@@ -53,7 +53,7 @@ ExtractResult contains:
 
 Each FixtureResult carries all the fields needed to populate the DB tables:
   fixture_type, scope, start_line, end_line, loc,
-  cyclomatic_complexity, cognitive_complexity,
+  cyclomatic_complexity, max_nesting_depth,
   num_objects_instantiated, num_external_calls, num_parameters,
   framework (mock framework used, if any), raw_source text
 """
@@ -135,7 +135,6 @@ class FixtureResult:
     end_line: int
     loc: int  # non-blank lines
     cyclomatic_complexity: int
-    cognitive_complexity: int
     max_nesting_depth: int  # maximum block nesting level from Lizard
     num_objects_instantiated: int
     num_external_calls: int
@@ -1234,7 +1233,7 @@ def _build_result(
     )
 
     # Get metrics from Lizard via complexity_provider
-    # Includes: cyclomatic_complexity, cognitive_complexity, num_parameters
+    # Includes: cyclomatic_complexity, num_parameters
     metrics = analyze_function_complexity(src_text, language)
 
     # Compute nesting depth from AST (Lizard's max_nesting_depth doesn't work for functions)
@@ -1249,7 +1248,6 @@ def _build_result(
         end_line=node.end_point[0] + 1,
         loc=_count_loc(src_text),  # Custom counting (non-blank lines)
         cyclomatic_complexity=metrics.get("cyclomatic_complexity", 1),
-        cognitive_complexity=metrics.get("cognitive_complexity", 0),
         max_nesting_depth=nesting_depth,
         num_objects_instantiated=metrics.get(
             "num_objects_instantiated", 0

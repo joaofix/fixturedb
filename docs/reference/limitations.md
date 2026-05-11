@@ -58,8 +58,7 @@ re-run or improve detection against the original fixture text.
 |--------|-----------|-----------|
 | `has_teardown_pair` | Heuristic detection; implicit cleanup (connection pooling, auto-cleanup) not detected. Ambiguous in JavaScript/TypeScript. | Use `raw_source` for manual verification on important fixtures. |
 | `num_contributors` | GitHub API page limit (~30 per page); repos with >100 contributors may be under-counted. | For precise counts, query GitHub API or web interface directly. |
-| `max_nesting_depth` | May over-estimate when counting lambda/closure nesting vs. control flow nesting. | Combine with `cognitive_complexity` for accuracy. |
-| `cognitive_complexity` | Formula-based approximation for non-Python languages; not validated against SonarQube. | Use as relative measure, not absolute. |
+| `max_nesting_depth` | May over-estimate when counting lambda/closure nesting vs. control flow nesting. | Use `cyclomatic_complexity` for cross-validation of structural complexity. |
 
 ---
 
@@ -77,7 +76,7 @@ re-run or improve detection against the original fixture text.
 | TypeScript | Medium | Same as JavaScript. |
 | Go | **Incomplete** | Helper function detection validated but classification incomplete. |
 
-**Known gaps:** Parametrized test detection edge cases, false-positive rates (~5–15% for `num_objects_instantiated`), non-Python `cognitive_complexity` formula validation.
+**Known gaps:** Parametrized test detection edge cases, false-positive rates (~5–15% for `num_objects_instantiated`).
 
 ---
 

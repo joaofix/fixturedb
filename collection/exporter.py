@@ -103,7 +103,6 @@ This archive contains 3 CSV files plus a SQLite database:
    
    Complexity:
    - cyclomatic_complexity 1 + number of branching statements (McCabe)
-   - cognitive_complexity  Nesting-depth-weighted complexity
    - max_nesting_depth     Maximum block nesting level
    
    Dependencies & Structure:
@@ -303,7 +302,7 @@ def _export_fixtures_with_url(
       - Characteristics: fixture_type, framework, scope
       - Location: start_line, end_line
       - Structure: loc (lines of code)
-      - Complexity: cyclomatic_complexity, cognitive_complexity, max_nesting_depth
+      - Complexity: cyclomatic_complexity, max_nesting_depth
       - Behavior: num_parameters, num_objects_instantiated, num_external_calls
       - Reuse: reuse_count, has_teardown_pair
       - Reproducibility: pinned_commit, github_url
@@ -322,7 +321,6 @@ def _export_fixtures_with_url(
         f.end_line,
         f.loc,
         f.cyclomatic_complexity,
-        f.cognitive_complexity,
         f.max_nesting_depth,
         f.num_parameters,
         f.num_objects_instantiated,

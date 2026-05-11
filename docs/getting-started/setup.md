@@ -31,7 +31,6 @@ python pipeline.py init
 
 | Package         | Purpose |
 |-----------------|---------|
-| `pydriller`     | Repository traversal and git metadata |
 | `tree-sitter` + language bindings | AST parsing for fixture detection (all 6 languages) |
 | `lizard`        | Cyclomatic complexity metrics and parameter count |
 | `complexipy`    | SonarQube-standard cognitive complexity for Python (fast, Rust-based) |

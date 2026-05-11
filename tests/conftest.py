@@ -118,8 +118,6 @@ def assert_fixture_metrics(
     min_complexity: int = None,
     max_complexity: int = None,
     num_parameters: int = None,
-    min_cognitive_complexity: int = None,
-    max_cognitive_complexity: int = None,
     min_objects_instantiated: int = None,
     max_objects_instantiated: int = None,
     min_external_calls: int = None,
@@ -132,8 +130,6 @@ def assert_fixture_metrics(
         min_complexity: Minimum cyclomatic complexity (inclusive)
         max_complexity: Maximum cyclomatic complexity (inclusive)
         num_parameters: Exact number of parameters
-        min_cognitive_complexity: Minimum cognitive complexity (inclusive)
-        max_cognitive_complexity: Maximum cognitive complexity (inclusive)
         min_objects_instantiated: Minimum number of object instantiations (inclusive)
         max_objects_instantiated: Maximum number of object instantiations (inclusive)
         min_external_calls: Minimum number of external calls (inclusive)
@@ -154,25 +150,15 @@ def assert_fixture_metrics(
             fixture.num_parameters == num_parameters
         ), f"Expected {num_parameters} parameters, got {fixture.num_parameters}"
 
-    if min_cognitive_complexity is not None:
-        assert (
-            fixture.cognitive_complexity >= min_cognitive_complexity
-        ), f"Expected cognitive_complexity >= {min_cognitive_complexity}, got {fixture.cognitive_complexity}"
-
-    if max_cognitive_complexity is not None:
-        assert (
-            fixture.cognitive_complexity <= max_cognitive_complexity
-        ), f"Expected cognitive_complexity <= {max_cognitive_complexity}, got {fixture.cognitive_complexity}"
-
     if min_objects_instantiated is not None:
         assert (
             fixture.num_objects_instantiated >= min_objects_instantiated
-        ), f"Expected num_objects_instantiated >= {min_objects_instantiated}, got {fixture.num_objects_instantiated}"
+        ), f"Expected objects >= {min_objects_instantiated}, got {fixture.num_objects_instantiated}"
 
     if max_objects_instantiated is not None:
         assert (
             fixture.num_objects_instantiated <= max_objects_instantiated
-        ), f"Expected num_objects_instantiated <= {max_objects_instantiated}, got {fixture.num_objects_instantiated}"
+        ), f"Expected objects <= {max_objects_instantiated}, got {fixture.num_objects_instantiated}"
 
     if min_external_calls is not None:
         assert (

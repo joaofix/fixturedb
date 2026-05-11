@@ -35,7 +35,6 @@ def plot_repo_maturity_vs_fixture_quality(conn, out_dir, show):
         SELECT r.id, r.language, r.stars, r.forks, r.num_contributors,
                COUNT(f.id) as num_fixtures,
                AVG(f.cyclomatic_complexity) as avg_complexity,
-               AVG(f.cognitive_complexity) as avg_cognitive,
                AVG(f.loc) as avg_loc,
                AVG(f.reuse_count) as avg_reuse
         FROM repositories r

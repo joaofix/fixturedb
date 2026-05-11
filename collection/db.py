@@ -80,7 +80,6 @@ CREATE TABLE IF NOT EXISTS fixtures (
     end_line                INTEGER,
     loc                     INTEGER,   -- lines of code (non-blank)
     cyclomatic_complexity   INTEGER,
-    cognitive_complexity    INTEGER,
     max_nesting_depth       INTEGER DEFAULT 0,      -- maximum block nesting level
     num_objects_instantiated INTEGER DEFAULT 0,
     num_external_calls      INTEGER DEFAULT 0,
@@ -375,13 +374,13 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         INSERT INTO fixtures (
             file_id, repo_id, name, fixture_type, scope,
             start_line, end_line, loc, cyclomatic_complexity,
-            cognitive_complexity, max_nesting_depth, num_objects_instantiated, 
+            max_nesting_depth, num_objects_instantiated, 
             num_external_calls, num_parameters, reuse_count, has_teardown_pair,
             raw_source, framework
         ) VALUES (
             :file_id, :repo_id, :name, :fixture_type, :scope,
             :start_line, :end_line, :loc, :cyclomatic_complexity,
-            :cognitive_complexity, :max_nesting_depth, :num_objects_instantiated, 
+            :max_nesting_depth, :num_objects_instantiated, 
             :num_external_calls, :num_parameters, :reuse_count, :has_teardown_pair,
             :raw_source, :framework
         )

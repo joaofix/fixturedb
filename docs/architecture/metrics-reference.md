@@ -7,13 +7,12 @@
 
 ## Quick Reference: Metrics at a Glance
 
-### Metrics from Known Tools (Lizard, complexipy, Tree-sitter)
+### Metrics from Known Tools (Lizard, Tree-sitter)
 
 | Metric | Category | Tool(s) |
 |--------|----------|----------|
 | `loc` | Code Structure | Lizard |
 | `cyclomatic_complexity` | Complexity | Lizard |
-| `cognitive_complexity` | Complexity | complexipy (Python) / formula (others) |
 | `num_parameters` | Code Structure | Lizard |
 | `file_loc` | Code Structure | Lizard |
 | `num_test_funcs` | Code Structure | Lizard |
@@ -44,7 +43,7 @@
 
 **Metrics Provided:**
 - `cyclomatic_complexity` — McCabe's cyclomatic complexity
-- `cognitive_complexity` (fallback) — Approximation using nesting depth
+
 - `num_parameters` — Function/method parameter count
 - `loc` — Lines of code (including blank lines)
 - `num_external_calls` — External function call count (used as basis for object instantiation filtering)
@@ -76,42 +75,7 @@
 
 ---
 
-### 1.2 complexipy
-
-**Purpose:** Python-specific cognitive complexity calculation (SonarQube standard)
-
-(See [requirements.txt](../../requirements.txt) for version)
-
-**Metrics Provided:**
-- `cognitive_complexity` — Nesting-depth-weighted complexity following SonarQube's algorithm
-
-**Academic Reference:**
-> Campbell, G. A. (2018). "Cognitive Complexity: An Overview and Evaluation." CQSE White Paper.
-> — Defines cognitive complexity as weighted sum of nesting depth over control structures; research-backed metric for code understandability
-
-**Pros:**
-- Accurate implementation of SonarQube standard
-- Fast Rust-based implementation
-- Validated across industrial codebases
-- Better correlates with human cognition than cyclomatic complexity
-
-**Cons:**
-- Python-only (no Java/JavaScript/TypeScript support)
-- Relatively newer than cyclomatic complexity
-
-**Citation in Papers:**
-```bibtex
-@software{complexipy2024,
-  author = {Rohaquinlop},
-  title = {complexipy: Python Cognitive Complexity Calculator},
-  url = {https://github.com/rohaquinlop/complexipy},
-  year = {2024}
-}
-```
-
----
-
-### 1.3 Tree-sitter
+### 1.2 Tree-sitter
 
 **Purpose:** Language-agnostic AST parsing for fixture detection and scope analysis
 
@@ -716,7 +680,7 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
 
 | Metric | Phase | Location | When Used |
 |--------|-------|----------|-----------|
-| `loc`, `cyclomatic_complexity`, `cognitive_complexity`, `num_parameters`, `num_objects_instantiated` | P1-P2 | `collection/complexity_provider.py::analyze_function_complexity()` | During fixture detection |
+| `loc`, `cyclomatic_complexity`, `num_parameters`, `num_objects_instantiated` | P1-P2 | `collection/complexity_provider.py::analyze_function_complexity()` | During fixture detection |
 | `num_external_calls` | P1-P2 | `collection/detector.py::_count_external_calls()` | During fixture detection |
 | `fixture_type`, `scope`, `framework` | P1-P2 | `collection/detector.py::_detect_fixtures_<language>()` | During fixture detection |
 | `max_nesting_depth` | P1-P2 | `collection/detector.py::_calculate_max_nesting_depth()` | During fixture detection |

@@ -51,7 +51,6 @@ fixturedb_export/
 | `loc` | Integer | Lines of code |
 | **Complexity** | | |
 | `cyclomatic_complexity` | Integer | McCabe complexity (1 = simple, 10+ = very complex) |
-| `cognitive_complexity` | Integer | SonarQube-standard cognitive complexity (nesting-weighted) |
 | `max_nesting_depth` | Integer | Maximum nested block depth |
 | **Behavior** | | |
 | `num_parameters` | Integer | Function parameters |

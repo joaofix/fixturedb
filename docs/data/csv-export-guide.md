@@ -72,7 +72,6 @@ One row per fixture definition found during extraction.
 | `end_line` | INT | 1-indexed end line in source file |
 | `loc` | INT | Non-blank lines of code in fixture |
 | `cyclomatic_complexity` | INT | McCabe complexity: 1 + number of branching statements |
-| `cognitive_complexity` | INT | Nesting-depth-weighted complexity (higher = harder to understand) |
 | `max_nesting_depth` | INT | Maximum block nesting level |
 | `num_parameters` | INT | Number of function parameters |
 | `num_objects_instantiated` | INT | Estimated constructor calls inside fixture (detected via regex; see limitations) |

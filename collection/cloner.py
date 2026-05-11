@@ -18,7 +18,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import requests
-from pydriller import Repository
 
 from collection.config import (
     CLONES_DIR,

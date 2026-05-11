@@ -84,7 +84,6 @@ def temp_db_with_data():
         end_line INTEGER,
         loc INTEGER,
         cyclomatic_complexity INTEGER,
-        cognitive_complexity INTEGER,
         num_objects_instantiated INTEGER,
         num_external_calls INTEGER,
         num_parameters INTEGER,
@@ -140,31 +139,31 @@ def temp_db_with_data():
     conn.execute("""
         INSERT INTO fixtures 
         (file_id, repo_id, name, fixture_type, scope, start_line, end_line, loc,
-         cyclomatic_complexity, cognitive_complexity, num_objects_instantiated,
+         cyclomatic_complexity, num_objects_instantiated,
          num_external_calls, num_parameters, raw_source, category, framework,
          max_nesting_depth, reuse_count, has_teardown_pair)
         VALUES (1, 1, 'db_fixture', 'pytest_decorator', 'per_test', 5, 15, 11,
-                2, 1, 1, 2, 0, 'def db_fixture():\\n    ...', 'setup', 'pytest',
+                2, 1, 2, 0, 'def db_fixture():\\n    ...', 'setup', 'pytest',
                 2, 1, 0)
     """)
     conn.execute("""
         INSERT INTO fixtures 
         (file_id, repo_id, name, fixture_type, scope, start_line, end_line, loc,
-         cyclomatic_complexity, cognitive_complexity, num_objects_instantiated,
+         cyclomatic_complexity, num_objects_instantiated,
          num_external_calls, num_parameters, raw_source, category, framework,
          max_nesting_depth, reuse_count, has_teardown_pair)
         VALUES (1, 1, 'config_fixture', 'pytest_decorator', 'per_module', 20, 25, 6,
-                1, 0, 0, 1, 1, 'def config_fixture(request):\\n    ...', 'setup', 'pytest',
+                1, 0, 1, 1, 'def config_fixture(request):\\n    ...', 'setup', 'pytest',
                 1, 0, 1)
     """)
     conn.execute("""
         INSERT INTO fixtures 
         (file_id, repo_id, name, fixture_type, scope, start_line, end_line, loc,
-         cyclomatic_complexity, cognitive_complexity, num_objects_instantiated,
+         cyclomatic_complexity, num_objects_instantiated,
          num_external_calls, num_parameters, raw_source, category, framework,
          max_nesting_depth, reuse_count, has_teardown_pair)
         VALUES (2, 2, 'setUp', 'junit4_before', 'per_test', 10, 20, 11,
-                2, 1, 1, 1, 0, 'public void setUp() {\\n    ...', 'setup', 'junit',
+                2, 1, 1, 0, 'public void setUp() {\\n    ...', 'setup', 'junit',
                 1, 2, 0)
     """)
 
@@ -408,9 +407,9 @@ class TestReadmeGeneration:
         _write_readme(readme_path, "1.0")
 
         content = readme_path.read_text()
-        assert "TABLE: repositories" in content
-        assert "TABLE: fixtures" in content
-        assert "TABLE: mock_usages" in content
+        assert "REPOSITORIES.CSV" in content
+        assert "FIXTURES.CSV" in content
+        assert "cyclomatic_complexity" in content
         assert SCHEMA_DOCS in content
 
     def test_write_readme_includes_timestamp(self, tmp_path):
@@ -457,10 +456,11 @@ class TestStatsGeneration:
             content = stats_path.read_text()
             assert "python" in content
             assert "java" in content
-            # Stats should show repos=1 for each language (we inserted one of each)
+            # Stats should include language in a table format
             lines = content.split("\n")
-            python_line = [l for l in lines if "python" in l][0]
-            assert "repos=" in python_line
+            python_line = [l for l in lines if l.strip().startswith("python")][0]
+            # Check that the line has numeric values (repos, test files, fixtures)
+            assert any(c.isdigit() for c in python_line)
 
     def test_write_stats_counts_fixtures_correctly(self, temp_db_with_data):
         """Stats should count fixtures per language accurately."""

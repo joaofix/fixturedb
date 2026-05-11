@@ -23,7 +23,7 @@ FixtureDB provides data in two formats optimized for different use cases:
 |-------|------|--------------|---------|
 | `repositories` | 200 | Root | full_name, language, stars, forks, pinned_commit, status, num_test_files, num_fixtures, num_contributors |
 | `test_files` | 257,764 | FK → repositories.id | repo_id, relative_path, language, file_loc, num_fixtures, total_fixture_loc |
-| `fixtures` | 35,169 | FK → test_files.id, repo_id | name, fixture_type, scope, loc, cyclomatic_complexity, cognitive_complexity, num_parameters, reuse_count, has_teardown_pair |
+| `fixtures` | 35,169 | FK → test_files.id, repo_id | name, fixture_type, scope, loc, cyclomatic_complexity, num_parameters, reuse_count, has_teardown_pair |
 | `mock_usages` | ~18K | FK → fixtures.id | fixture_id, framework, mock_style, target_identifier |
 
 **Entity Relationship:**
@@ -36,7 +36,7 @@ repositories (1) ──< test_files (1) ──< fixtures (1) ──< mock_usages
 ### Key Columns for CSV Export
 
 **fixtures table (primary analysis table):**
-- **structure:** `loc`, `cyclomatic_complexity` (via Lizard), `cognitive_complexity` (via complexipy)
+- **structure:** `loc`, `cyclomatic_complexity` (via Lizard)
 - **design:** `scope`, `num_parameters`, `reuse_count`, `has_teardown_pair`
 - **detection:** `fixture_type`, `framework`, `name`
 - **context:** Via SQL join: `language`, `repo` (full_name), `file_path`
@@ -82,7 +82,7 @@ export/fixturedb_v<version>_<date>/
 - **Classification:** fixture_type, framework, scope
 - **Location:** start_line, end_line
 - **Structure:** loc
-- **Complexity:** cyclomatic_complexity, cognitive_complexity, max_nesting_depth
+- **Complexity:** cyclomatic_complexity, max_nesting_depth
 - **Design:** num_parameters, num_objects_instantiated, num_external_calls, reuse_count, has_teardown_pair
 - **Reproducibility:** pinned_commit, github_url
 

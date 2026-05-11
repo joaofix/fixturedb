@@ -335,7 +335,6 @@ def ultra_complex():
         fixture = result.fixtures[0]
         # Complex fixture should have detectable cyclomatic complexity
         assert fixture.cyclomatic_complexity >= 1
-        assert fixture.cognitive_complexity >= 0
 
     def test_fixture_with_many_parameters(self, tmp_path):
         """Fixture with many parameters should extract parameter count."""

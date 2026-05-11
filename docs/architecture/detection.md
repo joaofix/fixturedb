@@ -48,13 +48,14 @@ Scope is consistently mapped across frameworks (e.g., `@Before` = per_test, `@Be
 
 For each detected fixture, the system computes **14 quantitative metrics** across three categories:
 
-### Code Complexity (3 metrics)
+### Code Complexity (2 metrics)
 
 | Metric | Definition | Tool(s) | Notes |
 |--------|-----------|---------|-------|
 | `cyclomatic_complexity` | McCabe complexity (decision points) | Lizard | Standard metric; Python, Java, JavaScript, TypeScript |
-| `cognitive_complexity` | Nesting-aware understandability | Lizard + SonarQube algorithm | Python uses SonarQube standard; others use formula fallback |
 | `max_nesting_depth` | Maximum control structure nesting | Tree-sitter AST | Structural measure independent of complexity |
+
+**Note on Cognitive Complexity:** Originally, we attempted to compute cognitive complexity (a nesting-weighted understandability metric) using the SonarQube algorithm in Python and a formula fallback for other languages. However, since `complexipy` (the only programmatic implementation) only supports Python and no equivalent alternatives exist for Java, JavaScript, or TypeScript, we removed this metric entirely to avoid inconsistent/unreliable cross-language metrics.
 
 ### Code Structure (4 metrics)
 

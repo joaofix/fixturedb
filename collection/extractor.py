@@ -349,7 +349,6 @@ def extract_repo(repo_id: int, full_name: str, language: str) -> dict:
                     "end_line": fix.end_line,
                     "loc": fix.loc,
                     "cyclomatic_complexity": fix.cyclomatic_complexity,
-                    "cognitive_complexity": fix.cognitive_complexity,
                     "max_nesting_depth": fix.max_nesting_depth,
                     "num_objects_instantiated": fix.num_objects_instantiated,
                     "num_external_calls": fix.num_external_calls,

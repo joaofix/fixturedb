@@ -276,7 +276,6 @@ def complete_fixture(dep):
                 assert hasattr(fixture, "reuse_count")
                 assert hasattr(fixture, "has_teardown_pair")
                 assert hasattr(fixture, "cyclomatic_complexity")
-                assert hasattr(fixture, "cognitive_complexity")
                 assert hasattr(fixture, "num_parameters")
 
                 # Verify they have sensible default values
@@ -284,7 +283,6 @@ def complete_fixture(dep):
                 assert fixture.reuse_count >= 0
                 assert fixture.has_teardown_pair in (0, 1)
                 assert fixture.cyclomatic_complexity >= 1
-                assert fixture.cognitive_complexity >= 0
                 assert fixture.num_parameters >= 0
 
     def test_fixture_baseline_metrics_consistent(self):
@@ -309,5 +307,3 @@ def baseline_fixture(a, b):
                 # Verify phase 1+2 metrics are still computed
                 assert fixture.cyclomatic_complexity >= 1  # Lizard
                 assert fixture.num_parameters == 2  # Lizard (a, b)
-                # Cognitive complexity should be reasonable for simple code
-                assert fixture.cognitive_complexity >= 0

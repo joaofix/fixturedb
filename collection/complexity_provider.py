@@ -2,23 +2,25 @@
 Third-party metric collection for code complexity and structure analysis.
 
 This module wraps industry-standard tools to calculate code metrics across all
-5 supported languages (Python, Java, JavaScript, TypeScript, Go).
+supported languages (Python, Java, JavaScript, TypeScript).
 
-METRICS PROVIDED (via Lizard + complexipy libraries)
-====================================================
+METRICS PROVIDED (via Lizard library)
+=====================================
 
 - Cyclomatic Complexity: via Lizard library (all languages)
-- Cognitive Complexity: via complexipy library (Python) with fallback formula (other languages)
-- Number of Parameters: via Lizard library (all languages) — Phase 2 addition
+- Maximum Nesting Depth: via custom AST analysis (all languages)
+- Number of Parameters: via Lizard library (all languages)
 
-BENEFITS over custom tree-sitter implementation:
-- Uses proven, well-maintained industry-standard libraries
-- Consistent with SonarQube and McCabe complexity standards
+Note: Cognitive complexity calculation has been removed as it requires
+language-specific parsers (complexipy for Python only). No programmatic
+alternatives exist for Java, JavaScript, or TypeScript.
+
+BENEFITS of using Lizard:
+- Uses proven, well-maintained industry-standard library
+- Consistent with McCabe complexity standards
 - Reduces custom code maintenance burden
 - Better cross-language consistency
 - Academic credibility for published research
-
-See docs/COMPLEXITY_METRICS_MIGRATION.md for complete methodology and justification.
 """
 
 import logging
@@ -26,7 +28,6 @@ from pathlib import Path
 from typing import Optional
 
 from lizard import analyze_file as lizard_analyze_file
-from complexipy import code_complexity
 
 logger = logging.getLogger(__name__)
 
@@ -61,66 +62,6 @@ def get_cyclomatic_complexity(file_path: Path, language: str) -> Optional[int]:
     return None
 
 
-def get_cognitive_complexity_python(file_path: Path) -> Optional[int]:
-    """
-    Get cognitive complexity using the complexipy library.
-
-    Cognitive complexity extends cyclomatic complexity by:
-    - Weighting nested structures more heavily
-    - Tracking boolean operators
-    - Following SonarQube's standard definition
-
-    Args:
-        file_path: Path to Python source file
-
-    Returns:
-        Cognitive complexity metric (>= 0), or None if analysis fails
-    """
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            source = f.read()
-
-        # Get complexity of first function found using complexipy
-        result = code_complexity(source)
-
-        # complexipy returns code-level complexity for the entire file
-        # For single-function extraction, return the file-level complexity
-        if result and hasattr(result, "complexity"):
-            return result.complexity
-    except Exception as e:
-        logger.debug(
-            f"Failed to get cognitive complexity for {file_path}: {type(e).__name__}: {e}"
-        )
-    return None
-
-
-def get_cognitive_complexity_fallback(cyclomatic: int, max_nesting: int = 1) -> int:
-    """
-    Compute cognitive complexity using a formula when language-specific parser unavailable.
-
-    For languages without native cognitive complexity support (Java, JS, etc.),
-    use this estimated formula based on cyclomatic complexity and nesting depth.
-
-    Formula: CC_cognitive ≈ CC * max_nesting_depth (or CC itself if depth unavailable)
-
-    Args:
-        cyclomatic: Cyclomatic complexity value
-        max_nesting: Maximum nesting depth (default: 1)
-
-    Returns:
-        Estimated cognitive complexity
-
-    Note:
-        This is a heuristic. Languages with proper parsers (Python) should use
-        language-specific implementations instead.
-    """
-    if max_nesting <= 0:
-        max_nesting = 1
-    # Simple formula: multiply by nesting depth
-    # This gives higher weight to nested structures
-    return max(1, cyclomatic + max(0, max_nesting - 1))
-
-
 def analyze_function_complexity(
     source_text: str,
     language: str,
@@ -137,9 +78,7 @@ def analyze_function_complexity(
     Returns:
         Dictionary with keys:
         - 'cyclomatic_complexity' (int): McCabe complexity, >= 1
-        - 'cognitive_complexity' (int): SonarQube-style complexity, >= 0
         - 'num_parameters' (int): Function signature parameter count
-        - 'num_objects_instantiated' (int): Count of object instantiations (constructors), >= 0
         - 'num_external_calls' (int): Lizard's external call count (used for validation)
 
     Note:
@@ -159,14 +98,11 @@ def analyze_function_complexity(
         >>> metrics = analyze_function_complexity(code, 'python')
         >>> metrics['cyclomatic_complexity']
         2
-        >>> metrics['cognitive_complexity']
-        1
         >>> metrics['num_parameters']
         1
     """
     metrics = {
         "cyclomatic_complexity": 1,
-        "cognitive_complexity": 0,
         "num_parameters": 0,
         "num_external_calls": 0,
     }
@@ -196,28 +132,6 @@ def analyze_function_complexity(
                 if hasattr(func_info, "external_call_count")
                 else 0
             )
-
-            # Compute cognitive complexity based on language
-            if language.lower() == "python":
-                # Use complexipy library for Python (most accurate)
-                try:
-                    result = code_complexity(source_text)
-                    if result and hasattr(result, "complexity"):
-                        metrics["cognitive_complexity"] = result.complexity
-                except (ValueError, ImportError) as e:
-                    # Fall back to formula if complexipy library fails
-                    # Use cyclomatic complexity as proxy (nesting depth not available from Lizard)
-                    logger.debug(
-                        f"Failed to analyze Python cognitive complexity: {type(e).__name__}: {e}"
-                    )
-                    metrics["cognitive_complexity"] = get_cognitive_complexity_fallback(
-                        metrics["cyclomatic_complexity"], 1
-                    )
-            else:
-                # For other languages: use default formula
-                metrics["cognitive_complexity"] = get_cognitive_complexity_fallback(
-                    metrics["cyclomatic_complexity"], 1
-                )
 
     except (OSError, RuntimeError, ValueError) as e:
         # Return defaults (including loc=0) on any error
