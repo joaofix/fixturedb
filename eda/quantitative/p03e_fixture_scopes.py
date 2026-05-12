@@ -53,7 +53,11 @@ def plot_fixture_scopes(conn, out_dir, show):
     scopes_pivot = (
         scopes_data[scopes_data["language"].isin(present)]
         .pivot_table(
-            index="language", columns="scope", values="count", fill_value=0, aggfunc="sum"
+            index="language",
+            columns="scope",
+            values="count",
+            fill_value=0,
+            aggfunc="sum",
         )
         .reindex(present)
     )

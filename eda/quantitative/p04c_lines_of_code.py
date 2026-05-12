@@ -50,9 +50,7 @@ def plot_lines_of_code(conn, out_dir, show):
 
     # Panel 1: Box plots
     ax = axes[0]
-    box_data = [
-        fixtures[fixtures["language"] == l]["loc"].values for l in present
-    ]
+    box_data = [fixtures[fixtures["language"] == l]["loc"].values for l in present]
     bp = ax.boxplot(
         box_data,
         labels=[lang_display(l) for l in present],
@@ -70,7 +68,10 @@ def plot_lines_of_code(conn, out_dir, show):
     # Panel 2: Violin plots (log scale)
     ax = axes[1]
     parts = ax.violinplot(
-        [np.log10(fixtures[fixtures["language"] == l]["loc"].values + 1) for l in present],
+        [
+            np.log10(fixtures[fixtures["language"] == l]["loc"].values + 1)
+            for l in present
+        ],
         positions=range(len(present)),
         widths=0.7,
         showmeans=True,
@@ -82,7 +83,9 @@ def plot_lines_of_code(conn, out_dir, show):
     ax.set_xticks(range(len(present)))
     ax.set_xticklabels([lang_display(l) for l in present])
     ax.set_ylabel("Lines of Code (log10 scale)", fontsize=11)
-    ax.set_title("(b) Fixture LOC: Distribution (log scale)", fontsize=12, fontweight="bold")
+    ax.set_title(
+        "(b) Fixture LOC: Distribution (log scale)", fontsize=12, fontweight="bold"
+    )
     ax.grid(axis="y", alpha=0.3, linestyle="--")
 
     # Panel 3: Histogram with KDE

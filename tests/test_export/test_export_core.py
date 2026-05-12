@@ -215,7 +215,10 @@ class TestExportTable:
 
             # Export fixtures without category, fixture_type, and has_teardown_pair (but keep raw_source)
             _export_table(
-                conn, "fixtures", dest, exclude_cols=["category", "fixture_type", "has_teardown_pair"]
+                conn,
+                "fixtures",
+                dest,
+                exclude_cols=["category", "fixture_type", "has_teardown_pair"],
             )
             conn.close()
 
@@ -291,7 +294,13 @@ class TestExportTable:
                 conn,
                 "repositories",
                 dest,
-                exclude_cols=["star_tier", "status", "domain", "error_message", "skip_reason"],
+                exclude_cols=[
+                    "star_tier",
+                    "status",
+                    "domain",
+                    "error_message",
+                    "skip_reason",
+                ],
             )
             conn.close()
 
@@ -302,7 +311,7 @@ class TestExportTable:
             assert "domain" not in df.columns
             assert "error_message" not in df.columns
             assert "skip_reason" not in df.columns
-            
+
             # Verify essential columns are present
             assert "github_id" in df.columns
             assert "full_name" in df.columns
@@ -374,7 +383,10 @@ class TestFixturesExport:
             conn = sqlite3.connect(temp_db_with_data)
 
             _export_table(
-                conn, "fixtures", dest, exclude_cols=["category", "fixture_type", "has_teardown_pair"]
+                conn,
+                "fixtures",
+                dest,
+                exclude_cols=["category", "fixture_type", "has_teardown_pair"],
             )
             conn.close()
 
@@ -423,7 +435,10 @@ class TestFixturesExport:
             conn = sqlite3.connect(temp_db_with_data)
 
             _export_table(
-                conn, "fixtures", dest, exclude_cols=["category", "fixture_type", "has_teardown_pair"]
+                conn,
+                "fixtures",
+                dest,
+                exclude_cols=["category", "fixture_type", "has_teardown_pair"],
             )
             conn.close()
 
@@ -457,12 +472,12 @@ class TestRepositoryStatisticsExport:
             df = pd.read_csv(stats_path)
             # Should have one row per repository with analyzed fixtures
             assert len(df) >= 1
-            
+
             # Check for key aggregation columns
             assert "full_name" in df.columns
             assert "num_fixtures_total" in df.columns
             assert "num_test_files" in df.columns
-            
+
             # Aggregation statistics should be present
             assert "avg_cyclomatic_complexity" in df.columns
             assert "max_cyclomatic_complexity" in df.columns
@@ -479,14 +494,16 @@ class TestRepositoryStatisticsExport:
 
             # Count analyzed repos in DB
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(DISTINCT full_name) FROM repositories WHERE status = 'analysed'")
+            cursor.execute(
+                "SELECT COUNT(DISTINCT full_name) FROM repositories WHERE status = 'analysed'"
+            )
             expected_repos = cursor.fetchone()[0]
 
             _export_repository_statistics(conn, stats_path)
             conn.close()
 
             df = pd.read_csv(stats_path)
-            
+
             # Should have one row per analyzed repository
             assert len(df) == expected_repos
 
@@ -510,13 +527,13 @@ class TestTestFileStatisticsExport:
             df = pd.read_csv(stats_path)
             # Should have rows for test files
             assert len(df) > 0
-            
+
             # Check for key columns
             assert "relative_path" in df.columns
             assert "language" in df.columns
             assert "num_fixtures_total" in df.columns
             assert "file_loc" in df.columns
-            
+
             # Aggregation statistics should be present
             assert "avg_cyclomatic_complexity" in df.columns
             assert "max_cyclomatic_complexity" in df.columns
@@ -538,7 +555,7 @@ class TestTestFileStatisticsExport:
             conn.close()
 
             df = pd.read_csv(stats_path)
-            
+
             # Should have rows for all test files
             assert len(df) == total_files
 

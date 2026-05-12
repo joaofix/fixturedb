@@ -72,7 +72,9 @@ def plot_test_file_characteristics(conn, out_dir, show):
 
     # Panel 2: File LOC distribution by language
     ax = axes[1]
-    box_data = [test_files[test_files["language"] == l]["file_loc"].values for l in present]
+    box_data = [
+        test_files[test_files["language"] == l]["file_loc"].values for l in present
+    ]
     bp = ax.boxplot(
         box_data,
         labels=[lang_display(l) for l in present],
@@ -126,7 +128,13 @@ def plot_test_file_characteristics(conn, out_dir, show):
 
     table = ax.table(
         cellText=stats_data,
-        colLabels=["Language", "Test Files", "Avg LOC", "Avg Fixtures", "Avg Test Funcs"],
+        colLabels=[
+            "Language",
+            "Test Files",
+            "Avg LOC",
+            "Avg Fixtures",
+            "Avg Test Funcs",
+        ],
         cellLoc="center",
         loc="center",
         colWidths=[0.18, 0.18, 0.18, 0.18, 0.18],
@@ -154,9 +162,7 @@ def plot_test_file_characteristics(conn, out_dir, show):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="FixtureDB Test File Characteristics"
-    )
+    parser = argparse.ArgumentParser(description="FixtureDB Test File Characteristics")
     parser.add_argument("--db", default=str(DB_PATH))
     parser.add_argument("--out", default=str(DEFAULT_OUT))
     parser.add_argument("--show", action="store_true")

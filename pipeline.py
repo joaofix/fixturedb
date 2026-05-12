@@ -250,9 +250,7 @@ def cmd_collect_balanced(args: argparse.Namespace, targets: dict[str, int]) -> N
         )
 
         if all_reached:
-            print(
-                f"\n✓ ALL LANGUAGES REACHED TARGET"
-            )
+            print(f"\n✓ ALL LANGUAGES REACHED TARGET")
             break
 
         # Clone phase: Only clone for languages below target
@@ -267,9 +265,7 @@ def cmd_collect_balanced(args: argparse.Namespace, targets: dict[str, int]) -> N
                 cmd_clone(args)
                 print(f"    Cloning {lang} (currently {current}/{target})")
             else:
-                print(
-                    f"    Skipping {lang} (already at {current}/{target})"
-                )
+                print(f"    Skipping {lang} (already at {current}/{target})")
         args.language = None  # Reset for extraction
 
         # Extract phase: Stop when all languages reach target
@@ -314,9 +310,7 @@ def cmd_toy(args: argparse.Namespace) -> None:
     total_toys = sum(toy_targets.values())
 
     print("╔════════════════════════════════════════════════════╗")
-    print(
-        f"║  TOY DATASET ({total_toys} extracted repos total)            ║"
-    )
+    print(f"║  TOY DATASET ({total_toys} extracted repos total)            ║")
     print("╚════════════════════════════════════════════════════╝")
 
     print("\n── Phase 0: Initialise ─────────────────────────────")
@@ -330,9 +324,7 @@ def cmd_toy(args: argparse.Namespace) -> None:
     cmd_load(args)
 
     print("\n── Phase 2-3: Balanced Clone + Extract ────────────")
-    print(
-        f"  (Iteratively collecting until targets reached per language)"
-    )
+    print(f"  (Iteratively collecting until targets reached per language)")
     cmd_collect_balanced(args, targets=toy_targets)
     args.language = None  # Reset language filter
 
@@ -369,13 +361,13 @@ def cmd_full(args: argparse.Namespace) -> None:
     from collection.config import LANGUAGE_CONFIGS
 
     # Build per-language targets from config
-    full_targets = {lang: config.full_target for lang, config in LANGUAGE_CONFIGS.items()}
+    full_targets = {
+        lang: config.full_target for lang, config in LANGUAGE_CONFIGS.items()
+    }
     total_full = sum(full_targets.values())
 
     print("╔════════════════════════════════════════════════════╗")
-    print(
-        f"║  FULL DATASET ({total_full} extracted repos total)           ║"
-    )
+    print(f"║  FULL DATASET ({total_full} extracted repos total)           ║")
     print("╚════════════════════════════════════════════════════╝")
 
     print("\n── Phase 0: Initialise ─────────────────────────────")
@@ -389,9 +381,7 @@ def cmd_full(args: argparse.Namespace) -> None:
     cmd_load(args)
 
     print("\n── Phase 2-3: Balanced Clone + Extract ────────────")
-    print(
-        f"  (Iteratively collecting until targets reached per language)"
-    )
+    print(f"  (Iteratively collecting until targets reached per language)")
     cmd_collect_balanced(args, targets=full_targets)
     args.language = None  # Reset language filter
 
@@ -425,7 +415,6 @@ def cmd_categorize(args: argparse.Namespace) -> None:
     """Categorize detected fixtures into types and patterns."""
     counts = categorize_all(overwrite=args.overwrite)
     print(f"✓ Fixture categorization done: {counts}")
-
 
 
 def cmd_export(args: argparse.Namespace) -> None:
@@ -589,7 +578,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     # collect
 
-
     # cleanup
     p_cleanup = sub.add_parser(
         "cleanup", help="Remove stale clone directories from interrupted runs"
@@ -711,7 +699,6 @@ COMMAND_MAP = {
     "cleanup-toy": cmd_cleanup_toy,
     "classify": cmd_classify,
     "categorize": cmd_categorize,
-
     "export": cmd_export,
     "validate": cmd_validate,
     "run": cmd_run,

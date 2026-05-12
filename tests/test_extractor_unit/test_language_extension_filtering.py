@@ -81,7 +81,9 @@ class TestLanguageExtensionFiltering:
         """Non-TypeScript files should be skipped in TypeScript repos."""
         assert should_process_file(Path("test.js"), "typescript") is False
         assert should_process_file(Path("test.py"), "typescript") is False
-        assert should_process_file(Path("test.kt"), "typescript") is False  # Kotlin case
+        assert (
+            should_process_file(Path("test.kt"), "typescript") is False
+        )  # Kotlin case
         assert should_process_file(Path("test.java"), "typescript") is False
 
     # ========================================================================
@@ -117,11 +119,19 @@ class TestLanguageExtensionFiltering:
 
     def test_nested_path_extension_checked(self):
         """Extension should be checked even for deeply nested paths."""
-        assert should_process_file(Path("src/test/utils/test_helper.py"), "python") is True
-        assert should_process_file(Path("src/test/utils/test_helper.kt"), "python") is False
-        assert should_process_file(
-            Path("app/src/test/java/com/example/MyTest.java"), "java"
-        ) is True
+        assert (
+            should_process_file(Path("src/test/utils/test_helper.py"), "python") is True
+        )
+        assert (
+            should_process_file(Path("src/test/utils/test_helper.kt"), "python")
+            is False
+        )
+        assert (
+            should_process_file(
+                Path("app/src/test/java/com/example/MyTest.java"), "java"
+            )
+            is True
+        )
 
     def test_multiple_dots_in_filename(self):
         """Only the final extension should be checked."""

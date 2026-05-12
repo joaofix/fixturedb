@@ -332,7 +332,7 @@ def _export_repositories(
     dest: Path,
 ) -> None:
     """Export repositories with adoption and maturity metrics.
-    
+
     Columns (in order):
       - Identifiers: id, github_id, full_name
       - Context: language
@@ -370,7 +370,7 @@ def _export_test_files(
     dest: Path,
 ) -> None:
     """Export test files with repository context.
-    
+
     Columns (in order):
       - Identifiers: id
       - Context: repo (full_name), language, relative_path
@@ -401,7 +401,7 @@ def _export_fixtures_with_url(
     include_raw_source: bool = False,
 ) -> None:
     """Export fixtures with computed github_url and context.
-    
+
     Columns (in order):
       - Identifiers: id
       - Context: language, repo, file_path, name
@@ -413,7 +413,8 @@ def _export_fixtures_with_url(
       - Reuse: reuse_count, has_teardown_pair
       - Reproducibility: pinned_commit, github_url
     """
-    query = """
+    query = (
+        """
     SELECT
         f.id,
         r.language,
@@ -439,13 +440,16 @@ def _export_fixtures_with_url(
             THEN SUBSTR(r.clone_url, 1, LENGTH(r.clone_url) - 4)
             ELSE r.clone_url
         END || '/blob/' || r.pinned_commit || '/' || tf.relative_path || '#L' || f.start_line) AS github_url
-        """ + (", f.raw_source" if include_raw_source else "") + """
+        """
+        + (", f.raw_source" if include_raw_source else "")
+        + """
     FROM fixtures f
     JOIN repositories r ON f.repo_id = r.id
     JOIN test_files tf ON f.file_id = tf.id
     ORDER BY f.id
     """
-    
+    )
+
     df = pd.read_sql(query, conn)
     df.to_csv(dest, index=False)
     logger.info(f"  fixtures: {len(df):,} rows → {dest.name}")
@@ -456,7 +460,7 @@ def _export_repository_statistics(
     dest: Path,
 ) -> None:
     """Export aggregated fixture metrics per repository.
-    
+
     Aggregates all fixtures in each repository to provide repository-level
     summary statistics. Includes complexity metrics, scope distribution, framework
     diversity, and teardown adoption rates.
@@ -520,18 +524,18 @@ def _export_repository_statistics(
              r.num_contributors, r.pinned_commit, r.domain
     ORDER BY r.full_name
     """
-    
+
     try:
         df = pd.read_sql(query, conn)
     except Exception as e:
         logger.error(f"Failed to query repository_statistics from database: {e}")
         raise
-    
+
     if df.empty:
         logger.warning("repository_statistics: No data returned from query")
         df.to_csv(dest, index=False)
         return
-    
+
     # Calculate median and stddev using pandas (SQLite doesn't support PERCENTILE_CONT)
     # For each numeric column, we need to get raw fixture data for median/stddev calc
     fixture_query = """
@@ -539,107 +543,163 @@ def _export_repository_statistics(
     FROM fixtures f
     """
     fixture_df = pd.read_sql(fixture_query, conn)
-    
+
     # Calculate per-repo statistics
     def calc_stats_by_repo(group_df, col):
         """Calculate median and stddev for a column by repo."""
         stats = {}
-        for repo_id, group in group_df.groupby('repo_id'):
+        for repo_id, group in group_df.groupby("repo_id"):
             values = group[col].dropna()
             if len(values) > 0:
                 stats[repo_id] = {
-                    'median': values.median(),
-                    'stddev': values.std() if len(values) > 1 else 0.0
+                    "median": values.median(),
+                    "stddev": values.std() if len(values) > 1 else 0.0,
                 }
             else:
-                stats[repo_id] = {'median': None, 'stddev': None}
+                stats[repo_id] = {"median": None, "stddev": None}
         return stats
-    
-    loc_stats = calc_stats_by_repo(fixture_df, 'loc')
-    cc_stats = calc_stats_by_repo(fixture_df, 'cyclomatic_complexity')
-    
+
+    loc_stats = calc_stats_by_repo(fixture_df, "loc")
+    cc_stats = calc_stats_by_repo(fixture_df, "cyclomatic_complexity")
+
     # Add calculated columns to dataframe
-    df['median_fixture_loc'] = df['repository_id'].apply(
-        lambda rid: round(loc_stats.get(rid, {}).get('median'), 2) 
-                   if loc_stats.get(rid, {}).get('median') is not None else None
+    df["median_fixture_loc"] = df["repository_id"].apply(
+        lambda rid: (
+            round(loc_stats.get(rid, {}).get("median"), 2)
+            if loc_stats.get(rid, {}).get("median") is not None
+            else None
+        )
     )
-    df['stddev_fixture_loc'] = df['repository_id'].apply(
-        lambda rid: round(loc_stats.get(rid, {}).get('stddev'), 2)
-                   if loc_stats.get(rid, {}).get('stddev') is not None else None
+    df["stddev_fixture_loc"] = df["repository_id"].apply(
+        lambda rid: (
+            round(loc_stats.get(rid, {}).get("stddev"), 2)
+            if loc_stats.get(rid, {}).get("stddev") is not None
+            else None
+        )
     )
-    df['median_cyclomatic_complexity'] = df['repository_id'].apply(
-        lambda rid: round(cc_stats.get(rid, {}).get('median'), 2)
-                   if cc_stats.get(rid, {}).get('median') is not None else None
+    df["median_cyclomatic_complexity"] = df["repository_id"].apply(
+        lambda rid: (
+            round(cc_stats.get(rid, {}).get("median"), 2)
+            if cc_stats.get(rid, {}).get("median") is not None
+            else None
+        )
     )
-    
+
     # Get top fixture type and framework for each repo
     type_query = """
     SELECT f.repo_id, f.fixture_type
     FROM fixtures f
     """
     type_df = pd.read_sql(type_query, conn)
-    
+
     def get_top_value(group_df, col):
         """Get most common value in a column by repo."""
         tops = {}
-        for repo_id, group in group_df.groupby('repo_id'):
+        for repo_id, group in group_df.groupby("repo_id"):
             value_counts = group[col].value_counts()
             if len(value_counts) > 0:
                 tops[repo_id] = value_counts.index[0]
             else:
                 tops[repo_id] = None
         return tops
-    
-    top_type = get_top_value(type_df, 'fixture_type')
-    
+
+    top_type = get_top_value(type_df, "fixture_type")
+
     framework_query = """
     SELECT f.repo_id, f.framework
     FROM fixtures f
     """
     framework_df = pd.read_sql(framework_query, conn)
-    top_framework = get_top_value(framework_df, 'framework')
-    
-    df['top_fixture_type'] = df['repository_id'].apply(lambda rid: top_type.get(rid))
-    df['top_framework'] = df['repository_id'].apply(lambda rid: top_framework.get(rid))
-    
+    top_framework = get_top_value(framework_df, "framework")
+
+    df["top_fixture_type"] = df["repository_id"].apply(lambda rid: top_type.get(rid))
+    df["top_framework"] = df["repository_id"].apply(lambda rid: top_framework.get(rid))
+
     # Pre-calculate counts for efficiency (avoid O(n²) lookups)
-    type_counts_by_repo = type_df.groupby(['repo_id', 'fixture_type']).size().reset_index(name='count')
-    type_counts_by_repo = type_counts_by_repo.loc[type_counts_by_repo.groupby('repo_id')['count'].idxmax()]
-    type_count_map = dict(zip(type_counts_by_repo['repo_id'], type_counts_by_repo['count']))
-    
-    framework_counts_by_repo = framework_df.groupby(['repo_id', 'framework']).size().reset_index(name='count')
-    framework_counts_by_repo = framework_counts_by_repo.loc[framework_counts_by_repo.groupby('repo_id')['count'].idxmax()]
-    fw_count_map = dict(zip(framework_counts_by_repo['repo_id'], framework_counts_by_repo['count']))
-    
-    df['top_fixture_type_count'] = df['repository_id'].apply(lambda rid: type_count_map.get(rid, 0))
-    df['top_framework_count'] = df['repository_id'].apply(lambda rid: fw_count_map.get(rid, 0))
-    
+    type_counts_by_repo = (
+        type_df.groupby(["repo_id", "fixture_type"]).size().reset_index(name="count")
+    )
+    type_counts_by_repo = type_counts_by_repo.loc[
+        type_counts_by_repo.groupby("repo_id")["count"].idxmax()
+    ]
+    type_count_map = dict(
+        zip(type_counts_by_repo["repo_id"], type_counts_by_repo["count"])
+    )
+
+    framework_counts_by_repo = (
+        framework_df.groupby(["repo_id", "framework"]).size().reset_index(name="count")
+    )
+    framework_counts_by_repo = framework_counts_by_repo.loc[
+        framework_counts_by_repo.groupby("repo_id")["count"].idxmax()
+    ]
+    fw_count_map = dict(
+        zip(framework_counts_by_repo["repo_id"], framework_counts_by_repo["count"])
+    )
+
+    df["top_fixture_type_count"] = df["repository_id"].apply(
+        lambda rid: type_count_map.get(rid, 0)
+    )
+    df["top_framework_count"] = df["repository_id"].apply(
+        lambda rid: fw_count_map.get(rid, 0)
+    )
+
     # Reorder columns for better readability
     col_order = [
-        'repository_id', 'full_name', 'language', 'github_id', 'stars', 'forks',
-        'num_contributors', 'pinned_commit', 'domain',
-        'num_test_files', 'total_test_file_loc', 'avg_test_file_loc',
-        'num_fixtures_total', 'num_fixtures_per_test', 'num_fixtures_per_class',
-        'num_fixtures_per_module', 'num_fixtures_global',
-        'num_fixture_types_unique', 'top_fixture_type', 'top_fixture_type_count',
-        'num_frameworks_unique', 'top_framework', 'top_framework_count',
-        'avg_fixture_loc', 'min_fixture_loc', 'max_fixture_loc', 'median_fixture_loc', 'stddev_fixture_loc',
-        'avg_cyclomatic_complexity', 'min_cyclomatic_complexity', 'max_cyclomatic_complexity', 'median_cyclomatic_complexity',
-        'avg_max_nesting_depth', 'max_nesting_depth_overall',
-        'avg_num_parameters', 'avg_num_external_calls', 'avg_num_objects_instantiated',
-        'fixtures_with_teardown_count', 'teardown_adoption_rate',
-        'total_mock_usages', 'avg_mocks_per_fixture',
-        'total_test_functions', 'avg_fixtures_per_test_file'
+        "repository_id",
+        "full_name",
+        "language",
+        "github_id",
+        "stars",
+        "forks",
+        "num_contributors",
+        "pinned_commit",
+        "domain",
+        "num_test_files",
+        "total_test_file_loc",
+        "avg_test_file_loc",
+        "num_fixtures_total",
+        "num_fixtures_per_test",
+        "num_fixtures_per_class",
+        "num_fixtures_per_module",
+        "num_fixtures_global",
+        "num_fixture_types_unique",
+        "top_fixture_type",
+        "top_fixture_type_count",
+        "num_frameworks_unique",
+        "top_framework",
+        "top_framework_count",
+        "avg_fixture_loc",
+        "min_fixture_loc",
+        "max_fixture_loc",
+        "median_fixture_loc",
+        "stddev_fixture_loc",
+        "avg_cyclomatic_complexity",
+        "min_cyclomatic_complexity",
+        "max_cyclomatic_complexity",
+        "median_cyclomatic_complexity",
+        "avg_max_nesting_depth",
+        "max_nesting_depth_overall",
+        "avg_num_parameters",
+        "avg_num_external_calls",
+        "avg_num_objects_instantiated",
+        "fixtures_with_teardown_count",
+        "teardown_adoption_rate",
+        "total_mock_usages",
+        "avg_mocks_per_fixture",
+        "total_test_functions",
+        "avg_fixtures_per_test_file",
     ]
     df = df[[c for c in col_order if c in df.columns]]
-    
+
     # Validate all expected columns are present
     missing = set(col_order) - set(df.columns)
     if missing:
         logger.warning(f"repository_statistics: Missing columns {missing}")
-    
+
     df.to_csv(dest, index=False)
-    logger.info(f"  repository_statistics: {len(df):,} rows × {len(df.columns)} cols → {dest.name}")
+    logger.info(
+        f"  repository_statistics: {len(df):,} rows × {len(df.columns)} cols → {dest.name}"
+    )
 
 
 def _export_test_file_statistics(
@@ -647,21 +707,21 @@ def _export_test_file_statistics(
     dest: Path,
 ) -> None:
     """Export aggregated fixture metrics per test file.
-    
+
     Aggregates all fixtures in each test file to provide file-level
     summary statistics. Includes complexity metrics, scope distribution,
     framework diversity, and teardown adoption rates.
-    
+
     Args:
         conn: SQLite connection to corpus database
         dest: Path to write test_file_statistics.csv
-    
+
     Returns:
         None. Writes CSV file to dest.
-    
+
     Raises:
         Exception: If SQL query fails or data is invalid
-    
+
     Note:
         For files with 0 fixtures, aggregate columns are NULL/empty.
         This design preserves all test files for complete research datasets.
@@ -716,127 +776,177 @@ def _export_test_file_statistics(
     GROUP BY tf.id, r.id, r.full_name, tf.language, tf.relative_path, tf.file_loc, tf.num_test_funcs
     ORDER BY r.full_name, tf.relative_path
     """
-    
+
     try:
         df = pd.read_sql(query, conn)
     except Exception as e:
         logger.error(f"Failed to query test_file_statistics from database: {e}")
         raise
-    
+
     if df.empty:
         logger.warning("test_file_statistics: No data returned from query")
         df.to_csv(dest, index=False)
         return
-    
+
     # Get top fixture type and framework for each test file
     type_query = """
     SELECT f.file_id, f.fixture_type
     FROM fixtures f
     """
     type_df = pd.read_sql(type_query, conn)
-    
+
     def get_top_value_by_file(group_df, col):
         """Get most common value in a column by file."""
         tops = {}
-        for file_id, group in group_df.groupby('file_id'):
+        for file_id, group in group_df.groupby("file_id"):
             value_counts = group[col].value_counts()
             if len(value_counts) > 0:
                 tops[file_id] = value_counts.index[0]
             else:
                 tops[file_id] = None
         return tops
-    
-    top_type = get_top_value_by_file(type_df, 'fixture_type')
-    
+
+    top_type = get_top_value_by_file(type_df, "fixture_type")
+
     framework_query = """
     SELECT f.file_id, f.framework
     FROM fixtures f
     """
     framework_df = pd.read_sql(framework_query, conn)
-    top_framework = get_top_value_by_file(framework_df, 'framework')
-    
+    top_framework = get_top_value_by_file(framework_df, "framework")
+
     # Calculate median and stddev using pandas for consistency with repository_statistics
     fixture_query = """
     SELECT f.file_id, f.loc, f.cyclomatic_complexity
     FROM fixtures f
     """
     fixture_df = pd.read_sql(fixture_query, conn)
-    
+
     def calc_stats_by_file(group_df, col):
         """Calculate median and stddev for a column by file."""
         stats = {}
-        for file_id, group in group_df.groupby('file_id'):
+        for file_id, group in group_df.groupby("file_id"):
             values = group[col].dropna()
             if len(values) > 0:
                 stats[file_id] = {
-                    'median': values.median(),
-                    'stddev': values.std() if len(values) > 1 else 0.0
+                    "median": values.median(),
+                    "stddev": values.std() if len(values) > 1 else 0.0,
                 }
             else:
-                stats[file_id] = {'median': None, 'stddev': None}
+                stats[file_id] = {"median": None, "stddev": None}
         return stats
-    
-    loc_stats = calc_stats_by_file(fixture_df, 'loc')
-    cc_stats = calc_stats_by_file(fixture_df, 'cyclomatic_complexity')
-    
-    df['median_fixture_loc'] = df['test_file_id'].apply(
-        lambda fid: round(loc_stats.get(fid, {}).get('median'), 2)
-                   if loc_stats.get(fid, {}).get('median') is not None else None
+
+    loc_stats = calc_stats_by_file(fixture_df, "loc")
+    cc_stats = calc_stats_by_file(fixture_df, "cyclomatic_complexity")
+
+    df["median_fixture_loc"] = df["test_file_id"].apply(
+        lambda fid: (
+            round(loc_stats.get(fid, {}).get("median"), 2)
+            if loc_stats.get(fid, {}).get("median") is not None
+            else None
+        )
     )
-    df['stddev_fixture_loc'] = df['test_file_id'].apply(
-        lambda fid: round(loc_stats.get(fid, {}).get('stddev'), 2)
-                   if loc_stats.get(fid, {}).get('stddev') is not None else None
+    df["stddev_fixture_loc"] = df["test_file_id"].apply(
+        lambda fid: (
+            round(loc_stats.get(fid, {}).get("stddev"), 2)
+            if loc_stats.get(fid, {}).get("stddev") is not None
+            else None
+        )
     )
-    df['median_cyclomatic_complexity'] = df['test_file_id'].apply(
-        lambda fid: round(cc_stats.get(fid, {}).get('median'), 2)
-                   if cc_stats.get(fid, {}).get('median') is not None else None
+    df["median_cyclomatic_complexity"] = df["test_file_id"].apply(
+        lambda fid: (
+            round(cc_stats.get(fid, {}).get("median"), 2)
+            if cc_stats.get(fid, {}).get("median") is not None
+            else None
+        )
     )
-    
+
     # Pre-calculate top values for efficiency (avoid O(n²) lookups)
-    type_counts_by_file = type_df.groupby(['file_id', 'fixture_type']).size().reset_index(name='count')
-    type_counts_by_file = type_counts_by_file.loc[type_counts_by_file.groupby('file_id')['count'].idxmax()]
-    type_map = dict(zip(type_counts_by_file['file_id'], type_counts_by_file['fixture_type']))
-    type_count_map = dict(zip(type_counts_by_file['file_id'], type_counts_by_file['count']))
-    
-    framework_counts_by_file = framework_df.groupby(['file_id', 'framework']).size().reset_index(name='count')
-    framework_counts_by_file = framework_counts_by_file.loc[framework_counts_by_file.groupby('file_id')['count'].idxmax()]
-    fw_map = dict(zip(framework_counts_by_file['file_id'], framework_counts_by_file['framework']))
-    fw_count_map = dict(zip(framework_counts_by_file['file_id'], framework_counts_by_file['count']))
-    
-    df['top_fixture_type'] = df['test_file_id'].apply(lambda fid: type_map.get(fid))
-    df['top_fixture_type_count'] = df['test_file_id'].apply(lambda fid: type_count_map.get(fid, 0))
-    df['top_framework'] = df['test_file_id'].apply(lambda fid: fw_map.get(fid))
-    df['top_framework_count'] = df['test_file_id'].apply(lambda fid: fw_count_map.get(fid, 0))
-    
+    type_counts_by_file = (
+        type_df.groupby(["file_id", "fixture_type"]).size().reset_index(name="count")
+    )
+    type_counts_by_file = type_counts_by_file.loc[
+        type_counts_by_file.groupby("file_id")["count"].idxmax()
+    ]
+    type_map = dict(
+        zip(type_counts_by_file["file_id"], type_counts_by_file["fixture_type"])
+    )
+    type_count_map = dict(
+        zip(type_counts_by_file["file_id"], type_counts_by_file["count"])
+    )
+
+    framework_counts_by_file = (
+        framework_df.groupby(["file_id", "framework"]).size().reset_index(name="count")
+    )
+    framework_counts_by_file = framework_counts_by_file.loc[
+        framework_counts_by_file.groupby("file_id")["count"].idxmax()
+    ]
+    fw_map = dict(
+        zip(framework_counts_by_file["file_id"], framework_counts_by_file["framework"])
+    )
+    fw_count_map = dict(
+        zip(framework_counts_by_file["file_id"], framework_counts_by_file["count"])
+    )
+
+    df["top_fixture_type"] = df["test_file_id"].apply(lambda fid: type_map.get(fid))
+    df["top_fixture_type_count"] = df["test_file_id"].apply(
+        lambda fid: type_count_map.get(fid, 0)
+    )
+    df["top_framework"] = df["test_file_id"].apply(lambda fid: fw_map.get(fid))
+    df["top_framework_count"] = df["test_file_id"].apply(
+        lambda fid: fw_count_map.get(fid, 0)
+    )
+
     # Reorder columns for better readability and consistency with repository_statistics
     col_order = [
-        'test_file_id', 'repository_id', 'full_name', 'language', 'relative_path', 'file_loc',
-        'num_fixtures_total', 'num_fixtures_per_test', 'num_fixtures_per_class',
-        'num_fixtures_per_module', 'num_fixtures_global',
-        'num_fixture_types_unique', 'top_fixture_type', 'top_fixture_type_count',
-        'num_frameworks_unique', 'top_framework', 'top_framework_count',
-        'total_fixture_loc', 'avg_fixture_loc', 'min_fixture_loc', 'max_fixture_loc',
-        'median_fixture_loc', 'stddev_fixture_loc',
-        'avg_cyclomatic_complexity', 'min_cyclomatic_complexity', 'max_cyclomatic_complexity',
-        'median_cyclomatic_complexity',
-        'avg_max_nesting_depth', 'max_nesting_depth',
-        'avg_num_parameters', 'avg_num_external_calls', 'avg_num_objects_instantiated',
-        'fixtures_with_teardown_count', 'teardown_adoption_rate',
-        'total_mock_usages',
-        'num_test_funcs'
+        "test_file_id",
+        "repository_id",
+        "full_name",
+        "language",
+        "relative_path",
+        "file_loc",
+        "num_fixtures_total",
+        "num_fixtures_per_test",
+        "num_fixtures_per_class",
+        "num_fixtures_per_module",
+        "num_fixtures_global",
+        "num_fixture_types_unique",
+        "top_fixture_type",
+        "top_fixture_type_count",
+        "num_frameworks_unique",
+        "top_framework",
+        "top_framework_count",
+        "total_fixture_loc",
+        "avg_fixture_loc",
+        "min_fixture_loc",
+        "max_fixture_loc",
+        "median_fixture_loc",
+        "stddev_fixture_loc",
+        "avg_cyclomatic_complexity",
+        "min_cyclomatic_complexity",
+        "max_cyclomatic_complexity",
+        "median_cyclomatic_complexity",
+        "avg_max_nesting_depth",
+        "max_nesting_depth",
+        "avg_num_parameters",
+        "avg_num_external_calls",
+        "avg_num_objects_instantiated",
+        "fixtures_with_teardown_count",
+        "teardown_adoption_rate",
+        "total_mock_usages",
+        "num_test_funcs",
     ]
     df = df[[c for c in col_order if c in df.columns]]
-    
+
     # Validate all expected columns are present
     missing = set(col_order) - set(df.columns)
     if missing:
         logger.warning(f"test_file_statistics: Missing columns {missing}")
-    
+
     df.to_csv(dest, index=False)
-    logger.info(f"  test_file_statistics: {len(df):,} rows × {len(df.columns)} cols → {dest.name}")
-
-
-
+    logger.info(
+        f"  test_file_statistics: {len(df):,} rows × {len(df.columns)} cols → {dest.name}"
+    )
 
 
 def _write_readme(path: Path, version: str) -> None:
@@ -912,7 +1022,9 @@ def _write_stats(conn, path: Path) -> None:
         "SELECT COUNT(*) n FROM repositories WHERE status='analysed'"
     ).fetchone()["n"]
     total_fixtures = conn2.execute("SELECT COUNT(*) n FROM fixtures").fetchone()["n"]
-    total_test_files = conn2.execute("SELECT COUNT(*) n FROM test_files").fetchone()["n"]
+    total_test_files = conn2.execute("SELECT COUNT(*) n FROM test_files").fetchone()[
+        "n"
+    ]
 
     lines.append(f"Total repositories:     {total_repos:,}\n")
     lines.append(f"Total test files:       {total_test_files:,}\n")

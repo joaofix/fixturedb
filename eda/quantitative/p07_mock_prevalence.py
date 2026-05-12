@@ -67,7 +67,10 @@ def plot_mock_prevalence(conn, out_dir, show):
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5), facecolor="#FAFAFA")
     fig.suptitle(
-        "Mocking Practices Inside Fixtures (CSV-Exported Metrics)", fontsize=14, fontweight="bold", y=1.02
+        "Mocking Practices Inside Fixtures (CSV-Exported Metrics)",
+        fontsize=14,
+        fontweight="bold",
+        y=1.02,
     )
 
     # ── 7a: mock prevalence — lollipop chart ─────────────────────────────────

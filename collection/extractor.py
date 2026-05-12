@@ -189,13 +189,15 @@ def _find_test_files(repo_dir: Path, language: str) -> list[Path]:
 
         matched = False
         name_lower = name.lower()
-        
+
         # Check file suffix patterns (handles prefix patterns like "test_", suffix patterns like "_test.py", and full names like "conftest.py")
         for pat in config.test_file_suffixes:
             pat_lower = pat.lower()
             if pat_lower.startswith("test_"):
                 # Prefix pattern like "test_.py" - match files starting with "test_" and ending with extension
-                if name_lower.startswith("test_") and name_lower.endswith(pat_lower.split("test_")[1]):
+                if name_lower.startswith("test_") and name_lower.endswith(
+                    pat_lower.split("test_")[1]
+                ):
                     matched = True
                     break
             elif pat_lower == "conftest.py":
@@ -209,7 +211,7 @@ def _find_test_files(repo_dir: Path, language: str) -> list[Path]:
                 if name_lower.endswith(pat_lower):
                     matched = True
                     break
-        
+
         if not matched:
             # Match path patterns with proper boundary checking
             # Directory patterns should match complete path components only
@@ -475,7 +477,7 @@ def extract_all_cloned(
                 GROUP BY language
             """)
             lang_counts = {row["language"]: row["count"] for row in cursor.fetchall()}
-            
+
             if target_per_language_dict:
                 languages_to_skip = {
                     lang
@@ -488,7 +490,7 @@ def extract_all_cloned(
                     for lang in LANGUAGE_CONFIGS.keys()
                     if lang_counts.get(lang, 0) >= target_per_language
                 }
-            
+
             if languages_to_skip:
                 logger.info(
                     f"Skipping extraction for languages already at target: {languages_to_skip}"
@@ -629,7 +631,8 @@ def extract_all_cloned(
 
                     # Check if all languages have reached their specific targets
                     all_reached = all(
-                        lang_counts.get(lang, 0) >= target_per_language_dict.get(lang, 0)
+                        lang_counts.get(lang, 0)
+                        >= target_per_language_dict.get(lang, 0)
                         for lang in target_per_language_dict.keys()
                     )
 

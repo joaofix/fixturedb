@@ -36,14 +36,9 @@ def plot_corpus_by_tier(conn, out_dir, show):
     present = [l for l in LANG_ORDER if l in repos["language"].values]
 
     fig, ax = plt.subplots(figsize=(10, 5), facecolor="#FAFAFA")
-    fig.suptitle(
-        "Repositories by Language", fontsize=14, fontweight="bold", y=1.02
-    )
+    fig.suptitle("Repositories by Language", fontsize=14, fontweight="bold", y=1.02)
 
-    vals = [
-        int(repos.query("language==@lang").shape[0])
-        for lang in present
-    ]
+    vals = [int(repos.query("language==@lang").shape[0]) for lang in present]
     for i, (lang, v) in enumerate(zip(present, vals)):
         colour = LANG_PALETTE[lang]
         bar = ax.bar(

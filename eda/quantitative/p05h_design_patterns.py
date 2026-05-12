@@ -126,20 +126,24 @@ def plot_fixture_design_patterns(conn, out_dir, show):
     """,
     )
 
-    teardown_stats = teardown_stats[teardown_stats["language"].isin(present)].sort_values(
-        "language"
-    )
+    teardown_stats = teardown_stats[
+        teardown_stats["language"].isin(present)
+    ].sort_values("language")
     teardown_stats = teardown_stats.set_index("language").loc[present]
 
     y_pos = np.arange(len(teardown_stats))
     colors = [LANG_PALETTE[l] for l in teardown_stats.index]
 
-    bars = ax.barh(y_pos, teardown_stats["teardown_pct"].values, color=colors, alpha=0.8)
+    bars = ax.barh(
+        y_pos, teardown_stats["teardown_pct"].values, color=colors, alpha=0.8
+    )
 
     ax.set_yticks(y_pos)
     ax.set_yticklabels([lang_display(l) for l in teardown_stats.index])
     ax.set_xlabel("Adoption Rate (%)", fontsize=11)
-    ax.set_title("(d) Fixtures with Teardown/Cleanup Code", fontsize=12, fontweight="bold")
+    ax.set_title(
+        "(d) Fixtures with Teardown/Cleanup Code", fontsize=12, fontweight="bold"
+    )
     ax.set_xlim(0, 50)
     ax.grid(axis="x", alpha=0.3, linestyle="--")
 
@@ -167,9 +171,7 @@ def plot_fixture_design_patterns(conn, out_dir, show):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="FixtureDB Fixture Design Patterns"
-    )
+    parser = argparse.ArgumentParser(description="FixtureDB Fixture Design Patterns")
     parser.add_argument("--db", default=str(DB_PATH))
     parser.add_argument("--out", default=str(DEFAULT_OUT))
     parser.add_argument("--show", action="store_true")

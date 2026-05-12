@@ -46,12 +46,11 @@ def plot_fixture_types(conn, out_dir, show):
         return
 
     present = [l for l in LANG_ORDER if l in fixtures["language"].unique()]
-    
+
     # Get top 5 types overall
-    top_types = (
-        qdf(
-            conn,
-            """
+    top_types = qdf(
+        conn,
+        """
             SELECT f.fixture_type, COUNT(*) as count
             FROM fixtures f
             JOIN repositories r ON f.repo_id = r.id
@@ -60,9 +59,7 @@ def plot_fixture_types(conn, out_dir, show):
             ORDER BY count DESC
             LIMIT 5
         """,
-        )["fixture_type"]
-        .tolist()
-    )
+    )["fixture_type"].tolist()
 
     fig, axes = plt.subplots(1, len(present), figsize=(14, 4), facecolor="#FAFAFA")
     if len(present) == 1:
@@ -83,8 +80,12 @@ def plot_fixture_types(conn, out_dir, show):
         ax.set_title(lang_display(lang), fontsize=12, fontweight="bold")
         ax.grid(axis="x", alpha=0.3, linestyle="--")
 
-        for i, (val, ftype) in enumerate(zip(sub["count"].values, sub["fixture_type"].values)):
-            ax.text(val + 2, i, f"{int(val)}", va="center", fontsize=9, fontweight="bold")
+        for i, (val, ftype) in enumerate(
+            zip(sub["count"].values, sub["fixture_type"].values)
+        ):
+            ax.text(
+                val + 2, i, f"{int(val)}", va="center", fontsize=9, fontweight="bold"
+            )
 
     fig.suptitle(
         "Top Fixture Detection Patterns by Language (Top 5 Globally)",

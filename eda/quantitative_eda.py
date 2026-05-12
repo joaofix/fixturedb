@@ -40,6 +40,7 @@ from eda.quantitative.p04b_framework_diversity import plot_framework_diversity
 from eda.quantitative.p04c_lines_of_code import plot_lines_of_code
 from eda.quantitative.p04d_complexity_metrics import plot_complexity_metrics
 from eda.quantitative.p04e_framework_by_scope import plot_framework_by_scope
+
 # NOTE: plot_mock_styles removed (mock_style column no longer exists in DB as of 2026-04-25)
 from eda.quantitative.p05a_nesting_depth import plot_nesting_depth
 from eda.quantitative.p05b_nesting_complexity_correlation import (
@@ -53,7 +54,9 @@ from eda.quantitative.p05d_reuse_complexity_correlation import (
 )
 from eda.quantitative.p05e_teardown_adoption import plot_teardown_adoption
 from eda.quantitative.p05f_contributors_impact import plot_contributors_impact
-from eda.quantitative.p05g_test_file_characteristics import plot_test_file_characteristics
+from eda.quantitative.p05g_test_file_characteristics import (
+    plot_test_file_characteristics,
+)
 from eda.quantitative.p05h_design_patterns import plot_fixture_design_patterns
 from eda.quantitative.p05i_repo_maturity import plot_repo_maturity_vs_fixture_quality
 

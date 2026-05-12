@@ -133,7 +133,14 @@ def plot_repo_maturity_vs_fixture_quality(conn, out_dir, show):
 
     table = ax.table(
         cellText=stats_data,
-        colLabels=["Lang", "Repos", "Avg Stars", "Med Contributors", "Avg Complexity", "Avg LOC"],
+        colLabels=[
+            "Lang",
+            "Repos",
+            "Avg Stars",
+            "Med Contributors",
+            "Avg Complexity",
+            "Avg LOC",
+        ],
         cellLoc="center",
         loc="center",
         colWidths=[0.12, 0.12, 0.18, 0.2, 0.18, 0.12],

@@ -231,7 +231,6 @@ def _compute_nesting_depth(node) -> int:
 # ---------------------------------------------------------------------------
 
 
-
 def _count_external_calls(node, src_bytes: bytes) -> int:
     """
     Count calls that look like external I/O or system operations.
@@ -263,7 +262,7 @@ def _count_external_calls(node, src_bytes: bytes) -> int:
 # ---------------------------------------------------------------------------
 
 SNIPPET_CONTEXT_BEFORE = 20  # characters before match in mock detection
-SNIPPET_CONTEXT_AFTER = 60   # characters after match in mock detection
+SNIPPET_CONTEXT_AFTER = 60  # characters after match in mock detection
 
 # ---------------------------------------------------------------------------
 # Mock detection (language-agnostic heuristic pass)

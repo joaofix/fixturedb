@@ -344,7 +344,10 @@ def _classify_fixture(
         if mock_count >= 2 and "mock_setup" in matched_categories:
             return "mock_setup"
         # If it looks like a builder (lots of object instantiation), it wins
-        if num_objects_instantiated >= OBJECTS_DATA_BUILDER_THRESHOLD and "data_builder" in matched_categories:
+        if (
+            num_objects_instantiated >= OBJECTS_DATA_BUILDER_THRESHOLD
+            and "data_builder" in matched_categories
+        ):
             return "data_builder"
         # Otherwise, it's genuinely hybrid
         return "hybrid"
