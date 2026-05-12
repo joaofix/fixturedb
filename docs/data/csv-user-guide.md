@@ -8,13 +8,22 @@
 
 ```
 fixturedb_export/
-├── fixtures.csv                    ← Main table: 1 row per fixture (35.2K in toy dataset)
-├── repositories.csv                ← Repository metadata (200 in toy dataset)
-├── test_files.csv                  ← Test file listing (257.8K in toy dataset)
+├── repositories.csv                ← Repository metadata (200 rows)
+├── repository_statistics.csv       ← Aggregated metrics per repo (200 rows) [NEW]
+├── test_files.csv                  ← Test file listing (257.8K rows)
+├── test_file_statistics.csv        ← Aggregated metrics per test file (76.5K rows) [NEW]
+├── fixtures.csv                    ← Individual fixtures: 1 row per fixture (35.2K rows)
 ├── fixtures.db                     ← Full SQLite database (optional for advanced queries)
-├── stats.txt                       ← Summary statistics
+├── stats.txt                       ← Summary statistics by language
 └── README.txt                      ← Schema documentation
 ```
+
+**File Purpose Guide:**
+- **repositories.csv** — Repo metadata (stars, forks, contributors, pinned commit)
+- **repository_statistics.csv** — Aggregated fixture metrics by repository (complexity, scope, framework distribution, teardown adoption)
+- **test_files.csv** — Test file paths, LOC, fixture count per file
+- **test_file_statistics.csv** — Aggregated fixture metrics by test file (for test suite quality analysis)
+- **fixtures.csv** — Individual fixture definitions with all metrics and GitHub links
 
 **Note:** CSV files contain quantitative metrics only. For detailed mock framework analysis or raw source code inspection, use the included SQLite database (`fixtures.db`).
 

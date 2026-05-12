@@ -21,13 +21,17 @@ Based on the target collection of ~4,000 searched repos and an expected
 |----------------------------------------|-------------|
 | SQLite database (without `raw_source`) | ~150–300 MB |
 | SQLite database (with `raw_source`)    | ~1–3 GB |
-| All CSV exports (without `raw_source`) | ~80–150 MB |
-| Zenodo zip (without `raw_source`)      | ~100–200 MB |
+| All CSV exports (without `raw_source`) | ~130–200 MB |
+| Zenodo zip (without `raw_source`)      | ~150–250 MB |
 
-The `raw_source` column dominates storage. The Zenodo deposit excludes it
-from CSV by default but includes it in the SQLite file, giving researchers
-access to the full fixture text while keeping the primary download size
-manageable.
+**Note on storage:** The latest estimates include two new aggregated CSV files:
+- `repository_statistics.csv` — Aggregated metrics per repository (47 KB)
+- `test_file_statistics.csv` — Aggregated metrics per test file (13 MB)
+
+The `raw_source` column in the SQLite database dominates storage. The Zenodo
+deposit excludes it from CSVs by default but includes it in the SQLite file,
+giving researchers access to the full fixture text while keeping the primary
+download size manageable.
 
 ## Database (corpus.db) growth during a run
 

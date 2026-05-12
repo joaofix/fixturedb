@@ -16,9 +16,11 @@ GitHub Repositories
         ↓
     Export Dataset
         ├── fixtures.db (full database)
-        ├── repositories.csv (with num_analyzed_fixtures)
+        ├── repositories.csv (metadata)
+        ├── repository_statistics.csv (aggregated per repo) [NEW]
         ├── test_files.csv (with repo context)
-        ├── fixtures.csv (with fixture_type, has_teardown_pair, github_url)
+        ├── test_file_statistics.csv (aggregated per file) [NEW]
+        ├── fixtures.csv (individual fixtures)
         └── stats.txt
                 ↓
            Zenodo Archive
@@ -74,9 +76,11 @@ Export phase generates queryable database (`fixtures.db`) and user-friendly CSVs
 
 **Generated files:**
 - `fixtures.db` — Full SQLite database (all internal columns available, including mock_usages table)
-- `repositories.csv` — Repository metadata with maturity metrics (stars, forks, num_contributors) and num_analyzed_fixtures count
-- `test_files.csv` — Test file listing with repo name for context
-- `fixtures.csv` — Fixture definitions with quantitative metrics, fixture_type detection pattern, github_url for direct source access, and has_teardown_pair indicator
+- `repositories.csv` — Repository metadata with maturity metrics (stars, forks, contributors) and num_analyzed_fixtures count
+- `repository_statistics.csv` — Aggregated fixture metrics per repository (complexity distribution, scope breakdown, framework diversity, teardown adoption)
+- `test_files.csv` — Test file listing with repo name, language, and fixture counts
+- `test_file_statistics.csv` — Aggregated fixture metrics per test file (for test suite quality analysis)
+- `fixtures.csv` — Individual fixture definitions with quantitative metrics, fixture_type detection pattern, github_url for direct source access, and has_teardown_pair indicator
 - `stats.txt` — Summary statistics by language
 
 **Note:** Detailed mock framework analysis (`mock_usages` table) is available in SQLite database for researchers who need it; not exported to CSV for Zenodo distribution.

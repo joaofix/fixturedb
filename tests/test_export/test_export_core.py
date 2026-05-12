@@ -389,6 +389,160 @@ class TestFixturesExport:
             assert "db_fixture" in df.iloc[0]["raw_source"]
 
 
+class TestFixturesExport:
+    """Test fixtures CSV exports with quantitative metrics and source code."""
+
+    def test_fixtures_excludes_qualitative_fields_by_default(self, temp_db_with_data):
+        """Default fixtures.csv should exclude qualitative fields but include raw_source."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "fixtures.csv"
+            conn = sqlite3.connect(temp_db_with_data)
+
+            _export_table(
+                conn,
+                "fixtures",
+                dest,
+                exclude_cols=["category", "fixture_type", "has_teardown_pair"],
+            )
+            conn.close()
+
+            df = pd.read_csv(dest)
+            # Qualitative fields excluded
+            assert "category" not in df.columns
+            assert "fixture_type" not in df.columns
+            assert "has_teardown_pair" not in df.columns
+            # But raw_source is included for reproducibility
+            assert "raw_source" in df.columns
+            assert "name" in df.columns
+            assert len(df) == 3
+
+    def test_fixtures_with_source_includes_raw_source(self, temp_db_with_data):
+        """fixtures_with_source.csv should include raw_source and exclude only qualitative fields."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "fixtures_with_source.csv"
+            conn = sqlite3.connect(temp_db_with_data)
+
+            _export_table(
+                conn, "fixtures", dest, exclude_cols=["category", "fixture_type", "has_teardown_pair"]
+            )
+            conn.close()
+
+            df = pd.read_csv(dest)
+            # raw_source is included
+            assert "raw_source" in df.columns
+            # Qualitative fields still excluded
+            assert "category" not in df.columns
+            assert "fixture_type" not in df.columns
+            assert "has_teardown_pair" not in df.columns
+            # raw_source contains the literal string with escaped newlines
+            assert "db_fixture" in df.iloc[0]["raw_source"]
+
+
+class TestRepositoryStatisticsExport:
+    """Test repository_statistics CSV generation with aggregated metrics."""
+
+    def test_repository_statistics_structure(self, temp_db_with_data):
+        """repository_statistics should have expected aggregated columns."""
+        from collection.exporter import _export_repository_statistics
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stats_path = Path(tmpdir) / "repository_statistics.csv"
+            conn = sqlite3.connect(temp_db_with_data)
+
+            _export_repository_statistics(conn, stats_path)
+            conn.close()
+
+            assert stats_path.exists()
+
+            df = pd.read_csv(stats_path)
+            # Should have one row per repository with analyzed fixtures
+            assert len(df) >= 1
+            
+            # Check for key aggregation columns
+            assert "full_name" in df.columns
+            assert "num_fixtures_total" in df.columns
+            assert "num_test_files" in df.columns
+            
+            # Aggregation statistics should be present
+            assert "avg_cyclomatic_complexity" in df.columns
+            assert "max_cyclomatic_complexity" in df.columns
+            assert "min_fixture_loc" in df.columns
+            assert "max_fixture_loc" in df.columns
+
+    def test_repository_statistics_row_count(self, temp_db_with_data):
+        """repository_statistics should have one row per repository."""
+        from collection.exporter import _export_repository_statistics
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stats_path = Path(tmpdir) / "repository_statistics.csv"
+            conn = sqlite3.connect(temp_db_with_data)
+
+            # Count analyzed repos in DB
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(DISTINCT full_name) FROM repositories WHERE status = 'analysed'")
+            expected_repos = cursor.fetchone()[0]
+
+            _export_repository_statistics(conn, stats_path)
+            conn.close()
+
+            df = pd.read_csv(stats_path)
+            
+            # Should have one row per analyzed repository
+            assert len(df) == expected_repos
+
+
+class TestTestFileStatisticsExport:
+    """Test test_file_statistics CSV generation with per-file aggregated metrics."""
+
+    def test_test_file_statistics_structure(self, temp_db_with_data):
+        """test_file_statistics should have expected per-file aggregation columns."""
+        from collection.exporter import _export_test_file_statistics
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stats_path = Path(tmpdir) / "test_file_statistics.csv"
+            conn = sqlite3.connect(temp_db_with_data)
+
+            _export_test_file_statistics(conn, stats_path)
+            conn.close()
+
+            assert stats_path.exists()
+
+            df = pd.read_csv(stats_path)
+            # Should have rows for test files
+            assert len(df) > 0
+            
+            # Check for key columns
+            assert "relative_path" in df.columns
+            assert "language" in df.columns
+            assert "num_fixtures_total" in df.columns
+            assert "file_loc" in df.columns
+            
+            # Aggregation statistics should be present
+            assert "avg_cyclomatic_complexity" in df.columns
+            assert "max_cyclomatic_complexity" in df.columns
+
+    def test_test_file_statistics_includes_all_files(self, temp_db_with_data):
+        """test_file_statistics should include all test files, even those with zero fixtures."""
+        from collection.exporter import _export_test_file_statistics
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            stats_path = Path(tmpdir) / "test_file_statistics.csv"
+            conn = sqlite3.connect(temp_db_with_data)
+
+            # Count all test files in DB
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM test_files")
+            total_files = cursor.fetchone()[0]
+
+            _export_test_file_statistics(conn, stats_path)
+            conn.close()
+
+            df = pd.read_csv(stats_path)
+            
+            # Should have rows for all test files
+            assert len(df) == total_files
+
+
 class TestReadmeGeneration:
     """Test README generation contains necessary metadata."""
 
@@ -519,7 +673,9 @@ class TestFullExportWorkflow:
                 with zipfile.ZipFile(zip_path) as zf:
                     names = zf.namelist()
                     assert any("repositories.csv" in n for n in names)
+                    assert any("repository_statistics.csv" in n for n in names)
                     assert any("test_files.csv" in n for n in names)
+                    assert any("test_file_statistics.csv" in n for n in names)
                     assert any("fixtures.csv" in n for n in names)
                     assert any("README" in n for n in names)
             finally:

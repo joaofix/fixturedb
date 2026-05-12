@@ -10,12 +10,14 @@ CSV files generated during export:
 
 ```
 export/fixturedb_v<version>_<date>/
-├── fixtures.db                (full database with all fields)
-├── repositories.csv
-├── test_files.csv
-├── fixtures.csv               (raw_source excluded by default; use --include-source for full source)
-├── stats.txt                  (summary statistics)
-└── README.txt                 (schema documentation)
+├── fixtures.db                     (full database with all fields)
+├── repositories.csv                (repository metadata)
+├── repository_statistics.csv       (aggregated fixture metrics per repository)
+├── test_files.csv                  (test file metadata)
+├── test_file_statistics.csv        (aggregated fixture metrics per test file)
+├── fixtures.csv                    (individual fixture definitions)
+├── stats.txt                       (summary statistics)
+└── README.txt                      (schema documentation)
 ```
 
 ## 1. repositories.csv
@@ -54,7 +56,132 @@ One row per test file found during repository analysis.
 | `num_fixtures` | INT | Count of fixture definitions in this file |
 | `total_fixture_loc` | INT | Sum of lines of code across all fixtures in this file |
 
-## 3. fixtures.csv
+## 3. repository_statistics.csv
+
+Aggregated fixture metrics per repository. One row per analyzed repository.
+
+**Purpose:** Enables repository-level analysis without manual aggregation of fixture data. Useful for cross-repository comparisons, maturity assessments, and language-level pattern analysis.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `repository_id` | INT | Internal primary key (matches repositories.csv id) |
+| `full_name` | TEXT | Repository slug (e.g., "owner/repo") |
+| `language` | TEXT | Programming language (python, java, javascript, typescript) |
+| `github_id` | INT | GitHub repository numeric ID |
+| `stars` | INT | Star count at collection time |
+| `forks` | INT | Fork count at collection time |
+| `num_contributors` | INT | GitHub contributor count |
+| `pinned_commit` | TEXT | SHA of analyzed commit |
+| `domain` | TEXT | Repository domain classification (library, web, cli, infra, data, other) |
+| | | **Test File Metrics** |
+| `num_test_files` | INT | Count of test files in repository |
+| `total_test_file_loc` | INT | Total LOC across all test files |
+| `avg_test_file_loc` | FLOAT | Average test file size |
+| | | **Fixture Counts by Scope** |
+| `num_fixtures_total` | INT | Total fixture definitions |
+| `num_fixtures_per_test` | INT | Fixtures with per_test scope |
+| `num_fixtures_per_class` | INT | Fixtures with per_class scope |
+| `num_fixtures_per_module` | INT | Fixtures with per_module scope |
+| `num_fixtures_global` | INT | Fixtures with global scope |
+| | | **Fixture Type & Framework Diversity** |
+| `num_fixture_types_unique` | INT | Count of distinct fixture type values |
+| `top_fixture_type` | TEXT | Most common fixture type in repository |
+| `top_fixture_type_count` | INT | Count of most common fixture type |
+| `num_frameworks_unique` | INT | Count of distinct frameworks |
+| `top_framework` | TEXT | Most common testing framework |
+| `top_framework_count` | INT | Count of most common framework |
+| | | **Fixture LOC Statistics** |
+| `avg_fixture_loc` | FLOAT | Average fixture LOC |
+| `min_fixture_loc` | INT | Minimum fixture LOC |
+| `max_fixture_loc` | INT | Maximum fixture LOC |
+| `median_fixture_loc` | FLOAT | Median fixture LOC |
+| `stddev_fixture_loc` | FLOAT | Standard deviation of fixture LOC |
+| | | **Cyclomatic Complexity Statistics** |
+| `avg_cyclomatic_complexity` | FLOAT | Average McCabe complexity |
+| `min_cyclomatic_complexity` | INT | Minimum McCabe complexity |
+| `max_cyclomatic_complexity` | INT | Maximum McCabe complexity |
+| `median_cyclomatic_complexity` | FLOAT | Median McCabe complexity |
+| | | **Structural Metrics** |
+| `avg_max_nesting_depth` | FLOAT | Average maximum nesting depth |
+| `max_nesting_depth_overall` | INT | Deepest nesting level in any fixture |
+| `avg_num_parameters` | FLOAT | Average fixture parameters |
+| `avg_num_external_calls` | FLOAT | Average external/IO calls per fixture |
+| `avg_num_objects_instantiated` | FLOAT | Average object instantiations per fixture |
+| | | **Teardown & Cleanup Metrics** |
+| `fixtures_with_teardown_count` | INT | Count of fixtures with cleanup logic |
+| `teardown_adoption_rate` | FLOAT | Percentage of fixtures with teardown |
+| | | **Mock Usage Metrics** |
+| `total_mock_usages` | INT | Total distinct mock usages |
+| `avg_mocks_per_fixture` | FLOAT | Average mocks per fixture |
+| | | **Test Function Metrics** |
+| `total_test_functions` | INT | Total test functions in repository |
+| `avg_fixtures_per_test_file` | FLOAT | Average fixtures per test file |
+
+**Use cases:**
+- Compare fixture patterns across languages
+- Correlate repository maturity (stars, contributors) with fixture complexity
+- Track teardown adoption trends
+- Identify high-complexity repositories
+- Analyze framework adoption patterns
+
+## 4. test_file_statistics.csv
+
+Aggregated fixture metrics per test file. One row per test file (including files with no fixtures).
+
+**Purpose:** Bridges repository and fixture-level analysis. Useful for test suite quality assessment, file-level complexity distribution, and identifying problematic test files.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `test_file_id` | INT | Internal primary key (matches test_files.csv id) |
+| `repository_id` | INT | Reference to repository (matches repositories.csv id) |
+| `full_name` | TEXT | Repository slug — human-readable context |
+| `language` | TEXT | Programming language |
+| `relative_path` | TEXT | Path relative to repository root |
+| `file_loc` | INT | Non-blank lines of code in test file |
+| | | **Fixture Counts by Scope** |
+| `num_fixtures_total` | INT | Total fixtures in this file |
+| `num_fixtures_per_test` | INT | Fixtures with per_test scope |
+| `num_fixtures_per_class` | INT | Fixtures with per_class scope |
+| `num_fixtures_per_module` | INT | Fixtures with per_module scope |
+| `num_fixtures_global` | INT | Fixtures with global scope |
+| | | **Fixture Type & Framework Diversity** |
+| `num_fixture_types_unique` | INT | Count of distinct fixture types in file |
+| `top_fixture_type` | TEXT | Most common fixture type in file |
+| `num_frameworks_unique` | INT | Count of distinct frameworks in file |
+| `top_framework` | TEXT | Most common testing framework in file |
+| | | **Fixture LOC Statistics** |
+| `total_fixture_loc` | INT | Total LOC of all fixtures in file |
+| `avg_fixture_loc` | FLOAT | Average fixture LOC |
+| `min_fixture_loc` | INT | Minimum fixture LOC in file |
+| `max_fixture_loc` | INT | Maximum fixture LOC in file |
+| | | **Cyclomatic Complexity Statistics** |
+| `avg_cyclomatic_complexity` | FLOAT | Average McCabe complexity of fixtures |
+| `min_cyclomatic_complexity` | INT | Minimum complexity in file |
+| `max_cyclomatic_complexity` | INT | Maximum complexity in file |
+| | | **Structural Metrics** |
+| `avg_max_nesting_depth` | FLOAT | Average nesting depth |
+| `avg_num_parameters` | FLOAT | Average parameters per fixture |
+| `avg_num_external_calls` | FLOAT | Average external calls per fixture |
+| | | **Teardown & Cleanup Metrics** |
+| `fixtures_with_teardown_count` | INT | Count of fixtures with cleanup logic |
+| `teardown_adoption_rate` | FLOAT | Percentage of fixtures with teardown |
+| | | **Mock Usage Metrics** |
+| `total_mock_usages` | INT | Total distinct mock usages in file |
+| | | **Test Function Metrics** |
+| `num_test_funcs` | INT | Count of test functions in file |
+
+**Notes:**
+- Test files with zero fixtures will have empty/NULL aggregate values
+- Files are included even if they contain no fixtures (for completeness)
+
+**Use cases:**
+- Identify high-complexity test files
+- Analyze test file organization patterns
+- Measure test suite health metrics
+- Find unusually complex files that need refactoring
+- Compare fixture patterns within a repository
+
+## 5. fixtures.csv
 
 One row per fixture definition found during extraction.
 

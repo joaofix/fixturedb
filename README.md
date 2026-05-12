@@ -26,8 +26,8 @@ The toy dataset contains fixture definitions extracted from 200 GitHub repositor
 | **Total Test Files** | 257,764 |
 | **Total Fixtures** | 35,169 |
 | **Languages** | Python, Java, JavaScript, TypeScript |
-| **Size (SQLite + CSVs)** | ~175 MB (uncompressed) / 24.5 MB (compressed) |
-| **Export Format** | SQLite database + 3 CSV files (repositories, test_files, fixtures) |
+| **Size (SQLite + CSVs)** | ~175 MB (uncompressed) / 26 MB (compressed) |
+| **Export Format** | SQLite database + 5 CSV files:<br>- repositories.csv (metadata)<br>- repository_statistics.csv (aggregated metrics per repo)<br>- test_files.csv (file metadata)<br>- test_file_statistics.csv (aggregated metrics per file)<br>- fixtures.csv (individual fixtures) |
 | **Reproducibility** | Pinned GitHub commits for all repositories |
 
 **Download:** [Latest Zenodo Release](TODO: add Zenodo DOI) — includes full SQLite database and CSV exports for analysis.

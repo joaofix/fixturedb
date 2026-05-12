@@ -128,7 +128,13 @@ Assigns domain label (`web`, `data`, `cli`, `infra`, `library`, `other`) based o
 ## Phase 5 — Export
 
 Produces versioned zip file with:
-- **SQLite database** (`fixtures.db`) — Full queryable data with raw source
-- **CSV exports** — User-friendly views (`repositories.csv`, `fixtures.csv`, `fixtures_*.csv`, etc.)
+- **SQLite database** (`fixtures.db`) — Full queryable data with raw source code
+- **CSV exports** — Multi-level statistics and individual records:
+  - `repositories.csv` — Repository metadata
+  - `repository_statistics.csv` — Aggregated metrics per repository
+  - `test_files.csv` — Test file metadata
+  - `test_file_statistics.csv` — Aggregated metrics per test file
+  - `fixtures.csv` — Individual fixture records
+  - `stats.txt` — Summary by language
 
 See [data-pipeline-overview.md](../architecture/data-pipeline-overview.md) for schema documentation.

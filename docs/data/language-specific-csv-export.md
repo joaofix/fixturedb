@@ -14,12 +14,14 @@ python pipeline.py export --version 1.0
 
 This generates:
 - `export/fixturedb_v<version>_<date>/` directory containing:
-  - `fixtures.db` — Full SQLite database
-  - `repositories.csv` — Repository metadata (all languages)
-  - `test_files.csv` — Test file listing
-  - `fixtures.csv` — All fixture definitions (all languages, cross-language analysis)
-  - `stats.txt` — Summary statistics
-  - `README.txt` — Schema documentation
+  - `fixtures.db` — Full SQLite database with raw source code
+  - `repositories.csv` — Repository metadata (200 repositories)
+  - `repository_statistics.csv` — Aggregated fixture metrics per repository (NEW)
+  - `test_files.csv` — Test file listing (257,764 test files)
+  - `test_file_statistics.csv` — Aggregated fixture metrics per test file (NEW)
+  - `fixtures.csv` — All fixture definitions (35,169 individual fixtures)
+  - `stats.txt` — Summary statistics by language
+  - `README.txt` — Complete schema documentation
 
 The directory is zipped into `fixturedb_v<version>_<date>.zip` for upload to Zenodo.
 

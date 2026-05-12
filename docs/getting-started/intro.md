@@ -24,8 +24,13 @@ With FixtureDB, researchers can now:
 
 FixtureDB comprises:
 
-- **Public CSV exports** — Quantitative metrics only (structure, complexity, mock detection)
+- **Public CSV exports** — Quantitative metrics at multiple levels:
+  - **Repository-level** (`repositories.csv`, `repository_statistics.csv`) — Metadata and aggregated metrics per repository
+  - **Test-file-level** (`test_files.csv`, `test_file_statistics.csv`) — File paths and aggregated metrics per file
+  - **Fixture-level** (`fixtures.csv`) — Individual fixture definitions with detailed metrics
 - **Full SQLite database** — Complete dataset + internal infrastructure for reproducibility
-- **Repository metadata** — GitHub stars, domain classification, contributor counts
+- **Repository metadata** — GitHub stars, domain classification, contributor counts, pinned commits
 
-**Recommended format:** CSV exports for analysis; SQLite for verification and reproducibility.
+**Recommended format:** 
+- **CSV exports** for statistical analysis and paper writing (structure, complexity, scope distribution, mock adoption)
+- **SQLite database** for verification, reproducibility, and detailed queries across levels
