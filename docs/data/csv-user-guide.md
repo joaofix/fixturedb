@@ -1,143 +1,129 @@
 # CSV User Guide
 
-**Quick reference for analyzing FixtureDB without SQL.** For full schema details, see [Database Schema](../architecture/database-schema.md). For code examples, see [Using the Dataset](../usage/usage.md).
+This guide explains the CSV exports produced by the current collection pipeline. The exports are designed for spreadsheet tools and lightweight analysis workflows; for joins and provenance checks, use the SQLite databases documented in [Database Schema](../architecture/database-schema.md).
 
----
+## Export layout
 
-## CSV Files
+Typical export bundle:
 
 ```
-fixturedb_export/
-├── repositories.csv                ← Repository metadata (200 rows)
-├── repository_statistics.csv       ← Aggregated metrics per repo (200 rows) [NEW]
-├── test_files.csv                  ← Test file listing (257.8K rows)
-├── test_file_statistics.csv        ← Aggregated metrics per test file (76.5K rows) [NEW]
-├── fixtures.csv                    ← Individual fixtures: 1 row per fixture (35.2K rows)
-├── fixtures.db                     ← Full SQLite database (optional for advanced queries)
-├── stats.txt                       ← Summary statistics by language
-└── README.txt                      ← Schema documentation
+export/
+├── repositories.csv
+├── repository_statistics.csv
+├── test_files.csv
+├── test_file_statistics.csv
+├── fixtures.csv
+├── stats.txt
+└── README.txt
 ```
 
-**File Purpose Guide:**
-- **repositories.csv** — Repo metadata (stars, forks, contributors, pinned commit)
-- **repository_statistics.csv** — Aggregated fixture metrics by repository (complexity, scope, framework distribution, teardown adoption)
-- **test_files.csv** — Test file paths, LOC, fixture count per file
-- **test_file_statistics.csv** — Aggregated fixture metrics by test file (for test suite quality analysis)
-- **fixtures.csv** — Individual fixture definitions with all metrics and GitHub links
-
-**Note:** CSV files contain quantitative metrics only. For detailed mock framework analysis or raw source code inspection, use the included SQLite database (`fixtures.db`).
-
----
-
-## Quick Import
+## Quick import
 
 | Tool | Command |
 |------|---------|
-| **Excel** | Open → fixtures.csv (auto-import) |
-| **Python** | `pd.read_csv('fixtures.csv')` |
-| **R** | `read.csv('fixtures.csv')` |
-| **SQL (SQLite)** | See [usage.md](../usage/usage.md) |
+| Excel | Open `fixtures.csv` |
+| Python | `pd.read_csv("fixtures.csv")` |
+| R | `read.csv("fixtures.csv")` |
+| DuckDB | `SELECT * FROM read_csv_auto('fixtures.csv')` |
+| Google Sheets | File > Import > Upload `fixtures.csv` |
 
----
+## Core CSV files
 
-## Fixtures Table (Main Analysis)
+### repositories.csv
 
-| Column | Type | Meaning |
-|--------|------|---------|
-| **Identifiers** | | |
-| `id` | Integer | Fixture ID (primary key) |
-| **Context** | | |
-| `language` | Text | `python`, `java`, `javascript`, `typescript` |
-| `repo` | Text | Repository (e.g., `owner/repo`) |
-| `file_path` | Text | Test file path |
-| `name` | Text | Fixture function name |
-| **Characteristics** | | |
-| `fixture_type` | Text | Detection pattern (`pytest_decorator`, `unittest_setup`, `before_each`, etc.) |
-| `framework` | Text | Testing framework (pytest, unittest, jest, mocha, junit4, etc.) |
-| `scope` | Text | Execution scope: `per_test`, `per_class`, `per_module`, `global` |
-| **Location** | | |
-| `start_line`, `end_line` | Integer | Line numbers in source file |
-| `loc` | Integer | Lines of code |
-| **Complexity** | | |
-| `cyclomatic_complexity` | Integer | McCabe complexity (1 = simple, 10+ = very complex) |
-| `max_nesting_depth` | Integer | Maximum nested block depth |
-| **Behavior** | | |
-| `num_parameters` | Integer | Function parameters |
-| `num_objects_instantiated` | Integer | Object creations (heuristic) |
-| `num_external_calls` | Integer | I/O and external API calls (heuristic) |
-| `reuse_count` | Integer | Number of tests using this fixture |
-| `has_teardown_pair` | Integer | Binary (0/1): has cleanup/teardown logic |
-| **Reproducibility** | | |
-| `pinned_commit` | Text | Git SHA of analyzed commit |
-| `github_url` | Text | Direct link to fixture source on GitHub |
+One row per analyzed repository.
 
----
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INT | Internal repository ID |
+| `github_id` | INT | GitHub numeric ID |
+| `full_name` | TEXT | Repository slug such as `owner/repo` |
+| `language` | TEXT | Repository language |
+| `stars` | INT | Star count at collection time |
+| `forks` | INT | Fork count at collection time |
+| `description` | TEXT | Repository description |
+| `topics` | TEXT | JSON-encoded topics list |
+| `created_at` | TEXT | Repository creation timestamp |
+| `pushed_at` | TEXT | Last push timestamp |
+| `clone_url` | TEXT | Repository clone URL |
+| `pinned_commit` | TEXT | Commit analyzed for the repository |
+| `status` | TEXT | Collection status |
+| `error_message` | TEXT | Error text if the repository failed collection |
+| `skip_reason` | TEXT | Reason for skipping a repository |
+| `num_test_files` | INT | Number of test files found |
+| `num_fixtures` | INT | Number of fixture definitions found |
+| `num_mock_usages` | INT | Number of mock usages detected |
+| `num_contributors` | INT | Contributor count from GitHub |
+| `collected_at` | TEXT | Collection timestamp |
 
-## Repositories Table
+### test_files.csv
 
-| Column | Meaning |
-|--------|---------|
-| `id` | Repository ID |
-| `github_id` | GitHub numeric repository ID |
-| `full_name` | GitHub slug (e.g., `"pytest-dev/pytest"`) |
-| `language` | `python`, `java`, `javascript`, `typescript` |
-| `stars` | Star count at collection time (maturity metric) |
-| `forks` | Fork count at collection time (adoption metric) |
-| `num_contributors` | GitHub contributor count (maturity metric) |
-| `created_at`, `pushed_at` | Creation and last push dates (ISO 8601) |
-| `pinned_commit` | Git SHA analyzed (for reproducibility) |
-| `num_test_files` | Test files found in repository |
-| `num_fixtures` | Fixtures found in repository |
-| `num_analyzed_fixtures` | Fixtures extracted and analyzed (should match count for this repo in fixtures.csv) |
-| `collected_at` | Timestamp of collection (ISO 8601) |
+One row per test file.
 
----
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INT | Internal test file ID |
+| `repo` | TEXT | Repository slug |
+| `language` | TEXT | File language |
+| `relative_path` | TEXT | Path relative to repository root |
+| `file_loc` | INT | Non-blank lines of code in the file |
+| `num_test_funcs` | INT | Number of test functions detected |
+| `num_fixtures` | INT | Number of fixtures in the file |
+| `total_fixture_loc` | INT | Sum of fixture LOC in the file |
 
-## Test Files Table
+### fixtures.csv
 
-| Column | Meaning |
-|--------|---------|
-| `relative_path` | Path within repository (e.g., `tests/test_app.py`) |
-| `file_loc` | Total lines of code |
-| `num_fixtures` | Fixtures defined in file |
-| `language` | Programming language |
+One row per extracted fixture definition.
 
----
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INT | Internal fixture ID |
+| `language` | TEXT | Fixture language |
+| `repo` | TEXT | Repository slug |
+| `file_path` | TEXT | Relative path to the test file |
+| `name` | TEXT | Fixture name or method name |
+| `fixture_type` | TEXT | Detected fixture pattern |
+| `framework` | TEXT | Detected testing framework |
+| `scope` | TEXT | Execution scope |
+| `start_line` | INT | Start line in the source file |
+| `end_line` | INT | End line in the source file |
+| `loc` | INT | Non-blank lines of code |
+| `cyclomatic_complexity` | INT | McCabe cyclomatic complexity |
+| `max_nesting_depth` | INT | Maximum block nesting depth |
+| `num_parameters` | INT | Number of parameters |
+| `num_objects_instantiated` | INT | Estimated object instantiations |
+| `num_external_calls` | INT | Estimated external or I/O calls |
+| `reuse_count` | INT | Number of test functions using the fixture |
+| `has_teardown_pair` | INT | 1 when teardown or cleanup logic is present |
+| `pinned_commit` | TEXT | Commit SHA analyzed for the fixture |
+| `github_url` | TEXT | Direct link to the fixture source on GitHub |
 
-## Common Analysis Patterns
+## Aggregated CSVs
 
-**Distribution of complexity by language:**
-```python
-import pandas as pd
-df = pd.read_csv('fixtures.csv')
-df.groupby('language')['cyclomatic_complexity'].agg(['mean', 'count'])
-```
+### repository_statistics.csv
 
-**Fixtures with high reuse:**
-```python
-df_high_reuse = df[df['reuse_count'] > 10].sort_values('reuse_count', ascending=False)
-df_high_reuse[['name', 'fixture_type', 'reuse_count', 'cyclomatic_complexity']]
-```
+Repository-level aggregates for cross-project comparisons.
 
-**Teardown adoption by language:**
-```python
-df.groupby('language')['has_teardown_pair'].agg(['sum', 'count', lambda x: (x.sum()/len(x))*100])
-```
+### test_file_statistics.csv
 
-**Test file statistics:**
-```python
-tf = pd.read_csv('test_files.csv')
-tf.groupby('repo')['num_fixtures'].sum().sort_values(ascending=False).head(10)
-```
+Test-file-level aggregates for file organization and complexity analysis.
 
----
+These aggregated exports usually contain the same metric families as the underlying tables: fixture counts by scope, fixture type and framework distribution, LOC statistics, cyclomatic complexity statistics, nesting, parameters, external calls, teardown adoption, mock usage counts, and test-function counts.
 
-## Data Notes
+## When to use CSV vs SQLite
 
-- **Complexity NULL:** Error during calculation (< 0.1%); safe to exclude
-- **Count = 0:** Legitimate (no objects/calls in that fixture)
-- **Scope options:** `per_test` (most common) → `per_class` → `per_module` → `global` (rare)
-- **Pinned commits:** Use `repositories.pinned_commit` to check out exact code versions analyzed
+| Task | Best format |
+|------|-------------|
+| Load into Excel, R, or pandas | CSV |
+| Simple descriptive statistics | CSV |
+| Joins across repositories, files, and fixtures | SQLite |
+| Inspect raw source text | SQLite |
+| Reproduce a paper table | CSV |
 
-See [Limitations](../reference/limitations.md) for known constraints and validation status.
+## Data quality notes
+
+- CSV exports contain objective, quantitative metrics only.
+- Repository, file, and fixture identifiers are stable within an export bundle.
+- Legacy columns from the old collection are not part of the current CSV design.
+- SQLite should be used when you need provenance, raw source text, or joins across tables.
 

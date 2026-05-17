@@ -1,16 +1,14 @@
 # CSV Export Guide
 
-**Note:** For full database queries and raw source code access, see [Database Schema](../architecture/database-schema.md) or [Using the Dataset](../usage/usage.md).
+This document describes the CSV files exported by the dataset export step (`python pipeline.py export`). The public CSVs contain objective, quantitative metrics only; the full SQLite exports contain additional internal fields and detailed mock-analysis tables for reproducibility.
 
-This document describes all CSV files exported during `python pipeline.py export`.
+## Export structure
 
-## Export Structure
-
-CSV files generated during export:
+Typical export layout:
 
 ```
 export/fixturedb_v<version>_<date>/
-├── fixtures.db                     (full database with all fields)
+├── fixtures.db                     (full SQLite database with all fields)
 ├── repositories.csv                (repository metadata)
 ├── repository_statistics.csv       (aggregated fixture metrics per repository)
 ├── test_files.csv                  (test file metadata)
@@ -29,16 +27,16 @@ One row per repository with at least one analyzed fixture (status='analysed').
 | `id` | INT | Internal primary key |
 | `github_id` | INT | GitHub repository numeric ID |
 | `full_name` | TEXT | Repository slug (e.g., "pytest-dev/pytest") |
-| `language` | TEXT | Primary language (python, java, javascript, typescript) |
-| `stars` | INT | Star count at collection time (GitHub maturity metric) |
-| `forks` | INT | Fork count at collection time (adoption metric) |
-| `num_contributors` | INT | GitHub contributor count (project maturity) |
+| `language` | TEXT | Primary language (python, java, javascript, typescript, go) |
+| `stars` | INT | Star count at collection time |
+| `forks` | INT | Fork count at collection time |
+| `num_contributors` | INT | GitHub contributor count |
 | `created_at` | TEXT | ISO 8601 repository creation date |
 | `pushed_at` | TEXT | ISO 8601 last push date |
-| `pinned_commit` | TEXT | SHA of HEAD commit at analysis time (for reproducibility) |
+| `pinned_commit` | TEXT | SHA of HEAD commit at analysis time |
 | `num_test_files` | INT | Total test files found in repository |
 | `num_fixtures` | INT | Total fixture definitions in repository |
-| `num_analyzed_fixtures` | INT | Fixture definitions extracted and analyzed (matches fixtures.csv count for this repo) |
+| `num_analyzed_fixtures` | INT | Fixture definitions extracted and analyzed |
 | `collected_at` | TEXT | ISO 8601 timestamp of DB insertion |
 
 ## 2. test_files.csv
@@ -48,8 +46,8 @@ One row per test file found during repository analysis.
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INT | Internal primary key |
-| `repo` | TEXT | Repository full_name (e.g., "owner/repo") — human-readable context |
-| `language` | TEXT | Source language (python, java, javascript, typescript) |
+| `repo` | TEXT | Repository full_name (e.g., "owner/repo") |
+| `language` | TEXT | Source language |
 | `relative_path` | TEXT | Path relative to repository root |
 | `file_loc` | INT | Non-blank lines of code in test file |
 | `num_test_funcs` | INT | Count of test function definitions detected |
@@ -58,21 +56,18 @@ One row per test file found during repository analysis.
 
 ## 3. repository_statistics.csv
 
-Aggregated fixture metrics per repository. One row per analyzed repository.
-
-**Purpose:** Enables repository-level analysis without manual aggregation of fixture data. Useful for cross-repository comparisons, maturity assessments, and language-level pattern analysis.
+Aggregated fixture metrics per repository. One row per analyzed repository. Designed for cross-repository comparisons and correlational studies.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `repository_id` | INT | Internal primary key (matches repositories.csv id) |
-| `full_name` | TEXT | Repository slug (e.g., "owner/repo") |
-| `language` | TEXT | Programming language (python, java, javascript, typescript) |
+| `full_name` | TEXT | Repository slug |
+| `language` | TEXT | Programming language |
 | `github_id` | INT | GitHub repository numeric ID |
 | `stars` | INT | Star count at collection time |
 | `forks` | INT | Fork count at collection time |
 | `num_contributors` | INT | GitHub contributor count |
 | `pinned_commit` | TEXT | SHA of analyzed commit |
-| `domain` | TEXT | Repository domain classification (library, web, cli, infra, data, other) |
 | | | **Test File Metrics** |
 | `num_test_files` | INT | Count of test files in repository |
 | `total_test_file_loc` | INT | Total LOC across all test files |
@@ -117,18 +112,9 @@ Aggregated fixture metrics per repository. One row per analyzed repository.
 | `total_test_functions` | INT | Total test functions in repository |
 | `avg_fixtures_per_test_file` | FLOAT | Average fixtures per test file |
 
-**Use cases:**
-- Compare fixture patterns across languages
-- Correlate repository maturity (stars, contributors) with fixture complexity
-- Track teardown adoption trends
-- Identify high-complexity repositories
-- Analyze framework adoption patterns
-
 ## 4. test_file_statistics.csv
 
 Aggregated fixture metrics per test file. One row per test file (including files with no fixtures).
-
-**Purpose:** Bridges repository and fixture-level analysis. Useful for test suite quality assessment, file-level complexity distribution, and identifying problematic test files.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -170,63 +156,43 @@ Aggregated fixture metrics per test file. One row per test file (including files
 | | | **Test Function Metrics** |
 | `num_test_funcs` | INT | Count of test functions in file |
 
-**Notes:**
-- Test files with zero fixtures will have empty/NULL aggregate values
-- Files are included even if they contain no fixtures (for completeness)
-
-**Use cases:**
-- Identify high-complexity test files
-- Analyze test file organization patterns
-- Measure test suite health metrics
-- Find unusually complex files that need refactoring
-- Compare fixture patterns within a repository
-
 ## 5. fixtures.csv
 
-One row per fixture definition found during extraction.
+One row per fixture definition extracted from test code.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INT | Internal primary key |
-| `language` | TEXT | Programming language (python, java, javascript, typescript) |
-| `repo` | TEXT | Repository full_name (e.g., "owner/repo") — human-readable context |
+| `language` | TEXT | Programming language |
+| `repo` | TEXT | Repository full_name (e.g., "owner/repo") |
 | `file_path` | TEXT | Relative path to test file |
 | `name` | TEXT | Function/method name of the fixture |
-| `fixture_type` | TEXT | Detection pattern (pytest_decorator, unittest_setup, before_each, etc.) — quantitative classification |
+| `fixture_type` | TEXT | Detection pattern (pytest_decorator, unittest_setup, before_each, etc.) |
 | `framework` | TEXT | Detected testing framework (pytest, unittest, jest, mocha, junit4, etc.) |
 | `scope` | TEXT | Execution scope (per_test, per_class, per_module, global) |
 | `start_line` | INT | 1-indexed start line in source file |
 | `end_line` | INT | 1-indexed end line in source file |
 | `loc` | INT | Non-blank lines of code in fixture |
-| `cyclomatic_complexity` | INT | McCabe complexity: 1 + number of branching statements |
+| `cyclomatic_complexity` | INT | McCabe complexity |
 | `max_nesting_depth` | INT | Maximum block nesting level |
 | `num_parameters` | INT | Number of function parameters |
-| `num_objects_instantiated` | INT | Estimated constructor calls inside fixture (detected via regex; see limitations) |
-| `num_external_calls` | INT | Estimated I/O / external API calls (DB, HTTP, filesystem, env); see limitations |
+| `num_objects_instantiated` | INT | Estimated constructor calls inside fixture |
+| `num_external_calls` | INT | Estimated I/O / external API calls |
 | `reuse_count` | INT | Number of test functions using this fixture |
 | `has_teardown_pair` | INT | Binary indicator (0/1): whether fixture includes cleanup/teardown logic |
-| `pinned_commit` | TEXT | SHA of analyzed commit (for reproducibility) |
-| `github_url` | TEXT | Direct GitHub link to fixture source code (click to view in browser) |
+| `pinned_commit` | TEXT | SHA of analyzed commit |
+| `github_url` | TEXT | Direct GitHub link to fixture source code |
 
-## Design Rationale
+## Design rationale
 
-### CSV Export Strategy
+- CSV exports contain only quantitative, objective metrics to facilitate reproducible analyses.
+- The full SQLite database (`fixtures.db`) includes internal-only tables/columns used for advanced analysis and reproducibility.
 
-The public CSV exports contain **quantitative metrics only** for this dataset. The full SQLite database includes additional infrastructure columns for reproducibility and detailed mock framework analysis, but these are intentionally excluded from CSV exports:
+**Internal-only fields (excluded from CSV exports):**
+- `category` (fixture): internal fixture classification infrastructure removed from public CSVs
+- Detailed `mock_usages` table: available in the SQLite database for researchers who need the raw mock/framework interaction data
 
-**Internal-only fields (excluded from CSV):**
-- `category` (fixture) — Internal fixture classification infrastructure; enables future taxonomy work
-- `mock_usages` table (fixture framework analysis) — Detailed mock framework counts and interactions; available in SQLite database for researchers who need it
+## See also
 
-### Design principles
-
-1. **Quantitative focus:** CSV exports contain only measurable, objective facts (LOC, counts, metrics, detection patterns)
-2. **Context-rich:** Human-readable columns (repo, file_path, github_url) enable standalone analysis without database joins
-3. **Reproducible:** Full SQLite database available for verification of extraction decisions
-4. **Traceable:** github_url enables verification of any finding directly in source code on GitHub
-5. **Archivable:** Zenodo deposit includes both SQLite (for transparency and future research) and CSV (for paper analysis and public sharing)
-
-## See Also
-
-- [Database Schema](../architecture/database-schema.md) — Complete schema including excluded fields
-- [Collection & Extraction](../data/data-collection.md) — How metrics and detections are computed
+- [Database Schema](../architecture/database-schema.md)
+- [Collection & Extraction](../data/data-collection.md)

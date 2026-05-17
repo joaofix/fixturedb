@@ -63,8 +63,8 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from collection.config import MAX_FILE_SIZE_BYTES
-from collection.complexity_provider import (
+from .config import MAX_FILE_SIZE_BYTES
+from .complexity_provider import (
     analyze_function_complexity,
     get_file_loc,
     get_file_function_count,
@@ -601,7 +601,7 @@ def _validate_framework(framework: str, language: str) -> str:
     Returns:
         The framework name (unchanged, for further processing)
     """
-    from collection.config import is_known_framework, get_known_frameworks
+    from .config import is_known_framework, get_known_frameworks
 
     if not is_known_framework(framework, language):
         known = get_known_frameworks(language)

@@ -21,6 +21,12 @@ tests/
 ├── conftest.py                      # Shared pytest fixtures and helpers
 ├── TEST_PLAN.md                     # Comprehensive test strategy document
 ├── fixtures/                        # Test data files (future use)
+├── test_split_agent_detector.py     # Agent detection unit tests
+├── test_split_fixture_extractor.py  # Fixture extraction tests
+├── test_split_dataset_sampler.py    # Dataset sampling tests
+├── test_split_dataset_exporter.py   # Dataset export tests
+├── test_split_integration.py        # Integration tests
+├── test_agent_detection_end_to_end.py  # E2E agent detection tests
 ├── test_extractor_unit/             # Category 1: Unit tests
 │   ├── test_python_fixtures.py
 │   ├── test_java_fixtures.py
@@ -230,18 +236,76 @@ class Test(unittest.TestCase):
     assert_loc(fixture, 1)
 ```
 
-## Test Success Criteria
+## Agent Detection Tests (End-to-End)
 
-The test suite validates the following metrics:
+The `test_agent_detection_end_to_end.py` module provides comprehensive validation of the agent detection pipeline, including:
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| **Precision** | >95% of detected items are actual fixtures | Planned |
-| **Recall** | >90% of actual fixtures are detected | Planned |
-| **Language Coverage** | All 6 languages thoroughly tested | Implemented |
-| **Edge Case Handling** | Graceful degradation on malformed code | Tested |
-| **Metadata Accuracy** | Line numbers and metrics correct | Tested |
-| **Performance** | No fixture timeout violations | Tested |
+### Test Coverage
+
+1. **Agent File Scanner** — Detects agent-specific files (`.copilot-instructions.md`, `.cursorrules`, etc.)
+2. **Agent Commit Verifier** — Detects `Co-authored-by` trailers and agent keywords in commit messages
+3. **AGENT Fixture Extraction** — Validates extraction of fixtures from agent commits and `is_complete_addition` marking
+4. **Multiple Agent Types** — Tests Copilot, Cursor, Claude, and other agent detection
+5. **Partial Modifications** — Validates that modified (not wholly-added) fixtures are marked accordingly
+6. **Edge Cases** — Commits without fixtures, commits with deletions, refactoring scenarios
+
+### Running Agent Detection Tests
+
+```bash
+# Run only agent detection tests
+pytest tests/test_agent_detection_end_to_end.py -v
+
+# Run specific agent detection test
+pytest tests/test_agent_detection_end_to_end.py::test_agent_file_scanner_detects_agent_files -v
+
+# Run with coverage
+pytest tests/test_agent_detection_end_to_end.py --cov=collection.agent_detector --cov-report=term-missing -v
+```
+
+### Test Structure
+
+The tests use real git repositories created in temporary directories (`tmp_path`) to validate:
+
+- **Real git operations**: Commits are created with proper `Co-authored-by` trailers
+- **Actual file detection**: Agent config files are physically created and scanned
+- **Complete extraction flow**: Diff parsing and fixture extraction with completeness validation
+
+Example:
+
+```python
+def test_agent_commit_and_llm_extraction_end_to_end(tmp_path: Path, monkeypatch):
+    """Validates detection of Copilot-authored commits and fixture extraction."""
+    # Create temp git repo with agent commits
+    # Verify agent commit is detected
+    # Extract fixtures from agent commits
+    # Validate is_complete_addition marking
+```
+
+## pytest Configuration
+
+The project uses `pyproject.toml` to configure test discovery and execution:
+
+```toml
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = ["clones", ".git", "venv", "dist", "build"]
+addopts = "-q"
+```
+
+### Why the Pytest Configuration is Important
+
+- **Prevents importing external test code**: The `clones/` directory contains hundreds of external repositories with their own tests. Without the pytest configuration in `pyproject.toml`, pytest would try to import and run them, causing dependency and timeout issues.
+- **Ensures consistency**: CI/CD and local runs use the same configuration, preventing environment-specific failures.
+- **Performance**: Running only project tests instead of external dependencies is ~100x faster.
+
+### Verifying the Pytest Configuration
+
+CI workflows use the shared pytest configuration:
+
+```bash
+pytest -q                     # Uses pyproject.toml configuration
+pytest --override-ini testpaths=tests  # Alternative: override at runtime
+```
 
 ## Adding New Tests
 
@@ -252,6 +316,7 @@ The test suite validates the following metrics:
 - **Edge cases**: Unusual patterns (use `test_extractor_edge_cases/`)
 - **Mock detection**: Mock framework patterns (use `test_mock_detection/test_<language>_mock_patterns.py`)
 - **Integration tests**: Real-world code (use `test_integration/test_<language>_realistic_fixtures.py`)
+- **Agent detection**: Agent commit and file detection (use `test_agent_detection_end_to_end.py`)
 
 ### 2. Use Existing Helpers
 

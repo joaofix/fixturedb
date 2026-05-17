@@ -20,6 +20,16 @@ DATA_DIR = ROOT_DIR / "data"
 DB_PATH = DATA_DIR / "corpus.db"
 LOGS_DIR = ROOT_DIR / "logs"
 
+# ---------------------------------------------------------------------------
+# Split date boundary
+# ---------------------------------------------------------------------------
+
+# Human dataset includes fixtures up to 2020-12-31.
+HUMAN_DATASET_END_DATE = "2020-12-31"
+
+# Agent dataset starts on 2021-01-01 and runs onwards.
+AGENT_DATASET_START_DATE = "2021-01-01"
+
 for _d in (CLONES_DIR, DATA_DIR, LOGS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
@@ -188,6 +198,9 @@ NON_CODE_EXTENSIONS = {
 # Repository search filters
 # ---------------------------------------------------------------------------
 
+# Minimum repository star floor used by language configs and discovery filters.
+MIN_STARS = 100
+
 
 @dataclass
 class LanguageConfig:
@@ -195,8 +208,8 @@ class LanguageConfig:
 
     name: str  # human-readable
     github_language: str  # label used by GitHub search API
-    min_stars: int = 100
-    toy_target: int = 50  # target count for toy dataset
+    min_stars: int = MIN_STARS
+    toy_target: int = 20  # target count for toy dataset
     full_target: int = 500  # target count for full production dataset
 
     # Paths that signal "this is a test file"
@@ -294,8 +307,8 @@ LANGUAGE_CONFIGS = {
     "python": LanguageConfig(
         name="Python",
         github_language="Python",
-        min_stars=100,
-        toy_target=50,
+        min_stars=MIN_STARS,
+        toy_target=20,
         full_target=500,
         test_path_patterns=["test/", "tests/", "testing/"],
         test_file_suffixes=["test_.py", "_test.py", "_tests.py", "conftest.py"],
@@ -303,8 +316,8 @@ LANGUAGE_CONFIGS = {
     "java": LanguageConfig(
         name="Java",
         github_language="Java",
-        min_stars=100,
-        toy_target=50,
+        min_stars=MIN_STARS,
+        toy_target=20,
         full_target=500,
         test_path_patterns=["src/test/", "test/", "tests/"],
         test_file_suffixes=["Test.java", "Tests.java", "IT.java", "Spec.java"],
@@ -312,8 +325,8 @@ LANGUAGE_CONFIGS = {
     "javascript": LanguageConfig(
         name="JavaScript",
         github_language="JavaScript",
-        min_stars=100,
-        toy_target=25,
+        min_stars=MIN_STARS,
+        toy_target=20,
         full_target=250,
         test_path_patterns=["test/", "tests/", "spec/", "__tests__/"],
         test_file_suffixes=[
@@ -329,8 +342,8 @@ LANGUAGE_CONFIGS = {
     "typescript": LanguageConfig(
         name="TypeScript",
         github_language="TypeScript",
-        min_stars=100,
-        toy_target=25,
+        min_stars=MIN_STARS,
+        toy_target=20,
         full_target=250,
         test_path_patterns=["test/", "tests/", "spec/", "__tests__/"],
         test_file_suffixes=[
@@ -429,6 +442,7 @@ FRAMEWORK_REGISTRY = {
 MIN_TEST_FILES = 5  # repos with fewer test files are dropped
 MIN_COMMITS = 100  # repos with fewer commits are dropped
 MIN_FIXTURES_FOUND = 1  # repos where we detect zero fixtures are dropped
+MIN_FIXTURES_FOUND = 1  # repos where we detect zero fixtures are dropped
 
 # Per-language survival rates (discovered → analyzed with fixtures)
 # These are empirically observed rates used to calculate discovery estimates.
@@ -474,3 +488,64 @@ FILE_SIZE_WARN_MB = 10
 OBJECTS_DATA_BUILDER_THRESHOLD = 5
 # Parametrized fixtures: repos with moderate reuse/complexity
 OBJECTS_PARAMETRIZED_THRESHOLD = 2
+
+# ---------------------------------------------------------------------------
+# Agent Detection Configuration (Two-Tier Methodology)
+# ---------------------------------------------------------------------------
+
+# Agent configuration file patterns (used in Phase 1A/1D for agent activity detection)
+AGENT_CONFIG_PATTERNS = {
+    "claude": [
+        "CLAUDE.md",
+        ".claudeignore",
+        ".claude/",
+        "anthropic/",
+    ],
+    "cursor": [
+        "CURSOR.md",
+        ".cursor/",
+        ".cursorrules",
+    ],
+    "copilot": [
+        "copilot_instructions.md",
+        "copilot-instructions.md",
+        ".copilot-instructions.md",
+        ".copilot-*.md",
+        ".copilotignore",
+        ".copilot/",
+    ],
+}
+
+# Agent signature patterns for commit author/message detection
+# Used in Phase 1B to verify Co-authored-by trailers
+AGENT_SIGNATURES = {
+    "claude": ["claude", "anthropic"],
+    "cursor": ["cursor"],
+    "copilot": ["copilot", "github.com/apps/github-copilot"],
+    "github-actions": ["github-actions[bot]", "github-actions"],
+    "other": [
+        "aider",
+        "openhands",
+        "devin",
+        "jules",
+        "cline",
+        "junie",
+        "gemini",
+        "coderabbit",
+        "windsurf",
+    ],
+}
+
+# Tier 1 assessment thresholds (Phase 1C)
+# If Tier 1 (corpus repos) falls below these, Phase 1D (matched repo discovery) is triggered
+TIER1_MINIMUM_REPOS_WITH_AGENT = 30  # minimum repos needed from corpus
+TIER1_MINIMUM_AGENT_COMMITS = 100  # minimum agent commits needed from corpus
+
+# Tier 2 matching criteria (Phase 1D: SEART-based discovery)
+# Parameters for finding supplementary repos when Tier 1 insufficient
+TIER2_MATCHING_MIN_STARS = 50  # lower bound for matched repos
+TIER2_MATCHING_MAX_STARS = 50000  # upper bound for matched repos
+TIER2_MATCHING_STAR_TOLERANCE = 2.0  # allow repos within 2x star count of corpus median
+TIER2_MIN_COMMITS = 100  # matched repos must have >= commits
+TIER2_MIN_TEST_FILES = 5  # matched repos must have >= test files
+TIER2_MUST_HAVE_AGENT_CONFIGS = True  # matched repos MUST have agent config files

@@ -45,19 +45,28 @@ The toy dataset contains fixture definitions extracted from 200 GitHub repositor
 | **Complexity Analysis** | Lizard + language-specific cognitive complexity |
 | **Python Environment** | 3.8+ |
 
-### Collection Pipeline
+### Human vs Agent Fixture Analysis
 
-The dataset was constructed through a five-phase pipeline:
+Building on the FixtureDB corpus, the `collection/` pipeline implements a **two-tier methodology** to compare human-created (pre-2021) vs AGENT-generated (2022+) fixtures:
 
-1. **GitHub Search** (April 1–2, 2026) — Query SEART API for repositories by language and star count
-2. **Repository Cloning** — Download full source code for all matching repositories
-3. **Test File Detection** — Discover test files using language-specific patterns and parse with Tree-sitter
-4. **Fixture Extraction** — Identify fixture definitions and scan for mock framework usage
-5. **Metrics & Export** — Compute complexity metrics, validate quality, generate CSV exports
+- **Tier 1 (Within-Repo)**: Search existing corpus repos for agent commits → eliminates confounders (same project, domain, team)
+- **Tier 2 (Between-Repo)**: If Tier 1 insufficient, discover matched repos via SEART → reach statistical power with transparency
 
-![Collection Pipeline](docs/collection-pipeline.png)
+**Phases:**
+1. Scan corpus for agent commits (Tier 1)
+2. Verify Co-authored-by trailers
+3. Assess Tier 1 yield, recommend Tier 2 if needed
+4. Discover matched repos (Tier 2, conditional)
+5. Extract pre-2021 human fixtures (snapshot-based)
+6. Extract AGENT fixtures (with tier labels + commit SHA)
+7. Analyze distributions, stratified sampling
+8. Export and final validation
 
-See [docs/collection-pipeline.md](docs/collection-pipeline.md) for detailed pipeline walkthrough and [docs/data/data-collection.md](docs/data/data-collection.md) for reproducibility steps. For exact tool versions, see [requirements.txt](requirements.txt).
+**Output:** Two balanced datasets: `fixturedb-human.db` vs `fixturedb-agent.db` with explicit methodology tracking.
+
+For a fast validation run, use `python -m collection.toy` to build a 20-repo-per-language toy dataset.
+
+See [collection/README.md](collection/README.md) for detailed documentation and quick start.
 
 ---
 
@@ -70,7 +79,7 @@ Complete documentation has been organized into dedicated files in the [docs/](do
 | Document | Purpose |
 |----------|---------|
 | [docs/INDEX.md](docs/INDEX.md) | **Start here** — overview and quick navigation |
-| [docs/collection-pipeline.md](docs/collection-pipeline.md) | Collection pipeline phases with Mermaid diagram |
+| [collection/README.md](collection/README.md) | Command-line entrypoint for the new dataset |
 
 ### Getting Started
 
@@ -79,7 +88,7 @@ Complete documentation has been organized into dedicated files in the [docs/](do
 | [docs/getting-started/intro.md](docs/getting-started/intro.md) | What is FixtureDB and why it matters |
 | [docs/getting-started/repository-structure.md](docs/getting-started/repository-structure.md) | Project layout and organization |
 | [docs/getting-started/setup.md](docs/getting-started/setup.md) | Installation and dependencies |
-| [docs/getting-started/running.md](docs/getting-started/running.md) | Command reference for pipeline operations |
+| [collection/README.md](collection/README.md) | Command reference for the new dataset |
 
 ### Dataset & Data Collection
 
@@ -127,14 +136,31 @@ pip install -r requirements.txt
 cp .env.example .env
 # Edit .env and add your GITHUB_TOKEN
 
-# Initialize the database
-python pipeline.py init
-
-# Run the full pipeline (all languages)
-python pipeline.py run
+# Build a quick validation dataset
+python -m collection toy
 ```
 
 For detailed setup, see [docs/getting-started/setup.md](docs/getting-started/setup.md).
+
+## Running Tests
+
+The test suite is organized to match the project structure:
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run collection module tests
+pytest tests/collection/
+
+# Run human_vs_agent pipeline tests
+pytest tests/human_vs_agent/
+
+# Run with coverage report
+pytest tests/ --cov=collection --cov=human_vs_agent --cov-report=html
+```
+
+For detailed test organization, see [tests/TEST_ORGANIZATION.md](tests/TEST_ORGANIZATION.md).
 
 ## What is FixtureDB?
 

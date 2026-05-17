@@ -15,6 +15,21 @@ FixtureDB detects test fixture definitions across Python, Java, JavaScript, and 
 
 ---
 
+## Important: Fixture Detection vs Agent Detection
+
+**This document describes FIXTURE DETECTION** — the process of identifying test fixture definitions (setup methods, fixtures, mocks) in source code.
+
+This is DIFFERENT from **AGENT DETECTION** — the process of identifying which commits were authored/co-authored by AI assistants. For agent detection, see [Agent Detection Methodology](./agent-detection.md).
+
+**Key Distinction:**
+- **Fixture Detection:** Answers "What is a test fixture?" (AST parsing for setup/teardown)
+- **Agent Detection:** Answers "Who wrote this code?" (Git history parsing for Co-authored-by trailers)
+
+Both are essential for the FixtureDB Split project:
+1. Agent Detection (Phase 1A-1B) identifies AI-generated fixtures
+2. Fixture Detection extracts and analyzes the fixtures themselves
+
+
 ## How Fixtures Are Detected
 
 ### Language-Specific Patterns

@@ -9,7 +9,7 @@
 
 ### Metrics from Known Tools (Lizard, Tree-sitter)
 
-| Metric | Category | Tool(s) |
+| Metric | Source | Tool(s) |
 |--------|----------|----------|
 | `loc` | Code Structure | Lizard |
 | `cyclomatic_complexity` | Complexity | Lizard |
@@ -19,14 +19,14 @@
 
 ### Custom Implementations
 
-| Metric | Category | How Calculated |
+| Metric | Source | How Calculated |
 |--------|----------|------------------|
 | `max_nesting_depth` | Code Structure | Tree-sitter AST traversal |
 | `num_objects_instantiated` | Semantic | Filtered Lizard + regex |
-| `num_external_calls` | Domain-Specific | Regex pattern matching |
-| `fixture_type` | Classification | AST + regex patterns |
-| `scope` | Classification | Framework metadata extraction |
-| `framework` | Classification | Registry lookup |
+| `num_external_calls` | Custom | Regex pattern matching |
+| `fixture_type` | Detected pattern | AST + regex patterns |
+| `scope` | Derived scope | Framework metadata extraction |
+| `framework` | Detected framework | Registry lookup |
 | `reuse_count` | Usage Analysis | Post-processing AST |
 | `has_teardown_pair` | Resource Management | AST pattern matching |
 | `fixture_dependencies` | Relationships | Regex parsing |
@@ -114,7 +114,7 @@
 
 ---
 
-## Part 2: Custom Implementations (Domain-Specific, Validated)
+## Part 2: Custom Implementations (Validated)
 
 ### 2.1 num_objects_instantiated
 
@@ -174,7 +174,7 @@ def setup(self):
 **Implementation:** `collection/detector.py::_count_external_calls()`
 
 **Implementation Details:**
-- Domain-specific targeting (I/O vs. general functions)
+- I/O-focused targeting (I/O vs. general functions)
 - Identifies fixtures with infrastructure dependencies
 - Useful for analyzing test setup complexity
 
@@ -230,7 +230,7 @@ def setup(self):
 
 ### 2.4 fixture_type (Framework-Specific Detection)
 
-**What:** Classification of how a fixture is defined (e.g., `pytest_decorator`, `junit4_before`, `unittest_setup`)
+**What:** Detected fixture pattern for a source element (e.g., `pytest_decorator`, `junit4_before`, `unittest_setup`)
 
 **How Calculated:**
 - Language-specific pattern matching via AST + regex:
@@ -258,7 +258,7 @@ def setup(self):
 
 ### 2.5 scope (Fixture Execution Scope)
 
-**What:** When a fixture runs relative to test execution (per_test, per_class, per_module, global)
+**What:** When a fixture runs relative to test execution (`per_test`, `per_class`, `per_module`, `global`)
 
 **Canonical Scope Values:**
 - `per_test` — Fixture executes before/after **each individual test** (innermost scope, most common)
@@ -358,7 +358,7 @@ All hook names have standardized semantics across frameworks (Jest, Mocha, Jasmi
 
 **Implementation Details:**
 - All detection uses explicit syntax (decorators, annotations, method names)
-- Same source code always produces same scope classification
+- Same source code always produces the same derived scope
 - Scope hierarchy (per_test < per_class < per_module < global) is enforced across languages
 - Method/decorator names are standardized by framework specifications
 
@@ -729,7 +729,7 @@ See [docs/architecture/configuration.md](configuration.md) for:
 
 - Integrate SonarQube cognitive complexity APIs for Java/JavaScript
 - AST-based I/O detection (replace regex)
-- Object instantiation type classification (library vs. user classes)
+- Object instantiation refinement (library vs. user classes)
 - Cross-language fixture dependency tracking (mock frameworks, etc.)
 - Parameterized test expansion in reuse counting
 

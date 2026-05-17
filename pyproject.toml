@@ -26,3 +26,17 @@ extend-exclude = '''
   | dist
 )/
 '''
+
+[tool.pytest.ini_options]
+# IMPORTANT: Restrict testpaths to 'tests/' to prevent pytest from discovering tests
+# in the clones/ directory. The clones/ folder contains hundreds of external open-source
+# repositories with their own tests, frameworks, and dependencies.
+# Without this configuration, pytest would:
+# - Attempt to import and run external tests
+# - Require heavy external dependencies (TensorFlow, etc.)
+# - Take ~100x longer to execute
+# - Fail due to missing external dependencies
+# See docs/reference/testing.md for more details.
+testpaths = ["tests"]
+norecursedirs = ["clones", ".git", "venv", "dist", "build"]
+addopts = "-q"

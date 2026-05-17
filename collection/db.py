@@ -13,7 +13,7 @@ import logging
 from contextlib import contextmanager
 from pathlib import Path
 
-from collection.config import DB_PATH
+from .config import DB_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,6 @@ CREATE TABLE IF NOT EXISTS repositories (
     pushed_at       TEXT,
     clone_url       TEXT,
     pinned_commit   TEXT,                   -- SHA at time of analysis (reproducibility)
-    domain          TEXT,                   -- web/cli/data/infra/library/other (filled later)
     status          TEXT DEFAULT 'discovered',
     -- status values: discovered | cloned | analysed | skipped | error
     error_message   TEXT,
@@ -87,9 +86,13 @@ CREATE TABLE IF NOT EXISTS fixtures (
     reuse_count             INTEGER DEFAULT 0,      -- count of test functions using this fixture
     has_teardown_pair       INTEGER DEFAULT 0,      -- 1 if teardown/cleanup logic exists, 0 otherwise
     raw_source              TEXT,              -- original source text
-    category                TEXT,              -- RQ1 taxonomy label (filled by classifier)
     framework               TEXT,              -- testing framework (pytest, unittest, junit, nunit, testify, etc.)
     num_mocks               INTEGER DEFAULT 0, -- count of distinct mock usages in this fixture
+    -- Agent-specific columns (populated only in fixturedb-agent.db)
+    commit_sha              TEXT DEFAULT NULL,      -- exact commit where fixture added (agent-only)
+    agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/github-actions/other
+    match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
+    is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     UNIQUE(file_id, name, start_line)
 );
 
@@ -112,7 +115,6 @@ CREATE TABLE IF NOT EXISTS mock_usages (
 -- -------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_fixtures_repo    ON fixtures(repo_id);
 CREATE INDEX IF NOT EXISTS idx_fixtures_type    ON fixtures(fixture_type);
-CREATE INDEX IF NOT EXISTS idx_fixtures_category ON fixtures(category);
 CREATE INDEX IF NOT EXISTS idx_mocks_fixture    ON mock_usages(fixture_id);
 CREATE INDEX IF NOT EXISTS idx_mocks_framework  ON mock_usages(framework);
 CREATE INDEX IF NOT EXISTS idx_test_files_repo  ON test_files(repo_id);
@@ -368,24 +370,43 @@ def update_test_file_counts(
 
 
 def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
-    """Insert a fixture record. Returns the new row id, or existing id on conflict."""
+    """
+    Insert a fixture record. Returns the new row id, or existing id on conflict.
+    
+    Args:
+        conn: Database connection
+        fixture: Dict with fixture data. May include:
+            - Standard columns: file_id, repo_id, name, fixture_type, scope, etc.
+            - AGENT-specific columns: commit_sha, agent_type, tier, is_complete_addition
+    
+    Returns:
+        The fixture ID (newly inserted or existing)
+    """
+    # Build the column list dynamically based on what's in the fixture dict
+    columns = [
+        'file_id', 'repo_id', 'name', 'fixture_type', 'scope',
+        'start_line', 'end_line', 'loc', 'cyclomatic_complexity',
+        'max_nesting_depth', 'num_objects_instantiated', 
+        'num_external_calls', 'num_parameters', 'reuse_count', 'has_teardown_pair',
+        'raw_source', 'framework'
+    ]
+    
+    # Add agent-specific columns if present
+    agent_columns = ['commit_sha', 'agent_type', 'match_scope', 'is_complete_addition']
+    for col in agent_columns:
+        if col in fixture:
+            columns.append(col)
+    
+    # Build the INSERT statement
+    cols_str = ', '.join(columns)
+    placeholders = ', '.join([f':{col}' for col in columns])
+    
     cursor = conn.execute(
-        """
-        INSERT INTO fixtures (
-            file_id, repo_id, name, fixture_type, scope,
-            start_line, end_line, loc, cyclomatic_complexity,
-            max_nesting_depth, num_objects_instantiated, 
-            num_external_calls, num_parameters, reuse_count, has_teardown_pair,
-            raw_source, framework
-        ) VALUES (
-            :file_id, :repo_id, :name, :fixture_type, :scope,
-            :start_line, :end_line, :loc, :cyclomatic_complexity,
-            :max_nesting_depth, :num_objects_instantiated, 
-            :num_external_calls, :num_parameters, :reuse_count, :has_teardown_pair,
-            :raw_source, :framework
-        )
+        f"""
+        INSERT INTO fixtures ({cols_str})
+        VALUES ({placeholders})
         ON CONFLICT(file_id, name, start_line) DO NOTHING
-    """,
+        """,
         fixture,
     )
     if cursor.lastrowid:
@@ -539,10 +560,10 @@ def get_survival_rate_for_language(conn: sqlite3.Connection, language: str) -> f
 
 
 def cleanup_to_toy_dataset(
-    db_path: Path = DB_PATH, toy_count_per_language: int = 50
+    db_path: Path = DB_PATH, toy_count_per_language: int = 20
 ) -> dict:
     """
-    Clean up database to keep only the toy dataset: 50 repos per language.
+    Clean up database to keep only the toy dataset: 20 repos per language.
 
     Removes extracted fixtures and data for all repos beyond the first toy_count_per_language
     analyzed repos per language (ordered by creation date, then by ID for consistency).

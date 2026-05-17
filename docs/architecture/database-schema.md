@@ -1,112 +1,186 @@
-# Database Schema
+# Database Schema - FixtureDB Collection
 
-FixtureDB provides data in two formats optimized for different use cases:
+The collection stores fixture data in SQLite with a shared schema and a small set of AGENT-only columns. The public documentation focuses on the fields that are actually used for analysis and export.
 
-## Data Formats Comparison
+## Database overview
 
-| Aspect | **SQLite** (`fixtures.db`) | **CSV Exports** |
-|--------|--------|---------|
-| **Purpose** | Complete reproducible dataset with all fields | Quantitative metrics with context for analysis |
-| **Tables** | 4 normalized (repositories, test_files, fixtures, mock_usages) | 3 CSV files (fixtures, repositories, test_files) |
-| **Includes** | Raw source, internal classifications, error logs, mock framework details | Quantitative metrics only (no raw_source, categories, classifications) |
-| **Best for** | Verification, reproducibility, source inspection, detailed mock analysis | Paper analysis, spreadsheet workflows, pandas/R |
+| Database | Purpose | Scope |
+|----------|---------|-------|
+| `fixturedb-human.db` | Pre-2021 human-written fixtures | Human baseline |
+| `fixturedb-agent.db` | 2021+ agent-generated fixtures | Agent-era dataset with commit metadata |
 
----
+Both databases use SQLite with WAL mode enabled for safe concurrent reads.
 
-## SQLite Database (fixtures.db)
+## Shared schema
 
-**Setup:** Standard SQLite 3 with WAL mode (safe read-only access during writes)
+### repositories
 
-### Table Overview
+Repository metadata and collection statistics.
 
-| Table | Rows (toy) | Relationship | Key Columns |
-|-------|------|--------------|---------|
-| `repositories` | 200 | Root | full_name, language, stars, forks, pinned_commit, status, num_test_files, num_fixtures, num_contributors |
-| `test_files` | 257,764 | FK → repositories.id | repo_id, relative_path, language, file_loc, num_fixtures, total_fixture_loc |
-| `fixtures` | 35,169 | FK → test_files.id, repo_id | name, fixture_type, scope, loc, cyclomatic_complexity, num_parameters, reuse_count, has_teardown_pair |
-| `mock_usages` | ~18K | FK → fixtures.id | fixture_id, framework, mock_style, target_identifier |
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Internal primary key |
+| `github_id` | INTEGER | GitHub repository numeric ID |
+| `full_name` | TEXT | Repository slug such as `pytest-dev/pytest` |
+| `language` | TEXT | Normalized primary language (`python`, `java`, `javascript`, `typescript`, `go`) |
+| `stars` | INTEGER | Star count at collection time |
+| `forks` | INTEGER | Fork count at collection time |
+| `description` | TEXT | Repository description from GitHub |
+| `topics` | TEXT | JSON-encoded list of GitHub topics |
+| `created_at` | TEXT | ISO 8601 repository creation date |
+| `pushed_at` | TEXT | ISO 8601 last push date |
+| `clone_url` | TEXT | Repository clone URL |
+| `pinned_commit` | TEXT | Commit SHA analyzed for the repository |
+| `status` | TEXT | Collection status such as `discovered`, `cloned`, `analysed`, `skipped`, or `error` |
+| `error_message` | TEXT | Error details if collection failed |
+| `skip_reason` | TEXT | Skip reason when a repository is filtered out |
+| `num_test_files` | INTEGER | Number of test files found |
+| `num_fixtures` | INTEGER | Number of fixture definitions found |
+| `num_mock_usages` | INTEGER | Number of mock usages detected |
+| `num_contributors` | INTEGER | Contributor count from GitHub |
+| `collected_at` | TEXT | Timestamp of insertion |
 
-**Entity Relationship:**
+### test_files
+
+Test file inventory and file-level summary counts.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Internal primary key |
+| `repo_id` | INTEGER | Foreign key to `repositories.id` |
+| `relative_path` | TEXT | Path relative to repository root |
+| `language` | TEXT | File language |
+| `file_loc` | INTEGER | Non-blank lines of code in the file |
+| `num_test_funcs` | INTEGER | Number of detected test functions |
+| `num_fixtures` | INTEGER | Number of fixtures in the file |
+| `total_fixture_loc` | INTEGER | Sum of fixture LOC within the file |
+
+### fixtures
+
+Individual fixture definitions and their quantitative metrics.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Internal primary key |
+| `file_id` | INTEGER | Foreign key to `test_files.id` |
+| `repo_id` | INTEGER | Foreign key to `repositories.id` |
+| `name` | TEXT | Fixture name or method name |
+| `fixture_type` | TEXT | Detected fixture pattern such as `pytest_decorator`, `unittest_setup`, or `before_each` |
+| `scope` | TEXT | Execution scope such as `per_test`, `per_class`, `per_module`, or `global` |
+| `start_line` | INTEGER | 1-based start line |
+| `end_line` | INTEGER | 1-based end line |
+| `loc` | INTEGER | Non-blank lines of code in the fixture |
+| `cyclomatic_complexity` | INTEGER | McCabe cyclomatic complexity |
+| `max_nesting_depth` | INTEGER | Maximum block nesting depth |
+| `num_objects_instantiated` | INTEGER | Estimated object creations inside the fixture |
+| `num_external_calls` | INTEGER | Estimated I/O or external calls inside the fixture |
+| `num_parameters` | INTEGER | Number of fixture parameters |
+| `reuse_count` | INTEGER | Number of test functions using this fixture |
+| `has_teardown_pair` | INTEGER | Binary indicator for teardown or cleanup logic |
+| `raw_source` | TEXT | Original source text for the fixture |
+| `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |
+| `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
+| `commit_sha` | TEXT | AGENT-only: commit that introduced the fixture |
+| `agent_type` | TEXT | AGENT-only: agent family such as `claude`, `copilot`, `cursor`, or `github-actions` |
+| `tier` | INTEGER | AGENT-only: corpus tier flag used by the split pipeline |
+| `is_complete_addition` | INTEGER | AGENT-only: 1 when the fixture was added as a complete addition |
+
+### mock_usages
+
+Per-fixture mock framework usage data.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | INTEGER | Internal primary key |
+| `fixture_id` | INTEGER | Foreign key to `fixtures.id` |
+| `repo_id` | INTEGER | Foreign key to `repositories.id` |
+| `framework` | TEXT | Mocking framework or helper family |
+| `target_identifier` | TEXT | Identifier passed to the mock call |
+| `num_interactions_configured` | INTEGER | Number of interactions configured on the mock |
+| `raw_snippet` | TEXT | Original source snippet for the mock usage |
+
+## Query examples
+
+### Compare human and AGENT fixture size
+
+```python
+import pandas as pd
+import sqlite3
+
+human = sqlite3.connect("fixturedb-human.db")
+agent = sqlite3.connect("fixturedb-agent.db")
+
+human_by_framework = pd.read_sql(
+    "SELECT framework, COUNT(*) AS n, AVG(loc) AS avg_loc FROM fixtures GROUP BY framework ORDER BY n DESC",
+    human,
+)
+llm_by_framework = pd.read_sql(
+    "SELECT framework, COUNT(*) AS n, AVG(loc) AS avg_loc FROM fixtures GROUP BY framework ORDER BY n DESC",
+    agent,
+)
+
+print(human_by_framework)
+print(llm_by_framework)
 ```
-repositories (1) ──< test_files (1) ──< fixtures (1) ──< mock_usages
-      │                                      │
-      └──────────────── repo_id ─────────────┘  (denormalized FK)
+
+### Compare scope distributions
+
+```sql
+SELECT scope, COUNT(*) AS fixtures
+FROM fixtures
+GROUP BY scope
+ORDER BY fixtures DESC;
 ```
 
-### Key Columns for CSV Export
+### Inspect mock usage per framework
 
-**fixtures table (primary analysis table):**
-- **structure:** `loc`, `cyclomatic_complexity` (via Lizard)
-- **design:** `scope`, `num_parameters`, `reuse_count`, `has_teardown_pair`
-- **detection:** `fixture_type`, `framework`, `name`
-- **context:** Via SQL join: `language`, `repo` (full_name), `file_path`
-- **reproducibility:** Via SQL join: `pinned_commit`, `github_url`
+```python
+import sqlite3
+import pandas as pd
 
-**repositories table (exported for context):**
-- **identification:** `github_id`, `full_name`, `language`
-- **metrics:** `stars`, `forks`, `num_contributors`
-- **dates:** `created_at`, `pushed_at`, `pinned_commit`, `collected_at`
-- **counts:** `num_test_files`, `num_fixtures`, `num_analyzed_fixtures`
-
-**mock_usages table (database only - not exported to CSV):**
-- `framework` (detection pattern: unittest_mock, pytest_mock, mockito, jest, sinon, etc.)
-- `target_identifier` (string passed to mock call)
-- `num_interactions_configured` (behavior configuration count)
-- Available in SQLite for researchers who need detailed mock analysis
-
----
-
-## CSV Exports
-
-### Files Generated
-
-```
-export/fixturedb_v<version>_<date>/
-├── fixtures.db                      ← SQLite database
-├── fixtures.csv                     ← All fixtures, all languages (~35K rows)
-├── repositories.csv                 ← Repository metadata (200 rows)
-├── test_files.csv                   ← Test files analyzed (~257K rows)
-└── README.txt
+conn = sqlite3.connect("fixturedb-agent.db")
+df = pd.read_sql(
+    "SELECT framework, COUNT(*) AS mock_count, AVG(num_interactions_configured) AS avg_interactions FROM mock_usages GROUP BY framework ORDER BY mock_count DESC",
+    conn,
+)
+print(df)
 ```
 
-### What's Excluded from CSV
+## Data quality guarantees
 
-**Never exported:** `raw_source`, `category`, `mock_style`, `target_layer`, `raw_snippet`, `mock_usages table`  
-(Use SQLite database if you need to inspect original code, internal classifications, or detailed mock framework analysis)
+- The schema is append-safe and re-runnable; existing records are not truncated during collection.
+- Human and AGENT databases share the same core table structure so analyses can be compared directly.
+- AGENT-only columns are only populated where commit-level provenance exists.
+- Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from the analyzed source code.
 
-### CSV Export Columns
+## Accessing the databases
 
-**fixtures.csv** — Main analysis table; one row per fixture (all languages)
-- **Identification:** id, language
-- **Context:** repo (full_name), file_path, name  
-- **Classification:** fixture_type, framework, scope
-- **Location:** start_line, end_line
-- **Structure:** loc
-- **Complexity:** cyclomatic_complexity, max_nesting_depth
-- **Design:** num_parameters, num_objects_instantiated, num_external_calls, reuse_count, has_teardown_pair
-- **Reproducibility:** pinned_commit, github_url
+### CLI
 
-**repositories.csv** — Repository metadata; one row per analyzed repository
-- **Identification:** id, github_id, full_name, language
-- **Metrics:** stars, forks, num_contributors
-- **Dates:** created_at, pushed_at, pinned_commit
-- **Counts:** num_test_files, num_fixtures, num_analyzed_fixtures, collected_at
+```bash
+sqlite3 fixturedb-human.db "SELECT COUNT(*) FROM fixtures;"
+sqlite3 fixturedb-agent.db "SELECT framework, COUNT(*) FROM fixtures GROUP BY framework ORDER BY COUNT(*) DESC;"
+```
 
-**test_files.csv** — Test file metadata; one row per test file analyzed
-- **Path:** repo (full_name), language, relative_path
-- **Metrics:** file_loc, num_test_funcs, num_fixtures, total_fixture_loc
+### Python
 
----
+```python
+import sqlite3
 
-## Usage Guidelines
+conn = sqlite3.connect("fixturedb-human.db")
+rows = conn.execute("SELECT scope, COUNT(*) FROM fixtures GROUP BY scope ORDER BY COUNT(*) DESC").fetchall()
+print(rows)
+```
 
-**Use CSVs if:**
-- Analyzing with Excel, Tableau, pandas, or R
-- Writing a paper (clean, quantitative-only format)
-- You don't need raw source code or internal details
+### R
 
-**Use SQLite if:**
-- Verifying extraction decisions (inspect raw_source)
-- Performing complex joins across tables
-- Tracing fixture → mock → repository relationships
-- Reproducing results (includes error_message, pinned_commit)
+```r
+library(DBI)
+con <- dbConnect(RSQLite::SQLite(), "fixturedb-agent.db")
+dbGetQuery(con, "SELECT agent_type, COUNT(*) AS fixtures FROM fixtures GROUP BY agent_type ORDER BY fixtures DESC")
+```
+
+## Notes
+
+- The public docs only document the current collection fields and metrics.
+- The SQLite database keeps the raw source text for reproducibility and deeper analysis.

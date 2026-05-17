@@ -31,7 +31,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest --cov=collection --cov-report=term-missing --cov-report=xml --cov-report=html -v
+        pytest -c pytest.ini --cov=collection --cov-report=term-missing --cov-report=xml --cov-report=html -v
       continue-on-error: true
 
     - name: Generate coverage badge

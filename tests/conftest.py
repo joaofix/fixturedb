@@ -199,3 +199,197 @@ def assert_fixture_with_type_detected(
             ), f"Expected scope {scope}, got {fixture.scope}"
 
     return matching[0] if count == 1 else matching
+
+
+# ==================== FixtureDB Split Implementation Fixtures ====================
+
+
+@pytest.fixture
+def temp_clones_directory():
+    """Create a temporary clones directory with mock repositories."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        clones_dir = Path(tmpdir) / "clones"
+        clones_dir.mkdir()
+
+        # Create 5 mock repositories
+        for i in range(5):
+            repo_dir = clones_dir / f"repo_{i}"
+            repo_dir.mkdir()
+
+            # Add some agent files to first 3 repos
+            if i < 3:
+                (repo_dir / ".cursorrules").touch()
+
+            # Create basic git structure (init repo)
+            (repo_dir / ".git").mkdir(exist_ok=True)
+
+        yield clones_dir
+
+
+@pytest.fixture
+def temp_database():
+    """Create a temporary SQLite database for testing."""
+    import sqlite3
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        db_path = Path(tmpdir) / "test.db"
+
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        # Create basic schema
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS fixtures (
+                fixture_id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT,
+                scope TEXT,
+                file_id INTEGER,
+                repo_id INTEGER
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS test_files (
+                file_id INTEGER PRIMARY KEY,
+                repo_id INTEGER,
+                file_path TEXT,
+                language TEXT
+            )
+        """)
+
+        conn.commit()
+        conn.close()
+
+        yield db_path
+
+
+@pytest.fixture
+def sample_agent_commits():
+    """Provide sample agent commit data for testing."""
+    return {
+        "repo_1": {
+            "claude": [
+                "abc123def456",
+                "ghi789jkl012",
+            ],
+            "copilot": ["mno345pqr678"],
+        },
+        "repo_2": {
+            "cursor": ["stu901vwx234"],
+        },
+    }
+
+
+@pytest.fixture
+def sample_fixture_data():
+    """Provide sample fixture data for testing."""
+    return [
+        {
+            "fixture_id": 1,
+            "name": "test_client",
+            "type": "pytest.fixture",
+            "scope": "function",
+            "file_id": 1,
+            "repo_id": 1,
+        },
+        {
+            "fixture_id": 2,
+            "name": "setup_database",
+            "type": "pytest.fixture",
+            "scope": "module",
+            "file_id": 1,
+            "repo_id": 1,
+        },
+        {
+            "fixture_id": 3,
+            "name": "mock_config",
+            "type": "pytest.fixture",
+            "scope": "function",
+            "file_id": 2,
+            "repo_id": 2,
+        },
+    ]
+
+
+@pytest.fixture
+def sample_fixture_distribution():
+    """Provide sample fixture distribution by type."""
+    return {
+        "pytest.fixture": {
+            "count": 700,
+            "repos": 150,
+        },
+        "unittest.TestCase": {
+            "count": 200,
+            "repos": 50,
+        },
+        "jasmine.describe": {
+            "count": 100,
+            "repos": 30,
+        },
+    }
+
+
+@pytest.fixture
+def mock_git_output():
+    """Provide sample git log output for testing."""
+    return (
+        "abc123def456|2023-01-15|John Doe <john@example.com>|Fix bug\n"
+        "Co-authored-by: claude\n"
+        "---\n"
+        "ghi789jkl012|2023-02-20|Jane Smith <jane@example.com>|Add feature\n"
+        "Co-authored-by: copilot <copilot@github.com>\n"
+        "---\n"
+        "mno345pqr678|2023-03-10|Bob Johnson <bob@example.com>|Refactor\n"
+        "---\n"
+    )
+
+
+def create_mock_agent_config_file(repo_dir: Path, agent_type: str) -> Path:
+    """Create a mock agent configuration file in a repository."""
+    config_map = {
+        "claude": ".cursorrules",
+        "cursor": ".cursorrules",
+        "copilot": ".copilot",
+        "aider": ".aider.conf",
+        "devin": ".devin.config",
+    }
+
+    config_file = repo_dir / config_map.get(agent_type, ".agent.config")
+    config_file.write_text(f"# Mock {agent_type} configuration")
+
+    return config_file
+
+
+def create_mock_fixture_file(repo_dir: Path, fixtures_count: int = 3) -> Path:
+    """Create a mock Python test file with fixtures."""
+    test_file = repo_dir / "tests" / "conftest.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+
+    fixture_code = "import pytest\n\n"
+    for i in range(fixtures_count):
+        fixture_code += f"""
+@pytest.fixture
+def fixture_{i}():
+    \"\"\"Test fixture {i}.\"\"\"
+    return {i}
+
+"""
+
+    test_file.write_text(fixture_code)
+    return test_file
+
+
+def create_mock_agent_commit_data(
+    agent_type: str = "claude",
+    commit_count: int = 5,
+) -> dict:
+    """Create mock agent commit data."""
+    commits = {}
+    for i in range(commit_count):
+        commits[f"repo_{i}"] = {
+            agent_type: [f"commit_{i}_{j}" for j in range(2)]
+        }
+
+    return commits
