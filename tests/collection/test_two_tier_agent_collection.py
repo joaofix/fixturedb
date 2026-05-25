@@ -122,7 +122,9 @@ Co-authored-by: OpenHands <openhands@example.com>"""
 
         # UPPERCASE keyword
         body2 = "Fix\n\nCO-AUTHORED-BY: Copilot <copilot@github.com>"
-        assert scanner._detect_agent_in_commit("User", "user@ex.com", body2) == "copilot"
+        assert (
+            scanner._detect_agent_in_commit("User", "user@ex.com", body2) == "copilot"
+        )
 
         # MixedCase keyword
         body3 = "Fix\n\nCo-Authored-By: Cursor <cursor@anysoftware.io>"
@@ -181,7 +183,9 @@ Co-authored-by: Bob <bob@example.com>"""
 
         # Another agent
         body3 = "Fix\n\nCo-authored-by: GitHub Copilot"
-        assert scanner._detect_agent_in_commit("User", "user@ex.com", body3) == "copilot"
+        assert (
+            scanner._detect_agent_in_commit("User", "user@ex.com", body3) == "copilot"
+        )
 
         # Cursor without email
         body4 = "Fix\n\nCo-authored-by: Cursor IDE"

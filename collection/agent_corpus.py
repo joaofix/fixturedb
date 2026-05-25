@@ -400,7 +400,7 @@ class AgentCorpusCollector:
         # Trackers for statistics
         repo_ages = []
         repo_contributors = []
-        
+
         # Progress logging state
         last_progress_log = time.time()
         progress_lock = threading.Lock()
@@ -446,7 +446,9 @@ class AgentCorpusCollector:
                     logger.info(
                         f"[Agent Corpus] Cloning {repo_name} with history for commit scan..."
                     )
-                    if not clone_repo_for_commit_scan(repo.get("clone_url", ""), repo_path):
+                    if not clone_repo_for_commit_scan(
+                        repo.get("clone_url", ""), repo_path
+                    ):
                         stats.repos_failed_qc += 1
                         stats.qc_skip_reasons["clone_failed"] = (
                             stats.qc_skip_reasons.get("clone_failed", 0) + 1
@@ -505,7 +507,9 @@ class AgentCorpusCollector:
                 )
 
                 if not agent_commits:
-                    logger.debug(f"[Agent Corpus] No agent commits found in {repo_name}")
+                    logger.debug(
+                        f"[Agent Corpus] No agent commits found in {repo_name}"
+                    )
                     stats.repos_failed_qc += 1
                     stats.qc_skip_reasons["no_agent_commits"] = (
                         stats.qc_skip_reasons.get("no_agent_commits", 0) + 1
@@ -536,7 +540,9 @@ class AgentCorpusCollector:
                             "commit_date": commit_info.get("commit_date"),
                             "language": language_name,
                             "test_file_count": len(test_files),
-                            "test_file_paths": json.dumps(test_files, ensure_ascii=False),
+                            "test_file_paths": json.dumps(
+                                test_files, ensure_ascii=False
+                            ),
                         }
                     )
 
@@ -555,6 +561,9 @@ class AgentCorpusCollector:
 
                 # Extract fixtures from test commits
                 test_files_cache = {}  # Cache to avoid re-inserting same test file
+                # Track per-repo fixture metadata to write repo list CSV
+                repo_fixture_count = 0
+                repo_fixture_commit_shas: list[str] = []
 
                 with db_session(self.output_db) as conn:
                     for test_commit in test_commits:
@@ -575,6 +584,12 @@ class AgentCorpusCollector:
                             logger.info(
                                 f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} fixtures"
                             )
+
+                            if fixtures:
+                                repo_fixture_count += len(fixtures)
+                                repo_fixture_commit_shas.append(
+                                    commit_info["commit_sha"]
+                                )
 
                             for fixture in fixtures:
                                 file_path = fixture.get("file_path", "unknown")
@@ -630,15 +645,73 @@ class AgentCorpusCollector:
                             logger.debug(
                                 f"Failed to extract fixtures from {commit_info['commit_sha']}: {e}"
                             )
-                
+
                 # Clean up clone after extraction is complete
                 if repo_path.exists():
                     shutil.rmtree(repo_path, ignore_errors=True)
                     logger.debug(f"[Agent Corpus] Cleaned up clone: {repo_name}")
-                
+
+                # If we extracted fixtures from this repo, write a per-language
+                # agent fixture repo list CSV so downstream human selection can
+                # consume only repos that actually yielded agent fixtures.
+                try:
+                    if repo_fixture_count > 0:
+                        fixture_list_dir = Path(self.repo_qc_dir) / "agent_fixtures"
+                        fixture_list_dir.mkdir(parents=True, exist_ok=True)
+                        repo_list_path = (
+                            fixture_list_dir
+                            / f"{language_name}_agent_fixture_repos.csv"
+                        )
+                        write_header = not repo_list_path.exists()
+                        with repo_list_path.open(
+                            "a", encoding="utf-8", newline=""
+                        ) as fh:
+                            writer = csv.DictWriter(
+                                fh,
+                                fieldnames=[
+                                    "repo_name",
+                                    "language",
+                                    "fixture_count",
+                                    "commit_count_with_fixtures",
+                                    "first_fixture_commit",
+                                    "last_fixture_commit",
+                                    "clone_url",
+                                ],
+                            )
+                            if write_header:
+                                writer.writeheader()
+
+                            first_sha = (
+                                repo_fixture_commit_shas[0]
+                                if repo_fixture_commit_shas
+                                else ""
+                            )
+                            last_sha = (
+                                repo_fixture_commit_shas[-1]
+                                if repo_fixture_commit_shas
+                                else ""
+                            )
+                            writer.writerow(
+                                {
+                                    "repo_name": repo_name,
+                                    "language": language_name,
+                                    "fixture_count": repo_fixture_count,
+                                    "commit_count_with_fixtures": len(
+                                        repo_fixture_commit_shas
+                                    ),
+                                    "first_fixture_commit": first_sha,
+                                    "last_fixture_commit": last_sha,
+                                    "clone_url": repo.get("clone_url", ""),
+                                }
+                            )
+                except Exception as e:
+                    logger.debug(
+                        f"Failed to write agent fixture repo list for {repo_name}: {e}"
+                    )
+
                 # Log progress every 3 minutes
                 log_progress_if_needed()
-            
+
             # Final progress log
             log_progress_if_needed(force=True)
 

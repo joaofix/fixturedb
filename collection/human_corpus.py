@@ -163,6 +163,53 @@ def select_human_corpus_repositories(
 
     # Fallback: read repo-QC CSVs
     grouped: dict[str, list[dict]] = {}
+    # First preference: per-language agent fixture repo lists produced by
+    # the agent extraction step. These files list repositories that actually
+    # yielded agent fixtures and should be used as the canonical selection.
+    fixture_list_dir = Path(repo_qc_dir) / "agent_fixtures"
+    if fixture_list_dir.exists() and fixture_list_dir.is_dir():
+        for fpath in sorted(fixture_list_dir.glob("*_agent_fixture_repos.csv")):
+            with fpath.open("r", encoding="utf-8", newline="") as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    repo_name = (
+                        row.get("repo_name") or row.get("full_name") or ""
+                    ).strip()
+                    lang = (row.get("language") or "unknown").strip().lower()
+                    if not repo_name or "/" not in repo_name:
+                        continue
+                    if language and lang != language:
+                        continue
+                    repo_row = {
+                        "id": _stable_repo_id(repo_name),
+                        "github_id": _stable_repo_id(repo_name),
+                        "full_name": repo_name,
+                        "language": lang,
+                        "stars": 0,
+                        "forks": 0,
+                        "description": "",
+                        "topics": "[]",
+                        "created_at": "",
+                        "pushed_at": "",
+                        "clone_url": f"https://github.com/{repo_name}.git",
+                        "num_contributors": 0,
+                    }
+                    grouped.setdefault(lang, [])
+                    if repo_name not in {r["full_name"] for r in grouped[lang]}:
+                        grouped[lang].append(repo_row)
+
+    # If we found fixture-list repos, return those (respecting per-language cap)
+    if grouped:
+        for lang in ([language] if language else list(LANGUAGE_CONFIGS.keys())):
+            if not lang:
+                continue
+            lang_repos = grouped.get(lang, [])
+            selected.extend(
+                lang_repos
+                if repos_per_language is None
+                else lang_repos[:repos_per_language]
+            )
+        return selected
     # New fallback: accept per-language human test-commit CSVs produced earlier
     # e.g., python_human_test_commit_qc.csv. These contain `repo_name` and
     # `language` columns and can be used to select repositories directly.
@@ -200,6 +247,29 @@ def select_human_corpus_repositories(
                 if repo_name not in {r["full_name"] for r in grouped[lang]}:
                     grouped[lang].append(repo_row)
 
+    # Prefer agent test-commit CSVs (if present) which indicate positive
+    # detection of agent activity in test files. If such files exist under
+    # the `tests_commits` subdirectory of `repo_qc_dir`, use those repo
+    # names as the canonical selection. Otherwise fall back to agent_repo_qc
+    # CSVs as before.
+    tests_commits_dir = Path(repo_qc_dir) / "tests_commits"
+
+    agent_test_repos: set[str] = set()
+    if tests_commits_dir.exists() and tests_commits_dir.is_dir():
+        for tpath in sorted(tests_commits_dir.glob("*_agent_test_commit.csv")):
+            with tpath.open("r", encoding="utf-8", newline="") as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    repo_name = (
+                        row.get("repo_name") or row.get("full_name") or ""
+                    ).strip()
+                    lang = (row.get("language") or "unknown").strip().lower()
+                    if not repo_name or "/" not in repo_name:
+                        continue
+                    if language and lang != language:
+                        continue
+                    agent_test_repos.add((repo_name, lang))
+
     for csv_path in sorted(Path(repo_qc_dir).glob("*_agent_repo_qc.csv")):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
@@ -215,6 +285,10 @@ def select_human_corpus_repositories(
                 if not repo_name or "/" not in repo_name:
                     continue
                 if language and lang != language:
+                    continue
+
+                # If agent test-commit selection exists, restrict to that set
+                if agent_test_repos and (repo_name, lang) not in agent_test_repos:
                     continue
 
                 repo_row = {
@@ -466,7 +540,7 @@ class HumanCorpusCollector:
         stats = HumanCorpusStats()
         all_test_commit_rows: list[dict] = []
         test_commit_rows_by_language: dict[str, list[dict]] = defaultdict(list)
-        
+
         # If running in write-only mode and the repo_qc_dir already contains
         # per-language human test-commit CSVs, copy them to the output and exit.
         if only_write_test_commits:
@@ -528,9 +602,7 @@ class HumanCorpusCollector:
                         total_repos = language_progress[lang]["total_repos"]
                         completed = language_progress[lang]["completed"]
                         pct = (completed / total_repos * 100) if total_repos > 0 else 0
-                        avg_fixtures = (
-                            language_progress[lang]["avg_fixtures_per_repo"]
-                        )
+                        avg_fixtures = language_progress[lang]["avg_fixtures_per_repo"]
                         logger.info(
                             f"  {lang}: {completed}/{total_repos} ({pct:.1f}%) "
                             f"~{avg_fixtures:.0f} fixtures/repo"

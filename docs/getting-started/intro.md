@@ -39,3 +39,29 @@ This design enables within-repository comparison of fixtures written by agents v
 - Fixture-level metrics for distribution analysis
 - Repository-level context for stratified analysis
 
+## Recommended Extraction Flow
+
+To ensure the human control sample is drawn only from repositories where agents actually produced fixtures, follow this order:
+
+1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `github-search-agent/agent_fixtures/{language}_agent_fixture_repos.csv`.
+
+	Example:
+
+	```bash
+	python -m collection.agent_corpus --language python --repos-per-language 50
+	```
+
+2. Optionally write per-language human test-commit CSVs (the human collector will prefer the agent-produced repo lists). This is useful if you only want to collect test-commit rows without running full fixture extraction.
+
+	```bash
+	python -m collection.human_corpus --corpus-db data/corpus.db --repo-qc-dir github-search-agent --language python --test-commits-csv /path/to/output --only-write-test-commits
+	```
+
+3. Run the human fixture extraction step. The human collector will prefer `github-search-agent/agent_fixtures/{language}_agent_fixture_repos.csv` if present and will restrict selection accordingly.
+
+	```bash
+	python -m collection.human_corpus --corpus-db data/corpus.db --repo-qc-dir github-search-agent --language python
+	```
+
+Backwards compatibility: if the agent fixture repo lists are not present, the human collector falls back to `github-search-agent/tests_commits/*_agent_test_commit.csv` and then to `*_agent_repo_qc.csv`.
+
