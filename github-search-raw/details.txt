@@ -1,0 +1,12 @@
+Source: https://seart-ghs.si.usi.ch/
+Download date: 25-05-2026
+Quality filters:
+minimum of 500 stars;
+minimum of 100 commits;
+minimum of 5k non-blank lines of code;
+excluding forks
+Repository count:
+JavaScript: 5294
+Python: 8119
+Java: 3744
+TypeScript: 6331
