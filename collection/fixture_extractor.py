@@ -7,21 +7,182 @@ Handles extraction of fixtures from repositories using different strategies:
 """
 
 import logging
+import re
 import subprocess
+from contextlib import contextmanager
+from time import sleep
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from .config import CLONES_DIR, DB_PATH, AGENT_DATASET_START_DATE
+import fcntl
+
+from .config import CLONES_DIR, DB_PATH, AGENT_CORPUS_START_DATE
 from .db import db_session
-from .detector import extract_fixtures
+from .detector import extract_fixtures, _get_parser
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_repo_path(clones_dir: Path, repo_name: str) -> Path:
+    """Resolve a repository path using either slash or double-underscore naming."""
+    candidates = [
+        clones_dir / repo_name,
+        clones_dir / repo_name.replace("/", "__"),
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    return candidates[0]
+
+
+@contextmanager
+def _repo_worktree_lock(repo_path: Path):
+    """Serialize checkout-based extraction for a repository path."""
+    lock_path = repo_path / ".collection.lock"
+    lock_path.touch(exist_ok=True)
+    lock_file = lock_path.open("r+")
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
+        yield
+    finally:
+        try:
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+        finally:
+            lock_file.close()
+
+
+def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
+    """Checkout a commit, falling back to fetching full history if needed."""
+    lock_path = repo_path / ".git" / "index.lock"
+
+    for attempt in range(3):
+        try:
+            subprocess.run(
+                ["git", "checkout", commit_sha, "--quiet"],
+                cwd=repo_path,
+                timeout=30,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return
+        except subprocess.CalledProcessError as exc:
+            stderr = (exc.stderr or "").lower()
+            stdout = (exc.stdout or "").lower()
+            if "index.lock" in stderr or "index.lock" in stdout:
+                if lock_path.exists():
+                    try:
+                        lock_path.unlink()
+                        logger.warning(
+                            "Removed stale git index lock in %s before retrying checkout of %s",
+                            repo_path,
+                            commit_sha,
+                        )
+                    except Exception:
+                        pass
+                sleep(0.5 * (attempt + 1))
+                continue
+
+            try:
+                subprocess.run(
+                    ["git", "fetch", "--unshallow", "--tags", "origin"],
+                    cwd=repo_path,
+                    timeout=300,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                subprocess.run(
+                    ["git", "checkout", commit_sha, "--quiet"],
+                    cwd=repo_path,
+                    timeout=30,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                return
+            except subprocess.CalledProcessError as fetch_exc:
+                raise RuntimeError(f"Failed to checkout {commit_sha}: {fetch_exc}")
+            except subprocess.TimeoutExpired:
+                raise RuntimeError(f"Checkout timeout for {commit_sha}")
+        except subprocess.TimeoutExpired:
+            raise RuntimeError(f"Checkout timeout for {commit_sha}")
+
+    raise RuntimeError(
+        f"Failed to checkout {commit_sha}: stale git index lock persisted after retries"
+    )
+
+
+def extract_fixtures_at_commit(
+    repo_path: Path, commit_sha: str, language: str
+) -> List[Dict]:
+    """Extract fixtures from a repository at a specific commit.
+
+    This is the commit-level primitive used by the paired study workflow.
+    """
+    if not Path(repo_path).exists():
+        raise RuntimeError(f"Repository not found: {repo_path}")
+
+    with _repo_worktree_lock(repo_path):
+        _checkout_commit(repo_path, commit_sha)
+
+        extractor = Pre2021FixtureExtractor(
+            clones_dir=repo_path.parent, source_db=DB_PATH
+        )
+        fixtures: List[Dict] = []
+
+        try:
+            test_files = extractor._find_test_files(repo_path, language)
+
+            for test_file in test_files:
+                try:
+                    result = extract_fixtures(test_file, language)
+                    for fixture in result.fixtures:
+                        fixtures.append(
+                            {
+                                "name": fixture.name,
+                                "fixture_type": fixture.fixture_type,
+                                "framework": fixture.framework,
+                                "scope": fixture.scope,
+                                "loc": fixture.loc,
+                                "language": language,
+                                "file_path": str(test_file.relative_to(repo_path)),
+                                "start_line": fixture.start_line,
+                                "end_line": fixture.end_line,
+                                "cyclomatic_complexity": fixture.cyclomatic_complexity,
+                                "max_nesting_depth": fixture.max_nesting_depth,
+                                "num_objects_instantiated": fixture.num_objects_instantiated,
+                                "num_external_calls": fixture.num_external_calls,
+                                "num_parameters": fixture.num_parameters,
+                                "reuse_count": fixture.reuse_count,
+                                "has_teardown_pair": fixture.has_teardown_pair,
+                                "raw_source": fixture.raw_source,
+                                "mocks": [
+                                    {
+                                        "framework": m.framework,
+                                        "target_identifier": m.target_identifier,
+                                        "num_interactions_configured": m.num_interactions_configured,
+                                        "raw_snippet": m.raw_snippet,
+                                    }
+                                    for m in fixture.mocks
+                                ],
+                            }
+                        )
+                except Exception as exc:
+                    logger.debug(f"Failed to extract from {test_file}: {exc}")
+        except Exception as exc:
+            raise RuntimeError(f"Failed to extract fixtures: {exc}")
+
+    return fixtures
 
 
 @dataclass
 class Pre2021ExtractionStats:
     """Statistics from pre-2021 fixture extraction."""
+
     total_repositories: int = 0
     repositories_with_fixtures: int = 0
     total_fixtures_extracted: int = 0
@@ -33,6 +194,7 @@ class Pre2021ExtractionStats:
 @dataclass
 class AgentExtractionStats:
     """Statistics from agent fixture extraction."""
+
     total_repositories: int = 0
     repositories_with_agent_commits: int = 0
     total_fixtures_extracted: int = 0
@@ -41,6 +203,29 @@ class AgentExtractionStats:
     partially_modified_fixtures: int = 0
     repositories_processed: List[str] = field(default_factory=list)
     repositories_failed: List[Tuple[str, str]] = field(default_factory=list)
+
+
+_HUNK_HEADER_RE = re.compile(
+    r"^@@ -(?P<old_start>\d+)(?:,\d+)? \+(?P<new_start>\d+)(?:,\d+)? @@"
+)
+
+
+@dataclass(frozen=True)
+class DiffLineMap:
+    """Per-file map of new-file line numbers to diff states."""
+
+    line_states: Dict[int, str]
+
+    def fixture_is_completely_added(self, start_line: int, end_line: int) -> bool:
+        """Return True only if every line in the fixture span is newly added."""
+        if start_line <= 0 or end_line < start_line:
+            return False
+
+        for line_no in range(start_line, end_line + 1):
+            if self.line_states.get(line_no) != "added":
+                return False
+
+        return True
 
 
 class Pre2021FixtureExtractor:
@@ -61,6 +246,7 @@ class Pre2021FixtureExtractor:
         self.clones_dir = Path(clones_dir)
         self.source_db = Path(source_db)
         self.stats = Pre2021ExtractionStats()
+        self.all_fixtures: List[Dict] = []
 
     def extract_all(
         self,
@@ -81,13 +267,15 @@ class Pre2021FixtureExtractor:
             Pre2021ExtractionStats with extraction results
         """
         logger.info(f"Starting pre-2021 fixture extraction ({min_year}-{max_year})")
+        self.stats = Pre2021ExtractionStats()
+        self.all_fixtures = []
 
         # Get repositories from corpus.db
         repos = self._get_eligible_repositories()
 
         if repo_names:
             selected = {name for name in repo_names}
-            repos = [repo for repo in repos if repo.get('full_name') in selected]
+            repos = [repo for repo in repos if repo.get("full_name") in selected]
 
         self.stats.total_repositories = len(repos)
 
@@ -98,10 +286,10 @@ class Pre2021FixtureExtractor:
         logger.info(f"Found {len(repos)} repositories to process")
 
         for idx, repo in enumerate(repos, 1):
-            repo_id = repo['id']
-            repo_name = repo['full_name']
-            pinned_commit = repo['pinned_commit']
-            language = repo['language']
+            repo_id = repo["id"]
+            repo_name = repo["full_name"]
+            pinned_commit = repo["pinned_commit"]
+            language = repo["language"]
 
             try:
                 # Extract fixtures from this repository at its pinned commit
@@ -114,10 +302,11 @@ class Pre2021FixtureExtractor:
                 if fixtures:
                     self.stats.repositories_with_fixtures += 1
                     self.stats.total_fixtures_extracted += len(fixtures)
+                    self.all_fixtures.extend(fixtures)
 
                     # Count by type
                     for fixture in fixtures:
-                        fixture_type = fixture.get('fixture_type', 'unknown')
+                        fixture_type = fixture.get("fixture_type", "unknown")
                         self.stats.fixtures_by_type[fixture_type] = (
                             self.stats.fixtures_by_type.get(fixture_type, 0) + 1
                         )
@@ -141,6 +330,162 @@ class Pre2021FixtureExtractor:
                 self.stats.repositories_failed.append((repo_name, str(e)))
 
         return self.stats
+
+    def insert_all(self, target_db: Path) -> int:
+        """
+        Insert all collected pre-2021 fixtures into the target database.
+
+        Args:
+            target_db: Path to target database (fixturedb-human.db)
+
+        Returns:
+            Number of fixtures currently stored after this extraction pass.
+        """
+        from .db import (
+            db_session,
+            insert_fixture,
+            insert_mock_usage,
+            upsert_repository,
+            upsert_test_file,
+        )
+
+        if not self.all_fixtures:
+            logger.warning("No human fixtures to insert")
+            return 0
+
+        logger.info(f"Inserting {len(self.all_fixtures)} human fixtures")
+
+        try:
+            with db_session(target_db) as conn:
+                before_count = conn.execute(
+                    "SELECT COUNT(*) AS c FROM fixtures"
+                ).fetchone()["c"]
+
+                fixtures_by_repo: Dict[str, List[Dict]] = {}
+                for fixture in self.all_fixtures:
+                    repo_name = fixture.get("repo_name")
+                    if repo_name not in fixtures_by_repo:
+                        fixtures_by_repo[repo_name] = []
+                    fixtures_by_repo[repo_name].append(fixture)
+
+                for repo_name, repo_fixtures in fixtures_by_repo.items():
+                    try:
+                        lookup_name = (
+                            repo_name.replace("__", "/")
+                            if "__" in repo_name
+                            else repo_name
+                        )
+
+                        with db_session(self.source_db) as source_conn:
+                            source_row = source_conn.execute(
+                                """
+                                SELECT github_id, full_name, language, stars, forks,
+                                       description, topics, created_at, pushed_at, clone_url
+                                FROM repositories
+                                WHERE full_name = ?
+                                """,
+                                (lookup_name,),
+                            ).fetchone()
+
+                        if source_row is None:
+                            raise RuntimeError(
+                                f"Repository metadata not found in source DB for {repo_name}"
+                            )
+
+                        repo_data = dict(source_row)
+                        repo_data["status"] = "analysed"
+                        repo_id, _ = upsert_repository(conn, repo_data)
+
+                        files_by_path: Dict[str, List[Dict]] = {}
+                        for fixture in repo_fixtures:
+                            file_path = fixture.get("file_path", "unknown")
+                            if file_path not in files_by_path:
+                                files_by_path[file_path] = []
+                            files_by_path[file_path].append(fixture)
+
+                        for file_path, file_fixtures in files_by_path.items():
+                            file_id = upsert_test_file(
+                                conn,
+                                repo_id,
+                                file_path,
+                                file_fixtures[0].get("language", "unknown"),
+                            )
+
+                            for fixture in file_fixtures:
+                                mocks = fixture.get("mocks", [])
+                                fixture_data = {
+                                    "file_id": file_id,
+                                    "repo_id": repo_id,
+                                    "name": fixture.get("name"),
+                                    "fixture_type": fixture.get("fixture_type"),
+                                    "scope": fixture.get("scope", "unknown"),
+                                    "start_line": fixture.get("start_line", 0),
+                                    "end_line": fixture.get("end_line", 0),
+                                    "loc": fixture.get("loc", 0),
+                                    "cyclomatic_complexity": fixture.get(
+                                        "cyclomatic_complexity", 0
+                                    ),
+                                    "max_nesting_depth": fixture.get(
+                                        "max_nesting_depth", 0
+                                    ),
+                                    "num_objects_instantiated": fixture.get(
+                                        "num_objects_instantiated", 0
+                                    ),
+                                    "num_external_calls": fixture.get(
+                                        "num_external_calls", 0
+                                    ),
+                                    "num_parameters": fixture.get("num_parameters", 0),
+                                    "reuse_count": fixture.get("reuse_count", 0),
+                                    "has_teardown_pair": fixture.get(
+                                        "has_teardown_pair", 0
+                                    ),
+                                    "raw_source": fixture.get("raw_source", ""),
+                                    "framework": fixture.get("framework"),
+                                    "num_mocks": len(mocks),
+                                }
+                                fixture_id = insert_fixture(conn, fixture_data)
+
+                                for mock in mocks:
+                                    insert_mock_usage(
+                                        conn,
+                                        {
+                                            "fixture_id": fixture_id,
+                                            "repo_id": repo_id,
+                                            "framework": mock.get("framework"),
+                                            "target_identifier": mock.get(
+                                                "target_identifier", ""
+                                            ),
+                                            "num_interactions_configured": mock.get(
+                                                "num_interactions_configured", 0
+                                            ),
+                                            "raw_snippet": mock.get("raw_snippet", ""),
+                                        },
+                                    )
+
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to insert human fixtures from {repo_name}: {e}"
+                        )
+
+                conn.execute("""
+                    UPDATE fixtures
+                    SET num_mocks = (
+                        SELECT COUNT(*)
+                        FROM mock_usages
+                        WHERE mock_usages.fixture_id = fixtures.id
+                    )
+                    """)
+
+                after_count = conn.execute(
+                    "SELECT COUNT(*) AS c FROM fixtures"
+                ).fetchone()["c"]
+                inserted_count = max(0, after_count - before_count)
+                logger.info(f"Stored {inserted_count} human fixtures in {target_db}")
+                return inserted_count
+
+        except Exception as e:
+            logger.error(f"Error inserting human fixtures: {e}", exc_info=True)
+            raise RuntimeError(f"Failed to insert human fixtures: {e}") from e
 
     def _get_eligible_repositories(self) -> List[Dict]:
         """
@@ -189,51 +534,64 @@ class Pre2021FixtureExtractor:
         Returns:
             List of fixture dicts extracted from the repository
         """
-        repo_path = self.clones_dir / repo_name
+        repo_path = _resolve_repo_path(self.clones_dir, repo_name)
 
         if not repo_path.exists():
             raise RuntimeError(f"Repository not found: {repo_path}")
 
-        # Checkout specific commit
-        try:
-            subprocess.run(
-                ['git', 'checkout', commit_sha, '--quiet'],
-                cwd=repo_path,
-                timeout=30,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to checkout {commit_sha}: {e}")
-        except subprocess.TimeoutExpired:
-            raise RuntimeError(f"Checkout timeout for {commit_sha}")
-
-        # Extract fixtures from test files
         fixtures = []
 
-        try:
-            # Find test files
-            test_files = self._find_test_files(repo_path, language)
+        with _repo_worktree_lock(repo_path):
+            # Checkout specific commit
+            _checkout_commit(repo_path, commit_sha)
 
-            for test_file in test_files:
-                try:
-                    result = extract_fixtures(test_file, language)
+            # Extract fixtures from test files
+            try:
+                # Find test files
+                test_files = self._find_test_files(repo_path, language)
 
-                    for fixture in result.fixtures:
-                        fixtures.append({
-                            'name': fixture.name,
-                            'fixture_type': fixture.fixture_type,
-                            'scope': fixture.scope,
-                            'loc': fixture.loc,
-                            'file_path': str(test_file.relative_to(repo_path)),
-                            'start_line': fixture.start_line,
-                            'end_line': fixture.end_line,
-                        })
+                for test_file in test_files:
+                    try:
+                        result = extract_fixtures(test_file, language)
 
-                except Exception as e:
-                    logger.debug(f"Failed to extract from {test_file}: {e}")
+                        for fixture in result.fixtures:
+                            fixtures.append(
+                                {
+                                    "repo_name": repo_name,
+                                    "name": fixture.name,
+                                    "fixture_type": fixture.fixture_type,
+                                    "framework": fixture.framework,
+                                    "scope": fixture.scope,
+                                    "loc": fixture.loc,
+                                    "language": language,
+                                    "file_path": str(test_file.relative_to(repo_path)),
+                                    "start_line": fixture.start_line,
+                                    "end_line": fixture.end_line,
+                                    "cyclomatic_complexity": fixture.cyclomatic_complexity,
+                                    "max_nesting_depth": fixture.max_nesting_depth,
+                                    "num_objects_instantiated": fixture.num_objects_instantiated,
+                                    "num_external_calls": fixture.num_external_calls,
+                                    "num_parameters": fixture.num_parameters,
+                                    "reuse_count": fixture.reuse_count,
+                                    "has_teardown_pair": fixture.has_teardown_pair,
+                                    "raw_source": fixture.raw_source,
+                                    "mocks": [
+                                        {
+                                            "framework": m.framework,
+                                            "target_identifier": m.target_identifier,
+                                            "num_interactions_configured": m.num_interactions_configured,
+                                            "raw_snippet": m.raw_snippet,
+                                        }
+                                        for m in fixture.mocks
+                                    ],
+                                }
+                            )
 
-        except Exception as e:
-            raise RuntimeError(f"Failed to extract fixtures: {e}")
+                    except Exception as e:
+                        logger.debug(f"Failed to extract from {test_file}: {e}")
+
+            except Exception as e:
+                raise RuntimeError(f"Failed to extract fixtures: {e}")
 
         return fixtures
 
@@ -254,11 +612,27 @@ class Pre2021FixtureExtractor:
         if not config:
             return []
 
-        test_files = []
+        test_files: List[Path] = []
+        seen: set[Path] = set()
 
-        for pattern in config.test_path_patterns:
-            for match in repo_path.glob(pattern):
+        # First pass: canonical test filename conventions (fast and precise).
+        for suffix in config.test_file_suffixes:
+            for match in repo_path.rglob(f"*{suffix}"):
                 if match.is_file() and self._should_process_file(match, language):
+                    if match not in seen:
+                        seen.add(match)
+                        test_files.append(match)
+
+        # Second pass: fallback to files located under common test directories.
+        path_markers = [p.strip("/") for p in config.test_path_patterns]
+        for match in repo_path.rglob("*"):
+            if not match.is_file() or not self._should_process_file(match, language):
+                continue
+
+            rel_parts = set(match.relative_to(repo_path).parts)
+            if any(marker in rel_parts for marker in path_markers):
+                if match not in seen:
+                    seen.add(match)
                     test_files.append(match)
 
         return test_files
@@ -274,10 +648,21 @@ class Pre2021FixtureExtractor:
         Returns:
             True if file should be processed
         """
-        from .config import LANGUAGE_EXTENSIONS, MAX_FILE_SIZE_BYTES
+        from .config import MAX_FILE_SIZE_BYTES, NON_CODE_EXTENSIONS
+
+        language_extensions = {
+            "python": {".py"},
+            "java": {".java"},
+            "javascript": {".js", ".jsx", ".mjs", ".cjs"},
+            "typescript": {".ts", ".tsx", ".mts", ".cts"},
+            "go": {".go"},
+        }
 
         # Check extension
-        if file_path.suffix not in LANGUAGE_EXTENSIONS.get(language.lower(), set()):
+        allowed_extensions = language_extensions.get(language.lower(), set())
+        if not allowed_extensions or file_path.suffix.lower() not in allowed_extensions:
+            return False
+        if file_path.suffix.lower() in NON_CODE_EXTENSIONS:
             return False
 
         # Check file size
@@ -297,7 +682,7 @@ class AgentFixtureExtractor:
         self,
         clones_dir: Path = CLONES_DIR,
         source_db: Path = DB_PATH,
-        start_date: str = AGENT_DATASET_START_DATE,
+        start_date: str = AGENT_CORPUS_START_DATE,
     ):
         """
         Initialize AGENT fixture extractor.
@@ -311,8 +696,7 @@ class AgentFixtureExtractor:
         self.source_db = Path(source_db)
         self.start_date = start_date
         self.stats = AgentExtractionStats()
-        self.all_fixtures = []  # Collected fixtures ready for insertion
-        self.all_fixtures = []  # Collect all extracted fixtures for insertion
+        self.all_fixtures = []
 
     def extract_all(
         self,
@@ -327,15 +711,15 @@ class AgentFixtureExtractor:
             show_progress: Whether to log progress
 
         Returns:
-            LLMExtractionStats with extraction results
+            AgentExtractionStats with extraction results
         """
         logger.info("Starting agent fixture extraction from verified agent commits")
 
         repos_to_process = list(agent_commits.keys())
+        self.stats = AgentExtractionStats()
         self.stats.total_repositories = len(repos_to_process)
         self.stats.repositories_with_agent_commits = len(repos_to_process)
         self.all_fixtures = []
-        self.all_fixtures = []  # Initialize collection
 
         logger.info(f"Found {len(repos_to_process)} repositories with agent commits")
 
@@ -352,16 +736,15 @@ class AgentFixtureExtractor:
                 if fixtures:
                     self.stats.total_fixtures_extracted += len(fixtures)
                     self.all_fixtures.extend(fixtures)
-                    self.all_fixtures.extend(fixtures)  # Collect for insertion
 
                     # Count by agent type
                     for fixture in fixtures:
-                        agent_type = fixture.get('agent_type', 'unknown')
+                        agent_type = fixture.get("agent_type", "unknown")
                         self.stats.fixtures_by_agent[agent_type] = (
                             self.stats.fixtures_by_agent.get(agent_type, 0) + 1
                         )
 
-                        if fixture.get('is_complete_addition'):
+                        if fixture.get("is_complete_addition"):
                             self.stats.completely_added_fixtures += 1
                         else:
                             self.stats.partially_modified_fixtures += 1
@@ -395,22 +778,32 @@ class AgentFixtureExtractor:
         Raises:
             RuntimeError: If target database is not initialized
         """
-        from .db import upsert_repository, upsert_test_file, insert_fixture, db_session
+        from .db import (
+            db_session,
+            insert_fixture,
+            insert_mock_usage,
+            upsert_repository,
+            upsert_test_file,
+        )
 
         if not self.all_fixtures:
             logger.warning("No fixtures to insert")
             return 0
 
-        logger.info(f"Inserting {len(self.all_fixtures)} fixtures with match_scope={match_scope}")
+        logger.info(
+            f"Inserting {len(self.all_fixtures)} fixtures with match_scope={match_scope}"
+        )
 
         try:
             with db_session(target_db) as conn:
-                inserted_count = 0
+                before_count = conn.execute(
+                    "SELECT COUNT(*) AS c FROM fixtures"
+                ).fetchone()["c"]
 
                 # Group fixtures by repository
                 fixtures_by_repo = {}
                 for fixture in self.all_fixtures:
-                    repo_name = fixture.get('repo_name')
+                    repo_name = fixture.get("repo_name")
                     if repo_name not in fixtures_by_repo:
                         fixtures_by_repo[repo_name] = []
                     fixtures_by_repo[repo_name].append(fixture)
@@ -418,7 +811,11 @@ class AgentFixtureExtractor:
                 # Insert fixtures repo by repo
                 for repo_name, repo_fixtures in fixtures_by_repo.items():
                     try:
-                        lookup_name = repo_name.replace('__', '/') if '__' in repo_name else repo_name
+                        lookup_name = (
+                            repo_name.replace("__", "/")
+                            if "__" in repo_name
+                            else repo_name
+                        )
 
                         with db_session(self.source_db) as source_conn:
                             source_row = source_conn.execute(
@@ -437,14 +834,14 @@ class AgentFixtureExtractor:
                             )
 
                         repo_data = dict(source_row)
-                        repo_data['status'] = 'analysed'
+                        repo_data["status"] = "analysed"
 
                         repo_id, _ = upsert_repository(conn, repo_data)
 
                         # Process test files
                         files_by_path = {}
                         for fixture in repo_fixtures:
-                            file_path = fixture.get('file_path', 'unknown')
+                            file_path = fixture.get("file_path", "unknown")
                             if file_path not in files_by_path:
                                 files_by_path[file_path] = []
                             files_by_path[file_path].append(fixture)
@@ -452,48 +849,88 @@ class AgentFixtureExtractor:
                         # Insert test file records and fixtures
                         for file_path, file_fixtures in files_by_path.items():
                             test_file_data = {
-                                'repo_id': repo_id,
-                                'relative_path': file_path,
-                                'language': file_fixtures[0].get('language', 'unknown'),
-                                'file_loc': 0,  # Not computed for AGENT extraction
-                                'num_test_funcs': 0,
-                                'num_fixtures': len(file_fixtures),
+                                "repo_id": repo_id,
+                                "relative_path": file_path,
+                                "language": file_fixtures[0].get("language", "unknown"),
+                                "file_loc": 0,  # Not computed for AGENT extraction
+                                "num_test_funcs": 0,
+                                "num_fixtures": len(file_fixtures),
                             }
-                            file_id, _ = upsert_test_file(conn, test_file_data)
+                            file_id = upsert_test_file(
+                                conn,
+                                repo_id,
+                                file_path,
+                                test_file_data["language"],
+                            )
 
                             # Insert each fixture with match_scope label
                             for fixture in file_fixtures:
+                                mocks = fixture.get("mocks", [])
                                 fixture_data = {
-                                    'file_id': file_id,
-                                    'repo_id': repo_id,
-                                    'name': fixture.get('name'),
-                                    'fixture_type': fixture.get('fixture_type'),
-                                    'scope': fixture.get('scope', 'unknown'),
-                                    'start_line': fixture.get('start_line', 0),
-                                    'end_line': fixture.get('end_line', 0),
-                                    'loc': fixture.get('loc', 0),
-                                    'cyclomatic_complexity': 0,
-                                    'max_nesting_depth': 0,
-                                    'num_objects_instantiated': 0,
-                                    'num_external_calls': 0,
-                                    'num_parameters': 0,
-                                    'reuse_count': 0,
-                                    'has_teardown_pair': 0,
-                                    'raw_source': fixture.get('raw_source', ''),
-                                    'framework': fixture.get('framework'),
+                                    "file_id": file_id,
+                                    "repo_id": repo_id,
+                                    "name": fixture.get("name"),
+                                    "fixture_type": fixture.get("fixture_type"),
+                                    "scope": fixture.get("scope", "unknown"),
+                                    "start_line": fixture.get("start_line", 0),
+                                    "end_line": fixture.get("end_line", 0),
+                                    "loc": fixture.get("loc", 0),
+                                    "cyclomatic_complexity": 0,
+                                    "max_nesting_depth": 0,
+                                    "num_objects_instantiated": 0,
+                                    "num_external_calls": 0,
+                                    "num_parameters": 0,
+                                    "reuse_count": 0,
+                                    "has_teardown_pair": 0,
+                                    "raw_source": fixture.get("raw_source", ""),
+                                    "framework": fixture.get("framework"),
+                                    "num_mocks": len(mocks),
                                     # Agent-specific fields
-                                    'commit_sha': fixture.get('commit_sha'),
-                                    'agent_type': fixture.get('agent_type'),
-                                    'match_scope': match_scope,
-                                    'is_complete_addition': 1 if fixture.get('is_complete_addition') else 0,
+                                    "commit_sha": fixture.get("commit_sha"),
+                                    "agent_type": fixture.get("agent_type"),
+                                    "match_scope": match_scope,
+                                    "is_complete_addition": (
+                                        1 if fixture.get("is_complete_addition") else 0
+                                    ),
                                 }
-                                insert_fixture(conn, fixture_data)
-                                inserted_count += 1
+                                fixture_id = insert_fixture(conn, fixture_data)
+
+                                for mock in mocks:
+                                    insert_mock_usage(
+                                        conn,
+                                        {
+                                            "fixture_id": fixture_id,
+                                            "repo_id": repo_id,
+                                            "framework": mock.get("framework"),
+                                            "target_identifier": mock.get(
+                                                "target_identifier", ""
+                                            ),
+                                            "num_interactions_configured": mock.get(
+                                                "num_interactions_configured", 0
+                                            ),
+                                            "raw_snippet": mock.get("raw_snippet", ""),
+                                        },
+                                    )
 
                     except Exception as e:
-                        logger.warning(f"Failed to insert fixtures from {repo_name}: {e}")
+                        logger.warning(
+                            f"Failed to insert fixtures from {repo_name}: {e}"
+                        )
+
+                conn.execute("""
+                    UPDATE fixtures
+                    SET num_mocks = (
+                        SELECT COUNT(*)
+                        FROM mock_usages
+                        WHERE mock_usages.fixture_id = fixtures.id
+                    )
+                    """)
 
                 conn.commit()
+                after_count = conn.execute(
+                    "SELECT COUNT(*) AS c FROM fixtures"
+                ).fetchone()["c"]
+                inserted_count = max(0, after_count - before_count)
                 logger.info(f"Successfully inserted {inserted_count} fixtures")
                 return inserted_count
 
@@ -516,7 +953,7 @@ class AgentFixtureExtractor:
         Returns:
             List of fixture dicts with commit_sha, agent_type, is_complete_addition
         """
-        repo_path = self.clones_dir / repo_name
+        repo_path = _resolve_repo_path(self.clones_dir, repo_name)
 
         if not repo_path.exists():
             raise RuntimeError(f"Repository not found: {repo_path}")
@@ -525,36 +962,32 @@ class AgentFixtureExtractor:
 
         for commit_sha, agent_type in commits.items():
             try:
-                # Checkout commit
-                subprocess.run(
-                    ['git', 'checkout', commit_sha, '--quiet'],
-                    cwd=repo_path,
-                    timeout=30,
-                    check=True,
-                )
+                with _repo_worktree_lock(repo_path):
+                    # Checkout commit
+                    _checkout_commit(repo_path, commit_sha)
 
-                # Get commit metadata
-                commit_info = self._get_commit_info(repo_path, commit_sha)
-                if not commit_info:
-                    continue
+                    # Get commit metadata
+                    commit_info = self._get_commit_info(repo_path, commit_sha)
+                    if not commit_info:
+                        continue
 
-                # Check if commit date is within range
-                if commit_info['date'] < self.start_date:
-                    continue
+                    # Check if commit date is within range
+                    if commit_info["date"] < self.start_date:
+                        continue
 
-                # Get diff to check for complete additions
-                diff_info = self._get_commit_diff(repo_path, commit_sha)
+                    # Get diff to check for complete additions
+                    diff_info = self._get_commit_diff(repo_path, commit_sha)
 
-                # Extract fixtures
-                commit_fixtures = self._extract_from_diff(
-                    repo_path=repo_path,
-                    repo_name=repo_name,
-                    diff_info=diff_info,
-                    commit_sha=commit_sha,
-                    agent_type=agent_type,
-                )
+                    # Extract fixtures
+                    commit_fixtures = self._extract_from_diff(
+                        repo_path=repo_path,
+                        repo_name=repo_name,
+                        diff_info=diff_info,
+                        commit_sha=commit_sha,
+                        agent_type=agent_type,
+                    )
 
-                fixtures.extend(commit_fixtures)
+                    fixtures.extend(commit_fixtures)
 
             except Exception as e:
                 logger.debug(f"Failed to extract from {commit_sha}: {e}")
@@ -574,7 +1007,7 @@ class AgentFixtureExtractor:
         """
         try:
             result = subprocess.run(
-                ['git', 'log', '-1', '--pretty=format:%ai|%an|%ae|%B', commit_sha],
+                ["git", "log", "-1", "--pretty=format:%ai|%an|%ae|%B", commit_sha],
                 cwd=repo_path,
                 capture_output=True,
                 text=True,
@@ -582,18 +1015,18 @@ class AgentFixtureExtractor:
                 check=True,
             )
 
-            parts = result.stdout.strip().split('|', 3)
+            parts = result.stdout.strip().split("|", 3)
             if len(parts) < 4:
                 return None
 
             timestamp = parts[0]
-            date = timestamp.split(' ')[0]  # Extract YYYY-MM-DD
+            date = timestamp.split(" ")[0]  # Extract YYYY-MM-DD
 
             return {
-                'date': date,
-                'author_name': parts[1],
-                'author_email': parts[2],
-                'message': parts[3] if len(parts) > 3 else '',
+                "date": date,
+                "author_name": parts[1],
+                "author_email": parts[2],
+                "message": parts[3] if len(parts) > 3 else "",
             }
 
         except Exception as e:
@@ -613,7 +1046,7 @@ class AgentFixtureExtractor:
         """
         try:
             result = subprocess.run(
-                ['git', 'show', '--unified=3', commit_sha],
+                ["git", "show", "--unified=3", commit_sha],
                 cwd=repo_path,
                 capture_output=True,
                 text=True,
@@ -655,6 +1088,7 @@ class AgentFixtureExtractor:
             return []
 
         fixtures = []
+        diff_maps = self._build_diff_line_maps(diff_info)
 
         # Parse diff to find added test functions/methods with fixture decorator
         # This is a simplified implementation - real implementation would parse diff
@@ -672,34 +1106,150 @@ class AgentFixtureExtractor:
                 try:
                     language = self._get_language(full_path)
                     result = extract_fixtures(full_path, language)
+                    diff_map = diff_maps.get(file_path)
 
                     for fixture in result.fixtures:
-                        # Check if fixture is completely added (simplified heuristic)
-                        is_complete = self._is_completely_added_fixture(
-                            diff_info, file_path, fixture.name
+                        is_complete = self._is_fixture_completely_added(
+                            full_path=full_path,
+                            fixture=fixture,
+                            diff_map=diff_map,
+                            language=language,
                         )
 
-                        fixtures.append({
-                            'repo_name': repo_name,
-                            'name': fixture.name,
-                            'fixture_type': fixture.fixture_type,
-                            'scope': fixture.scope,
-                            'loc': fixture.loc,
-                            'language': language,
-                            'file_path': file_path,
-                            'start_line': fixture.start_line,
-                            'end_line': fixture.end_line,
-                            'raw_source': fixture.raw_source if hasattr(fixture, 'raw_source') else '',
-                            'framework': fixture.framework if hasattr(fixture, 'framework') else None,
-                            'commit_sha': commit_sha,
-                            'agent_type': agent_type,
-                            'is_complete_addition': is_complete,
-                        })
+                        fixtures.append(
+                            {
+                                "repo_name": repo_name,
+                                "name": fixture.name,
+                                "fixture_type": fixture.fixture_type,
+                                "scope": fixture.scope,
+                                "loc": fixture.loc,
+                                "language": language,
+                                "file_path": file_path,
+                                "start_line": fixture.start_line,
+                                "end_line": fixture.end_line,
+                                "cyclomatic_complexity": fixture.cyclomatic_complexity,
+                                "max_nesting_depth": fixture.max_nesting_depth,
+                                "num_objects_instantiated": fixture.num_objects_instantiated,
+                                "num_external_calls": fixture.num_external_calls,
+                                "num_parameters": fixture.num_parameters,
+                                "reuse_count": fixture.reuse_count,
+                                "has_teardown_pair": fixture.has_teardown_pair,
+                                "raw_source": fixture.raw_source,
+                                "framework": fixture.framework,
+                                "mocks": [
+                                    {
+                                        "framework": m.framework,
+                                        "target_identifier": m.target_identifier,
+                                        "num_interactions_configured": m.num_interactions_configured,
+                                        "raw_snippet": m.raw_snippet,
+                                    }
+                                    for m in fixture.mocks
+                                ],
+                                "commit_sha": commit_sha,
+                                "agent_type": agent_type,
+                                "is_complete_addition": is_complete,
+                            }
+                        )
 
                 except Exception as e:
                     logger.debug(f"Failed to extract from {file_path}: {e}")
 
         return fixtures
+
+    def _is_fixture_completely_added(
+        self,
+        full_path: Path,
+        fixture,
+        diff_map: Optional[DiffLineMap],
+        language: str,
+    ) -> bool:
+        """Check completeness using AST node spans first, then fall back to line spans."""
+        if diff_map is None:
+            return False
+
+        if fixture.start_line <= 0 or fixture.end_line < fixture.start_line:
+            return False
+
+        try:
+            parser = _get_parser(language)
+            source_bytes = full_path.read_bytes()
+            tree = parser.parse(source_bytes)
+            target_node = self._find_enclosing_node(
+                tree.root_node,
+                fixture.start_line,
+                fixture.end_line,
+            )
+
+            if target_node is not None:
+                line_numbers = self._collect_named_node_lines(target_node)
+                if line_numbers:
+                    return all(
+                        diff_map.line_states.get(line_no) == "added"
+                        for line_no in line_numbers
+                    )
+        except Exception as exc:
+            logger.debug(
+                "AST completeness check failed for %s:%s-%s (%s): %s",
+                full_path,
+                fixture.start_line,
+                fixture.end_line,
+                language,
+                exc,
+            )
+
+        return diff_map.fixture_is_completely_added(
+            fixture.start_line,
+            fixture.end_line,
+        )
+
+    def _find_enclosing_node(self, root, start_line: int, end_line: int):
+        """Find the smallest AST node that encloses the fixture span."""
+        best_node = None
+        best_rank = None
+
+        def visit(node):
+            nonlocal best_node, best_rank
+
+            node_start = node.start_point[0] + 1
+            node_end = node.end_point[0] + 1
+
+            if node_start <= start_line and node_end >= end_line:
+                span = node_end - node_start
+                rank = (span, 1 if node.type == "module" else 0)
+                if best_rank is None or rank < best_rank:
+                    best_node = node
+                    best_rank = rank
+
+                for child in node.children:
+                    child_start = child.start_point[0] + 1
+                    child_end = child.end_point[0] + 1
+                    if child_start <= end_line and child_end >= start_line:
+                        visit(child)
+
+        visit(root)
+        return best_node
+
+    def _collect_named_node_lines(self, node) -> set[int]:
+        """Collect line numbers covered by named leaf AST nodes under a target node."""
+        lines: set[int] = set()
+
+        def visit(current):
+            named_children = list(getattr(current, "named_children", []))
+
+            if getattr(current, "type", None) == "comment":
+                return
+
+            if getattr(current, "is_named", False) and not named_children:
+                start_line = current.start_point[0] + 1
+                end_line = current.end_point[0] + 1
+                for line_no in range(start_line, end_line + 1):
+                    lines.add(line_no)
+
+            for child in named_children:
+                visit(child)
+
+        visit(node)
+        return lines
 
     def _find_added_test_files(self, diff: str) -> List[str]:
         """
@@ -713,57 +1263,61 @@ class AgentFixtureExtractor:
         """
         files = []
 
-        for line in diff.split('\n'):
-            if line.startswith('diff --git'):
+        for line in diff.split("\n"):
+            if line.startswith("diff --git"):
                 # Extract file path
                 parts = line.split()
                 if len(parts) >= 4:
                     file_path = parts[3][2:]  # Remove 'b/' prefix
                     if any(
                         file_path.endswith(ext)
-                        for ext in ['.py', '.java', '.js', '.ts', '.go']
+                        for ext in [".py", ".java", ".js", ".ts", ".go"]
                     ):
                         files.append(file_path)
 
         return files
 
-    def _is_completely_added_fixture(
-        self,
-        diff: str,
-        file_path: str,
-        fixture_name: str,
-    ) -> bool:
+    def _build_diff_line_maps(self, diff: str) -> Dict[str, DiffLineMap]:
+        """Build a per-file map of new-file line numbers to diff states.
+
+        The resulting map only considers the new version of each file. A fixture is
+        considered completely added when every line in its [start_line, end_line]
+        span is marked as ``added``.
         """
-        Check if a fixture is completely added (no modifications).
+        file_states: Dict[str, Dict[int, str]] = {}
+        current_file: Optional[str] = None
+        new_line_no: Optional[int] = None
 
-        CRITICAL: Validates that fixture was 100% added in this commit.
+        for raw_line in diff.splitlines():
+            if raw_line.startswith("diff --git"):
+                current_file = None
+                new_line_no = None
+                continue
 
-        Args:
-            diff: Unified diff output
-            file_path: Path to test file
-            fixture_name: Fixture name
+            if raw_line.startswith("+++ b/"):
+                current_file = raw_line[len("+++ b/") :].strip()
+                file_states.setdefault(current_file, {})
+                continue
 
-        Returns:
-            True if fixture is completely new (all added lines)
-        """
-        # Simplified heuristic: check if diff only has additions for this file
-        # Real implementation would parse AST and validate fixture boundaries
+            hunk_match = _HUNK_HEADER_RE.match(raw_line)
+            if hunk_match:
+                new_line_no = int(hunk_match.group("new_start"))
+                continue
 
-        in_file = False
-        has_modifications = False
+            if current_file is None or new_line_no is None:
+                continue
 
-        for line in diff.split('\n'):
-            if f'b/{file_path}' in line:
-                in_file = True
-            elif line.startswith('diff --git'):
-                in_file = False
+            if raw_line.startswith(" "):
+                file_states[current_file][new_line_no] = "context"
+                new_line_no += 1
+            elif raw_line.startswith("+") and not raw_line.startswith("+++"):
+                file_states[current_file][new_line_no] = "added"
+                new_line_no += 1
+            elif raw_line.startswith("-") and not raw_line.startswith("---"):
+                # Deletions do not advance the new-file line number.
+                continue
 
-            if in_file and line.startswith('-') and not line.startswith('---'):
-                # Found a deletion in this file
-                has_modifications = True
-                break
-
-        return not has_modifications
+        return {path: DiffLineMap(states) for path, states in file_states.items()}
 
     def _get_language(self, file_path: Path) -> str:
         """
@@ -778,13 +1332,13 @@ class AgentFixtureExtractor:
         ext = file_path.suffix.lower()
 
         mapping = {
-            '.py': 'python',
-            '.java': 'java',
-            '.js': 'javascript',
-            '.jsx': 'javascript',
-            '.ts': 'typescript',
-            '.tsx': 'typescript',
-            '.go': 'go',
+            ".py": "python",
+            ".java": "java",
+            ".js": "javascript",
+            ".jsx": "javascript",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".go": "go",
         }
 
-        return mapping.get(ext, 'unknown')
+        return mapping.get(ext, "unknown")

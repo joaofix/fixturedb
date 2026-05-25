@@ -388,8 +388,6 @@ def create_mock_agent_commit_data(
     """Create mock agent commit data."""
     commits = {}
     for i in range(commit_count):
-        commits[f"repo_{i}"] = {
-            agent_type: [f"commit_{i}_{j}" for j in range(2)]
-        }
+        commits[f"repo_{i}"] = {agent_type: [f"commit_{i}_{j}" for j in range(2)]}
 
     return commits

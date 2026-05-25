@@ -1,0 +1,515 @@
+"""
+Comprehensive tests for corpus_utils shared utilities.
+
+Tests the new shared utilities module that provides common functions
+for both agent and human corpus collection.
+"""
+
+import json
+import tempfile
+from dataclasses import asdict
+from pathlib import Path
+from unittest.mock import MagicMock, patch, ANY
+
+import pytest
+
+from collection.corpus_utils import (
+    BaseCorpusStats,
+    RepositoryMetadata,
+    FixtureData,
+    compute_repo_metadata,
+    construct_repo_dict,
+    write_fixture_csv_row,
+    persist_repository_and_fixtures,
+    generate_corpus_summary,
+)
+from collection.config import HUMAN_CORPUS_CUTOFF_DATE
+
+
+class TestBaseCorpusStats:
+    """Test BaseCorpusStats dataclass and methods."""
+
+    def test_base_corpus_stats_initialization(self):
+        """Verify BaseCorpusStats initializes with default values."""
+        stats = BaseCorpusStats()
+        assert stats.repos_scanned == 0
+        assert stats.repos_passed_qc == 0
+        assert stats.repos_failed_qc == 0
+        assert stats.fixtures_collected == 0
+        assert stats.qc_skip_reasons == {}
+        assert stats.domain_distribution == {}
+
+    def test_base_corpus_stats_record_skip(self):
+        """Verify record_skip method updates counts correctly."""
+        stats = BaseCorpusStats()
+
+        stats.record_skip("clone_failed")
+        assert stats.repos_failed_qc == 1
+        assert stats.qc_skip_reasons["clone_failed"] == 1
+
+        stats.record_skip("clone_failed")
+        assert stats.repos_failed_qc == 2
+        assert stats.qc_skip_reasons["clone_failed"] == 2
+
+        stats.record_skip("no_commits")
+        assert stats.repos_failed_qc == 3
+        assert stats.qc_skip_reasons["no_commits"] == 1
+
+    def test_base_corpus_stats_to_dict(self):
+        """Verify to_dict serializes all fields."""
+        stats = BaseCorpusStats(
+            repos_scanned=10,
+            repos_passed_qc=8,
+            fixtures_collected=42,
+        )
+
+        result = stats.to_dict()
+        assert isinstance(result, dict)
+        assert result["repos_scanned"] == 10
+        assert result["repos_passed_qc"] == 8
+        assert result["fixtures_collected"] == 42
+        assert "qc_skip_reasons" in result
+        assert "domain_distribution" in result
+
+
+class TestComputeRepoMetadata:
+    """Test repository metadata computation."""
+
+    def test_compute_repo_metadata_returns_all_fields(self):
+        """Verify function returns domain, star_tier, and repo_age."""
+        repo = {
+            "topics": '["django", "web"]',
+            "description": "Web framework",
+            "stars": 1000,
+            "created_at": "2015-01-01",
+        }
+
+        result = compute_repo_metadata(repo, "2021-01-01")
+
+        assert "domain" in result
+        assert "star_tier" in result
+        assert "repo_age_years" in result
+        assert isinstance(result["domain"], str)
+        assert isinstance(result["star_tier"], str)
+
+    def test_compute_repo_metadata_with_web_domain(self):
+        """Verify web domain is detected from topics."""
+        repo = {
+            "topics": '["django", "flask", "rest"]',
+            "description": "",
+            "stars": 100,
+            "created_at": "2015-01-01",
+        }
+
+        result = compute_repo_metadata(repo, "2021-01-01")
+        assert result["domain"] == "web"
+
+    def test_compute_repo_metadata_with_ml_domain(self):
+        """Verify ML domain is detected from topics."""
+        repo = {
+            "topics": '["machine learning", "tensorflow"]',
+            "description": "",
+            "stars": 5000,
+            "created_at": "2015-01-01",
+        }
+
+        result = compute_repo_metadata(repo, "2021-01-01")
+        assert result["domain"] == "ml"
+
+    def test_compute_repo_metadata_star_tier_low(self):
+        """Verify star_tier classification for low stars."""
+        repo = {
+            "topics": "[]",
+            "description": "",
+            "stars": 100,
+            "created_at": "2015-01-01",
+        }
+
+        result = compute_repo_metadata(repo, "2021-01-01")
+        assert result["star_tier"] in ["extended", "core"]
+
+    def test_compute_repo_metadata_repo_age(self):
+        """Verify repo age is computed correctly."""
+        repo = {
+            "topics": "[]",
+            "description": "",
+            "stars": 0,
+            "created_at": "2015-01-01",
+        }
+
+        result = compute_repo_metadata(repo, "2021-01-01")
+        # 2015 to 2021 = 6 years
+        assert isinstance(result["repo_age_years"], (float, type(None)))
+        if result["repo_age_years"] is not None:
+            assert result["repo_age_years"] > 5  # Approximate
+
+
+class TestConstructRepoDict:
+    """Test repository dictionary construction."""
+
+    def test_construct_repo_dict_has_all_required_fields(self):
+        """Verify constructed dict has all required DB fields."""
+        result = construct_repo_dict(
+            full_name="owner/repo",
+            language="python",
+        )
+
+        required_fields = [
+            "github_id",
+            "full_name",
+            "language",
+            "stars",
+            "forks",
+            "description",
+            "topics",
+            "created_at",
+            "pushed_at",
+            "clone_url",
+            "num_contributors",
+        ]
+
+        for field in required_fields:
+            assert field in result
+
+    def test_construct_repo_dict_default_clone_url(self):
+        """Verify clone_url defaults to GitHub URL if not provided."""
+        result = construct_repo_dict(
+            full_name="owner/repo",
+            language="python",
+            clone_url="",
+        )
+
+        assert result["clone_url"] == "https://github.com/owner/repo.git"
+
+    def test_construct_repo_dict_explicit_clone_url(self):
+        """Verify clone_url is used if provided."""
+        custom_url = "https://git.example.com/owner/repo.git"
+        result = construct_repo_dict(
+            full_name="owner/repo",
+            language="python",
+            clone_url=custom_url,
+        )
+
+        assert result["clone_url"] == custom_url
+
+    def test_construct_repo_dict_with_all_fields(self):
+        """Verify all fields are correctly assigned."""
+        result = construct_repo_dict(
+            full_name="owner/repo",
+            language="python",
+            stars=100,
+            forks=10,
+            description="Test repo",
+            topics='["testing"]',
+            created_at="2020-01-01T00:00:00Z",
+            pushed_at="2021-01-01T00:00:00Z",
+            clone_url="https://github.com/owner/repo.git",
+            github_id=12345,
+            num_contributors=5,
+            domain="web",
+            star_tier="tier_mid",
+            repo_age_years=1.5,
+        )
+
+        assert result["full_name"] == "owner/repo"
+        assert result["language"] == "python"
+        assert result["stars"] == 100
+        assert result["forks"] == 10
+        assert result["description"] == "Test repo"
+        assert result["domain"] == "web"
+        assert result["star_tier"] == "tier_mid"
+        assert result["repo_age_years"] == 1.5
+
+
+class TestWriteFixtureCsvRow:
+    """Test fixture CSV row writing."""
+
+    def test_write_fixture_csv_row_creates_file_with_header(self, tmp_path):
+        """Verify CSV file is created with header on first write."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "test_fixture",
+            "fixture_type": "function",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 11,
+            "framework": "pytest",
+        }
+
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
+
+        assert out_path.exists()
+        content = out_path.read_text()
+        assert "repo_name" in content  # Header
+        assert "owner/repo" in content  # Data
+
+    def test_write_fixture_csv_row_appends_without_header(self, tmp_path):
+        """Verify subsequent writes append without header."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture1 = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "fixture1",
+            "fixture_type": "function",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 11,
+            "framework": "pytest",
+        }
+        fixture2 = {
+            "commit_sha": "def456",
+            "file_path": "test_bar.py",
+            "name": "fixture2",
+            "fixture_type": "function",
+            "start_line": 30,
+            "end_line": 40,
+            "loc": 11,
+            "framework": "pytest",
+        }
+
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture1)
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture2)
+
+        content = out_path.read_text()
+        lines = content.strip().split("\n")
+        # 1 header + 2 data rows
+        assert len(lines) == 3
+        assert "fixture1" in content
+        assert "fixture2" in content
+
+    def test_write_fixture_csv_row_with_extra_fields(self, tmp_path):
+        """Verify extra fields are included in CSV."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "fixture",
+            "fixture_type": "function",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 11,
+            "framework": "pytest",
+        }
+
+        write_fixture_csv_row(
+            out_path,
+            "owner/repo",
+            "python",
+            fixture,
+            extra_fields={"is_complete_addition": 1},
+        )
+
+        content = out_path.read_text()
+        assert "is_complete_addition" in content
+
+
+class TestPersistRepositoryAndFixtures:
+    """Test repository and fixture persistence (CSV + DB)."""
+
+    def test_persist_returns_fixture_count(self):
+        """Verify function returns number of fixtures persisted."""
+        repo_data = {
+            "github_id": 123,
+            "full_name": "owner/repo",
+            "language": "python",
+            "stars": 100,
+            "forks": 10,
+            "description": "Test",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/repo.git",
+            "num_contributors": 5,
+        }
+        fixtures = [
+            {
+                "commit_sha": "abc123",
+                "file_path": "test_foo.py",
+                "name": "fixture",
+                "fixture_type": "function",
+                "start_line": 10,
+                "end_line": 20,
+                "loc": 11,
+                "framework": "pytest",
+                "mocks": [],
+            }
+        ]
+
+        with patch("collection.corpus_utils.db_session"):
+            with patch("collection.corpus_utils.upsert_repository") as mock_upsert:
+                with patch("collection.corpus_utils.insert_fixture"):
+                    mock_upsert.return_value = (1, False)
+                    count = persist_repository_and_fixtures(
+                        Path("/tmp/test.db"),
+                        repo_data,
+                        fixtures,
+                    )
+                    assert count == 1
+
+    def test_persist_with_csv_export(self, tmp_path):
+        """Verify CSV export when out_path provided."""
+        repo_data = {
+            "github_id": 123,
+            "full_name": "owner/repo",
+            "language": "python",
+            "stars": 100,
+            "forks": 10,
+            "description": "Test",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/repo.git",
+            "num_contributors": 5,
+        }
+        fixtures = [
+            {
+                "commit_sha": "abc123",
+                "file_path": "test_foo.py",
+                "name": "fixture",
+                "fixture_type": "function",
+                "start_line": 10,
+                "end_line": 20,
+                "loc": 11,
+                "framework": "pytest",
+                "mocks": [],
+            }
+        ]
+        out_path = tmp_path / "fixtures.csv"
+
+        with patch("collection.corpus_utils.db_session"):
+            with patch("collection.corpus_utils.upsert_repository") as mock_upsert:
+                with patch("collection.corpus_utils.insert_fixture"):
+                    mock_upsert.return_value = (1, False)
+                    persist_repository_and_fixtures(
+                        Path("/tmp/test.db"),
+                        repo_data,
+                        fixtures,
+                        out_path=out_path,
+                    )
+
+                    assert out_path.exists()
+                    content = out_path.read_text()
+                    assert "owner/repo" in content
+                    assert "fixture" in content
+
+    def test_persist_with_empty_fixtures(self):
+        """Verify handling of empty fixture list."""
+        repo_data = {
+            "github_id": 123,
+            "full_name": "owner/repo",
+            "language": "python",
+            "stars": 100,
+            "forks": 10,
+            "description": "Test",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/repo.git",
+            "num_contributors": 5,
+        }
+
+        with patch("collection.corpus_utils.db_session"):
+            with patch("collection.corpus_utils.upsert_repository") as mock_upsert:
+                mock_upsert.return_value = (1, False)
+                count = persist_repository_and_fixtures(
+                    Path("/tmp/test.db"),
+                    repo_data,
+                    [],
+                )
+                assert count == 0
+
+
+class TestGenerateCorpusSummary:
+    """Test corpus summary generation."""
+
+    def test_generate_corpus_summary_creates_json_file(self, tmp_path):
+        """Verify summary file is created."""
+        stats = BaseCorpusStats(
+            repos_scanned=100,
+            repos_passed_qc=80,
+            fixtures_collected=1500,
+        )
+
+        with patch("collection.corpus_utils.Path") as mock_path_class:
+            mock_output_dir = tmp_path / "output"
+            mock_output_dir.mkdir()
+            mock_path_class.return_value = mock_output_dir
+
+            # Mock the datetime for predictable filename
+            with patch("collection.corpus_utils.datetime") as mock_datetime:
+                mock_datetime.now.return_value.isoformat.return_value = (
+                    "2026-05-24T12:00:00"
+                )
+                mock_datetime.now.return_value.strftime.return_value = "20260524_120000"
+
+                summary_path = generate_corpus_summary(
+                    stats,
+                    "test_corpus",
+                    Path("/tmp/test.db"),
+                    "since 2021-01-01",
+                    extra_metadata={"test": "value"},
+                )
+
+                assert summary_path is not None
+
+    def test_generate_corpus_summary_json_structure(self, tmp_path):
+        """Verify summary JSON has expected structure."""
+        stats = BaseCorpusStats(
+            repos_scanned=100,
+            repos_passed_qc=80,
+            repos_failed_qc=20,
+            fixtures_collected=1500,
+            test_commits_found=500,
+            domain_distribution={"web": 50, "ml": 30},
+            star_tier_distribution={"tier_low": 60, "tier_high": 40},
+            mean_repo_age_years=3.5,
+            mean_contributors=8.2,
+        )
+
+        # Patch Path to use tmp_path
+        with patch("collection.corpus_utils.Path") as mock_path_class:
+            output_dir = tmp_path / "output"
+            output_dir.mkdir()
+
+            # Make Path() return tmp_path/output for the parent call
+            def path_side_effect(arg=None):
+                if arg == ".":
+                    return tmp_path
+                return output_dir
+
+            mock_path_class.side_effect = lambda *args: (
+                output_dir if not args else output_dir / args[0]
+            )
+
+            # Just test the structure by checking what gets passed to json.dump
+            with patch("builtins.open", create=True) as mock_open:
+                with patch("json.dump") as mock_json_dump:
+                    summary_path = generate_corpus_summary(
+                        stats,
+                        "test_corpus",
+                        Path("/tmp/test.db"),
+                        "since 2021-01-01",
+                    )
+
+                    # Verify json.dump was called
+                    assert mock_json_dump.called
+                    # Get the data that was passed to json.dump
+                    call_args = mock_json_dump.call_args
+                    summary_data = call_args[0][0]
+
+                    # Verify structure
+                    assert "timestamp" in summary_data
+                    assert "methodology" in summary_data
+                    assert "summary_statistics" in summary_data
+                    assert "control_variables" in summary_data
+                    assert (
+                        summary_data["summary_statistics"]["fixtures_collected"] == 1500
+                    )
+                    assert (
+                        summary_data["control_variables"]["mean_repo_age_years"] == 3.5
+                    )

@@ -1,0 +1,101 @@
+"""
+Phase 3: Extract agent-generated fixtures from the quality-controlled commit dataset.
+
+This script now uses the QCed repo/commit CSV exports as input instead of the
+raw discovery pipeline or Phase 1B JSON artifacts.
+"""
+
+import argparse
+import json
+import logging
+import sys
+from pathlib import Path
+from datetime import datetime
+
+from .agent_corpus import AgentCorpusCollector
+from .fixture_extractor import AgentFixtureExtractor
+from .db import initialise_db
+
+# AGENT dataset start date is configured in collection.config as AGENT_CORPUS_START_DATE
+from .resume_utils import database_has_rows
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+
+def main():
+    """Execute Phase 3 agent fixture extraction."""
+
+    parser = argparse.ArgumentParser(
+        description="Extract agent fixtures from user-provided QC datasets"
+    )
+    project_root = Path(__file__).resolve().parents[1]
+    parser.add_argument(
+        "--output-db",
+        type=Path,
+        default=project_root / "data" / "fixturedb-agent.db",
+        help="Output database path",
+    )
+    parser.add_argument(
+        "--repo-qc-dir",
+        type=Path,
+        default=project_root / "github-search-agent",
+        help="Directory containing *_agent_repo_qc.csv files",
+    )
+    parser.add_argument(
+        "--commit-qc-dir",
+        type=Path,
+        default=project_root / "github-search-agent",
+        help="Directory containing *_agent_commit_qc.csv files",
+    )
+    args = parser.parse_args()
+
+    output_db = args.output_db
+    repo_qc_dir = args.repo_qc_dir
+    commit_qc_dir = args.commit_qc_dir
+    output_dir = project_root / "output"
+    output_dir.mkdir(exist_ok=True)
+
+    logger.info("=" * 70)
+    logger.info("PHASE 3: Extract agent-generated fixtures from QC input")
+    logger.info("=" * 70)
+    logger.info(f"Target database: {output_db}")
+    logger.info(f"QC repo input: {repo_qc_dir}")
+    logger.info(f"QC commit input: {commit_qc_dir}")
+    logger.info("")
+
+    if database_has_rows(output_db, "fixtures"):
+        logger.info(
+            f"Existing agent fixture database detected ({output_db.name}); "
+            "skipping extraction and reusing the current results"
+        )
+        return 0
+
+    try:
+        collector = AgentCorpusCollector(
+            output_db=output_db,
+            repo_qc_dir=repo_qc_dir,
+            commit_qc_dir=commit_qc_dir,
+        )
+        stats, db_path = collector.run(
+            repos_per_language=50,
+            language=None,
+        )
+
+        logger.info("")
+        logger.info("PHASE 3 COMPLETE")
+        logger.info(f"Fixture database available at: {db_path}")
+        logger.info("Next: run the analysis and export stages")
+
+        return 0
+
+    except Exception as e:
+        logger.error(f"Error during extraction: {e}", exc_info=True)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

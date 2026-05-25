@@ -21,14 +21,31 @@ DB_PATH = DATA_DIR / "corpus.db"
 LOGS_DIR = ROOT_DIR / "logs"
 
 # ---------------------------------------------------------------------------
-# Split date boundary
+# Temporal boundaries for between-group comparison methodology
 # ---------------------------------------------------------------------------
 
-# Human dataset includes fixtures up to 2020-12-31.
-HUMAN_DATASET_END_DATE = "2020-12-31"
+# Between-group methodology uses different boundaries
+# Human corpus: fixtures from pre-2021 repositories (before agent era)
+HUMAN_CORPUS_CUTOFF_DATE = "2021-01-01"
 
-# Agent dataset starts on 2021-01-01 and runs onwards.
-AGENT_DATASET_START_DATE = "2021-01-01"
+# Agent corpus: fixtures from 2023+ repositories with agent commits
+AGENT_CORPUS_START_DATE = (
+    "2023-06-01"  # Post-ChatGPT (Nov 2022), post-Copilot GA (Jun 2023)
+)
+
+# Quality thresholds for corpus filtering (same for both)
+# Project minimum star floor for repository quality filtering
+MIN_STARS = 500
+MIN_COMMITS = 100
+MIN_TEST_FILES = 5
+
+# Agent configuration files are defined in `collection/agent_patterns.py` as
+# explicit pattern lists (with wildcard and directory markers) and imported by
+# detection modules. Keep patterns centralized in `agent_patterns.py` to avoid
+# duplication and preserve explicit, readable patterns.
+
+# Target repositories per language (NEW: between-group design)
+TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP = 500
 
 for _d in (CLONES_DIR, DATA_DIR, LOGS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
@@ -199,7 +216,7 @@ NON_CODE_EXTENSIONS = {
 # ---------------------------------------------------------------------------
 
 # Minimum repository star floor used by language configs and discovery filters.
-MIN_STARS = 100
+# (Defined in the between-group section above)
 
 
 @dataclass
@@ -209,7 +226,6 @@ class LanguageConfig:
     name: str  # human-readable
     github_language: str  # label used by GitHub search API
     min_stars: int = MIN_STARS
-    toy_target: int = 20  # target count for toy dataset
     full_target: int = 500  # target count for full production dataset
 
     # Paths that signal "this is a test file"
@@ -232,7 +248,7 @@ class LanguageConfig:
 # Literature reference:
 #   Hamster (arXiv:2509.26204) uses ≥500 stars + organisational ownership.
 #   Studies using ≥1000 stars claim "influential project" comparability.
-#   The 100-star floor is the common quality minimum in MSR work.
+#   This project uses a 500-star floor as the quality minimum for discovery.
 # ---------------------------------------------------------------------------
 
 
@@ -308,7 +324,6 @@ LANGUAGE_CONFIGS = {
         name="Python",
         github_language="Python",
         min_stars=MIN_STARS,
-        toy_target=20,
         full_target=500,
         test_path_patterns=["test/", "tests/", "testing/"],
         test_file_suffixes=["test_.py", "_test.py", "_tests.py", "conftest.py"],
@@ -317,7 +332,6 @@ LANGUAGE_CONFIGS = {
         name="Java",
         github_language="Java",
         min_stars=MIN_STARS,
-        toy_target=20,
         full_target=500,
         test_path_patterns=["src/test/", "test/", "tests/"],
         test_file_suffixes=["Test.java", "Tests.java", "IT.java", "Spec.java"],
@@ -326,7 +340,6 @@ LANGUAGE_CONFIGS = {
         name="JavaScript",
         github_language="JavaScript",
         min_stars=MIN_STARS,
-        toy_target=20,
         full_target=250,
         test_path_patterns=["test/", "tests/", "spec/", "__tests__/"],
         test_file_suffixes=[
@@ -343,7 +356,6 @@ LANGUAGE_CONFIGS = {
         name="TypeScript",
         github_language="TypeScript",
         min_stars=MIN_STARS,
-        toy_target=20,
         full_target=250,
         test_path_patterns=["test/", "tests/", "spec/", "__tests__/"],
         test_file_suffixes=[

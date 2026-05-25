@@ -1,0 +1,137 @@
+"""Helpers for identifying test commits from git diffs."""
+
+from __future__ import annotations
+
+import csv
+import json
+import subprocess
+from pathlib import Path
+from typing import Iterable
+
+from .config import LANGUAGE_CONFIGS, NON_CODE_EXTENSIONS
+
+
+def is_test_file_path(relative_path: str, language: str) -> bool:
+    """Return True when a path matches the configured test-file heuristics."""
+    config = LANGUAGE_CONFIGS.get(language)
+    if config is None:
+        return False
+
+    rel = relative_path.replace("\\", "/").strip()
+    if not rel:
+        return False
+
+    name = Path(rel).name
+    name_lower = name.lower()
+
+    if "." not in name:
+        return False
+
+    if any(name_lower.endswith(ext) for ext in NON_CODE_EXTENSIONS):
+        return False
+
+    matched = False
+
+    for pattern in config.test_file_suffixes:
+        pattern_lower = pattern.lower()
+        if pattern_lower.startswith("test_"):
+            if name_lower.startswith("test_") and name_lower.endswith(
+                pattern_lower.split("test_")[1]
+            ):
+                matched = True
+                break
+        elif pattern_lower == "conftest.py":
+            if name_lower == "conftest.py":
+                matched = True
+                break
+        else:
+            if name_lower.endswith(pattern_lower):
+                matched = True
+                break
+
+    if not matched:
+        rel_parts = rel.lower().split("/")
+        for pattern in config.test_path_patterns:
+            dir_pattern = pattern.lower().rstrip("/")
+            if dir_pattern in rel_parts:
+                matched = True
+                break
+
+    return matched
+
+
+def collect_test_files_for_commit(
+    repo_path: Path, commit_sha: str, language: str
+) -> list[str]:
+    """Return the test files touched by a commit."""
+    result = subprocess.run(
+        [
+            "git",
+            "show",
+            "--format=",
+            "--name-status",
+            "--find-renames",
+            "--diff-filter=AMRT",
+            "--root",
+            commit_sha,
+        ],
+        cwd=repo_path,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if result.returncode != 0:
+        return []
+
+    test_files: list[str] = []
+    seen: set[str] = set()
+
+    for raw_line in result.stdout.splitlines():
+        if not raw_line.strip():
+            continue
+        parts = raw_line.split("\t")
+        status = parts[0].strip()
+        path = ""
+
+        if status.startswith(("R", "C")) and len(parts) >= 3:
+            path = parts[-1].strip()
+        elif len(parts) >= 2:
+            path = parts[1].strip()
+
+        if path and path not in seen and is_test_file_path(path, language):
+            seen.add(path)
+            test_files.append(path)
+
+    return test_files
+
+
+def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
+    """Write test commit records to CSV for standalone runs."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    rows = list(records)
+    fieldnames = [
+        "repo_name",
+        "language",
+        "commit_sha",
+        "commit_role",
+        "agent_type",
+        "commit_date",
+        "test_file_count",
+        "test_file_paths",
+    ]
+
+    with output_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            serialised = dict(row)
+            test_file_paths = serialised.get("test_file_paths", [])
+            if not isinstance(test_file_paths, str):
+                serialised["test_file_paths"] = json.dumps(
+                    test_file_paths, ensure_ascii=False
+                )
+            writer.writerow({key: serialised.get(key, "") for key in fieldnames})
+
+    return output_path

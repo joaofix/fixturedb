@@ -17,13 +17,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StratificationResult:
     """Result of stratified sampling operation."""
+
     sampled_ids: List[int] = field(default_factory=list)
     sampled_count: int = 0
     target_count: int = 0
     distribution_check: Dict[str, Dict] = field(default_factory=dict)
     random_seed: int = 42
     reproducible: bool = True
-    stratify_by: str = 'fixture_type'
+    stratify_by: str = "fixture_type"
 
 
 class StratifiedSampler:
@@ -43,7 +44,7 @@ class StratifiedSampler:
         self,
         fixtures: List[Dict],
         target_count: int,
-        stratify_by: str = 'fixture_type',
+        stratify_by: str = "fixture_type",
         tolerance: float = 0.02,
     ) -> StratificationResult:
         """
@@ -104,17 +105,16 @@ class StratifiedSampler:
         while len(sampled) < target_count and sampled:
             # Add more fixtures to reach exact target
             additional_needed = target_count - len(sampled)
-            
+
             # Sample from all fixtures excluding already sampled ones
-            sampled_ids = set(f['id'] for f in sampled)
-            remaining = [f for f in fixtures if f['id'] not in sampled_ids]
-            
+            sampled_ids = set(f["id"] for f in sampled)
+            remaining = [f for f in fixtures if f["id"] not in sampled_ids]
+
             if not remaining:
                 break
-            
+
             additional = random.sample(
-                remaining,
-                min(additional_needed, len(remaining))
+                remaining, min(additional_needed, len(remaining))
             )
             sampled.extend(additional)
 
@@ -122,7 +122,7 @@ class StratifiedSampler:
         sampled = sampled[:target_count]
 
         # Extract IDs
-        sampled_ids = [f['id'] for f in sampled]
+        sampled_ids = [f["id"] for f in sampled]
 
         # Validate distribution
         distribution_check = self._validate_distribution(
@@ -162,7 +162,7 @@ class StratifiedSampler:
         groups = {}
 
         for fixture in fixtures:
-            stratum_value = fixture.get(stratify_by, 'unknown')
+            stratum_value = fixture.get(stratify_by, "unknown")
             if stratum_value not in groups:
                 groups[stratum_value] = []
             groups[stratum_value].append(fixture)
@@ -199,7 +199,7 @@ class StratifiedSampler:
         results = {}
 
         # Get all strata from original
-        strata = set(f.get(stratify_by, 'unknown') for f in original)
+        strata = set(f.get(stratify_by, "unknown") for f in original)
 
         for stratum_value in strata:
             original_count = len(
@@ -215,10 +215,10 @@ class StratifiedSampler:
             tolerance_met = deviation <= tolerance
 
             results[str(stratum_value)] = {
-                'original_ratio': round(orig_ratio, 4),
-                'sampled_ratio': round(samp_ratio, 4),
-                'deviation': round(deviation, 4),
-                'tolerance_met': tolerance_met,
+                "original_ratio": round(orig_ratio, 4),
+                "sampled_ratio": round(samp_ratio, 4),
+                "deviation": round(deviation, 4),
+                "tolerance_met": tolerance_met,
             }
 
             status = "✓" if tolerance_met else "✗"
@@ -240,17 +240,15 @@ class StratifiedSampler:
             Dict with statistics
         """
         all_tolerances_met = all(
-            v['tolerance_met'] for v in result.distribution_check.values()
+            v["tolerance_met"] for v in result.distribution_check.values()
         )
 
         return {
-            'target_count': result.target_count,
-            'sampled_count': result.sampled_count,
-            'sampling_ratio': round(
-                result.sampled_count / result.target_count, 4
-            ),
-            'stratify_by': result.stratify_by,
-            'random_seed': result.random_seed,
-            'all_strata_within_tolerance': all_tolerances_met,
-            'strata_count': len(result.distribution_check),
+            "target_count": result.target_count,
+            "sampled_count": result.sampled_count,
+            "sampling_ratio": round(result.sampled_count / result.target_count, 4),
+            "stratify_by": result.stratify_by,
+            "random_seed": result.random_seed,
+            "all_strata_within_tolerance": all_tolerances_met,
+            "strata_count": len(result.distribution_check),
         }

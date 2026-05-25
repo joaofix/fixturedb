@@ -46,6 +46,9 @@ CREATE TABLE IF NOT EXISTS repositories (
     num_fixtures    INTEGER DEFAULT 0,      -- count of fixture definitions
     num_mock_usages INTEGER DEFAULT 0,      -- count of mock usages detected
     num_contributors INTEGER DEFAULT 0,     -- GitHub API: repository contributor count
+    domain          TEXT DEFAULT NULL,      -- classified domain (web/systems/ml/etc)
+    star_tier       TEXT DEFAULT NULL,      -- core (>=500) or extended (<500)
+    repo_age_years  REAL DEFAULT NULL,      -- repository age in years at collection time
     collected_at    TEXT DEFAULT (datetime('now'))
 );
 
@@ -91,9 +94,44 @@ CREATE TABLE IF NOT EXISTS fixtures (
     -- Agent-specific columns (populated only in fixturedb-agent.db)
     commit_sha              TEXT DEFAULT NULL,      -- exact commit where fixture added (agent-only)
     agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/github-actions/other
+    commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
     match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     UNIQUE(file_id, name, start_line)
+);
+
+-- -------------------------------------------------------------------------
+-- Commit-level observations for paired within-repo analysis
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS commit_observations (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_id             INTEGER NOT NULL REFERENCES repositories(id),
+    commit_sha          TEXT NOT NULL,
+    commit_role         TEXT NOT NULL,   -- agent / human
+    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/github-actions/other
+    commit_date         TEXT,
+    fixture_count       INTEGER DEFAULT 0,
+    mock_usage_count    INTEGER DEFAULT 0,
+    test_file_count     INTEGER DEFAULT 0,
+    collected_at        TEXT DEFAULT (datetime('now')),
+    UNIQUE(repo_id, commit_sha)
+);
+
+-- -------------------------------------------------------------------------
+-- Test commits detected from repository history
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS test_commits (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_id             INTEGER NOT NULL REFERENCES repositories(id),
+    commit_sha          TEXT NOT NULL,
+    commit_role         TEXT NOT NULL,   -- agent / human
+    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/github-actions/other
+    commit_date         TEXT,
+    language            TEXT NOT NULL,
+    test_file_count     INTEGER DEFAULT 0,
+    test_file_paths     TEXT DEFAULT NULL,  -- JSON array of touched test files
+    collected_at        TEXT DEFAULT (datetime('now')),
+    UNIQUE(repo_id, commit_sha)
 );
 
 -- -------------------------------------------------------------------------
@@ -115,9 +153,12 @@ CREATE TABLE IF NOT EXISTS mock_usages (
 -- -------------------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_fixtures_repo    ON fixtures(repo_id);
 CREATE INDEX IF NOT EXISTS idx_fixtures_type    ON fixtures(fixture_type);
+CREATE INDEX IF NOT EXISTS idx_fixtures_corpus  ON fixtures(commit_kind);  -- between-group: filter by corpus (human/agent)
 CREATE INDEX IF NOT EXISTS idx_mocks_fixture    ON mock_usages(fixture_id);
 CREATE INDEX IF NOT EXISTS idx_mocks_framework  ON mock_usages(framework);
 CREATE INDEX IF NOT EXISTS idx_test_files_repo  ON test_files(repo_id);
+CREATE INDEX IF NOT EXISTS idx_test_commits_repo ON test_commits(repo_id);
+CREATE INDEX IF NOT EXISTS idx_test_commits_role ON test_commits(commit_role);
 """
 
 
@@ -151,54 +192,105 @@ def db_session(db_path: Path = DB_PATH, max_retries: int = 20):
     For overnight runs: up to 20 retries with base 0.5s, reaching ~260s max wait.
     Handles database locks that occur during both connection and operations.
     """
-    last_exception = None
-
     for attempt in range(max_retries):
         conn = None
-        caught_exception = None
         try:
             conn = get_connection(db_path)
-            try:
-                yield conn
-                conn.commit()
-                return  # Success - exit the retry loop
-            except Exception as e:
-                caught_exception = e
-                if conn:
-                    conn.rollback()
-                # Don't re-raise here - handle in outer scope
+            yield conn
+            conn.commit()
+            return  # Success - exit the retry loop
+        except Exception as e:
+            if conn:
+                conn.rollback()
+
+            # Check if it's a lock error and we should retry
+            if (
+                isinstance(e, sqlite3.OperationalError)
+                and "locked" in str(e).lower()
+                and attempt < max_retries - 1
+            ):
+                wait_time = (2**attempt) * 0.5
+                logger.warning(
+                    f"Database locked, retrying in {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})"
+                )
+                time.sleep(wait_time)
+                continue  # Retry with new connection
+            else:
+                # Either not a lock error, or max retries reached
+                raise
         finally:
             if conn:
                 conn.close()
 
-        # Handle exception outside the finally block to avoid generator issues
-        if caught_exception is not None:
-            if (
-                isinstance(caught_exception, sqlite3.OperationalError)
-                and "locked" in str(caught_exception).lower()
-            ):
-                if attempt < max_retries - 1:
-                    # Database locked - retry with exponential backoff
-                    last_exception = caught_exception
-                    wait_time = (2**attempt) * 0.5
-                    logger.warning(
-                        f"Database locked, retrying in {wait_time:.1f}s (attempt {attempt + 1}/{max_retries})"
-                    )
-                    time.sleep(wait_time)
-                    continue  # Retry
-                else:
-                    # Max retries reached
-                    logger.error(
-                        f"Database lock not resolved after {max_retries} attempts: {caught_exception}"
-                    )
-                    raise caught_exception
-            else:
-                # Non-lock exceptions should be raised immediately (not retried)
-                raise caught_exception
 
-    # Should not reach here, but just in case
-    if last_exception:
-        raise last_exception
+def insert_commit_observation(conn: sqlite3.Connection, observation: dict) -> int:
+    """Insert a paired-study commit observation and return its row id."""
+    cursor = conn.execute(
+        """
+        INSERT INTO commit_observations (
+            repo_id, commit_sha, commit_role, agent_type,
+            commit_date, fixture_count, mock_usage_count, test_file_count
+        ) VALUES (
+            :repo_id, :commit_sha, :commit_role, :agent_type,
+            :commit_date, :fixture_count, :mock_usage_count, :test_file_count
+        )
+        ON CONFLICT(repo_id, commit_sha) DO UPDATE SET
+            commit_role = excluded.commit_role,
+            agent_type = excluded.agent_type,
+            commit_date = excluded.commit_date,
+            fixture_count = excluded.fixture_count,
+            mock_usage_count = excluded.mock_usage_count,
+            test_file_count = excluded.test_file_count
+        """,
+        observation,
+    )
+    if cursor.rowcount == 1:
+        return cursor.lastrowid
+
+    row = conn.execute(
+        "SELECT id FROM commit_observations WHERE repo_id=? AND commit_sha=?",
+        (observation["repo_id"], observation["commit_sha"]),
+    ).fetchone()
+    if row is None:
+        raise ValueError(
+            f"Commit observation insert conflict but SELECT returned no rows: repo_id={observation['repo_id']}, commit_sha={observation['commit_sha']}"
+        )
+    return row["id"]
+
+
+def insert_test_commit(conn: sqlite3.Connection, test_commit: dict) -> int:
+    """Insert a detected test commit and return its row id."""
+    cursor = conn.execute(
+        """
+        INSERT INTO test_commits (
+            repo_id, commit_sha, commit_role, agent_type,
+            commit_date, language, test_file_count, test_file_paths
+        ) VALUES (
+            :repo_id, :commit_sha, :commit_role, :agent_type,
+            :commit_date, :language, :test_file_count, :test_file_paths
+        )
+        ON CONFLICT(repo_id, commit_sha) DO UPDATE SET
+            commit_role = excluded.commit_role,
+            agent_type = excluded.agent_type,
+            commit_date = excluded.commit_date,
+            language = excluded.language,
+            test_file_count = excluded.test_file_count,
+            test_file_paths = excluded.test_file_paths
+        """,
+        test_commit,
+    )
+    if cursor.rowcount == 1:
+        return cursor.lastrowid
+
+    row = conn.execute(
+        "SELECT id FROM test_commits WHERE repo_id=? AND commit_sha=?",
+        (test_commit["repo_id"], test_commit["commit_sha"]),
+    ).fetchone()
+    if row is None:
+        raise ValueError(
+            f"Test commit insert conflict but SELECT returned no rows: repo_id={test_commit['repo_id']}, commit_sha={test_commit['commit_sha']}"
+        )
+    return row["id"]
 
 
 def initialise_db(db_path: Path = DB_PATH) -> None:
@@ -252,14 +344,20 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
         """
         INSERT INTO repositories (
             github_id, full_name, language, stars, forks,
-            description, topics, created_at, pushed_at, clone_url
+            description, topics, created_at, pushed_at, clone_url,
+            domain, star_tier, repo_age_years, num_contributors
         ) VALUES (
             :github_id, :full_name, :language, :stars, :forks,
-            :description, :topics, :created_at, :pushed_at, :clone_url
+            :description, :topics, :created_at, :pushed_at, :clone_url,
+            :domain, :star_tier, :repo_age_years, :num_contributors
         )
         ON CONFLICT(github_id) DO UPDATE SET
             stars       = excluded.stars,
-            pushed_at   = excluded.pushed_at
+            pushed_at   = excluded.pushed_at,
+            domain      = excluded.domain,
+            star_tier   = excluded.star_tier,
+            repo_age_years = excluded.repo_age_years,
+            num_contributors = excluded.num_contributors
     """,
         repo,
     )
@@ -372,35 +470,54 @@ def update_test_file_counts(
 def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
     """
     Insert a fixture record. Returns the new row id, or existing id on conflict.
-    
+
     Args:
         conn: Database connection
         fixture: Dict with fixture data. May include:
             - Standard columns: file_id, repo_id, name, fixture_type, scope, etc.
             - AGENT-specific columns: commit_sha, agent_type, tier, is_complete_addition
-    
+
     Returns:
         The fixture ID (newly inserted or existing)
     """
     # Build the column list dynamically based on what's in the fixture dict
     columns = [
-        'file_id', 'repo_id', 'name', 'fixture_type', 'scope',
-        'start_line', 'end_line', 'loc', 'cyclomatic_complexity',
-        'max_nesting_depth', 'num_objects_instantiated', 
-        'num_external_calls', 'num_parameters', 'reuse_count', 'has_teardown_pair',
-        'raw_source', 'framework'
+        "file_id",
+        "repo_id",
+        "name",
+        "fixture_type",
+        "scope",
+        "start_line",
+        "end_line",
+        "loc",
+        "cyclomatic_complexity",
+        "max_nesting_depth",
+        "num_objects_instantiated",
+        "num_external_calls",
+        "num_parameters",
+        "reuse_count",
+        "has_teardown_pair",
+        "raw_source",
+        "framework",
+        "num_mocks",
     ]
-    
+
     # Add agent-specific columns if present
-    agent_columns = ['commit_sha', 'agent_type', 'match_scope', 'is_complete_addition']
+    agent_columns = [
+        "commit_sha",
+        "agent_type",
+        "commit_kind",
+        "match_scope",
+        "is_complete_addition",
+    ]
     for col in agent_columns:
         if col in fixture:
             columns.append(col)
-    
+
     # Build the INSERT statement
-    cols_str = ', '.join(columns)
-    placeholders = ', '.join([f':{col}' for col in columns])
-    
+    cols_str = ", ".join(columns)
+    placeholders = ", ".join([f":{col}" for col in columns])
+
     cursor = conn.execute(
         f"""
         INSERT INTO fixtures ({cols_str})
@@ -409,7 +526,7 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         """,
         fixture,
     )
-    if cursor.lastrowid:
+    if cursor.rowcount == 1:
         return cursor.lastrowid
     row = conn.execute(
         "SELECT id FROM fixtures WHERE file_id=? AND name=? AND start_line=?",
@@ -559,106 +676,180 @@ def get_survival_rate_for_language(conn: sqlite3.Connection, language: str) -> f
     return analyzed / discovered
 
 
-def cleanup_to_toy_dataset(
-    db_path: Path = DB_PATH, toy_count_per_language: int = 20
-) -> dict:
+def classify_domain(topics_str: str | None, description_str: str | None) -> str:
     """
-    Clean up database to keep only the toy dataset: 20 repos per language.
+    Classify repository domain from topics and description.
 
-    Removes extracted fixtures and data for all repos beyond the first toy_count_per_language
-    analyzed repos per language (ordered by creation date, then by ID for consistency).
-
-    Returns a dict with:
-      - 'repos_removed': count of repos cleaned
-      - 'fixtures_removed': count of fixtures deleted
-      - 'mocks_removed': count of mock_usages deleted
-      - 'per_language': dict of cleanup counts per language
+    Returns one of: web, systems, ml, security, database, devops, other
     """
-    with db_session(db_path) as conn:
-        summary = {
-            "repos_removed": 0,
-            "fixtures_removed": 0,
-            "mocks_removed": 0,
-            "per_language": {},
-        }
-
-        # Get all analyzed repos per language, ordered by creation date
-        cursor = conn.execute("""
-            SELECT r.id, r.language, r.full_name, r.created_at
-            FROM repositories r
-            WHERE r.status = 'analysed' AND EXISTS (
-                SELECT 1 FROM fixtures WHERE repo_id = r.id
+    text = ""
+    if topics_str:
+        try:
+            topics_list = (
+                json.loads(topics_str) if isinstance(topics_str, str) else topics_str
             )
-            ORDER BY r.language, r.created_at ASC, r.id ASC
-        """)
-        all_analyzed = cursor.fetchall()
+            text += " ".join(str(t).lower() for t in topics_list) + " "
+        except (json.JSONDecodeError, TypeError):
+            pass
 
-        # Group by language and keep track of which IDs to remove
-        by_language = {}
-        for row in all_analyzed:
-            lang = row["language"]
-            if lang not in by_language:
-                by_language[lang] = []
-            by_language[lang].append(row["id"])
+    if description_str:
+        text += description_str.lower()
 
-        # Identify repos to delete (those beyond toy_count_per_language per language)
-        repos_to_remove = []
-        for lang, repo_ids in by_language.items():
-            keep_count = min(toy_count_per_language, len(repo_ids))
-            remove_ids = repo_ids[keep_count:]
-            repos_to_remove.extend(remove_ids)
+    # Domain classification keywords
+    domain_keywords = {
+        "web": [
+            "web",
+            "rest",
+            "http",
+            "frontend",
+            "react",
+            "vue",
+            "angular",
+            "django",
+            "flask",
+            "rails",
+        ],
+        "systems": [
+            "kernel",
+            "driver",
+            "os",
+            "system",
+            "compiler",
+            "linux",
+            "windows",
+            "os/2",
+            "unix",
+        ],
+        "ml": [
+            "machine learning",
+            "ml",
+            "ai",
+            "neural",
+            "deep learning",
+            "tensorflow",
+            "pytorch",
+            "scikit",
+        ],
+        "security": ["security", "crypto", "encryption", "ssl", "tls", "auth", "oauth"],
+        "database": [
+            "database",
+            "db",
+            "sql",
+            "nosql",
+            "mongodb",
+            "postgresql",
+            "mysql",
+            "cache",
+            "redis",
+        ],
+        "devops": [
+            "devops",
+            "kubernetes",
+            "docker",
+            "ci/cd",
+            "jenkins",
+            "ansible",
+            "terraform",
+        ],
+    }
 
-            if remove_ids:
-                summary["per_language"][lang] = {
-                    "kept": keep_count,
-                    "removed": len(remove_ids),
-                }
-                logger.info(
-                    f"{lang}: Keeping {keep_count}/{len(repo_ids)}, "
-                    f"removing {len(remove_ids)}"
-                )
+    for domain, keywords in domain_keywords.items():
+        if any(kw in text for kw in keywords):
+            return domain
 
-        # Delete fixtures and mocks for repos to remove
-        if repos_to_remove:
-            # Delete mock_usages first (foreign key to fixtures)
-            placeholders = ",".join("?" * len(repos_to_remove))
-            cursor = conn.execute(
-                f"SELECT COUNT(*) as n FROM mock_usages WHERE fixture_id IN "
-                f"(SELECT id FROM fixtures WHERE repo_id IN ({placeholders}))",
-                repos_to_remove,
-            )
-            mock_count = cursor.fetchone()["n"]
-            summary["mocks_removed"] = mock_count
+    return "other"
 
-            conn.execute(
-                f"DELETE FROM mock_usages WHERE fixture_id IN "
-                f"(SELECT id FROM fixtures WHERE repo_id IN ({placeholders}))",
-                repos_to_remove,
-            )
 
-            # Delete fixtures
-            cursor = conn.execute(
-                f"SELECT COUNT(*) as n FROM fixtures WHERE repo_id IN ({placeholders})",
-                repos_to_remove,
-            )
-            fixture_count = cursor.fetchone()["n"]
-            summary["fixtures_removed"] = fixture_count
+def compute_star_tier(stars: int | None) -> str:
+    """
+    Classify repository into star tier based on GitHub stars.
 
-            conn.execute(
-                f"DELETE FROM fixtures WHERE repo_id IN ({placeholders})",
-                repos_to_remove,
-            )
+    Returns: "core" (>=500 stars) or "extended" (<500 stars)
+    """
+    if stars is None:
+        return "extended"
+    return "core" if stars >= 500 else "extended"
 
-            # Update repository status to 'skipped' instead of deleting the repo record
-            # (keeps provenance that we discovered them, but didn't keep them)
-            conn.execute(
-                f"UPDATE repositories SET status = 'skipped', skip_reason = 'Removed to maintain toy dataset balance' "
-                f"WHERE id IN ({placeholders})",
-                repos_to_remove,
-            )
 
-            summary["repos_removed"] = len(repos_to_remove)
+def compute_repo_age_years(created_at_str: str | None) -> float | None:
+    """
+    Compute repository age in years from creation date string (ISO format).
 
-        conn.commit()
+    Returns: age in years as float, or None if created_at is None/invalid
+    """
+    if not created_at_str:
+        return None
 
-    return summary
+    try:
+        from datetime import datetime as dt
+
+        created = dt.fromisoformat(created_at_str.replace("Z", "+00:00"))
+        now = dt.now(created.tzinfo) if created.tzinfo else dt.now()
+        age_days = (now - created).days
+        return age_days / 365.25
+    except (ValueError, AttributeError):
+        return None
+
+
+def compute_repo_age_at_date(
+    created_at_str: str | None, target_date_str: str
+) -> float | None:
+    """
+    Compute repository age in years relative to a specific date.
+
+    Used for between-group design to compute control variables at historical
+    snapshots (e.g., 2021-01-01 for human corpus, 2023-06-01 for agent corpus).
+
+    Args:
+        created_at_str: Repository creation date (ISO format)
+        target_date_str: Target date for age computation (ISO format)
+
+    Returns:
+        Age in years as float, or None if inputs are invalid
+    """
+    if not created_at_str or not target_date_str:
+        return None
+
+    try:
+        from datetime import datetime as dt
+
+        created = dt.fromisoformat(created_at_str.replace("Z", "+00:00"))
+        target = dt.fromisoformat(target_date_str.replace("Z", "+00:00"))
+        age_days = (target - created).days
+
+        # Handle negative age (repo created after target date)
+        if age_days < 0:
+            return None
+
+        return age_days / 365.25
+    except (ValueError, AttributeError):
+        return None
+
+
+def get_control_variables_at_date(repo: dict, target_date: str) -> dict:
+    """
+    Compute control variables (domain, star_tier, repo_age) at a specific date.
+
+    For between-group comparison, control variables should reflect repo state
+    at fixture writing time (2021-01-01 for human, 2023-06-01 for agent).
+
+    Args:
+        repo: Repository metadata dict with keys: topics, description, stars, created_at
+        target_date: ISO date string (e.g., "2021-01-01")
+
+    Returns:
+        Dict with control_variables keys:
+        - domain: str (web, systems, ml, security, database, devops, other)
+        - star_tier: str (core >=500, extended <500) — current stars only
+        - repo_age_years: float (age at target_date) or None
+    """
+    domain = classify_domain(repo.get("topics"), repo.get("description"))
+    # Note: Star tier uses current stars (historical unavailable from API)
+    star_tier = compute_star_tier(repo.get("stars"))
+    repo_age = compute_repo_age_at_date(repo.get("created_at"), target_date)
+
+    return {
+        "domain": domain,
+        "star_tier": star_tier,
+        "repo_age_years": repo_age,
+    }

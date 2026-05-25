@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExportResult:
     """Result of dataset export operation."""
+
     db_path: Path
     csv_files: List[Path]
     documentation_files: List[Path]
@@ -92,7 +93,7 @@ class DatasetExporter:
             # Write CSV
             if data:
                 fieldnames = list(data[0].keys())
-                with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+                with open(csv_path, "w", newline="", encoding="utf-8") as f:
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(data)
@@ -143,7 +144,7 @@ class HumanDatasetExporter(DatasetExporter):
         csv_files = []
 
         # Repositories (all)
-        csv_files.append(self.export_table_to_csv('repositories'))
+        csv_files.append(self.export_table_to_csv("repositories"))
 
         # Test files (only those with sampled fixtures)
         query = f"""
@@ -152,34 +153,36 @@ class HumanDatasetExporter(DatasetExporter):
                 SELECT DISTINCT file_id FROM fixtures WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
             )
         """
-        csv_files.append(self.export_table_to_csv('test_files', query=query))
+        csv_files.append(self.export_table_to_csv("test_files", query=query))
 
         # Fixtures (only sampled)
         query = f"""
             SELECT * FROM fixtures
             WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
         """
-        csv_files.append(self.export_table_to_csv('fixtures', query=query))
+        csv_files.append(self.export_table_to_csv("fixtures", query=query))
 
         # Mocks (for fixtures in sample)
         query = f"""
             SELECT DISTINCT mu.* FROM mock_usages mu
             WHERE mu.fixture_id IN ({','.join(map(str, sampled_fixture_ids))})
         """
-        csv_files.append(self.export_table_to_csv('mock_usages', query=query))
+        csv_files.append(self.export_table_to_csv("mock_usages", query=query))
 
         # Generate documentation
         doc_files = self._generate_documentation(
             sampled_fixture_ids,
             version,
-            dataset_type='human',
+            dataset_type="human",
         )
 
         # Create ZIP archive
-        zip_path = self._create_zip_archive(csv_files + doc_files, 'human', version)
+        zip_path = self._create_zip_archive(csv_files + doc_files, "human", version)
 
         # Calculate total size
-        total_size = sum(f.stat().st_size for f in csv_files + doc_files) / (1024 * 1024)
+        total_size = sum(f.stat().st_size for f in csv_files + doc_files) / (
+            1024 * 1024
+        )
 
         result = ExportResult(
             db_path=self.source_db,
@@ -188,7 +191,7 @@ class HumanDatasetExporter(DatasetExporter):
             zip_path=zip_path,
             total_size_mb=total_size,
             fixture_count=len(sampled_fixture_ids),
-            repository_count=self._get_table_count('repositories'),
+            repository_count=self._get_table_count("repositories"),
         )
 
         return result
@@ -203,7 +206,7 @@ class HumanDatasetExporter(DatasetExporter):
         doc_files = []
 
         # README
-        readme_path = self.output_dir / 'README.md'
+        readme_path = self.output_dir / "README.md"
         readme_content = f"""# FixtureDB Human Dataset v{version}
 
 ## Overview
@@ -282,13 +285,13 @@ A: Using snapshot-based extraction at each repository's pinned commit before 202
 A: To match AGENT dataset size for fair statistical comparison.
 """
 
-        with open(readme_path, 'w') as f:
+        with open(readme_path, "w") as f:
             f.write(readme_content)
         doc_files.append(readme_path)
         logger.info(f"Generated README: {readme_path.name}")
 
         # SCHEMA.md
-        schema_path = self.output_dir / 'SCHEMA.md'
+        schema_path = self.output_dir / "SCHEMA.md"
         schema_content = """# Database Schema
 
 ## repositories
@@ -371,7 +374,7 @@ Contains mock framework usage.
 | raw_snippet | TEXT | Mock configuration code |
 """
 
-        with open(schema_path, 'w') as f:
+        with open(schema_path, "w") as f:
             f.write(schema_content)
         doc_files.append(schema_path)
         logger.info(f"Generated SCHEMA: {schema_path.name}")
@@ -388,7 +391,7 @@ Contains mock framework usage.
         zip_path = self.output_dir / f"fixturedb-{dataset_type}_v{version}_export.zip"
 
         try:
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
                 for file_path in files:
                     zf.write(file_path, arcname=file_path.name)
 
@@ -400,7 +403,7 @@ Contains mock framework usage.
         return zip_path
 
 
-class LLMDatasetExporter(HumanDatasetExporter):
+class AgentDatasetExporter(HumanDatasetExporter):
     """Export fixturedb-agent.db with agent metadata."""
 
     def export(
@@ -423,7 +426,7 @@ class LLMDatasetExporter(HumanDatasetExporter):
         # Export CSVs with filters (same as human)
         csv_files = []
 
-        csv_files.append(self.export_table_to_csv('repositories'))
+        csv_files.append(self.export_table_to_csv("repositories"))
 
         query = f"""
             SELECT DISTINCT tf.* FROM test_files tf
@@ -431,30 +434,32 @@ class LLMDatasetExporter(HumanDatasetExporter):
                 SELECT DISTINCT file_id FROM fixtures WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
             )
         """
-        csv_files.append(self.export_table_to_csv('test_files', query=query))
+        csv_files.append(self.export_table_to_csv("test_files", query=query))
 
         query = f"""
             SELECT * FROM fixtures
             WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
         """
-        csv_files.append(self.export_table_to_csv('fixtures', query=query))
+        csv_files.append(self.export_table_to_csv("fixtures", query=query))
 
         query = f"""
             SELECT DISTINCT mu.* FROM mock_usages mu
             WHERE mu.fixture_id IN ({','.join(map(str, sampled_fixture_ids))})
         """
-        csv_files.append(self.export_table_to_csv('mock_usages', query=query))
+        csv_files.append(self.export_table_to_csv("mock_usages", query=query))
 
         # Generate documentation (includes AGENTS.md for AGENT)
-        doc_files = self._generate_llm_documentation(
+        doc_files = self._generate_agent_documentation(
             sampled_fixture_ids,
             version,
         )
 
         # Create ZIP archive
-        zip_path = self._create_zip_archive(csv_files + doc_files, 'agent', version)
+        zip_path = self._create_zip_archive(csv_files + doc_files, "agent", version)
 
-        total_size = sum(f.stat().st_size for f in csv_files + doc_files) / (1024 * 1024)
+        total_size = sum(f.stat().st_size for f in csv_files + doc_files) / (
+            1024 * 1024
+        )
 
         result = ExportResult(
             db_path=self.source_db,
@@ -463,12 +468,12 @@ class LLMDatasetExporter(HumanDatasetExporter):
             zip_path=zip_path,
             total_size_mb=total_size,
             fixture_count=len(sampled_fixture_ids),
-            repository_count=self._get_table_count('repositories'),
+            repository_count=self._get_table_count("repositories"),
         )
 
         return result
 
-    def _generate_llm_documentation(
+    def _generate_agent_documentation(
         self,
         sampled_ids: List[int],
         version: str,
@@ -477,7 +482,7 @@ class LLMDatasetExporter(HumanDatasetExporter):
         doc_files = []
 
         # README (similar to human but with AGENT context)
-        readme_path = self.output_dir / 'README.md'
+        readme_path = self.output_dir / "README.md"
         readme_content = f"""# FixtureDB AGENT Dataset v{version}
 
 ## Overview
@@ -580,12 +585,12 @@ A: 100% - each fixture was completely added in a single commit (no refactoring).
 A: Yes. This is a completely standalone dataset.
 """
 
-        with open(readme_path, 'w') as f:
+        with open(readme_path, "w") as f:
             f.write(readme_content)
         doc_files.append(readme_path)
 
         # SCHEMA.md (same as human)
-        schema_path = self.output_dir / 'SCHEMA.md'
+        schema_path = self.output_dir / "SCHEMA.md"
         schema_content = """# Database Schema
 
 ## (See human dataset for fixtures, test_files, repositories, mock_usages tables)
@@ -600,12 +605,12 @@ Additional columns in AGENT dataset:
 | is_complete_addition | BOOLEAN | True if 100% added in this commit |
 """
 
-        with open(schema_path, 'w') as f:
+        with open(schema_path, "w") as f:
             f.write(schema_content)
         doc_files.append(schema_path)
 
         # AGENTS.md
-        agents_path = self.output_dir / 'AGENTS.md'
+        agents_path = self.output_dir / "AGENTS.md"
         agents_content = """# Agent Detection Methodology
 
 ## Overview
@@ -688,7 +693,7 @@ See fixture counts by agent_type in the fixtures.csv file.
 - Individual agent documentation and conventions
 """
 
-        with open(agents_path, 'w') as f:
+        with open(agents_path, "w") as f:
             f.write(agents_content)
         doc_files.append(agents_path)
         logger.info(f"Generated AGENTS: {agents_path.name}")

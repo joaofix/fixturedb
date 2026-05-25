@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-05-24T21:15:16.391494",
+  "methodology": {
+    "corpus": "human",
+    "temporal_scope": "since 2021-01-01",
+    "description": "Human-generated fixtures from agent-enabled repositories, collected from non-AI commits"
+  },
+  "parameters": {
+    "agent_dataset_start_date": "2021-01-01"
+  },
+  "summary_statistics": {
+    "repos_scanned": 20,
+    "repos_passed_qc": 20,
+    "repos_failed_qc": 0,
+    "qc_skip_reasons": {},
+    "fixtures_collected": 1148,
+    "test_commits_found": 3048,
+    "repos_by_language": {
+      "python": 2,
+      "java": 5,
+      "javascript": 3,
+      "typescript": 4
+    }
+  },
+  "control_variables": {
+    "domain_distribution": {
+      "other": 20
+    },
+    "star_tier_distribution": {
+      "extended": 20
+    },
+    "mean_repo_age_years": 0.0,
+    "mean_contributors": 0.0
+  },
+  "output_database": "/home/joao/icsme-nier-2026/data/between-group.db"
+}
