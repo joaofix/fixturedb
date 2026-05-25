@@ -23,7 +23,7 @@ from .db import (
     compute_repo_age_years,
 )
 from .fixture_extractor import extract_fixtures_at_commit
-from .two_tier_agent_collection import Tier1RepositoryScanner
+from .agent_commit_detector import Tier1RepositoryScanner
 
 logger = logging.getLogger(__name__)
 

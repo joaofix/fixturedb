@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-from .two_tier_agent_collection import Tier1RepositoryScanner
+from .agent_commit_detector import Tier1RepositoryScanner
 from .config import DB_PATH
 from .resume_utils import latest_matching_file
 

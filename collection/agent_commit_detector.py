@@ -33,6 +33,11 @@ from .agent_detector import (
     GitHubAgentFileChecker,
 )
 from .cloner import clone_repo
+
+# Regex to extract Co-authored-by trailer values (case-insensitive, multiline)
+COAUTHOR_TRAILER_RE = re.compile(
+    r"^\s*co-authored-by:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE
+)
 from .db import db_session
 
 logger = logging.getLogger(__name__)
@@ -324,6 +329,10 @@ class Tier1RepositoryScanner:
         """
         Detect agent type from commit metadata.
 
+        Checks:
+        1. Author name/email for agent signatures
+        2. Co-authored-by trailers in commit body
+
         Args:
             author_name: Commit author name
             author_email: Commit author email
@@ -332,15 +341,22 @@ class Tier1RepositoryScanner:
         Returns:
             Agent type (claude/cursor/copilot/other) or None
         """
-        # Search body for Co-authored-by trailers
-        # Case-insensitive search for agent signatures
-        search_text = f"{author_name} {author_email} {body}".lower()
-
-        # Check agent signatures
+        # Search author name and email for agent signatures (case-insensitive)
+        author_text = f"{author_name} {author_email}".lower()
         for agent_type, keywords in self.agent_signatures.items():
             for keyword in keywords:
-                if keyword.lower() in search_text:
+                if keyword.lower() in author_text:
                     return agent_type
+
+        # Extract and check Co-authored-by trailers (case-insensitive)
+        if body:
+            coauthor_matches = COAUTHOR_TRAILER_RE.findall(body)
+            for coauthor_line in coauthor_matches:
+                coauthor_lower = coauthor_line.lower()
+                for agent_type, keywords in self.agent_signatures.items():
+                    for keyword in keywords:
+                        if keyword.lower() in coauthor_lower:
+                            return agent_type
 
         return None
 
@@ -793,51 +809,3 @@ class Tier2RepoMatcher:
             params.append(candidate_limit)
             rows = conn.execute(query, params).fetchall()
             return [dict(row) for row in rows]
-
-    def find_matched_repos(
-        self,
-        target_count: int = 50,
-        language: str = "python",
-        domain_labels: Optional[List[str]] = None,
-    ) -> List[Dict]:
-        """
-        Find supplementary repositories for Tier 2.
-
-        Uses SEART API to search for repos with:
-        - Agent configuration files (CLAUDE.md, .cursorrules, etc.)
-        - Similar star count to corpus
-        - Same language
-        - Similar domain labels (if provided)
-
-        Args:
-            target_count: Target number of repos to find
-            language: Programming language filter
-            domain_labels: Optional domain labels to match (from corpus classifier)
-
-        Returns:
-            List of repo metadata dictionaries suitable for Tier 2 collection
-
-        Note:
-            This is a placeholder implementation. Real implementation would:
-            1. Call SEART API with appropriate search filters
-            2. Parse results for agent activity signals
-            3. Filter by star count, commits, test files
-            4. Verify agent config files exist
-        """
-        logger.info(
-            f"Placeholder: Would search for {target_count} {language} repos with agent activity"
-        )
-        logger.info(f"  Using SEART engine for: {language}")
-        if domain_labels:
-            logger.info(f"  Preferring domains: {domain_labels}")
-        logger.info(f"  With Tier 2 matching criteria:")
-        logger.info(
-            f"    - Star range: {TIER2_MATCHING_MIN_STARS}-{TIER2_MATCHING_MAX_STARS}"
-        )
-        logger.info(f"    - Min commits: {TIER2_MIN_COMMITS}")
-        logger.info(f"    - Min test files: {TIER2_MIN_TEST_FILES}")
-        logger.info(
-            f"    - Must have agent config files: {TIER2_MUST_HAVE_AGENT_CONFIGS}"
-        )
-
-        return []  # Placeholder

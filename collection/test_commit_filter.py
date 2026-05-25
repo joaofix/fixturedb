@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from .agent_corpus import collect_test_files_for_commit
-from .two_tier_agent_collection import Tier1RepositoryScanner
+from .agent_commit_detector import Tier1RepositoryScanner
 from .config import HUMAN_CORPUS_CUTOFF_DATE, AGENT_CORPUS_START_DATE
 import argparse
 from pathlib import Path

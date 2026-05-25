@@ -21,7 +21,7 @@ from .config import (
     TIER1_MINIMUM_REPOS_WITH_AGENT,
 )
 from .resume_utils import latest_matching_file
-from .two_tier_agent_collection import Tier2RepoMatcher
+from .agent_commit_detector import Tier2RepoMatcher
 
 logging.basicConfig(
     level=logging.INFO,

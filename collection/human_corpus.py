@@ -13,6 +13,8 @@ import json
 import logging
 import shutil
 import subprocess
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -35,7 +37,7 @@ from .db import (
 from .agent_corpus import clone_repo_for_commit_scan
 from .fixture_extractor import AgentFixtureExtractor
 from .test_commit_utils import write_test_commits_csv
-from .two_tier_agent_collection import Tier1RepositoryScanner
+from .agent_commit_detector import Tier1RepositoryScanner
 from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from .corpus_utils import (
     BaseCorpusStats,
@@ -442,7 +444,10 @@ class HumanCorpusCollector:
         seed: int = 42,
     ) -> tuple[HumanCorpusStats, Path]:
         """
-        Collect human corpus.
+        Collect human corpus with sequential language processing and progress tracking.
+
+        Safe checkpoint: After all repos for a language are processed, CSV is written
+        before moving to the next language.
 
         Args:
             repos_per_language: Optional per-language cap. None means include all rows.
@@ -461,6 +466,7 @@ class HumanCorpusCollector:
         stats = HumanCorpusStats()
         all_test_commit_rows: list[dict] = []
         test_commit_rows_by_language: dict[str, list[dict]] = defaultdict(list)
+        
         # If running in write-only mode and the repo_qc_dir already contains
         # per-language human test-commit CSVs, copy them to the output and exit.
         if only_write_test_commits:
@@ -490,91 +496,187 @@ class HumanCorpusCollector:
         )
         logger.info(f"[Human Corpus] Using {workers} worker(s)")
 
-        # Trackers for statistics
+        # Group repos by language for sequential processing
+        repos_by_language: dict[str, list[dict]] = defaultdict(list)
+        for repo in selected_repos:
+            lang = repo.get("language", "unknown").lower()
+            repos_by_language[lang].append(repo)
+
+        logger.info(
+            f"[Human Corpus] Languages to process: {', '.join(sorted(repos_by_language.keys()))}"
+        )
+        for lang, repos in sorted(repos_by_language.items()):
+            logger.info(f"[Human Corpus]   {lang}: {len(repos)} repositories")
+
+        # Trackers for statistics and progress
         repo_ages = []
         repo_contributors = []
+        language_progress = {}  # Track per-language progress for logging
+        progress_lock = threading.Lock()
 
-        def handle_result(result: dict) -> None:
-            stats.repos_scanned += 1
-            repo_name = result["repo_name"]
-            language_name = result["language_name"]
+        def log_progress():
+            """Log progress every 3 minutes."""
+            while not hasattr(log_progress, "stop_flag") or not log_progress.stop_flag:
+                with progress_lock:
+                    completed_total = stats.repos_scanned
+                    fixtures_total = stats.fixtures_collected
+                    logger.info(
+                        f"[Human Corpus Progress] {completed_total} repos scanned, "
+                        f"{stats.repos_passed_qc} passed QC, {fixtures_total} fixtures collected"
+                    )
+                    for lang in sorted(language_progress.keys()):
+                        total_repos = language_progress[lang]["total_repos"]
+                        completed = language_progress[lang]["completed"]
+                        pct = (completed / total_repos * 100) if total_repos > 0 else 0
+                        avg_fixtures = (
+                            language_progress[lang]["avg_fixtures_per_repo"]
+                        )
+                        logger.info(
+                            f"  {lang}: {completed}/{total_repos} ({pct:.1f}%) "
+                            f"~{avg_fixtures:.0f} fixtures/repo"
+                        )
+                time.sleep(180)  # 3 minutes
 
-            if result["status"] != "ok":
-                stats.record_skip(result.get("skip_reason") or "unknown")
-                logger.debug(
-                    f"[Human Corpus] Skip {repo_name}: {result.get('skip_reason')}"
-                )
-                return
+        # Start progress logging thread
+        log_progress.stop_flag = False
+        progress_thread = threading.Thread(target=log_progress, daemon=True)
+        progress_thread.start()
 
-            stats.repos_passed_qc += 1
-
-            domain = result["domain"]
-            star_tier = result["star_tier"]
-            repo_age = result["repo_age"]
-            if repo_age is not None:
-                repo_ages.append(repo_age)
-            if result.get("num_contributors"):
-                repo_contributors.append(result["num_contributors"])
-
-            stats.domain_distribution[domain] = (
-                stats.domain_distribution.get(domain, 0) + 1
-            )
-            stats.star_tier_distribution[star_tier] = (
-                stats.star_tier_distribution.get(star_tier, 0) + 1
-            )
-
-            repo_data = result["repo_data"]
-            test_commit_rows = result["test_commit_rows"]
-            fixtures = result["fixtures"]
-
-            # Upsert repository and enrich test commits with repo_id
-            with db_session(self.output_db) as conn:
-                repo_row, _ = upsert_repository(conn, repo_data)
-
-                # Insert test commits with repo_id
-                for test_commit in test_commit_rows:
-                    test_commit["repo_id"] = repo_row
-                    insert_test_commit(conn, test_commit)
-
-            all_test_commit_rows.extend(test_commit_rows)
-            test_commit_rows_by_language[language_name].extend(test_commit_rows)
-            stats.test_commits_found += len(test_commit_rows)
-
-            # Export fixtures to CSV
-            if fixtures:
-                fixtures_out_path = (
-                    Path(self.repo_qc_dir) / f"{language_name}_human_fixtures.csv"
-                )
-                fixture_count = persist_repository_and_fixtures(
-                    self.output_db,
-                    repo_data,
-                    fixtures,
-                    out_path=fixtures_out_path,
-                    handle_mocks=True,  # Enable mock insertion for human corpus
-                )
-                stats.repos_by_language[language_name] = (
-                    stats.repos_by_language.get(language_name, 0) + 1
-                )
-                stats.fixtures_collected += fixture_count
-            else:
-                logger.debug(
-                    f"[Human Corpus] No complete human fixtures found in {repo_name}"
-                )
-                stats.repos_by_language[language_name] = (
-                    stats.repos_by_language.get(language_name, 0) + 1
+        try:
+            # Process each language sequentially
+            for lang_idx, (current_lang, lang_repos) in enumerate(
+                sorted(repos_by_language.items()), 1
+            ):
+                logger.info(
+                    f"[Human Corpus] Processing language {lang_idx}/{len(repos_by_language)}: {current_lang} ({len(lang_repos)} repos)"
                 )
 
-        if workers <= 1:
-            for repo in selected_repos:
-                handle_result(self._process_human_repository(repo))
-        else:
-            with ThreadPoolExecutor(max_workers=workers) as executor:
-                futures = {
-                    executor.submit(self._process_human_repository, repo): repo
-                    for repo in selected_repos
+                language_progress[current_lang] = {
+                    "total_repos": len(lang_repos),
+                    "completed": 0,
+                    "avg_fixtures_per_repo": 0,
                 }
-                for future in as_completed(futures):
-                    handle_result(future.result())
+
+                # Accumulate all results for this language
+                lang_results = []
+                lang_all_fixtures = []
+                lang_test_commit_rows = []
+
+                if workers <= 1:
+                    for repo in lang_repos:
+                        lang_results.append(self._process_human_repository(repo))
+                else:
+                    with ThreadPoolExecutor(max_workers=workers) as executor:
+                        futures = {
+                            executor.submit(self._process_human_repository, repo): repo
+                            for repo in lang_repos
+                        }
+                        for future in as_completed(futures):
+                            lang_results.append(future.result())
+
+                # Process all results for this language
+                for result in lang_results:
+                    with progress_lock:
+                        stats.repos_scanned += 1
+                        language_progress[current_lang]["completed"] += 1
+
+                    repo_name = result["repo_name"]
+
+                    if result["status"] != "ok":
+                        stats.record_skip(result.get("skip_reason") or "unknown")
+                        logger.debug(
+                            f"[Human Corpus] Skip {repo_name}: {result.get('skip_reason')}"
+                        )
+                        continue
+
+                    stats.repos_passed_qc += 1
+
+                    domain = result["domain"]
+                    star_tier = result["star_tier"]
+                    repo_age = result["repo_age"]
+                    if repo_age is not None:
+                        repo_ages.append(repo_age)
+                    if result.get("num_contributors"):
+                        repo_contributors.append(result["num_contributors"])
+
+                    stats.domain_distribution[domain] = (
+                        stats.domain_distribution.get(domain, 0) + 1
+                    )
+                    stats.star_tier_distribution[star_tier] = (
+                        stats.star_tier_distribution.get(star_tier, 0) + 1
+                    )
+
+                    repo_data = result["repo_data"]
+                    test_commit_rows = result["test_commit_rows"]
+                    fixtures = result["fixtures"]
+
+                    # Upsert repository and enrich test commits with repo_id
+                    with db_session(self.output_db) as conn:
+                        repo_row, _ = upsert_repository(conn, repo_data)
+
+                        # Insert test commits with repo_id
+                        for test_commit in test_commit_rows:
+                            test_commit["repo_id"] = repo_row
+                            insert_test_commit(conn, test_commit)
+
+                    lang_test_commit_rows.extend(test_commit_rows)
+                    test_commit_rows_by_language[current_lang].extend(test_commit_rows)
+                    stats.test_commits_found += len(test_commit_rows)
+
+                    if fixtures:
+                        lang_all_fixtures.append((repo_data, fixtures))
+                        stats.repos_by_language[current_lang] = (
+                            stats.repos_by_language.get(current_lang, 0) + 1
+                        )
+                    else:
+                        logger.debug(
+                            f"[Human Corpus] No complete human fixtures found in {repo_name}"
+                        )
+                        stats.repos_by_language[current_lang] = (
+                            stats.repos_by_language.get(current_lang, 0) + 1
+                        )
+
+                    # Clean up clone after extraction is complete
+                    repo_path = self.clones_dir / repo_name.replace("/", "__")
+                    if repo_path.exists():
+                        shutil.rmtree(repo_path, ignore_errors=True)
+                        logger.debug(f"[Human Corpus] Cleaned up clone: {repo_name}")
+
+                # SAFE CHECKPOINT: Write all fixtures for this language to CSV before moving to next language
+                if lang_all_fixtures:
+                    logger.info(
+                        f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
+                    )
+                    fixtures_out_path = (
+                        Path(self.repo_qc_dir) / f"{current_lang}_human_fixtures.csv"
+                    )
+                    for repo_data, fixtures_list in lang_all_fixtures:
+                        fixture_count = persist_repository_and_fixtures(
+                            self.output_db,
+                            repo_data,
+                            fixtures_list,
+                            out_path=fixtures_out_path,
+                            handle_mocks=True,
+                        )
+                        with progress_lock:
+                            stats.fixtures_collected += fixture_count
+                            if stats.repos_by_language[current_lang] > 0:
+                                language_progress[current_lang][
+                                    "avg_fixtures_per_repo"
+                                ] = (
+                                    stats.fixtures_collected
+                                    / stats.repos_by_language[current_lang]
+                                )
+
+                    logger.info(
+                        f"[Human Corpus] Checkpoint complete for {current_lang}: "
+                        f"{stats.fixtures_collected} total fixtures collected"
+                    )
+
+        finally:
+            # Stop progress logging thread
+            log_progress.stop_flag = True
+            progress_thread.join(timeout=5)
 
         # Compute means
         if repo_ages:
