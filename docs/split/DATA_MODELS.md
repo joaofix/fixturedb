@@ -1,6 +1,6 @@
 # FixtureDB Split: Data Models
 
-Complete documentation of the database schemas for fixturedb-human.db and fixturedb-llm.db
+Complete documentation of the database schemas for fixturedb-human.db and fixturedb-agent.db
 
 ---
 
@@ -9,7 +9,7 @@ Complete documentation of the database schemas for fixturedb-human.db and fixtur
 **fixturedb-human.db:** Identical schema to corpus.db (no agent tracking needed)  
 **fixturedb-llm.db:** Extended with agent metadata columns
 
-Both databases inherit the core schema from corpus.db with additions specific to the LLM dataset.
+Both databases inherit the core schema from corpus.db with additions specific to the agent dataset.
 
 ---
 
@@ -231,11 +231,11 @@ ALTER TABLE fixtures ADD COLUMN commit_date TEXT;
     -- Filter: >= 2021-01-01 (by design)
     -- Use: Time-series analysis (early 2021 vs 2026)
 
--- Indexes for fast queries on LLM-specific columns
-CREATE INDEX idx_llm_commit ON fixtures(commit_sha);
-CREATE INDEX idx_llm_agent ON fixtures(agent_type);
-CREATE INDEX idx_llm_complete ON fixtures(is_complete_addition);
-CREATE INDEX idx_llm_date ON fixtures(commit_date);
+-- Indexes for fast queries on agent-specific columns
+CREATE INDEX idx_agent_commit ON fixtures(commit_sha);
+CREATE INDEX idx_agent_agent ON fixtures(agent_type);
+CREATE INDEX idx_agent_complete ON fixtures(is_complete_addition);
+CREATE INDEX idx_agent_date ON fixtures(commit_date);
 ```
 
 ---
@@ -256,11 +256,11 @@ Schema: Identical to corpus.db
 Data:
   - Repositories: 200
   - Test files: ~157k
-  - Fixtures: 32,895
+  - Fixtures: human dataset
   - No commit metadata
 ```
 
-### LLM Dataset (2021+)
+### Agent Dataset (2021+)
 
 ```
 Characteristics:
@@ -422,7 +422,7 @@ repositories UNIQUE(github_id, clone_url)
 |-------|-------|-----|
 | repositories | ~200 | ~145 |
 | test_files | ~157k | ~78k |
-| fixtures | 32,895 | ~87k |
+| fixtures | human dataset | agent dataset |
 | mocks | ~2k | ~3k |
 
 ---
@@ -500,7 +500,7 @@ FROM fixtures
 ## Data Quality Standards
 
 ### Completeness
-- Human: 100% of pre-2021 fixtures included
+- Human: all pre-2021 fixtures included
 - LLM: Only completely-added fixtures (is_complete_addition = TRUE)
 
 ### Uniqueness

@@ -273,7 +273,7 @@ The tests use real git repositories created in temporary directories (`tmp_path`
 Example:
 
 ```python
-def test_agent_commit_and_llm_extraction_end_to_end(tmp_path: Path, monkeypatch):
+def test_agent_commit_and_agent_extraction_end_to_end(tmp_path: Path, monkeypatch):
     """Validates detection of Copilot-authored commits and fixture extraction."""
     # Create temp git repo with agent commits
     # Verify agent commit is detected

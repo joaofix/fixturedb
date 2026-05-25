@@ -1,6 +1,6 @@
-# CSV User Guide
+# CSV User Guide - FixtureDB Between-Group Study
 
-This guide explains the CSV exports produced by the current collection pipeline. The exports are designed for spreadsheet tools and lightweight analysis workflows; for joins and provenance checks, use the SQLite databases documented in [Database Schema](../architecture/database-schema.md).
+This guide explains the CSV exports from the between-group study collection pipeline. The exports are designed for spreadsheet tools and lightweight analysis workflows; for joins, control variable analysis, and provenance checks, use the SQLite database documented in [Database Schema](../architecture/database-schema.md).
 
 ## Export layout
 

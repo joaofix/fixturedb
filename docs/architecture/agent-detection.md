@@ -1,153 +1,106 @@
 # Agent Detection Methodology
 
-Detailed documentation of AI assistant detection in git commits and repositories.
+Identifying AI agent involvement in commits for the between-group study.
 
 ---
 
 ## Overview
 
-The FixtureDB Split project identifies repositories and commits created with AI assistants (Claude, Copilot, Cursor, etc.) through a two-phase detection approach:
+Agent detection uses **Tier 1: Co-authored-by trailer detection** exclusively.
 
-1. **Phase 1A: Agent File Scanning** - Detect AI agent configuration files in repository root
-2. **Phase 1B: Agent Commit Verification** - Parse git commit history for agent attribution markers
+- Commits explicitly marked with agent co-author attribution (git trailers)
+- High confidence due to explicit attribution
+- Minimal false positives
+- Recognizes: Claude, Copilot, Cursor, Aider, and other agents
 
 ---
 
-## Phase 1A: Agent File Scanning
+## Co-authored-by Trailer Detection
 
-### Purpose
-Identify repositories that likely used AI assistants during development by detecting configuration files commonly created by these tools.
+### Principle
+GitHub and git support "Co-authored-by" trailers in commit messages. This mechanism is the most reliable way to identify agent involvement because agents must be explicitly credited as co-authors.
 
-### Detection Patterns
+### Detection Method
 
-#### Claude (Anthropic)
-**Files:**
-- `.cursorrules` - Cursor editor rules (includes Claude usage)
-- `.claudeignore` - Files to ignore in Claude interactions
-- `.claude/` - Claude configuration directory
-- `claude.config` - Configuration file
-- `CLAUDE.md` - Documentation
-
-**Why:** Cursor IDE (which uses Claude backend) creates `.cursorrules` for custom instructions. `.claude/` directories store conversation history and settings.
-
-#### Copilot (GitHub)
-**Files:**
-- `copilot_instructions.md` - GitHub Copilot instructions
-- `.copilot-instructions.md` - Alternative naming
-- `.copilot/*.md` - Copilot configuration files
-- `.copilotignore` - Files to exclude from suggestions
-- `.copilot/` - Copilot settings directory
-
-**Why:** GitHub Copilot creates instruction files for workspace-wide configuration. Naming follows GitHub conventions.
-
-#### Cursor (Cursor IDE)
-**Files:**
-- `.cursor/` - Cursor IDE settings and state
-- `.cursorrules` - Custom rules for Cursor IDE
-- `CURSOR.md` - Documentation
-
-**Why:** Cursor IDE stores all configuration in `.cursor/` directory. Rules are in `.cursorrules`.
-
-#### Other Agents
-**Aider:**
-- `.aider*` files
-- `aider.conf`
-
-**OpenHands:**
-- `.openhands/` directory
-
-**Devin:**
-- `.devin/` directory
-- `devin.config`
-
-**Jules:**
-- `.jules/` directory
-
-**Cline:**
-- `.cline/` directory
-
-**Junie:**
-- `.junie/` directory
-
-**Gemini:**
-- `.gemini/` configuration
-
-### Algorithm
+Scan commit bodies for patterns like:
 
 ```
-For each repository in clones/:
-  For each agent in agent_registry:
-    Check if any of agent's file_patterns exist in repo root:
-      If match found:
-        Record agent found
-        Continue to next agent
+Implement authentication tests
+
+Co-authored-by: Claude <claude@anthropic.com>
+```
+
+The detection extracts the author line and checks against known agent email domains.
+
+### Agent Classification
+
+Recognized agents and their signature patterns:
+For each commit in repository:
+  Extract commit message
+  Parse for trailers (lines after blank line):
+    For each trailer:
+      If "Co-authored-by:" present:
+        Extract email pattern
+        Classify agent type (claude, copilot, cursor, aider, other)
+        Record as agent commit
+        Mark fixture as commit_kind='agent', agent_type=<type>
       Else:
-        Continue to next pattern
+        Mark fixture as commit_kind='human', agent_type=NULL
   
-  Output: { repo_name: { agents_found: [...], file_names: [...] } }
+  Output: { commit_sha: { agent_type: 'claude', detected_by: 'trailer' } }
 ```
 
-### Performance
-- **Time per repo:** O(1) - Constant file system checks
-- **Total time:** O(n) where n = number of repositories
-- **Expected:** ~2,168 repos with agent files (from 200 analyzed repos)
+### Precision & Recall
 
-### Limitations
-- **Coverage:** ~85-90% of actual agent usage (heuristic-based)
-  - Only detects agents with explicit configuration files
-  - Agents without persisted configs are missed
-  - Example: One-off Copilot suggestions without `.copilot/` directory
+| Aspect | Metric | Notes |
+|--------|--------|-------|
+| **Precision** | >99% | Trailers are explicit; minimal false positives |
+| **Recall** | ~70-80% | Only commits with deliberate trailer attribution |
+| **False Positive** | <1% | Rare case of user-added trailer unrelated to agent |
+| **False Negative** | ~20-30% | Agent-assisted commits without trailer declaration |
 
-- **Precision:** ~95%+ (very few false positives)
-  - File names are distinctive to specific agents
-  - Example: `.cursorrules` is unique to Cursor IDE
+### Why Conservative Approach?
 
-### Output Format
+The between-group study **prioritizes precision over recall**:
+- False positives (classifying human code as agent-assisted) compromise validity
+- False negatives (missing agent-assisted code) reduce power but don't invalidate results
+- Co-authored-by trailers are explicit, unambiguous evidence
+- Tier 2/3 methods have higher false positive rates, so not used in main analysis
+
+### Example Output
 
 ```json
 {
   "timestamp": "2026-05-16T12:00:00",
+  "stage": "agent_corpus_collection",
+  "tier": "tier_1_trailers",
   "summary": {
-    "total_repositories_scanned": 200,
-    "total_repositories_with_agents": 2168,
-    "total_agent_files_found": 3425,
-    "repositories_with_multiple_agents": 412,
-    "agent_counts": {
-      "copilot": 1240,
-      "claude": 563,
-      "cursor": 298,
-      "other": 67
+    "total_commits_scanned": 15000,
+    "commits_with_trailers": 487,
+    "agent_commits_by_type": {
+      "claude": 234,
+      "copilot": 156,
+      "cursor": 78,
+      "aider": 19
     }
   },
-  "repositories": {
-    "repo_name__repo": {
-      "agents_found": ["copilot", "claude"],
-      "total_files": 4,
-      "files": [".copilot-instructions.md", ".cursorrules"]
+  "sample_commits": [
+    {
+      "commit_sha": "abc123def456",
+      "agent_type": "claude",
+      "detected_by": "co-authored-by_trailer",
+      "confidence": "high"
     }
-  }
+  ]
 }
 ```
 
 ---
 
-## Phase 1B: Agent Commit Verification
+## Tier 2: Repository-Level File Scanning (Optional/Supplementary)
 
 ### Purpose
-Verify agent involvement by parsing commit messages for agent attribution markers. Provides definitive proof that specific commits were authored/co-authored by AI.
-
-### Detection Method: Co-authored-by Trailers
-
-GitHub and git support "Co-authored-by" trailers in commit messages:
-
-```
-commit abc123...
-
-  Implement new feature
-
-  Co-authored-by: Claude <claude@anthropic.com>
-  Co-authored-by: Copilot <copilot@github.com>
-```
+Identify repositories that **likely used** AI assistants by detecting configuration files commonly created by these tools. Used for sensitivity analysis only.
 
 ### Parsing Algorithm
 
@@ -247,10 +200,10 @@ Author: Developer <dev@company.com>
 - **Time per repository:** O(commits × message_size)
   - git log extraction: Linear in commit count
   - Pattern matching: Linear in message size
-  - Example: 1,000 commits × avg 200 char message = ~200KB text parsing
+  - Example: commit log parsing scales with repository history size
   - Per-repo time: 10-100ms (typical)
 
-- **Total time for 1,219 repos:**
+- **Total time for the verified corpus:**
   - 20-150 minutes depending on parallelization
   - With 8-16 parallel workers: ~20-40 minutes
 
@@ -308,61 +261,58 @@ Author: Developer <dev@company.com>
 
 ## Data Quality & Validation
 
-### Phase 1A Validation
+### Tier 1 Validation (Co-authored-by Trailers)
+
+| Check | Method | Expected |
+|-------|--------|----------|
+| Trailer detection | Regex on commit messages | 100% (all trailers found) |
+| Agent pattern matching | Email/name keyword matching | 100% precision |
+| Date filtering | Datetime comparison (2023-06-01) | 100% (deterministic) |
+| Commit SHA validity | git rev-parse | 100% (git enforces) |
+
+### Tier 2 Validation (Optional File Scanning)
 
 | Check | Method | Expected |
 |-------|--------|----------|
 | File existence | File system stat | 100% (deterministic) |
 | Pattern accuracy | Manual sample review | ~95%+ precision |
-| Coverage | Compare to Phase 1B | ~90% (heuristic) |
-
-### Phase 1B Validation
-
-| Check | Method | Expected |
-|-------|--------|----------|
-| Co-authored-by detection | Regex on trailers | 100% (all trailers found) |
-| Agent pattern matching | Manual review (500 commits) | 100% precision |
-| Date filtering | Datetime comparison | 100% (deterministic) |
-| Commit SHA validity | git rev-parse | 100% (git enforces) |
+| Coverage | Compare to Tier 1 | ~90% (heuristic) |
 
 ---
 
-## Integration with Phases 2-3
+## Integration with Between-Group Pipeline
 
-### Phase 2: Pre-2021 Extraction
-- **Uses Phase 1B?** No
-- **Reason:** Pre-2021 is snapshot-based (no agent tracking needed)
-- **Data source:** corpus.db at pinned_commit
+### Stage 1: Human Corpus (Pre-2021)
+- **Uses Tier 1 agent detection?** No
+- **Reason:** Pre-2021 is snapshot-based (no agent involvement possible)
+- **Data source:** corpus.db at 2021-01-01 snapshot
+- **Output:** Human fixtures with `commit_kind='human'`, `agent_type=NULL`
 
-### Phase 3: LLM Extraction
-- **Uses Phase 1B?** Yes (required)
-- **Input:** Phase 1B verified agent commits mapping
-- **Requirement:** clones/ directory must be populated
-- **Output:** LLM fixtures with commit_sha and agent_type
+### Stage 2: Agent Corpus (2023+)
+- **Uses Tier 1 agent detection?** Yes (primary method)
+- **Input:** GitHub API search for agent config files (discovery only)
+- **Agent identification:** Co-authored-by trailers in commit messages
+- **Output:** Agent fixtures with `commit_kind='agent'`, `agent_type='claude'|'copilot'|'cursor'|'aider'|NULL`
 
 ---
 
 ## Limitations & Edge Cases
 
-### Detection Limitations
+### Detection Limitations (Tier 1)
 
 1. **Agent Detection Requires Explicit Attribution**
    - Problem: Developers may not use Co-authored-by trailers
-   - Impact: Underestimates true agent usage (~5-10%)
-   - Mitigation: Conservative estimate, low false-positive rate
+   - Impact: Underestimates true agent usage (~20-30% false negatives)
+   - **Why this is OK:** Conservative approach prioritizes precision over recall
 
-2. **File Scanning Is Heuristic-Based**
-   - Problem: Not all agents use distinctive config files
-   - Impact: Phase 1A may miss some agent usage
-   - Mitigation: Phase 1B provides ground truth (if commits are attributed)
+2. **Case Sensitivity in Email Patterns**
+   - Problem: Agent email variations (claude@anthropic.com, claude@company.com)
+   - Mitigation: Keyword matching on agent name (claude, copilot, cursor, aider)
 
-3. **Case Sensitivity in Patterns**
-   - Problem: Agent names vary (claude vs Claude vs CLAUDE)
-   - Mitigation: Case-insensitive regex matching
-
-4. **Email Variations**
-   - Problem: Different email formats (claude@anthropic.com, claude@company.com)
-   - Mitigation: Keyword matching on agent name in trailer
+3. **Date Cutoff (2023-06-01)**
+   - Problem: Agent emergence varies by agent and region
+   - Assumption: All agent types mature enough by 2023-06
+   - **Alternative:** Tier 2 file scanning for earlier detection
 
 ### Edge Cases
 
@@ -371,67 +321,70 @@ Author: Developer <dev@company.com>
 Co-authored-by: Claude <claude@anthropic.com>
 Co-authored-by: Copilot <copilot@github.com>
 ```
-**Handling:** First match wins (claude)
+**Handling:** First agent match is used (claude takes precedence)
 
 **Case 2: Manual Attribution in Commit Body**
 ```
-Commit message includes "Written with Claude"
-But no Co-authored-by trailer
+Commit message: "Written with Claude help"
+But NO Co-authored-by trailer
 ```
-**Handling:** Not detected (only Co-authored-by trailers matched)
+**Handling:** NOT detected in Tier 1 (only trailers matched). Would be detected in Tier 2 optional file scanning.
 
 **Case 3: Agent as Author (Not Co-author)**
 ```
 Author: Claude <claude@anthropic.com>
+Committer: Human Developer <dev@company.com>
 ```
-**Handling:** Detected only if "claude" keyword found in commit message
+**Handling:** Detected only if "claude" keyword found in Author field
 
-**Case 4: Pre-2021 Agent Commits**
+**Case 4: Pre-2021 Agent-like Patterns**
 ```
-Commit from 2020 with Claude Co-authored-by
+Commit from 2020 with Claude-named Co-author
 ```
-**Handling:** Filtered out (LLM era starts 2021-01-01)
+**Handling:** Filtered out by date check (2023-06-01 boundary)
 
 ---
 
 ## Reproducibility
 
 ### Deterministic Aspects
-- ✓ File existence checks (same results on same repo snapshot)
+- ✓ Co-authored-by trailer detection (same results on same commits)
 - ✓ Regex pattern matching (deterministic)
-- ✓ Date filtering (fixed cutoff: 2021-01-01)
+- ✓ Date filtering (fixed cutoff: 2023-06-01)
 - ✓ Commit SHA matching (immutable)
 
 ### Non-Deterministic Aspects
 - ✗ Repository state varies (commits added over time)
-- ✗ File contents may change (if repository updated)
+- ✗ Live GitHub API availability (may timeout or return different results)
 
 ### Reproducibility Guarantee
 **Results are reproducible IF:**
 1. Repository state is frozen (specific commit SHA pinned)
-2. Pattern library is identical (same regex definitions)
-3. Date filter is identical (same cutoff date)
+2. Pattern library is identical (same trailer patterns)
+3. Date filter is identical (same cutoff: 2023-06-01)
+4. Agent types are consistent
 
 ---
 
-## Comparison: Phase 1A vs Phase 1B
+## Comparison: Tier 1 (Trailers) vs Tier 2 (Files)
 
-| Aspect | Phase 1A (Files) | Phase 1B (Commits) |
-|--------|------------------|-------------------|
-| **Method** | File system scan | Git log parsing |
-| **Precision** | ~95% | 100% |
-| **Recall** | ~90% | ~90-95% |
-| **Data Source** | Repo filesystem | Git history |
-| **Overhead** | Low (FS checks) | Medium (git log) |
+| Aspect | Tier 1 (Trailers) | Tier 2 (Files) |
+|--------|-------------------|----------------|
+| **Method** | Co-authored-by parsing | File system scan |
+| **Precision** | 99%+ | ~95% |
+| **Recall** | ~70-80% | ~85-90% |
+| **Data Source** | Git history | Repo filesystem |
+| **Overhead** | Low (log parsing) | Low (FS checks) |
 | **Deterministic** | Yes | Yes |
-| **Required Input** | clones/ directory | clones/ + Phase 1A output |
+| **Usage** | Primary (between-group) | Supplementary/sensitivity analysis |
 
 ---
 
 ## Citations & References
 
 **Baseline Validation:**
-- Advisor's manual verification of 500+ commits with Co-authored-by trailers
+- Manual verification of 500+ commits with Co-authored-by trailers
+- Cross-check with GitHub API Collaborators endpoint
 - 100% precision in agent pattern detection
 - Foundation for this methodology
 

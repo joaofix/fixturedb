@@ -25,8 +25,8 @@ This is DIFFERENT from **AGENT DETECTION** — the process of identifying which 
 - **Fixture Detection:** Answers "What is a test fixture?" (AST parsing for setup/teardown)
 - **Agent Detection:** Answers "Who wrote this code?" (Git history parsing for Co-authored-by trailers)
 
-Both are essential for the FixtureDB Split project:
-1. Agent Detection (Phase 1A-1B) identifies AI-generated fixtures
+Both are essential for the FixtureDB between-group study:
+1. Agent Detection identifies AI-generated commits (via trailers)
 2. Fixture Detection extracts and analyzes the fixtures themselves
 
 

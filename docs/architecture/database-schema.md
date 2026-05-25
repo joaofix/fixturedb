@@ -1,21 +1,21 @@
-# Database Schema - FixtureDB Collection
+# Database Schema - FixtureDB Between-Group Study
 
-The collection stores fixture data in SQLite with a shared schema and a small set of AGENT-only columns. The public documentation focuses on the fields that are actually used for analysis and export.
+The between-group study stores fixture data from two separate populations: human-authored (pre-2021) and agent-authored (2023+). The database enables comparison of fixture characteristics across populations while tracking control variables.
 
 ## Database overview
 
 | Database | Purpose | Scope |
 |----------|---------|-------|
-| `fixturedb-human.db` | Pre-2021 human-written fixtures | Human baseline |
-| `fixturedb-agent.db` | 2021+ agent-generated fixtures | Agent-era dataset with commit metadata |
+| `corpus.db` | Original repository corpus with pinned commits | Source data for both corpora |
+| `between-group.db` | Human and agent fixture populations | Between-group comparison and statistical analysis |
 
 Both databases use SQLite with WAL mode enabled for safe concurrent reads.
 
-## Shared schema
+## Between-Group Schema
 
 ### repositories
 
-Repository metadata and collection statistics.
+Repository metadata and control variables computed at fixture writing time.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -23,7 +23,7 @@ Repository metadata and collection statistics.
 | `github_id` | INTEGER | GitHub repository numeric ID |
 | `full_name` | TEXT | Repository slug such as `pytest-dev/pytest` |
 | `language` | TEXT | Normalized primary language (`python`, `java`, `javascript`, `typescript`, `go`) |
-| `stars` | INTEGER | Star count at collection time |
+| `stars` | INTEGER | Star count (current; historical unavailable from GitHub API) |
 | `forks` | INTEGER | Fork count at collection time |
 | `description` | TEXT | Repository description from GitHub |
 | `topics` | TEXT | JSON-encoded list of GitHub topics |
@@ -38,6 +38,10 @@ Repository metadata and collection statistics.
 | `num_fixtures` | INTEGER | Number of fixture definitions found |
 | `num_mock_usages` | INTEGER | Number of mock usages detected |
 | `num_contributors` | INTEGER | Contributor count from GitHub |
+| **Control Variables** |
+| `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
+| `star_tier` | TEXT | Star classification (`core` ≥500 stars, `extended` <500 stars) |
+| `repo_age_years` | REAL | Repository age in years at fixture writing time (2021-01-01 for human, 2023-06-01 for agent) |
 | `collected_at` | TEXT | Timestamp of insertion |
 
 ### test_files
@@ -80,10 +84,11 @@ Individual fixture definitions and their quantitative metrics.
 | `raw_source` | TEXT | Original source text for the fixture |
 | `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |
 | `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
-| `commit_sha` | TEXT | AGENT-only: commit that introduced the fixture |
-| `agent_type` | TEXT | AGENT-only: agent family such as `claude`, `copilot`, `cursor`, or `github-actions` |
-| `tier` | INTEGER | AGENT-only: corpus tier flag used by the split pipeline |
-| `is_complete_addition` | INTEGER | AGENT-only: 1 when the fixture was added as a complete addition |
+| **Between-Group Labeling** |
+| `commit_sha` | TEXT | Commit SHA that introduced this fixture |
+| `commit_kind` | TEXT | Corpus label: `human` (pre-2021) or `agent` (2023+) |
+| `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored, NULL otherwise |
+| `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
 
 ### mock_usages
 
@@ -99,67 +104,154 @@ Per-fixture mock framework usage data.
 | `num_interactions_configured` | INTEGER | Number of interactions configured on the mock |
 | `raw_snippet` | TEXT | Original source snippet for the mock usage |
 
+
 ## Query examples
 
-### Compare human and AGENT fixture size
+### Compare human vs agent fixture characteristics
 
 ```python
 import pandas as pd
 import sqlite3
 
-human = sqlite3.connect("fixturedb-human.db")
-agent = sqlite3.connect("fixturedb-agent.db")
+conn = sqlite3.connect("between-group.db")
 
-human_by_framework = pd.read_sql(
-    "SELECT framework, COUNT(*) AS n, AVG(loc) AS avg_loc FROM fixtures GROUP BY framework ORDER BY n DESC",
-    human,
-)
-llm_by_framework = pd.read_sql(
-    "SELECT framework, COUNT(*) AS n, AVG(loc) AS avg_loc FROM fixtures GROUP BY framework ORDER BY n DESC",
-    agent,
-)
+# Aggregate fixtures by corpus
+fixtures_by_corpus = pd.read_sql("""
+    SELECT 
+        f.commit_kind as corpus,
+        COUNT(f.id) as fixture_count,
+        ROUND(AVG(f.loc), 2) as avg_loc,
+        ROUND(AVG(f.cyclomatic_complexity), 2) as avg_complexity,
+        ROUND(AVG(f.num_parameters), 2) as avg_parameters
+    FROM fixtures f
+    GROUP BY f.commit_kind
+""", conn)
 
-print(human_by_framework)
-print(llm_by_framework)
+print(fixtures_by_corpus)
 ```
 
-### Compare scope distributions
-
-```sql
-SELECT scope, COUNT(*) AS fixtures
-FROM fixtures
-GROUP BY scope
-ORDER BY fixtures DESC;
-```
-
-### Inspect mock usage per framework
+### Analyze agent type distribution (agent corpus only)
 
 ```python
 import sqlite3
 import pandas as pd
 
-conn = sqlite3.connect("fixturedb-agent.db")
-df = pd.read_sql(
-    "SELECT framework, COUNT(*) AS mock_count, AVG(num_interactions_configured) AS avg_interactions FROM mock_usages GROUP BY framework ORDER BY mock_count DESC",
-    conn,
-)
-print(df)
+conn = sqlite3.connect("between-group.db")
+
+agent_breakdown = pd.read_sql("""
+    SELECT 
+        f.agent_type,
+        COUNT(DISTINCT f.commit_sha) as commits,
+        COUNT(f.id) as fixtures,
+        ROUND(AVG(f.loc), 2) as avg_loc
+    FROM fixtures f
+    WHERE f.commit_kind = 'agent' AND f.agent_type IS NOT NULL
+    GROUP BY f.agent_type
+    ORDER BY commits DESC
+""", conn)
+
+print(agent_breakdown)
+```
+
+### Check control variable distributions
+
+```python
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect("between-group.db")
+
+# Domain distribution by corpus
+domain_balance = pd.read_sql("""
+    SELECT 
+        r.domain,
+        f.commit_kind as corpus,
+        COUNT(DISTINCT r.id) as repos,
+        COUNT(f.id) as fixtures
+    FROM fixtures f
+    JOIN repositories r ON f.repo_id = r.id
+    WHERE r.domain IS NOT NULL
+    GROUP BY r.domain, f.commit_kind
+    ORDER BY r.domain, f.commit_kind
+""", conn)
+
+print(domain_balance)
+```
+
+### Repository age and star tier balance
+
+```python
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect("between-group.db")
+
+# Age and star tier by corpus
+control_balance = pd.read_sql("""
+    SELECT 
+        r.star_tier,
+        f.commit_kind as corpus,
+        COUNT(DISTINCT r.id) as repos,
+        ROUND(AVG(r.repo_age_years), 2) as avg_age_years
+    FROM fixtures f
+    JOIN repositories r ON f.repo_id = r.id
+    WHERE r.star_tier IS NOT NULL
+    GROUP BY r.star_tier, f.commit_kind
+    ORDER BY r.star_tier, f.commit_kind
+""", conn)
+
+print(control_balance)
+```
+
+### Inspect frameworks used in agent vs human fixtures
+
+```python
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect("data/between-group.db")
+
+framework_comparison = pd.read_sql("""
+    SELECT 
+        f.framework,
+        f.commit_kind,
+        COUNT(*) as fixture_count,
+        ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM fixtures), 1) as pct
+    FROM fixtures f
+    WHERE f.framework IS NOT NULL
+    GROUP BY f.framework, f.commit_kind
+    ORDER BY fixture_count DESC
+""", conn)
+
+print(framework_comparison)
 ```
 
 ## Data quality guarantees
 
-- The schema is append-safe and re-runnable; existing records are not truncated during collection.
-- Human and AGENT databases share the same core table structure so analyses can be compared directly.
-- AGENT-only columns are only populated where commit-level provenance exists.
-- Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from the analyzed source code.
+- The schema is append-safe and re-runnable; existing records are not duplicated during collection.
+- Fixtures are labeled by corpus (`commit_kind`) and agent type, enabling unpaired statistical analysis.
+- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at temporal boundaries (2021-01-01 for human, 2023-06-01 for agent).
+- Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
 
-## Accessing the databases
+## Accessing the database
 
 ### CLI
 
 ```bash
-sqlite3 fixturedb-human.db "SELECT COUNT(*) FROM fixtures;"
-sqlite3 fixturedb-agent.db "SELECT framework, COUNT(*) FROM fixtures GROUP BY framework ORDER BY COUNT(*) DESC;"
+# Count fixtures by commit_kind (corpus)
+sqlite3 data/between-group.db "SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;"
+
+# Agent type breakdown
+sqlite3 data/between-group.db "SELECT agent_type, COUNT(*) FROM fixtures WHERE agent_type IS NOT NULL GROUP BY agent_type;"
+
+# Compare fixture counts
+sqlite3 data/between-group.db "
+  SELECT commit_kind, 
+         COUNT(f.id) as fixture_count,
+         ROUND(AVG(f.cyclomatic_complexity), 2) as avg_complexity
+  FROM fixtures f
+  GROUP BY f.commit_kind;
+"
 ```
 
 ### Python
@@ -167,20 +259,36 @@ sqlite3 fixturedb-agent.db "SELECT framework, COUNT(*) FROM fixtures GROUP BY fr
 ```python
 import sqlite3
 
-conn = sqlite3.connect("fixturedb-human.db")
-rows = conn.execute("SELECT scope, COUNT(*) FROM fixtures GROUP BY scope ORDER BY COUNT(*) DESC").fetchall()
-print(rows)
+conn = sqlite3.connect("data/between-group.db")
+
+# Human vs agent fixture count
+corpus_counts = conn.execute(
+    "SELECT commit_kind, COUNT(*) as count FROM fixtures GROUP BY commit_kind"
+).fetchall()
+
+for corpus, count in corpus_counts:
+    print(f"{corpus}: {count} fixtures")
 ```
 
 ### R
 
 ```r
 library(DBI)
-con <- dbConnect(RSQLite::SQLite(), "fixturedb-agent.db")
-dbGetQuery(con, "SELECT agent_type, COUNT(*) AS fixtures FROM fixtures GROUP BY agent_type ORDER BY fixtures DESC")
+con <- dbConnect(RSQLite::SQLite(), "data/between-group.db")
+
+# Fixture counts by agent type
+dbGetQuery(con, "
+  SELECT agent_type, COUNT(*) AS fixture_count
+  FROM fixtures
+  WHERE commit_kind = 'agent' AND agent_type IS NOT NULL
+  GROUP BY agent_type
+  ORDER BY fixture_count DESC
+")
 ```
 
 ## Notes
 
-- The public docs only document the current collection fields and metrics.
-- The SQLite database keeps the raw source text for reproducibility and deeper analysis.
+- The between-group database preserves control variables (language, domain, star_tier, repo_age_years) computed at temporal boundaries for reproducibility and validity assessment.
+- The schema is designed for between-group unpaired comparisons using statistical tests appropriate for independent samples.
+- Balance test results enable assessment of control variable distributions across human and agent corpora.
+

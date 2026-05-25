@@ -15,7 +15,7 @@ The FixtureDB Split implementation is **100% code complete** with comprehensive 
 | Phase 1A-1B Scripts | ✓ Complete | Agent detection, 340 lines |
 | Phase 2-3 Scripts | ✓ Complete | Fixture extraction, 480 lines |
 | Phase 4-8 Scripts | ✓ Complete | Analysis, sampling, export, validation |
-| Core Modules | ✓ Complete | 4 modules, 3,200+ lines, full type hints |
+| Core Modules | ✓ Complete | Multiple modules, full type hints |
 | Unit Tests | ✓ Complete | 19/19 passing |
 | Integration Tests | ✓ Complete | 5/5 passing |
 | Documentation | ✓ Complete | Implementation plan, algorithms, schemas |
@@ -32,12 +32,12 @@ The FixtureDB Split implementation is **100% code complete** with comprehensive 
 | phase_1a_scan_agent_files.py | 110 | ✓ | JSON (agent files) |
 | phase_1b_verify_agent_commits.py | 145 | ✓ | JSON (agent commits) |
 | phase_2_extract_pre_2021.py | 155 | ✓ | JSON (pre-2021 stats) |
-| phase_3_extract_llm.py | 180 | ✓ | JSON (LLM stats) |
+| phase_3_extract_agent.py | 180 | ✓ | JSON (agent stats) |
 | phase_4_analyze_distribution.py | 92 | ✓ | JSON (analysis) |
 | phase_5_stratified_sample.py | 110 | ✓ | JSON (sampled IDs) |
 | phase_6_7_export_and_document.py | 185 | ✓ | ZIP + CSV + DOCX |
 | phase_8_final_validation.py | 220 | ✓ | JSON (validation report) |
-| **TOTAL** | **1,197** | **✓** | **8 JSON outputs** |
+| **TOTAL** | **✓** | **✓** | Multiple JSON outputs |
 
 ### ✓ Core Collection Modules (4/4 Complete)
 
@@ -62,8 +62,8 @@ Features:
 Classes:
   - Pre2021ExtractionStats (dataclass)
   - Pre2021FixtureExtractor (Phase 2)
-  - LLMExtractionStats (dataclass)
-  - LLMFixtureExtractor (Phase 3)
+  - AgentExtractionStats (dataclass)
+  - AgentFixtureExtractor (Phase 3)
 
 Features:
   - Snapshot-based extraction (pre-2021)
@@ -94,7 +94,7 @@ Classes:
   - ExportResult (dataclass)
   - DatasetExporter (base)
   - HumanDatasetExporter (fixturedb-human.db)
-  - LLMDatasetExporter (fixturedb-llm.db)
+  - AgentDatasetExporter (fixturedb-agent.db)
 
 Features:
   - Database schema copying
@@ -108,7 +108,7 @@ Features:
 
 ### ✓ Test Suite (19/19 Passing)
 
-#### Unit Tests (5 test files, 19 tests total)
+#### Unit Tests
 
 ```
 test_split_agent_detector.py (7 tests)
@@ -121,7 +121,7 @@ test_split_agent_detector.py (7 tests)
 test_split_fixture_extractor.py (5 tests)
   ✓ Pre2021FixtureExtractor constructor
   ✓ Pre2021FixtureExtractor.extract_all()
-  ✓ LLMFixtureExtractor constructor
+  ✓ AgentFixtureExtractor constructor
   ✓ LLMFixtureExtractor method tests
   ... (2 tests passing)
 
@@ -132,7 +132,7 @@ test_split_dataset_sampler.py (3 tests)
 
 test_split_dataset_exporter.py (3 tests)
   ✓ HumanDatasetExporter.export()
-  ✓ LLMDatasetExporter includes AGENTS.md
+  ✓ AgentDatasetExporter includes AGENTS.md
   ✓ CSV export format validation
 
 test_split_integration.py (1 test)
@@ -148,7 +148,7 @@ $ pytest tests/test_split_*.py -v
 ### ✓ Documentation (Complete)
 
 #### Implementation Plans
-- [FIXTUREDB_SPLIT_IMPLEMENTATION_PLAN.md](../internal/FIXTUREDB_SPLIT_IMPLEMENTATION_PLAN.md) - Main plan (1,200+ lines)
+- [FIXTUREDB_SPLIT_IMPLEMENTATION_PLAN.md](../internal/FIXTUREDB_SPLIT_IMPLEMENTATION_PLAN.md) - Main plan
 - [FIXTUREDB_SPLIT_TASK_BREAKDOWN.md](../internal/FIXTUREDB_SPLIT_TASK_BREAKDOWN.md) - Task details
 
 #### Architecture & Design
@@ -197,7 +197,7 @@ $ pytest tests/test_split_*.py -v
 - [x] All 4 collection modules
 - [x] Dataclass models for all data types
 - [x] JSON input/output for phase chaining
-- [x] Database schema design (human + LLM)
+- [x] Database schema design (human + agent)
 - [x] CSV export implementation
 - [x] ZIP archive creation
 - [x] Documentation generation (README, SCHEMA, AGENTS)
@@ -211,7 +211,7 @@ $ pytest tests/test_split_*.py -v
 - [x] All 19 tests passing
 
 ### ✓ Documentation
-- [x] Implementation plan (1,200+ lines)
+- [x] Implementation plan
 - [x] Phase-by-phase guide (500+ lines)
 - [x] Database schema documentation (800+ lines)
 - [x] Execution guide with troubleshooting
@@ -280,8 +280,8 @@ Total: ~10-20 minutes once Phases 1-3 complete
 
 ```
 corpus.db (129 MB)
-  - 200 repositories (status = 'analysed')
-  - 35,169 fixtures across all time periods
+  - analyzed repositories
+  - fixtures across all time periods
   - Complete metadata (pinned_commits, etc.)
   - Ready for Phase 2 extraction
   
@@ -408,7 +408,7 @@ clones/ directory population
 
 2. **Review Phase 2 output:**
    - Check statistics in `output/phase_2_extraction_stats_*.json`
-   - Verify 32,895 pre-2021 fixtures detected
+  - Verify pre-2021 fixtures detected
 
 ### Conditional (If Cloning Needed)
 

@@ -1,6 +1,6 @@
-# CSV Export Guide
+# CSV Export Guide - FixtureDB Between-Group Study
 
-This document describes the CSV files exported by the dataset export step (`python pipeline.py export`). The public CSVs contain objective, quantitative metrics only; the full SQLite exports contain additional internal fields and detailed mock-analysis tables for reproducibility.
+This document describes CSV files you can export from the between-group.db database using SQL tools or custom scripts. The public CSVs contain objective, quantitative metrics only; the full SQLite database contains additional internal fields and control variable data for reproducibility.
 
 ## Export structure
 

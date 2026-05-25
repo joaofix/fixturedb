@@ -1,77 +1,242 @@
-# Configuration Reference
+# Configuration Reference - FixtureDB Between-Group Study
 
-## Important: Original Pipeline vs Split Pipeline
+This document describes configuration options for the between-group study collection pipeline.
 
-This document describes configuration for the **original FixtureDB collection pipeline**. 
+## Three-Stage Pipeline
 
-For the **FixtureDB Split project**, see [Execution Guide](../split/EXECUTION_GUIDE.md) for phase-specific parameters and configuration.
+The between-group study uses a three-stage CLI-based pipeline:
 
----
+```
+Stage 1: python pipeline.py human    → Human corpus (pre-2021)
+Stage 2: python pipeline.py agent    → Agent corpus (2023+)
+Stage 3: python pipeline.py between-group-stats → Statistical comparison
+```
 
-## Original Pipeline Configuration
+All configuration is via command-line arguments (no configuration files needed).
 
-All collection parameters lived in `collection/config.py` for the original pipeline.
+## Stage 1: Human Corpus Collection
 
-### Per-language targets
+```bash
+python pipeline.py human [OPTIONS]
+```
 
-| Language       | `min_stars` | `target_repos` | Rationale |
-|----------------|-------------|----------------|----------|
-| Python         | 100         | 1,000          | Large ecosystem, high test culture |
-| Java           | 100         | 1,000          | Direct comparability with Hamster |
-| JavaScript     | 100         | 800            | Frontend repos often yield few fixtures |
-| TypeScript     | 100         | 600            | Younger ecosystem |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--repos-per-language` | INT | 100 | Target fixtures per language |
+| `--language` | STR | (all) | Specific language: python, java, javascript, typescript |
+| `--output-db` | PATH | data/between-group.db | SQLite database output path |
 
-### Star tiers
+### Control Variables (Fixed)
 
-| Tier       | `stars` range | Rationale |
-|------------|---------------|----------|
-| `core`     | ≥ 500         | Threshold used in Hamster study (Pan et al., 2025). High-quality, mature projects with established testing practices. |
-| `extended` | 100–499       | Adds diversity and smaller/emerging projects. 100-star floor aligns with MSR empirical study conventions and balances between popularity and novelty. |
+Control variables are **computed automatically** at 2021-01-01 snapshot:
 
-### Quality filters (post-clone)
+| Variable | Description |
+|----------|-------------|
+| `language` | Programming language (python, java, javascript, typescript) |
+| `domain` | Repository domain (computed from topics/description) |
+| `star_tier` | GitHub stars tier at snapshot (core: ≥500, extended: 100-499) |
+| `repo_age_years` | Repository age in years at 2021-01-01 |
 
-| Parameter             | Default | Rationale |
-|-----------------------|---------|----------|
-| `MIN_TEST_FILES`      | 5       | Empirical threshold; repos with fewer test files likely lack testing culture. Aligned with Ahmed et al. (2025) observations on test project characteristics. |
-| `MIN_COMMITS`         | 50      | Ensures repositories have sufficient history and are non-trivial projects. Avoids prototype/example repos. |
-| `MIN_FIXTURES_FOUND`  | 1       | Only repositories with at least one fixture definition are included in the final dataset (post-extraction filter). Avoids cluttering with test-only but fixture-less repos. |
+### Example
 
-### Pipeline tuning
+```bash
+# Collect 100 Python fixtures from pre-2021 repositories
+python pipeline.py human --repos-per-language 100 --language python
 
-| Parameter                          | Default | Notes |
-|------------------------------------|---------|-------|
-| `CLONE_WORKERS`                    | 12      | Parallel clone threads |
-| `CLONE_BATCH_SIZE`                 | 50      | Repos per `clone` invocation (incremental mode) |
-| `EXTRACT_WORKERS`                  | 8       | Parallel extraction workers (balanced for SQLite single-writer limit) |
-| `MAX_COLLECTION_ITERATIONS`        | 10      | Max balanced collection loop iterations (safety limit) |
+# Collect all languages, 200 fixtures each
+python pipeline.py human --repos-per-language 200
 
----
+# Specify output database location
+python pipeline.py human --repos-per-language 100 --output-db output/my-between-group.db
+```
 
-## Split Pipeline Configuration
+## Stage 2: Agent Corpus Collection
 
-### Phase Parameters
+```bash
+python pipeline.py agent [OPTIONS]
+```
 
-See [EXECUTION_GUIDE](../split/EXECUTION_GUIDE.md) for split pipeline phase-specific configuration:
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--repos-per-language` | INT | 100 | Target fixtures per language |
+| `--language` | STR | (all) | Specific language: python, java, javascript, typescript |
+| `--github-token` | STR | $GITHUB_TOKEN | GitHub API token (for rate limits) |
+| `--output-db` | PATH | data/between-group.db | SQLite database output path |
 
-- **Phase 1A-1B:** Agent detection (scans clones/ directory)
-- **Phase 2:** Pre-2021 extraction (reads from corpus.db)
-- **Phase 3:** AGENT extraction (reads from clones/ and corpus.db)
-- **Phase 4-8:** Sampling, export, validation
+### Control Variables (Fixed)
 
-### Key Differences from Original
+Control variables are **computed automatically** at 2023-06-01 snapshot:
 
-| Aspect | Original | Split |
-|--------|----------|-------|
-| Data source | GitHub Search (SEART-GHS) | Existing corpus.db + clones/ |
-| Databases | Single corpus.db | Three separate databases |
-| Agent detection | None | Phases 1A-1B (required for Phase 3) |
-| Fixture filtering | Language-specific | Temporal (pre-2021 vs 2021+) |
-| Output | Single CSV set | Two CSV sets (human + AGENT) |
+| Variable | Description |
+|----------|-------------|
+| `language` | Programming language |
+| `domain` | Repository domain |
+| `star_tier` | GitHub stars tier at snapshot |
+| `repo_age_years` | Repository age in years at 2023-06-01 |
+| `agent_type` | Agent classifier: claude, copilot, cursor, aider, or NULL |
+| `commit_kind` | Always 'agent' for Stage 2 |
 
----
+### Agent Detection
+
+Agents detected via **Tier 1 (co-authored-by trailers only)**:
+
+```
+Agent patterns recognized:
+- co-authored-by: Claude <claude@anthropic.com>
+- co-authored-by: GitHub Copilot <copilot@github.com>
+- co-authored-by: Cursor <cursor@anysoftware.io>
+- co-authored-by: Aider <aider@paul.pub>
+```
+
+### Example
+
+```bash
+# Collect 100 agent-authored fixtures per language
+python pipeline.py agent --repos-per-language 100
+
+# Collect JavaScript only with authentication
+export GITHUB_TOKEN=github_pat_...
+python pipeline.py agent --language javascript --repos-per-language 50
+
+# Override rate limit behavior with explicit token
+python pipeline.py agent --github-token $GITHUB_TOKEN
+```
+
+## Stage 3: Statistical Comparison
+
+```bash
+python pipeline.py between-group-stats [OPTIONS]
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `--db` | PATH | data/between-group.db | Between-group database |
+| `--human-stats` | PATH | output/human_corpus_summary_*.json | Human corpus JSON |
+| `--agent-stats` | PATH | output/agent_corpus_summary_*.json | Agent corpus JSON |
+| `--output-dir` | PATH | output/ | Output directory for results JSON |
+
+### Statistical Tests
+
+Stage 3 runs the following tests:
+
+| Control | Test | Interpretation |
+|---------|------|-----------------|
+| language | Chi-square test | p ≥ 0.05 → balanced |
+| domain | Chi-square test | p ≥ 0.05 → balanced |
+| star_tier | Chi-square test | p ≥ 0.05 → balanced |
+| repo_age_years | Mann-Whitney U | p ≥ 0.05 → balanced |
+
+Results saved to JSON file in output directory.
+
+### Example
+
+```bash
+# Run comparison with default output locations
+python pipeline.py between-group-stats
+
+# Specify custom paths
+python pipeline.py between-group-stats \
+  --db output/my-between-group.db \
+  --human-stats output/custom_human.json \
+  --agent-stats output/custom_agent.json \
+  --output-dir output/comparison/
+```
+
+## Temporal Boundaries
+
+Fixed snapshot dates (not configurable):
+
+| Corpus | Snapshot Date | Repositories | Rationale |
+|--------|---------------|--------------|-----------|
+| Human | 2021-01-01 | Created before 2021 | Pre-AI agent era |
+| Agent | 2023-06-01 | Created before 2023-06 | Agent availability (2023+) |
+
+These dates ensure:
+- No agent involvement in human corpus (2021 < 2023)
+- Sufficient agent maturity by 2023-06
+- ~2.5 year temporal gap for framework/practice evolution
+
+## Database Configuration
+
+Both stages use the same database with different corpora:
+
+```sql
+-- Human fixtures
+SELECT COUNT(*) FROM fixtures WHERE commit_kind = 'human';
+
+-- Agent fixtures
+SELECT COUNT(*) FROM fixtures WHERE commit_kind = 'agent';
+
+-- Filtered by agent type
+SELECT agent_type, COUNT(*) FROM fixtures
+WHERE commit_kind = 'agent'
+GROUP BY agent_type;
+```
+
+## Quality Filters
+
+### Stage 1 (Human)
+
+Auto-applied filters:
+- Repositories created before 2021-01-01
+- At least 5 test files found
+- At least 1 fixture extracted
+
+### Stage 2 (Agent)
+
+Auto-applied filters:
+- Repositories with agent commits (co-authored-by trailers)
+- At least 1 fixture extracted
+- Tier 1 agent detection only (no heuristics)
+
+## Logging and Monitoring
+
+Both stages produce JSON summaries:
+
+```
+output/
+├── human_corpus_summary_20240115_143022.json
+├── agent_corpus_summary_20240115_160545.json
+└── between_group_comparison_20240115_161500.json
+```
+
+Check JSON for:
+- `summary.total_fixtures` — Fixture counts
+- `control_variables.distributions` — Balance statistics
+- `qa_results` — Quality assurance checks
+
+## Environment Variables
+
+| Variable | Usage | Example |
+|----------|-------|---------|
+| `GITHUB_TOKEN` | GitHub API auth (Stage 2) | github_pat_1A2B3C4D5E6F |
+| `PYTHONPATH` | Module import path | `export PYTHONPATH=$PWD` |
+
+## Advanced Options
+
+### Memory Management
+
+```bash
+# For limited-memory machines (< 2GB)
+python pipeline.py human --repos-per-language 10
+
+# For high-memory machines (8GB+)
+python pipeline.py agent --repos-per-language 500
+```
+
+### Database Optimization
+
+```bash
+# Rebuild indexes after collection
+sqlite3 data/between-group.db "VACUUM; ANALYZE;"
+
+# Check database health
+sqlite3 data/between-group.db "PRAGMA integrity_check;"
+```
 
 ## See Also
 
-- [Execution Guide](../split/EXECUTION_GUIDE.md) — Phase-by-phase execution
-- [Data Models](../split/DATA_MODELS.md) — Schema details
-- [Agent Detection](./agent-detection.md) — Agent detection methodology
+- [Reproducing Results](../usage/reproducing.md) — Step-by-step collection guide
+- [Database Schema](./database-schema.md) — Table structure and columns
+- [Agent Detection](./agent-detection.md) — How agents are identified
+

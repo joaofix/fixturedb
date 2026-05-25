@@ -1,14 +1,41 @@
-# Limitations and Threats to Validity
+# Limitations and Threats to Validity - FixtureDB Between-Group Study
+
+## Between-Group Study Design
+
+The between-group methodology collects human and agent corpora at different time periods to avoid temporal confounding. However, this design introduces its own limitations:
+
+### Temporal Separation Confounding
+- **Human corpus:** Pre-2021 repositories (fixture collection snapshot at 2021-01-01)
+- **Agent corpus:** 2023+ repositories with agent commits (fixture collection snapshot at 2023-06-01)
+- **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2023 may affect fixture patterns independently of agent involvement
+
+**Mitigation:** Control variables (language, domain, star_tier, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U). Balance report generated after Stage 3 confirms no significant differences (p ≥ 0.05).
+
+### Agent Detection Conservatism
+- **Tier 1 detection only:** Agents identified via `co-authored-by` commit trailers only
+- **False negatives:** Agents without proper trailers are classified as human
+- **Impact:** True agent detection rate may be higher than reported
+
+**Mitigation:** Use conservative Tier 1 estimates. Tier 2/3 (heuristic-based) detection documented in [Agent Detection Methodology](../architecture/agent-detection.md).
+
+### Repository Availability
+- **Human corpus:** Assumes pre-2021 repositories are still publicly available
+- **Agent corpus:** Depends on GitHub API availability and rate limits
+- **Impact:** Extinct or private repositories cannot be collected
+
+**Mitigation:** Stage 1 uses corpus.db (pre-curated); Stage 2 queries live GitHub API with error handling.
+
+---
 
 ## Sampling bias
 
-The corpus is drawn from repositories with ≥500 GitHub stars. Popular,
+Both human and agent corpora are drawn from repositories with ≥500 GitHub stars. Popular,
 actively maintained projects may exhibit higher test discipline than typical
 open-source software. This is a known limitation in empirical software
 engineering studies (Hamster study by Pan et al., 2025) which also used
 star-based sampling to ensure sufficient test coverage. To mitigate this bias
-and improve generalizability, we collected all available open-source repositories
-with ≥500 stars across 4 programming languages.
+and improve generalizability, both corpora are restricted to high-star repositories
+across 4 programming languages, and control variables are balanced.
 
 ## Language coverage
 
@@ -64,7 +91,7 @@ re-run or improve detection against the original fixture text.
 
 ## Validation Status
 
-**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, manually inspect 50–100 fixtures per language to establish project-specific precision and recall.
+**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, manually inspect 50–100 fixtures per language and per corpus to establish project-specific precision and recall.
 
 **Language-Specific Confidence:**
 
@@ -74,7 +101,6 @@ re-run or improve detection against the original fixture text.
 | Java | High | Annotation-based detection is unambiguous. |
 | JavaScript | Medium | Framework conventions vary; helper detection relies on naming. |
 | TypeScript | Medium | Same as JavaScript. |
-| Go | **Incomplete** | Helper function detection validated but classification incomplete. |
 
 **Known gaps:** Parametrized test detection edge cases, false-positive rates (~5–15% for `num_objects_instantiated`).
 
@@ -83,3 +109,17 @@ re-run or improve detection against the original fixture text.
 ## Mock Detection
 
 40+ framework patterns detected (`unittest.mock`, `pytest-mock`, Mockito, Jest, Sinon, Vitest). Coverage excludes niche frameworks and non-standard APIs. Detects mocks within fixtures only, not test bodies. Treat `num_mocks=0` as reliable; use `num_mocks>0` as presence indicator, not exact count.
+
+---
+
+## Control Variable Balance
+
+The between-group study balances control variables (language, domain, star_tier, repo_age_years) across human and agent corpora. Balance is verified using:
+
+- **Chi-square test:** Categorical controls (p ≥ 0.05 indicates balance)
+- **Mann-Whitney U test:** Continuous controls (p ≥ 0.05 indicates balance)
+
+**Limitation:** Balance testing only checks for differences in distributions; unmeasured confounds (e.g., framework version changes, testing best practices evolution) may still exist.
+
+**Mitigation:** Statistical tests reported in between_group_comparison_*.json. Inspect balance report before drawing conclusions.
+

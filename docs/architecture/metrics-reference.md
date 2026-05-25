@@ -252,7 +252,7 @@ def setup(self):
 
 **Validation:**
 - Test suite: `tests/test_extractor_unit/` has 500+ test cases
-- Production validation: FixtureDB contains 40,672 fixtures with detected types
+- Production validation: FixtureDB contains a large number of fixtures with detected types
 
 ---
 
@@ -369,7 +369,7 @@ All hook names have standardized semantics across frameworks (Jest, Mocha, Jasmi
 
 **Validation:**
 - Test suite: `tests/test_extractor_unit/` contains scope mapping unit tests per language
-- Production validation: Scope distribution across 40,672+ fixtures matches expected framework patterns
+- Production validation: Scope distribution across the dataset matches expected framework patterns
   - Python: ~60% per_test, ~20% per_class, ~18% per_module, ~2% global
   - Java: ~75% per_test, ~25% per_class (per_module not applicable)
   - JavaScript: ~80% per_test, ~20% per_class (per_module not applicable)
@@ -552,7 +552,7 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
 
 **Validation:**
 - Test suite: `tests/test_framework_detection.py` — 50+ unit tests verifying correct framework detection across all languages
-- Production validation: FixtureDB contains 40,672+ fixtures with detected frameworks
+- Production validation: FixtureDB contains a large number of fixtures with detected frameworks
 - Manual spot-checks: Validation CSV with GitHub URLs for reproducibility
 
 **Citation in Papers:**
@@ -618,7 +618,7 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
 
 **Validation:**
 - Test suite: `tests/test_mock_detection/` contains unit tests for pattern matching
-- Production validation: Distribution of num_mocks across 40,672+ fixtures
+- Production validation: Distribution of num_mocks across the dataset
   - ~45% of fixtures have num_mocks = 0 (no mocks)
   - ~35% have 1-2 mocks
   - ~15% have 3-5 mocks
