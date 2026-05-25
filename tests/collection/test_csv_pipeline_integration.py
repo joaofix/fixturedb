@@ -220,6 +220,194 @@ class TestCSVRepositorySelection:
         # Should have all 5 repos
         assert len(repos) == 5
 
+    def test_select_human_corpus_restricts_to_agent_test_commits(self, tmp_path):
+        """When agent test-commit CSVs exist, selection is restricted to those repos."""
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+
+        # Create tests_commits subdir with a single agent test-commit repo
+        tests_dir = input_dir / "tests_commits"
+        tests_dir.mkdir()
+
+        tpath = tests_dir / "python_agent_test_commit.csv"
+        with open(tpath, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "repo_name",
+                    "language",
+                    "commit_sha",
+                    "commit_role",
+                    "agent_type",
+                    "commit_date",
+                    "test_file_count",
+                    "test_file_paths",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "repo_name": "owner/only_test_repo",
+                    "language": "python",
+                    "commit_sha": "abc123",
+                    "commit_role": "agent",
+                    "agent_type": "claude",
+                    "commit_date": "2026-01-01T00:00:00Z",
+                    "test_file_count": "1",
+                    "test_file_paths": '["tests/test_foo.py"]',
+                }
+            )
+
+        # Create agent_repo_qc csv containing two repos, only one of which appears
+        csv_path = input_dir / "python_agent_repo_qc.csv"
+        rows = [
+            {
+                "repo_name": "owner/only_test_repo",
+                "full_name": "owner/only_test_repo",
+                "language": "python",
+                "stars": 100,
+                "forks": 10,
+                "num_contributors": 1,
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+            {
+                "repo_name": "owner/other_repo",
+                "full_name": "owner/other_repo",
+                "language": "python",
+                "stars": 50,
+                "forks": 5,
+                "num_contributors": 1,
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+        ]
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+
+        repos = select_human_corpus_repositories(
+            input_dir, repos_per_language=None, language="python"
+        )
+
+        assert len(repos) == 1
+        assert repos[0]["full_name"] == "owner/only_test_repo"
+
+    def test_select_human_corpus_fallback_when_no_tests_commits(self, tmp_path):
+        """When no tests_commits directory exists, selection falls back to agent_repo_qc CSVs."""
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+
+        csv_path = input_dir / "python_agent_repo_qc.csv"
+        rows = [
+            {
+                "repo_name": "owner/repo1",
+                "full_name": "owner/repo1",
+                "language": "python",
+                "stars": 100,
+                "forks": 10,
+                "num_contributors": 1,
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+            {
+                "repo_name": "owner/repo2",
+                "full_name": "owner/repo2",
+                "language": "python",
+                "stars": 50,
+                "forks": 5,
+                "num_contributors": 1,
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+        ]
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+
+        repos = select_human_corpus_repositories(
+            input_dir, repos_per_language=None, language="python"
+        )
+
+        assert len(repos) == 2
+
+    def test_select_human_corpus_prefers_agent_fixture_repo_list(self, tmp_path):
+        """When an agent fixture repo list exists, it should be preferred."""
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+
+        # Create agent_fixtures directory with a per-language repo list
+        fixtures_dir = input_dir / "agent_fixtures"
+        fixtures_dir.mkdir()
+
+        repo_list = fixtures_dir / "python_agent_fixture_repos.csv"
+        with open(repo_list, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "repo_name",
+                    "language",
+                    "fixture_count",
+                    "commit_count_with_fixtures",
+                    "first_fixture_commit",
+                    "last_fixture_commit",
+                    "clone_url",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "repo_name": "owner/fixture_repo",
+                    "language": "python",
+                    "fixture_count": "5",
+                    "commit_count_with_fixtures": "2",
+                    "first_fixture_commit": "abc123",
+                    "last_fixture_commit": "def456",
+                    "clone_url": "https://github.com/owner/fixture_repo.git",
+                }
+            )
+
+        # Also create agent_repo_qc with another repo that should be ignored
+        csv_path = input_dir / "python_agent_repo_qc.csv"
+        rows = [
+            {
+                "repo_name": "owner/fixture_repo",
+                "full_name": "owner/fixture_repo",
+                "language": "python",
+                "stars": 100,
+                "forks": 10,
+                "num_contributors": 1,
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+            {
+                "repo_name": "owner/other_repo",
+                "full_name": "owner/other_repo",
+                "language": "python",
+                "stars": 50,
+                "forks": 5,
+                "num_contributors": 1,
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+        ]
+
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+            writer.writeheader()
+            writer.writerows(rows)
+
+        repos = select_human_corpus_repositories(
+            input_dir, repos_per_language=None, language="python"
+        )
+
+        assert len(repos) == 1
+        assert repos[0]["full_name"] == "owner/fixture_repo"
+
 
 class TestCSVFixtureExportFormat:
     """Test fixture CSV export format validation."""

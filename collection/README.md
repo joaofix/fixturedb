@@ -17,6 +17,30 @@ The paired command samples repositories that contain both human and agent commit
 
 The top-level wrapper `python pipeline.py paired` is equivalent.
 
+## Agent-first Workflow (recommended)
+
+You can run lower-level collection commands directly to implement an agent-first extraction flow:
+
+- Run agent extraction (detect agent commits, extract fixtures, and write per-language fixture repo lists):
+
+```bash
+python -m collection.agent_corpus --language python --repos-per-language 50
+```
+
+- Optionally export human test-commit CSVs (useful as an intermediate step):
+
+```bash
+python -m collection.human_corpus --corpus-db data/corpus.db --repo-qc-dir github-search-agent --language python --test-commits-csv /path/to/out --only-write-test-commits
+```
+
+- Run human fixture extraction (the human collector will prefer the agent-produced repo lists under `github-search-agent/agent_fixtures`):
+
+```bash
+python -m collection.human_corpus --corpus-db data/corpus.db --repo-qc-dir github-search-agent --language python
+```
+
+Backwards compatibility: if the agent fixture repo lists are not present, the human collector falls back to `github-search-agent/tests_commits/*_agent_test_commit.csv` and then to `*_agent_repo_qc.csv`.
+
 ## Study Model
 
 - unit of comparison: commit
