@@ -211,4 +211,4 @@ clones/                 # Temporary git clones (deleted after extraction)
 data/                   # SQLite database and collected data
 logs/                   # Pipeline execution logs
 output/                 # EDA output and analysis results
-internal-docs/*         # Internal documentation and notes
+internal-docs/*         # Internal documentation and notesdata/corpus.db
