@@ -1,4 +1,4 @@
-# FixtureDB — Paired Fixture Collection Pipeline
+# FixtureDB — Fixture Collection Pipeline
 
 [![Tests & Coverage](https://github.com/joao-almeida/icsme-nier-2026/actions/workflows/coverage.yml/badge.svg)](https://github.com/joao-almeida/icsme-nier-2026/actions/workflows/coverage.yml)
 ![Coverage](./.github/coverage.svg)
@@ -9,7 +9,7 @@ Replication package for the paper:
 > João Almeida, Andre Hora
 > *ICSME 2026 — Tool Demonstration and Data Showcase Track*
 
-This repository contains the pipeline used to build FixtureDB and the paired study derived from it. The collection flow now includes a test-commit detection step before fixture extraction, and the study is a paired, within-repository commit-level comparison.
+This repository contains the pipeline used to build FixtureDB and the study derived from it. The collection flow now includes a test-commit detection step before fixture extraction, and the study is a paired, within-repository commit-level comparison.
 
 The central idea is simple:
 
@@ -20,7 +20,7 @@ The central idea is simple:
 
 ## Primary Workflow
 
-Run the paired study with:
+Run the study with:
 
 ```bash
 python pipeline.py paired
