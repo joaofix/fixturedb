@@ -31,12 +31,17 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        pytest -c pytest.ini --cov=collection --cov-report=term-missing --cov-report=xml --cov-report=html -v
-      continue-on-error: true
+        coverage run --source=collection -m pytest -v
+        coverage xml
+        coverage html
 
     - name: Generate coverage badge
       run: |
-        coverage-badge -o .github/coverage.svg -f
+        if [ -f .coverage ]; then
+          coverage-badge -o .github/coverage.svg -f || true
+        else
+          echo "Skipping badge generation: no coverage data available"
+        fi
 
     - name: Display coverage in summary
       run: |
