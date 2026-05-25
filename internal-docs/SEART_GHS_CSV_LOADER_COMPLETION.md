@@ -84,9 +84,9 @@ from collection.github_search_loader import load_repos_for_language, load_all_la
 - **After**: Calls `load_repos_for_language()` with optional max_repos limit
 - Help text updated: "Load repos from SEART-GHS CSV files"
 
-#### `cmd_run()` and `cmd_toy()`
-- Updated Phase 1 description: "Search GitHub" → "Load SEART-GHS repos"
-- Removed stratified flags
+#### `cmd_run()` and paired-study entrypoints
+- Updated the main command surface to the paired study
+- Removed toy-mode references from the user-facing CLI
 
 #### `cmd_collect()`
 - Removed `stratified` parameter handling
