@@ -79,7 +79,7 @@ python -m collection agent_corpus --output-db data/custom.db
 ## Pipeline Stages
 
 ### Stage 1: Repository Selection
-- Read `*_agent_repo_qc.csv` files from `--repo-qc-dir`
+- Read `*_agent_repo.csv` files from `--repo-qc-dir`
 - Filter by language if specified
 - No per-language caps (all repos processed)
 echo "Stage 3: Between-group comparison..."

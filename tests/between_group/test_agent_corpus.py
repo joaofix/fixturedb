@@ -318,7 +318,7 @@ class TestQualityControlledInputs:
         repo_qc_dir.mkdir()
         commit_qc_dir.mkdir()
 
-        (repo_qc_dir / "python_agent_repo_qc.csv").write_text(
+        (repo_qc_dir / "python_agent_repo.csv").write_text(
             "repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,processed_at\n"
             "good/repo,1,python,123,https://github.com/good/repo.git,4,,2026-05-22T00:00:00Z\n"
             "bad/repo,0,python,456,https://github.com/bad/repo.git,7,no_agent_config,2026-05-22T00:00:00Z\n",

@@ -42,8 +42,8 @@ def main():
     parser.add_argument(
         "--repo-qc-dir",
         type=Path,
-        default=project_root / "github-search-agent",
-        help="Directory containing *_agent_repo_qc.csv files",
+        default=project_root / "github-search-agent" / "agent_repositories",
+        help="Directory containing *_agent_repo.csv files",
     )
     parser.add_argument(
         "--source-db",

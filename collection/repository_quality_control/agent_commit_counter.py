@@ -1,7 +1,7 @@
 """
 Agent commit counter
 
-For each repository marked `has_agent_config` in the selected `*_agent_repo_qc.csv` input directory,
+For each repository marked `has_agent_config` in the selected `*_agent_repo.csv` input directory,
 this script clones the repository using the shared commit-scan clone helper,
 scans the git history for agent commits using the shared collection logic, and writes
 one CSV per language containing one row per detected agent commit.
@@ -39,8 +39,8 @@ from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.temp_clone import cleanup_tempdir, clone_to_tempdir
 
-GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search" / "agent-activity-100-stars"
-OUTPUT_DIR = PROJECT_ROOT / "github-search" / "agent-activity-100-stars"
+GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
+OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,11 @@ logger = logging.getLogger(__name__)
 
 def read_config_positive_rows() -> list[dict]:
     rows = []
-    for fp in sorted(GITHUB_SEARCH_AGENT_DIR.glob("*_agent_repo_qc.csv")):
+    repo_csv_paths = sorted(
+        GITHUB_SEARCH_AGENT_DIR.glob("*_agent_repo.csv"), key=lambda path: path.name
+    )
+
+    for fp in repo_csv_paths:
         with fp.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for r in reader:
@@ -284,7 +288,7 @@ def main():
         "--input-dir",
         type=Path,
         default=GITHUB_SEARCH_AGENT_DIR,
-        help="Directory containing *_agent_repo_qc.csv files",
+        help="Directory containing *_agent_repo.csv files",
     )
     parser.add_argument(
         "--output-dir",

@@ -303,11 +303,7 @@ def collect_human_test_commits(
     grouped: dict[str, list[dict]] = defaultdict(list)
 
     csv_paths = sorted(
-        {
-            *Path(repo_qc_dir).glob("*_agent_repo_qc.csv"),
-            *Path(repo_qc_dir).glob("*_agent_repo.csv"),
-        },
-        key=lambda path: path.name,
+        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
     )
     for csv_path in csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
@@ -512,11 +508,7 @@ def collect_agent_test_commits_from_repos(
     grouped: dict[str, list[dict]] = defaultdict(list)
 
     csv_paths = sorted(
-        {
-            *Path(repo_qc_dir).glob("*_agent_repo_qc.csv"),
-            *Path(repo_qc_dir).glob("*_agent_repo.csv"),
-        },
-        key=lambda path: path.name,
+        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
     )
     for csv_path in csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
@@ -643,16 +635,22 @@ def _cli_main():
     )
     parser.add_argument("--mode", choices=["agent", "human"], default="agent")
     parser.add_argument(
-        "--commit-qc-dir", type=Path, default=Path("github-search-agent")
+        "--commit-qc-dir",
+        type=Path,
+        default=Path("github-search-agent") / "agent_repositories",
     )
-    parser.add_argument("--repo-qc-dir", type=Path, default=Path("github-search-agent"))
+    parser.add_argument(
+        "--repo-qc-dir",
+        type=Path,
+        default=Path("github-search-agent") / "agent_repositories",
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("output/test-commits"))
     parser.add_argument("--workers", type=int, default=12)
     args = parser.parse_args()
 
     # Prefer repo-driven collection when repo QC CSVs are available
     repo_qc_files = (
-        list(Path(args.repo_qc_dir).glob("*_agent_repo_qc.csv"))
+        list(Path(args.repo_qc_dir).glob("*_agent_repo.csv"))
         if Path(args.repo_qc_dir).exists()
         else []
     )

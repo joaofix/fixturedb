@@ -45,7 +45,7 @@ def minimal_human_repo_qc_csv(test_data_dir):
     import csv
 
     test_data_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = test_data_dir / "python_agent_repo_qc.csv"
+    csv_path = test_data_dir / "python_agent_repo.csv"
 
     # Single test repo
     rows = [

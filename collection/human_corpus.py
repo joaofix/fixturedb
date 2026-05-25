@@ -74,7 +74,7 @@ def select_human_corpus_repositories(
     Queries the repo-QC CSV exports for repositories with agent config files.
 
     Args:
-        repo_qc_dir: Directory containing *_agent_repo_qc.csv files
+        repo_qc_dir: Directory containing *_agent_repo.csv files
         repos_per_language: Optional per-language cap. None means include all rows.
         language: Optional filter to single language
 
@@ -250,7 +250,7 @@ def select_human_corpus_repositories(
     # Prefer agent test-commit CSVs (if present) which indicate positive
     # detection of agent activity in test files. If such files exist under
     # the `tests_commits` subdirectory of `repo_qc_dir`, use those repo
-    # names as the canonical selection. Otherwise fall back to agent_repo_qc
+    # names as the canonical selection. Otherwise fall back to repo QC CSVs.
     # CSVs as before.
     tests_commits_dir = Path(repo_qc_dir) / "tests_commits"
 
@@ -270,7 +270,11 @@ def select_human_corpus_repositories(
                         continue
                     agent_test_repos.add((repo_name, lang))
 
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_agent_repo_qc.csv")):
+    repo_csv_paths = sorted(
+        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+    )
+
+    for csv_path in repo_csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -342,7 +346,7 @@ class HumanCorpusCollector:
             corpus_db_path: Path to source corpus.db (kept for metadata lookups)
             clones_dir: Directory for temporary clones
             output_db: Path to output database (default: data/between-group.db)
-            repo_qc_dir: Directory containing *_agent_repo_qc.csv files
+            repo_qc_dir: Directory containing *_agent_repo.csv files
         """
         self.corpus_db_path = Path(corpus_db_path)
         self.clones_dir = Path(clones_dir)
@@ -352,7 +356,9 @@ class HumanCorpusCollector:
         self.test_commits_csv = Path(test_commits_csv) if test_commits_csv else None
         project_root = Path(__file__).resolve().parents[1]
         self.repo_qc_dir = (
-            Path(repo_qc_dir) if repo_qc_dir else (project_root / "github-search-agent")
+            Path(repo_qc_dir)
+            if repo_qc_dir
+            else (project_root / "github-search-agent" / "agent_repositories")
         )
 
     def _validate_quality_filters(
