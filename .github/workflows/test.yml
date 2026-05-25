@@ -30,10 +30,10 @@ jobs:
 
     - name: Run unit tests (respecting pytest.ini)
       run: |
-        pytest -c pytest.ini -q
+        pytest -q
       continue-on-error: false
 
     - name: Run tests with verbose output (on failure)
       if: failure()
       run: |
-        pytest -c pytest.ini -vv
+        pytest -vv
