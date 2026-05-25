@@ -1,21 +1,18 @@
 """
 Preliminary repository counter (previously agent_repo_preliminar_quality_control.py)
 
-Scans `github-search` result files, shallow-clones each candidate, detects whether
+Scans `github-search-raw` result files, shallow-clones each candidate, detects whether
 an agent configuration file exists in the latest tree, and writes per-language
 CSV rows with the repository metadata and `has_agent_config` flag.
-
-Progress is saved atomically to `qc_progress.json` in the selected output directory so runs are resumable.
 """
 
 import csv
-import json
 import logging
-import os
 from pathlib import Path
 from typing import List, Optional
 from datetime import datetime, timezone
 import concurrent.futures
+import threading
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in __import__("sys").path:
@@ -28,18 +25,14 @@ from collection.temp_clone import cleanup_tempdir, clone_to_tempdir
 
 logger = logging.getLogger(__name__)
 
-GITHUB_SEARCH_DIR = PROJECT_ROOT / "github-search"
-REPOSITORIES_SOURCE_500_DIR = GITHUB_SEARCH_DIR / "repositories-source-500-stars"
-REPOSITORIES_SOURCE_100_DIR = GITHUB_SEARCH_DIR / "repositories-source-100-stars"
-OUTPUT_DIR = GITHUB_SEARCH_DIR / "agent-activity-100-stars"
+GITHUB_SEARCH_RAW_DIR = PROJECT_ROOT / "github-search-raw"
+OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-PROGRESS_PATH = OUTPUT_DIR / "qc_progress.json"
 
 
 def csv_path_for_language(language: str) -> Path:
     lang = (language or "unknown").lower()
-    return OUTPUT_DIR / f"{lang}_agent_repo_qc.csv"
+    return OUTPUT_DIR / f"{lang}_agent_repo.csv"
 
 
 def _to_int(value: object) -> int:
@@ -60,24 +53,26 @@ def _has_exclusion_keyword(text: str) -> bool:
 
 
 def _collect_result_files(results_dir: Path) -> list[Path]:
-    """Pick one results file per language base, preferring CSV over JSON."""
-    preferred_order = [
-        "-results.csv.gz",
-        "-results.csv",
-        "-results.json.gz",
-        "-results.json",
-    ]
+    """Pick one raw input file per language, preferring compressed CSV exports."""
+    preferred_order = [".csv.gz", ".csv", ".json.gz", ".json", ".txt", ".list"]
     files_by_base: dict[str, list[Path]] = {}
 
     if not results_dir.exists() or not results_dir.is_dir():
         return []
 
     for f in sorted(results_dir.iterdir()):
-        if f.is_dir():
+        if f.is_dir() or f.name == "details.txt":
             continue
-        if "-results." in f.name:
-            base = f.name.split("-results.", 1)[0]
-            files_by_base.setdefault(base, []).append(f)
+
+        base = f.name
+        for suffix in (".csv.gz", ".json.gz"):
+            if base.endswith(suffix):
+                base = base[: -len(suffix)]
+                break
+        else:
+            base = f.stem
+
+        files_by_base.setdefault(base, []).append(f)
 
     chosen_files = []
     for _base, flist in files_by_base.items():
@@ -102,10 +97,12 @@ def _read_repos_from_files(files: list[Path]) -> List[dict]:
 
     for f in files:
         source_language = _language_from_results_filename(f.name)
+        if not source_language:
+            source_language = _language_from_raw_filename(f.name)
         if source_language and source_language not in PAPER_AGENT_REPOSITORY_LANGUAGES:
             continue
         try:
-            if f.name.endswith("-results.csv.gz"):
+            if f.name.endswith(".csv.gz"):
                 import gzip
 
                 with gzip.open(f, "rt", errors="ignore") as fh:
@@ -214,107 +211,30 @@ def _read_repos_from_files(files: list[Path]) -> List[dict]:
     return repos
 
 
-def save_progress(progress: dict) -> None:
-    try:
-        PROGRESS_PATH.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = PROGRESS_PATH.with_suffix(".json.tmp")
-        with tmp_path.open("w", encoding="utf-8") as fh:
-            json.dump(progress, fh)
-            fh.flush()
-            os.fsync(fh.fileno())
-        os.replace(tmp_path, PROGRESS_PATH)
-    except Exception:
-        logger.debug("Failed to save progress")
-
-
-def _rebuild_progress_from_csvs() -> dict:
-    processed = {}
-    for csv_path in OUTPUT_DIR.glob("*_agent_repo_qc.csv"):
-        try:
-            with csv_path.open("r", encoding="utf-8", newline="") as fh:
-                reader = csv.DictReader(fh)
-                for row in reader:
-                    repo_name = (row.get("repo_name") or "").strip()
-                    if not repo_name:
-                        continue
-                    processed[repo_name] = {
-                        "language": (row.get("language") or "").strip() or "unknown",
-                        "qc_reason": (row.get("qc_reason") or "").strip(),
-                    }
-        except Exception:
-            continue
-    return {"processed": processed}
-
-
-def load_progress() -> dict:
-    if PROGRESS_PATH.exists():
-        try:
-            return json.loads(PROGRESS_PATH.read_text())
-        except Exception:
-            rebuilt = _rebuild_progress_from_csvs()
-            save_progress(rebuilt)
-            return rebuilt
-    return {}
-
-
 def _language_from_results_filename(file_name: str) -> str:
     if "-results." not in file_name:
         return ""
     return file_name.split("-results.", 1)[0].strip().lower()
 
 
+def _language_from_raw_filename(file_name: str) -> str:
+    if file_name.endswith(".csv.gz"):
+        return file_name[:-7].strip().lower()
+    if file_name.endswith(".csv"):
+        return file_name[:-4].strip().lower()
+    if file_name.endswith(".json.gz"):
+        return file_name[:-8].strip().lower()
+    if file_name.endswith(".json"):
+        return file_name[:-5].strip().lower()
+    return ""
+
+
 def read_repo_list() -> List[dict]:
-    """Read candidate repos from the refactored github-search directory.
-
-    The 100-star candidate set is built as:
-      1) all repositories from the 500-star source folder
-      2) plus only the additional repositories from the 100-star source folder
-         with 100 <= stars < 500
-
-    This guarantees we leverage the existing 500-star search results while
-    extending coverage only in the missing star range.
-    """
-    files_500 = _collect_result_files(REPOSITORIES_SOURCE_500_DIR)
-    files_100 = _collect_result_files(REPOSITORIES_SOURCE_100_DIR)
-
-    # Backward-compatibility for legacy flat layout under github-search/
-    if not files_500 and not files_100:
-        files_500 = _collect_result_files(GITHUB_SEARCH_DIR)
-
-    repos_500 = _read_repos_from_files(files_500)
-    repos_100 = _read_repos_from_files(files_100)
-
-    by_name: dict[str, dict] = {}
-    ordered: list[dict] = []
-
-    # Keep all 500+ repos as baseline.
-    for repo in repos_500:
-        name = (repo.get("full_name") or "").strip()
-        if not name or name in by_name:
-            continue
-        by_name[name] = repo
-        ordered.append(repo)
-
-    added_low_star = 0
-    # Append only the missing 100-499 repos from the broader 100-star export.
-    for repo in repos_100:
-        name = (repo.get("full_name") or "").strip()
-        if not name or name in by_name:
-            continue
-        stars = _to_int(repo.get("stars"))
-        if stars < 100 or stars >= 500:
-            continue
-        by_name[name] = repo
-        ordered.append(repo)
-        added_low_star += 1
-
-    logger.info(
-        "Loaded repo candidates using merged star tiers: baseline_500=%d, added_100_499=%d, total=%d",
-        len(repos_500),
-        added_low_star,
-        len(ordered),
-    )
-    return ordered
+    """Read candidate repos from github-search-raw."""
+    files_raw = _collect_result_files(GITHUB_SEARCH_RAW_DIR)
+    repos = _read_repos_from_files(files_raw)
+    logger.info("Loaded %d repo candidates from %s", len(repos), GITHUB_SEARCH_RAW_DIR)
+    return repos
 
 
 def _process_single(entry: dict, since: str) -> Optional[dict]:
@@ -384,63 +304,32 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
 def run(limit: int = 0, since: str = "2023-06-01", workers: int = 8) -> int:
     repos = read_repo_list()
     if not repos:
-        print(
-            "No repos found in github-search source folders (repositories-source-500-stars / repositories-source-100-stars)."
-        )
+        print("No repos found in github-search-raw.")
         return 0
     limit = int(limit or 0)
-    progress = load_progress()
 
     to_process = []
-    seen_global = set(progress.get("processed", {}).keys())
     for entry in repos:
         if limit and len(to_process) >= limit:
             break
-        full_name = entry.get("full_name")
-        if full_name in seen_global:
-            continue
         to_process.append(entry)
 
     if not to_process:
-        print("No new repos to process (all skipped by progress).")
+        print("No repos to process.")
         return 0
 
-    csv_headers_written = set()
+    write_lock = threading.Lock()
 
     def write_row(row: dict) -> None:
         csv_path = csv_path_for_language(row.get("language") or "unknown")
-        if csv_path not in csv_headers_written:
-            if not csv_path.exists():
-                with csv_path.open("w", newline="", encoding="utf-8") as fh:
-                    writer = csv.DictWriter(
-                        fh,
-                        fieldnames=[
-                            "repo_name",
-                            "has_agent_config",
-                            "language",
-                            "stars",
-                            "clone_url",
-                            "num_contributors",
-                            "qc_reason",
-                            "processed_at",
-                        ],
-                    )
+        with write_lock:
+            file_exists = csv_path.exists()
+            with csv_path.open("a", newline="", encoding="utf-8") as fh:
+                writer = csv.DictWriter(fh, fieldnames=list(row.keys()))
+                if not file_exists:
                     writer.writeheader()
-            csv_headers_written.add(csv_path)
-
-        with csv_path.open("a", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(row.keys()))
-            writer.writerow(row)
-            fh.flush()
-
-        processed = progress.get("processed", {})
-        processed[row["repo_name"]] = {
-            "language": row.get("language"),
-            "qc_reason": row.get("qc_reason", ""),
-        }
-        progress["processed"] = processed
-        progress["last"] = {"repo": row["repo_name"]}
-        save_progress(progress)
+                writer.writerow(row)
+                fh.flush()
 
     workers = max(1, int(workers or 1))
     if workers == 1:
@@ -469,7 +358,7 @@ def run(limit: int = 0, since: str = "2023-06-01", workers: int = 8) -> int:
 def main():
     import argparse
 
-    global REPOSITORIES_SOURCE_500_DIR, REPOSITORIES_SOURCE_100_DIR, OUTPUT_DIR, PROGRESS_PATH
+    global GITHUB_SEARCH_RAW_DIR, OUTPUT_DIR
 
     parser = argparse.ArgumentParser(
         description="Preliminary QC of agent candidate repos"
@@ -490,30 +379,22 @@ def main():
         help="Number of worker threads for parallel processing",
     )
     parser.add_argument(
-        "--source-500-dir",
+        "--source-dir",
         type=Path,
-        default=REPOSITORIES_SOURCE_500_DIR,
-        help="Directory containing 500-star SEART source files",
-    )
-    parser.add_argument(
-        "--source-100-dir",
-        type=Path,
-        default=REPOSITORIES_SOURCE_100_DIR,
-        help="Directory containing 100-star SEART source files",
+        default=GITHUB_SEARCH_RAW_DIR,
+        help="Directory containing github-search-raw result files",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=OUTPUT_DIR,
-        help="Directory where *_agent_repo_qc.csv and qc_progress.json are stored",
+        help="Directory where *_agent_repo.csv files are stored",
     )
     args = parser.parse_args()
 
-    REPOSITORIES_SOURCE_500_DIR = Path(args.source_500_dir)
-    REPOSITORIES_SOURCE_100_DIR = Path(args.source_100_dir)
+    GITHUB_SEARCH_RAW_DIR = Path(args.source_dir)
     OUTPUT_DIR = Path(args.output_dir)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    PROGRESS_PATH = OUTPUT_DIR / "qc_progress.json"
 
     raise SystemExit(run(limit=args.limit, since=args.since, workers=args.workers))
 

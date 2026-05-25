@@ -31,9 +31,9 @@ def tmp_csv_dir(tmp_path):
 
 
 @pytest.fixture
-def sample_agent_repo_qc_csv(tmp_csv_dir):
-    """Create a sample agent_repo_qc.csv file."""
-    csv_path = tmp_csv_dir / "python_agent_repo_qc.csv"
+def sample_agent_repo_csv(tmp_csv_dir):
+    """Create a sample agent_repo.csv file."""
+    csv_path = tmp_csv_dir / "python_agent_repo.csv"
 
     rows = [
         {
@@ -95,10 +95,10 @@ class TestCSVRepositorySelection:
     """Test CSV file reading and repository selection."""
 
     def test_select_human_corpus_repositories_reads_csv_file(
-        self, sample_agent_repo_qc_csv
+        self, sample_agent_repo_csv
     ):
         """Verify CSV file is read and repositories are selected."""
-        csv_dir = sample_agent_repo_qc_csv.parent
+        csv_dir = sample_agent_repo_csv.parent
 
         repos = select_human_corpus_repositories(
             csv_dir,
@@ -114,7 +114,7 @@ class TestCSVRepositorySelection:
     ):
         """Verify language filter is applied."""
         # Create mixed language CSV
-        csv_path = tmp_csv_dir / "mixed_agent_repo_qc.csv"
+        csv_path = tmp_csv_dir / "mixed_agent_repo.csv"
         rows = [
             {
                 "repo_name": "owner/repo_python",
@@ -157,7 +157,7 @@ class TestCSVRepositorySelection:
         self, tmp_csv_dir
     ):
         """Verify per-language cap is applied."""
-        csv_path = tmp_csv_dir / "python_agent_repo_qc.csv"
+        csv_path = tmp_csv_dir / "python_agent_repo.csv"
 
         # Create 5 Python repos
         rows = [
@@ -190,7 +190,7 @@ class TestCSVRepositorySelection:
 
     def test_select_human_corpus_repositories_all_rows_when_none(self, tmp_csv_dir):
         """Verify None for repos_per_language means all rows."""
-        csv_path = tmp_csv_dir / "python_agent_repo_qc.csv"
+        csv_path = tmp_csv_dir / "python_agent_repo.csv"
 
         rows = [
             {
@@ -258,8 +258,8 @@ class TestCSVRepositorySelection:
                 }
             )
 
-        # Create agent_repo_qc csv containing two repos, only one of which appears
-        csv_path = input_dir / "python_agent_repo_qc.csv"
+        # Create agent_repo csv containing two repos, only one of which appears
+        csv_path = input_dir / "python_agent_repo.csv"
         rows = [
             {
                 "repo_name": "owner/only_test_repo",
@@ -296,11 +296,11 @@ class TestCSVRepositorySelection:
         assert repos[0]["full_name"] == "owner/only_test_repo"
 
     def test_select_human_corpus_fallback_when_no_tests_commits(self, tmp_path):
-        """When no tests_commits directory exists, selection falls back to agent_repo_qc CSVs."""
+        """When no tests_commits directory exists, selection falls back to agent_repo CSVs."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
 
-        csv_path = input_dir / "python_agent_repo_qc.csv"
+        csv_path = input_dir / "python_agent_repo.csv"
         rows = [
             {
                 "repo_name": "owner/repo1",
@@ -371,8 +371,8 @@ class TestCSVRepositorySelection:
                 }
             )
 
-        # Also create agent_repo_qc with another repo that should be ignored
-        csv_path = input_dir / "python_agent_repo_qc.csv"
+        # Also create agent_repo with another repo that should be ignored
+        csv_path = input_dir / "python_agent_repo.csv"
         rows = [
             {
                 "repo_name": "owner/fixture_repo",
@@ -549,7 +549,7 @@ class TestCSVPipelineEndToEnd:
         input_dir = tmp_path / "input"
         input_dir.mkdir()
 
-        csv_path = input_dir / "python_agent_repo_qc.csv"
+        csv_path = input_dir / "python_agent_repo.csv"
         rows = [
             {
                 "repo_name": "owner/repo",

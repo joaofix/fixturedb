@@ -168,7 +168,11 @@ def _load_qc_repo_rows(
     allowed_language = (language or "").strip().lower() or None
     grouped: dict[str, list[dict]] = {}
 
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_agent_repo_qc.csv")):
+    repo_csv_paths = sorted(
+        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+    )
+
+    for csv_path in repo_csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -342,7 +346,7 @@ class AgentCorpusCollector:
             clones_dir: Directory for repository clones
             github_token: Optional GitHub API token
             output_db: Path to output database (default: data/between-group.db)
-            repo_qc_dir: Directory containing *_agent_repo_qc.csv files
+            repo_qc_dir: Directory containing *_agent_repo.csv files
             commit_qc_dir: Directory containing *_agent_commit_qc.csv files
         """
         self.clones_dir = Path(clones_dir)
@@ -353,12 +357,14 @@ class AgentCorpusCollector:
         self.test_commits_csv = Path(test_commits_csv) if test_commits_csv else None
         project_root = Path(__file__).resolve().parents[1]
         self.repo_qc_dir = (
-            Path(repo_qc_dir) if repo_qc_dir else (project_root / "github-search-agent")
+            Path(repo_qc_dir)
+            if repo_qc_dir
+            else (project_root / "github-search-agent" / "agent_repositories")
         )
         self.commit_qc_dir = (
             Path(commit_qc_dir)
             if commit_qc_dir
-            else (project_root / "github-search-agent")
+            else (project_root / "github-search-agent" / "agent_repositories")
         )
 
     def run(

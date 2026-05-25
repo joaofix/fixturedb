@@ -44,7 +44,7 @@ def test_collect_agent_test_commits_from_repos(tmp_path: Path):
 
     repo_qc_dir = tmp_path / "repo_qc"
     repo_qc_dir.mkdir()
-    csv_path = repo_qc_dir / "python_agent_repo_qc.csv"
+    csv_path = repo_qc_dir / "python_agent_repo.csv"
     header = [
         "repo_name",
         "language",
