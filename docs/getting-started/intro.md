@@ -43,12 +43,12 @@ This design enables within-repository comparison of fixtures written by agents v
 
 To ensure the human control sample is drawn only from repositories where agents actually produced fixtures, follow this order:
 
-0. Build the repo-QC inputs from `github-search-raw/`. This step scans the raw repository search results, detects agent configuration files, and writes the per-language repo lists to `github-search-agent/agent_repositories/{language}_agent_repo.csv`.
+0. Build the repo-QC inputs from `github-search-raw/`. This step scans the raw repository search results, detects agent configuration files, and writes the per-language repo lists to `github-search-agent/agent_repositories/{language}_agent_repo.csv`. You can limit the run to one or more languages with `--languages`.
 
 	Example:
 
 	```bash
-	python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories
+	python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories --languages java javascript
 	```
 
 1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `github-search-agent/agent_fixtures/{language}_agent_fixture_repos.csv`.
@@ -56,7 +56,7 @@ To ensure the human control sample is drawn only from repositories where agents 
 	Example:
 
 	```bash
-	python -m collection.agent_corpus --language python --repos-per-language 50
+	python -m collection.agent_corpus --languages java javascript --repos-per-language 50
 	```
 
 2. Optionally write per-language human test-commit CSVs (the human collector will prefer the agent-produced repo lists). This is useful if you only want to collect test-commit rows without running full fixture extraction.
