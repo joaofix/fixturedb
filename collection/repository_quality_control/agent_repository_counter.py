@@ -35,6 +35,24 @@ def csv_path_for_language(language: str) -> Path:
     return OUTPUT_DIR / f"{lang}_agent_repo.csv"
 
 
+def _normalize_language_filters(
+    languages: Optional[list[str]] = None, language: Optional[str] = None
+) -> list[str] | None:
+    selected: list[str] = []
+    candidates: list[str] = list(languages or [])
+    if language:
+        candidates.append(language)
+
+    for candidate in candidates:
+        normalized = (candidate or "").strip().lower()
+        if not normalized or normalized not in PAPER_AGENT_REPOSITORY_LANGUAGES:
+            continue
+        if normalized not in selected:
+            selected.append(normalized)
+
+    return selected or None
+
+
 def _to_int(value: object) -> int:
     try:
         if value is None:
@@ -52,10 +70,13 @@ def _has_exclusion_keyword(text: str) -> bool:
     return any(keyword.casefold() in lowered for keyword in EXCLUSION_KEYWORDS)
 
 
-def _collect_result_files(results_dir: Path) -> list[Path]:
+def _collect_result_files(
+    results_dir: Path, allowed_languages: Optional[list[str]] = None
+) -> list[Path]:
     """Pick one raw input file per language, preferring compressed CSV exports."""
     preferred_order = [".csv.gz", ".csv", ".json.gz", ".json", ".txt", ".list"]
     files_by_base: dict[str, list[Path]] = {}
+    allowed = {lang.lower() for lang in (allowed_languages or []) if lang}
 
     if not results_dir.exists() or not results_dir.is_dir():
         return []
@@ -80,25 +101,38 @@ def _collect_result_files(results_dir: Path) -> list[Path]:
         for pref in preferred_order:
             for f in flist:
                 if f.name.endswith(pref):
+                    if allowed:
+                        language = _language_from_raw_filename(f.name)
+                        if language and language not in allowed:
+                            continue
                     pick = f
                     break
             if pick:
                 break
         if not pick:
             pick = flist[0]
+            if allowed:
+                language = _language_from_raw_filename(pick.name)
+                if language and language not in allowed:
+                    continue
         chosen_files.append(pick)
 
     return chosen_files
 
 
-def _read_repos_from_files(files: list[Path]) -> List[dict]:
+def _read_repos_from_files(
+    files: list[Path], allowed_languages: Optional[list[str]] = None
+) -> List[dict]:
     """Read repositories from SEART result files (CSV/JSON)."""
     repos: list[dict] = []
+    allowed = {lang.lower() for lang in (allowed_languages or []) if lang}
 
     for f in files:
         source_language = _language_from_results_filename(f.name)
         if not source_language:
             source_language = _language_from_raw_filename(f.name)
+        if allowed and source_language and source_language not in allowed:
+            continue
         if source_language and source_language not in PAPER_AGENT_REPOSITORY_LANGUAGES:
             continue
         try:
@@ -229,11 +263,22 @@ def _language_from_raw_filename(file_name: str) -> str:
     return ""
 
 
-def read_repo_list() -> List[dict]:
+def read_repo_list(
+    languages: Optional[list[str]] = None, language: Optional[str] = None
+) -> List[dict]:
     """Read candidate repos from github-search-raw."""
-    files_raw = _collect_result_files(GITHUB_SEARCH_RAW_DIR)
-    repos = _read_repos_from_files(files_raw)
-    logger.info("Loaded %d repo candidates from %s", len(repos), GITHUB_SEARCH_RAW_DIR)
+    selected_languages = _normalize_language_filters(languages, language)
+    files_raw = _collect_result_files(GITHUB_SEARCH_RAW_DIR, selected_languages)
+    repos = _read_repos_from_files(files_raw, selected_languages)
+    if selected_languages:
+        logger.info(
+            "Loaded %d repo candidates from %s for languages=%s",
+            len(repos),
+            GITHUB_SEARCH_RAW_DIR,
+            ",".join(selected_languages),
+        )
+    else:
+        logger.info("Loaded %d repo candidates from %s", len(repos), GITHUB_SEARCH_RAW_DIR)
     return repos
 
 
@@ -301,8 +346,14 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         return None
 
 
-def run(limit: int = 0, since: str = "2023-06-01", workers: int = 8) -> int:
-    repos = read_repo_list()
+def run(
+    limit: int = 0,
+    since: str = "2023-06-01",
+    workers: int = 8,
+    languages: Optional[list[str]] = None,
+    language: Optional[str] = None,
+) -> int:
+    repos = read_repo_list(languages=languages, language=language)
     if not repos:
         print("No repos found in github-search-raw.")
         return 0
@@ -379,6 +430,17 @@ def main():
         help="Number of worker threads for parallel processing",
     )
     parser.add_argument(
+        "--language",
+        choices=sorted(PAPER_AGENT_REPOSITORY_LANGUAGES),
+        help="Limit processing to a single language",
+    )
+    parser.add_argument(
+        "--languages",
+        nargs="+",
+        choices=sorted(PAPER_AGENT_REPOSITORY_LANGUAGES),
+        help="Limit processing to one or more languages",
+    )
+    parser.add_argument(
         "--source-dir",
         type=Path,
         default=GITHUB_SEARCH_RAW_DIR,
@@ -396,7 +458,20 @@ def main():
     OUTPUT_DIR = Path(args.output_dir)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    raise SystemExit(run(limit=args.limit, since=args.since, workers=args.workers))
+    selected_languages = []
+    if args.language:
+        selected_languages.append(args.language)
+    if args.languages:
+        selected_languages.extend(args.languages)
+
+    raise SystemExit(
+        run(
+            limit=args.limit,
+            since=args.since,
+            workers=args.workers,
+            languages=selected_languages or None,
+        )
+    )
 
 
 if __name__ == "__main__":

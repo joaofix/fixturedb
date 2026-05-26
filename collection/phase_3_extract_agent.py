@@ -13,6 +13,7 @@ from pathlib import Path
 from datetime import datetime
 
 from .agent_corpus import AgentCorpusCollector
+from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from .fixture_extractor import AgentFixtureExtractor
 from .db import initialise_db
 
@@ -44,6 +45,12 @@ def main():
         type=Path,
         default=project_root / "github-search-agent" / "agent_repositories",
         help="Directory containing *_agent_repo.csv files",
+    )
+    parser.add_argument(
+        "--languages",
+        nargs="+",
+        choices=sorted(PAPER_AGENT_REPOSITORY_LANGUAGES),
+        help="Limit extraction to one or more languages",
     )
     parser.add_argument(
         "--commit-qc-dir",
@@ -82,6 +89,7 @@ def main():
         )
         stats, db_path = collector.run(
             repos_per_language=50,
+            languages=args.languages,
             language=None,
         )
 

@@ -65,6 +65,24 @@ class AgentCorpusStats(BaseCorpusStats):
     agent_types_distribution: Dict[str, int] = field(default_factory=dict)
 
 
+def _normalize_language_filters(
+    languages: Optional[list[str]] = None, language: Optional[str] = None
+) -> list[str] | None:
+    selected: list[str] = []
+    candidates: list[str] = list(languages or [])
+    if language:
+        candidates.append(language)
+
+    for candidate in candidates:
+        normalized = (candidate or "").strip().lower()
+        if not normalized or normalized not in PAPER_AGENT_REPOSITORY_LANGUAGES:
+            continue
+        if normalized not in selected:
+            selected.append(normalized)
+
+    return selected or None
+
+
 def detect_agent_type(commit_message: str) -> Optional[str]:
     """
     Detect agent type from commit metadata.
@@ -161,11 +179,13 @@ def _stable_repo_id(full_name: str) -> int:
 
 def _load_qc_repo_rows(
     repo_qc_dir: Path,
+    languages: Optional[list[str]] = None,
     language: Optional[str] = None,
     repos_per_language: Optional[int] = None,
 ) -> list[dict]:
     """Load config-positive repositories from the repo-QC CSVs."""
-    allowed_language = (language or "").strip().lower() or None
+    selected_languages = _normalize_language_filters(languages, language)
+    allowed_languages = set(selected_languages or [])
     grouped: dict[str, list[dict]] = {}
 
     repo_csv_paths = sorted(
@@ -188,7 +208,7 @@ def _load_qc_repo_rows(
                     continue
                 if lang not in PAPER_AGENT_REPOSITORY_LANGUAGES:
                     continue
-                if allowed_language and lang != allowed_language:
+                if allowed_languages and lang not in allowed_languages:
                     continue
 
                 repo_row = {
@@ -211,7 +231,7 @@ def _load_qc_repo_rows(
                     grouped[lang].append(repo_row)
 
     ordered: list[dict] = []
-    language_order = [allowed_language] if allowed_language else sorted(grouped.keys())
+    language_order = selected_languages or sorted(grouped.keys())
     for lang in language_order:
         if lang:
             ordered.extend(grouped.get(lang, [])[:repos_per_language])
@@ -220,10 +240,13 @@ def _load_qc_repo_rows(
 
 
 def _load_qc_agent_commits(
-    commit_qc_dir: Path, language: Optional[str] = None
+    commit_qc_dir: Path,
+    languages: Optional[list[str]] = None,
+    language: Optional[str] = None,
 ) -> dict[str, list[dict]]:
     """Load agent commits from the commit-QC CSVs and group them by repository."""
-    allowed_language = (language or "").strip().lower() or None
+    selected_languages = _normalize_language_filters(languages, language)
+    allowed_languages = set(selected_languages or [])
     commits_by_repo: dict[str, list[dict]] = {}
     seen_shas: dict[str, set[str]] = {}
 
@@ -238,7 +261,7 @@ def _load_qc_agent_commits(
                     continue
                 if lang not in PAPER_AGENT_REPOSITORY_LANGUAGES:
                     continue
-                if allowed_language and lang != allowed_language:
+                if allowed_languages and lang not in allowed_languages:
                     continue
 
                 repo_seen = seen_shas.setdefault(repo_name, set())
@@ -370,6 +393,7 @@ class AgentCorpusCollector:
     def run(
         self,
         repos_per_language: Optional[int] = None,
+        languages: Optional[list[str]] = None,
         language: Optional[str] = None,
     ) -> tuple[AgentCorpusStats, Path]:
         """
@@ -377,6 +401,7 @@ class AgentCorpusCollector:
 
         Args:
             repos_per_language: Optional per-language cap. None means include all rows.
+            languages: Optional list of languages to include
             language: Optional filter to single language
 
         Returns:
@@ -388,11 +413,13 @@ class AgentCorpusCollector:
 
         repos_to_collect = _load_qc_repo_rows(
             self.repo_qc_dir,
+            languages=languages,
             language=language,
             repos_per_language=repos_per_language,
         )
         commits_by_repo = _load_qc_agent_commits(
             self.commit_qc_dir,
+            languages=languages,
             language=language,
         )
 
@@ -765,6 +792,7 @@ def main(args):
     )
     stats, db_path = collector.run(
         repos_per_language=args.repos_per_language,
+        languages=args.languages,
         language=args.language,
     )
     logger.info(
@@ -793,6 +821,12 @@ if __name__ == "__main__":
         type=int,
         default=None,
         help="Number of repos per language (None = all repos)",
+    )
+    parser.add_argument(
+        "--languages",
+        nargs="+",
+        choices=sorted(PAPER_AGENT_REPOSITORY_LANGUAGES),
+        help="Limit collection to one or more languages",
     )
     parser.add_argument(
         "--language",

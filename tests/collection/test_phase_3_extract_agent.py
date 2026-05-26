@@ -23,9 +23,10 @@ class DummyAgentCollector:
         self.commit_qc_dir = commit_qc_dir
         self.github_token = github_token
 
-    def run(self, repos_per_language=50, language=None):
+    def run(self, repos_per_language=50, languages=None, language=None):
         self.run_args = {
             "repos_per_language": repos_per_language,
+            "languages": languages,
             "language": language,
         }
         return DummyStats(
@@ -46,7 +47,9 @@ def test_phase_3_main_uses_manual_repo_and_commit_datasets(monkeypatch, tmp_path
 
     def collector_factory(*args, **kwargs):
         captured["collector_kwargs"] = kwargs
-        return DummyAgentCollector(*args, **kwargs)
+        collector = DummyAgentCollector(*args, **kwargs)
+        captured["collector"] = collector
+        return collector
 
     monkeypatch.setattr(phase3, "AgentCorpusCollector", collector_factory)
     monkeypatch.setattr(phase3, "database_has_rows", lambda *args, **kwargs: False)
@@ -61,6 +64,9 @@ def test_phase_3_main_uses_manual_repo_and_commit_datasets(monkeypatch, tmp_path
             str(repo_qc_dir),
             "--commit-qc-dir",
             str(commit_qc_dir),
+            "--languages",
+            "java",
+            "javascript",
         ],
     )
 
@@ -70,3 +76,4 @@ def test_phase_3_main_uses_manual_repo_and_commit_datasets(monkeypatch, tmp_path
     assert captured["collector_kwargs"]["output_db"] == output_db
     assert captured["collector_kwargs"]["repo_qc_dir"] == repo_qc_dir
     assert captured["collector_kwargs"]["commit_qc_dir"] == commit_qc_dir
+    assert captured["collector"].run_args["languages"] == ["java", "javascript"]

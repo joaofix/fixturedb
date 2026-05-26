@@ -24,13 +24,13 @@ You can run lower-level collection commands directly to implement an agent-first
 - Build the repo-QC CSVs from `github-search-raw/`:
 
 ```bash
-python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories
+python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories --languages java javascript
 ```
 
 - Run agent extraction (detect agent commits, extract fixtures, and write per-language fixture repo lists):
 
 ```bash
-python -m collection.agent_corpus --language python --repos-per-language 50
+python -m collection.agent_corpus --languages java javascript --repos-per-language 50
 ```
 
 - Optionally export human test-commit CSVs (useful as an intermediate step):
