@@ -228,7 +228,7 @@ ALTER TABLE fixtures ADD COLUMN commit_author_email TEXT;
 ALTER TABLE fixtures ADD COLUMN commit_date TEXT;
     -- When commit was authored
     -- Format: ISO 8601 (YYYY-MM-DDTHH:MM:SS)
-    -- Filter: >= 2021-01-01 (by design)
+    -- Filter: >= 2020-12-31 (by design)
     -- Use: Time-series analysis (early 2021 vs 2026)
 
 -- Indexes for fast queries on agent-specific columns

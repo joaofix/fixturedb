@@ -128,7 +128,7 @@ For each extracted field:
   6. On FIRST match: Record {commit_sha → agent_type}, exit inner loop
   
 Date Filtering:
-  7. Check commit date >= 2021-01-01 (LLM era cutoff)
+  7. Check commit date >= 2020-12-31 (LLM era cutoff)
   8. Keep only commits 2021+
 ```
 
@@ -236,7 +236,7 @@ Author: Developer <dev@company.com>
   "summary": {
     "total_repositories_processed": 1219,
     "total_agent_commits_found": 48563,
-    "date_range": "2021-01-01 to 2026-05-16",
+    "date_range": "2020-12-31 to 2026-05-16",
     "agent_distribution": {
       "copilot": 25472,
       "claude": 19043,
@@ -285,7 +285,7 @@ Author: Developer <dev@company.com>
 ### Stage 1: Human Corpus (Pre-2021)
 - **Uses Tier 1 agent detection?** No
 - **Reason:** Pre-2021 is snapshot-based (no agent involvement possible)
-- **Data source:** corpus.db at 2021-01-01 snapshot
+- **Data source:** corpus.db at 2020-12-31 snapshot
 - **Output:** Human fixtures with `commit_kind='human'`, `agent_type=NULL`
 
 ### Stage 2: Agent Corpus (2025+)

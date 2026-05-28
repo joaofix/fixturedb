@@ -120,7 +120,7 @@ Core implementation of between-group study with three main collection modules:
 
 **1. human_corpus.py (430+ lines)**
 - Extracts pre-2021 fixtures from corpus.db
-- Computes control variables at 2021-01-01 snapshot
+- Computes control variables at 2020-12-31 snapshot
 - Quality filters and statistics tracking
 - Outputs JSON summary to `output/human_corpus_summary_*.json`
 
@@ -149,7 +149,7 @@ corpus.db (input)
     ↓
 Stage 1: python pipeline.py human
     → Reads pre-2021 repositories
-    → Extracts fixtures at 2021-01-01 snapshot
+    → Extracts fixtures at 2020-12-31 snapshot
     → Computes control variables (language, domain, star_tier, repo_age)
     → Outputs human_corpus_summary_*.json
     → Writes to between-group.db (commit_kind='human')
