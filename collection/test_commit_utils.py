@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .config import LANGUAGE_CONFIGS, NON_CODE_EXTENSIONS
+from .csv_adapter import get_adapter
 
 
 def is_test_file_path(relative_path: str, language: str) -> bool:
@@ -107,10 +108,14 @@ def collect_test_files_for_commit(
 
 def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
     """Write test commit records to CSV for standalone runs."""
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
+    adapter = get_adapter()
     rows = list(records)
+    # Ensure test_file_paths is serialised to JSON string for CSV output
+    for row in rows:
+        tf = row.get("test_file_paths", [])
+        if not isinstance(tf, str):
+            row["test_file_paths"] = json.dumps(tf, ensure_ascii=False)
+
     fieldnames = [
         "repo_name",
         "language",
@@ -122,16 +127,4 @@ def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
         "test_file_paths",
     ]
 
-    with output_path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            serialised = dict(row)
-            test_file_paths = serialised.get("test_file_paths", [])
-            if not isinstance(test_file_paths, str):
-                serialised["test_file_paths"] = json.dumps(
-                    test_file_paths, ensure_ascii=False
-                )
-            writer.writerow({key: serialised.get(key, "") for key in fieldnames})
-
-    return output_path
+    return adapter.write_dicts(Path(output_path), rows, fieldnames)
