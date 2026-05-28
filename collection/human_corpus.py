@@ -39,6 +39,7 @@ from .db import (
     insert_human_within_fixture,
 )
 from .agent_corpus import clone_repo_for_commit_scan
+from .clone_manager import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
 from .test_commit_utils import write_test_commits_csv
 from .agent_commit_detector import Tier1RepositoryScanner
@@ -411,11 +412,14 @@ class HumanCorpusCollector:
         if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
             shutil.rmtree(repo_path, ignore_errors=True)
 
-        if not repo_path.exists():
-            logger.info(
-                f"[Human Corpus] Cloning {repo_name} with full history for commit scan..."
-            )
-            if not clone_repo_for_commit_scan(repo.get("clone_url", ""), repo_path):
+        # Clone inside a managed context to guarantee cleanup and respect disk guards.
+        logger.info(
+            f"[Human Corpus] Cloning {repo_name} with full history for commit scan..."
+        )
+        with clone_with_function(
+            clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path
+        ) as managed_repo_path:
+            if managed_repo_path is None:
                 return {
                     "repo_name": repo_name,
                     "language_name": language_name,
@@ -425,97 +429,98 @@ class HumanCorpusCollector:
                     "fixtures": [],
                 }
 
-        passes_qc, skip_reason = self._validate_quality_filters(
-            repo_path, language_name, repo_name
-        )
-        if not passes_qc:
+            passes_qc, skip_reason = self._validate_quality_filters(
+                managed_repo_path, language_name, repo_name
+            )
+            if not passes_qc:
+                return {
+                    "repo_name": repo_name,
+                    "language_name": language_name,
+                    "status": "qc_failed",
+                    "skip_reason": skip_reason or "commit_count_failed",
+                    "test_commit_rows": [],
+                    "fixtures": [],
+                }
+
+            scanner = Tier1RepositoryScanner(self.corpus_db_path)
+            extractor = AgentFixtureExtractor(
+                clones_dir=self.clones_dir,
+                source_db=self.corpus_db_path,
+                start_date=AGENT_CORPUS_START_DATE,
+            )
+
+            # Compute control variables using shared utility
+            metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
+            domain = metadata["domain"]
+            star_tier = metadata["star_tier"]
+            repo_age = metadata["repo_age_years"]
+
+            commit_roles = scanner.scan_repo_commit_roles(
+                managed_repo_path,
+                start_date=AGENT_CORPUS_START_DATE,
+                language=language_name,
+                detect_test_files=True,
+            )
+
+            test_commit_rows = [
+                {
+                    "repo_name": repo_name,
+                    "commit_sha": commit.commit_sha,
+                    "commit_role": commit.commit_role,
+                    "agent_type": commit.agent_type,
+                    "commit_date": commit.commit_date,
+                    "language": language_name,
+                    "test_file_count": len(commit.test_files),
+                    "test_file_paths": json.dumps(
+                        commit.test_files, ensure_ascii=False
+                    ),
+                }
+                for commit in commit_roles
+                if commit.commit_role == "human" and commit.is_test_commit
+            ]
+
+            human_commits = {
+                commit.commit_sha: "human"
+                for commit in commit_roles
+                if commit.commit_role == "human" and commit.is_test_commit
+            }
+
+            fixtures = []
+            if human_commits:
+                logger.info(
+                    f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits"
+                )
+                fixtures = extractor._extract_from_agent_commits(
+                    repo_name=repo_name, commits=human_commits
+                )
+                fixtures = [
+                    fixture for fixture in fixtures if fixture.get("is_complete_addition")
+                ]
+
             return {
                 "repo_name": repo_name,
                 "language_name": language_name,
-                "status": "qc_failed",
-                "skip_reason": skip_reason or "commit_count_failed",
-                "test_commit_rows": [],
-                "fixtures": [],
-            }
-
-        scanner = Tier1RepositoryScanner(self.corpus_db_path)
-        extractor = AgentFixtureExtractor(
-            clones_dir=self.clones_dir,
-            source_db=self.corpus_db_path,
-            start_date=AGENT_CORPUS_START_DATE,
-        )
-
-        # Compute control variables using shared utility
-        metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
-        domain = metadata["domain"]
-        star_tier = metadata["star_tier"]
-        repo_age = metadata["repo_age_years"]
-
-        commit_roles = scanner.scan_repo_commit_roles(
-            repo_path,
-            start_date=AGENT_CORPUS_START_DATE,
-            language=language_name,
-            detect_test_files=True,
-        )
-
-        test_commit_rows = [
-            {
-                "repo_name": repo_name,
-                "commit_sha": commit.commit_sha,
-                "commit_role": commit.commit_role,
-                "agent_type": commit.agent_type,
-                "commit_date": commit.commit_date,
-                "language": language_name,
-                "test_file_count": len(commit.test_files),
-                "test_file_paths": json.dumps(commit.test_files, ensure_ascii=False),
-            }
-            for commit in commit_roles
-            if commit.commit_role == "human" and commit.is_test_commit
-        ]
-
-        human_commits = {
-            commit.commit_sha: "human"
-            for commit in commit_roles
-            if commit.commit_role == "human" and commit.is_test_commit
-        }
-
-        fixtures = []
-        if human_commits:
-            logger.info(
-                f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits"
-            )
-            fixtures = extractor._extract_from_agent_commits(
-                repo_name=repo_name,
-                commits=human_commits,
-            )
-            fixtures = [
-                fixture for fixture in fixtures if fixture.get("is_complete_addition")
-            ]
-
-        return {
-            "repo_name": repo_name,
-            "language_name": language_name,
-            "status": "ok",
-            "skip_reason": None,
-            "domain": domain,
-            "star_tier": star_tier,
-            "repo_age": repo_age,
-            "num_contributors": repo.get("num_contributors", 0),
-            "repo_data": construct_repo_dict(
-                full_name=repo_name,
-                language=language_name,
-                stars=repo.get("stars", 0),
-                forks=repo.get("forks", 0),
-                description=repo.get("description", "") or "",
-                topics=repo.get("topics", "[]") or "[]",
-                created_at=repo.get("created_at", ""),
-                pushed_at=repo.get("pushed_at", ""),
-                clone_url=repo.get("clone_url", ""),
-                github_id=repo.get("github_id"),
-                num_contributors=repo.get("num_contributors", 0),
-                domain=domain,
-                star_tier=star_tier,
-                repo_age_years=repo_age,
+                "status": "ok",
+                "skip_reason": None,
+                "domain": domain,
+                "star_tier": star_tier,
+                "repo_age": repo_age,
+                "num_contributors": repo.get("num_contributors", 0),
+                "repo_data": construct_repo_dict(
+                    full_name=repo_name,
+                    language=language_name,
+                    stars=repo.get("stars", 0),
+                    forks=repo.get("forks", 0),
+                    description=repo.get("description", "") or "",
+                    topics=repo.get("topics", "[]") or "[]",
+                    created_at=repo.get("created_at", ""),
+                    pushed_at=repo.get("pushed_at", ""),
+                    clone_url=repo.get("clone_url", ""),
+                    github_id=repo.get("github_id"),
+                    num_contributors=repo.get("num_contributors", 0),
+                    domain=domain,
+                    star_tier=star_tier,
+                    repo_age_years=repo_age,
             ),
             "test_commit_rows": test_commit_rows,
             "fixtures": fixtures,
@@ -810,7 +815,9 @@ class HumanCorpusCollector:
         stats = HumanCorpusStats()
         candidates: list[dict] = []
 
-        logger.info(f"[Human Inter] Building candidate pool from {len(agent_repos)} repos")
+        logger.info(
+            f"[Human Inter] Building candidate pool from {len(agent_repos)} repos"
+        )
 
         scanner = Tier1RepositoryScanner(self.corpus_db_path)
         extractor = AgentFixtureExtractor(
@@ -823,10 +830,16 @@ class HumanCorpusCollector:
         candidate_map = {}
         if raw_commits_dir:
             try:
-                candidate_map = build_pre2021_candidate_pool(raw_commits_dir, cutoff_date=HUMAN_CORPUS_CUTOFF_DATE)
-                logger.info(f"[Human Inter] Loaded pre-2021 candidate pool with {len(candidate_map)} repos from {raw_commits_dir}")
+                candidate_map = build_pre2021_candidate_pool(
+                    raw_commits_dir, cutoff_date=HUMAN_CORPUS_CUTOFF_DATE
+                )
+                logger.info(
+                    f"[Human Inter] Loaded pre-2021 candidate pool with {len(candidate_map)} repos from {raw_commits_dir}"
+                )
             except Exception as e:
-                logger.debug(f"Failed to build candidate pool from {raw_commits_dir}: {e}")
+                logger.debug(
+                    f"Failed to build candidate pool from {raw_commits_dir}: {e}"
+                )
 
         # Collect candidate fixtures across repos
         for repo in agent_repos:
@@ -836,76 +849,69 @@ class HumanCorpusCollector:
             if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
                 shutil.rmtree(repo_path, ignore_errors=True)
 
-            if not repo_path.exists():
-                if not clone_repo_for_commit_scan(repo.get("clone_url", ""), repo_path):
-                    logger.debug(f"[Human Inter] clone failed for {repo_name}; skipping")
-                    continue
-
-            # If we have a candidate map from raw CSVs, prefer those commit SHAs
-            human_commits = {}
-            if candidate_map and repo_name in candidate_map:
-                for row in candidate_map[repo_name]:
-                    sha = (row.get("commit_sha") or "").strip()
-                    date = (row.get("commit_date") or "").strip()
-                    if sha and date and date <= HUMAN_CORPUS_CUTOFF_DATE:
-                        human_commits[sha] = "human"
-            else:
-                try:
-                    commit_roles = scanner.scan_repo_commit_roles(
-                        repo_path,
-                        start_date="1970-01-01",
-                        language=repo.get("language"),
-                        detect_test_files=True,
+            # Use managed clone context to ensure cleanup and reduce scattered rmtree calls.
+            with clone_with_function(clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path) as managed_repo_path:
+                if managed_repo_path is None:
+                    logger.debug(
+                        f"[Human Inter] clone failed for {repo_name}; skipping"
                     )
-                except Exception as e:
-                    logger.debug(f"[Human Inter] scan failed for {repo_name}: {e}")
                     continue
 
-                human_commits = {
-                    c.commit_sha: "human"
-                    for c in commit_roles
-                    if c.commit_role == "human"
-                    and getattr(c, "is_test_commit", False)
-                    and (c.commit_date or "") <= HUMAN_CORPUS_CUTOFF_DATE
-                }
+                # If we have a candidate map from raw CSVs, prefer those commit SHAs
+                human_commits = {}
+                if candidate_map and repo_name in candidate_map:
+                    for row in candidate_map[repo_name]:
+                        sha = (row.get("commit_sha") or "").strip()
+                        date = (row.get("commit_date") or "").strip()
+                        if sha and date and date <= HUMAN_CORPUS_CUTOFF_DATE:
+                            human_commits[sha] = "human"
+                else:
+                    try:
+                        commit_roles = scanner.scan_repo_commit_roles(
+                            managed_repo_path,
+                            start_date="1970-01-01",
+                            language=repo.get("language"),
+                            detect_test_files=True,
+                        )
+                    except Exception as e:
+                        logger.debug(f"[Human Inter] scan failed for {repo_name}: {e}")
+                        continue
 
-            if not human_commits:
-                # Clean up
-                if repo_path.exists():
-                    shutil.rmtree(repo_path, ignore_errors=True)
-                continue
+                    human_commits = {
+                        c.commit_sha: "human"
+                        for c in commit_roles
+                        if c.commit_role == "human"
+                        and getattr(c, "is_test_commit", False)
+                        and (c.commit_date or "") <= HUMAN_CORPUS_CUTOFF_DATE
+                    }
 
-            fixtures = extractor._extract_from_agent_commits(
-                repo_name=repo_name, commits=human_commits
-            )
-            fixtures = [f for f in fixtures if f.get("is_complete_addition")]
-            if not fixtures:
-                if repo_path.exists():
-                    shutil.rmtree(repo_path, ignore_errors=True)
-                continue
+                if not human_commits:
+                    continue
 
-            # Attach repo metadata to each fixture for sampling
-            for f in fixtures:
-                f["repo_full_name"] = repo_name
-                f["language"] = repo.get("language")
-                candidates.append((repo, f))
+                fixtures = extractor._extract_from_agent_commits(
+                    repo_name=repo_name, commits=human_commits
+                )
+                fixtures = [f for f in fixtures if f.get("is_complete_addition")]
+                if not fixtures:
+                    continue
 
-            if repo_path.exists():
-                shutil.rmtree(repo_path, ignore_errors=True)
+                # Attach repo metadata to each fixture for sampling
+                for f in fixtures:
+                    f["repo_full_name"] = repo_name
+                    f["language"] = repo.get("language")
+                    candidates.append((repo, f))
 
         # Compute targets if not provided: count agent fixtures per language
         if targets is None:
             targets = {}
             with db_session(self.output_db) as conn:
-                cur = conn.execute(
-                    """
+                cur = conn.execute("""
                     SELECT r.language, COUNT(f.id) as c
                     FROM fixtures f
                     JOIN repositories r ON f.repo_id = r.id
                     WHERE f.commit_kind = 'agent'
                     GROUP BY r.language
-                    """
-                )
+                    """)
                 for row in cur.fetchall():
                     lang = (row[0] or "unknown").lower()
                     targets[lang] = int(row[1])
@@ -934,7 +940,9 @@ class HumanCorpusCollector:
         for repo_full, fixtures_list in repo_groups.items():
             repo_data = construct_repo_dict(
                 full_name=repo_full,
-                language=(fixtures_list[0].get("language") if fixtures_list else "unknown"),
+                language=(
+                    fixtures_list[0].get("language") if fixtures_list else "unknown"
+                ),
                 stars=0,
                 forks=0,
             )
@@ -943,68 +951,23 @@ class HumanCorpusCollector:
                     self.output_db, repo_data, fixtures_list, handle_mocks=True
                 )
             except Exception as e:
-                logger.debug(f"[Human Inter] failed to persist fixtures for {repo_full}: {e}")
+                logger.debug(
+                    f"[Human Inter] failed to persist fixtures for {repo_full}: {e}"
+                )
                 # Skip inserting inter rows for this repo
                 for _ in fixtures_list:
                     pass
 
-        # Now perform all inter-table inserts inside a single transaction
-        with db_session(self.output_db) as conn:
-            inter_rows = []
-            for fixture in selected:
-                repo_full = fixture.get("repo_full_name")
-                cur = conn.execute(
-                    """
-                    SELECT f.file_id, f.repo_id
-                    FROM fixtures f
-                    JOIN repositories r ON f.repo_id = r.id
-                    WHERE r.full_name = ? AND f.name = ? AND f.start_line = ?
-                    LIMIT 1
-                    """,
-                    (repo_full, fixture.get("name"), fixture.get("start_line")),
-                )
-                row = cur.fetchone()
-                if not row:
-                    logger.debug(f"[Human Inter] inserted fixture not found for {repo_full}:{fixture.get('name')}")
-                    continue
-                file_id = row[0]
-                repo_id = row[1]
+        # Use coordinated bulk insert to perform lookups + executemany inside a single transaction
+        try:
+            from .db import insert_human_inter_fixtures_coordinated
 
-                inter_row = {
-                    "file_id": file_id,
-                    "repo_id": repo_id,
-                    "name": fixture.get("name"),
-                    "fixture_type": fixture.get("fixture_type"),
-                    "scope": fixture.get("scope"),
-                    "start_line": fixture.get("start_line"),
-                    "end_line": fixture.get("end_line"),
-                    "loc": fixture.get("loc"),
-                    "cyclomatic_complexity": fixture.get("cyclomatic_complexity"),
-                    "max_nesting_depth": fixture.get("max_nesting_depth"),
-                    "num_objects_instantiated": fixture.get("num_objects_instantiated"),
-                    "num_external_calls": fixture.get("num_external_calls"),
-                    "num_parameters": fixture.get("num_parameters"),
-                    "reuse_count": fixture.get("reuse_count"),
-                    "has_teardown_pair": fixture.get("has_teardown_pair"),
-                    "raw_source": fixture.get("raw_source"),
-                    "framework": fixture.get("framework"),
-                    "num_mocks": len(fixture.get("mocks", []) or []),
-                    "commit_sha": fixture.get("commit_sha"),
-                    "commit_author_name": fixture.get("commit_author_name", ""),
-                    "commit_author_email": fixture.get("commit_author_email", ""),
-                    "commit_date": fixture.get("commit_date", ""),
-                    "matched_control_id": None,
-                    "match_score": None,
-                    "provenance": json.dumps({"sample_seed": seed}),
-                }
-                inter_rows.append(inter_row)
-
-            # Bulk-insert all inter rows
-            try:
-                inserted = insert_human_inter_fixtures_bulk(conn, inter_rows)
-                stats.fixtures_collected += inserted
-            except Exception as e:
-                logger.debug(f"[Human Inter] bulk insert failed: {e}")
+            inserted = insert_human_inter_fixtures_coordinated(
+                self.output_db, selected, seed=seed, batch_size=1000
+            )
+            stats.fixtures_collected += inserted
+        except Exception as e:
+            logger.debug(f"[Human Inter] coordinated bulk insert failed: {e}")
 
         # Generate summary for the inter sample
         self._generate_summary(stats)
