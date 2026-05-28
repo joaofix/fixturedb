@@ -37,7 +37,7 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
-from collection.temp_clone import cleanup_tempdir, clone_to_tempdir
+from collection.clone_manager import temp_clone_commit_history
 
 GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
 OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
@@ -135,19 +135,12 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
         "--no-checkout",
     ]
     logger.info("Cloning %s (lang=%s) args=%s", full_name, lang, clone_args)
-    repo_path, temp_root = clone_to_tempdir(
-        full_name,
-        clone_url,
-        clone_args,
-        timeout=300,
-        prefix="agent-commit-qc-",
-    )
-    if repo_path is None or temp_root is None:
-        logger.warning("Clone failed for %s (clone_url=%s)", full_name, clone_url)
-        return []
-
     out_rows = []
-    try:
+    with temp_clone_commit_history(clone_url, full_name, prefix="agent-commit-qc-", timeout=300) as repo_path:
+        if repo_path is None:
+            logger.warning("Clone failed for %s (clone_url=%s)", full_name, clone_url)
+            return []
+
         if repo_path and repo_path.exists():
             commits = get_agent_commits(repo_path, since)
             logger.info(
@@ -173,9 +166,6 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
                         "processed_at": datetime.now(timezone.utc).isoformat(),
                     }
                 )
-    finally:
-        # Delete the temp clone as soon as this repo is done, even if parsing fails.
-        cleanup_tempdir(temp_root)
 
     return out_rows
 
