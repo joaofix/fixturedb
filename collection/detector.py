@@ -64,6 +64,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .config import MAX_FILE_SIZE_BYTES
+from .ast_cache import parse_bytes as parse_src_bytes
 from .complexity_provider import (
     analyze_function_complexity,
     get_file_loc,
@@ -1659,6 +1660,33 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
         logger.warning(f"No detector for language '{language}'")
         return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
 
+    # Conservative per-language allowlist of source file extensions. This
+    # ensures we do not run heavy analysis on non-source files. We still keep
+    # `NON_CODE_EXTENSIONS` (from config) for a broad blacklist used elsewhere
+    # in the codebase; here we use it as an early exit plus a language-specific
+    # whitelist to be stricter for the languages under study.
+    from .config import NON_CODE_EXTENSIONS
+
+    ALLOWED_EXTS = {
+        "python": {".py", ".pyw", ".pyi"},
+        "javascript": {".js", ".mjs", ".cjs", ".jsx"},
+        "typescript": {".ts", ".tsx", ".mts"},
+        "java": {".java"},
+    }
+
+    ext = file_path.suffix.lower()
+    # First, skip anything explicitly marked as non-code.
+    if ext in NON_CODE_EXTENSIONS:
+        logger.debug(f"Skipping non-code extension {ext} for {file_path}")
+        return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
+
+    # If the file has an extension, require it to be in the allowed set for the
+    # language. This avoids analyzing files like README.md or data files.
+    allowed = ALLOWED_EXTS.get(language)
+    if ext and allowed is not None and ext not in allowed:
+        logger.debug(f"Skipping file with extension {ext} not in allowed list for {language}: {file_path}")
+        return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
+
     # Log file size before reading (helps identify memory issues with large files)
     try:
         file_size_bytes = file_path.stat().st_size
@@ -1690,8 +1718,9 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
         return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
 
     try:
-        parser = _get_parser(language)
-        tree = parser.parse(src_bytes)
+        # Use cached parser results when possible to avoid repeated tree-sitter
+        # parses of identical file contents during bulk extraction.
+        tree = parse_src_bytes(src_bytes, language)
     except Exception as e:
         logger.warning(f"Parse error in {file_path}: {e}")
         return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
