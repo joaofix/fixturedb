@@ -8,7 +8,7 @@ The between-group study uses a three-stage CLI-based pipeline:
 
 ```
 Stage 1: python pipeline.py human    → Human corpus (pre-2021)
-Stage 2: python pipeline.py agent    → Agent corpus (2023+)
+Stage 2: python pipeline.py agent    → Agent corpus (2025+)
 Stage 3: python pipeline.py between-group-stats → Statistical comparison
 ```
 
@@ -65,14 +65,14 @@ python pipeline.py agent [OPTIONS]
 
 ### Control Variables (Fixed)
 
-Control variables are **computed automatically** at 2023-06-01 snapshot:
+Control variables are **computed automatically** at 2025-01-01 snapshot:
 
 | Variable | Description |
 |----------|-------------|
 | `language` | Programming language |
 | `domain` | Repository domain |
 | `star_tier` | GitHub stars tier at snapshot |
-| `repo_age_years` | Repository age in years at 2023-06-01 |
+| `repo_age_years` | Repository age in years at 2025-01-01 |
 | `agent_type` | Agent classifier: claude, copilot, cursor, aider, or NULL |
 | `commit_kind` | Always 'agent' for Stage 2 |
 
@@ -149,11 +149,11 @@ Fixed snapshot dates (not configurable):
 | Corpus | Snapshot Date | Repositories | Rationale |
 |--------|---------------|--------------|-----------|
 | Human | 2021-01-01 | Created before 2021 | Pre-AI agent era |
-| Agent | 2023-06-01 | Created before 2023-06 | Agent availability (2023+) |
+| Agent | 2025-01-01 | Created before 2025-01 | Agent availability (2025+) |
 
 These dates ensure:
-- No agent involvement in human corpus (2021 < 2023)
-- Sufficient agent maturity by 2023-06
+- No agent involvement in human corpus (2021 < 2025)
+- Sufficient agent maturity by 2025-01
 - ~2.5 year temporal gap for framework/practice evolution
 
 ## Database Configuration

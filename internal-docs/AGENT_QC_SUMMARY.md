@@ -24,7 +24,7 @@ Notes:
 
 These values are read from `collection/config.py` and implemented in the QC code (`collection/agent_repo_preliminar_quality_control.py`, `collection/agent_corpus.py`).
 
-- Temporal boundary for agent commits: `AGENT_CORPUS_START_DATE = 2023-06-01`.
+- Temporal boundary for agent commits: `AGENT_CORPUS_START_DATE = 2025-01-01`.
 - Minimum star floor used for discovery and language configs: `MIN_STARS = 100` (per-language configs also use this by default).
 - Minimum repository thresholds applied post-clone:
   - `MIN_COMMITS = 100`

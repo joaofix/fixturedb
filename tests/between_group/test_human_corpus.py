@@ -1,5 +1,5 @@
 """Tests human corpus collection for agent-enabled repositories including:
-- Repository selection from agent-enabled repos (post-2023)
+- Repository selection from agent-enabled repos (post-2025)
 - Human fixture collection in same temporal window as agents
 - Control variable computation
 - Statistics aggregation
@@ -47,7 +47,7 @@ def _create_test_corpus_db(db_path: Path) -> None:
         )
     """)
 
-    # Add post-2023 repositories with agent config (should be included)
+    # Add post-2025 repositories with agent config (should be included)
     agent_era_repos = [
         (
             1,
@@ -58,8 +58,8 @@ def _create_test_corpus_db(db_path: Path) -> None:
             50,
             "A web framework",
             '["django"]',
-            "2023-07-01T00:00:00Z",
-            "2023-12-01T00:00:00Z",
+            "2025-01-02T00:00:00Z",
+            "2025-03-01T00:00:00Z",
             "https://github.com/owner1/repo_python_agent.git",
             "analysed",
             10,
@@ -74,8 +74,8 @@ def _create_test_corpus_db(db_path: Path) -> None:
             60,
             "ML library",
             '["machine learning"]',
-            "2023-08-01T00:00:00Z",
-            "2023-11-01T00:00:00Z",
+            "2025-02-01T00:00:00Z",
+            "2025-03-15T00:00:00Z",
             "https://github.com/owner2/repo_python_ml.git",
             "cloned",
             15,
@@ -90,8 +90,8 @@ def _create_test_corpus_db(db_path: Path) -> None:
             70,
             "Frontend framework",
             '["vue"]',
-            "2023-09-01T00:00:00Z",
-            "2023-10-01T00:00:00Z",
+            "2025-04-01T00:00:00Z",
+            "2025-05-01T00:00:00Z",
             "https://github.com/owner3/repo_js_agent.git",
             "analysed",
             20,
@@ -99,7 +99,7 @@ def _create_test_corpus_db(db_path: Path) -> None:
         ),
     ]
 
-    # Add pre-2023 repositories (should NOT be included)
+    # Add pre-2025 repositories (should NOT be included)
     old_repos = [
         (
             4,
@@ -111,7 +111,7 @@ def _create_test_corpus_db(db_path: Path) -> None:
             "Old library",
             '["async"]',
             "2020-01-01T00:00:00Z",
-            "2023-06-01T00:00:00Z",
+            "2025-01-01T00:00:00Z",
             "https://github.com/owner4/repo_python_old.git",
             "analysed",
             8,
@@ -127,7 +127,7 @@ def _create_test_corpus_db(db_path: Path) -> None:
             "Android app",
             '["android"]',
             "2019-06-01T00:00:00Z",
-            "2023-06-15T00:00:00Z",
+            "2025-01-15T00:00:00Z",
             "https://github.com/owner5/repo_java_old.git",
             "analysed",
             5,
@@ -239,7 +239,7 @@ class TestRepositorySelection:
 
             repos = select_human_corpus_repositories(corpus_db, repos_per_language=20)
 
-            # Verify all repos are post-2023 (same temporal window as agents)
+            # Verify all repos are post-2025 (same temporal window as agents)
             for repo in repos:
                 assert repo["created_at"] >= AGENT_CORPUS_START_DATE
 
@@ -315,8 +315,8 @@ class TestHumanCorpusTemporalBoundary:
     """Test that human corpus respects temporal boundary."""
 
     def test_human_corpus_temporal_window(self):
-        """Human and agent corpus should use same temporal window (post-2023)."""
-        assert AGENT_CORPUS_START_DATE.startswith("2023-06-01")
+        """Human and agent corpus should use same temporal window (post-2025)."""
+        assert AGENT_CORPUS_START_DATE.startswith("2025-01-01")
 
     def test_repositories_at_boundary_included(self):
         """Repositories created at or after AGENT_CORPUS_START_DATE should be included."""

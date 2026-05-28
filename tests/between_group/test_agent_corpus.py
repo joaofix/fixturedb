@@ -1,7 +1,7 @@
 """
 Unit tests for agent corpus collection.
 
-Tests the 2023+ agent-authored fixture collection including:
+Tests the 2025+ agent-authored fixture collection including:
 - Agent type detection from commit messages (Tier 1)
 - Repository scanning for agent configuration files
 - Agent commit discovery from git history
@@ -155,14 +155,14 @@ class TestAgentCorpusTemporalBoundary:
     """Test that agent corpus respects temporal boundaries."""
 
     def test_agent_corpus_start_date(self):
-        """Agent corpus should start from 2023-06-01 (post-agent emergence)."""
+        """Agent corpus should start from 2025-01-01 (post-agent emergence)."""
         # This tests the constant, not the implementation
-        assert AGENT_CORPUS_START_DATE >= "2023-01-01"
+        assert AGENT_CORPUS_START_DATE == "2025-01-01"
 
     def test_control_variables_computed_at_snapshot(self):
-        """Control variables should be computed at 2023-06-01 snapshot."""
-        created_at = "2023-01-01T00:00:00Z"
-        snapshot_date = "2023-06-01T00:00:00Z"
+        """Control variables should be computed at 2025-01-01 snapshot."""
+        created_at = "2024-08-01T00:00:00Z"
+        snapshot_date = "2025-01-01T00:00:00Z"
 
         age = compute_repo_age_at_date(created_at, snapshot_date)
 
@@ -265,7 +265,7 @@ class TestAgentCommitMetadataDetection:
             env=env,
         )
 
-        commits = get_agent_commits(repo_path, "2023-06-01")
+        commits = get_agent_commits(repo_path, "2025-01-01")
 
         assert len(commits) == 1
         assert commits[0]["agent_type"] == "copilot"

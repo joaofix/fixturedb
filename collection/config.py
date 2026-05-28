@@ -28,9 +28,9 @@ LOGS_DIR = ROOT_DIR / "logs"
 # Human corpus: fixtures from pre-2021 repositories (before agent era)
 HUMAN_CORPUS_CUTOFF_DATE = "2021-01-01"
 
-# Agent corpus: fixtures from 2023+ repositories with agent commits
+# Agent corpus: fixtures from 2025+ repositories with agent commits
 AGENT_CORPUS_START_DATE = (
-    "2023-06-01"  # Post-ChatGPT (Nov 2022), post-Copilot GA (Jun 2023)
+    "2025-01-01"
 )
 
 # Quality thresholds for corpus filtering (same for both)

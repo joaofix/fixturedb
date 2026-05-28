@@ -40,10 +40,10 @@ The **toy agent dataset suffers from severe diversity problems** due to:
 
 | Repo | Reason | Language |
 |------|--------|----------|
-| reactnativecn/react-native-pushy | No co-authored-by commits after 2023-06-01 | TypeScript |
-| theotherp/nzbhydra2 | No co-authored-by commits after 2023-06-01 | Java |
-| martin-majlis/wikipedia-api | No co-authored-by commits after 2023-06-01 | Python |
-| liferay/liferay-portal | No co-authored-by commits after 2023-06-01 | Java |
+| reactnativecn/react-native-pushy | No co-authored-by commits after 2025-01-01 | TypeScript |
+| theotherp/nzbhydra2 | No co-authored-by commits after 2025-01-01 | Java |
+| martin-majlis/wikipedia-api | No co-authored-by commits after 2025-01-01 | Python |
+| liferay/liferay-portal | No co-authored-by commits after 2025-01-01 | Java |
 
 ---
 
@@ -75,7 +75,7 @@ copilot-instructions.md
 co-authored-by Trailer Detection:
   ✓ Requires exact co-authored-by line in commit message
   ✓ Pattern: Co-authored-by: Agent Name <agent@example.com>
-  ✓ Only counts commits AFTER 2023-06-01
+  ✓ Only counts commits AFTER 2025-01-01
 ```
 
 **Why repos were rejected:**

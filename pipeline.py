@@ -169,7 +169,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Agent corpus collection (between-group design)
     agent_parser = sub.add_parser(
-        "agent", help="Collect agent test commits and fixtures (2023+)"
+        "agent", help="Collect agent test commits and fixtures (2025+)"
     )
     agent_parser.add_argument(
         "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
@@ -242,7 +242,7 @@ def build_parser() -> argparse.ArgumentParser:
     repo_qc_parser.add_argument(
         "--since",
         type=str,
-        default="2023-06-01",
+        default="2025-01-01",
         help="Since date (kept for compatibility)",
     )
     repo_qc_parser.add_argument(
@@ -256,7 +256,7 @@ def build_parser() -> argparse.ArgumentParser:
     commit_qc_parser.add_argument(
         "--since",
         type=str,
-        default="2023-06-01",
+        default="2025-01-01",
         help="Since date for agent commit scan",
     )
     commit_qc_parser.add_argument(
@@ -341,7 +341,7 @@ def cmd_full(args) -> int:
 
         # Stage 2: Agent corpus
         print(
-            "\n=== Stage 2: Detect agent test commits and collect fixtures (2023+) ==="
+            "\n=== Stage 2: Detect agent test commits and collect fixtures (2025+) ==="
         )
         agent_collector = AgentCorpusCollector(
             github_token=args.github_token,
@@ -487,7 +487,7 @@ def cmd_status() -> None:
     # Agent corpus
     agent_summaries = sorted(output_dir.glob("agent_corpus_summary_*.json"))
     if agent_summaries:
-        print(f"\n  Agent Corpus (2023+):")
+        print(f"\n  Agent Corpus (2025+):")
         print(f"    {agent_summaries[-1].name}")
 
     # Between-group comparison

@@ -53,7 +53,7 @@ icsme-nier-2026/
 │   ├── __init__.py
 │   ├── __main__.py                    # Package CLI (python -m collection)
 │   ├── human_corpus.py                # Human corpus collection (pre-2021)
-│   ├── agent_corpus.py                # Agent corpus collection (2023+)
+│   ├── agent_corpus.py                # Agent corpus collection (2025+)
 │   ├── between_group_comparison.py    # Statistical comparison
 │   ├── github_api_search.py           # GitHub API integration
 │   ├── github_archive.py              # Historical data access (optional)
@@ -122,7 +122,7 @@ python pipeline.py human --repos-per-language 100
 
 This collects fixtures from repositories created before 2021, when no AI agents existed.
 
-### Stage 2: Collect Agent Corpus (2023+)
+### Stage 2: Collect Agent Corpus (2025+)
 ```bash
 python pipeline.py agent --repos-per-language 100 --github-token YOUR_TOKEN
 ```

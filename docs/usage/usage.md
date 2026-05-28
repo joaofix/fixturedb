@@ -8,7 +8,7 @@ The FixtureDB between-group dataset contains fixtures from agent-enabled reposit
 
 The between-group study compares agent and human fixtures within repositories:
 - **Repository basis:** Agent-enabled repositories (containing agent config files)
-- **Temporal window:** 2023-06-01 onwards for both agent and human fixtures
+- **Temporal window:** 2025-01-01 onwards for both agent and human fixtures
 - **Agent identification:** Tier 1 only (co-authored-by trailers, author signatures)
 - **Control variables:** Language, domain, star tier, repository age (computed at temporal snapshot)
 - **Analysis:** Within-repository paired comparisons
@@ -475,17 +475,17 @@ agent_df[agent_df['agent_type'].notna()].groupby('agent_type')['cyclomatic_compl
 
 When writing papers using the between-group dataset, please:
 
-1. **Clarify the design**: Explain the between-group design with temporal separation (pre-2021 vs 2023+)
+1. **Clarify the design**: Explain the between-group design with temporal separation (pre-2021 vs 2025+)
 2. **Document control variable balance**: Reference the balance test results from Stage 3
 3. **Note agent detection method**: Specify Tier 1 (co-authored-by trailers) detection only
 4. **Mention agent types detected**: Claude, Copilot, Cursor, Aider, or other (Tier 1)
 5. **Use unpaired statistical tests**: Mann-Whitney U for continuous, chi-square for categorical
-6. **Discuss temporal confounding**: Acknowledge framework/practice changes between 2021 and 2023
+6. **Discuss temporal confounding**: Acknowledge framework/practice changes between 2021 and 2025
 
 Example methodology section:
 ```
 "We analyzed test fixtures using a between-group comparison design, 
-comparing pre-2021 human-authored fixtures (N=3,500) with 2023+ agent-assisted 
+comparing pre-2021 human-authored fixtures (N=3,500) with 2025+ agent-assisted 
 fixtures (N=4,500) across Python, Java, JavaScript, and TypeScript. 
 Agent involvement was identified using Tier 1 detection (co-authored-by git trailers) 
 to ensure high precision. Control variables (language, domain, star tier, repository age) 

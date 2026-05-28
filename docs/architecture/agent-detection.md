@@ -267,7 +267,7 @@ Author: Developer <dev@company.com>
 |-------|--------|----------|
 | Trailer detection | Regex on commit messages | 100% (all trailers found) |
 | Agent pattern matching | Email/name keyword matching | 100% precision |
-| Date filtering | Datetime comparison (2023-06-01) | 100% (deterministic) |
+| Date filtering | Datetime comparison (2025-01-01) | 100% (deterministic) |
 | Commit SHA validity | git rev-parse | 100% (git enforces) |
 
 ### Tier 2 Validation (Optional File Scanning)
@@ -288,7 +288,7 @@ Author: Developer <dev@company.com>
 - **Data source:** corpus.db at 2021-01-01 snapshot
 - **Output:** Human fixtures with `commit_kind='human'`, `agent_type=NULL`
 
-### Stage 2: Agent Corpus (2023+)
+### Stage 2: Agent Corpus (2025+)
 - **Uses Tier 1 agent detection?** Yes (primary method)
 - **Input:** GitHub API search for agent config files (discovery only)
 - **Agent identification:** Co-authored-by trailers in commit messages
@@ -309,9 +309,9 @@ Author: Developer <dev@company.com>
    - Problem: Agent email variations (claude@anthropic.com, claude@company.com)
    - Mitigation: Keyword matching on agent name (claude, copilot, cursor, aider)
 
-3. **Date Cutoff (2023-06-01)**
+3. **Date Cutoff (2025-01-01)**
    - Problem: Agent emergence varies by agent and region
-   - Assumption: All agent types mature enough by 2023-06
+   - Assumption: All agent types mature enough by 2025-01
    - **Alternative:** Tier 2 file scanning for earlier detection
 
 ### Edge Cases
@@ -341,7 +341,7 @@ Committer: Human Developer <dev@company.com>
 ```
 Commit from 2020 with Claude-named Co-author
 ```
-**Handling:** Filtered out by date check (2023-06-01 boundary)
+**Handling:** Filtered out by date check (2025-01-01 boundary)
 
 ---
 
@@ -350,7 +350,7 @@ Commit from 2020 with Claude-named Co-author
 ### Deterministic Aspects
 - ✓ Co-authored-by trailer detection (same results on same commits)
 - ✓ Regex pattern matching (deterministic)
-- ✓ Date filtering (fixed cutoff: 2023-06-01)
+- ✓ Date filtering (fixed cutoff: 2025-01-01)
 - ✓ Commit SHA matching (immutable)
 
 ### Non-Deterministic Aspects
@@ -361,7 +361,7 @@ Commit from 2020 with Claude-named Co-author
 **Results are reproducible IF:**
 1. Repository state is frozen (specific commit SHA pinned)
 2. Pattern library is identical (same trailer patterns)
-3. Date filter is identical (same cutoff: 2023-06-01)
+3. Date filter is identical (same cutoff: 2025-01-01)
 4. Agent types are consistent
 
 ---

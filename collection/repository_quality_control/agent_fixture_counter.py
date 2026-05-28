@@ -72,7 +72,7 @@ def _date_only(value: str) -> str:
 def _load_agent_commit_dataset(
     input_dir: Path,
     language: str | None = None,
-    since: str = "2023-06-01",
+    since: str = "2025-01-01",
     commit_dataset: str = "agent",
 ) -> dict[str, dict]:
     """Load QCed agent commits grouped by repository."""
@@ -667,7 +667,7 @@ def main() -> int:
     parser.add_argument(
         "--since",
         type=str,
-        default="2023-06-01",
+        default="2025-01-01",
         help="Only process commits on/after this date (YYYY-MM-DD)",
     )
     parser.add_argument(

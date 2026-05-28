@@ -9,12 +9,12 @@ The paired within-repository approach has been replaced with a more methodologic
 ## Why This Documentation Is Archived
 
 The paired study had methodological limitations:
-- **Temporal confounding:** Comparing 2021 and 2023+ in the same repo conflates agent effects with framework evolution
-- **Selection bias:** Repositories with agents in 2023+ differ systematically from 2021 baselines
+- **Temporal confounding:** Comparing 2021 and 2025+ in the same repo conflates agent effects with framework evolution
+- **Selection bias:** Repositories with agents in 2025+ differ systematically from 2021 baselines
 - **Power issues:** Limited paired observations per repository
 
 The **between-group design** resolves these by:
-- Temporally separating populations (pre-2021 human vs 2023+ agent)
+- Temporally separating populations (pre-2021 human vs 2025+ agent)
 - Balancing control variables across corpora
 - Improving statistical power with larger independent samples
 

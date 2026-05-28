@@ -8,7 +8,7 @@ The collection pipeline processes agent-enabled repositories to extract fixtures
 
 **Key design principles:**
 - Agent-enabled repos sourced from `github-search/` directory
-- Single temporal window (post-2023) for both agent and human fixtures  
+- Single temporal window (post-2025) for both agent and human fixtures  
 - Tier 1 detection only (co-authored-by trailers, author signatures)
 - All repositories processed without per-language caps
 
@@ -35,7 +35,7 @@ Both commands:
 1. Read agent-enabled repositories from CSVs in `github-search/`
 2. Filter by language (if specified) or include all
 3. Clone and scan each repository
-4. Extract fixtures from all commits (2023-06-01 onwards)
+4. Extract fixtures from all commits (2025-01-01 onwards)
 5. Classify commits as agent or human based on authorship signals
 6. Persist fixtures to `data/between-group.db` with `commit_kind`
 7. Generate summary JSON with statistics
@@ -113,7 +113,7 @@ The between-group study is deterministic given:
 2. **Fixed clone directory** with repository snapshots
 3. **Deterministic fixture extraction** from tree-sitter AST analysis
 4. **Conservative agent detection** (Tier 1 only: co-authored-by trailers)
-5. **Fixed temporal boundaries** (2021-01-01 for human, 2023-06-01 for agent)
+5. **Fixed temporal boundaries** (2021-01-01 for human, 2025-01-01 for agent)
 
 ---
 
@@ -176,7 +176,7 @@ human_dates = pd.read_sql("""
     SELECT MIN(commit_sha), MAX(commit_sha) FROM fixtures WHERE commit_kind = 'human'
 """, conn)
 
-# Agent corpus: all commits after 2023-06-01
+# Agent corpus: all commits after 2025-01-01
 agent_dates = pd.read_sql("""
     SELECT MIN(commit_sha), MAX(commit_sha) FROM fixtures WHERE commit_kind = 'agent'
 """, conn)
@@ -251,7 +251,7 @@ sqlite3 data/between-group.db "
 ### Conditional Determinism
 
 - **Repository selection**: Depends on corpus.db and GitHub API results
-- **Temporal boundaries**: Fixed at 2021-01-01 (human) and 2023-06-01 (agent)
+- **Temporal boundaries**: Fixed at 2021-01-01 (human) and 2025-01-01 (agent)
 - **Clone freshness**: Depends on git history at time of collection
 
 **Guarantee**: If `data/corpus.db` and temporal boundaries are fixed, all between-group collections are reproducible.

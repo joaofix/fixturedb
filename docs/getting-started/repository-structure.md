@@ -8,7 +8,7 @@ icsme-nier-2026/
 ├── MAIN CLI & PIPELINES
 │   ├── pipeline.py                          # Main CLI entrypoint
 │   │   ├── python pipeline.py human          # Stage 1: Human corpus (pre-2021)
-│   │   ├── python pipeline.py agent          # Stage 2: Agent corpus (2023+)
+│   │   ├── python pipeline.py agent          # Stage 2: Agent corpus (2025+)
 │   │   └── python pipeline.py between-group-stats  # Stage 3: Comparison
 │   │
 │   └── collection/
@@ -111,7 +111,7 @@ icsme-nier-2026/
 ### Main CLI (Root)
 - **pipeline.py** — Entry point for all commands
   - `python pipeline.py human` — Stage 1: Collect pre-2021 fixtures
-  - `python pipeline.py agent` — Stage 2: Collect 2023+ agent-authored fixtures
+  - `python pipeline.py agent` — Stage 2: Collect 2025+ agent-authored fixtures
   - `python pipeline.py between-group-stats` — Stage 3: Run statistical comparison
   - `python pipeline.py status` — Check database and output status
 
@@ -157,8 +157,8 @@ Stage 1: python pipeline.py human
 Stage 2: python pipeline.py agent
     → Queries GitHub API for agent configs
     → Detects agent commits (co-authored-by trailers)
-    → Extracts fixtures from agent commits (2023+)
-    → Computes control variables at 2023-06-01 snapshot
+    → Extracts fixtures from agent commits (2025+)
+    → Computes control variables at 2025-01-01 snapshot
     → Outputs agent_corpus_summary_*.json
     → Appends to between-group.db (commit_kind='agent', agent_type)
     ↓

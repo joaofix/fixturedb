@@ -348,7 +348,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
 
 def run(
     limit: int = 0,
-    since: str = "2023-06-01",
+    since: str = "2025-01-01",
     workers: int = 8,
     languages: Optional[list[str]] = None,
     language: Optional[str] = None,
@@ -421,7 +421,7 @@ def main():
         help="Limit number of repos to process (0 = all)",
     )
     parser.add_argument(
-        "--since", type=str, default="2023-06-01", help="Since date for agent commits"
+        "--since", type=str, default="2025-01-01", help="Since date for agent commits"
     )
     parser.add_argument(
         "--workers",

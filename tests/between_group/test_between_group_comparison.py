@@ -76,7 +76,7 @@ def _create_test_between_group_db(db_path: Path) -> None:
             repo,
         )
 
-    # Add agent repositories (2023+, snapshot at 2023-06-01)
+    # Add agent repositories (2025+, snapshot at 2025-01-01)
     agent_repos = [
         (5, "gh5", "python", "web", "core", 0.4, "2023-01-01T00:00:00Z", 7, 4),
         (6, "gh6", "python", "database", "core", 0.3, "2023-02-01T00:00:00Z", 6, 3),
@@ -449,7 +449,7 @@ class TestComparisonLimitations:
     def test_comparison_with_limitations(self):
         """Should document known limitations of between-group design."""
         limitations = [
-            "Temporal separation confounding: human corpus (pre-2021) vs agent corpus (2023+)",
+            "Temporal separation confounding: human corpus (pre-2021) vs agent corpus (2025+)",
             "Tier 1 agent detection is conservative (70-80% recall, 99%+ precision)",
             "Repository availability may differ between temporal periods",
         ]

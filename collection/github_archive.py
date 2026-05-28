@@ -5,7 +5,7 @@ Provides access to historical GitHub repository metadata (stars, commits, etc.)
 from GitHub Archive (gharchive.org) via BigQuery.
 
 This is used to compute control variables (star tier, repo age) at specific
-historical dates (e.g., 2021-01-01 for human corpus, 2023-06-01 for agent corpus).
+historical dates (e.g., 2021-01-01 for human corpus, 2025-01-01 for agent corpus).
 """
 
 import logging
