@@ -15,7 +15,7 @@ from .config import HUMAN_CORPUS_CUTOFF_DATE, AGENT_CORPUS_START_DATE
 import argparse
 from pathlib import Path
 from .config import CLONES_DIR
-from .temp_clone import cleanup_tempdir, clone_to_tempdir
+from .clone_manager import temp_clone_commit_history
 from .test_commit_utils import write_test_commits_csv
 
 logger = logging.getLogger(__name__)
@@ -48,45 +48,36 @@ def _process_repo_test_commits(
 
     logger.info("[test-commits] Cloning %s (%s)", repo_name, language)
 
-    repo_path, temp_root = clone_to_tempdir(
-        repo_name,
-        clone_url,
-        ["--filter=blob:limit=10m", "--single-branch", "--no-tags"],
-        timeout=300,
-        prefix="agent-test-commits-",
-    )
-    if repo_path is None:
-        logger.warning("Failed to clone %s while filtering test commits", repo_name)
-        return language, [], 1, 0
+    with temp_clone_commit_history(clone_url, repo_name, prefix="agent-test-commits-", timeout=300) as repo_path:
+        if repo_path is None:
+            logger.warning("Failed to clone %s while filtering test commits", repo_name)
+            return language, [], 1, 0
 
     test_commit_rows: list[dict] = []
     commits_scanned = 0
 
-    try:
-        for row in repo_rows:
-            commit_sha = (row.get("commit_sha") or "").strip()
-            if not commit_sha:
-                continue
+    for row in repo_rows:
+        commit_sha = (row.get("commit_sha") or "").strip()
+        if not commit_sha:
+            continue
 
-            commits_scanned += 1
-            test_files = collect_test_files_for_commit(repo_path, commit_sha, language)
-            if not test_files:
-                continue
+        commits_scanned += 1
+        test_files = collect_test_files_for_commit(repo_path, commit_sha, language)
+        if not test_files:
+            continue
 
-            test_commit_rows.append(
-                {
-                    "repo_name": repo_name,
-                    "language": language,
-                    "commit_sha": commit_sha,
-                    "commit_role": "agent",
-                    "agent_type": (row.get("agent_type") or "unknown").strip().lower(),
-                    "commit_date": row.get("commit_date") or "",
-                    "test_file_count": len(test_files),
-                    "test_file_paths": json.dumps(test_files, ensure_ascii=False),
-                }
-            )
-    finally:
-        cleanup_tempdir(temp_root)
+        test_commit_rows.append(
+            {
+                "repo_name": repo_name,
+                "language": language,
+                "commit_sha": commit_sha,
+                "commit_role": "agent",
+                "agent_type": (row.get("agent_type") or "unknown").strip().lower(),
+                "commit_date": row.get("commit_date") or "",
+                "test_file_count": len(test_files),
+                "test_file_paths": json.dumps(test_files, ensure_ascii=False),
+            }
+        )
 
     logger.info(
         "[test-commits] %s (%s): scanned %d commits, found %d test commits",
@@ -228,23 +219,16 @@ def _process_repo_human_test_commits(
 
     logger.info("[human-test-commits] Cloning %s (%s)", repo_name, language)
 
-    repo_path, temp_root = clone_to_tempdir(
-        repo_name,
-        clone_url,
-        ["--filter=blob:limit=10m", "--single-branch", "--no-tags"],
-        timeout=300,
-        prefix="human-test-commits-",
-    )
-    if repo_path is None:
-        logger.warning(
-            "Failed to clone %s while filtering human test commits", repo_name
-        )
-        return language, [], 1, 0
+    with temp_clone_commit_history(clone_url, repo_name, prefix="human-test-commits-", timeout=300) as repo_path:
+        if repo_path is None:
+            logger.warning(
+                "Failed to clone %s while filtering human test commits", repo_name
+            )
+            return language, [], 1, 0
 
-    test_commit_rows: list[dict] = []
-    commits_scanned = 0
+        test_commit_rows: list[dict] = []
+        commits_scanned = 0
 
-    try:
         project_root = Path(__file__).resolve().parents[1]
         scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
 
@@ -276,8 +260,6 @@ def _process_repo_human_test_commits(
                     ),
                 }
             )
-    finally:
-        cleanup_tempdir(temp_root)
 
     logger.info(
         "[human-test-commits] %s (%s): scanned %d commits, found %d human test commits",
@@ -433,23 +415,16 @@ def _process_repo_agent_test_commits(
 
     logger.info("[agent-test-commits] Cloning %s (%s)", repo_name, language)
 
-    repo_path, temp_root = clone_to_tempdir(
-        repo_name,
-        clone_url,
-        ["--filter=blob:limit=10m", "--single-branch", "--no-tags"],
-        timeout=300,
-        prefix="agent-test-commits-",
-    )
-    if repo_path is None:
-        logger.warning(
-            "Failed to clone %s while filtering agent test commits", repo_name
-        )
-        return language, [], 1, 0
+    with temp_clone_commit_history(clone_url, repo_name, prefix="agent-test-commits-", timeout=300) as repo_path:
+        if repo_path is None:
+            logger.warning(
+                "Failed to clone %s while filtering agent test commits", repo_name
+            )
+            return language, [], 1, 0
 
-    test_commit_rows: list[dict] = []
-    commits_scanned = 0
+        test_commit_rows: list[dict] = []
+        commits_scanned = 0
 
-    try:
         project_root = Path(__file__).resolve().parents[1]
         scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
 
@@ -481,8 +456,7 @@ def _process_repo_agent_test_commits(
                     ),
                 }
             )
-    finally:
-        cleanup_tempdir(temp_root)
+    
 
     logger.info(
         "[agent-test-commits] %s (%s): scanned %d commits, found %d agent test commits",
@@ -623,6 +597,44 @@ def collect_agent_test_commits_from_repos(
         "output_files": output_files,
         "output_dir": str(output_dir),
     }
+
+
+def build_pre2021_candidate_pool(
+    raw_commits_dir: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE
+) -> dict:
+    """
+    Build a candidate pool of pre-2021 commits by scanning raw commit CSV exports.
+
+    Args:
+        raw_commits_dir: Directory containing raw commit CSVs (e.g., github-search-raw)
+        cutoff_date: ISO date string upper bound (inclusive). Defaults to HUMAN_CORPUS_CUTOFF_DATE.
+
+    Returns:
+        Mapping of repo_full_name -> list of commit row dicts (filtered to commit_date <= cutoff_date)
+    """
+    candidates: dict[str, list[dict]] = defaultdict(list)
+    raw_dir = Path(raw_commits_dir)
+    csv_paths = sorted(raw_dir.glob("**/*_commit*.csv"), key=lambda p: p.name)
+    for csv_path in csv_paths:
+        try:
+            with csv_path.open("r", encoding="utf-8", newline="") as fh:
+                reader = csv.DictReader(fh)
+                for row in reader:
+                    repo_name = (
+                        row.get("repo_name") or row.get("full_name") or ""
+                    ).strip()
+                    commit_date = (row.get("commit_date") or "").strip()
+                    if not repo_name or not commit_date:
+                        continue
+                    # simple lexical compare for ISO YYYY-MM-DD strings
+                    if commit_date <= cutoff_date:
+                        candidates.setdefault(repo_name, []).append(dict(row))
+        except Exception:
+            # ignore unreadable files but continue
+            logger.debug(f"Failed to read raw commits CSV: {csv_path}")
+            continue
+
+    return candidates
 
 
 def _cli_main():
