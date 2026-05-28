@@ -38,9 +38,12 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.clone_manager import temp_clone_commit_history
+import os
+import json
 
 GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
-OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
+# Default output dir for agent commit CSVs (per-language)
+OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_commits"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 logger = logging.getLogger(__name__)
@@ -73,7 +76,7 @@ def read_config_positive_rows() -> list[dict]:
 
 
 def load_seen_commits_for_language(lang: str) -> set:
-    csv_path = OUTPUT_DIR / f"{lang.lower()}_agent_commit_qc.csv"
+    csv_path = OUTPUT_DIR / f"{lang.lower()}_agent_commit.csv"
     seen = set()
     if csv_path.exists():
         try:
@@ -96,7 +99,7 @@ def write_commit_rows(rows: list[dict]) -> None:
         by_lang.setdefault(lang, []).append(r)
 
     for lang, items in by_lang.items():
-        csv_path = OUTPUT_DIR / f"{lang}_agent_commit_qc.csv"
+        csv_path = OUTPUT_DIR / f"{lang}_agent_commit.csv"
         fieldnames = [
             "repo_name",
             "commit_sha",
@@ -112,14 +115,41 @@ def write_commit_rows(rows: list[dict]) -> None:
         logger.info(
             "Writing %d commit rows for language=%s to %s", len(items), lang, csv_path
         )
+        # Ensure header exists
         if not csv_path.exists():
             with csv_path.open("w", newline="", encoding="utf-8") as fh:
                 writer = csv.DictWriter(fh, fieldnames=fieldnames)
                 writer.writeheader()
+
+        # Append rows and fsync to make progress durable for checkpoints
         with csv_path.open("a", newline="", encoding="utf-8") as fh:
             writer = csv.DictWriter(fh, fieldnames=fieldnames)
             for it in items:
                 writer.writerow({k: it.get(k, "") for k in fieldnames})
+            try:
+                fh.flush()
+                os.fsync(fh.fileno())
+            except Exception:
+                # Best-effort durability; failures shouldn't abort the whole run
+                logger.exception("Failed to fsync %s", csv_path)
+
+        # Write a small JSON checkpoint to record progress and allow fast inspection
+        try:
+            checkpoint = {
+                "language": lang,
+                "rows_written": len(items),
+                "last_written_at": datetime.now(timezone.utc).isoformat(),
+            }
+            cp_path = OUTPUT_DIR / f"{lang}_agent_commit.checkpoint.json"
+            with cp_path.open("w", encoding="utf-8") as cfh:
+                json.dump(checkpoint, cfh)
+                cfh.flush()
+                try:
+                    os.fsync(cfh.fileno())
+                except Exception:
+                    logger.exception("Failed to fsync checkpoint %s", cp_path)
+        except Exception:
+            logger.exception("Failed to write checkpoint for language=%s", lang)
 
 
 def process_repo_for_commits(row: dict, since: str) -> list[dict]:
