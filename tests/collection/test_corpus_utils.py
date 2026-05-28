@@ -84,7 +84,7 @@ class TestComputeRepoMetadata:
             "created_at": "2015-01-01",
         }
 
-        result = compute_repo_metadata(repo, "2021-01-01")
+        result = compute_repo_metadata(repo, "2020-12-31")
 
         assert "domain" in result
         assert "star_tier" in result
@@ -101,7 +101,7 @@ class TestComputeRepoMetadata:
             "created_at": "2015-01-01",
         }
 
-        result = compute_repo_metadata(repo, "2021-01-01")
+        result = compute_repo_metadata(repo, "2020-12-31")
         assert result["domain"] == "web"
 
     def test_compute_repo_metadata_with_ml_domain(self):
@@ -113,7 +113,7 @@ class TestComputeRepoMetadata:
             "created_at": "2015-01-01",
         }
 
-        result = compute_repo_metadata(repo, "2021-01-01")
+        result = compute_repo_metadata(repo, "2020-12-31")
         assert result["domain"] == "ml"
 
     def test_compute_repo_metadata_star_tier_low(self):
@@ -125,7 +125,7 @@ class TestComputeRepoMetadata:
             "created_at": "2015-01-01",
         }
 
-        result = compute_repo_metadata(repo, "2021-01-01")
+        result = compute_repo_metadata(repo, "2020-12-31")
         assert result["star_tier"] in ["extended", "core"]
 
     def test_compute_repo_metadata_repo_age(self):
@@ -137,7 +137,7 @@ class TestComputeRepoMetadata:
             "created_at": "2015-01-01",
         }
 
-        result = compute_repo_metadata(repo, "2021-01-01")
+        result = compute_repo_metadata(repo, "2020-12-31")
         # 2015 to 2021 = 6 years
         assert isinstance(result["repo_age_years"], (float, type(None)))
         if result["repo_age_years"] is not None:
@@ -202,7 +202,7 @@ class TestConstructRepoDict:
             description="Test repo",
             topics='["testing"]',
             created_at="2020-01-01T00:00:00Z",
-            pushed_at="2021-01-01T00:00:00Z",
+            pushed_at="2020-12-31T00:00:00Z",
             clone_url="https://github.com/owner/repo.git",
             github_id=12345,
             num_contributors=5,
@@ -451,7 +451,7 @@ class TestGenerateCorpusSummary:
                     stats,
                     "test_corpus",
                     Path("/tmp/test.db"),
-                    "since 2021-01-01",
+                    "since 2020-12-31",
                     extra_metadata={"test": "value"},
                 )
 
@@ -493,7 +493,7 @@ class TestGenerateCorpusSummary:
                         stats,
                         "test_corpus",
                         Path("/tmp/test.db"),
-                        "since 2021-01-01",
+                        "since 2020-12-31",
                     )
 
                     # Verify json.dump was called

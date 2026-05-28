@@ -113,7 +113,7 @@ The between-group study is deterministic given:
 2. **Fixed clone directory** with repository snapshots
 3. **Deterministic fixture extraction** from tree-sitter AST analysis
 4. **Conservative agent detection** (Tier 1 only: co-authored-by trailers)
-5. **Fixed temporal boundaries** (2021-01-01 for human, 2025-01-01 for agent)
+5. **Fixed temporal boundaries** (2020-12-31 for human, 2025-01-01 for agent)
 
 ---
 
@@ -171,7 +171,7 @@ import pandas as pd
 
 conn = sqlite3.connect("data/between-group.db")
 
-# Human corpus: all commits before 2021-01-01
+# Human corpus: all commits on or before 2020-12-31
 human_dates = pd.read_sql("""
     SELECT MIN(commit_sha), MAX(commit_sha) FROM fixtures WHERE commit_kind = 'human'
 """, conn)
@@ -251,7 +251,7 @@ sqlite3 data/between-group.db "
 ### Conditional Determinism
 
 - **Repository selection**: Depends on corpus.db and GitHub API results
-- **Temporal boundaries**: Fixed at 2021-01-01 (human) and 2025-01-01 (agent)
+- **Temporal boundaries**: Fixed at 2020-12-31 (human) and 2025-01-01 (agent)
 - **Clone freshness**: Depends on git history at time of collection
 
 **Guarantee**: If `data/corpus.db` and temporal boundaries are fixed, all between-group collections are reproducible.

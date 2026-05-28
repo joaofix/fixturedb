@@ -26,7 +26,7 @@ LOGS_DIR = ROOT_DIR / "logs"
 
 # Between-group methodology uses different boundaries
 # Human corpus: fixtures from pre-2021 repositories (before agent era)
-HUMAN_CORPUS_CUTOFF_DATE = "2021-01-01"
+HUMAN_CORPUS_CUTOFF_DATE = "2020-12-31"
 
 # Agent corpus: fixtures from 2025+ repositories with agent commits
 AGENT_CORPUS_START_DATE = (

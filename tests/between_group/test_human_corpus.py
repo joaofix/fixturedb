@@ -205,9 +205,9 @@ class TestControlVariableComputation:
 
     def test_compute_repo_age_years_at_snapshot_date(self):
         """Repository age should be computed relative to snapshot date."""
-        # Repository created in 2015, snapshot at 2021-01-01
+        # Repository created in 2015, snapshot at 2020-12-31
         created_at = "2015-01-01T00:00:00Z"
-        snapshot_date = "2021-01-01T00:00:00Z"
+        snapshot_date = "2020-12-31T00:00:00Z"
 
         age = compute_repo_age_at_date(created_at, snapshot_date)
 

@@ -5,7 +5,7 @@ Provides access to historical GitHub repository metadata (stars, commits, etc.)
 from GitHub Archive (gharchive.org) via BigQuery.
 
 This is used to compute control variables (star tier, repo age) at specific
-historical dates (e.g., 2021-01-01 for human corpus, 2025-01-01 for agent corpus).
+historical dates (e.g., 2020-12-31 for human corpus, 2025-01-01 for agent corpus).
 """
 
 import logging
@@ -54,7 +54,7 @@ class GitHubArchiveClient:
 
         Args:
             repo_full_name: Repository full name (e.g., "owner/repo")
-            target_date: ISO date string (e.g., "2021-01-01")
+            target_date: ISO date string (e.g., "2020-12-31")
 
         Returns:
             Star count at target date, or None if unavailable
@@ -108,7 +108,7 @@ class GitHubArchiveClient:
 
         Args:
             repo_full_name: Repository full name (e.g., "owner/repo")
-            target_date: ISO date string (e.g., "2021-01-01")
+            target_date: ISO date string (e.g., "2020-12-31")
 
         Returns:
             Repository age in years, or None if unavailable
@@ -182,7 +182,7 @@ def get_repo_stars_at_date(
 
     Args:
         repo_full_name: Repository full name (e.g., "owner/repo")
-        target_date: ISO date string (e.g., "2021-01-01")
+        target_date: ISO date string (e.g., "2020-12-31")
         project_id: Google Cloud Project ID (optional)
 
     Returns:
@@ -202,7 +202,7 @@ def get_repo_age_at_date(
 
     Args:
         repo_full_name: Repository full name (e.g., "owner/repo")
-        target_date: ISO date string (e.g., "2021-01-01")
+        target_date: ISO date string (e.g., "2020-12-31")
         project_id: Google Cloud Project ID (optional)
 
     Returns:

@@ -59,7 +59,7 @@ def _create_test_between_group_db(db_path: Path) -> None:
         )
     """)
 
-    # Add human repositories (pre-2021, snapshot at 2021-01-01)
+    # Add human repositories (pre-2021, snapshot at 2020-12-31)
     human_repos = [
         (1, "gh1", "python", "web", "core", 5.0, "2015-01-01T00:00:00Z", 10, 5),
         (2, "gh2", "python", "ml", "core", 4.0, "2016-01-01T00:00:00Z", 15, 6),

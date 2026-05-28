@@ -101,14 +101,14 @@ between-group.db
 
 Both human and agent fixtures include **control variables computed at their temporal boundaries**:
 
-### Human Corpus (snapshot: 2021-01-01)
+### Human Corpus (snapshot: 2020-12-31)
 ```sql
 SELECT 
   f.id,
   r.language,           -- Programming language
   r.domain,            -- Project domain
   r.star_tier,         -- GitHub stars tier
-  (JULIANDAY('2021-01-01') - JULIANDAY(r.created_at)) / 365.25 as repo_age_years
+  (JULIANDAY('2020-12-31') - JULIANDAY(r.created_at)) / 365.25 as repo_age_years
 FROM fixtures f
 JOIN test_files tf ON f.test_file_id = tf.id
 JOIN repositories r ON tf.repo_id = r.id

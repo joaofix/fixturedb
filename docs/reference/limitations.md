@@ -5,7 +5,7 @@
 The between-group methodology collects human and agent corpora at different time periods to avoid temporal confounding. However, this design introduces its own limitations:
 
 ### Temporal Separation Confounding
-- **Human corpus:** Pre-2021 repositories (fixture collection snapshot at 2021-01-01)
+- **Human corpus:** Pre-2021 repositories (fixture collection snapshot at 2020-12-31)
 - **Agent corpus:** 2025+ repositories with agent commits (fixture collection snapshot at 2025-01-01)
 - **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement
 

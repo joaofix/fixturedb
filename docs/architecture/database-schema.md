@@ -41,7 +41,7 @@ Repository metadata and control variables computed at fixture writing time.
 | **Control Variables** |
 | `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
 | `star_tier` | TEXT | Star classification (`core` ≥500 stars, `extended` <500 stars) |
-| `repo_age_years` | REAL | Repository age in years at fixture writing time (2021-01-01 for human, 2025-01-01 for agent) |
+| `repo_age_years` | REAL | Repository age in years at fixture writing time (2020-12-31 for human, 2025-01-01 for agent) |
 | `collected_at` | TEXT | Timestamp of insertion |
 
 ### test_files
@@ -230,7 +230,7 @@ print(framework_comparison)
 
 - The schema is append-safe and re-runnable; existing records are not duplicated during collection.
 - Fixtures are labeled by corpus (`commit_kind`) and agent type, enabling unpaired statistical analysis.
-- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at temporal boundaries (2021-01-01 for human, 2025-01-01 for agent).
+- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at temporal boundaries (2020-12-31 for human, 2025-01-01 for agent).
 - Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
 
 ## Accessing the database

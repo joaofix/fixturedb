@@ -28,14 +28,14 @@ python pipeline.py human [OPTIONS]
 
 ### Control Variables (Fixed)
 
-Control variables are **computed automatically** at 2021-01-01 snapshot:
+Control variables are **computed automatically** at 2020-12-31 snapshot:
 
 | Variable | Description |
 |----------|-------------|
 | `language` | Programming language (python, java, javascript, typescript) |
 | `domain` | Repository domain (computed from topics/description) |
 | `star_tier` | GitHub stars tier at snapshot (core: ≥500, extended: 100-499) |
-| `repo_age_years` | Repository age in years at 2021-01-01 |
+| `repo_age_years` | Repository age in years at 2020-12-31 |
 
 ### Example
 
@@ -148,7 +148,7 @@ Fixed snapshot dates (not configurable):
 
 | Corpus | Snapshot Date | Repositories | Rationale |
 |--------|---------------|--------------|-----------|
-| Human | 2021-01-01 | Created before 2021 | Pre-AI agent era |
+| Human | 2020-12-31 | Created before 2021 | Pre-AI agent era |
 | Agent | 2025-01-01 | Created before 2025-01 | Agent availability (2025+) |
 
 These dates ensure:
@@ -178,7 +178,7 @@ GROUP BY agent_type;
 ### Stage 1 (Human)
 
 Auto-applied filters:
-- Repositories created before 2021-01-01
+- Repositories created on or before 2020-12-31
 - At least 5 test files found
 - At least 1 fixture extracted
 
