@@ -180,7 +180,7 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
     return out_rows
 
 
-def run(since: str = "2023-06-01", workers: int = 4) -> int:
+def run(since: str = "2025-01-01", workers: int = 4) -> int:
     candidates = read_config_positive_rows()
     logger.info("Found %d config-positive repos", len(candidates))
     if not candidates:
@@ -281,7 +281,7 @@ def main():
         description="Full-history agent-commit counter for config-positive repos"
     )
     parser.add_argument(
-        "--since", type=str, default="2023-06-01", help="Since date for agent commits"
+        "--since", type=str, default="2025-01-01", help="Since date for agent commits"
     )
     parser.add_argument("--workers", type=int, default=4, help="Parallel workers")
     parser.add_argument(

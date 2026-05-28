@@ -6,8 +6,8 @@ The between-group methodology collects human and agent corpora at different time
 
 ### Temporal Separation Confounding
 - **Human corpus:** Pre-2021 repositories (fixture collection snapshot at 2021-01-01)
-- **Agent corpus:** 2023+ repositories with agent commits (fixture collection snapshot at 2023-06-01)
-- **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2023 may affect fixture patterns independently of agent involvement
+- **Agent corpus:** 2025+ repositories with agent commits (fixture collection snapshot at 2025-01-01)
+- **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement
 
 **Mitigation:** Control variables (language, domain, star_tier, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U). Balance report generated after Stage 3 confirms no significant differences (p ≥ 0.05).
 

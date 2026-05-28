@@ -4,7 +4,7 @@ ALGORITHM: FixtureDB Human vs Agent Corpus Construction
 
 CONSTANTS:
     HUMAN_CUTOFF_DATE      = 2021-01-01
-    AGENT_START_DATE       = 2023-06-01   # post-Copilot-GA, post-ChatGPT
+    AGENT_START_DATE       = 2025-01-01   # post-Copilot-GA, post-ChatGPT
     MIN_STARS              = 100
     MIN_COMMITS            = 100
     MIN_TEST_FILES         = 5

@@ -1,6 +1,6 @@
 # Database Schema - FixtureDB Between-Group Study
 
-The between-group study stores fixture data from two separate populations: human-authored (pre-2021) and agent-authored (2023+). The database enables comparison of fixture characteristics across populations while tracking control variables.
+The between-group study stores fixture data from two separate populations: human-authored (pre-2021) and agent-authored (2025+). The database enables comparison of fixture characteristics across populations while tracking control variables.
 
 ## Database overview
 
@@ -41,7 +41,7 @@ Repository metadata and control variables computed at fixture writing time.
 | **Control Variables** |
 | `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
 | `star_tier` | TEXT | Star classification (`core` ≥500 stars, `extended` <500 stars) |
-| `repo_age_years` | REAL | Repository age in years at fixture writing time (2021-01-01 for human, 2023-06-01 for agent) |
+| `repo_age_years` | REAL | Repository age in years at fixture writing time (2021-01-01 for human, 2025-01-01 for agent) |
 | `collected_at` | TEXT | Timestamp of insertion |
 
 ### test_files
@@ -86,7 +86,7 @@ Individual fixture definitions and their quantitative metrics.
 | `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
 | **Between-Group Labeling** |
 | `commit_sha` | TEXT | Commit SHA that introduced this fixture |
-| `commit_kind` | TEXT | Corpus label: `human` (pre-2021) or `agent` (2023+) |
+| `commit_kind` | TEXT | Corpus label: `human` (pre-2021) or `agent` (2025+) |
 | `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored, NULL otherwise |
 | `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
 
@@ -230,7 +230,7 @@ print(framework_comparison)
 
 - The schema is append-safe and re-runnable; existing records are not duplicated during collection.
 - Fixtures are labeled by corpus (`commit_kind`) and agent type, enabling unpaired statistical analysis.
-- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at temporal boundaries (2021-01-01 for human, 2023-06-01 for agent).
+- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at temporal boundaries (2021-01-01 for human, 2025-01-01 for agent).
 - Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
 
 ## Accessing the database

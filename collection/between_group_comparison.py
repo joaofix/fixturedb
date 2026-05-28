@@ -331,7 +331,7 @@ class BetweenGroupComparator:
             methodology={
                 "design": "between-group comparison",
                 "human_corpus": "pre-2021 (before agent era)",
-                "agent_corpus": "2023+ (agent-authored, Tier 1 only)",
+                "agent_corpus": "2025+ (agent-authored, Tier 1 only)",
                 "control_variables": [
                     "language",
                     "domain",

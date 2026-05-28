@@ -101,7 +101,7 @@ def select_human_corpus_repositories(
             WHERE created_at >= ? AND status IN ('analysed', 'cloned')
             ORDER BY language ASC, created_at ASC
             """,
-            (AGENT_CORPUS_START_DATE,),  # Use agent temporal window (post-2023)
+            (AGENT_CORPUS_START_DATE,),  # Use agent temporal window (post-2025)
         )
         rows = cur.fetchall()
         conn.close()

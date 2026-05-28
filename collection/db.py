@@ -798,7 +798,7 @@ def compute_repo_age_at_date(
     Compute repository age in years relative to a specific date.
 
     Used for between-group design to compute control variables at historical
-    snapshots (e.g., 2021-01-01 for human corpus, 2023-06-01 for agent corpus).
+    snapshots (e.g., 2021-01-01 for human corpus, 2025-01-01 for agent corpus).
 
     Args:
         created_at_str: Repository creation date (ISO format)
@@ -831,7 +831,7 @@ def get_control_variables_at_date(repo: dict, target_date: str) -> dict:
     Compute control variables (domain, star_tier, repo_age) at a specific date.
 
     For between-group comparison, control variables should reflect repo state
-    at fixture writing time (2021-01-01 for human, 2023-06-01 for agent).
+    at fixture writing time (2021-01-01 for human, 2025-01-01 for agent).
 
     Args:
         repo: Repository metadata dict with keys: topics, description, stars, created_at

@@ -10,7 +10,7 @@
 Three critical methodology updates were implemented to align code and documentation with the correct study design:
 
 1. **Removed Tier 2 references** - Only Tier 1 agent detection from co-authored-by trailers
-2. **Unified temporal window** - Both human and agent fixtures collected post-2023 (AGENT_CORPUS_START_DATE)
+2. **Unified temporal window** - Both human and agent fixtures collected post-2025 (AGENT_CORPUS_START_DATE)
 3. **Removed repository capping** - Process all agent-enabled repos without per-language limits
 
 ---
@@ -44,7 +44,7 @@ Three critical methodology updates were implemented to align code and documentat
 - Database query construction - temporal filter
 - Summary generation metadata
 
-**Impact:** Human corpus now collected from same post-2023 temporal window as agent corpus
+**Impact:** Human corpus now collected from same post-2025 temporal window as agent corpus
 
 ### 3. collection/two_tier_agent_collection.py
 
@@ -59,15 +59,15 @@ Three critical methodology updates were implemented to align code and documentat
 
 **Changed:** Test data and assertions to match new temporal window
 
-- Test docstring: Updated to reflect post-2023 temporal window
+- Test docstring: Updated to reflect post-2025 temporal window
 - Import: Changed from `HUMAN_CORPUS_CUTOFF_DATE` to `AGENT_CORPUS_START_DATE`
-- Test fixture data: Replaced pre-2021 repos with post-2023 agent-era repos
+- Test fixture data: Replaced pre-2021 repos with post-2025 agent-era repos
 - Test assertions: Changed from `< HUMAN_CORPUS_CUTOFF_DATE` to `>= AGENT_CORPUS_START_DATE`
 - Test names: Updated to reflect new temporal semantics
 
 **Specific test changes:**
 - `test_select_human_corpus_repositories_filters_by_date` - now asserts `>=` instead of `<`
-- `test_human_corpus_cutoff_is_2021_01_01` → `test_human_corpus_temporal_window` - now checks 2023-06-01
+- `test_human_corpus_cutoff_is_2021_01_01` → `test_human_corpus_temporal_window` - now checks 2025-01-01
 - `test_repositories_at_boundary_not_included` → `test_repositories_at_boundary_included` - semantics reversed
 
 **Result:** All 44 existing human/agent corpus tests still passing ✅
@@ -80,7 +80,7 @@ Three critical methodology updates were implemented to align code and documentat
 
 **Changed:** Study design overview from temporal separation to within-repository comparison
 
-- **Old design:** Pre-2021 human repos vs 2023+ agent repos (unpaired, different populations)
+- **Old design:** Pre-2021 human repos vs 2025+ agent repos (unpaired, different populations)
 - **New design:** Agent-enabled repos with both human and agent fixtures in same temporal window (within-repo pairs)
 - Updated rationale to emphasize natural pairs within codebases
 - Updated output description to reflect single temporal window and paired structure
@@ -167,14 +167,14 @@ Three critical methodology updates were implemented to align code and documentat
 | Component | Change | Impact |
 |-----------|--------|--------|
 | **Code** | Removed Tier 2, unified temporal window, removed capping | Simpler, more consistent methodology |
-| **Tests** | Updated for post-2023 temporal window | Tests align with implementation |
+| **Tests** | Updated for post-2025 temporal window | Tests align with implementation |
 | **Docs** | Clarified within-repo design, single temporal window | Clear, accurate methodology explanation |
 
 ---
 
 ## Key Design Principles Now Documented
 
-1. **Single temporal window** - Both agent and human fixtures from post-2023 onwards
+1. **Single temporal window** - Both agent and human fixtures from post-2025 onwards
 2. **Repository basis** - Agent-enabled repos as fundamental unit
 3. **Tier 1 only** - Conservative co-authored-by trailer detection
 4. **No capping** - Process all matching repositories

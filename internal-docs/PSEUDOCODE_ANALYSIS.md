@@ -19,7 +19,7 @@ The current **paired within-repository** design is **methodologically superior**
 **Why split design is weaker:**
 - Pseudocode tries to compare two disjoint populations (human repos vs agent repos)
 - Inherent confounding: repos with agent activity differ systematically from pre-agent repos
-  - Recency: agent repos are newer (2023+) → different testing practices
+  - Recency: agent repos are newer (2025+) → different testing practices
   - Selection bias: repos that adopt agents may differ in quality/maturity
   - Domain drift: different project types may adopt agents at different rates
 - Requires extensive covariate control (domain, stars, age, contributors) to be even remotely valid

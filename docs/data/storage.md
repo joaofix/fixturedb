@@ -11,7 +11,7 @@ The between-group study uses a **single unified database** (`between-group.db`) 
 | Stage | Fixtures | Database Size | Notes |
 |-------|----------|---------------|-------|
 | After Stage 1 (human corpus) | ~3,500 | 50-80 MB | Pre-2021 repositories |
-| After Stage 2 (agent corpus) | ~7,500-8,500 | 120-180 MB | 2023+ agent-authored commits |
+| After Stage 2 (agent corpus) | ~7,500-8,500 | 120-180 MB | 2025+ agent-authored commits |
 | **Total** | **7,000-8,500** | **120-180 MB** | Single database, both corpora |
 
 The between-group design collects **fewer fixtures per corpus** than the original paired study (to maintain statistical power for comparison), resulting in a smaller overall database than the original FixtureDB.
@@ -115,14 +115,14 @@ JOIN repositories r ON tf.repo_id = r.id
 WHERE f.commit_kind = 'human'
 ```
 
-### Agent Corpus (snapshot: 2023-06-01)
+### Agent Corpus (snapshot: 2025-01-01)
 ```sql
 SELECT 
   f.id,
   r.language,
   r.domain,
   r.star_tier,
-  (JULIANDAY('2023-06-01') - JULIANDAY(r.created_at)) / 365.25 as repo_age_years
+  (JULIANDAY('2025-01-01') - JULIANDAY(r.created_at)) / 365.25 as repo_age_years
 FROM fixtures f
 JOIN test_files tf ON f.test_file_id = tf.id
 JOIN repositories r ON tf.repo_id = r.id
