@@ -48,6 +48,7 @@ from .corpus_utils import (
     generate_corpus_summary,
     persist_repository_and_fixtures,
 )
+from .clone_manager import clone_with_function
 
 logger = logging.getLogger(__name__)
 
@@ -466,7 +467,7 @@ class AgentCorpusCollector:
                     f"[Agent Corpus] Processing {repo_name} ({stats.repos_scanned}/{len(repos_to_collect)})"
                 )
 
-                # Clone full history for agent-commit scanning; replace old shallow clones if present.
+                # Replace shallow clones with full-history by removing shallow state.
                 if repo_path.exists():
                     shallow_flag = repo_path / ".git" / "shallow"
                     if shallow_flag.exists():
@@ -475,21 +476,21 @@ class AgentCorpusCollector:
                         )
                         shutil.rmtree(repo_path, ignore_errors=True)
 
-                if not repo_path.exists():
-                    logger.info(
-                        f"[Agent Corpus] Cloning {repo_name} with history for commit scan..."
-                    )
-                    if not clone_repo_for_commit_scan(
-                        repo.get("clone_url", ""), repo_path
-                    ):
+                # Use managed clone context to ensure cleanup and disk guards.
+                logger.info(f"[Agent Corpus] Cloning {repo_name} with history for commit scan...")
+                with clone_with_function(clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path) as managed_repo_path:
+                    if managed_repo_path is None:
                         stats.repos_failed_qc += 1
                         stats.qc_skip_reasons["clone_failed"] = (
                             stats.qc_skip_reasons.get("clone_failed", 0) + 1
                         )
                         continue
 
-                stats.repos_cloned += 1
-                stats.repos_with_agent_config += 1
+                    # From here onward use managed_repo_path as the repository path
+                    repo_path = managed_repo_path
+
+                    stats.repos_cloned += 1
+                    stats.repos_with_agent_config += 1
 
                 # Compute control variables at AGENT_CORPUS_START_DATE using shared utility
                 metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
@@ -679,10 +680,8 @@ class AgentCorpusCollector:
                                 f"Failed to extract fixtures from {commit_info['commit_sha']}: {e}"
                             )
 
-                # Clean up clone after extraction is complete
-                if repo_path.exists():
-                    shutil.rmtree(repo_path, ignore_errors=True)
-                    logger.debug(f"[Agent Corpus] Cleaned up clone: {repo_name}")
+                    # cleanup is handled by the clone manager context
+                    logger.debug(f"[Agent Corpus] Cleaned up clone (managed): {repo_name}")
 
                 # If we extracted fixtures from this repo, write a per-language
                 # agent fixture repo list CSV so downstream human selection can

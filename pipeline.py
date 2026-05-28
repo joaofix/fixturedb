@@ -13,7 +13,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from collection.config import LANGUAGE_CONFIGS, DATA_DIR
 from collection.paired_collection import main as paired_main
-from collection.human_corpus import HumanCorpusCollector
+from collection.human_corpus import (
+    HumanCorpusCollector,
+    select_human_corpus_repositories,
+)
 from collection.agent_corpus import AgentCorpusCollector
 from collection.between_group_comparison import BetweenGroupComparator
 from collection.repository_quality_control.agent_repository_counter import (
@@ -166,6 +169,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Optional CSV export for detected human test commits",
     )
+    human_parser.add_argument(
+        "--mode",
+        choices=["within", "inter", "both"],
+        default="within",
+        help="Collection mode: within (within-repo), inter (inter-repo sample), or both",
+    )
 
     # Agent corpus collection (between-group design)
     agent_parser = sub.add_parser(
@@ -300,10 +309,26 @@ def cmd_human(args) -> int:
         if hasattr(args, "test_commits_csv"):
             human_kwargs["test_commits_csv"] = getattr(args, "test_commits_csv")
         collector = HumanCorpusCollector(**human_kwargs)
-        stats, db_path = collector.run(
-            repos_per_language=args.repos_per_language,
-            language=args.language,
-        )
+        mode = getattr(args, "mode", "within")
+        if mode == "within":
+            stats, db_path = collector.run(
+                repos_per_language=args.repos_per_language,
+                language=args.language,
+            )
+        elif mode == "inter":
+            # Select agent-enabled repos first
+            agent_repos = select_human_corpus_repositories(
+                args.repo_qc_dir, args.repos_per_language, args.language
+            )
+            stats, db_path = collector.collect_inter_human(
+                agent_repos=agent_repos,
+                targets=None,
+            )
+        else:  # both
+            stats, db_path = collector.run(
+                repos_per_language=args.repos_per_language,
+                language=args.language,
+            )
         print(f"\n✓ Human corpus collection complete")
         print(f"  Fixtures collected: {stats.fixtures_collected}")
         print(f"  Repositories analyzed: {stats.repos_passed_qc}")

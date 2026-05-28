@@ -29,9 +29,7 @@ LOGS_DIR = ROOT_DIR / "logs"
 HUMAN_CORPUS_CUTOFF_DATE = "2020-12-31"
 
 # Agent corpus: fixtures from 2025+ repositories with agent commits
-AGENT_CORPUS_START_DATE = (
-    "2025-01-01"
-)
+AGENT_CORPUS_START_DATE = "2025-01-01"
 
 # Quality thresholds for corpus filtering (same for both)
 # Project minimum star floor for repository quality filtering
@@ -369,6 +367,15 @@ LANGUAGE_CONFIGS = {
         ],
     ),
 }
+
+# Performance tuning
+# When True, bulk inserts may temporarily relax durability (PRAGMA synchronous=OFF)
+# to speed large import operations. This should only be enabled for one-off bulk
+# imports where power-failure durability is not a primary concern.
+FAST_BULK_INSERTS = bool(os.getenv("FAST_BULK_INSERTS", "False").lower() in ("1", "true", "yes"))
+
+# Default batch size for coordinated bulk inserts
+DEFAULT_BULK_BATCH_SIZE = int(os.getenv("DEFAULT_BULK_BATCH_SIZE", "1000"))
 
 # ---------------------------------------------------------------------------
 # Testing Framework Registry
