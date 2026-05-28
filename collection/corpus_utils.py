@@ -6,6 +6,7 @@ for corpus collectors to reduce code duplication.
 """
 
 import csv
+import time
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -213,6 +214,7 @@ def persist_repository_and_fixtures(
     language = repo_data["language"]
     fixture_count = 0
 
+    start_ts = time.time()
     with db_session(output_db) as conn:
         # Upsert repository
         repo_id, _ = upsert_repository(conn, repo_data)
@@ -299,8 +301,11 @@ def persist_repository_and_fixtures(
                             logger.debug(
                                 f"Failed to insert mock for fixture {fixture_id} in {repo_name}: {e}"
                             )
-
-    return fixture_count
+        duration = time.time() - start_ts
+        logger.debug(
+            f"persist_repository_and_fixtures: persisted {fixture_count} fixtures for {repo_name} in {duration:.3f}s"
+        )
+        return fixture_count
 
 
 def construct_repo_dict(

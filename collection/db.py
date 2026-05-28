@@ -159,6 +159,71 @@ CREATE INDEX IF NOT EXISTS idx_mocks_framework  ON mock_usages(framework);
 CREATE INDEX IF NOT EXISTS idx_test_files_repo  ON test_files(repo_id);
 CREATE INDEX IF NOT EXISTS idx_test_commits_repo ON test_commits(repo_id);
 CREATE INDEX IF NOT EXISTS idx_test_commits_role ON test_commits(commit_role);
+
+-- -------------------------------------------------------------------------
+-- Human-sample tables for between-group experiments
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS human_within_fixtures (
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_id                 INTEGER REFERENCES test_files(id) ON DELETE CASCADE,
+    repo_id                 INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+    name                    TEXT,
+    fixture_type            TEXT,
+    scope                   TEXT,
+    start_line              INTEGER,
+    end_line                INTEGER,
+    loc                     INTEGER,
+    cyclomatic_complexity   INTEGER,
+    max_nesting_depth       INTEGER DEFAULT 0,
+    num_objects_instantiated INTEGER DEFAULT 0,
+    num_external_calls      INTEGER DEFAULT 0,
+    num_parameters          INTEGER DEFAULT 0,
+    reuse_count             INTEGER DEFAULT 0,
+    has_teardown_pair       INTEGER DEFAULT 0,
+    raw_source              TEXT,
+    framework               TEXT,
+    num_mocks               INTEGER DEFAULT 0,
+    commit_sha              TEXT DEFAULT NULL,
+    commit_author_name      TEXT DEFAULT NULL,
+    commit_author_email     TEXT DEFAULT NULL,
+    commit_date             TEXT DEFAULT NULL,
+    is_sampled              INTEGER DEFAULT 0,
+    sample_batch            INTEGER DEFAULT NULL,
+    provenance              TEXT DEFAULT NULL,
+    UNIQUE(file_id, name, start_line)
+);
+CREATE INDEX IF NOT EXISTS idx_human_within_repo ON human_within_fixtures(repo_id);
+
+CREATE TABLE IF NOT EXISTS human_inter_fixtures (
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_id                 INTEGER REFERENCES test_files(id) ON DELETE CASCADE,
+    repo_id                 INTEGER REFERENCES repositories(id) ON DELETE CASCADE,
+    name                    TEXT,
+    fixture_type            TEXT,
+    scope                   TEXT,
+    start_line              INTEGER,
+    end_line                INTEGER,
+    loc                     INTEGER,
+    cyclomatic_complexity   INTEGER,
+    max_nesting_depth       INTEGER DEFAULT 0,
+    num_objects_instantiated INTEGER DEFAULT 0,
+    num_external_calls      INTEGER DEFAULT 0,
+    num_parameters          INTEGER DEFAULT 0,
+    reuse_count             INTEGER DEFAULT 0,
+    has_teardown_pair       INTEGER DEFAULT 0,
+    raw_source              TEXT,
+    framework               TEXT,
+    num_mocks               INTEGER DEFAULT 0,
+    commit_sha              TEXT DEFAULT NULL,
+    commit_author_name      TEXT DEFAULT NULL,
+    commit_author_email     TEXT DEFAULT NULL,
+    commit_date             TEXT DEFAULT NULL,
+    matched_control_id      INTEGER DEFAULT NULL,
+    match_score             REAL DEFAULT NULL,
+    provenance              TEXT DEFAULT NULL,
+    UNIQUE(file_id, name, start_line)
+);
+CREATE INDEX IF NOT EXISTS idx_human_inter_repo ON human_inter_fixtures(repo_id);
 """
 
 
@@ -168,6 +233,12 @@ CREATE INDEX IF NOT EXISTS idx_test_commits_role ON test_commits(commit_role);
 
 
 def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    # Use a file-backed SQLite DB with WAL and a generous busy timeout to
+    # tolerate concurrent readers while writers operate. These PRAGMA settings
+    # are chosen to reduce transient `database is locked` errors during
+    # multi-worker extraction and insertion:
+    #  - `journal_mode=WAL` allows concurrent reads and a single writer
+    #  - `busy_timeout` / `timeout` give SQLite time to resolve brief locks
     conn = sqlite3.connect(db_path, timeout=60.0)  # 60 second timeout for lock waits
     conn.row_factory = sqlite3.Row  # rows behave like dicts
     conn.execute("PRAGMA journal_mode=WAL")  # safe for concurrent reads
@@ -538,6 +609,173 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
             f"file_id={fixture['file_id']}, name={fixture['name']}, start_line={fixture['start_line']}"
         )
     return row["id"]
+
+
+def insert_human_within_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
+    """
+    Insert a sampled human-within fixture into `human_within_fixtures`.
+    Returns the row id (new or existing).
+    """
+    columns = [
+        "file_id",
+        "repo_id",
+        "name",
+        "fixture_type",
+        "scope",
+        "start_line",
+        "end_line",
+        "loc",
+        "cyclomatic_complexity",
+        "max_nesting_depth",
+        "num_objects_instantiated",
+        "num_external_calls",
+        "num_parameters",
+        "reuse_count",
+        "has_teardown_pair",
+        "raw_source",
+        "framework",
+        "num_mocks",
+        "commit_sha",
+        "commit_author_name",
+        "commit_author_email",
+        "commit_date",
+        "is_sampled",
+        "sample_batch",
+        "provenance",
+    ]
+
+    cols_str = ", ".join(columns)
+    placeholders = ", ".join([f":{c}" for c in columns])
+
+    cursor = conn.execute(
+        f"""
+        INSERT INTO human_within_fixtures ({cols_str})
+        VALUES ({placeholders})
+        ON CONFLICT(file_id, name, start_line) DO NOTHING
+        """,
+        fixture,
+    )
+    if cursor.rowcount == 1:
+        return cursor.lastrowid
+    row = conn.execute(
+        "SELECT id FROM human_within_fixtures WHERE file_id=? AND name=? AND start_line=?",
+        (fixture["file_id"], fixture["name"], fixture["start_line"]),
+    ).fetchone()
+    if row is None:
+        raise ValueError(
+            f"Human within fixture insert conflict but SELECT returned no rows: file_id={fixture['file_id']}, name={fixture['name']}, start_line={fixture['start_line']}"
+        )
+    return row["id"]
+
+
+def insert_human_inter_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
+    """
+    Insert a sampled human-inter fixture into `human_inter_fixtures`.
+    Returns the row id (new or existing).
+    """
+    columns = [
+        "file_id",
+        "repo_id",
+        "name",
+        "fixture_type",
+        "scope",
+        "start_line",
+        "end_line",
+        "loc",
+        "cyclomatic_complexity",
+        "max_nesting_depth",
+        "num_objects_instantiated",
+        "num_external_calls",
+        "num_parameters",
+        "reuse_count",
+        "has_teardown_pair",
+        "raw_source",
+        "framework",
+        "num_mocks",
+        "commit_sha",
+        "commit_author_name",
+        "commit_author_email",
+        "commit_date",
+        "matched_control_id",
+        "match_score",
+        "provenance",
+    ]
+
+    cols_str = ", ".join(columns)
+    placeholders = ", ".join([f":{c}" for c in columns])
+
+    cursor = conn.execute(
+        f"""
+        INSERT INTO human_inter_fixtures ({cols_str})
+        VALUES ({placeholders})
+        ON CONFLICT(file_id, name, start_line) DO NOTHING
+        """,
+        fixture,
+    )
+    if cursor.rowcount == 1:
+        return cursor.lastrowid
+    row = conn.execute(
+        "SELECT id FROM human_inter_fixtures WHERE file_id=? AND name=? AND start_line=?",
+        (fixture["file_id"], fixture["name"], fixture["start_line"]),
+    ).fetchone()
+    if row is None:
+        raise ValueError(
+            f"Human inter fixture insert conflict but SELECT returned no rows: file_id={fixture['file_id']}, name={fixture['name']}, start_line={fixture['start_line']}"
+        )
+    return row["id"]
+
+
+def insert_human_inter_fixtures_bulk(
+    conn: sqlite3.Connection, fixtures: list[dict]
+) -> int:
+    """
+    Bulk-insert sampled human-inter fixtures using executemany.
+
+    Returns the number of attempted inserts (not the number of new rows).
+    """
+    if not fixtures:
+        return 0
+
+    columns = [
+        "file_id",
+        "repo_id",
+        "name",
+        "fixture_type",
+        "scope",
+        "start_line",
+        "end_line",
+        "loc",
+        "cyclomatic_complexity",
+        "max_nesting_depth",
+        "num_objects_instantiated",
+        "num_external_calls",
+        "num_parameters",
+        "reuse_count",
+        "has_teardown_pair",
+        "raw_source",
+        "framework",
+        "num_mocks",
+        "commit_sha",
+        "commit_author_name",
+        "commit_author_email",
+        "commit_date",
+        "matched_control_id",
+        "match_score",
+        "provenance",
+    ]
+
+    cols_str = ", ".join(columns)
+    placeholders = ", ".join([f":{c}" for c in columns])
+
+    sql = f"""
+    INSERT INTO human_inter_fixtures ({cols_str})
+    VALUES ({placeholders})
+    ON CONFLICT(file_id, name, start_line) DO NOTHING
+    """
+
+    # executemany accepts a sequence of mappings when using named placeholders
+    conn.executemany(sql, fixtures)
+    return len(fixtures)
 
 
 # ---------------------------------------------------------------------------
