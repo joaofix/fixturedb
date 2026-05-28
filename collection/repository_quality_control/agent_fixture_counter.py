@@ -36,7 +36,7 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.fixture_extractor import AgentFixtureExtractor
-from collection.temp_clone import cleanup_tempdir, clone_to_tempdir
+from collection.clone_manager import temp_clone_commit_history
 
 logger = logging.getLogger(__name__)
 
@@ -335,6 +335,9 @@ def _extract_rows_for_repo(
     return out_rows
 
 
+from collection.csv_adapter import get_adapter
+
+
 def _write_language_csvs(output_dir: Path, rows: list[dict]) -> None:
     fieldnames = [
         "repo_name",
@@ -363,13 +366,11 @@ def _write_language_csvs(output_dir: Path, rows: list[dict]) -> None:
         lang = (row.get("language") or "unknown").strip().lower()
         by_language[lang].append(row)
 
+    adapter = get_adapter()
     output_dir.mkdir(parents=True, exist_ok=True)
     for lang, lang_rows in sorted(by_language.items()):
         path = output_dir / f"{lang}_agent_fixture.csv"
-        with path.open("w", encoding="utf-8", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(lang_rows)
+        adapter.write_dicts(path, lang_rows, fieldnames)
         logger.info("Wrote %d fixture rows to %s", len(lang_rows), path)
 
 
@@ -423,15 +424,23 @@ def _process_single_repo(
                     repo_name,
                 )
                 clone_args = ["--filter=blob:limit=10m", "--no-tags"]
-                local_repo_path, temp_root = clone_to_tempdir(
-                    repo_name,
-                    clone_url,
-                    clone_args,
-                    timeout=300,
-                    prefix="agent-fixture-qc-",
-                )
-                if local_repo_path is None or temp_root is None:
-                    logger.warning("Skipping %s: clone/fetch failed", repo_name)
+                with temp_clone_commit_history(clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300) as local_repo_path:
+                    if local_repo_path is None:
+                        logger.warning("Skipping %s: clone/fetch failed", repo_name)
+                        return {
+                            "repo_name": repo_name,
+                            "strategy": selected_strategy,
+                            "rows": [],
+                            "skipped": True,
+                            "local_clone_reuse": used_local_clone,
+                        }
+                    _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+        else:
+            # Clone strategy: one broader clone for this repo and reuse locally for all target commits.
+            clone_args = ["--filter=blob:limit=10m", "--no-tags"]
+            with temp_clone_commit_history(clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300) as local_repo_path:
+                if local_repo_path is None:
+                    logger.warning("Skipping %s: clone failed", repo_name)
                     return {
                         "repo_name": repo_name,
                         "strategy": selected_strategy,
@@ -440,46 +449,23 @@ def _process_single_repo(
                         "local_clone_reuse": used_local_clone,
                     }
                 _ensure_commits_present(local_repo_path, clone_url, commit_shas)
-        else:
-            # Clone strategy: one broader clone for this repo and reuse locally for all target commits.
-            clone_args = ["--filter=blob:limit=10m", "--no-tags"]
-            local_repo_path, temp_root = clone_to_tempdir(
-                repo_name,
-                clone_url,
-                clone_args,
-                timeout=300,
-                prefix="agent-fixture-qc-",
-            )
-            if local_repo_path is None or temp_root is None:
-                logger.warning("Skipping %s: clone failed", repo_name)
+
+                extractor = AgentFixtureExtractor(
+                    clones_dir=local_repo_path.parent, start_date=since
+                )
+                repo_rows = _extract_rows_for_repo(
+                    repo_info=repo_info,
+                    extractor=extractor,
+                    include_partial=include_partial,
+                )
+                logger.info("%s -> %d extracted fixture rows", repo_name, len(repo_rows))
                 return {
                     "repo_name": repo_name,
                     "strategy": selected_strategy,
-                    "rows": [],
-                    "skipped": True,
+                    "rows": repo_rows,
+                    "skipped": False,
                     "local_clone_reuse": used_local_clone,
                 }
-            _ensure_commits_present(local_repo_path, clone_url, commit_shas)
-
-    extractor = AgentFixtureExtractor(
-        clones_dir=local_repo_path.parent, start_date=since
-    )
-    try:
-        repo_rows = _extract_rows_for_repo(
-            repo_info=repo_info,
-            extractor=extractor,
-            include_partial=include_partial,
-        )
-        logger.info("%s -> %d extracted fixture rows", repo_name, len(repo_rows))
-        return {
-            "repo_name": repo_name,
-            "strategy": selected_strategy,
-            "rows": repo_rows,
-            "skipped": False,
-            "local_clone_reuse": used_local_clone,
-        }
-    finally:
-        cleanup_tempdir(temp_root)
 
 
 def run(

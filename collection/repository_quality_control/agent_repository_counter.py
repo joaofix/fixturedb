@@ -21,7 +21,7 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 from collection.agent_corpus import scan_cloned_repo_for_agent_configs
 from collection.config import EXCLUSION_KEYWORDS
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
-from collection.temp_clone import cleanup_tempdir, clone_to_tempdir
+from collection.clone_manager import temp_clone_commit_history
 
 logger = logging.getLogger(__name__)
 
@@ -278,7 +278,9 @@ def read_repo_list(
             ",".join(selected_languages),
         )
     else:
-        logger.info("Loaded %d repo candidates from %s", len(repos), GITHUB_SEARCH_RAW_DIR)
+        logger.info(
+            "Loaded %d repo candidates from %s", len(repos), GITHUB_SEARCH_RAW_DIR
+        )
     return repos
 
 
@@ -300,35 +302,19 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         print(f"Processing {full_name} (lang={lang})")
 
         clone_url = meta.get("clone_url")
-        repo_path = None
-        temp_root = None
-        if clone_url:
-            clone_args = [
-                "--depth=1",
-                "--filter=blob:none",
-                "--single-branch",
-                "--no-tags",
-            ]
-            repo_path, temp_root = clone_to_tempdir(
-                full_name,
-                clone_url,
-                clone_args,
-                timeout=60,
-                prefix="agent-qc-",
-            )
-
         has_agent_config = False
         qc_reason = ""
 
-        try:
-            if repo_path and repo_path.exists():
-                has_agent_config = scan_cloned_repo_for_agent_configs(repo_path)
-                if not has_agent_config:
-                    qc_reason = "no_agent_config"
-            else:
+        with temp_clone_commit_history(clone_url, full_name, prefix="agent-qc-", timeout=60) as repo_path:
+            try:
+                if repo_path and repo_path.exists():
+                    has_agent_config = scan_cloned_repo_for_agent_configs(repo_path)
+                    if not has_agent_config:
+                        qc_reason = "no_agent_config"
+                else:
+                    qc_reason = "clone_failed_or_missing"
+            except Exception:
                 qc_reason = "clone_failed_or_missing"
-        finally:
-            cleanup_tempdir(temp_root)
 
         row = {
             "repo_name": full_name,
