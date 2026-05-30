@@ -33,7 +33,7 @@ from .db import (
     insert_fixture,
     insert_test_commit,
 )
-from .fixture_extractor import extract_fixtures_at_commit
+from .fixture_extractor import AgentFixtureExtractor
 from .test_commit_utils import collect_test_files_for_commit, write_test_commits_csv
 from .agent_patterns import (
     AGENT_SIGNATURES,
@@ -245,13 +245,27 @@ def _load_qc_agent_commits(
     languages: Optional[list[str]] = None,
     language: Optional[str] = None,
 ) -> dict[str, list[dict]]:
-    """Load agent commits from the commit-QC CSVs and group them by repository."""
+    """Load agent commits from QC CSVs and group them by repository.
+
+    Supports both raw agent-commit datasets and pre-filtered agent test-commit
+    datasets so fixture extraction can run directly from either source.
+    """
     selected_languages = _normalize_language_filters(languages, language)
     allowed_languages = set(selected_languages or [])
     commits_by_repo: dict[str, list[dict]] = {}
     seen_shas: dict[str, set[str]] = {}
 
-    for csv_path in sorted(Path(commit_qc_dir).glob("*_agent_commit_qc.csv")):
+    # Accept both raw agent-commit CSVs and pre-filtered agent test-commit CSVs.
+    patterns = [
+        "*_agent_commit.csv",
+        "*_agent_commit_qc.csv",
+        "*_agent_test_commit.csv",
+        "*_agent_test_commit_qc.csv",
+    ]
+    csv_paths = []
+    for pat in patterns:
+        csv_paths.extend(sorted(Path(commit_qc_dir).glob(pat)))
+    for csv_path in csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -411,6 +425,7 @@ class AgentCorpusCollector:
         initialise_db(self.output_db)
         stats = AgentCorpusStats()
         all_test_commit_rows: list[dict] = []
+        agent_extractor = AgentFixtureExtractor(clones_dir=self.clones_dir)
 
         repos_to_collect = _load_qc_repo_rows(
             self.repo_qc_dir,
@@ -478,7 +493,9 @@ class AgentCorpusCollector:
 
                 # Use managed clone context to ensure cleanup and disk guards.
                 logger.info(f"[Agent Corpus] Cloning {repo_name} with history for commit scan...")
-                with clone_with_function(clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path) as managed_repo_path:
+                with clone_with_function(
+                    clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path
+                ) as managed_repo_path:
                     if managed_repo_path is None:
                         stats.repos_failed_qc += 1
                         stats.qc_skip_reasons["clone_failed"] = (
@@ -492,207 +509,218 @@ class AgentCorpusCollector:
                     stats.repos_cloned += 1
                     stats.repos_with_agent_config += 1
 
-                # Compute control variables at AGENT_CORPUS_START_DATE using shared utility
-                metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
-                domain = metadata["domain"]
-                star_tier = metadata["star_tier"]
-                repo_age = metadata["repo_age_years"]
+                    # Compute control variables at AGENT_CORPUS_START_DATE using shared utility
+                    metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
+                    domain = metadata["domain"]
+                    star_tier = metadata["star_tier"]
+                    repo_age = metadata["repo_age_years"]
 
-                # Track distributions
-                stats.domain_distribution[domain] = (
-                    stats.domain_distribution.get(domain, 0) + 1
-                )
-                stats.star_tier_distribution[star_tier] = (
-                    stats.star_tier_distribution.get(star_tier, 0) + 1
-                )
-                if repo_age is not None:
-                    repo_ages.append(repo_age)
+                    # Track distributions
+                    stats.domain_distribution[domain] = (
+                        stats.domain_distribution.get(domain, 0) + 1
+                    )
+                    stats.star_tier_distribution[star_tier] = (
+                        stats.star_tier_distribution.get(star_tier, 0) + 1
+                    )
+                    if repo_age is not None:
+                        repo_ages.append(repo_age)
 
-                # Persist repository metadata using shared utility
-                with db_session(self.output_db) as conn:
-                    repo_row, _ = upsert_repository(
-                        conn,
-                        construct_repo_dict(
-                            full_name=repo_name,
-                            language=language_name,
-                            stars=repo.get("stars", 0),
-                            forks=repo.get("forks", 0),
-                            description=repo.get("description", "") or "",
-                            topics=(
-                                json.dumps(repo.get("topics", []))
-                                if isinstance(repo.get("topics"), list)
-                                else repo.get("topics", "[]")
+                    # Persist repository metadata using shared utility
+                    with db_session(self.output_db) as conn:
+                        repo_row, _ = upsert_repository(
+                            conn,
+                            construct_repo_dict(
+                                full_name=repo_name,
+                                language=language_name,
+                                stars=repo.get("stars", 0),
+                                forks=repo.get("forks", 0),
+                                description=repo.get("description", "") or "",
+                                topics=(
+                                    json.dumps(repo.get("topics", []))
+                                    if isinstance(repo.get("topics"), list)
+                                    else repo.get("topics", "[]")
+                                ),
+                                created_at=repo.get("created_at", ""),
+                                pushed_at=repo.get("pushed_at", ""),
+                                clone_url=repo.get("clone_url", ""),
+                                github_id=repo.get("github_id"),
+                                num_contributors=repo.get("num_contributors", 0),
+                                domain=domain,
+                                star_tier=star_tier,
+                                repo_age_years=repo_age,
                             ),
-                            created_at=repo.get("created_at", ""),
-                            pushed_at=repo.get("pushed_at", ""),
-                            clone_url=repo.get("clone_url", ""),
-                            github_id=repo.get("github_id"),
-                            num_contributors=repo.get("num_contributors", 0),
-                            domain=domain,
-                            star_tier=star_tier,
-                            repo_age_years=repo_age,
-                        ),
-                    )
-
-                # Find agent commits from the QCed commit dataset.
-                agent_commits = commits_by_repo.get(repo_name, [])
-                logger.info(
-                    f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent commits to inspect"
-                )
-
-                if not agent_commits:
-                    logger.debug(
-                        f"[Agent Corpus] No agent commits found in {repo_name}"
-                    )
-                    stats.repos_failed_qc += 1
-                    stats.qc_skip_reasons["no_agent_commits"] = (
-                        stats.qc_skip_reasons.get("no_agent_commits", 0) + 1
-                    )
-                    continue
-
-                stats.repos_passed_qc += 1
-                stats.agent_commits_found += len(agent_commits)
-                stats.repos_by_language[language_name] = (
-                    stats.repos_by_language.get(language_name, 0) + 1
-                )
-
-                test_commits: list[dict] = []
-                for commit_info in agent_commits:
-                    test_files = collect_test_files_for_commit(
-                        repo_path, commit_info["commit_sha"], language_name
-                    )
-                    if not test_files:
-                        continue
-
-                    test_commits.append(
-                        {
-                            "commit_info": commit_info,
-                            "repo_id": repo_row,
-                            "commit_sha": commit_info["commit_sha"],
-                            "commit_role": "agent",
-                            "agent_type": commit_info.get("agent_type"),
-                            "commit_date": commit_info.get("commit_date"),
-                            "language": language_name,
-                            "test_file_count": len(test_files),
-                            "test_file_paths": json.dumps(
-                                test_files, ensure_ascii=False
-                            ),
-                        }
-                    )
-
-                if not test_commits:
-                    logger.debug(
-                        f"[Agent Corpus] No agent test commits found in {repo_name}"
-                    )
-                    stats.repos_failed_qc += 1
-                    stats.qc_skip_reasons["no_test_commits"] = (
-                        stats.qc_skip_reasons.get("no_test_commits", 0) + 1
-                    )
-                    continue
-
-                stats.test_commits_found += len(test_commits)
-                all_test_commit_rows.extend(test_commits)
-
-                # Extract fixtures from test commits
-                test_files_cache = {}  # Cache to avoid re-inserting same test file
-                # Track per-repo fixture metadata to write repo list CSV
-                repo_fixture_count = 0
-                repo_fixture_commit_shas: list[str] = []
-
-                with db_session(self.output_db) as conn:
-                    for test_commit in test_commits:
-                        insert_test_commit(conn, test_commit)
-
-                    for test_commit in test_commits:
-                        commit_info = test_commit["commit_info"]
-                        agent_type = commit_info.get("agent_type")
-                        stats.agent_types_distribution[agent_type] = (
-                            stats.agent_types_distribution.get(agent_type, 0) + 1
                         )
 
-                        try:
-                            fixtures = extract_fixtures_at_commit(
-                                repo_path, commit_info["commit_sha"], language_name
+                    # Find agent commits from the QCed commit dataset.
+                    agent_commits = commits_by_repo.get(repo_name, [])
+                    logger.info(
+                        f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent commits to inspect"
+                    )
+
+                    if not agent_commits:
+                        logger.debug(
+                            f"[Agent Corpus] No agent commits found in {repo_name}"
+                        )
+                        stats.repos_failed_qc += 1
+                        stats.qc_skip_reasons["no_agent_commits"] = (
+                            stats.qc_skip_reasons.get("no_agent_commits", 0) + 1
+                        )
+                        continue
+
+                    stats.repos_passed_qc += 1
+                    stats.agent_commits_found += len(agent_commits)
+                    stats.repos_by_language[language_name] = (
+                        stats.repos_by_language.get(language_name, 0) + 1
+                    )
+
+                    test_commits: list[dict] = []
+                    for commit_info in agent_commits:
+                        test_files = collect_test_files_for_commit(
+                            repo_path, commit_info["commit_sha"], language_name
+                        )
+                        if not test_files:
+                            continue
+
+                        test_commits.append(
+                            {
+                                "commit_info": commit_info,
+                                "repo_id": repo_row,
+                                "commit_sha": commit_info["commit_sha"],
+                                "commit_role": "agent",
+                                "agent_type": commit_info.get("agent_type"),
+                                "commit_date": commit_info.get("commit_date"),
+                                "language": language_name,
+                                "test_file_count": len(test_files),
+                                "test_file_paths": json.dumps(
+                                    test_files, ensure_ascii=False
+                                ),
+                            }
+                        )
+
+                    if not test_commits:
+                        logger.debug(
+                            f"[Agent Corpus] No agent test commits found in {repo_name}"
+                        )
+                        stats.repos_failed_qc += 1
+                        stats.qc_skip_reasons["no_test_commits"] = (
+                            stats.qc_skip_reasons.get("no_test_commits", 0) + 1
+                        )
+                        continue
+
+                    stats.test_commits_found += len(test_commits)
+                    all_test_commit_rows.extend(test_commits)
+
+                    # Extract fixtures from test commits
+                    test_files_cache = {}  # Cache to avoid re-inserting same test file
+                    # Track per-repo fixture metadata to write repo list CSV
+                    repo_fixture_count = 0
+                    repo_fixture_commit_shas: list[str] = []
+
+                    with db_session(self.output_db) as conn:
+                        for test_commit in test_commits:
+                            insert_test_commit(conn, test_commit)
+
+                        for test_commit in test_commits:
+                            commit_info = test_commit["commit_info"]
+                            agent_type = commit_info.get("agent_type")
+                            stats.agent_types_distribution[agent_type] = (
+                                stats.agent_types_distribution.get(agent_type, 0) + 1
                             )
 
-                            logger.info(
-                                f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} fixtures"
-                            )
-
-                            if fixtures:
-                                repo_fixture_count += len(fixtures)
-                                repo_fixture_commit_shas.append(
-                                    commit_info["commit_sha"]
-                                )
-
-                            for fixture in fixtures:
-                                file_path = fixture.get("file_path", "unknown")
-
-                                # Ensure test file exists in database (upsert, cached)
-                                if file_path not in test_files_cache:
-                                    test_file_id = upsert_test_file(
-                                        conn, repo_row, file_path, language_name
-                                    )
-                                    test_files_cache[file_path] = test_file_id
-                                else:
-                                    test_file_id = test_files_cache[file_path]
-
-                                insert_fixture(
-                                    conn,
-                                    {
-                                        "file_id": test_file_id,
-                                        "repo_id": repo_row,
-                                        "name": fixture.get("name"),
-                                        "fixture_type": fixture.get("fixture_type"),
-                                        "scope": fixture.get("scope"),
-                                        "start_line": fixture.get("start_line"),
-                                        "end_line": fixture.get("end_line"),
-                                        "loc": fixture.get("loc"),
-                                        "cyclomatic_complexity": fixture.get(
-                                            "cyclomatic_complexity"
-                                        ),
-                                        "max_nesting_depth": fixture.get(
-                                            "max_nesting_depth"
-                                        ),
-                                        "num_objects_instantiated": fixture.get(
-                                            "num_objects_instantiated"
-                                        ),
-                                        "num_external_calls": fixture.get(
-                                            "num_external_calls"
-                                        ),
-                                        "num_parameters": fixture.get("num_parameters"),
-                                        "reuse_count": fixture.get("reuse_count"),
-                                        "has_teardown_pair": fixture.get(
-                                            "has_teardown_pair"
-                                        ),
-                                        "raw_source": fixture.get("raw_source"),
-                                        "framework": fixture.get("framework"),
-                                        "num_mocks": len(fixture.get("mocks", [])),
-                                        "commit_sha": commit_info["commit_sha"],
-                                        "agent_type": agent_type,
-                                        "commit_kind": "agent",
+                            try:
+                                fixtures = agent_extractor._extract_from_agent_commits(
+                                    repo_name=repo_name,
+                                    commits={
+                                        commit_info["commit_sha"]: commit_info.get(
+                                            "agent_type", "unknown"
+                                        )
                                     },
                                 )
+                                fixtures = [
+                                    fixture
+                                    for fixture in fixtures
+                                    if fixture.get("is_complete_addition")
+                                ]
 
-                            stats.fixtures_collected += len(fixtures)
-                        except Exception as e:
-                            logger.debug(
-                                f"Failed to extract fixtures from {commit_info['commit_sha']}: {e}"
-                            )
+                                logger.info(
+                                f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} complete fixtures"
+                                )
 
-                    # cleanup is handled by the clone manager context
-                    logger.debug(f"[Agent Corpus] Cleaned up clone (managed): {repo_name}")
+                                if fixtures:
+                                    repo_fixture_count += len(fixtures)
+                                    repo_fixture_commit_shas.append(
+                                        commit_info["commit_sha"]
+                                    )
+
+                                for fixture in fixtures:
+                                    file_path = fixture.get("file_path", "unknown")
+
+                                    # Ensure test file exists in database (upsert, cached)
+                                    if file_path not in test_files_cache:
+                                        test_file_id = upsert_test_file(
+                                            conn, repo_row, file_path, language_name
+                                        )
+                                        test_files_cache[file_path] = test_file_id
+                                    else:
+                                        test_file_id = test_files_cache[file_path]
+
+                                    insert_fixture(
+                                        conn,
+                                        {
+                                            "file_id": test_file_id,
+                                            "repo_id": repo_row,
+                                            "name": fixture.get("name"),
+                                            "fixture_type": fixture.get("fixture_type"),
+                                            "scope": fixture.get("scope"),
+                                            "start_line": fixture.get("start_line"),
+                                            "end_line": fixture.get("end_line"),
+                                            "loc": fixture.get("loc"),
+                                            "cyclomatic_complexity": fixture.get(
+                                                "cyclomatic_complexity"
+                                            ),
+                                            "max_nesting_depth": fixture.get(
+                                                "max_nesting_depth"
+                                            ),
+                                            "num_objects_instantiated": fixture.get(
+                                                "num_objects_instantiated"
+                                            ),
+                                            "num_external_calls": fixture.get(
+                                                "num_external_calls"
+                                            ),
+                                            "num_parameters": fixture.get("num_parameters"),
+                                            "reuse_count": fixture.get("reuse_count"),
+                                            "has_teardown_pair": fixture.get(
+                                                "has_teardown_pair"
+                                            ),
+                                            "raw_source": fixture.get("raw_source"),
+                                            "framework": fixture.get("framework"),
+                                            "num_mocks": len(fixture.get("mocks", [])),
+                                            "is_complete_addition": 1 if fixture.get("is_complete_addition") else 0,
+                                            "commit_sha": commit_info["commit_sha"],
+                                            "agent_type": agent_type,
+                                            "commit_kind": "agent",
+                                        },
+                                    )
+
+                                stats.fixtures_collected += len(fixtures)
+                            except Exception as e:
+                                logger.debug(
+                                    f"Failed to extract fixtures from {commit_info['commit_sha']}: {e}"
+                                )
+
+                        # cleanup is handled by the clone manager context
+                        logger.debug(f"[Agent Corpus] Cleaned up clone (managed): {repo_name}")
 
                 # If we extracted fixtures from this repo, write a per-language
                 # agent fixture repo list CSV so downstream human selection can
                 # consume only repos that actually yielded agent fixtures.
                 try:
                     if repo_fixture_count > 0:
-                        fixture_list_dir = Path(self.repo_qc_dir) / "agent_fixtures"
+                        project_root = Path(__file__).resolve().parents[1]
+                        fixture_list_dir = project_root / "fixtures-from-agents"
                         fixture_list_dir.mkdir(parents=True, exist_ok=True)
                         repo_list_path = (
-                            fixture_list_dir
-                            / f"{language_name}_agent_fixture_repos.csv"
+                            fixture_list_dir / f"{language_name}_agent_fixture_repos.csv"
                         )
                         write_header = not repo_list_path.exists()
                         with repo_list_path.open(
@@ -767,7 +795,7 @@ class AgentCorpusCollector:
         """Generate and save agent corpus summary."""
         generate_corpus_summary(
             stats=stats,
-            corpus_name="agent",
+            corpus_name="agent_fixtures",
             output_db=self.output_db,
             temporal_scope=f"after {AGENT_CORPUS_START_DATE}",
             extra_metadata={
