@@ -9,6 +9,7 @@ Tests the 2025+ agent-authored fixture collection including:
 - Statistics aggregation
 """
 
+import csv
 import sqlite3
 import os
 import subprocess
@@ -19,6 +20,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from collection.agent_corpus import (
+    AgentCorpusCollector,
     AgentCorpusStats,
     detect_agent_in_commit,
     detect_agent_type,
@@ -343,3 +345,172 @@ class TestQualityControlledInputs:
         assert len(commits["good/repo"]) == 1
         assert commits["good/repo"][0]["agent_type"] == "claude"
         assert commits["good/repo"][0]["commit_sha"] == "abc123"
+
+    def test_load_qc_agent_test_commit_rows(self, tmp_path):
+        commit_qc_dir = tmp_path / "tests-commits"
+        commit_qc_dir.mkdir()
+
+        (commit_qc_dir / "python_agent_test_commit_qc.csv").write_text(
+            "repo_name,language,commit_sha,commit_role,agent_type,commit_date,test_file_count,test_file_paths\n"
+            "good/repo,python,abc123,agent,claude,2026-05-21T00:00:00Z,1,\"[\\\"tests/test_sample.py\\\"]\"\n"
+            "good/repo,python,abc123,agent,claude,2026-05-21T00:00:00Z,1,\"[\\\"tests/test_sample.py\\\"]\"\n"
+            "other/repo,python,def456,agent,copilot,2026-05-22T00:00:00Z,2,\"[\\\"tests/test_a.py\\\", \\\"tests/test_b.py\\\"]\"\n",
+            encoding="utf-8",
+        )
+
+        commits = _load_qc_agent_commits(commit_qc_dir)
+
+        assert list(commits.keys()) == ["good/repo", "other/repo"]
+        assert len(commits["good/repo"]) == 1
+        assert commits["good/repo"][0]["agent_type"] == "claude"
+        assert commits["good/repo"][0]["commit_sha"] == "abc123"
+
+    def test_agent_corpus_keeps_only_complete_additions(
+        self, tmp_path, monkeypatch
+    ):
+        repo_qc_dir = tmp_path / "repo-qc"
+        commit_qc_dir = tmp_path / "commit-qc"
+        repo_qc_dir.mkdir()
+        commit_qc_dir.mkdir()
+
+        with (repo_qc_dir / "python_agent_repo.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name",
+                    "has_agent_config",
+                    "language",
+                    "stars",
+                    "clone_url",
+                    "num_contributors",
+                    "qc_reason",
+                    "processed_at",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "repo_name": "good/repo",
+                    "has_agent_config": "1",
+                    "language": "python",
+                    "stars": 123,
+                    "clone_url": "https://github.com/good/repo.git",
+                    "num_contributors": 4,
+                    "qc_reason": "",
+                    "processed_at": "2026-05-28T00:00:00Z",
+                }
+            )
+
+        with (commit_qc_dir / "python_agent_commit.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name",
+                    "commit_sha",
+                    "commit_url",
+                    "agent_type",
+                    "commit_date",
+                    "author_name",
+                    "author_email",
+                    "language",
+                    "clone_url",
+                    "processed_at",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "repo_name": "good/repo",
+                    "commit_sha": "abc123",
+                    "commit_url": "https://github.com/good/repo/commit/abc123",
+                    "agent_type": "claude",
+                    "commit_date": "2026-05-21T00:00:00Z",
+                    "author_name": "Alice",
+                    "author_email": "alice@example.com",
+                    "language": "python",
+                    "clone_url": "https://github.com/good/repo.git",
+                    "processed_at": "2026-05-28T00:00:00Z",
+                }
+            )
+
+        def fake_clone(clone_url, target_dir):
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / ".git").mkdir(parents=True, exist_ok=True)
+            return True
+
+        monkeypatch.setattr("collection.agent_corpus.clone_repo_for_commit_scan", fake_clone)
+        monkeypatch.setattr(
+            "collection.agent_corpus.collect_test_files_for_commit",
+            lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
+        )
+        monkeypatch.setattr(
+            "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
+            lambda self, repo_name, commits: [
+                {
+                    "repo_name": repo_name,
+                    "name": "complete_fixture",
+                    "fixture_type": "pytest_decorator",
+                    "scope": "per_test",
+                    "loc": 3,
+                    "language": "python",
+                    "file_path": "tests/test_sample.py",
+                    "start_line": 1,
+                    "end_line": 3,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 0,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "reuse_count": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": "def complete_fixture(): pass",
+                    "framework": "pytest",
+                    "mocks": [],
+                    "commit_sha": "abc123",
+                    "agent_type": "claude",
+                    "is_complete_addition": True,
+                },
+                {
+                    "repo_name": repo_name,
+                    "name": "partial_fixture",
+                    "fixture_type": "pytest_decorator",
+                    "scope": "per_test",
+                    "loc": 4,
+                    "language": "python",
+                    "file_path": "tests/test_sample.py",
+                    "start_line": 5,
+                    "end_line": 8,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 0,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "reuse_count": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": "def partial_fixture(): pass",
+                    "framework": "pytest",
+                    "mocks": [],
+                    "commit_sha": "abc123",
+                    "agent_type": "claude",
+                    "is_complete_addition": False,
+                },
+            ],
+        )
+
+        collector = AgentCorpusCollector(
+            output_db=tmp_path / "between-group.db",
+            repo_qc_dir=repo_qc_dir,
+            commit_qc_dir=commit_qc_dir,
+        )
+        stats, db_path = collector.run(repos_per_language=1, languages=["python"])
+
+        conn = sqlite3.connect(db_path)
+        count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+        conn.close()
+
+        assert stats.fixtures_collected == 1
+        assert count == 1
