@@ -314,26 +314,76 @@ class TestMultipleAgentTypes:
 class TestQualityControlledInputs:
     """Test loading QC repo and commit CSV inputs."""
 
-    def test_load_qc_repo_and_commit_rows(self, tmp_path):
+    def test_load_qc_repo_and_commit_rows(self, tmp_path, make_csv):
         repo_qc_dir = tmp_path / "repo-qc"
         commit_qc_dir = tmp_path / "commit-qc"
         repo_qc_dir.mkdir()
         commit_qc_dir.mkdir()
+        # Use make_csv fixture to generate deterministic sample CSVs matching previous expectations
+        repo_rows = [
+            {
+                "repo_name": "good/repo",
+                "has_agent_config": "1",
+                "language": "python",
+                "stars": "123",
+                "clone_url": "https://github.com/good/repo.git",
+                "num_contributors": "4",
+                "qc_reason": "",
+                "processed_at": "2026-05-22T00:00:00Z",
+            },
+            {
+                "repo_name": "bad/repo",
+                "has_agent_config": "0",
+                "language": "python",
+                "stars": "456",
+                "clone_url": "https://github.com/bad/repo.git",
+                "num_contributors": "7",
+                "qc_reason": "no_agent_config",
+                "processed_at": "2026-05-22T00:00:00Z",
+            },
+        ]
 
-        (repo_qc_dir / "python_agent_repo.csv").write_text(
-            "repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,processed_at\n"
-            "good/repo,1,python,123,https://github.com/good/repo.git,4,,2026-05-22T00:00:00Z\n"
-            "bad/repo,0,python,456,https://github.com/bad/repo.git,7,no_agent_config,2026-05-22T00:00:00Z\n",
-            encoding="utf-8",
-        )
+        commit_rows = [
+            {
+                "repo_name": "good/repo",
+                "commit_sha": "abc123",
+                "commit_url": "https://github.com/good/repo/commit/abc123",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "author_name": "Alice",
+                "author_email": "alice@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/good/repo.git",
+                "processed_at": "2026-05-22T00:00:00Z",
+            },
+            {
+                "repo_name": "good/repo",
+                "commit_sha": "abc123",
+                "commit_url": "https://github.com/good/repo/commit/abc123",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "author_name": "Alice",
+                "author_email": "alice@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/good/repo.git",
+                "processed_at": "2026-05-22T00:00:00Z",
+            },
+            {
+                "repo_name": "bad/repo",
+                "commit_sha": "def456",
+                "commit_url": "https://github.com/bad/repo/commit/def456",
+                "agent_type": "copilot",
+                "commit_date": "2026-05-20T00:00:00Z",
+                "author_name": "Bob",
+                "author_email": "bob@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/bad/repo.git",
+                "processed_at": "2026-05-22T00:00:00Z",
+            },
+        ]
 
-        (commit_qc_dir / "python_agent_commit_qc.csv").write_text(
-            "repo_name,commit_sha,commit_url,agent_type,commit_date,author_name,author_email,language,clone_url,processed_at\n"
-            "good/repo,abc123,https://github.com/good/repo/commit/abc123,claude,2026-05-21T00:00:00Z,Alice,alice@example.com,python,https://github.com/good/repo.git,2026-05-22T00:00:00Z\n"
-            "good/repo,abc123,https://github.com/good/repo/commit/abc123,claude,2026-05-21T00:00:00Z,Alice,alice@example.com,python,https://github.com/good/repo.git,2026-05-22T00:00:00Z\n"
-            "bad/repo,def456,https://github.com/bad/repo/commit/def456,copilot,2026-05-20T00:00:00Z,Bob,bob@example.com,python,https://github.com/bad/repo.git,2026-05-22T00:00:00Z\n",
-            encoding="utf-8",
-        )
+        make_csv(repo_qc_dir, "python_agent_repo.csv", rows=repo_rows)
+        make_csv(commit_qc_dir, "python_agent_commit_qc.csv", rows=commit_rows)
 
         repos = _load_qc_repo_rows(repo_qc_dir, repos_per_language=10)
         commits = _load_qc_agent_commits(commit_qc_dir)
@@ -346,17 +396,44 @@ class TestQualityControlledInputs:
         assert commits["good/repo"][0]["agent_type"] == "claude"
         assert commits["good/repo"][0]["commit_sha"] == "abc123"
 
-    def test_load_qc_agent_test_commit_rows(self, tmp_path):
+    def test_load_qc_agent_test_commit_rows(self, tmp_path, make_csv):
         commit_qc_dir = tmp_path / "tests-commits"
-        commit_qc_dir.mkdir()
 
-        (commit_qc_dir / "python_agent_test_commit_qc.csv").write_text(
-            "repo_name,language,commit_sha,commit_role,agent_type,commit_date,test_file_count,test_file_paths\n"
-            "good/repo,python,abc123,agent,claude,2026-05-21T00:00:00Z,1,\"[\\\"tests/test_sample.py\\\"]\"\n"
-            "good/repo,python,abc123,agent,claude,2026-05-21T00:00:00Z,1,\"[\\\"tests/test_sample.py\\\"]\"\n"
-            "other/repo,python,def456,agent,copilot,2026-05-22T00:00:00Z,2,\"[\\\"tests/test_a.py\\\", \\\"tests/test_b.py\\\"]\"\n",
-            encoding="utf-8",
-        )
+        # create a small sample CSV in the temp dir for deterministic testing
+        test_rows = [
+            {
+                "repo_name": "good/repo",
+                "language": "python",
+                "commit_sha": "abc123",
+                "commit_role": "agent",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "test_file_count": "1",
+                "test_file_paths": '["tests/test_sample.py"]',
+            },
+            {
+                "repo_name": "good/repo",
+                "language": "python",
+                "commit_sha": "abc123",
+                "commit_role": "agent",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "test_file_count": "1",
+                "test_file_paths": '["tests/test_sample.py"]',
+            },
+            {
+                "repo_name": "other/repo",
+                "language": "python",
+                "commit_sha": "def456",
+                "commit_role": "agent",
+                "agent_type": "copilot",
+                "commit_date": "2026-05-22T00:00:00Z",
+                "test_file_count": "2",
+                "test_file_paths": '["tests/test_a.py", "tests/test_b.py"]',
+            },
+        ]
+
+        make_csv(tmp_path, "python_agent_test_commit_qc.csv", rows=test_rows, dest_name="tests-commits/python_agent_test_commit_qc.csv")
 
         commits = _load_qc_agent_commits(commit_qc_dir)
 

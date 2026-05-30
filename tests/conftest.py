@@ -5,6 +5,7 @@ Shared test utilities and fixtures for extractor tests.
 import pytest
 import tempfile
 from pathlib import Path
+from typing import Optional
 from collection.detector import extract_fixtures, FixtureResult
 
 
@@ -57,6 +58,8 @@ def extract_and_find_fixtures(
             fixtures = [f for f in fixtures if f.name == fixture_name]
         return fixtures
     finally:
+
+
         if temp_file.exists():
             temp_file.unlink()
 
@@ -391,3 +394,161 @@ def create_mock_agent_commit_data(
         commits[f"repo_{i}"] = {agent_type: [f"commit_{i}_{j}" for j in range(2)]}
 
     return commits
+
+
+@pytest.fixture
+def make_csv():
+    """Return a helper to write CSV data into a target directory.
+
+    The helper can be called as `make_csv(tmp_path, name)` to write a predefined
+    sample, or `make_csv(tmp_path, name, rows=rows)` to write custom rows.
+    """
+
+    SAMPLE_DATA = {
+        "python_agent_repo.csv": [
+            {
+                "repo_name": "owner1/repo_python",
+                "full_name": "owner1/repo_python",
+                "language": "python",
+                "stars": "600",
+                "forks": "50",
+                "num_contributors": "10",
+                "clone_url": "https://github.com/owner1/repo_python.git",
+                "has_agent_config": "1",
+            },
+            {
+                "repo_name": "owner2/repo_python_ml",
+                "full_name": "owner2/repo_python_ml",
+                "language": "python",
+                "stars": "700",
+                "forks": "60",
+                "num_contributors": "15",
+                "clone_url": "https://github.com/owner2/repo_python_ml.git",
+                "has_agent_config": "1",
+            },
+        ],
+        "mixed_agent_repo.csv": [
+            {
+                "repo_name": "owner/repo_python",
+                "full_name": "owner/repo_python",
+                "language": "python",
+                "has_agent_config": "1",
+                "stars": "100",
+                "forks": "10",
+                "num_contributors": "5",
+                "clone_url": "",
+            },
+            {
+                "repo_name": "owner/repo_java",
+                "full_name": "owner/repo_java",
+                "language": "java",
+                "has_agent_config": "1",
+                "stars": "200",
+                "forks": "20",
+                "num_contributors": "8",
+                "clone_url": "",
+            },
+        ],
+        "python_agent_repo_small.csv": [
+            {
+                "repo_name": "owner/repo1",
+                "full_name": "owner/repo1",
+                "language": "python",
+                "stars": "100",
+                "forks": "10",
+                "num_contributors": "1",
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+            {
+                "repo_name": "owner/repo2",
+                "full_name": "owner/repo2",
+                "language": "python",
+                "stars": "50",
+                "forks": "5",
+                "num_contributors": "1",
+                "clone_url": "",
+                "has_agent_config": "1",
+            },
+        ],
+        "python_human_test_commit_qc.csv": [
+            {
+                "repo_name": "owner1/repo_python",
+                "full_name": "owner1/repo_python",
+                "language": "python",
+                "commit_sha": "abc123",
+                "commit_role": "human",
+                "test_file_count": "2",
+                "test_file_paths": '["tests/test_foo.py", "tests/test_bar.py"]',
+            }
+        ],
+        "python_agent_test_commit.csv": [
+            {
+                "repo_name": "owner/only_test_repo",
+                "language": "python",
+                "commit_sha": "abc123",
+                "commit_role": "agent",
+                "agent_type": "claude",
+                "commit_date": "2026-01-01T00:00:00Z",
+                "test_file_count": "1",
+                "test_file_paths": '["tests/test_foo.py"]',
+            }
+        ],
+        "python_agent_fixture_repos.csv": [
+            {
+                "repo_name": "owner/fixture_repo",
+                "language": "python",
+                "fixture_count": "5",
+                "commit_count_with_fixtures": "2",
+                "first_fixture_commit": "abc123",
+                "last_fixture_commit": "def456",
+                "clone_url": "https://github.com/owner/fixture_repo.git",
+            }
+        ],
+        "python_agent_commit_qc.csv": [
+            {
+                "repo_name": "good/repo",
+                "commit_sha": "abc123",
+                "commit_url": "https://github.com/good/repo/commit/abc123",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "author_name": "Alice",
+                "author_email": "alice@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/good/repo.git",
+                "processed_at": "2026-05-22T00:00:00Z",
+            }
+        ],
+        "python_agent_test_commit_qc.csv": [
+            {
+                "repo_name": "good/repo",
+                "language": "python",
+                "commit_sha": "abc123",
+                "commit_role": "agent",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "test_file_count": "1",
+                "test_file_paths": '["tests/test_sample.py"]',
+            }
+        ],
+    }
+
+    def _make(base_dir: Path, name: str, rows: Optional[list[dict]] = None, dest_name: Optional[str] = None) -> Path:
+        data = rows if rows is not None else SAMPLE_DATA.get(name)
+        if data is None:
+            raise ValueError(f"No sample data known for {name} and no rows provided")
+        dest_rel = dest_name or name
+        dest = base_dir / dest_rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        # Determine header from first row
+        header = list(data[0].keys())
+        import csv as _csv
+
+        with dest.open("w", encoding="utf-8", newline="") as fh:
+            writer = _csv.DictWriter(fh, fieldnames=header)
+            writer.writeheader()
+            writer.writerows(data)
+
+        return dest
+
+    return _make
