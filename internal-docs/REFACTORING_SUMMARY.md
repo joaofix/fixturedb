@@ -289,7 +289,7 @@ The refactored code is **READY FOR PRODUCTION**:
 - Well-documented utilities ✅
 
 **Next Steps:**
-1. Ready to run full human corpus extraction: `./env/bin/python -m collection.human_corpus --repo-qc-dir github-search-human --workers 8`
+1. Ready to run full human corpus extraction: `./env/bin/python -m collection.human_corpus --repo-dir github-search-human --workers 8`
 2. Can apply similar refactoring to agent_corpus if needed
 3. Consider applying to test_commit utilities as phase 2
 

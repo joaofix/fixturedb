@@ -70,7 +70,7 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
             str(clones_dir),
             "--output-db",
             str(output_db),
-            "--repo-qc-dir",
+            "--repo-dir",
             str(repo_qc_dir),
         ],
     )

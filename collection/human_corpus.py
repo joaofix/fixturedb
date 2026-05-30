@@ -173,37 +173,53 @@ def select_human_corpus_repositories(
     # First preference: per-language agent fixture repo lists produced by
     # the agent extraction step. These files list repositories that actually
     # yielded agent fixtures and should be used as the canonical selection.
-    fixture_list_dir = Path(repo_qc_dir) / "agent_fixtures"
-    if fixture_list_dir.exists() and fixture_list_dir.is_dir():
-        for fpath in sorted(fixture_list_dir.glob("*_agent_fixture_repos.csv")):
-            with fpath.open("r", encoding="utf-8", newline="") as fh:
-                reader = csv.DictReader(fh)
-                for row in reader:
-                    repo_name = (
-                        row.get("repo_name") or row.get("full_name") or ""
-                    ).strip()
-                    lang = (row.get("language") or "unknown").strip().lower()
-                    if not repo_name or "/" not in repo_name:
-                        continue
-                    if language and lang != language:
-                        continue
-                    repo_row = {
-                        "id": _stable_repo_id(repo_name),
-                        "github_id": _stable_repo_id(repo_name),
-                        "full_name": repo_name,
-                        "language": lang,
-                        "stars": 0,
-                        "forks": 0,
-                        "description": "",
-                        "topics": "[]",
-                        "created_at": "",
-                        "pushed_at": "",
-                        "clone_url": f"https://github.com/{repo_name}.git",
-                        "num_contributors": 0,
-                    }
-                    grouped.setdefault(lang, [])
-                    if repo_name not in {r["full_name"] for r in grouped[lang]}:
-                        grouped[lang].append(repo_row)
+    project_root = Path(__file__).resolve().parents[1]
+    # Prefer fixture lists in the provided repo_qc_dir (backwards compatible
+    # with earlier behavior), then fall back to the project-level fixtures
+    # directory used by centralized runs.
+    # Prefer fixture lists in the provided repo_qc_dir (backwards compatible
+    # with earlier behavior). Only fall back to the project-level
+    # `fixtures-from-agents` if the caller explicitly pointed at the
+    # project root (centralized runs) or if no repo_qc_dir was provided.
+    candidate_dirs = [Path(repo_qc_dir) / "fixtures-from-agents"]
+    try:
+        # Only include project-level fixtures when repo_qc_dir is the project root
+        if Path(repo_qc_dir).resolve() == project_root.resolve():
+            candidate_dirs.append(project_root / "fixtures-from-agents")
+    except Exception:
+        # If resolution fails for any reason, do not add the project-level fallback
+        pass
+    for fixture_list_dir in candidate_dirs:
+        if fixture_list_dir.exists() and fixture_list_dir.is_dir():
+            for fpath in sorted(fixture_list_dir.glob("*_agent_fixture_repos.csv")):
+                with fpath.open("r", encoding="utf-8", newline="") as fh:
+                    reader = csv.DictReader(fh)
+                    for row in reader:
+                        repo_name = (
+                            row.get("repo_name") or row.get("full_name") or ""
+                        ).strip()
+                        lang = (row.get("language") or "unknown").strip().lower()
+                        if not repo_name or "/" not in repo_name:
+                            continue
+                        if language and lang != language:
+                            continue
+                        repo_row = {
+                            "id": _stable_repo_id(repo_name),
+                            "github_id": _stable_repo_id(repo_name),
+                            "full_name": repo_name,
+                            "language": lang,
+                            "stars": 0,
+                            "forks": 0,
+                            "description": "",
+                            "topics": "[]",
+                            "created_at": "",
+                            "pushed_at": "",
+                            "clone_url": f"https://github.com/{repo_name}.git",
+                            "num_contributors": 0,
+                        }
+                        grouped.setdefault(lang, [])
+                        if repo_name not in {r["full_name"] for r in grouped[lang]}:
+                            grouped[lang].append(repo_row)
 
     # If we found fixture-list repos, return those (respecting per-language cap)
     if grouped:
@@ -1053,7 +1069,8 @@ if __name__ == "__main__":
         help="Number of concurrent worker threads for repo processing",
     )
     parser.add_argument(
-        "--repo-qc-dir",
+        "--repo-dir",
+        dest="repo_qc_dir",
         type=Path,
         default=None,
         help="Directory containing repo-QC CSVs or per-language human test-commit CSVs (overrides default)",

@@ -79,6 +79,7 @@ class BaseCorpusStats:
     """Base statistics for corpus collection."""
 
     repos_scanned: int = 0
+    repos_cloned: int = 0
     repos_passed_qc: int = 0
     repos_failed_qc: int = 0
     qc_skip_reasons: Dict[str, int] = field(default_factory=dict)

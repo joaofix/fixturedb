@@ -203,6 +203,6 @@ The codebase is now aligned with the correct methodology:
 
 **Production command:**
 ```bash
-./env/bin/python -m collection.human_corpus --repo-qc-dir github-search --workers 8
-./env/bin/python -m collection.agent_corpus --repo-qc-dir github-search --workers 8
+./env/bin/python -m collection.human_corpus --repo-dir github-search --workers 8
+./env/bin/python -m collection.agent_corpus --repo-dir github-search --workers 8
 ```

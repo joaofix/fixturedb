@@ -202,7 +202,7 @@ fixture_count = persist_repository_and_fixtures(
 ```bash
 # Run full human corpus extraction on all 2096 repositories
 ./env/bin/python -m collection.human_corpus \
-  --repo-qc-dir github-search-human \
+  --repo-dir github-search-human \
   --workers 8
 ```
 

@@ -293,8 +293,8 @@ cd /home/joao/icsme-nier-2026
 
 # Run collection with 8 workers
 ./env/bin/python -m collection.human_corpus \
-    --repo-qc-dir github-search-human \
-    --workers 8
+   --repo-dir github-search-human \
+   --workers 8
 
 # Monitor progress
 # Output: CSV files in output/human_corpus/
