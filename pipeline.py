@@ -85,8 +85,8 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument(
             "--repos-per-language",
             type=int,
-            default=50,
-            help="Repositories per language to consider",
+            default=None,
+            help="Repositories per language (None = all)",
         )
         p.add_argument(
             "--max-commits-per-role",
@@ -106,8 +106,8 @@ def build_parser() -> argparse.ArgumentParser:
     full_parser.add_argument(
         "--repos-per-language",
         type=int,
-        default=50,
-        help="Repositories per language to collect",
+        default=None,
+        help="Repositories per language (None = all)",
     )
     full_parser.add_argument(
         "--github-token",
@@ -122,16 +122,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output database path (default: data/between-group.db)",
     )
     full_parser.add_argument(
-        "--repo-qc-dir",
+        "--repo-dir",
+        dest="repo_qc_dir",
         type=Path,
         default=MANUAL_REPO_QC_DIR,
         help="Directory containing the hand-built agent-enabled repository CSVs",
     )
     full_parser.add_argument(
-        "--commit-qc-dir",
+        "--commit-dir",
+        dest="commit_qc_dir",
         type=Path,
         default=MANUAL_REPO_QC_DIR,
-        help="Directory containing the hand-built agent commit CSVs",
+        help="Directory containing agent commit/test-commit CSVs",
     )
     full_parser.add_argument(
         "--log-file",
@@ -149,7 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
     )
     human_parser.add_argument(
-        "--repos-per-language", type=int, default=50, help="Repositories per language"
+        "--repos-per-language", type=int, default=None, help="Repositories per language (None = all)"
     )
     human_parser.add_argument(
         "--output-db",
@@ -158,7 +160,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output database path (default: data/between-group.db)",
     )
     human_parser.add_argument(
-        "--repo-qc-dir",
+        "--repo-dir",
+        dest="repo_qc_dir",
         type=Path,
         default=MANUAL_REPO_QC_DIR,
         help="Directory containing the hand-built agent-enabled repository CSVs",
@@ -184,7 +187,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
     )
     agent_parser.add_argument(
-        "--repos-per-language", type=int, default=50, help="Repositories per language"
+        "--languages",
+        nargs="+",
+        choices=sorted(list(LANGUAGE_CONFIGS)),
+        help="Limit collection to one or more languages",
+    )
+    agent_parser.add_argument(
+        "--repos-per-language", type=int, default=None, help="Repositories per language (None = all)"
     )
     agent_parser.add_argument(
         "--github-token", type=str, default=None, help="GitHub API token (optional)"
@@ -196,22 +205,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output database path (default: data/between-group.db)",
     )
     agent_parser.add_argument(
-        "--repo-qc-dir",
+        "--repo-dir",
+        dest="repo_qc_dir",
         type=Path,
         default=MANUAL_REPO_QC_DIR,
         help="Directory containing the hand-built agent-enabled repository CSVs",
     )
     agent_parser.add_argument(
-        "--commit-qc-dir",
+        "--commit-dir",
+        dest="commit_qc_dir",
         type=Path,
         default=MANUAL_REPO_QC_DIR,
-        help="Directory containing the hand-built agent commit CSVs",
+        help="Directory containing agent commit/test-commit CSVs",
     )
     agent_parser.add_argument(
         "--test-commits-csv",
         type=Path,
         default=None,
         help="Optional CSV export for detected agent test commits",
+    )
+    agent_parser.add_argument(
+        "--workers",
+        type=int,
+        default=8,
+        help="Parallel workers (note: collector uses configured defaults)",
     )
 
     # Between-group comparison
@@ -274,13 +291,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     test_commit_parser = sub.add_parser(
         "agent-test-commits",
-        help="Filter an agent-commit dataset down to commits that touch test files",
+        help="Build the agent test-commit dataset from agent-commit CSVs",
     )
     test_commit_parser.add_argument(
-        "--commit-qc-dir",
+        "--commit-dir",
+        dest="commit_qc_dir",
         type=Path,
-        default=PROJECT_ROOT / "github-search-agent",
-        help="Directory containing *_agent_commit_qc.csv files",
+        default=PROJECT_ROOT / "github-search-agent" / "agent_commits",
+        help="Directory containing *_agent_commit.csv files",
     )
     test_commit_parser.add_argument(
         "--output-dir",
@@ -546,7 +564,7 @@ def cmd_agent_commit_qc_100(args) -> int:
 
 
 def cmd_agent_test_commits(args) -> int:
-    """Filter an existing agent-commit dataset down to commits that touch test files."""
+    """Build the agent test-commit dataset from agent-commit CSV inputs."""
     try:
         output_dir = args.output_dir or args.commit_qc_dir
         stats = collect_agent_test_commits(
