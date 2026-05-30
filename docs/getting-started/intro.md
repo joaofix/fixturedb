@@ -51,7 +51,7 @@ To ensure the human control sample is drawn only from repositories where agents 
 	python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories --languages java javascript
 	```
 
-1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `github-search-agent/agent_fixtures/{language}_agent_fixture_repos.csv`.
+1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `fixtures-from-agents/{language}_agent_fixture_repos.csv`.
 
 	Example:
 
@@ -62,13 +62,13 @@ To ensure the human control sample is drawn only from repositories where agents 
 2. Optionally write per-language human test-commit CSVs (the human collector will prefer the agent-produced repo lists). This is useful if you only want to collect test-commit rows without running full fixture extraction.
 
 	```bash
-	python -m collection.human_corpus --corpus-db data/corpus.db --repo-qc-dir github-search-agent/agent_repositories --language python --test-commits-csv /path/to/output --only-write-test-commits
+	python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python --test-commits-csv /path/to/output --only-write-test-commits
 	```
 
-3. Run the human fixture extraction step. The human collector will prefer `github-search-agent/agent_fixtures/{language}_agent_fixture_repos.csv` if present and will restrict selection accordingly.
+3. Run the human fixture extraction step. The human collector will prefer `fixtures-from-agents/{language}_agent_fixture_repos.csv` if present and will restrict selection accordingly.
 
 	```bash
-	python -m collection.human_corpus --corpus-db data/corpus.db --repo-qc-dir github-search-agent/agent_repositories --language python
+	python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python
 	```
 
 Backwards compatibility: if the agent fixture repo lists are not present, the human collector falls back to `github-search-agent/tests_commits/*_agent_test_commit.csv` and then to `github-search-agent/agent_repositories/*_agent_repo.csv`.

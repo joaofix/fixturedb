@@ -27,8 +27,8 @@ The repository list comes from `github-search/` output (pre-computed GitHub API 
 ### Stage 2: Collect Agent and Human Fixtures
 
 ```bash
-python -m collection human_corpus --repo-qc-dir github-search --workers 8
-python -m collection agent_corpus --repo-qc-dir github-search --workers 8
+python -m collection human_corpus --repo-dir github-search --workers 8
+python -m collection agent_corpus --repo-dir github-search --workers 8
 ```
 
 Both commands:
@@ -55,13 +55,13 @@ Both commands:
 
 ```bash
 # Collect all agent-enabled repositories (no capping)
-python -m collection human_corpus --repo-qc-dir github-search
+python -m collection human_corpus --repo-dir github-search
 
 # Specific language only
-python -m collection agent_corpus --repo-qc-dir github-search --language python
+python -m collection agent_corpus --repo-dir github-search --language python
 
 # Parallel processing (default: 8 workers)
-python -m collection human_corpus --repo-qc-dir github-search --workers 12
+python -m collection human_corpus --repo-dir github-search --workers 12
 
 # Using custom output database
 python -m collection agent_corpus --output-db data/custom.db
@@ -71,7 +71,7 @@ python -m collection agent_corpus --output-db data/custom.db
 
 | Parameter | Human | Agent | Default | Meaning |
 |-----------|-------|-------|---------|---------|
-| `--repo-qc-dir` | Required | Required | — | Path to CSV repo list (github-search/) |
+| `--repo-dir` | Required | Required | — | Path to CSV repo list (github-search/) |
 | `--language` | Optional | Optional | None | Limit to single language |
 | `--workers` | Optional | Optional | 8 | Parallel clone/extract threads |
 | `--output-db` | Optional | Optional | data/between-group.db | Output database path |
@@ -79,7 +79,7 @@ python -m collection agent_corpus --output-db data/custom.db
 ## Pipeline Stages
 
 ### Stage 1: Repository Selection
-- Read `*_agent_repo.csv` files from `--repo-qc-dir`
+- Read `*_agent_repo.csv` files from `--repo-dir`
 - Filter by language if specified
 - No per-language caps (all repos processed)
 echo "Stage 3: Between-group comparison..."

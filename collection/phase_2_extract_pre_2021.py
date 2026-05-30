@@ -40,7 +40,14 @@ def main():
         help="Output database path",
     )
     parser.add_argument(
-        "--repo-qc-dir",
+        "--repos-per-language",
+        type=int,
+        default=None,
+        help="Repositories per language (None = all)",
+    )
+    parser.add_argument(
+        "--repo-dir",
+        dest="repo_qc_dir",
         type=Path,
         default=project_root / "github-search-agent" / "agent_repositories",
         help="Directory containing *_agent_repo.csv files",
@@ -108,7 +115,7 @@ def main():
             output_db=output_db,
             repo_qc_dir=repo_qc_dir,
         )
-        stats, db_path = collector.run(repos_per_language=50, language=None)
+        stats, db_path = collector.run(repos_per_language=args.repos_per_language, language=None)
 
         logger.info("")
         logger.info("=" * 70)
