@@ -40,33 +40,11 @@ def test_data_dir(tmp_path):
 
 
 @pytest.fixture
-def minimal_human_repo_qc_csv(test_data_dir):
-    """Create minimal human repo QC CSV for testing."""
-    import csv
-
+def minimal_human_repo_qc_csv(test_data_dir, make_csv):
+    """Create minimal human repo QC CSV for testing using make_csv fixture."""
     test_data_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = test_data_dir / "python_agent_repo.csv"
-
-    # Single test repo
-    rows = [
-        {
-            "repo_name": "test-owner/test-repo",
-            "full_name": "test-owner/test-repo",
-            "language": "python",
-            "stars": 100,
-            "forks": 5,
-            "num_contributors": 3,
-            "clone_url": "https://github.com/test-owner/test-repo.git",
-            "has_agent_config": "1",
-        }
-    ]
-
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-        writer.writeheader()
-        writer.writerows(rows)
-
-    return csv_path
+    make_csv(test_data_dir, "python_agent_repo.csv")
+    return test_data_dir / "python_agent_repo.csv"
 
 
 @pytest.fixture
