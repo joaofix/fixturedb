@@ -453,8 +453,8 @@ class TestCSVPipelineEndToEnd:
         assert repos[0]["full_name"] == "owner/repo"
 
         # Create output CSV directory
-        output_dir = tmp_path / "output"
-        output_dir.mkdir()
+        output_dir = tmp_path / "fixtures-from-humans" / "same-repo"
+        output_dir.mkdir(parents=True)
 
         # Write output fixture CSV
         from collection.corpus_utils import write_fixture_csv_row

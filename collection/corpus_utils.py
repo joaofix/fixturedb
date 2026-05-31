@@ -166,6 +166,8 @@ def write_fixture_csv_row(
     except Exception:
         pass
 
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
     with out_path.open("a", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         if write_header:
