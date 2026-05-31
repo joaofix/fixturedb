@@ -82,6 +82,27 @@ def test_collect_test_files_for_commit_parsing(monkeypatch, tmp_path):
     assert "tests/test_copy.py" in files
 
 
+def test_scan_repo_commit_roles_parses_multiline_git_log(monkeypatch, tmp_path):
+    stdout = (
+        "abc123\x1fAlice\x1falice@example.com\x1f2026-05-01T10:00:00+00:00\x1fFix pipes | in body\n"
+        "Second line\n"
+        "Co-authored-by: Claude <claude@example.com>\x1e"
+        "def456\x1fBob\x1fbob@example.com\x1f2026-05-02T11:00:00+00:00\x1fRegular commit\x1e"
+    )
+
+    def fake_run(cmd, cwd, capture_output, text, timeout):
+        return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    commits = scanner.scan_repo_commit_roles(tmp_path, start_date="2026-05-01")
+
+    assert [c.commit_sha for c in commits] == ["abc123", "def456"]
+    assert commits[0].commit_date == "2026-05-01T10:00:00+00:00"
+    assert commits[1].commit_date == "2026-05-02T11:00:00+00:00"
+
+
 def test_is_test_file_path_javascript():
     assert _is_test_file_path("__tests__/my.test.js", "javascript")
     assert _is_test_file_path("spec/my.spec.js", "javascript")

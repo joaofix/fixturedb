@@ -169,14 +169,20 @@ def build_parser() -> argparse.ArgumentParser:
     human_parser.add_argument(
         "--test-commits-csv",
         type=Path,
-        default=None,
-        help="Optional CSV export for detected human test commits",
+        default=PROJECT_ROOT / "github-search-human" / "test_commits",
+        help="Output file or directory for detected human test commits (default: github-search-human/test_commits)",
     )
     human_parser.add_argument(
         "--mode",
         choices=["within", "inter", "both"],
         default="within",
         help="Collection mode: within (within-repo), inter (inter-repo sample), or both",
+    )
+    human_parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="Parallel workers for human collection (default: configured EXTRACT_WORKERS)",
     )
 
     # Agent corpus collection (between-group design)
@@ -332,6 +338,7 @@ def cmd_human(args) -> int:
             stats, db_path = collector.run(
                 repos_per_language=args.repos_per_language,
                 language=args.language,
+                workers=getattr(args, "workers", None),
             )
         elif mode == "inter":
             # Select agent-enabled repos first
@@ -341,11 +348,13 @@ def cmd_human(args) -> int:
             stats, db_path = collector.collect_inter_human(
                 agent_repos=agent_repos,
                 targets=None,
+                workers=getattr(args, "workers", None),
             )
         else:  # both
             stats, db_path = collector.run(
                 repos_per_language=args.repos_per_language,
                 language=args.language,
+                workers=getattr(args, "workers", None),
             )
         print(f"\n✓ Human corpus collection complete")
         print(f"  Fixtures collected: {stats.fixtures_collected}")

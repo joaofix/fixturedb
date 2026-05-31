@@ -22,7 +22,7 @@ Repository metadata and control variables computed at fixture writing time.
 | `id` | INTEGER | Internal primary key |
 | `github_id` | INTEGER | GitHub repository numeric ID |
 | `full_name` | TEXT | Repository slug such as `pytest-dev/pytest` |
-| `language` | TEXT | Normalized primary language (`python`, `java`, `javascript`, `typescript`, `go`) |
+| `language` | TEXT | Normalized primary language (`python`, `java`, `javascript`, `typescript`) |
 | `stars` | INTEGER | Star count (current; historical unavailable from GitHub API) |
 | `forks` | INTEGER | Fork count at collection time |
 | `description` | TEXT | Repository description from GitHub |

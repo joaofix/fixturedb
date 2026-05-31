@@ -40,7 +40,7 @@ across 4 programming languages, and control variables are balanced.
 ## Language coverage
 
 FixtureDB covers four languages: Python, Java, JavaScript, and TypeScript.
-Other languages such as Ruby (RSpec), Kotlin, Scala, Rust, C#, and Go are not included.
+Other languages such as Ruby (RSpec), Kotlin, Scala, Rust, and C# are not included.
 
 ## Parametrized Tests
 

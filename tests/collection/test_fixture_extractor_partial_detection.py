@@ -259,6 +259,23 @@ def test_ast_aware_completeness_works_for_java(tmp_path):
     )
 
 
+def test_added_test_file_detection_ignores_go_paths():
+    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
+    diff = "\n".join(
+        [
+            "diff --git a/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go b/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go",
+            "diff --git a/pkg/example_test.go b/pkg/example_test.go",
+            "diff --git a/tests/sample.spec.ts b/tests/sample.spec.ts",
+        ]
+    )
+
+    files = extractor._find_added_test_files(diff)
+
+    assert "tests/sample.spec.ts" in files
+    assert "pkg/example_test.go" not in files
+    assert "connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go" not in files
+
+
 def test_checkout_commit_removes_stale_index_lock_and_retries(tmp_path, monkeypatch):
     repo_path = tmp_path / "repo"
     git_dir = repo_path / ".git"

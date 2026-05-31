@@ -28,6 +28,8 @@ from .config import (
 from .db import (
     db_session,
     initialise_db,
+    mark_global_checkpoint,
+    is_global_checkpoint_completed,
     upsert_repository,
     upsert_test_file,
     insert_fixture,
@@ -439,6 +441,56 @@ class AgentCorpusCollector:
             language=language,
         )
 
+        completion_all_step = "agent_complete:all"
+
+        def completion_step(lang_name: str) -> str:
+            return f"agent_complete:{lang_name}"
+
+        selected_languages = sorted(
+            {
+                (repo.get("language") or "unknown").strip().lower()
+                for repo in repos_to_collect
+            }
+        )
+
+        with db_session(self.output_db) as conn:
+            if is_global_checkpoint_completed(conn, completion_all_step):
+                logger.info(
+                    "[Agent Corpus] Completion checkpoint found; skipping agent collection"
+                )
+                return stats, self.output_db
+
+            if language and is_global_checkpoint_completed(conn, completion_step(language)):
+                logger.info(
+                    f"[Agent Corpus] Completion checkpoint found for {language}; skipping agent collection"
+                )
+                return stats, self.output_db
+
+            completed_languages = {
+                lang for lang in selected_languages if is_global_checkpoint_completed(conn, completion_step(lang))
+            }
+
+        repos_to_collect = [
+            repo
+            for repo in repos_to_collect
+            if (repo.get("language") or "unknown").strip().lower() not in completed_languages
+        ]
+
+        if not repos_to_collect:
+            with db_session(self.output_db) as conn:
+                mark_global_checkpoint(conn, completion_all_step)
+            logger.info(
+                "[Agent Corpus] All selected languages already completed; skipping agent collection"
+            )
+            return stats, self.output_db
+
+        repos_to_collect.sort(
+            key=lambda repo: (
+                (repo.get("language") or "unknown").strip().lower(),
+                repo.get("full_name", ""),
+            )
+        )
+
         logger.info(
             "[Agent Corpus] Loaded %d QC repositories from %s and commit rows from %s",
             len(repos_to_collect),
@@ -449,6 +501,7 @@ class AgentCorpusCollector:
         # Trackers for statistics
         repo_ages = []
         repo_contributors = []
+        lang_test_commit_rows: list[dict] = []
 
         # Progress logging state
         last_progress_log = time.time()
@@ -472,7 +525,7 @@ class AgentCorpusCollector:
                 last_progress_log = current_time
 
         try:
-            for repo in repos_to_collect:
+            for idx, repo in enumerate(repos_to_collect):
                 stats.repos_scanned += 1
                 repo_name = repo.get("full_name", "unknown")
                 language_name = repo.get("language", "unknown")
@@ -609,6 +662,7 @@ class AgentCorpusCollector:
 
                     stats.test_commits_found += len(test_commits)
                     all_test_commit_rows.extend(test_commits)
+                    lang_test_commit_rows.extend(test_commits)
 
                     # Extract fixtures from test commits
                     test_files_cache = {}  # Cache to avoid re-inserting same test file
@@ -769,6 +823,24 @@ class AgentCorpusCollector:
                         f"Failed to write agent fixture repo list for {repo_name}: {e}"
                     )
 
+                next_language = None
+                if idx + 1 < len(repos_to_collect):
+                    next_language = (
+                        repos_to_collect[idx + 1].get("language", "unknown")
+                        .strip()
+                        .lower()
+                    )
+                current_language = (language_name or "unknown").strip().lower()
+                if next_language != current_language:
+                    if self.test_commits_csv and self.test_commits_csv.suffix == "":
+                        out_dir = Path(self.test_commits_csv)
+                        out_dir.mkdir(parents=True, exist_ok=True)
+                        out_path = out_dir / f"{current_language}_agent_test_commit_qc.csv"
+                        write_test_commits_csv(lang_test_commit_rows, out_path)
+                    with db_session(self.output_db) as conn:
+                        mark_global_checkpoint(conn, completion_step(current_language))
+                    lang_test_commit_rows = []
+
                 # Log progress every 3 minutes
                 log_progress_if_needed()
 
@@ -784,7 +856,15 @@ class AgentCorpusCollector:
             stats.mean_repo_age_years = sum(repo_ages) / len(repo_ages)
 
         if self.test_commits_csv:
-            write_test_commits_csv(all_test_commit_rows, self.test_commits_csv)
+            if not (self.test_commits_csv.suffix == ""):
+                write_test_commits_csv(all_test_commit_rows, self.test_commits_csv)
+
+        with db_session(self.output_db) as conn:
+            if all(
+                is_global_checkpoint_completed(conn, completion_step(lang))
+                for lang in selected_languages
+            ):
+                mark_global_checkpoint(conn, completion_all_step)
 
         # Generate summary
         self._generate_summary(stats)

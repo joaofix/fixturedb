@@ -27,7 +27,7 @@ One row per repository with at least one analyzed fixture (status='analysed').
 | `id` | INT | Internal primary key |
 | `github_id` | INT | GitHub repository numeric ID |
 | `full_name` | TEXT | Repository slug (e.g., "pytest-dev/pytest") |
-| `language` | TEXT | Primary language (python, java, javascript, typescript, go) |
+| `language` | TEXT | Primary language (python, java, javascript, typescript) |
 | `stars` | INT | Star count at collection time |
 | `forks` | INT | Fork count at collection time |
 | `num_contributors` | INT | GitHub contributor count |

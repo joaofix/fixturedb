@@ -90,7 +90,6 @@ def _get_parser(language: str):
         import tree_sitter_java
         import tree_sitter_javascript
         import tree_sitter_typescript
-        import tree_sitter_go
         from tree_sitter import Language, Parser
 
         lang_map = {
@@ -98,7 +97,6 @@ def _get_parser(language: str):
             "java": Language(tree_sitter_java.language()),
             "javascript": Language(tree_sitter_javascript.language()),
             "typescript": Language(tree_sitter_typescript.language_typescript()),
-            "go": Language(tree_sitter_go.language()),
         }
         for key, lang in lang_map.items():
             p = Parser(lang)
@@ -1376,7 +1374,6 @@ def _count_test_functions(tree, src_bytes: bytes, language: str) -> int:
         "java": _count_test_functions_java,
         "javascript": _count_test_functions_js,
         "typescript": _count_test_functions_js,
-        "go": _count_test_functions_go,
     }
     counter = counters.get(language)
     return counter(tree, src_bytes) if counter else 0
@@ -1644,7 +1641,6 @@ DETECTORS = {
     "java": _detect_java,
     "javascript": _detect_js,
     "typescript": _detect_js,  # TypeScript shares JS grammar for this purpose
-    "go": _detect_go,
 }
 
 

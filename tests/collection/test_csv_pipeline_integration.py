@@ -266,6 +266,21 @@ class TestCSVRepositorySelection:
         assert len(repos) == 1
         assert repos[0]["full_name"] == "owner/fixture_repo"
 
+    def test_select_human_corpus_strict_requires_fixture_repo_list(self, tmp_path, make_csv):
+        """Strict mode must fail when fixture-repo list is missing."""
+        input_dir = tmp_path / "input"
+        input_dir.mkdir()
+
+        make_csv(input_dir, "python_agent_repo.csv", dest_name="python_agent_repo.csv")
+
+        with pytest.raises(ValueError, match="Strict within-mode requires"):
+            select_human_corpus_repositories(
+                input_dir,
+                repos_per_language=None,
+                language="python",
+                require_fixture_repo_list=True,
+            )
+
 
 class TestCSVFixtureExportFormat:
     """Test fixture CSV export format validation."""

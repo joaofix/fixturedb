@@ -229,6 +229,7 @@ beforeEach(() => {
         assert fixture.fixture_type == "before_each"
 
 
+@pytest.mark.skip(reason="Go is not supported")
 class TestGoMockPatterns:
     """Validate detection of Go mock patterns"""
 

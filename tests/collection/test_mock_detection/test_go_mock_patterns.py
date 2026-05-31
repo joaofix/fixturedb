@@ -13,6 +13,8 @@ from ..conftest import (
     assert_fixture_count,
 )
 
+pytestmark = pytest.mark.skip(reason="Go is not supported")
+
 
 class TestGoMockPatterns:
     """Go mocking patterns"""

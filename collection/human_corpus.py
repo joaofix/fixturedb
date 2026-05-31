@@ -32,6 +32,8 @@ from .config import (
 from .db import (
     db_session,
     initialise_db,
+    mark_global_checkpoint,
+    is_global_checkpoint_completed,
     upsert_repository,
     insert_test_commit,
     insert_human_inter_fixture,
@@ -74,6 +76,7 @@ def select_human_corpus_repositories(
     repo_qc_dir: Path,
     repos_per_language: Optional[int] = None,
     language: Optional[str] = None,
+    require_fixture_repo_list: bool = False,
 ) -> list[dict]:
     """
     Select agent-enabled repositories for human corpus collection.
@@ -84,6 +87,8 @@ def select_human_corpus_repositories(
         repo_qc_dir: Directory containing *_agent_repo.csv files
         repos_per_language: Optional per-language cap. None means include all rows.
         language: Optional filter to single language
+        require_fixture_repo_list: If True, require repositories to come only from
+            *_agent_fixture_repos.csv files and fail otherwise.
 
     Returns:
         List of repository dicts with required metadata
@@ -233,6 +238,12 @@ def select_human_corpus_repositories(
                 else lang_repos[:repos_per_language]
             )
         return selected
+
+    if require_fixture_repo_list:
+        raise ValueError(
+            "Strict within-mode requires *_agent_fixture_repos.csv under "
+            f"{Path(repo_qc_dir) / 'fixtures-from-agents'}"
+        )
     # New fallback: accept per-language human test-commit CSVs produced earlier
     # e.g., python_human_test_commit_qc.csv. These contain `repo_name` and
     # `language` columns and can be used to select repositories directly.
@@ -595,8 +606,16 @@ class HumanCorpusCollector:
                 return stats, self.output_db
 
         selected_repos = select_human_corpus_repositories(
-            self.repo_qc_dir, repos_per_language, language
+            self.repo_qc_dir,
+            repos_per_language,
+            language,
+            require_fixture_repo_list=True,
         )
+
+        within_all_step = "human_within_complete:all"
+
+        def within_step(lang_name: str) -> str:
+            return f"human_within_complete:{lang_name}"
 
         logger.info(
             f"[Human Corpus] Selected {len(selected_repos)} agent-enabled repositories"
@@ -608,6 +627,38 @@ class HumanCorpusCollector:
         for repo in selected_repos:
             lang = repo.get("language", "unknown").lower()
             repos_by_language[lang].append(repo)
+
+        completed_languages: set[str] = set()
+        with db_session(self.output_db) as conn:
+            if is_global_checkpoint_completed(conn, within_all_step):
+                logger.info(
+                    "[Human Corpus] Completion checkpoint found; skipping within collection"
+                )
+                return stats, self.output_db
+
+            for lang in repos_by_language:
+                if is_global_checkpoint_completed(conn, within_step(lang)):
+                    completed_languages.add(lang)
+
+        if language and language.lower() in completed_languages:
+            logger.info(
+                f"[Human Corpus] Completion checkpoint found for {language}; skipping within collection"
+            )
+            return stats, self.output_db
+
+        repos_by_language = {
+            lang: repos
+            for lang, repos in repos_by_language.items()
+            if lang not in completed_languages
+        }
+
+        if not repos_by_language:
+            with db_session(self.output_db) as conn:
+                mark_global_checkpoint(conn, within_all_step)
+            logger.info(
+                "[Human Corpus] All selected languages already completed; skipping within collection"
+            )
+            return stats, self.output_db
 
         logger.info(
             f"[Human Corpus] Languages to process: {', '.join(sorted(repos_by_language.keys()))}"
@@ -726,6 +777,7 @@ class HumanCorpusCollector:
 
                     lang_test_commit_rows.extend(test_commit_rows)
                     test_commit_rows_by_language[current_lang].extend(test_commit_rows)
+                    all_test_commit_rows.extend(test_commit_rows)
                     stats.test_commits_found += len(test_commit_rows)
 
                     if fixtures:
@@ -747,7 +799,7 @@ class HumanCorpusCollector:
                         shutil.rmtree(repo_path, ignore_errors=True)
                         logger.debug(f"[Human Corpus] Cleaned up clone: {repo_name}")
 
-                # SAFE CHECKPOINT: Write all fixtures for this language to CSV before moving to next language
+                # SAFE CHECKPOINT: Write all fixtures/test commits for this language before moving to next language
                 if lang_all_fixtures:
                     logger.info(
                         f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
@@ -778,6 +830,17 @@ class HumanCorpusCollector:
                         f"{stats.fixtures_collected} total fixtures collected"
                     )
 
+                if self.test_commits_csv:
+                    # Flush the language CSV as soon as the language is complete.
+                    if only_write_test_commits or self.test_commits_csv.suffix == "":
+                        out_dir = Path(self.test_commits_csv)
+                        out_dir.mkdir(parents=True, exist_ok=True)
+                        out_path = out_dir / f"{current_lang}_human_test_commit_qc.csv"
+                        write_test_commits_csv(lang_test_commit_rows, out_path)
+
+                with db_session(self.output_db) as conn:
+                    mark_global_checkpoint(conn, within_step(current_lang))
+
         finally:
             # Stop progress logging thread
             log_progress.stop_flag = True
@@ -790,19 +853,20 @@ class HumanCorpusCollector:
             stats.mean_contributors = sum(repo_contributors) / len(repo_contributors)
 
         if self.test_commits_csv:
-            # If running in "only write test commits" mode and a directory
-            # path is provided, write per-language CSVs and skip fixture extraction.
-            if only_write_test_commits:
+            # When an explicit file path is requested, write the combined rows.
+            if not (only_write_test_commits or self.test_commits_csv.suffix == ""):
                 out_dir = Path(self.test_commits_csv)
-                out_dir.mkdir(parents=True, exist_ok=True)
-                for lang, rows in test_commit_rows_by_language.items():
-                    out_path = out_dir / f"{lang}_human_test_commit_qc.csv"
-                    write_test_commits_csv(rows, out_path)
-            else:
                 write_test_commits_csv(all_test_commit_rows, self.test_commits_csv)
 
         # Generate summary
         self._generate_summary(stats)
+
+        with db_session(self.output_db) as conn:
+            if all(
+                is_global_checkpoint_completed(conn, within_step(lang))
+                for lang in repos_by_language
+            ):
+                mark_global_checkpoint(conn, within_all_step)
 
         return stats, self.output_db
 

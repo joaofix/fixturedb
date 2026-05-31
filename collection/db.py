@@ -17,6 +17,8 @@ from .config import DB_PATH
 
 logger = logging.getLogger(__name__)
 
+GLOBAL_CHECKPOINT_REPO_ID = 0
+
 # ---------------------------------------------------------------------------
 # Schema
 # ---------------------------------------------------------------------------
@@ -1028,6 +1030,16 @@ def is_checkpoint_completed(conn: sqlite3.Connection, repo_id: int, step: str) -
         "SELECT id FROM checkpoints WHERE repo_id = ? AND step = ?", (repo_id, step)
     ).fetchone()
     return row is not None
+
+
+def mark_global_checkpoint(conn: sqlite3.Connection, step: str) -> None:
+    """Record a completed global step for the current run."""
+    mark_checkpoint(conn, GLOBAL_CHECKPOINT_REPO_ID, step)
+
+
+def is_global_checkpoint_completed(conn: sqlite3.Connection, step: str) -> bool:
+    """Return True if the given global checkpoint step has been recorded."""
+    return is_checkpoint_completed(conn, GLOBAL_CHECKPOINT_REPO_ID, step)
 
 
 # ---------------------------------------------------------------------------

@@ -327,13 +327,12 @@ def _detect_repo_language(repo_path: Path) -> str:
         repo_path: Path to the repository.
 
     Returns:
-        Language string (python, javascript, java, go, typescript, etc.)
+        Language string (python, javascript, java, typescript, etc.)
     """
     language_scores = {
         "python": 0,
         "javascript": 0,
         "java": 0,
-        "go": 0,
         "typescript": 0,
     }
 
@@ -345,7 +344,6 @@ def _detect_repo_language(repo_path: Path) -> str:
         (".ts", "typescript"),
         (".tsx", "typescript"),
         (".java", "java"),
-        (".go", "go"),
     ]:
         try:
             matches = list(repo_path.rglob(f"*{suffix}"))

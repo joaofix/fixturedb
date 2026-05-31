@@ -1,10 +1,11 @@
+import csv
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from collection.human_corpus import HumanCorpusCollector
-from collection.db import initialise_db
+from collection.db import initialise_db, is_checkpoint_completed, db_session
 import collection.human_corpus as human_corpus
 
 
@@ -14,12 +15,15 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     clones_dir.mkdir()
     repo_qc_dir = tmp_path / "repo_qc"
     repo_qc_dir.mkdir()
+    fixtures_dir = repo_qc_dir / "fixtures-from-agents"
+    fixtures_dir.mkdir()
     out_db = tmp_path / "between.db"
+    test_commits_dir = tmp_path / "test_commits"
 
     initialise_db(out_db)
 
-    # Create a minimal agent_repo CSV via fixture
-    make_csv(repo_qc_dir, "python_agent_repo.csv")
+    # Create a minimal agent fixture repo list so strict within-mode selection is satisfied
+    make_csv(fixtures_dir, "python_agent_fixture_repos.csv")
 
     # Monkeypatch cloning to create repo directory
     def fake_clone(url, path):
@@ -90,6 +94,7 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
         clones_dir=clones_dir,
         output_db=out_db,
         repo_qc_dir=repo_qc_dir,
+        test_commits_csv=test_commits_dir,
     )
 
     # Monkeypatch subprocess.run used in _validate_quality_filters to simulate git log
@@ -108,3 +113,21 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     assert db_path == out_db
     # expect at least one fixture collected according to stats
     assert stats.fixtures_collected >= 1
+
+    out_csv = test_commits_dir / "python_human_test_commit_qc.csv"
+    assert out_csv.exists()
+
+    with out_csv.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert len(rows) == 1
+    assert rows[0]["repo_name"] == "owner/fixture_repo"
+
+    with db_session(out_db) as conn:
+        assert is_checkpoint_completed(conn, 0, "human_within_complete:all")
+
+    # A second run should short-circuit immediately once the completion checkpoint exists.
+    stats2, db_path2 = collector.run(repos_per_language=1, workers=1)
+    assert db_path2 == out_db
+    assert stats2.fixtures_collected == 0
+    assert stats2.repos_scanned == 0
