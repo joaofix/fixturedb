@@ -59,6 +59,15 @@ from .sampling import stratified_sample_by_language
 logger = logging.getLogger(__name__)
 
 
+def _human_fixtures_root() -> Path:
+    return Path(__file__).resolve().parents[1] / "fixtures-from-humans"
+
+
+def _human_fixture_csv_path(language: str, collection_kind: str) -> Path:
+    subdir = "same-repo" if collection_kind == "within" else "cross-repo"
+    return _human_fixtures_root() / subdir / f"{language}_human_fixtures.csv"
+
+
 def _stable_repo_id(full_name: str) -> int:
     """Derive a stable synthetic repository ID from a repository slug."""
     digest = hashlib.md5(full_name.encode("utf-8")).hexdigest()
@@ -183,13 +192,18 @@ def select_human_corpus_repositories(
     # with earlier behavior), then fall back to the project-level fixtures
     # directory used by centralized runs.
     # Prefer fixture lists in the provided repo_qc_dir (backwards compatible
-    # with earlier behavior). Only fall back to the project-level
-    # `fixtures-from-agents` if the caller explicitly pointed at the
-    # project root (centralized runs) or if no repo_qc_dir was provided.
-    candidate_dirs = [Path(repo_qc_dir) / "fixtures-from-agents"]
+    # with earlier behavior), but also fall back to the project-level
+    # `fixtures-from-agents` so shared fixture lists remain discoverable even
+    # when the caller points repo_qc_dir at a different CSV directory.
+    candidate_dirs = []
     try:
-        # Only include project-level fixtures when repo_qc_dir is the project root
-        if Path(repo_qc_dir).resolve() == project_root.resolve():
+        local_fixture_dir = Path(repo_qc_dir) / "fixtures-from-agents"
+        has_human_test_commit_csvs = any(
+            Path(repo_qc_dir).glob("*_human_test_commit_qc.csv")
+        )
+        if local_fixture_dir.exists() and local_fixture_dir.is_dir():
+            candidate_dirs.append(local_fixture_dir)
+        elif require_fixture_repo_list and has_human_test_commit_csvs:
             candidate_dirs.append(project_root / "fixtures-from-agents")
     except Exception:
         # If resolution fails for any reason, do not add the project-level fallback
@@ -804,9 +818,7 @@ class HumanCorpusCollector:
                     logger.info(
                         f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
                     )
-                    fixtures_out_path = (
-                        Path(self.repo_qc_dir) / f"{current_lang}_human_fixtures.csv"
-                    )
+                    fixtures_out_path = _human_fixture_csv_path(current_lang, "within")
                     for repo_data, fixtures_list in lang_all_fixtures:
                         fixture_count = persist_repository_and_fixtures(
                             self.output_db,
@@ -1027,8 +1039,15 @@ class HumanCorpusCollector:
                 forks=0,
             )
             try:
+                fixtures_out_path = _human_fixture_csv_path(
+                    repo_data["language"], "inter"
+                )
                 persist_repository_and_fixtures(
-                    self.output_db, repo_data, fixtures_list, handle_mocks=True
+                    self.output_db,
+                    repo_data,
+                    fixtures_list,
+                    out_path=fixtures_out_path,
+                    handle_mocks=True,
                 )
             except Exception as e:
                 logger.debug(
