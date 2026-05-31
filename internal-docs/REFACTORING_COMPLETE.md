@@ -206,6 +206,19 @@ fixture_count = persist_repository_and_fixtures(
   --workers 8
 ```
 
+Note: human test-commit CSV outputs are separated by provenance.
+- Agent-era (2025+) outputs: `github-search-human/2025_test_commits` (default)
+- Pre-2021 raw-search outputs: `github-search-human/pre_2021_test_commits`
+
+To generate pre-2021 human test-commit CSVs from the raw search exports, run:
+
+```bash
+python -m collection.test_commit_filter --mode human \
+  --raw-search-dir github-search-raw \
+  --output-dir github-search-human/pre_2021_test_commits \
+  --workers 8
+```
+
 ### Phase 2 (Future Optimization - Low Priority)
 1. Consolidate test-commit utilities (~150 lines savings possible)
 2. Add concurrency helper wrapper (~20 lines savings)
