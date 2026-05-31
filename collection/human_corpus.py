@@ -705,12 +705,48 @@ class HumanCorpusCollector:
                             f"  {lang}: {completed}/{total_repos} ({pct:.1f}%) "
                             f"~{avg_fixtures:.0f} fixtures/repo"
                         )
+                # Also write a JSON progress snapshot for external monitoring
+                try:
+                    write_progress_file()
+                except Exception:
+                    logger.debug("Failed to write progress snapshot")
                 time.sleep(180)  # 3 minutes
 
         # Start progress logging thread
         log_progress.stop_flag = False
         progress_thread = threading.Thread(target=log_progress, daemon=True)
         progress_thread.start()
+
+        # Progress file path (writes periodic JSON snapshots for external monitoring)
+        progress_file = (
+            Path(self.output_db).parent
+            / f"{Path(self.output_db).stem}_human_progress.json"
+        )
+
+        def write_progress_file() -> None:
+            with progress_lock:
+                data = {
+                    "repos_scanned": stats.repos_scanned,
+                    "repos_passed_qc": stats.repos_passed_qc,
+                    "fixtures_collected": stats.fixtures_collected,
+                    "test_commits_found": stats.test_commits_found,
+                    "per_language": {
+                        lang: {
+                            "total_repos": info.get("total_repos", 0),
+                            "completed": info.get("completed", 0),
+                            "avg_fixtures_per_repo": info.get(
+                                "avg_fixtures_per_repo", 0
+                            ),
+                        }
+                        for lang, info in language_progress.items()
+                    },
+                }
+            try:
+                progress_file.parent.mkdir(parents=True, exist_ok=True)
+                with progress_file.open("w", encoding="utf-8") as fh:
+                    json.dump(data, fh, ensure_ascii=False, indent=2)
+            except Exception:
+                logger.debug("Failed to write progress file %s", progress_file)
 
         try:
             # Process each language sequentially
@@ -841,6 +877,10 @@ class HumanCorpusCollector:
                         f"[Human Corpus] Checkpoint complete for {current_lang}: "
                         f"{stats.fixtures_collected} total fixtures collected"
                     )
+                    try:
+                        write_progress_file()
+                    except Exception:
+                        logger.debug("Failed to write progress after checkpoint for %s", current_lang)
 
                 if self.test_commits_csv:
                     # Flush the language CSV as soon as the language is complete.
@@ -849,6 +889,10 @@ class HumanCorpusCollector:
                         out_dir.mkdir(parents=True, exist_ok=True)
                         out_path = out_dir / f"{current_lang}_human_test_commit_qc.csv"
                         write_test_commits_csv(lang_test_commit_rows, out_path)
+                        try:
+                            write_progress_file()
+                        except Exception:
+                            logger.debug("Failed to write progress after flushing test commits for %s", current_lang)
 
                 with db_session(self.output_db) as conn:
                     mark_global_checkpoint(conn, within_step(current_lang))
@@ -879,6 +923,11 @@ class HumanCorpusCollector:
                 for lang in repos_by_language
             ):
                 mark_global_checkpoint(conn, within_all_step)
+
+        try:
+            write_progress_file()
+        except Exception:
+            logger.debug("Failed to write final progress file")
 
         return stats, self.output_db
 
