@@ -169,8 +169,8 @@ def build_parser() -> argparse.ArgumentParser:
     human_parser.add_argument(
         "--test-commits-csv",
         type=Path,
-        default=PROJECT_ROOT / "github-search-human" / "test_commits",
-        help="Output file or directory for detected human test commits (default: github-search-human/test_commits)",
+        default=PROJECT_ROOT / "github-search-human" / "2025_test_commits",
+        help="Output file or directory for detected human test commits (default: github-search-human/2025_test_commits)",
     )
     human_parser.add_argument(
         "--mode",

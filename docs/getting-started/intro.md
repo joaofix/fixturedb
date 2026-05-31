@@ -62,7 +62,7 @@ To ensure the human control sample is drawn only from repositories where agents 
 2. Optionally write per-language human test-commit CSVs (the human collector will prefer the agent-produced repo lists). This is useful if you only want to collect test-commit rows without running full fixture extraction.
 
 	```bash
-	python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python --test-commits-csv /path/to/output --only-write-test-commits
+	python -m collection.test_commit_filter --mode human --raw-search-dir github-search-raw --output-dir github-search-human/2025_test_commits --workers 8
 	```
 
 3. Run the human fixture extraction step. The human collector writes fixtures to `fixtures-from-humans/same-repo/{language}_human_fixtures.csv` now, and will use `fixtures-from-humans/cross-repo/{language}_human_fixtures.csv` for the inter-repository collection later. It still prefers `fixtures-from-agents/{language}_agent_fixture_repos.csv` when selecting repositories.
