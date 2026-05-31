@@ -509,7 +509,6 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
    - **Python**: Decorators (`@pytest.fixture`, `@unittest`, `@behave`), method naming patterns (`setUp`, `tearDown`)
    - **Java**: Annotations (`@Before`, `@BeforeClass`, `@Test`, `@TestNG`), method naming patterns
    - **JavaScript/TypeScript**: Function naming conventions (`beforeEach`, `beforeAll`, `describe`, `setUp`), imports (`jest`, `mocha`)
-   - **Go**: Function naming patterns (`Test*`, `Setup`, `Teardown`)
 
 2. **Registry validation** — Detected framework is cross-referenced against `FRAMEWORK_REGISTRY` in `collection/config.py` to confirm it's a known framework
 
@@ -525,7 +524,7 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
 | Language | Frameworks |
 |----------|------------|
 | **Python** | pytest, unittest, nose, nose2, doctest, behave, pytest-bdd, pytest-asyncio, testtools, trial |
-| **Java** | junit, testng, spock, cucumber, mockito, easymock, powermock, testify, jtest, arquillian |
+| **Java** | junit, testng, spock, cucumber, mockito, easymock, powermock, jtest, arquillian |
 | **JavaScript** | jest, mocha, jasmine, ava, vitest, cucumber, sinon, tap, cheerio |
 | **TypeScript** | jest, mocha, vitest, cucumber, sinon, tap |
 

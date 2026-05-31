@@ -20,6 +20,7 @@ import fcntl
 from .config import CLONES_DIR, DB_PATH, AGENT_CORPUS_START_DATE
 from .db import db_session
 from .detector import extract_fixtures, _get_parser
+from .test_commit_utils import is_test_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -655,7 +656,6 @@ class Pre2021FixtureExtractor:
             "java": {".java"},
             "javascript": {".js", ".jsx", ".mjs", ".cjs"},
             "typescript": {".ts", ".tsx", ".mts", ".cts"},
-            "go": {".go"},
         }
 
         # Check extension
@@ -1254,7 +1254,6 @@ class AgentFixtureExtractor:
     def _find_added_test_files(self, diff: str) -> List[str]:
         """
         Find test files that were added in the diff.
-
         Args:
             diff: Unified diff output
 
@@ -1269,18 +1268,16 @@ class AgentFixtureExtractor:
                 parts = line.split()
                 if len(parts) >= 4:
                     file_path = parts[3][2:]  # Remove 'b/' prefix
-                    if any(
-                        file_path.endswith(ext)
-                        for ext in [".py", ".java", ".js", ".ts", ".go"]
-                    ):
+                    path_obj = Path(file_path)
+                    language = self._get_language(path_obj)
+
+                    if language != "unknown" and is_test_file_path(file_path, language):
                         files.append(file_path)
 
         return files
 
     def _build_diff_line_maps(self, diff: str) -> Dict[str, DiffLineMap]:
-        """Build a per-file map of new-file line numbers to diff states.
-
-        The resulting map only considers the new version of each file. A fixture is
+        """
         considered completely added when every line in its [start_line, end_line]
         span is marked as ``added``.
         """
@@ -1338,7 +1335,6 @@ class AgentFixtureExtractor:
             ".jsx": "javascript",
             ".ts": "typescript",
             ".tsx": "typescript",
-            ".go": "go",
         }
 
         return mapping.get(ext, "unknown")

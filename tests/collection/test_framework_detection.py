@@ -187,6 +187,7 @@ public class TemporaryFolderTest {
         assert class_rule_fixtures[0].framework == "junit"
 
 
+@pytest.mark.skip(reason="Go is not supported")
 class TestGoFrameworkDetection:
     """Test Go framework detection (golang_testing and testify)"""
 

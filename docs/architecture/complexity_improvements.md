@@ -19,7 +19,7 @@ This document summarizes profiling findings and proposed improvements to the com
 ## Proposed improvements (non-heuristic, reproducible, academically sound)
 
 1. File-type filtering (conservative)
-   - Only pass files with recognized source extensions to Lizard (e.g., `.py`, `.java`, `.js`, `.ts`, `.go`, `.c`, `.cpp`).
+   - Only pass files with recognized source extensions to Lizard (e.g., `.py`, `.java`, `.js`, `.ts`, `.c`, `.cpp`).
    - This is not a heuristic about "importance"; it's a safe restriction to avoid non-source files.
 
 2. Lizard result caching (recommended)

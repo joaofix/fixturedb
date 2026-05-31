@@ -23,11 +23,12 @@ class DummyHumanCollector:
         self.output_db = output_db
         self.repo_qc_dir = repo_qc_dir
 
-    def run(self, repos_per_language=50, language=None, seed=42):
+    def run(self, repos_per_language=50, language=None, seed=42, workers=None):
         self.run_args = {
             "repos_per_language": repos_per_language,
             "language": language,
             "seed": seed,
+            "workers": workers,
         }
         return DummyStats(fixtures_collected=11, repos_passed_qc=6), Path(
             "/tmp/human.db"
@@ -73,6 +74,7 @@ def test_human_command_uses_repo_dataset_override(monkeypatch):
         repos_per_language=4,
         language="python",
         repo_qc_dir=Path("/data/manual/repo-qc"),
+        workers=None,
     )
 
     result = pipeline.cmd_human(args)

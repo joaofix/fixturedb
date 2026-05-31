@@ -14,11 +14,13 @@ import sqlite3
 import os
 import subprocess
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+import collection.agent_corpus as agent_corpus
 from collection.agent_corpus import (
     AgentCorpusCollector,
     AgentCorpusStats,
@@ -33,6 +35,8 @@ from collection.db import (
     classify_domain,
     compute_star_tier,
     compute_repo_age_at_date,
+    db_session,
+    is_global_checkpoint_completed,
 )
 from collection.config import AGENT_CORPUS_START_DATE
 
@@ -591,3 +595,86 @@ class TestQualityControlledInputs:
 
         assert stats.fixtures_collected == 1
         assert count == 1
+
+
+@contextmanager
+def _fake_clone_with_function(*args, **kwargs):
+    repo_path = args[2]
+    repo_path.mkdir(parents=True, exist_ok=True)
+    (repo_path / ".git").mkdir(parents=True, exist_ok=True)
+    yield repo_path
+
+
+def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeypatch):
+    repo_qc_dir = tmp_path / "repo-qc"
+    commit_qc_dir = tmp_path / "commit-qc"
+    repo_qc_dir.mkdir()
+    commit_qc_dir.mkdir()
+
+    monkeypatch.setattr(
+        agent_corpus,
+        "_load_qc_repo_rows",
+        lambda *args, **kwargs: [
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": "python",
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "",
+                "pushed_at": "",
+                "clone_url": "https://example.com/repo.git",
+                "num_contributors": 1,
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        agent_corpus,
+        "_load_qc_agent_commits",
+        lambda *args, **kwargs: {
+            "owner/repo": [
+                {
+                    "commit_sha": "abc123",
+                    "agent_type": "claude",
+                    "commit_date": "2025-01-01",
+                }
+            ]
+        },
+    )
+    monkeypatch.setattr(agent_corpus, "clone_with_function", _fake_clone_with_function)
+    monkeypatch.setattr(
+        agent_corpus,
+        "collect_test_files_for_commit",
+        lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
+    )
+    monkeypatch.setattr(
+        agent_corpus.AgentFixtureExtractor,
+        "_extract_from_agent_commits",
+        lambda self, repo_name, commits: [],
+    )
+    monkeypatch.setattr(
+        agent_corpus.AgentCorpusCollector,
+        "_generate_summary",
+        lambda self, stats: None,
+    )
+
+    collector = AgentCorpusCollector(
+        output_db=tmp_path / "between-group.db",
+        repo_qc_dir=repo_qc_dir,
+        commit_qc_dir=commit_qc_dir,
+    )
+
+    stats1, db_path1 = collector.run(repos_per_language=1, language="python")
+    assert db_path1 == tmp_path / "between-group.db"
+    assert stats1.repos_scanned == 1
+
+    with db_session(db_path1) as conn:
+        assert is_global_checkpoint_completed(conn, "agent_complete:python")
+        assert is_global_checkpoint_completed(conn, "agent_complete:all")
+
+    stats2, db_path2 = collector.run(repos_per_language=1, language="python")
+    assert db_path2 == tmp_path / "between-group.db"
+    assert stats2.repos_scanned == 0
+    assert stats2.fixtures_collected == 0

@@ -337,6 +337,7 @@ describe('UserRepository', () => {
         assert_fixture_with_type_detected(code, "typescript", "after_each")
 
 
+@pytest.mark.skip(reason="Go is not supported")
 class TestRealWorldGoFixtures:
     """Integration tests using realistic Go test code"""
 

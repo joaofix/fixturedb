@@ -258,7 +258,7 @@ describe('Test suite', () => {
                 assert before_each[0].scope == "per_test"
 
     def test_go_test_main_in_multiple_files(self, tmp_path):
-        """Go files referencing TestMain should be detected."""
+        """Go files should be ignored because Go is unsupported."""
         go_file = tmp_path / "setup_test.go"
         go_file.write_text("""
 package main
@@ -276,9 +276,7 @@ func TestMain(m *testing.M) {
 """)
 
         result = extract_fixtures(go_file, "go")
-
-        if len(result.fixtures) > 0:
-            assert result.fixtures[0].name == "TestMain"
+        assert result.fixtures == []
 
 
 class TestDetectorBoundaryConditions:

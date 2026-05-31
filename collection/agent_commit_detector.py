@@ -42,6 +42,9 @@ from .db import db_session
 
 logger = logging.getLogger(__name__)
 
+GIT_LOG_FIELD_SEPARATOR = "\x1f"
+GIT_LOG_RECORD_SEPARATOR = "\x1e"
+
 
 @dataclass
 class AgentCommitInfo:
@@ -155,6 +158,18 @@ def _collect_test_files_for_commit(
     return test_files
 
 
+def _iter_git_log_records(output: str):
+    """Yield parsed git-log records with a lossless record separator."""
+    for record in output.split(GIT_LOG_RECORD_SEPARATOR):
+        record = record.strip()
+        if not record:
+            continue
+        parts = record.split(GIT_LOG_FIELD_SEPARATOR, 4)
+        if len(parts) < 5:
+            continue
+        yield parts
+
+
 @dataclass
 class Tier1Assessment:
     """Results of Tier 1 (corpus repos) assessment."""
@@ -210,7 +225,7 @@ class Tier1RepositoryScanner:
                 "log",
                 "HEAD",
                 f"--since={start_date}",
-                "--format=%H|%an|%ae|%aI|%b",
+                f"--format=%H{GIT_LOG_FIELD_SEPARATOR}%an{GIT_LOG_FIELD_SEPARATOR}%ae{GIT_LOG_FIELD_SEPARATOR}%aI{GIT_LOG_FIELD_SEPARATOR}%b{GIT_LOG_RECORD_SEPARATOR}",
             ]
             result = subprocess.run(
                 cmd, cwd=str(repo_path), capture_output=True, text=True, timeout=60
@@ -221,14 +236,7 @@ class Tier1RepositoryScanner:
                 return []
 
             # Parse commits
-            for line in result.stdout.strip().split("\n"):
-                if not line.strip():
-                    continue
-
-                parts = line.split("|", 4)
-                if len(parts) < 5:
-                    continue
-
+            for parts in _iter_git_log_records(result.stdout):
                 commit_sha, author_name, author_email, commit_date, body = parts
 
                 # Search for agent signatures in commit message
@@ -273,7 +281,7 @@ class Tier1RepositoryScanner:
                 "log",
                 "HEAD",
                 f"--since={start_date}",
-                "--format=%H|%an|%ae|%aI|%b",
+                f"--format=%H{GIT_LOG_FIELD_SEPARATOR}%an{GIT_LOG_FIELD_SEPARATOR}%ae{GIT_LOG_FIELD_SEPARATOR}%aI{GIT_LOG_FIELD_SEPARATOR}%b{GIT_LOG_RECORD_SEPARATOR}",
             ]
             result = subprocess.run(
                 cmd,
@@ -287,14 +295,7 @@ class Tier1RepositoryScanner:
                 logger.warning(f"Failed to get git log for {repo_path.name}")
                 return []
 
-            for line in result.stdout.strip().split("\n"):
-                if not line.strip():
-                    continue
-
-                parts = line.split("|", 4)
-                if len(parts) < 5:
-                    continue
-
+            for parts in _iter_git_log_records(result.stdout):
                 commit_sha, author_name, author_email, commit_date, body = parts
                 agent_type = self._detect_agent_in_commit(
                     author_name, author_email, body

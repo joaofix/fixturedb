@@ -26,6 +26,7 @@ def make_args(mode="within"):
         repo_qc_dir=Path("./"),
         test_commits_csv=None,
         mode=mode,
+        workers=None,
     )
 
 
@@ -56,3 +57,9 @@ def test_cmd_human_inter(monkeypatch):
     rc = pipeline.cmd_human(args)
     assert rc == 0
     assert fake.collect_inter_called
+
+
+def test_human_parser_default_test_commits_dir():
+    args = pipeline.build_parser().parse_args(["human"])
+    expected = pipeline.PROJECT_ROOT / "github-search-human" / "test_commits"
+    assert args.test_commits_csv == expected
