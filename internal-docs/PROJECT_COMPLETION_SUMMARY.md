@@ -299,6 +299,14 @@ cd /home/joao/icsme-nier-2026
 # Monitor progress
 # Output: CSV files in output/human_corpus/
 # Database: data/between-group.db
+
+Notes:
+- The project separates human test-commit CSVs by provenance. Agent-enabled repository outputs are in `github-search-human/2025_test_commits`.
+- If you want to build the pre-2021 human test-commit CSVs from raw search exports, run:
+
+```bash
+python -m collection.test_commit_filter --mode human --raw-search-dir github-search-raw --output-dir github-search-human/pre_2021_test_commits --workers 8
+```
 ```
 
 ### Full Agent Corpus Collection

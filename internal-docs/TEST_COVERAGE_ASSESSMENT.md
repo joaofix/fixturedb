@@ -73,6 +73,9 @@ TOTAL:                          500+ tests (distributed across module)
 **Examples of missing coverage:**
 ```python
 # NOT TESTED: Reading repo-QC CSV files
+# Note: human test-commit CSVs are produced to either
+# `github-search-human/2025_test_commits` (agent-era outputs) or
+# `github-search-human/pre_2021_test_commits` (raw-search pre-2021 outputs).
 collector.select_human_corpus_repositories(
     repo_qc_dir=Path("github-search-human/"),  # Real CSV files
     repos_per_language=50,
