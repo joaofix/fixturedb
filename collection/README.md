@@ -42,7 +42,7 @@ python -m collection.test_commit_filter --mode agent --commit-dir github-search-
 - Optionally export human test-commit CSVs (useful as an intermediate step):
 
 ```bash
-python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python --test-commits-csv /path/to/out --only-write-test-commits
+python -m collection.test_commit_filter --mode human --raw-search-dir github-search-raw --output-dir github-search-human/2025_test_commits --workers 8
 ```
 
  - Run human fixture extraction (the human collector will prefer the agent-produced repo lists under `fixtures-from-agents`):
