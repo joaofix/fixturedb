@@ -61,5 +61,5 @@ def test_cmd_human_inter(monkeypatch):
 
 def test_human_parser_default_test_commits_dir():
     args = pipeline.build_parser().parse_args(["human"])
-    expected = pipeline.PROJECT_ROOT / "github-search-human" / "test_commits"
+    expected = pipeline.PROJECT_ROOT / "github-search-human" / "2025_test_commits"
     assert args.test_commits_csv == expected
