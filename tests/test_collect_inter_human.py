@@ -100,23 +100,35 @@ def test_collect_inter_human_monkeypatched(tmp_path, monkeypatch):
     def fake_human_fixture_csv_path(language, collection_kind):
         return csv_path
 
-    monkeypatch.setattr(human_corpus, "_human_fixture_csv_path", fake_human_fixture_csv_path)
+    monkeypatch.setattr(
+        human_corpus, "_human_fixture_csv_path", fake_human_fixture_csv_path
+    )
 
-    def fake_persist_repository_and_fixtures(output_db, repo_data, fixtures_list, out_path=None, handle_mocks=False):
+    def fake_persist_repository_and_fixtures(
+        output_db, repo_data, fixtures_list, out_path=None, handle_mocks=False
+    ):
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with out_path.open("a", encoding="utf-8", newline="") as fh:
-            fh.write(f"{repo_data['full_name']},{repo_data['language']},{len(fixtures_list)}\n")
+            fh.write(
+                f"{repo_data['full_name']},{repo_data['language']},{len(fixtures_list)}\n"
+            )
         return len(fixtures_list)
 
-    monkeypatch.setattr(human_corpus, "persist_repository_and_fixtures", fake_persist_repository_and_fixtures)
+    monkeypatch.setattr(
+        human_corpus,
+        "persist_repository_and_fixtures",
+        fake_persist_repository_and_fixtures,
+    )
 
     import collection.db as db_module
 
     monkeypatch.setattr(
         db_module,
         "insert_human_inter_fixtures_coordinated",
-        lambda db_path, selected_fixtures, seed=42, batch_size=1000: len(selected_fixtures),
+        lambda db_path, selected_fixtures, seed=42, batch_size=1000: len(
+            selected_fixtures
+        ),
     )
 
     # Ensure the output DB is initialised

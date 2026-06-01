@@ -372,7 +372,9 @@ LANGUAGE_CONFIGS = {
 # When True, bulk inserts may temporarily relax durability (PRAGMA synchronous=OFF)
 # to speed large import operations. This should only be enabled for one-off bulk
 # imports where power-failure durability is not a primary concern.
-FAST_BULK_INSERTS = bool(os.getenv("FAST_BULK_INSERTS", "False").lower() in ("1", "true", "yes"))
+FAST_BULK_INSERTS = bool(
+    os.getenv("FAST_BULK_INSERTS", "False").lower() in ("1", "true", "yes")
+)
 
 # Default batch size for coordinated bulk inserts
 DEFAULT_BULK_BATCH_SIZE = int(os.getenv("DEFAULT_BULK_BATCH_SIZE", "1000"))

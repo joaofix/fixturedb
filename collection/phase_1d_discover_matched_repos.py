@@ -105,7 +105,7 @@ def main() -> int:
 
     tier2_file = (
         output_dir
-        / f'phase_1d_tier2_repos_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        / f"phase_1d_tier2_repos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     )
     with open(tier2_file, "w") as f:
         json.dump(tier2_results, f, indent=2)

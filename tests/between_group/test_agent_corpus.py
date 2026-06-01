@@ -437,7 +437,12 @@ class TestQualityControlledInputs:
             },
         ]
 
-        make_csv(tmp_path, "python_agent_test_commit_qc.csv", rows=test_rows, dest_name="tests-commits/python_agent_test_commit_qc.csv")
+        make_csv(
+            tmp_path,
+            "python_agent_test_commit_qc.csv",
+            rows=test_rows,
+            dest_name="tests-commits/python_agent_test_commit_qc.csv",
+        )
 
         commits = _load_qc_agent_commits(commit_qc_dir)
 
@@ -446,9 +451,7 @@ class TestQualityControlledInputs:
         assert commits["good/repo"][0]["agent_type"] == "claude"
         assert commits["good/repo"][0]["commit_sha"] == "abc123"
 
-    def test_agent_corpus_keeps_only_complete_additions(
-        self, tmp_path, monkeypatch
-    ):
+    def test_agent_corpus_keeps_only_complete_additions(self, tmp_path, monkeypatch):
         repo_qc_dir = tmp_path / "repo-qc"
         commit_qc_dir = tmp_path / "commit-qc"
         repo_qc_dir.mkdir()
@@ -523,7 +526,9 @@ class TestQualityControlledInputs:
             (target_dir / ".git").mkdir(parents=True, exist_ok=True)
             return True
 
-        monkeypatch.setattr("collection.agent_corpus.clone_repo_for_commit_scan", fake_clone)
+        monkeypatch.setattr(
+            "collection.agent_corpus.clone_repo_for_commit_scan", fake_clone
+        )
         monkeypatch.setattr(
             "collection.agent_corpus.collect_test_files_for_commit",
             lambda repo_path, commit_sha, language: ["tests/test_sample.py"],

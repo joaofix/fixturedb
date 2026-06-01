@@ -241,6 +241,6 @@ Co-authored-by: github.com/apps/github-copilot <copilot@example.com>"""
         for coauthor_str, expected_agent in test_cases:
             body = f"Fix.\n\nCo-authored-by: {coauthor_str}"
             agent = scanner._detect_agent_in_commit("User", "user@example.com", body)
-            assert (
-                agent == expected_agent
-            ), f"Failed to detect {expected_agent} from {coauthor_str}, got {agent}"
+            assert agent == expected_agent, (
+                f"Failed to detect {expected_agent} from {coauthor_str}, got {agent}"
+            )

@@ -152,7 +152,7 @@ class HumanDatasetExporter(DatasetExporter):
         query = f"""
             SELECT DISTINCT tf.* FROM test_files tf
             WHERE tf.id IN (
-                SELECT DISTINCT file_id FROM fixtures WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
+                SELECT DISTINCT file_id FROM fixtures WHERE id IN ({",".join(map(str, sampled_fixture_ids))})
             )
         """
         csv_files.append(self.export_table_to_csv("test_files", query=query))
@@ -160,14 +160,14 @@ class HumanDatasetExporter(DatasetExporter):
         # Fixtures (only sampled)
         query = f"""
             SELECT * FROM fixtures
-            WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
+            WHERE id IN ({",".join(map(str, sampled_fixture_ids))})
         """
         csv_files.append(self.export_table_to_csv("fixtures", query=query))
 
         # Mocks (for fixtures in sample)
         query = f"""
             SELECT DISTINCT mu.* FROM mock_usages mu
-            WHERE mu.fixture_id IN ({','.join(map(str, sampled_fixture_ids))})
+            WHERE mu.fixture_id IN ({",".join(map(str, sampled_fixture_ids))})
         """
         csv_files.append(self.export_table_to_csv("mock_usages", query=query))
 
@@ -433,20 +433,20 @@ class AgentDatasetExporter(HumanDatasetExporter):
         query = f"""
             SELECT DISTINCT tf.* FROM test_files tf
             WHERE tf.id IN (
-                SELECT DISTINCT file_id FROM fixtures WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
+                SELECT DISTINCT file_id FROM fixtures WHERE id IN ({",".join(map(str, sampled_fixture_ids))})
             )
         """
         csv_files.append(self.export_table_to_csv("test_files", query=query))
 
         query = f"""
             SELECT * FROM fixtures
-            WHERE id IN ({','.join(map(str, sampled_fixture_ids))})
+            WHERE id IN ({",".join(map(str, sampled_fixture_ids))})
         """
         csv_files.append(self.export_table_to_csv("fixtures", query=query))
 
         query = f"""
             SELECT DISTINCT mu.* FROM mock_usages mu
-            WHERE mu.fixture_id IN ({','.join(map(str, sampled_fixture_ids))})
+            WHERE mu.fixture_id IN ({",".join(map(str, sampled_fixture_ids))})
         """
         csv_files.append(self.export_table_to_csv("mock_usages", query=query))
 

@@ -98,7 +98,9 @@ def _load_inter_checkpoint(inter_checkpoint: Path) -> tuple[set[str], dict]:
     return completed, counts_local
 
 
-def _save_inter_checkpoint(inter_checkpoint: Path, completed: set[str], counts_local: dict) -> None:
+def _save_inter_checkpoint(
+    inter_checkpoint: Path, completed: set[str], counts_local: dict
+) -> None:
     """Persist inter-repo resume state to disk."""
     try:
         inter_checkpoint.parent.mkdir(parents=True, exist_ok=True)
@@ -113,7 +115,9 @@ def _save_inter_checkpoint(inter_checkpoint: Path, completed: set[str], counts_l
         logger.debug("Failed to save inter checkpoint %s", inter_checkpoint)
 
 
-def _write_inter_progress(inter_progress_file: Path, completed: set[str], counts_local: dict) -> None:
+def _write_inter_progress(
+    inter_progress_file: Path, completed: set[str], counts_local: dict
+) -> None:
     """Write a small progress snapshot for the inter-repo collector."""
     try:
         inter_progress_file.parent.mkdir(parents=True, exist_ok=True)
@@ -295,7 +299,7 @@ def select_human_corpus_repositories(
             grouped.setdefault(lang, [])
             grouped[lang].append(repo_row)
 
-        for lang in ([language] if language else list(LANGUAGE_CONFIGS.keys())):
+        for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
             if not lang:
                 continue
             lang_repos = grouped.get(lang, [])
@@ -367,7 +371,7 @@ def select_human_corpus_repositories(
 
     # If we found fixture-list repos, return those (respecting per-language cap)
     if grouped:
-        for lang in ([language] if language else list(LANGUAGE_CONFIGS.keys())):
+        for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
             if not lang:
                 continue
             lang_repos = grouped.get(lang, [])
@@ -488,7 +492,7 @@ def select_human_corpus_repositories(
                 if repo_name not in {r["full_name"] for r in grouped[lang]}:
                     grouped[lang].append(repo_row)
 
-    for lang in ([language] if language else list(LANGUAGE_CONFIGS.keys())):
+    for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
         if not lang:
             continue
         lang_repos = grouped.get(lang, [])
@@ -648,10 +652,10 @@ class HumanCorpusCollector:
                     domain=domain,
                     star_tier=star_tier,
                     repo_age_years=repo_age,
-            ),
-            "test_commit_rows": test_commit_rows,
-            "fixtures": fixtures,
-        }
+                ),
+                "test_commit_rows": test_commit_rows,
+                "fixtures": fixtures,
+            }
 
     def _scan_and_extract(
         self,
@@ -714,9 +718,15 @@ class HumanCorpusCollector:
 
         fixtures = []
         if human_commits:
-            logger.info(f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits")
-            fixtures = extractor._extract_from_agent_commits(repo_name=repo_name, commits=human_commits)
-            fixtures = [fixture for fixture in fixtures if fixture.get("is_complete_addition")]
+            logger.info(
+                f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits"
+            )
+            fixtures = extractor._extract_from_agent_commits(
+                repo_name=repo_name, commits=human_commits
+            )
+            fixtures = [
+                fixture for fixture in fixtures if fixture.get("is_complete_addition")
+            ]
 
         return test_commit_rows, fixtures
 
@@ -925,9 +935,7 @@ class HumanCorpusCollector:
                 mark_global_checkpoint(conn, within_all_step)
 
         try:
-            self._write_human_progress_snapshot(
-                progress_file, stats, language_progress
-            )
+            self._write_human_progress_snapshot(progress_file, stats, language_progress)
         except Exception:
             logger.debug("Failed to write final progress file")
 
@@ -960,9 +968,14 @@ class HumanCorpusCollector:
 
         # Checkpoint / progress paths for inter-run resumability
         inter_checkpoint = Path(self.output_db).parent / "human_inter_checkpoint.json"
-        inter_progress_file = Path(self.output_db).parent / f"{Path(self.output_db).stem}_human_inter_progress.json"
+        inter_progress_file = (
+            Path(self.output_db).parent
+            / f"{Path(self.output_db).stem}_human_inter_progress.json"
+        )
 
-        logger.info("[Human Inter] Building candidate pool from %d repos", len(agent_repos))
+        logger.info(
+            "[Human Inter] Building candidate pool from %d repos", len(agent_repos)
+        )
         candidates = self._build_inter_candidates(agent_repos, raw_commits_dir)
 
         # Compute targets if not provided: count agent fixtures per language
@@ -1033,7 +1046,9 @@ class HumanCorpusCollector:
         Returns:
             List of (repo_dict, fixture_dict) candidate pairs.
         """
-        logger.info("[Human Inter] Building candidate pool from %d repos", len(agent_repos))
+        logger.info(
+            "[Human Inter] Building candidate pool from %d repos", len(agent_repos)
+        )
         scanner = Tier1RepositoryScanner(self.corpus_db_path)
         extractor = AgentFixtureExtractor(
             clones_dir=self.clones_dir,
@@ -1051,7 +1066,9 @@ class HumanCorpusCollector:
                     f"[Human Inter] Loaded pre-2021 candidate pool with {len(candidate_map)} repos from {raw_commits_dir}"
                 )
             except Exception as e:
-                logger.debug(f"Failed to build candidate pool from {raw_commits_dir}: {e}")
+                logger.debug(
+                    f"Failed to build candidate pool from {raw_commits_dir}: {e}"
+                )
 
         return _collect_inter_human_candidates(
             agent_repos, self.clones_dir, scanner, extractor, candidate_map
@@ -1080,16 +1097,22 @@ class HumanCorpusCollector:
         completed_repos, counts_local = _load_inter_checkpoint(inter_checkpoint)
         for repo_full, fixtures_list in repo_groups.items():
             if repo_full in completed_repos:
-                logger.debug("[Human Inter] Skipping already persisted repo %s", repo_full)
+                logger.debug(
+                    "[Human Inter] Skipping already persisted repo %s", repo_full
+                )
                 continue
             repo_data = construct_repo_dict(
                 full_name=repo_full,
-                language=(fixtures_list[0].get("language") if fixtures_list else "unknown"),
+                language=(
+                    fixtures_list[0].get("language") if fixtures_list else "unknown"
+                ),
                 stars=0,
                 forks=0,
             )
             try:
-                fixtures_out_path = _human_fixture_csv_path(repo_data["language"], "inter")
+                fixtures_out_path = _human_fixture_csv_path(
+                    repo_data["language"], "inter"
+                )
                 fixture_count = persist_repository_and_fixtures(
                     self.output_db,
                     repo_data,
@@ -1097,13 +1120,21 @@ class HumanCorpusCollector:
                     out_path=fixtures_out_path,
                     handle_mocks=True,
                 )
-                counts_local["repos_persisted"] = counts_local.get("repos_persisted", 0) + 1
-                counts_local["fixtures_persisted"] = counts_local.get("fixtures_persisted", 0) + int(fixture_count or 0)
+                counts_local["repos_persisted"] = (
+                    counts_local.get("repos_persisted", 0) + 1
+                )
+                counts_local["fixtures_persisted"] = counts_local.get(
+                    "fixtures_persisted", 0
+                ) + int(fixture_count or 0)
                 completed_repos.add(repo_full)
                 _save_inter_checkpoint(inter_checkpoint, completed_repos, counts_local)
-                _write_inter_progress(inter_progress_file, completed_repos, counts_local)
+                _write_inter_progress(
+                    inter_progress_file, completed_repos, counts_local
+                )
             except Exception as e:
-                logger.debug(f"[Human Inter] failed to persist fixtures for {repo_full}: {e}")
+                logger.debug(
+                    f"[Human Inter] failed to persist fixtures for {repo_full}: {e}"
+                )
                 continue
 
         # Perform coordinated insert and return inserted count
@@ -1124,7 +1155,10 @@ class HumanCorpusCollector:
 
     def _human_progress_file(self) -> Path:
         """Return the progress snapshot path for within-repo collection."""
-        return Path(self.output_db).parent / f"{Path(self.output_db).stem}_human_progress.json"
+        return (
+            Path(self.output_db).parent
+            / f"{Path(self.output_db).stem}_human_progress.json"
+        )
 
     def _write_human_progress_snapshot(
         self,
@@ -1283,7 +1317,9 @@ class HumanCorpusCollector:
                 out_dir.mkdir(parents=True, exist_ok=True)
                 out_path = out_dir / f"{current_lang}_human_test_commit_qc.csv"
                 write_test_commits_csv(lang_test_commit_rows, out_path)
-                self._write_human_progress_snapshot(progress_file, stats, language_progress)
+                self._write_human_progress_snapshot(
+                    progress_file, stats, language_progress
+                )
 
         with db_session(self.output_db) as conn:
             mark_global_checkpoint(conn, f"human_within_complete:{current_lang}")
@@ -1337,7 +1373,11 @@ if __name__ == "__main__":
         action="store_true",
         help="If set, write per-language human test-commit CSVs and skip fixture extraction",
     )
-    add_workers_arg(parser, EXTRACT_WORKERS, "Number of concurrent worker threads for repo processing")
+    add_workers_arg(
+        parser,
+        EXTRACT_WORKERS,
+        "Number of concurrent worker threads for repo processing",
+    )
     add_repo_dir_arg(
         parser,
         None,

@@ -462,20 +462,25 @@ class AgentCorpusCollector:
                 )
                 return stats, self.output_db
 
-            if language and is_global_checkpoint_completed(conn, completion_step(language)):
+            if language and is_global_checkpoint_completed(
+                conn, completion_step(language)
+            ):
                 logger.info(
                     f"[Agent Corpus] Completion checkpoint found for {language}; skipping agent collection"
                 )
                 return stats, self.output_db
 
             completed_languages = {
-                lang for lang in selected_languages if is_global_checkpoint_completed(conn, completion_step(lang))
+                lang
+                for lang in selected_languages
+                if is_global_checkpoint_completed(conn, completion_step(lang))
             }
 
         repos_to_collect = [
             repo
             for repo in repos_to_collect
-            if (repo.get("language") or "unknown").strip().lower() not in completed_languages
+            if (repo.get("language") or "unknown").strip().lower()
+            not in completed_languages
         ]
 
         if not repos_to_collect:
@@ -547,7 +552,9 @@ class AgentCorpusCollector:
                         shutil.rmtree(repo_path, ignore_errors=True)
 
                 # Use managed clone context to ensure cleanup and disk guards.
-                logger.info(f"[Agent Corpus] Cloning {repo_name} with history for commit scan...")
+                logger.info(
+                    f"[Agent Corpus] Cloning {repo_name} with history for commit scan..."
+                )
                 with clone_with_function(
                     clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path
                 ) as managed_repo_path:
@@ -699,7 +706,7 @@ class AgentCorpusCollector:
                                 ]
 
                                 logger.info(
-                                f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} complete fixtures"
+                                    f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} complete fixtures"
                                 )
 
                                 if fixtures:
@@ -743,7 +750,9 @@ class AgentCorpusCollector:
                                             "num_external_calls": fixture.get(
                                                 "num_external_calls"
                                             ),
-                                            "num_parameters": fixture.get("num_parameters"),
+                                            "num_parameters": fixture.get(
+                                                "num_parameters"
+                                            ),
                                             "reuse_count": fixture.get("reuse_count"),
                                             "has_teardown_pair": fixture.get(
                                                 "has_teardown_pair"
@@ -751,7 +760,11 @@ class AgentCorpusCollector:
                                             "raw_source": fixture.get("raw_source"),
                                             "framework": fixture.get("framework"),
                                             "num_mocks": len(fixture.get("mocks", [])),
-                                            "is_complete_addition": 1 if fixture.get("is_complete_addition") else 0,
+                                            "is_complete_addition": (
+                                                1
+                                                if fixture.get("is_complete_addition")
+                                                else 0
+                                            ),
                                             "commit_sha": commit_info["commit_sha"],
                                             "agent_type": agent_type,
                                             "commit_kind": "agent",
@@ -765,7 +778,9 @@ class AgentCorpusCollector:
                                 )
 
                         # cleanup is handled by the clone manager context
-                        logger.debug(f"[Agent Corpus] Cleaned up clone (managed): {repo_name}")
+                        logger.debug(
+                            f"[Agent Corpus] Cleaned up clone (managed): {repo_name}"
+                        )
 
                 # If we extracted fixtures from this repo, write a per-language
                 # agent fixture repo list CSV so downstream human selection can
@@ -776,7 +791,8 @@ class AgentCorpusCollector:
                         fixture_list_dir = project_root / "fixtures-from-agents"
                         fixture_list_dir.mkdir(parents=True, exist_ok=True)
                         repo_list_path = (
-                            fixture_list_dir / f"{language_name}_agent_fixture_repos.csv"
+                            fixture_list_dir
+                            / f"{language_name}_agent_fixture_repos.csv"
                         )
                         write_header = not repo_list_path.exists()
                         with repo_list_path.open(
@@ -828,7 +844,8 @@ class AgentCorpusCollector:
                 next_language = None
                 if idx + 1 < len(repos_to_collect):
                     next_language = (
-                        repos_to_collect[idx + 1].get("language", "unknown")
+                        repos_to_collect[idx + 1]
+                        .get("language", "unknown")
                         .strip()
                         .lower()
                     )
@@ -837,7 +854,9 @@ class AgentCorpusCollector:
                     if self.test_commits_csv and self.test_commits_csv.suffix == "":
                         out_dir = Path(self.test_commits_csv)
                         out_dir.mkdir(parents=True, exist_ok=True)
-                        out_path = out_dir / f"{current_language}_agent_test_commit_qc.csv"
+                        out_path = (
+                            out_dir / f"{current_language}_agent_test_commit_qc.csv"
+                        )
                         write_test_commits_csv(lang_test_commit_rows, out_path)
                     with db_session(self.output_db) as conn:
                         mark_global_checkpoint(conn, completion_step(current_language))

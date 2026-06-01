@@ -100,7 +100,7 @@ class StratifiedSampler:
 
             logger.debug(
                 f"  {stratum_value}: {len(sampled_from_stratum)}/{len(group)} "
-                f"({proportion*100:.1f}%)"
+                f"({proportion * 100:.1f}%)"
             )
 
         # Adjust to exact target if needed (rounding may cause differences)
@@ -225,7 +225,7 @@ class StratifiedSampler:
 
             status = "✓" if tolerance_met else "✗"
             logger.debug(
-                f"  {stratum_value}: {orig_ratio*100:.1f}% → {samp_ratio*100:.1f}% "
+                f"  {stratum_value}: {orig_ratio * 100:.1f}% → {samp_ratio * 100:.1f}% "
                 f"({status})"
             )
 

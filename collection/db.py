@@ -395,8 +395,7 @@ def db_is_initialised(db_path: Path = DB_PATH) -> bool:
     try:
         conn = get_connection(db_path)
         result = conn.execute(
-            "SELECT name FROM sqlite_master "
-            "WHERE type='table' AND name='repositories'"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='repositories'"
         ).fetchone()
         conn.close()
         return result is not None
@@ -913,7 +912,9 @@ def insert_human_inter_fixtures_coordinated(
         batch: list[dict] = []
         for fx in selected_fixtures:
             repo_full = fx.get("repo_full_name")
-            cur = conn.execute(lookup_sql, (repo_full, fx.get("name"), fx.get("start_line")))
+            cur = conn.execute(
+                lookup_sql, (repo_full, fx.get("name"), fx.get("start_line"))
+            )
             row = cur.fetchone()
             if not row:
                 logger.debug(

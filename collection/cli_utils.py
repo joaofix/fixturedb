@@ -80,6 +80,4 @@ def add_raw_search_dir_arg(parser: ArgumentParser, help_text: str) -> None:
 
 
 def add_test_commits_csv_arg(parser: ArgumentParser, help_text: str) -> None:
-    parser.add_argument(
-        "--test-commits-csv", type=Path, default=None, help=help_text
-    )
+    parser.add_argument("--test-commits-csv", type=Path, default=None, help=help_text)

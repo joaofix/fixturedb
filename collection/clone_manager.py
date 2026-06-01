@@ -3,6 +3,7 @@
 Provides context managers to clone repos (either via an injected clone function
 or into a temporary directory) and guarantees cleanup on exit.
 """
+
 from contextlib import contextmanager
 import shutil
 import shutil as _shutil
@@ -48,7 +49,9 @@ def clone_with_throttle(
             attempt = 0
             while attempt < retries:
                 attempt += 1
-                with clone_with_function(clone_fn, clone_url, target_dir, min_free_bytes=min_free_bytes) as repo_path:
+                with clone_with_function(
+                    clone_fn, clone_url, target_dir, min_free_bytes=min_free_bytes
+                ) as repo_path:
                     if repo_path is not None:
                         yield repo_path
                         return
@@ -79,7 +82,11 @@ def ensure_free_space(path: Path, min_bytes: int) -> bool:
 
 @contextmanager
 def clone_with_function(
-    clone_fn: Callable[[str, Path], bool], clone_url: str, target_dir: Path, *, min_free_bytes: int = 100_000_000
+    clone_fn: Callable[[str, Path], bool],
+    clone_url: str,
+    target_dir: Path,
+    *,
+    min_free_bytes: int = 100_000_000,
 ) -> Optional[Path]:
     """Clone using a provided clone function into `target_dir` and remove it on exit.
 
@@ -89,7 +96,9 @@ def clone_with_function(
     parent = target_dir.parent if target_dir.parent.exists() else Path.cwd()
     if min_free_bytes and not ensure_free_space(parent, min_free_bytes):
         logger.warning(
-            "Insufficient free space on %s for cloning (need %d bytes)", parent, min_free_bytes
+            "Insufficient free space on %s for cloning (need %d bytes)",
+            parent,
+            min_free_bytes,
         )
         yield None
         return
@@ -109,7 +118,9 @@ def clone_with_function(
         _shutil.rmtree(target_dir, ignore_errors=True)
 
 
-def prune_old_clones(clones_dir: Path, max_age_seconds: int = 7 * 24 * 3600, dry_run: bool = False) -> dict:
+def prune_old_clones(
+    clones_dir: Path, max_age_seconds: int = 7 * 24 * 3600, dry_run: bool = False
+) -> dict:
     """Remove clone directories under `clones_dir` older than `max_age_seconds`.
 
     Returns a dict with counts: {removed, kept, errors}.
@@ -127,7 +138,11 @@ def prune_old_clones(clones_dir: Path, max_age_seconds: int = 7 * 24 * 3600, dry
             age = now - mtime
             if age > max_age_seconds:
                 if dry_run:
-                    logger.info("Would remove stale clone %s (age=%.1f days)", child, age / 86400)
+                    logger.info(
+                        "Would remove stale clone %s (age=%.1f days)",
+                        child,
+                        age / 86400,
+                    )
                     counts["removed"] += 1
                 else:
                     _shutil.rmtree(child, ignore_errors=True)
@@ -143,7 +158,13 @@ def prune_old_clones(clones_dir: Path, max_age_seconds: int = 7 * 24 * 3600, dry
 
 
 @contextmanager
-def temp_clone_commit_history(clone_url: str, repo_full_name: str, *, prefix: str = "collection-", timeout: int = 300):
+def temp_clone_commit_history(
+    clone_url: str,
+    repo_full_name: str,
+    *,
+    prefix: str = "collection-",
+    timeout: int = 300,
+):
     """Clone history into a temporary directory and cleanup on exit.
 
     Uses `clone_to_tempdir` helper; yields the repo path (or None on failure).

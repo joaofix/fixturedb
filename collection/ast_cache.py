@@ -5,6 +5,7 @@ Tree-sitter `Tree` object for the given source bytes and language. It uses
 an in-memory LRU cache keyed by a content hash to avoid reparsing unchanged
 files during bulk extraction.
 """
+
 import hashlib
 from functools import lru_cache
 from typing import Any

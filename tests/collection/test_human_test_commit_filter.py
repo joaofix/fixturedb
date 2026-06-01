@@ -15,7 +15,9 @@ class FakeScanner:
     def __init__(self, corpus_db_path):
         pass
 
-    def scan_repo_commit_roles(self, repo_path, start_date, language, detect_test_files=True):
+    def scan_repo_commit_roles(
+        self, repo_path, start_date, language, detect_test_files=True
+    ):
         return [
             SimpleNamespace(
                 commit_sha="deadbeef",
@@ -56,7 +58,9 @@ def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
     repo_dir = tmp_path / "repo"
     commit_sha = init_minimal_repo(repo_dir)
 
-    monkeypatch.setattr("collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner)
+    monkeypatch.setattr(
+        "collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner
+    )
 
     repo_qc_dir = tmp_path / "repo_qc"
     repo_qc_dir.mkdir()
@@ -99,7 +103,9 @@ def test_collect_human_test_commits_from_raw_search(tmp_path: Path, monkeypatch)
     repo_dir = tmp_path / "repo"
     commit_sha = init_minimal_repo(repo_dir)
 
-    monkeypatch.setattr("collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner)
+    monkeypatch.setattr(
+        "collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner
+    )
 
     raw_dir = tmp_path / "github-search-raw"
     raw_dir.mkdir()
