@@ -956,6 +956,48 @@ class HumanCorpusCollector:
         stats = HumanCorpusStats()
         candidates: list[dict] = []
 
+        # Checkpoint / progress paths for inter-run resumability
+        inter_checkpoint = (
+            Path(self.output_db).parent / "human_inter_checkpoint.json"
+        )
+        inter_progress_file = (
+            Path(self.output_db).parent / f"{Path(self.output_db).stem}_human_inter_progress.json"
+        )
+
+        def _load_inter_checkpoint() -> tuple[set, dict]:
+            completed = set()
+            counts_local = {"repos_persisted": 0, "fixtures_persisted": 0}
+            if inter_checkpoint.exists():
+                try:
+                    with inter_checkpoint.open("r", encoding="utf-8") as fh:
+                        data = json.load(fh)
+                    completed.update(data.get("completed_repos", []))
+                    counts_local.update(data.get("counts", {}))
+                except Exception:
+                    logger.debug("Failed to load inter checkpoint %s", inter_checkpoint)
+            return completed, counts_local
+
+        def _save_inter_checkpoint(completed: set, counts_local: dict) -> None:
+            try:
+                inter_checkpoint.parent.mkdir(parents=True, exist_ok=True)
+                with inter_checkpoint.open("w", encoding="utf-8") as fh:
+                    json.dump({"completed_repos": sorted(completed), "counts": counts_local}, fh, ensure_ascii=False, indent=2)
+            except Exception:
+                logger.debug("Failed to save inter checkpoint %s", inter_checkpoint)
+
+        def _write_inter_progress(completed: set, counts_local: dict) -> None:
+            try:
+                inter_progress_file.parent.mkdir(parents=True, exist_ok=True)
+                data = {
+                    "repos_persisted": counts_local.get("repos_persisted", 0),
+                    "fixtures_persisted": counts_local.get("fixtures_persisted", 0),
+                    "completed_repos_count": len(completed),
+                }
+                with inter_progress_file.open("w", encoding="utf-8") as fh:
+                    json.dump(data, fh, ensure_ascii=False, indent=2)
+            except Exception:
+                logger.debug("Failed to write inter progress %s", inter_progress_file)
+
         logger.info(
             f"[Human Inter] Building candidate pool from {len(agent_repos)} repos"
         )
@@ -1078,33 +1120,37 @@ class HumanCorpusCollector:
             repo_groups[fixture.get("repo_full_name")].append(fixture)
 
         # Persist per-repo (each call opens its own session internally)
+        completed_repos, counts_local = _load_inter_checkpoint()
         for repo_full, fixtures_list in repo_groups.items():
+            if repo_full in completed_repos:
+                logger.debug("[Human Inter] Skipping already persisted repo %s", repo_full)
+                continue
             repo_data = construct_repo_dict(
                 full_name=repo_full,
-                language=(
-                    fixtures_list[0].get("language") if fixtures_list else "unknown"
-                ),
+                language=(fixtures_list[0].get("language") if fixtures_list else "unknown"),
                 stars=0,
                 forks=0,
             )
             try:
-                fixtures_out_path = _human_fixture_csv_path(
-                    repo_data["language"], "inter"
-                )
-                persist_repository_and_fixtures(
+                fixtures_out_path = _human_fixture_csv_path(repo_data["language"], "inter")
+                fixture_count = persist_repository_and_fixtures(
                     self.output_db,
                     repo_data,
                     fixtures_list,
                     out_path=fixtures_out_path,
                     handle_mocks=True,
                 )
+                # update counts and checkpoint after every successful repo persist
+                counts_local["repos_persisted"] = counts_local.get("repos_persisted", 0) + 1
+                counts_local["fixtures_persisted"] = counts_local.get("fixtures_persisted", 0) + int(fixture_count or 0)
+                stats.fixtures_collected += int(fixture_count or 0)
+                completed_repos.add(repo_full)
+                _save_inter_checkpoint(completed_repos, counts_local)
+                _write_inter_progress(completed_repos, counts_local)
             except Exception as e:
-                logger.debug(
-                    f"[Human Inter] failed to persist fixtures for {repo_full}: {e}"
-                )
+                logger.debug(f"[Human Inter] failed to persist fixtures for {repo_full}: {e}")
                 # Skip inserting inter rows for this repo
-                for _ in fixtures_list:
-                    pass
+                continue
 
         # Use coordinated bulk insert to perform lookups + executemany inside a single transaction
         try:
@@ -1116,6 +1162,10 @@ class HumanCorpusCollector:
             stats.fixtures_collected += inserted
         except Exception as e:
             logger.debug(f"[Human Inter] coordinated bulk insert failed: {e}")
+        finally:
+            # save final checkpoint/progress
+            _save_inter_checkpoint(completed_repos, counts_local)
+            _write_inter_progress(completed_repos, counts_local)
 
         # Generate summary for the inter sample
         self._generate_summary(stats)
