@@ -43,7 +43,7 @@ def load_fixtures_from_db(db_path: Path) -> list:
     try:
         with db_session(db_path) as conn:
             rows = conn.execute(
-                "SELECT id, fixture_type, scope, loc, name FROM fixtures " "ORDER BY id"
+                "SELECT id, fixture_type, scope, loc, name FROM fixtures ORDER BY id"
             ).fetchall()
 
             fixtures = [dict(row) for row in rows]
@@ -151,8 +151,8 @@ def main():
         for stratum, check in sorted(human_result.distribution_check.items()):
             status = "✓" if check["tolerance_met"] else "✗"
             logger.info(
-                f"    {stratum}: {check['original_ratio']*100:.1f}% → "
-                f"{check['sampled_ratio']*100:.1f}% (dev: {check['deviation']*100:.2f}%) {status}"
+                f"    {stratum}: {check['original_ratio'] * 100:.1f}% → "
+                f"{check['sampled_ratio'] * 100:.1f}% (dev: {check['deviation'] * 100:.2f}%) {status}"
             )
 
         # Agent sampling results
@@ -171,8 +171,8 @@ def main():
         for stratum, check in sorted(agent_result.distribution_check.items()):
             status = "✓" if check["tolerance_met"] else "✗"
             logger.info(
-                f"    {stratum}: {check['original_ratio']*100:.1f}% → "
-                f"{check['sampled_ratio']*100:.1f}% (dev: {check['deviation']*100:.2f}%) {status}"
+                f"    {stratum}: {check['original_ratio'] * 100:.1f}% → "
+                f"{check['sampled_ratio'] * 100:.1f}% (dev: {check['deviation'] * 100:.2f}%) {status}"
             )
 
         # Prepare output

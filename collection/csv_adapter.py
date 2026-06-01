@@ -3,6 +3,7 @@
 Provides a default filesystem-backed adapter but allows tests or alternate
 backends (in-memory, S3, DB export) to be plugged in via `set_adapter()`.
 """
+
 from __future__ import annotations
 
 import csv
@@ -21,7 +22,9 @@ class CSVAdapter:
             for row in reader:
                 yield dict(row)
 
-    def write_dicts(self, path: Path, rows: Iterable[dict], fieldnames: list[str]) -> Path:
+    def write_dicts(
+        self, path: Path, rows: Iterable[dict], fieldnames: list[str]
+    ) -> Path:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         rows_list = list(rows)

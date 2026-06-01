@@ -126,7 +126,9 @@ class TestCSVRepositorySelection:
         # Should have all 5 repos
         assert len(repos) == 5
 
-    def test_select_human_corpus_restricts_to_agent_test_commits(self, tmp_path, make_csv):
+    def test_select_human_corpus_restricts_to_agent_test_commits(
+        self, tmp_path, make_csv
+    ):
         """When agent test-commit CSVs exist, selection is restricted to those repos."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
@@ -166,7 +168,11 @@ class TestCSVRepositorySelection:
 
         # Create agent_repo csv containing two repos, only one of which appears
         # Create sample repo CSV and test-commit CSV for selection test
-        make_csv(input_dir, "python_agent_test_commit.csv", dest_name="tests_commits/python_agent_test_commit.csv")
+        make_csv(
+            input_dir,
+            "python_agent_test_commit.csv",
+            dest_name="tests_commits/python_agent_test_commit.csv",
+        )
 
         # Write agent_repo CSV that lists the two repos referenced in this test
         csv_path = input_dir / "python_agent_repo.csv"
@@ -205,13 +211,17 @@ class TestCSVRepositorySelection:
         assert len(repos) == 1
         assert repos[0]["full_name"] == "owner/only_test_repo"
 
-    def test_select_human_corpus_fallback_when_no_tests_commits(self, tmp_path, make_csv):
+    def test_select_human_corpus_fallback_when_no_tests_commits(
+        self, tmp_path, make_csv
+    ):
         """When no tests_commits directory exists, selection falls back to agent_repo CSVs."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
 
         # Use committed small sample CSV with exactly two repos (copy into expected name)
-        make_csv(input_dir, "python_agent_repo_small.csv", dest_name="python_agent_repo.csv")
+        make_csv(
+            input_dir, "python_agent_repo_small.csv", dest_name="python_agent_repo.csv"
+        )
 
         repos = select_human_corpus_repositories(
             input_dir, repos_per_language=None, language="python"
@@ -219,7 +229,9 @@ class TestCSVRepositorySelection:
 
         assert len(repos) == 2
 
-    def test_select_human_corpus_prefers_agent_fixture_repo_list(self, tmp_path, make_csv):
+    def test_select_human_corpus_prefers_agent_fixture_repo_list(
+        self, tmp_path, make_csv
+    ):
         """When an agent fixture repo list exists, it should be preferred."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
@@ -227,7 +239,11 @@ class TestCSVRepositorySelection:
         # Create fixtures-from-agents directory with a per-language repo list
         fixtures_dir = input_dir / "fixtures-from-agents"
         fixtures_dir.mkdir()
-        make_csv(fixtures_dir, "python_agent_fixture_repos.csv", dest_name="python_agent_fixture_repos.csv")
+        make_csv(
+            fixtures_dir,
+            "python_agent_fixture_repos.csv",
+            dest_name="python_agent_fixture_repos.csv",
+        )
 
         # Also create agent_repo with another repo that should be ignored
         csv_path = input_dir / "python_agent_repo.csv"
@@ -266,7 +282,9 @@ class TestCSVRepositorySelection:
         assert len(repos) == 1
         assert repos[0]["full_name"] == "owner/fixture_repo"
 
-    def test_select_human_corpus_strict_requires_fixture_repo_list(self, tmp_path, make_csv):
+    def test_select_human_corpus_strict_requires_fixture_repo_list(
+        self, tmp_path, make_csv
+    ):
         """Strict mode must fail when fixture-repo list is missing."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()

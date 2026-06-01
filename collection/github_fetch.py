@@ -3,6 +3,7 @@
 This provides a simple, best-effort archive downloader to use when cloning
 is too heavy or fails. It supports retry and basic resume via Range headers.
 """
+
 import time
 import shutil
 import urllib.request
@@ -12,7 +13,9 @@ DEFAULT_RETRIES = 3
 DEFAULT_BACKOFF = 1.0
 
 
-def download_github_archive(repo_full_name: str, dest: Path, retries: int = DEFAULT_RETRIES):
+def download_github_archive(
+    repo_full_name: str, dest: Path, retries: int = DEFAULT_RETRIES
+):
     """Download the GitHub tarball for the default branch for `repo_full_name`.
 
     Returns the path to the downloaded archive, or raises on failure.
@@ -32,4 +35,6 @@ def download_github_archive(repo_full_name: str, dest: Path, retries: int = DEFA
         except Exception:
             attempt += 1
             time.sleep(DEFAULT_BACKOFF * attempt)
-    raise RuntimeError(f"Failed to download archive for {repo_full_name} after {retries} attempts")
+    raise RuntimeError(
+        f"Failed to download archive for {repo_full_name} after {retries} attempts"
+    )

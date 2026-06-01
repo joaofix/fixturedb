@@ -106,7 +106,7 @@ def main():
     # Save assessment
     assessment_file = (
         output_dir
-        / f'phase_1c_assessment_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        / f"phase_1c_assessment_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     )
     with open(assessment_file, "w") as f:
         json.dump(assessment, f, indent=2)

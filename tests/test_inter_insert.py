@@ -2,7 +2,14 @@ import tempfile
 from pathlib import Path
 import os
 
-from collection.db import initialise_db, db_session, upsert_repository, upsert_test_file, insert_fixture, insert_human_inter_fixtures_bulk
+from collection.db import (
+    initialise_db,
+    db_session,
+    upsert_repository,
+    upsert_test_file,
+    insert_fixture,
+    insert_human_inter_fixtures_bulk,
+)
 from collection.corpus_utils import construct_repo_dict
 
 
@@ -77,7 +84,9 @@ def test_bulk_insert_and_conflict_handling(tmp_path):
 
     # Confirm row exists
     with db_session(db_path) as conn:
-        cur = conn.execute("SELECT COUNT(*) AS n FROM human_inter_fixtures WHERE file_id=?", (file_id,))
+        cur = conn.execute(
+            "SELECT COUNT(*) AS n FROM human_inter_fixtures WHERE file_id=?", (file_id,)
+        )
         assert cur.fetchone()["n"] == 1
 
     # Second bulk insert (duplicate) should not raise and should attempt 1 insert
@@ -86,5 +95,7 @@ def test_bulk_insert_and_conflict_handling(tmp_path):
         assert inserted2 == 1
 
     with db_session(db_path) as conn:
-        cur = conn.execute("SELECT COUNT(*) AS n FROM human_inter_fixtures WHERE file_id=?", (file_id,))
+        cur = conn.execute(
+            "SELECT COUNT(*) AS n FROM human_inter_fixtures WHERE file_id=?", (file_id,)
+        )
         assert cur.fetchone()["n"] == 1

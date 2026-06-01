@@ -422,9 +422,9 @@ describe('Test', () => {
         for language, code in examples.items():
             fixtures = extract_and_find_fixtures(code, language)
             assert len(fixtures) > 0, f"No fixtures detected in {language}"
-            assert (
-                fixtures[0].scope == "per_test"
-            ), f"Wrong scope for {language}: {fixtures[0].scope}"
+            assert fixtures[0].scope == "per_test", (
+                f"Wrong scope for {language}: {fixtures[0].scope}"
+            )
 
 
 class TestLargeComplexTestFiles:

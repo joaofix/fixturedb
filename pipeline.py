@@ -151,7 +151,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
     )
     human_parser.add_argument(
-        "--repos-per-language", type=int, default=None, help="Repositories per language (None = all)"
+        "--repos-per-language",
+        type=int,
+        default=None,
+        help="Repositories per language (None = all)",
     )
     human_parser.add_argument(
         "--output-db",
@@ -199,7 +202,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Limit collection to one or more languages",
     )
     agent_parser.add_argument(
-        "--repos-per-language", type=int, default=None, help="Repositories per language (None = all)"
+        "--repos-per-language",
+        type=int,
+        default=None,
+        help="Repositories per language (None = all)",
     )
     agent_parser.add_argument(
         "--github-token", type=str, default=None, help="GitHub API token (optional)"

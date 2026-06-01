@@ -9,11 +9,13 @@ def make_candidates(lang: str, repo_counts: dict) -> list:
     candidates = []
     for repo_id, count in repo_counts.items():
         for i in range(count):
-            candidates.append({
-                "repo_id": repo_id,
-                "language": lang,
-                "name": f"f_{repo_id}_{i}",
-            })
+            candidates.append(
+                {
+                    "repo_id": repo_id,
+                    "language": lang,
+                    "name": f"f_{repo_id}_{i}",
+                }
+            )
     return candidates
 
 
@@ -38,7 +40,9 @@ def test_stratified_sample_basic_distribution():
     assert counts["java"] == 10
 
     # Ensure per-repo selections do not exceed available counts
-    py_repo_counts = Counter([c["repo_id"] for c in selected if c["language"] == "python"]) 
+    py_repo_counts = Counter(
+        [c["repo_id"] for c in selected if c["language"] == "python"]
+    )
     for rid, ct in py_repo_counts.items():
         assert ct <= python_repos[rid]
 

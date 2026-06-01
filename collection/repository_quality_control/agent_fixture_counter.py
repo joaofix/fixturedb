@@ -426,7 +426,9 @@ def _process_single_repo(
                     repo_name,
                 )
                 clone_args = ["--filter=blob:limit=10m", "--no-tags"]
-                with temp_clone_commit_history(clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300) as local_repo_path:
+                with temp_clone_commit_history(
+                    clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300
+                ) as local_repo_path:
                     if local_repo_path is None:
                         logger.warning("Skipping %s: clone/fetch failed", repo_name)
                         return {
@@ -440,7 +442,9 @@ def _process_single_repo(
         else:
             # Clone strategy: one broader clone for this repo and reuse locally for all target commits.
             clone_args = ["--filter=blob:limit=10m", "--no-tags"]
-            with temp_clone_commit_history(clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300) as local_repo_path:
+            with temp_clone_commit_history(
+                clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300
+            ) as local_repo_path:
                 if local_repo_path is None:
                     logger.warning("Skipping %s: clone failed", repo_name)
                     return {
@@ -460,7 +464,9 @@ def _process_single_repo(
                     extractor=extractor,
                     include_partial=include_partial,
                 )
-                logger.info("%s -> %d extracted fixture rows", repo_name, len(repo_rows))
+                logger.info(
+                    "%s -> %d extracted fixture rows", repo_name, len(repo_rows)
+                )
                 return {
                     "repo_name": repo_name,
                     "strategy": selected_strategy,
@@ -702,6 +708,7 @@ def main() -> int:
     args = parser.parse_args()
 
     from collection.logging_utils import configure_logging
+
     configure_logging()
     return run(
         input_dir=Path(args.input_dir),

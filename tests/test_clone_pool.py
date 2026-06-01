@@ -28,5 +28,7 @@ def test_clone_with_throttle_disk_guard(monkeypatch, tmp_path: Path):
 
     monkeypatch.setattr(cm, "ensure_free_space", lambda path, n: False)
 
-    with cm.clone_with_throttle(fake_clone, "url", target, min_free_bytes=10 ** 12) as repo_path:
+    with cm.clone_with_throttle(
+        fake_clone, "url", target, min_free_bytes=10**12
+    ) as repo_path:
         assert repo_path is None

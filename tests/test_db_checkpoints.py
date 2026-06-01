@@ -1,5 +1,10 @@
 from pathlib import Path
-from collection.db import initialise_db, mark_checkpoint, is_checkpoint_completed, db_session
+from collection.db import (
+    initialise_db,
+    mark_checkpoint,
+    is_checkpoint_completed,
+    db_session,
+)
 
 
 def test_checkpoints(tmp_path: Path):

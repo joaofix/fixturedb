@@ -72,9 +72,19 @@ def _load_test_commit_resume_state(
     }
 
     output_dir = Path(output_dir)
-    pattern = "*_agent_test_commit_qc.csv" if role == "agent" else "*_human_test_commit_qc.csv"
-    suffix = "_agent_test_commit_qc.csv" if role == "agent" else "_human_test_commit_qc.csv"
-    checkpoint_name = AGENT_TEST_COMMITS_CHECKPOINT if role == "agent" else HUMAN_TEST_COMMITS_CHECKPOINT
+    pattern = (
+        "*_agent_test_commit_qc.csv"
+        if role == "agent"
+        else "*_human_test_commit_qc.csv"
+    )
+    suffix = (
+        "_agent_test_commit_qc.csv" if role == "agent" else "_human_test_commit_qc.csv"
+    )
+    checkpoint_name = (
+        AGENT_TEST_COMMITS_CHECKPOINT
+        if role == "agent"
+        else HUMAN_TEST_COMMITS_CHECKPOINT
+    )
 
     if output_dir.exists():
         for csv_path in sorted(output_dir.glob(pattern), key=lambda p: p.name):
@@ -114,7 +124,11 @@ def _save_test_commit_resume_state(
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint_name = AGENT_TEST_COMMITS_CHECKPOINT if role == "agent" else HUMAN_TEST_COMMITS_CHECKPOINT
+    checkpoint_name = (
+        AGENT_TEST_COMMITS_CHECKPOINT
+        if role == "agent"
+        else HUMAN_TEST_COMMITS_CHECKPOINT
+    )
     checkpoint_path = output_dir / checkpoint_name
     checkpoint = {
         "repos_processed": int(counts.get("repos_processed", 0) or 0),
@@ -139,11 +153,17 @@ def _load_agent_test_commit_resume_state(output_dir: Path):
     return _load_test_commit_resume_state(output_dir, role="agent")
 
 
-def _save_agent_test_commit_resume_state(output_dir: Path, counts: dict[str, int], completed_repos: set[str]):
-    return _save_test_commit_resume_state(output_dir, counts, completed_repos, role="agent")
+def _save_agent_test_commit_resume_state(
+    output_dir: Path, counts: dict[str, int], completed_repos: set[str]
+):
+    return _save_test_commit_resume_state(
+        output_dir, counts, completed_repos, role="agent"
+    )
 
 
-def _load_pre2021_raw_repo_rows(raw_search_dir: Path, language: str | None = None) -> list[dict]:
+def _load_pre2021_raw_repo_rows(
+    raw_search_dir: Path, language: str | None = None
+) -> list[dict]:
     """Load pre-2021 repository search rows from github-search-raw CSV.gz files."""
     cutoff_date = HUMAN_CORPUS_CUTOFF_DATE
     language_filter = (language or "").strip().lower() or None
@@ -155,9 +175,17 @@ def _load_pre2021_raw_repo_rows(raw_search_dir: Path, language: str | None = Non
                 reader = csv.DictReader(fh)
                 for row in reader:
                     repo_name = (row.get("name") or row.get("full_name") or "").strip()
-                    lang = (row.get("mainLanguage") or row.get("language") or "").strip().lower()
-                    created_at = (row.get("createdAt") or row.get("created_at") or "").strip()
-                    is_fork = str(row.get("isFork") or row.get("fork") or "").strip().lower()
+                    lang = (
+                        (row.get("mainLanguage") or row.get("language") or "")
+                        .strip()
+                        .lower()
+                    )
+                    created_at = (
+                        row.get("createdAt") or row.get("created_at") or ""
+                    ).strip()
+                    is_fork = (
+                        str(row.get("isFork") or row.get("fork") or "").strip().lower()
+                    )
                     if not repo_name or "/" not in repo_name:
                         continue
                     if language_filter and lang != language_filter:
@@ -173,7 +201,10 @@ def _load_pre2021_raw_repo_rows(raw_search_dir: Path, language: str | None = Non
                             "repo_name": repo_name,
                             "full_name": repo_name,
                             "language": lang or language_filter or "unknown",
-                            "clone_url": (row.get("clone_url") or f"https://github.com/{repo_name}.git").strip(),
+                            "clone_url": (
+                                row.get("clone_url")
+                                or f"https://github.com/{repo_name}.git"
+                            ).strip(),
                             "created_at": created_at,
                         }
                     )
@@ -237,18 +268,25 @@ def _collect_human_test_commits_from_repo_rows(
                 "commits_scanned": commits_scanned,
                 "repos_with_test_commits": repos_with_test_commits,
                 "test_commits_found": sum(
-                    len(language_rows) for language_rows in test_commit_rows_by_language.values()
+                    len(language_rows)
+                    for language_rows in test_commit_rows_by_language.values()
                 ),
             }
         )
         output_dir.mkdir(parents=True, exist_ok=True)
         for language, language_rows in sorted(test_commit_rows_by_language.items()):
-            write_test_commits_csv(language_rows, output_dir / f"{language}_human_test_commit_qc.csv")
-        _save_test_commit_resume_state(output_dir, counts, completed_repos, role="human")
+            write_test_commits_csv(
+                language_rows, output_dir / f"{language}_human_test_commit_qc.csv"
+            )
+        _save_test_commit_resume_state(
+            output_dir, counts, completed_repos, role="human"
+        )
 
     if workers == 1:
         for repo_name, repo_rows_for_name in repos_to_process.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = _process_repo_human_test_commits(repo_rows_for_name[0])
+            language, repo_test_commits, repo_count, repo_commits_scanned = (
+                _process_repo_human_test_commits(repo_rows_for_name[0])
+            )
             repos_processed += repo_count
             commits_scanned += repo_commits_scanned
             new_rows = []
@@ -275,12 +313,16 @@ def _collect_human_test_commits_from_repo_rows(
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
-                executor.submit(_process_repo_human_test_commits, repo_rows_for_name[0]): repo_name
+                executor.submit(
+                    _process_repo_human_test_commits, repo_rows_for_name[0]
+                ): repo_name
                 for repo_name, repo_rows_for_name in repos_to_process.items()
             }
             try:
                 for future in as_completed(futures):
-                    language, repo_test_commits, repo_count, repo_commits_scanned = future.result()
+                    language, repo_test_commits, repo_count, repo_commits_scanned = (
+                        future.result()
+                    )
                     repos_processed += repo_count
                     commits_scanned += repo_commits_scanned
                     new_rows = []
@@ -307,7 +349,9 @@ def _collect_human_test_commits_from_repo_rows(
                         len(completed_repos),
                     )
             except KeyboardInterrupt:
-                logger.warning("[human-test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs...")
+                logger.warning(
+                    "[human-test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs..."
+                )
                 for fut in futures:
                     fut.cancel()
                 persist_progress()
@@ -346,8 +390,12 @@ def _collect_human_test_commits_from_repo_rows(
     }
 
 
-def _process_repo_test_commits(repo_name: str, repo_rows: list[dict]) -> tuple[str, list[dict], int, int]:
-    clone_url = (repo_rows[0].get("clone_url") or f"https://github.com/{repo_name}.git").strip()
+def _process_repo_test_commits(
+    repo_name: str, repo_rows: list[dict]
+) -> tuple[str, list[dict], int, int]:
+    clone_url = (
+        repo_rows[0].get("clone_url") or f"https://github.com/{repo_name}.git"
+    ).strip()
     language = (repo_rows[0].get("language") or "unknown").strip().lower()
 
     logger.info("[test-commits] Cloning %s (%s)", repo_name, language)
@@ -446,16 +494,23 @@ def collect_agent_test_commits(
                 "repos_processed": repos_processed,
                 "commits_scanned": commits_scanned,
                 "repos_with_test_commits": repos_with_test_commits,
-                "test_commits_found": sum(len(language_rows) for language_rows in test_commit_rows_by_language.values()),
+                "test_commits_found": sum(
+                    len(language_rows)
+                    for language_rows in test_commit_rows_by_language.values()
+                ),
             }
         )
         for language, language_rows in sorted(test_commit_rows_by_language.items()):
-            write_test_commits_csv(language_rows, output_dir / f"{language}_agent_test_commit_qc.csv")
+            write_test_commits_csv(
+                language_rows, output_dir / f"{language}_agent_test_commit_qc.csv"
+            )
         _save_agent_test_commit_resume_state(output_dir, counts, completed_repos)
 
     if workers == 1:
         for repo_name, repo_rows in repos_to_process.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = _process_repo_test_commits(repo_name, repo_rows)
+            language, repo_test_commits, repo_count, repo_commits_scanned = (
+                _process_repo_test_commits(repo_name, repo_rows)
+            )
             repos_processed += repo_count
             commits_scanned += repo_commits_scanned
             new_rows = []
@@ -481,11 +536,18 @@ def collect_agent_test_commits(
             )
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {executor.submit(_process_repo_test_commits, repo_name, repo_rows): repo_name for repo_name, repo_rows in repos_to_process.items()}
+            futures = {
+                executor.submit(
+                    _process_repo_test_commits, repo_name, repo_rows
+                ): repo_name
+                for repo_name, repo_rows in repos_to_process.items()
+            }
             try:
                 for future in as_completed(futures):
                     repo_name = futures[future]
-                    language, repo_test_commits, repo_count, repo_commits_scanned = future.result()
+                    language, repo_test_commits, repo_count, repo_commits_scanned = (
+                        future.result()
+                    )
                     repos_processed += repo_count
                     commits_scanned += repo_commits_scanned
                     new_rows = []
@@ -510,7 +572,9 @@ def collect_agent_test_commits(
                         len(completed_repos),
                     )
             except KeyboardInterrupt:
-                logger.warning("[test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs...")
+                logger.warning(
+                    "[test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs..."
+                )
                 for fut in futures:
                     fut.cancel()
                 persist_progress()
@@ -522,7 +586,12 @@ def collect_agent_test_commits(
         output_path = output_dir / f"{language}_agent_test_commit_qc.csv"
         output_files[language] = str(output_path)
         total_test_commits += len(language_rows)
-        logger.info("[test-commits] Wrote %d agent test commits for %s to %s", len(language_rows), language, output_path)
+        logger.info(
+            "[test-commits] Wrote %d agent test commits for %s to %s",
+            len(language_rows),
+            language,
+            output_path,
+        )
 
     logger.info(
         "[test-commits] Finished: %d repos processed, %d commits scanned, %d agent test commits found",
@@ -540,15 +609,23 @@ def collect_agent_test_commits(
     }
 
 
-def _process_repo_human_test_commits(repo_row: dict) -> tuple[str, list[dict], int, int]:
+def _process_repo_human_test_commits(
+    repo_row: dict,
+) -> tuple[str, list[dict], int, int]:
     repo_name = (repo_row.get("repo_name") or repo_row.get("full_name") or "").strip()
-    clone_url = (repo_row.get("clone_url") or f"https://github.com/{repo_name}.git").strip()
+    clone_url = (
+        repo_row.get("clone_url") or f"https://github.com/{repo_name}.git"
+    ).strip()
     language = (repo_row.get("language") or "unknown").strip().lower()
 
     logger.info("[human-test-commits] Cloning %s (%s)", repo_name, language)
-    with temp_clone_commit_history(clone_url, repo_name, prefix="human-test-commits-", timeout=300) as repo_path:
+    with temp_clone_commit_history(
+        clone_url, repo_name, prefix="human-test-commits-", timeout=300
+    ) as repo_path:
         if repo_path is None:
-            logger.warning("Failed to clone %s while filtering human test commits", repo_name)
+            logger.warning(
+                "Failed to clone %s while filtering human test commits", repo_name
+            )
             return language, [], 1, 0
 
         test_commit_rows: list[dict] = []
@@ -574,7 +651,9 @@ def _process_repo_human_test_commits(repo_row: dict) -> tuple[str, list[dict], i
                     "agent_type": commit.agent_type,
                     "commit_date": commit.commit_date,
                     "test_file_count": len(commit.test_files),
-                    "test_file_paths": json.dumps(commit.test_files, ensure_ascii=False),
+                    "test_file_paths": json.dumps(
+                        commit.test_files, ensure_ascii=False
+                    ),
                 }
             )
 
@@ -602,10 +681,15 @@ def collect_human_test_commits(
     """
     grouped: dict[str, list[dict]] = defaultdict(list)
     language_filter = (language or "").strip().lower() or None
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name):
+    for csv_path in sorted(
+        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+    ):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             for row in csv.DictReader(fh):
-                if str(row.get("has_agent_config") or "").strip().lower() not in {"1", "true"}:
+                if str(row.get("has_agent_config") or "").strip().lower() not in {
+                    "1",
+                    "true",
+                }:
                     continue
                 row_lang = (row.get("language") or "").strip().lower() or None
                 if language_filter and row_lang and row_lang != language_filter:
@@ -640,18 +724,28 @@ def collect_human_test_commits_from_raw_search(
         len(repo_rows),
         raw_search_dir,
     )
-    return _collect_human_test_commits_from_repo_rows(repo_rows, Path(output_dir), clones_dir=clones_dir, workers=workers)
+    return _collect_human_test_commits_from_repo_rows(
+        repo_rows, Path(output_dir), clones_dir=clones_dir, workers=workers
+    )
 
 
-def _process_repo_agent_test_commits(repo_row: dict) -> tuple[str, list[dict], int, int]:
+def _process_repo_agent_test_commits(
+    repo_row: dict,
+) -> tuple[str, list[dict], int, int]:
     repo_name = (repo_row.get("repo_name") or repo_row.get("full_name") or "").strip()
-    clone_url = (repo_row.get("clone_url") or f"https://github.com/{repo_name}.git").strip()
+    clone_url = (
+        repo_row.get("clone_url") or f"https://github.com/{repo_name}.git"
+    ).strip()
     language = (repo_row.get("language") or "unknown").strip().lower()
 
     logger.info("[agent-test-commits] Cloning %s (%s)", repo_name, language)
-    with temp_clone_commit_history(clone_url, repo_name, prefix="agent-test-commits-", timeout=300) as repo_path:
+    with temp_clone_commit_history(
+        clone_url, repo_name, prefix="agent-test-commits-", timeout=300
+    ) as repo_path:
         if repo_path is None:
-            logger.warning("Failed to clone %s while filtering agent test commits", repo_name)
+            logger.warning(
+                "Failed to clone %s while filtering agent test commits", repo_name
+            )
             return language, [], 1, 0
 
         test_commit_rows: list[dict] = []
@@ -677,7 +771,9 @@ def _process_repo_agent_test_commits(repo_row: dict) -> tuple[str, list[dict], i
                     "agent_type": commit.agent_type,
                     "commit_date": commit.commit_date,
                     "test_file_count": len(commit.test_files),
-                    "test_file_paths": json.dumps(commit.test_files, ensure_ascii=False),
+                    "test_file_paths": json.dumps(
+                        commit.test_files, ensure_ascii=False
+                    ),
                 }
             )
 
@@ -699,10 +795,15 @@ def collect_agent_test_commits_from_repos(
 ) -> dict:
     """Filter agent-config repositories to agent-authored commits that touch test files."""
     grouped: dict[str, list[dict]] = defaultdict(list)
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name):
+    for csv_path in sorted(
+        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+    ):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             for row in csv.DictReader(fh):
-                if str(row.get("has_agent_config") or "").strip().lower() not in {"1", "true"}:
+                if str(row.get("has_agent_config") or "").strip().lower() not in {
+                    "1",
+                    "true",
+                }:
                     continue
                 repo_name = (row.get("repo_name") or row.get("full_name") or "").strip()
                 if repo_name:
@@ -724,29 +825,52 @@ def collect_agent_test_commits_from_repos(
 
     if workers == 1:
         for repo_name, repo_rows in grouped.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = _process_repo_agent_test_commits(repo_rows[0])
+            language, repo_test_commits, repo_count, repo_commits_scanned = (
+                _process_repo_agent_test_commits(repo_rows[0])
+            )
             repos_processed += repo_count
             commits_scanned += repo_commits_scanned
             if repo_test_commits:
                 repos_with_test_commits += 1
                 test_commit_rows_by_language[language].extend(repo_test_commits)
             pct = (repos_processed / total_repos * 100) if total_repos else 100
-            logger.info("[agent-test-commits] Progress: %d/%d repos (%.1f%%), %d commits scanned", repos_processed, total_repos, pct, commits_scanned)
+            logger.info(
+                "[agent-test-commits] Progress: %d/%d repos (%.1f%%), %d commits scanned",
+                repos_processed,
+                total_repos,
+                pct,
+                commits_scanned,
+            )
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = {executor.submit(_process_repo_agent_test_commits, repo_rows[0]): repo_name for repo_name, repo_rows in grouped.items()}
+            futures = {
+                executor.submit(
+                    _process_repo_agent_test_commits, repo_rows[0]
+                ): repo_name
+                for repo_name, repo_rows in grouped.items()
+            }
             try:
                 for future in as_completed(futures):
-                    language, repo_test_commits, repo_count, repo_commits_scanned = future.result()
+                    language, repo_test_commits, repo_count, repo_commits_scanned = (
+                        future.result()
+                    )
                     repos_processed += repo_count
                     commits_scanned += repo_commits_scanned
                     if repo_test_commits:
                         repos_with_test_commits += 1
                         test_commit_rows_by_language[language].extend(repo_test_commits)
                     pct = (repos_processed / total_repos * 100) if total_repos else 100
-                    logger.info("[agent-test-commits] Progress: %d/%d repos completed (%.1f%%), %d commits scanned", repos_processed, total_repos, pct, commits_scanned)
+                    logger.info(
+                        "[agent-test-commits] Progress: %d/%d repos completed (%.1f%%), %d commits scanned",
+                        repos_processed,
+                        total_repos,
+                        pct,
+                        commits_scanned,
+                    )
             except KeyboardInterrupt:
-                logger.warning("[agent-test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs...")
+                logger.warning(
+                    "[agent-test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs..."
+                )
                 for fut in futures:
                     fut.cancel()
                 raise
@@ -777,13 +901,19 @@ def collect_agent_test_commits_from_repos(
     }
 
 
-def build_pre2021_candidate_pool(raw_commits_dir: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE) -> dict:
+def build_pre2021_candidate_pool(
+    raw_commits_dir: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE
+) -> dict:
     candidates: dict[str, list[dict]] = defaultdict(list)
-    for csv_path in sorted(Path(raw_commits_dir).glob("**/*_commit*.csv"), key=lambda p: p.name):
+    for csv_path in sorted(
+        Path(raw_commits_dir).glob("**/*_commit*.csv"), key=lambda p: p.name
+    ):
         try:
             with csv_path.open("r", encoding="utf-8", newline="") as fh:
                 for row in csv.DictReader(fh):
-                    repo_name = (row.get("repo_name") or row.get("full_name") or "").strip()
+                    repo_name = (
+                        row.get("repo_name") or row.get("full_name") or ""
+                    ).strip()
                     commit_date = (row.get("commit_date") or "").strip()
                     if repo_name and commit_date and commit_date <= cutoff_date:
                         candidates[repo_name].append(dict(row))
@@ -797,7 +927,9 @@ def _cli_main() -> None:
     from collection.logging_utils import configure_logging
 
     configure_logging()
-    parser = argparse.ArgumentParser(description="Filter agent datasets to test commits (agent or human)")
+    parser = argparse.ArgumentParser(
+        description="Filter agent datasets to test commits (agent or human)"
+    )
     parser.add_argument("--mode", choices=["agent", "human"], default="agent")
     add_commit_dir_arg(
         parser,
@@ -809,25 +941,47 @@ def _cli_main() -> None:
         parser,
         "Directory containing github-search-raw *.csv.gz repository search files",
     )
-    add_output_dir_arg(parser, Path("output/test-commits"), "Output directory for filtered test commits")
-    add_language_arg(parser, ["python", "java", "javascript", "typescript", "go"], "Limit to one language (e.g. python)")
+    add_output_dir_arg(
+        parser,
+        Path("output/test-commits"),
+        "Output directory for filtered test commits",
+    )
+    add_language_arg(
+        parser,
+        ["python", "java", "javascript", "typescript", "go"],
+        "Limit to one language (e.g. python)",
+    )
     add_workers_arg(parser, 12)
     args = parser.parse_args()
 
-    repo_qc_files = list(Path(args.repo_qc_dir).glob("*_agent_repo.csv")) if Path(args.repo_qc_dir).exists() else []
+    repo_qc_files = (
+        list(Path(args.repo_qc_dir).glob("*_agent_repo.csv"))
+        if Path(args.repo_qc_dir).exists()
+        else []
+    )
     if args.mode == "agent":
         if repo_qc_files:
-            collect_agent_test_commits_from_repos(args.repo_qc_dir, args.output_dir, workers=args.workers)
+            collect_agent_test_commits_from_repos(
+                args.repo_qc_dir, args.output_dir, workers=args.workers
+            )
         else:
-            collect_agent_test_commits(args.commit_qc_dir, args.output_dir, workers=args.workers)
+            collect_agent_test_commits(
+                args.commit_qc_dir, args.output_dir, workers=args.workers
+            )
     else:
         if args.raw_search_dir:
             collect_human_test_commits_from_raw_search(
-                args.raw_search_dir, args.output_dir, workers=args.workers, language=args.language
+                args.raw_search_dir,
+                args.output_dir,
+                workers=args.workers,
+                language=args.language,
             )
         else:
             collect_human_test_commits(
-                args.repo_qc_dir, args.output_dir, workers=args.workers, language=args.language
+                args.repo_qc_dir,
+                args.output_dir,
+                workers=args.workers,
+                language=args.language,
             )
 
 

@@ -307,7 +307,9 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         has_agent_config = False
         qc_reason = ""
 
-        with temp_clone_commit_history(clone_url, full_name, prefix="agent-qc-", timeout=60) as repo_path:
+        with temp_clone_commit_history(
+            clone_url, full_name, prefix="agent-qc-", timeout=60
+        ) as repo_path:
             try:
                 if repo_path and repo_path.exists():
                     has_agent_config = scan_cloned_repo_for_agent_configs(repo_path)

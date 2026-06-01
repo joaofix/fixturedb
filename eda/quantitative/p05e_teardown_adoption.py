@@ -92,7 +92,7 @@ def plot_teardown_adoption(conn, out_dir, show):
 
     ax.set_ylabel("Adoption Rate  (%)", fontsize=11)
     ax.set_title(
-        "Fixture Cleanup/Teardown Adoption\n" "(% of fixtures with cleanup logic)",
+        "Fixture Cleanup/Teardown Adoption\n(% of fixtures with cleanup logic)",
         fontsize=12,
         fontweight="bold",
     )
@@ -106,7 +106,7 @@ def plot_teardown_adoption(conn, out_dir, show):
     total_without = (fixtures["has_teardown_pair"] == 0).sum()
     overall_pct = 100 * total_with / (total_with + total_without)
 
-    summary = f"Overall: {overall_pct:.1f}% have teardown  ({total_with:,}/{total_with+total_without:,})"
+    summary = f"Overall: {overall_pct:.1f}% have teardown  ({total_with:,}/{total_with + total_without:,})"
     ax.text(
         0.02,
         0.97,

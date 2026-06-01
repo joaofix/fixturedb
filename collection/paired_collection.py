@@ -80,7 +80,7 @@ def select_paired_repositories(
         grouped.setdefault(repo["language"], []).append(repo)
 
     selected: list[dict] = []
-    for lang in ([language] if language else list(LANGUAGE_CONFIGS.keys())):
+    for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
         if not lang:
             continue
         selected.extend(grouped.get(lang, [])[:repos_per_language])
@@ -199,10 +199,12 @@ class PairedStudyCollector:
         # For now, return empty structure
         balance_results = {
             "language_distribution": self._compute_chi_square_balance(
-                {}, {}  # Will be populated during run()
+                {},
+                {},  # Will be populated during run()
             ),
             "domain_distribution": self._compute_chi_square_balance(
-                {}, {}  # Will be populated during run()
+                {},
+                {},  # Will be populated during run()
             ),
         }
 

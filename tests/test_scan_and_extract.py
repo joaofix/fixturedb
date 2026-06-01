@@ -7,7 +7,9 @@ import collection.human_corpus as human_corpus
 
 def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
     # Setup minimal collector
-    collector = HumanCorpusCollector(corpus_db_path=tmp_path / "c.db", clones_dir=tmp_path / "clones")
+    collector = HumanCorpusCollector(
+        corpus_db_path=tmp_path / "c.db", clones_dir=tmp_path / "clones"
+    )
 
     # Fake commit role objects
     commits = [
@@ -30,7 +32,9 @@ def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
     ]
 
     class FakeScanner:
-        def scan_repo_commit_roles(self, repo_path, start_date, language, detect_test_files=True):
+        def scan_repo_commit_roles(
+            self, repo_path, start_date, language, detect_test_files=True
+        ):
             return commits
 
     class FakeExtractor:
@@ -58,7 +62,9 @@ def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
     scanner = FakeScanner()
     extractor = FakeExtractor()
 
-    test_rows, fixtures = collector._scan_and_extract(Path("/tmp"), "python", "owner/repo", scanner, extractor)
+    test_rows, fixtures = collector._scan_and_extract(
+        Path("/tmp"), "python", "owner/repo", scanner, extractor
+    )
 
     # Only one test_row (human) should be included
     assert len(test_rows) == 1

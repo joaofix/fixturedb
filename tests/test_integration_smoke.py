@@ -34,7 +34,9 @@ def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
         def __init__(self, corpus_db_path):
             pass
 
-        def scan_repo_commit_roles(self, repo_path, start_date, language, detect_test_files=True):
+        def scan_repo_commit_roles(
+            self, repo_path, start_date, language, detect_test_files=True
+        ):
             return [
                 SimpleNamespace(
                     commit_sha="deadbeef",
@@ -94,29 +96,56 @@ def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
         lambda language, kind: tmp_path / f"{language}_human_fixtures.csv",
     )
 
-    def fake_persist_repository_and_fixtures(output_db, repo_data, fixtures_list, out_path=None, handle_mocks=False):
+    def fake_persist_repository_and_fixtures(
+        output_db, repo_data, fixtures_list, out_path=None, handle_mocks=False
+    ):
         out_path = Path(out_path)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with out_path.open("a", encoding="utf-8", newline="") as fh:
-            fh.write(f"{repo_data['full_name']},{repo_data['language']},{len(fixtures_list)}\n")
+            fh.write(
+                f"{repo_data['full_name']},{repo_data['language']},{len(fixtures_list)}\n"
+            )
         return len(fixtures_list)
 
-    monkeypatch.setattr(human_corpus, "persist_repository_and_fixtures", fake_persist_repository_and_fixtures)
+    monkeypatch.setattr(
+        human_corpus,
+        "persist_repository_and_fixtures",
+        fake_persist_repository_and_fixtures,
+    )
 
     import collection.db as db_module
 
-    monkeypatch.setattr(db_module, "insert_human_inter_fixtures_coordinated", lambda db_path, selected_fixtures, seed=42, batch_size=1000: len(selected_fixtures))
+    monkeypatch.setattr(
+        db_module,
+        "insert_human_inter_fixtures_coordinated",
+        lambda db_path, selected_fixtures, seed=42, batch_size=1000: len(
+            selected_fixtures
+        ),
+    )
 
     initialise_db(out_db)
 
-    collector = HumanCorpusCollector(corpus_db_path=out_db, clones_dir=clones_dir, output_db=out_db, repo_qc_dir=tmp_path)
+    collector = HumanCorpusCollector(
+        corpus_db_path=out_db,
+        clones_dir=clones_dir,
+        output_db=out_db,
+        repo_qc_dir=tmp_path,
+    )
     # Ensure run() selects our single repo
-    monkeypatch.setattr(human_corpus, 'select_human_corpus_repositories', lambda repo_qc_dir, repos_per_language, language, require_fixture_repo_list: [repo])
+    monkeypatch.setattr(
+        human_corpus,
+        "select_human_corpus_repositories",
+        lambda repo_qc_dir, repos_per_language, language, require_fixture_repo_list: [
+            repo
+        ],
+    )
 
-    stats_run, db_path = collector.run(repos_per_language=None, language=None, only_write_test_commits=False, workers=1)
+    stats_run, db_path = collector.run(
+        repos_per_language=None, language=None, only_write_test_commits=False, workers=1
+    )
     assert db_path == out_db
 
-    stats_inter, db_path = collector.collect_inter_human([repo], targets={"python": 1}, workers=1)
+    stats_inter, db_path = collector.collect_inter_human(
+        [repo], targets={"python": 1}, workers=1
+    )
     assert stats_inter.fixtures_collected == 1
-
- 

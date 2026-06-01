@@ -804,7 +804,7 @@ class Tier2RepoMatcher:
                        created_at, pushed_at, clone_url, pinned_commit, domain,
                        num_test_files, num_fixtures
                 FROM repositories
-                WHERE {' AND '.join(where)}
+                WHERE {" AND ".join(where)}
                 ORDER BY stars DESC, num_test_files DESC, num_fixtures DESC, full_name ASC
                 LIMIT ?
             """

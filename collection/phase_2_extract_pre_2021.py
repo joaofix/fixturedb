@@ -107,7 +107,9 @@ def main():
             output_db=output_db,
             repo_qc_dir=repo_qc_dir,
         )
-        stats, db_path = collector.run(repos_per_language=args.repos_per_language, language=None)
+        stats, db_path = collector.run(
+            repos_per_language=args.repos_per_language, language=None
+        )
 
         logger.info("")
         logger.info("=" * 70)

@@ -1682,7 +1682,9 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
     # language. This avoids analyzing files like README.md or data files.
     allowed = ALLOWED_EXTS.get(language)
     if ext and allowed is not None and ext not in allowed:
-        logger.debug(f"Skipping file with extension {ext} not in allowed list for {language}: {file_path}")
+        logger.debug(
+            f"Skipping file with extension {ext} not in allowed list for {language}: {file_path}"
+        )
         return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
 
     # Log file size before reading (helps identify memory issues with large files)
@@ -1694,7 +1696,7 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
         # Skip files larger than MAX_FILE_SIZE_BYTES (not real test files)
         if file_size_bytes > MAX_FILE_SIZE_BYTES:
             logger.warning(
-                f"[extract] Skipping oversized file: {file_path.name} is {file_size_mb:.2f} MB (> {MAX_FILE_SIZE_BYTES / (1024*1024):.0f} MB limit)"
+                f"[extract] Skipping oversized file: {file_path.name} is {file_size_mb:.2f} MB (> {MAX_FILE_SIZE_BYTES / (1024 * 1024):.0f} MB limit)"
             )
             return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
 
