@@ -40,3 +40,17 @@ extend-exclude = '''
 testpaths = ["tests"]
 norecursedirs = ["clones", ".git", "venv", "dist", "build"]
 addopts = "-q"
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I", "C", "Q", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_configs = true
+files = ["collection"]
+
+[tool.isort]
+profile = "black"
