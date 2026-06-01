@@ -22744,3 +22744,16 @@ getsentry/sentry,python,36db4b14652967cdd8a56c533dd65b9b5e32eb0a,tests/sentry/wo
 getsentry/sentry,python,1ff6f855e876de90b730656e7e1924d4ce19151c,tests/sentry/workflow_engine/handlers/condition/test_group_state_handlers.py,setUp,unittest_setup,218,238,21,unittest,0,1
 getsentry/sentry,python,6484e454fca05f0f544a47307b3133eb06f0ef10,tests/sentry/workflow_engine/handlers/condition/test_group_state_handlers.py,setUp,unittest_setup,157,177,21,unittest,0,1
 getsentry/sentry,python,30d47e51948d616efc50711551562e3c05188ee4,tests/sentry/workflow_engine/handlers/condition/test_group_event_handlers.py,setUp,unittest_setup,159,168,10,unittest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
+owner/fixture_repo,python,deadbeef,tests/test_foo.py,my_fixture,pytest_decorator,10,20,5,pytest,0,1
