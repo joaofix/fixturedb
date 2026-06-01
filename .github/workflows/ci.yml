@@ -36,6 +36,18 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+      - name: Install linting tools
+        run: |
+          pip install ruff mypy black
+
+      - name: Run linters
+        run: |
+          ruff check .
+          black --check .
+
+      - name: Run mypy
+        run: mypy
+
       - name: Run tests
         run: |
           pytest -q --junitxml=pytest.xml
