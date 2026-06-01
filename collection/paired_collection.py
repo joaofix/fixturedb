@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from collections import Counter
 
+from .cli_utils import add_language_arg, add_repos_per_language_arg
 from .cloner import clone_repo
 from .config import CLONES_DIR, DATA_DIR, HUMAN_CORPUS_CUTOFF_DATE, LANGUAGE_CONFIGS
 from .db import (
@@ -25,7 +26,9 @@ from .db import (
 from .fixture_extractor import extract_fixtures_at_commit
 from .agent_commit_detector import Tier1RepositoryScanner
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -508,15 +511,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Run the paired within-repository study"
     )
-    parser.add_argument(
-        "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
-    )
-    parser.add_argument(
-        "--repos-per-language",
-        type=int,
-        default=50,
-        help="Repositories per language to consider",
-    )
+    add_language_arg(parser, LANGUAGE_CONFIGS, "Limit to one language")
+    add_repos_per_language_arg(parser, 50, "Repositories per language to consider")
     parser.add_argument(
         "--max-commits-per-role",
         type=int,

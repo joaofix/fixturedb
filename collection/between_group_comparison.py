@@ -18,7 +18,9 @@ from scipy.stats import chi2_contingency, mannwhitneyu
 from .config import DATA_DIR
 from .db import db_session
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass

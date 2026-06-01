@@ -23,7 +23,9 @@ from collection.config import EXCLUSION_KEYWORDS
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.clone_manager import temp_clone_commit_history
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 GITHUB_SEARCH_RAW_DIR = PROJECT_ROOT / "github-search-raw"
 OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
@@ -461,5 +463,8 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    # Configure logging via collection.logging_utils.configure_logging()
+    from collection.logging_utils import configure_logging
+
+    configure_logging()
     main()

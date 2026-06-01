@@ -27,7 +27,9 @@ from .db import (
     db_session,
 )
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class RepositoryMetadata(TypedDict, total=False):

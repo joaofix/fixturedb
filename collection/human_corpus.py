@@ -18,9 +18,17 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple, Any, Set
 from collections import defaultdict
 
+from .cli_utils import (
+    add_language_arg,
+    add_output_db_arg,
+    add_repos_per_language_arg,
+    add_repo_dir_arg,
+    add_test_commits_csv_arg,
+    add_workers_arg,
+)
 from .config import (
     CLONES_DIR,
     DATA_DIR,
@@ -55,8 +63,9 @@ from .corpus_utils import (
     persist_repository_and_fixtures,
 )
 from .sampling import stratified_sample_by_language
+from .logging_utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def _human_fixtures_root() -> Path:
@@ -72,6 +81,122 @@ def _stable_repo_id(full_name: str) -> int:
     """Derive a stable synthetic repository ID from a repository slug."""
     digest = hashlib.md5(full_name.encode("utf-8")).hexdigest()
     return int(digest[:12], 16)
+
+
+def _load_inter_checkpoint(inter_checkpoint: Path) -> tuple[set[str], dict]:
+    """Load inter-repo resume state from disk."""
+    completed: set[str] = set()
+    counts_local = {"repos_persisted": 0, "fixtures_persisted": 0}
+    if inter_checkpoint.exists():
+        try:
+            with inter_checkpoint.open("r", encoding="utf-8") as fh:
+                data = json.load(fh)
+            completed.update(data.get("completed_repos", []))
+            counts_local.update(data.get("counts", {}))
+        except Exception:
+            logger.debug("Failed to load inter checkpoint %s", inter_checkpoint)
+    return completed, counts_local
+
+
+def _save_inter_checkpoint(inter_checkpoint: Path, completed: set[str], counts_local: dict) -> None:
+    """Persist inter-repo resume state to disk."""
+    try:
+        inter_checkpoint.parent.mkdir(parents=True, exist_ok=True)
+        with inter_checkpoint.open("w", encoding="utf-8") as fh:
+            json.dump(
+                {"completed_repos": sorted(completed), "counts": counts_local},
+                fh,
+                ensure_ascii=False,
+                indent=2,
+            )
+    except Exception:
+        logger.debug("Failed to save inter checkpoint %s", inter_checkpoint)
+
+
+def _write_inter_progress(inter_progress_file: Path, completed: set[str], counts_local: dict) -> None:
+    """Write a small progress snapshot for the inter-repo collector."""
+    try:
+        inter_progress_file.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "repos_persisted": counts_local.get("repos_persisted", 0),
+            "fixtures_persisted": counts_local.get("fixtures_persisted", 0),
+            "completed_repos_count": len(completed),
+        }
+        with inter_progress_file.open("w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=2)
+    except Exception:
+        logger.debug("Failed to write inter progress %s", inter_progress_file)
+
+
+def _collect_inter_human_candidates(
+    agent_repos: list[dict],
+    clones_dir: Path,
+    scanner: Tier1RepositoryScanner,
+    extractor: AgentFixtureExtractor,
+    candidate_map: dict[str, list[dict]],
+) -> list[tuple[dict, dict]]:
+    """Collect complete human fixture candidates from agent-enabled repositories."""
+    candidates: list[tuple[dict, dict]] = []
+
+    for repo in agent_repos:
+        repo_name = repo["full_name"]
+        repo_path = clones_dir / repo_name.replace("/", "__")
+
+        if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
+            shutil.rmtree(repo_path, ignore_errors=True)
+
+        with clone_with_function(
+            clone_repo_for_commit_scan,
+            repo.get("clone_url", ""),
+            repo_path,
+        ) as managed_repo_path:
+            if managed_repo_path is None:
+                logger.debug("[Human Inter] clone failed for %s; skipping", repo_name)
+                continue
+
+            human_commits = {}
+            if candidate_map and repo_name in candidate_map:
+                for row in candidate_map[repo_name]:
+                    sha = (row.get("commit_sha") or "").strip()
+                    date = (row.get("commit_date") or "").strip()
+                    if sha and date and date <= HUMAN_CORPUS_CUTOFF_DATE:
+                        human_commits[sha] = "human"
+            else:
+                try:
+                    commit_roles = scanner.scan_repo_commit_roles(
+                        managed_repo_path,
+                        start_date="1970-01-01",
+                        language=repo.get("language"),
+                        detect_test_files=True,
+                    )
+                except Exception as e:
+                    logger.debug("[Human Inter] scan failed for %s: %s", repo_name, e)
+                    continue
+
+                human_commits = {
+                    c.commit_sha: "human"
+                    for c in commit_roles
+                    if c.commit_role == "human"
+                    and getattr(c, "is_test_commit", False)
+                    and (c.commit_date or "") <= HUMAN_CORPUS_CUTOFF_DATE
+                }
+
+            if not human_commits:
+                continue
+
+            fixtures = extractor._extract_from_agent_commits(
+                repo_name=repo_name, commits=human_commits
+            )
+            fixtures = [f for f in fixtures if f.get("is_complete_addition")]
+            if not fixtures:
+                continue
+
+            for fixture in fixtures:
+                fixture["repo_full_name"] = repo_name
+                fixture["language"] = repo.get("language")
+                candidates.append((repo, fixture))
+
+    return candidates
 
 
 @dataclass
@@ -495,48 +620,9 @@ class HumanCorpusCollector:
             domain = metadata["domain"]
             star_tier = metadata["star_tier"]
             repo_age = metadata["repo_age_years"]
-
-            commit_roles = scanner.scan_repo_commit_roles(
-                managed_repo_path,
-                start_date=AGENT_CORPUS_START_DATE,
-                language=language_name,
-                detect_test_files=True,
+            test_commit_rows, fixtures = self._scan_and_extract(
+                managed_repo_path, language_name, repo_name, scanner, extractor
             )
-
-            test_commit_rows = [
-                {
-                    "repo_name": repo_name,
-                    "commit_sha": commit.commit_sha,
-                    "commit_role": commit.commit_role,
-                    "agent_type": commit.agent_type,
-                    "commit_date": commit.commit_date,
-                    "language": language_name,
-                    "test_file_count": len(commit.test_files),
-                    "test_file_paths": json.dumps(
-                        commit.test_files, ensure_ascii=False
-                    ),
-                }
-                for commit in commit_roles
-                if commit.commit_role == "human" and commit.is_test_commit
-            ]
-
-            human_commits = {
-                commit.commit_sha: "human"
-                for commit in commit_roles
-                if commit.commit_role == "human" and commit.is_test_commit
-            }
-
-            fixtures = []
-            if human_commits:
-                logger.info(
-                    f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits"
-                )
-                fixtures = extractor._extract_from_agent_commits(
-                    repo_name=repo_name, commits=human_commits
-                )
-                fixtures = [
-                    fixture for fixture in fixtures if fixture.get("is_complete_addition")
-                ]
 
             return {
                 "repo_name": repo_name,
@@ -566,6 +652,73 @@ class HumanCorpusCollector:
             "test_commit_rows": test_commit_rows,
             "fixtures": fixtures,
         }
+
+    def _scan_and_extract(
+        self,
+        managed_repo_path: Path,
+        language_name: str,
+        repo_name: str,
+        scanner: Tier1RepositoryScanner,
+        extractor: AgentFixtureExtractor,
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """Scan commit roles for a repository and extract complete human fixtures.
+
+        This helper runs the provided `scanner` to obtain commit role objects,
+        filters those commits to human test commits, and then invokes the
+        `extractor` to extract fixtures from the matching commits. Only
+        fixtures marked as `is_complete_addition` are returned.
+
+        Args:
+            managed_repo_path (Path): Path to the checked-out repository.
+            language_name (str): Repository language (e.g., 'python').
+            repo_name (str): GitHub repository full name (owner/name).
+            scanner (Tier1RepositoryScanner-like): Object exposing
+                `scan_repo_commit_roles(repo_path, start_date, language, detect_test_files)`.
+            extractor (AgentFixtureExtractor-like): Object exposing
+                `_extract_from_agent_commits(repo_name, commits)`.
+
+        Returns:
+            tuple: (test_commit_rows, fixtures)
+                - test_commit_rows (list[dict]): Rows suitable for CSV/DB insertion
+                  describing each human test commit discovered.
+                - fixtures (list[dict]): Extracted fixture dictionaries filtered
+                  to only include complete additions.
+        """
+        commit_roles = scanner.scan_repo_commit_roles(
+            managed_repo_path,
+            start_date=AGENT_CORPUS_START_DATE,
+            language=language_name,
+            detect_test_files=True,
+        )
+
+        test_commit_rows = [
+            {
+                "repo_name": repo_name,
+                "commit_sha": commit.commit_sha,
+                "commit_role": commit.commit_role,
+                "agent_type": commit.agent_type,
+                "commit_date": commit.commit_date,
+                "language": language_name,
+                "test_file_count": len(commit.test_files),
+                "test_file_paths": json.dumps(commit.test_files, ensure_ascii=False),
+            }
+            for commit in commit_roles
+            if commit.commit_role == "human" and commit.is_test_commit
+        ]
+
+        human_commits = {
+            commit.commit_sha: "human"
+            for commit in commit_roles
+            if commit.commit_role == "human" and commit.is_test_commit
+        }
+
+        fixtures = []
+        if human_commits:
+            logger.info(f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits")
+            fixtures = extractor._extract_from_agent_commits(repo_name=repo_name, commits=human_commits)
+            fixtures = [fixture for fixture in fixtures if fixture.get("is_complete_addition")]
+
+        return test_commit_rows, fixtures
 
     def run(
         self,
@@ -680,11 +833,11 @@ class HumanCorpusCollector:
         for lang, repos in sorted(repos_by_language.items()):
             logger.info(f"[Human Corpus]   {lang}: {len(repos)} repositories")
 
-        # Trackers for statistics and progress
         repo_ages = []
         repo_contributors = []
-        language_progress = {}  # Track per-language progress for logging
+        language_progress: dict[str, dict] = {}
         progress_lock = threading.Lock()
+        progress_file = self._human_progress_file()
 
         def log_progress():
             """Log progress every 3 minutes."""
@@ -705,197 +858,44 @@ class HumanCorpusCollector:
                             f"  {lang}: {completed}/{total_repos} ({pct:.1f}%) "
                             f"~{avg_fixtures:.0f} fixtures/repo"
                         )
-                # Also write a JSON progress snapshot for external monitoring
                 try:
-                    write_progress_file()
+                    self._write_human_progress_snapshot(
+                        progress_file, stats, language_progress
+                    )
                 except Exception:
                     logger.debug("Failed to write progress snapshot")
-                time.sleep(180)  # 3 minutes
+                time.sleep(180)
 
-        # Start progress logging thread
         log_progress.stop_flag = False
         progress_thread = threading.Thread(target=log_progress, daemon=True)
         progress_thread.start()
 
-        # Progress file path (writes periodic JSON snapshots for external monitoring)
-        progress_file = (
-            Path(self.output_db).parent
-            / f"{Path(self.output_db).stem}_human_progress.json"
-        )
-
-        def write_progress_file() -> None:
-            with progress_lock:
-                data = {
-                    "repos_scanned": stats.repos_scanned,
-                    "repos_passed_qc": stats.repos_passed_qc,
-                    "fixtures_collected": stats.fixtures_collected,
-                    "test_commits_found": stats.test_commits_found,
-                    "per_language": {
-                        lang: {
-                            "total_repos": info.get("total_repos", 0),
-                            "completed": info.get("completed", 0),
-                            "avg_fixtures_per_repo": info.get(
-                                "avg_fixtures_per_repo", 0
-                            ),
-                        }
-                        for lang, info in language_progress.items()
-                    },
-                }
-            try:
-                progress_file.parent.mkdir(parents=True, exist_ok=True)
-                with progress_file.open("w", encoding="utf-8") as fh:
-                    json.dump(data, fh, ensure_ascii=False, indent=2)
-            except Exception:
-                logger.debug("Failed to write progress file %s", progress_file)
-
         try:
-            # Process each language sequentially
             for lang_idx, (current_lang, lang_repos) in enumerate(
                 sorted(repos_by_language.items()), 1
             ):
                 logger.info(
                     f"[Human Corpus] Processing language {lang_idx}/{len(repos_by_language)}: {current_lang} ({len(lang_repos)} repos)"
                 )
-
                 language_progress[current_lang] = {
                     "total_repos": len(lang_repos),
                     "completed": 0,
                     "avg_fixtures_per_repo": 0,
                 }
-
-                # Accumulate all results for this language
-                lang_results = []
-                lang_all_fixtures = []
-                lang_test_commit_rows = []
-
-                if workers <= 1:
-                    for repo in lang_repos:
-                        lang_results.append(self._process_human_repository(repo))
-                else:
-                    with ThreadPoolExecutor(max_workers=workers) as executor:
-                        futures = {
-                            executor.submit(self._process_human_repository, repo): repo
-                            for repo in lang_repos
-                        }
-                        for future in as_completed(futures):
-                            lang_results.append(future.result())
-
-                # Process all results for this language
-                for result in lang_results:
-                    with progress_lock:
-                        stats.repos_scanned += 1
-                        language_progress[current_lang]["completed"] += 1
-
-                    repo_name = result["repo_name"]
-
-                    if result["status"] != "ok":
-                        stats.record_skip(result.get("skip_reason") or "unknown")
-                        logger.debug(
-                            f"[Human Corpus] Skip {repo_name}: {result.get('skip_reason')}"
-                        )
-                        continue
-
-                    stats.repos_passed_qc += 1
-
-                    domain = result["domain"]
-                    star_tier = result["star_tier"]
-                    repo_age = result["repo_age"]
-                    if repo_age is not None:
-                        repo_ages.append(repo_age)
-                    if result.get("num_contributors"):
-                        repo_contributors.append(result["num_contributors"])
-
-                    stats.domain_distribution[domain] = (
-                        stats.domain_distribution.get(domain, 0) + 1
-                    )
-                    stats.star_tier_distribution[star_tier] = (
-                        stats.star_tier_distribution.get(star_tier, 0) + 1
-                    )
-
-                    repo_data = result["repo_data"]
-                    test_commit_rows = result["test_commit_rows"]
-                    fixtures = result["fixtures"]
-
-                    # Upsert repository and enrich test commits with repo_id
-                    with db_session(self.output_db) as conn:
-                        repo_row, _ = upsert_repository(conn, repo_data)
-
-                        # Insert test commits with repo_id
-                        for test_commit in test_commit_rows:
-                            test_commit["repo_id"] = repo_row
-                            insert_test_commit(conn, test_commit)
-
-                    lang_test_commit_rows.extend(test_commit_rows)
-                    test_commit_rows_by_language[current_lang].extend(test_commit_rows)
-                    all_test_commit_rows.extend(test_commit_rows)
-                    stats.test_commits_found += len(test_commit_rows)
-
-                    if fixtures:
-                        lang_all_fixtures.append((repo_data, fixtures))
-                        stats.repos_by_language[current_lang] = (
-                            stats.repos_by_language.get(current_lang, 0) + 1
-                        )
-                    else:
-                        logger.debug(
-                            f"[Human Corpus] No complete human fixtures found in {repo_name}"
-                        )
-                        stats.repos_by_language[current_lang] = (
-                            stats.repos_by_language.get(current_lang, 0) + 1
-                        )
-
-                    # Clean up clone after extraction is complete
-                    repo_path = self.clones_dir / repo_name.replace("/", "__")
-                    if repo_path.exists():
-                        shutil.rmtree(repo_path, ignore_errors=True)
-                        logger.debug(f"[Human Corpus] Cleaned up clone: {repo_name}")
-
-                # SAFE CHECKPOINT: Write all fixtures/test commits for this language before moving to next language
-                if lang_all_fixtures:
-                    logger.info(
-                        f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
-                    )
-                    fixtures_out_path = _human_fixture_csv_path(current_lang, "within")
-                    for repo_data, fixtures_list in lang_all_fixtures:
-                        fixture_count = persist_repository_and_fixtures(
-                            self.output_db,
-                            repo_data,
-                            fixtures_list,
-                            out_path=fixtures_out_path,
-                            handle_mocks=True,
-                        )
-                        with progress_lock:
-                            stats.fixtures_collected += fixture_count
-                            if stats.repos_by_language[current_lang] > 0:
-                                language_progress[current_lang][
-                                    "avg_fixtures_per_repo"
-                                ] = (
-                                    stats.fixtures_collected
-                                    / stats.repos_by_language[current_lang]
-                                )
-
-                    logger.info(
-                        f"[Human Corpus] Checkpoint complete for {current_lang}: "
-                        f"{stats.fixtures_collected} total fixtures collected"
-                    )
-                    try:
-                        write_progress_file()
-                    except Exception:
-                        logger.debug("Failed to write progress after checkpoint for %s", current_lang)
-
-                if self.test_commits_csv:
-                    # Flush the language CSV as soon as the language is complete.
-                    if only_write_test_commits or self.test_commits_csv.suffix == "":
-                        out_dir = Path(self.test_commits_csv)
-                        out_dir.mkdir(parents=True, exist_ok=True)
-                        out_path = out_dir / f"{current_lang}_human_test_commit_qc.csv"
-                        write_test_commits_csv(lang_test_commit_rows, out_path)
-                        try:
-                            write_progress_file()
-                        except Exception:
-                            logger.debug("Failed to write progress after flushing test commits for %s", current_lang)
-
-                with db_session(self.output_db) as conn:
-                    mark_global_checkpoint(conn, within_step(current_lang))
+                self._process_human_within_language(
+                    current_lang=current_lang,
+                    lang_repos=lang_repos,
+                    workers=workers,
+                    only_write_test_commits=only_write_test_commits,
+                    stats=stats,
+                    progress_lock=progress_lock,
+                    language_progress=language_progress,
+                    repo_ages=repo_ages,
+                    repo_contributors=repo_contributors,
+                    all_test_commit_rows=all_test_commit_rows,
+                    test_commit_rows_by_language=test_commit_rows_by_language,
+                    progress_file=progress_file,
+                )
 
         finally:
             # Stop progress logging thread
@@ -925,7 +925,9 @@ class HumanCorpusCollector:
                 mark_global_checkpoint(conn, within_all_step)
 
         try:
-            write_progress_file()
+            self._write_human_progress_snapshot(
+                progress_file, stats, language_progress
+            )
         except Exception:
             logger.debug("Failed to write final progress file")
 
@@ -957,132 +959,11 @@ class HumanCorpusCollector:
         candidates: list[dict] = []
 
         # Checkpoint / progress paths for inter-run resumability
-        inter_checkpoint = (
-            Path(self.output_db).parent / "human_inter_checkpoint.json"
-        )
-        inter_progress_file = (
-            Path(self.output_db).parent / f"{Path(self.output_db).stem}_human_inter_progress.json"
-        )
+        inter_checkpoint = Path(self.output_db).parent / "human_inter_checkpoint.json"
+        inter_progress_file = Path(self.output_db).parent / f"{Path(self.output_db).stem}_human_inter_progress.json"
 
-        def _load_inter_checkpoint() -> tuple[set, dict]:
-            completed = set()
-            counts_local = {"repos_persisted": 0, "fixtures_persisted": 0}
-            if inter_checkpoint.exists():
-                try:
-                    with inter_checkpoint.open("r", encoding="utf-8") as fh:
-                        data = json.load(fh)
-                    completed.update(data.get("completed_repos", []))
-                    counts_local.update(data.get("counts", {}))
-                except Exception:
-                    logger.debug("Failed to load inter checkpoint %s", inter_checkpoint)
-            return completed, counts_local
-
-        def _save_inter_checkpoint(completed: set, counts_local: dict) -> None:
-            try:
-                inter_checkpoint.parent.mkdir(parents=True, exist_ok=True)
-                with inter_checkpoint.open("w", encoding="utf-8") as fh:
-                    json.dump({"completed_repos": sorted(completed), "counts": counts_local}, fh, ensure_ascii=False, indent=2)
-            except Exception:
-                logger.debug("Failed to save inter checkpoint %s", inter_checkpoint)
-
-        def _write_inter_progress(completed: set, counts_local: dict) -> None:
-            try:
-                inter_progress_file.parent.mkdir(parents=True, exist_ok=True)
-                data = {
-                    "repos_persisted": counts_local.get("repos_persisted", 0),
-                    "fixtures_persisted": counts_local.get("fixtures_persisted", 0),
-                    "completed_repos_count": len(completed),
-                }
-                with inter_progress_file.open("w", encoding="utf-8") as fh:
-                    json.dump(data, fh, ensure_ascii=False, indent=2)
-            except Exception:
-                logger.debug("Failed to write inter progress %s", inter_progress_file)
-
-        logger.info(
-            f"[Human Inter] Building candidate pool from {len(agent_repos)} repos"
-        )
-
-        scanner = Tier1RepositoryScanner(self.corpus_db_path)
-        extractor = AgentFixtureExtractor(
-            clones_dir=self.clones_dir,
-            source_db=self.corpus_db_path,
-            start_date="1970-01-01",
-        )
-
-        # Optionally build candidate pool from raw commit CSV exports to avoid scanning full history
-        candidate_map = {}
-        if raw_commits_dir:
-            try:
-                candidate_map = build_pre2021_candidate_pool(
-                    raw_commits_dir, cutoff_date=HUMAN_CORPUS_CUTOFF_DATE
-                )
-                logger.info(
-                    f"[Human Inter] Loaded pre-2021 candidate pool with {len(candidate_map)} repos from {raw_commits_dir}"
-                )
-            except Exception as e:
-                logger.debug(
-                    f"Failed to build candidate pool from {raw_commits_dir}: {e}"
-                )
-
-        # Collect candidate fixtures across repos
-        for repo in agent_repos:
-            repo_name = repo["full_name"]
-            repo_path = self.clones_dir / repo_name.replace("/", "__")
-
-            if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
-                shutil.rmtree(repo_path, ignore_errors=True)
-
-            # Use managed clone context to ensure cleanup and reduce scattered rmtree calls.
-            with clone_with_function(clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path) as managed_repo_path:
-                if managed_repo_path is None:
-                    logger.debug(
-                        f"[Human Inter] clone failed for {repo_name}; skipping"
-                    )
-                    continue
-
-                # If we have a candidate map from raw CSVs, prefer those commit SHAs
-                human_commits = {}
-                if candidate_map and repo_name in candidate_map:
-                    for row in candidate_map[repo_name]:
-                        sha = (row.get("commit_sha") or "").strip()
-                        date = (row.get("commit_date") or "").strip()
-                        if sha and date and date <= HUMAN_CORPUS_CUTOFF_DATE:
-                            human_commits[sha] = "human"
-                else:
-                    try:
-                        commit_roles = scanner.scan_repo_commit_roles(
-                            managed_repo_path,
-                            start_date="1970-01-01",
-                            language=repo.get("language"),
-                            detect_test_files=True,
-                        )
-                    except Exception as e:
-                        logger.debug(f"[Human Inter] scan failed for {repo_name}: {e}")
-                        continue
-
-                    human_commits = {
-                        c.commit_sha: "human"
-                        for c in commit_roles
-                        if c.commit_role == "human"
-                        and getattr(c, "is_test_commit", False)
-                        and (c.commit_date or "") <= HUMAN_CORPUS_CUTOFF_DATE
-                    }
-
-                if not human_commits:
-                    continue
-
-                fixtures = extractor._extract_from_agent_commits(
-                    repo_name=repo_name, commits=human_commits
-                )
-                fixtures = [f for f in fixtures if f.get("is_complete_addition")]
-                if not fixtures:
-                    continue
-
-                # Attach repo metadata to each fixture for sampling
-                for f in fixtures:
-                    f["repo_full_name"] = repo_name
-                    f["language"] = repo.get("language")
-                    candidates.append((repo, f))
+        logger.info("[Human Inter] Building candidate pool from %d repos", len(agent_repos))
+        candidates = self._build_inter_candidates(agent_repos, raw_commits_dir)
 
         # Compute targets if not provided: count agent fixtures per language
         if targets is None:
@@ -1119,8 +1000,84 @@ class HumanCorpusCollector:
         for fixture in selected:
             repo_groups[fixture.get("repo_full_name")].append(fixture)
 
-        # Persist per-repo (each call opens its own session internally)
-        completed_repos, counts_local = _load_inter_checkpoint()
+        counts_local, completed_repos, inserted = self._persist_and_insert_inter(
+            selected, inter_checkpoint, inter_progress_file, seed=seed
+        )
+        stats.fixtures_collected += int(inserted or 0)
+
+        # Generate summary for the inter sample
+        self._generate_summary(stats)
+        return stats, self.output_db
+
+    def _generate_summary(self, stats: HumanCorpusStats) -> None:
+        """Generate and save human corpus summary."""
+        generate_corpus_summary(
+            stats=stats,
+            corpus_name="human",
+            output_db=self.output_db,
+            temporal_scope=f"since {AGENT_CORPUS_START_DATE}",
+            extra_metadata={
+                "dataset_temporal_window": AGENT_CORPUS_START_DATE,
+            },
+        )
+
+    def _build_inter_candidates(
+        self, agent_repos: List[Dict[str, Any]], raw_commits_dir: Optional[Path]
+    ) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
+        """Construct the pre-2021 candidate pool of human fixtures from agent repos.
+
+        Args:
+            agent_repos: list of repository metadata dicts.
+            raw_commits_dir: optional path to pre-2021 raw commit CSV exports.
+
+        Returns:
+            List of (repo_dict, fixture_dict) candidate pairs.
+        """
+        logger.info("[Human Inter] Building candidate pool from %d repos", len(agent_repos))
+        scanner = Tier1RepositoryScanner(self.corpus_db_path)
+        extractor = AgentFixtureExtractor(
+            clones_dir=self.clones_dir,
+            source_db=self.corpus_db_path,
+            start_date="1970-01-01",
+        )
+
+        candidate_map = {}
+        if raw_commits_dir:
+            try:
+                candidate_map = build_pre2021_candidate_pool(
+                    raw_commits_dir, cutoff_date=HUMAN_CORPUS_CUTOFF_DATE
+                )
+                logger.info(
+                    f"[Human Inter] Loaded pre-2021 candidate pool with {len(candidate_map)} repos from {raw_commits_dir}"
+                )
+            except Exception as e:
+                logger.debug(f"Failed to build candidate pool from {raw_commits_dir}: {e}")
+
+        return _collect_inter_human_candidates(
+            agent_repos, self.clones_dir, scanner, extractor, candidate_map
+        )
+
+    def _persist_and_insert_inter(
+        self,
+        selected: List[Dict[str, Any]],
+        inter_checkpoint: Path,
+        inter_progress_file: Path,
+        seed: int = 42,
+    ) -> Tuple[Dict[str, int], Set[str], int]:
+        """Persist per-repo CSVs for selected fixtures and perform coordinated DB insert.
+
+        Returns:
+            counts_local: mapping of counters (repos_persisted, fixtures_persisted)
+            completed_repos: set of repo full-names successfully persisted
+            inserted_count: number of rows inserted into `human_inter_fixtures`
+        """
+        from collections import defaultdict
+
+        repo_groups: dict[str, list[dict]] = defaultdict(list)
+        for fixture in selected:
+            repo_groups[fixture.get("repo_full_name")].append(fixture)
+
+        completed_repos, counts_local = _load_inter_checkpoint(inter_checkpoint)
         for repo_full, fixtures_list in repo_groups.items():
             if repo_full in completed_repos:
                 logger.debug("[Human Inter] Skipping already persisted repo %s", repo_full)
@@ -1140,48 +1097,196 @@ class HumanCorpusCollector:
                     out_path=fixtures_out_path,
                     handle_mocks=True,
                 )
-                # update counts and checkpoint after every successful repo persist
                 counts_local["repos_persisted"] = counts_local.get("repos_persisted", 0) + 1
                 counts_local["fixtures_persisted"] = counts_local.get("fixtures_persisted", 0) + int(fixture_count or 0)
-                stats.fixtures_collected += int(fixture_count or 0)
                 completed_repos.add(repo_full)
-                _save_inter_checkpoint(completed_repos, counts_local)
-                _write_inter_progress(completed_repos, counts_local)
+                _save_inter_checkpoint(inter_checkpoint, completed_repos, counts_local)
+                _write_inter_progress(inter_progress_file, completed_repos, counts_local)
             except Exception as e:
                 logger.debug(f"[Human Inter] failed to persist fixtures for {repo_full}: {e}")
-                # Skip inserting inter rows for this repo
                 continue
 
-        # Use coordinated bulk insert to perform lookups + executemany inside a single transaction
+        # Perform coordinated insert and return inserted count
+        inserted = 0
         try:
             from .db import insert_human_inter_fixtures_coordinated
 
             inserted = insert_human_inter_fixtures_coordinated(
                 self.output_db, selected, seed=seed, batch_size=1000
             )
-            stats.fixtures_collected += inserted
         except Exception as e:
             logger.debug(f"[Human Inter] coordinated bulk insert failed: {e}")
         finally:
-            # save final checkpoint/progress
-            _save_inter_checkpoint(completed_repos, counts_local)
-            _write_inter_progress(completed_repos, counts_local)
+            _save_inter_checkpoint(inter_checkpoint, completed_repos, counts_local)
+            _write_inter_progress(inter_progress_file, completed_repos, counts_local)
 
-        # Generate summary for the inter sample
-        self._generate_summary(stats)
-        return stats, self.output_db
+        return counts_local, completed_repos, int(inserted or 0)
 
-    def _generate_summary(self, stats: HumanCorpusStats) -> None:
-        """Generate and save human corpus summary."""
-        generate_corpus_summary(
-            stats=stats,
-            corpus_name="human",
-            output_db=self.output_db,
-            temporal_scope=f"since {AGENT_CORPUS_START_DATE}",
-            extra_metadata={
-                "dataset_temporal_window": AGENT_CORPUS_START_DATE,
+    def _human_progress_file(self) -> Path:
+        """Return the progress snapshot path for within-repo collection."""
+        return Path(self.output_db).parent / f"{Path(self.output_db).stem}_human_progress.json"
+
+    def _write_human_progress_snapshot(
+        self,
+        progress_file: Path,
+        stats: HumanCorpusStats,
+        language_progress: dict[str, dict],
+    ) -> None:
+        """Write a JSON progress snapshot for the human within-repo collector."""
+        data = {
+            "repos_scanned": stats.repos_scanned,
+            "repos_passed_qc": stats.repos_passed_qc,
+            "fixtures_collected": stats.fixtures_collected,
+            "test_commits_found": stats.test_commits_found,
+            "per_language": {
+                lang: {
+                    "total_repos": info.get("total_repos", 0),
+                    "completed": info.get("completed", 0),
+                    "avg_fixtures_per_repo": info.get("avg_fixtures_per_repo", 0),
+                }
+                for lang, info in language_progress.items()
             },
-        )
+        }
+        try:
+            progress_file.parent.mkdir(parents=True, exist_ok=True)
+            with progress_file.open("w", encoding="utf-8") as fh:
+                json.dump(data, fh, ensure_ascii=False, indent=2)
+        except Exception:
+            logger.debug("Failed to write progress file %s", progress_file)
+
+    def _process_human_within_language(
+        self,
+        current_lang: str,
+        lang_repos: list[dict],
+        workers: int,
+        only_write_test_commits: bool,
+        stats: HumanCorpusStats,
+        progress_lock: threading.Lock,
+        language_progress: dict[str, dict],
+        repo_ages: list,
+        repo_contributors: list,
+        all_test_commit_rows: list[dict],
+        test_commit_rows_by_language: dict[str, list[dict]],
+        progress_file: Path,
+    ) -> None:
+        """Process one language worth of repositories and persist its outputs."""
+        lang_results = []
+        lang_all_fixtures = []
+        lang_test_commit_rows = []
+
+        if workers <= 1:
+            for repo in lang_repos:
+                lang_results.append(self._process_human_repository(repo))
+        else:
+            with ThreadPoolExecutor(max_workers=workers) as executor:
+                futures = {
+                    executor.submit(self._process_human_repository, repo): repo
+                    for repo in lang_repos
+                }
+                for future in as_completed(futures):
+                    lang_results.append(future.result())
+
+        for result in lang_results:
+            with progress_lock:
+                stats.repos_scanned += 1
+                language_progress[current_lang]["completed"] += 1
+
+            repo_name = result["repo_name"]
+
+            if result["status"] != "ok":
+                stats.record_skip(result.get("skip_reason") or "unknown")
+                logger.debug(
+                    f"[Human Corpus] Skip {repo_name}: {result.get('skip_reason')}"
+                )
+                continue
+
+            stats.repos_passed_qc += 1
+
+            domain = result["domain"]
+            star_tier = result["star_tier"]
+            repo_age = result["repo_age"]
+            if repo_age is not None:
+                repo_ages.append(repo_age)
+            if result.get("num_contributors"):
+                repo_contributors.append(result["num_contributors"])
+
+            stats.domain_distribution[domain] = (
+                stats.domain_distribution.get(domain, 0) + 1
+            )
+            stats.star_tier_distribution[star_tier] = (
+                stats.star_tier_distribution.get(star_tier, 0) + 1
+            )
+
+            repo_data = result["repo_data"]
+            test_commit_rows = result["test_commit_rows"]
+            fixtures = result["fixtures"]
+
+            with db_session(self.output_db) as conn:
+                repo_row, _ = upsert_repository(conn, repo_data)
+                for test_commit in test_commit_rows:
+                    test_commit["repo_id"] = repo_row
+                    insert_test_commit(conn, test_commit)
+
+            lang_test_commit_rows.extend(test_commit_rows)
+            test_commit_rows_by_language[current_lang].extend(test_commit_rows)
+            all_test_commit_rows.extend(test_commit_rows)
+            stats.test_commits_found += len(test_commit_rows)
+
+            if fixtures:
+                lang_all_fixtures.append((repo_data, fixtures))
+                stats.repos_by_language[current_lang] = (
+                    stats.repos_by_language.get(current_lang, 0) + 1
+                )
+            else:
+                logger.debug(
+                    f"[Human Corpus] No complete human fixtures found in {repo_name}"
+                )
+                stats.repos_by_language[current_lang] = (
+                    stats.repos_by_language.get(current_lang, 0) + 1
+                )
+
+            repo_path = self.clones_dir / repo_name.replace("/", "__")
+            if repo_path.exists():
+                shutil.rmtree(repo_path, ignore_errors=True)
+                logger.debug(f"[Human Corpus] Cleaned up clone: {repo_name}")
+
+        if lang_all_fixtures:
+            logger.info(
+                f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
+            )
+            fixtures_out_path = _human_fixture_csv_path(current_lang, "within")
+            for repo_data, fixtures_list in lang_all_fixtures:
+                fixture_count = persist_repository_and_fixtures(
+                    self.output_db,
+                    repo_data,
+                    fixtures_list,
+                    out_path=fixtures_out_path,
+                    handle_mocks=True,
+                )
+                with progress_lock:
+                    stats.fixtures_collected += fixture_count
+                    if stats.repos_by_language[current_lang] > 0:
+                        language_progress[current_lang]["avg_fixtures_per_repo"] = (
+                            stats.fixtures_collected
+                            / stats.repos_by_language[current_lang]
+                        )
+
+            logger.info(
+                f"[Human Corpus] Checkpoint complete for {current_lang}: "
+                f"{stats.fixtures_collected} total fixtures collected"
+            )
+            self._write_human_progress_snapshot(progress_file, stats, language_progress)
+
+        if self.test_commits_csv:
+            if only_write_test_commits or self.test_commits_csv.suffix == "":
+                out_dir = Path(self.test_commits_csv)
+                out_dir.mkdir(parents=True, exist_ok=True)
+                out_path = out_dir / f"{current_lang}_human_test_commit_qc.csv"
+                write_test_commits_csv(lang_test_commit_rows, out_path)
+                self._write_human_progress_snapshot(progress_file, stats, language_progress)
+
+        with db_session(self.output_db) as conn:
+            mark_global_checkpoint(conn, f"human_within_complete:{current_lang}")
 
 
 def main(args):
@@ -1204,9 +1309,9 @@ def main(args):
 
 if __name__ == "__main__":
     # Ensure logging is configured for CLI runs so INFO progress messages are visible
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
-    )
+    from collection.logging_utils import configure_logging
+
+    configure_logging()
     parser = argparse.ArgumentParser(
         description="Collect human corpus from agent-enabled repositories"
     )
@@ -1216,46 +1321,27 @@ if __name__ == "__main__":
         default=DATA_DIR / "corpus.db",
         help="Path to source corpus.db",
     )
-    parser.add_argument(
-        "--output-db",
-        type=Path,
-        default=None,
-        help="Path to output between-group.db (default: data/between-group.db)",
+    add_output_db_arg(
+        parser,
+        None,
+        "Path to output between-group.db (default: data/between-group.db)",
     )
-    parser.add_argument(
-        "--repos-per-language",
-        type=int,
-        default=None,
-        help="Number of repos per language (None = all repos)",
-    )
-    parser.add_argument(
-        "--language",
-        choices=list(LANGUAGE_CONFIGS.keys()),
-        help="Limit to one language",
-    )
-    parser.add_argument(
-        "--test-commits-csv",
-        type=Path,
-        default=None,
-        help="Directory path to write per-language human test-commit CSVs and exit",
+    add_repos_per_language_arg(parser, None)
+    add_language_arg(parser, LANGUAGE_CONFIGS.keys())
+    add_test_commits_csv_arg(
+        parser,
+        "Directory path to write per-language human test-commit CSVs and exit",
     )
     parser.add_argument(
         "--only-write-test-commits",
         action="store_true",
         help="If set, write per-language human test-commit CSVs and skip fixture extraction",
     )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=EXTRACT_WORKERS,
-        help="Number of concurrent worker threads for repo processing",
-    )
-    parser.add_argument(
-        "--repo-dir",
-        dest="repo_qc_dir",
-        type=Path,
-        default=None,
-        help="Directory containing repo-QC CSVs or per-language human test-commit CSVs (overrides default)",
+    add_workers_arg(parser, EXTRACT_WORKERS, "Number of concurrent worker threads for repo processing")
+    add_repo_dir_arg(
+        parser,
+        None,
+        "Directory containing repo-QC CSVs or per-language human test-commit CSVs (overrides default)",
     )
     args = parser.parse_args()
     # If user provided a test-commits path, wire it into the collector and run in write-only mode

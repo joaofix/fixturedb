@@ -24,7 +24,9 @@ from .agent_patterns import (
     path_matches_pattern,
 )
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass

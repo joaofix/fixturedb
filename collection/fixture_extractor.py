@@ -22,7 +22,9 @@ from .db import db_session
 from .detector import extract_fixtures, _get_parser
 from .test_commit_utils import is_test_file_path
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def _resolve_repo_path(clones_dir: Path, repo_name: str) -> Path:

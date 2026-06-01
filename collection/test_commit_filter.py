@@ -11,6 +11,14 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from .cli_utils import (
+    add_commit_dir_arg,
+    add_language_arg,
+    add_output_dir_arg,
+    add_raw_search_dir_arg,
+    add_repo_dir_arg,
+    add_workers_arg,
+)
 from .agent_corpus import collect_test_files_for_commit
 from .agent_commit_detector import Tier1RepositoryScanner
 from .clone_manager import temp_clone_commit_history
@@ -22,7 +30,9 @@ from .config import (
 )
 from .test_commit_utils import write_test_commits_csv
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 AGENT_TEST_COMMITS_CHECKPOINT = "agent_test_commits.checkpoint.json"
 HUMAN_TEST_COMMITS_CHECKPOINT = "human_test_commits.checkpoint.json"
@@ -783,15 +793,25 @@ def build_pre2021_candidate_pool(raw_commits_dir: Path, cutoff_date: str = HUMAN
 
 
 def _cli_main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    # Configure logging via collection.logging_utils.configure_logging()
+    from collection.logging_utils import configure_logging
+
+    configure_logging()
     parser = argparse.ArgumentParser(description="Filter agent datasets to test commits (agent or human)")
     parser.add_argument("--mode", choices=["agent", "human"], default="agent")
-    parser.add_argument("--commit-dir", dest="commit_qc_dir", type=Path, default=Path("github-search-agent") / "agent_commits", help="Directory containing *_agent_commit.csv files")
-    parser.add_argument("--repo-dir", dest="repo_qc_dir", type=Path, default=Path("github-search-agent") / "agent_repositories")
-    parser.add_argument("--raw-search-dir", dest="raw_search_dir", type=Path, default=None, help="Directory containing github-search-raw *.csv.gz repository search files")
-    parser.add_argument("--output-dir", type=Path, default=Path("output/test-commits"))
-    parser.add_argument("--language", type=str, default=None, help="Limit to one language (e.g. python)")
-    parser.add_argument("--workers", type=int, default=12)
+    add_commit_dir_arg(
+        parser,
+        Path("github-search-agent") / "agent_commits",
+        "Directory containing *_agent_commit.csv files",
+    )
+    add_repo_dir_arg(parser, Path("github-search-agent") / "agent_repositories")
+    add_raw_search_dir_arg(
+        parser,
+        "Directory containing github-search-raw *.csv.gz repository search files",
+    )
+    add_output_dir_arg(parser, Path("output/test-commits"), "Output directory for filtered test commits")
+    add_language_arg(parser, ["python", "java", "javascript", "typescript", "go"], "Limit to one language (e.g. python)")
+    add_workers_arg(parser, 12)
     args = parser.parse_args()
 
     repo_qc_files = list(Path(args.repo_qc_dir).glob("*_agent_repo.csv")) if Path(args.repo_qc_dir).exists() else []
