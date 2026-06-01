@@ -23,11 +23,10 @@ from .config import (
 from .resume_utils import latest_matching_file
 from .agent_commit_detector import Tier2RepoMatcher
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+# Logging is configured via collection.logging_utils.configure_logging()
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def main() -> int:

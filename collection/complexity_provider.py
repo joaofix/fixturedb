@@ -29,7 +29,9 @@ from typing import Optional
 
 from lizard import analyze_file as lizard_analyze_file
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def get_cyclomatic_complexity(file_path: Path, language: str) -> Optional[int]:

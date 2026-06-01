@@ -52,7 +52,9 @@ from .corpus_utils import (
 )
 from .clone_manager import clone_with_function
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 COAUTHOR_TRAILER_RE = re.compile(
     r"^\s*co-authored-by:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE

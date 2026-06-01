@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
+from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg
 from .agent_corpus import AgentCorpusCollector
 from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from .fixture_extractor import AgentFixtureExtractor
@@ -20,11 +21,10 @@ from .db import initialise_db
 # AGENT dataset start date is configured in collection.config as AGENT_CORPUS_START_DATE
 from .resume_utils import database_has_rows
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Logging is configured via collection.logging_utils.configure_logging()
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def main():
@@ -34,25 +34,17 @@ def main():
         description="Extract agent fixtures from user-provided QC datasets"
     )
     project_root = Path(__file__).resolve().parents[1]
-    parser.add_argument(
-        "--output-db",
-        type=Path,
-        default=project_root / "data" / "fixturedb-agent.db",
-        help="Output database path",
+    add_output_db_arg(
+        parser,
+        project_root / "data" / "fixturedb-agent.db",
+        "Output database path",
     )
-    parser.add_argument(
-        "--repo-dir",
-        dest="repo_qc_dir",
-        type=Path,
-        default=project_root / "github-search-agent" / "agent_repositories",
-        help="Directory containing *_agent_repo.csv files",
+    add_repo_dir_arg(
+        parser,
+        project_root / "github-search-agent" / "agent_repositories",
+        "Directory containing *_agent_repo.csv files",
     )
-    parser.add_argument(
-        "--repos-per-language",
-        type=int,
-        default=None,
-        help="Repositories per language (None = all)",
-    )
+    add_repos_per_language_arg(parser, None)
     parser.add_argument(
         "--languages",
         nargs="+",

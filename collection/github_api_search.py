@@ -20,7 +20,9 @@ from .agent_patterns import (
     iter_exact_filename_patterns,
 )
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 class GitHubAPISearcher:

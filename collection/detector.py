@@ -71,7 +71,9 @@ from .complexity_provider import (
     get_file_function_count,
 )
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Lazy-load Tree-sitter grammars to avoid import overhead when unused

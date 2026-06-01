@@ -46,7 +46,9 @@ GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_reposito
 OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_commits"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def read_config_positive_rows() -> list[dict]:
@@ -326,5 +328,7 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    from collection.logging_utils import configure_logging
+
+    configure_logging()
     main()

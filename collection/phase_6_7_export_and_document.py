@@ -26,11 +26,11 @@ from datetime import datetime
 from .dataset_exporter import HumanDatasetExporter, AgentDatasetExporter
 from .db import db_session
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Logging is configured via collection.logging_utils.configure_logging()
+from collection.logging_utils import get_logger
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def main():

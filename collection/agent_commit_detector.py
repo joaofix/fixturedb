@@ -39,8 +39,9 @@ COAUTHOR_TRAILER_RE = re.compile(
     r"^\s*co-authored-by:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE
 )
 from .db import db_session
+from collection.logging_utils import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 GIT_LOG_FIELD_SEPARATOR = "\x1f"
 GIT_LOG_RECORD_SEPARATOR = "\x1e"

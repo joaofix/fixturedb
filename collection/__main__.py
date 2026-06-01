@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from .cli_utils import add_language_arg, add_repos_per_language_arg
 from .config import LANGUAGE_CONFIGS
 from .paired_collection import main as paired_main
 
@@ -18,14 +19,9 @@ def build_parser() -> argparse.ArgumentParser:
     paired_parser = subparsers.add_parser(
         "paired", help="Run the paired within-repository study"
     )
-    paired_parser.add_argument(
-        "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
-    )
-    paired_parser.add_argument(
-        "--repos-per-language",
-        type=int,
-        default=50,
-        help="Repositories per language to consider",
+    add_language_arg(paired_parser, LANGUAGE_CONFIGS, "Limit to one language")
+    add_repos_per_language_arg(
+        paired_parser, 50, "Repositories per language to consider"
     )
     paired_parser.add_argument(
         "--max-commits-per-role",

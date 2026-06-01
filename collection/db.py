@@ -15,7 +15,9 @@ from pathlib import Path
 
 from .config import DB_PATH
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 GLOBAL_CHECKPOINT_REPO_ID = 0
 

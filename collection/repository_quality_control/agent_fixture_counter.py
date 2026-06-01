@@ -38,7 +38,9 @@ from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.clone_manager import temp_clone_commit_history
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 DEFAULT_INPUT_DIR = PROJECT_ROOT / "github-search-agent"
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "github-search-agent"
@@ -699,7 +701,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
+    from collection.logging_utils import configure_logging
+    configure_logging()
     return run(
         input_dir=Path(args.input_dir),
         output_dir=Path(args.output_dir),

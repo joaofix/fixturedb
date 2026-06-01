@@ -12,7 +12,9 @@ from typing import Callable, Optional
 import logging
 import time
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 from .temp_clone import clone_to_tempdir, cleanup_tempdir
 import threading

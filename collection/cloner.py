@@ -26,7 +26,9 @@ from .config import (
 )
 from .db import db_session, get_repos_by_status, set_repo_status
 
-logger = logging.getLogger(__name__)
+from collection.logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def cleanup_stale_clones(dry_run: bool = False) -> dict:
