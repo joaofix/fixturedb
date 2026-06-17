@@ -259,6 +259,17 @@ Author: Developer <dev@company.com>
 
 ---
 
+## Exclusions
+
+### Merge Commits
+
+Merge commits are excluded from agent detection. Merge commits are not representative of individual developer or agent activity—they are artifacts of version control workflows (e.g., pull request merges, branch integrations) and typically contain no substantive code changes. All `git log` invocations in the collection pipeline use `--no-merges` to skip them:
+
+- `collection/agent_commit_detector.py`: `scan_repo_for_agent_commits` and `scan_repo_commit_roles`
+- `collection/agent_detector.py`: `verify_repository`
+
+---
+
 ## Data Quality & Validation
 
 ### Tier 1 Validation (Co-authored-by Trailers)

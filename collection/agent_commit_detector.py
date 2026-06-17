@@ -225,6 +225,7 @@ class Tier1RepositoryScanner:
                 "git",
                 "log",
                 "HEAD",
+                "--no-merges",
                 f"--since={start_date}",
                 f"--format=%H{GIT_LOG_FIELD_SEPARATOR}%an{GIT_LOG_FIELD_SEPARATOR}%ae{GIT_LOG_FIELD_SEPARATOR}%aI{GIT_LOG_FIELD_SEPARATOR}%b{GIT_LOG_RECORD_SEPARATOR}",
             ]
@@ -281,6 +282,7 @@ class Tier1RepositoryScanner:
                 "git",
                 "log",
                 "HEAD",
+                "--no-merges",
                 f"--since={start_date}",
                 f"--format=%H{GIT_LOG_FIELD_SEPARATOR}%an{GIT_LOG_FIELD_SEPARATOR}%ae{GIT_LOG_FIELD_SEPARATOR}%aI{GIT_LOG_FIELD_SEPARATOR}%b{GIT_LOG_RECORD_SEPARATOR}",
             ]

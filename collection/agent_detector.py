@@ -525,6 +525,7 @@ class AgentCommitVerifier:
                     "git",
                     "log",
                     "HEAD",
+                    "--no-merges",
                     "--pretty=format:%H%n%ai%n%an%n%ae%n%B%n---END_COMMIT---",
                     "--",
                 ],
