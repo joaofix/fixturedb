@@ -213,6 +213,80 @@ _HUNK_HEADER_RE = re.compile(
 )
 
 
+def is_pure_addition(modified_file) -> bool:
+    """Return True if the modified file's diff contains exclusively added lines.
+
+    A file is considered a "pure addition" when:
+    - It was not renamed (change_type != RENAME)
+    - Its diff_parsed contains no deleted lines
+
+    This uses PyDriller's ModifiedFile.diff_parsed and ModifiedFile.change_type.
+    """
+    from pydriller.domain.commit import ModificationType
+
+    if modified_file.change_type == ModificationType.RENAME:
+        return False
+
+    diff_parsed = modified_file.diff_parsed
+    if diff_parsed.get("deleted"):
+        return False
+
+    return True
+
+
+def _raw_diff_file_is_pure_addition(diff_text: str, file_path: str) -> bool:
+    """Check whether *file_path*'s chunk in a unified diff has no deletions or renames.
+
+    Parses raw ``git show`` / ``git diff`` output and returns True only when
+    the file's diff contains exclusively added lines (no ``-`` lines in hunks)
+    and the old/new paths are identical (no rename).
+    """
+    lines = diff_text.splitlines()
+    in_target = False
+    old_path = None
+    new_path = None
+
+    for line in lines:
+        if line.startswith("diff --git"):
+            in_target = False
+            parts = line.split()
+            if len(parts) >= 4:
+                a_path = parts[2][2:]  # strip "a/"
+                b_path = parts[3][2:]  # strip "b/"
+                if b_path == file_path or a_path == file_path:
+                    in_target = True
+                    old_path = a_path
+                    new_path = b_path
+            continue
+
+        if not in_target:
+            continue
+
+        # Rename check: old and new paths differ
+        if line.startswith("rename from ") or line.startswith("rename to "):
+            return False
+
+        if line.startswith("--- ") or line.startswith("+++ "):
+            continue
+
+        # Hunk lines: a deletion line means the file is not a pure addition
+        if line.startswith("-") and not line.startswith("---"):
+            return False
+
+        # Once we hit the next file header, we're done with this file's chunk
+        # (but the loop already handles this via the diff --git check above)
+
+    # If we never found the file in the diff, treat as not pure
+    if old_path is None:
+        return False
+
+    # Cross-check: if old_path != new_path, it's effectively a rename
+    if old_path != new_path:
+        return False
+
+    return True
+
+
 @dataclass(frozen=True)
 class DiffLineMap:
     """Per-file map of new-file line numbers to diff states."""
@@ -1101,7 +1175,19 @@ class AgentFixtureExtractor:
 
         test_files = self._find_added_test_files(diff_info)
 
+        purity_skipped_count = 0
+
         for file_path in test_files:
+            # ── Purity gate: only extract from files whose diff is 100% additions ──
+            if not _raw_diff_file_is_pure_addition(diff_info, file_path):
+                logger.debug(
+                    "Skipping %s in %s: diff contains deletions or is a rename",
+                    file_path,
+                    commit_sha[:8],
+                )
+                purity_skipped_count += 1
+                continue
+
             full_path = repo_path / file_path
 
             if full_path.exists():
@@ -1155,6 +1241,13 @@ class AgentFixtureExtractor:
 
                 except Exception as e:
                     logger.debug(f"Failed to extract from {file_path}: {e}")
+
+        if purity_skipped_count > 0:
+            logger.info(
+                "Commit %s: purity filter skipped %d file(s) (deletions or rename detected)",
+                commit_sha[:8],
+                purity_skipped_count,
+            )
 
         return fixtures
 

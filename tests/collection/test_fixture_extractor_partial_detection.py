@@ -363,3 +363,219 @@ def test_repo_worktree_lock_serializes_concurrent_extractions(tmp_path, monkeypa
     assert not thread_two.is_alive()
     assert max_active <= 1
     assert len(results) == 2
+
+
+# ──────────────────────────────────────────────────────────────
+# Integration tests: purity gate inside _extract_from_diff()
+# ──────────────────────────────────────────────────────────────
+
+
+def test_extract_from_diff_skips_file_with_deletions(tmp_path, monkeypatch):
+    """When a test file's diff contains deletions, the purity gate blocks extraction."""
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+
+    # Write a test file on disk so full_path.exists() is True
+    test_file = tmp_path / "tests" / "test_skip_me.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text(
+        "\n".join(
+            [
+                "import pytest",
+                "",
+                "@pytest.fixture",
+                "def my_fixture():",
+                "    return 42",
+            ]
+        )
+    )
+
+    diff = "\n".join(
+        [
+            "diff --git a/tests/test_skip_me.py b/tests/test_skip_me.py",
+            "--- a/tests/test_skip_me.py",
+            "+++ b/tests/test_skip_me.py",
+            "@@ -1,3 +1,3 @@",
+            " import pytest",
+            "-from old_module import thing",
+            "+from new_module import thing",
+            " @pytest.fixture",
+            " def my_fixture():",
+            "     return 42",
+        ]
+    )
+
+    fixtures = extractor._extract_from_diff(
+        repo_path=tmp_path,
+        repo_name="test/repo",
+        diff_info=diff,
+        commit_sha="abc123456789",
+        agent_type="copilot",
+    )
+
+    # The file has a deletion line (-from old_module) → purity gate skips it
+    assert len(fixtures) == 0
+
+
+def test_extract_from_diff_skips_renamed_file(tmp_path):
+    """When a test file is renamed, the purity gate blocks extraction."""
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+
+    test_file = tmp_path / "tests" / "test_renamed.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text(
+        "\n".join(
+            [
+                "import pytest",
+                "",
+                "@pytest.fixture",
+                "def my_fixture():",
+                "    return 42",
+            ]
+        )
+    )
+
+    diff = "\n".join(
+        [
+            "diff --git a/tests/test_old_name.py b/tests/test_renamed.py",
+            "rename from tests/test_old_name.py",
+            "rename to tests/test_renamed.py",
+        ]
+    )
+
+    fixtures = extractor._extract_from_diff(
+        repo_path=tmp_path,
+        repo_name="test/repo",
+        diff_info=diff,
+        commit_sha="abc123456789",
+        agent_type="copilot",
+    )
+
+    assert len(fixtures) == 0
+
+
+def test_extract_from_diff_keeps_pure_addition_file(tmp_path):
+    """When a test file has only added lines, extraction proceeds normally."""
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+
+    test_file = tmp_path / "tests" / "test_pure.py"
+    test_file.parent.mkdir(parents=True, exist_ok=True)
+    test_file.write_text(
+        "\n".join(
+            [
+                "import pytest",
+                "",
+                "@pytest.fixture",
+                "def my_fixture():",
+                "    return 42",
+            ]
+        )
+    )
+
+    diff = "\n".join(
+        [
+            "diff --git a/tests/test_pure.py b/tests/test_pure.py",
+            "new file mode 100644",
+            "index 0000000..abc1234",
+            "--- /dev/null",
+            "+++ b/tests/test_pure.py",
+            "@@ -0,0 +1,5 @@",
+            "+import pytest",
+            "+",
+            "+@pytest.fixture",
+            "+def my_fixture():",
+            "+    return 42",
+        ]
+    )
+
+    fixtures = extractor._extract_from_diff(
+        repo_path=tmp_path,
+        repo_name="test/repo",
+        diff_info=diff,
+        commit_sha="abc123456789",
+        agent_type="copilot",
+    )
+
+    # At least one fixture should be extracted (pytest fixture in a pure-add file)
+    assert len(fixtures) >= 1
+    fixture_names = {f["name"] for f in fixtures}
+    assert "my_fixture" in fixture_names
+
+
+def test_extract_from_diff_mixed_files_one_skipped_one_kept(tmp_path):
+    """One file with deletions is skipped; a pure-addition file in the same commit is kept."""
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+
+    # Pure-add test file
+    pure_file = tmp_path / "tests" / "test_pure.py"
+    pure_file.parent.mkdir(parents=True, exist_ok=True)
+    pure_file.write_text(
+        "\n".join(
+            [
+                "@pytest.fixture",
+                "def pure_fixture():",
+                "    return 1",
+            ]
+        )
+    )
+
+    # Modified test file (has deletions)
+    modified_file = tmp_path / "tests" / "test_modified.py"
+    modified_file.parent.mkdir(parents=True, exist_ok=True)
+    modified_file.write_text(
+        "\n".join(
+            [
+                "import pytest",
+                "@pytest.fixture",
+                "def mod_fixture():",
+                "    return 99",
+            ]
+        )
+    )
+
+    diff = "\n".join(
+        [
+            "diff --git a/tests/test_modified.py b/tests/test_modified.py",
+            "--- a/tests/test_modified.py",
+            "+++ b/tests/test_modified.py",
+            "@@ -1,4 +1,4 @@",
+            " import pytest",
+            "-from old_dep import helper",
+            "+from new_dep import helper",
+            " @pytest.fixture",
+            " def mod_fixture():",
+            "     return 99",
+            "diff --git a/tests/test_pure.py b/tests/test_pure.py",
+            "new file mode 100644",
+            "--- /dev/null",
+            "+++ b/tests/test_pure.py",
+            "@@ -0,0 +1,3 @@",
+            "+@pytest.fixture",
+            "+def pure_fixture():",
+            "+    return 1",
+        ]
+    )
+
+    fixtures = extractor._extract_from_diff(
+        repo_path=tmp_path,
+        repo_name="test/repo",
+        diff_info=diff,
+        commit_sha="abc123456789",
+        agent_type="copilot",
+    )
+
+    # mod_fixture should be skipped (file had deletions), pure_fixture kept
+    fixture_names = {f["name"] for f in fixtures}
+    assert "pure_fixture" in fixture_names
+    assert "mod_fixture" not in fixture_names
+
+
+def test_extract_from_diff_empty_diff_returns_nothing():
+    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
+    fixtures = extractor._extract_from_diff(
+        repo_path=Path("/tmp"),
+        repo_name="test/repo",
+        diff_info="",
+        commit_sha="abc123456789",
+        agent_type="copilot",
+    )
+    assert fixtures == []
