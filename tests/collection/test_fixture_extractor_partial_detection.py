@@ -8,6 +8,7 @@ from collection.fixture_extractor import (
     AgentFixtureExtractor,
     DiffLineMap,
     _checkout_commit,
+    _raw_diff_commit_is_pure_addition,
     extract_fixtures_at_commit,
 )
 
@@ -579,3 +580,134 @@ def test_extract_from_diff_empty_diff_returns_nothing():
         agent_type="copilot",
     )
     assert fixtures == []
+
+
+# ──────────────────────────────────────────────────────────────
+# Integration tests: commit-level purity gate in _extract_from_agent_commits
+# ──────────────────────────────────────────────────────────────
+
+
+def test_agent_commits_skipped_when_commit_level_impure(tmp_path, monkeypatch):
+    """If a test file in the commit has deletions, the whole commit is skipped."""
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+
+    repo_path = tmp_path / "repos" / "test__repo"
+    (repo_path / ".git").mkdir(parents=True, exist_ok=True)
+
+    # Prepare test files on disk
+    clean_file = repo_path / "tests" / "clean.py"
+    clean_file.parent.mkdir(parents=True, exist_ok=True)
+    clean_file.write_text("@pytest.fixture\ndef fix(): return 1\n")
+
+    dirty_file = repo_path / "tests" / "dirty.py"
+    dirty_file.parent.mkdir(parents=True, exist_ok=True)
+    dirty_file.write_text("def test(): pass\n")
+
+    diff = "\n".join(
+        [
+            "diff --git a/tests/clean.py b/tests/clean.py",
+            "--- /dev/null",
+            "+++ b/tests/clean.py",
+            "@@ -0,0 +1,2 @@",
+            "+@pytest.fixture",
+            "+def fix(): return 1",
+            "diff --git a/tests/dirty.py b/tests/dirty.py",
+            "--- a/tests/dirty.py",
+            "+++ b/tests/dirty.py",
+            "@@ -1,1 +1,1 @@",
+            "-def old(): pass",
+            "+def test(): pass",
+        ]
+    )
+
+    # Monkeypatch module-level helpers
+    monkeypatch.setattr(
+        "collection.fixture_extractor._checkout_commit",
+        lambda *a, **kw: None,
+    )
+    monkeypatch.setattr(
+        extractor,
+        "_get_commit_info",
+        lambda *a, **kw: {"date": "2025-06-01"},
+    )
+    monkeypatch.setattr(
+        extractor,
+        "_get_commit_diff",
+        lambda *a, **kw: diff,
+    )
+
+    # The actual extraction code path we are testing
+    from collection.fixture_extractor import _resolve_repo_path
+
+    monkeypatch.setattr(
+        "collection.fixture_extractor._resolve_repo_path",
+        lambda *a, **kw: repo_path,
+    )
+    monkeypatch.setattr(
+        "collection.fixture_extractor._repo_worktree_lock",
+        lambda *a, **kw: __import__("contextlib").nullcontext(),
+    )
+
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="test/repo",
+        commits={"abc12345": "copilot"},
+    )
+
+    # Commit-level gate should block extraction — dirty.py has a deletion
+    assert len(fixtures) == 0
+
+
+def test_agent_commits_proceeds_when_commit_level_pure(tmp_path, monkeypatch):
+    """When all test files are pure additions, extraction proceeds."""
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+
+    repo_path = tmp_path / "repos" / "test__repo"
+    (repo_path / ".git").mkdir(parents=True, exist_ok=True)
+
+    pure_file = repo_path / "tests" / "pure.py"
+    pure_file.parent.mkdir(parents=True, exist_ok=True)
+    pure_file.write_text("@pytest.fixture\ndef fix(): return 1\n")
+
+    diff = "\n".join(
+        [
+            "diff --git a/tests/pure.py b/tests/pure.py",
+            "--- /dev/null",
+            "+++ b/tests/pure.py",
+            "@@ -0,0 +1,2 @@",
+            "+@pytest.fixture",
+            "+def fix(): return 1",
+        ]
+    )
+
+    monkeypatch.setattr(
+        "collection.fixture_extractor._checkout_commit",
+        lambda *a, **kw: None,
+    )
+    monkeypatch.setattr(
+        extractor,
+        "_get_commit_info",
+        lambda *a, **kw: {"date": "2025-06-01"},
+    )
+    monkeypatch.setattr(
+        extractor,
+        "_get_commit_diff",
+        lambda *a, **kw: diff,
+    )
+    monkeypatch.setattr(
+        "collection.fixture_extractor._resolve_repo_path",
+        lambda *a, **kw: repo_path,
+    )
+    monkeypatch.setattr(
+        "collection.fixture_extractor._repo_worktree_lock",
+        lambda *a, **kw: __import__("contextlib").nullcontext(),
+    )
+
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="test/repo",
+        commits={"abc12345": "copilot"},
+    )
+
+    # Pure addition commit should yield fixtures
+    assert len(fixtures) >= 1
+    fixture_names = {f["name"] for f in fixtures}
+    assert "fix" in fixture_names

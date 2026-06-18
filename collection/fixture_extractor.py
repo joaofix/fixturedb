@@ -217,14 +217,18 @@ def is_pure_addition(modified_file) -> bool:
     """Return True if the modified file's diff contains exclusively added lines.
 
     A file is considered a "pure addition" when:
-    - It was not renamed (change_type != RENAME)
+    - It was not renamed, deleted, or copied (change_type not in RENAME/DELETE/COPY)
     - Its diff_parsed contains no deleted lines
 
     This uses PyDriller's ModifiedFile.diff_parsed and ModifiedFile.change_type.
     """
     from pydriller.domain.commit import ModificationType
 
-    if modified_file.change_type == ModificationType.RENAME:
+    if modified_file.change_type in (
+        ModificationType.RENAME,
+        ModificationType.DELETE,
+        ModificationType.COPY,
+    ):
         return False
 
     diff_parsed = modified_file.diff_parsed
@@ -262,8 +266,14 @@ def _raw_diff_file_is_pure_addition(diff_text: str, file_path: str) -> bool:
         if not in_target:
             continue
 
-        # Rename check: old and new paths differ
+        # Rename / copy / delete markers
         if line.startswith("rename from ") or line.startswith("rename to "):
+            return False
+
+        if line.startswith("copy from ") or line.startswith("copy to "):
+            return False
+
+        if line.startswith("deleted file mode"):
             return False
 
         if line.startswith("--- ") or line.startswith("+++ "):
@@ -283,6 +293,109 @@ def _raw_diff_file_is_pure_addition(diff_text: str, file_path: str) -> bool:
     # Cross-check: if old_path != new_path, it's effectively a rename
     if old_path != new_path:
         return False
+
+    return True
+
+
+def commit_is_pure_addition(commit) -> bool:
+    """Return True only if every test file in *commit* is a pure addition.
+
+    Iterates over ``commit.modified_files``, ignores non-test files, and
+    returns False if any test file has deletions, is a DELETE, or is a RENAME.
+    Uses PyDriller's ``ModifiedFile.diff_parsed`` and ``ModificationType``.
+    """
+    from pydriller.domain.commit import ModificationType
+
+    for modified_file in commit.modified_files:
+        filename = modified_file.new_path or modified_file.old_path or ""
+        path_obj = Path(filename)
+        language = _get_language_static(path_obj)
+        if language == "unknown" or not is_test_file_path(str(filename), language):
+            continue
+
+        if modified_file.change_type in (
+            ModificationType.RENAME,
+            ModificationType.DELETE,
+            ModificationType.COPY,
+        ):
+            return False
+
+        diff_parsed = modified_file.diff_parsed
+        if diff_parsed.get("deleted"):
+            return False
+
+    return True
+
+
+def _get_language_static(file_path: Path) -> str:
+    """Infer language from file extension (module-level, no instance needed)."""
+    ext = file_path.suffix.lower()
+    return {
+        ".py": "python",
+        ".java": "java",
+        ".js": "javascript",
+        ".jsx": "javascript",
+        ".mjs": "javascript",
+        ".cjs": "javascript",
+        ".ts": "typescript",
+        ".tsx": "typescript",
+        ".mts": "typescript",
+        ".cts": "typescript",
+    }.get(ext, "unknown")
+
+
+def _raw_diff_commit_is_pure_addition(diff_text: str) -> bool:
+    """Return True only if every test file in *diff_text* is a pure addition.
+
+    Parses raw ``git show`` / ``git diff`` output.  For each file found in the
+    diff, if the file is a test file and its hunk(s) contain any ``-`` line
+    (deletion), or if it is a rename/delete, return False.
+    Non-test files are ignored.
+    """
+    lines = diff_text.splitlines()
+    current_file: Optional[str] = None
+    current_test_lang: Optional[str] = None
+
+    for line in lines:
+        if line.startswith("diff --git"):
+            current_file = None
+            current_test_lang = None
+            parts = line.split()
+            if len(parts) >= 4:
+                b_path = parts[3][2:]  # strip "b/"
+                current_file = b_path
+                path_obj = Path(current_file)
+                lang = _get_language_static(path_obj)
+                if lang != "unknown" and is_test_file_path(current_file, lang):
+                    current_test_lang = lang
+            continue
+
+        if current_file is None:
+            continue
+
+        # Rename / copy / delete markers
+        if line.startswith("rename from ") or line.startswith("rename to "):
+            if current_test_lang is not None:
+                return False
+            continue
+
+        if line.startswith("copy from ") or line.startswith("copy to "):
+            if current_test_lang is not None:
+                return False
+            continue
+
+        if line.startswith("deleted file mode"):
+            if current_test_lang is not None:
+                return False
+            continue
+
+        if line.startswith("--- ") or line.startswith("+++ "):
+            continue
+
+        # A deletion line in a hunk
+        if line.startswith("-") and not line.startswith("---"):
+            if current_test_lang is not None:
+                return False
 
     return True
 
@@ -1036,6 +1149,12 @@ class AgentFixtureExtractor:
 
         fixtures = []
 
+        # Per-repo purity counters
+        total_agent_commits = len(commits)
+        commits_skipped_commit_level = 0
+        commits_skipped_file_level = 0
+        commits_proceeded = 0
+
         for commit_sha, agent_type in commits.items():
             try:
                 with _repo_worktree_lock(repo_path):
@@ -1054,6 +1173,20 @@ class AgentFixtureExtractor:
                     # Get diff to check for complete additions
                     diff_info = self._get_commit_diff(repo_path, commit_sha)
 
+                    # ── Commit‑level purity gate ──
+                    if not diff_info:
+                        continue
+
+                    if not _raw_diff_commit_is_pure_addition(diff_info):
+                        logger.debug(
+                            "Skipping entire commit %s in %s: a test file contains "
+                            "deletions, is deleted, or is renamed",
+                            commit_sha[:8],
+                            repo_name,
+                        )
+                        commits_skipped_commit_level += 1
+                        continue
+
                     # Extract fixtures
                     commit_fixtures = self._extract_from_diff(
                         repo_path=repo_path,
@@ -1063,10 +1196,28 @@ class AgentFixtureExtractor:
                         agent_type=agent_type,
                     )
 
+                    if commit_fixtures:
+                        commits_proceeded += 1
+                    else:
+                        # Commit passed commit-level gate but all files were filtered
+                        # at file level → count as file-level skip
+                        commits_skipped_file_level += 1
+
                     fixtures.extend(commit_fixtures)
 
             except Exception as e:
                 logger.debug(f"Failed to extract from {commit_sha}: {e}")
+
+        logger.info(
+            "Repo %s: %d agent commits found, %d skipped (commit-level), "
+            "%d skipped (file-level), %d proceeded to extraction, %d fixtures extracted",
+            repo_name,
+            total_agent_commits,
+            commits_skipped_commit_level,
+            commits_skipped_file_level,
+            commits_proceeded,
+            len(fixtures),
+        )
 
         return fixtures
 
