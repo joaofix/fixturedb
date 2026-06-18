@@ -3,13 +3,10 @@ from pathlib import Path
 
 import subprocess
 
-from types import SimpleNamespace
-
 from collection.agent_commit_detector import (
     _is_test_file_path,
     Tier1RepositoryScanner,
     AGENT_TRAILER_RE,
-    _collect_test_files_for_commit,
 )
 
 
@@ -77,45 +74,38 @@ def test_detect_agent_multiple_coauthors():
     assert agent in {"copilot", "claude"}
 
 
-def test_collect_test_files_for_commit_parsing(monkeypatch, tmp_path):
-    # Simulate git show output with added/modified/rename/copied entries
-    stdout = (
-        "A\ttests/test_foo.py\n"
-        "M\tsrc/main.py\n"
-        "R100\told.py\ttests/test_renamed.py\n"
-        "C100\told.py\ttests/test_copy.py\n"
+def test_scan_repo_commit_roles_parses_multiline_git_log(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "Alice <alice@example.com>"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Alice"], check=True, capture_output=True)
+    (repo / "a.txt").write_text("hello\n")
+    subprocess.run(["git", "-C", str(repo), "add", "a.txt"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "Fix pipes | in body\nSecond line\nCo-authored-by: Claude <claude@example.com>"],
+        check=True,
+        capture_output=True,
     )
-
-    def fake_run(cmd, cwd, capture_output, text, timeout):
-        return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    files = _collect_test_files_for_commit(tmp_path, "deadbeef", "python")
-    assert "tests/test_foo.py" in files
-    assert "tests/test_renamed.py" in files
-    assert "tests/test_copy.py" in files
-
-
-def test_scan_repo_commit_roles_parses_multiline_git_log(monkeypatch, tmp_path):
-    stdout = (
-        "abc123\x1fAlice\x1falice@example.com\x1f2026-05-01T10:00:00+00:00\x1fFix pipes | in body\n"
-        "Second line\n"
-        "Co-authored-by: Claude <claude@example.com>\x1e"
-        "def456\x1fBob\x1fbob@example.com\x1f2026-05-02T11:00:00+00:00\x1fRegular commit\x1e"
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "Bob <bob@example.com>"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Bob"], check=True, capture_output=True)
+    (repo / "b.txt").write_text("world\n")
+    subprocess.run(["git", "-C", str(repo), "add", "b.txt"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "Regular commit"],
+        check=True,
+        capture_output=True,
     )
-
-    def fake_run(cmd, cwd, capture_output, text, timeout):
-        return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
 
     scanner = Tier1RepositoryScanner(Path("/tmp"))
-    commits = scanner.scan_repo_commit_roles(tmp_path, start_date="2026-05-01")
+    commits = scanner.scan_repo_commit_roles(repo, start_date="2020-01-01")
 
-    assert [c.commit_sha for c in commits] == ["abc123", "def456"]
-    assert commits[0].commit_date == "2026-05-01T10:00:00+00:00"
-    assert commits[1].commit_date == "2026-05-02T11:00:00+00:00"
+    assert len(commits) == 2
+    assert commits[0].commit_sha != commits[1].commit_sha
+    assert commits[0].author_name == "Alice"
+    assert commits[1].author_name == "Bob"
+    assert commits[0].agent_type == "claude"
+    assert commits[1].agent_type is None
 
 
 def test_is_test_file_path_javascript():

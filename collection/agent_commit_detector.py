@@ -4,14 +4,14 @@ Provides tools for identifying agent-authored commits and classifying commit rol
 for paired-sample analysis within repositories.
 """
 
-import json
 import logging
 import re
-import subprocess
 from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set
+
+from pydriller import Repository
 
 from .config import (
     AGENT_SIGNATURES,
@@ -44,9 +44,6 @@ from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
-GIT_LOG_FIELD_SEPARATOR = "\x1f"
-GIT_LOG_RECORD_SEPARATOR = "\x1e"
-
 
 @dataclass
 class AgentCommitInfo:
@@ -71,6 +68,10 @@ class CommitRoleInfo:
     author_email: str
     is_test_commit: bool = False
     test_files: List[str] = field(default_factory=list)
+
+
+def _parse_since_date(start_date: str) -> datetime:
+    return datetime.fromisoformat(start_date)
 
 
 def _is_test_file_path(relative_path: str, language: str) -> bool:
@@ -116,60 +117,20 @@ def _is_test_file_path(relative_path: str, language: str) -> bool:
     return matched
 
 
-def _collect_test_files_for_commit(
-    repo_path: Path, commit_sha: str, language: str
-) -> list[str]:
-    result = subprocess.run(
-        [
-            "git",
-            "show",
-            "--format=",
-            "--name-status",
-            "--find-renames",
-            "--diff-filter=AMRT",
-            "--root",
-            commit_sha,
-        ],
-        cwd=str(repo_path),
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-
-    if result.returncode != 0:
-        return []
-
+def _collect_test_files_from_pydriller(commit, language: str) -> list[str]:
+    """Extract test files from a PyDriller commit's modified files."""
     test_files: list[str] = []
     seen: set[str] = set()
-    for raw_line in result.stdout.splitlines():
-        if not raw_line.strip():
+    for modified_file in commit.modified_files:
+        path = modified_file.new_path or modified_file.old_path or ""
+        if not path:
             continue
-        parts = raw_line.split("\t")
-        status = parts[0].strip()
-        if status.startswith(("R", "C")) and len(parts) >= 3:
-            path = parts[-1].strip()
-        elif len(parts) >= 2:
-            path = parts[1].strip()
-        else:
-            continue
-
-        if path and path not in seen and _is_test_file_path(path, language):
+        if path not in seen and _is_test_file_path(path, language):
             seen.add(path)
             test_files.append(path)
-
     return test_files
 
 
-def _iter_git_log_records(output: str):
-    """Yield parsed git-log records with a lossless record separator."""
-    for record in output.split(GIT_LOG_RECORD_SEPARATOR):
-        record = record.strip()
-        if not record:
-            continue
-        parts = record.split(GIT_LOG_FIELD_SEPARATOR, 4)
-        if len(parts) < 5:
-            continue
-        yield parts
 
 
 @dataclass
@@ -221,25 +182,17 @@ class Tier1RepositoryScanner:
         commits = []
 
         try:
-            # Get commit log with agent keywords
-            cmd = [
-                "git",
-                "log",
-                "HEAD",
-                "--no-merges",
-                f"--since={start_date}",
-                f"--format=%H{GIT_LOG_FIELD_SEPARATOR}%an{GIT_LOG_FIELD_SEPARATOR}%ae{GIT_LOG_FIELD_SEPARATOR}%aI{GIT_LOG_FIELD_SEPARATOR}%b{GIT_LOG_RECORD_SEPARATOR}",
-            ]
-            result = subprocess.run(
-                cmd, cwd=str(repo_path), capture_output=True, text=True, timeout=60
-            )
-
-            if result.returncode != 0:
-                logger.warning(f"Failed to get git log for {repo_path.name}")
-                return []
-
-            for parts in _iter_git_log_records(result.stdout):
-                commit_sha, author_name, author_email, commit_date, body = parts
+            since_date = _parse_since_date(start_date)
+            for commit in Repository(
+                str(repo_path),
+                since=since_date,
+                only_no_merge=True,
+            ).traverse_commits():
+                commit_sha = commit.hash
+                author_name = commit.author.name
+                author_email = commit.author.email
+                commit_date = commit.author_date.isoformat()
+                body = commit.msg
 
                 agent_type = self._detect_agent_in_commit(
                     author_name, author_email, body
@@ -256,8 +209,6 @@ class Tier1RepositoryScanner:
                         )
                     )
 
-        except subprocess.TimeoutExpired:
-            logger.warning(f"Timeout scanning {repo_path.name}")
         except Exception as e:
             logger.error(f"Error scanning {repo_path.name}: {e}")
 
@@ -277,36 +228,28 @@ class Tier1RepositoryScanner:
         commit_roles: List[CommitRoleInfo] = []
 
         try:
-            cmd = [
-                "git",
-                "log",
-                "HEAD",
-                "--no-merges",
-                f"--since={start_date}",
-                f"--format=%H{GIT_LOG_FIELD_SEPARATOR}%an{GIT_LOG_FIELD_SEPARATOR}%ae{GIT_LOG_FIELD_SEPARATOR}%aI{GIT_LOG_FIELD_SEPARATOR}%b{GIT_LOG_RECORD_SEPARATOR}",
-            ]
-            result = subprocess.run(
-                cmd,
-                cwd=str(repo_path),
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+            since_date = _parse_since_date(start_date)
+            for commit in Repository(
+                str(repo_path),
+                since=since_date,
+                only_no_merge=True,
+            ).traverse_commits():
+                commit_sha = commit.hash
+                author_name = commit.author.name
+                author_email = commit.author.email
+                commit_date = commit.author_date.isoformat()
+                body = commit.msg
 
-            if result.returncode != 0:
-                logger.warning(f"Failed to get git log for {repo_path.name}")
-                return []
-
-            for parts in _iter_git_log_records(result.stdout):
-                commit_sha, author_name, author_email, commit_date, body = parts
                 agent_type = self._detect_agent_in_commit(
                     author_name, author_email, body
                 )
+
                 test_files: list[str] = []
                 if detect_test_files and language:
-                    test_files = _collect_test_files_for_commit(
-                        repo_path, commit_sha, language
+                    test_files = _collect_test_files_from_pydriller(
+                        commit, language
                     )
+
                 commit_roles.append(
                     CommitRoleInfo(
                         commit_sha=commit_sha,
@@ -319,8 +262,6 @@ class Tier1RepositoryScanner:
                         test_files=test_files,
                     )
                 )
-        except subprocess.TimeoutExpired:
-            logger.warning(f"Timeout scanning {repo_path.name}")
         except Exception as exc:
             logger.error(f"Error scanning {repo_path.name}: {exc}")
 
