@@ -16,53 +16,80 @@ import pytest
 
 from collection.agent_commit_detector import (
     Tier1RepositoryScanner,
-    COAUTHOR_TRAILER_RE,
+    AGENT_TRAILER_RE,
 )
 from collection.config import AGENT_CORPUS_START_DATE
 
 
-class TestCoauthoredByTrailerDetection:
-    """Test co-authored-by trailer regex and parsing."""
+class TestAgentTrailerDetection:
+    """Test agent trailer regex and parsing (co-authored-by, assisted-by, generated-by)."""
 
-    def test_coauthor_trailer_regex_basic(self):
+    def test_agent_trailer_regex_basic(self):
         """Should extract co-authored-by trailer value."""
         body = "Fix bug\n\nCo-authored-by: Claude <claude@anthropic.com>"
-        matches = COAUTHOR_TRAILER_RE.findall(body)
+        matches = AGENT_TRAILER_RE.findall(body)
         assert len(matches) == 1
         assert "Claude" in matches[0]
         assert "claude@anthropic.com" in matches[0]
 
-    def test_coauthor_trailer_regex_lowercase(self):
+    def test_agent_trailer_regex_lowercase(self):
         """Should match lowercase co-authored-by."""
         body = "Fix bug\n\nco-authored-by: GitHub Copilot <copilot@github.com>"
-        matches = COAUTHOR_TRAILER_RE.findall(body)
+        matches = AGENT_TRAILER_RE.findall(body)
         assert len(matches) == 1
         assert "GitHub Copilot" in matches[0]
 
-    def test_coauthor_trailer_regex_uppercase(self):
+    def test_agent_trailer_regex_uppercase(self):
         """Should match uppercase CO-AUTHORED-BY."""
         body = "Fix bug\n\nCO-AUTHORED-BY: Cursor <cursor@anysoftware.io>"
-        matches = COAUTHOR_TRAILER_RE.findall(body)
+        matches = AGENT_TRAILER_RE.findall(body)
         assert len(matches) == 1
         assert "Cursor" in matches[0]
 
-    def test_coauthor_trailer_regex_multiple(self):
-        """Should extract multiple co-authored-by trailers."""
+    def test_agent_trailer_regex_multiple(self):
+        """Should extract multiple agent trailers."""
         body = """Refactor usability tests.
 
 Co-authored-by: Claude <claude@anthropic.com>
 Co-authored-by: Another-name <another-name@example.com>"""
-        matches = COAUTHOR_TRAILER_RE.findall(body)
+        matches = AGENT_TRAILER_RE.findall(body)
         assert len(matches) == 2
         assert "Claude" in matches[0]
         assert "Another-name" in matches[1]
 
-    def test_coauthor_trailer_regex_mixed_case(self):
+    def test_agent_trailer_regex_mixed_case(self):
         """Should match mixed case variations."""
         body = "Fix\n\nCo-Authored-By: Aider <aider@paul.pub>"
-        matches = COAUTHOR_TRAILER_RE.findall(body)
+        matches = AGENT_TRAILER_RE.findall(body)
         assert len(matches) == 1
         assert "Aider" in matches[0]
+
+    def test_agent_trailer_assisted_by(self):
+        """Should match assisted-by trailer."""
+        body = "Fix bug\n\nAssisted-by: Claude <claude@anthropic.com>"
+        matches = AGENT_TRAILER_RE.findall(body)
+        assert len(matches) == 1
+        assert "Claude" in matches[0]
+
+    def test_agent_trailer_generated_by(self):
+        """Should match generated-by trailer."""
+        body = "Fix bug\n\nGenerated-by: GitHub Copilot <copilot@github.com>"
+        matches = AGENT_TRAILER_RE.findall(body)
+        assert len(matches) == 1
+        assert "GitHub Copilot" in matches[0]
+
+    def test_agent_trailer_mixed_types(self):
+        """Should match all three trailer types in the same commit."""
+        body = """Fix bug.
+
+Co-authored-by: Claude <claude@anthropic.com>
+Assisted-by: Aider <aider@paul.pub>
+Generated-by: Cursor <cursor@anysoftware.io>"""
+        matches = AGENT_TRAILER_RE.findall(body)
+        assert len(matches) == 3
+        assert "Claude" in matches[0]
+        assert "Aider" in matches[1]
+        assert "Cursor" in matches[2]
 
 
 class TestTier1RepositoryScannerDetection:
@@ -79,6 +106,22 @@ class TestTier1RepositoryScannerDetection:
         body = """Refactor usability tests.
 
 Co-authored-by: Claude <claude@anthropic.com>"""
+        agent = scanner._detect_agent_in_commit("John", "john@example.com", body)
+        assert agent == "claude"
+
+    def test_detect_claude_in_assisted_by(self, scanner):
+        """Should detect Claude from assisted-by trailer."""
+        body = """Refactor usability tests.
+
+Assisted-by: Claude <claude@anthropic.com>"""
+        agent = scanner._detect_agent_in_commit("John", "john@example.com", body)
+        assert agent == "claude"
+
+    def test_detect_claude_in_generated_by(self, scanner):
+        """Should detect Claude from generated-by trailer."""
+        body = """Refactor usability tests.
+
+Generated-by: Claude <claude@anthropic.com>"""
         agent = scanner._detect_agent_in_commit("John", "john@example.com", body)
         assert agent == "claude"
 

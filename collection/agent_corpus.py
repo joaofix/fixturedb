@@ -56,8 +56,9 @@ from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
-COAUTHOR_TRAILER_RE = re.compile(
-    r"^\s*co-authored-by:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE
+AGENT_TRAILER_RE = re.compile(
+    r"^\s*(?:co-authored-by|assisted-by|generated-by):\s*(.+?)\s*$",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 
@@ -108,12 +109,12 @@ def detect_agent_type(commit_message: str) -> Optional[str]:
 
 
 def _extract_coauthors(commit_body: str) -> list[str]:
-    """Extract Co-authored-by trailer values from the commit body."""
+    """Extract agent trailer values (co-authored-by, assisted-by, generated-by) from the commit body."""
     if not commit_body:
         return []
     return [
         match.strip()
-        for match in COAUTHOR_TRAILER_RE.findall(commit_body)
+        for match in AGENT_TRAILER_RE.findall(commit_body)
         if match.strip()
     ]
 

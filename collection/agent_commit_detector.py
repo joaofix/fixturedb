@@ -34,9 +34,10 @@ from .agent_detector import (
 )
 from .cloner import clone_repo
 
-# Regex to extract Co-authored-by trailer values (case-insensitive, multiline)
-COAUTHOR_TRAILER_RE = re.compile(
-    r"^\s*co-authored-by:\s*(.+?)\s*$", re.IGNORECASE | re.MULTILINE
+# Regex to extract agent trailer values (co-authored-by, assisted-by, generated-by)
+AGENT_TRAILER_RE = re.compile(
+    r"^\s*(?:co-authored-by|assisted-by|generated-by):\s*(.+?)\s*$",
+    re.IGNORECASE | re.MULTILINE,
 )
 from .db import db_session
 from collection.logging_utils import get_logger
@@ -237,11 +238,9 @@ class Tier1RepositoryScanner:
                 logger.warning(f"Failed to get git log for {repo_path.name}")
                 return []
 
-            # Parse commits
             for parts in _iter_git_log_records(result.stdout):
                 commit_sha, author_name, author_email, commit_date, body = parts
 
-                # Search for agent signatures in commit message
                 agent_type = self._detect_agent_in_commit(
                     author_name, author_email, body
                 )
@@ -335,12 +334,12 @@ class Tier1RepositoryScanner:
 
         Checks:
         1. Author name/email for agent signatures
-        2. Co-authored-by trailers in commit body
+        2. Agent trailers (co-authored-by, assisted-by, generated-by) in commit body
 
         Args:
             author_name: Commit author name
             author_email: Commit author email
-            body: Commit message body (for Co-authored-by parsing)
+            body: Commit message body (for agent trailer parsing)
 
         Returns:
             Agent type (claude/cursor/copilot/other) or None
@@ -352,14 +351,14 @@ class Tier1RepositoryScanner:
                 if keyword.lower() in author_text:
                     return agent_type
 
-        # Extract and check Co-authored-by trailers (case-insensitive)
+        # Extract and check agent trailers (case-insensitive)
         if body:
-            coauthor_matches = COAUTHOR_TRAILER_RE.findall(body)
-            for coauthor_line in coauthor_matches:
-                coauthor_lower = coauthor_line.lower()
+            agent_matches = AGENT_TRAILER_RE.findall(body)
+            for agent_line in agent_matches:
+                agent_lower = agent_line.lower()
                 for agent_type, keywords in self.agent_signatures.items():
                     for keyword in keywords:
-                        if keyword.lower() in coauthor_lower:
+                        if keyword.lower() in agent_lower:
                             return agent_type
 
         return None

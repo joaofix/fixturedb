@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from collection.agent_commit_detector import (
     _is_test_file_path,
     Tier1RepositoryScanner,
-    COAUTHOR_TRAILER_RE,
+    AGENT_TRAILER_RE,
     _collect_test_files_for_commit,
 )
 
@@ -38,9 +38,24 @@ def test_detect_agent_in_commit_author_and_coauthor():
 
     # co-authored-by trailer detection
     body = "Some message\nCo-authored-by: GitHub Copilot <copilot@github.com>\n"
-    # verify regex finds the trailer
-    matches = COAUTHOR_TRAILER_RE.findall(body)
+    matches = AGENT_TRAILER_RE.findall(body)
     assert any("copilot" in m.lower() for m in matches)
+    agent3 = scanner._detect_agent_in_commit("Someone", "someone@example.com", body)
+    assert agent3 == "copilot"
+
+    # assisted-by trailer detection
+    body2 = "Some message\nAssisted-by: Claude <claude@anthropic.com>\n"
+    matches2 = AGENT_TRAILER_RE.findall(body2)
+    assert any("claude" in m.lower() for m in matches2)
+    agent4 = scanner._detect_agent_in_commit("Someone", "someone@example.com", body2)
+    assert agent4 == "claude"
+
+    # generated-by trailer detection
+    body3 = "Some message\nGenerated-by: Cursor <cursor@anysoftware.io>\n"
+    matches3 = AGENT_TRAILER_RE.findall(body3)
+    assert any("cursor" in m.lower() for m in matches3)
+    agent5 = scanner._detect_agent_in_commit("Someone", "someone@example.com", body3)
+    assert agent5 == "cursor"
 
 
 def test_detect_agent_no_match():
