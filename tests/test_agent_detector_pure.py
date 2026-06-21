@@ -78,20 +78,49 @@ def test_detect_agent_multiple_coauthors():
 def test_scan_repo_commit_roles_parses_multiline_git_log(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
-    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "Alice <alice@example.com>"], check=True, capture_output=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Alice"], check=True, capture_output=True)
-    (repo / "a.txt").write_text("hello\n")
-    subprocess.run(["git", "-C", str(repo), "add", "a.txt"], check=True, capture_output=True)
     subprocess.run(
-        ["git", "-C", str(repo), "commit", "-m", "Fix pipes | in body\nSecond line\nCo-authored-by: Claude <claude@example.com>"],
+        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "Alice <alice@example.com>"],
         check=True,
         capture_output=True,
     )
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "Bob <bob@example.com>"], check=True, capture_output=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Bob"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Alice"],
+        check=True,
+        capture_output=True,
+    )
+    (repo / "a.txt").write_text("hello\n")
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "a.txt"], check=True, capture_output=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "commit",
+            "-m",
+            "Fix pipes | in body\nSecond line\nCo-authored-by: Claude <claude@example.com>",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "Bob <bob@example.com>"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Bob"],
+        check=True,
+        capture_output=True,
+    )
     (repo / "b.txt").write_text("world\n")
-    subprocess.run(["git", "-C", str(repo), "add", "b.txt"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "b.txt"], check=True, capture_output=True
+    )
     subprocess.run(
         ["git", "-C", str(repo), "commit", "-m", "Regular commit"],
         check=True,
@@ -118,19 +147,44 @@ def test_is_test_file_path_javascript():
 def test_agent_commit_verifier_detects_trailers(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
-    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "a@b.com"], check=True, capture_output=True)
-    subprocess.run(["git", "-C", str(repo), "config", "user.name", "A"], check=True, capture_output=True)
-    (repo / "f.py").write_text("x = 1\n")
-    subprocess.run(["git", "-C", str(repo), "add", "f.py"], check=True, capture_output=True)
     subprocess.run(
-        ["git", "-C", str(repo), "commit", "-m", "feat\n\nCo-authored-by: Claude <claude@anthropic.com>"],
+        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "a@b.com"],
         check=True,
         capture_output=True,
     )
-    subprocess.run(["git", "-C", str(repo), "config", "user.email", "b@b.com"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "A"],
+        check=True,
+        capture_output=True,
+    )
+    (repo / "f.py").write_text("x = 1\n")
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "f.py"], check=True, capture_output=True
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "commit",
+            "-m",
+            "feat\n\nCo-authored-by: Claude <claude@anthropic.com>",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "b@b.com"],
+        check=True,
+        capture_output=True,
+    )
     (repo / "g.py").write_text("y = 2\n")
-    subprocess.run(["git", "-C", str(repo), "add", "g.py"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "g.py"], check=True, capture_output=True
+    )
     subprocess.run(
         ["git", "-C", str(repo), "commit", "-m", "fix"],
         check=True,

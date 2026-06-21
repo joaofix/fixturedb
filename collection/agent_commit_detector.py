@@ -131,8 +131,6 @@ def _collect_test_files_from_pydriller(commit, language: str) -> list[str]:
     return test_files
 
 
-
-
 @dataclass
 class Tier1Assessment:
     """Results of Tier 1 (corpus repos) assessment."""
@@ -246,9 +244,7 @@ class Tier1RepositoryScanner:
 
                 test_files: list[str] = []
                 if detect_test_files and language:
-                    test_files = _collect_test_files_from_pydriller(
-                        commit, language
-                    )
+                    test_files = _collect_test_files_from_pydriller(commit, language)
 
                 commit_roles.append(
                     CommitRoleInfo(

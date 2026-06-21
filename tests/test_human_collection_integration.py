@@ -29,12 +29,28 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     # Monkeypatch cloning to create repo directory
     def fake_clone(url, path):
         path.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["git", "init", "-b", "main", str(path)], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(path), "config", "user.email", "test@example.com"], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(path), "config", "user.name", "Test"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "init", "-b", "main", str(path)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "-C", str(path), "config", "user.email", "test@example.com"],
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(path), "config", "user.name", "Test"],
+            check=True,
+            capture_output=True,
+        )
         (path / "file.txt").write_text("hello\n")
-        subprocess.run(["git", "-C", str(path), "add", "file.txt"], check=True, capture_output=True)
-        subprocess.run(["git", "-C", str(path), "commit", "-m", "initial"], check=True, capture_output=True)
+        subprocess.run(
+            ["git", "-C", str(path), "add", "file.txt"], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "-C", str(path), "commit", "-m", "initial"],
+            check=True,
+            capture_output=True,
+        )
         return True
 
     monkeypatch.setattr(human_corpus, "clone_repo_for_commit_scan", fake_clone)

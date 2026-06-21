@@ -97,39 +97,78 @@ class TestIsPureAddition:
 
     def test_add_no_deletions(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.ADD, [])) is True
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.ADD, [])) is True
+        )
 
     def test_add_with_deletions(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.ADD, [(1, "x")])) is False
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.ADD, [(1, "x")]))
+            is False
+        )
 
     def test_modify_no_deletions(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.MODIFY, [])) is True
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.MODIFY, []))
+            is True
+        )
 
     def test_modify_with_deletions(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.MODIFY, [(5, "old")])) is False
+
+        assert (
+            is_pure_addition(
+                _make_mock_modified_file(ModificationType.MODIFY, [(5, "old")])
+            )
+            is False
+        )
 
     def test_rename(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.RENAME, [])) is False
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.RENAME, []))
+            is False
+        )
 
     def test_delete(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.DELETE, [])) is False
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.DELETE, []))
+            is False
+        )
 
     def test_copy(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.COPY, [])) is False
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.COPY, []))
+            is False
+        )
 
     def test_unknown_no_deletions(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file(ModificationType.UNKNOWN, [])) is True
+
+        assert (
+            is_pure_addition(_make_mock_modified_file(ModificationType.UNKNOWN, []))
+            is True
+        )
 
     def test_missing_deleted_key(self):
         from pydriller.domain.commit import ModificationType
-        assert is_pure_addition(_make_mock_modified_file_no_deleted_key(ModificationType.ADD)) is True
+
+        assert (
+            is_pure_addition(
+                _make_mock_modified_file_no_deleted_key(ModificationType.ADD)
+            )
+            is True
+        )
 
 
 # ──────────────────────────────────────────────────────────────
@@ -143,102 +182,118 @@ class TestRawDiffFileIsPureAddition:
     # ── happy path ──
 
     def test_fully_added_file(self):
-        diff = "\n".join([
-            "diff --git a/tests/test_foo.py b/tests/test_foo.py",
-            "new file mode 100644",
-            "index 0000000..abc1234",
-            "--- /dev/null",
-            "+++ b/tests/test_foo.py",
-            "@@ -0,0 +1,3 @@",
-            "+@pytest.fixture",
-            "+def my_fixture():",
-            "+    return 42",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "new file mode 100644",
+                "index 0000000..abc1234",
+                "--- /dev/null",
+                "+++ b/tests/test_foo.py",
+                "@@ -0,0 +1,3 @@",
+                "+@pytest.fixture",
+                "+def my_fixture():",
+                "+    return 42",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is True
 
     def test_context_only_no_deletions(self):
         """File with only context lines (no +/-) — no deletions, so pure."""
-        diff = "\n".join([
-            "diff --git a/tests/test_foo.py b/tests/test_foo.py",
-            "--- a/tests/test_foo.py",
-            "+++ b/tests/test_foo.py",
-            "@@ -1,2 +1,2 @@",
-            " unchanged line 1",
-            " unchanged line 2",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,2 +1,2 @@",
+                " unchanged line 1",
+                " unchanged line 2",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is True
 
     # ── deletion in hunk ──
 
     def test_deletion_line_present(self):
-        diff = "\n".join([
-            "diff --git a/tests/test_foo.py b/tests/test_foo.py",
-            "--- a/tests/test_foo.py",
-            "+++ b/tests/test_foo.py",
-            "@@ -1,4 +1,5 @@",
-            " @pytest.fixture",
-            " def my_fixture():",
-            "-    old_value = 1",
-            "+    new_value = 42",
-            "     return new_value",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,4 +1,5 @@",
+                " @pytest.fixture",
+                " def my_fixture():",
+                "-    old_value = 1",
+                "+    new_value = 42",
+                "     return new_value",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
 
     # ── rename ──
 
     def test_old_and_new_paths_differ(self):
-        diff = "\n".join([
-            "diff --git a/tests/old_name.py b/tests/new_name.py",
-            "--- a/tests/old_name.py",
-            "+++ b/tests/new_name.py",
-            "@@ -0,0 +1,3 @@",
-            "+def test_thing():",
-            "+    pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/old_name.py b/tests/new_name.py",
+                "--- a/tests/old_name.py",
+                "+++ b/tests/new_name.py",
+                "@@ -0,0 +1,3 @@",
+                "+def test_thing():",
+                "+    pass",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/new_name.py") is False
 
     def test_rename_from_to_lines(self):
-        diff = "\n".join([
-            "diff --git a/tests/old.py b/tests/new.py",
-            "rename from tests/old.py",
-            "rename to tests/new.py",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/old.py b/tests/new.py",
+                "rename from tests/old.py",
+                "rename to tests/new.py",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/new.py") is False
 
     # ── copy ──
 
     def test_copy_from_to_lines(self):
-        diff = "\n".join([
-            "diff --git a/tests/orig.py b/tests/copied.py",
-            "copy from tests/orig.py",
-            "copy to tests/copied.py",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/orig.py b/tests/copied.py",
+                "copy from tests/orig.py",
+                "copy to tests/copied.py",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/copied.py") is False
 
     # ── deleted file ──
 
     def test_deleted_file_mode(self):
-        diff = "\n".join([
-            "diff --git a/tests/gone.py b/tests/gone.py",
-            "deleted file mode 100644",
-            "--- a/tests/gone.py",
-            "+++ /dev/null",
-            "@@ -1,3 +0,0 @@",
-            "-def test_gone():",
-            "-    pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/gone.py b/tests/gone.py",
+                "deleted file mode 100644",
+                "--- a/tests/gone.py",
+                "+++ /dev/null",
+                "@@ -1,3 +0,0 @@",
+                "-def test_gone():",
+                "-    pass",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/gone.py") is False
 
     # ── file not in diff ──
 
     def test_file_not_in_diff(self):
-        diff = "\n".join([
-            "diff --git a/src/main.py b/src/main.py",
-            "--- a/src/main.py",
-            "+++ b/src/main.py",
-            "@@ -0,0 +1,1 @@",
-            "+print('hello')",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/src/main.py b/src/main.py",
+                "--- a/src/main.py",
+                "+++ b/src/main.py",
+                "@@ -0,0 +1,1 @@",
+                "+print('hello')",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/missing.py") is False
 
     def test_empty_diff(self):
@@ -248,52 +303,58 @@ class TestRawDiffFileIsPureAddition:
 
     def test_matched_by_a_path(self):
         """File matched via old path (a/) when b/ differs."""
-        diff = "\n".join([
-            "diff --git a/tests/old.py b/tests/new.py",
-            "--- a/tests/old.py",
-            "+++ b/tests/new.py",
-            "@@ -0,0 +1,1 @@",
-            "+def test(): pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/old.py b/tests/new.py",
+                "--- a/tests/old.py",
+                "+++ b/tests/new.py",
+                "@@ -0,0 +1,1 @@",
+                "+def test(): pass",
+            ]
+        )
         # old_path != new_path → rename → False
         assert _raw_diff_file_is_pure_addition(diff, "tests/old.py") is False
 
     # ── multi-file diffs ──
 
     def test_multi_file_both_pure(self):
-        diff = "\n".join([
-            "diff --git a/tests/test_a.py b/tests/test_a.py",
-            "--- /dev/null",
-            "+++ b/tests/test_a.py",
-            "@@ -0,0 +1,3 @@",
-            "+def fixture_a():",
-            "+    pass",
-            "diff --git a/tests/test_b.py b/tests/test_b.py",
-            "--- a/tests/test_b.py",
-            "+++ b/tests/test_b.py",
-            "@@ -1,1 +1,2 @@",
-            " existing line",
-            "+new line",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_a.py b/tests/test_a.py",
+                "--- /dev/null",
+                "+++ b/tests/test_a.py",
+                "@@ -0,0 +1,3 @@",
+                "+def fixture_a():",
+                "+    pass",
+                "diff --git a/tests/test_b.py b/tests/test_b.py",
+                "--- a/tests/test_b.py",
+                "+++ b/tests/test_b.py",
+                "@@ -1,1 +1,2 @@",
+                " existing line",
+                "+new line",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_a.py") is True
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_b.py") is True
 
     def test_multi_file_one_has_deletion(self):
-        diff = "\n".join([
-            "diff --git a/tests/good.py b/tests/good.py",
-            "--- /dev/null",
-            "+++ b/tests/good.py",
-            "@@ -0,0 +1,2 @@",
-            "+def fixture_a():",
-            "+    pass",
-            "diff --git a/tests/bad.py b/tests/bad.py",
-            "--- a/tests/bad.py",
-            "+++ b/tests/bad.py",
-            "@@ -1,3 +1,3 @@",
-            " unchanged",
-            "-deleted line",
-            "+added line",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/good.py b/tests/good.py",
+                "--- /dev/null",
+                "+++ b/tests/good.py",
+                "@@ -0,0 +1,2 @@",
+                "+def fixture_a():",
+                "+    pass",
+                "diff --git a/tests/bad.py b/tests/bad.py",
+                "--- a/tests/bad.py",
+                "+++ b/tests/bad.py",
+                "@@ -1,3 +1,3 @@",
+                " unchanged",
+                "-deleted line",
+                "+added line",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/good.py") is True
         assert _raw_diff_file_is_pure_addition(diff, "tests/bad.py") is False
 
@@ -301,13 +362,15 @@ class TestRawDiffFileIsPureAddition:
 
     def test_malformed_diff_git_header(self):
         """diff --git with fewer than 4 parts — file not matched."""
-        diff = "\n".join([
-            "diff --git a/tests/x.py",
-            "--- /dev/null",
-            "+++ b/tests/x.py",
-            "@@ -0,0 +1,1 @@",
-            "+pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/x.py",
+                "--- /dev/null",
+                "+++ b/tests/x.py",
+                "@@ -0,0 +1,1 @@",
+                "+pass",
+            ]
+        )
         assert _raw_diff_file_is_pure_addition(diff, "tests/x.py") is False
 
 
@@ -328,6 +391,7 @@ class TestCommitIsPureAddition:
 
     def test_all_test_files_clean(self):
         from pydriller.domain.commit import ModificationType
+
         mf1 = _make_mock_modified_file(ModificationType.ADD, [])
         type(mf1).new_path = PropertyMock(return_value="tests/test_a.py")
         type(mf1).old_path = PropertyMock(return_value=None)
@@ -338,6 +402,7 @@ class TestCommitIsPureAddition:
 
     def test_test_file_with_deletions(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.MODIFY, [(3, "deleted")])
         type(mf).new_path = PropertyMock(return_value="tests/test_foo.py")
         type(mf).old_path = PropertyMock(return_value="tests/test_foo.py")
@@ -345,6 +410,7 @@ class TestCommitIsPureAddition:
 
     def test_test_file_rename(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.RENAME, [])
         type(mf).new_path = PropertyMock(return_value="tests/test_new.py")
         type(mf).old_path = PropertyMock(return_value="tests/test_old.py")
@@ -352,6 +418,7 @@ class TestCommitIsPureAddition:
 
     def test_test_file_delete(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.DELETE, [])
         type(mf).new_path = PropertyMock(return_value=None)
         type(mf).old_path = PropertyMock(return_value="tests/test_deleted.py")
@@ -359,6 +426,7 @@ class TestCommitIsPureAddition:
 
     def test_test_file_copy(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.COPY, [])
         type(mf).new_path = PropertyMock(return_value="tests/test_copied.py")
         type(mf).old_path = PropertyMock(return_value="tests/test_orig.py")
@@ -366,6 +434,7 @@ class TestCommitIsPureAddition:
 
     def test_ignores_non_test_files(self):
         from pydriller.domain.commit import ModificationType
+
         non_test = _make_mock_modified_file(ModificationType.MODIFY, [(1, "old")])
         type(non_test).new_path = PropertyMock(return_value="src/main.py")
         type(non_test).old_path = PropertyMock(return_value="src/main.py")
@@ -376,6 +445,7 @@ class TestCommitIsPureAddition:
 
     def test_mixed_clean_and_dirty(self):
         from pydriller.domain.commit import ModificationType
+
         clean = _make_mock_modified_file(ModificationType.ADD, [])
         type(clean).new_path = PropertyMock(return_value="tests/clean.py")
         type(clean).old_path = PropertyMock(return_value=None)
@@ -386,6 +456,7 @@ class TestCommitIsPureAddition:
 
     def test_unknown_extension_ignored(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.MODIFY, [(1, "old")])
         type(mf).new_path = PropertyMock(return_value="docs/readme.txt")
         type(mf).old_path = PropertyMock(return_value="docs/readme.txt")
@@ -396,6 +467,7 @@ class TestCommitIsPureAddition:
 
     def test_only_non_test_files(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.MODIFY, [(1, "old")])
         type(mf).new_path = PropertyMock(return_value="src/main.py")
         type(mf).old_path = PropertyMock(return_value="src/main.py")
@@ -403,6 +475,7 @@ class TestCommitIsPureAddition:
 
     def test_modify_no_deletions_is_clean(self):
         from pydriller.domain.commit import ModificationType
+
         mf = _make_mock_modified_file(ModificationType.MODIFY, [])
         type(mf).new_path = PropertyMock(return_value="tests/test_foo.py")
         type(mf).old_path = PropertyMock(return_value="tests/test_foo.py")
@@ -410,13 +483,21 @@ class TestCommitIsPureAddition:
 
     def test_js_and_ts_extensions(self):
         from pydriller.domain.commit import ModificationType
-        for ext, lang in [(".mjs", "javascript"), (".cjs", "javascript"),
-                          (".mts", "typescript"), (".cts", "typescript"),
-                          (".jsx", "javascript"), (".tsx", "typescript")]:
+
+        for ext, lang in [
+            (".mjs", "javascript"),
+            (".cjs", "javascript"),
+            (".mts", "typescript"),
+            (".cts", "typescript"),
+            (".jsx", "javascript"),
+            (".tsx", "typescript"),
+        ]:
             mf = _make_mock_modified_file(ModificationType.ADD, [])
             type(mf).new_path = PropertyMock(return_value=f"tests/test_foo{ext}")
             type(mf).old_path = PropertyMock(return_value=None)
-            assert commit_is_pure_addition(_make_mock_commit([mf])) is True, f"failed for {ext}"
+            assert (
+                commit_is_pure_addition(_make_mock_commit([mf])) is True
+            ), f"failed for {ext}"
 
 
 # ──────────────────────────────────────────────────────────────
@@ -430,190 +511,216 @@ class TestRawDiffCommitIsPureAddition:
     # ── happy path ──
 
     def test_all_test_files_clean(self):
-        diff = "\n".join([
-            "diff --git a/tests/test_a.py b/tests/test_a.py",
-            "--- /dev/null",
-            "+++ b/tests/test_a.py",
-            "@@ -0,0 +1,3 @@",
-            "+@pytest.fixture",
-            "+def fix_a():",
-            "+    return 1",
-            "diff --git a/tests/test_b.py b/tests/test_b.py",
-            "--- /dev/null",
-            "+++ b/tests/test_b.py",
-            "@@ -0,0 +1,3 @@",
-            "+@pytest.fixture",
-            "+def fix_b():",
-            "+    return 2",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_a.py b/tests/test_a.py",
+                "--- /dev/null",
+                "+++ b/tests/test_a.py",
+                "@@ -0,0 +1,3 @@",
+                "+@pytest.fixture",
+                "+def fix_a():",
+                "+    return 1",
+                "diff --git a/tests/test_b.py b/tests/test_b.py",
+                "--- /dev/null",
+                "+++ b/tests/test_b.py",
+                "@@ -0,0 +1,3 @@",
+                "+@pytest.fixture",
+                "+def fix_b():",
+                "+    return 2",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
     def test_empty_string(self):
         assert _raw_diff_commit_is_pure_addition("") is True
 
     def test_no_test_files_at_all(self):
-        diff = "\n".join([
-            "diff --git a/src/main.py b/src/main.py",
-            "--- /dev/null",
-            "+++ b/src/main.py",
-            "@@ -0,0 +1,1 @@",
-            "+print('hello')",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/src/main.py b/src/main.py",
+                "--- /dev/null",
+                "+++ b/src/main.py",
+                "@@ -0,0 +1,1 @@",
+                "+print('hello')",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
     def test_only_non_test_files(self):
-        diff = "\n".join([
-            "diff --git a/src/main.py b/src/main.py",
-            "--- a/src/main.py",
-            "+++ b/src/main.py",
-            "@@ -1,1 +1,1 @@",
-            "-old",
-            "+new",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/src/main.py b/src/main.py",
+                "--- a/src/main.py",
+                "+++ b/src/main.py",
+                "@@ -1,1 +1,1 @@",
+                "-old",
+                "+new",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
     def test_test_file_context_only(self):
         """Test file with only context lines — no deletions, so pure."""
-        diff = "\n".join([
-            "diff --git a/tests/test_foo.py b/tests/test_foo.py",
-            "--- a/tests/test_foo.py",
-            "+++ b/tests/test_foo.py",
-            "@@ -1,2 +1,2 @@",
-            " unchanged 1",
-            " unchanged 2",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,2 +1,2 @@",
+                " unchanged 1",
+                " unchanged 2",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
     # ── deletion in hunk ──
 
     def test_one_test_file_has_deletion(self):
-        diff = "\n".join([
-            "diff --git a/tests/clean.py b/tests/clean.py",
-            "--- /dev/null",
-            "+++ b/tests/clean.py",
-            "@@ -0,0 +1,2 @@",
-            "+def fix():",
-            "+    pass",
-            "diff --git a/tests/dirty.py b/tests/dirty.py",
-            "--- a/tests/dirty.py",
-            "+++ b/tests/dirty.py",
-            "@@ -1,2 +1,2 @@",
-            " def test():",
-            "-    old = 1",
-            "+    new = 2",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/clean.py b/tests/clean.py",
+                "--- /dev/null",
+                "+++ b/tests/clean.py",
+                "@@ -0,0 +1,2 @@",
+                "+def fix():",
+                "+    pass",
+                "diff --git a/tests/dirty.py b/tests/dirty.py",
+                "--- a/tests/dirty.py",
+                "+++ b/tests/dirty.py",
+                "@@ -1,2 +1,2 @@",
+                " def test():",
+                "-    old = 1",
+                "+    new = 2",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     def test_dirty_file_appears_first(self):
         """Dirty test file before clean — should still return False."""
-        diff = "\n".join([
-            "diff --git a/tests/dirty.py b/tests/dirty.py",
-            "--- a/tests/dirty.py",
-            "+++ b/tests/dirty.py",
-            "@@ -1,1 +1,1 @@",
-            "-old",
-            "+new",
-            "diff --git a/tests/clean.py b/tests/clean.py",
-            "--- /dev/null",
-            "+++ b/tests/clean.py",
-            "@@ -0,0 +1,1 @@",
-            "+pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/dirty.py b/tests/dirty.py",
+                "--- a/tests/dirty.py",
+                "+++ b/tests/dirty.py",
+                "@@ -1,1 +1,1 @@",
+                "-old",
+                "+new",
+                "diff --git a/tests/clean.py b/tests/clean.py",
+                "--- /dev/null",
+                "+++ b/tests/clean.py",
+                "@@ -0,0 +1,1 @@",
+                "+pass",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     def test_clean_file_appears_first_then_dirty(self):
         """Clean test file first, then dirty — should return False."""
-        diff = "\n".join([
-            "diff --git a/tests/clean.py b/tests/clean.py",
-            "--- /dev/null",
-            "+++ b/tests/clean.py",
-            "@@ -0,0 +1,1 @@",
-            "+pass",
-            "diff --git a/tests/dirty.py b/tests/dirty.py",
-            "--- a/tests/dirty.py",
-            "+++ b/tests/dirty.py",
-            "@@ -1,1 +1,1 @@",
-            "-old",
-            "+new",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/clean.py b/tests/clean.py",
+                "--- /dev/null",
+                "+++ b/tests/clean.py",
+                "@@ -0,0 +1,1 @@",
+                "+pass",
+                "diff --git a/tests/dirty.py b/tests/dirty.py",
+                "--- a/tests/dirty.py",
+                "+++ b/tests/dirty.py",
+                "@@ -1,1 +1,1 @@",
+                "-old",
+                "+new",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     # ── rename ──
 
     def test_rename_is_tainted(self):
-        diff = "\n".join([
-            "diff --git a/tests/old.py b/tests/new.py",
-            "rename from tests/old.py",
-            "rename to tests/new.py",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/old.py b/tests/new.py",
+                "rename from tests/old.py",
+                "rename to tests/new.py",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     # ── copy ──
 
     def test_copy_is_tainted(self):
-        diff = "\n".join([
-            "diff --git a/tests/orig.py b/tests/copied.py",
-            "copy from tests/orig.py",
-            "copy to tests/copied.py",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/orig.py b/tests/copied.py",
+                "copy from tests/orig.py",
+                "copy to tests/copied.py",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     # ── deleted file ──
 
     def test_deleted_file_is_tainted(self):
-        diff = "\n".join([
-            "diff --git a/tests/gone.py b/tests/gone.py",
-            "deleted file mode 100644",
-            "--- a/tests/gone.py",
-            "+++ /dev/null",
-            "@@ -1,3 +0,0 @@",
-            "-def test_gone():",
-            "-    pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/gone.py b/tests/gone.py",
+                "deleted file mode 100644",
+                "--- a/tests/gone.py",
+                "+++ /dev/null",
+                "@@ -1,3 +0,0 @@",
+                "-def test_gone():",
+                "-    pass",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     # ── non-test files ignored ──
 
     def test_ignores_non_test_files(self):
-        diff = "\n".join([
-            "diff --git a/src/main.py b/src/main.py",
-            "--- a/src/main.py",
-            "+++ b/src/main.py",
-            "@@ -1,1 +1,1 @@",
-            "-old",
-            "+new",
-            "diff --git a/tests/clean.py b/tests/clean.py",
-            "--- /dev/null",
-            "+++ b/tests/clean.py",
-            "@@ -0,0 +1,2 @@",
-            "+def fix():",
-            "+    pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/src/main.py b/src/main.py",
+                "--- a/src/main.py",
+                "+++ b/src/main.py",
+                "@@ -1,1 +1,1 @@",
+                "-old",
+                "+new",
+                "diff --git a/tests/clean.py b/tests/clean.py",
+                "--- /dev/null",
+                "+++ b/tests/clean.py",
+                "@@ -0,0 +1,2 @@",
+                "+def fix():",
+                "+    pass",
+            ]
+        )
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
     # ── js/ts extensions ──
 
     def test_js_and_ts_extensions(self):
         for ext in [".mjs", ".cjs", ".mts", ".cts", ".jsx", ".tsx"]:
-            diff = "\n".join([
-                f"diff --git a/tests/test_foo{ext} b/tests/test_foo{ext}",
-                "--- /dev/null",
-                f"+++ b/tests/test_foo{ext}",
-                "@@ -0,0 +1,1 @@",
-                "+pass",
-            ])
+            diff = "\n".join(
+                [
+                    f"diff --git a/tests/test_foo{ext} b/tests/test_foo{ext}",
+                    "--- /dev/null",
+                    f"+++ b/tests/test_foo{ext}",
+                    "@@ -0,0 +1,1 @@",
+                    "+pass",
+                ]
+            )
             assert _raw_diff_commit_is_pure_addition(diff) is True, f"failed for {ext}"
 
     # ── malformed header ──
 
     def test_malformed_diff_git_header(self):
         """diff --git with fewer than 4 parts — file not identified as test."""
-        diff = "\n".join([
-            "diff --git a/tests/x.py",
-            "--- /dev/null",
-            "+++ b/tests/x.py",
-            "@@ -0,0 +1,1 @@",
-            "+pass",
-        ])
+        diff = "\n".join(
+            [
+                "diff --git a/tests/x.py",
+                "--- /dev/null",
+                "+++ b/tests/x.py",
+                "@@ -0,0 +1,1 @@",
+                "+pass",
+            ]
+        )
         # File not recognized → treated as non-test → commit is pure
         assert _raw_diff_commit_is_pure_addition(diff) is True

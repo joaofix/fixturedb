@@ -302,9 +302,9 @@ test('query test', t => {
 
         assert len(ava_fixtures) > 0, "AVA fixtures should be detected"
         for fixture in ava_fixtures:
-            assert fixture.framework == "ava", (
-                f"AVA fixture {fixture.name} should have framework='ava', got {fixture.framework}"
-            )
+            assert (
+                fixture.framework == "ava"
+            ), f"AVA fixture {fixture.name} should have framework='ava', got {fixture.framework}"
 
     def test_jest_mocha_ambiguous_framework(self):
         """Jest/Mocha beforeEach should have framework=None (ambiguous)"""
@@ -333,9 +333,9 @@ describe('Database', () => {
 
         assert len(hook_fixtures) > 0, "beforeEach/afterEach hooks should be detected"
         for fixture in hook_fixtures:
-            assert fixture.framework is None, (
-                f"Jest/Mocha hook {fixture.name} should have framework=None (ambiguous), got {fixture.framework}"
-            )
+            assert (
+                fixture.framework is None
+            ), f"Jest/Mocha hook {fixture.name} should have framework=None (ambiguous), got {fixture.framework}"
 
     def test_ava_javascript(self):
         """AVA in JavaScript should also have framework='ava'"""
@@ -402,12 +402,10 @@ test.before(t => {});
             for fixture in fixtures:
                 assert fixture.framework is None or isinstance(
                     fixture.framework, str
-                ), (
-                    f"Framework must be None or str, got {type(fixture.framework)} for {language}"
-                )
-                assert fixture.framework != "", (
-                    f"Framework should be None, not empty string for {language}"
-                )
+                ), f"Framework must be None or str, got {type(fixture.framework)} for {language}"
+                assert (
+                    fixture.framework != ""
+                ), f"Framework should be None, not empty string for {language}"
 
     def test_framework_detection_doesnt_affect_other_fields(self):
         """Framework detection should not affect other fixture properties"""

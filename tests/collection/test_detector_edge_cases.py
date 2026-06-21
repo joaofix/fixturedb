@@ -286,16 +286,11 @@ class TestDetectorBoundaryConditions:
         """File with many fixtures should handle all of them."""
         py_file = tmp_path / "test_many.py"
 
-        fixture_defs = "\n".join(
-            [
-                f"""
+        fixture_defs = "\n".join([f"""
 @pytest.fixture
 def fixture_{i}():
     return {i}
-"""
-                for i in range(50)
-            ]
-        )
+""" for i in range(50)])
 
         py_file.write_text(f"import pytest\n{fixture_defs}")
 

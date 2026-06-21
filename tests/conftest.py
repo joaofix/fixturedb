@@ -75,9 +75,9 @@ def assert_fixture_detected(
 
     fixture = fixtures[0]
     if fixture_type:
-        assert fixture.fixture_type == fixture_type, (
-            f"Expected type {fixture_type}, got {fixture.fixture_type}"
-        )
+        assert (
+            fixture.fixture_type == fixture_type
+        ), f"Expected type {fixture_type}, got {fixture.fixture_type}"
     if scope:
         assert fixture.scope == scope, f"Expected scope {scope}, got {fixture.scope}"
     return fixture
@@ -92,26 +92,26 @@ def assert_fixture_not_detected(code: str, language: str, fixture_name: str):
 def assert_fixture_count(code: str, language: str, expected_count: int):
     """Assert the number of detected fixtures."""
     fixtures = extract_and_find_fixtures(code, language)
-    assert len(fixtures) == expected_count, (
-        f"Expected {expected_count} fixtures, got {len(fixtures)}"
-    )
+    assert (
+        len(fixtures) == expected_count
+    ), f"Expected {expected_count} fixtures, got {len(fixtures)}"
 
 
 def assert_line_range(fixture: FixtureResult, expected_start: int, expected_end: int):
     """Assert fixture line number range."""
-    assert fixture.start_line == expected_start, (
-        f"Expected start_line {expected_start}, got {fixture.start_line}"
-    )
-    assert fixture.end_line == expected_end, (
-        f"Expected end_line {expected_end}, got {fixture.end_line}"
-    )
+    assert (
+        fixture.start_line == expected_start
+    ), f"Expected start_line {expected_start}, got {fixture.start_line}"
+    assert (
+        fixture.end_line == expected_end
+    ), f"Expected end_line {expected_end}, got {fixture.end_line}"
 
 
 def assert_loc(fixture: FixtureResult, expected_loc: int):
     """Assert lines of code count."""
-    assert fixture.loc == expected_loc, (
-        f"Expected {expected_loc} LOC, got {fixture.loc}"
-    )
+    assert (
+        fixture.loc == expected_loc
+    ), f"Expected {expected_loc} LOC, got {fixture.loc}"
 
 
 def assert_fixture_metrics(
@@ -137,39 +137,39 @@ def assert_fixture_metrics(
         max_external_calls: Maximum number of external calls (inclusive)
     """
     if min_complexity is not None:
-        assert fixture.cyclomatic_complexity >= min_complexity, (
-            f"Expected complexity >= {min_complexity}, got {fixture.cyclomatic_complexity}"
-        )
+        assert (
+            fixture.cyclomatic_complexity >= min_complexity
+        ), f"Expected complexity >= {min_complexity}, got {fixture.cyclomatic_complexity}"
 
     if max_complexity is not None:
-        assert fixture.cyclomatic_complexity <= max_complexity, (
-            f"Expected complexity <= {max_complexity}, got {fixture.cyclomatic_complexity}"
-        )
+        assert (
+            fixture.cyclomatic_complexity <= max_complexity
+        ), f"Expected complexity <= {max_complexity}, got {fixture.cyclomatic_complexity}"
 
     if num_parameters is not None:
-        assert fixture.num_parameters == num_parameters, (
-            f"Expected {num_parameters} parameters, got {fixture.num_parameters}"
-        )
+        assert (
+            fixture.num_parameters == num_parameters
+        ), f"Expected {num_parameters} parameters, got {fixture.num_parameters}"
 
     if min_objects_instantiated is not None:
-        assert fixture.num_objects_instantiated >= min_objects_instantiated, (
-            f"Expected objects >= {min_objects_instantiated}, got {fixture.num_objects_instantiated}"
-        )
+        assert (
+            fixture.num_objects_instantiated >= min_objects_instantiated
+        ), f"Expected objects >= {min_objects_instantiated}, got {fixture.num_objects_instantiated}"
 
     if max_objects_instantiated is not None:
-        assert fixture.num_objects_instantiated <= max_objects_instantiated, (
-            f"Expected objects <= {max_objects_instantiated}, got {fixture.num_objects_instantiated}"
-        )
+        assert (
+            fixture.num_objects_instantiated <= max_objects_instantiated
+        ), f"Expected objects <= {max_objects_instantiated}, got {fixture.num_objects_instantiated}"
 
     if min_external_calls is not None:
-        assert fixture.num_external_calls >= min_external_calls, (
-            f"Expected num_external_calls >= {min_external_calls}, got {fixture.num_external_calls}"
-        )
+        assert (
+            fixture.num_external_calls >= min_external_calls
+        ), f"Expected num_external_calls >= {min_external_calls}, got {fixture.num_external_calls}"
 
     if max_external_calls is not None:
-        assert fixture.num_external_calls <= max_external_calls, (
-            f"Expected num_external_calls <= {max_external_calls}, got {fixture.num_external_calls}"
-        )
+        assert (
+            fixture.num_external_calls <= max_external_calls
+        ), f"Expected num_external_calls <= {max_external_calls}, got {fixture.num_external_calls}"
 
 
 def assert_fixture_with_type_detected(
@@ -189,15 +189,15 @@ def assert_fixture_with_type_detected(
     """
     fixtures = extract_and_find_fixtures(code, language)
     matching = [f for f in fixtures if f.fixture_type == fixture_type]
-    assert len(matching) == count, (
-        f"Expected {count} fixture(s) with type '{fixture_type}', found {len(matching)}"
-    )
+    assert (
+        len(matching) == count
+    ), f"Expected {count} fixture(s) with type '{fixture_type}', found {len(matching)}"
 
     if scope:
         for fixture in matching:
-            assert fixture.scope == scope, (
-                f"Expected scope {scope}, got {fixture.scope}"
-            )
+            assert (
+                fixture.scope == scope
+            ), f"Expected scope {scope}, got {fixture.scope}"
 
     return matching[0] if count == 1 else matching
 
