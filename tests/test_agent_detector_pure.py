@@ -8,6 +8,7 @@ from collection.agent_commit_detector import (
     Tier1RepositoryScanner,
     AGENT_TRAILER_RE,
 )
+from collection.agent_detector import AgentCommitVerifier
 
 
 def test_is_test_file_path_python_cases():
@@ -112,3 +113,33 @@ def test_is_test_file_path_javascript():
     assert _is_test_file_path("__tests__/my.test.js", "javascript")
     assert _is_test_file_path("spec/my.spec.js", "javascript")
     assert not _is_test_file_path("lib/foo.js", "javascript")
+
+
+def test_agent_commit_verifier_detects_trailers(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "a@b.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "A"], check=True, capture_output=True)
+    (repo / "f.py").write_text("x = 1\n")
+    subprocess.run(["git", "-C", str(repo), "add", "f.py"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "feat\n\nCo-authored-by: Claude <claude@anthropic.com>"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "b@b.com"], check=True, capture_output=True)
+    (repo / "g.py").write_text("y = 2\n")
+    subprocess.run(["git", "-C", str(repo), "add", "g.py"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "fix"],
+        check=True,
+        capture_output=True,
+    )
+
+    verifier = AgentCommitVerifier(clones_dir=tmp_path)
+    result = verifier.verify_repository(str(repo.name), start_date="2020-01-01")
+
+    assert result.total_agent_commits == 1
+    assert result.repo_name == repo.name
+    assert list(result.agent_commits.values()) == ["claude"]

@@ -10,12 +10,14 @@ Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline
 import json
 import logging
 import re
-import subprocess
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+
+from pydriller import Repository
 
 from .config import AGENT_CORPUS_START_DATE
 from .agent_patterns import (
@@ -519,47 +521,28 @@ class AgentCommitVerifier:
         agent_commits = {}
 
         try:
-            # Get all commits with full metadata and message
-            result = subprocess.run(
-                [
-                    "git",
-                    "log",
-                    "HEAD",
-                    "--no-merges",
-                    "--pretty=format:%H%n%ai%n%an%n%ae%n%B%n---END_COMMIT---",
-                    "--",
-                ],
-                cwd=repo_path,
-                capture_output=True,
-                text=True,
-                timeout=300,
-                check=False,
-            )
-
-            if result.returncode != 0 and not result.stdout:
-                logger.warning(f"Git log failed for {repo_name}: {result.stderr[:200]}")
-                return AgentCommitVerificationResult(repo_name=repo_name)
-
-        except subprocess.TimeoutExpired:
-            raise RuntimeError(f"Git log timeout for {repo_name}")
-        except Exception as e:
-            raise RuntimeError(f"Git operation failed for {repo_name}: {e}")
-
-        # Parse commits
-        commits = self._parse_commits(result.stdout)
-
-        # Detect agents in commits after start_date
-        for commit_data in commits:
-            if commit_data["date"] >= start_date:
+            since_date = datetime.fromisoformat(start_date)
+            for commit in Repository(
+                str(repo_path),
+                since=since_date,
+                only_no_merge=True,
+            ).traverse_commits():
+                commit_data = {
+                    "sha": commit.hash,
+                    "date": commit.author_date.date().isoformat(),
+                    "author_name": commit.author.name,
+                    "author_email": commit.author.email,
+                    "message": commit.msg,
+                }
                 agent_type = self._detect_agent_in_commit(commit_data)
                 if agent_type:
                     agent_commits[commit_data["sha"]] = agent_type
+        except Exception as e:
+            raise RuntimeError(f"Git operation failed for {repo_name}: {e}")
 
-        result = AgentCommitVerificationResult(
+        return AgentCommitVerificationResult(
             repo_name=repo_name, agent_commits=agent_commits
         )
-
-        return result
 
     def verify_all(
         self,
@@ -610,53 +593,6 @@ class AgentCommitVerifier:
         )
 
         return results
-
-    def _parse_commits(self, git_output: str) -> List[Dict]:
-        """
-        Parse git log output into structured commit data.
-
-        Args:
-            git_output: Raw output from git log
-
-        Returns:
-            List of dicts with keys: sha, date, author_name, author_email, message
-        """
-        commits = []
-
-        if not git_output.strip():
-            return commits
-
-        for block in git_output.split("---END_COMMIT---"):
-            lines = block.strip().split("\n", 4)
-
-            if len(lines) < 5:
-                continue
-
-            try:
-                sha = lines[0].strip()
-                timestamp = lines[1].strip()  # Format: "2021-05-12 14:30:45 +0000"
-                author_name = lines[2].strip()
-                author_email = lines[3].strip()
-                message = lines[4].strip() if len(lines) > 4 else ""
-
-                # Extract ISO date
-                date_iso = timestamp.split(" ")[0]
-
-                commits.append(
-                    {
-                        "sha": sha,
-                        "date": date_iso,
-                        "author_name": author_name,
-                        "author_email": author_email,
-                        "message": message,
-                    }
-                )
-
-            except (IndexError, ValueError) as e:
-                logger.debug(f"Failed to parse commit block: {e}")
-                continue
-
-        return commits
 
     def _detect_agent_in_commit(self, commit_data: Dict) -> Optional[str]:
         """

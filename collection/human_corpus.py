@@ -17,9 +17,12 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, List, Tuple, Any, Set
 from collections import defaultdict
+
+from pydriller import Repository
 
 from .cli_utils import (
     add_language_arg,
@@ -541,25 +544,11 @@ class HumanCorpusCollector:
     def _validate_quality_filters(
         self, repo_path: Path, language: str, repo_name: str
     ) -> tuple[bool, Optional[str]]:
-        """
-        Validate repository meets quality criteria.
-
-        Returns:
-            (passes_qc: bool, skip_reason: Optional[str])
-        """
-        # Count commits in the same window used for agent collection.
+        since_date = datetime.fromisoformat(AGENT_CORPUS_START_DATE)
         try:
-            result = subprocess.run(
-                ["git", "log", "--oneline", f"--since={AGENT_CORPUS_START_DATE}"],
-                cwd=str(repo_path),
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            if result.returncode != 0:
-                return False, "git_log_failed"
-            num_commits = (
-                len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+            num_commits = sum(
+                1
+                for _ in Repository(str(repo_path), since=since_date).traverse_commits()
             )
         except Exception as e:
             logger.debug(f"Failed to count commits for {repo_name}: {e}")
@@ -568,7 +557,6 @@ class HumanCorpusCollector:
         if num_commits == 0:
             return False, "no_commits_in_agent_window"
 
-        # Quality threshold checks will happen during extraction
         return True, None
 
     def _process_human_repository(self, repo: dict) -> dict:
@@ -1032,6 +1020,7 @@ class HumanCorpusCollector:
             extra_metadata={
                 "dataset_temporal_window": AGENT_CORPUS_START_DATE,
             },
+            output_dir=self.output_db.parent,
         )
 
     def _build_inter_candidates(

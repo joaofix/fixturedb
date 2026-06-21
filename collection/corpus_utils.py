@@ -366,6 +366,7 @@ def generate_corpus_summary(
     output_db: Path,
     temporal_scope: str,
     extra_metadata: Optional[dict] = None,
+    output_dir: Optional[Path] = None,
 ) -> Path:
     """
     Generate and save corpus collection summary to JSON.
@@ -376,12 +377,14 @@ def generate_corpus_summary(
         output_db: Path to output database
         temporal_scope: Description of temporal window
         extra_metadata: Optional additional metadata to include
+        output_dir: Directory to write summary JSON (default: project output/ dir)
 
     Returns:
         Path to generated summary file
     """
-    output_dir = Path(__file__).parent.parent / "output"
-    output_dir.mkdir(exist_ok=True)
+    if output_dir is None:
+        output_dir = Path(__file__).parent.parent / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
     summary_path = (
         output_dir
         / f"{corpus_name}_corpus_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

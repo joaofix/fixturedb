@@ -3,6 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import subprocess
 
 from collection.human_corpus import HumanCorpusCollector
 from collection.db import initialise_db, is_checkpoint_completed, db_session
@@ -28,7 +29,12 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     # Monkeypatch cloning to create repo directory
     def fake_clone(url, path):
         path.mkdir(parents=True, exist_ok=True)
-        (path / ".git").mkdir(exist_ok=True)
+        subprocess.run(["git", "init", "-b", "main", str(path)], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(path), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(path), "config", "user.name", "Test"], check=True, capture_output=True)
+        (path / "file.txt").write_text("hello\n")
+        subprocess.run(["git", "-C", str(path), "add", "file.txt"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(path), "commit", "-m", "initial"], check=True, capture_output=True)
         return True
 
     monkeypatch.setattr(human_corpus, "clone_repo_for_commit_scan", fake_clone)
@@ -96,15 +102,6 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
         repo_qc_dir=repo_qc_dir,
         test_commits_csv=test_commits_dir,
     )
-
-    # Monkeypatch subprocess.run used in _validate_quality_filters to simulate git log
-    def fake_run(cmd, cwd, capture_output, text, timeout):
-        # Simulate a successful `git log --oneline` with one commit
-        return SimpleNamespace(
-            returncode=0, stdout="abcd123 commit message\n", stderr=""
-        )
-
-    monkeypatch.setattr("collection.human_corpus.subprocess.run", fake_run)
 
     # Run the collector in fast (single-worker) mode; this should persist fixtures
     stats, db_path = collector.run(repos_per_language=1, workers=1)

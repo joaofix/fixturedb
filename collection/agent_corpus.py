@@ -910,6 +910,7 @@ class AgentCorpusCollector:
                 "agent_commits_found": stats.agent_commits_found,
                 "agent_types_distribution": dict(stats.agent_types_distribution),
             },
+            output_dir=self.output_db.parent,
         )
 
 

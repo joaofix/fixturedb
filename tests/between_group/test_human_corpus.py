@@ -6,6 +6,7 @@
 """
 
 import sqlite3
+import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +15,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from collection.human_corpus import (
+    HumanCorpusCollector,
     HumanCorpusStats,
     select_human_corpus_repositories,
 )
@@ -373,3 +375,48 @@ class TestHumanCorpusTemporalBoundary:
 
             # Should include repo at boundary
             assert len(repos) >= 1
+
+
+def test_validate_quality_filters_passes_with_commits(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True, capture_output=True)
+    (repo / "f.py").write_text("x = 1\n")
+    subprocess.run(["git", "-C", str(repo), "add", "f.py"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-m", "initial"], check=True, capture_output=True)
+
+    collector = HumanCorpusCollector(corpus_db_path=tmp_path / "corpus.db")
+    passes, reason = collector._validate_quality_filters(repo, "python", "owner/repo")
+    assert passes is True
+    assert reason is None
+
+
+def test_validate_quality_filters_fails_with_no_commits(tmp_path):
+    repo = tmp_path / "empty_repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+
+    collector = HumanCorpusCollector(corpus_db_path=tmp_path / "corpus.db")
+    passes, reason = collector._validate_quality_filters(repo, "python", "owner/repo")
+    assert passes is False
+    assert reason == "no_commits_in_agent_window"
+
+
+def test_validate_quality_filters_returns_tuple(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True, capture_output=True)
+    (repo / "f.py").write_text("x = 1\n")
+    subprocess.run(["git", "-C", str(repo), "add", "f.py"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-m", "initial"], check=True, capture_output=True)
+
+    collector = HumanCorpusCollector(corpus_db_path=tmp_path / "corpus.db")
+    result = collector._validate_quality_filters(repo, "python", "owner/repo")
+    assert isinstance(result, tuple)
+    assert len(result) == 2
+    assert isinstance(result[0], bool)
+    assert result[1] is None or isinstance(result[1], str)
