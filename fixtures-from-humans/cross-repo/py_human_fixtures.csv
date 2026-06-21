@@ -1,0 +1,11 @@
+repo_name,language,commit_sha,file_path,fixture_name,fixture_type,start_line,end_line,loc,framework,num_mocks,is_complete_addition
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
+owner/repo,py,deadbeef,tests/test_x.py,fix1,pytest_decorator,1,3,3,pytest,0,1
