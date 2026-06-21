@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import requests
+from tqdm import tqdm
 
 from .config import (
     CLONES_DIR,
@@ -288,10 +289,6 @@ def clone_pending_repos(
     logger.info(f"Cloning batch of {batch_total} repos with {CLONE_WORKERS} workers …")
     summary = {"cloned": 0, "skipped": 0, "error": 0}
 
-    processed = 0
-    start_time = time.time()
-    progress_interval = max(1, batch_total // 20)
-
     with ThreadPoolExecutor(max_workers=CLONE_WORKERS) as executor:
         futures = {
             executor.submit(
@@ -303,33 +300,23 @@ def clone_pending_repos(
             ): row
             for row in batch
         }
-        for future in as_completed(futures):
-            repo_id, status, commit, skip_reason = future.result()
-            summary[status] = summary.get(status, 0) + 1
-            processed += 1
-
-            with db_session() as conn:
-                set_repo_status(
-                    conn,
-                    repo_id,
-                    status,
-                    skip_reason=skip_reason,
-                    pinned_commit=commit,
+        with tqdm(total=batch_total, desc="Cloning", unit="repo") as pbar:
+            for future in as_completed(futures):
+                repo_id, status, commit, skip_reason = future.result()
+                summary[status] = summary.get(status, 0) + 1
+                pbar.set_description_str(
+                    f"Cloning [cloned:{summary['cloned']} skipped:{summary['skipped']} error:{summary['error']}]"
                 )
+                pbar.update(1)
 
-            if processed % progress_interval == 0 or processed == batch_total:
-                elapsed = time.time() - start_time
-                rate = processed / elapsed if elapsed > 0 else 0
-                remaining = batch_total - processed
-                eta_secs = remaining / rate if rate > 0 else 0
-                eta_mins = eta_secs / 60
-                percent = (processed / batch_total) * 100
-
-                logger.info(
-                    f"[progress] Cloned {processed:4d}/{batch_total} ({percent:5.1f}%) | "
-                    f"cloned:{summary['cloned']:3d} skipped:{summary['skipped']:3d} error:{summary['error']:1d} | "
-                    f"rate:{rate:5.2f} repos/sec | ETA:{eta_mins:6.1f}min"
-                )
+                with db_session() as conn:
+                    set_repo_status(
+                        conn,
+                        repo_id,
+                        status,
+                        skip_reason=skip_reason,
+                        pinned_commit=commit,
+                    )
 
     logger.info(f"Batch done: {summary}")
     return summary

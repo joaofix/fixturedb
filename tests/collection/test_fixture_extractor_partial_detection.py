@@ -711,3 +711,125 @@ def test_agent_commits_proceeds_when_commit_level_pure(tmp_path, monkeypatch):
     assert len(fixtures) >= 1
     fixture_names = {f["name"] for f in fixtures}
     assert "fix" in fixture_names
+
+
+# ──────────────────────────────────────────────────────────────
+# Integration tests: purity gate inside _extract_from_agent_commits()
+# ──────────────────────────────────────────────────────────────
+
+
+def _init_repo_with_commits(tmp_path: Path, commits: list[dict]) -> str:
+    """Create a real git repo under tmp_path/owner__repo and return HEAD commit SHA."""
+    repo = tmp_path / "owner__repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True, capture_output=True)
+
+    for c in commits:
+        (repo / c["path"]).parent.mkdir(parents=True, exist_ok=True)
+        (repo / c["path"]).write_text(c.get("content", ""), encoding="utf-8")
+        subprocess.run(["git", "-C", str(repo), "add", c["path"]], check=True, capture_output=True)
+        msg = c.get("msg", "commit")
+        subprocess.run(["git", "-C", str(repo), "commit", "-m", msg], check=True, capture_output=True)
+
+    return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"]).decode().strip()
+
+
+def test_extract_from_agent_commits_skips_commit_with_deletions(tmp_path):
+    """A commit whose test files contain deletions is skipped entirely."""
+    repo = tmp_path / "owner__repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True, capture_output=True)
+
+    # Base commit: add a test file
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_foo.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef foo():\n    return 1\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "tests/test_foo.py"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-m", "base"], check=True, capture_output=True)
+
+    # Second commit: modify the test file (introducing a deletion line)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test2@example.com"], check=True, capture_output=True)
+    (repo / "tests" / "test_foo.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef foo():\n    return 2\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "tests/test_foo.py"], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "modify test\n\nCo-authored-by: GitHub Copilot <copilot@example.com>"],
+        check=True, capture_output=True,
+    )
+    sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"]).decode().strip()
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "copilot"},
+    )
+    assert fixtures == []
+
+
+def test_extract_from_agent_commits_keeps_pure_addition_commit(tmp_path):
+    """A commit whose test files are pure additions yields fixtures."""
+    sha = _init_repo_with_commits(tmp_path, [
+        {
+            "path": "tests/test_pure.py",
+            "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+            "msg": "add pure test\n\nCo-authored-by: Claude <claude@anthropic.com>",
+        }
+    ])
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "claude"},
+    )
+    assert len(fixtures) >= 1
+    names = {f["name"] for f in fixtures}
+    assert "pure_fixture" in names
+
+
+def test_extract_from_agent_commits_mixed_files_skips_entire_commit(tmp_path):
+    """If any test file in a commit has deletions, the whole commit is skipped."""
+    # First commit: pure-add test file
+    sha_pure = _init_repo_with_commits(tmp_path, [
+        {
+            "path": "tests/test_pure.py",
+            "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 1\n",
+            "msg": "add pure test\n\nCo-authored-by: Claude <claude@anthropic.com>",
+        }
+    ])
+
+    # Second commit: modify the same file (introducing a deletion) plus add another test
+    repo = tmp_path / "owner__repo"
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test2@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test2"], check=True, capture_output=True)
+    (repo / "tests/test_pure.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 2\n",
+        encoding="utf-8",
+    )
+    (repo / "tests/test_extra.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef extra_fixture():\n    return 3\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "modify and add\n\nCo-authored-by: Claude <claude@anthropic.com>"],
+        check=True, capture_output=True,
+    )
+    sha_dirty = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"]).decode().strip()
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha_pure: "claude", sha_dirty: "claude"},
+    )
+
+    names = {f["name"] for f in fixtures}
+    assert "pure_fixture" in names
+    assert "extra_fixture" not in names

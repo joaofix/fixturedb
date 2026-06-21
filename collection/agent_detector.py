@@ -9,6 +9,7 @@ Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline
 
 import json
 import logging
+import platformdirs
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -29,6 +30,8 @@ from .agent_patterns import (
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
+
+DEFAULT_CLONES_DIR = Path(platformdirs.user_data_dir("icsme-nier", "clones"))
 
 
 @dataclass
@@ -271,10 +274,10 @@ class AgentFileScanner:
 
         Args:
             clones_dir: Path to directory containing cloned repositories.
-                       Defaults to current working directory + clones/.
+                       Defaults to user data dir + clones/.
         """
         if clones_dir is None:
-            clones_dir = Path.cwd() / "clones"
+            clones_dir = DEFAULT_CLONES_DIR
 
         self.clones_dir = Path(clones_dir)
 
@@ -487,10 +490,10 @@ class AgentCommitVerifier:
 
         Args:
             clones_dir: Path to directory containing cloned repositories.
-                       Defaults to current working directory + clones/.
+                       Defaults to user data dir + clones/.
         """
         if clones_dir is None:
-            clones_dir = Path.cwd() / "clones"
+            clones_dir = DEFAULT_CLONES_DIR
 
         self.clones_dir = Path(clones_dir)
 

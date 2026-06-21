@@ -12,11 +12,11 @@ import json
 import logging
 import re
 import subprocess
-import threading
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Optional
+
+from tqdm import tqdm
 
 from .config import (
     AGENT_CORPUS_START_DATE,
@@ -511,29 +511,12 @@ class AgentCorpusCollector:
         repo_contributors = []
         lang_test_commit_rows: list[dict] = []
 
-        # Progress logging state
-        last_progress_log = time.time()
-        progress_lock = threading.Lock()
-
-        def log_progress_if_needed(force=False):
-            """Log progress every 3 minutes (180 seconds) unless forced."""
-            nonlocal last_progress_log
-            current_time = time.time()
-            if force or (current_time - last_progress_log) >= 180:
-                with progress_lock:
-                    pct = (
-                        (stats.repos_scanned / len(repos_to_collect) * 100)
-                        if repos_to_collect
-                        else 0
-                    )
-                    logger.info(
-                        f"[Agent Corpus Progress] {stats.repos_scanned}/{len(repos_to_collect)} repos ({pct:.1f}%), "
-                        f"{stats.repos_passed_qc} passed QC, {stats.fixtures_collected} fixtures collected"
-                    )
-                last_progress_log = current_time
-
         try:
-            for idx, repo in enumerate(repos_to_collect):
+            for idx, repo in tqdm(
+                enumerate(repos_to_collect, 1),
+                total=len(repos_to_collect),
+                desc="Agent Corpus",
+            ):
                 stats.repos_scanned += 1
                 repo_name = repo.get("full_name", "unknown")
                 language_name = repo.get("language", "unknown")
@@ -863,11 +846,7 @@ class AgentCorpusCollector:
                         mark_global_checkpoint(conn, completion_step(current_language))
                     lang_test_commit_rows = []
 
-                # Log progress every 3 minutes
-                log_progress_if_needed()
-
             # Final progress log
-            log_progress_if_needed(force=True)
 
         except KeyboardInterrupt:
             logger.info("[Agent Corpus] Collection interrupted by user")
