@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import csv
 import json
-import subprocess
 from pathlib import Path
 from typing import Iterable
+
+from pydriller import Repository
+from pydriller.domain.commit import ModificationType
 
 from .config import LANGUAGE_CONFIGS, NON_CODE_EXTENSIONS
 from .csv_adapter import get_adapter
@@ -65,41 +67,29 @@ def collect_test_files_for_commit(
     repo_path: Path, commit_sha: str, language: str
 ) -> list[str]:
     """Return the test files touched by a commit."""
-    result = subprocess.run(
-        [
-            "git",
-            "show",
-            "--format=",
-            "--name-status",
-            "--find-renames",
-            "--diff-filter=AMRT",
-            "--root",
-            commit_sha,
-        ],
-        cwd=repo_path,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    if result.returncode != 0:
+    try:
+        commits = list(
+            Repository(str(repo_path), single=commit_sha).traverse_commits()
+        )
+    except Exception:
         return []
 
+    if not commits:
+        return []
+
+    commit = commits[0]
     test_files: list[str] = []
     seen: set[str] = set()
 
-    for raw_line in result.stdout.splitlines():
-        if not raw_line.strip():
+    for modified_file in commit.modified_files:
+        if modified_file.change_type == ModificationType.DELETE:
             continue
-        parts = raw_line.split("\t")
-        status = parts[0].strip()
-        path = ""
 
-        if status.startswith(("R", "C")) and len(parts) >= 3:
-            path = parts[-1].strip()
-        elif len(parts) >= 2:
-            path = parts[1].strip()
+        path = modified_file.new_path or modified_file.old_path or ""
+        if not path:
+            continue
 
-        if path and path not in seen and is_test_file_path(path, language):
+        if path not in seen and is_test_file_path(path, language):
             seen.add(path)
             test_files.append(path)
 
