@@ -559,6 +559,28 @@ class TestRawDiffCommitIsPureAddition:
         )
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
+    def test_non_test_modifications_with_pure_add_test_files(self):
+        """Non-test files can have deletions; only test-file purity matters."""
+        diff = "\n".join(
+            [
+                "diff --git a/src/main.py b/src/main.py",
+                "--- a/src/main.py",
+                "+++ b/src/main.py",
+                "@@ -1,2 +1,2 @@",
+                "-old_line",
+                "+new_line",
+                " context",
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- /dev/null",
+                "+++ b/tests/test_foo.py",
+                "@@ -0,0 +1,3 @@",
+                "+import pytest",
+                "+",
+                "+def test_foo():",
+            ]
+        )
+        assert _raw_diff_commit_is_pure_addition(diff) is True
+
     def test_test_file_context_only(self):
         """Test file with only context lines — no deletions, so pure."""
         diff = "\n".join(

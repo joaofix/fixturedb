@@ -21,6 +21,7 @@ from tqdm import tqdm
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
+    COLLECTION_OUTPUT_TAG,
     DATA_DIR,
     LANGUAGE_CONFIGS,
     MIN_COMMITS,
@@ -456,6 +457,17 @@ class AgentCorpusCollector:
             }
         )
 
+        logger.info(
+            "[Agent Corpus] Selected languages: %s | repos to collect: %d",
+            selected_languages,
+            len(repos_to_collect),
+        )
+        if language:
+            logger.info(
+                "[Agent Corpus] Single-language filter active: %s",
+                language,
+            )
+
         with db_session(self.output_db) as conn:
             if is_global_checkpoint_completed(conn, completion_all_step):
                 logger.info(
@@ -772,7 +784,9 @@ class AgentCorpusCollector:
                 try:
                     if repo_fixture_count > 0:
                         project_root = Path(__file__).resolve().parents[1]
-                        fixture_list_dir = project_root / "fixtures-from-agents"
+                        fixture_list_dir = (
+                            project_root / "fixtures-from-agents" / COLLECTION_OUTPUT_TAG
+                        )
                         fixture_list_dir.mkdir(parents=True, exist_ok=True)
                         repo_list_path = (
                             fixture_list_dir
@@ -834,7 +848,11 @@ class AgentCorpusCollector:
                         .lower()
                     )
                 current_language = (language_name or "unknown").strip().lower()
-                if next_language != current_language:
+
+                # Write checkpoint + CSV incrementally after every repo that
+                # produced test-commit rows, so progress is preserved even if
+                # the process crashes mid-language.
+                if lang_test_commit_rows:
                     if self.test_commits_csv and self.test_commits_csv.suffix == "":
                         out_dir = Path(self.test_commits_csv)
                         out_dir.mkdir(parents=True, exist_ok=True)
@@ -844,9 +862,42 @@ class AgentCorpusCollector:
                         write_test_commits_csv(lang_test_commit_rows, out_path)
                     with db_session(self.output_db) as conn:
                         mark_global_checkpoint(conn, completion_step(current_language))
-                    lang_test_commit_rows = []
+
+                # Early-exit for single-language runs: stop when we've finished
+                # all repos of the target language.
+                if language:
+                    if next_language and next_language != language:
+                        logger.info(
+                            "[Agent Corpus] Single-language run (%s) complete; stopping early",
+                            language,
+                        )
+                        break
+                    elif next_language is None:
+                        logger.info(
+                            "[Agent Corpus] Single-language run (%s) complete (end of list)",
+                            language,
+                        )
+                        break
+
+                lang_test_commit_rows = []
 
             # Final progress log
+            # Flush any remaining test-commit rows for the last language
+            if lang_test_commit_rows:
+                current_language = (
+                    repos_to_collect[-1].get("language", "unknown").strip().lower()
+                    if repos_to_collect
+                    else (language or "unknown")
+                )
+                if self.test_commits_csv and self.test_commits_csv.suffix == "":
+                    out_dir = Path(self.test_commits_csv)
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    out_path = (
+                        out_dir / f"{current_language}_agent_test_commit_qc.csv"
+                    )
+                    write_test_commits_csv(lang_test_commit_rows, out_path)
+                with db_session(self.output_db) as conn:
+                    mark_global_checkpoint(conn, completion_step(current_language))
 
         except KeyboardInterrupt:
             logger.info("[Agent Corpus] Collection interrupted by user")

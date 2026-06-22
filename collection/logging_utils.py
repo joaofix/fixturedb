@@ -37,3 +37,4 @@ def configure_logging(level: int = logging.INFO, fmt: str | None = None) -> None
     if fmt is None:
         fmt = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=level, format=fmt)
+    logging.getLogger("pydriller").setLevel(logging.WARNING)

@@ -39,6 +39,7 @@ from .config import (
     HUMAN_CORPUS_CUTOFF_DATE,
     LANGUAGE_CONFIGS,
     EXTRACT_WORKERS,
+    COLLECTION_OUTPUT_TAG,
 )
 from .db import (
     db_session,
@@ -72,7 +73,7 @@ logger = get_logger(__name__)
 
 
 def _human_fixtures_root() -> Path:
-    return Path(__file__).resolve().parents[1] / "fixtures-from-humans"
+    return Path(__file__).resolve().parents[1] / "fixtures-from-humans" / COLLECTION_OUTPUT_TAG
 
 
 def _human_fixture_csv_path(language: str, collection_kind: str) -> Path:

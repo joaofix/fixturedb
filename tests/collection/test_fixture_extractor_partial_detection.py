@@ -833,3 +833,46 @@ def test_extract_from_agent_commits_mixed_files_skips_entire_commit(tmp_path):
     names = {f["name"] for f in fixtures}
     assert "pure_fixture" in names
     assert "extra_fixture" not in names
+
+
+def test_extract_from_agent_commits_accepts_non_test_modifications_with_pure_add_tests(tmp_path):
+    """Commit modifying non-test files + pure-add test files is accepted."""
+    repo = tmp_path / "owner__repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-b", "main", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.com"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Test"], check=True, capture_output=True)
+
+    # Base: source file + test file
+    (repo / "src").mkdir()
+    (repo / "src" / "main.py").write_text("def main():\n    pass\n", encoding="utf-8")
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_main.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef main_fixture():\n    return 1\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-m", "base"], check=True, capture_output=True)
+
+    # Second commit: modify source file (with deletion) + add new test file
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test2@example.com"], check=True, capture_output=True)
+    (repo / "src" / "main.py").write_text("def main():\n    return 1\n", encoding="utf-8")
+    (repo / "tests" / "test_new.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef new_fixture():\n    return 2\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "modify source, add test\n\nCo-authored-by: Claude <claude@anthropic.com>"],
+        check=True, capture_output=True,
+    )
+    sha = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"]).decode().strip()
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "claude"},
+    )
+
+    names = {f["name"] for f in fixtures}
+    assert "new_fixture" in names

@@ -25,6 +25,7 @@ from .clone_manager import temp_clone_commit_history
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
+    COLLECTION_OUTPUT_TAG,
     HUMAN_CORPUS_CUTOFF_DATE,
     LANGUAGE_CONFIGS,
 )
@@ -943,7 +944,7 @@ def _cli_main() -> None:
     )
     add_output_dir_arg(
         parser,
-        Path("output/test-commits"),
+        Path("output/test-commits") / COLLECTION_OUTPUT_TAG,
         "Output directory for filtered test commits",
     )
     add_language_arg(

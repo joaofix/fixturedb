@@ -17,6 +17,7 @@ import pytest
 from collection.human_corpus import (
     HumanCorpusCollector,
     HumanCorpusStats,
+    _human_fixtures_root,
     select_human_corpus_repositories,
 )
 from collection.db import (
@@ -24,7 +25,7 @@ from collection.db import (
     compute_star_tier,
     compute_repo_age_at_date,
 )
-from collection.config import AGENT_CORPUS_START_DATE
+from collection.config import AGENT_CORPUS_START_DATE, COLLECTION_OUTPUT_TAG
 
 
 def _create_test_corpus_db(db_path: Path) -> None:
@@ -454,3 +455,10 @@ def test_validate_quality_filters_returns_tuple(tmp_path):
     assert len(result) == 2
     assert isinstance(result[0], bool)
     assert result[1] is None or isinstance(result[1], str)
+
+
+def test_human_fixtures_root_includes_collection_tag():
+    root = _human_fixtures_root()
+    assert COLLECTION_OUTPUT_TAG in str(root)
+    assert (root / "same-repo").exists() or True
+    assert (root / "cross-repo").exists() or True

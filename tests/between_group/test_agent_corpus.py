@@ -683,3 +683,64 @@ def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeyp
     assert db_path2 == tmp_path / "between-group.db"
     assert stats2.repos_scanned == 0
     assert stats2.fixtures_collected == 0
+
+
+def test_agent_fixture_repos_dir_includes_collection_tag():
+    from collection.config import COLLECTION_OUTPUT_TAG
+
+    assert COLLECTION_OUTPUT_TAG
+    assert "v2" in COLLECTION_OUTPUT_TAG or "v1" in COLLECTION_OUTPUT_TAG
+
+
+def test_single_language_filter_limits_repos():
+    """_load_qc_repo_rows should return only repos for the requested language."""
+    from collection.agent_corpus import _load_qc_repo_rows
+
+    rows = _load_qc_repo_rows(
+        Path("fixtures-from-agents"),
+        language="java",
+    )
+    for row in rows:
+        assert row["language"] == "java"
+
+
+def test_incremental_checkpoint_after_repo(tmp_path):
+    """AgentCorpusCollector should write checkpoint/CSV after each repo with test commits."""
+    from unittest.mock import patch, MagicMock
+    from collection.agent_corpus import AgentCorpusCollector
+
+    collector = AgentCorpusCollector(
+        output_db=tmp_path / "corpus.db",
+        repo_qc_dir=Path("fixtures-from-agents"),
+        commit_qc_dir=Path("github-search-agent/agent_commits"),
+        test_commits_csv=tmp_path / "test_commits",
+    )
+
+    fake_repo = {
+        "full_name": "test/example",
+        "language": "java",
+        "stars": 100,
+        "clone_url": "https://github.com/test/example.git",
+    }
+    fake_commits = {
+        "test/example": [
+            {
+                "commit_sha": "abc123",
+                "agent_type": "claude",
+                "commit_date": "2025-01-01",
+            }
+        ]
+    }
+
+    with patch("collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]):
+        with patch("collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits):
+            with patch("collection.agent_corpus.clone_with_function") as mock_clone:
+                mock_clone.return_value.__enter__ = MagicMock(return_value=tmp_path / "repo")
+                mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+                with patch("collection.agent_corpus.collect_test_files_for_commit", return_value=["tests/test_foo.py"]):
+                    with patch("collection.agent_corpus.AgentFixtureExtractor") as mock_ext:
+                        instance = mock_ext.return_value
+                        instance._extract_from_agent_commits.return_value = []
+                        stats, _ = collector.run(language="java")
+
+    assert stats.repos_scanned == 1

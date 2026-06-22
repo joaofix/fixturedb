@@ -4,6 +4,12 @@ Between-group comparison and balance testing.
 Compares human vs agent fixture corpora on control variables (language, domain,
 star tier, repository age). Uses chi-square for categorical variables and
 Mann-Whitney U for continuous variables.
+
+python -m collection.test_commit_filter agent \
+  --language java \
+  --commit-dir github-search-agent/agent_commits \
+  --output-dir output/test-commits/v2-pure-addition-2026-06 \
+  --workers 8
 """
 
 import json

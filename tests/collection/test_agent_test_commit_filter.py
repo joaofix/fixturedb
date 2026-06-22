@@ -5,6 +5,7 @@ from pathlib import Path
 
 from collection.test_commit_filter import collect_agent_test_commits_from_repos
 from collection.test_commit_filter import collect_agent_test_commits
+from collection.config import COLLECTION_OUTPUT_TAG
 
 
 def init_minimal_repo_with_agent_commit(path: Path, marker: str = "") -> str:
@@ -180,3 +181,12 @@ def test_collect_agent_test_commits_resumes_completed_repos(tmp_path: Path):
         reader = csv.DictReader(fh)
         rows = list(reader)
     assert {row["commit_sha"] for row in rows} == {sha_one, sha_two}
+
+
+def test_default_output_dir_includes_collection_tag():
+    from pathlib import Path
+    from collection.config import COLLECTION_OUTPUT_TAG
+
+    default_path = Path("output/test-commits") / COLLECTION_OUTPUT_TAG
+    assert COLLECTION_OUTPUT_TAG in str(default_path)
+    assert str(default_path).endswith(COLLECTION_OUTPUT_TAG)

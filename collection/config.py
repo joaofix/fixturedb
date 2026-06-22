@@ -18,6 +18,13 @@ ROOT_DIR = Path(__file__).parent.parent
 CLONES_DIR = ROOT_DIR / "clones"  # temporary, deleted after extraction
 DATA_DIR = ROOT_DIR / "data"
 DB_PATH = DATA_DIR / "corpus.db"
+
+# ---------------------------------------------------------------------------
+# Collection run label
+# ---------------------------------------------------------------------------
+# Tag used to version collection output subfolders (e.g. v2-pure-addition-2026-06).
+# Change this when running a new collection with different extraction logic.
+COLLECTION_OUTPUT_TAG = "v2-pure-addition-2026-06"
 LOGS_DIR = ROOT_DIR / "logs"
 
 # ---------------------------------------------------------------------------
