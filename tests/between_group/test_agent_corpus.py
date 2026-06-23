@@ -104,6 +104,14 @@ class TestAgentSignatures:
         expected_agents = {"claude", "copilot", "cursor", "aider"}
         assert expected_agents.issubset(set(AGENT_SIGNATURES.keys()))
 
+    def test_github_actions_not_in_agent_signatures(self):
+        """GitHub Actions bot should not be classified as an agent."""
+        assert "github-actions" not in AGENT_SIGNATURES
+        for signatures in AGENT_SIGNATURES.values():
+            assert not any(
+                "github-actions" in sig.lower() for sig in signatures
+            )
+
     def test_agent_signatures_have_variants(self):
         """Each agent should have multiple signature variants."""
         for agent_type, signatures in AGENT_SIGNATURES.items():

@@ -550,7 +550,6 @@ AGENT_SIGNATURES = {
     "claude": ["claude", "anthropic"],
     "cursor": ["cursor"],
     "copilot": ["copilot", "github.com/apps/github-copilot"],
-    "github-actions": ["github-actions[bot]", "github-actions"],
     "other": [
         "aider",
         "openhands",

@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS fixtures (
     num_mocks               INTEGER DEFAULT 0, -- count of distinct mock usages in this fixture
     -- Agent-specific columns (populated only in fixturedb-agent.db)
     commit_sha              TEXT DEFAULT NULL,      -- exact commit where fixture added (agent-only)
-    agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/github-actions/other
+    agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/other
     commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
     match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS commit_observations (
     repo_id             INTEGER NOT NULL REFERENCES repositories(id),
     commit_sha          TEXT NOT NULL,
     commit_role         TEXT NOT NULL,   -- agent / human
-    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/github-actions/other
+    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/other
     commit_date         TEXT,
     fixture_count       INTEGER DEFAULT 0,
     mock_usage_count    INTEGER DEFAULT 0,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS test_commits (
     repo_id             INTEGER NOT NULL REFERENCES repositories(id),
     commit_sha          TEXT NOT NULL,
     commit_role         TEXT NOT NULL,   -- agent / human
-    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/github-actions/other
+    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/other
     commit_date         TEXT,
     language            TEXT NOT NULL,
     test_file_count     INTEGER DEFAULT 0,
