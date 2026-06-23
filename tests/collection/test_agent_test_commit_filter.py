@@ -183,10 +183,11 @@ def test_collect_agent_test_commits_resumes_completed_repos(tmp_path: Path):
     assert {row["commit_sha"] for row in rows} == {sha_one, sha_two}
 
 
-def test_default_output_dir_includes_collection_tag():
+def test_default_output_dir_no_versioned_subfolder_when_tag_empty():
+    """With empty COLLECTION_OUTPUT_TAG, default output is root test-commits dir."""
     from pathlib import Path
     from collection.config import COLLECTION_OUTPUT_TAG
 
     default_path = Path("output/test-commits") / COLLECTION_OUTPUT_TAG
-    assert COLLECTION_OUTPUT_TAG in str(default_path)
-    assert str(default_path).endswith(COLLECTION_OUTPUT_TAG)
+    assert COLLECTION_OUTPUT_TAG == ""
+    assert str(default_path).rstrip("/").endswith("output/test-commits")

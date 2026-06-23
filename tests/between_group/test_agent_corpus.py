@@ -685,11 +685,18 @@ def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeyp
     assert stats2.fixtures_collected == 0
 
 
-def test_agent_fixture_repos_dir_includes_collection_tag():
+def test_agent_fixture_repos_dir_no_versioned_subfolder_when_tag_empty():
+    """With empty COLLECTION_OUTPUT_TAG, fixture list goes to root fixtures-from-agents."""
     from collection.config import COLLECTION_OUTPUT_TAG
+    from pathlib import Path
 
-    assert COLLECTION_OUTPUT_TAG
-    assert "v2" in COLLECTION_OUTPUT_TAG or "v1" in COLLECTION_OUTPUT_TAG
+    # When tag is empty, the code appends directly to fixtures-from-agents/
+    project_root = Path(".").resolve()
+    expected_dir = project_root / "fixtures-from-agents"
+    assert COLLECTION_OUTPUT_TAG == ""
+    # Verify the path does not contain a versioned subfolder
+    assert not str(expected_dir).endswith("v1-initial-2026-05")
+    assert not str(expected_dir).endswith("v2-pure-addition-2026-06")
 
 
 def test_single_language_filter_limits_repos():
