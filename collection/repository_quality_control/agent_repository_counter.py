@@ -308,7 +308,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         qc_reason = ""
 
         with temp_clone_commit_history(
-            clone_url, full_name, prefix="agent-qc-", timeout=60
+            clone_url, full_name, prefix="agent-repos-", timeout=60
         ) as repo_path:
             try:
                 if repo_path and repo_path.exists():

@@ -30,17 +30,17 @@ def make_args(mode="within"):
     )
 
 
-def test_cmd_human_within(monkeypatch):
+def test_cmd_human_fixtures_within(monkeypatch):
     fake = FakeCollector()
     monkeypatch.setattr(pipeline, "HumanCorpusCollector", lambda **kwargs: fake)
 
     args = make_args(mode="within")
-    rc = pipeline.cmd_human(args)
+    rc = pipeline.cmd_human_fixtures(args)
     assert rc == 0
     assert fake.run_called
 
 
-def test_cmd_human_inter(monkeypatch):
+def test_cmd_human_fixtures_inter(monkeypatch):
     fake = FakeCollector()
     monkeypatch.setattr(pipeline, "HumanCorpusCollector", lambda **kwargs: fake)
 
@@ -54,12 +54,12 @@ def test_cmd_human_inter(monkeypatch):
     )
 
     args = make_args(mode="inter")
-    rc = pipeline.cmd_human(args)
+    rc = pipeline.cmd_human_fixtures(args)
     assert rc == 0
     assert fake.collect_inter_called
 
 
-def test_human_parser_default_test_commits_dir():
-    args = pipeline.build_parser().parse_args(["human"])
+def test_human_fixtures_parser_default_test_commits_dir():
+    args = pipeline.build_parser().parse_args(["human-fixtures"])
     expected = pipeline.PROJECT_ROOT / "github-search-human" / "2025_test_commits"
     assert args.test_commits_csv == expected

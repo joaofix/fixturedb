@@ -239,7 +239,7 @@ def _create_commit_targeted_temp_repo(
 ) -> tuple[Path | None, Path | None]:
     """Create a temporary repo and fetch only requested commit SHAs."""
     owner, name = repo_name.split("/", 1)
-    temp_root = Path(tempfile.mkdtemp(prefix="agent-fixture-qc-"))
+    temp_root = Path(tempfile.mkdtemp(prefix="agent-fixtures-"))
     repo_path = temp_root / f"{owner}__{name}"
 
     try:
@@ -427,7 +427,7 @@ def _process_single_repo(
                 )
                 clone_args = ["--filter=blob:limit=10m", "--no-tags"]
                 with temp_clone_commit_history(
-                    clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300
+                    clone_url, repo_name, prefix="agent-fixtures-", timeout=300
                 ) as local_repo_path:
                     if local_repo_path is None:
                         logger.warning("Skipping %s: clone/fetch failed", repo_name)

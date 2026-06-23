@@ -144,7 +144,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Human corpus collection (between-group design)
     human_parser = sub.add_parser(
-        "human",
+        "human-fixtures",
         help="Collect human test commits and fixtures from agent-enabled repositories",
     )
     human_parser.add_argument(
@@ -190,7 +190,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Agent corpus collection (between-group design)
     agent_parser = sub.add_parser(
-        "agent", help="Collect agent test commits and fixtures (2025+)"
+        "agent-fixtures", help="Extract fixtures from agent test commits"
     )
     agent_parser.add_argument(
         "--language", choices=list(LANGUAGE_CONFIGS), help="Limit to one language"
@@ -269,10 +269,10 @@ def build_parser() -> argparse.ArgumentParser:
     # Status command
     sub.add_parser("status", help="Show latest summaries")
 
-    # Standalone search extension commands (100-star workflow)
+    # Standalone search extension commands
     repo_qc_parser = sub.add_parser(
-        "agent-repo-qc-100",
-        help="Scan merged SEART 100-star candidates and flag repos with agent config files",
+        "agent-repos",
+        help="Scan merged SEART candidates and flag repos with agent config files",
     )
     repo_qc_parser.add_argument(
         "--limit", type=int, default=0, help="Limit number of repos to process (0=all)"
@@ -288,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     commit_qc_parser = sub.add_parser(
-        "agent-commit-qc-100",
+        "agent-commits",
         help="Scan commit activity for repos already flagged with agent config",
     )
     commit_qc_parser.add_argument(
@@ -328,7 +328,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def cmd_human(args) -> int:
+def cmd_human_fixtures(args) -> int:
     """Collect human corpus."""
     try:
         human_kwargs = dict(
@@ -618,10 +618,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "full":
         return cmd_full(args)
 
-    if args.command == "human":
+    if args.command == "human-fixtures":
         return cmd_human(args)
 
-    if args.command == "agent":
+    if args.command == "agent-fixtures":
         return cmd_agent(args)
 
     if args.command == "between-group-stats":
@@ -631,10 +631,10 @@ def main(argv: list[str] | None = None) -> int:
         cmd_status()
         return 0
 
-    if args.command == "agent-repo-qc-100":
+    if args.command == "agent-repos":
         return cmd_agent_repo_qc_100(args)
 
-    if args.command == "agent-commit-qc-100":
+    if args.command == "agent-commits":
         return cmd_agent_commit_qc_100(args)
 
     if args.command == "agent-test-commits":

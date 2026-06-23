@@ -169,7 +169,7 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
     logger.info("Cloning %s (lang=%s) args=%s", full_name, lang, clone_args)
     out_rows = []
     with temp_clone_commit_history(
-        clone_url, full_name, prefix="agent-commit-qc-", timeout=300
+        clone_url, full_name, prefix="agent-commits-", timeout=300
     ) as repo_path:
         if repo_path is None:
             logger.warning("Clone failed for %s (clone_url=%s)", full_name, clone_url)

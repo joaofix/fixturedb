@@ -60,7 +60,7 @@ class DummyAgentCollector:
         ), Path("/tmp/agent.db")
 
 
-def test_human_command_uses_repo_dataset_override(monkeypatch):
+def test_human_fixtures_command_uses_repo_dataset_override(monkeypatch):
     captured = {}
 
     def human_factory(*args, **kwargs):
@@ -77,7 +77,7 @@ def test_human_command_uses_repo_dataset_override(monkeypatch):
         workers=None,
     )
 
-    result = pipeline.cmd_human(args)
+    result = pipeline.cmd_human_fixtures(args)
 
     assert result == 0
     assert captured["human_kwargs"]["repo_qc_dir"] == Path("/data/manual/repo-qc")
