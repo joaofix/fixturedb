@@ -469,7 +469,12 @@ class AgentCorpusCollector:
             )
 
         with db_session(self.output_db) as conn:
-            if is_global_checkpoint_completed(conn, completion_all_step):
+            # Only check the "all completed" checkpoint when running without
+            # a single-language filter. Otherwise a completed full run would
+            # block every subsequent single-language run.
+            if not language and is_global_checkpoint_completed(
+                conn, completion_all_step
+            ):
                 logger.info(
                     "[Agent Corpus] Completion checkpoint found; skipping agent collection"
                 )
