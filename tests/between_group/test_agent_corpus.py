@@ -759,3 +759,78 @@ def test_incremental_checkpoint_after_repo(tmp_path):
                         stats, _ = collector.run(language="java")
 
     assert stats.repos_scanned == 1
+
+
+def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
+    """After a full run completes, single-language runs for new languages should still proceed."""
+    from unittest.mock import patch, MagicMock
+    from collection.agent_corpus import AgentCorpusCollector
+    from collection.db import mark_global_checkpoint, initialise_db
+
+    db_path = tmp_path / "corpus.db"
+    initialise_db(db_path)
+    collector = AgentCorpusCollector(
+        output_db=db_path,
+        repo_qc_dir=Path("fixtures-from-agents"),
+        commit_qc_dir=Path("github-search-agent/agent_commits"),
+        test_commits_csv=tmp_path / "test_commits",
+    )
+
+    # Simulate a completed full run by writing the "all completed" checkpoint
+    with db_session(db_path) as conn:
+        mark_global_checkpoint(conn, "agent_complete:all")
+
+    # Now run single-language for java — should NOT be blocked by the full-run checkpoint
+    fake_repo = {
+        "full_name": "test/java-example",
+        "language": "java",
+        "stars": 100,
+        "clone_url": "https://github.com/test/java-example.git",
+    }
+    fake_commits = {
+        "test/java-example": [
+            {
+                "commit_sha": "def456",
+                "agent_type": "claude",
+                "commit_date": "2025-01-02",
+            }
+        ]
+    }
+
+    with patch("collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]):
+        with patch("collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits):
+            with patch("collection.agent_corpus.clone_with_function") as mock_clone:
+                mock_clone.return_value.__enter__ = MagicMock(return_value=tmp_path / "repo")
+                mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+                with patch("collection.agent_corpus.collect_test_files_for_commit", return_value=["tests/test_foo.py"]):
+                    with patch("collection.agent_corpus.AgentFixtureExtractor") as mock_ext:
+                        instance = mock_ext.return_value
+                        instance._extract_from_agent_commits.return_value = []
+                        stats, _ = collector.run(language="java")
+
+    assert stats.repos_scanned == 1, "Single-language run should proceed despite full-run checkpoint"
+
+
+def test_single_language_checkpoint_blocks_rerun(tmp_path):
+    """A completed single-language run should block re-runs of the same language."""
+    from unittest.mock import patch, MagicMock
+    from collection.agent_corpus import AgentCorpusCollector
+    from collection.db import mark_global_checkpoint, initialise_db
+
+    db_path = tmp_path / "corpus.db"
+    initialise_db(db_path)
+    collector = AgentCorpusCollector(
+        output_db=db_path,
+        repo_qc_dir=Path("fixtures-from-agents"),
+        commit_qc_dir=Path("github-search-agent/agent_commits"),
+        test_commits_csv=tmp_path / "test_commits",
+    )
+
+    # Simulate a completed java run
+    with db_session(db_path) as conn:
+        mark_global_checkpoint(conn, "agent_complete:java")
+
+    # Re-run java — should be blocked
+    stats, _ = collector.run(language="java")
+    assert stats.repos_scanned == 0
+    assert stats.fixtures_collected == 0

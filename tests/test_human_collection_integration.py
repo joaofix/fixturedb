@@ -144,3 +144,20 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     assert db_path2 == out_db
     assert stats2.fixtures_collected == 0
     assert stats2.repos_scanned == 0
+
+    # Clean up any fixture CSVs written to the project directory during the test
+    _cleanup_test_fixtures()
+
+
+def _cleanup_test_fixtures():
+    """Remove fixture CSVs that tests may have written to project directories."""
+    import shutil
+
+    for rel in [
+        Path("fixtures-from-humans") / "same-repo" / "python_human_fixtures.csv",
+        Path("fixtures-from-humans") / "cross-repo" / "python_human_fixtures.csv",
+        Path("fixtures-from-humans") / "cross-repo" / "py_human_fixtures.csv",
+    ]:
+        p = Path(__file__).resolve().parents[1] / rel
+        if p.exists():
+            p.unlink()

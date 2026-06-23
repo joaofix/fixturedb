@@ -1,0 +1,5 @@
+repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url
+good/repo,python,1,1,abc123,abc123,https://github.com/good/repo.git
+good/repo,python,1,1,abc123,abc123,https://github.com/good/repo.git
+good/repo,python,1,1,abc123,abc123,https://github.com/good/repo.git
+good/repo,python,1,1,abc123,abc123,https://github.com/good/repo.git
