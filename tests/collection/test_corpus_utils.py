@@ -5,6 +5,7 @@ Tests the new shared utilities module that provides common functions
 for both agent and human corpus collection.
 """
 
+import csv
 import json
 import tempfile
 from dataclasses import asdict
@@ -306,6 +307,77 @@ class TestWriteFixtureCsvRow:
 
         content = out_path.read_text()
         assert "is_complete_addition" in content
+
+    def test_write_fixture_csv_row_preserves_fixture_agent_type(self, tmp_path):
+        """Fixture's own agent_type should be passed via extra_fields value.
+
+        Regression test for agent_corpus.py: when writing per-fixture CSV
+        rows, the caller must pass fixture.get('agent_type', fallback) as
+        the extra_fields value, not the outer-loop's stale agent_type.
+        """
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "cursor_sha",
+            "file_path": "test_foo.py",
+            "name": "test_bar",
+            "fixture_type": "pytest_decorator",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 10,
+            "framework": "pytest",
+            "agent_type": "cursor",
+        }
+
+        # Correct call pattern (as fixed in agent_corpus.py):
+        # pass fixture.get('agent_type', fallback) as the value
+        write_fixture_csv_row(
+            out_path,
+            "owner/repo",
+            "python",
+            fixture,
+            extra_fields={
+                "agent_type": fixture.get("agent_type", "claude"),
+                "commit_kind": "agent",
+            },
+        )
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+
+        assert row["agent_type"] == "cursor"
+        assert row["commit_kind"] == "agent"
+
+    def test_write_fixture_csv_row_falls_back_to_extra_agent_type(self, tmp_path):
+        """When fixture has no agent_type, extra_fields fallback is used."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "test_bar",
+            "fixture_type": "pytest_decorator",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 10,
+            "framework": "pytest",
+        }
+
+        write_fixture_csv_row(
+            out_path,
+            "owner/repo",
+            "python",
+            fixture,
+            extra_fields={
+                "agent_type": "copilot",
+                "commit_kind": "agent",
+            },
+        )
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+
+        assert row["agent_type"] == "copilot"
 
 
 class TestPersistRepositoryAndFixtures:

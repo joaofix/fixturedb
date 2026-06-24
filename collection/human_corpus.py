@@ -343,35 +343,38 @@ def select_human_corpus_repositories(
         pass
     for fixture_list_dir in candidate_dirs:
         if fixture_list_dir.exists() and fixture_list_dir.is_dir():
-            for fpath in sorted(fixture_list_dir.glob("*_agent_fixture_repos.csv")):
-                with fpath.open("r", encoding="utf-8", newline="") as fh:
-                    reader = csv.DictReader(fh)
-                    for row in reader:
-                        repo_name = (
-                            row.get("repo_name") or row.get("full_name") or ""
-                        ).strip()
-                        lang = (row.get("language") or "unknown").strip().lower()
-                        if not repo_name or "/" not in repo_name:
-                            continue
-                        if language and lang != language:
-                            continue
-                        repo_row = {
-                            "id": _stable_repo_id(repo_name),
-                            "github_id": _stable_repo_id(repo_name),
-                            "full_name": repo_name,
-                            "language": lang,
-                            "stars": 0,
-                            "forks": 0,
-                            "description": "",
-                            "topics": "[]",
-                            "created_at": "",
-                            "pushed_at": "",
-                            "clone_url": f"https://github.com/{repo_name}.git",
-                            "num_contributors": 0,
-                        }
-                        grouped.setdefault(lang, [])
-                        if repo_name not in {r["full_name"] for r in grouped[lang]}:
-                            grouped[lang].append(repo_row)
+            for search_dir in [fixture_list_dir, fixture_list_dir / "repos"]:
+                if not search_dir.is_dir():
+                    continue
+                for fpath in sorted(search_dir.glob("*_agent_fixture_repos.csv")):
+                    with fpath.open("r", encoding="utf-8", newline="") as fh:
+                        reader = csv.DictReader(fh)
+                        for row in reader:
+                            repo_name = (
+                                row.get("repo_name") or row.get("full_name") or ""
+                            ).strip()
+                            lang = (row.get("language") or "unknown").strip().lower()
+                            if not repo_name or "/" not in repo_name:
+                                continue
+                            if language and lang != language:
+                                continue
+                            repo_row = {
+                                "id": _stable_repo_id(repo_name),
+                                "github_id": _stable_repo_id(repo_name),
+                                "full_name": repo_name,
+                                "language": lang,
+                                "stars": 0,
+                                "forks": 0,
+                                "description": "",
+                                "topics": "[]",
+                                "created_at": "",
+                                "pushed_at": "",
+                                "clone_url": f"https://github.com/{repo_name}.git",
+                                "num_contributors": 0,
+                            }
+                            grouped.setdefault(lang, [])
+                            if repo_name not in {r["full_name"] for r in grouped[lang]}:
+                                grouped[lang].append(repo_row)
 
     # If we found fixture-list repos, return those (respecting per-language cap)
     if grouped:

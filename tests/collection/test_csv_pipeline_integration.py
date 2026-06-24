@@ -242,7 +242,7 @@ class TestCSVRepositorySelection:
         make_csv(
             fixtures_dir,
             "python_agent_fixture_repos.csv",
-            dest_name="python_agent_fixture_repos.csv",
+            dest_name="repos/python_agent_fixture_repos.csv",
         )
 
         # Also create agent_repo with another repo that should be ignored

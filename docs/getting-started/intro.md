@@ -51,7 +51,7 @@ To ensure the human control sample is drawn only from repositories where agents 
 	python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories --languages java javascript
 	```
 
-1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `fixtures-from-agents/{language}_agent_fixture_repos.csv`.
+1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `fixtures-from-agents/repos/{language}_agent_fixture_repos.csv`.
 
 	Example:
 
@@ -65,7 +65,7 @@ To ensure the human control sample is drawn only from repositories where agents 
 	python -m collection.test_commit_filter --mode human --raw-search-dir github-search-raw --output-dir github-search-human/2025_test_commits --workers 8
 	```
 
-3. Run the human fixture extraction step. The human collector writes fixtures to `fixtures-from-humans/same-repo/{language}_human_fixtures.csv` now, and will use `fixtures-from-humans/cross-repo/{language}_human_fixtures.csv` for the inter-repository collection later. It still prefers `fixtures-from-agents/{language}_agent_fixture_repos.csv` when selecting repositories.
+3. Run the human fixture extraction step. The human collector writes fixtures to `fixtures-from-humans/same-repo/{language}_human_fixtures.csv` now, and will use `fixtures-from-humans/cross-repo/{language}_human_fixtures.csv` for the inter-repository collection later. It still prefers `fixtures-from-agents/repos/{language}_agent_fixture_repos.csv` when selecting repositories.
 
 	```bash
 	python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python

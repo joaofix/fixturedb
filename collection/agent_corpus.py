@@ -797,9 +797,11 @@ class AgentCorpusCollector:
                         )
                         fixture_list_dir.mkdir(parents=True, exist_ok=True)
 
-                        # Repo-level summary CSV (existing behavior)
+                        # Repo-level summary CSV — keep separate from fixture rows
+                        repo_list_dir = fixture_list_dir / "repos"
+                        repo_list_dir.mkdir(parents=True, exist_ok=True)
                         repo_list_path = (
-                            fixture_list_dir
+                            repo_list_dir
                             / f"{language_name}_agent_fixture_repos.csv"
                         )
                         write_header = not repo_list_path.exists()

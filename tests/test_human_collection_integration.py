@@ -24,7 +24,9 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     initialise_db(out_db)
 
     # Create a minimal agent fixture repo list so strict within-mode selection is satisfied
-    make_csv(fixtures_dir, "python_agent_fixture_repos.csv")
+    repos_dir = fixtures_dir / "repos"
+    repos_dir.mkdir()
+    make_csv(repos_dir, "python_agent_fixture_repos.csv")
 
     # Monkeypatch cloning to create repo directory
     def fake_clone(url, path):

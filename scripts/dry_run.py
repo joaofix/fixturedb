@@ -157,9 +157,9 @@ def run_agent_extraction(
         print(f"  Agent extraction failed with exit code {result.returncode}")
         return False
 
-    # Check that the fixtures-from-agents directory was created
+    # Check that the fixtures-from-agents/repos directory was created
     fixture_list_dir = repo_qc_dir / "fixtures-from-agents"
-    expected_csv = fixture_list_dir / f"{language}_agent_fixture_repos.csv"
+    expected_csv = fixture_list_dir / "repos" / f"{language}_agent_fixture_repos.csv"
     if expected_csv.exists():
         with open(expected_csv, "r") as f:
             count = sum(1 for _ in f) - 1  # minus header
