@@ -50,6 +50,7 @@ from .corpus_utils import (
     construct_repo_dict,
     generate_corpus_summary,
     persist_repository_and_fixtures,
+    write_fixture_csv_row,
 )
 from .clone_manager import clone_with_function
 
@@ -679,6 +680,7 @@ class AgentCorpusCollector:
                     # Track per-repo fixture metadata to write repo list CSV
                     repo_fixture_count = 0
                     repo_fixture_commit_shas: list[str] = []
+                    all_repo_fixtures: list[dict] = []
 
                     with db_session(self.output_db) as conn:
                         for test_commit in test_commits:
@@ -715,6 +717,7 @@ class AgentCorpusCollector:
                                     repo_fixture_commit_shas.append(
                                         commit_info["commit_sha"]
                                     )
+                                    all_repo_fixtures.extend(fixtures)
 
                                 for fixture in fixtures:
                                     file_path = fixture.get("file_path", "unknown")
@@ -783,9 +786,9 @@ class AgentCorpusCollector:
                             f"[Agent Corpus] Cleaned up clone (managed): {repo_name}"
                         )
 
-                # If we extracted fixtures from this repo, write a per-language
-                # agent fixture repo list CSV so downstream human selection can
-                # consume only repos that actually yielded agent fixtures.
+                # If we extracted fixtures from this repo, write two CSVs:
+                # 1. Per-language repo summary (for downstream human selection)
+                # 2. Per-fixture detail (one row per fixture, for analysis)
                 try:
                     if repo_fixture_count > 0:
                         project_root = Path(__file__).resolve().parents[1]
@@ -793,6 +796,8 @@ class AgentCorpusCollector:
                             project_root / "fixtures-from-agents" / COLLECTION_OUTPUT_TAG
                         )
                         fixture_list_dir.mkdir(parents=True, exist_ok=True)
+
+                        # Repo-level summary CSV (existing behavior)
                         repo_list_path = (
                             fixture_list_dir
                             / f"{language_name}_agent_fixture_repos.csv"
@@ -838,6 +843,23 @@ class AgentCorpusCollector:
                                     "last_fixture_commit": last_sha,
                                     "clone_url": repo.get("clone_url", ""),
                                 }
+                            )
+
+                        # Per-fixture CSV (new: one row per fixture)
+                        fixtures_list_path = (
+                            fixture_list_dir
+                            / f"{language_name}_agent_fixtures.csv"
+                        )
+                        for fixture in all_repo_fixtures:
+                            write_fixture_csv_row(
+                                fixtures_list_path,
+                                repo_name,
+                                language_name,
+                                fixture,
+                                extra_fields={
+                                    "agent_type": agent_type,
+                                    "commit_kind": "agent",
+                                },
                             )
                 except Exception as e:
                     logger.debug(
