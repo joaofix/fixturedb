@@ -465,6 +465,16 @@ class TestQualityControlledInputs:
         repo_qc_dir.mkdir()
         commit_qc_dir.mkdir()
 
+        repo_list_path = (
+            Path(__file__).resolve().parents[2]
+            / "fixtures-from-agents"
+            / "repos"
+            / "python_agent_fixture_repos.csv"
+        )
+        original_bytes = b""
+        if repo_list_path.exists():
+            original_bytes = repo_list_path.read_bytes()
+
         with (repo_qc_dir / "python_agent_repo.csv").open(
             "w", newline="", encoding="utf-8"
         ) as fh:
@@ -608,6 +618,9 @@ class TestQualityControlledInputs:
 
         assert stats.fixtures_collected == 1
         assert count == 1
+
+        if repo_list_path.exists() and original_bytes:
+            repo_list_path.write_bytes(original_bytes)
 
 
 @contextmanager
