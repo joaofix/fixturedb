@@ -857,7 +857,9 @@ class AgentCorpusCollector:
                                 language_name,
                                 fixture,
                                 extra_fields={
-                                    "agent_type": agent_type,
+                                    "agent_type": fixture.get(
+                                        "agent_type", agent_type
+                                    ),
                                     "commit_kind": "agent",
                                 },
                             )
