@@ -380,6 +380,42 @@ class TestWriteFixtureCsvRow:
         assert row["agent_type"] == "copilot"
 
 
+class TestBuildGithubUrl:
+    """Test _build_github_url helper."""
+
+    def test_basic_url(self):
+        from collection.corpus_utils import _build_github_url
+
+        url = _build_github_url(
+            "owner/repo", "abc123def", "tests/test_foo.py", 10, 20
+        )
+        assert (
+            url
+            == "https://github.com/owner/repo/blob/abc123def/tests/test_foo.py#L10-L20"
+        )
+
+    def test_leading_slash_stripped(self):
+        from collection.corpus_utils import _build_github_url
+
+        url = _build_github_url(
+            "owner/repo", "abc123", "/tests/test_foo.py", 1, 5
+        )
+        assert url.startswith("https://github.com/owner/repo/blob/abc123/tests/")
+
+    def test_no_lines_returns_no_anchor(self):
+        from collection.corpus_utils import _build_github_url
+
+        url = _build_github_url("owner/repo", "abc123", "tests/test_foo.py", 0, 0)
+        assert url == "https://github.com/owner/repo/blob/abc123/tests/test_foo.py"
+
+    def test_missing_fields_returns_empty(self):
+        from collection.corpus_utils import _build_github_url
+
+        assert _build_github_url("", "abc123", "tests/test_foo.py", 1, 5) == ""
+        assert _build_github_url("owner/repo", "", "tests/test_foo.py", 1, 5) == ""
+        assert _build_github_url("owner/repo", "abc123", "", 1, 5) == ""
+
+
 class TestPersistRepositoryAndFixtures:
     """Test repository and fixture persistence (CSV + DB)."""
 

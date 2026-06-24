@@ -127,6 +127,31 @@ def compute_repo_metadata(
     }
 
 
+def _build_github_url(
+    repo_name: str,
+    commit_sha: str,
+    file_path: str,
+    start_line: int,
+    end_line: int,
+) -> str:
+    """Build a GitHub URL pointing to the fixture's file at the commit.
+
+    Uses the blob URL with line anchors so reviewers can open the exact
+    fixture code in the browser without cloning the repo.
+    """
+    if not repo_name or not commit_sha or not file_path:
+        return ""
+    sha = commit_sha.strip()
+    if not sha:
+        return ""
+    path = file_path.lstrip("/")
+    if start_line > 0 and end_line >= start_line:
+        anchor = f"#L{start_line}-L{end_line}"
+    else:
+        anchor = ""
+    return f"https://github.com/{repo_name}/blob/{sha}/{path}{anchor}"
+
+
 def write_fixture_csv_row(
     out_path: Path,
     repo_name: str,
@@ -156,6 +181,7 @@ def write_fixture_csv_row(
         "loc",
         "framework",
         "num_mocks",
+        "github_url",
     ]
 
     if extra_fields:
@@ -187,6 +213,13 @@ def write_fixture_csv_row(
             "loc": fixture.get("loc", 0),
             "framework": fixture.get("framework", ""),
             "num_mocks": len(fixture.get("mocks", []) or []),
+            "github_url": _build_github_url(
+                repo_name,
+                fixture.get("commit_sha", ""),
+                fixture.get("file_path", ""),
+                fixture.get("start_line", 0),
+                fixture.get("end_line", 0),
+            ),
         }
 
         if extra_fields:
