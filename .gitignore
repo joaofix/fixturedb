@@ -214,3 +214,4 @@ output/                 # EDA output and analysis results
 internal-docs/*         # Internal documentation and notes
 data/between-group.db
 github-search-human/pre_2021_test_commits/
+*.checkpoint.json       # Pipeline checkpoint files (runtime artifacts)
