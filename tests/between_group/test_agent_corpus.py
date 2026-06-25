@@ -238,6 +238,33 @@ class TestAgentCommitMetadataDetection:
         assert agent_type == "copilot"
         assert matched_field == "author"
 
+
+    def test_bot_authors_are_excluded_from_agent_detection(self):
+        """Bot accounts like copilot-swe-agent[bot] must not be classified as agents."""
+        # swe-agent bot — author name contains [bot]
+        agent_type, _ = detect_agent_in_commit(
+            author_name="copilot-swe-agent[bot]",
+            author_email="198982749+Copilot@users.noreply.github.com",
+            commit_body="Some commit",
+        )
+        assert agent_type is None
+
+        # anthropic-code-agent bot
+        agent_type2, _ = detect_agent_in_commit(
+            author_name="anthropic-code-agent[bot]",
+            author_email="242468646+Claude@users.noreply.github.com",
+            commit_body="Some commit",
+        )
+        assert agent_type2 is None
+
+        # Non-bot with copilot keyword should still match
+        agent_type3, _ = detect_agent_in_commit(
+            author_name="GitHub Copilot",
+            author_email="copilot@github.com",
+            commit_body="Fix typo",
+        )
+        assert agent_type3 == "copilot"
+
     def test_reject_non_agent_commit_metadata(self):
         agent_type, matched_field = detect_agent_in_commit(
             author_name="Alice Example",

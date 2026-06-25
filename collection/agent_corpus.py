@@ -131,6 +131,9 @@ def detect_agent_in_commit(
         (agent_type, matched_field) where matched_field is one of
         {"author", "coauthored-by"} or "" if no match.
     """
+    if "[bot]" in author_name.lower():
+        return None, ""
+
     author_text = f"{author_name} {author_email}".lower()
     for agent_type, signatures in AGENT_SIGNATURES.items():
         for sig in signatures:

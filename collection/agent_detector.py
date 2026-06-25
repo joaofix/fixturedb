@@ -628,6 +628,9 @@ class AgentCommitVerifier:
             if agent_type:
                 return agent_type
 
+        if "[bot]" in author_name.lower():
+            return None
+
         # Check author name
         agent_type = self._match_agent_keywords(author_name.lower())
         if agent_type:

@@ -281,7 +281,9 @@ class Tier1RepositoryScanner:
         Returns:
             Agent type (claude/cursor/copilot/other) or None
         """
-        # Search author name and email for agent signatures (case-insensitive)
+        if "[bot]" in author_name.lower():
+            return None
+
         author_text = f"{author_name} {author_email}".lower()
         for agent_type, keywords in self.agent_signatures.items():
             for keyword in keywords:
