@@ -155,11 +155,6 @@ def _cleanup_test_fixtures():
     """Remove fixture CSVs that tests may have written to project directories."""
     import shutil
 
-    for rel in [
-        Path("fixtures-from-humans") / "same-repo" / "python_human_fixtures.csv",
-        Path("fixtures-from-humans") / "cross-repo" / "python_human_fixtures.csv",
-        Path("fixtures-from-humans") / "cross-repo" / "py_human_fixtures.csv",
-    ]:
-        p = Path(__file__).resolve().parents[1] / rel
-        if p.exists():
-            p.unlink()
+    fixtures_root = Path(__file__).resolve().parents[1] / "fixtures-from-humans"
+    if fixtures_root.exists():
+        shutil.rmtree(fixtures_root)
