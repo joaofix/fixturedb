@@ -8,7 +8,6 @@ the agent dataset, and only non-AI commits that fully add a fixture are kept.
 
 import argparse
 import csv
-import hashlib
 import json
 import logging
 import shutil
@@ -58,7 +57,7 @@ from .fixture_extractor import AgentFixtureExtractor
 from .test_commit_utils import write_test_commits_csv
 from .agent_commit_detector import Tier1RepositoryScanner
 from .test_commit_filter import build_pre2021_candidate_pool
-from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
+from .agent_patterns import AGENT_SIGNATURES, PAPER_AGENT_CONFIG_PATTERNS, PAPER_AGENT_REPOSITORY_LANGUAGES
 from .corpus_utils import (
     BaseCorpusStats,
     compute_repo_metadata,
@@ -67,6 +66,12 @@ from .corpus_utils import (
     persist_repository_and_fixtures,
 )
 from .sampling import stratified_sample_by_language
+from .utils import (
+    _stable_repo_id,
+    _normalize_language_filters,
+    build_repo_row,
+    _date_only,
+)
 from .logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -79,12 +84,6 @@ def _human_fixtures_root() -> Path:
 def _human_fixture_csv_path(language: str, collection_kind: str) -> Path:
     subdir = "same-repo" if collection_kind == "within" else "cross-repo"
     return _human_fixtures_root() / subdir / f"{language}_human_fixtures.csv"
-
-
-def _stable_repo_id(full_name: str) -> int:
-    """Derive a stable synthetic repository ID from a repository slug."""
-    digest = hashlib.md5(full_name.encode("utf-8")).hexdigest()
-    return int(digest[:12], 16)
 
 
 def _load_inter_checkpoint(inter_checkpoint: Path) -> tuple[set[str], dict]:
@@ -358,20 +357,10 @@ def select_human_corpus_repositories(
                                 continue
                             if language and lang != language:
                                 continue
-                            repo_row = {
-                                "id": _stable_repo_id(repo_name),
-                                "github_id": _stable_repo_id(repo_name),
-                                "full_name": repo_name,
-                                "language": lang,
-                                "stars": 0,
-                                "forks": 0,
-                                "description": "",
-                                "topics": "[]",
-                                "created_at": "",
-                                "pushed_at": "",
-                                "clone_url": f"https://github.com/{repo_name}.git",
-                                "num_contributors": 0,
-                            }
+                            repo_row = build_repo_row(
+                                repo_name,
+                                lang,
+                            )
                             grouped.setdefault(lang, [])
                             if repo_name not in {r["full_name"] for r in grouped[lang]}:
                                 grouped[lang].append(repo_row)
@@ -413,20 +402,10 @@ def select_human_corpus_repositories(
                     continue
                 if language and lang != language:
                     continue
-                repo_row = {
-                    "id": _stable_repo_id(repo_name),
-                    "github_id": _stable_repo_id(repo_name),
-                    "full_name": repo_name,
-                    "language": lang,
-                    "stars": 0,
-                    "forks": 0,
-                    "description": "",
-                    "topics": "[]",
-                    "created_at": "",
-                    "pushed_at": "",
-                    "clone_url": f"https://github.com/{repo_name}.git",
-                    "num_contributors": 0,
-                }
+                repo_row = build_repo_row(
+                    repo_name,
+                    lang,
+                )
                 grouped.setdefault(lang, [])
                 if repo_name not in {r["full_name"] for r in grouped[lang]}:
                     grouped[lang].append(repo_row)
@@ -479,22 +458,13 @@ def select_human_corpus_repositories(
                 if agent_test_repos and (repo_name, lang) not in agent_test_repos:
                     continue
 
-                repo_row = {
-                    "id": _stable_repo_id(repo_name),
-                    "github_id": _stable_repo_id(repo_name),
-                    "full_name": repo_name,
-                    "language": lang,
-                    "stars": int(float(row.get("stars") or 0)),
-                    "forks": 0,
-                    "description": "",
-                    "topics": "[]",
-                    "created_at": "",
-                    "pushed_at": "",
-                    "clone_url": (
-                        row.get("clone_url") or f"https://github.com/{repo_name}.git"
-                    ).strip(),
-                    "num_contributors": int(float(row.get("num_contributors") or 0)),
-                }
+                repo_row = build_repo_row(
+                    repo_name,
+                    lang,
+                    stars=row.get("stars") or 0,
+                    clone_url=row.get("clone_url"),
+                    num_contributors=row.get("num_contributors") or 0,
+                )
                 grouped.setdefault(lang, [])
                 if repo_name not in {r["full_name"] for r in grouped[lang]}:
                     grouped[lang].append(repo_row)

@@ -37,6 +37,7 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.clone_manager import temp_clone_commit_history
+from collection.utils import _date_only
 
 from collection.logging_utils import get_logger
 
@@ -62,13 +63,6 @@ def _collect_commit_files(input_dir: Path, commit_dataset: str = "agent") -> lis
             if p.is_file():
                 files.add(p)
     return sorted(files)
-
-
-def _date_only(value: str) -> str:
-    value = (value or "").strip()
-    if not value:
-        return ""
-    return value[:10]
 
 
 def _load_agent_commit_dataset(

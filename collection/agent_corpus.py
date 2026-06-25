@@ -7,7 +7,6 @@ only) detected from repositories with agent configuration files.
 
 import argparse
 import csv
-import hashlib
 import json
 import logging
 import re
@@ -53,15 +52,16 @@ from .corpus_utils import (
     write_fixture_csv_row,
 )
 from .clone_manager import clone_with_function
+from .utils import (
+    _normalize_language_filters,
+    build_repo_row,
+    _date_only,
+    AGENT_TRAILER_RE,
+)
 
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
-
-AGENT_TRAILER_RE = re.compile(
-    r"^\s*(?:co-authored-by|assisted-by|generated-by):\s*(.+?)\s*$",
-    re.IGNORECASE | re.MULTILINE,
-)
 
 
 @dataclass
@@ -71,24 +71,6 @@ class AgentCorpusStats(BaseCorpusStats):
     repos_with_agent_config: int = 0
     agent_commits_found: int = 0
     agent_types_distribution: Dict[str, int] = field(default_factory=dict)
-
-
-def _normalize_language_filters(
-    languages: Optional[list[str]] = None, language: Optional[str] = None
-) -> list[str] | None:
-    selected: list[str] = []
-    candidates: list[str] = list(languages or [])
-    if language:
-        candidates.append(language)
-
-    for candidate in candidates:
-        normalized = (candidate or "").strip().lower()
-        if not normalized or normalized not in PAPER_AGENT_REPOSITORY_LANGUAGES:
-            continue
-        if normalized not in selected:
-            selected.append(normalized)
-
-    return selected or None
 
 
 def detect_agent_type(commit_message: str) -> Optional[str]:
@@ -182,12 +164,6 @@ def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:
         return []
 
 
-def _stable_repo_id(full_name: str) -> int:
-    """Derive a stable synthetic repository ID from a repository slug."""
-    digest = hashlib.md5(full_name.encode("utf-8")).hexdigest()
-    return int(digest[:12], 16)
-
-
 def _load_qc_repo_rows(
     repo_qc_dir: Path,
     languages: Optional[list[str]] = None,
@@ -222,21 +198,13 @@ def _load_qc_repo_rows(
                 if allowed_languages and lang not in allowed_languages:
                     continue
 
-                repo_row = {
-                    "github_id": _stable_repo_id(repo_name),
-                    "full_name": repo_name,
-                    "language": lang,
-                    "stars": int(float(row.get("stars") or 0)),
-                    "forks": 0,
-                    "description": "",
-                    "topics": "[]",
-                    "created_at": "",
-                    "pushed_at": "",
-                    "clone_url": (
-                        row.get("clone_url") or f"https://github.com/{repo_name}.git"
-                    ).strip(),
-                    "num_contributors": int(float(row.get("num_contributors") or 0)),
-                }
+                repo_row = build_repo_row(
+                    repo_name,
+                    lang,
+                    stars=row.get("stars") or 0,
+                    clone_url=row.get("clone_url"),
+                    num_contributors=row.get("num_contributors") or 0,
+                )
                 grouped.setdefault(lang, [])
                 if repo_name not in {r["full_name"] for r in grouped[lang]}:
                     grouped[lang].append(repo_row)

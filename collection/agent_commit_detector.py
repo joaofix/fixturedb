@@ -33,12 +33,7 @@ from .agent_detector import (
     GitHubAgentFileChecker,
 )
 from .cloner import clone_repo
-
-# Regex to extract agent trailer values (co-authored-by, assisted-by, generated-by)
-AGENT_TRAILER_RE = re.compile(
-    r"^\s*(?:co-authored-by|assisted-by|generated-by):\s*(.+?)\s*$",
-    re.IGNORECASE | re.MULTILINE,
-)
+from .utils import AGENT_TRAILER_RE
 from .db import db_session
 from collection.logging_utils import get_logger
 

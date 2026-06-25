@@ -20,8 +20,9 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 
 from collection.agent_corpus import scan_cloned_repo_for_agent_configs
 from collection.config import EXCLUSION_KEYWORDS
-from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
+from collection.agent_patterns import AGENT_SIGNATURES, PAPER_AGENT_CONFIG_PATTERNS, PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.clone_manager import temp_clone_commit_history
+from collection.utils import _normalize_language_filters
 
 from collection.logging_utils import get_logger
 
@@ -35,24 +36,6 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 def csv_path_for_language(language: str) -> Path:
     lang = (language or "unknown").lower()
     return OUTPUT_DIR / f"{lang}_agent_repo.csv"
-
-
-def _normalize_language_filters(
-    languages: Optional[list[str]] = None, language: Optional[str] = None
-) -> list[str] | None:
-    selected: list[str] = []
-    candidates: list[str] = list(languages or [])
-    if language:
-        candidates.append(language)
-
-    for candidate in candidates:
-        normalized = (candidate or "").strip().lower()
-        if not normalized or normalized not in PAPER_AGENT_REPOSITORY_LANGUAGES:
-            continue
-        if normalized not in selected:
-            selected.append(normalized)
-
-    return selected or None
 
 
 def _to_int(value: object) -> int:
