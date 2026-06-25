@@ -68,6 +68,7 @@ def test_human_fixtures_command_uses_repo_dataset_override(monkeypatch):
         return DummyHumanCollector(*args, **kwargs)
 
     monkeypatch.setattr(pipeline, "HumanCorpusCollector", human_factory)
+    monkeypatch.setattr(pipeline, "_truncate_human_output_csvs", lambda: None)
 
     args = SimpleNamespace(
         output_db=Path("/tmp/human-out.db"),
@@ -91,6 +92,7 @@ def test_agent_command_uses_repo_and_commit_dataset_overrides(monkeypatch):
         return DummyAgentCollector(*args, **kwargs)
 
     monkeypatch.setattr(pipeline, "AgentCorpusCollector", agent_factory)
+    monkeypatch.setattr(pipeline, "_truncate_agent_output_csvs", lambda: None)
 
     args = SimpleNamespace(
         github_token="token-123",

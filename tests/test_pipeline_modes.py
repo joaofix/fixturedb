@@ -33,6 +33,7 @@ def make_args(mode="within"):
 def test_cmd_human_fixtures_within(monkeypatch):
     fake = FakeCollector()
     monkeypatch.setattr(pipeline, "HumanCorpusCollector", lambda **kwargs: fake)
+    monkeypatch.setattr(pipeline, "_truncate_human_output_csvs", lambda: None)
 
     args = make_args(mode="within")
     rc = pipeline.cmd_human_fixtures(args)
@@ -43,6 +44,7 @@ def test_cmd_human_fixtures_within(monkeypatch):
 def test_cmd_human_fixtures_inter(monkeypatch):
     fake = FakeCollector()
     monkeypatch.setattr(pipeline, "HumanCorpusCollector", lambda **kwargs: fake)
+    monkeypatch.setattr(pipeline, "_truncate_human_output_csvs", lambda: None)
 
     # stub select_human_corpus_repositories to return a dummy list
     monkeypatch.setattr(

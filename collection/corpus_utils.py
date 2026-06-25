@@ -152,6 +152,22 @@ def _build_github_url(
     return f"https://github.com/{repo_name}/blob/{sha}/{path}{anchor}"
 
 
+def truncate_fixture_csvs(csv_paths: list[Path]) -> None:
+    """Remove output CSV files so collection starts from a clean slate.
+
+    This ensures that re-running the collection pipeline replaces existing
+    CSV files instead of appending to them.
+
+    Args:
+        csv_paths: List of CSV file paths that should be truncated.
+    """
+    for path in csv_paths:
+        try:
+            path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
 def write_fixture_csv_row(
     out_path: Path,
     repo_name: str,

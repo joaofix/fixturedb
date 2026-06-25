@@ -20,6 +20,7 @@ from collection.corpus_utils import (
     FixtureData,
     compute_repo_metadata,
     construct_repo_dict,
+    truncate_fixture_csvs,
     write_fixture_csv_row,
     persist_repository_and_fixtures,
     generate_corpus_summary,
@@ -621,3 +622,60 @@ class TestGenerateCorpusSummary:
                     assert (
                         summary_data["control_variables"]["mean_repo_age_years"] == 3.5
                     )
+
+
+class TestTruncateFixtureCsvs:
+    """Test truncation of output CSV files before collection runs."""
+
+    def test_truncate_removes_existing_files(self, tmp_path):
+        """Verify truncate_fixture_csvs removes existing CSV files."""
+        csv_a = tmp_path / "python_agent_fixtures.csv"
+        csv_b = tmp_path / "repos" / "python_agent_fixture_repos.csv"
+        csv_b.parent.mkdir(parents=True, exist_ok=True)
+
+        csv_a.write_text("old,data\nrow1\n")
+        csv_b.write_text("old,data\nrow1\n")
+
+        truncate_fixture_csvs([csv_a, csv_b])
+
+        assert not csv_a.exists()
+        assert not csv_b.exists()
+
+    def test_truncate_ignores_missing_files(self, tmp_path):
+        """Verify truncate_fixture_csvs does not fail on missing files."""
+        missing = tmp_path / "nonexistent.csv"
+        truncate_fixture_csvs([missing])
+        # Should not raise
+
+    def test_truncate_then_write_produces_fresh_file(self, tmp_path):
+        """Verify that after truncation, a new write produces a clean file."""
+        csv_path = tmp_path / "fixtures.csv"
+
+        # Simulate a previous run
+        csv_path.write_text("repo_name,language\nold/repo,python\n")
+
+        # Truncate
+        truncate_fixture_csvs([csv_path])
+
+        # New run writes fresh data
+        write_fixture_csv_row(
+            csv_path,
+            "new/repo",
+            "python",
+            {
+                "commit_sha": "abc",
+                "file_path": "test.py",
+                "name": "fixture",
+                "fixture_type": "function",
+                "start_line": 1,
+                "end_line": 3,
+                "loc": 3,
+                "framework": "pytest",
+            },
+        )
+
+        content = csv_path.read_text()
+        lines = content.strip().split("\n")
+        assert len(lines) == 2  # header + 1 data row
+        assert "new/repo" in content
+        assert "old/repo" not in content

@@ -884,3 +884,153 @@ def test_single_language_checkpoint_blocks_rerun(tmp_path):
     stats, _ = collector.run(language="java")
     assert stats.repos_scanned == 0
     assert stats.fixtures_collected == 0
+
+
+def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
+    """Pipeline should truncate output CSVs before collection, so re-runs replace."""
+    from unittest.mock import patch, MagicMock
+    from collection.agent_corpus import AgentCorpusCollector
+    from collection.corpus_utils import truncate_fixture_csvs
+
+    repo_qc_dir = tmp_path / "repo-qc"
+    commit_qc_dir = tmp_path / "commit-qc"
+    repo_qc_dir.mkdir()
+    commit_qc_dir.mkdir()
+
+    # Save/restore real CSV files that the collector writes to
+    project_root = Path(__file__).resolve().parents[2]
+    fixture_list_dir = project_root / "fixtures-from-agents"
+    repos_dir = fixture_list_dir / "repos"
+
+    fixtures_csv = fixture_list_dir / "python_agent_fixtures.csv"
+    repos_csv = repos_dir / "python_agent_fixture_repos.csv"
+
+    original_fixtures = fixtures_csv.read_bytes() if fixtures_csv.exists() else b""
+    original_repos = repos_csv.read_bytes() if repos_csv.exists() else b""
+
+    try:
+        # Pre-populate with old data to simulate a previous run
+        fixture_list_dir.mkdir(parents=True, exist_ok=True)
+        repos_dir.mkdir(parents=True, exist_ok=True)
+        fixtures_csv.write_text("repo_name,language\nold/repo,python\n")
+        repos_csv.write_text("repo_name,language\nold/repo,python\n")
+
+        # Create a fake repo QC CSV
+        with (repo_qc_dir / "python_agent_repo.csv").open("w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name", "has_agent_config", "language", "stars",
+                    "clone_url", "num_contributors", "qc_reason", "processed_at",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow({
+                "repo_name": "good/repo",
+                "has_agent_config": "1",
+                "language": "python",
+                "stars": 123,
+                "clone_url": "https://github.com/good/repo.git",
+                "num_contributors": 4,
+                "qc_reason": "",
+                "processed_at": "2026-05-28T00:00:00Z",
+            })
+
+        # Create a fake commit QC CSV
+        with (commit_qc_dir / "python_agent_commit.csv").open("w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name", "commit_sha", "commit_url", "agent_type",
+                    "commit_date", "author_name", "author_email", "language",
+                    "clone_url", "processed_at",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow({
+                "repo_name": "good/repo",
+                "commit_sha": "abc123",
+                "commit_url": "https://github.com/good/repo/commit/abc123",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "author_name": "Alice",
+                "author_email": "alice@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/good/repo.git",
+                "processed_at": "2026-05-28T00:00:00Z",
+            })
+
+        def fake_clone(clone_url, target_dir):
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / ".git").mkdir(parents=True, exist_ok=True)
+            return True
+
+        monkeypatch.setattr(
+            "collection.agent_corpus.clone_repo_for_commit_scan", fake_clone
+        )
+        monkeypatch.setattr(
+            "collection.agent_corpus.collect_test_files_for_commit",
+            lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
+        )
+        monkeypatch.setattr(
+            "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
+            lambda self, repo_name, commits: [
+                {
+                    "repo_name": repo_name,
+                    "name": "complete_fixture",
+                    "fixture_type": "pytest_decorator",
+                    "scope": "per_test",
+                    "loc": 3,
+                    "language": "python",
+                    "file_path": "tests/test_sample.py",
+                    "start_line": 1,
+                    "end_line": 3,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 0,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "reuse_count": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": "def complete_fixture(): pass",
+                    "framework": "pytest",
+                    "mocks": [],
+                    "commit_sha": "abc123",
+                    "agent_type": "claude",
+                    "is_complete_addition": True,
+                },
+            ],
+        )
+
+        collector = AgentCorpusCollector(
+            output_db=tmp_path / "between-group.db",
+            repo_qc_dir=repo_qc_dir,
+            commit_qc_dir=commit_qc_dir,
+        )
+        # Simulate pipeline truncation before run
+        truncate_fixture_csvs([fixtures_csv, repos_csv])
+        stats, db_path = collector.run(repos_per_language=1, languages=["python"])
+
+        assert stats.fixtures_collected == 1
+
+        # Verify CSV was truncated and rewritten (old data gone)
+        assert fixtures_csv.exists()
+        content = fixtures_csv.read_text()
+        assert "old/repo" not in content
+        assert "good/repo" in content
+
+        assert repos_csv.exists()
+        repos_content = repos_csv.read_text()
+        assert "old/repo" not in repos_content
+        assert "good/repo" in repos_content
+
+    finally:
+        # Restore original files
+        if original_fixtures:
+            fixtures_csv.write_bytes(original_fixtures)
+        elif fixtures_csv.exists():
+            fixtures_csv.unlink()
+        if original_repos:
+            repos_csv.write_bytes(original_repos)
+        elif repos_csv.exists():
+            repos_csv.unlink()

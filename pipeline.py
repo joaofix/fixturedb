@@ -12,6 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from collection.config import LANGUAGE_CONFIGS, DATA_DIR
+from collection.corpus_utils import truncate_fixture_csvs
 from collection.paired_collection import main as paired_main
 from collection.human_corpus import (
     HumanCorpusCollector,
@@ -36,6 +37,30 @@ except Exception:
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent
 MANUAL_REPO_QC_DIR = PROJECT_ROOT / "github-search-agent"
+
+
+def _truncate_agent_output_csvs() -> None:
+    """Truncate agent fixture output CSVs so re-runs replace instead of appending."""
+    from collection.config import LANGUAGE_CONFIGS
+
+    fixture_list_dir = PROJECT_ROOT / "fixtures-from-agents"
+    csvs: list[Path] = []
+    for lang in LANGUAGE_CONFIGS:
+        csvs.append(fixture_list_dir / f"{lang}_agent_fixtures.csv")
+        csvs.append(fixture_list_dir / "repos" / f"{lang}_agent_fixture_repos.csv")
+    truncate_fixture_csvs(csvs)
+
+
+def _truncate_human_output_csvs() -> None:
+    """Truncate human fixture output CSVs so re-runs replace instead of appending."""
+    from collection.config import LANGUAGE_CONFIGS
+
+    human_root = PROJECT_ROOT / "fixtures-from-humans"
+    csvs: list[Path] = []
+    for lang in LANGUAGE_CONFIGS:
+        csvs.append(human_root / "same-repo" / f"{lang}_human_fixtures.csv")
+        csvs.append(human_root / "cross-repo" / f"{lang}_human_fixtures.csv")
+    truncate_fixture_csvs(csvs)
 
 
 class TeeStream:
@@ -331,6 +356,9 @@ def build_parser() -> argparse.ArgumentParser:
 def cmd_human_fixtures(args) -> int:
     """Collect human corpus."""
     try:
+        # Truncate output CSVs so re-runs replace instead of appending
+        _truncate_human_output_csvs()
+
         human_kwargs = dict(
             corpus_db_path=DATA_DIR / "corpus.db",
             output_db=args.output_db,
@@ -454,6 +482,9 @@ def cmd_full(args) -> int:
 def cmd_agent(args) -> int:
     """Collect agent corpus."""
     try:
+        # Truncate output CSVs so re-runs replace instead of appending
+        _truncate_agent_output_csvs()
+
         agent_kwargs = dict(
             github_token=args.github_token,
             output_db=args.output_db,
