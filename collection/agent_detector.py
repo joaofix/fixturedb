@@ -7,6 +7,7 @@ by detecting configuration files commonly created by these tools.
 Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline, Junie, Gemini
 """
 
+import fnmatch
 import json
 import logging
 import platformdirs

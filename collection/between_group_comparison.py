@@ -19,6 +19,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
+ALLOWED_CATEGORICAL_VARIABLES = {"language", "domain", "star_tier"}
+ALLOWED_CONTINUOUS_VARIABLES = {"repo_age_years"}
+ALLOWED_VARIABLES = ALLOWED_CATEGORICAL_VARIABLES | ALLOWED_CONTINUOUS_VARIABLES
+
 from scipy.stats import chi2_contingency, mannwhitneyu
 
 from .config import DATA_DIR
@@ -79,6 +83,9 @@ def get_human_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
     Returns:
         Dict with value → count
     """
+    if variable not in ALLOWED_CATEGORICAL_VARIABLES:
+        raise ValueError(f"variable must be one of {ALLOWED_CATEGORICAL_VARIABLES}, got {variable!r}")
+
     with db_session(db_path) as conn:
         query = f"""
         SELECT r.{variable}, COUNT(f.id) as count
@@ -102,6 +109,9 @@ def get_agent_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
     Returns:
         Dict with value → count
     """
+    if variable not in ALLOWED_CATEGORICAL_VARIABLES:
+        raise ValueError(f"variable must be one of {ALLOWED_CATEGORICAL_VARIABLES}, got {variable!r}")
+
     with db_session(db_path) as conn:
         query = f"""
         SELECT r.{variable}, COUNT(f.id) as count
@@ -260,6 +270,9 @@ def get_continuous_values(db_path: Path, variable: str, corpus: str) -> list[flo
     Returns:
         List of values
     """
+    if variable not in ALLOWED_CONTINUOUS_VARIABLES:
+        raise ValueError(f"variable must be one of {ALLOWED_CONTINUOUS_VARIABLES}, got {variable!r}")
+
     with db_session(db_path) as conn:
         query = f"""
         SELECT r.{variable}

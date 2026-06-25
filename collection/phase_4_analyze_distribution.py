@@ -40,7 +40,6 @@ def analyze_database_distribution(db_path: Path) -> dict:
         "total_fixtures": 0,
         "by_type": {},
         "by_scope": {},
-        "by_category": {},
         "repositories": 0,
         "test_files": 0,
     }
@@ -64,14 +63,6 @@ def analyze_database_distribution(db_path: Path) -> dict:
                 "GROUP BY scope ORDER BY count DESC"
             ).fetchall()
             stats["by_scope"] = {row["scope"]: row["count"] for row in rows}
-
-            # By category
-            rows = conn.execute(
-                "SELECT category, COUNT(*) as count FROM fixtures "
-                "WHERE category IS NOT NULL "
-                "GROUP BY category ORDER BY count DESC"
-            ).fetchall()
-            stats["by_category"] = {row["category"]: row["count"] for row in rows}
 
             # Repository count
             result = conn.execute(

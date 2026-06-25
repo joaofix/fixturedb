@@ -470,7 +470,6 @@ FRAMEWORK_REGISTRY = {
 MIN_TEST_FILES = 5  # repos with fewer test files are dropped
 MIN_COMMITS = 100  # repos with fewer commits are dropped
 MIN_FIXTURES_FOUND = 1  # repos where we detect zero fixtures are dropped
-MIN_FIXTURES_FOUND = 1  # repos where we detect zero fixtures are dropped
 
 # Per-language survival rates (discovered → analyzed with fixtures)
 # These are empirically observed rates used to calculate discovery estimates.
