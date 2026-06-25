@@ -498,9 +498,17 @@ class TestQualityControlledInputs:
             / "repos"
             / "python_agent_fixture_repos.csv"
         )
+        fixtures_csv_path = (
+            Path(__file__).resolve().parents[2]
+            / "fixtures-from-agents"
+            / "python_agent_fixtures.csv"
+        )
         original_bytes = b""
+        original_fixtures_bytes = b""
         if repo_list_path.exists():
             original_bytes = repo_list_path.read_bytes()
+        if fixtures_csv_path.exists():
+            original_fixtures_bytes = fixtures_csv_path.read_bytes()
 
         with (repo_qc_dir / "python_agent_repo.csv").open(
             "w", newline="", encoding="utf-8"
@@ -648,6 +656,8 @@ class TestQualityControlledInputs:
 
         if repo_list_path.exists() and original_bytes:
             repo_list_path.write_bytes(original_bytes)
+        if fixtures_csv_path.exists() and original_fixtures_bytes:
+            fixtures_csv_path.write_bytes(original_fixtures_bytes)
 
 
 @contextmanager

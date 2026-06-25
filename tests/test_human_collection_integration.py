@@ -119,6 +119,7 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
         output_db=out_db,
         repo_qc_dir=repo_qc_dir,
         test_commits_csv=test_commits_dir,
+        fixtures_output_dir=tmp_path,
     )
 
     # Run the collector in fast (single-worker) mode; this should persist fixtures
@@ -146,15 +147,3 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     assert db_path2 == out_db
     assert stats2.fixtures_collected == 0
     assert stats2.repos_scanned == 0
-
-    # Clean up any fixture CSVs written to the project directory during the test
-    _cleanup_test_fixtures()
-
-
-def _cleanup_test_fixtures():
-    """Remove fixture CSVs that tests may have written to project directories."""
-    import shutil
-
-    fixtures_root = Path(__file__).resolve().parents[1] / "fixtures-from-humans"
-    if fixtures_root.exists():
-        shutil.rmtree(fixtures_root)

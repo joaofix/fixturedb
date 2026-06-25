@@ -97,7 +97,7 @@ def test_collect_inter_human_monkeypatched(tmp_path, monkeypatch):
 
     csv_path = tmp_path / "human_inter.csv"
 
-    def fake_human_fixture_csv_path(language, collection_kind):
+    def fake_human_fixture_csv_path(language, collection_kind, override=None):
         return csv_path
 
     monkeypatch.setattr(

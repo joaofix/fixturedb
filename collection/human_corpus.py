@@ -77,13 +77,15 @@ from .logging_utils import get_logger
 logger = get_logger(__name__)
 
 
-def _human_fixtures_root() -> Path:
+def _human_fixtures_root(override: Path | None = None) -> Path:
+    if override is not None:
+        return override
     return Path(__file__).resolve().parents[1] / "fixtures-from-humans" / COLLECTION_OUTPUT_TAG
 
 
-def _human_fixture_csv_path(language: str, collection_kind: str) -> Path:
+def _human_fixture_csv_path(language: str, collection_kind: str, override: Path | None = None) -> Path:
     subdir = "same-repo" if collection_kind == "within" else "cross-repo"
-    return _human_fixtures_root() / subdir / f"{language}_human_fixtures.csv"
+    return _human_fixtures_root(override) / subdir / f"{language}_human_fixtures.csv"
 
 
 def _load_inter_checkpoint(inter_checkpoint: Path) -> tuple[set[str], dict]:
@@ -492,6 +494,7 @@ class HumanCorpusCollector:
         output_db: Path | None = None,
         repo_qc_dir: Path | None = None,
         test_commits_csv: Path | None = None,
+        fixtures_output_dir: Path | None = None,
     ):
         """
         Initialize human corpus collector.
@@ -501,6 +504,8 @@ class HumanCorpusCollector:
             clones_dir: Directory for temporary clones
             output_db: Path to output database (default: data/between-group.db)
             repo_qc_dir: Directory containing *_agent_repo.csv files
+            test_commits_csv: Directory containing test-commit CSVs
+            fixtures_output_dir: Override for fixture CSV output directory
         """
         self.corpus_db_path = Path(corpus_db_path)
         self.clones_dir = Path(clones_dir)
@@ -508,6 +513,9 @@ class HumanCorpusCollector:
             Path(output_db) if output_db else (DATA_DIR / "between-group.db")
         )
         self.test_commits_csv = Path(test_commits_csv) if test_commits_csv else None
+        self.fixtures_output_dir = (
+            Path(fixtures_output_dir) if fixtures_output_dir else None
+        )
         project_root = Path(__file__).resolve().parents[1]
         self.repo_qc_dir = (
             Path(repo_qc_dir)
@@ -1074,7 +1082,7 @@ class HumanCorpusCollector:
             )
             try:
                 fixtures_out_path = _human_fixture_csv_path(
-                    repo_data["language"], "inter"
+                    repo_data["language"], "inter", self.fixtures_output_dir
                 )
                 fixture_count = persist_repository_and_fixtures(
                     self.output_db,
@@ -1251,7 +1259,7 @@ class HumanCorpusCollector:
             logger.info(
                 f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
             )
-            fixtures_out_path = _human_fixture_csv_path(current_lang, "within")
+            fixtures_out_path = _human_fixture_csv_path(current_lang, "within", self.fixtures_output_dir)
             for repo_data, fixtures_list in lang_all_fixtures:
                 fixture_count = persist_repository_and_fixtures(
                     self.output_db,

@@ -93,7 +93,7 @@ def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
     monkeypatch.setattr(
         human_corpus,
         "_human_fixture_csv_path",
-        lambda language, kind: tmp_path / f"{language}_human_fixtures.csv",
+        lambda language, kind, override=None: tmp_path / f"{language}_human_fixtures.csv",
     )
 
     def fake_persist_repository_and_fixtures(
