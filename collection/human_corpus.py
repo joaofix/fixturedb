@@ -411,7 +411,7 @@ def select_human_corpus_repositories(
             f"{Path(repo_qc_dir) / 'fixtures-from-agents'}"
         )
     # New fallback: accept per-language human test-commit CSVs produced earlier
-    # e.g., python_human_test_commit_qc.csv. These contain `repo_name` and
+    # e.g., python_human_test_commit.csv. These contain `repo_name` and
     # `language` columns and can be used to select repositories directly.
     # Increase CSV field size limit to handle very large `test_file_paths` fields
     try:
@@ -419,7 +419,7 @@ def select_human_corpus_repositories(
     except Exception:
         pass
 
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_human_test_commit_qc.csv")):
+    for csv_path in sorted(Path(repo_qc_dir).glob("*_human_test_commit.csv")):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -760,7 +760,7 @@ class HumanCorpusCollector:
         # If running in write-only mode and the repo_qc_dir already contains
         # per-language human test-commit CSVs, copy them to the output and exit.
         if only_write_test_commits:
-            existing = list(Path(self.repo_qc_dir).glob("*_human_test_commit_qc.csv"))
+            existing = list(Path(self.repo_qc_dir).glob("*_human_test_commit.csv"))
             if existing:
                 out_dir = Path(self.test_commits_csv)
                 # If input and output are the same directory, nothing to do.
@@ -1314,7 +1314,7 @@ class HumanCorpusCollector:
             if only_write_test_commits or self.test_commits_csv.suffix == "":
                 out_dir = Path(self.test_commits_csv)
                 out_dir.mkdir(parents=True, exist_ok=True)
-                out_path = out_dir / f"{current_lang}_human_test_commit_qc.csv"
+                out_path = out_dir / f"{current_lang}_human_test_commit.csv"
                 write_test_commits_csv(lang_test_commit_rows, out_path)
                 self._write_human_progress_snapshot(
                     progress_file, stats, language_progress

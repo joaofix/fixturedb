@@ -75,10 +75,10 @@ def _load_test_commit_resume_state(
     pattern = (
         "*_agent_test_commit_qc.csv"
         if role == "agent"
-        else "*_human_test_commit_qc.csv"
+        else "*_human_test_commit.csv"
     )
     suffix = (
-        "_agent_test_commit_qc.csv" if role == "agent" else "_human_test_commit_qc.csv"
+        "_agent_test_commit_qc.csv" if role == "agent" else "_human_test_commit.csv"
     )
     checkpoint_name = (
         AGENT_TEST_COMMITS_CHECKPOINT
@@ -281,7 +281,7 @@ def _collect_human_test_commits_from_repo_rows(
         output_dir.mkdir(parents=True, exist_ok=True)
         for language, language_rows in sorted(test_commit_rows_by_language.items()):
             write_test_commits_csv(
-                language_rows, output_dir / f"{language}_human_test_commit_qc.csv"
+                language_rows, output_dir / f"{language}_human_test_commit.csv"
             )
         _save_test_commit_resume_state(
             output_dir, counts, completed_repos, role="human"
@@ -365,7 +365,7 @@ def _collect_human_test_commits_from_repo_rows(
     output_files: dict[str, str] = {}
     total_test_commits = 0
     for language, language_rows in sorted(test_commit_rows_by_language.items()):
-        output_path = output_dir / f"{language}_human_test_commit_qc.csv"
+        output_path = output_dir / f"{language}_human_test_commit.csv"
         write_test_commits_csv(language_rows, output_path)
         output_files[language] = str(output_path)
         total_test_commits += len(language_rows)

@@ -130,7 +130,7 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     # expect at least one fixture collected according to stats
     assert stats.fixtures_collected >= 1
 
-    out_csv = test_commits_dir / "python_human_test_commit_qc.csv"
+    out_csv = test_commits_dir / "python_human_test_commit.csv"
     assert out_csv.exists()
 
     with out_csv.open("r", encoding="utf-8", newline="") as fh:

@@ -38,9 +38,9 @@ def sample_agent_repo_csv(tmp_csv_dir, make_csv):
 
 
 @pytest.fixture
-def sample_human_test_commit_qc_csv(tmp_csv_dir, make_csv):
-    make_csv(tmp_csv_dir, "python_human_test_commit_qc.csv")
-    return tmp_csv_dir / "python_human_test_commit_qc.csv"
+def sample_human_test_commit_csv(tmp_csv_dir, make_csv):
+    make_csv(tmp_csv_dir, "python_human_test_commit.csv")
+    return tmp_csv_dir / "python_human_test_commit.csv"
 
 
 class TestCSVRepositorySelection:

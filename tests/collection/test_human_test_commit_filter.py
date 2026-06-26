@@ -90,7 +90,7 @@ def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
     result = collect_human_test_commits(repo_qc_dir, out_dir, workers=1)
     assert result["test_commits_found"] >= 1
 
-    out_csv = out_dir / "python_human_test_commit_qc.csv"
+    out_csv = out_dir / "python_human_test_commit.csv"
     assert out_csv.exists()
 
     with out_csv.open("r", encoding="utf-8", newline="") as fh:
@@ -198,7 +198,7 @@ def test_collect_human_test_commits_from_raw_search(tmp_path: Path, monkeypatch)
     result = collect_human_test_commits_from_raw_search(raw_dir, out_dir, workers=1)
 
     assert result["test_commits_found"] >= 1
-    out_csv = out_dir / "python_human_test_commit_qc.csv"
+    out_csv = out_dir / "python_human_test_commit.csv"
     assert out_csv.exists()
 
     with out_csv.open("r", encoding="utf-8", newline="") as fh:

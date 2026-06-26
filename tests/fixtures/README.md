@@ -40,7 +40,7 @@ The following sample names are available by default in `SAMPLE_DATA` (see `tests
 - python_agent_repo.csv
 - mixed_agent_repo.csv
 - python_agent_repo_small.csv
-- python_human_test_commit_qc.csv
+- python_human_test_commit.csv
 - python_agent_test_commit.csv
 - python_agent_fixture_repos.csv
 - python_agent_commit_qc.csv

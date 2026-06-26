@@ -469,7 +469,7 @@ def make_csv():
                 "has_agent_config": "1",
             },
         ],
-        "python_human_test_commit_qc.csv": [
+        "python_human_test_commit.csv": [
             {
                 "repo_name": "owner1/repo_python",
                 "full_name": "owner1/repo_python",
