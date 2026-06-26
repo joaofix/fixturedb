@@ -219,6 +219,7 @@ def _collect_human_test_commits_from_repo_rows(
     output_dir: Path,
     clones_dir: Path = CLONES_DIR,
     workers: int = 12,
+    process_fn=None,
 ) -> dict:
     grouped: dict[str, list[dict]] = defaultdict(list)
     for row in repo_rows:
@@ -237,6 +238,10 @@ def _collect_human_test_commits_from_repo_rows(
     commits_scanned = counts.get("commits_scanned", 0)
     repos_with_test_commits = counts.get("repos_with_test_commits", 0)
     workers = max(1, int(workers or 1))
+
+    # Default to the 2025+ variant for Dataset 2 (agent-enabled repos, post-2025)
+    if process_fn is None:
+        process_fn = _process_repo_human_test_commits_2025
 
     # Filter out repos already completed in checkpoint
     repos_to_process = {
@@ -285,7 +290,7 @@ def _collect_human_test_commits_from_repo_rows(
     if workers == 1:
         for repo_name, repo_rows_for_name in repos_to_process.items():
             language, repo_test_commits, repo_count, repo_commits_scanned = (
-                _process_repo_human_test_commits(repo_rows_for_name[0])
+                process_fn(repo_rows_for_name[0])
             )
             repos_processed += repo_count
             commits_scanned += repo_commits_scanned
@@ -314,7 +319,7 @@ def _collect_human_test_commits_from_repo_rows(
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
                 executor.submit(
-                    _process_repo_human_test_commits, repo_rows_for_name[0]
+                    process_fn, repo_rows_for_name[0]
                 ): repo_name
                 for repo_name, repo_rows_for_name in repos_to_process.items()
             }
@@ -609,9 +614,14 @@ def collect_agent_test_commits(
     }
 
 
-def _process_repo_human_test_commits(
+def _process_repo_human_test_commits_pre2021(
     repo_row: dict,
 ) -> tuple[str, list[dict], int, int]:
+    """Scan a repo for human test commits in the pre-2021 era (Dataset 3).
+
+    Uses HUMAN_CORPUS_CUTOFF_DATE to find human-authored test commits
+    from before the AI coding agent era.
+    """
     repo_name = (repo_row.get("repo_name") or repo_row.get("full_name") or "").strip()
     clone_url = (
         repo_row.get("clone_url") or f"https://github.com/{repo_name}.git"
@@ -667,6 +677,74 @@ def _process_repo_human_test_commits(
     return language, test_commit_rows, 1, commits_scanned
 
 
+def _process_repo_human_test_commits_2025(
+    repo_row: dict,
+) -> tuple[str, list[dict], int, int]:
+    """Scan a repo for human test commits in the post-2025 era (Dataset 2).
+
+    Uses AGENT_CORPUS_START_DATE to find human-authored test commits
+    from the same temporal window as the agent dataset, in agent-enabled repos.
+    """
+    repo_name = (repo_row.get("repo_name") or repo_row.get("full_name") or "").strip()
+    clone_url = (
+        repo_row.get("clone_url") or f"https://github.com/{repo_name}.git"
+    ).strip()
+    language = (repo_row.get("language") or "unknown").strip().lower()
+
+    logger.info("[human-test-commits] Cloning %s (%s)", repo_name, language)
+    with temp_clone_commit_history(
+        clone_url, repo_name, prefix="human-test-commits-", timeout=300
+    ) as repo_path:
+        if repo_path is None:
+            logger.warning(
+                "Failed to clone %s while filtering human test commits", repo_name
+            )
+            return language, [], 1, 0
+
+        test_commit_rows: list[dict] = []
+        commits_scanned = 0
+        project_root = Path(__file__).resolve().parents[1]
+        scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
+        commit_roles = scanner.scan_repo_commit_roles(
+            repo_path,
+            start_date=AGENT_CORPUS_START_DATE,
+            language=language,
+            detect_test_files=True,
+        )
+        for commit in commit_roles:
+            commits_scanned += 1
+            if commit.commit_role != "human" or not commit.is_test_commit:
+                continue
+            test_commit_rows.append(
+                {
+                    "repo_name": repo_name,
+                    "language": language,
+                    "commit_sha": commit.commit_sha,
+                    "commit_role": "human",
+                    "agent_type": commit.agent_type,
+                    "commit_date": commit.commit_date,
+                    "test_file_count": len(commit.test_files),
+                    "test_file_paths": json.dumps(
+                        commit.test_files, ensure_ascii=False
+                    ),
+                }
+            )
+
+    logger.info(
+        "[human-test-commits] %s (%s): scanned %d commits, found %d human test commits",
+        repo_name,
+        language,
+        commits_scanned,
+        len(test_commit_rows),
+    )
+    return language, test_commit_rows, 1, commits_scanned
+
+
+# Backwards-compatible alias: the old name now points to the pre-2021 variant
+# (Dataset 3). Dataset 2 callers should use _process_repo_human_test_commits_2025.
+_process_repo_human_test_commits = _process_repo_human_test_commits_pre2021
+
+
 def collect_human_test_commits(
     repo_qc_dir: Path,
     output_dir: Path,
@@ -706,7 +784,11 @@ def collect_human_test_commits(
         repo_qc_dir,
     )
     return _collect_human_test_commits_from_repo_rows(
-        repo_rows, Path(output_dir), clones_dir=clones_dir, workers=workers
+        repo_rows,
+        Path(output_dir),
+        clones_dir=clones_dir,
+        workers=workers,
+        process_fn=_process_repo_human_test_commits_2025,
     )
 
 
@@ -725,7 +807,11 @@ def collect_human_test_commits_from_raw_search(
         raw_search_dir,
     )
     return _collect_human_test_commits_from_repo_rows(
-        repo_rows, Path(output_dir), clones_dir=clones_dir, workers=workers
+        repo_rows,
+        Path(output_dir),
+        clones_dir=clones_dir,
+        workers=workers,
+        process_fn=_process_repo_human_test_commits_pre2021,
     )
 
 

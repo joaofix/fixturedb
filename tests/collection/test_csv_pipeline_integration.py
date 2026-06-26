@@ -285,19 +285,25 @@ class TestCSVRepositorySelection:
     def test_select_human_corpus_strict_requires_fixture_repo_list(
         self, tmp_path, make_csv
     ):
-        """Strict mode must fail when fixture-repo list is missing."""
+        """Strict mode falls back to project-level fixtures-from-agents when local dir missing."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
 
         make_csv(input_dir, "python_agent_repo.csv", dest_name="python_agent_repo.csv")
 
-        with pytest.raises(ValueError, match="Strict within-mode requires"):
-            select_human_corpus_repositories(
-                input_dir,
-                repos_per_language=None,
-                language="python",
-                require_fixture_repo_list=True,
-            )
+        # With require_fixture_repo_list=True and no local fixtures-from-agents/,
+        # the function falls back to the project-level fixtures-from-agents/repos/.
+        # Since the real project has those files, this should succeed (not raise).
+        repos = select_human_corpus_repositories(
+            input_dir,
+            repos_per_language=None,
+            language="python",
+            require_fixture_repo_list=True,
+        )
+
+        # Should find repos from the project-level fixture lists
+        assert len(repos) >= 1
+        assert all(repo["language"] == "python" for repo in repos)
 
 
 class TestCSVFixtureExportFormat:

@@ -88,6 +88,23 @@ def _human_fixture_csv_path(language: str, collection_kind: str, override: Path 
     return _human_fixtures_root(override) / subdir / f"{language}_human_fixtures.csv"
 
 
+def _warn_stale_human_fixture_csvs(fixtures_output_dir: Path | None = None) -> None:
+    """Log a warning if stale human fixture CSVs exist from a previous run."""
+    root = _human_fixtures_root(fixtures_output_dir)
+    same_repo_dir = root / "same-repo"
+    if same_repo_dir.exists() and same_repo_dir.is_dir():
+        existing = list(same_repo_dir.glob("*_human_fixtures.csv"))
+        if existing:
+            logger.warning(
+                "[Human Corpus] Found %d existing human fixture CSV(s) in %s "
+                "from a previous run. These will be overwritten with fresh data.",
+                len(existing),
+                same_repo_dir,
+            )
+            for p in sorted(existing):
+                logger.warning("[Human Corpus]   %s (%d bytes)", p.name, p.stat().st_size)
+
+
 def _load_inter_checkpoint(inter_checkpoint: Path) -> tuple[set[str], dict]:
     """Load inter-repo resume state from disk."""
     completed: set[str] = set()
@@ -332,13 +349,21 @@ def select_human_corpus_repositories(
     candidate_dirs = []
     try:
         local_fixture_dir = Path(repo_qc_dir) / "fixtures-from-agents"
-        has_human_test_commit_csvs = any(
-            Path(repo_qc_dir).glob("*_human_test_commit_qc.csv")
-        )
         if local_fixture_dir.exists() and local_fixture_dir.is_dir():
             candidate_dirs.append(local_fixture_dir)
-        elif require_fixture_repo_list and has_human_test_commit_csvs:
-            candidate_dirs.append(project_root / "fixtures-from-agents")
+        elif require_fixture_repo_list:
+            # When strict mode is on and the repo_qc_dir doesn't have its own
+            # fixtures-from-agents/ subdirectory, fall back to the project-level
+            # fixture lists (fixtures-from-agents/repos/).
+            project_fixture_dir = project_root / "fixtures-from-agents"
+            if project_fixture_dir.exists() and project_fixture_dir.is_dir():
+                logger.info(
+                    "[Human Corpus] No local fixture-repo lists at %s; "
+                    "falling back to project-level %s",
+                    local_fixture_dir,
+                    project_fixture_dir,
+                )
+                candidate_dirs.append(project_fixture_dir)
     except Exception:
         # If resolution fails for any reason, do not add the project-level fallback
         pass
@@ -758,6 +783,9 @@ class HumanCorpusCollector:
             language,
             require_fixture_repo_list=True,
         )
+
+        # Warn if stale fixture CSVs exist from a previous run
+        _warn_stale_human_fixture_csvs(self.fixtures_output_dir)
 
         within_all_step = "human_within_complete:all"
 
