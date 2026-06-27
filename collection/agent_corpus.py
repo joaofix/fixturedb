@@ -401,6 +401,10 @@ class AgentCorpusCollector:
             (stats, output_db_path)
         """
         initialise_db(self.output_db)
+        try:
+            csv.field_size_limit(10**7)
+        except OverflowError:
+            csv.field_size_limit(2**31 - 1)
         stats = AgentCorpusStats()
         all_test_commit_rows: list[dict] = []
         agent_extractor = AgentFixtureExtractor(clones_dir=self.clones_dir)
