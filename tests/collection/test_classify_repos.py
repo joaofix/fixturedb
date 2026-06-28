@@ -283,6 +283,11 @@ class TestGitHubRateLimiter:
         time.sleep(0.5)
         assert limiter.available <= 100.0
 
+    def test_starts_with_small_burst(self):
+        """Bucket starts nearly empty to avoid exhausting GitHub rate limit."""
+        limiter = GitHubRateLimiter(max_requests_per_hour=3600)
+        assert limiter.available < 200  # small burst, not full bucket
+
     def test_thread_safety(self):
         import threading
 

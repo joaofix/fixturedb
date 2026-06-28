@@ -61,7 +61,10 @@ class GitHubRateLimiter:
 
     def __init__(self, max_requests_per_hour: int = _GITHUB_RATE_LIMIT_PER_HOUR):
         self._max_tokens = max_requests_per_hour
-        self._tokens = float(max_requests_per_hour)  # start full
+        # Start with a small burst allowance (100) to avoid exhausting the
+        # GitHub rate limit in the first few minutes. The bucket refills at
+        # ~1.25 tokens/sec, matching the sustained 4,500/hr rate.
+        self._tokens = 100.0
         self._refill_rate = max_requests_per_hour / 3600.0  # tokens / second
         self._lock = threading.Lock()
         self._last_refill = time.monotonic()
@@ -367,9 +370,23 @@ class READMEEnricher:
             return excerpt
 
         except urllib.error.HTTPError as exc:
-            # 403 = private / access denied; 404 = no README
+            # 403 can mean: private repo, rate-limited, or blocked
             if exc.code == 403:
-                logger.warning("README 403 (private/denied): %s", repo_full_name)
+                # Try to read rate-limit headers to distinguish cause
+                try:
+                    remaining = exc.headers.get("X-RateLimit-Remaining", "?")
+                except Exception:
+                    remaining = "?"
+                if remaining == "0":
+                    logger.warning(
+                        "README 403 (rate limited): %s", repo_full_name
+                    )
+                else:
+                    logger.warning(
+                        "README 403 (private/denied, rate-limit-remaining=%s): %s",
+                        remaining,
+                        repo_full_name,
+                    )
             elif exc.code != 404:
                 logger.debug("README HTTP %d for %s", exc.code, repo_full_name)
             with self._lock:
