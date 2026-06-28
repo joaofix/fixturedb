@@ -52,6 +52,7 @@ from .corpus_utils import (
     write_fixture_csv_row,
 )
 from .clone_manager import clone_with_function
+from .temp_clone import _output_requests_credentials
 from .utils import (
     _normalize_language_filters,
     build_repo_row,
@@ -282,10 +283,11 @@ def clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
     Clone a repository with full commit history but without downloading large blobs.
 
     This is the history used for agent-commit detection and fixture extraction.
+    Returns False if the repo requires credentials (private/removed repo).
     """
     try:
         target_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.run(
+        result = subprocess.run(
             [
                 "git",
                 "clone",
@@ -299,11 +301,47 @@ def clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
             text=True,
             timeout=300,
         )
-        return target_dir.exists() and (
+        if _output_requests_credentials(result.stderr):
+            return False
+        return result.returncode == 0 and target_dir.exists() and (
             list(target_dir.glob(".git")) or list(target_dir.iterdir())
         )
-    except (subprocess.TimeoutExpired, Exception) as e:
+    except subprocess.TimeoutExpired:
+        logger.warning(f"Timeout cloning history for {clone_url}")
+        return False
+    except Exception as e:
         logger.warning(f"Failed to clone history for {clone_url}: {e}")
+        return False
+
+
+def shallow_clone_repo(clone_url: str, target_dir: Path) -> bool:
+    """
+    Shallow-clone a repository (depth 1) for quick agent config detection.
+
+    Returns False if the repo requires credentials (private/removed repo).
+    """
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--single-branch",
+                "--no-tags",
+                clone_url,
+                str(target_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if _output_requests_credentials(result.stderr):
+            return False
+        return result.returncode == 0 and target_dir.exists()
+    except Exception as e:
+        logger.warning(f"Failed to shallow-clone {clone_url}: {e}")
         return False
 
 

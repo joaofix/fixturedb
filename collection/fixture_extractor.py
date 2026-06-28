@@ -18,6 +18,7 @@ from typing import Dict, List, Optional, Tuple
 import fcntl
 
 from .config import CLONES_DIR, DB_PATH, AGENT_CORPUS_START_DATE
+from .temp_clone import _output_requests_credentials
 from .db import db_session
 from .detector import extract_fixtures, _get_parser
 from .test_commit_utils import is_test_file_path
@@ -58,12 +59,15 @@ def _repo_worktree_lock(repo_path: Path):
 
 
 def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
-    """Checkout a commit, falling back to fetching full history if needed."""
+    """Checkout a commit, falling back to fetching full history if needed.
+
+    Raises RuntimeError if credentials are required (repo became private or was deleted).
+    """
     lock_path = repo_path / ".git" / "index.lock"
 
     for attempt in range(3):
         try:
-            subprocess.run(
+            result = subprocess.run(
                 ["git", "checkout", commit_sha, "--quiet"],
                 cwd=repo_path,
                 timeout=30,
@@ -73,9 +77,12 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
             )
             return
         except subprocess.CalledProcessError as exc:
-            stderr = (exc.stderr or "").lower()
-            stdout = (exc.stdout or "").lower()
-            if "index.lock" in stderr or "index.lock" in stdout:
+            stderr = (exc.stderr or "")
+            stdout = (exc.stdout or "")
+            combined = stderr.lower() + stdout.lower()
+            if _output_requests_credentials(stderr) or _output_requests_credentials(stdout):
+                raise RuntimeError(f"Repository requires credentials for checkout")
+            if "index.lock" in combined:
                 if lock_path.exists():
                     try:
                         lock_path.unlink()
@@ -90,7 +97,7 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
                 continue
 
             try:
-                subprocess.run(
+                result = subprocess.run(
                     ["git", "fetch", "--unshallow", "--tags", "origin"],
                     cwd=repo_path,
                     timeout=300,
@@ -98,7 +105,9 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
                     capture_output=True,
                     text=True,
                 )
-                subprocess.run(
+                if _output_requests_credentials(result.stderr):
+                    raise RuntimeError("Repository requires credentials for fetch")
+                result = subprocess.run(
                     ["git", "checkout", commit_sha, "--quiet"],
                     cwd=repo_path,
                     timeout=30,
@@ -108,6 +117,8 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
                 )
                 return
             except subprocess.CalledProcessError as fetch_exc:
+                if _output_requests_credentials(fetch_exc.stderr or ""):
+                    raise RuntimeError("Repository requires credentials for fetch")
                 raise RuntimeError(f"Failed to checkout {commit_sha}: {fetch_exc}")
             except subprocess.TimeoutExpired:
                 raise RuntimeError(f"Checkout timeout for {commit_sha}")

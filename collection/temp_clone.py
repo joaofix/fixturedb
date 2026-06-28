@@ -6,6 +6,28 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+import re
+
+
+CREDENTIAL_PROMPT_PATTERNS = [
+    re.compile(r"Username.*:", re.IGNORECASE),
+    re.compile(r"Password.*:", re.IGNORECASE),
+    re.compile(r"Personal access token.*:", re.IGNORECASE),
+    re.compile(r"repository.*not found", re.IGNORECASE),
+    re.compile(r"does not exist", re.IGNORECASE),
+    re.compile(r"remote: Repository not found", re.IGNORECASE),
+    re.compile(r"fatal: could not read Username", re.IGNORECASE),
+    re.compile(r"Authentication failed", re.IGNORECASE),
+    re.compile(r"PERMISSION_DENIED", re.IGNORECASE),
+]
+
+
+def _output_requests_credentials(stderr: str) -> bool:
+    """Check if stderr output indicates a credential prompt or private repo error."""
+    for pattern in CREDENTIAL_PROMPT_PATTERNS:
+        if pattern.search(stderr):
+            return True
+    return False
 
 
 def clone_to_tempdir(
@@ -33,8 +55,9 @@ def clone_to_tempdir(
         )
         if result.returncode == 0:
             return repo_path, temp_root
+        if _output_requests_credentials(result.stderr):
+            return None, None
     except KeyboardInterrupt:
-        # Propagate user interrupt so callers can shutdown cleanly
         raise
     except Exception:
         pass

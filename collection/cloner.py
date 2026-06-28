@@ -26,6 +26,7 @@ from .config import (
     GITHUB_TOKEN,
 )
 from .db import db_session, get_repos_by_status, set_repo_status
+from .temp_clone import _output_requests_credentials
 
 from collection.logging_utils import get_logger
 
@@ -93,7 +94,13 @@ def clone_repo(
             )
             shutil.rmtree(target_dir, ignore_errors=True)
 
-    if not _is_accessible_remote(clone_url):
+    accessible, requires_creds = _is_accessible_remote(clone_url)
+    if requires_creds:
+        logger.info(
+            f"[clone] Skip {full_name}: repository requires credentials (private or removed)"
+        )
+        return repo_id, "skipped", None, "requires_credentials"
+    if not accessible:
         logger.debug(
             f"[clone] Skip {full_name}: remote not accessible or repo does not exist"
         )
@@ -119,6 +126,10 @@ def clone_repo(
             text=True,
             timeout=300,
         )
+        if _output_requests_credentials(result.stderr):
+            shutil.rmtree(target_dir, ignore_errors=True)
+            logger.info(f"[clone] Skip {full_name}: repository requires credentials")
+            return repo_id, "skipped", None, "requires_credentials"
         if result.returncode != 0:
             message = result.stderr.strip()[:300]
             logger.warning(f"[clone] Failed {full_name}: {message}")
@@ -169,8 +180,13 @@ def _get_head_sha(repo_dir: Path) -> str:
     return result.stdout.strip()
 
 
-def _is_accessible_remote(clone_url: str) -> bool:
-    """Fast check: is the remote repository accessible?"""
+def _is_accessible_remote(clone_url: str) -> tuple[bool, bool]:
+    """Fast check: is the remote repository accessible?
+
+    Returns (accessible, is_credential_required):
+    - accessible: True if remote is reachable
+    - is_credential_required: True if repo asks for credentials (private or removed)
+    """
     try:
         result = subprocess.run(
             ["git", "ls-remote", "--heads", clone_url],
@@ -178,9 +194,13 @@ def _is_accessible_remote(clone_url: str) -> bool:
             text=True,
             timeout=15,
         )
-        return result.returncode == 0
+        if result.returncode == 0:
+            return True, False
+        if _output_requests_credentials(result.stderr):
+            return False, True
+        return False, False
     except Exception:
-        return False
+        return False, False
 
 
 def _has_sufficient_test_files(full_name: str, language: str) -> bool:
