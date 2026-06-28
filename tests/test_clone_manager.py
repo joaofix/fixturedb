@@ -6,6 +6,26 @@ import pytest
 
 
 from collection import clone_manager as cm
+from collection.temp_clone import _output_requests_credentials
+
+
+def test_output_requests_credentials():
+    """Test that credential prompt patterns are correctly detected."""
+    assert _output_requests_credentials("Username for 'https://github.com':") == True
+    assert _output_requests_credentials("Password for 'https://github.com':") == True
+    assert _output_requests_credentials("Personal access token for 'https://github.com':") == True
+    assert _output_requests_credentials("repository not found") == True
+    assert _output_requests_credentials("Repository not found") == True
+    assert _output_requests_credentials("Remote: Repository not found") == True
+    assert _output_requests_credentials("fatal: could not read Username") == True
+    assert _output_requests_credentials("Authentication failed for 'https://github.com':") == True
+    assert _output_requests_credentials("PERMISSION_DENIED") == True
+    assert _output_requests_credentials("does not exist") == True
+
+    assert _output_requests_credentials("fatal: unable to access 'https://github.com': The requested URL returned error: 404") == False
+    assert _output_requests_credentials("fatal: not a git repository") == False
+    assert _output_requests_credentials("") == False
+    assert _output_requests_credentials("Successfully cloned repository") == False
 
 
 def test_clone_with_function_success(tmp_path):
