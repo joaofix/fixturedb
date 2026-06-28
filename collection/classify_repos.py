@@ -23,8 +23,9 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Protocol
 
+import requests
 from openai import OpenAI
 from tqdm import tqdm
 
@@ -33,6 +34,8 @@ from .config import (
     CLASSIFY_OUTPUT_DIR,
     CLASSIFY_WORKERS,
     GITHUB_TOKEN,
+    OLLAMA_BASE_URL,
+    OLLAMA_MODEL,
     OPENROUTER_BASE_URL,
     OPENROUTER_KEY,
     OPENROUTER_MODEL,
@@ -129,8 +132,26 @@ VALID_CONFIDENCES = frozenset({"high", "medium", "low"})
 # ---------------------------------------------------------------------------
 
 
-class RepoClassifier:
-    """Classify repositories via OpenRouter LLM (GPT-4o-mini)."""
+# ---------------------------------------------------------------------------
+# LLM Provider interface
+# ---------------------------------------------------------------------------
+
+
+class LLMProvider(Protocol):
+    """Protocol for LLM backends (OpenRouter, Ollama, etc.)."""
+
+    def classify(self, repo: dict, readme_excerpt: Optional[str] = None) -> dict:
+        """Classify a single repository. Returns {domain, confidence, reasoning}."""
+        ...
+
+
+# ---------------------------------------------------------------------------
+# OpenRouter provider
+# ---------------------------------------------------------------------------
+
+
+class OpenRouterProvider:
+    """Classify via OpenRouter API (GPT-4o-mini)."""
 
     def __init__(self) -> None:
         if not OPENROUTER_KEY:
@@ -145,28 +166,8 @@ class RepoClassifier:
     def classify(
         self, repo: dict, readme_excerpt: Optional[str] = None
     ) -> dict:
-        """Classify a single repository.
-
-        Returns:
-            dict with keys: domain, confidence, reasoning
-        """
+        prompt = _build_user_prompt(repo, readme_excerpt)
         name = repo.get("name", "")
-        description = (repo.get("description") or "").strip()
-        language = (
-            repo.get("mainLanguage") or repo.get("language") or ""
-        ).strip()
-        topics = (repo.get("topics") or "").strip()
-        labels = (repo.get("labels") or "").strip()
-        readme = (readme_excerpt or "N/A").strip()
-
-        user_prompt = USER_PROMPT_TEMPLATE.format(
-            name=name,
-            description=description or "N/A",
-            language=language or "N/A",
-            topics=topics or "N/A",
-            labels=labels or "N/A",
-            readme=readme,
-        )
 
         for attempt in range(3):
             try:
@@ -174,61 +175,146 @@ class RepoClassifier:
                     model=OPENROUTER_MODEL,
                     messages=[
                         {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": user_prompt},
+                        {"role": "user", "content": prompt},
                     ],
                     temperature=0.0,
                     max_tokens=100,
                 )
                 raw = response.choices[0].message.content.strip()
-                return self._parse_response(raw)
+                return _parse_response(raw)
             except Exception as exc:
                 if attempt < 2:
                     time.sleep(2**attempt)
                 else:
-                    logger.warning("LLM failed for %s: %s", name, exc)
-                    return {
-                        "domain": "other",
-                        "confidence": "low",
-                        "reasoning": f"LLM error: {str(exc)[:80]}",
-                    }
+                    logger.warning("OpenRouter failed for %s: %s", name, exc)
+                    return _fallback_response(f"LLM error: {str(exc)[:80]}")
 
-        # Unreachable, but keeps type checkers happy
-        return {"domain": "other", "confidence": "low", "reasoning": "Unexpected"}
+        return _fallback_response("Unexpected")
 
-    @staticmethod
-    def _parse_response(raw: str) -> dict:
-        """Parse LLM JSON response with fallback for malformed output."""
-        try:
-            # Strip markdown code fences if present
-            cleaned = raw.strip()
-            if cleaned.startswith("```"):
-                cleaned = cleaned.split("```")[1]
-                if cleaned.startswith("json"):
-                    cleaned = cleaned[4:]
-                cleaned = cleaned.strip()
 
-            result = json.loads(cleaned)
-            domain = str(result.get("domain", "other")).lower().strip()
-            confidence = str(result.get("confidence", "low")).lower().strip()
-            reasoning = str(result.get("reasoning", "")).strip()
+# ---------------------------------------------------------------------------
+# Ollama provider
+# ---------------------------------------------------------------------------
 
-            if domain not in VALID_DOMAINS:
-                domain = "other"
-            if confidence not in VALID_CONFIDENCES:
-                confidence = "low"
 
-            return {
-                "domain": domain,
-                "confidence": confidence,
-                "reasoning": reasoning[:200],
-            }
-        except (json.JSONDecodeError, KeyError, ValueError) as exc:
-            logger.debug("Failed to parse LLM response: %s", raw[:100])
-            return {
-                "domain": "other",
-                "confidence": "low",
-                "reasoning": f"Parse error: {str(exc)[:80]}",
-            }
+class OllamaProvider:
+    """Classify via local Ollama instance (e.g. qwen3:14b)."""
+
+    def __init__(self) -> None:
+        self._base_url = OLLAMA_BASE_URL
+        self._model = OLLAMA_MODEL
+
+    def classify(
+        self, repo: dict, readme_excerpt: Optional[str] = None
+    ) -> dict:
+        prompt = _build_user_prompt(repo, readme_excerpt)
+        full_prompt = SYSTEM_PROMPT + "\n\n" + prompt
+        name = repo.get("name", "")
+
+        payload = {
+            "model": self._model,
+            "prompt": full_prompt,
+            "stream": False,
+            "options": {"think": False},
+        }
+
+        for attempt in range(3):
+            try:
+                resp = requests.post(
+                    f"{self._base_url}/api/generate",
+                    json=payload,
+                    timeout=30,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                raw = data.get("response", "").strip()
+                return _parse_response(raw)
+            except Exception as exc:
+                if attempt < 2:
+                    time.sleep(2**attempt)
+                else:
+                    logger.warning("Ollama failed for %s: %s", name, exc)
+                    return _fallback_response(f"LLM error: {str(exc)[:80]}")
+
+        return _fallback_response("Unexpected")
+
+
+# ---------------------------------------------------------------------------
+# RepoClassifier (facade)
+# ---------------------------------------------------------------------------
+
+
+class RepoClassifier:
+    """Classify repositories using the configured LLM provider."""
+
+    def __init__(self, provider: LLMProvider) -> None:
+        self._provider = provider
+
+    def classify(
+        self, repo: dict, readme_excerpt: Optional[str] = None
+    ) -> dict:
+        return self._provider.classify(repo, readme_excerpt)
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+def _build_user_prompt(repo: dict, readme_excerpt: Optional[str] = None) -> str:
+    """Build the user prompt string from repo metadata."""
+    name = repo.get("name", "")
+    description = (repo.get("description") or "").strip()
+    language = (
+        repo.get("mainLanguage") or repo.get("language") or ""
+    ).strip()
+    topics = (repo.get("topics") or "").strip()
+    labels = (repo.get("labels") or "").strip()
+    readme = (readme_excerpt or "N/A").strip()
+
+    return USER_PROMPT_TEMPLATE.format(
+        name=name,
+        description=description or "N/A",
+        language=language or "N/A",
+        topics=topics or "N/A",
+        labels=labels or "N/A",
+        readme=readme,
+    )
+
+
+def _parse_response(raw: str) -> dict:
+    """Parse LLM JSON response with fallback for malformed output."""
+    try:
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("```")[1]
+            if cleaned.startswith("json"):
+                cleaned = cleaned[4:]
+            cleaned = cleaned.strip()
+
+        result = json.loads(cleaned)
+        domain = str(result.get("domain", "other")).lower().strip()
+        confidence = str(result.get("confidence", "low")).lower().strip()
+        reasoning = str(result.get("reasoning", "")).strip()
+
+        if domain not in VALID_DOMAINS:
+            domain = "other"
+        if confidence not in VALID_CONFIDENCES:
+            confidence = "low"
+
+        return {
+            "domain": domain,
+            "confidence": confidence,
+            "reasoning": reasoning[:200],
+        }
+    except (json.JSONDecodeError, KeyError, ValueError) as exc:
+        logger.debug("Failed to parse LLM response: %s", raw[:100])
+        return _fallback_response(f"Parse error: {str(exc)[:80]}")
+
+
+def _fallback_response(reason: str) -> dict:
+    """Return a safe fallback classification."""
+    return {"domain": "other", "confidence": "low", "reasoning": reason}
 
 
 # ---------------------------------------------------------------------------
@@ -472,6 +558,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Process only N repos (for testing)",
     )
     parser.add_argument(
+        "--provider",
+        choices=["openrouter", "ollama"],
+        default="openrouter",
+        help="LLM provider (default: openrouter)",
+    )
+    parser.add_argument(
         "--toy",
         action="store_true",
         help="Sample 10 random repos per language (40 total) for a quick end-to-end test",
@@ -490,7 +582,11 @@ def main(argv: list[str] | None = None) -> int:
     configure_logging()
     logger.info("=" * 60)
     logger.info("Repository Domain Classifier")
-    logger.info("Model: %s", OPENROUTER_MODEL)
+    logger.info("Provider: %s", args.provider)
+    if args.provider == "openrouter":
+        logger.info("Model: %s", OPENROUTER_MODEL)
+    else:
+        logger.info("Model: %s @ %s", OLLAMA_MODEL, OLLAMA_BASE_URL)
     logger.info("Workers: %d", args.workers)
     logger.info("README fetching: %s", "OFF" if args.skip_readme else "ON")
     logger.info("=" * 60)
@@ -543,7 +639,11 @@ def main(argv: list[str] | None = None) -> int:
     # ------------------------------------------------------------------
     # Classify — one language at a time (checkpoint per language)
     # ------------------------------------------------------------------
-    classifier = RepoClassifier()
+    if args.provider == "ollama":
+        provider = OllamaProvider()
+    else:
+        provider = OpenRouterProvider()
+    classifier = RepoClassifier(provider)
     rate_limiter = None if args.skip_readme else GitHubRateLimiter()
     enricher = None if args.skip_readme else READMEEnricher(rate_limiter=rate_limiter)
 
