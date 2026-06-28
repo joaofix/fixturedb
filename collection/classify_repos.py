@@ -223,7 +223,7 @@ class OllamaProvider:
                 resp = requests.post(
                     f"{self._base_url}/api/generate",
                     json=payload,
-                    timeout=30,
+                    timeout=120,
                 )
                 resp.raise_for_status()
                 data = resp.json()
