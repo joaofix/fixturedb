@@ -647,7 +647,7 @@ def main(argv: list[str] | None = None) -> int:
         return int(paired_main(paired_args) or 0)
 
     if args.command == "full":
-        return cmd_full(args)
+        return cmd_human_fixtures(args)
 
     if args.command == "human-fixtures":
         return cmd_human(args)
