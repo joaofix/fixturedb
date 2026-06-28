@@ -1,0 +1,11 @@
+name,mainLanguage,domain,confidence,reasoning
+katanaml/sparrow,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+kamalgill/flask-appengine-template,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+pymanopt/pymanopt,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+seed-labs/seed-labs,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+freemocap/freemocap,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+awslabs/automated-security-helper,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+veusz/veusz,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+autoviml/featurewiz,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+evalplus/evalplus,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
+jxmorris12/vec2text,Python,other,low,"LLM error: HTTPConnectionPool(host='localhost', port=11434): Read timed out. (read timeout="
