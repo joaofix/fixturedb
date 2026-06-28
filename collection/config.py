@@ -71,6 +71,10 @@ OPENROUTER_KEY = os.getenv("OPENROUTER_KEY", "")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 OPENROUTER_MODEL = "openai/gpt-4o-mini"
 
+# Ollama (local, university server)
+OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_MODEL = "qwen3:14b"
+
 # Max concurrent LLM API calls (OpenRouter free-tier allows moderate parallelism)
 # GitHub API calls are rate-limited separately via a token-bucket in classify_repos.py
 # (4,500 req/hr target, staying under the 5,000/hr authenticated limit).
