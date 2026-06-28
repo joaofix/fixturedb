@@ -589,6 +589,12 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("Model: %s @ %s", OLLAMA_MODEL, OLLAMA_BASE_URL)
     logger.info("Workers: %d", args.workers)
     logger.info("README fetching: %s", "OFF" if args.skip_readme else "ON")
+
+    # Ollama on local hardware — cap concurrency to avoid overwhelming the server
+    if args.provider == "ollama" and args.workers > 4:
+        logger.info("Ollama: capping workers at 4 (was %d)", args.workers)
+        args.workers = 4
+
     logger.info("=" * 60)
 
     # ------------------------------------------------------------------
