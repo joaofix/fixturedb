@@ -62,6 +62,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Sample 10 random repos per language (40 total) for a quick end-to-end test",
     )
     classify_parser.add_argument(
+        "--provider",
+        choices=["openrouter", "ollama"],
+        default="openrouter",
+        help="LLM provider (default: openrouter)",
+    )
+    classify_parser.add_argument(
         "--seed",
         type=int,
         default=42,
@@ -89,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
         if getattr(args, "language", None):
             classify_args.extend(["--language", args.language])
         classify_args.extend(["--workers", str(args.workers)])
+        classify_args.extend(["--provider", str(args.provider)])
         if getattr(args, "skip_readme", False):
             classify_args.append("--skip-readme")
         if getattr(args, "sample", 0):

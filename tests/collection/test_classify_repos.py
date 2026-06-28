@@ -15,9 +15,12 @@ from collection.classify_repos import (
     VALID_DOMAINS,
     VALID_CONFIDENCES,
     GitHubRateLimiter,
+    OllamaProvider,
+    OpenRouterProvider,
     READMEEnricher,
     RepoClassifier,
     _classify_one,
+    _parse_response,
     _parse_topics,
     load_completed_repos,
     load_repos_from_raw,
@@ -60,7 +63,7 @@ class TestParseTopics:
 
 class TestParseResponse:
     def test_valid_json(self):
-        result = RepoClassifier._parse_response(
+        result = _parse_response(
             '{"domain": "web", "confidence": "high", "reasoning": "It is a web framework"}'
         )
         assert result == {
@@ -70,45 +73,45 @@ class TestParseResponse:
         }
 
     def test_markdown_fenced_json(self):
-        result = RepoClassifier._parse_response(
+        result = _parse_response(
             '```json\n{"domain": "library", "confidence": "medium", "reasoning": "Utility lib"}\n```'
         )
         assert result["domain"] == "library"
         assert result["confidence"] == "medium"
 
     def test_markdown_fenced_no_lang(self):
-        result = RepoClassifier._parse_response(
+        result = _parse_response(
             '```\n{"domain": "data", "confidence": "high", "reasoning": "ML framework"}\n```'
         )
         assert result["domain"] == "data"
 
     def test_invalid_json_fallback(self):
-        result = RepoClassifier._parse_response("not json at all")
+        result = _parse_response("not json at all")
         assert result["domain"] == "other"
         assert result["confidence"] == "low"
         assert "Parse error" in result["reasoning"]
 
     def test_invalid_domain_fallback(self):
-        result = RepoClassifier._parse_response(
+        result = _parse_response(
             '{"domain": "invalid_domain", "confidence": "high", "reasoning": "test"}'
         )
         assert result["domain"] == "other"
 
     def test_invalid_confidence_fallback(self):
-        result = RepoClassifier._parse_response(
+        result = _parse_response(
             '{"domain": "web", "confidence": "very_high", "reasoning": "test"}'
         )
         assert result["confidence"] == "low"
 
     def test_missing_keys_default(self):
-        result = RepoClassifier._parse_response("{}")
+        result = _parse_response("{}")
         assert result["domain"] == "other"
         assert result["confidence"] == "low"
         assert result["reasoning"] == ""
 
     def test_reasoning_truncated(self):
         long_reasoning = "x" * 300
-        result = RepoClassifier._parse_response(
+        result = _parse_response(
             json.dumps(
                 {
                     "domain": "cli",
@@ -144,7 +147,8 @@ class TestClassify:
 
     @pytest.fixture
     def classifier(self, mock_openai_client):
-        return RepoClassifier()
+        provider = OpenRouterProvider()
+        return RepoClassifier(provider)
 
     def _mock_response(self, mock_client, content: str):
         mock_choice = MagicMock()
@@ -228,7 +232,7 @@ class TestClassify:
             "collection.classify_repos.OPENROUTER_KEY", ""
         )
         with pytest.raises(RuntimeError, match="OPENROUTER_KEY"):
-            RepoClassifier()
+            OpenRouterProvider()
 
 
 # ---------------------------------------------------------------------------
@@ -755,7 +759,8 @@ class TestClassifyOne:
         )
 
     def test_without_enricher(self):
-        classifier = RepoClassifier()
+        provider = OpenRouterProvider()
+        classifier = RepoClassifier(provider)
         classifier.classify = MagicMock(
             return_value={
                 "domain": "cli",
@@ -774,7 +779,8 @@ class TestClassifyOne:
         classifier.classify.assert_called_once()
 
     def test_with_enricher(self):
-        classifier = RepoClassifier()
+        provider = OpenRouterProvider()
+        classifier = RepoClassifier(provider)
         classifier.classify = MagicMock(
             return_value={
                 "domain": "data",
