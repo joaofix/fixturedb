@@ -64,6 +64,24 @@ for _d in (CLONES_DIR, DATA_DIR, LOGS_DIR):
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # set in .env
 
 # ---------------------------------------------------------------------------
+# OpenRouter / LLM classification
+# ---------------------------------------------------------------------------
+
+OPENROUTER_KEY = os.getenv("OPENROUTER_KEY", "")
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+OPENROUTER_MODEL = "openai/gpt-4o-mini"
+
+# Max concurrent LLM API calls (OpenRouter free-tier allows moderate parallelism)
+# GitHub API calls are rate-limited separately via a token-bucket in classify_repos.py
+# (4,500 req/hr target, staying under the 5,000/hr authenticated limit).
+# With the rate limiter, workers > GitHub req/s just queue up safely.
+CLASSIFY_WORKERS = 10
+
+# Input / output directories for repository domain classification
+CLASSIFY_INPUT_DIR = ROOT_DIR / "github-search-raw"
+CLASSIFY_OUTPUT_DIR = ROOT_DIR / "github-search-labeled"
+
+# ---------------------------------------------------------------------------
 # File size and type filters
 # ---------------------------------------------------------------------------
 
