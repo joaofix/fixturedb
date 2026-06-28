@@ -37,6 +37,7 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.clone_manager import temp_clone_commit_history
+from collection.temp_clone import _output_requests_credentials
 from collection.utils import _date_only
 
 from collection.logging_utils import get_logger
@@ -166,7 +167,8 @@ def _repo_local_path(clones_dir: Path, repo_name: str) -> Path:
     return underscore
 
 
-def _run_git(repo_path: Path, args: list[str], timeout: int = 60) -> bool:
+def _run_git(repo_path: Path, args: list[str], timeout: int = 60) -> tuple[bool, bool]:
+    """Run a git command and return (success, credential_required)."""
     try:
         result = subprocess.run(
             ["git", *args],
@@ -175,35 +177,45 @@ def _run_git(repo_path: Path, args: list[str], timeout: int = 60) -> bool:
             text=True,
             timeout=timeout,
         )
-        return result.returncode == 0
+        if _output_requests_credentials(result.stderr) or _output_requests_credentials(result.stdout):
+            return False, True
+        return result.returncode == 0, False
     except Exception:
-        return False
+        return False, False
 
 
 def _has_commit(repo_path: Path, commit_sha: str) -> bool:
-    return _run_git(
+    success, _ = _run_git(
         repo_path, ["cat-file", "-e", f"{commit_sha}^{{commit}}"], timeout=20
     )
+    return success
 
 
-def _fetch_commit(repo_path: Path, commit_sha: str, timeout: int = 120) -> bool:
-    return _run_git(
+def _fetch_commit(repo_path: Path, commit_sha: str, timeout: int = 120) -> tuple[bool, bool]:
+    """Fetch a commit and return (success, credential_required)."""
+    success, requires_creds = _run_git(
         repo_path,
         ["fetch", "--depth=1", "--filter=blob:none", "origin", commit_sha],
         timeout=timeout,
     )
+    return success, requires_creds
 
 
 def _ensure_commits_present(
     repo_path: Path, clone_url: str, commit_shas: list[str]
 ) -> bool:
-    """Ensure each target commit exists locally, fetching by SHA only when missing."""
+    """Ensure each target commit exists locally, fetching by SHA only when missing.
+
+    Returns True if all commits are present, False otherwise.
+    Raises RuntimeError if credentials are required (skip the repo entirely).
+    """
     if not (repo_path / ".git").exists():
         return False
 
-    # Add origin if the local repo has no remote set.
-    if not _run_git(repo_path, ["remote", "get-url", "origin"], timeout=20):
-        _run_git(repo_path, ["remote", "add", "origin", clone_url], timeout=20)
+    if not _run_git(repo_path, ["remote", "get-url", "origin"], timeout=20)[0]:
+        success, creds = _run_git(repo_path, ["remote", "add", "origin", clone_url], timeout=20)
+        if creds:
+            raise RuntimeError(f"Repository {clone_url} requires credentials")
 
     all_present = True
     fetched = 0
@@ -212,7 +224,10 @@ def _ensure_commits_present(
         if _has_commit(repo_path, sha):
             already_present += 1
             continue
-        if not _fetch_commit(repo_path, sha):
+        fetched_result, creds = _fetch_commit(repo_path, sha)
+        if creds:
+            raise RuntimeError(f"Repository {clone_url} requires credentials for fetch")
+        if not fetched_result:
             all_present = False
         else:
             fetched += 1
@@ -231,22 +246,35 @@ def _ensure_commits_present(
 def _create_commit_targeted_temp_repo(
     repo_name: str, clone_url: str, commit_shas: list[str]
 ) -> tuple[Path | None, Path | None]:
-    """Create a temporary repo and fetch only requested commit SHAs."""
+    """Create a temporary repo and fetch only requested commit SHAs.
+
+    Returns (None, None) if credentials are required.
+    """
     owner, name = repo_name.split("/", 1)
     temp_root = Path(tempfile.mkdtemp(prefix="agent-fixtures-"))
     repo_path = temp_root / f"{owner}__{name}"
 
     try:
         repo_path.mkdir(parents=True, exist_ok=True)
-        if not _run_git(repo_path, ["init", "-q"], timeout=20):
+        if not _run_git(repo_path, ["init", "-q"], timeout=20)[0]:
             raise RuntimeError("git init failed")
-        if not _run_git(repo_path, ["remote", "add", "origin", clone_url], timeout=20):
+        success, creds = _run_git(repo_path, ["remote", "add", "origin", clone_url], timeout=20)
+        if creds:
+            logger.warning(f"Skipping {repo_name}: remote requires credentials")
+            shutil.rmtree(temp_root, ignore_errors=True)
+            return None, None
+        if not success:
             raise RuntimeError("git remote add failed")
 
         fetched_any = False
         fetched_count = 0
         for sha in commit_shas:
-            if _fetch_commit(repo_path, sha, timeout=180):
+            fetched_result, creds = _fetch_commit(repo_path, sha, timeout=180)
+            if creds:
+                logger.warning(f"Skipping {repo_name}: fetch requires credentials")
+                shutil.rmtree(temp_root, ignore_errors=True)
+                return None, None
+            if fetched_result:
                 fetched_any = True
                 fetched_count += 1
 
@@ -403,17 +431,25 @@ def _process_single_repo(
         logger.info(
             "Repo %s: using existing local clone at %s", repo_name, local_repo_path
         )
-        _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+        try:
+            _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+        except RuntimeError as e:
+            return {
+                "repo_name": repo_name,
+                "strategy": selected_strategy,
+                "rows": [],
+                "skipped": True,
+                "local_clone_reuse": used_local_clone,
+                "skip_reason": "requires_credentials",
+            }
     else:
         if selected_strategy == "sha":
-            # Fast path: fetch only requested SHAs into a temp repo.
             local_repo_path, temp_root = _create_commit_targeted_temp_repo(
                 repo_name,
                 clone_url,
                 commit_shas,
             )
 
-            # Fallback: broader temporary clone if SHA-targeted fetch failed.
             if local_repo_path is None or temp_root is None:
                 logger.info(
                     "Repo %s: SHA strategy failed, falling back to clone strategy",
@@ -431,10 +467,57 @@ def _process_single_repo(
                             "rows": [],
                             "skipped": True,
                             "local_clone_reuse": used_local_clone,
+                            "skip_reason": "clone_failed",
                         }
-                    _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+                    try:
+                        _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+                    except RuntimeError:
+                        return {
+                            "repo_name": repo_name,
+                            "strategy": selected_strategy,
+                            "rows": [],
+                            "skipped": True,
+                            "local_clone_reuse": used_local_clone,
+                            "skip_reason": "requires_credentials",
+                        }
+                    extractor = AgentFixtureExtractor(
+                        clones_dir=local_repo_path.parent, start_date=since
+                    )
+                    repo_rows = _extract_rows_for_repo(
+                        repo_info=repo_info,
+                        extractor=extractor,
+                        include_partial=include_partial,
+                    )
+                    logger.info(
+                        "%s -> %d extracted fixture rows", repo_name, len(repo_rows)
+                    )
+                    return {
+                        "repo_name": repo_name,
+                        "strategy": selected_strategy,
+                        "rows": repo_rows,
+                        "skipped": False,
+                        "local_clone_reuse": used_local_clone,
+                    }
+            else:
+                extractor = AgentFixtureExtractor(
+                    clones_dir=repo_info.get("clones_dir", clones_dir), start_date=since
+                )
+                repo_rows = _extract_rows_for_repo(
+                    repo_info=repo_info,
+                    extractor=extractor,
+                    include_partial=include_partial,
+                )
+                logger.info(
+                    "%s -> %d extracted fixture rows", repo_name, len(repo_rows)
+                )
+                return {
+                    "repo_name": repo_name,
+                    "strategy": selected_strategy,
+                    "rows": repo_rows,
+                    "skipped": False,
+                    "local_clone_reuse": used_local_clone,
+                }
         else:
-            # Clone strategy: one broader clone for this repo and reuse locally for all target commits.
             clone_args = ["--filter=blob:limit=10m", "--no-tags"]
             with temp_clone_commit_history(
                 clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300
@@ -447,8 +530,19 @@ def _process_single_repo(
                         "rows": [],
                         "skipped": True,
                         "local_clone_reuse": used_local_clone,
+                        "skip_reason": "clone_failed",
                     }
-                _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+                try:
+                    _ensure_commits_present(local_repo_path, clone_url, commit_shas)
+                except RuntimeError:
+                    return {
+                        "repo_name": repo_name,
+                        "strategy": selected_strategy,
+                        "rows": [],
+                        "skipped": True,
+                        "local_clone_reuse": used_local_clone,
+                        "skip_reason": "requires_credentials",
+                    }
 
                 extractor = AgentFixtureExtractor(
                     clones_dir=local_repo_path.parent, start_date=since
