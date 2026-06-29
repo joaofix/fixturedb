@@ -91,8 +91,14 @@ def main():
         )
         return 0
 
-    # Verify source database exists
-    if not source_db.exists():
+    # Check if this is a Dataset C run (uses CSV, not corpus.db)
+    dataset_c_dir = project_root / "fixtures-from-agents"
+    per_lang_csv = dataset_c_dir / f"dataset_c_{args.language}.csv" if args.language else None
+    combined_csv = dataset_c_dir / "dataset_c_sample.csv"
+    is_dataset_c = (per_lang_csv and per_lang_csv.exists()) or combined_csv.exists()
+
+    # Verify source database exists (not needed for Dataset C)
+    if not is_dataset_c and not source_db.exists():
         logger.error(f"Source database not found: {source_db}")
         logger.error("Please run corpus collection or ensure corpus.db exists")
         return 1
@@ -108,16 +114,10 @@ def main():
     try:
         logger.info("Starting human fixture collection...")
 
-        # Dataset C: per-language checkpoint via dataset_c_{lang}.csv or combined file
-        dataset_c_dir = project_root / "fixtures-from-agents"
-        per_lang_csv = dataset_c_dir / f"dataset_c_{args.language}.csv" if args.language else None
-        combined_csv = dataset_c_dir / "dataset_c_sample.csv"
-
-        csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
-
-        if csv_path.exists():
+        if is_dataset_c:
             from .human_corpus import load_dataset_c_repos
 
+            csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
             repos = load_dataset_c_repos(csv_path)
             logger.info(
                 "Dataset C mode: loaded %d repos from %s",
