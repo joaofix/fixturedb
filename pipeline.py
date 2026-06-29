@@ -212,6 +212,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Parallel workers for human collection (default: configured EXTRACT_WORKERS)",
     )
+    human_parser.add_argument(
+        "--dataset-c-csv",
+        type=Path,
+        default=None,
+        help="Path to dataset_c_sample.csv for Dataset C proportional pre-2021 sampling",
+    )
 
     # Agent corpus collection (between-group design)
     agent_parser = sub.add_parser(
@@ -368,7 +374,22 @@ def cmd_human_fixtures(args) -> int:
             human_kwargs["test_commits_csv"] = getattr(args, "test_commits_csv")
         collector = HumanCorpusCollector(**human_kwargs)
         mode = getattr(args, "mode", "within")
-        if mode == "within":
+
+        # Dataset C: use proportional pre-2021 sample
+        if getattr(args, "dataset_c_csv", None):
+            from collection.human_corpus import load_dataset_c_repos
+
+            repos = load_dataset_c_repos(args.dataset_c_csv)
+            logger.info(
+                "Dataset C mode: loaded %d repos from %s",
+                len(repos),
+                args.dataset_c_csv,
+            )
+            stats, db_path = collector.collect_inter_human(
+                agent_repos=repos,
+                workers=getattr(args, "workers", None),
+            )
+        elif mode == "within":
             stats, db_path = collector.run(
                 repos_per_language=args.repos_per_language,
                 language=args.language,
@@ -650,7 +671,7 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_human_fixtures(args)
 
     if args.command == "human-fixtures":
-        return cmd_human(args)
+        return cmd_human_fixtures(args)
 
     if args.command == "agent-fixtures":
         return cmd_agent(args)
