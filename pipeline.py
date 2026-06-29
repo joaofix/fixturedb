@@ -19,7 +19,6 @@ from collection.human_corpus import (
     select_human_corpus_repositories,
 )
 from collection.agent_corpus import AgentCorpusCollector
-from collection.between_group_comparison import BetweenGroupComparator
 from collection.repository_quality_control.agent_repository_counter import (
     run as run_agent_repo_qc,
 )
@@ -467,6 +466,8 @@ def cmd_full(args) -> int:
 
         # Stage 3: Between-group comparison
         print("\n=== Stage 3: Compare human vs agent corpora ===")
+        from collection.between_group_comparison import BetweenGroupComparator
+
         comparator = BetweenGroupComparator(db_path=output_db)
         comparison = comparator.run(
             human_stats=human_stats.to_dict(), agent_stats=agent_stats.to_dict()
@@ -546,6 +547,8 @@ def cmd_between_group_stats(args) -> int:
         if args.agent_stats and args.agent_stats.exists():
             with open(args.agent_stats) as f:
                 agent_stats = json.load(f)
+
+        from collection.between_group_comparison import BetweenGroupComparator
 
         comparator = BetweenGroupComparator(db_path=db_path)
         comparison = comparator.run(human_stats=human_stats, agent_stats=agent_stats)

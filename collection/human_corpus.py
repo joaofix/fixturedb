@@ -215,6 +215,8 @@ def _collect_inter_human_candidates(
                 logger.info("[Human Inter] clone failed for %s; skipping", repo_name)
                 continue
 
+            logger.info("[Human Inter] clone done for %s; scanning commits …", repo_name)
+
             human_commits = {}
             if candidate_map and repo_name in candidate_map:
                 for row in candidate_map[repo_name]:

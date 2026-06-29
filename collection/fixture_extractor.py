@@ -589,12 +589,29 @@ class Pre2021FixtureExtractor:
                             ).fetchone()
 
                         if source_row is None:
-                            raise RuntimeError(
-                                f"Repository metadata not found in source DB for {repo_name}"
+                            logger.debug(
+                                "Repository metadata not found in source DB for %s; "
+                                "using minimal repo metadata from fixtures",
+                                repo_name,
                             )
-
-                        repo_data = dict(source_row)
-                        repo_data["status"] = "analysed"
+                            repo_data = {
+                                "id": None,
+                                "github_id": None,
+                                "full_name": repo_name,
+                                "language": fixtures_list[0].get("language", "unknown") if fixtures_list else "unknown",
+                                "stars": 0,
+                                "forks": 0,
+                                "description": "",
+                                "topics": "[]",
+                                "created_at": "",
+                                "pushed_at": "",
+                                "clone_url": f"https://github.com/{repo_name}.git",
+                                "num_contributors": 0,
+                                "status": "analysed",
+                            }
+                        else:
+                            repo_data = dict(source_row)
+                            repo_data["status"] = "analysed"
                         repo_id, _ = upsert_repository(conn, repo_data)
 
                         files_by_path: Dict[str, List[Dict]] = {}
@@ -1029,12 +1046,29 @@ class AgentFixtureExtractor:
                             ).fetchone()
 
                         if source_row is None:
-                            raise RuntimeError(
-                                f"Repository metadata not found in source DB for {repo_name}"
+                            logger.debug(
+                                "Repository metadata not found in source DB for %s; "
+                                "using minimal repo metadata from fixtures",
+                                repo_name,
                             )
-
-                        repo_data = dict(source_row)
-                        repo_data["status"] = "analysed"
+                            repo_data = {
+                                "id": None,
+                                "github_id": None,
+                                "full_name": repo_name,
+                                "language": fixtures_list[0].get("language", "unknown") if fixtures_list else "unknown",
+                                "stars": 0,
+                                "forks": 0,
+                                "description": "",
+                                "topics": "[]",
+                                "created_at": "",
+                                "pushed_at": "",
+                                "clone_url": f"https://github.com/{repo_name}.git",
+                                "num_contributors": 0,
+                                "status": "analysed",
+                            }
+                        else:
+                            repo_data = dict(source_row)
+                            repo_data["status"] = "analysed"
 
                         repo_id, _ = upsert_repository(conn, repo_data)
 

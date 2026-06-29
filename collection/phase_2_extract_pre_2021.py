@@ -20,6 +20,8 @@ from .cli_utils import add_output_db_arg, add_repos_per_language_arg, add_repo_d
 from .human_corpus import HumanCorpusCollector
 from .resume_utils import database_has_rows
 
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
 
@@ -97,6 +99,10 @@ def main():
     combined_csv = dataset_c_dir / "dataset_c_sample.csv"
     is_dataset_c = (per_lang_csv and per_lang_csv.exists()) or combined_csv.exists()
 
+    if is_dataset_c:
+        csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
+        logger.info("Dataset C mode: %s", csv_path)
+
     # Verify source database exists (not needed for Dataset C)
     if not is_dataset_c and not source_db.exists():
         logger.error(f"Source database not found: {source_db}")
@@ -143,7 +149,8 @@ def main():
                 repo_qc_dir=repo_qc_dir,
             )
             stats, db_path = collector.run(
-                repos_per_language=args.repos_per_language, language=None
+                repos_per_language=args.repos_per_language,
+                language=args.language,
             )
 
         logger.info("")
