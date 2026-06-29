@@ -42,6 +42,15 @@ class DummyHumanCollector:
             repos_scanned=2, repos_passed_qc=1, fixtures_collected=3
         ), Path("/tmp/human.db")
 
+    def collect_inter_human(self, agent_repos=None, workers=None):
+        self.inter_human_args = {
+            "agent_repos": agent_repos,
+            "workers": workers,
+        }
+        return DummyStats(
+            repos_scanned=2, repos_passed_qc=1, fixtures_collected=3
+        ), Path("/tmp/human.db")
+
 
 def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     captured = {}
