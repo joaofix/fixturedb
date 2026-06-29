@@ -198,11 +198,10 @@ def _collect_inter_human_candidates(
         repo_path = clones_dir / repo_name.replace("/", "__")
 
         # Per-repo progress at info level (matches Dataset B verbosity)
-        if idx % 10 == 0 or idx == total_repos:
-            logger.info(
-                "[Human Inter] Processing repo %d/%d: %s",
-                idx, total_repos, repo_name,
-            )
+        logger.info(
+            "[Human Inter] Processing repo %d/%d: %s",
+            idx, total_repos, repo_name,
+        )
 
         if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
             shutil.rmtree(repo_path, ignore_errors=True)
