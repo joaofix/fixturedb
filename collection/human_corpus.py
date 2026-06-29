@@ -191,10 +191,18 @@ def _collect_inter_human_candidates(
 ) -> list[tuple[dict, dict]]:
     """Collect complete human fixture candidates from agent-enabled repositories."""
     candidates: list[tuple[dict, dict]] = []
+    total_repos = len(agent_repos)
 
-    for repo in agent_repos:
+    for idx, repo in enumerate(agent_repos, start=1):
         repo_name = repo["full_name"]
         repo_path = clones_dir / repo_name.replace("/", "__")
+
+        # Per-repo progress at info level (matches Dataset B verbosity)
+        if idx % 10 == 0 or idx == total_repos:
+            logger.info(
+                "[Human Inter] Processing repo %d/%d: %s",
+                idx, total_repos, repo_name,
+            )
 
         if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
             shutil.rmtree(repo_path, ignore_errors=True)
@@ -205,7 +213,7 @@ def _collect_inter_human_candidates(
             repo_path,
         ) as managed_repo_path:
             if managed_repo_path is None:
-                logger.debug("[Human Inter] clone failed for %s; skipping", repo_name)
+                logger.info("[Human Inter] clone failed for %s; skipping", repo_name)
                 continue
 
             human_commits = {}
@@ -243,7 +251,13 @@ def _collect_inter_human_candidates(
             )
             fixtures = [f for f in fixtures if f.get("is_complete_addition")]
             if not fixtures:
+                logger.debug("[Human Inter] no complete fixtures for %s", repo_name)
                 continue
+
+            logger.info(
+                "[Human Inter] %s: %d human test commits → %d complete fixtures",
+                repo_name, len(human_commits), len(fixtures),
+            )
 
             for fixture in fixtures:
                 fixture["repo_full_name"] = repo_name
@@ -1044,22 +1058,24 @@ class HumanCorpusCollector:
         )
         stats.fixtures_collected += int(inserted or 0)
 
+        # Per-language summary for Dataset C
+        lang_counts: dict[str, int] = defaultdict(int)
+        for fixture in selected:
+            lang = fixture.get("language", "unknown")
+            lang_counts[lang] += 1
+        logger.info(
+            "[Human Inter / Dataset C] Completed: %d fixtures across %d repos",
+            stats.fixtures_collected,
+            len(completed_repos),
+        )
+        for lang in sorted(lang_counts):
+            logger.info(
+                "  %s: %d fixtures", lang, lang_counts[lang]
+            )
+
         # Generate summary for the inter sample
         self._generate_summary(stats)
         return stats, self.output_db
-
-    def _generate_summary(self, stats: HumanCorpusStats) -> None:
-        """Generate and save human corpus summary."""
-        generate_corpus_summary(
-            stats=stats,
-            corpus_name="human",
-            output_db=self.output_db,
-            temporal_scope=f"since {AGENT_CORPUS_START_DATE}",
-            extra_metadata={
-                "dataset_temporal_window": AGENT_CORPUS_START_DATE,
-            },
-            output_dir=self.output_db.parent,
-        )
 
     def _build_inter_candidates(
         self, agent_repos: List[Dict[str, Any]], raw_commits_dir: Optional[Path]
@@ -1090,11 +1106,13 @@ class HumanCorpusCollector:
                     raw_commits_dir, cutoff_date=HUMAN_CORPUS_CUTOFF_DATE
                 )
                 logger.info(
-                    f"[Human Inter] Loaded pre-2021 candidate pool with {len(candidate_map)} repos from {raw_commits_dir}"
+                    "[Human Inter] Loaded pre-2021 candidate pool with %d repos from %s",
+                    len(candidate_map), raw_commits_dir,
                 )
             except Exception as e:
-                logger.debug(
-                    f"Failed to build candidate pool from {raw_commits_dir}: {e}"
+                logger.info(
+                    "[Human Inter] Failed to build candidate pool from %s: %s",
+                    raw_commits_dir, e,
                 )
 
         return _collect_inter_human_candidates(
