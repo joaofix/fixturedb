@@ -77,6 +77,34 @@ from .logging_utils import get_logger
 logger = get_logger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# Dataset C loader
+# ---------------------------------------------------------------------------
+
+
+def load_dataset_c_repos(csv_path: Path) -> list[dict]:
+    """Load repos from a Dataset C CSV file.
+
+    Works with both the combined ``dataset_c_sample.csv`` and per-language
+    ``dataset_c_{lang}.csv`` files. Returns a list of dicts with keys:
+    *full_name*, *language*, *clone_url*.
+    """
+    repos: list[dict] = []
+    with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            name = (row.get("repo_name") or "").strip()
+            if not name or "/" not in name:
+                continue
+            repos.append({
+                "full_name": name,
+                "language": (row.get("language") or "").strip().lower(),
+                "clone_url": (row.get("clone_url") or f"https://github.com/{name}.git").strip(),
+            })
+    logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)
+    return repos
+
+
 def _human_fixtures_root(override: Path | None = None) -> Path:
     if override is not None:
         return override

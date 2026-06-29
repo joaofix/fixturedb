@@ -56,6 +56,12 @@ def main():
         default=project_root / "clones",
         help="Directory with repository clones",
     )
+    parser.add_argument(
+        "--language",
+        choices=["python", "javascript", "java", "typescript"],
+        default=None,
+        help="Process a single language (uses dataset_c_{lang}.csv)",
+    )
     args = parser.parse_args()
 
     clones_dir = args.clones_dir
@@ -101,15 +107,44 @@ def main():
 
     try:
         logger.info("Starting human fixture collection...")
-        collector = HumanCorpusCollector(
-            corpus_db_path=source_db,
-            clones_dir=clones_dir,
-            output_db=output_db,
-            repo_qc_dir=repo_qc_dir,
-        )
-        stats, db_path = collector.run(
-            repos_per_language=args.repos_per_language, language=None
-        )
+
+        # Dataset C: per-language checkpoint via dataset_c_{lang}.csv or combined file
+        dataset_c_dir = project_root / "fixtures-from-agents"
+        per_lang_csv = dataset_c_dir / f"dataset_c_{args.language}.csv" if args.language else None
+        combined_csv = dataset_c_dir / "dataset_c_sample.csv"
+
+        csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
+
+        if csv_path.exists():
+            from .human_corpus import load_dataset_c_repos
+
+            repos = load_dataset_c_repos(csv_path)
+            logger.info(
+                "Dataset C mode: loaded %d repos from %s",
+                len(repos),
+                csv_path,
+            )
+
+            collector = HumanCorpusCollector(
+                corpus_db_path=source_db,
+                clones_dir=clones_dir,
+                output_db=output_db,
+                repo_qc_dir=repo_qc_dir,
+            )
+            stats, db_path = collector.collect_inter_human(
+                agent_repos=repos,
+                workers=getattr(args, "workers", None),
+            )
+        else:
+            collector = HumanCorpusCollector(
+                corpus_db_path=source_db,
+                clones_dir=clones_dir,
+                output_db=output_db,
+                repo_qc_dir=repo_qc_dir,
+            )
+            stats, db_path = collector.run(
+                repos_per_language=args.repos_per_language, language=None
+            )
 
         logger.info("")
         logger.info("=" * 70)
