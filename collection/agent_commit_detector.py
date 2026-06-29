@@ -40,6 +40,9 @@ from collection.logging_utils import get_logger
 logger = get_logger(__name__)
 
 
+_BOT = object()
+
+
 @dataclass
 class AgentCommitInfo:
     """Information about a single agent commit."""
@@ -191,6 +194,9 @@ class Tier1RepositoryScanner:
                     author_name, author_email, body
                 )
 
+                if agent_type is _BOT:
+                    continue
+
                 if agent_type:
                     commits.append(
                         AgentCommitInfo(
@@ -237,6 +243,9 @@ class Tier1RepositoryScanner:
                     author_name, author_email, body
                 )
 
+                if agent_type is _BOT:
+                    continue
+
                 test_files: list[str] = []
                 if detect_test_files and language:
                     test_files = _collect_test_files_from_pydriller(commit, language)
@@ -268,16 +277,12 @@ class Tier1RepositoryScanner:
         1. Author name/email for agent signatures
         2. Agent trailers (co-authored-by, assisted-by, generated-by) in commit body
 
-        Args:
-            author_name: Commit author name
-            author_email: Commit author email
-            body: Commit message body (for agent trailer parsing)
-
         Returns:
-            Agent type (claude/cursor/copilot/other) or None
+            Agent type (claude/cursor/copilot/other), None for human-authored,
+            or _BOT sentinel for bot-authored commits.
         """
         if "[bot]" in author_name.lower():
-            return None
+            return _BOT
 
         author_text = f"{author_name} {author_email}".lower()
         for agent_type, keywords in self.agent_signatures.items():

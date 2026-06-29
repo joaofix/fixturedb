@@ -7,6 +7,7 @@ from collection.agent_commit_detector import (
     _is_test_file_path,
     Tier1RepositoryScanner,
     AGENT_TRAILER_RE,
+    _BOT,
 )
 from collection.agent_detector import AgentCommitVerifier
 
@@ -73,21 +74,21 @@ def test_detect_agent_bot_authors_are_excluded():
         "copilot-swe-agent[bot]",
         "198982749+Copilot@users.noreply.github.com",
         ""
-    ) is None
+    ) is _BOT
 
     # anthropic-code-agent bot
     assert scanner._detect_agent_in_commit(
         "anthropic-code-agent[bot]",
         "242468646+Claude@users.noreply.github.com",
         ""
-    ) is None
+    ) is _BOT
 
     # github-actions bot
     assert scanner._detect_agent_in_commit(
         "github-actions[bot]",
         "github-actions[bot]@users.noreply.github.com",
         ""
-    ) is None
+    ) is _BOT
 
     # Regular author with bot-like email but no [bot] in name should still be checked
     agent = scanner._detect_agent_in_commit(
@@ -102,7 +103,7 @@ def test_detect_agent_bot_authors_are_excluded():
         "dependabot[bot]",
         "dependabot@users.noreply.github.com",
         ""
-    ) is None
+    ) is _BOT
 
     # But non-bot with copilot keyword should still match
     agent2 = scanner._detect_agent_in_commit(
@@ -185,6 +186,68 @@ def test_scan_repo_commit_roles_parses_multiline_git_log(tmp_path):
     assert commits[1].author_name == "Bob"
     assert commits[0].agent_type == "claude"
     assert commits[1].agent_type is None
+
+
+def test_scan_repo_commit_roles_excludes_bot_authors(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo), "config", "user.email",
+            "dependabot[bot]@users.noreply.github.com",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "dependabot[bot]"],
+        check=True,
+        capture_output=True,
+    )
+    (repo / "test_foo.py").write_text("def test_foo(): pass\n")
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "test_foo.py"], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "chore: update pytest"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        [
+            "git", "-C", str(repo), "config", "user.email",
+            "alice@example.com",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Alice"],
+        check=True,
+        capture_output=True,
+    )
+    (repo / "test_bar.py").write_text("def test_bar(): pass\n")
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "test_bar.py"], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "test: add test_bar"],
+        check=True,
+        capture_output=True,
+    )
+
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    commits = scanner.scan_repo_commit_roles(
+        repo, start_date="2020-01-01", language="python", detect_test_files=True
+    )
+
+    assert len(commits) == 1
+    assert commits[0].author_name == "Alice"
+    assert commits[0].commit_role == "human"
+    assert commits[0].is_test_commit is True
 
 
 def test_is_test_file_path_javascript():
