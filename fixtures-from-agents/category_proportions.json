@@ -1,0 +1,105 @@
+{
+  "global": {
+    "total_repos": 1169,
+    "domain_counts": {
+      "library": 321,
+      "data": 271,
+      "cli": 252,
+      "web": 186,
+      "infra": 112,
+      "other": 27
+    },
+    "proportions": {
+      "library": 0.2746,
+      "data": 0.2318,
+      "cli": 0.2156,
+      "web": 0.1591,
+      "infra": 0.0958,
+      "other": 0.0231
+    }
+  },
+  "per_language": {
+    "java": {
+      "total_repos": 80,
+      "classified": 80,
+      "unknown": 0,
+      "domain_counts": {
+        "library": 26,
+        "infra": 25,
+        "data": 19,
+        "web": 5,
+        "cli": 5
+      },
+      "proportions": {
+        "library": 0.325,
+        "infra": 0.3125,
+        "data": 0.2375,
+        "web": 0.0625,
+        "cli": 0.0625
+      }
+    },
+    "javascript": {
+      "total_repos": 73,
+      "classified": 73,
+      "unknown": 0,
+      "domain_counts": {
+        "cli": 22,
+        "library": 19,
+        "web": 14,
+        "infra": 9,
+        "data": 5,
+        "other": 4
+      },
+      "proportions": {
+        "cli": 0.3014,
+        "library": 0.2603,
+        "web": 0.1918,
+        "infra": 0.1233,
+        "data": 0.0685,
+        "other": 0.0548
+      }
+    },
+    "python": {
+      "total_repos": 433,
+      "classified": 433,
+      "unknown": 0,
+      "domain_counts": {
+        "data": 190,
+        "library": 104,
+        "cli": 69,
+        "infra": 46,
+        "web": 21,
+        "other": 3
+      },
+      "proportions": {
+        "data": 0.4388,
+        "library": 0.2402,
+        "cli": 0.1594,
+        "infra": 0.1062,
+        "web": 0.0485,
+        "other": 0.0069
+      }
+    },
+    "typescript": {
+      "total_repos": 583,
+      "classified": 583,
+      "unknown": 0,
+      "domain_counts": {
+        "library": 172,
+        "cli": 156,
+        "web": 146,
+        "data": 57,
+        "infra": 32,
+        "other": 20
+      },
+      "proportions": {
+        "library": 0.295,
+        "cli": 0.2676,
+        "web": 0.2504,
+        "data": 0.0978,
+        "infra": 0.0549,
+        "other": 0.0343
+      }
+    }
+  }
+}
