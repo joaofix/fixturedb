@@ -100,6 +100,13 @@ def main():
     combined_csv = dataset_c_dir / "dataset_c_sample.csv"
     is_dataset_c = (per_lang_csv and per_lang_csv.exists()) or combined_csv.exists()
 
+    # If no language specified and no combined CSV, check for any per-language CSVs
+    if not is_dataset_c and not args.language:
+        per_lang_csvs = sorted(dataset_c_dir.glob("dataset_c_*.csv"))
+        if per_lang_csvs:
+            is_dataset_c = True
+            logger.info("Dataset C mode: auto-detected %d language CSVs", len(per_lang_csvs))
+
     if is_dataset_c:
         csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
         logger.info("Dataset C mode: %s", csv_path)
@@ -134,14 +141,37 @@ def main():
             )
 
             cutoff_csv = dataset_c_dir / "dataset_c_repo_cutoffs.csv"
-            stats, db_path = collect_dataset_c_fixtures(
-                agent_repos=repos,
-                clones_dir=clones_dir,
-                output_db=output_db,
-                cutoff_csv=cutoff_csv,
-                workers=getattr(args, "workers", None) or 4,
-                language=args.language,
-            )
+            if args.language:
+                stats, db_path = collect_dataset_c_fixtures(
+                    agent_repos=repos,
+                    clones_dir=clones_dir,
+                    output_db=output_db,
+                    cutoff_csv=cutoff_csv,
+                    workers=getattr(args, "workers", None) or 4,
+                    language=args.language,
+                )
+            else:
+                # Run for all available language CSVs
+                available = sorted(dataset_c_dir.glob("dataset_c_*.csv"))
+                all_stats = {}
+                for lang_csv in available:
+                    lang = lang_csv.stem.replace("dataset_c_", "")
+                    lang_repos = load_dataset_c_repos(lang_csv)
+                    logger.info("Dataset C: processing language=%s (%d repos)", lang, len(lang_repos))
+                    stats, db_path = collect_dataset_c_fixtures(
+                        agent_repos=lang_repos,
+                        clones_dir=clones_dir,
+                        output_db=output_db,
+                        cutoff_csv=cutoff_csv,
+                        workers=getattr(args, "workers", None) or 4,
+                        language=lang,
+                    )
+                    all_stats[lang] = stats
+                stats = {
+                    "repos_persisted": sum(s.get("repos_persisted", 0) for s in all_stats.values()),
+                    "fixtures_persisted": sum(s.get("fixtures_persisted", 0) for s in all_stats.values()),
+                    "completed_repos": sum(s.get("completed_repos", 0) for s in all_stats.values()),
+                }
         else:
             collector = HumanCorpusCollector(
                 corpus_db_path=source_db,

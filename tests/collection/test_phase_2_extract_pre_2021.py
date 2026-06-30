@@ -61,6 +61,13 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     repo_qc_dir.mkdir()
     output_db = tmp_path / "human.db"
 
+    fixtures_dir = tmp_path / "fixtures-from-agents"
+    fixtures_dir.mkdir()
+    (fixtures_dir / "dataset_c_sample.csv").write_text(
+        "repo_name,language,domain,clone_url\nowner/repo,python,data,https://github.com/owner/repo.git\n",
+        encoding="utf-8",
+    )
+
     def collector_factory(*args, **kwargs):
         captured["collector_kwargs"] = kwargs
         return DummyHumanCollector(*args, **kwargs)
@@ -111,7 +118,13 @@ def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monke
     repo_qc_dir.mkdir()
     output_db = tmp_path / "human.db"
 
-    # Pre-populate the output DB with fixture rows, simulating a prior java run
+    fixtures_dir = tmp_path / "fixtures-from-agents"
+    fixtures_dir.mkdir()
+    (fixtures_dir / "dataset_c_sample.csv").write_text(
+        "repo_name,language,domain,clone_url\nowner/repo,python,data,https://github.com/owner/repo.git\n",
+        encoding="utf-8",
+    )
+
     import sqlite3
     conn = sqlite3.connect(str(output_db))
     conn.execute("CREATE TABLE IF NOT EXISTS fixtures (id INTEGER PRIMARY KEY)")
