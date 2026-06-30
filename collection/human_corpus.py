@@ -1002,6 +1002,19 @@ class HumanCorpusCollector:
             / f"{Path(self.output_db).stem}_human_inter_progress.json"
         )
 
+        completed_repos, _ = _load_inter_checkpoint(inter_checkpoint)
+        if completed_repos:
+            agent_repos = [
+                repo
+                for repo in agent_repos
+                if repo.get("full_name") not in completed_repos
+            ]
+            logger.info(
+                "[Human Inter] Skipping %d already-persisted repos (%d remaining)",
+                len(completed_repos),
+                len(agent_repos),
+            )
+
         logger.info(
             "[Human Inter] Building candidate pool from %d repos", len(agent_repos)
         )
