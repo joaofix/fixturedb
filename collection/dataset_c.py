@@ -410,7 +410,7 @@ def collect_dataset_c_fixtures(
             from collection.human_corpus import _human_fixture_csv_path
 
             fixture_out_path = _human_fixture_csv_path(
-                repo_data["language"], "inter", output_db.parent
+                repo_data["language"], "inter"
             )
             persist_repository_and_fixtures(
                 output_db,
