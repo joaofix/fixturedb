@@ -121,6 +121,7 @@ def main():
         logger.info("Starting human fixture collection...")
 
         if is_dataset_c:
+            from .dataset_c import collect_dataset_c_fixtures
             from .human_corpus import load_dataset_c_repos
 
             csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
@@ -131,14 +132,12 @@ def main():
                 csv_path,
             )
 
-            collector = HumanCorpusCollector(
-                corpus_db_path=source_db,
+            cutoff_csv = dataset_c_dir / "dataset_c_repo_cutoffs.csv"
+            stats, db_path = collect_dataset_c_fixtures(
+                agent_repos=repos,
                 clones_dir=clones_dir,
                 output_db=output_db,
-                repo_qc_dir=repo_qc_dir,
-            )
-            stats, db_path = collector.collect_inter_human(
-                agent_repos=repos,
+                cutoff_csv=cutoff_csv,
                 workers=getattr(args, "workers", None),
             )
         else:
@@ -157,36 +156,48 @@ def main():
         logger.info("=" * 70)
         logger.info("EXTRACTION RESULTS SUMMARY")
         logger.info("=" * 70)
-        logger.info(f"Total repositories processed: {stats.repos_scanned}")
-        logger.info(f"Repositories passed QC: {stats.repos_passed_qc}")
-        logger.info(f"Total fixtures extracted: {stats.fixtures_collected}")
-        logger.info("")
-        logger.info("Fixtures by language:")
-        for language_name, count in sorted(
-            stats.repos_by_language.items(),
-            key=lambda x: x[1],
-            reverse=True,
-        ):
-            logger.info(f"  {language_name}: {count}")
-
-        if stats.qc_skip_reasons:
+        if hasattr(stats, 'repos_scanned'):
+            logger.info(f"Total repositories processed: {stats.repos_scanned}")
+            logger.info(f"Repositories passed QC: {stats.repos_passed_qc}")
+            logger.info(f"Total fixtures extracted: {stats.fixtures_collected}")
             logger.info("")
-            logger.warning(f"QC skip reasons: {len(stats.qc_skip_reasons)}")
-            for reason, count in sorted(
-                stats.qc_skip_reasons.items(), key=lambda x: x[1], reverse=True
-            )[:5]:
-                logger.warning(f"  {reason}: {count}")
+            logger.info("Fixtures by language:")
+            for language_name, count in sorted(
+                stats.repos_by_language.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            ):
+                logger.info(f"  {language_name}: {count}")
+            if stats.qc_skip_reasons:
+                logger.info("")
+                logger.warning(f"QC skip reasons: {len(stats.qc_skip_reasons)}")
+                for reason, count in sorted(
+                    stats.qc_skip_reasons.items(), key=lambda x: x[1], reverse=True
+                )[:5]:
+                    logger.warning(f"  {reason}: {count}")
+        else:
+            logger.info(f"Repositories persisted: {stats.get('repos_persisted', 0)}")
+            logger.info(f"Total fixtures extracted: {stats.get('fixtures_persisted', 0)}")
+            logger.info(f"Completed repos: {stats.get('completed_repos', 0)}")
 
         # Prepare output data
-        output_data = {
-            "timestamp": datetime.now().isoformat(),
-            "phase": "Phase 2 - Human Fixture Collection",
-            "statistics": {
+        if hasattr(stats, 'repos_scanned'):
+            stats_payload = {
                 "repos_scanned": stats.repos_scanned,
                 "repos_passed_qc": stats.repos_passed_qc,
                 "fixtures_collected": stats.fixtures_collected,
                 "repos_by_language": stats.repos_by_language,
-            },
+            }
+        else:
+            stats_payload = {
+                "repos_persisted": stats.get("repos_persisted", 0),
+                "fixtures_persisted": stats.get("fixtures_persisted", 0),
+                "completed_repos": stats.get("completed_repos", 0),
+            }
+        output_data = {
+            "timestamp": datetime.now().isoformat(),
+            "phase": "Phase 2 - Human Fixture Collection",
+            "statistics": stats_payload,
             "output_database": str(db_path),
         }
 

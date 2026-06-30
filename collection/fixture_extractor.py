@@ -318,7 +318,7 @@ def commit_is_pure_addition(commit) -> bool:
     for modified_file in commit.modified_files:
         filename = modified_file.new_path or modified_file.old_path or ""
         path_obj = Path(filename)
-        language = _get_language_static(path_obj)
+        language = get_language_static(path_obj)
         if language == "unknown" or not is_test_file_path(str(filename), language):
             continue
 
@@ -336,7 +336,7 @@ def commit_is_pure_addition(commit) -> bool:
     return True
 
 
-def _get_language_static(file_path: Path) -> str:
+def get_language_static(file_path: Path) -> str:
     """Infer language from file extension (module-level, no instance needed)."""
     ext = file_path.suffix.lower()
     return {
@@ -374,7 +374,7 @@ def _raw_diff_commit_is_pure_addition(diff_text: str) -> bool:
                 b_path = parts[3][2:]  # strip "b/"
                 current_file = b_path
                 path_obj = Path(current_file)
-                lang = _get_language_static(path_obj)
+                lang = get_language_static(path_obj)
                 if lang != "unknown" and is_test_file_path(current_file, lang):
                     current_test_lang = lang
             continue
@@ -443,7 +443,7 @@ class Pre2021FixtureExtractor:
             source_db: Source database (corpus.db) to query
         """
         self.clones_dir = Path(clones_dir)
-        self.source_db = Path(source_db)
+        self.source_db = Path(source_db) if source_db is not None else None
         self.stats = Pre2021ExtractionStats()
         self.all_fixtures: List[Dict] = []
 
@@ -908,7 +908,7 @@ class AgentFixtureExtractor:
             start_date: Only extract commits after this date (ISO format)
         """
         self.clones_dir = Path(clones_dir)
-        self.source_db = Path(source_db)
+        self.source_db = Path(source_db) if source_db is not None else None
         self.start_date = start_date
         self.stats = AgentExtractionStats()
         self.all_fixtures = []
@@ -1459,6 +1459,67 @@ class AgentFixtureExtractor:
                 purity_skipped_count,
             )
 
+        return fixtures
+
+    def _extract_from_snapshot_file(
+        self,
+        repo_path: Path,
+        file_path: str,
+        language: str,
+        cutoff_commit_sha: str,
+        cutoff_commit_date: str,
+    ) -> List[Dict]:
+        """Extract ALL fixtures from a full test file at the repo checkout.
+
+        No diff analysis, no pure-addition gate. Used for Dataset C snapshot extraction.
+        """
+        full_path = repo_path / file_path
+        if not full_path.exists():
+            return []
+
+        try:
+            result = extract_fixtures(full_path, language)
+        except Exception as exc:
+            logger.debug("Failed to extract fixtures from %s: %s", file_path, exc)
+            return []
+
+        fixtures = []
+        for fixture in result.fixtures:
+            fixtures.append(
+                {
+                    "repo_name": repo_path.name,
+                    "name": fixture.name,
+                    "fixture_type": fixture.fixture_type,
+                    "scope": fixture.scope,
+                    "loc": fixture.loc,
+                    "language": language,
+                    "file_path": file_path,
+                    "start_line": fixture.start_line,
+                    "end_line": fixture.end_line,
+                    "cyclomatic_complexity": fixture.cyclomatic_complexity,
+                    "max_nesting_depth": fixture.max_nesting_depth,
+                    "num_objects_instantiated": fixture.num_objects_instantiated,
+                    "num_external_calls": fixture.num_external_calls,
+                    "num_parameters": fixture.num_parameters,
+                    "reuse_count": fixture.reuse_count,
+                    "has_teardown_pair": fixture.has_teardown_pair,
+                    "raw_source": fixture.raw_source,
+                    "framework": fixture.framework,
+                    "mocks": [
+                        {
+                            "framework": m.framework,
+                            "target_identifier": m.target_identifier,
+                            "num_interactions_configured": m.num_interactions_configured,
+                            "raw_snippet": m.raw_snippet,
+                        }
+                        for m in fixture.mocks
+                    ],
+                    "commit_sha": cutoff_commit_sha,
+                    "commit_date": cutoff_commit_date,
+                    "agent_type": "human_pre2022",
+                    "is_complete_addition": 1,
+                }
+            )
         return fixtures
 
     def _is_fixture_completely_added(

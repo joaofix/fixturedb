@@ -65,8 +65,15 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
         captured["collector_kwargs"] = kwargs
         return DummyHumanCollector(*args, **kwargs)
 
+    captured_c = {}
+    def dataset_c_factory(*args, **kwargs):
+        captured_c["kwargs"] = kwargs
+        return {"repos_persisted": 1, "fixtures_persisted": 2, "completed_repos": 1}, output_db
+
     monkeypatch.setattr(phase2, "HumanCorpusCollector", collector_factory)
     monkeypatch.setattr(phase2, "database_has_rows", lambda *args, **kwargs: False)
+    import collection.dataset_c as dataset_c_mod
+    monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
     monkeypatch.setattr(
         phase2.sys,
         "argv",
@@ -87,7 +94,5 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     result = phase2.main()
 
     assert result == 0
-    assert captured["collector_kwargs"]["corpus_db_path"] == source_db
-    assert captured["collector_kwargs"]["clones_dir"] == clones_dir
-    assert captured["collector_kwargs"]["output_db"] == output_db
-    assert captured["collector_kwargs"]["repo_qc_dir"] == repo_qc_dir
+    assert captured_c["kwargs"]["clones_dir"] == clones_dir
+    assert captured_c["kwargs"]["output_db"] == output_db
