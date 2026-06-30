@@ -71,7 +71,6 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
         return {"repos_persisted": 1, "fixtures_persisted": 2, "completed_repos": 1}, output_db
 
     monkeypatch.setattr(phase2, "HumanCorpusCollector", collector_factory)
-    monkeypatch.setattr(phase2, "database_has_rows", lambda *args, **kwargs: False)
     import collection.dataset_c as dataset_c_mod
     monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
     monkeypatch.setattr(

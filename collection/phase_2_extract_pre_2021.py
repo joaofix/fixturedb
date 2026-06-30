@@ -18,7 +18,6 @@ from pathlib import Path
 
 from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg, add_workers_arg
 from .human_corpus import HumanCorpusCollector
-from .resume_utils import database_has_rows
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -90,12 +89,10 @@ def main():
     logger.info(f"Statistics will be saved to: {stats_file}")
     logger.info("")
 
-    if database_has_rows(output_db, "fixtures"):
-        logger.info(
-            f"Existing human fixture database detected ({output_db.name}); "
-            "skipping extraction and reusing the current results"
-        )
-        return 0
+    # NOTE: No top-level database_has_rows guard here. Dataset C has its own
+    # per-language checkpoint (dataset_c_checkpoint_<lang>.json) and per-repo
+    # persistence checkpoints inside collect_dataset_c_fixtures. A blanket
+    # skip-if-db-has-rows breaks multi-language workflows.
 
     # Check if this is a Dataset C run (uses CSV, not corpus.db)
     dataset_c_dir = project_root / "fixtures-from-agents"
