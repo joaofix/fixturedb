@@ -312,24 +312,41 @@ def collect_dataset_c_fixtures(
                     WHERE f.commit_kind = 'agent'
                     GROUP BY r.language
                 """)
-                for row in cur.fetchall():
+                rows = cur.fetchall()
+                if rows:
+                    logger.info(
+                        "[Dataset C] Loaded %d language targets from DB: %s",
+                        len(rows),
+                        {r[0]: r[1] for r in rows},
+                    )
+                for row in rows:
                     lang = (row[0] or "unknown").lower()
                     targets[lang] = int(row[1])
         except Exception as exc:
-            logger.debug("[Dataset C] DB target lookup failed: %s", exc)
+            logger.warning("[Dataset C] DB target lookup failed: %s", exc)
     else:
         targets = dict(targets)
 
     if not targets:
-        csv_targets = _load_agent_targets_from_csv(
-            PROJECT_ROOT / "fixtures-from-agents"
+        fixtures_dir = PROJECT_ROOT / "fixtures-from-agents"
+        logger.info(
+            "[Dataset C] No targets in DB; trying CSV fallback from %s",
+            fixtures_dir,
         )
+        csv_targets = _load_agent_targets_from_csv(fixtures_dir)
         if csv_targets:
             logger.info(
-                "[Dataset C] Loaded %d language targets from agent fixture CSVs",
+                "[Dataset C] Loaded %d language targets from agent fixture CSVs: %s",
                 len(csv_targets),
+                dict(csv_targets),
             )
             targets.update(csv_targets)
+        else:
+            logger.warning(
+                "[Dataset C] CSV fallback returned no targets from %s; "
+                "sampling will select all candidates",
+                fixtures_dir,
+            )
 
     candidates: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
     extractor = AgentFixtureExtractor(
