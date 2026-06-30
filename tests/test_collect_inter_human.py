@@ -329,3 +329,135 @@ def test_collect_inter_human_skips_completed_repos_from_checkpoint(
 
     assert stats.fixtures_collected == 1
     assert extracted_repos == ["owner/still-pending"]
+
+
+def test_collect_inter_human_does_not_filter_is_complete_addition(tmp_path, monkeypatch):
+    """Dataset C must keep all fixtures regardless of is_complete_addition."""
+    clones_dir = tmp_path / "clones"
+    clones_dir.mkdir()
+    out_db = tmp_path / "between.db"
+
+    repo = {
+        "full_name": "owner/refactor-repo",
+        "language": "java",
+        "clone_url": "https://example.com/owner/refactor-repo.git",
+        "github_id": 1,
+    }
+
+    @contextmanager
+    def fake_clone_with_function(func, url, path):
+        path.mkdir(parents=True, exist_ok=True)
+        (path / ".git").mkdir(exist_ok=True)
+        yield path
+
+    monkeypatch.setattr(human_corpus, "clone_with_function", fake_clone_with_function)
+
+    class FakeScanner:
+        def __init__(self, corpus_db_path):
+            pass
+
+        def scan_repo_commit_roles(self, repo_path, start_date, language, detect_test_files=True):
+            return [
+                SimpleNamespace(
+                    commit_sha="abc123",
+                    commit_role="human",
+                    is_test_commit=True,
+                    commit_date="2020-01-01",
+                    agent_type=None,
+                    test_files=["tests/Test.java"],
+                )
+            ]
+
+    monkeypatch.setattr(human_corpus, "Tier1RepositoryScanner", FakeScanner)
+
+    class FakeExtractor:
+        def __init__(self, clones_dir=None, source_db=None, start_date=None):
+            pass
+
+        def _extract_from_agent_commits(self, repo_name, commits):
+            return [
+                {
+                    "name": "refactored_fixture",
+                    "file_path": "tests/Test.java",
+                    "start_line": 5,
+                    "end_line": 15,
+                    "loc": 4,
+                    "fixture_type": "before_each",
+                    "scope": "per_method",
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 0,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "reuse_count": 2,
+                    "has_teardown_pair": 0,
+                    "raw_source": "public void refactored_fixture() {}",
+                    "framework": "junit",
+                    "mocks": [],
+                    "commit_sha": "abc123",
+                    "commit_author_name": "Bob",
+                    "commit_author_email": "bob@example.com",
+                    "commit_date": "2020-01-01",
+                    "is_complete_addition": 0,
+                }
+            ]
+
+    monkeypatch.setattr(human_corpus, "AgentFixtureExtractor", FakeExtractor)
+
+    monkeypatch.setattr(
+        human_corpus,
+        "stratified_sample_by_language",
+        lambda candidates, targets, seed=42: list(candidates),
+    )
+
+    csv_path = tmp_path / "human_inter.csv"
+
+    def fake_human_fixture_csv_path(language, collection_kind, override=None):
+        return csv_path
+
+    monkeypatch.setattr(
+        human_corpus, "_human_fixture_csv_path", fake_human_fixture_csv_path
+    )
+
+    def fake_persist_repository_and_fixtures(
+        output_db, repo_data, fixtures_list, out_path=None, handle_mocks=False
+    ):
+        out_path = Path(out_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with out_path.open("a", encoding="utf-8", newline="") as fh:
+            fh.write(
+                f"{repo_data['full_name']},{repo_data['language']},{len(fixtures_list)}\n"
+            )
+        return len(fixtures_list)
+
+    monkeypatch.setattr(
+        human_corpus,
+        "persist_repository_and_fixtures",
+        fake_persist_repository_and_fixtures,
+    )
+
+    import collection.db as db_module
+
+    monkeypatch.setattr(
+        db_module,
+        "insert_human_inter_fixtures_coordinated",
+        lambda db_path, selected_fixtures, seed=42, batch_size=1000: len(
+            selected_fixtures
+        ),
+    )
+
+    initialise_db(out_db)
+
+    collector = HumanCorpusCollector(
+        corpus_db_path=out_db,
+        clones_dir=clones_dir,
+        output_db=out_db,
+        repo_qc_dir=tmp_path,
+    )
+
+    # No targets needed: sampler returns all 1 candidate
+    stats, db_path = collector.collect_inter_human(
+        [repo], targets={"java": 1}, workers=1
+    )
+
+    assert stats.fixtures_collected == 1

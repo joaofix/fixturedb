@@ -240,13 +240,12 @@ def _collect_inter_human_candidates(
             fixtures = extractor._extract_from_agent_commits(
                 repo_name=repo_name, commits=human_commits
             )
-            fixtures = [f for f in fixtures if f.get("is_complete_addition")]
             if not fixtures:
                 logger.debug("[Human Inter] no complete fixtures for %s", repo_name)
                 continue
 
             logger.info(
-                "[Human Inter] %s: %d human test commits → %d complete fixtures",
+                "[Human Inter] %s: %d human test commits → %d fixtures",
                 repo_name, len(human_commits), len(fixtures),
             )
 
