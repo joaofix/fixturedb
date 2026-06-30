@@ -1191,12 +1191,14 @@ class AgentFixtureExtractor:
             raise RuntimeError(f"Repository not found: {repo_path}")
 
         fixtures = []
+        seen_fixtures: set[tuple] = set()
 
         # Per-repo purity counters
         total_agent_commits = len(commits)
         commits_skipped_commit_level = 0
         commits_skipped_file_level = 0
         commits_proceeded = 0
+        duplicates_skipped = 0
 
         for commit_sha, agent_type in commits.items():
             try:
@@ -1246,19 +1248,33 @@ class AgentFixtureExtractor:
                         # at file level → count as file-level skip
                         commits_skipped_file_level += 1
 
-                    fixtures.extend(commit_fixtures)
+                    for fixture in commit_fixtures:
+                        fixture_key = (
+                            fixture.get("file_path"),
+                            fixture.get("start_line"),
+                            fixture.get("end_line"),
+                            fixture.get("name"),
+                            fixture.get("fixture_type"),
+                        )
+                        if fixture_key in seen_fixtures:
+                            duplicates_skipped += 1
+                            continue
+                        seen_fixtures.add(fixture_key)
+                        fixtures.append(fixture)
 
             except Exception as e:
                 logger.debug(f"Failed to extract from {commit_sha}: {e}")
 
         logger.info(
             "Repo %s: %d commits found, %d skipped (commit-level), "
-            "%d skipped (file-level), %d proceeded to extraction, %d fixtures extracted",
+            "%d skipped (file-level), %d proceeded to extraction, "
+            "%d duplicates skipped, %d fixtures extracted",
             repo_name,
             total_agent_commits,
             commits_skipped_commit_level,
             commits_skipped_file_level,
             commits_proceeded,
+            duplicates_skipped,
             len(fixtures),
         )
 
