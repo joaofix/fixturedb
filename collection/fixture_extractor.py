@@ -1252,7 +1252,7 @@ class AgentFixtureExtractor:
                 logger.debug(f"Failed to extract from {commit_sha}: {e}")
 
         logger.info(
-            "Repo %s: %d agent commits found, %d skipped (commit-level), "
+            "Repo %s: %d commits found, %d skipped (commit-level), "
             "%d skipped (file-level), %d proceeded to extraction, %d fixtures extracted",
             repo_name,
             total_agent_commits,
