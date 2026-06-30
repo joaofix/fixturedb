@@ -1,13 +1,10 @@
 import csv
-from pathlib import Path
+import subprocess
 from types import SimpleNamespace
 
-import pytest
-import subprocess
-
-from collection.human_corpus import HumanCorpusCollector
-from collection.db import initialise_db, is_checkpoint_completed, db_session
 import collection.human_corpus as human_corpus
+from collection.db import db_session, initialise_db, is_checkpoint_completed
+from collection.human_corpus import HumanCorpusCollector
 
 
 def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):

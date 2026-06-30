@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import pytest
 
 from collection import agent_patterns as ap

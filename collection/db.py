@@ -6,16 +6,15 @@ Schema is designed to be append-safe: re-running the pipeline on new repos
 will not duplicate existing records.
 """
 
-import sqlite3
 import json
+import sqlite3
 import time
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 
-from .config import DB_PATH
-
 from collection.logging_utils import get_logger
+
+from .config import DB_PATH
 
 logger = get_logger(__name__)
 

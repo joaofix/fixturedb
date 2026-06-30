@@ -5,11 +5,9 @@ Validates that fixtures are correctly classified by type and scope.
 """
 
 import pytest
+
 from ..conftest import (
-    extract_and_find_fixtures,
     assert_fixture_detected,
-    assert_fixture_not_detected,
-    assert_fixture_count,
 )
 
 

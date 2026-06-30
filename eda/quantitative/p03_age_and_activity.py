@@ -15,18 +15,15 @@ import pandas as pd
 import seaborn as sns
 
 from ..eda_common import (
-    ROOT,
     DB_PATH,
     DEFAULT_OUT,
-    LANG_PALETTE,
     LANG_ORDER,
-    STATUS_PALETTE,
-    setup_style,
-    save_or_show,
-    load_db,
-    has_data,
-    qdf,
+    LANG_PALETTE,
     lang_display,
+    load_db,
+    qdf,
+    save_or_show,
+    setup_style,
 )
 
 # -----------
@@ -164,7 +161,7 @@ if __name__ == "__main__":
     conn = load_db(Path(args.db))
     setup_style()
 
-    print(f"\n[Repository Age & Activity]")
+    print("\n[Repository Age & Activity]")
     plot_age_and_activity(conn, out_dir, args.show)
 
     conn.close()

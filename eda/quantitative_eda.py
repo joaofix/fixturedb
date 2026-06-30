@@ -103,7 +103,7 @@ def main():
     print(
         f"\nFixtureDB Quantitative EDA — {int(total):,} repos  ({int(analysed):,} analysed)"
     )
-    print(f"Track: ICSME Data Showcase (no subjective interpretation)")
+    print("Track: ICSME Data Showcase (no subjective interpretation)")
     print(f"Output → {out_dir or 'screen'}\n")
 
     # Quantitative plots only (no subjectivity bias)

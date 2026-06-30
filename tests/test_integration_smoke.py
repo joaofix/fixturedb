@@ -1,13 +1,10 @@
-import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
-from contextlib import contextmanager
 
-import pytest
-
-from collection.human_corpus import HumanCorpusCollector
 import collection.human_corpus as human_corpus
 from collection.db import initialise_db
+from collection.human_corpus import HumanCorpusCollector
 
 
 def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):

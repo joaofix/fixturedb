@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import mock_open
 
 import collection.phase_2_extract_pre_2021 as phase2

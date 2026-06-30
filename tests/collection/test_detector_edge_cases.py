@@ -8,11 +8,8 @@ Tests cover critical error paths and boundary conditions:
 - Error recovery and graceful degradation
 """
 
-import pytest
-import tempfile
-from pathlib import Path
 
-from collection.detector import extract_fixtures, ExtractResult
+from collection.detector import ExtractResult, extract_fixtures
 
 
 class TestDetectorErrorHandling:

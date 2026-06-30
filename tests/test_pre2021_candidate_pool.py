@@ -1,5 +1,4 @@
 import csv
-from pathlib import Path
 
 from collection.test_commit_filter import build_pre2021_candidate_pool
 

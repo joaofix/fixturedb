@@ -15,22 +15,17 @@ Uses small test repositories and mocked git operations for speed.
 
 import json
 import sqlite3
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, call, ANY
-from dataclasses import asdict
+from unittest.mock import patch
 
 import pytest
 
+from collection.agent_corpus import (
+    AgentCorpusCollector,
+)
 from collection.human_corpus import (
     HumanCorpusCollector,
     HumanCorpusStats,
 )
-from collection.agent_corpus import (
-    AgentCorpusCollector,
-    AgentCorpusStats,
-)
-from collection.config import HUMAN_CORPUS_CUTOFF_DATE
 
 
 @pytest.fixture

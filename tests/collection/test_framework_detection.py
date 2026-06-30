@@ -7,7 +7,8 @@ golang_testing, ava, etc.).
 """
 
 import pytest
-from .conftest import extract_and_find_fixtures, assert_fixture_detected
+
+from .conftest import extract_and_find_fixtures
 
 
 class TestPythonFrameworkDetection:

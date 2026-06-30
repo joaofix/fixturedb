@@ -8,9 +8,10 @@ languages (Python, Java, JavaScript, TypeScript), including edge cases and langu
 - Generics: Type parameters in Java/TypeScript (new HashMap<String, String>())
 """
 
-import pytest
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+
+import pytest
 
 from collection.detector import extract_fixtures
 

@@ -4,38 +4,34 @@ Provides tools for identifying agent-authored commits and classifying commit rol
 for paired-sample analysis within repositories.
 """
 
-import logging
-import re
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from pydriller import Repository
 
-from .config import (
-    AGENT_SIGNATURES,
-    AGENT_CORPUS_START_DATE,
-    CLONES_DIR,
-    LANGUAGE_CONFIGS,
-    TIER1_MINIMUM_REPOS_WITH_AGENT,
-    TIER1_MINIMUM_AGENT_COMMITS,
-    TIER2_MATCHING_MIN_STARS,
-    TIER2_MATCHING_MAX_STARS,
-    TIER2_MATCHING_STAR_TOLERANCE,
-    TIER2_MIN_COMMITS,
-    TIER2_MIN_TEST_FILES,
-    TIER2_MUST_HAVE_AGENT_CONFIGS,
-)
+from collection.logging_utils import get_logger
+
 from .agent_detector import (
     AgentCommitVerifier,
     AgentFileScanner,
     GitHubAgentFileChecker,
 )
 from .cloner import clone_repo
-from .utils import AGENT_TRAILER_RE
+from .config import (
+    AGENT_CORPUS_START_DATE,
+    AGENT_SIGNATURES,
+    CLONES_DIR,
+    LANGUAGE_CONFIGS,
+    TIER1_MINIMUM_AGENT_COMMITS,
+    TIER1_MINIMUM_REPOS_WITH_AGENT,
+    TIER2_MATCHING_MAX_STARS,
+    TIER2_MATCHING_MIN_STARS,
+    TIER2_MIN_TEST_FILES,
+)
 from .db import db_session
-from collection.logging_utils import get_logger
+from .utils import AGENT_TRAILER_RE
 
 logger = get_logger(__name__)
 
@@ -363,16 +359,16 @@ class Tier1RepositoryScanner:
     def _generate_summary(self, assessment: Tier1Assessment) -> str:
         """Generate human-readable summary of Tier 1 assessment."""
         lines = [
-            f"Tier 1 Assessment Results:",
+            "Tier 1 Assessment Results:",
             f"  Repos with agent commits: {assessment.repos_with_agent}",
             f"  Total agent commits: {assessment.total_agent_commits}",
             f"  Agent distribution: {assessment.repos_by_agent}",
         ]
 
         if assessment.sufficient:
-            lines.append(f"  ✓ SUFFICIENT for statistical power (Tier 2 not needed)")
+            lines.append("  ✓ SUFFICIENT for statistical power (Tier 2 not needed)")
         else:
-            lines.append(f"  ⚠ INSUFFICIENT (Tier 2 matching recommended)")
+            lines.append("  ⚠ INSUFFICIENT (Tier 2 matching recommended)")
             lines.append(
                 f"    - Need at least {TIER1_MINIMUM_REPOS_WITH_AGENT} repos, found {assessment.repos_with_agent}"
             )

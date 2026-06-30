@@ -7,7 +7,6 @@ backends (in-memory, S3, DB export) to be plugged in via `set_adapter()`.
 from __future__ import annotations
 
 import csv
-import json
 from pathlib import Path
 from typing import Iterable, Iterator
 

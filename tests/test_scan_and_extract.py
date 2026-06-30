@@ -1,8 +1,7 @@
-import json
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
+
 from collection.human_corpus import HumanCorpusCollector
-import collection.human_corpus as human_corpus
 
 
 def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):

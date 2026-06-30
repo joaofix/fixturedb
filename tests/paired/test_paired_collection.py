@@ -9,21 +9,19 @@ Tests the paired within-repository methodology including:
 """
 
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
+from collection.db import (
+    classify_domain,
+    compute_repo_age_years,
+    compute_star_tier,
+)
 from collection.paired_collection import (
     PairedStudyCollector,
     PairedStudyStats,
-    select_paired_repositories,
-)
-from collection.db import (
-    classify_domain,
-    compute_star_tier,
-    compute_repo_age_years,
 )
 
 

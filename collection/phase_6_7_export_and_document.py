@@ -16,19 +16,17 @@ Output:
     - fixturedb-agent_v1.0_export.zip
 """
 
-import json
 import csv
-import logging
+import json
 import sys
-from pathlib import Path
 from datetime import datetime
-
-from .dataset_exporter import HumanDatasetExporter, AgentDatasetExporter
-from .db import db_session
+from pathlib import Path
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
-from collection.logging_utils import get_logger
+
+from .dataset_exporter import AgentDatasetExporter, HumanDatasetExporter
+from .db import db_session
 
 logger = get_logger(__name__)
 
@@ -61,7 +59,7 @@ def main():
     logger.info(f"Loading Phase 5 results from: {phase_5_file}")
 
     try:
-        with open(phase_5_file, "r") as f:
+        with open(phase_5_file) as f:
             phase_5_results = json.load(f)
 
         human_sampled_ids = phase_5_results["human_sampling"]["sampled_fixture_ids"]

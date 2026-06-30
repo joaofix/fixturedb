@@ -9,70 +9,60 @@ the agent dataset, and only non-AI commits that fully add a fixture are kept.
 import argparse
 import csv
 import json
-import logging
 import shutil
-import subprocess
 import threading
 import time
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple, Any, Set
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydriller import Repository
 
+from .agent_commit_detector import Tier1RepositoryScanner
+from .agent_corpus import clone_repo_for_commit_scan
 from .cli_utils import (
     add_language_arg,
     add_output_db_arg,
-    add_repos_per_language_arg,
     add_repo_dir_arg,
+    add_repos_per_language_arg,
     add_test_commits_csv_arg,
     add_workers_arg,
 )
+from .clone_manager import clone_with_function
 from .config import (
-    CLONES_DIR,
-    DATA_DIR,
     AGENT_CORPUS_START_DATE,
+    CLONES_DIR,
+    COLLECTION_OUTPUT_TAG,
+    DATA_DIR,
+    EXTRACT_WORKERS,
     HUMAN_CORPUS_CUTOFF_DATE,
     LANGUAGE_CONFIGS,
-    EXTRACT_WORKERS,
-    COLLECTION_OUTPUT_TAG,
 )
-from .db import (
-    db_session,
-    initialise_db,
-    mark_global_checkpoint,
-    is_global_checkpoint_completed,
-    upsert_repository,
-    insert_test_commit,
-    insert_human_inter_fixture,
-    insert_human_inter_fixtures_bulk,
-    insert_human_within_fixture,
-)
-from .agent_corpus import clone_repo_for_commit_scan
-from .clone_manager import clone_with_function
-from .fixture_extractor import AgentFixtureExtractor
-from .test_commit_utils import write_test_commits_csv
-from .agent_commit_detector import Tier1RepositoryScanner
-from .test_commit_filter import build_pre2021_candidate_pool
-from .agent_patterns import AGENT_SIGNATURES, PAPER_AGENT_CONFIG_PATTERNS, PAPER_AGENT_REPOSITORY_LANGUAGES
 from .corpus_utils import (
     BaseCorpusStats,
     compute_repo_metadata,
     construct_repo_dict,
-    generate_corpus_summary,
     persist_repository_and_fixtures,
 )
-from .sampling import stratified_sample_by_language
-from .utils import (
-    _stable_repo_id,
-    _normalize_language_filters,
-    build_repo_row,
-    _date_only,
+from .db import (
+    db_session,
+    initialise_db,
+    insert_test_commit,
+    is_global_checkpoint_completed,
+    mark_global_checkpoint,
+    upsert_repository,
 )
+from .fixture_extractor import AgentFixtureExtractor
 from .logging_utils import get_logger
+from .sampling import stratified_sample_by_language
+from .test_commit_filter import build_pre2021_candidate_pool
+from .test_commit_utils import write_test_commits_csv
+from .utils import (
+    build_repo_row,
+)
 
 logger = get_logger(__name__)
 
@@ -90,7 +80,7 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
     *full_name*, *language*, *clone_url*.
     """
     repos: list[dict] = []
-    with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+    with open(csv_path, encoding="utf-8", newline="") as fh:
         reader = csv.DictReader(fh)
         for row in reader:
             name = (row.get("repo_name") or "").strip()
@@ -966,8 +956,6 @@ class HumanCorpusCollector:
                 write_test_commits_csv(all_test_commit_rows, self.test_commits_csv)
 
         # Generate summary
-        self._generate_summary(stats)
-
         with db_session(self.output_db) as conn:
             if all(
                 is_global_checkpoint_completed(conn, within_step(lang))
@@ -1075,7 +1063,6 @@ class HumanCorpusCollector:
             )
 
         # Generate summary for the inter sample
-        self._generate_summary(stats)
         return stats, self.output_db
 
     def _build_inter_candidates(

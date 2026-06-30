@@ -5,12 +5,12 @@ Validates that extracted fixture metadata (line numbers, LOC, scope, type, metri
 """
 
 import pytest
+
 from ..conftest import (
-    extract_and_find_fixtures,
     assert_fixture_detected,
+    assert_fixture_metrics,
     assert_line_range,
     assert_loc,
-    assert_fixture_metrics,
 )
 
 

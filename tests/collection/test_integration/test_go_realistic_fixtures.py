@@ -6,10 +6,9 @@ setup functions, and real-world code from popular Go testing patterns.
 """
 
 import pytest
+
 from ..conftest import (
     extract_and_find_fixtures,
-    assert_fixture_detected,
-    assert_fixture_count,
 )
 
 pytestmark = pytest.mark.skip(reason="Go is not supported")

@@ -6,26 +6,18 @@ for both agent and human corpus collection.
 """
 
 import csv
-import json
-import tempfile
-from dataclasses import asdict
 from pathlib import Path
-from unittest.mock import MagicMock, patch, ANY
-
-import pytest
+from unittest.mock import patch
 
 from collection.corpus_utils import (
     BaseCorpusStats,
-    RepositoryMetadata,
-    FixtureData,
     compute_repo_metadata,
     construct_repo_dict,
+    generate_corpus_summary,
+    persist_repository_and_fixtures,
     truncate_fixture_csvs,
     write_fixture_csv_row,
-    persist_repository_and_fixtures,
-    generate_corpus_summary,
 )
-from collection.config import HUMAN_CORPUS_CUTOFF_DATE
 
 
 class TestBaseCorpusStats:

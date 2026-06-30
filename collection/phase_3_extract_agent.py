@@ -6,23 +6,18 @@ raw discovery pipeline or Phase 1B JSON artifacts.
 """
 
 import argparse
-import json
-import logging
 import sys
 from pathlib import Path
-from datetime import datetime
-
-from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg
-from .agent_corpus import AgentCorpusCollector
-from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
-from .fixture_extractor import AgentFixtureExtractor
-from .db import initialise_db
-
-# AGENT dataset start date is configured in collection.config as AGENT_CORPUS_START_DATE
-from .resume_utils import database_has_rows
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
+
+from .agent_corpus import AgentCorpusCollector
+from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
+from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg
+
+# AGENT dataset start date is configured in collection.config as AGENT_CORPUS_START_DATE
+from .resume_utils import database_has_rows
 
 logger = get_logger(__name__)
 

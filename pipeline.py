@@ -11,19 +11,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from collection.config import LANGUAGE_CONFIGS, DATA_DIR
+from collection.agent_corpus import AgentCorpusCollector
+from collection.config import DATA_DIR, LANGUAGE_CONFIGS
 from collection.corpus_utils import truncate_fixture_csvs
-from collection.paired_collection import main as paired_main
 from collection.human_corpus import (
     HumanCorpusCollector,
     select_human_corpus_repositories,
 )
-from collection.agent_corpus import AgentCorpusCollector
-from collection.repository_quality_control.agent_repository_counter import (
-    run as run_agent_repo_qc,
-)
+from collection.paired_collection import main as paired_main
 from collection.repository_quality_control.agent_commit_counter import (
     run as run_agent_commit_qc,
+)
+from collection.repository_quality_control.agent_repository_counter import (
+    run as run_agent_repo_qc,
 )
 from collection.test_commit_filter import collect_agent_test_commits
 
@@ -36,6 +36,7 @@ except Exception:
 logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent
 MANUAL_REPO_QC_DIR = PROJECT_ROOT / "github-search-agent"
+BetweenGroupComparator = None
 
 
 def _truncate_agent_output_csvs() -> None:
@@ -370,7 +371,7 @@ def cmd_human_fixtures(args) -> int:
             repo_qc_dir=args.repo_qc_dir,
         )
         if hasattr(args, "test_commits_csv"):
-            human_kwargs["test_commits_csv"] = getattr(args, "test_commits_csv")
+            human_kwargs["test_commits_csv"] = args.test_commits_csv
         collector = HumanCorpusCollector(**human_kwargs)
         mode = getattr(args, "mode", "within")
 
@@ -410,7 +411,7 @@ def cmd_human_fixtures(args) -> int:
                 language=args.language,
                 workers=getattr(args, "workers", None),
             )
-        print(f"\n✓ Human corpus collection complete")
+        print("\n✓ Human corpus collection complete")
         print(f"  Fixtures collected: {stats.fixtures_collected}")
         print(f"  Repositories analyzed: {stats.repos_passed_qc}")
         print(f"  Output database: {db_path}\n")
@@ -466,14 +467,17 @@ def cmd_full(args) -> int:
 
         # Stage 3: Between-group comparison
         print("\n=== Stage 3: Compare human vs agent corpora ===")
-        from collection.between_group_comparison import BetweenGroupComparator
+        global BetweenGroupComparator
+        if BetweenGroupComparator is None:
+            from collection.between_group_comparison import BetweenGroupComparator as _BGC
+            BetweenGroupComparator = _BGC
 
         comparator = BetweenGroupComparator(db_path=output_db)
         comparison = comparator.run(
             human_stats=human_stats.to_dict(), agent_stats=agent_stats.to_dict()
         )
         report_path = comparator.save_report(comparison)
-        print(f"✓ Between-group comparison complete")
+        print("✓ Between-group comparison complete")
         print(
             f"  Balance tests run: {comparison.control_variable_summary['total_tests']}"
         )
@@ -490,7 +494,7 @@ def cmd_full(args) -> int:
             for limitation in comparison.limitations:
                 print(f"    - {limitation}")
 
-        print(f"\n✓ Full between-group pipeline complete")
+        print("\n✓ Full between-group pipeline complete")
         print(f"  Output database: {output_db}\n")
         return 0
     except Exception as e:
@@ -514,13 +518,13 @@ def cmd_agent(args) -> int:
             commit_qc_dir=args.commit_qc_dir,
         )
         if hasattr(args, "test_commits_csv"):
-            agent_kwargs["test_commits_csv"] = getattr(args, "test_commits_csv")
+            agent_kwargs["test_commits_csv"] = args.test_commits_csv
         collector = AgentCorpusCollector(**agent_kwargs)
         stats, db_path = collector.run(
             repos_per_language=args.repos_per_language,
             language=args.language,
         )
-        print(f"\n✓ Agent corpus collection complete")
+        print("\n✓ Agent corpus collection complete")
         print(f"  Fixtures collected: {stats.fixtures_collected}")
         print(f"  Repositories analyzed: {stats.repos_passed_qc}")
         print(f"  Agent commits found: {stats.agent_commits_found}")
@@ -548,14 +552,17 @@ def cmd_between_group_stats(args) -> int:
             with open(args.agent_stats) as f:
                 agent_stats = json.load(f)
 
-        from collection.between_group_comparison import BetweenGroupComparator
+        global BetweenGroupComparator
+        if BetweenGroupComparator is None:
+            from collection.between_group_comparison import BetweenGroupComparator as _BGC
+            BetweenGroupComparator = _BGC
 
         comparator = BetweenGroupComparator(db_path=db_path)
         comparison = comparator.run(human_stats=human_stats, agent_stats=agent_stats)
         report_path = comparator.save_report(comparison)
 
         # Print summary
-        print(f"\n✓ Between-group comparison complete")
+        print("\n✓ Between-group comparison complete")
         print(
             f"  Balance tests run: {comparison.control_variable_summary['total_tests']}"
         )
@@ -588,25 +595,25 @@ def cmd_status() -> None:
     # Paired study
     paired_summaries = sorted(output_dir.glob("paired_study_summary_*.json"))
     if paired_summaries:
-        print(f"  Paired Study (within-repo):")
+        print("  Paired Study (within-repo):")
         print(f"    {paired_summaries[-1].name}")
 
     # Human corpus
     human_summaries = sorted(output_dir.glob("human_corpus_summary_*.json"))
     if human_summaries:
-        print(f"\n  Human Corpus (agent-enabled repos):")
+        print("\n  Human Corpus (agent-enabled repos):")
         print(f"    {human_summaries[-1].name}")
 
     # Agent corpus
     agent_summaries = sorted(output_dir.glob("agent_corpus_summary_*.json"))
     if agent_summaries:
-        print(f"\n  Agent Corpus (2025+):")
+        print("\n  Agent Corpus (2025+):")
         print(f"    {agent_summaries[-1].name}")
 
     # Between-group comparison
     comparison_reports = sorted(output_dir.glob("between_group_comparison_*.json"))
     if comparison_reports:
-        print(f"\n  Between-Group Comparison:")
+        print("\n  Between-Group Comparison:")
         print(f"    {comparison_reports[-1].name}")
 
     print()
@@ -642,7 +649,7 @@ def cmd_agent_test_commits(args) -> int:
             output_dir=output_dir,
             workers=args.workers,
         )
-        print(f"\n✓ Test-commit filtering complete")
+        print("\n✓ Test-commit filtering complete")
         print(f"  Repos processed: {stats['repos_processed']}")
         print(f"  Commits scanned: {stats['commits_scanned']}")
         print(f"  Test commits found: {stats['test_commits_found']}")

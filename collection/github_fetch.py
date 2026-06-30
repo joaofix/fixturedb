@@ -4,8 +4,8 @@ This provides a simple, best-effort archive downloader to use when cloning
 is too heavy or fails. It supports retry and basic resume via Range headers.
 """
 
-import time
 import shutil
+import time
 import urllib.request
 from pathlib import Path
 

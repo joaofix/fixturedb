@@ -6,25 +6,25 @@ an agent configuration file exists in the latest tree, and writes per-language
 CSV rows with the repository metadata and `has_agent_config` flag.
 """
 
+import concurrent.futures
 import csv
-import logging
+import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
-from datetime import datetime, timezone
-import concurrent.futures
-import threading
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
 
 from collection.agent_corpus import scan_cloned_repo_for_agent_configs
-from collection.config import EXCLUSION_KEYWORDS
-from collection.agent_patterns import AGENT_SIGNATURES, PAPER_AGENT_CONFIG_PATTERNS, PAPER_AGENT_REPOSITORY_LANGUAGES
+from collection.agent_patterns import (
+    PAPER_AGENT_REPOSITORY_LANGUAGES,
+)
 from collection.clone_manager import temp_clone_commit_history
-from collection.utils import _normalize_language_filters
-
+from collection.config import EXCLUSION_KEYWORDS
 from collection.logging_utils import get_logger
+from collection.utils import _normalize_language_filters
 
 logger = get_logger(__name__)
 

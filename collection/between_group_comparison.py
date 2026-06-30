@@ -13,7 +13,6 @@ python -m collection.test_commit_filter agent \
 """
 
 import json
-import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -25,10 +24,10 @@ ALLOWED_VARIABLES = ALLOWED_CATEGORICAL_VARIABLES | ALLOWED_CONTINUOUS_VARIABLES
 
 from scipy.stats import chi2_contingency, mannwhitneyu
 
+from collection.logging_utils import get_logger
+
 from .config import DATA_DIR
 from .db import db_session
-
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 

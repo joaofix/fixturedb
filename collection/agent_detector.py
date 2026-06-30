@@ -9,26 +9,25 @@ Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline
 
 import fnmatch
 import json
-import logging
-import platformdirs
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
+import platformdirs
 from pydriller import Repository
 
-from .config import AGENT_CORPUS_START_DATE
+from collection.logging_utils import get_logger
+
 from .agent_patterns import (
     AGENT_SIGNATURES,
     LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
     path_matches_pattern,
 )
-
-from collection.logging_utils import get_logger
+from .config import AGENT_CORPUS_START_DATE
 
 logger = get_logger(__name__)
 

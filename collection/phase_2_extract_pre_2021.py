@@ -13,10 +13,10 @@ import argparse
 import json
 import logging
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from .cli_utils import add_output_db_arg, add_repos_per_language_arg, add_repo_dir_arg
+from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg
 from .human_corpus import HumanCorpusCollector
 from .resume_utils import database_has_rows
 

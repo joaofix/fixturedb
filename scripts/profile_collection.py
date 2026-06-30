@@ -8,9 +8,9 @@ This will run `extract_fixtures` on all test files under the given repo and
 print timing/profile statistics. Intended as a lightweight hotspot finder.
 """
 
-import sys
 import cProfile
 import pstats
+import sys
 from pathlib import Path
 
 from collection.detector import extract_fixtures

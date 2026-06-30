@@ -9,24 +9,18 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
-import pandas as pd
 import seaborn as sns
 
 from ..eda_common import (
-    ROOT,
     DB_PATH,
     DEFAULT_OUT,
-    LANG_PALETTE,
     LANG_ORDER,
-    STATUS_PALETTE,
-    setup_style,
-    save_or_show,
-    load_db,
-    has_data,
-    qdf,
     lang_display,
+    load_db,
+    qdf,
+    save_or_show,
+    setup_style,
 )
 
 # -----------
@@ -111,7 +105,7 @@ if __name__ == "__main__":
     conn = load_db(Path(args.db))
     setup_style()
 
-    print(f"\n[Domain Distribution]")
+    print("\n[Domain Distribution]")
     plot_domain_distribution(conn, out_dir, args.show)
 
     conn.close()

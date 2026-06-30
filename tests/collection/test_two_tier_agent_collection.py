@@ -7,18 +7,15 @@ Tests agent commit detection including:
 - Edge cases in commit detection
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 import tempfile
-import subprocess
+from pathlib import Path
 
 import pytest
 
 from collection.agent_commit_detector import (
-    Tier1RepositoryScanner,
     AGENT_TRAILER_RE,
+    Tier1RepositoryScanner,
 )
-from collection.config import AGENT_CORPUS_START_DATE
 
 
 class TestAgentTrailerDetection:

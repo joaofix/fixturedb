@@ -6,7 +6,6 @@ import csv
 import gzip
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -21,7 +20,6 @@ from collection.sample_proportional_repos import (
     sample_proportional,
     write_per_language_files,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

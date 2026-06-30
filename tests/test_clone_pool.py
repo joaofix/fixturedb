@@ -1,7 +1,4 @@
-import time
 from pathlib import Path
-
-import pytest
 
 from collection import clone_manager as cm
 

@@ -9,11 +9,11 @@ Tests positive and negative detection of Go fixture patterns:
 """
 
 import pytest
+
 from ..conftest import (
-    extract_and_find_fixtures,
-    assert_fixture_detected,
-    assert_fixture_not_detected,
     assert_fixture_count,
+    assert_fixture_detected,
+    extract_and_find_fixtures,
 )
 
 pytestmark = pytest.mark.skip(reason="Go is not supported")

@@ -6,11 +6,14 @@ import argparse
 import csv
 import gzip
 import json
-import logging
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from collection.logging_utils import get_logger
+
+from .agent_commit_detector import Tier1RepositoryScanner
+from .agent_corpus import collect_test_files_for_commit
 from .cli_utils import (
     add_commit_dir_arg,
     add_language_arg,
@@ -19,8 +22,6 @@ from .cli_utils import (
     add_repo_dir_arg,
     add_workers_arg,
 )
-from .agent_corpus import collect_test_files_for_commit
-from .agent_commit_detector import Tier1RepositoryScanner
 from .clone_manager import temp_clone_commit_history
 from .config import (
     AGENT_CORPUS_START_DATE,
@@ -29,8 +30,6 @@ from .config import (
     LANGUAGE_CONFIGS,
 )
 from .test_commit_utils import write_test_commits_csv
-
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 

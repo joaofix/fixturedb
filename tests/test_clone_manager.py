@@ -1,9 +1,4 @@
-import os
-import shutil
 from pathlib import Path
-
-import pytest
-
 
 from collection import clone_manager as cm
 from collection.temp_clone import _output_requests_credentials

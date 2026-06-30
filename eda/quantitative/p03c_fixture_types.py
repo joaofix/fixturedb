@@ -4,21 +4,19 @@ FixtureDB — Exploratory Data Analysis
 Fixture Type Distribution (Detection Patterns)
 """
 
-import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 from ..eda_common import (
-    LANG_PALETTE,
-    LANG_ORDER,
-    setup_style,
-    save_or_show,
-    load_db,
-    has_data,
-    qdf,
-    lang_display,
     DB_PATH,
     DEFAULT_OUT,
+    LANG_ORDER,
+    LANG_PALETTE,
+    has_data,
+    lang_display,
+    load_db,
+    qdf,
+    save_or_show,
+    setup_style,
 )
 
 

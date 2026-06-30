@@ -8,7 +8,6 @@ This is used to compute control variables (star tier, repo age) at specific
 historical dates (e.g., 2020-12-31 for human corpus, 2025-01-01 for agent corpus).
 """
 
-import logging
 from datetime import datetime
 from typing import Optional
 

@@ -17,7 +17,6 @@ Usage:
 """
 
 import argparse
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -72,7 +71,7 @@ def main():
     print(
         f"\nFixtureDB Qualitative EDA — {int(total):,} repos  ({int(analysed):,} analysed)"
     )
-    print(f"⚠ WARNING: Internal analysis only (subjective interpretation)")
+    print("⚠ WARNING: Internal analysis only (subjective interpretation)")
     print(f"Output → {out_dir or 'screen'}\n")
 
     # Qualitative plots (may contain subjective bias)

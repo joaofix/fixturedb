@@ -6,21 +6,20 @@ Searches GitHub for repositories that contain agent configuration files
 indicating active use of AI coding agents.
 """
 
-import logging
 import time
 from pathlib import Path
 from typing import Optional
 
 import requests
 
-from .config import GITHUB_TOKEN, MIN_STARS
+from collection.logging_utils import get_logger
+
 from .agent_patterns import (
     LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
-    repo_contains_patterns,
     iter_exact_filename_patterns,
+    repo_contains_patterns,
 )
-
-from collection.logging_utils import get_logger
+from .config import GITHUB_TOKEN, MIN_STARS
 
 logger = get_logger(__name__)
 

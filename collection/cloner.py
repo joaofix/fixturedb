@@ -7,28 +7,26 @@ clone, and quality-filter logic in one place so other collection phases can
 reuse it directly.
 """
 
-import logging
 import shutil
 import subprocess
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import requests
 from tqdm import tqdm
 
+from collection.logging_utils import get_logger
+
 from .config import (
+    CLONE_WORKERS,
     CLONES_DIR,
+    GITHUB_TOKEN,
     LANGUAGE_CONFIGS,
     MIN_COMMITS,
     MIN_TEST_FILES,
-    CLONE_WORKERS,
-    GITHUB_TOKEN,
 )
 from .db import db_session, get_repos_by_status, set_repo_status
 from .temp_clone import _output_requests_credentials
-
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 

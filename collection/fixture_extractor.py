@@ -6,24 +6,22 @@ Handles extraction of fixtures from repositories using different strategies:
 - Phase 3: agent-generated fixtures (commit-by-commit with completeness validation)
 """
 
-import logging
+import fcntl
 import re
 import subprocess
 from contextlib import contextmanager
-from time import sleep
 from dataclasses import dataclass, field
 from pathlib import Path
+from time import sleep
 from typing import Dict, List, Optional, Tuple
 
-import fcntl
-
-from .config import CLONES_DIR, DB_PATH, AGENT_CORPUS_START_DATE
-from .temp_clone import _output_requests_credentials
-from .db import db_session
-from .detector import extract_fixtures, _get_parser
-from .test_commit_utils import is_test_file_path
-
 from collection.logging_utils import get_logger
+
+from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, DB_PATH
+from .db import db_session
+from .detector import _get_parser, extract_fixtures
+from .temp_clone import _output_requests_credentials
+from .test_commit_utils import is_test_file_path
 
 logger = get_logger(__name__)
 
@@ -81,7 +79,7 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
             stdout = (exc.stdout or "")
             combined = stderr.lower() + stdout.lower()
             if _output_requests_credentials(stderr) or _output_requests_credentials(stdout):
-                raise RuntimeError(f"Repository requires credentials for checkout")
+                raise RuntimeError("Repository requires credentials for checkout")
             if "index.lock" in combined:
                 if lock_path.exists():
                     try:

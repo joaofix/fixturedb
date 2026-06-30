@@ -1,19 +1,16 @@
 import shutil
-from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock
 
-import pytest
-
+from collection.config import MAX_FILE_SIZE_BYTES
 from collection.fixture_extractor import (
+    DiffLineMap,
+    Pre2021FixtureExtractor,
     _raw_diff_commit_is_pure_addition,
     _raw_diff_file_is_pure_addition,
     _resolve_repo_path,
     commit_is_pure_addition,
-    DiffLineMap,
-    Pre2021FixtureExtractor,
     is_pure_addition,
 )
-from collection.config import MAX_FILE_SIZE_BYTES
 
 
 def test_resolve_repo_path_prefers_slash(tmp_path):

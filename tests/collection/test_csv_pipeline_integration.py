@@ -9,17 +9,12 @@ Verifies that the collection module correctly:
 """
 
 import csv
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, patch, ANY
 
 import pytest
 
 from collection.human_corpus import (
-    HumanCorpusCollector,
     select_human_corpus_repositories,
 )
-from collection.config import HUMAN_CORPUS_CUTOFF_DATE
 
 
 @pytest.fixture
@@ -329,7 +324,7 @@ class TestCSVFixtureExportFormat:
         write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
 
         # Read and verify columns
-        with open(out_path, "r", encoding="utf-8") as f:
+        with open(out_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             headers = reader.fieldnames
 
@@ -372,7 +367,7 @@ class TestCSVFixtureExportFormat:
         write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
 
         # Verify no truncation
-        with open(out_path, "r", encoding="utf-8") as f:
+        with open(out_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             row = next(reader)
 
@@ -402,7 +397,7 @@ class TestCSVFixtureExportFormat:
         write_fixture_csv_row(out_path, "owner/特殊_repo", "python", fixture)
 
         # Verify content is preserved
-        with open(out_path, "r", encoding="utf-8") as f:
+        with open(out_path, encoding="utf-8") as f:
             content = f.read()
             assert "café" in content
             assert "特殊" in content
@@ -429,7 +424,7 @@ class TestCSVFixtureExportFormat:
         write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
 
         # Read and verify comma handling
-        with open(out_path, "r", encoding="utf-8") as f:
+        with open(out_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             row = next(reader)
 
@@ -501,7 +496,7 @@ class TestCSVPipelineEndToEnd:
         # Verify output CSV was created and contains expected data
         assert out_path.exists()
 
-        with open(out_path, "r", encoding="utf-8") as f:
+        with open(out_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             rows_out = list(reader)
 

@@ -9,17 +9,16 @@ Output: JSON file with verified agent commits per repository for the test-commit
 """
 
 import json
-import logging
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+# Logging is configured via collection.logging_utils.configure_logging()
+from collection.logging_utils import get_logger
 
 from .agent_detector import AgentCommitVerifier
 from .config import AGENT_CORPUS_START_DATE
 from .resume_utils import latest_matching_file
-
-# Logging is configured via collection.logging_utils.configure_logging()
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -64,7 +63,7 @@ def main():
         phase_1a_file = phase_1a_files[-1]  # Use latest
         logger.info(f"Loading Phase 1A results from: {phase_1a_file}")
         try:
-            with open(phase_1a_file, "r") as f:
+            with open(phase_1a_file) as f:
                 phase_1a_results = json.load(f)
             repo_candidates = list(phase_1a_results["repositories"].keys())
             logger.info(

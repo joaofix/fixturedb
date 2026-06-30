@@ -5,12 +5,11 @@ Validates graceful handling of unusual code patterns, malformed inputs, and boun
 """
 
 import pytest
+
 from ..conftest import (
-    create_test_file,
-    extract_and_find_fixtures,
-    assert_fixture_detected,
-    assert_fixture_not_detected,
     assert_fixture_count,
+    assert_fixture_detected,
+    extract_and_find_fixtures,
 )
 
 

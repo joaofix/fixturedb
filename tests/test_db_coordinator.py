@@ -1,13 +1,13 @@
 from pathlib import Path
 
+from collection.corpus_utils import construct_repo_dict
 from collection.db import (
-    initialise_db,
     db_session,
-    upsert_test_file,
+    initialise_db,
     insert_fixture,
     insert_human_inter_fixtures_coordinated,
+    upsert_test_file,
 )
-from collection.corpus_utils import construct_repo_dict
 
 
 def test_coordinator_inserts(tmp_path: Path):

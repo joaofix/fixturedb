@@ -1,9 +1,6 @@
 """Tests for temp_clone.py credential detection and skip behavior."""
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from collection.temp_clone import _output_requests_credentials, clone_to_tempdir
 

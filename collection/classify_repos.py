@@ -475,7 +475,7 @@ def load_completed_repos(output_dir: Path) -> set[str]:
 
     for csv_path in sorted(output_dir.glob("*.csv")):
         try:
-            with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+            with open(csv_path, encoding="utf-8", newline="") as fh:
                 reader = csv.DictReader(fh)
                 for row in reader:
                     name = (row.get("name") or "").strip()
@@ -731,7 +731,7 @@ def _log_language_summary(lang: str, success: int, failed: int) -> None:
 
     domain_counts: dict[str, int] = {}
     try:
-        with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+        with open(csv_path, encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
                 d = (row.get("domain") or "unknown").strip()

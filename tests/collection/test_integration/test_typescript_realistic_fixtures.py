@@ -6,10 +6,8 @@ complex patterns, and real-world code from popular TypeScript frameworks.
 """
 
 import pytest
+
 from ..conftest import (
-    extract_and_find_fixtures,
-    assert_fixture_detected,
-    assert_fixture_count,
     assert_fixture_with_type_detected,
 )
 

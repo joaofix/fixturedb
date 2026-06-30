@@ -1,13 +1,11 @@
-import re
+import subprocess
 from pathlib import Path
 
-import subprocess
-
 from collection.agent_commit_detector import (
-    _is_test_file_path,
-    Tier1RepositoryScanner,
-    AGENT_TRAILER_RE,
     _BOT,
+    AGENT_TRAILER_RE,
+    Tier1RepositoryScanner,
+    _is_test_file_path,
 )
 from collection.agent_detector import AgentCommitVerifier
 

@@ -8,22 +8,20 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import pandas as pd
+import matplotlib.pyplot as plt
 
 from ..eda_common import (
-    ROOT,
     DB_PATH,
     DEFAULT_OUT,
-    LANG_PALETTE,
     LANG_ORDER,
-    setup_style,
-    save_or_show,
-    load_db,
+    LANG_PALETTE,
     has_data,
-    qdf,
     lang_display,
+    load_db,
+    qdf,
+    save_or_show,
+    setup_style,
 )
 
 

@@ -13,15 +13,14 @@ Output:
 """
 
 import json
-import logging
 import sys
-from pathlib import Path
 from datetime import datetime
-
-from .db import db_session
+from pathlib import Path
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
+
+from .db import db_session
 
 logger = get_logger(__name__)
 
@@ -192,8 +191,8 @@ def main():
         logger.info("")
         logger.info("For fair comparison, sample both datasets to:")
         logger.info(f"  Target fixture count: {min_count}")
-        logger.info(f"  Stratification: fixture_type")
-        logger.info(f"  Tolerance: 2%")
+        logger.info("  Stratification: fixture_type")
+        logger.info("  Tolerance: 2%")
 
         # Prepare output
         output_data = {

@@ -1,25 +1,22 @@
-import sqlite3
-from pathlib import Path
 
-import pytest
 
 from collection.db import (
-    initialise_db,
+    classify_domain,
+    compute_repo_age_at_date,
+    compute_star_tier,
     db_session,
+    get_analyzed_count_by_language,
+    get_corpus_stats,
+    initialise_db,
+    insert_commit_observation,
+    insert_fixture,
+    insert_human_inter_fixture,
+    insert_human_within_fixture,
+    insert_mock_usage,
+    insert_test_commit,
+    set_repo_analysed,
     upsert_repository,
     upsert_test_file,
-    insert_fixture,
-    insert_human_within_fixture,
-    insert_human_inter_fixture,
-    insert_commit_observation,
-    insert_test_commit,
-    insert_mock_usage,
-    get_corpus_stats,
-    get_analyzed_count_by_language,
-    set_repo_analysed,
-    compute_star_tier,
-    compute_repo_age_at_date,
-    classify_domain,
 )
 
 

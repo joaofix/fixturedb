@@ -38,7 +38,7 @@ _OUTPUT_FIELDNAMES = ["repo_name", "language", "domain", "clone_url"]
 
 def _load_proportions(path: Path) -> dict:
     """Load the category proportions JSON."""
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
@@ -87,7 +87,7 @@ def _load_classification_map(classified_dir: Path) -> dict[str, str]:
     """Build repo_name → domain mapping from classified CSVs."""
     mapping: dict[str, str] = {}
     for csv_path in sorted(classified_dir.glob("*.csv")):
-        with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+        with open(csv_path, encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
                 name = (row.get("name") or "").strip()

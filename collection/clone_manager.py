@@ -4,22 +4,21 @@ Provides context managers to clone repos (either via an injected clone function
 or into a temporary directory) and guarantees cleanup on exit.
 """
 
-from contextlib import contextmanager
+import os
 import shutil
 import shutil as _shutil
-import os
+import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Optional
-import logging
-import time
 
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
-from .temp_clone import clone_to_tempdir, cleanup_tempdir
 import threading
-import math
+
+from .temp_clone import cleanup_tempdir, clone_to_tempdir
 
 # Configurable concurrency limit for git clone operations
 DEFAULT_MAX_CONCURRENT_CLONES = int(os.getenv("MAX_CONCURRENT_CLONES", "4"))

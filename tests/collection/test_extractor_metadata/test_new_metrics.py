@@ -2,7 +2,6 @@
 Tests for new metrics: max_nesting_depth, reuse_count, has_teardown_pair, num_contributors.
 """
 
-import pytest
 from pathlib import Path
 
 from collection.detector import extract_fixtures

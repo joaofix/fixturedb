@@ -59,19 +59,17 @@ Each FixtureResult carries all the fields needed to populate the DB tables:
 """
 
 import re
-import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config import MAX_FILE_SIZE_BYTES
+from collection.logging_utils import get_logger
+
 from .ast_cache import parse_bytes as parse_src_bytes
 from .complexity_provider import (
     analyze_function_complexity,
-    get_file_loc,
     get_file_function_count,
 )
-
-from collection.logging_utils import get_logger
+from .config import MAX_FILE_SIZE_BYTES
 
 logger = get_logger(__name__)
 
@@ -88,9 +86,9 @@ def _get_parser(language: str):
         return _PARSERS[language]
 
     try:
-        import tree_sitter_python
         import tree_sitter_java
         import tree_sitter_javascript
+        import tree_sitter_python
         import tree_sitter_typescript
         from tree_sitter import Language, Parser
 
@@ -602,7 +600,7 @@ def _validate_framework(framework: str, language: str) -> str:
     Returns:
         The framework name (unchanged, for further processing)
     """
-    from .config import is_known_framework, get_known_frameworks
+    from .config import get_known_frameworks, is_known_framework
 
     if not is_known_framework(framework, language):
         known = get_known_frameworks(language)

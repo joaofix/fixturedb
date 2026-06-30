@@ -23,7 +23,6 @@ BENEFITS of using Lizard:
 - Academic credibility for published research
 """
 
-import logging
 from pathlib import Path
 from typing import Optional
 

@@ -10,20 +10,17 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from ..eda_common import (
-    ROOT,
     DB_PATH,
     DEFAULT_OUT,
-    LANG_PALETTE,
     LANG_ORDER,
-    setup_style,
-    save_or_show,
-    load_db,
     has_data,
-    qdf,
     lang_display,
+    load_db,
+    qdf,
+    save_or_show,
+    setup_style,
 )
 
 

@@ -6,9 +6,9 @@ targets. Fallback strategies (expand pool or reduce targets) are intentionally
 not implemented here — they'll be added later after initial collection tests.
 """
 
-from collections import defaultdict
 import random
-from typing import List, Dict
+from collections import defaultdict
+from typing import Dict, List
 
 
 def stratified_sample_by_language(

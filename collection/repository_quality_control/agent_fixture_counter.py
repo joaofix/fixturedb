@@ -20,13 +20,12 @@ metadata from the QCed commit CSVs.
 from __future__ import annotations
 
 import csv
-import logging
 import shutil
 import subprocess
 import tempfile
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -35,12 +34,11 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
 
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
-from collection.fixture_extractor import AgentFixtureExtractor
 from collection.clone_manager import temp_clone_commit_history
+from collection.fixture_extractor import AgentFixtureExtractor
+from collection.logging_utils import get_logger
 from collection.temp_clone import _output_requests_credentials
 from collection.utils import _date_only
-
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -433,7 +431,7 @@ def _process_single_repo(
         )
         try:
             _ensure_commits_present(local_repo_path, clone_url, commit_shas)
-        except RuntimeError as e:
+        except RuntimeError:
             return {
                 "repo_name": repo_name,
                 "strategy": selected_strategy,

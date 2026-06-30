@@ -12,13 +12,9 @@ Shows the distribution of fixtures across the 8-category taxonomy:
   - environment: manages environment, files, databases
 """
 
-import sqlite3
-from pathlib import Path
-import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
-from ..eda_common import qdf, lang_display, save_or_show, LANG_ORDER
+from ..eda_common import qdf, save_or_show
 
 # Color palette for categories (semantic: primary patterns first)
 CATEGORY_COLORS = {

@@ -18,12 +18,10 @@ Output:
 """
 
 import json
-import logging
-import sqlite3
 import sys
 import zipfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger

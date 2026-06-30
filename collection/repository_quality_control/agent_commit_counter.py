@@ -24,22 +24,21 @@ It only reads repositories marked `has_agent_config` in the repo-counter CSV out
 By default the clone is blob-limited so large file contents are not downloaded; commit history remains complete.
 """
 
+import concurrent.futures
 import csv
 import json
-import logging
 from datetime import datetime, timezone
 from pathlib import Path
-import concurrent.futures
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
 
+import os
+
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.clone_manager import temp_clone_commit_history
-import os
-import json
 
 GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
 # Default output dir for agent commit CSVs (per-language)

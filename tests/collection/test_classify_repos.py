@@ -12,10 +12,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from collection.classify_repos import (
-    VALID_DOMAINS,
     VALID_CONFIDENCES,
+    VALID_DOMAINS,
     GitHubRateLimiter,
-    OllamaProvider,
     OpenRouterProvider,
     READMEEnricher,
     RepoClassifier,
@@ -27,7 +26,6 @@ from collection.classify_repos import (
     main,
     write_result,
 )
-
 
 # ---------------------------------------------------------------------------
 # _parse_topics

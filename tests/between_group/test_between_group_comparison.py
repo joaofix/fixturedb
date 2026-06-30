@@ -11,17 +11,14 @@ Tests statistical comparison of human vs agent corpora including:
 import sqlite3
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from collection.between_group_comparison import (
     BalanceTest,
     BetweenGroupComparison,
     compute_categorical_balance,
     compute_continuous_balance,
-    get_human_fixtures_by_variable,
     get_agent_fixtures_by_variable,
+    get_human_fixtures_by_variable,
 )
 
 

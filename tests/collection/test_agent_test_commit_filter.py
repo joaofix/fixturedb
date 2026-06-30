@@ -3,9 +3,11 @@ import json
 import subprocess
 from pathlib import Path
 
-from collection.test_commit_filter import collect_agent_test_commits_from_repos
-from collection.test_commit_filter import collect_agent_test_commits
 from collection.config import COLLECTION_OUTPUT_TAG
+from collection.test_commit_filter import (
+    collect_agent_test_commits,
+    collect_agent_test_commits_from_repos,
+)
 
 
 def init_minimal_repo_with_agent_commit(path: Path, marker: str = "") -> str:
@@ -186,7 +188,6 @@ def test_collect_agent_test_commits_resumes_completed_repos(tmp_path: Path):
 def test_default_output_dir_no_versioned_subfolder_when_tag_empty():
     """With empty COLLECTION_OUTPUT_TAG, default output is root test-commits dir."""
     from pathlib import Path
-    from collection.config import COLLECTION_OUTPUT_TAG
 
     default_path = Path("output/test-commits") / COLLECTION_OUTPUT_TAG
     assert COLLECTION_OUTPUT_TAG == ""

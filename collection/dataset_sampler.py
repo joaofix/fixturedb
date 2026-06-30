@@ -6,10 +6,9 @@ Ensures both fixturedb-human and fixturedb-agent have identical fixture counts
 while maintaining statistical distribution within tolerance.
 """
 
-import logging
 import random
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from collection.logging_utils import get_logger
 

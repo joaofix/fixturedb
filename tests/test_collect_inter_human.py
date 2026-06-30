@@ -1,14 +1,12 @@
-import sqlite3
 import json
+import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
-
-from collection.human_corpus import HumanCorpusCollector
 import collection.human_corpus as human_corpus
 from collection.db import initialise_db
+from collection.human_corpus import HumanCorpusCollector
 
 
 def test_collect_inter_human_monkeypatched(tmp_path, monkeypatch):

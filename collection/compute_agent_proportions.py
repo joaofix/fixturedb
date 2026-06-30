@@ -31,7 +31,7 @@ def _load_classification_map(classified_dir: Path) -> dict[str, str]:
     """Build a mapping from repo_name → domain from the classified CSVs."""
     mapping: dict[str, str] = {}
     for csv_path in sorted(classified_dir.glob("*.csv")):
-        with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+        with open(csv_path, encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
                 name = (row.get("name") or "").strip()
@@ -51,7 +51,7 @@ def _load_agent_repos(repos_dir: Path) -> dict[str, list[str]]:
     for csv_path in sorted(repos_dir.glob("*_agent_fixture_repos.csv")):
         # Extract language from filename: "python_agent_fixture_repos.csv" → "python"
         lang = csv_path.stem.split("_")[0]
-        with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+        with open(csv_path, encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
                 name = (row.get("repo_name") or "").strip()

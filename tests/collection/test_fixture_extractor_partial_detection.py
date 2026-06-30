@@ -1,14 +1,13 @@
-from pathlib import Path
-from types import SimpleNamespace
-from threading import Lock, Thread
-import time
 import subprocess
+import time
+from pathlib import Path
+from threading import Lock, Thread
+from types import SimpleNamespace
 
 from collection.fixture_extractor import (
     AgentFixtureExtractor,
     DiffLineMap,
     _checkout_commit,
-    _raw_diff_commit_is_pure_addition,
     extract_fixtures_at_commit,
 )
 
@@ -637,7 +636,6 @@ def test_agent_commits_skipped_when_commit_level_impure(tmp_path, monkeypatch):
     )
 
     # The actual extraction code path we are testing
-    from collection.fixture_extractor import _resolve_repo_path
 
     monkeypatch.setattr(
         "collection.fixture_extractor._resolve_repo_path",

@@ -8,24 +8,20 @@
 import sqlite3
 import subprocess
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
-
+from collection.config import AGENT_CORPUS_START_DATE
+from collection.db import (
+    classify_domain,
+    compute_repo_age_at_date,
+    compute_star_tier,
+)
 from collection.human_corpus import (
     HumanCorpusCollector,
     HumanCorpusStats,
     _human_fixtures_root,
     select_human_corpus_repositories,
 )
-from collection.db import (
-    classify_domain,
-    compute_star_tier,
-    compute_repo_age_at_date,
-)
-from collection.config import AGENT_CORPUS_START_DATE, COLLECTION_OUTPUT_TAG
 
 
 def _create_test_corpus_db(db_path: Path) -> None:

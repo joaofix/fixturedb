@@ -7,9 +7,6 @@ and usable without cross-references or the original corpus.db.
 """
 
 import csv
-import json
-import logging
-import shutil
 import sqlite3
 import zipfile
 from dataclasses import dataclass

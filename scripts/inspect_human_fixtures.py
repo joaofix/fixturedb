@@ -6,11 +6,11 @@ per fixture containing metadata, the raw source lines, and the git diff for the
 commit that added the fixture.
 """
 
-from pathlib import Path
 import csv
-import subprocess
 import json
 import re
+import subprocess
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CLONES = ROOT / "clones"

@@ -17,11 +17,8 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 from collection.compute_agent_proportions import compute_proportions
 from collection.human_corpus import load_dataset_c_repos
 from collection.sample_proportional_repos import (
-    _assign_domains,
-    _load_pre_cutoff_repos,
     sample_proportional,
 )
-
 
 # ---------------------------------------------------------------------------
 # Full pipeline integration: real data

@@ -1,9 +1,7 @@
-import sqlite3
-from pathlib import Path
 
 from collection.db import (
-    initialise_db,
     db_session,
+    initialise_db,
     insert_human_inter_fixture,
     upsert_repository,
     upsert_test_file,

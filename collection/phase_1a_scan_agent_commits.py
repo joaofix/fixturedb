@@ -11,18 +11,16 @@ Output: JSON file with agent commits found in corpus repos for Phase 1B verifica
 """
 
 import json
-import logging
 import sqlite3
 import sys
-from pathlib import Path
 from datetime import datetime
-
-from .agent_commit_detector import Tier1RepositoryScanner
-from .config import DB_PATH
-from .resume_utils import latest_matching_file
+from pathlib import Path
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
+
+from .agent_commit_detector import Tier1RepositoryScanner
+from .resume_utils import latest_matching_file
 
 logger = get_logger(__name__)
 
@@ -199,7 +197,7 @@ def main():
         logger.info(
             f"Total agent commits found: {tier1_results['total_agent_commits']}"
         )
-        logger.info(f"Agent distribution:")
+        logger.info("Agent distribution:")
         for agent, count in sorted(
             tier1_results["agents_by_type"].items(), key=lambda x: x[1], reverse=True
         ):

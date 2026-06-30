@@ -10,35 +10,30 @@ Tests the 2025+ agent-authored fixture collection including:
 """
 
 import csv
-import sqlite3
 import os
+import sqlite3
 import subprocess
-import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import collection.agent_corpus as agent_corpus
 from collection.agent_corpus import (
+    AGENT_SIGNATURES,
     AgentCorpusCollector,
     AgentCorpusStats,
+    _load_qc_agent_commits,
+    _load_qc_repo_rows,
     detect_agent_in_commit,
     detect_agent_type,
     get_agent_commits,
-    _load_qc_agent_commits,
-    _load_qc_repo_rows,
-    AGENT_SIGNATURES,
 )
+from collection.config import AGENT_CORPUS_START_DATE
 from collection.db import (
-    classify_domain,
-    compute_star_tier,
     compute_repo_age_at_date,
     db_session,
     is_global_checkpoint_completed,
 )
-from collection.config import AGENT_CORPUS_START_DATE
 
 
 class TestAgentDetection:
@@ -745,8 +740,9 @@ def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeyp
 
 def test_agent_fixture_repos_dir_no_versioned_subfolder_when_tag_empty():
     """With empty COLLECTION_OUTPUT_TAG, fixture list goes to root fixtures-from-agents."""
-    from collection.config import COLLECTION_OUTPUT_TAG
     from pathlib import Path
+
+    from collection.config import COLLECTION_OUTPUT_TAG
 
     # When tag is empty, the code appends directly to fixtures-from-agents/
     project_root = Path(".").resolve()
@@ -771,7 +767,6 @@ def test_single_language_filter_limits_repos():
 
 def test_incremental_checkpoint_after_repo(tmp_path):
     """AgentCorpusCollector should write checkpoint/CSV after each repo with test commits."""
-    from unittest.mock import patch, MagicMock
     from collection.agent_corpus import AgentCorpusCollector
 
     collector = AgentCorpusCollector(
@@ -813,9 +808,8 @@ def test_incremental_checkpoint_after_repo(tmp_path):
 
 def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
     """After a full run completes, single-language runs for new languages should still proceed."""
-    from unittest.mock import patch, MagicMock
     from collection.agent_corpus import AgentCorpusCollector
-    from collection.db import mark_global_checkpoint, initialise_db
+    from collection.db import initialise_db, mark_global_checkpoint
 
     db_path = tmp_path / "corpus.db"
     initialise_db(db_path)
@@ -863,9 +857,8 @@ def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
 
 def test_single_language_checkpoint_blocks_rerun(tmp_path):
     """A completed single-language run should block re-runs of the same language."""
-    from unittest.mock import patch, MagicMock
     from collection.agent_corpus import AgentCorpusCollector
-    from collection.db import mark_global_checkpoint, initialise_db
+    from collection.db import initialise_db, mark_global_checkpoint
 
     db_path = tmp_path / "corpus.db"
     initialise_db(db_path)
@@ -888,7 +881,6 @@ def test_single_language_checkpoint_blocks_rerun(tmp_path):
 
 def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
     """Pipeline should truncate output CSVs before collection, so re-runs replace."""
-    from unittest.mock import patch, MagicMock
     from collection.agent_corpus import AgentCorpusCollector
     from collection.corpus_utils import truncate_fixture_csvs
 

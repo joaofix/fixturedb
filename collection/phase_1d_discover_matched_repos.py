@@ -10,21 +10,20 @@ behavior so completed runs are not repeated.
 from __future__ import annotations
 
 import json
-import logging
 import sys
 from datetime import datetime
 from pathlib import Path
 
+# Logging is configured via collection.logging_utils.configure_logging()
+from collection.logging_utils import get_logger
+
+from .agent_commit_detector import Tier2RepoMatcher
 from .config import (
     DATA_DIR,
     TIER1_MINIMUM_AGENT_COMMITS,
     TIER1_MINIMUM_REPOS_WITH_AGENT,
 )
 from .resume_utils import latest_matching_file
-from .agent_commit_detector import Tier2RepoMatcher
-
-# Logging is configured via collection.logging_utils.configure_logging()
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 

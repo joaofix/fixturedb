@@ -6,28 +6,24 @@ for corpus collectors to reduce code duplication.
 """
 
 import csv
-import time
 import json
-import logging
-from abc import ABC, abstractmethod
+import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, TypedDict, Any
-
-from .config import LANGUAGE_CONFIGS
-from .db import (
-    classify_domain,
-    compute_star_tier,
-    compute_repo_age_at_date,
-    upsert_repository,
-    upsert_test_file,
-    insert_fixture,
-    insert_test_commit,
-    db_session,
-)
+from typing import Any, Dict, Optional, TypedDict
 
 from collection.logging_utils import get_logger
+
+from .db import (
+    classify_domain,
+    compute_repo_age_at_date,
+    compute_star_tier,
+    db_session,
+    insert_fixture,
+    upsert_repository,
+    upsert_test_file,
+)
 
 logger = get_logger(__name__)
 

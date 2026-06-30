@@ -1,9 +1,11 @@
 import time
-from pathlib import Path
 
-from collection.db import initialise_db, insert_human_inter_fixtures_bulk
-from collection.db import insert_human_inter_fixture
-from collection.db import db_session
+from collection.db import (
+    db_session,
+    initialise_db,
+    insert_human_inter_fixture,
+    insert_human_inter_fixtures_bulk,
+)
 
 
 def make_fixture(i, repo_id, file_id=1):

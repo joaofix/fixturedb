@@ -6,10 +6,9 @@ complex hierarchies, and real-world patterns from popular Java frameworks.
 """
 
 import pytest
+
 from ..conftest import (
-    extract_and_find_fixtures,
     assert_fixture_detected,
-    assert_fixture_count,
 )
 
 

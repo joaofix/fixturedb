@@ -2,11 +2,13 @@
 Shared test utilities and fixtures for extractor tests.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
 from typing import Optional
-from collection.detector import extract_fixtures, FixtureResult
+
+import pytest
+
+from collection.detector import FixtureResult, extract_fixtures
 
 
 @pytest.fixture

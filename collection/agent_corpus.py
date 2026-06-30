@@ -8,8 +8,6 @@ only) detected from repositories with agent configuration files.
 import argparse
 import csv
 import json
-import logging
-import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -17,6 +15,15 @@ from typing import Dict, Optional
 
 from tqdm import tqdm
 
+from collection.logging_utils import get_logger
+
+from .agent_patterns import (
+    AGENT_SIGNATURES,
+    PAPER_AGENT_CONFIG_PATTERNS,
+    PAPER_AGENT_REPOSITORY_LANGUAGES,
+    repo_contains_patterns,
+)
+from .clone_manager import clone_with_function
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
@@ -25,42 +32,31 @@ from .config import (
     LANGUAGE_CONFIGS,
     MIN_COMMITS,
 )
-from .db import (
-    db_session,
-    initialise_db,
-    mark_global_checkpoint,
-    is_global_checkpoint_completed,
-    upsert_repository,
-    upsert_test_file,
-    insert_fixture,
-    insert_test_commit,
-)
-from .fixture_extractor import AgentFixtureExtractor
-from .test_commit_utils import collect_test_files_for_commit, write_test_commits_csv
-from .agent_patterns import (
-    AGENT_SIGNATURES,
-    PAPER_AGENT_CONFIG_PATTERNS,
-    PAPER_AGENT_REPOSITORY_LANGUAGES,
-    repo_contains_patterns,
-)
 from .corpus_utils import (
     BaseCorpusStats,
     compute_repo_metadata,
     construct_repo_dict,
     generate_corpus_summary,
-    persist_repository_and_fixtures,
     write_fixture_csv_row,
 )
-from .clone_manager import clone_with_function
+from .db import (
+    db_session,
+    initialise_db,
+    insert_fixture,
+    insert_test_commit,
+    is_global_checkpoint_completed,
+    mark_global_checkpoint,
+    upsert_repository,
+    upsert_test_file,
+)
+from .fixture_extractor import AgentFixtureExtractor
 from .temp_clone import _output_requests_credentials
+from .test_commit_utils import collect_test_files_for_commit, write_test_commits_csv
 from .utils import (
+    AGENT_TRAILER_RE,
     _normalize_language_filters,
     build_repo_row,
-    _date_only,
-    AGENT_TRAILER_RE,
 )
-
-from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 

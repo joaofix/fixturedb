@@ -14,16 +14,15 @@ Output:
 """
 
 import json
-import logging
 import sys
-from pathlib import Path
 from datetime import datetime
-
-from .dataset_sampler import StratifiedSampler
-from .db import db_session
+from pathlib import Path
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
+
+from .dataset_sampler import StratifiedSampler
+from .db import db_session
 
 logger = get_logger(__name__)
 
@@ -79,7 +78,7 @@ def main():
         phase_4_file = phase_4_files[-1]
         logger.info(f"Loading Phase 4 results from: {phase_4_file}")
         try:
-            with open(phase_4_file, "r") as f:
+            with open(phase_4_file) as f:
                 phase_4_results = json.load(f)
             target_count = phase_4_results["sampling_recommendation"]["target_count"]
             logger.info(f"Target sample size (from Phase 4): {target_count}")

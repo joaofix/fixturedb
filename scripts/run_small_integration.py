@@ -8,9 +8,10 @@ and persistence pipeline.
 import subprocess
 import tempfile
 from pathlib import Path
-from collection.fixture_extractor import extract_fixtures_at_commit
-from collection.corpus_utils import persist_repository_and_fixtures, construct_repo_dict
+
+from collection.corpus_utils import construct_repo_dict, persist_repository_and_fixtures
 from collection.db import initialise_db
+from collection.fixture_extractor import extract_fixtures_at_commit
 
 
 def create_sample_repo(root: Path) -> Path:

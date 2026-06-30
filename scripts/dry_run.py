@@ -16,7 +16,6 @@ Requirements:
 
 import argparse
 import csv
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -161,12 +160,12 @@ def run_agent_extraction(
     fixture_list_dir = repo_qc_dir / "fixtures-from-agents"
     expected_csv = fixture_list_dir / "repos" / f"{language}_agent_fixture_repos.csv"
     if expected_csv.exists():
-        with open(expected_csv, "r") as f:
+        with open(expected_csv) as f:
             count = sum(1 for _ in f) - 1  # minus header
         print(f"  ✓ Agent fixture repo list written: {expected_csv} ({count} repos)")
     else:
         print(f"  ⚠ Agent fixture repo list NOT found at {expected_csv}")
-        print(f"    (This is OK if no repos produced agent fixtures)")
+        print("    (This is OK if no repos produced agent fixtures)")
 
     return True
 
@@ -278,7 +277,7 @@ def main():
 
     dry_run_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Dry run started")
+    print("Dry run started")
     print(f"  Language:          {args.language}")
     print(f"  Repos per language: {args.repos_per_language}")
     print(f"  Workers:           {args.workers}")
@@ -332,13 +331,13 @@ def main():
         fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
         test_commits = conn.execute("SELECT COUNT(*) FROM test_commits").fetchone()[0]
         conn.close()
-        print(f"\n  DB contents:")
+        print("\n  DB contents:")
         print(f"    Repositories:  {repos}")
         print(f"    Test commits:  {test_commits}")
         print(f"    Fixtures:      {fixtures}")
 
-    print(f"\n  To resume with more repos, run:")
-    print(f"    python scripts/dry_run.py --skip-clean --repos-per-language 5")
+    print("\n  To resume with more repos, run:")
+    print("    python scripts/dry_run.py --skip-clean --repos-per-language 5")
     print()
 
 

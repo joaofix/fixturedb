@@ -8,7 +8,6 @@ import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import pandas as pd
 import seaborn as sns
 
