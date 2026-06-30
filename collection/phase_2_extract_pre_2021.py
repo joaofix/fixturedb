@@ -22,6 +22,9 @@ from .resume_utils import database_has_rows
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
+# Suppress pydriller's per-commit traversal noise (keep warnings/errors)
+logging.getLogger("pydriller").setLevel(logging.WARNING)
+
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
 
