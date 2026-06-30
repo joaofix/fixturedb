@@ -216,6 +216,47 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
     assert "owner/pending-java" in processed
 
 
+def test_collect_dataset_c_empty_targets_selects_all(tmp_path):
+    """When no agent targets exist in DB, all candidates should be selected."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, [
+            (
+                repo,
+                {
+                    "name": f"fixture_{i}",
+                    "file_path": "t.py",
+                    "start_line": i,
+                    "end_line": i + 3,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            )
+            for i in range(3)
+        ]
+
+    repos = [{"full_name": "owner/repo", "language": "python", "clone_url": "https://github.com/owner/repo.git"}]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
+         patch("collection.dataset_c.persist_repository_and_fixtures") as mock_persist, \
+         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+        # Pass empty targets to simulate fresh DB
+        stats, db_path = collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="python",
+            targets={},
+        )
+
+    assert stats["fixtures_persisted"] == 3
+    assert stats["completed_repos"] == 1
+
+
 def test_dataset_c_persistence_error_logs_warning(tmp_path, caplog):
     """Persistence failures must be logged at WARNING, not DEBUG."""
     import logging

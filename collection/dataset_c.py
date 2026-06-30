@@ -337,7 +337,14 @@ def collect_dataset_c_fixtures(
     _write_dataset_c_progress(progress_path, completed_repos, counts)
 
     flat_candidates = [dict(fixture) for _, fixture in candidates]
-    selected = stratified_sample_by_language(flat_candidates, targets, seed=seed)
+    if not targets:
+        logger.info(
+            "[Dataset C] No agent targets found in DB; selecting all %d candidates",
+            len(flat_candidates),
+        )
+        selected = flat_candidates
+    else:
+        selected = stratified_sample_by_language(flat_candidates, targets, seed=seed)
 
     repo_groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for fixture in selected:
