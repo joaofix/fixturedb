@@ -95,3 +95,64 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     assert result == 0
     assert captured_c["kwargs"]["clones_dir"] == clones_dir
     assert captured_c["kwargs"]["output_db"] == output_db
+
+
+def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monkeypatch):
+    """
+    Dataset C must not skip extraction when the output DB already contains
+    fixtures from a previous language run. The old blanket
+    database_has_rows guard caused this.
+    """
+    source_db = tmp_path / "source.db"
+    source_db.write_text("stub", encoding="utf-8")
+    clones_dir = tmp_path / "clones"
+    clones_dir.mkdir()
+    repo_qc_dir = tmp_path / "manual-repo-qc"
+    repo_qc_dir.mkdir()
+    output_db = tmp_path / "human.db"
+
+    # Pre-populate the output DB with fixture rows, simulating a prior java run
+    import sqlite3
+    conn = sqlite3.connect(str(output_db))
+    conn.execute("CREATE TABLE IF NOT EXISTS fixtures (id INTEGER PRIMARY KEY)")
+    conn.execute("INSERT INTO fixtures (id) VALUES (1)")
+    conn.execute("INSERT INTO fixtures (id) VALUES (2)")
+    conn.commit()
+    conn.close()
+
+    dataset_c_called = {}
+
+    def dataset_c_factory(*args, **kwargs):
+        dataset_c_called["kw"] = kwargs
+        return {"repos_persisted": 0, "fixtures_persisted": 0, "completed_repos": 0}, output_db
+
+    import collection.dataset_c as dataset_c_mod
+    monkeypatch.setattr(phase2, "HumanCorpusCollector", lambda *a, **k: None)
+    monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
+    monkeypatch.setattr(
+        phase2.sys,
+        "argv",
+        [
+            "phase_2_extract_pre_2021.py",
+            "--source-db",
+            str(source_db),
+            "--clones-dir",
+            str(clones_dir),
+            "--output-db",
+            str(output_db),
+            "--repo-dir",
+            str(repo_qc_dir),
+            "--language",
+            "javascript",
+        ],
+    )
+    monkeypatch.setattr("builtins.open", mock_open())
+
+    result = phase2.main()
+
+    assert result == 0
+    assert "kw" in dataset_c_called, (
+        "collect_dataset_c_fixtures was not called; the multi-language guard "
+        "is still blocking extraction when the DB already has rows"
+    )
+    assert dataset_c_called["kw"]["language"] == "javascript"

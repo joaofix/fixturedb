@@ -140,6 +140,7 @@ def main():
                 output_db=output_db,
                 cutoff_csv=cutoff_csv,
                 workers=getattr(args, "workers", None) or 4,
+                language=args.language,
             )
         else:
             collector = HumanCorpusCollector(
