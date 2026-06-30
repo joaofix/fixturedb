@@ -100,16 +100,19 @@ def main():
     combined_csv = dataset_c_dir / "dataset_c_sample.csv"
     is_dataset_c = (per_lang_csv and per_lang_csv.exists()) or combined_csv.exists()
 
-    # If no language specified and no combined CSV, check for any per-language CSVs
+    # If no language specified and no combined CSV, auto-detect per-language CSVs
     if not is_dataset_c and not args.language:
         per_lang_csvs = sorted(dataset_c_dir.glob("dataset_c_*.csv"))
         if per_lang_csvs:
             is_dataset_c = True
-            logger.info("Dataset C mode: auto-detected %d language CSVs", len(per_lang_csvs))
+            logger.info(
+                "Dataset C mode: auto-detected %d language CSVs: %s",
+                len(per_lang_csvs),
+                [p.name for p in per_lang_csvs],
+            )
 
     if is_dataset_c:
-        csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
-        logger.info("Dataset C mode: %s", csv_path)
+        logger.info("Dataset C mode activated")
 
     # Verify source database exists (not needed for Dataset C)
     if not is_dataset_c and not source_db.exists():
@@ -132,16 +135,15 @@ def main():
             from .dataset_c import collect_dataset_c_fixtures
             from .human_corpus import load_dataset_c_repos
 
-            csv_path = per_lang_csv if (per_lang_csv and per_lang_csv.exists()) else combined_csv
-            repos = load_dataset_c_repos(csv_path)
-            logger.info(
-                "Dataset C mode: loaded %d repos from %s",
-                len(repos),
-                csv_path,
-            )
-
             cutoff_csv = dataset_c_dir / "dataset_c_repo_cutoffs.csv"
             if args.language:
+                csv_path = per_lang_csv if per_lang_csv else combined_csv
+                repos = load_dataset_c_repos(csv_path)
+                logger.info(
+                    "Dataset C mode: loaded %d repos from %s",
+                    len(repos),
+                    csv_path,
+                )
                 stats, db_path = collect_dataset_c_fixtures(
                     agent_repos=repos,
                     clones_dir=clones_dir,
@@ -151,7 +153,6 @@ def main():
                     language=args.language,
                 )
             else:
-                # Run for all available language CSVs
                 available = sorted(dataset_c_dir.glob("dataset_c_*.csv"))
                 all_stats = {}
                 for lang_csv in available:

@@ -51,6 +51,17 @@ class DummyHumanCollector:
         ), Path("/tmp/human.db")
 
 
+def _make_dummy_dataset_c_csv(project_root: Path) -> Path:
+    fixtures_dir = project_root / "fixtures-from-agents"
+    fixtures_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = fixtures_dir / "dataset_c_sample.csv"
+    csv_path.write_text(
+        "repo_name,language,domain,clone_url\nowner/repo,python,data,https://github.com/owner/repo.git\n",
+        encoding="utf-8",
+    )
+    return csv_path
+
+
 def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     captured = {}
     source_db = tmp_path / "source.db"
@@ -61,47 +72,44 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     repo_qc_dir.mkdir()
     output_db = tmp_path / "human.db"
 
-    fixtures_dir = tmp_path / "fixtures-from-agents"
-    fixtures_dir.mkdir()
-    (fixtures_dir / "dataset_c_sample.csv").write_text(
-        "repo_name,language,domain,clone_url\nowner/repo,python,data,https://github.com/owner/repo.git\n",
-        encoding="utf-8",
-    )
+    dummy_csv = _make_dummy_dataset_c_csv(Path(phase2.__file__).resolve().parents[1])
+    try:
+        def collector_factory(*args, **kwargs):
+            captured["collector_kwargs"] = kwargs
+            return DummyHumanCollector(*args, **kwargs)
 
-    def collector_factory(*args, **kwargs):
-        captured["collector_kwargs"] = kwargs
-        return DummyHumanCollector(*args, **kwargs)
+        captured_c = {}
+        def dataset_c_factory(*args, **kwargs):
+            captured_c["kwargs"] = kwargs
+            return {"repos_persisted": 1, "fixtures_persisted": 2, "completed_repos": 1}, output_db
 
-    captured_c = {}
-    def dataset_c_factory(*args, **kwargs):
-        captured_c["kwargs"] = kwargs
-        return {"repos_persisted": 1, "fixtures_persisted": 2, "completed_repos": 1}, output_db
+        monkeypatch.setattr(phase2, "HumanCorpusCollector", collector_factory)
+        import collection.dataset_c as dataset_c_mod
+        monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
+        monkeypatch.setattr(
+            phase2.sys,
+            "argv",
+            [
+                "phase_2_extract_pre_2021.py",
+                "--source-db",
+                str(source_db),
+                "--clones-dir",
+                str(clones_dir),
+                "--output-db",
+                str(output_db),
+                "--repo-dir",
+                str(repo_qc_dir),
+            ],
+        )
+        monkeypatch.setattr("builtins.open", mock_open())
 
-    monkeypatch.setattr(phase2, "HumanCorpusCollector", collector_factory)
-    import collection.dataset_c as dataset_c_mod
-    monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
-    monkeypatch.setattr(
-        phase2.sys,
-        "argv",
-        [
-            "phase_2_extract_pre_2021.py",
-            "--source-db",
-            str(source_db),
-            "--clones-dir",
-            str(clones_dir),
-            "--output-db",
-            str(output_db),
-            "--repo-dir",
-            str(repo_qc_dir),
-        ],
-    )
-    monkeypatch.setattr("builtins.open", mock_open())
+        result = phase2.main()
 
-    result = phase2.main()
-
-    assert result == 0
-    assert captured_c["kwargs"]["clones_dir"] == clones_dir
-    assert captured_c["kwargs"]["output_db"] == output_db
+        assert result == 0
+        assert captured_c["kwargs"]["clones_dir"] == clones_dir
+        assert captured_c["kwargs"]["output_db"] == output_db
+    finally:
+        dummy_csv.unlink(missing_ok=True)
 
 
 def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monkeypatch):
@@ -118,54 +126,51 @@ def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monke
     repo_qc_dir.mkdir()
     output_db = tmp_path / "human.db"
 
-    fixtures_dir = tmp_path / "fixtures-from-agents"
-    fixtures_dir.mkdir()
-    (fixtures_dir / "dataset_c_sample.csv").write_text(
-        "repo_name,language,domain,clone_url\nowner/repo,python,data,https://github.com/owner/repo.git\n",
-        encoding="utf-8",
-    )
+    dummy_csv = _make_dummy_dataset_c_csv(Path(phase2.__file__).resolve().parents[1])
+    try:
+        import sqlite3
+        conn = sqlite3.connect(str(output_db))
+        conn.execute("CREATE TABLE IF NOT EXISTS fixtures (id INTEGER PRIMARY KEY)")
+        conn.execute("INSERT INTO fixtures (id) VALUES (1)")
+        conn.execute("INSERT INTO fixtures (id) VALUES (2)")
+        conn.commit()
+        conn.close()
 
-    import sqlite3
-    conn = sqlite3.connect(str(output_db))
-    conn.execute("CREATE TABLE IF NOT EXISTS fixtures (id INTEGER PRIMARY KEY)")
-    conn.execute("INSERT INTO fixtures (id) VALUES (1)")
-    conn.execute("INSERT INTO fixtures (id) VALUES (2)")
-    conn.commit()
-    conn.close()
+        dataset_c_called = {}
 
-    dataset_c_called = {}
+        def dataset_c_factory(*args, **kwargs):
+            dataset_c_called["kw"] = kwargs
+            return {"repos_persisted": 0, "fixtures_persisted": 0, "completed_repos": 0}, output_db
 
-    def dataset_c_factory(*args, **kwargs):
-        dataset_c_called["kw"] = kwargs
-        return {"repos_persisted": 0, "fixtures_persisted": 0, "completed_repos": 0}, output_db
+        import collection.dataset_c as dataset_c_mod
+        monkeypatch.setattr(phase2, "HumanCorpusCollector", lambda *a, **k: None)
+        monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
+        monkeypatch.setattr(
+            phase2.sys,
+            "argv",
+            [
+                "phase_2_extract_pre_2021.py",
+                "--source-db",
+                str(source_db),
+                "--clones-dir",
+                str(clones_dir),
+                "--output-db",
+                str(output_db),
+                "--repo-dir",
+                str(repo_qc_dir),
+                "--language",
+                "javascript",
+            ],
+        )
+        monkeypatch.setattr("builtins.open", mock_open())
 
-    import collection.dataset_c as dataset_c_mod
-    monkeypatch.setattr(phase2, "HumanCorpusCollector", lambda *a, **k: None)
-    monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
-    monkeypatch.setattr(
-        phase2.sys,
-        "argv",
-        [
-            "phase_2_extract_pre_2021.py",
-            "--source-db",
-            str(source_db),
-            "--clones-dir",
-            str(clones_dir),
-            "--output-db",
-            str(output_db),
-            "--repo-dir",
-            str(repo_qc_dir),
-            "--language",
-            "javascript",
-        ],
-    )
-    monkeypatch.setattr("builtins.open", mock_open())
+        result = phase2.main()
 
-    result = phase2.main()
-
-    assert result == 0
-    assert "kw" in dataset_c_called, (
-        "collect_dataset_c_fixtures was not called; the multi-language guard "
-        "is still blocking extraction when the DB already has rows"
-    )
-    assert dataset_c_called["kw"]["language"] == "javascript"
+        assert result == 0
+        assert "kw" in dataset_c_called, (
+            "collect_dataset_c_fixtures was not called; the multi-language guard "
+            "is still blocking extraction when the DB already has rows"
+        )
+        assert dataset_c_called["kw"]["language"] == "javascript"
+    finally:
+        dummy_csv.unlink(missing_ok=True)
