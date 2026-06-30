@@ -202,6 +202,8 @@ def write_fixture_csv_row(
         "reuse_count",
         "has_teardown_pair",
         "github_url",
+        "agent_type",
+        "commit_kind",
     ]
 
     if extra_fields:
@@ -248,6 +250,8 @@ def write_fixture_csv_row(
                 fixture.get("start_line", 0),
                 fixture.get("end_line", 0),
             ),
+            "agent_type": fixture.get("agent_type", ""),
+            "commit_kind": fixture.get("commit_kind", "unknown"),
         }
 
         if extra_fields:

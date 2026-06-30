@@ -1517,6 +1517,7 @@ class AgentFixtureExtractor:
                     "commit_sha": cutoff_commit_sha,
                     "commit_date": cutoff_commit_date,
                     "agent_type": "human_pre2022",
+                    "commit_kind": "human",
                     "is_complete_addition": 1,
                 }
             )

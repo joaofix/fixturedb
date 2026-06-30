@@ -359,7 +359,7 @@ def collect_dataset_c_fixtures(
                         successful_repos.add(futures[future]["full_name"])
                         candidates.extend(results)
             except KeyboardInterrupt:
-                logger.warning("[Dataset C] Interrupted; saving progress...")
+                logger.warning("[Dataset C] Interrupted; saving extraction progress...")
                 for fut in futures:
                     fut.cancel()
                 _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
@@ -367,8 +367,6 @@ def collect_dataset_c_fixtures(
                 raise
 
     completed_repos.update(successful_repos)
-    _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
-    _write_dataset_c_progress(progress_path, completed_repos, counts)
 
     flat_candidates = [dict(fixture) for _, fixture in candidates]
     if not targets:
@@ -410,6 +408,9 @@ def collect_dataset_c_fixtures(
             ) + len(fixtures_list)
         except Exception as exc:
             logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
+
+    _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
+    _write_dataset_c_progress(progress_path, completed_repos, counts)
 
     totals: Dict[str, int] = {
         "repos_persisted": counts.get("repos_persisted", 0),
