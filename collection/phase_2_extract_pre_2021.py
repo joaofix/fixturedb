@@ -16,7 +16,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg
+from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg, add_workers_arg
 from .human_corpus import HumanCorpusCollector
 from .resume_utils import database_has_rows
 
@@ -64,6 +64,7 @@ def main():
         default=None,
         help="Process a single language (uses dataset_c_{lang}.csv)",
     )
+    add_workers_arg(parser, default=4)
     args = parser.parse_args()
 
     clones_dir = args.clones_dir
@@ -138,7 +139,7 @@ def main():
                 clones_dir=clones_dir,
                 output_db=output_db,
                 cutoff_csv=cutoff_csv,
-                workers=getattr(args, "workers", None),
+                workers=getattr(args, "workers", None) or 4,
             )
         else:
             collector = HumanCorpusCollector(
