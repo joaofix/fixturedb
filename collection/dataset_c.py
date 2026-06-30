@@ -239,6 +239,7 @@ def collect_dataset_c_fixtures(
     workers: int = 4,
     seed: int = 42,
     targets: Optional[Dict[str, int]] = None,
+    language: Optional[str] = None,
 ) -> Tuple[Dict[str, int], Path]:
     """Extract human_pre2022 fixtures from a stratified repo sample via snapshot extraction.
 
@@ -258,8 +259,8 @@ def collect_dataset_c_fixtures(
     if cutoff_csv:
         cutoffs = load_repo_cutoffs(cutoff_csv)
 
-    checkpoint_path = output_db.parent / "dataset_c_checkpoint.json"
-    progress_path = output_db.parent / f"{output_db.stem}_dataset_c_progress.json"
+    checkpoint_path = output_db.parent / f"dataset_c_checkpoint_{language or 'all'}.json"
+    progress_path = output_db.parent / f"{output_db.stem}_dataset_c_{language or 'all'}_progress.json"
 
     completed_repos, counts = _load_dataset_c_checkpoint(checkpoint_path)
     pending_repos = [r for r in agent_repos if r.get("full_name") not in completed_repos]
@@ -367,7 +368,7 @@ def collect_dataset_c_fixtures(
                 "fixtures_persisted", 0
             ) + len(fixtures_list)
         except Exception as exc:
-            logger.debug("[Dataset C] Failed to persist %s: %s", repo_full, exc)
+            logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
 
     totals: Dict[str, int] = {
         "repos_persisted": counts.get("repos_persisted", 0),

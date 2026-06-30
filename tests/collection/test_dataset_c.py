@@ -98,7 +98,7 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
 
-    checkpoint_path = tmp_path / "dataset_c_checkpoint.json"
+    checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
     _save_dataset_c_checkpoint(checkpoint_path, {"owner/done"}, {"repos_persisted": 1, "fixtures_persisted": 1})
 
     repos = [
@@ -120,6 +120,7 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
             clones_dir=tmp_path / "clones",
             output_db=output_db,
             workers=1,
+            language="python",
         )
 
     assert processed == ["owner/pending"]
@@ -148,6 +149,7 @@ def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
             clones_dir=tmp_path / "clones",
             output_db=output_db,
             workers=1,
+            language="python",
         )
 
     assert stats["fixtures_persisted"] == 3
