@@ -9,6 +9,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 from collection.fixture_extractor import AgentFixtureExtractor, extract_fixtures
 from collection.agent_commit_detector import _is_test_file_path
 from collection.clone_manager import clone_with_function
@@ -231,6 +233,24 @@ def _process_repo(
         return True, []
 
 
+
+
+def _load_agent_targets_from_csv(fixtures_dir: Path) -> Dict[str, int]:
+    """Count agent fixtures per language from fixtures-from-agents/*_agent_fixtures.csv."""
+    targets: Dict[str, int] = {}
+    if not fixtures_dir.exists():
+        return targets
+    for csv_path in sorted(fixtures_dir.glob("*_agent_fixtures.csv")):
+        lang = csv_path.stem.replace("_agent_fixtures", "")
+        try:
+            with csv_path.open("r", encoding="utf-8", newline="") as fh:
+                row_count = sum(1 for _ in csv.DictReader(fh))
+                if row_count > 0:
+                    targets[lang] = row_count
+        except Exception as exc:
+            logger.debug("Failed to load %s: %s", csv_path, exc)
+    return targets
+
 def collect_dataset_c_fixtures(
     agent_repos: List[Dict[str, Any]],
     clones_dir: Path,
@@ -283,19 +303,33 @@ def collect_dataset_c_fixtures(
 
     if targets is None:
         targets = {}
-        with db_session(output_db) as conn:
-            cur = conn.execute("""
-                SELECT r.language, COUNT(f.id) as c
-                FROM fixtures f
-                JOIN repositories r ON f.repo_id = r.id
-                WHERE f.commit_kind = 'agent'
-                GROUP BY r.language
-            """)
-            for row in cur.fetchall():
-                lang = (row[0] or "unknown").lower()
-                targets[lang] = int(row[1])
+        try:
+            with db_session(output_db) as conn:
+                cur = conn.execute("""
+                    SELECT r.language, COUNT(f.id) as c
+                    FROM fixtures f
+                    JOIN repositories r ON f.repo_id = r.id
+                    WHERE f.commit_kind = 'agent'
+                    GROUP BY r.language
+                """)
+                for row in cur.fetchall():
+                    lang = (row[0] or "unknown").lower()
+                    targets[lang] = int(row[1])
+        except Exception as exc:
+            logger.debug("[Dataset C] DB target lookup failed: %s", exc)
     else:
         targets = dict(targets)
+
+    if not targets:
+        csv_targets = _load_agent_targets_from_csv(
+            PROJECT_ROOT / "fixtures-from-agents"
+        )
+        if csv_targets:
+            logger.info(
+                "[Dataset C] Loaded %d language targets from agent fixture CSVs",
+                len(csv_targets),
+            )
+            targets.update(csv_targets)
 
     candidates: List[Tuple[Dict[str, Any], Dict[str, Any]]] = []
     extractor = AgentFixtureExtractor(

@@ -216,6 +216,44 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
     assert "owner/pending-java" in processed
 
 
+def test_load_agent_targets_from_csv_counts_fixtures(tmp_path):
+    """CSV fallback should count agent fixtures per language from fixture CSVs."""
+    import csv
+
+    fixtures_dir = tmp_path / "fixtures-from-agents"
+    fixtures_dir.mkdir()
+
+    # Write minimal CSVs with varying row counts
+    for lang, rows in [("python", 50), ("java", 30), ("typescript", 10)]:
+        csv_path = fixtures_dir / f"{lang}_agent_fixtures.csv"
+        with csv_path.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=["repo_name", "language", "commit_sha", "agent_type", "test_file_count", "test_file_paths"])
+            writer.writeheader()
+            for i in range(rows):
+                writer.writerow({
+                    "repo_name": f"owner/repo{i}",
+                    "language": lang,
+                    "commit_sha": f"abc{i:03d}",
+                    "agent_type": "claude",
+                    "test_file_count": 1,
+                    "test_file_paths": "tests/test_foo.py",
+                })
+
+    from collection.dataset_c import _load_agent_targets_from_csv
+
+    targets = _load_agent_targets_from_csv(fixtures_dir)
+    assert targets["python"] == 50
+    assert targets["java"] == 30
+    assert targets["typescript"] == 10
+
+
+def test_load_agent_targets_from_csv_missing_dir(tmp_path):
+    from collection.dataset_c import _load_agent_targets_from_csv
+
+    targets = _load_agent_targets_from_csv(tmp_path / "nonexistent")
+    assert targets == {}
+
+
 def test_collect_dataset_c_empty_targets_selects_all(tmp_path):
     """When no agent targets exist in DB, all candidates should be selected."""
     output_db = tmp_path / "out.db"
