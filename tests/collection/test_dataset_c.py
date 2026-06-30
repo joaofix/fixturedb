@@ -154,3 +154,102 @@ def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
 
     assert stats["fixtures_persisted"] == 3
     mock_persist.assert_called_once()
+
+
+def test_dataset_c_checkpoint_is_language_specific(tmp_path):
+    """Java checkpoint must not skip typescript repos and vice-versa."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+
+    repos = [
+        {"full_name": "owner/done-java", "language": "java", "clone_url": "https://github.com/owner/done-java.git"},
+        {"full_name": "owner/done-ts", "language": "typescript", "clone_url": "https://github.com/owner/done-ts.git"},
+        {"full_name": "owner/pending-java", "language": "java", "clone_url": "https://github.com/owner/pending-java.git"},
+        {"full_name": "owner/pending-ts", "language": "typescript", "clone_url": "https://github.com/owner/pending-ts.git"},
+    ]
+
+    processed = []
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        processed.append(repo["full_name"])
+        return True, []
+
+    # Save language-specific checkpoints for repos that are "done"
+    java_ckpt = tmp_path / "dataset_c_checkpoint_java.json"
+    _save_dataset_c_checkpoint(java_ckpt, {"owner/done-java"}, {"repos_persisted": 1, "fixtures_persisted": 1})
+
+    ts_ckpt = tmp_path / "dataset_c_checkpoint_typescript.json"
+    _save_dataset_c_checkpoint(ts_ckpt, {"owner/done-ts"}, {"repos_persisted": 1, "fixtures_persisted": 1})
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
+         patch("collection.dataset_c.persist_repository_and_fixtures"), \
+         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="java",
+        )
+
+    assert "owner/done-java" not in processed
+    assert "owner/pending-java" in processed
+    assert "owner/done-ts" in processed
+    assert "owner/pending-ts" in processed
+
+    processed.clear()
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
+         patch("collection.dataset_c.persist_repository_and_fixtures"), \
+         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="typescript",
+        )
+
+    assert "owner/done-ts" not in processed
+    assert "owner/pending-ts" in processed
+    assert "owner/done-java" in processed
+    assert "owner/pending-java" in processed
+
+
+def test_dataset_c_persistence_error_logs_warning(tmp_path, caplog):
+    """Persistence failures must be logged at WARNING, not DEBUG."""
+    import logging
+
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, [
+            (
+                repo,
+                {
+                    "name": "f1",
+                    "file_path": "t.py",
+                    "start_line": 1,
+                    "end_line": 5,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            )
+        ]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
+         patch("collection.dataset_c.persist_repository_and_fixtures", side_effect=RuntimeError("disk full")), \
+         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+        with caplog.at_level("WARNING"):
+            collect_dataset_c_fixtures(
+                agent_repos=[{"full_name": "owner/repo", "language": "python", "clone_url": "https://github.com/owner/repo.git"}],
+                clones_dir=tmp_path / "clones",
+                output_db=output_db,
+                workers=1,
+                language="python",
+            )
+
+    assert any("Failed to persist" in record.message for record in caplog.records)
+    assert any(record.levelno == logging.WARNING for record in caplog.records)
