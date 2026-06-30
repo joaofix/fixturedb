@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 from collection.fixture_extractor import AgentFixtureExtractor, extract_fixtures
 from collection.agent_commit_detector import _is_test_file_path
