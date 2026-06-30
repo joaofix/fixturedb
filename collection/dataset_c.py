@@ -385,6 +385,20 @@ def collect_dataset_c_fixtures(
 
     completed_repos.update(successful_repos)
 
+    # Clear stale CSV output for a fresh run so we don't append duplicates
+    # on top of a previous run that used the same language CSV.
+    from collection.human_corpus import _human_fixture_csv_path
+    fresh_start = not checkpoint_path.exists()
+    if fresh_start:
+        for lang in {c[1].get('language') for c in candidates}:
+            try:
+                csv_path = _human_fixture_csv_path(lang, 'inter')
+                if csv_path.exists():
+                    csv_path.unlink()
+                    logger.debug('[Dataset C] Removed stale CSV for fresh start: %s', csv_path)
+            except Exception as exc:
+                logger.debug('[Dataset C] Skipping CSV clear for %s: %s', lang, exc)
+
     flat_candidates = [dict(fixture) for _, fixture in candidates]
     if not targets:
         logger.info(
