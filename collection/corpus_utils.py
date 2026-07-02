@@ -65,7 +65,7 @@ class FixtureData(TypedDict, total=False):
     reuse_count: int
     has_teardown_pair: bool
     raw_source: str
-    framework: str
+    framework: Optional[str]
     num_mocks: int
     commit_sha: str
     commit_kind: str
@@ -317,7 +317,7 @@ def persist_repository_and_fixtures(
                 test_file_id = test_files_cache[file_path]
 
             # Build and insert fixture data
-            fixture_data: FixtureData = {
+            fixture_data: dict[str, Any] = {
                 "file_id": test_file_id,
                 "repo_id": repo_id,
                 "name": fixture.get("name"),

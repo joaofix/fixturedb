@@ -545,7 +545,7 @@ def _process_single_repo(
                         "rows": [],
                         "skipped": True,
                         "local_clone_reuse": used_local_clone,
-                        "skip_reason": "requires_credentials",
+"skip_reason": "requires_credentials",
                     }
 
                 extractor = AgentFixtureExtractor(
@@ -566,6 +566,15 @@ def _process_single_repo(
                     "skipped": False,
                     "local_clone_reuse": used_local_clone,
                 }
+
+    return {
+        "repo_name": repo_name,
+        "strategy": selected_strategy,
+        "rows": [],
+        "skipped": True,
+        "local_clone_reuse": used_local_clone,
+        "skip_reason": "unexpected_error",
+    }
 
 
 def run(

@@ -61,6 +61,7 @@ Each FixtureResult carries all the fields needed to populate the DB tables:
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 from collection.logging_utils import get_logger
 
@@ -128,7 +129,7 @@ class MockResult:
 class FixtureResult:
     name: str
     fixture_type: str  # see per-language constants below
-    framework: str  # testing framework: pytest, unittest, junit, nunit, testify, etc.
+    framework: Optional[str]  # testing framework: pytest, unittest, junit, nunit, testify, etc.
     scope: str  # per_test / per_class / per_module / global
     start_line: int
     end_line: int
@@ -321,7 +322,7 @@ def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
 
 
 def is_mock_framework_available(
-    framework: str, language: str, repo_path: Path = None
+    framework: str, language: str, repo_path: Optional[Path] = None
 ) -> bool:
     """
     Check if a detected mock framework is actually available in the project (Phase 4).
@@ -1218,7 +1219,7 @@ def _build_result(
     src_bytes: bytes,
     fixture_type: str,
     scope: str,
-    framework: str = None,
+    framework: Optional[str] = None,
     language: str = "python",
 ) -> FixtureResult:
     src_text = _source(func_node, src_bytes)
@@ -1425,7 +1426,7 @@ def _calculate_reuse_counts(
     else:
         # For other languages, use a simpler heuristic: count by scope
         # (same-scope fixtures are typically reused by multiple tests)
-        scope_groups = {}
+        scope_groups: dict[str, list] = {}
         for fixture in fixtures:
             key = fixture.scope
             if key not in scope_groups:

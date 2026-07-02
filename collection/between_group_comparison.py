@@ -294,7 +294,7 @@ def get_continuous_values(db_path: Path, variable: str, corpus: str) -> list[flo
 class BetweenGroupComparator:
     """Compare human and agent corpora on control variables."""
 
-    def __init__(self, db_path: Path = None):
+    def __init__(self, db_path: Optional[Path] = None):
         """
         Initialize comparator.
 

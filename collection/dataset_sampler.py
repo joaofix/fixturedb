@@ -108,8 +108,8 @@ class StratifiedSampler:
             additional_needed = target_count - len(sampled)
 
             # Sample from all fixtures excluding already sampled ones
-            sampled_ids = {f["id"] for f in sampled}
-            remaining = [f for f in fixtures if f["id"] not in sampled_ids]
+            current_ids = {f["id"] for f in sampled}
+            remaining = [f for f in fixtures if f["id"] not in current_ids]
 
             if not remaining:
                 break
@@ -123,7 +123,7 @@ class StratifiedSampler:
         sampled = sampled[:target_count]
 
         # Extract IDs
-        sampled_ids = [f["id"] for f in sampled]
+        sampled_ids: List[int] = [f["id"] for f in sampled]
 
         # Validate distribution
         distribution_check = self._validate_distribution(
@@ -160,7 +160,7 @@ class StratifiedSampler:
         Returns:
             Dict mapping stratum value to list of fixtures
         """
-        groups = {}
+        groups: Dict[str, List[Dict]] = {}
 
         for fixture in fixtures:
             stratum_value = fixture.get(stratify_by, "unknown")

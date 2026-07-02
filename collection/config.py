@@ -337,7 +337,7 @@ def get_known_frameworks(language: str) -> list[str]:
     return FRAMEWORK_REGISTRY.get(language, [])
 
 
-EXCLUSION_KEYWORDS = [
+EXCLUSION_KEYWORDS: list[str] = [
     "tutorial",
     "course",
     "homework",
@@ -356,6 +356,7 @@ EXCLUSION_KEYWORDS = [
     "leetcode",
     "hackerrank",
 ]
+
 
 # ---------------------------------------------------------------------------
 # Per-language targets

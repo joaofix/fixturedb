@@ -22,6 +22,7 @@ import sys
 import zipfile
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
@@ -41,7 +42,7 @@ class DatasetValidator:
         """
         self.export_dir = Path(export_dir)
 
-    def validate_zip_archive(self, zip_path: Path) -> dict:
+    def validate_zip_archive(self, zip_path: Path) -> dict[str, Any]:
         """
         Validate ZIP archive structure and contents.
 
@@ -51,7 +52,7 @@ class DatasetValidator:
         Returns:
             Validation result dict
         """
-        result = {
+        result: dict[str, Any] = {
             "zip_exists": zip_path.exists(),
             "zip_readable": False,
             "file_count": 0,
@@ -92,7 +93,7 @@ class DatasetValidator:
 
         return result
 
-    def validate_csv_files(self, zip_path: Path) -> dict:
+    def validate_csv_files(self, zip_path: Path) -> dict[str, Any]:
         """
         Validate CSV files in archive.
 
@@ -102,7 +103,7 @@ class DatasetValidator:
         Returns:
         Validation result dict
         """
-        result = {
+        result: dict[str, Any] = {
             "repositories": {"valid": False, "row_count": 0, "columns": []},
             "test_files": {"valid": False, "row_count": 0, "columns": []},
             "fixtures": {"valid": False, "row_count": 0, "columns": []},
@@ -148,7 +149,7 @@ class DatasetValidator:
 
         return result
 
-    def validate_independence(self, zip_path: Path) -> dict:
+    def validate_independence(self, zip_path: Path) -> dict[str, Any]:
         """
         Validate that dataset is completely independent.
 
@@ -163,7 +164,7 @@ class DatasetValidator:
         Returns:
             Validation result dict
         """
-        result = {
+        result: dict[str, Any] = {
             "is_independent": True,
             "no_corpus_references": True,
             "has_repository_metadata": True,
@@ -239,7 +240,7 @@ class DatasetValidator:
         self,
         human_zip: Path,
         agent_zip: Path,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Generate comprehensive validation report.
 
@@ -250,7 +251,7 @@ class DatasetValidator:
         Returns:
             Validation report dict
         """
-        report = {
+        report: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "human_dataset": {
                 "zip_validation": self.validate_zip_archive(human_zip),
@@ -268,7 +269,7 @@ class DatasetValidator:
         human_valid = (
             report["human_dataset"]["zip_validation"]["zip_readable"]
             and all(
-                report["human_dataset"]["zip_validation"]["required_files"].values()
+                report["human_dataset"]["zip_validation"]["required_files"].values()  # type: ignore[union-attr]
             )
             and report["human_dataset"]["independence_validation"]["is_independent"]
         )
@@ -276,7 +277,7 @@ class DatasetValidator:
         agent_valid = (
             report["agent_dataset"]["zip_validation"]["zip_readable"]
             and all(
-                report["agent_dataset"]["zip_validation"]["required_files"].values()
+                report["agent_dataset"]["zip_validation"]["required_files"].values()  # type: ignore[union-attr]
             )
             and report["agent_dataset"]["zip_validation"]["agents_md_present"]
             and report["agent_dataset"]["independence_validation"]["is_independent"]

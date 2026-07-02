@@ -31,15 +31,16 @@ def stratified_sample_by_language(
     rnd = random.Random(seed)
 
     # Group candidates by language then by repo
-    by_lang = defaultdict(lambda: defaultdict(list))
+    by_lang: Dict[str, Dict[str, List[dict]]] = defaultdict(lambda: defaultdict(list))
     for c in candidates:
         lang = c.get("language") or c.get("framework") or "unknown"
-        by_lang[lang][c.get("repo_id")].append(c)
+        repo_id = c.get("repo_id") or "unknown"
+        by_lang[lang][repo_id].append(c)
 
     selected: List[dict] = []
 
     for lang, target in targets.items():
-        repo_groups = by_lang.get(lang, {})
+        repo_groups: Dict[str, List[dict]] = by_lang.get(lang, {})
         if not repo_groups:
             continue
 

@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from time import sleep
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from collection.logging_utils import get_logger
 
@@ -917,7 +917,7 @@ class AgentFixtureExtractor:
         self.source_db = Path(source_db) if source_db is not None else None
         self.start_date = start_date
         self.stats = AgentExtractionStats()
-        self.all_fixtures = []
+        self.all_fixtures: list[dict[str, Any]] = []
 
     def extract_all(
         self,
@@ -1022,9 +1022,9 @@ class AgentFixtureExtractor:
                 ).fetchone()["c"]
 
                 # Group fixtures by repository
-                fixtures_by_repo = {}
+                fixtures_by_repo: Dict[str, List[dict[str, Any]]] = {}
                 for fixture in self.all_fixtures:
-                    repo_name = fixture.get("repo_name")
+                    repo_name = fixture.get("repo_name") or "unknown"
                     if repo_name not in fixtures_by_repo:
                         fixtures_by_repo[repo_name] = []
                     fixtures_by_repo[repo_name].append(fixture)
@@ -1081,7 +1081,7 @@ class AgentFixtureExtractor:
                         repo_id, _ = upsert_repository(conn, repo_data)
 
                         # Process test files
-                        files_by_path = {}
+                        files_by_path: Dict[str, List[dict[str, Any]]] = {}
                         for fixture in repo_fixtures:
                             file_path = fixture.get("file_path", "unknown")
                             if file_path not in files_by_path:

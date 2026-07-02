@@ -11,6 +11,7 @@ import sqlite3
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Optional
 
 from collection.logging_utils import get_logger
 
@@ -331,7 +332,8 @@ def insert_commit_observation(conn: sqlite3.Connection, observation: dict) -> in
         observation,
     )
     if cursor.rowcount == 1:
-        return cursor.lastrowid
+        rowid = cursor.lastrowid
+        return rowid if rowid is not None else 0
 
     row = conn.execute(
         "SELECT id FROM commit_observations WHERE repo_id=? AND commit_sha=?",
@@ -366,7 +368,8 @@ def insert_test_commit(conn: sqlite3.Connection, test_commit: dict) -> int:
         test_commit,
     )
     if cursor.rowcount == 1:
-        return cursor.lastrowid
+        rowid = cursor.lastrowid
+        return rowid if rowid is not None else 0
 
     row = conn.execute(
         "SELECT id FROM test_commits WHERE repo_id=? AND commit_sha=?",
@@ -462,9 +465,9 @@ def set_repo_status(
     conn: sqlite3.Connection,
     repo_id: int,
     status: str,
-    error: str = None,
-    skip_reason: str = None,
-    pinned_commit: str = None,
+    error: Optional[str] = None,
+    skip_reason: Optional[str] = None,
+    pinned_commit: Optional[str] = None,
 ) -> None:
     conn.execute(
         """
@@ -612,7 +615,8 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         fixture,
     )
     if cursor.rowcount == 1:
-        return cursor.lastrowid
+        rowid = cursor.lastrowid
+        return rowid if rowid is not None else 0
     row = conn.execute(
         "SELECT id FROM fixtures WHERE file_id=? AND name=? AND start_line=?",
         (fixture["file_id"], fixture["name"], fixture["start_line"]),

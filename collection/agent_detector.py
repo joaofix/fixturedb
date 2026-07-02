@@ -66,7 +66,7 @@ class GitHubAgentFileChecker:
             github_token: GitHub API token for authenticated requests (optional)
         """
         self.github_token = github_token
-        self.session_cache = {}  # Cache API results for efficiency
+        self.session_cache: Dict[Tuple[str, str], Tuple[bool, List[str]]] = {}  # Cache API results for efficiency
 
     def has_agent_config_files(
         self, full_repo_name: str, ref: str = "HEAD", timeout: int = 5
@@ -88,7 +88,7 @@ class GitHubAgentFileChecker:
         """
         try:
             # Check cache first
-            cache_key = f"{full_repo_name}:{ref}"
+            cache_key: Tuple[str, str] = (full_repo_name, ref)
             if cache_key in self.session_cache:
                 return self.session_cache[cache_key]
 
@@ -268,7 +268,7 @@ class AgentFileScanner:
         },
     }
 
-    def __init__(self, clones_dir: Path = None):
+    def __init__(self, clones_dir: Optional[Path] = None):
         """
         Initialize the agent file scanner.
 
@@ -416,7 +416,7 @@ class AgentFileScanner:
         Returns:
             Dict with summary statistics
         """
-        agent_counts = {}
+        agent_counts: Dict[str, int] = {}
         total_files = 0
         repo_with_multiple_agents = 0
 
@@ -438,7 +438,7 @@ class AgentFileScanner:
 
 
 def scan_for_agents(
-    clones_dir: Path = None, show_progress: bool = True
+    clones_dir: Optional[Path] = None, show_progress: bool = True
 ) -> Tuple[Dict[str, AgentFileDetectionResult], Dict]:
     """
     Convenience function to scan all repositories for agent files.
@@ -484,7 +484,7 @@ class AgentCommitVerifier:
     # Case-insensitive keywords for agent detection in commit messages.
     AGENT_KEYWORDS = AGENT_SIGNATURES
 
-    def __init__(self, clones_dir: Path = None):
+    def __init__(self, clones_dir: Optional[Path] = None):
         """
         Initialize the commit verifier.
 
@@ -677,7 +677,7 @@ class AgentCommitVerifier:
         Returns:
             Dict with summary statistics
         """
-        agent_commit_counts = {}
+        agent_commit_counts: Dict[str, int] = {}
         total_agent_commits = 0
         total_repos = len(verification_results)
 

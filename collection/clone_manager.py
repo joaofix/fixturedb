@@ -10,7 +10,7 @@ import shutil as _shutil
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable, Optional, Generator
 
 from collection.logging_utils import get_logger
 
@@ -86,7 +86,7 @@ def clone_with_function(
     target_dir: Path,
     *,
     min_free_bytes: int = 100_000_000,
-) -> Optional[Path]:
+) -> Generator[Optional[Path], None, None]:
     """Clone using a provided clone function into `target_dir` and remove it on exit.
 
     `clone_fn` should accept `(clone_url, target_dir)` and return True on success.
