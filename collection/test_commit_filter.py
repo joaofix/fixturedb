@@ -72,9 +72,7 @@ def _load_test_commit_resume_state(
 
     output_dir = Path(output_dir)
     pattern = (
-        "*_agent_test_commit_qc.csv"
-        if role == "agent"
-        else "*_human_test_commit.csv"
+        "*_agent_test_commit_qc.csv" if role == "agent" else "*_human_test_commit.csv"
     )
     suffix = (
         "_agent_test_commit_qc.csv" if role == "agent" else "_human_test_commit.csv"
@@ -288,8 +286,8 @@ def _collect_human_test_commits_from_repo_rows(
 
     if workers == 1:
         for repo_name, repo_rows_for_name in repos_to_process.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = (
-                process_fn(repo_rows_for_name[0])
+            language, repo_test_commits, repo_count, repo_commits_scanned = process_fn(
+                repo_rows_for_name[0]
             )
             repos_processed += repo_count
             commits_scanned += repo_commits_scanned
@@ -317,9 +315,7 @@ def _collect_human_test_commits_from_repo_rows(
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
-                executor.submit(
-                    process_fn, repo_rows_for_name[0]
-                ): repo_name
+                executor.submit(process_fn, repo_rows_for_name[0]): repo_name
                 for repo_name, repo_rows_for_name in repos_to_process.items()
             }
             try:
@@ -909,7 +905,7 @@ def collect_agent_test_commits_from_repos(
     )
 
     if workers == 1:
-        for repo_name, repo_rows in grouped.items():
+        for _repo_name, repo_rows in grouped.items():
             language, repo_test_commits, repo_count, repo_commits_scanned = (
                 _process_repo_agent_test_commits(repo_rows[0])
             )

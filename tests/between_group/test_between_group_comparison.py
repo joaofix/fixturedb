@@ -259,7 +259,7 @@ class TestContinuousBalance:
 
         assert result.variable == "repo_age_years"
         assert result.test_type == "mann-whitney-u"
-        assert result.is_balanced == True
+        assert result.is_balanced
 
     def test_similar_distributions(self):
         """Similar distributions should pass balance test."""
@@ -271,7 +271,7 @@ class TestContinuousBalance:
         )
 
         assert result.p_value >= 0.05  # Should be balanced
-        assert result.is_balanced == True
+        assert result.is_balanced
 
     def test_different_distributions(self):
         """Clearly different distributions should fail test."""
@@ -283,7 +283,7 @@ class TestContinuousBalance:
         )
 
         assert result.p_value < 0.05  # Should be imbalanced
-        assert result.is_balanced == False
+        assert not result.is_balanced
 
     def test_mann_whitney_with_empty_data(self):
         """Mann-Whitney U should handle empty data gracefully."""
@@ -348,7 +348,7 @@ class TestVariableDistribution:
             _create_test_between_group_db(db_path)
 
             human_dist = get_human_fixtures_by_variable(db_path, "star_tier")
-            agent_dist = get_agent_fixtures_by_variable(db_path, "star_tier")
+            get_agent_fixtures_by_variable(db_path, "star_tier")
 
             assert "core" in human_dist
             assert "extended" in human_dist

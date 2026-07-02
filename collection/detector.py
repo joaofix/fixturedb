@@ -367,7 +367,6 @@ def is_mock_framework_available(
         "mockito": ["mockito", "mockito-python"],
         "mock": ["mock", "unittest"],  # built-in or pypi
         # Java frameworks
-        "mockito": ["mockito"],  # looks for org.mockito:mockito-core
         "easymock": ["easymock"],
         "mockk": ["mockk"],
         "jmockit": ["jmockit"],
@@ -1529,7 +1528,7 @@ def _propagate_fixture_scopes(fixtures: list[FixtureResult]) -> None:
 
     # Propagate scopes (may need multiple passes for chains of dependencies)
     max_iterations = len(fixtures)
-    for iteration in range(max_iterations):
+    for _iteration in range(max_iterations):
         changed = False
 
         for fixture in fixtures:
@@ -1587,14 +1586,6 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
         "nunit_setup",
         "xunit_fact",
         "xunit_theory",
-    }
-
-    fixture_types_teardown = {
-        "unittest_teardown",
-        "junit5_after_each",
-        "junit4_after",
-        "after_each",
-        "nunit_teardown",
     }
 
     for fixture in fixtures:

@@ -182,7 +182,7 @@ def run_human_extraction(
     print(f"STEP 2: Human test-commit collection [{language}]")
     print(f"{'=' * 60}")
 
-    test_commits_out = Path(repo_qc_dir) / f"{language}_human_test_commit.csv"
+    Path(repo_qc_dir) / f"{language}_human_test_commit.csv"
 
     # Step 2a: Write human test-commit CSVs
     cmd = [

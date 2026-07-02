@@ -87,11 +87,15 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
             name = (row.get("repo_name") or "").strip()
             if not name or "/" not in name:
                 continue
-            repos.append({
-                "full_name": name,
-                "language": (row.get("language") or "").strip().lower(),
-                "clone_url": (row.get("clone_url") or f"https://github.com/{name}.git").strip(),
-            })
+            repos.append(
+                {
+                    "full_name": name,
+                    "language": (row.get("language") or "").strip().lower(),
+                    "clone_url": (
+                        row.get("clone_url") or f"https://github.com/{name}.git"
+                    ).strip(),
+                }
+            )
     logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)
     return repos
 
@@ -99,10 +103,16 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
 def _human_fixtures_root(override: Path | None = None) -> Path:
     if override is not None:
         return override
-    return Path(__file__).resolve().parents[1] / "fixtures-from-humans" / COLLECTION_OUTPUT_TAG
+    return (
+        Path(__file__).resolve().parents[1]
+        / "fixtures-from-humans"
+        / COLLECTION_OUTPUT_TAG
+    )
 
 
-def _human_fixture_csv_path(language: str, collection_kind: str, override: Path | None = None) -> Path:
+def _human_fixture_csv_path(
+    language: str, collection_kind: str, override: Path | None = None
+) -> Path:
     subdir = "same-repo" if collection_kind == "within" else "cross-repo"
     return _human_fixtures_root(override) / subdir / f"{language}_human_fixtures.csv"
 
@@ -121,7 +131,9 @@ def _warn_stale_human_fixture_csvs(fixtures_output_dir: Path | None = None) -> N
                 same_repo_dir,
             )
             for p in sorted(existing):
-                logger.warning("[Human Corpus]   %s (%d bytes)", p.name, p.stat().st_size)
+                logger.warning(
+                    "[Human Corpus]   %s (%d bytes)", p.name, p.stat().st_size
+                )
 
 
 def _load_inter_checkpoint(inter_checkpoint: Path) -> tuple[set[str], dict]:
@@ -191,7 +203,9 @@ def _collect_inter_human_candidates(
         # Per-repo progress at info level (matches Dataset B verbosity)
         logger.info(
             "[Human Inter] Processing repo %d/%d: %s",
-            idx, total_repos, repo_name,
+            idx,
+            total_repos,
+            repo_name,
         )
 
         if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
@@ -206,7 +220,9 @@ def _collect_inter_human_candidates(
                 logger.info("[Human Inter] clone failed for %s; skipping", repo_name)
                 continue
 
-            logger.info("[Human Inter] clone done for %s; scanning commits …", repo_name)
+            logger.info(
+                "[Human Inter] clone done for %s; scanning commits …", repo_name
+            )
 
             human_commits = {}
             if candidate_map and repo_name in candidate_map:
@@ -247,7 +263,9 @@ def _collect_inter_human_candidates(
 
             logger.info(
                 "[Human Inter] %s: %d human test commits → %d fixtures",
-                repo_name, len(human_commits), len(fixtures),
+                repo_name,
+                len(human_commits),
+                len(fixtures),
             )
 
             for fixture in fixtures:
@@ -1071,9 +1089,7 @@ class HumanCorpusCollector:
             len(completed_repos),
         )
         for lang in sorted(lang_counts):
-            logger.info(
-                "  %s: %d fixtures", lang, lang_counts[lang]
-            )
+            logger.info("  %s: %d fixtures", lang, lang_counts[lang])
 
         # Generate summary for the inter sample
         return stats, self.output_db
@@ -1108,12 +1124,14 @@ class HumanCorpusCollector:
                 )
                 logger.info(
                     "[Human Inter] Loaded pre-2021 candidate pool with %d repos from %s",
-                    len(candidate_map), raw_commits_dir,
+                    len(candidate_map),
+                    raw_commits_dir,
                 )
             except Exception as e:
                 logger.info(
                     "[Human Inter] Failed to build candidate pool from %s: %s",
-                    raw_commits_dir, e,
+                    raw_commits_dir,
+                    e,
                 )
 
         return _collect_inter_human_candidates(
@@ -1334,7 +1352,9 @@ class HumanCorpusCollector:
             logger.info(
                 f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
             )
-            fixtures_out_path = _human_fixture_csv_path(current_lang, "within", self.fixtures_output_dir)
+            fixtures_out_path = _human_fixture_csv_path(
+                current_lang, "within", self.fixtures_output_dir
+            )
             for repo_data, fixtures_list in lang_all_fixtures:
                 fixture_count = persist_repository_and_fixtures(
                     self.output_db,

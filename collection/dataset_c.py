@@ -2,7 +2,6 @@
 
 import csv
 import json
-import logging
 import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,18 +10,18 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-from collection.fixture_extractor import AgentFixtureExtractor, extract_fixtures
 from collection.agent_commit_detector import _is_test_file_path
-from collection.clone_manager import clone_with_function
 from collection.agent_corpus import clone_repo_for_commit_scan
+from collection.clone_manager import clone_with_function
 from collection.config import (
     DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
 )
 from collection.corpus_utils import construct_repo_dict, persist_repository_and_fixtures
-from collection.sampling import stratified_sample_by_language
 from collection.db import db_session, initialise_db
+from collection.fixture_extractor import AgentFixtureExtractor
 from collection.logging_utils import get_logger
+from collection.sampling import stratified_sample_by_language
 
 logger = get_logger(__name__)
 
@@ -48,7 +47,9 @@ def load_repo_cutoffs(csv_path: Path) -> Dict[str, Dict[str, str]]:
     return cutoffs
 
 
-def find_cutoff_commit(repo_path: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE) -> Optional[Dict[str, str]]:
+def find_cutoff_commit(
+    repo_path: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE
+) -> Optional[Dict[str, str]]:
     """Find the last commit before cutoff_date in the repo."""
     try:
         from pydriller import Repository
@@ -69,7 +70,9 @@ def find_cutoff_commit(repo_path: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_D
         return None
 
 
-def find_test_files_at_commit(repo_path: Path, language: Optional[str] = None) -> List[str]:
+def find_test_files_at_commit(
+    repo_path: Path, language: Optional[str] = None
+) -> List[str]:
     """Find all test files in the repo at the current checkout."""
     test_files: List[str] = []
     for file_path in sorted(repo_path.rglob("*")):
@@ -82,7 +85,9 @@ def find_test_files_at_commit(repo_path: Path, language: Optional[str] = None) -
     return test_files
 
 
-def _load_dataset_c_checkpoint(checkpoint_path: Path) -> Tuple[Set[str], Dict[str, int]]:
+def _load_dataset_c_checkpoint(
+    checkpoint_path: Path,
+) -> Tuple[Set[str], Dict[str, int]]:
     completed_repos: Set[str] = set()
     counts: Dict[str, int] = {
         "repos_persisted": 0,
@@ -102,7 +107,9 @@ def _load_dataset_c_checkpoint(checkpoint_path: Path) -> Tuple[Set[str], Dict[st
     return completed_repos, counts
 
 
-def _save_dataset_c_checkpoint(checkpoint_path: Path, completed_repos: Set[str], counts: Dict[str, int]) -> None:
+def _save_dataset_c_checkpoint(
+    checkpoint_path: Path, completed_repos: Set[str], counts: Dict[str, int]
+) -> None:
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     checkpoint = {
         "completed_repos": sorted(completed_repos),
@@ -113,7 +120,9 @@ def _save_dataset_c_checkpoint(checkpoint_path: Path, completed_repos: Set[str],
         fh.flush()
 
 
-def _write_dataset_c_progress(progress_path: Path, completed_repos: Set[str], counts: Dict[str, int]) -> None:
+def _write_dataset_c_progress(
+    progress_path: Path, completed_repos: Set[str], counts: Dict[str, int]
+) -> None:
     progress = {
         "repos_persisted": counts.get("repos_persisted", 0),
         "fixtures_persisted": counts.get("fixtures_persisted", 0),
@@ -148,7 +157,9 @@ def _process_repo(
     # Determine target path before clone so managed_path can be used directly
     actual_repo_path = repo_path
 
-    with clone_with_function(clone_repo_for_commit_scan, clone_url, repo_path) as managed_path:
+    with clone_with_function(
+        clone_repo_for_commit_scan, clone_url, repo_path
+    ) as managed_path:
         if managed_path is None:
             logger.warning("[Dataset C] Clone failed for %s", repo_name)
             return False, []
@@ -234,8 +245,6 @@ def _process_repo(
         return True, []
 
 
-
-
 def _load_agent_targets_from_csv(fixtures_dir: Path) -> Dict[str, int]:
     """Count agent fixtures per language from fixtures-from-agents/*_agent_fixtures.csv."""
     targets: Dict[str, int] = {}
@@ -251,6 +260,7 @@ def _load_agent_targets_from_csv(fixtures_dir: Path) -> Dict[str, int]:
         except Exception as exc:
             logger.debug("Failed to load %s: %s", csv_path, exc)
     return targets
+
 
 def collect_dataset_c_fixtures(
     agent_repos: List[Dict[str, Any]],
@@ -280,11 +290,18 @@ def collect_dataset_c_fixtures(
     if cutoff_csv:
         cutoffs = load_repo_cutoffs(cutoff_csv)
 
-    checkpoint_path = output_db.parent / f"dataset_c_checkpoint_{language or 'all'}.json"
-    progress_path = output_db.parent / f"{output_db.stem}_dataset_c_{language or 'all'}_progress.json"
+    checkpoint_path = (
+        output_db.parent / f"dataset_c_checkpoint_{language or 'all'}.json"
+    )
+    progress_path = (
+        output_db.parent
+        / f"{output_db.stem}_dataset_c_{language or 'all'}_progress.json"
+    )
 
     completed_repos, counts = _load_dataset_c_checkpoint(checkpoint_path)
-    pending_repos = [r for r in agent_repos if r.get("full_name") not in completed_repos]
+    pending_repos = [
+        r for r in agent_repos if r.get("full_name") not in completed_repos
+    ]
     if completed_repos:
         logger.info(
             "[Dataset C] Skipping %d already-persisted repos (%d remaining)",
@@ -365,6 +382,7 @@ def collect_dataset_c_fixtures(
                 successful_repos.add(repo["full_name"])
                 candidates.extend(results)
     else:
+
         def _submit(repo):
             return _process_repo(repo, cutoffs, extractor, clones_dir)
 
@@ -389,16 +407,19 @@ def collect_dataset_c_fixtures(
     # Clear stale CSV output for a fresh run so we don't append duplicates
     # on top of a previous run that used the same language CSV.
     from collection.human_corpus import _human_fixture_csv_path
+
     fresh_start = not checkpoint_path.exists()
     if fresh_start:
-        for lang in {c[1].get('language') for c in candidates}:
+        for lang in {c[1].get("language") for c in candidates}:
             try:
-                csv_path = _human_fixture_csv_path(lang, 'inter')
+                csv_path = _human_fixture_csv_path(lang, "inter")
                 if csv_path.exists():
                     csv_path.unlink()
-                    logger.debug('[Dataset C] Removed stale CSV for fresh start: %s', csv_path)
+                    logger.debug(
+                        "[Dataset C] Removed stale CSV for fresh start: %s", csv_path
+                    )
             except Exception as exc:
-                logger.debug('[Dataset C] Skipping CSV clear for %s: %s', lang, exc)
+                logger.debug("[Dataset C] Skipping CSV clear for %s: %s", lang, exc)
 
     flat_candidates = [dict(fixture) for _, fixture in candidates]
     if not targets:
@@ -424,9 +445,7 @@ def collect_dataset_c_fixtures(
         try:
             from collection.human_corpus import _human_fixture_csv_path
 
-            fixture_out_path = _human_fixture_csv_path(
-                repo_data["language"], "inter"
-            )
+            fixture_out_path = _human_fixture_csv_path(repo_data["language"], "inter")
             persist_repository_and_fixtures(
                 output_db,
                 repo_data,
@@ -435,9 +454,9 @@ def collect_dataset_c_fixtures(
                 handle_mocks=True,
             )
             counts["repos_persisted"] = counts.get("repos_persisted", 0) + 1
-            counts["fixtures_persisted"] = counts.get(
-                "fixtures_persisted", 0
-            ) + len(fixtures_list)
+            counts["fixtures_persisted"] = counts.get("fixtures_persisted", 0) + len(
+                fixtures_list
+            )
         except Exception as exc:
             logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
 

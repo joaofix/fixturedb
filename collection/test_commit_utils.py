@@ -67,9 +67,7 @@ def collect_test_files_for_commit(
 ) -> list[str]:
     """Return the test files touched by a commit."""
     try:
-        commits = list(
-            Repository(str(repo_path), single=commit_sha).traverse_commits()
-        )
+        commits = list(Repository(str(repo_path), single=commit_sha).traverse_commits())
     except Exception:
         return []
 

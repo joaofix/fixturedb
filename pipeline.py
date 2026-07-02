@@ -229,7 +229,7 @@ def build_parser() -> argparse.ArgumentParser:
     agent_parser.add_argument(
         "--languages",
         nargs="+",
-        choices=sorted(list(LANGUAGE_CONFIGS)),
+        choices=sorted(LANGUAGE_CONFIGS),
         help="Limit collection to one or more languages",
     )
     agent_parser.add_argument(
@@ -365,11 +365,11 @@ def cmd_human_fixtures(args) -> int:
         # Truncate output CSVs so re-runs replace instead of appending
         _truncate_human_output_csvs()
 
-        human_kwargs = dict(
-            corpus_db_path=DATA_DIR / "corpus.db",
-            output_db=args.output_db,
-            repo_qc_dir=args.repo_qc_dir,
-        )
+        human_kwargs = {
+            "corpus_db_path": DATA_DIR / "corpus.db",
+            "output_db": args.output_db,
+            "repo_qc_dir": args.repo_qc_dir,
+        }
         if hasattr(args, "test_commits_csv"):
             human_kwargs["test_commits_csv"] = args.test_commits_csv
         collector = HumanCorpusCollector(**human_kwargs)
@@ -469,7 +469,10 @@ def cmd_full(args) -> int:
         print("\n=== Stage 3: Compare human vs agent corpora ===")
         global BetweenGroupComparator
         if BetweenGroupComparator is None:
-            from collection.between_group_comparison import BetweenGroupComparator as _BGC
+            from collection.between_group_comparison import (
+                BetweenGroupComparator as _BGC,
+            )
+
             BetweenGroupComparator = _BGC
 
         comparator = BetweenGroupComparator(db_path=output_db)
@@ -511,12 +514,12 @@ def cmd_agent(args) -> int:
         # Truncate output CSVs so re-runs replace instead of appending
         _truncate_agent_output_csvs()
 
-        agent_kwargs = dict(
-            github_token=args.github_token,
-            output_db=args.output_db,
-            repo_qc_dir=args.repo_qc_dir,
-            commit_qc_dir=args.commit_qc_dir,
-        )
+        agent_kwargs = {
+            "github_token": args.github_token,
+            "output_db": args.output_db,
+            "repo_qc_dir": args.repo_qc_dir,
+            "commit_qc_dir": args.commit_qc_dir,
+        }
         if hasattr(args, "test_commits_csv"):
             agent_kwargs["test_commits_csv"] = args.test_commits_csv
         collector = AgentCorpusCollector(**agent_kwargs)
@@ -554,7 +557,10 @@ def cmd_between_group_stats(args) -> int:
 
         global BetweenGroupComparator
         if BetweenGroupComparator is None:
-            from collection.between_group_comparison import BetweenGroupComparator as _BGC
+            from collection.between_group_comparison import (
+                BetweenGroupComparator as _BGC,
+            )
+
             BetweenGroupComparator = _BGC
 
         comparator = BetweenGroupComparator(db_path=db_path)

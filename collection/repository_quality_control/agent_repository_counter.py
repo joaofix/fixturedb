@@ -8,6 +8,7 @@ CSV rows with the repository metadata and `has_agent_config` flag.
 
 import concurrent.futures
 import csv
+import json
 import threading
 from datetime import datetime, timezone
 from pathlib import Path

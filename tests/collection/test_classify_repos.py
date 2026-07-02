@@ -130,15 +130,11 @@ class TestClassify:
     @pytest.fixture(autouse=True)
     def _patch_openrouter_key(self, monkeypatch):
         """Ensure OPENROUTER_KEY is set before RepoClassifier is instantiated."""
-        monkeypatch.setattr(
-            "collection.classify_repos.OPENROUTER_KEY", "sk-test-key"
-        )
+        monkeypatch.setattr("collection.classify_repos.OPENROUTER_KEY", "sk-test-key")
 
     @pytest.fixture
     def mock_openai_client(self):
-        with patch(
-            "collection.classify_repos.OpenAI"
-        ) as mock_openai_cls:
+        with patch("collection.classify_repos.OpenAI") as mock_openai_cls:
             mock_client = MagicMock()
             mock_openai_cls.return_value = mock_client
             yield mock_client
@@ -183,7 +179,9 @@ class TestClassify:
             "topics": "",
             "labels": "",
         }
-        result = classifier.classify(repo, readme_excerpt="A machine learning pipeline for ETL.")
+        result = classifier.classify(
+            repo, readme_excerpt="A machine learning pipeline for ETL."
+        )
         assert result["domain"] == "data"
 
     def test_classify_retry_then_succeed(self, classifier, mock_openai_client):
@@ -226,9 +224,7 @@ class TestClassify:
         assert "LLM error" in result["reasoning"]
 
     def test_classify_missing_openrouter_key(self, monkeypatch):
-        monkeypatch.setattr(
-            "collection.classify_repos.OPENROUTER_KEY", ""
-        )
+        monkeypatch.setattr("collection.classify_repos.OPENROUTER_KEY", "")
         with pytest.raises(RuntimeError, match="OPENROUTER_KEY"):
             OpenRouterProvider()
 
@@ -344,9 +340,7 @@ class TestREADMEEnricher:
         enricher = READMEEnricher()
 
         def fake_urlopen(req, timeout=None):
-            raise urllib.error.HTTPError(
-                "url", 404, "Not Found", {}, None
-            )
+            raise urllib.error.HTTPError("url", 404, "Not Found", {}, None)
 
         monkeypatch.setattr(
             "collection.classify_repos.urllib.request.urlopen", fake_urlopen
@@ -757,9 +751,7 @@ class TestWriteResult:
 class TestClassifyOne:
     @pytest.fixture(autouse=True)
     def _patch_openrouter_key(self, monkeypatch):
-        monkeypatch.setattr(
-            "collection.classify_repos.OPENROUTER_KEY", "sk-test"
-        )
+        monkeypatch.setattr("collection.classify_repos.OPENROUTER_KEY", "sk-test")
 
     def test_without_enricher(self):
         provider = OpenRouterProvider()
@@ -815,9 +807,7 @@ class TestMainCLI:
     @pytest.fixture(autouse=True)
     def _patch_config(self, monkeypatch):
         """Patch config constants so main() uses tmp_path."""
-        monkeypatch.setattr(
-            "collection.classify_repos.OPENROUTER_KEY", "sk-test"
-        )
+        monkeypatch.setattr("collection.classify_repos.OPENROUTER_KEY", "sk-test")
 
     def _write_gz_csv(self, path: Path, rows: list[dict]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -843,26 +833,16 @@ class TestMainCLI:
         raw_dir = tmp_path / "github-search-raw"
         out_dir = tmp_path / "github-search-labeled"
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
-        py_rows = [
-            self._make_repo_row(f"owner/py{i}", "Python") for i in range(20)
-        ]
-        java_rows = [
-            self._make_repo_row(f"owner/jv{i}", "Java") for i in range(15)
-        ]
+        py_rows = [self._make_repo_row(f"owner/py{i}", "Python") for i in range(20)]
+        java_rows = [self._make_repo_row(f"owner/jv{i}", "Java") for i in range(15)]
 
         self._write_gz_csv(raw_dir / "python.csv.gz", py_rows)
         self._write_gz_csv(raw_dir / "java.csv.gz", java_rows)
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -871,16 +851,12 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher
 
-                exit_code = main(
-                    ["--toy", "--seed", "42", "--skip-readme"]
-                )
+                exit_code = main(["--toy", "--seed", "42", "--skip-readme"])
 
         assert exit_code == 0
 
@@ -900,18 +876,12 @@ class TestMainCLI:
         out_dir1 = tmp_path / "out1"
         out_dir2 = tmp_path / "out2"
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
 
-        py_rows = [
-            self._make_repo_row(f"owner/py{i}", "Python") for i in range(30)
-        ]
+        py_rows = [self._make_repo_row(f"owner/py{i}", "Python") for i in range(30)]
         self._write_gz_csv(raw_dir / "python.csv.gz", py_rows)
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -920,34 +890,26 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher
 
-                with patch(
-                    "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir1
-                ):
+                with patch("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir1):
                     main(["--toy", "--seed", "42", "--skip-readme"])
 
-                with patch(
-                    "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir2
-                ):
+                with patch("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir2):
                     main(["--toy", "--seed", "42", "--skip-readme"])
 
         names1 = set()
         for csv_file in out_dir1.glob("*.csv"):
             names1.update(
-                row["name"]
-                for row in csv.DictReader(csv_file.read_text().splitlines())
+                row["name"] for row in csv.DictReader(csv_file.read_text().splitlines())
             )
         names2 = set()
         for csv_file in out_dir2.glob("*.csv"):
             names2.update(
-                row["name"]
-                for row in csv.DictReader(csv_file.read_text().splitlines())
+                row["name"] for row in csv.DictReader(csv_file.read_text().splitlines())
             )
 
         assert names1 == names2
@@ -957,25 +919,15 @@ class TestMainCLI:
         raw_dir = tmp_path / "github-search-raw"
         out_dir = tmp_path / "github-search-labeled"
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
-        py_rows = [
-            self._make_repo_row(f"owner/py{i}", "Python") for i in range(50)
-        ]
-        java_rows = [
-            self._make_repo_row(f"owner/jv{i}", "Java") for i in range(30)
-        ]
+        py_rows = [self._make_repo_row(f"owner/py{i}", "Python") for i in range(50)]
+        java_rows = [self._make_repo_row(f"owner/jv{i}", "Java") for i in range(30)]
         self._write_gz_csv(raw_dir / "python.csv.gz", py_rows)
         self._write_gz_csv(raw_dir / "java.csv.gz", java_rows)
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -984,9 +936,7 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher
@@ -1009,12 +959,8 @@ class TestMainCLI:
         out_dir = tmp_path / "github-search-labeled"
         out_dir.mkdir(parents=True)
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
         (out_dir / "python.csv").write_text(
             "name,mainLanguage,domain,confidence,reasoning\n"
@@ -1023,14 +969,10 @@ class TestMainCLI:
             encoding="utf-8",
         )
 
-        py_rows = [
-            self._make_repo_row(f"owner/py{i}", "Python") for i in range(5)
-        ]
+        py_rows = [self._make_repo_row(f"owner/py{i}", "Python") for i in range(5)]
         self._write_gz_csv(raw_dir / "python.csv.gz", py_rows)
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -1039,9 +981,7 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher
@@ -1057,12 +997,8 @@ class TestMainCLI:
         raw_dir = tmp_path / "github-search-raw"
         out_dir = tmp_path / "github-search-labeled"
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
         self._write_gz_csv(
             raw_dir / "python.csv.gz",
@@ -1073,9 +1009,7 @@ class TestMainCLI:
             [self._make_repo_row("owner/jv0", "Java")],
         )
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -1084,9 +1018,7 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher
@@ -1102,12 +1034,8 @@ class TestMainCLI:
         out_dir = tmp_path / "github-search-labeled"
         out_dir.mkdir(parents=True)
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
         (out_dir / "python.csv").write_text(
             "name,mainLanguage,domain,confidence,reasoning\n"
@@ -1120,9 +1048,7 @@ class TestMainCLI:
             [self._make_repo_row("owner/py0", "Python")],
         )
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_cls.return_value = mock_instance
 
@@ -1136,12 +1062,8 @@ class TestMainCLI:
         raw_dir = tmp_path / "github-search-raw"
         out_dir = tmp_path / "github-search-labeled"
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
         self._write_gz_csv(
             raw_dir / "python.csv.gz",
@@ -1153,11 +1075,8 @@ class TestMainCLI:
         )
 
         # Track which language is being processed
-        processed_order = []
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -1166,9 +1085,7 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher
@@ -1191,12 +1108,8 @@ class TestMainCLI:
         out_dir = tmp_path / "github-search-labeled"
         out_dir.mkdir(parents=True)
 
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir
-        )
-        monkeypatch.setattr(
-            "collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir
-        )
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_INPUT_DIR", raw_dir)
+        monkeypatch.setattr("collection.classify_repos.CLASSIFY_OUTPUT_DIR", out_dir)
 
         # Pre-populate python.csv (simulating completed language)
         (out_dir / "python.csv").write_text(
@@ -1215,9 +1128,7 @@ class TestMainCLI:
             [self._make_repo_row(f"owner/jv{i}", "Java") for i in range(2)],
         )
 
-        with patch(
-            "collection.classify_repos.RepoClassifier"
-        ) as mock_cls:
+        with patch("collection.classify_repos.RepoClassifier") as mock_cls:
             mock_instance = MagicMock()
             mock_instance.classify.return_value = {
                 "domain": "web",
@@ -1226,9 +1137,7 @@ class TestMainCLI:
             }
             mock_cls.return_value = mock_instance
 
-            with patch(
-                "collection.classify_repos.READMEEnricher"
-            ) as mock_enricher_cls:
+            with patch("collection.classify_repos.READMEEnricher") as mock_enricher_cls:
                 mock_enricher = MagicMock()
                 mock_enricher.fetch.return_value = "Mock README."
                 mock_enricher_cls.return_value = mock_enricher

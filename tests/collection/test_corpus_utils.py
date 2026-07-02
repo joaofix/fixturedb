@@ -379,9 +379,7 @@ class TestBuildGithubUrl:
     def test_basic_url(self):
         from collection.corpus_utils import _build_github_url
 
-        url = _build_github_url(
-            "owner/repo", "abc123def", "tests/test_foo.py", 10, 20
-        )
+        url = _build_github_url("owner/repo", "abc123def", "tests/test_foo.py", 10, 20)
         assert (
             url
             == "https://github.com/owner/repo/blob/abc123def/tests/test_foo.py#L10-L20"
@@ -390,9 +388,7 @@ class TestBuildGithubUrl:
     def test_leading_slash_stripped(self):
         from collection.corpus_utils import _build_github_url
 
-        url = _build_github_url(
-            "owner/repo", "abc123", "/tests/test_foo.py", 1, 5
-        )
+        url = _build_github_url("owner/repo", "abc123", "/tests/test_foo.py", 1, 5)
         assert url.startswith("https://github.com/owner/repo/blob/abc123/tests/")
 
     def test_no_lines_returns_no_anchor(self):
@@ -588,9 +584,9 @@ class TestGenerateCorpusSummary:
             )
 
             # Just test the structure by checking what gets passed to json.dump
-            with patch("builtins.open", create=True) as mock_open:
+            with patch("builtins.open", create=True):
                 with patch("json.dump") as mock_json_dump:
-                    summary_path = generate_corpus_summary(
+                    generate_corpus_summary(
                         stats,
                         "test_corpus",
                         Path("/tmp/test.db"),

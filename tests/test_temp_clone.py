@@ -9,38 +9,44 @@ class TestOutputRequestsCredentials:
     """Tests for credential prompt detection in git output."""
 
     def test_username_prompt_detected(self):
-        assert _output_requests_credentials("Username for 'https://github.com': ") == True
+        assert _output_requests_credentials("Username for 'https://github.com': ")
 
     def test_password_prompt_detected(self):
-        assert _output_requests_credentials("Password for 'https://github.com': ") == True
+        assert _output_requests_credentials("Password for 'https://github.com': ")
 
     def test_pat_prompt_detected(self):
-        assert _output_requests_credentials("Personal access token for 'https://github.com': ") == True
+        assert _output_requests_credentials(
+            "Personal access token for 'https://github.com': "
+        )
 
     def test_repository_not_found_detected(self):
-        assert _output_requests_credentials("remote: Repository not found") == True
-        assert _output_requests_credentials("fatal: repository not found") == True
+        assert _output_requests_credentials("remote: Repository not found")
+        assert _output_requests_credentials("fatal: repository not found")
 
     def test_does_not_exist_detected(self):
-        assert _output_requests_credentials("does not exist") == True
+        assert _output_requests_credentials("does not exist")
 
     def test_unknown_private_repo_detected(self):
-        assert _output_requests_credentials("fatal: could not read Username") == True
+        assert _output_requests_credentials("fatal: could not read Username")
 
     def test_authentication_failed_detected(self):
-        assert _output_requests_credentials("Authentication failed for 'https://github.com': not authorized") == True
+        assert _output_requests_credentials(
+            "Authentication failed for 'https://github.com': not authorized"
+        )
 
     def test_permission_denied_detected(self):
-        assert _output_requests_credentials("PERMISSION_DENIED") == True
+        assert _output_requests_credentials("PERMISSION_DENIED")
 
     def test_normal_error_not_detected(self):
-        assert _output_requests_credentials("fatal: unable to access 'https://github.com': The requested URL returned error: 404") == False
+        assert not _output_requests_credentials(
+            "fatal: unable to access 'https://github.com': The requested URL returned error: 404"
+        )
 
     def test_empty_output_not_detected(self):
-        assert _output_requests_credentials("") == False
+        assert not _output_requests_credentials("")
 
     def test_successful_clone_not_detected(self):
-        assert _output_requests_credentials("Cloning into 'repo'...") == False
+        assert not _output_requests_credentials("Cloning into 'repo'...")
 
 
 class TestCloneToTempdirCredentialSkip:
@@ -97,4 +103,6 @@ class TestCloneToTempdirCredentialSkip:
                 timeout=60,
                 prefix="test-",
             )
-            assert repo_path is not None or mock_run.call_count > 0  # Either succeeds or was attempted
+            assert (
+                repo_path is not None or mock_run.call_count > 0
+            )  # Either succeeds or was attempted

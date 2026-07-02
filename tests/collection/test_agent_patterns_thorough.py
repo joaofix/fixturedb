@@ -23,7 +23,7 @@ def test_all_patterns_have_matching_root_and_nested(mapping, tmp_path):
     repo.mkdir()
 
     counter = 0
-    for agent, patterns in mapping.items():
+    for _agent, patterns in mapping.items():
         for pattern in patterns:
             counter += 1
             name = make_match_name(pattern)

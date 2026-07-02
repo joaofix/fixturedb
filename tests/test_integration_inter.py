@@ -83,7 +83,10 @@ def test_collect_inter_human_basic(monkeypatch, tmp_path):
 
     # Run collector
     collector = HumanCorpusCollector(
-        corpus_db_path=tmp_path / "corpus.db", output_db=output_db, repo_qc_dir=tmp_path, fixtures_output_dir=tmp_path
+        corpus_db_path=tmp_path / "corpus.db",
+        output_db=output_db,
+        repo_qc_dir=tmp_path,
+        fixtures_output_dir=tmp_path,
     )
     stats, db_path = collector.collect_inter_human(
         agent_repos=agent_repos, targets={"py": 1}, seed=7

@@ -178,7 +178,7 @@ def main():
 
         # Determine sampling target
         min_count = min(human_stats["total_fixtures"], agent_stats["total_fixtures"])
-        max_count = max(human_stats["total_fixtures"], agent_stats["total_fixtures"])
+        max(human_stats["total_fixtures"], agent_stats["total_fixtures"])
 
         logger.info("")
         logger.info("=" * 70)

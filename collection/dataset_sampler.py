@@ -108,7 +108,7 @@ class StratifiedSampler:
             additional_needed = target_count - len(sampled)
 
             # Sample from all fixtures excluding already sampled ones
-            sampled_ids = set(f["id"] for f in sampled)
+            sampled_ids = {f["id"] for f in sampled}
             remaining = [f for f in fixtures if f["id"] not in sampled_ids]
 
             if not remaining:
@@ -200,7 +200,7 @@ class StratifiedSampler:
         results = {}
 
         # Get all strata from original
-        strata = set(f.get(stratify_by, "unknown") for f in original)
+        strata = {f.get(stratify_by, "unknown") for f in original}
 
         for stratum_value in strata:
             original_count = len(

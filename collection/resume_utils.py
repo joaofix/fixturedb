@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from .db import db_session
 
 
-def latest_matching_file(directory: Path, pattern: str) -> Optional[Path]:
+def latest_matching_file(directory: Path, pattern: str) -> Path | None:
     """Return the newest file matching a glob pattern, or None."""
     matches = sorted(directory.glob(pattern))
     return matches[-1] if matches else None

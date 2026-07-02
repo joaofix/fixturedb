@@ -10,12 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from collection.config import DATASET_C_SAMPLING_SEED
 from collection.compute_agent_proportions import (
     _load_agent_repos,
     _load_classification_map,
     compute_proportions,
 )
+from collection.config import DATASET_C_SAMPLING_SEED
 from collection.sample_proportional_repos import (
     _assign_domains,
     _load_pre_cutoff_repos,
@@ -54,8 +54,20 @@ class TestLoadClassificationMap:
         _write_csv(
             tmp_path / "python.csv",
             [
-                {"name": "owner/a", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"},
-                {"name": "owner/b", "mainLanguage": "Python", "domain": "library", "confidence": "high", "reasoning": "x"},
+                {
+                    "name": "owner/a",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
+                {
+                    "name": "owner/b",
+                    "mainLanguage": "Python",
+                    "domain": "library",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
             ],
         )
         mapping = _load_classification_map(tmp_path)
@@ -64,11 +76,27 @@ class TestLoadClassificationMap:
     def test_multiple_files(self, tmp_path):
         _write_csv(
             tmp_path / "python.csv",
-            [{"name": "owner/py", "mainLanguage": "Python", "domain": "data", "confidence": "high", "reasoning": "x"}],
+            [
+                {
+                    "name": "owner/py",
+                    "mainLanguage": "Python",
+                    "domain": "data",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            ],
         )
         _write_csv(
             tmp_path / "java.csv",
-            [{"name": "owner/jv", "mainLanguage": "Java", "domain": "library", "confidence": "high", "reasoning": "x"}],
+            [
+                {
+                    "name": "owner/jv",
+                    "mainLanguage": "Java",
+                    "domain": "library",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            ],
         )
         mapping = _load_classification_map(tmp_path)
         assert mapping == {"owner/py": "data", "owner/jv": "library"}
@@ -77,8 +105,20 @@ class TestLoadClassificationMap:
         _write_csv(
             tmp_path / "python.csv",
             [
-                {"name": "", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"},
-                {"name": "owner/valid", "mainLanguage": "Python", "domain": "cli", "confidence": "high", "reasoning": "x"},
+                {
+                    "name": "",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
+                {
+                    "name": "owner/valid",
+                    "mainLanguage": "Python",
+                    "domain": "cli",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
             ],
         )
         mapping = _load_classification_map(tmp_path)
@@ -90,8 +130,24 @@ class TestLoadAgentRepos:
         _write_csv(
             tmp_path / "python_agent_fixture_repos.csv",
             [
-                {"repo_name": "owner/a", "language": "python", "fixture_count": "5", "commit_count_with_fixtures": "2", "first_fixture_commit": "abc", "last_fixture_commit": "def", "clone_url": "url"},
-                {"repo_name": "owner/b", "language": "python", "fixture_count": "3", "commit_count_with_fixtures": "1", "first_fixture_commit": "abc", "last_fixture_commit": "def", "clone_url": "url"},
+                {
+                    "repo_name": "owner/a",
+                    "language": "python",
+                    "fixture_count": "5",
+                    "commit_count_with_fixtures": "2",
+                    "first_fixture_commit": "abc",
+                    "last_fixture_commit": "def",
+                    "clone_url": "url",
+                },
+                {
+                    "repo_name": "owner/b",
+                    "language": "python",
+                    "fixture_count": "3",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "abc",
+                    "last_fixture_commit": "def",
+                    "clone_url": "url",
+                },
             ],
         )
         by_lang = _load_agent_repos(tmp_path)
@@ -100,11 +156,31 @@ class TestLoadAgentRepos:
     def test_multiple_languages(self, tmp_path):
         _write_csv(
             tmp_path / "python_agent_fixture_repos.csv",
-            [{"repo_name": "owner/py", "language": "python", "fixture_count": "1", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"}],
+            [
+                {
+                    "repo_name": "owner/py",
+                    "language": "python",
+                    "fixture_count": "1",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                }
+            ],
         )
         _write_csv(
             tmp_path / "java_agent_fixture_repos.csv",
-            [{"repo_name": "owner/jv", "language": "java", "fixture_count": "1", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"}],
+            [
+                {
+                    "repo_name": "owner/jv",
+                    "language": "java",
+                    "fixture_count": "1",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                }
+            ],
         )
         by_lang = _load_agent_repos(tmp_path)
         assert set(by_lang.keys()) == {"python", "java"}
@@ -115,8 +191,24 @@ class TestLoadAgentRepos:
         _write_csv(
             tmp_path / "python_agent_fixture_repos.csv",
             [
-                {"repo_name": "", "language": "python", "fixture_count": "1", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
-                {"repo_name": "owner/valid", "language": "python", "fixture_count": "1", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
+                {
+                    "repo_name": "",
+                    "language": "python",
+                    "fixture_count": "1",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
+                {
+                    "repo_name": "owner/valid",
+                    "language": "python",
+                    "fixture_count": "1",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
             ],
         )
         by_lang = _load_agent_repos(tmp_path)
@@ -131,30 +223,86 @@ class TestComputeProportions:
         _write_csv(
             repos_dir / "python_agent_fixture_repos.csv",
             [
-                {"repo_name": "owner/a", "language": "python", "fixture_count": "5", "commit_count_with_fixtures": "2", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
-                {"repo_name": "owner/b", "language": "python", "fixture_count": "3", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
-                {"repo_name": "owner/c", "language": "python", "fixture_count": "2", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
+                {
+                    "repo_name": "owner/a",
+                    "language": "python",
+                    "fixture_count": "5",
+                    "commit_count_with_fixtures": "2",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
+                {
+                    "repo_name": "owner/b",
+                    "language": "python",
+                    "fixture_count": "3",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
+                {
+                    "repo_name": "owner/c",
+                    "language": "python",
+                    "fixture_count": "2",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
             ],
         )
         _write_csv(
             repos_dir / "java_agent_fixture_repos.csv",
             [
-                {"repo_name": "owner/d", "language": "java", "fixture_count": "4", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
+                {
+                    "repo_name": "owner/d",
+                    "language": "java",
+                    "fixture_count": "4",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
             ],
         )
 
         _write_csv(
             classified_dir / "python.csv",
             [
-                {"name": "owner/a", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"},
-                {"name": "owner/b", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"},
-                {"name": "owner/c", "mainLanguage": "Python", "domain": "data", "confidence": "high", "reasoning": "x"},
+                {
+                    "name": "owner/a",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
+                {
+                    "name": "owner/b",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
+                {
+                    "name": "owner/c",
+                    "mainLanguage": "Python",
+                    "domain": "data",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
             ],
         )
         _write_csv(
             classified_dir / "java.csv",
             [
-                {"name": "owner/d", "mainLanguage": "Java", "domain": "library", "confidence": "high", "reasoning": "x"},
+                {
+                    "name": "owner/d",
+                    "mainLanguage": "Java",
+                    "domain": "library",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
             ],
         )
 
@@ -186,14 +334,36 @@ class TestComputeProportions:
         _write_csv(
             repos_dir / "python_agent_fixture_repos.csv",
             [
-                {"repo_name": "owner/known", "language": "python", "fixture_count": "1", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
-                {"repo_name": "owner/unknown", "language": "python", "fixture_count": "1", "commit_count_with_fixtures": "1", "first_fixture_commit": "a", "last_fixture_commit": "b", "clone_url": "url"},
+                {
+                    "repo_name": "owner/known",
+                    "language": "python",
+                    "fixture_count": "1",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
+                {
+                    "repo_name": "owner/unknown",
+                    "language": "python",
+                    "fixture_count": "1",
+                    "commit_count_with_fixtures": "1",
+                    "first_fixture_commit": "a",
+                    "last_fixture_commit": "b",
+                    "clone_url": "url",
+                },
             ],
         )
         _write_csv(
             classified_dir / "python.csv",
             [
-                {"name": "owner/known", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"},
+                {
+                    "name": "owner/known",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                },
             ],
         )
 
@@ -216,8 +386,18 @@ class TestLoadPreCutoffRepos:
         _write_gz_csv(
             tmp_path / "python.csv.gz",
             [
-                {"name": "owner/old", "mainLanguage": "Python", "createdAt": "2019-06-15T00:00:00", "clone_url": "url1"},
-                {"name": "owner/new", "mainLanguage": "Python", "createdAt": "2022-03-01T00:00:00", "clone_url": "url2"},
+                {
+                    "name": "owner/old",
+                    "mainLanguage": "Python",
+                    "createdAt": "2019-06-15T00:00:00",
+                    "clone_url": "url1",
+                },
+                {
+                    "name": "owner/new",
+                    "mainLanguage": "Python",
+                    "createdAt": "2022-03-01T00:00:00",
+                    "clone_url": "url2",
+                },
             ],
         )
 
@@ -231,8 +411,18 @@ class TestLoadPreCutoffRepos:
         _write_gz_csv(
             tmp_path / "python.csv.gz",
             [
-                {"name": "owner/nodate", "mainLanguage": "Python", "createdAt": "", "clone_url": "url"},
-                {"name": "owner/hasdate", "mainLanguage": "Python", "createdAt": "2018-01-01T00:00:00", "clone_url": "url"},
+                {
+                    "name": "owner/nodate",
+                    "mainLanguage": "Python",
+                    "createdAt": "",
+                    "clone_url": "url",
+                },
+                {
+                    "name": "owner/hasdate",
+                    "mainLanguage": "Python",
+                    "createdAt": "2018-01-01T00:00:00",
+                    "clone_url": "url",
+                },
             ],
         )
 
@@ -245,9 +435,24 @@ class TestLoadPreCutoffRepos:
         _write_gz_csv(
             tmp_path / "python.csv.gz",
             [
-                {"name": "", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": "url"},
-                {"name": "no-slash", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": "url"},
-                {"name": "owner/valid", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": "url"},
+                {
+                    "name": "",
+                    "mainLanguage": "Python",
+                    "createdAt": "2019-01-01T00:00:00",
+                    "clone_url": "url",
+                },
+                {
+                    "name": "no-slash",
+                    "mainLanguage": "Python",
+                    "createdAt": "2019-01-01T00:00:00",
+                    "clone_url": "url",
+                },
+                {
+                    "name": "owner/valid",
+                    "mainLanguage": "Python",
+                    "createdAt": "2019-01-01T00:00:00",
+                    "clone_url": "url",
+                },
             ],
         )
 
@@ -318,11 +523,21 @@ class TestSampleProportional:
 
         # Raw repos: 50 web, 50 data, all pre-2021
         web_rows = [
-            {"name": f"owner/web{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url_w{i}"}
+            {
+                "name": f"owner/web{i}",
+                "mainLanguage": "Python",
+                "createdAt": "2019-01-01T00:00:00",
+                "clone_url": f"url_w{i}",
+            }
             for i in range(50)
         ]
         data_rows = [
-            {"name": f"owner/data{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url_d{i}"}
+            {
+                "name": f"owner/data{i}",
+                "mainLanguage": "Python",
+                "createdAt": "2019-01-01T00:00:00",
+                "clone_url": f"url_d{i}",
+            }
             for i in range(50)
         ]
         _write_gz_csv(raw_dir / "python.csv.gz", web_rows + data_rows)
@@ -330,8 +545,24 @@ class TestSampleProportional:
         # Classification: all web repos → web, all data repos → data
         class_rows = []
         for i in range(50):
-            class_rows.append({"name": f"owner/web{i}", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"})
-            class_rows.append({"name": f"owner/data{i}", "mainLanguage": "Python", "domain": "data", "confidence": "high", "reasoning": "x"})
+            class_rows.append(
+                {
+                    "name": f"owner/web{i}",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            )
+            class_rows.append(
+                {
+                    "name": f"owner/data{i}",
+                    "mainLanguage": "Python",
+                    "domain": "data",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            )
         _write_csv(classified_dir / "python.csv", class_rows)
 
         return proportions_dir / "category_proportions.json", raw_dir, classified_dir
@@ -360,8 +591,12 @@ class TestSampleProportional:
     def test_reproducible_with_seed(self, tmp_path):
         prop_path, raw_dir, classified_dir = self._setup_fixtures(tmp_path)
 
-        s1 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=42)
-        s2 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=42)
+        s1 = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=10, seed=42
+        )
+        s2 = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=10, seed=42
+        )
 
         names1 = {r["repo_name"] for r in s1}
         names2 = {r["repo_name"] for r in s2}
@@ -370,8 +605,12 @@ class TestSampleProportional:
     def test_different_seeds_different_samples(self, tmp_path):
         prop_path, raw_dir, classified_dir = self._setup_fixtures(tmp_path)
 
-        s1 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=42)
-        s2 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=99)
+        s1 = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=10, seed=42
+        )
+        s2 = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=10, seed=99
+        )
 
         names1 = {r["repo_name"] for r in s1}
         names2 = {r["repo_name"] for r in s2}
@@ -381,7 +620,9 @@ class TestSampleProportional:
     def test_output_has_required_fields(self, tmp_path):
         prop_path, raw_dir, classified_dir = self._setup_fixtures(tmp_path)
 
-        sampled = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=5, seed=42)
+        sampled = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=5, seed=42
+        )
 
         for repo in sampled:
             assert "repo_name" in repo
@@ -397,7 +638,11 @@ class TestSampleProportional:
         classified_dir = tmp_path / "classified"
 
         proportions = {
-            "global": {"total_repos": 1, "domain_counts": {"web": 1}, "proportions": {"web": 1.0}},
+            "global": {
+                "total_repos": 1,
+                "domain_counts": {"web": 1},
+                "proportions": {"web": 1.0},
+            },
             "per_language": {
                 "python": {
                     "total_repos": 1,
@@ -415,11 +660,28 @@ class TestSampleProportional:
         # Only data repos available, no web repos
         _write_gz_csv(
             raw_dir / "python.csv.gz",
-            [{"name": f"owner/data{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url{i}"} for i in range(5)],
+            [
+                {
+                    "name": f"owner/data{i}",
+                    "mainLanguage": "Python",
+                    "createdAt": "2019-01-01T00:00:00",
+                    "clone_url": f"url{i}",
+                }
+                for i in range(5)
+            ],
         )
         _write_csv(
             classified_dir / "python.csv",
-            [{"name": f"owner/data{i}", "mainLanguage": "Python", "domain": "data", "confidence": "high", "reasoning": "x"} for i in range(5)],
+            [
+                {
+                    "name": f"owner/data{i}",
+                    "mainLanguage": "Python",
+                    "domain": "data",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+                for i in range(5)
+            ],
         )
 
         sampled = sample_proportional(
@@ -443,9 +705,24 @@ class TestSampleProportional:
 class TestWritePerLanguageFiles:
     def test_writes_per_language_and_combined(self, tmp_path):
         sampled = [
-            {"repo_name": "owner/py1", "language": "python", "domain": "data", "clone_url": "url1"},
-            {"repo_name": "owner/py2", "language": "python", "domain": "web", "clone_url": "url2"},
-            {"repo_name": "owner/jv1", "language": "java", "domain": "library", "clone_url": "url3"},
+            {
+                "repo_name": "owner/py1",
+                "language": "python",
+                "domain": "data",
+                "clone_url": "url1",
+            },
+            {
+                "repo_name": "owner/py2",
+                "language": "python",
+                "domain": "web",
+                "clone_url": "url2",
+            },
+            {
+                "repo_name": "owner/jv1",
+                "language": "java",
+                "domain": "library",
+                "clone_url": "url3",
+            },
         ]
 
         counts = write_per_language_files(sampled, tmp_path)
@@ -492,7 +769,9 @@ class TestSeedConfiguration:
 
     def test_uses_local_rng_not_global(self, tmp_path):
         """sample_proportional should use local RNG to avoid global state pollution."""
-        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(tmp_path)
+        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(
+            tmp_path
+        )
 
         # Set a known global seed
         random.seed(12345)
@@ -515,13 +794,23 @@ class TestSeedConfiguration:
 
     def test_seed_propagates_to_cli_default(self, tmp_path):
         """CLI --seed default should come from config."""
-        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(tmp_path)
+        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(
+            tmp_path
+        )
 
         # Run without explicit seed - should use DATASET_C_SAMPLING_SEED
-        s1 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10)
+        s1 = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=10
+        )
 
         # Run with explicit seed matching config
-        s2 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=DATASET_C_SAMPLING_SEED)
+        s2 = sample_proportional(
+            prop_path,
+            raw_dir,
+            classified_dir,
+            target_per_language=10,
+            seed=DATASET_C_SAMPLING_SEED,
+        )
 
         # Should produce identical results
         names1 = {r["repo_name"] for r in s1}
@@ -559,19 +848,45 @@ class TestSamplingEdgeCases:
             json.dump(proportions, f)
 
         web_rows = [
-            {"name": f"owner/web{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url_w{i}"}
+            {
+                "name": f"owner/web{i}",
+                "mainLanguage": "Python",
+                "createdAt": "2019-01-01T00:00:00",
+                "clone_url": f"url_w{i}",
+            }
             for i in range(50)
         ]
         data_rows = [
-            {"name": f"owner/data{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url_d{i}"}
+            {
+                "name": f"owner/data{i}",
+                "mainLanguage": "Python",
+                "createdAt": "2019-01-01T00:00:00",
+                "clone_url": f"url_d{i}",
+            }
             for i in range(50)
         ]
         _write_gz_csv(raw_dir / "python.csv.gz", web_rows + data_rows)
 
         class_rows = []
         for i in range(50):
-            class_rows.append({"name": f"owner/web{i}", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"})
-            class_rows.append({"name": f"owner/data{i}", "mainLanguage": "Python", "domain": "data", "confidence": "high", "reasoning": "x"})
+            class_rows.append(
+                {
+                    "name": f"owner/web{i}",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            )
+            class_rows.append(
+                {
+                    "name": f"owner/data{i}",
+                    "mainLanguage": "Python",
+                    "domain": "data",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            )
         _write_csv(classified_dir / "python.csv", class_rows)
 
         return proportions_dir / "category_proportions.json", raw_dir, classified_dir
@@ -597,7 +912,11 @@ class TestSamplingEdgeCases:
         classified_dir = tmp_path / "classified"
 
         proportions = {
-            "global": {"total_repos": 1, "domain_counts": {"web": 1}, "proportions": {"web": 1.0}},
+            "global": {
+                "total_repos": 1,
+                "domain_counts": {"web": 1},
+                "proportions": {"web": 1.0},
+            },
             "per_language": {
                 "python": {
                     "total_repos": 1,
@@ -614,11 +933,26 @@ class TestSamplingEdgeCases:
 
         _write_gz_csv(
             raw_dir / "python.csv.gz",
-            [{"name": "owner/web1", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": "url1"}],
+            [
+                {
+                    "name": "owner/web1",
+                    "mainLanguage": "Python",
+                    "createdAt": "2019-01-01T00:00:00",
+                    "clone_url": "url1",
+                }
+            ],
         )
         _write_csv(
             classified_dir / "python.csv",
-            [{"name": "owner/web1", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"}],
+            [
+                {
+                    "name": "owner/web1",
+                    "mainLanguage": "Python",
+                    "domain": "web",
+                    "confidence": "high",
+                    "reasoning": "x",
+                }
+            ],
         )
 
         sampled = sample_proportional(
@@ -633,9 +967,13 @@ class TestSamplingEdgeCases:
 
     def test_proportion_rounding_respects_over_sample(self, tmp_path):
         """Verify over-sample factor (1.2x) is applied correctly before rounding."""
-        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(tmp_path)
+        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(
+            tmp_path
+        )
 
-        sampled = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=42)
+        sampled = sample_proportional(
+            prop_path, raw_dir, classified_dir, target_per_language=10, seed=42
+        )
 
         # target=10, over-sample=1.2 → 12. web=0.6*12=7.2→7, data=0.4*12=4.8→5
         assert len(sampled) == 12
@@ -666,7 +1004,9 @@ class TestClassificationOutputDir:
         monkeypatch.setenv("CLASSIFICATION_MODEL", "test-model")
         # Need to re-import to pick up env var
         import importlib
+
         import collection.config
+
         importlib.reload(collection.config)
         assert collection.config.CLASSIFICATION_MODEL == "test-model"
 
@@ -674,6 +1014,8 @@ class TestClassificationOutputDir:
         """CLASSIFY_MODEL_NAME should be overridable via environment."""
         monkeypatch.setenv("CLASSIFY_MODEL_NAME", "ollama_qwen3-14b")
         import importlib
+
         import collection.config
+
         importlib.reload(collection.config)
         assert collection.config.CLASSIFY_OUTPUT_DIR.name == "ollama_qwen3-14b"

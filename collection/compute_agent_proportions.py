@@ -91,7 +91,8 @@ def compute_proportions(
 
         total = len(repos)
         proportions = {
-            d: round(c / total, 4) for d, c in sorted(domain_counts.items(), key=lambda x: -x[1])
+            d: round(c / total, 4)
+            for d, c in sorted(domain_counts.items(), key=lambda x: -x[1])
         }
 
         per_language[lang] = {

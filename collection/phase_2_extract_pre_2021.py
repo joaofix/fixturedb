@@ -16,7 +16,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from .cli_utils import add_output_db_arg, add_repo_dir_arg, add_repos_per_language_arg, add_workers_arg
+from .cli_utils import (
+    add_output_db_arg,
+    add_repo_dir_arg,
+    add_repos_per_language_arg,
+    add_workers_arg,
+)
 from .human_corpus import HumanCorpusCollector
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -96,7 +101,9 @@ def main():
 
     # Check if this is a Dataset C run (uses CSV, not corpus.db)
     dataset_c_dir = project_root / "fixtures-from-agents"
-    per_lang_csv = dataset_c_dir / f"dataset_c_{args.language}.csv" if args.language else None
+    per_lang_csv = (
+        dataset_c_dir / f"dataset_c_{args.language}.csv" if args.language else None
+    )
     combined_csv = dataset_c_dir / "dataset_c_sample.csv"
     is_dataset_c = (per_lang_csv and per_lang_csv.exists()) or combined_csv.exists()
 
@@ -158,7 +165,11 @@ def main():
                 for lang_csv in available:
                     lang = lang_csv.stem.replace("dataset_c_", "")
                     lang_repos = load_dataset_c_repos(lang_csv)
-                    logger.info("Dataset C: processing language=%s (%d repos)", lang, len(lang_repos))
+                    logger.info(
+                        "Dataset C: processing language=%s (%d repos)",
+                        lang,
+                        len(lang_repos),
+                    )
                     stats, db_path = collect_dataset_c_fixtures(
                         agent_repos=lang_repos,
                         clones_dir=clones_dir,
@@ -169,9 +180,15 @@ def main():
                     )
                     all_stats[lang] = stats
                 stats = {
-                    "repos_persisted": sum(s.get("repos_persisted", 0) for s in all_stats.values()),
-                    "fixtures_persisted": sum(s.get("fixtures_persisted", 0) for s in all_stats.values()),
-                    "completed_repos": sum(s.get("completed_repos", 0) for s in all_stats.values()),
+                    "repos_persisted": sum(
+                        s.get("repos_persisted", 0) for s in all_stats.values()
+                    ),
+                    "fixtures_persisted": sum(
+                        s.get("fixtures_persisted", 0) for s in all_stats.values()
+                    ),
+                    "completed_repos": sum(
+                        s.get("completed_repos", 0) for s in all_stats.values()
+                    ),
                 }
         else:
             collector = HumanCorpusCollector(
@@ -189,7 +206,7 @@ def main():
         logger.info("=" * 70)
         logger.info("EXTRACTION RESULTS SUMMARY")
         logger.info("=" * 70)
-        if hasattr(stats, 'repos_scanned'):
+        if hasattr(stats, "repos_scanned"):
             logger.info(f"Total repositories processed: {stats.repos_scanned}")
             logger.info(f"Repositories passed QC: {stats.repos_passed_qc}")
             logger.info(f"Total fixtures extracted: {stats.fixtures_collected}")
@@ -210,11 +227,13 @@ def main():
                     logger.warning(f"  {reason}: {count}")
         else:
             logger.info(f"Repositories persisted: {stats.get('repos_persisted', 0)}")
-            logger.info(f"Total fixtures extracted: {stats.get('fixtures_persisted', 0)}")
+            logger.info(
+                f"Total fixtures extracted: {stats.get('fixtures_persisted', 0)}"
+            )
             logger.info(f"Completed repos: {stats.get('completed_repos', 0)}")
 
         # Prepare output data
-        if hasattr(stats, 'repos_scanned'):
+        if hasattr(stats, "repos_scanned"):
             stats_payload = {
                 "repos_scanned": stats.repos_scanned,
                 "repos_passed_qc": stats.repos_passed_qc,

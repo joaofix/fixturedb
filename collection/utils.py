@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +36,8 @@ def _stable_repo_id(full_name: str) -> int:
 # Language filter helpers
 # ---------------------------------------------------------------------------
 def _normalize_language_filters(
-    languages: Optional[list[str]] = None,
-    language: Optional[str] = None,
+    languages: list[str] | None = None,
+    language: str | None = None,
 ) -> list[str] | None:
     """Normalize and validate language filter arguments.
 

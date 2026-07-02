@@ -1,5 +1,3 @@
-
-
 from collection.db import (
     classify_domain,
     compute_repo_age_at_date,

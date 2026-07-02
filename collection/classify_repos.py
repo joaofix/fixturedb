@@ -23,7 +23,7 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Protocol
 
 import requests
 from openai import OpenAI
@@ -91,9 +91,7 @@ class GitHubRateLimiter:
         with self._lock:
             now = time.monotonic()
             elapsed = now - self._last_refill
-            return min(
-                self._max_tokens, self._tokens + elapsed * self._refill_rate
-            )
+            return min(self._max_tokens, self._tokens + elapsed * self._refill_rate)
 
 
 # ---------------------------------------------------------------------------
@@ -143,7 +141,7 @@ VALID_CONFIDENCES = frozenset({"high", "medium", "low"})
 class LLMProvider(Protocol):
     """Protocol for LLM backends (OpenRouter, Ollama, etc.)."""
 
-    def classify(self, repo: dict, readme_excerpt: Optional[str] = None) -> dict:
+    def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
         """Classify a single repository. Returns {domain, confidence, reasoning}."""
         ...
 
@@ -158,17 +156,13 @@ class OpenRouterProvider:
 
     def __init__(self) -> None:
         if not OPENROUTER_KEY:
-            raise RuntimeError(
-                "OPENROUTER_KEY not set. Add it to your .env file."
-            )
+            raise RuntimeError("OPENROUTER_KEY not set. Add it to your .env file.")
         self._client = OpenAI(
             base_url=OPENROUTER_BASE_URL,
             api_key=OPENROUTER_KEY,
         )
 
-    def classify(
-        self, repo: dict, readme_excerpt: Optional[str] = None
-    ) -> dict:
+    def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
         prompt = _build_user_prompt(repo, readme_excerpt)
         name = repo.get("name", "")
 
@@ -207,9 +201,7 @@ class OllamaProvider:
         self._base_url = OLLAMA_BASE_URL
         self._model = OLLAMA_MODEL
 
-    def classify(
-        self, repo: dict, readme_excerpt: Optional[str] = None
-    ) -> dict:
+    def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
         prompt = _build_user_prompt(repo, readme_excerpt)
         full_prompt = SYSTEM_PROMPT + "\n\n" + prompt
         name = repo.get("name", "")
@@ -253,9 +245,7 @@ class RepoClassifier:
     def __init__(self, provider: LLMProvider) -> None:
         self._provider = provider
 
-    def classify(
-        self, repo: dict, readme_excerpt: Optional[str] = None
-    ) -> dict:
+    def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
         return self._provider.classify(repo, readme_excerpt)
 
 
@@ -264,13 +254,11 @@ class RepoClassifier:
 # ---------------------------------------------------------------------------
 
 
-def _build_user_prompt(repo: dict, readme_excerpt: Optional[str] = None) -> str:
+def _build_user_prompt(repo: dict, readme_excerpt: str | None = None) -> str:
     """Build the user prompt string from repo metadata."""
     name = repo.get("name", "")
     description = (repo.get("description") or "").strip()
-    language = (
-        repo.get("mainLanguage") or repo.get("language") or ""
-    ).strip()
+    language = (repo.get("mainLanguage") or repo.get("language") or "").strip()
     topics = (repo.get("topics") or "").strip()
     labels = (repo.get("labels") or "").strip()
     readme = (readme_excerpt or "N/A").strip()
@@ -333,12 +321,12 @@ class READMEEnricher:
 
     _README_WORD_LIMIT = 200
 
-    def __init__(self, rate_limiter: Optional[GitHubRateLimiter] = None) -> None:
-        self._cache: dict[str, Optional[str]] = {}
+    def __init__(self, rate_limiter: GitHubRateLimiter | None = None) -> None:
+        self._cache: dict[str, str | None] = {}
         self._lock = threading.Lock()
         self._rate_limiter = rate_limiter
 
-    def fetch(self, repo_full_name: str) -> Optional[str]:
+    def fetch(self, repo_full_name: str) -> str | None:
         """Fetch and truncate the README for *repo_full_name*.
 
         Returns the first 200 words, or *None* when no README is available.
@@ -378,9 +366,7 @@ class READMEEnricher:
                 except Exception:
                     remaining = "?"
                 if remaining == "0":
-                    logger.warning(
-                        "README 403 (rate limited): %s", repo_full_name
-                    )
+                    logger.warning("README 403 (rate limited): %s", repo_full_name)
                 else:
                     logger.warning(
                         "README 403 (private/denied, rate-limit-remaining=%s): %s",
@@ -425,9 +411,7 @@ def _parse_topics(raw: str) -> str:
     return raw.replace(";", ", ")
 
 
-def load_repos_from_raw(
-    input_dir: Path, language: Optional[str] = None
-) -> list[dict]:
+def load_repos_from_raw(input_dir: Path, language: str | None = None) -> list[dict]:
     """Load repository metadata from ``github-search-raw/*.csv.gz``."""
     language_filter = (language or "").strip().lower() or None
     repos: list[dict] = []
@@ -523,7 +507,7 @@ def write_result(output_dir: Path, language: str, result: dict) -> None:
 def _classify_one(
     repo: dict,
     classifier: RepoClassifier,
-    enricher: Optional[READMEEnricher],
+    enricher: READMEEnricher | None,
 ) -> dict:
     """Fetch README (if enricher is set) and classify a single repo."""
     readme = None
@@ -634,7 +618,11 @@ def main(argv: list[str] | None = None) -> int:
             n = min(10, len(pool))
             by_lang[lang] = random.sample(pool, n)
             logger.info("Toy: sampled %d/%d repos for %s", n, len(pool), lang)
-        logger.info("Toy mode: %d repos total (seed=%d)", sum(len(v) for v in by_lang.values()), args.seed)
+        logger.info(
+            "Toy mode: %d repos total (seed=%d)",
+            sum(len(v) for v in by_lang.values()),
+            args.seed,
+        )
 
     # Sample mode: N repos per language
     if args.sample and args.sample > 0:
@@ -650,7 +638,12 @@ def main(argv: list[str] | None = None) -> int:
             by_lang[lang] = [r for r in by_lang[lang] if r["name"] not in completed]
             skipped = before - len(by_lang[lang])
             if skipped:
-                logger.info("Resume [%s]: %d already classified, %d remaining", lang, skipped, len(by_lang[lang]))
+                logger.info(
+                    "Resume [%s]: %d already classified, %d remaining",
+                    lang,
+                    skipped,
+                    len(by_lang[lang]),
+                )
 
     # Remove empty languages
     by_lang = {k: v for k, v in by_lang.items() if v}
@@ -695,7 +688,9 @@ def main(argv: list[str] | None = None) -> int:
                 for repo in repos
             }
 
-            with tqdm(total=len(repos), desc=f"Classifying {lang}", unit="repo") as pbar:
+            with tqdm(
+                total=len(repos), desc=f"Classifying {lang}", unit="repo"
+            ) as pbar:
                 for future in as_completed(futures):
                     repo = futures[future]
                     try:
@@ -708,9 +703,7 @@ def main(argv: list[str] | None = None) -> int:
                         logger.error("Failed %s: %s", repo["name"], exc)
                         failed += 1
 
-                    pbar.set_description_str(
-                        f"{lang} [ok:{success} fail:{failed}]"
-                    )
+                    pbar.set_description_str(f"{lang} [ok:{success} fail:{failed}]")
                     pbar.update(1)
 
         total_success += success
@@ -719,7 +712,9 @@ def main(argv: list[str] | None = None) -> int:
         # Per-language summary
         _log_language_summary(lang, success, failed)
 
-    logger.info("Done — total success: %d, total failed: %d", total_success, total_failed)
+    logger.info(
+        "Done — total success: %d, total failed: %d", total_success, total_failed
+    )
     return 0 if total_failed == 0 else 1
 
 
@@ -739,7 +734,9 @@ def _log_language_summary(lang: str, success: int, failed: int) -> None:
     except Exception:
         return
 
-    parts = "  ".join(f"{d}:{c}" for d, c in sorted(domain_counts.items(), key=lambda x: -x[1]))
+    parts = "  ".join(
+        f"{d}:{c}" for d, c in sorted(domain_counts.items(), key=lambda x: -x[1])
+    )
     logger.info("[%s] done — ok:%d fail:%d  domains: %s", lang, success, failed, parts)
 
 

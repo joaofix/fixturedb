@@ -30,7 +30,10 @@ def test_persist_and_insert_inter_monkeypatched(tmp_path, monkeypatch):
     out_db = tmp_path / "between.db"
     initialise_db(out_db)
     collector = HumanCorpusCollector(
-        corpus_db_path=out_db, clones_dir=tmp_path / "clones", output_db=out_db, fixtures_output_dir=tmp_path
+        corpus_db_path=out_db,
+        clones_dir=tmp_path / "clones",
+        output_db=out_db,
+        fixtures_output_dir=tmp_path,
     )
 
     # Selected fixtures (two fixtures in same repo)

@@ -8,6 +8,7 @@ only) detected from repositories with agent configuration files.
 import argparse
 import csv
 import json
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -299,8 +300,10 @@ def clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
         )
         if _output_requests_credentials(result.stderr):
             return False
-        return result.returncode == 0 and target_dir.exists() and (
-            list(target_dir.glob(".git")) or list(target_dir.iterdir())
+        return (
+            result.returncode == 0
+            and target_dir.exists()
+            and (list(target_dir.glob(".git")) or list(target_dir.iterdir()))
         )
     except subprocess.TimeoutExpired:
         logger.warning(f"Timeout cloning history for {clone_url}")
@@ -535,7 +538,6 @@ class AgentCorpusCollector:
 
         # Trackers for statistics
         repo_ages = []
-        repo_contributors = []
         lang_test_commit_rows: list[dict] = []
 
         try:
@@ -802,7 +804,9 @@ class AgentCorpusCollector:
                     if repo_fixture_count > 0:
                         project_root = Path(__file__).resolve().parents[1]
                         fixture_list_dir = (
-                            project_root / "fixtures-from-agents" / COLLECTION_OUTPUT_TAG
+                            project_root
+                            / "fixtures-from-agents"
+                            / COLLECTION_OUTPUT_TAG
                         )
                         fixture_list_dir.mkdir(parents=True, exist_ok=True)
 
@@ -810,8 +814,7 @@ class AgentCorpusCollector:
                         repo_list_dir = fixture_list_dir / "repos"
                         repo_list_dir.mkdir(parents=True, exist_ok=True)
                         repo_list_path = (
-                            repo_list_dir
-                            / f"{language_name}_agent_fixture_repos.csv"
+                            repo_list_dir / f"{language_name}_agent_fixture_repos.csv"
                         )
                         write_header = not repo_list_path.exists()
                         with repo_list_path.open(
@@ -858,8 +861,7 @@ class AgentCorpusCollector:
 
                         # Per-fixture CSV (new: one row per fixture)
                         fixtures_list_path = (
-                            fixture_list_dir
-                            / f"{language_name}_agent_fixtures.csv"
+                            fixture_list_dir / f"{language_name}_agent_fixtures.csv"
                         )
                         for fixture in all_repo_fixtures:
                             write_fixture_csv_row(
@@ -868,9 +870,7 @@ class AgentCorpusCollector:
                                 language_name,
                                 fixture,
                                 extra_fields={
-                                    "agent_type": fixture.get(
-                                        "agent_type", agent_type
-                                    ),
+                                    "agent_type": fixture.get("agent_type", agent_type),
                                     "commit_kind": "agent",
                                 },
                             )
@@ -932,9 +932,7 @@ class AgentCorpusCollector:
                 if self.test_commits_csv and self.test_commits_csv.suffix == "":
                     out_dir = Path(self.test_commits_csv)
                     out_dir.mkdir(parents=True, exist_ok=True)
-                    out_path = (
-                        out_dir / f"{current_language}_agent_test_commit_qc.csv"
-                    )
+                    out_path = out_dir / f"{current_language}_agent_test_commit_qc.csv"
                     write_test_commits_csv(lang_test_commit_rows, out_path)
                 with db_session(self.output_db) as conn:
                     mark_global_checkpoint(conn, completion_step(current_language))

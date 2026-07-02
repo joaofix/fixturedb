@@ -481,7 +481,7 @@ class TestCommitIsPureAddition:
     def test_js_and_ts_extensions(self):
         from pydriller.domain.commit import ModificationType
 
-        for ext, lang in [
+        for ext, _lang in [
             (".mjs", "javascript"),
             (".cjs", "javascript"),
             (".mts", "typescript"),

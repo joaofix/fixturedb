@@ -103,13 +103,11 @@ class TestAgentSignatures:
         """GitHub Actions bot should not be classified as an agent."""
         assert "github-actions" not in AGENT_SIGNATURES
         for signatures in AGENT_SIGNATURES.values():
-            assert not any(
-                "github-actions" in sig.lower() for sig in signatures
-            )
+            assert not any("github-actions" in sig.lower() for sig in signatures)
 
     def test_agent_signatures_have_variants(self):
         """Each agent should have multiple signature variants."""
-        for agent_type, signatures in AGENT_SIGNATURES.items():
+        for _agent_type, signatures in AGENT_SIGNATURES.items():
             assert isinstance(signatures, list)
             assert len(signatures) > 0
 
@@ -232,7 +230,6 @@ class TestAgentCommitMetadataDetection:
 
         assert agent_type == "copilot"
         assert matched_field == "author"
-
 
     def test_bot_authors_are_excluded_from_agent_detection(self):
         """Bot accounts like copilot-swe-agent[bot] must not be classified as agents."""
@@ -793,12 +790,21 @@ def test_incremental_checkpoint_after_repo(tmp_path):
     }
 
     with patch("collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]):
-        with patch("collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits):
+        with patch(
+            "collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits
+        ):
             with patch("collection.agent_corpus.clone_with_function") as mock_clone:
-                mock_clone.return_value.__enter__ = MagicMock(return_value=tmp_path / "repo")
+                mock_clone.return_value.__enter__ = MagicMock(
+                    return_value=tmp_path / "repo"
+                )
                 mock_clone.return_value.__exit__ = MagicMock(return_value=False)
-                with patch("collection.agent_corpus.collect_test_files_for_commit", return_value=["tests/test_foo.py"]):
-                    with patch("collection.agent_corpus.AgentFixtureExtractor") as mock_ext:
+                with patch(
+                    "collection.agent_corpus.collect_test_files_for_commit",
+                    return_value=["tests/test_foo.py"],
+                ):
+                    with patch(
+                        "collection.agent_corpus.AgentFixtureExtractor"
+                    ) as mock_ext:
                         instance = mock_ext.return_value
                         instance._extract_from_agent_commits.return_value = []
                         stats, _ = collector.run(language="java")
@@ -842,17 +848,28 @@ def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
     }
 
     with patch("collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]):
-        with patch("collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits):
+        with patch(
+            "collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits
+        ):
             with patch("collection.agent_corpus.clone_with_function") as mock_clone:
-                mock_clone.return_value.__enter__ = MagicMock(return_value=tmp_path / "repo")
+                mock_clone.return_value.__enter__ = MagicMock(
+                    return_value=tmp_path / "repo"
+                )
                 mock_clone.return_value.__exit__ = MagicMock(return_value=False)
-                with patch("collection.agent_corpus.collect_test_files_for_commit", return_value=["tests/test_foo.py"]):
-                    with patch("collection.agent_corpus.AgentFixtureExtractor") as mock_ext:
+                with patch(
+                    "collection.agent_corpus.collect_test_files_for_commit",
+                    return_value=["tests/test_foo.py"],
+                ):
+                    with patch(
+                        "collection.agent_corpus.AgentFixtureExtractor"
+                    ) as mock_ext:
                         instance = mock_ext.return_value
                         instance._extract_from_agent_commits.return_value = []
                         stats, _ = collector.run(language="java")
 
-    assert stats.repos_scanned == 1, "Single-language run should proceed despite full-run checkpoint"
+    assert (
+        stats.repos_scanned == 1
+    ), "Single-language run should proceed despite full-run checkpoint"
 
 
 def test_single_language_checkpoint_blocks_rerun(tmp_path):
@@ -908,49 +925,70 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
         repos_csv.write_text("repo_name,language\nold/repo,python\n")
 
         # Create a fake repo QC CSV
-        with (repo_qc_dir / "python_agent_repo.csv").open("w", newline="", encoding="utf-8") as fh:
+        with (repo_qc_dir / "python_agent_repo.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fh:
             writer = csv.DictWriter(
                 fh,
                 fieldnames=[
-                    "repo_name", "has_agent_config", "language", "stars",
-                    "clone_url", "num_contributors", "qc_reason", "processed_at",
+                    "repo_name",
+                    "has_agent_config",
+                    "language",
+                    "stars",
+                    "clone_url",
+                    "num_contributors",
+                    "qc_reason",
+                    "processed_at",
                 ],
             )
             writer.writeheader()
-            writer.writerow({
-                "repo_name": "good/repo",
-                "has_agent_config": "1",
-                "language": "python",
-                "stars": 123,
-                "clone_url": "https://github.com/good/repo.git",
-                "num_contributors": 4,
-                "qc_reason": "",
-                "processed_at": "2026-05-28T00:00:00Z",
-            })
+            writer.writerow(
+                {
+                    "repo_name": "good/repo",
+                    "has_agent_config": "1",
+                    "language": "python",
+                    "stars": 123,
+                    "clone_url": "https://github.com/good/repo.git",
+                    "num_contributors": 4,
+                    "qc_reason": "",
+                    "processed_at": "2026-05-28T00:00:00Z",
+                }
+            )
 
         # Create a fake commit QC CSV
-        with (commit_qc_dir / "python_agent_commit.csv").open("w", newline="", encoding="utf-8") as fh:
+        with (commit_qc_dir / "python_agent_commit.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fh:
             writer = csv.DictWriter(
                 fh,
                 fieldnames=[
-                    "repo_name", "commit_sha", "commit_url", "agent_type",
-                    "commit_date", "author_name", "author_email", "language",
-                    "clone_url", "processed_at",
+                    "repo_name",
+                    "commit_sha",
+                    "commit_url",
+                    "agent_type",
+                    "commit_date",
+                    "author_name",
+                    "author_email",
+                    "language",
+                    "clone_url",
+                    "processed_at",
                 ],
             )
             writer.writeheader()
-            writer.writerow({
-                "repo_name": "good/repo",
-                "commit_sha": "abc123",
-                "commit_url": "https://github.com/good/repo/commit/abc123",
-                "agent_type": "claude",
-                "commit_date": "2026-05-21T00:00:00Z",
-                "author_name": "Alice",
-                "author_email": "alice@example.com",
-                "language": "python",
-                "clone_url": "https://github.com/good/repo.git",
-                "processed_at": "2026-05-28T00:00:00Z",
-            })
+            writer.writerow(
+                {
+                    "repo_name": "good/repo",
+                    "commit_sha": "abc123",
+                    "commit_url": "https://github.com/good/repo/commit/abc123",
+                    "agent_type": "claude",
+                    "commit_date": "2026-05-21T00:00:00Z",
+                    "author_name": "Alice",
+                    "author_email": "alice@example.com",
+                    "language": "python",
+                    "clone_url": "https://github.com/good/repo.git",
+                    "processed_at": "2026-05-28T00:00:00Z",
+                }
+            )
 
         def fake_clone(clone_url, target_dir):
             target_dir.mkdir(parents=True, exist_ok=True)

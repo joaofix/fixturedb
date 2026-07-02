@@ -214,7 +214,9 @@ def test_collect_inter_human_skips_completed_repos_from_checkpoint(
         def __init__(self, corpus_db_path):
             pass
 
-        def scan_repo_commit_roles(self, repo_path, start_date, language, detect_test_files=True):
+        def scan_repo_commit_roles(
+            self, repo_path, start_date, language, detect_test_files=True
+        ):
             return [
                 SimpleNamespace(
                     commit_sha="deadbeef",
@@ -331,7 +333,9 @@ def test_collect_inter_human_skips_completed_repos_from_checkpoint(
     assert extracted_repos == ["owner/still-pending"]
 
 
-def test_collect_inter_human_does_not_filter_is_complete_addition(tmp_path, monkeypatch):
+def test_collect_inter_human_does_not_filter_is_complete_addition(
+    tmp_path, monkeypatch
+):
     """Dataset C must keep all fixtures regardless of is_complete_addition."""
     clones_dir = tmp_path / "clones"
     clones_dir.mkdir()
@@ -356,7 +360,9 @@ def test_collect_inter_human_does_not_filter_is_complete_addition(tmp_path, monk
         def __init__(self, corpus_db_path):
             pass
 
-        def scan_repo_commit_roles(self, repo_path, start_date, language, detect_test_files=True):
+        def scan_repo_commit_roles(
+            self, repo_path, start_date, language, detect_test_files=True
+        ):
             return [
                 SimpleNamespace(
                     commit_sha="abc123",

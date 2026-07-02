@@ -80,7 +80,7 @@ class TestExample:
 """
         # Note: This depends on detector implementation
         # May or may not be detected; test what actually happens
-        fixtures = extract_and_find_fixtures(code, "python")
+        extract_and_find_fixtures(code, "python")
         # Document the actual behavior
         pytest.mark.xfail(reason="Depends on detector's parameter strictness")
 
@@ -142,7 +142,7 @@ def sample_data():
 def db_connection():
     return connect()
 """
-        fixture = assert_fixture_detected(code, "python", "db_connection")
+        assert_fixture_detected(code, "python", "db_connection")
         # Scope detection depends on parsing decorator arguments
         pytest.mark.xfail(reason="Scope from decorator argument may not be parsed")
 
@@ -212,7 +212,7 @@ def user_factory():
         return User(name=name, email=email)
     return make_user
 """
-        fixture = assert_fixture_detected(code, "python", "user_factory")
+        assert_fixture_detected(code, "python", "user_factory")
 
     def test_parameterized_fixture_detected(self):
         """@pytest.mark.parametrize on fixtures should be detected"""
@@ -241,12 +241,6 @@ def process_data(data):
 
     def test_setUp_in_non_test_context_not_detected(self):
         """setUp in a non-TestCase class should not be detected"""
-        code = """
-class DataProcessor:
-    def setUp(self):
-        # Not a test class
-        pass
-"""
         # May or may not be detected depending on how strict the detector is
         pytest.mark.xfail(reason="Detector may not validate TestCase inheritance")
 
@@ -351,7 +345,7 @@ async def setup_module():
     global test_resource
     test_resource = await initialize_resource()
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code,
             "python",
             "setup_module",
@@ -365,7 +359,7 @@ async def setup_module():
 async def teardown_module():
     await cleanup_resource()
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code,
             "python",
             "teardown_module",
@@ -393,7 +387,7 @@ async def setup():
     global resource
     resource = await get_resource()
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code, "python", "setup", fixture_type="nose_fixture", scope="per_test"
         )
 
@@ -403,7 +397,7 @@ async def setup():
 async def teardown():
     await release_resource()
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code, "python", "teardown", fixture_type="nose_fixture", scope="per_test"
         )
 
@@ -464,7 +458,7 @@ class TestWithAsyncClass(unittest.TestCase):
     async def setUpClass(cls):
         cls.client = await create_client()
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code,
             "python",
             "setUpClass",
@@ -479,7 +473,7 @@ class TestClass:
     async def setup_method(self):
         self.db = await connect_db()
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code,
             "python",
             "setup_method",

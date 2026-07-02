@@ -63,52 +63,47 @@ def test_detect_agent_no_match():
     )
 
 
-
 def test_detect_agent_bot_authors_are_excluded():
     scanner = Tier1RepositoryScanner(Path("/tmp"))
 
     # swe-agent bot: author name contains [bot] and also contains copilot keyword
-    assert scanner._detect_agent_in_commit(
-        "copilot-swe-agent[bot]",
-        "198982749+Copilot@users.noreply.github.com",
-        ""
-    ) is _BOT
+    assert (
+        scanner._detect_agent_in_commit(
+            "copilot-swe-agent[bot]", "198982749+Copilot@users.noreply.github.com", ""
+        )
+        is _BOT
+    )
 
     # anthropic-code-agent bot
-    assert scanner._detect_agent_in_commit(
-        "anthropic-code-agent[bot]",
-        "242468646+Claude@users.noreply.github.com",
-        ""
-    ) is _BOT
+    assert (
+        scanner._detect_agent_in_commit(
+            "anthropic-code-agent[bot]", "242468646+Claude@users.noreply.github.com", ""
+        )
+        is _BOT
+    )
 
     # github-actions bot
-    assert scanner._detect_agent_in_commit(
-        "github-actions[bot]",
-        "github-actions[bot]@users.noreply.github.com",
-        ""
-    ) is _BOT
+    assert (
+        scanner._detect_agent_in_commit(
+            "github-actions[bot]", "github-actions[bot]@users.noreply.github.com", ""
+        )
+        is _BOT
+    )
 
     # Regular author with bot-like email but no [bot] in name should still be checked
-    agent = scanner._detect_agent_in_commit(
-        "Alice",
-        "alice@anthropic.com",
-        ""
-    )
+    agent = scanner._detect_agent_in_commit("Alice", "alice@anthropic.com", "")
     assert agent == "claude"
 
     # Bot name without agent keyword should also be excluded
-    assert scanner._detect_agent_in_commit(
-        "dependabot[bot]",
-        "dependabot@users.noreply.github.com",
-        ""
-    ) is _BOT
+    assert (
+        scanner._detect_agent_in_commit(
+            "dependabot[bot]", "dependabot@users.noreply.github.com", ""
+        )
+        is _BOT
+    )
 
     # But non-bot with copilot keyword should still match
-    agent2 = scanner._detect_agent_in_commit(
-        "GitHub Copilot",
-        "copilot@github.com",
-        ""
-    )
+    agent2 = scanner._detect_agent_in_commit("GitHub Copilot", "copilot@github.com", "")
     assert agent2 == "copilot"
 
 
@@ -194,7 +189,11 @@ def test_scan_repo_commit_roles_excludes_bot_authors(tmp_path):
     )
     subprocess.run(
         [
-            "git", "-C", str(repo), "config", "user.email",
+            "git",
+            "-C",
+            str(repo),
+            "config",
+            "user.email",
             "dependabot[bot]@users.noreply.github.com",
         ],
         check=True,
@@ -216,7 +215,11 @@ def test_scan_repo_commit_roles_excludes_bot_authors(tmp_path):
     )
     subprocess.run(
         [
-            "git", "-C", str(repo), "config", "user.email",
+            "git",
+            "-C",
+            str(repo),
+            "config",
+            "user.email",
             "alice@example.com",
         ],
         check=True,

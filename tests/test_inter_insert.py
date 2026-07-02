@@ -1,4 +1,3 @@
-
 from collection.corpus_utils import construct_repo_dict
 from collection.db import (
     db_session,
@@ -15,7 +14,6 @@ def test_bulk_insert_and_conflict_handling(tmp_path):
     initialise_db(db_path)
 
     repo = construct_repo_dict(full_name="owner/repo", language="python", github_id=123)
-    fixtures = []
 
     with db_session(db_path) as conn:
         repo_id, _ = upsert_repository(conn, repo)
@@ -44,7 +42,7 @@ def test_bulk_insert_and_conflict_handling(tmp_path):
             "commit_kind": "human",
             "is_complete_addition": 1,
         }
-        fixture_id = insert_fixture(conn, fixture_data)
+        insert_fixture(conn, fixture_data)
 
     inter_row = {
         "file_id": file_id,

@@ -1,4 +1,3 @@
-
 from collection.db import (
     db_session,
     initialise_db,

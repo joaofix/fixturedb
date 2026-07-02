@@ -8,7 +8,6 @@ from collections import Counter
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
 
 from collection.logging_utils import get_logger
 
@@ -36,20 +35,20 @@ class PairedStudyStats:
     repos_with_pairs: int = 0
     repos_passed_qc: int = 0
     repos_failed_qc: int = 0
-    qc_skip_reasons: Dict[str, int] = field(default_factory=dict)
+    qc_skip_reasons: dict[str, int] = field(default_factory=dict)
     agent_commits: int = 0
     human_commits: int = 0
     observations_inserted: int = 0
     fixtures_observed: int = 0
     mock_usages_observed: int = 0
-    repos_by_language: Dict[str, int] = field(default_factory=dict)
-    agent_type_breakdown: Dict[str, int] = field(default_factory=dict)
-    domain_distribution: Dict[str, int] = field(default_factory=dict)
-    star_tier_distribution: Dict[str, int] = field(default_factory=dict)
-    language_distribution: Dict[str, int] = field(default_factory=dict)
+    repos_by_language: dict[str, int] = field(default_factory=dict)
+    agent_type_breakdown: dict[str, int] = field(default_factory=dict)
+    domain_distribution: dict[str, int] = field(default_factory=dict)
+    star_tier_distribution: dict[str, int] = field(default_factory=dict)
+    language_distribution: dict[str, int] = field(default_factory=dict)
     mean_repo_age_years: float = 0.0
     mean_contributors: float = 0.0
-    balance_tests: Dict[str, dict] = field(default_factory=dict)
+    balance_tests: dict[str, dict] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -58,7 +57,7 @@ class PairedStudyStats:
 def select_paired_repositories(
     corpus_db: Path,
     repos_per_language: int,
-    language: Optional[str] = None,
+    language: str | None = None,
 ) -> list[dict]:
     """Select repositories for the paired study from the existing corpus."""
     with db_session(corpus_db) as conn:
@@ -117,7 +116,7 @@ class PairedStudyCollector:
 
     def _validate_quality_filters(
         self, repo_path: Path, language: str, repo_name: str
-    ) -> tuple[bool, Optional[str]]:
+    ) -> tuple[bool, str | None]:
         """
         Validate that repository meets quality criteria.
 
@@ -130,7 +129,7 @@ class PairedStudyCollector:
         return True, None
 
     def _compute_chi_square_balance(
-        self, agent_counts: Dict[str, int], human_counts: Dict[str, int]
+        self, agent_counts: dict[str, int], human_counts: dict[str, int]
     ) -> dict:
         """
         Compute chi-square test for balance between agent and non-agent distributions.
@@ -189,10 +188,10 @@ class PairedStudyCollector:
         Returns: Dictionary with balance test results for language and domain
         """
         # Build agent/human distributions from collected data
-        agent_lang = Counter()
-        human_lang = Counter()
-        agent_domain = Counter()
-        human_domain = Counter()
+        Counter()
+        Counter()
+        Counter()
+        Counter()
 
         # We'll populate these during the main collection loop
         # For now, return empty structure
@@ -212,7 +211,7 @@ class PairedStudyCollector:
     def run(
         self,
         repos_per_language: int = 50,
-        language: Optional[str] = None,
+        language: str | None = None,
         max_commits_per_role: int = 8,
         seed: int = 42,
     ) -> tuple[PairedStudyStats, Path]:
@@ -507,7 +506,7 @@ class PairedStudyCollector:
         return stats, summary_path
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """CLI entry point for the paired study collector."""
     parser = argparse.ArgumentParser(
         description="Run the paired within-repository study"

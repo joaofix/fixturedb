@@ -68,7 +68,7 @@ class GitHubArchiveClient:
 
         try:
             # Parse date
-            target_dt = datetime.fromisoformat(target_date)
+            datetime.fromisoformat(target_date)
             # BigQuery table is partitioned by day; look for earliest data >= target_date
             query = f"""
             SELECT

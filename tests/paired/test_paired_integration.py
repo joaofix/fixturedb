@@ -205,7 +205,7 @@ class TestPairedStudyStatsAccumulation:
         """Should accumulate repos_scanned count."""
         stats = PairedStudyStats()
 
-        for i in range(5):
+        for _i in range(5):
             stats.repos_scanned += 1
 
         assert stats.repos_scanned == 5

@@ -34,7 +34,7 @@ class TestFullPipeline:
 
     def test_compute_proportions_from_real_data(self):
         """Proportions computed from real Dataset A repos are valid."""
-        pr = self._project_root()
+        self._project_root()
         result = compute_proportions()
 
         # Global
@@ -45,7 +45,7 @@ class TestFullPipeline:
         assert set(gl["domain_counts"].keys()) == set(gl["proportions"].keys())
 
         # Per-language
-        for lang, info in result["per_language"].items():
+        for _lang, info in result["per_language"].items():
             assert info["total_repos"] > 0
             assert info["classified"] + info["unknown"] == info["total_repos"]
             if info["classified"] > 0:
@@ -92,7 +92,12 @@ class TestFullPipeline:
             assert " " not in row["repo_name"]
 
             # language must be valid
-            assert row["language"].lower() in {"python", "java", "javascript", "typescript"}
+            assert row["language"].lower() in {
+                "python",
+                "java",
+                "javascript",
+                "typescript",
+            }
 
             # domain must be valid
             assert row["domain"] in {"web", "library", "data", "infra", "cli", "other"}
@@ -147,9 +152,9 @@ class TestFullPipeline:
         # Each domain should be within ±10% of target (over-sample factor introduces variance)
         for domain, target in da_props.items():
             actual = dc_counts.get(domain, 0) / total
-            assert abs(actual - target) < 0.10, (
-                f"Domain {domain}: target={target:.1%}, actual={actual:.1%}"
-            )
+            assert (
+                abs(actual - target) < 0.10
+            ), f"Domain {domain}: target={target:.1%}, actual={actual:.1%}"
 
     def test_all_dataset_c_repos_have_classification(self):
         """Every repo in dataset_c_sample.csv has a domain classification."""
@@ -180,7 +185,9 @@ class TestFullPipeline:
                 missing += 1
 
         # A small number may be missing if classification was incomplete
-        assert missing < len(rows) * 0.02, f"{missing}/{len(rows)} repos missing classification"
+        assert (
+            missing < len(rows) * 0.02
+        ), f"{missing}/{len(rows)} repos missing classification"
 
     def test_no_overlap_dataset_a_and_c(self):
         """Dataset A and Dataset C should have no overlapping repos."""
@@ -210,9 +217,9 @@ class TestFullPipeline:
 
         overlap = a_names & c_names
         # A small overlap is expected (pre-2021 repos that happen to have agent activity)
-        assert len(overlap) < 20, (
-            f"Unexpectedly large overlap between Dataset A and C: {overlap}"
-        )
+        assert (
+            len(overlap) < 20
+        ), f"Unexpectedly large overlap between Dataset A and C: {overlap}"
 
 
 # ---------------------------------------------------------------------------
@@ -259,9 +266,7 @@ class TestPreCutoffIntegration:
             if created and created > cutoff:
                 post_cutoff.append(f"{name} ({created})")
 
-        assert len(post_cutoff) == 0, (
-            f"Repos created after cutoff: {post_cutoff}"
-        )
+        assert len(post_cutoff) == 0, f"Repos created after cutoff: {post_cutoff}"
 
 
 # ---------------------------------------------------------------------------

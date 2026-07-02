@@ -8,7 +8,6 @@ Tests cover critical error paths and boundary conditions:
 - Error recovery and graceful degradation
 """
 
-
 from collection.detector import ExtractResult, extract_fixtures
 
 

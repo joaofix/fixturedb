@@ -1,31 +1,49 @@
 from __future__ import annotations
 
 import csv
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
-
-from collection.db import initialise_db
 from collection.dataset_c import (
-    _load_dataset_c_checkpoint,
     _save_dataset_c_checkpoint,
     collect_dataset_c_fixtures,
     find_test_files_at_commit,
     load_repo_cutoffs,
 )
+from collection.db import initialise_db
 
 
 def test_load_repo_cutoffs_reads_csv(tmp_path):
     csv_path = tmp_path / "cutoffs.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=["repo_name", "language", "cutoff_commit_sha", "cutoff_commit_date", "clone_url"])
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "language",
+                "cutoff_commit_sha",
+                "cutoff_commit_date",
+                "clone_url",
+            ],
+        )
         writer.writeheader()
-        writer.writerows([
-            {"repo_name": "owner/repo1", "language": "python", "cutoff_commit_sha": "abc123", "cutoff_commit_date": "2021-12-31", "clone_url": "https://github.com/owner/repo1.git"},
-            {"repo_name": "owner/repo2", "language": "java", "cutoff_commit_sha": "def456", "cutoff_commit_date": "2020-06-15", "clone_url": "https://github.com/owner/repo2.git"},
-        ])
+        writer.writerows(
+            [
+                {
+                    "repo_name": "owner/repo1",
+                    "language": "python",
+                    "cutoff_commit_sha": "abc123",
+                    "cutoff_commit_date": "2021-12-31",
+                    "clone_url": "https://github.com/owner/repo1.git",
+                },
+                {
+                    "repo_name": "owner/repo2",
+                    "language": "java",
+                    "cutoff_commit_sha": "def456",
+                    "cutoff_commit_date": "2020-06-15",
+                    "clone_url": "https://github.com/owner/repo2.git",
+                },
+            ]
+        )
 
     cutoffs = load_repo_cutoffs(csv_path)
     assert len(cutoffs) == 2
@@ -99,11 +117,21 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
     initialise_db(output_db)
 
     checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
-    _save_dataset_c_checkpoint(checkpoint_path, {"owner/done"}, {"repos_persisted": 1, "fixtures_persisted": 1})
+    _save_dataset_c_checkpoint(
+        checkpoint_path, {"owner/done"}, {"repos_persisted": 1, "fixtures_persisted": 1}
+    )
 
     repos = [
-        {"full_name": "owner/done", "language": "python", "clone_url": "https://github.com/owner/done.git"},
-        {"full_name": "owner/pending", "language": "python", "clone_url": "https://github.com/owner/pending.git"},
+        {
+            "full_name": "owner/done",
+            "language": "python",
+            "clone_url": "https://github.com/owner/done.git",
+        },
+        {
+            "full_name": "owner/pending",
+            "language": "python",
+            "clone_url": "https://github.com/owner/pending.git",
+        },
     ]
 
     processed = []
@@ -112,9 +140,12 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
         processed.append(repo["full_name"])
         return True, []
 
-    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
-         patch("collection.dataset_c.persist_repository_and_fixtures") as mock_persist, \
-         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ) as mock_persist, patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
         stats, db_path = collect_dataset_c_fixtures(
             agent_repos=repos,
             clones_dir=tmp_path / "clones",
@@ -132,18 +163,56 @@ def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
     initialise_db(output_db)
 
     def fake_process(repo, cutoffs, extractor, clones_dir):
-        fixture = {"name": "dup", "file_path": "t.py", "start_line": 1, "end_line": 5, "framework": "pytest"}
+        fixture = {
+            "name": "dup",
+            "file_path": "t.py",
+            "start_line": 1,
+            "end_line": 5,
+            "framework": "pytest",
+        }
         return True, [
-            (repo, {**fixture, "repo_full_name": repo["full_name"], "language": repo.get("language", "unknown")}),
-            (repo, {**fixture, "repo_full_name": repo["full_name"], "language": repo.get("language", "unknown")}),
-            (repo, {"name": "unique", "file_path": "t.py", "start_line": 10, "end_line": 15, "framework": "pytest", "repo_full_name": repo["full_name"], "language": repo.get("language", "unknown")}),
+            (
+                repo,
+                {
+                    **fixture,
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            ),
+            (
+                repo,
+                {
+                    **fixture,
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            ),
+            (
+                repo,
+                {
+                    "name": "unique",
+                    "file_path": "t.py",
+                    "start_line": 10,
+                    "end_line": 15,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            ),
         ]
 
-    repos = [{"full_name": "owner/repo", "language": "python", "clone_url": "https://github.com/owner/repo.git"}]
+    repos = [
+        {
+            "full_name": "owner/repo",
+            "language": "python",
+            "clone_url": "https://github.com/owner/repo.git",
+        }
+    ]
 
-    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
-         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c), \
-         patch("collection.dataset_c.persist_repository_and_fixtures") as mock_persist:
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ), patch("collection.dataset_c.persist_repository_and_fixtures") as mock_persist:
         stats, db_path = collect_dataset_c_fixtures(
             agent_repos=repos,
             clones_dir=tmp_path / "clones",
@@ -162,10 +231,26 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
     initialise_db(output_db)
 
     repos = [
-        {"full_name": "owner/done-java", "language": "java", "clone_url": "https://github.com/owner/done-java.git"},
-        {"full_name": "owner/done-ts", "language": "typescript", "clone_url": "https://github.com/owner/done-ts.git"},
-        {"full_name": "owner/pending-java", "language": "java", "clone_url": "https://github.com/owner/pending-java.git"},
-        {"full_name": "owner/pending-ts", "language": "typescript", "clone_url": "https://github.com/owner/pending-ts.git"},
+        {
+            "full_name": "owner/done-java",
+            "language": "java",
+            "clone_url": "https://github.com/owner/done-java.git",
+        },
+        {
+            "full_name": "owner/done-ts",
+            "language": "typescript",
+            "clone_url": "https://github.com/owner/done-ts.git",
+        },
+        {
+            "full_name": "owner/pending-java",
+            "language": "java",
+            "clone_url": "https://github.com/owner/pending-java.git",
+        },
+        {
+            "full_name": "owner/pending-ts",
+            "language": "typescript",
+            "clone_url": "https://github.com/owner/pending-ts.git",
+        },
     ]
 
     processed = []
@@ -176,14 +261,21 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
 
     # Save language-specific checkpoints for repos that are "done"
     java_ckpt = tmp_path / "dataset_c_checkpoint_java.json"
-    _save_dataset_c_checkpoint(java_ckpt, {"owner/done-java"}, {"repos_persisted": 1, "fixtures_persisted": 1})
+    _save_dataset_c_checkpoint(
+        java_ckpt, {"owner/done-java"}, {"repos_persisted": 1, "fixtures_persisted": 1}
+    )
 
     ts_ckpt = tmp_path / "dataset_c_checkpoint_typescript.json"
-    _save_dataset_c_checkpoint(ts_ckpt, {"owner/done-ts"}, {"repos_persisted": 1, "fixtures_persisted": 1})
+    _save_dataset_c_checkpoint(
+        ts_ckpt, {"owner/done-ts"}, {"repos_persisted": 1, "fixtures_persisted": 1}
+    )
 
-    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
-         patch("collection.dataset_c.persist_repository_and_fixtures"), \
-         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
         collect_dataset_c_fixtures(
             agent_repos=repos,
             clones_dir=tmp_path / "clones",
@@ -199,9 +291,12 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
 
     processed.clear()
 
-    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
-         patch("collection.dataset_c.persist_repository_and_fixtures"), \
-         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
         collect_dataset_c_fixtures(
             agent_repos=repos,
             clones_dir=tmp_path / "clones",
@@ -227,17 +322,29 @@ def test_load_agent_targets_from_csv_counts_fixtures(tmp_path):
     for lang, rows in [("python", 50), ("java", 30), ("typescript", 10)]:
         csv_path = fixtures_dir / f"{lang}_agent_fixtures.csv"
         with csv_path.open("w", encoding="utf-8", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=["repo_name", "language", "commit_sha", "agent_type", "test_file_count", "test_file_paths"])
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name",
+                    "language",
+                    "commit_sha",
+                    "agent_type",
+                    "test_file_count",
+                    "test_file_paths",
+                ],
+            )
             writer.writeheader()
             for i in range(rows):
-                writer.writerow({
-                    "repo_name": f"owner/repo{i}",
-                    "language": lang,
-                    "commit_sha": f"abc{i:03d}",
-                    "agent_type": "claude",
-                    "test_file_count": 1,
-                    "test_file_paths": "tests/test_foo.py",
-                })
+                writer.writerow(
+                    {
+                        "repo_name": f"owner/repo{i}",
+                        "language": lang,
+                        "commit_sha": f"abc{i:03d}",
+                        "agent_type": "claude",
+                        "test_file_count": 1,
+                        "test_file_paths": "tests/test_foo.py",
+                    }
+                )
 
     from collection.dataset_c import _load_agent_targets_from_csv
 
@@ -276,11 +383,20 @@ def test_collect_dataset_c_empty_targets_selects_all(tmp_path):
             for i in range(3)
         ]
 
-    repos = [{"full_name": "owner/repo", "language": "python", "clone_url": "https://github.com/owner/repo.git"}]
+    repos = [
+        {
+            "full_name": "owner/repo",
+            "language": "python",
+            "clone_url": "https://github.com/owner/repo.git",
+        }
+    ]
 
-    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
-         patch("collection.dataset_c.persist_repository_and_fixtures") as mock_persist, \
-         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
         # Pass empty targets to simulate fresh DB
         stats, db_path = collect_dataset_c_fixtures(
             agent_repos=repos,
@@ -318,12 +434,22 @@ def test_dataset_c_persistence_error_logs_warning(tmp_path, caplog):
             )
         ]
 
-    with patch("collection.dataset_c._process_repo", side_effect=fake_process), \
-         patch("collection.dataset_c.persist_repository_and_fixtures", side_effect=RuntimeError("disk full")), \
-         patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures",
+        side_effect=RuntimeError("disk full"),
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
         with caplog.at_level("WARNING"):
             collect_dataset_c_fixtures(
-                agent_repos=[{"full_name": "owner/repo", "language": "python", "clone_url": "https://github.com/owner/repo.git"}],
+                agent_repos=[
+                    {
+                        "full_name": "owner/repo",
+                        "language": "python",
+                        "clone_url": "https://github.com/owner/repo.git",
+                    }
+                ],
                 clones_dir=tmp_path / "clones",
                 output_db=output_db,
                 workers=1,

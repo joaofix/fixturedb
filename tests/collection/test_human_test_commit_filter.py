@@ -55,7 +55,7 @@ def init_minimal_repo(path: Path) -> str:
 
 def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
     repo_dir = tmp_path / "repo"
-    commit_sha = init_minimal_repo(repo_dir)
+    init_minimal_repo(repo_dir)
 
     monkeypatch.setattr(
         "collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner

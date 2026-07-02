@@ -175,7 +175,9 @@ def _run_git(repo_path: Path, args: list[str], timeout: int = 60) -> tuple[bool,
             text=True,
             timeout=timeout,
         )
-        if _output_requests_credentials(result.stderr) or _output_requests_credentials(result.stdout):
+        if _output_requests_credentials(result.stderr) or _output_requests_credentials(
+            result.stdout
+        ):
             return False, True
         return result.returncode == 0, False
     except Exception:
@@ -189,7 +191,9 @@ def _has_commit(repo_path: Path, commit_sha: str) -> bool:
     return success
 
 
-def _fetch_commit(repo_path: Path, commit_sha: str, timeout: int = 120) -> tuple[bool, bool]:
+def _fetch_commit(
+    repo_path: Path, commit_sha: str, timeout: int = 120
+) -> tuple[bool, bool]:
     """Fetch a commit and return (success, credential_required)."""
     success, requires_creds = _run_git(
         repo_path,
@@ -211,7 +215,9 @@ def _ensure_commits_present(
         return False
 
     if not _run_git(repo_path, ["remote", "get-url", "origin"], timeout=20)[0]:
-        success, creds = _run_git(repo_path, ["remote", "add", "origin", clone_url], timeout=20)
+        success, creds = _run_git(
+            repo_path, ["remote", "add", "origin", clone_url], timeout=20
+        )
         if creds:
             raise RuntimeError(f"Repository {clone_url} requires credentials")
 
@@ -256,7 +262,9 @@ def _create_commit_targeted_temp_repo(
         repo_path.mkdir(parents=True, exist_ok=True)
         if not _run_git(repo_path, ["init", "-q"], timeout=20)[0]:
             raise RuntimeError("git init failed")
-        success, creds = _run_git(repo_path, ["remote", "add", "origin", clone_url], timeout=20)
+        success, creds = _run_git(
+            repo_path, ["remote", "add", "origin", clone_url], timeout=20
+        )
         if creds:
             logger.warning(f"Skipping {repo_name}: remote requires credentials")
             shutil.rmtree(temp_root, ignore_errors=True)
@@ -453,7 +461,6 @@ def _process_single_repo(
                     "Repo %s: SHA strategy failed, falling back to clone strategy",
                     repo_name,
                 )
-                clone_args = ["--filter=blob:limit=10m", "--no-tags"]
                 with temp_clone_commit_history(
                     clone_url, repo_name, prefix="agent-fixtures-", timeout=300
                 ) as local_repo_path:
@@ -516,7 +523,6 @@ def _process_single_repo(
                     "local_clone_reuse": used_local_clone,
                 }
         else:
-            clone_args = ["--filter=blob:limit=10m", "--no-tags"]
             with temp_clone_commit_history(
                 clone_url, repo_name, prefix="agent-fixture-qc-", timeout=300
             ) as local_repo_path:

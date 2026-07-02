@@ -83,7 +83,9 @@ def get_human_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
         Dict with value → count
     """
     if variable not in ALLOWED_CATEGORICAL_VARIABLES:
-        raise ValueError(f"variable must be one of {ALLOWED_CATEGORICAL_VARIABLES}, got {variable!r}")
+        raise ValueError(
+            f"variable must be one of {ALLOWED_CATEGORICAL_VARIABLES}, got {variable!r}"
+        )
 
     with db_session(db_path) as conn:
         query = f"""
@@ -109,7 +111,9 @@ def get_agent_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
         Dict with value → count
     """
     if variable not in ALLOWED_CATEGORICAL_VARIABLES:
-        raise ValueError(f"variable must be one of {ALLOWED_CATEGORICAL_VARIABLES}, got {variable!r}")
+        raise ValueError(
+            f"variable must be one of {ALLOWED_CATEGORICAL_VARIABLES}, got {variable!r}"
+        )
 
     with db_session(db_path) as conn:
         query = f"""
@@ -270,7 +274,9 @@ def get_continuous_values(db_path: Path, variable: str, corpus: str) -> list[flo
         List of values
     """
     if variable not in ALLOWED_CONTINUOUS_VARIABLES:
-        raise ValueError(f"variable must be one of {ALLOWED_CONTINUOUS_VARIABLES}, got {variable!r}")
+        raise ValueError(
+            f"variable must be one of {ALLOWED_CONTINUOUS_VARIABLES}, got {variable!r}"
+        )
 
     with db_session(db_path) as conn:
         query = f"""

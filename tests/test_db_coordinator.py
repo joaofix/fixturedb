@@ -63,7 +63,6 @@ def test_coordinator_inserts(tmp_path: Path):
             "start_line": 1,
             "fixture_type": "pytest_decorator",
             "scope": "per_test",
-            "start_line": 1,
             "end_line": 5,
             "loc": 5,
             "cyclomatic_complexity": 1,

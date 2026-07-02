@@ -75,10 +75,12 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
             )
             return
         except subprocess.CalledProcessError as exc:
-            stderr = (exc.stderr or "")
-            stdout = (exc.stdout or "")
+            stderr = exc.stderr or ""
+            stdout = exc.stdout or ""
             combined = stderr.lower() + stdout.lower()
-            if _output_requests_credentials(stderr) or _output_requests_credentials(stdout):
+            if _output_requests_credentials(stderr) or _output_requests_credentials(
+                stdout
+            ):
                 raise RuntimeError("Repository requires credentials for checkout")
             if "index.lock" in combined:
                 if lock_path.exists():
@@ -473,7 +475,7 @@ class Pre2021FixtureExtractor:
         repos = self._get_eligible_repositories()
 
         if repo_names:
-            selected = {name for name in repo_names}
+            selected = set(repo_names)
             repos = [repo for repo in repos if repo.get("full_name") in selected]
 
         self.stats.total_repositories = len(repos)
@@ -485,7 +487,7 @@ class Pre2021FixtureExtractor:
         logger.info(f"Found {len(repos)} repositories to process")
 
         for idx, repo in enumerate(repos, 1):
-            repo_id = repo["id"]
+            repo["id"]
             repo_name = repo["full_name"]
             pinned_commit = repo["pinned_commit"]
             language = repo["language"]
@@ -596,7 +598,11 @@ class Pre2021FixtureExtractor:
                                 "id": None,
                                 "github_id": None,
                                 "full_name": repo_name,
-                                "language": fixtures_list[0].get("language", "unknown") if fixtures_list else "unknown",
+                                "language": (
+                                    repo_fixtures[0].get("language", "unknown")
+                                    if repo_fixtures
+                                    else "unknown"
+                                ),
                                 "stars": 0,
                                 "forks": 0,
                                 "description": "",
@@ -1053,7 +1059,11 @@ class AgentFixtureExtractor:
                                 "id": None,
                                 "github_id": None,
                                 "full_name": repo_name,
-                                "language": fixtures_list[0].get("language", "unknown") if fixtures_list else "unknown",
+                                "language": (
+                                    repo_fixtures[0].get("language", "unknown")
+                                    if repo_fixtures
+                                    else "unknown"
+                                ),
                                 "stars": 0,
                                 "forks": 0,
                                 "description": "",

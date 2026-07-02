@@ -74,18 +74,27 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
 
     dummy_csv = _make_dummy_dataset_c_csv(Path(phase2.__file__).resolve().parents[1])
     try:
+
         def collector_factory(*args, **kwargs):
             captured["collector_kwargs"] = kwargs
             return DummyHumanCollector(*args, **kwargs)
 
         captured_c = {}
+
         def dataset_c_factory(*args, **kwargs):
             captured_c["kwargs"] = kwargs
-            return {"repos_persisted": 1, "fixtures_persisted": 2, "completed_repos": 1}, output_db
+            return {
+                "repos_persisted": 1,
+                "fixtures_persisted": 2,
+                "completed_repos": 1,
+            }, output_db
 
         monkeypatch.setattr(phase2, "HumanCorpusCollector", collector_factory)
         import collection.dataset_c as dataset_c_mod
-        monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
+
+        monkeypatch.setattr(
+            dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory
+        )
         monkeypatch.setattr(
             phase2.sys,
             "argv",
@@ -129,6 +138,7 @@ def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monke
     dummy_csv = _make_dummy_dataset_c_csv(Path(phase2.__file__).resolve().parents[1])
     try:
         import sqlite3
+
         conn = sqlite3.connect(str(output_db))
         conn.execute("CREATE TABLE IF NOT EXISTS fixtures (id INTEGER PRIMARY KEY)")
         conn.execute("INSERT INTO fixtures (id) VALUES (1)")
@@ -140,11 +150,18 @@ def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monke
 
         def dataset_c_factory(*args, **kwargs):
             dataset_c_called["kw"] = kwargs
-            return {"repos_persisted": 0, "fixtures_persisted": 0, "completed_repos": 0}, output_db
+            return {
+                "repos_persisted": 0,
+                "fixtures_persisted": 0,
+                "completed_repos": 0,
+            }, output_db
 
         import collection.dataset_c as dataset_c_mod
+
         monkeypatch.setattr(phase2, "HumanCorpusCollector", lambda *a, **k: None)
-        monkeypatch.setattr(dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory)
+        monkeypatch.setattr(
+            dataset_c_mod, "collect_dataset_c_fixtures", dataset_c_factory
+        )
         monkeypatch.setattr(
             phase2.sys,
             "argv",

@@ -105,7 +105,7 @@ class GitHubAgentFileChecker:
 
             # Check if any agent config files are present
             found_files = []
-            for agent, config_files in self.AGENT_CONFIG_FILES.items():
+            for _agent, config_files in self.AGENT_CONFIG_FILES.items():
                 for config_file in config_files:
                     if any(
                         path_matches_pattern(

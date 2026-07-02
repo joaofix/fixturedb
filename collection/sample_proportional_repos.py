@@ -56,7 +56,9 @@ def _load_pre_cutoff_repos(
     Returns:
         {language: {domain: [repo_dict, ...]}}
     """
-    by_lang_domain: dict[str, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
+    by_lang_domain: dict[str, dict[str, list[dict]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
 
     for csv_path in sorted(raw_dir.glob("*.csv.gz"), key=lambda p: p.name):
         file_lang = csv_path.stem.split(".")[0].lower()
@@ -68,23 +70,29 @@ def _load_pre_cutoff_repos(
                 if not name or "/" not in name:
                     continue
 
-                created_at = (row.get("createdAt") or row.get("created_at") or "").strip()
+                created_at = (
+                    row.get("createdAt") or row.get("created_at") or ""
+                ).strip()
                 if not created_at or created_at[:10] > cutoff_date:
                     continue
 
                 # We need the domain from the classification data — but we don't
                 # have it here. We'll join later. For now, store the raw repo.
                 lang = (
-                    row.get("mainLanguage") or row.get("language") or file_lang
-                ).strip().lower()
+                    (row.get("mainLanguage") or row.get("language") or file_lang)
+                    .strip()
+                    .lower()
+                )
                 # SEART CSVs don't have a clone_url column — construct it from name
                 clone_url = f"https://github.com/{name}.git"
 
-                by_lang_domain[lang]["__all__"].append({
-                    "repo_name": name,
-                    "language": lang,
-                    "clone_url": clone_url,
-                })
+                by_lang_domain[lang]["__all__"].append(
+                    {
+                        "repo_name": name,
+                        "language": lang,
+                        "clone_url": clone_url,
+                    }
+                )
 
     return {k: dict(v) for k, v in by_lang_domain.items()}
 
@@ -155,7 +163,12 @@ def sample_proportional(
         lang_props = lang_info["proportions"]
         available = by_lang_domain.get(lang, {})
 
-        logger.info("--- %s (target: %d, over-sampled: %d) ---", lang, target_per_language, effective_target)
+        logger.info(
+            "--- %s (target: %d, over-sampled: %d) ---",
+            lang,
+            target_per_language,
+            effective_target,
+        )
 
         for domain, proportion in lang_props.items():
             pool = available.get(domain, [])
@@ -165,7 +178,9 @@ def sample_proportional(
             if n_actual < n_wanted:
                 logger.warning(
                     "  %s: wanted %d, only %d available",
-                    domain, n_wanted, n_actual,
+                    domain,
+                    n_wanted,
+                    n_actual,
                 )
 
             chosen = rnd.sample(pool, n_actual) if n_actual > 0 else []
@@ -173,7 +188,13 @@ def sample_proportional(
                 repo["domain"] = domain
             sampled.extend(chosen)
 
-            logger.info("  %s: %d/%d (proportion: %.1%%)", domain, n_actual, len(pool), proportion)
+            logger.info(
+                "  %s: %d/%d (proportion: %.1%%)",
+                domain,
+                n_actual,
+                len(pool),
+                proportion,
+            )
 
     # Shuffle so output isn't grouped by language/domain
     rnd.shuffle(sampled)
@@ -203,7 +224,9 @@ def write_per_language_files(sampled: list[dict], output_dir: Path) -> dict[str,
         logger.info("  %s: %d repos → %s", lang, counts[lang], path.name)
 
     # Combined file
-    with open(output_dir / "dataset_c_sample.csv", "w", encoding="utf-8", newline="") as fh:
+    with open(
+        output_dir / "dataset_c_sample.csv", "w", encoding="utf-8", newline=""
+    ) as fh:
         writer = csv.DictWriter(fh, fieldnames=_OUTPUT_FIELDNAMES)
         writer.writeheader()
         for repo in sampled:
@@ -242,8 +265,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     logger.info("Sampling repos proportionally …")
-    logger.info("Target per language: %d (×%.1f over-sample = %d)",
-                 args.target, OVER_SAMPLE_FACTOR, int(args.target * OVER_SAMPLE_FACTOR))
+    logger.info(
+        "Target per language: %d (×%.1f over-sample = %d)",
+        args.target,
+        OVER_SAMPLE_FACTOR,
+        int(args.target * OVER_SAMPLE_FACTOR),
+    )
     logger.info("Cutoff date: %s", HUMAN_CORPUS_CUTOFF_DATE)
 
     sampled = sample_proportional(
@@ -261,7 +288,12 @@ def main(argv: list[str] | None = None) -> int:
     logger.info("Sampled %d repos total", len(sampled))
     for lang in sorted(counts):
         logger.info("  %s: %d", lang, counts[lang])
-    logger.info("Domains: %s", "  ".join(f"{d}:{c}" for d, c in sorted(by_domain.items(), key=lambda x: -x[1])))
+    logger.info(
+        "Domains: %s",
+        "  ".join(
+            f"{d}:{c}" for d, c in sorted(by_domain.items(), key=lambda x: -x[1])
+        ),
+    )
     logger.info("Written to %s/", OUTPUT_DIR)
 
     return 0
