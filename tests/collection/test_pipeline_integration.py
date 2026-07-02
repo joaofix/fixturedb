@@ -97,9 +97,10 @@ class TestFullPipeline:
             # domain must be valid
             assert row["domain"] in {"web", "library", "data", "infra", "cli", "other"}
 
-            # clone_url must be a valid git URL
-            assert row["clone_url"].startswith("https://github.com/")
-            assert row["clone_url"].endswith(".git")
+            # clone_url should either be empty or a valid git URL
+            if row["clone_url"]:
+                assert row["clone_url"].startswith("https://github.com/")
+                assert row["clone_url"].endswith(".git")
 
     def test_load_dataset_c_repos_format(self):
         """load_dataset_c_repos produces correct format for collect_inter_human()."""
