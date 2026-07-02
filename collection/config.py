@@ -543,6 +543,15 @@ OBJECTS_PARAMETRIZED_THRESHOLD = 2
 # Agent Detection Configuration (Two-Tier Methodology)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Dataset C Sampling Configuration
+# ---------------------------------------------------------------------------
+
+# Random seed for Dataset C proportional sampling (repo and fixture selection).
+# Controls both phases: (1) repo sampling from github-search-raw, (2) fixture
+# sampling when counts exceed targets. Must be integer string for environment override.
+DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))
+
 # Agent configuration file patterns (used in Phase 1A/1D for agent activity detection)
 AGENT_CONFIG_PATTERNS = {
     "claude": [

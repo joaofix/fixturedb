@@ -16,6 +16,7 @@ from collection.agent_commit_detector import _is_test_file_path
 from collection.clone_manager import clone_with_function
 from collection.agent_corpus import clone_repo_for_commit_scan
 from collection.config import (
+    DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
 )
 from collection.corpus_utils import construct_repo_dict, persist_repository_and_fixtures
@@ -257,7 +258,7 @@ def collect_dataset_c_fixtures(
     output_db: Path,
     cutoff_csv: Optional[Path] = None,
     workers: int = 4,
-    seed: int = 42,
+    seed: int = DATASET_C_SAMPLING_SEED,
     targets: Optional[Dict[str, int]] = None,
     language: Optional[str] = None,
 ) -> Tuple[Dict[str, int], Path]:

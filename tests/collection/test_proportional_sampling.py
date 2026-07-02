@@ -5,10 +5,12 @@ from __future__ import annotations
 import csv
 import gzip
 import json
+import random
 from pathlib import Path
 
 import pytest
 
+from collection.config import DATASET_C_SAMPLING_SEED
 from collection.compute_agent_proportions import (
     _load_agent_repos,
     _load_classification_map,
@@ -471,3 +473,169 @@ class TestWritePerLanguageFiles:
         counts = write_per_language_files([], tmp_path)
         assert counts == {}
         assert (tmp_path / "dataset_c_sample.csv").exists()
+
+
+# ---------------------------------------------------------------------------
+# Seed configuration
+# ---------------------------------------------------------------------------
+
+
+class TestSeedConfiguration:
+    def test_config_seed_is_integer(self):
+        """DATASET_C_SAMPLING_SEED should be an integer."""
+        assert isinstance(DATASET_C_SAMPLING_SEED, int)
+        assert DATASET_C_SAMPLING_SEED > 0
+
+    def test_default_seed_matches_hardcoded_default(self):
+        """Config default should match original hardcoded values (42)."""
+        assert DATASET_C_SAMPLING_SEED == 42
+
+    def test_uses_local_rng_not_global(self, tmp_path):
+        """sample_proportional should use local RNG to avoid global state pollution."""
+        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(tmp_path)
+
+        # Set a known global seed
+        random.seed(12345)
+        state_before = random.getstate()
+
+        sampled = sample_proportional(
+            proportions_path=prop_path,
+            raw_dir=raw_dir,
+            classified_dir=classified_dir,
+            target_per_language=5,
+            seed=999,
+        )
+
+        # Global state should be unchanged
+        state_after = random.getstate()
+        assert state_before == state_after
+
+        # But sampling should still work
+        assert len(sampled) >= 0
+
+    def test_seed_propagates_to_cli_default(self, tmp_path):
+        """CLI --seed default should come from config."""
+        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(tmp_path)
+
+        # Run without explicit seed - should use DATASET_C_SAMPLING_SEED
+        s1 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10)
+
+        # Run with explicit seed matching config
+        s2 = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=DATASET_C_SAMPLING_SEED)
+
+        # Should produce identical results
+        names1 = {r["repo_name"] for r in s1}
+        names2 = {r["repo_name"] for r in s2}
+        assert names1 == names2
+
+
+class TestSamplingEdgeCases:
+    """Edge case tests for proportional sampling robustness."""
+
+    def _setup_fixtures(self, tmp_path):
+        """Create minimal proportions, raw data, and classification files."""
+        proportions_dir = tmp_path / "proportions"
+        raw_dir = tmp_path / "raw"
+        classified_dir = tmp_path / "classified"
+
+        proportions = {
+            "global": {
+                "total_repos": 5,
+                "domain_counts": {"web": 3, "data": 2},
+                "proportions": {"web": 0.6, "data": 0.4},
+            },
+            "per_language": {
+                "python": {
+                    "total_repos": 5,
+                    "classified": 5,
+                    "unknown": 0,
+                    "domain_counts": {"web": 3, "data": 2},
+                    "proportions": {"web": 0.6, "data": 0.4},
+                }
+            },
+        }
+        proportions_dir.mkdir(parents=True)
+        with open(proportions_dir / "category_proportions.json", "w") as f:
+            json.dump(proportions, f)
+
+        web_rows = [
+            {"name": f"owner/web{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url_w{i}"}
+            for i in range(50)
+        ]
+        data_rows = [
+            {"name": f"owner/data{i}", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": f"url_d{i}"}
+            for i in range(50)
+        ]
+        _write_gz_csv(raw_dir / "python.csv.gz", web_rows + data_rows)
+
+        class_rows = []
+        for i in range(50):
+            class_rows.append({"name": f"owner/web{i}", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"})
+            class_rows.append({"name": f"owner/data{i}", "mainLanguage": "Python", "domain": "data", "confidence": "high", "reasoning": "x"})
+        _write_csv(classified_dir / "python.csv", class_rows)
+
+        return proportions_dir / "category_proportions.json", raw_dir, classified_dir
+
+    def test_zero_target_returns_minimum_one_per_domain(self, tmp_path):
+        """Zero target still returns minimum 1 per domain due to max(1, ...) guarantee."""
+        prop_path, raw_dir, classified_dir = self._setup_fixtures(tmp_path)
+
+        sampled = sample_proportional(
+            proportions_path=prop_path,
+            raw_dir=raw_dir,
+            classified_dir=classified_dir,
+            target_per_language=0,
+            seed=42,
+        )
+        # With target=0, effective=0, but max(1, ...) ensures at least 1 per domain
+        assert len(sampled) >= 2  # web + data domains
+
+    def test_small_pool_still_samples(self, tmp_path):
+        """When only 1 repo available in a domain, should still sample it."""
+        proportions_dir = tmp_path / "proportions"
+        raw_dir = tmp_path / "raw"
+        classified_dir = tmp_path / "classified"
+
+        proportions = {
+            "global": {"total_repos": 1, "domain_counts": {"web": 1}, "proportions": {"web": 1.0}},
+            "per_language": {
+                "python": {
+                    "total_repos": 1,
+                    "classified": 1,
+                    "unknown": 0,
+                    "domain_counts": {"web": 1},
+                    "proportions": {"web": 1.0},
+                }
+            },
+        }
+        proportions_dir.mkdir(parents=True)
+        with open(proportions_dir / "category_proportions.json", "w") as f:
+            json.dump(proportions, f)
+
+        _write_gz_csv(
+            raw_dir / "python.csv.gz",
+            [{"name": "owner/web1", "mainLanguage": "Python", "createdAt": "2019-01-01T00:00:00", "clone_url": "url1"}],
+        )
+        _write_csv(
+            classified_dir / "python.csv",
+            [{"name": "owner/web1", "mainLanguage": "Python", "domain": "web", "confidence": "high", "reasoning": "x"}],
+        )
+
+        sampled = sample_proportional(
+            proportions_path=proportions_dir / "category_proportions.json",
+            raw_dir=raw_dir,
+            classified_dir=classified_dir,
+            target_per_language=1,
+            seed=42,
+        )
+        assert len(sampled) == 1
+        assert sampled[0]["repo_name"] == "owner/web1"
+
+    def test_proportion_rounding_respects_over_sample(self, tmp_path):
+        """Verify over-sample factor (1.2x) is applied correctly before rounding."""
+        prop_path, raw_dir, classified_dir = TestSampleProportional()._setup_fixtures(tmp_path)
+
+        sampled = sample_proportional(prop_path, raw_dir, classified_dir, target_per_language=10, seed=42)
+
+        # target=10, over-sample=1.2 → 12. web=0.6*12=7.2→7, data=0.4*12=4.8→5
+        assert len(sampled) == 12

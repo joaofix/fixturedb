@@ -20,7 +20,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from .config import CLASSIFY_INPUT_DIR, HUMAN_CORPUS_CUTOFF_DATE, ROOT_DIR
+from .config import CLASSIFY_INPUT_DIR, HUMAN_CORPUS_CUTOFF_DATE, ROOT_DIR, DATASET_C_SAMPLING_SEED
 from .logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
@@ -117,7 +117,7 @@ def sample_proportional(
     raw_dir: Path = CLASSIFY_INPUT_DIR,
     classified_dir: Path = ROOT_DIR / "github-search-labeled",
     target_per_language: int = DEFAULT_TARGET_PER_LANGUAGE,
-    seed: int = 42,
+    seed: int = DATASET_C_SAMPLING_SEED,
 ) -> list[dict]:
     """Sample repos proportionally to Dataset A's category distribution.
 
@@ -126,12 +126,12 @@ def sample_proportional(
         raw_dir: Path to github-search-raw/
         classified_dir: Path to github-search-labeled/
         target_per_language: Target repos per language (before over-sample)
-        seed: Random seed for reproducibility
+        seed: Random seed for reproducibility (default: DATASET_C_SAMPLING_SEED from config)
 
     Returns:
         List of sampled repo dicts with keys: repo_name, language, domain, clone_url
     """
-    random.seed(seed)
+    rnd = random.Random(seed)
 
     proportions = _load_proportions(proportions_path)
     per_lang_props = proportions["per_language"]
@@ -162,7 +162,7 @@ def sample_proportional(
                     domain, n_wanted, n_actual,
                 )
 
-            chosen = random.sample(pool, n_actual) if n_actual > 0 else []
+            chosen = rnd.sample(pool, n_actual) if n_actual > 0 else []
             for repo in chosen:
                 repo["domain"] = domain
             sampled.extend(chosen)
@@ -170,7 +170,7 @@ def sample_proportional(
             logger.info("  %s: %d/%d (proportion: %.1%%)", domain, n_actual, len(pool), proportion)
 
     # Shuffle so output isn't grouped by language/domain
-    random.shuffle(sampled)
+    rnd.shuffle(sampled)
 
     return sampled
 
@@ -221,8 +221,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--seed",
         type=int,
-        default=42,
-        help="Random seed (default: %(default)s)",
+        default=DATASET_C_SAMPLING_SEED,
+        help="Random seed (default: %(default)s, from DATASET_C_SAMPLING_SEED in config)",
     )
     args = parser.parse_args(argv)
 

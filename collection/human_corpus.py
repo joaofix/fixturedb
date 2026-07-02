@@ -37,6 +37,7 @@ from .config import (
     CLONES_DIR,
     COLLECTION_OUTPUT_TAG,
     DATA_DIR,
+    DATASET_C_SAMPLING_SEED,
     EXTRACT_WORKERS,
     HUMAN_CORPUS_CUTOFF_DATE,
     LANGUAGE_CONFIGS,
@@ -974,7 +975,7 @@ class HumanCorpusCollector:
         agent_repos: list[dict],
         targets: Optional[dict] = None,
         workers: Optional[int] = None,
-        seed: int = 42,
+        seed: int = DATASET_C_SAMPLING_SEED,
         raw_commits_dir: Optional[Path] = None,
     ) -> tuple[HumanCorpusStats, Path]:
         """
