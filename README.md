@@ -18,7 +18,7 @@ The repository contains three main datasets. The fixture collections will be reg
 
 - **fixtures-from-humans (Dataset B)** — Human-authored test fixtures extracted from the same repositories as Dataset A. This is the matched human control sample for the within-repository comparison.
 
-- **Pre-agent Baseline (Dataset C)** — Human-authored test fixtures collected from pre-2022 software repositories that are independent from the agent-enabled corpus. This dataset serves as an inter-repository baseline. The repository sample files are stored under `fixtures-from-agents/` as `dataset_c_*.csv`.
+- **pre-agent-baseline (Dataset C)** — Human-authored test fixtures collected from pre-2022 software repositories that are independent from the agent-enabled corpus. This dataset serves as an inter-repository baseline. The repository sample files are stored under `fixtures-from-agents/` as `dataset_c_*.csv`.
 
 ## Methodology
 
