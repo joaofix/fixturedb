@@ -20,7 +20,13 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from .config import CLASSIFY_INPUT_DIR, HUMAN_CORPUS_CUTOFF_DATE, ROOT_DIR, DATASET_C_SAMPLING_SEED
+from .config import (
+    CLASSIFY_INPUT_DIR,
+    CLASSIFY_OUTPUT_DIR,
+    DATASET_C_SAMPLING_SEED,
+    HUMAN_CORPUS_CUTOFF_DATE,
+    ROOT_DIR,
+)
 from .logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
@@ -115,7 +121,7 @@ def _assign_domains(
 def sample_proportional(
     proportions_path: Path = PROPORTIONS_PATH,
     raw_dir: Path = CLASSIFY_INPUT_DIR,
-    classified_dir: Path = ROOT_DIR / "github-search-labeled",
+    classified_dir: Path = CLASSIFY_OUTPUT_DIR,
     target_per_language: int = DEFAULT_TARGET_PER_LANGUAGE,
     seed: int = DATASET_C_SAMPLING_SEED,
 ) -> list[dict]:
@@ -124,7 +130,7 @@ def sample_proportional(
     Args:
         proportions_path: Path to category_proportions.json
         raw_dir: Path to github-search-raw/
-        classified_dir: Path to github-search-labeled/
+        classified_dir: Path to classified repository CSVs
         target_per_language: Target repos per language (before over-sample)
         seed: Random seed for reproducibility (default: DATASET_C_SAMPLING_SEED from config)
 

@@ -82,9 +82,30 @@ OLLAMA_MODEL = "qwen3:14b"
 # With the rate limiter, workers > GitHub req/s just queue up safely.
 CLASSIFY_WORKERS = 10
 
-# Input / output directories for repository domain classification
+# Input directory for repository domain classification (raw source)
 CLASSIFY_INPUT_DIR = ROOT_DIR / "github-search-raw"
-CLASSIFY_OUTPUT_DIR = ROOT_DIR / "github-search-labeled"
+
+# ---------------------------------------------------------------------------
+# Classification Output Configuration
+# ---------------------------------------------------------------------------
+
+# Base directory for classified repository outputs (model-specific subfolders)
+CLASSIFY_CLASSIFIED_DIR = ROOT_DIR / "github-search-classified"
+
+# Model identifier for subdirectory naming (derived from OPENROUTER_MODEL/OLLAMA_MODEL)
+# For OpenRouter: "openai/gpt-4o-mini" → "openai_gpt-4o-mini"
+# For Ollama: "qwen3:14b" → "qwen3-14b"
+# Override via env var to control which model's classifications are used.
+CLASSIFY_MODEL_NAME = os.getenv("CLASSIFY_MODEL_NAME", "openai_gpt-4o-mini")
+
+# Full path to classified CSVs for the active model
+CLASSIFY_OUTPUT_DIR = CLASSIFY_CLASSIFIED_DIR / CLASSIFY_MODEL_NAME
+
+# Classification model in use (for display/logging)
+CLASSIFICATION_MODEL = os.getenv("CLASSIFICATION_MODEL", OPENROUTER_MODEL)
+
+# Dataset C sampling seed
+DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))
 
 # ---------------------------------------------------------------------------
 # File size and type filters
@@ -542,15 +563,6 @@ OBJECTS_PARAMETRIZED_THRESHOLD = 2
 # ---------------------------------------------------------------------------
 # Agent Detection Configuration (Two-Tier Methodology)
 # ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# Dataset C Sampling Configuration
-# ---------------------------------------------------------------------------
-
-# Random seed for Dataset C proportional sampling (repo and fixture selection).
-# Controls both phases: (1) repo sampling from github-search-raw, (2) fixture
-# sampling when counts exceed targets. Must be integer string for environment override.
-DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))
 
 # Agent configuration file patterns (used in Phase 1A/1D for agent activity detection)
 AGENT_CONFIG_PATTERNS = {

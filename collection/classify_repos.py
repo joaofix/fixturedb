@@ -4,7 +4,7 @@
 Reads repository metadata from github-search-raw/*.csv.gz, optionally enriches
 with README excerpts from the GitHub API, classifies each repo into one of six
 domains (web/library/data/infra/cli/other), and writes labeled CSVs to
-github-search-labeled/.
+github-search-classified/{model_name}/.
 
 Usage:
     python -m collection classify [--language LANG] [--workers N] [--skip-readme] [--sample N]

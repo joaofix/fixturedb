@@ -639,3 +639,41 @@ class TestSamplingEdgeCases:
 
         # target=10, over-sample=1.2 → 12. web=0.6*12=7.2→7, data=0.4*12=4.8→5
         assert len(sampled) == 12
+
+
+# ---------------------------------------------------------------------------
+# Classification output directory tests
+# ---------------------------------------------------------------------------
+
+
+class TestClassificationOutputDir:
+    """Tests for model-specific classification output structure."""
+
+    def test_classify_output_dir_uses_model_subfolder(self):
+        """CLASSIFY_OUTPUT_DIR should point to model-specific subfolder."""
+        from collection.config import (
+            CLASSIFY_CLASSIFIED_DIR,
+            CLASSIFY_MODEL_NAME,
+            CLASSIFY_OUTPUT_DIR,
+        )
+
+        assert CLASSIFY_CLASSIFIED_DIR.name == "github-search-classified"
+        assert CLASSIFY_MODEL_NAME == "openai_gpt-4o-mini"
+        assert CLASSIFY_OUTPUT_DIR.name == CLASSIFY_MODEL_NAME
+
+    def test_classification_model_env_override(self, monkeypatch):
+        """CLASSIFICATION_MODEL should be overridable via environment."""
+        monkeypatch.setenv("CLASSIFICATION_MODEL", "test-model")
+        # Need to re-import to pick up env var
+        import importlib
+        import collection.config
+        importlib.reload(collection.config)
+        assert collection.config.CLASSIFICATION_MODEL == "test-model"
+
+    def test_classify_model_name_env_override(self, monkeypatch):
+        """CLASSIFY_MODEL_NAME should be overridable via environment."""
+        monkeypatch.setenv("CLASSIFY_MODEL_NAME", "ollama_qwen3-14b")
+        import importlib
+        import collection.config
+        importlib.reload(collection.config)
+        assert collection.config.CLASSIFY_OUTPUT_DIR.name == "ollama_qwen3-14b"

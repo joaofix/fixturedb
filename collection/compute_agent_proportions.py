@@ -17,13 +17,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from .config import ROOT_DIR
+from .config import CLASSIFY_OUTPUT_DIR, ROOT_DIR
 from .logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
 
 AGENT_REPOS_DIR = ROOT_DIR / "fixtures-from-agents" / "repos"
-CLASSIFIED_DIR = ROOT_DIR / "github-search-labeled"
 OUTPUT_PATH = ROOT_DIR / "fixtures-from-agents" / "category_proportions.json"
 
 
@@ -62,7 +61,7 @@ def _load_agent_repos(repos_dir: Path) -> dict[str, list[str]]:
 
 def compute_proportions(
     agent_repos_dir: Path = AGENT_REPOS_DIR,
-    classified_dir: Path = CLASSIFIED_DIR,
+    classified_dir: Path = CLASSIFY_OUTPUT_DIR,
 ) -> dict:
     """Compute per-language and global category proportions.
 

@@ -1,7 +1,7 @@
 """Integration tests for the Dataset C proportional sampling pipeline.
 
 Tests the end-to-end flow: proportions → sampling → CSV loading → format validation.
-Uses real fixtures-from-agents and github-search-labeled data to verify correctness.
+Uses real fixtures-from-agents and github-search-classified data to verify correctness.
 """
 
 from __future__ import annotations
@@ -154,7 +154,7 @@ class TestFullPipeline:
         """Every repo in dataset_c_sample.csv has a domain classification."""
         pr = self._project_root()
         csv_path = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
-        labeled_dir = pr / "github-search-labeled"
+        labeled_dir = pr / "github-search-classified" / "openai_gpt-4o-mini"
 
         if not csv_path.exists():
             pytest.skip("dataset_c_sample.csv not found")
