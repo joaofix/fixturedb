@@ -5,9 +5,8 @@
 
 Replication package for the paper:
 
-> **FixtureDB: A Multi-Language Dataset of Test Fixture Definitions**
+> **An empirical study on test fixture usage by coding agents on open source software**
 > João Almeida, Andre Hora
-> *ICSME 2026 — Tool Demonstration and Data Showcase Track*
 
 FixtureDB is a between-group study of test fixtures extracted from agent-enabled GitHub repositories. It is the companion code for a master's degree thesis in Software Engineering. The collection pipeline detects agent commits, extracts fixtures, and compares agent-authored and human-authored test code within the same repositories. It also includes a separate human-only dataset collected from pre-agent repositories for inter-repository baseline comparison.
 
