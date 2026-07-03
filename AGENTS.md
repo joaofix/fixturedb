@@ -90,6 +90,6 @@ Tests use `tmp_path` fixtures for temporary git repos and SQLite databases. Neve
 ## Personal instructions
 - If we fix a bug, we unit test that
 - If we implement a new feature, we unit test that
-- we use a python virtualenv called venv to run tests
+- We use a python virtualenv called venv to run tests
 - A prompt that changed code is only considered finished if all tests are passing
-- If we change collection/ we evaluate the need to update the docs/ folder as well. collection/ represents the methodology of this work as code. We want to keep documentation up to date with the methodology.
+- If we change collection/, we evaluate the need to update the docs/ folder as well. collection/ represents the methodology of this work as code. We want to keep documentation up to date with the methodology.

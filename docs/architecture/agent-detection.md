@@ -6,8 +6,9 @@ Identifying AI agent involvement in commits for the between-group study.
 
 ## Overview
 
-Agent detection uses **Tier 1: Co-authored-by trailer detection** exclusively.
+Agent detection uses **Tier 1: author metadata + co-authored-by trailer detection**.
 
+- Commits where the agent is the **primary author** (name/email in the commit's `Author` field)
 - Commits explicitly marked with agent co-author attribution (git trailers)
 - High confidence due to explicit attribution
 - Minimal false positives
@@ -15,10 +16,15 @@ Agent detection uses **Tier 1: Co-authored-by trailer detection** exclusively.
 
 ---
 
-## Co-authored-by Trailer Detection
+## Detection Method
 
-### Principle
-GitHub and git support "Co-authored-by" trailers in commit messages. This mechanism is the most reliable way to identify agent involvement because agents must be explicitly credited as co-authors.
+### Two detection paths (checked in order)
+
+1. **Author metadata** — The commit's `Author` field (name + email) is checked against known agent signatures. Some AI coding tools set themselves as the primary author of the commit instead of (or in addition to) using a co-authored-by trailer.
+
+2. **Co-authored-by trailers** — The commit body is scanned for `Co-authored-by:`, `Assisted-by:`, and `Generated-by:` trailers (case-insensitive). The trailer values are checked against known agent signatures.
+
+Both paths can match simultaneously (e.g., an agent sets itself as author *and* adds a co-authored-by trailer). The first match wins.
 
 ### Detection Method
 
@@ -36,18 +42,26 @@ The detection extracts the author line and checks against known agent email doma
 
 Recognized agents and their signature patterns:
 For each commit in repository:
-  Extract commit message
-  Parse for trailers (lines after blank line):
-    For each trailer:
-      If "Co-authored-by:" present:
-        Extract email pattern
-        Classify agent type (claude, copilot, cursor, aider, other)
-        Record as agent commit
-        Mark fixture as commit_kind='agent', agent_type=<type>
-      Else:
-        Mark fixture as commit_kind='human', agent_type=NULL
+  Extract commit author name and email
+  Check author metadata against AGENT_SIGNATURES:
+    If match found:
+      Classify agent type (claude, copilot, cursor, aider, etc.)
+      Record as agent commit (matched_field="author")
+      Mark fixture as commit_kind='agent', agent_type=<type>
   
-  Output: { commit_sha: { agent_type: 'claude', detected_by: 'trailer' } }
+  If no author match:
+    Parse commit body for trailers (Co-authored-by, Assisted-by, Generated-by):
+      For each trailer:
+        Check trailer value against AGENT_SIGNATURES:
+          If match found:
+            Classify agent type
+            Record as agent commit (matched_field="coauthored-by")
+            Mark fixture as commit_kind='agent', agent_type=<type>
+  
+  If no match in either path:
+    Mark fixture as commit_kind='human', agent_type=NULL
+  
+  Output: { commit_sha: { agent_type: 'claude', detected_by: 'author'|'coauthored-by' } }
 ```
 
 ### Precision & Recall

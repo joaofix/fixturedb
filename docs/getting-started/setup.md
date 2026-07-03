@@ -127,7 +127,7 @@ This collects fixtures from repositories created before 2021, when no AI agents 
 python pipeline.py agent --repos-per-language 100 --github-token YOUR_TOKEN
 ```
 
-This collects fixtures from commits with agent co-authored-by trailers (Tier 1 detection only).
+This collects fixtures from commits with agent authorship signals (Tier 1 detection: author metadata + co-authored-by trailers).
 
 ### Stage 3: Run Between-Group Comparison
 ```bash

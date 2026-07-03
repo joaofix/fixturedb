@@ -78,7 +78,7 @@ Control variables are **computed automatically** at 2025-01-01 snapshot:
 
 ### Agent Detection
 
-Agents detected via **Tier 1 (co-authored-by trailers only)**:
+Agents detected via **Tier 1 (author metadata + co-authored-by trailers)**:
 
 ```
 Agent patterns recognized:

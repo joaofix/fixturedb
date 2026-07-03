@@ -56,7 +56,7 @@ The current FixtureDB methodology compares agent and human fixtures within repos
 
 - **Basis:** Agent-enabled repositories (with agent config files)
 - **Temporal window:** 2025-01-01 onwards (post-agent emergence)
-- **Agent fixtures:** From commits with agent authorship signals (Tier 1: co-authored-by trailers)
+- **Agent fixtures:** From commits with agent authorship signals (Tier 1: author metadata + co-authored-by trailers)
 - **Human fixtures:** From non-agent commits in the same repositories
 - **Control variables:** Language, domain, star tier, repository age (at temporal snapshot)
 - **Analysis:** Paired comparisons within repositories

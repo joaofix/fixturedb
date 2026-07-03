@@ -126,7 +126,7 @@ Core implementation of between-group study with three main collection modules:
 
 **2. agent_corpus.py (380+ lines)**
 - Uses GitHub API to find agent-authored commits
-- Tier 1 detection: co-authored-by trailers only
+- Tier 1 detection: author metadata + co-authored-by trailers
 - Agent type classification (claude, copilot, cursor, etc.)
 - Outputs JSON summary to `output/agent_corpus_summary_*.json`
 

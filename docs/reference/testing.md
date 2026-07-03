@@ -243,7 +243,7 @@ The `test_agent_detection_end_to_end.py` module provides comprehensive validatio
 ### Test Coverage
 
 1. **Agent File Scanner** — Detects agent-specific files (`.copilot-instructions.md`, `.cursorrules`, etc.)
-2. **Agent Commit Verifier** — Detects `Co-authored-by` trailers and agent keywords in commit messages
+2. **Agent Commit Verifier** — Detects agent signatures in author metadata (name/email) and `Co-authored-by`/`Assisted-by`/`Generated-by` trailers in commit messages
 3. **AGENT Fixture Extraction** — Validates extraction of fixtures from agent commits and `is_complete_addition` marking
 4. **Multiple Agent Types** — Tests Copilot, Cursor, Claude, and other agent detection
 5. **Partial Modifications** — Validates that modified (not wholly-added) fixtures are marked accordingly
