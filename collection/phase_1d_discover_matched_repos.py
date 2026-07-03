@@ -111,7 +111,12 @@ def main() -> int:
 
     logger.info("=" * 70)
     logger.info("PHASE 1D COMPLETE")
-    logger.info(f"Tier 2 repos found: {len(tier2_results.get('repos_found', []))}")
+    repos_found = tier2_results.get("repos_found")
+    if repos_found is None:
+        repos_found = []
+    if not isinstance(repos_found, list):
+        repos_found = list(repos_found) if hasattr(repos_found, "__iter__") else []
+    logger.info(f"Tier 2 repos found: {len(repos_found)}")
     logger.info(f"Output saved to: {tier2_file.name}")
     return 0
 

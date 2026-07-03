@@ -287,7 +287,8 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         }
         print(f"Processing {full_name} (lang={lang})")
 
-        clone_url: str = meta.get("clone_url") or f"https://github.com/{full_name}.git"
+        raw_clone_url = meta.get("clone_url") or f"https://github.com/{full_name}.git"
+        clone_url = str(raw_clone_url).strip()
         has_agent_config = False
         qc_reason = ""
 

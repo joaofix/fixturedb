@@ -385,7 +385,7 @@ def select_human_corpus_repositories(
         return selected
 
     # Fallback: read repo-QC CSVs
-    grouped: dict[str, list[dict]] = {}
+    grouped_csv: dict[str, list[dict]] = {}
     # First preference: per-language agent fixture repo lists produced by
     # the agent extraction step. These files list repositories that actually
     # yielded agent fixtures and should be used as the canonical selection.
@@ -439,16 +439,16 @@ def select_human_corpus_repositories(
                                 repo_name,
                                 lang,
                             )
-                            grouped.setdefault(lang, [])
-                            if repo_name not in {r["full_name"] for r in grouped[lang]}:
-                                grouped[lang].append(repo_row)
+                            grouped_csv.setdefault(lang, [])
+                            if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
+                                grouped_csv[lang].append(repo_row)
 
     # If we found fixture-list repos, return those (respecting per-language cap)
-    if grouped:
+    if grouped_csv:
         for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
             if not lang:
                 continue
-            lang_repos = grouped.get(lang, [])
+            lang_repos = grouped_csv.get(lang, [])
             selected.extend(
                 lang_repos
                 if repos_per_language is None
@@ -484,9 +484,9 @@ def select_human_corpus_repositories(
                     repo_name,
                     lang,
                 )
-                grouped.setdefault(lang, [])
-                if repo_name not in {r["full_name"] for r in grouped[lang]}:
-                    grouped[lang].append(repo_row)
+                grouped_csv.setdefault(lang, [])
+                if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
+                    grouped_csv[lang].append(repo_row)
 
     # Prefer agent test-commit CSVs (if present) which indicate positive
     # detection of agent activity in test files. If such files exist under
@@ -495,7 +495,7 @@ def select_human_corpus_repositories(
     # CSVs as before.
     tests_commits_dir = Path(repo_qc_dir) / "tests_commits"
 
-    agent_test_repos: set[str] = set()
+    agent_test_repos: set[tuple[str, str]] = set()
     if tests_commits_dir.exists() and tests_commits_dir.is_dir():
         for tpath in sorted(tests_commits_dir.glob("*_agent_test_commit.csv")):
             with tpath.open("r", encoding="utf-8", newline="") as fh:
@@ -540,17 +540,17 @@ def select_human_corpus_repositories(
                     repo_name,
                     lang,
                     stars=row.get("stars") or 0,
-                    clone_url=row.get("clone_url"),
+                    clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
                 )
-                grouped.setdefault(lang, [])
-                if repo_name not in {r["full_name"] for r in grouped[lang]}:
-                    grouped[lang].append(repo_row)
+                grouped_csv.setdefault(lang, [])
+                if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
+                    grouped_csv[lang].append(repo_row)
 
     for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
         if not lang:
             continue
-        lang_repos = grouped.get(lang, [])
+        lang_repos = grouped_csv.get(lang, [])
         selected.extend(
             lang_repos
             if repos_per_language is None
@@ -666,13 +666,16 @@ class HumanCorpusCollector:
             )
 
             # Compute control variables using shared utility
-            metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
+            metadata = compute_repo_metadata(dict(repo), AGENT_CORPUS_START_DATE)
             domain = metadata["domain"]
             star_tier = metadata["star_tier"]
             repo_age = metadata["repo_age_years"]
-            test_commit_rows, fixtures, adoption_intensity = self._scan_and_extract(
+            scan_result = self._scan_and_extract(
                 managed_repo_path, language_name, repo_name, scanner, extractor
             )
+            test_commit_rows = scan_result[0]
+            fixtures = scan_result[1]
+            adoption_intensity = scan_result[2]
 
             return {
                 "repo_name": repo_name,
@@ -711,7 +714,7 @@ class HumanCorpusCollector:
         repo_name: str,
         scanner: Tier1RepositoryScanner,
         extractor: AgentFixtureExtractor,
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], Any]:
         """Scan commit roles for a repository and extract complete human fixtures.
 
         This helper runs the provided `scanner` to obtain commit role objects,
@@ -828,8 +831,8 @@ class HumanCorpusCollector:
         # per-language human test-commit CSVs, copy them to the output and exit.
         if only_write_test_commits:
             existing = list(Path(self.repo_qc_dir).glob("*_human_test_commit.csv"))
-            if existing:
-                out_dir = Path(self.test_commits_csv)
+            if existing and self.test_commits_csv is not None:
+                out_dir = self.test_commits_csv
                 # If input and output are the same directory, nothing to do.
                 if out_dir.resolve() == Path(self.repo_qc_dir).resolve():
                     logger.info(
@@ -908,15 +911,15 @@ class HumanCorpusCollector:
         for lang, repos in sorted(repos_by_language.items()):
             logger.info(f"[Human Corpus]   {lang}: {len(repos)} repositories")
 
-        repo_ages = []
-        repo_contributors = []
+        repo_ages: list[float] = []
+        repo_contributors: list[int] = []
         language_progress: dict[str, dict] = {}
         progress_lock = threading.Lock()
         progress_file = self._human_progress_file()
 
-        def log_progress():
+        def log_progress(stop_flag_container: dict) -> None:
             """Log progress every 3 minutes."""
-            while not hasattr(log_progress, "stop_flag") or not log_progress.stop_flag:
+            while not stop_flag_container.get("stop_flag", False):
                 with progress_lock:
                     completed_total = stats.repos_scanned
                     fixtures_total = stats.fixtures_collected
@@ -941,8 +944,10 @@ class HumanCorpusCollector:
                     logger.debug("Failed to write progress snapshot")
                 time.sleep(180)
 
-        log_progress.stop_flag = False
-        progress_thread = threading.Thread(target=log_progress, daemon=True)
+        stop_flag_container: dict = {"stop_flag": False}
+        progress_thread = threading.Thread(
+            target=log_progress, args=(stop_flag_container,), daemon=True
+        )
         progress_thread.start()
 
         try:
@@ -973,8 +978,7 @@ class HumanCorpusCollector:
                 )
 
         finally:
-            # Stop progress logging thread
-            log_progress.stop_flag = True
+            stop_flag_container["stop_flag"] = True
             progress_thread.join(timeout=5)
 
         # Compute means
@@ -1027,7 +1031,7 @@ class HumanCorpusCollector:
         initialise_db(self.output_db)
 
         stats = HumanCorpusStats()
-        candidates: list[dict] = []
+        candidates: list[tuple[dict[str, Any], dict[str, Any]]] = []
 
         # Checkpoint / progress paths for inter-run resumability
         inter_checkpoint = Path(self.output_db).parent / "human_inter_checkpoint.json"
@@ -1087,7 +1091,9 @@ class HumanCorpusCollector:
 
         repo_groups: dict[str, list[dict]] = defaultdict(list)
         for fixture in selected:
-            repo_groups[fixture.get("repo_full_name")].append(fixture)
+            repo_full_name = fixture.get("repo_full_name")
+            if repo_full_name is not None:
+                repo_groups[repo_full_name].append(fixture)
 
         counts_local, completed_repos, inserted = self._persist_and_insert_inter(
             selected, inter_checkpoint, inter_progress_file, seed=seed
@@ -1172,7 +1178,9 @@ class HumanCorpusCollector:
 
         repo_groups: dict[str, list[dict]] = defaultdict(list)
         for fixture in selected:
-            repo_groups[fixture.get("repo_full_name")].append(fixture)
+            repo_full_name = fixture.get("repo_full_name")
+            if repo_full_name is not None:
+                repo_groups[repo_full_name].append(fixture)
 
         completed_repos, counts_local = _load_inter_checkpoint(inter_checkpoint)
         for repo_full, fixtures_list in repo_groups.items():
@@ -1184,7 +1192,7 @@ class HumanCorpusCollector:
             repo_data = construct_repo_dict(
                 full_name=repo_full,
                 language=(
-                    fixtures_list[0].get("language") if fixtures_list else "unknown"
+                    str(fixtures_list[0].get("language")) if fixtures_list else "unknown"
                 ),
                 stars=0,
                 forks=0,

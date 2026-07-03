@@ -67,7 +67,9 @@ def _parse_since_date(start_date: str) -> datetime:
     return datetime.fromisoformat(start_date)
 
 
-def _is_test_file_path(relative_path: str, language: str) -> bool:
+def _is_test_file_path(relative_path: str, language: Optional[str] = None) -> bool:
+    if language is None:
+        return False
     config = LANGUAGE_CONFIGS.get(language)
     if config is None:
         return False

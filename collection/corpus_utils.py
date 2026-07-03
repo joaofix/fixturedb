@@ -100,7 +100,7 @@ class BaseCorpusStats:
 
 
 def compute_repo_metadata(
-    repo: RepositoryMetadata, temporal_reference: str
+    repo: Dict[str, Any], temporal_reference: str
 ) -> Dict[str, Any]:
     """
     Compute repository metadata (domain, star_tier, repo_age).

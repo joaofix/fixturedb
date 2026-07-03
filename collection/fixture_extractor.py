@@ -904,7 +904,7 @@ class AgentFixtureExtractor:
     def __init__(
         self,
         clones_dir: Path = CLONES_DIR,
-        source_db: Path = DB_PATH,
+        source_db: Optional[Path] = DB_PATH,
         start_date: str = AGENT_CORPUS_START_DATE,
     ):
         """
@@ -1040,16 +1040,19 @@ class AgentFixtureExtractor:
                             else repo_name
                         )
 
-                        with db_session(self.source_db) as source_conn:
-                            source_row = source_conn.execute(
-                                """
-                                SELECT github_id, full_name, language, stars, forks,
-                                       description, topics, created_at, pushed_at, clone_url
-                                FROM repositories
-                                WHERE full_name = ?
-                                """,
-                                (lookup_name,),
-                            ).fetchone()
+                        source_row = None
+                        source_db = self.source_db
+                        if source_db is not None:
+                            with db_session(source_db) as source_conn:
+                                source_row = source_conn.execute(
+                                    """
+                                    SELECT github_id, full_name, language, stars, forks,
+                                           description, topics, created_at, pushed_at, clone_url
+                                    FROM repositories
+                                    WHERE full_name = ?
+                                    """,
+                                    (lookup_name,),
+                                ).fetchone()
 
                         if source_row is None:
                             logger.debug(

@@ -411,6 +411,8 @@ def collect_dataset_c_fixtures(
     fresh_start = not checkpoint_path.exists()
     if fresh_start:
         for lang in {c[1].get("language") for c in candidates}:
+            if lang is None:
+                lang = "unknown"
             try:
                 csv_path = _human_fixture_csv_path(lang, "inter")
                 if csv_path.exists():
@@ -433,12 +435,17 @@ def collect_dataset_c_fixtures(
 
     repo_groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for fixture in selected:
-        repo_groups[fixture.get("repo_full_name")].append(fixture)
+        repo_full_name = fixture.get("repo_full_name")
+        if repo_full_name is not None:
+            repo_groups[repo_full_name].append(fixture)
 
     for repo_full, fixtures_list in repo_groups.items():
+        language_val = fixtures_list[0].get("language") if fixtures_list else "unknown"
+        if language_val is None:
+            language_val = "unknown"
         repo_data = construct_repo_dict(
             full_name=repo_full,
-            language=fixtures_list[0].get("language") if fixtures_list else "unknown",
+            language=str(language_val),
             stars=0,
             forks=0,
         )
