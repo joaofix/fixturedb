@@ -6,6 +6,7 @@ or into a temporary directory) and guarantees cleanup on exit.
 
 import os
 import shutil
+import shutil as _shutil
 import time
 import threading
 from contextlib import contextmanager
