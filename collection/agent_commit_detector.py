@@ -35,8 +35,7 @@ from .utils import AGENT_TRAILER_RE
 
 logger = get_logger(__name__)
 
-
-_BOT = object()
+_BOT = "bot"
 
 
 @dataclass
@@ -190,7 +189,7 @@ class Tier1RepositoryScanner:
                     author_name, author_email, body
                 )
 
-                if agent_type is _BOT:
+                if agent_type == "bot":
                     continue
 
                 if agent_type:
@@ -239,7 +238,7 @@ class Tier1RepositoryScanner:
                     author_name, author_email, body
                 )
 
-                if agent_type is _BOT:
+                if agent_type == "bot":
                     continue
 
                 test_files: list[str] = []
@@ -265,20 +264,22 @@ class Tier1RepositoryScanner:
 
     def _detect_agent_in_commit(
         self, author_name: str, author_email: str, body: str
-    ) -> Optional[str]:
-        """
-        Detect agent type from commit metadata.
+    ) -> str | None:
+        """Detect if commit author indicates agent authorship.
 
-        Checks:
-        1. Author name/email for agent signatures
-        2. Agent trailers (co-authored-by, assisted-by, generated-by) in commit body
+        Checks signatures in author name/email and commit message body.
+
+        Args:
+            author_name: Commit author name
+            author_email: Commit author email
+            body: Commit body text
 
         Returns:
             Agent type (claude/cursor/copilot/other), None for human-authored,
-            or _BOT sentinel for bot-authored commits.
+            or "bot" for bot-authored commits.
         """
         if "[bot]" in author_name.lower():
-            return _BOT
+            return "bot"
 
         author_text = f"{author_name} {author_email}".lower()
         for agent_type, keywords in self.agent_signatures.items():

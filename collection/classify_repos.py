@@ -177,7 +177,11 @@ class OpenRouterProvider:
                     temperature=0.0,
                     max_tokens=100,
                 )
-                raw = response.choices[0].message.content.strip()
+                raw = response.choices[0].message.content
+                if raw is not None:
+                    raw = raw.strip()
+                else:
+                    raw = ""
                 return _parse_response(raw)
             except Exception as exc:
                 if attempt < 2:
@@ -206,7 +210,7 @@ class OllamaProvider:
         full_prompt = SYSTEM_PROMPT + "\n\n" + prompt
         name = repo.get("name", "")
 
-        payload = {
+        payload: dict[str, object] = {
             "model": self._model,
             "prompt": full_prompt,
             "stream": False,
@@ -217,7 +221,7 @@ class OllamaProvider:
             try:
                 resp = requests.post(
                     f"{self._base_url}/api/generate",
-                    json=payload,
+                    json=payload,  # type: ignore[arg-type]
                     timeout=120,
                 )
                 resp.raise_for_status()
@@ -656,7 +660,7 @@ def main(argv: list[str] | None = None) -> int:
     # Classify — one language at a time (checkpoint per language)
     # ------------------------------------------------------------------
     if args.provider == "ollama":
-        provider = OllamaProvider()
+        provider: LLMProvider = OllamaProvider()
     else:
         provider = OpenRouterProvider()
     classifier = RepoClassifier(provider)

@@ -200,7 +200,7 @@ def _load_qc_repo_rows(
                     repo_name,
                     lang,
                     stars=row.get("stars") or 0,
-                    clone_url=row.get("clone_url"),
+                    clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
                 )
                 grouped.setdefault(lang, [])
@@ -300,7 +300,7 @@ def clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
         )
         if _output_requests_credentials(result.stderr):
             return False
-        return (
+        return bool(
             result.returncode == 0
             and target_dir.exists()
             and (list(target_dir.glob(".git")) or list(target_dir.iterdir()))

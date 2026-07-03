@@ -51,10 +51,8 @@ class DummyHumanCollector:
         ), Path("/tmp/human.db")
 
 
-def _make_dummy_dataset_c_csv(project_root: Path) -> Path:
-    fixtures_dir = project_root / "fixtures-from-agents"
-    fixtures_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = fixtures_dir / "dataset_c_sample.csv"
+def _make_dummy_dataset_c_csv(out_dir: Path) -> Path:
+    csv_path = out_dir / "dataset_c_sample.csv"
     csv_path.write_text(
         "repo_name,language,domain,clone_url\nowner/repo,python,data,https://github.com/owner/repo.git\n",
         encoding="utf-8",
@@ -72,7 +70,17 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
     repo_qc_dir.mkdir()
     output_db = tmp_path / "human.db"
 
-    dummy_csv = _make_dummy_dataset_c_csv(Path(phase2.__file__).resolve().parents[1])
+    dummy_csv = _make_dummy_dataset_c_csv(tmp_path)
+
+    # phase_2 hardcodes project_root / "fixtures-from-agents" to detect
+    # Dataset C mode. Monkeypatch Path.exists so it sees our temp CSV.
+    original_exists = Path.exists
+    def _fake_exists(self):
+        if self.name.startswith("dataset_c_"):
+            return True
+        return original_exists(self)
+    monkeypatch.setattr(Path, "exists", _fake_exists)
+
     try:
 
         def collector_factory(*args, **kwargs):
@@ -108,6 +116,7 @@ def test_phase_2_main_uses_manual_repo_dataset(monkeypatch, tmp_path):
                 str(output_db),
                 "--repo-dir",
                 str(repo_qc_dir),
+                "--language", "python",
             ],
         )
         monkeypatch.setattr("builtins.open", mock_open())
@@ -135,7 +144,15 @@ def test_phase_2_multi_language_does_not_skip_due_to_existing_db(tmp_path, monke
     repo_qc_dir.mkdir()
     output_db = tmp_path / "human.db"
 
-    dummy_csv = _make_dummy_dataset_c_csv(Path(phase2.__file__).resolve().parents[1])
+    dummy_csv = _make_dummy_dataset_c_csv(tmp_path)
+
+    # Same monkeypatch for the second test
+    original_exists = Path.exists
+    def _fake_exists2(self):
+        if self.name.startswith("dataset_c_"):
+            return True
+        return original_exists(self)
+    monkeypatch.setattr(Path, "exists", _fake_exists2)
     try:
         import sqlite3
 

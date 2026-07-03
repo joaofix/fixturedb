@@ -218,6 +218,26 @@ def compute_continuous_balance(
         )
 
     try:
+        # If all values are identical, distributions are trivially balanced
+        if len(set(human_vals)) == 1 and len(set(agent_vals)) == 1 and human_vals[0] == agent_vals[0]:
+            return BalanceTest(
+                variable=variable,
+                test_type="mann-whitney-u",
+                p_value=1.0,
+                is_balanced=True,
+                statistic=0.0,
+                details={
+                    "human_count": len(human_vals),
+                    "agent_count": len(agent_vals),
+                    "human_mean": float(human_vals[0]),
+                    "agent_mean": float(agent_vals[0]),
+                    "human_median": float(human_vals[0]),
+                    "agent_median": float(agent_vals[0]),
+                    "u_statistic": 0.0,
+                    "reason": "identical_distributions",
+                },
+            )
+
         statistic, p_value = mannwhitneyu(
             human_vals, agent_vals, alternative="two-sided"
         )

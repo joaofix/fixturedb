@@ -565,6 +565,8 @@ class Pre2021FixtureExtractor:
                 fixtures_by_repo: Dict[str, List[Dict]] = {}
                 for fixture in self.all_fixtures:
                     repo_name = fixture.get("repo_name")
+                    if repo_name is None:
+                        continue
                     if repo_name not in fixtures_by_repo:
                         fixtures_by_repo[repo_name] = []
                     fixtures_by_repo[repo_name].append(fixture)

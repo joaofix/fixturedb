@@ -287,12 +287,12 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         }
         print(f"Processing {full_name} (lang={lang})")
 
-        clone_url = meta.get("clone_url")
+        clone_url: str = meta.get("clone_url") or f"https://github.com/{full_name}.git"
         has_agent_config = False
         qc_reason = ""
 
         with temp_clone_commit_history(
-            clone_url, full_name, prefix="agent-repos-", timeout=60
+            clone_url, str(full_name), prefix="agent-repos-", timeout=60
         ) as repo_path:
             try:
                 if repo_path and repo_path.exists():
@@ -333,7 +333,7 @@ def run(
         return 0
     limit = int(limit or 0)
 
-    to_process = []
+    to_process: list[dict] = []
     for entry in repos:
         if limit and len(to_process) >= limit:
             break

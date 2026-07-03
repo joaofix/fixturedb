@@ -94,7 +94,7 @@ def load_seen_commits_for_language(lang: str) -> set:
 
 def write_commit_rows(rows: list[dict]) -> None:
     # rows may contain multiple languages; group by language
-    by_lang = {}
+    by_lang: dict[str, list[dict]] = {}
     for r in rows:
         lang = (r.get("language") or "unknown").lower()
         by_lang.setdefault(lang, []).append(r)

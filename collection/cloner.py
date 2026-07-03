@@ -222,7 +222,7 @@ def _has_sufficient_test_files(full_name: str, language: str) -> bool:
         response = requests.get(
             "https://api.github.com/search/code",
             headers=headers,
-            params={"q": query, "per_page": 1},
+            params={"q": query, "per_page": "1"},
             timeout=5,
         )
 

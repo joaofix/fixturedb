@@ -111,7 +111,7 @@ def main() -> int:
 
     logger.info("=" * 70)
     logger.info("PHASE 1D COMPLETE")
-    logger.info(f"Tier 2 repos found: {len(tier2_results['repos_found'])}")
+    logger.info(f"Tier 2 repos found: {len(tier2_results.get('repos_found', []))}")
     logger.info(f"Output saved to: {tier2_file.name}")
     return 0
 

@@ -2,12 +2,16 @@
 
 Tests the end-to-end flow: proportions → sampling → CSV loading → format validation.
 Uses real fixtures-from-agents and github-search-classified data to verify correctness.
+
+IMPORTANT: fixtures-from-agents/ is real research data. Tests MUST NOT write to it.
+All test outputs go to temporary directories.
 """
 
 from __future__ import annotations
 
 import csv
 import json
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -18,6 +22,7 @@ from collection.compute_agent_proportions import compute_proportions
 from collection.human_corpus import load_dataset_c_repos
 from collection.sample_proportional_repos import (
     sample_proportional,
+    write_per_language_files,
 )
 
 # ---------------------------------------------------------------------------
@@ -71,155 +76,177 @@ class TestFullPipeline:
     def test_dataset_c_sample_is_valid(self):
         """dataset_c_sample.csv has correct format and content."""
         pr = self._project_root()
-        csv_path = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
-        assert csv_path.exists(), "Run sample_proportional_repos first"
+        prop_path = pr / "fixtures-from-agents" / "category_proportions.json"
+        if not prop_path.exists():
+            pytest.skip("category_proportions.json not found")
 
-        with open(csv_path, encoding="utf-8", newline="") as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            sampled = sample_proportional(
+                proportions_path=prop_path, target_per_language=5, seed=42
+            )
+            write_per_language_files(sampled, out_dir)
+            csv_path = out_dir / "dataset_c_sample.csv"
+            assert csv_path.exists()
 
-        assert len(rows) > 0
+            with open(csv_path, encoding="utf-8", newline="") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
 
-        for row in rows:
-            # Required columns
-            assert "repo_name" in row
-            assert "language" in row
-            assert "domain" in row
-            assert "clone_url" in row
+            assert len(rows) > 0
 
-            # repo_name must be owner/repo format
-            assert "/" in row["repo_name"]
-            assert " " not in row["repo_name"]
-
-            # language must be valid
-            assert row["language"].lower() in {
-                "python",
-                "java",
-                "javascript",
-                "typescript",
-            }
-
-            # domain must be valid
-            assert row["domain"] in {"web", "library", "data", "infra", "cli", "other"}
-
-            # clone_url should either be empty or a valid git URL
-            if row["clone_url"]:
-                assert row["clone_url"].startswith("https://github.com/")
-                assert row["clone_url"].endswith(".git")
+            for row in rows:
+                assert "repo_name" in row
+                assert "language" in row
+                assert "domain" in row
+                assert "clone_url" in row
+                assert "/" in row["repo_name"]
+                assert " " not in row["repo_name"]
+                assert row["language"].lower() in {
+                    "python", "java", "javascript", "typescript",
+                }
+                assert row["domain"] in {"web", "library", "data", "infra", "cli", "other"}
+                if row["clone_url"]:
+                    assert row["clone_url"].startswith("https://github.com/")
+                    assert row["clone_url"].endswith(".git")
 
     def test_load_dataset_c_repos_format(self):
         """load_dataset_c_repos produces correct format for collect_inter_human()."""
         pr = self._project_root()
-        csv_path = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
-        if not csv_path.exists():
-            pytest.skip("dataset_c_sample.csv not found")
+        prop_path = pr / "fixtures-from-agents" / "category_proportions.json"
+        if not prop_path.exists():
+            pytest.skip("category_proportions.json not found")
 
-        repos = load_dataset_c_repos(csv_path)
-        assert len(repos) > 0
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            sampled = sample_proportional(
+                proportions_path=prop_path, target_per_language=5, seed=42
+            )
+            write_per_language_files(sampled, out_dir)
+            csv_path = out_dir / "dataset_c_sample.csv"
 
-        for repo in repos:
-            assert "full_name" in repo
-            assert "language" in repo
-            assert "clone_url" in repo
-            assert "/" in repo["full_name"]
-            assert repo["clone_url"].endswith(".git")
+            repos = load_dataset_c_repos(csv_path)
+            assert len(repos) > 0
+
+            for repo in repos:
+                assert "full_name" in repo
+                assert "language" in repo
+                assert "clone_url" in repo
+                assert "/" in repo["full_name"]
+                assert repo["clone_url"].endswith(".git")
 
     def test_proportions_match_dataset_c_domains(self):
         """Dataset C domain proportions approximate Dataset A proportions."""
         pr = self._project_root()
         json_path = pr / "fixtures-from-agents" / "category_proportions.json"
-        csv_path = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
 
-        if not json_path.exists() or not csv_path.exists():
-            pytest.skip("Missing proportions or sample CSV")
+        if not json_path.exists():
+            pytest.skip("category_proportions.json not found")
 
         with open(json_path) as f:
             proportions = json.load(f)
 
-        with open(csv_path, encoding="utf-8", newline="") as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            sampled = sample_proportional(
+                proportions_path=json_path, target_per_language=10, seed=42
+            )
+            write_per_language_files(sampled, out_dir)
+            csv_path = out_dir / "dataset_c_sample.csv"
 
-        # Count domains in Dataset C
-        dc_counts: dict[str, int] = {}
-        for row in rows:
-            d = row["domain"]
-            dc_counts[d] = dc_counts.get(d, 0) + 1
+            with open(csv_path, encoding="utf-8", newline="") as f:
+                reader = csv.DictReader(f)
+                rows = list(reader)
 
-        total = sum(dc_counts.values())
-        da_props = proportions["global"]["proportions"]
+            dc_counts: dict[str, int] = {}
+            for row in rows:
+                d = row["domain"]
+                dc_counts[d] = dc_counts.get(d, 0) + 1
 
-        # Each domain should be within ±10% of target (over-sample factor introduces variance)
-        for domain, target in da_props.items():
-            actual = dc_counts.get(domain, 0) / total
-            assert (
-                abs(actual - target) < 0.10
-            ), f"Domain {domain}: target={target:.1%}, actual={actual:.1%}"
+            total = sum(dc_counts.values())
+            da_props = proportions["global"]["proportions"]
+
+            for domain, target in da_props.items():
+                actual = dc_counts.get(domain, 0) / total
+                assert (
+                    abs(actual - target) < 0.10
+                ), f"Domain {domain}: target={target:.1%}, actual={actual:.1%}"
 
     def test_all_dataset_c_repos_have_classification(self):
         """Every repo in dataset_c_sample.csv has a domain classification."""
         pr = self._project_root()
-        csv_path = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
+        prop_path = pr / "fixtures-from-agents" / "category_proportions.json"
         labeled_dir = pr / "github-search-classified" / "openai_gpt-4o-mini"
 
-        if not csv_path.exists():
-            pytest.skip("dataset_c_sample.csv not found")
+        if not prop_path.exists():
+            pytest.skip("category_proportions.json not found")
 
-        # Build classification map
-        class_map: dict[str, str] = {}
-        for lcsv in labeled_dir.glob("*.csv"):
-            with open(lcsv, encoding="utf-8", newline="") as f:
-                for row in csv.DictReader(f):
-                    name = (row.get("name") or "").strip()
-                    domain = (row.get("domain") or "").strip()
-                    if name and domain:
-                        class_map[name] = domain
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            sampled = sample_proportional(
+                proportions_path=prop_path, target_per_language=5, seed=42
+            )
+            write_per_language_files(sampled, out_dir)
+            csv_path = out_dir / "dataset_c_sample.csv"
 
-        with open(csv_path, encoding="utf-8", newline="") as f:
-            rows = list(csv.DictReader(f))
+            class_map: dict[str, str] = {}
+            for lcsv in labeled_dir.glob("*.csv"):
+                with open(lcsv, encoding="utf-8", newline="") as f:
+                    for row in csv.DictReader(f):
+                        name = (row.get("name") or "").strip()
+                        domain = (row.get("domain") or "").strip()
+                        if name and domain:
+                            class_map[name] = domain
 
-        missing = 0
-        for row in rows:
-            name = row["repo_name"]
-            if name not in class_map:
-                missing += 1
+            with open(csv_path, encoding="utf-8", newline="") as f:
+                rows = list(csv.DictReader(f))
 
-        # A small number may be missing if classification was incomplete
-        assert (
-            missing < len(rows) * 0.02
-        ), f"{missing}/{len(rows)} repos missing classification"
+            missing = 0
+            for row in rows:
+                name = row["repo_name"]
+                if name not in class_map:
+                    missing += 1
+
+            assert (
+                missing < len(rows) * 0.02
+            ), f"{missing}/{len(rows)} repos missing classification"
 
     def test_no_overlap_dataset_a_and_c(self):
         """Dataset A and Dataset C should have no overlapping repos."""
         pr = self._project_root()
-        csv_c = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
+        prop_path = pr / "fixtures-from-agents" / "category_proportions.json"
         repos_dir = pr / "fixtures-from-agents" / "repos"
 
-        if not csv_c.exists():
-            pytest.skip("dataset_c_sample.csv not found")
+        if not prop_path.exists():
+            pytest.skip("category_proportions.json not found")
 
-        # Load Dataset A repo names
-        a_names: set[str] = set()
-        for repo_csv in repos_dir.glob("*_agent_fixture_repos.csv"):
-            with open(repo_csv, encoding="utf-8", newline="") as f:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            sampled = sample_proportional(
+                proportions_path=prop_path, target_per_language=5, seed=42
+            )
+            write_per_language_files(sampled, out_dir)
+            csv_c = out_dir / "dataset_c_sample.csv"
+
+            a_names: set[str] = set()
+            for repo_csv in repos_dir.glob("*_agent_fixture_repos.csv"):
+                with open(repo_csv, encoding="utf-8", newline="") as f:
+                    for row in csv.DictReader(f):
+                        name = (row.get("repo_name") or "").strip()
+                        if name:
+                            a_names.add(name)
+
+            c_names: set[str] = set()
+            with open(csv_c, encoding="utf-8", newline="") as f:
                 for row in csv.DictReader(f):
                     name = (row.get("repo_name") or "").strip()
                     if name:
-                        a_names.add(name)
+                        c_names.add(name)
 
-        # Load Dataset C repo names
-        c_names: set[str] = set()
-        with open(csv_c, encoding="utf-8", newline="") as f:
-            for row in csv.DictReader(f):
-                name = (row.get("repo_name") or "").strip()
-                if name:
-                    c_names.add(name)
-
-        overlap = a_names & c_names
-        # A small overlap is expected (pre-2021 repos that happen to have agent activity)
-        assert (
-            len(overlap) < 20
-        ), f"Unexpectedly large overlap between Dataset A and C: {overlap}"
+            overlap = a_names & c_names
+            assert (
+                len(overlap) < 20
+            ), f"Unexpectedly large overlap between Dataset A and C: {overlap}"
 
 
 # ---------------------------------------------------------------------------
@@ -239,28 +266,41 @@ class TestPreCutoffIntegration:
         import gzip
 
         pr = self._project_root()
-        csv_path = pr / "fixtures-from-agents" / "dataset_c_sample.csv"
+        prop_path = pr / "fixtures-from-agents" / "category_proportions.json"
         raw_dir = pr / "github-search-raw"
         cutoff = "2020-12-31"
 
-        if not csv_path.exists():
-            pytest.skip("dataset_c_sample.csv not found")
+        if not prop_path.exists():
+            pytest.skip("category_proportions.json not found")
 
-        # Build a map of repo_name → createdAt from raw CSVs
-        created_map: dict[str, str] = {}
-        for gz_path in raw_dir.glob("*.csv.gz"):
-            with gzip.open(gz_path, "rt", encoding="utf-8", newline="") as f:
-                for row in csv.DictReader(f):
-                    name = (row.get("name") or "").strip()
-                    created = (row.get("createdAt") or "").strip()
-                    if name and created:
-                        created_map[name] = created[:10]
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_dir = Path(tmpdir)
+            sampled = sample_proportional(
+                proportions_path=prop_path, target_per_language=5, seed=42
+            )
+            write_per_language_files(sampled, out_dir)
+            csv_path = out_dir / "dataset_c_sample.csv"
 
-        with open(csv_path, encoding="utf-8", newline="") as f:
-            rows = list(csv.DictReader(f))
+            created_map: dict[str, str] = {}
+            for gz_path in raw_dir.glob("*.csv.gz"):
+                with gzip.open(gz_path, "rt", encoding="utf-8", newline="") as f:
+                    for row in csv.DictReader(f):
+                        name = (row.get("name") or "").strip()
+                        created = (row.get("createdAt") or "").strip()
+                        if name and created:
+                            created_map[name] = created[:10]
 
-        post_cutoff = []
-        for row in rows:
+            with open(csv_path, encoding="utf-8", newline="") as f:
+                rows = list(csv.DictReader(f))
+
+            post_cutoff = []
+            for row in rows:
+                name = row["repo_name"]
+                created = created_map.get(name, "")
+                if created and created > cutoff:
+                    post_cutoff.append(f"{name} ({created})")
+
+            assert len(post_cutoff) == 0, f"Repos created after cutoff: {post_cutoff}"
             name = row["repo_name"]
             created = created_map.get(name, "")
             if created and created > cutoff:

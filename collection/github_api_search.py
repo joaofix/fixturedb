@@ -71,7 +71,7 @@ class GitHubAPISearcher:
         # because filename: qualifiers are supported by /search/code. The
         # repository search endpoint does not accept filename: and will return
         # no results for this use-case.
-        repos = {}
+        repos: dict[str, dict] = {}
         page = 1
         per_page = 100
 
@@ -104,8 +104,8 @@ class GitHubAPISearcher:
                             self.CODE_SEARCH_ENDPOINT,
                             params={
                                 "q": query,
-                                "page": page,
-                                "per_page": per_page,
+                                "page": str(page),
+                                "per_page": str(per_page),
                             },
                             timeout=30,
                         )
@@ -355,7 +355,7 @@ def _detect_repo_language(repo_path: Path) -> str:
     # Return the language with highest count, default to python
     if not any(language_scores.values()):
         return "python"
-    return max(language_scores, key=language_scores.get)
+    return max(language_scores, key=lambda k: language_scores[k])
 
 
 def search_repos_with_agent_configs_local(
@@ -380,7 +380,7 @@ def search_repos_with_agent_configs_local(
     """
     repo_root = Path(__file__).resolve().parents[1]
     clones_path = Path(clones_dir) if clones_dir else repo_root / "clones"
-    results = []
+    results: list[dict] = []
     if not clones_path.exists():
         logger.warning(f"[Local Scan] clones directory not found: {clones_path}")
         return []

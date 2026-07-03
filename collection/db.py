@@ -674,7 +674,8 @@ def insert_human_within_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         fixture,
     )
     if cursor.rowcount == 1:
-        return cursor.lastrowid
+        rowid = cursor.lastrowid
+        return rowid if rowid is not None else 0
     row = conn.execute(
         "SELECT id FROM human_within_fixtures WHERE file_id=? AND name=? AND start_line=?",
         (fixture["file_id"], fixture["name"], fixture["start_line"]),
@@ -749,7 +750,8 @@ def insert_human_inter_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
             pass
 
     if cursor.rowcount == 1:
-        return cursor.lastrowid
+        rowid = cursor.lastrowid
+        return rowid if rowid is not None else 0
     row = conn.execute(
         "SELECT id FROM human_inter_fixtures WHERE file_id=? AND name=? AND start_line=?",
         (fixture["file_id"], fixture["name"], fixture["start_line"]),

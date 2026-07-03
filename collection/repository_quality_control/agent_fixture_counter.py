@@ -450,7 +450,7 @@ def _process_single_repo(
             }
     else:
         if selected_strategy == "sha":
-            local_repo_path, temp_root = _create_commit_targeted_temp_repo(
+            local_repo_path, temp_root = _create_commit_targeted_temp_repo(  # type: ignore[assignment]
                 repo_name,
                 clone_url,
                 commit_shas,

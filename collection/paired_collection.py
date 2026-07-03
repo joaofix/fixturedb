@@ -45,7 +45,7 @@ class PairedStudyStats:
     agent_type_breakdown: dict[str, int] = field(default_factory=dict)
     domain_distribution: dict[str, int] = field(default_factory=dict)
     star_tier_distribution: dict[str, int] = field(default_factory=dict)
-    language_distribution: dict[str, int] = field(default_factory=dict)
+    language_distribution: dict[str, dict[str, int]] = field(default_factory=dict)
     mean_repo_age_years: float = 0.0
     mean_contributors: float = 0.0
     balance_tests: dict[str, dict] = field(default_factory=dict)
@@ -226,10 +226,10 @@ class PairedStudyCollector:
         logger.info(f"Selected {len(selected_repos)} repositories for paired study")
 
         # Trackers for balance checking
-        agent_lang_dist = Counter()
-        human_lang_dist = Counter()
-        agent_domain_dist = Counter()
-        human_domain_dist = Counter()
+        agent_lang_dist: Counter[str] = Counter()
+        human_lang_dist: Counter[str] = Counter()
+        agent_domain_dist: Counter[str] = Counter()
+        human_domain_dist: Counter[str] = Counter()
         repo_ages = []
         repo_contributors = []
 
@@ -263,9 +263,10 @@ class PairedStudyCollector:
             )
             if not passes_qc:
                 stats.repos_failed_qc += 1
-                stats.qc_skip_reasons[skip_reason] = (
-                    stats.qc_skip_reasons.get(skip_reason, 0) + 1
-                )
+                if skip_reason is not None:
+                    stats.qc_skip_reasons[skip_reason] = (
+                        stats.qc_skip_reasons.get(skip_reason, 0) + 1
+                    )
                 logger.debug(f"[paired] Skip {repo_name}: QC failed ({skip_reason})")
                 continue
             stats.repos_passed_qc += 1
@@ -398,8 +399,8 @@ class PairedStudyCollector:
 
         # Track language distribution of commits
         stats.language_distribution = {
-            "agent": dict(agent_lang_dist),
-            "human": dict(human_lang_dist),
+            "agent": {k: int(v) for k, v in agent_lang_dist.items()},
+            "human": {k: int(v) for k, v in human_lang_dist.items()},
         }
 
         # Generate comprehensive summary
