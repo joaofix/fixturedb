@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS repositories (
     domain          TEXT DEFAULT NULL,      -- classified domain (web/systems/ml/etc)
     star_tier       TEXT DEFAULT NULL,      -- core (>=500) or extended (<500)
     repo_age_years  REAL DEFAULT NULL,      -- repository age in years at collection time
+    agent_adoption_intensity TEXT DEFAULT NULL,  -- agent commit ratio since adoption: no_commits/experimental/limited/consistent/pervasive
     collected_at    TEXT DEFAULT (datetime('now'))
 );
 
@@ -392,6 +393,23 @@ def initialise_db(db_path: Path = DB_PATH) -> None:
     print(f"[db] Initialised database at {db_path}")
 
 
+def migrate_add_adoption_intensity(db_path: Path = DB_PATH) -> None:
+    """Add agent_adoption_intensity column to existing databases (idempotent)."""
+    try:
+        conn = get_connection(db_path)
+        conn.execute(
+            "ALTER TABLE repositories ADD COLUMN agent_adoption_intensity TEXT DEFAULT NULL"
+        )
+        conn.commit()
+        conn.close()
+        logger.info("Migrated repositories table: added agent_adoption_intensity column")
+    except sqlite3.OperationalError:
+        # Column already exists — safe to ignore
+        pass
+    except Exception:
+        logger.debug("Migration skipped (database may not exist yet)")
+
+
 def db_is_initialised(db_path: Path = DB_PATH) -> bool:
     """Return True if the database already has the repositories table."""
     try:
@@ -428,16 +446,20 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
     ).fetchone()
     is_new = existing is None
 
+    adoption = repo.get("agent_adoption_intensity")
+
     conn.execute(
         """
         INSERT INTO repositories (
             github_id, full_name, language, stars, forks,
             description, topics, created_at, pushed_at, clone_url,
-            domain, star_tier, repo_age_years, num_contributors
+            domain, star_tier, repo_age_years, num_contributors,
+            agent_adoption_intensity
         ) VALUES (
             :github_id, :full_name, :language, :stars, :forks,
             :description, :topics, :created_at, :pushed_at, :clone_url,
-            :domain, :star_tier, :repo_age_years, :num_contributors
+            :domain, :star_tier, :repo_age_years, :num_contributors,
+            :agent_adoption_intensity
         )
         ON CONFLICT(github_id) DO UPDATE SET
             stars       = excluded.stars,
@@ -445,9 +467,10 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
             domain      = excluded.domain,
             star_tier   = excluded.star_tier,
             repo_age_years = excluded.repo_age_years,
-            num_contributors = excluded.num_contributors
+            num_contributors = excluded.num_contributors,
+            agent_adoption_intensity = excluded.agent_adoption_intensity
     """,
-        repo,
+        {**repo, "agent_adoption_intensity": adoption},
     )
 
     row_id = (

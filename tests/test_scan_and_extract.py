@@ -61,7 +61,7 @@ def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
     scanner = FakeScanner()
     extractor = FakeExtractor()
 
-    test_rows, fixtures = collector._scan_and_extract(
+    test_rows, fixtures, adoption = collector._scan_and_extract(
         Path("/tmp"), "python", "owner/repo", scanner, extractor
     )
 
@@ -72,3 +72,6 @@ def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
     # Fixtures should include only the complete addition
     assert len(fixtures) == 1
     assert fixtures[0]["name"] == "f1"
+
+    # Adoption intensity should be computed (no_commits for non-git path)
+    assert adoption == "no_commits"

@@ -380,6 +380,104 @@ class Tier1RepositoryScanner:
         return "\n".join(lines)
 
 
+# ---------------------------------------------------------------------------
+# Agent adoption intensity
+# ---------------------------------------------------------------------------
+
+# Adoption intensity levels based on ratio of agent commits to total commits
+# since AGENT_CORPUS_START_DATE (2025-01-01).
+_ADOPTION_THRESHOLD_EXPERIMENTAL = 0.01   # <1%
+_ADOPTION_THRESHOLD_LIMITED = 0.05        # 1–5%
+_ADOPTION_THRESHOLD_CONSISTENT = 0.20     # 5–20%
+# >20% is "pervasive"
+
+
+def count_total_commits_since(repo_path: Path, start_date: str) -> int:
+    """Count total non-merge commits in a repo since *start_date*.
+
+    Uses ``git rev-list --count`` for performance (avoids full PyDriller
+    traversal when only the count is needed).
+
+    Args:
+        repo_path: Path to a git repository on disk.
+        start_date: ISO-format date string (e.g. "2025-01-01").
+
+    Returns:
+        Number of non-merge commits since *start_date*, or 0 on failure.
+    """
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            [
+                "git", "-C", str(repo_path),
+                "rev-list", "--count", "--no-merges",
+                f"--since={start_date}", "HEAD",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode == 0:
+            return int(result.stdout.strip() or 0)
+    except (subprocess.TimeoutExpired, ValueError, OSError):
+        pass
+    return 0
+
+
+def compute_adoption_intensity(
+    repo_path: Path,
+    start_date: str,
+    agent_commit_count: int,
+    total_commit_count: int | None = None,
+) -> str | None:
+    """Compute the agent adoption intensity category for a repository.
+
+    Categories (based on ratio of agent commits to total commits since
+    *start_date*):
+
+    ==============  ==============================
+    Category         Agent commit ratio
+    ==============  ==============================
+    ``no_commits``   0 total commits or 0 agent commits
+    ``experimental`` ratio < 1%
+    ``limited``      1% ≤ ratio < 5%
+    ``consistent``   5% ≤ ratio ≤ 20%
+    ``pervasive``    ratio > 20%
+    ==============  ==============================
+
+    Args:
+        repo_path: Path to a git repository on disk.
+        start_date: ISO-format date string.
+        agent_commit_count: Number of agent commits (pre-computed).
+        total_commit_count: Total commits since *start_date*. If ``None``,
+            computed via ``count_total_commits_since``.
+
+    Returns:
+        One of ``"no_commits"``, ``"experimental"``, ``"limited"``,
+        ``"consistent"``, ``"pervasive"``, or ``None`` if the count
+        cannot be determined.
+    """
+    if total_commit_count is None:
+        total_commit_count = count_total_commits_since(repo_path, start_date)
+
+    if total_commit_count == 0:
+        return "no_commits"
+
+    if agent_commit_count == 0:
+        return "no_commits"
+
+    ratio = agent_commit_count / total_commit_count
+
+    if ratio < _ADOPTION_THRESHOLD_EXPERIMENTAL:
+        return "experimental"
+    if ratio < _ADOPTION_THRESHOLD_LIMITED:
+        return "limited"
+    if ratio <= _ADOPTION_THRESHOLD_CONSISTENT:
+        return "consistent"
+    return "pervasive"
+
+
 class Tier2RepoMatcher:
     """Discover supplementary repositories via agent activity signals (Tier 2)."""
 

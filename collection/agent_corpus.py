@@ -600,6 +600,32 @@ class AgentCorpusCollector:
                     if repo_age is not None:
                         repo_ages.append(repo_age)
 
+                    # Find agent commits from the QCed commit dataset.
+                    agent_commits = commits_by_repo.get(repo_name, [])
+                    logger.info(
+                        f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent commits to inspect"
+                    )
+
+                    # Compute agent adoption intensity before persisting repo metadata
+                    from .agent_commit_detector import (
+                        compute_adoption_intensity,
+                        count_total_commits_since,
+                    )
+
+                    total_commits = count_total_commits_since(
+                        repo_path, AGENT_CORPUS_START_DATE
+                    )
+                    adoption_intensity = compute_adoption_intensity(
+                        repo_path,
+                        AGENT_CORPUS_START_DATE,
+                        agent_commit_count=len(agent_commits),
+                        total_commit_count=total_commits,
+                    )
+                    logger.info(
+                        f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent / "
+                        f"{total_commits} total commits → {adoption_intensity}"
+                    )
+
                     # Persist repository metadata using shared utility
                     with db_session(self.output_db) as conn:
                         repo_row, _ = upsert_repository(
@@ -623,14 +649,9 @@ class AgentCorpusCollector:
                                 domain=domain,
                                 star_tier=star_tier,
                                 repo_age_years=repo_age,
+                                agent_adoption_intensity=adoption_intensity,
                             ),
                         )
-
-                    # Find agent commits from the QCed commit dataset.
-                    agent_commits = commits_by_repo.get(repo_name, [])
-                    logger.info(
-                        f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent commits to inspect"
-                    )
 
                     if not agent_commits:
                         logger.debug(

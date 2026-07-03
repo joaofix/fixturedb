@@ -670,7 +670,7 @@ class HumanCorpusCollector:
             domain = metadata["domain"]
             star_tier = metadata["star_tier"]
             repo_age = metadata["repo_age_years"]
-            test_commit_rows, fixtures = self._scan_and_extract(
+            test_commit_rows, fixtures, adoption_intensity = self._scan_and_extract(
                 managed_repo_path, language_name, repo_name, scanner, extractor
             )
 
@@ -698,6 +698,7 @@ class HumanCorpusCollector:
                     domain=domain,
                     star_tier=star_tier,
                     repo_age_years=repo_age,
+                    agent_adoption_intensity=adoption_intensity,
                 ),
                 "test_commit_rows": test_commit_rows,
                 "fixtures": fixtures,
@@ -728,17 +729,32 @@ class HumanCorpusCollector:
                 `_extract_from_agent_commits(repo_name, commits)`.
 
         Returns:
-            tuple: (test_commit_rows, fixtures)
+            tuple: (test_commit_rows, fixtures, adoption_intensity)
                 - test_commit_rows (list[dict]): Rows suitable for CSV/DB insertion
                   describing each human test commit discovered.
                 - fixtures (list[dict]): Extracted fixture dictionaries filtered
                   to only include complete additions.
+                - adoption_intensity (str | None): Agent adoption intensity category.
         """
         commit_roles = scanner.scan_repo_commit_roles(
             managed_repo_path,
             start_date=AGENT_CORPUS_START_DATE,
             language=language_name,
             detect_test_files=True,
+        )
+
+        # Compute agent adoption intensity from the full commit role list
+        total_commits = len(commit_roles)
+        agent_commits_count = sum(
+            1 for c in commit_roles if c.commit_role == "agent"
+        )
+        from .agent_commit_detector import compute_adoption_intensity
+
+        adoption_intensity = compute_adoption_intensity(
+            managed_repo_path,
+            AGENT_CORPUS_START_DATE,
+            agent_commit_count=agent_commits_count,
+            total_commit_count=total_commits,
         )
 
         test_commit_rows = [
@@ -774,7 +790,7 @@ class HumanCorpusCollector:
                 fixture for fixture in fixtures if fixture.get("is_complete_addition")
             ]
 
-        return test_commit_rows, fixtures
+        return test_commit_rows, fixtures, adoption_intensity
 
     def run(
         self,

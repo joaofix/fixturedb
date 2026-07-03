@@ -393,6 +393,7 @@ def construct_repo_dict(
     domain: Optional[str] = None,
     star_tier: Optional[str] = None,
     repo_age_years: Optional[float] = None,
+    agent_adoption_intensity: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Construct a repository data dictionary for database insertion.
@@ -422,6 +423,7 @@ def construct_repo_dict(
         "star_tier": star_tier,
         "repo_age_years": repo_age_years,
         "num_contributors": num_contributors or 0,
+        "agent_adoption_intensity": agent_adoption_intensity,
     }
 
 
