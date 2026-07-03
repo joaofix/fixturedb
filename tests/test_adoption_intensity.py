@@ -1,9 +1,6 @@
 """Unit tests for agent adoption intensity computation."""
 
 import subprocess
-from pathlib import Path
-
-import pytest
 
 from collection.agent_commit_detector import (
     compute_adoption_intensity,

@@ -6,8 +6,8 @@ or into a temporary directory) and guarantees cleanup on exit.
 
 import os
 import shutil
-import shutil as _shutil
 import time
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Optional, Generator
@@ -15,8 +15,6 @@ from typing import Callable, Optional, Generator
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
-
-import threading
 
 from .temp_clone import cleanup_tempdir, clone_to_tempdir
 
