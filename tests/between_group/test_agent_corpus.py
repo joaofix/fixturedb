@@ -651,6 +651,183 @@ class TestQualityControlledInputs:
         if fixtures_csv_path.exists() and original_fixtures_bytes:
             fixtures_csv_path.write_bytes(original_fixtures_bytes)
 
+    def test_agent_corpus_persists_full_metrics_and_mocks(self, tmp_path, monkeypatch):
+        """Regression test: agent fixture rows must keep their real computed
+        metrics and agent_type, and their mocks must reach mock_usages —
+        this is the behavior persist_repository_and_fixtures() now provides
+        after agent_corpus.py stopped hand-rolling its own insertion loop."""
+        repo_qc_dir = tmp_path / "repo-qc"
+        commit_qc_dir = tmp_path / "commit-qc"
+        repo_qc_dir.mkdir()
+        commit_qc_dir.mkdir()
+
+        repo_list_path = (
+            Path(__file__).resolve().parents[2]
+            / "fixtures-from-agents"
+            / "repos"
+            / "python_agent_fixture_repos.csv"
+        )
+        fixtures_csv_path = (
+            Path(__file__).resolve().parents[2]
+            / "fixtures-from-agents"
+            / "python_agent_fixtures.csv"
+        )
+        original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
+        original_fixtures_bytes = (
+            fixtures_csv_path.read_bytes() if fixtures_csv_path.exists() else b""
+        )
+
+        with (repo_qc_dir / "python_agent_repo.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name",
+                    "has_agent_config",
+                    "language",
+                    "stars",
+                    "clone_url",
+                    "num_contributors",
+                    "qc_reason",
+                    "processed_at",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "repo_name": "good/repo",
+                    "has_agent_config": "1",
+                    "language": "python",
+                    "stars": 123,
+                    "clone_url": "https://github.com/good/repo.git",
+                    "num_contributors": 4,
+                    "qc_reason": "",
+                    "processed_at": "2026-05-28T00:00:00Z",
+                }
+            )
+
+        with (commit_qc_dir / "python_agent_commit.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as fh:
+            writer = csv.DictWriter(
+                fh,
+                fieldnames=[
+                    "repo_name",
+                    "commit_sha",
+                    "commit_url",
+                    "agent_type",
+                    "commit_date",
+                    "author_name",
+                    "author_email",
+                    "language",
+                    "clone_url",
+                    "processed_at",
+                ],
+            )
+            writer.writeheader()
+            writer.writerow(
+                {
+                    "repo_name": "good/repo",
+                    "commit_sha": "abc123",
+                    "commit_url": "https://github.com/good/repo/commit/abc123",
+                    "agent_type": "claude",
+                    "commit_date": "2026-05-21T00:00:00Z",
+                    "author_name": "Alice",
+                    "author_email": "alice@example.com",
+                    "language": "python",
+                    "clone_url": "https://github.com/good/repo.git",
+                    "processed_at": "2026-05-28T00:00:00Z",
+                }
+            )
+
+        def fake_clone(clone_url, target_dir):
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / ".git").mkdir(parents=True, exist_ok=True)
+            return True
+
+        monkeypatch.setattr(
+            "collection.agent_corpus.clone_repo_for_commit_scan", fake_clone
+        )
+        monkeypatch.setattr(
+            "collection.agent_corpus.collect_test_files_for_commit",
+            lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
+        )
+        monkeypatch.setattr(
+            "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
+            lambda self, repo_name, commits: [
+                {
+                    "repo_name": repo_name,
+                    "name": "complex_fixture",
+                    "fixture_type": "pytest_decorator",
+                    "scope": "per_test",
+                    "loc": 10,
+                    "language": "python",
+                    "file_path": "tests/test_sample.py",
+                    "start_line": 1,
+                    "end_line": 10,
+                    "cyclomatic_complexity": 7,
+                    "max_nesting_depth": 3,
+                    "num_objects_instantiated": 2,
+                    "num_external_calls": 4,
+                    "num_parameters": 5,
+                    "reuse_count": 6,
+                    "has_teardown_pair": 1,
+                    "raw_source": "def complex_fixture(): pass",
+                    "framework": "pytest",
+                    "mocks": [
+                        {
+                            "framework": "unittest_mock",
+                            "target_identifier": "requests.get",
+                            "num_interactions_configured": 2,
+                            "raw_snippet": "mock.patch('requests.get')",
+                        }
+                    ],
+                    "commit_sha": "abc123",
+                    "agent_type": "claude",
+                    "is_complete_addition": True,
+                }
+            ],
+        )
+
+        collector = AgentCorpusCollector(
+            output_db=tmp_path / "between-group.db",
+            repo_qc_dir=repo_qc_dir,
+            commit_qc_dir=commit_qc_dir,
+        )
+        stats, db_path = collector.run(repos_per_language=1, languages=["python"])
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        fixture_row = conn.execute(
+            "SELECT * FROM fixtures WHERE name = 'complex_fixture'"
+        ).fetchone()
+        mock_row = conn.execute(
+            "SELECT * FROM mock_usages WHERE fixture_id = ?", (fixture_row["id"],)
+        ).fetchone()
+        conn.close()
+
+        assert fixture_row is not None
+        assert fixture_row["cyclomatic_complexity"] == 7
+        assert fixture_row["max_nesting_depth"] == 3
+        assert fixture_row["num_objects_instantiated"] == 2
+        assert fixture_row["num_external_calls"] == 4
+        assert fixture_row["num_parameters"] == 5
+        assert fixture_row["reuse_count"] == 6
+        assert fixture_row["has_teardown_pair"] == 1
+        assert fixture_row["agent_type"] == "claude"
+        assert fixture_row["commit_kind"] == "agent"
+        assert fixture_row["commit_sha"] == "abc123"
+
+        assert mock_row is not None
+        assert mock_row["framework"] == "unittest_mock"
+        assert mock_row["target_identifier"] == "requests.get"
+
+        if repo_list_path.exists() and original_bytes:
+            repo_list_path.write_bytes(original_bytes)
+        if fixtures_csv_path.exists() and original_fixtures_bytes:
+            fixtures_csv_path.write_bytes(original_fixtures_bytes)
+
 
 @contextmanager
 def _fake_clone_with_function(*args, **kwargs):

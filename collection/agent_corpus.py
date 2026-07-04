@@ -38,18 +38,16 @@ from .corpus_utils import (
     compute_repo_metadata,
     construct_repo_dict,
     generate_corpus_summary,
-    write_fixture_csv_row,
+    persist_repository_and_fixtures,
 )
 from .csv_adapter import get_adapter
 from .db import (
     db_session,
     initialise_db,
-    insert_fixture,
     insert_test_commit,
     is_global_checkpoint_completed,
     mark_global_checkpoint,
     upsert_repository,
-    upsert_test_file,
 )
 from .ephemeral_clone import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
@@ -628,31 +626,29 @@ class AgentCorpusCollector:
                     )
 
                     # Persist repository metadata using shared utility
+                    repo_data = construct_repo_dict(
+                        full_name=repo_name,
+                        language=language_name,
+                        stars=repo.get("stars", 0),
+                        forks=repo.get("forks", 0),
+                        description=repo.get("description", "") or "",
+                        topics=(
+                            json.dumps(repo.get("topics", []))
+                            if isinstance(repo.get("topics"), list)
+                            else repo.get("topics", "[]")
+                        ),
+                        created_at=repo.get("created_at", ""),
+                        pushed_at=repo.get("pushed_at", ""),
+                        clone_url=repo.get("clone_url", ""),
+                        github_id=repo.get("github_id"),
+                        num_contributors=repo.get("num_contributors", 0),
+                        domain=domain,
+                        star_tier=star_tier,
+                        repo_age_years=repo_age,
+                        agent_adoption_intensity=adoption_intensity,
+                    )
                     with db_session(self.output_db) as conn:
-                        repo_row, _ = upsert_repository(
-                            conn,
-                            construct_repo_dict(
-                                full_name=repo_name,
-                                language=language_name,
-                                stars=repo.get("stars", 0),
-                                forks=repo.get("forks", 0),
-                                description=repo.get("description", "") or "",
-                                topics=(
-                                    json.dumps(repo.get("topics", []))
-                                    if isinstance(repo.get("topics"), list)
-                                    else repo.get("topics", "[]")
-                                ),
-                                created_at=repo.get("created_at", ""),
-                                pushed_at=repo.get("pushed_at", ""),
-                                clone_url=repo.get("clone_url", ""),
-                                github_id=repo.get("github_id"),
-                                num_contributors=repo.get("num_contributors", 0),
-                                domain=domain,
-                                star_tier=star_tier,
-                                repo_age_years=repo_age,
-                                agent_adoption_intensity=adoption_intensity,
-                            ),
-                        )
+                        repo_row, _ = upsert_repository(conn, repo_data)
 
                     if not agent_commits:
                         logger.debug(
@@ -709,7 +705,6 @@ class AgentCorpusCollector:
                     lang_test_commit_rows.extend(test_commits)
 
                     # Extract fixtures from test commits
-                    test_files_cache = {}  # Cache to avoid re-inserting same test file
                     # Track per-repo fixture metadata to write repo list CSV
                     repo_fixture_count = 0
                     repo_fixture_commit_shas: list[str] = []
@@ -719,105 +714,55 @@ class AgentCorpusCollector:
                         for test_commit in test_commits:
                             insert_test_commit(conn, test_commit)
 
-                        for test_commit in test_commits:
-                            commit_info = test_commit["commit_info"]
-                            agent_type = commit_info.get("agent_type")
-                            stats.agent_types_distribution[agent_type] = (
-                                stats.agent_types_distribution.get(agent_type, 0) + 1
+                    for test_commit in test_commits:
+                        commit_info = test_commit["commit_info"]
+                        agent_type = commit_info.get("agent_type")
+                        stats.agent_types_distribution[agent_type] = (
+                            stats.agent_types_distribution.get(agent_type, 0) + 1
+                        )
+
+                        try:
+                            fixtures = agent_extractor._extract_from_agent_commits(
+                                repo_name=repo_name,
+                                commits={
+                                    commit_info["commit_sha"]: commit_info.get(
+                                        "agent_type", "unknown"
+                                    )
+                                },
+                            )
+                            fixtures = [
+                                fixture
+                                for fixture in fixtures
+                                if fixture.get("is_complete_addition")
+                            ]
+
+                            logger.info(
+                                f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} complete fixtures"
                             )
 
-                            try:
-                                fixtures = agent_extractor._extract_from_agent_commits(
-                                    repo_name=repo_name,
-                                    commits={
-                                        commit_info["commit_sha"]: commit_info.get(
-                                            "agent_type", "unknown"
-                                        )
-                                    },
+                            if fixtures:
+                                repo_fixture_count += len(fixtures)
+                                repo_fixture_commit_shas.append(
+                                    commit_info["commit_sha"]
                                 )
-                                fixtures = [
-                                    fixture
-                                    for fixture in fixtures
-                                    if fixture.get("is_complete_addition")
-                                ]
-
-                                logger.info(
-                                    f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} complete fixtures"
-                                )
-
-                                if fixtures:
-                                    repo_fixture_count += len(fixtures)
-                                    repo_fixture_commit_shas.append(
-                                        commit_info["commit_sha"]
-                                    )
-                                    all_repo_fixtures.extend(fixtures)
-
+                                # Persistence (DB row + CSV export) reads commit_sha and
+                                # agent_type directly from each fixture dict, but not
+                                # commit_kind — tag it here so both paths label these
+                                # rows correctly.
                                 for fixture in fixtures:
-                                    file_path = fixture.get("file_path", "unknown")
+                                    fixture["commit_kind"] = "agent"
+                                all_repo_fixtures.extend(fixtures)
 
-                                    # Ensure test file exists in database (upsert, cached)
-                                    if file_path not in test_files_cache:
-                                        test_file_id = upsert_test_file(
-                                            conn, repo_row, file_path, language_name
-                                        )
-                                        test_files_cache[file_path] = test_file_id
-                                    else:
-                                        test_file_id = test_files_cache[file_path]
+                            stats.fixtures_collected += len(fixtures)
+                        except Exception as e:
+                            logger.debug(
+                                f"Failed to extract fixtures from {commit_info['commit_sha']}: {e}"
+                            )
 
-                                    insert_fixture(
-                                        conn,
-                                        {
-                                            "file_id": test_file_id,
-                                            "repo_id": repo_row,
-                                            "name": fixture.get("name"),
-                                            "fixture_type": fixture.get("fixture_type"),
-                                            "scope": fixture.get("scope"),
-                                            "start_line": fixture.get("start_line"),
-                                            "end_line": fixture.get("end_line"),
-                                            "loc": fixture.get("loc"),
-                                            "cyclomatic_complexity": fixture.get(
-                                                "cyclomatic_complexity"
-                                            ),
-                                            "max_nesting_depth": fixture.get(
-                                                "max_nesting_depth"
-                                            ),
-                                            "num_objects_instantiated": fixture.get(
-                                                "num_objects_instantiated"
-                                            ),
-                                            "num_external_calls": fixture.get(
-                                                "num_external_calls"
-                                            ),
-                                            "num_parameters": fixture.get(
-                                                "num_parameters"
-                                            ),
-                                            "reuse_count": fixture.get("reuse_count"),
-                                            "has_teardown_pair": fixture.get(
-                                                "has_teardown_pair"
-                                            ),
-                                            "raw_source": fixture.get("raw_source"),
-                                            "framework": fixture.get("framework"),
-                                            "num_mocks": len(fixture.get("mocks", [])),
-                                            "is_complete_addition": (
-                                                1
-                                                if fixture.get("is_complete_addition")
-                                                else 0
-                                            ),
-                                            "commit_sha": commit_info["commit_sha"],
-                                            "agent_type": agent_type,
-                                            "commit_kind": "agent",
-                                        },
-                                    )
-
-                                stats.fixtures_collected += len(fixtures)
-                            except Exception as e:
-                                logger.debug(
-                                    f"Failed to extract fixtures from {commit_info['commit_sha']}: {e}"
-                                )
-
-                        # cleanup is handled by the clone manager context
-                        logger.debug(
-                            f"[Agent Corpus] Cleaned up clone (managed): {repo_name}"
-                        )
+                    # cleanup is handled by the clone manager context
+                    logger.debug(
+                        f"[Agent Corpus] Cleaned up clone (managed): {repo_name}"
+                    )
 
                 # If we extracted fixtures from this repo, write two CSVs:
                 # 1. Per-language repo summary (for downstream human selection)
@@ -874,21 +819,19 @@ class AgentCorpusCollector:
                             ],
                         )
 
-                        # Per-fixture CSV (new: one row per fixture)
+                        # Per-fixture DB rows + CSV (one row per fixture). Fixtures
+                        # already carry their own commit_sha/agent_type/commit_kind,
+                        # so no extra fields need injecting here.
                         fixtures_list_path = (
                             fixture_list_dir / f"{language_name}_agent_fixtures.csv"
                         )
-                        for fixture in all_repo_fixtures:
-                            write_fixture_csv_row(
-                                fixtures_list_path,
-                                repo_name,
-                                language_name,
-                                fixture,
-                                extra_fields={
-                                    "agent_type": fixture.get("agent_type", agent_type),
-                                    "commit_kind": "agent",
-                                },
-                            )
+                        persist_repository_and_fixtures(
+                            self.output_db,
+                            repo_data,
+                            all_repo_fixtures,
+                            out_path=fixtures_list_path,
+                            handle_mocks=True,
+                        )
                 except Exception as e:
                     logger.debug(
                         f"Failed to write agent fixture repo list for {repo_name}: {e}"

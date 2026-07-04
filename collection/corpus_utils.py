@@ -69,6 +69,7 @@ class FixtureData(TypedDict, total=False):
     num_mocks: int
     commit_sha: str
     commit_kind: str
+    agent_type: Optional[str]
     is_complete_addition: int
 
 
@@ -338,6 +339,7 @@ def persist_repository_and_fixtures(
                 "num_mocks": len(fixture.get("mocks", []) or []),
                 "commit_sha": fixture.get("commit_sha", ""),
                 "commit_kind": fixture.get("commit_kind", "unknown"),
+                "agent_type": fixture.get("agent_type"),
                 "is_complete_addition": 1,
             }
 
