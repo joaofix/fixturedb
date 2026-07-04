@@ -126,12 +126,18 @@ def main():
         logger.info("")
         logger.info("Next steps:")
         logger.info(
-            "  1. python phase_2_extract_pre_2021.py (detect human test commits and extract fixtures)"
+            "  1. python phase_2_extract_human.py (Dataset B: detect human test "
+            "commits and extract fixtures)"
         )
         logger.info(
-            "  2. python phase_3_extract_agent.py (detect agent test commits and extract fixtures)"
+            "  2. python phase_2b_extract_dataset_c.py (Dataset C: pre-2021 "
+            "cross-repo baseline fixtures)"
         )
-        logger.info("  3. Continue with Phases 4-8")
+        logger.info(
+            "  3. python phase_3_extract_agent.py (Dataset A: detect agent test "
+            "commits and extract fixtures)"
+        )
+        logger.info("  4. Continue with Phases 4-8")
 
     else:
         logger.info("⚠ Tier 1 INSUFFICIENT")
@@ -151,12 +157,18 @@ def main():
         )
         logger.info("  2. Integrate Tier 2 repos into collection pipeline")
         logger.info(
-            "  3. python phase_2_extract_pre_2021.py (detect human test commits and extract fixtures)"
+            "  3. python phase_2_extract_human.py (Dataset B: detect human test "
+            "commits and extract fixtures)"
         )
         logger.info(
-            "  4. python phase_3_extract_agent.py (detect agent test commits and extract fixtures with tier labels)"
+            "  4. python phase_2b_extract_dataset_c.py (Dataset C: pre-2021 "
+            "cross-repo baseline fixtures)"
         )
-        logger.info("  5. Continue with Phases 4-8")
+        logger.info(
+            "  5. python phase_3_extract_agent.py (Dataset A: detect agent test "
+            "commits and extract fixtures with tier labels)"
+        )
+        logger.info("  6. Continue with Phases 4-8")
 
     logger.info("")
     logger.info(f"Assessment saved to: {assessment_file.name}")
