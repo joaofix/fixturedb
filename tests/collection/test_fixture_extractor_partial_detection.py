@@ -298,9 +298,9 @@ def test_checkout_commit_removes_stale_index_lock_and_retries(tmp_path, monkeypa
 
     sleep_calls = []
 
-    monkeypatch.setattr("collection.fixture_extractor.subprocess.run", fake_run)
+    monkeypatch.setattr("collection.commit_checkout.subprocess.run", fake_run)
     monkeypatch.setattr(
-        "collection.fixture_extractor.sleep",
+        "collection.commit_checkout.sleep",
         lambda seconds: sleep_calls.append(seconds),
     )
 
@@ -621,7 +621,7 @@ def test_agent_commits_skipped_when_commit_level_impure(tmp_path, monkeypatch):
 
     # Monkeypatch module-level helpers
     monkeypatch.setattr(
-        "collection.fixture_extractor._checkout_commit",
+        "collection.agent_fixture_extractor._checkout_commit",
         lambda *a, **kw: None,
     )
     monkeypatch.setattr(
@@ -638,11 +638,11 @@ def test_agent_commits_skipped_when_commit_level_impure(tmp_path, monkeypatch):
     # The actual extraction code path we are testing
 
     monkeypatch.setattr(
-        "collection.fixture_extractor._resolve_repo_path",
+        "collection.agent_fixture_extractor._resolve_repo_path",
         lambda *a, **kw: repo_path,
     )
     monkeypatch.setattr(
-        "collection.fixture_extractor._repo_worktree_lock",
+        "collection.agent_fixture_extractor._repo_worktree_lock",
         lambda *a, **kw: __import__("contextlib").nullcontext(),
     )
 
@@ -678,7 +678,7 @@ def test_agent_commits_proceeds_when_commit_level_pure(tmp_path, monkeypatch):
     )
 
     monkeypatch.setattr(
-        "collection.fixture_extractor._checkout_commit",
+        "collection.agent_fixture_extractor._checkout_commit",
         lambda *a, **kw: None,
     )
     monkeypatch.setattr(
@@ -692,11 +692,11 @@ def test_agent_commits_proceeds_when_commit_level_pure(tmp_path, monkeypatch):
         lambda *a, **kw: diff,
     )
     monkeypatch.setattr(
-        "collection.fixture_extractor._resolve_repo_path",
+        "collection.agent_fixture_extractor._resolve_repo_path",
         lambda *a, **kw: repo_path,
     )
     monkeypatch.setattr(
-        "collection.fixture_extractor._repo_worktree_lock",
+        "collection.agent_fixture_extractor._repo_worktree_lock",
         lambda *a, **kw: __import__("contextlib").nullcontext(),
     )
 

@@ -134,7 +134,7 @@ diff --git a/tests/test_existing.py b/tests/test_existing.py
 The `-def old_fixture():` / `+def renamed_fixture():` line means this file had existing code modified, so it is rejected.
 
 #### Implementation
-- `collection/fixture_extractor.py`: `_raw_diff_commit_is_pure_addition()` and `_raw_diff_file_is_pure_addition()`
+- `collection/diff_purity.py`: `_raw_diff_commit_is_pure_addition()` and `_raw_diff_file_is_pure_addition()` (re-exported from `collection.fixture_extractor` for backward compatibility)
 - Tests: `tests/collection/test_fixture_extractor_partial_detection.py`
 
 ### Example Output
