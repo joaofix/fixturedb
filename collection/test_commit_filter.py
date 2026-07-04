@@ -12,7 +12,6 @@ from pathlib import Path
 
 from collection.logging_utils import get_logger
 
-from .agent_commit_detector import Tier1RepositoryScanner
 from .agent_corpus import collect_test_files_for_commit
 from .cli_utils import (
     add_commit_dir_arg,
@@ -30,6 +29,7 @@ from .config import (
 )
 from .ephemeral_clone import temp_clone_commit_history
 from .test_commit_utils import write_test_commits_csv
+from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
 logger = get_logger(__name__)
 

@@ -34,7 +34,9 @@ Python, Java, JavaScript, TypeScript.
 collection/          # Main pipeline code (the "library")
   config.py          # All constants, paths, thresholds
   db.py              # SQLite schema, upsert helpers, migrations
-  agent_commit_detector.py  # Commit scanning, agent detection, adoption intensity
+  tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
+  agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
+  clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   agent_corpus.py    # Phase 3: extract agent fixtures
   human_corpus.py    # Phase 2: extract human fixtures (within-repo)
   fixture_extractor.py     # Tree-sitter AST fixture extraction
@@ -90,6 +92,6 @@ Tests use `tmp_path` fixtures for temporary git repos and SQLite databases. Neve
 ## Personal instructions
 - If we fix a bug, we unit test that
 - If we implement a new feature, we unit test that
-- We use a python virtualenv called venv to run tests
+- We use a python virtualenv called venv to run tests, using the command "pytest tests/"
 - A prompt that changed code is only considered finished if all tests are passing
 - If we change collection/, we evaluate the need to update the docs/ folder as well. collection/ represents the methodology of this work as code. We want to keep documentation up to date with the methodology.

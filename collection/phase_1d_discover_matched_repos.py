@@ -17,13 +17,13 @@ from pathlib import Path
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
 
-from .agent_commit_detector import Tier2RepoMatcher
 from .config import (
     DATA_DIR,
     TIER1_MINIMUM_AGENT_COMMITS,
     TIER1_MINIMUM_REPOS_WITH_AGENT,
 )
 from .resume_utils import latest_matching_file
+from .tiered_agent_corpus_scanner import Tier2RepoMatcher
 
 logger = get_logger(__name__)
 

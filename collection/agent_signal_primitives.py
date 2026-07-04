@@ -1,8 +1,12 @@
 """
-Phase 1A: Scan repositories for AI agent configuration files.
+Low-level, single-repo agent-detection primitives.
 
-Identifies repositories that may have been worked on with AI assistants
-by detecting configuration files commonly created by these tools.
+Two independent building blocks used by `tiered_agent_corpus_scanner.py`'s
+Tier 2 discovery path (and directly by `phase_1b_verify_agent_commits.py`):
+scanning a repo's file tree for AI agent configuration files, and verifying/
+classifying agent-authored commits via `Co-authored-by`/author-metadata
+trailer parsing. This module does not orchestrate corpus-scale scanning
+itself — see `tiered_agent_corpus_scanner.py` for that.
 
 Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline, Junie, Gemini
 """
@@ -193,7 +197,7 @@ class GitHubAgentFileChecker:
 
 
 class AgentFileScanner:
-    """Phase 1A: Scan repositories for agent configuration files."""
+    """Scan repositories for agent configuration files."""
 
     # Agent configuration file patterns (case-insensitive)
     AGENT_FILE_PATTERNS = {
@@ -479,7 +483,7 @@ class AgentCommitVerificationResult:
 
 
 class AgentCommitVerifier:
-    """Phase 1B: Verify agent commits via Co-authored-by trailer parsing."""
+    """Verify agent commits via Co-authored-by trailer parsing."""
 
     # Case-insensitive keywords for agent detection in commit messages.
     AGENT_KEYWORDS = AGENT_SIGNATURES

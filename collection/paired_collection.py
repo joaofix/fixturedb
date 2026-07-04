@@ -11,7 +11,6 @@ from pathlib import Path
 
 from collection.logging_utils import get_logger
 
-from .agent_commit_detector import Tier1RepositoryScanner
 from .cli_utils import add_language_arg, add_repos_per_language_arg
 from .config import CLONES_DIR, DATA_DIR, HUMAN_CORPUS_CUTOFF_DATE, LANGUAGE_CONFIGS
 from .db import (
@@ -25,6 +24,7 @@ from .db import (
 )
 from .fixture_extractor import extract_fixtures_at_commit
 from .persistent_clone import clone_repo
+from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
 logger = get_logger(__name__)
 

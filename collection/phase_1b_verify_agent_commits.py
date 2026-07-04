@@ -16,7 +16,7 @@ from pathlib import Path
 # Logging is configured via collection.logging_utils.configure_logging()
 from collection.logging_utils import get_logger
 
-from .agent_detector import AgentCommitVerifier
+from .agent_signal_primitives import AgentCommitVerifier
 from .config import AGENT_CORPUS_START_DATE
 from .resume_utils import latest_matching_file
 

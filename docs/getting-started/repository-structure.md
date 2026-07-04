@@ -17,7 +17,8 @@ icsme-nier-2026/
 │       ├── agent_corpus.py                  # Agent corpus collection (380+ lines)
 │       ├── between_group_comparison.py      # Statistical comparison (410+ lines)
 │       ├── github_api_search.py             # GitHub API integration
-│       ├── agent_detector.py                # Agent detection in commits
+│       ├── agent_signal_primitives.py       # Agent detection in commits (formerly agent_detector.py)
+│       ├── tiered_agent_corpus_scanner.py   # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
 │       ├── fixture_extractor.py             # Fixture extraction at commit level
 │       ├── db.py                            # Database schema and helpers
 │       ├── config.py                        # Configuration constants
@@ -137,7 +138,7 @@ Core implementation of between-group study with three main collection modules:
 - Outputs JSON to `output/between_group_comparison_*.json`
 
 Supporting modules:
-- **agent_detector.py** — Agent detection utilities
+- **agent_signal_primitives.py** — Agent detection utilities (formerly agent_detector.py)
 - **fixture_extractor.py** — Fixture extraction at commit level
 - **db.py** — Database schema, helpers, and control variable functions
 - **config.py** — Configuration constants (temporal boundaries, patterns)

@@ -21,7 +21,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydriller import Repository
 
-from .agent_commit_detector import Tier1RepositoryScanner
 from .agent_corpus import clone_repo_for_commit_scan
 from .cli_utils import (
     add_language_arg,
@@ -61,6 +60,7 @@ from .logging_utils import get_logger
 from .sampling import stratified_sample_by_language
 from .test_commit_filter import build_pre2021_candidate_pool
 from .test_commit_utils import write_test_commits_csv
+from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 from .utils import (
     build_repo_row,
 )
@@ -751,7 +751,7 @@ class HumanCorpusCollector:
         agent_commits_count = sum(
             1 for c in commit_roles if c.commit_role == "agent"
         )
-        from .agent_commit_detector import compute_adoption_intensity
+        from .tiered_agent_corpus_scanner import compute_adoption_intensity
 
         adoption_intensity = compute_adoption_intensity(
             managed_repo_path,

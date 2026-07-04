@@ -1,7 +1,11 @@
-"""Utilities for agent commit detection and classification.
+"""Tier1/Tier2 corpus-scale agent-detection orchestration.
 
-Provides tools for identifying agent-authored commits and classifying commit roles
-for paired-sample analysis within repositories.
+The actual pipeline entry point for agent detection: Tier 1
+(`Tier1RepositoryScanner`) scans the existing corpus for `Co-authored-by`
+trailer commits and computes adoption-intensity stats; Tier 2
+(`Tier2RepoMatcher`) discovers new candidate repos via GitHub search and
+verifies them using `agent_signal_primitives.py`'s low-level scan/verify
+primitives. See `docs/architecture/agent-detection.md` for the methodology.
 """
 
 from dataclasses import asdict, dataclass, field
@@ -13,7 +17,7 @@ from pydriller import Repository
 
 from collection.logging_utils import get_logger
 
-from .agent_detector import (
+from .agent_signal_primitives import (
     AgentCommitVerifier,
     AgentFileScanner,
     GitHubAgentFileChecker,

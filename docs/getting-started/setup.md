@@ -57,7 +57,8 @@ icsme-nier-2026/
 │   ├── between_group_comparison.py    # Statistical comparison
 │   ├── github_api_search.py           # GitHub API integration
 │   ├── github_archive.py              # Historical data access (optional)
-│   ├── agent_detector.py              # Agent detection in commits
+│   ├── agent_signal_primitives.py     # Agent detection in commits (formerly agent_detector.py)
+│   ├── tiered_agent_corpus_scanner.py # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
 │   ├── fixture_extractor.py           # Fixture extraction
 │   ├── db.py                          # Database schema and helpers
 │   ├── config.py                      # Configuration constants

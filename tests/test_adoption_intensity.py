@@ -2,7 +2,7 @@
 
 import subprocess
 
-from collection.agent_commit_detector import (
+from collection.tiered_agent_corpus_scanner import (
     compute_adoption_intensity,
     count_total_commits_since,
 )

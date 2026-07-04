@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-from collection.agent_commit_detector import _is_test_file_path
 from collection.agent_corpus import clone_repo_for_commit_scan
 from collection.config import (
     DATASET_C_SAMPLING_SEED,
@@ -22,6 +21,7 @@ from collection.ephemeral_clone import clone_with_function
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.logging_utils import get_logger
 from collection.sampling import stratified_sample_by_language
+from collection.tiered_agent_corpus_scanner import _is_test_file_path
 
 logger = get_logger(__name__)
 

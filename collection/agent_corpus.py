@@ -143,7 +143,7 @@ def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:
         List of dicts with commit_sha, agent_type, commit_date
     """
     try:
-        from .agent_commit_detector import Tier1RepositoryScanner
+        from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
         project_root = Path(__file__).resolve().parents[1]
         scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
@@ -608,7 +608,7 @@ class AgentCorpusCollector:
                     )
 
                     # Compute agent adoption intensity before persisting repo metadata
-                    from .agent_commit_detector import (
+                    from .tiered_agent_corpus_scanner import (
                         compute_adoption_intensity,
                         count_total_commits_since,
                     )

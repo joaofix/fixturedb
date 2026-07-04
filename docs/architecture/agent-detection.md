@@ -14,6 +14,12 @@ Agent detection uses **Tier 1: author metadata + co-authored-by trailer detectio
 - Minimal false positives
 - Recognizes: Claude, Copilot, Cursor, Aider, and other agents
 
+**Module layering**: `collection/agent_signal_primitives.py` holds the low-level,
+single-repo detection building blocks (config-file scanning, commit-trailer
+verification). `collection/tiered_agent_corpus_scanner.py` is the Tier1/Tier2
+corpus-scale orchestrator and the actual pipeline entry point — it imports and
+calls into `agent_signal_primitives.py`'s primitives for its Tier 2 path.
+
 ---
 
 ## Detection Method
@@ -329,8 +335,8 @@ Author: Developer <dev@company.com>
 
 Merge commits are excluded from agent detection. Merge commits are not representative of individual developer or agent activity—they are artifacts of version control workflows (e.g., pull request merges, branch integrations) and typically contain no substantive code changes. All `git log` invocations in the collection pipeline use `--no-merges` to skip them:
 
-- `collection/agent_commit_detector.py`: `scan_repo_for_agent_commits` and `scan_repo_commit_roles`
-- `collection/agent_detector.py`: `verify_repository`
+- `collection/tiered_agent_corpus_scanner.py` (formerly `agent_commit_detector.py`): `scan_repo_for_agent_commits` and `scan_repo_commit_roles`
+- `collection/agent_signal_primitives.py` (formerly `agent_detector.py`): `verify_repository`
 
 ---
 

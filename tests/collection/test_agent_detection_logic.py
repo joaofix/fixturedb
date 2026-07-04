@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from collection.agent_corpus import scan_cloned_repo_for_agent_configs
-from collection.agent_detector import GitHubAgentFileChecker
+from collection.agent_signal_primitives import GitHubAgentFileChecker
 
 
 def _make_repo(tmp_path: Path, repo_name: str = "owner__repo") -> Path:

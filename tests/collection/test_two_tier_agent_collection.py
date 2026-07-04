@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from collection.agent_commit_detector import (
+from collection.tiered_agent_corpus_scanner import (
     AGENT_TRAILER_RE,
     Tier1RepositoryScanner,
 )
