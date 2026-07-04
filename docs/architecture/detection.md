@@ -149,9 +149,11 @@ For complete list of supported testing and mocking frameworks with official docu
 
 ## Implementation
 
-Code location: [collection/detector.py](../../collection/detector.py)
+Code location: [collection/detector.py](../../collection/detector.py) (slim public facade) plus:
+- [collection/detector_shared.py](../../collection/detector_shared.py) — dataclasses, parser cache, mock detection, the shared fixture builder, and cross-fixture post-processing
+- [collection/detector_python.py](../../collection/detector_python.py), [collection/detector_java.py](../../collection/detector_java.py), [collection/detector_javascript.py](../../collection/detector_javascript.py) — one per-language detector each
 
-Key functions: `extract_fixtures()` (main orchestrator), `detect_*_fixtures()` (language-specific), `detect_mock_usage()` (mock patterns), `compute_metrics()` (quantitative metrics), `post_process_fixtures()` (relationships).
+Key functions: `extract_fixtures()` (main orchestrator, in `detector.py`), `_detect_python()`/`_detect_java()`/`_detect_js()` (language-specific, one per module above), `_extract_mocks()` (mock patterns), `_build_result()` (quantitative metrics per fixture), `_calculate_reuse_counts()`/`_detect_fixture_dependencies()`/`_propagate_fixture_scopes()`/`_calculate_teardown_pairs()` (cross-fixture post-processing, all in `detector_shared.py`).
 
 See: [configuration.md](configuration.md), [metrics-reference.md](metrics-reference.md), [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)
 
