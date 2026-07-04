@@ -5,8 +5,12 @@ pipeline. See [Collection Architecture](./collection.md) for the Dataset
 A/B/C build map, and [Reproducing Results](../usage/reproducing.md) for the
 full phase sequence.
 
-All configuration is via command-line arguments (no configuration files
-needed). Each phase script also supports `--help` for its full argument list.
+Per-run parameters (which repos, which language, output paths) are all via
+command-line arguments — each phase script supports `--help` for its full
+argument list. Fixed reference data (file-type filters, the testing-framework
+registry, per-language search settings, and the agent-detection catalog) is
+instead kept as YAML under `collection/config_data/` and
+`collection/heuristics/` — see "Reference-Data Catalogs" below.
 
 ## Dataset B: `phase_2_extract_human.py`
 
@@ -186,6 +190,29 @@ output/
 ├── phase_4_distribution_analysis_YYYYMMDD_HHMMSS.json
 └── ...
 ```
+
+## Reference-Data Catalogs
+
+Fixed, non-per-run configuration lives as YAML data files, not hardcoded
+Python — editing a catalog is a data change, not a code change, and
+reviewers can scan the exact list without reading Python. `collection/config.py`
+loads all of these at import time and derives the module-level constants
+(`NON_CODE_EXTENSIONS`, `EXCLUSION_KEYWORDS`, `FRAMEWORK_REGISTRY`,
+`LANGUAGE_CONFIGS`) that the rest of the codebase already imports — no
+production call site reads the YAML directly.
+
+| Catalog | File | Loaded by |
+|---|---|---|
+| Non-code file extensions to skip during test-file scanning | `collection/config_data/non_code_extensions.yaml` | `config.NON_CODE_EXTENSIONS` |
+| Repo name/description keywords for boilerplate/toy repos | `collection/config_data/exclusion_keywords.yaml` | `config.EXCLUSION_KEYWORDS` |
+| Known testing frameworks per language | `collection/config_data/framework_registry.yaml` | `config.FRAMEWORK_REGISTRY` |
+| Per-language search/test-detection settings | `collection/config_data/language_configs.yaml` | `config.LANGUAGE_CONFIGS` |
+| Agent detection: config-file patterns + commit signatures | `collection/heuristics/agent_heuristics.yaml` | `agent_patterns.AGENT_SIGNATURES` / `PAPER_AGENT_CONFIG_PATTERNS` / `LIGHTWEIGHT_AGENT_CONFIG_PATTERNS` |
+
+Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
+and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain
+plain constants directly in `collection/config.py` — they're single values
+tuned for this study's design, not open-ended catalogs expected to grow.
 
 ## Environment Variables
 

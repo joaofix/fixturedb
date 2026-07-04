@@ -61,7 +61,8 @@ icsme-nier-2026/
 │   ├── tiered_agent_corpus_scanner.py # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
 │   ├── fixture_extractor.py           # Fixture extraction
 │   ├── db.py                          # Database schema and helpers
-│   ├── config.py                      # Configuration constants
+│   ├── config.py                      # Paths, thresholds, dates -- loads catalogs from config_data/
+│   ├── config_data/                   # Reference-data catalogs as YAML (extensions, frameworks, ...)
 │   ├── detector.py                    # Fixture detection (tree-sitter)
 │   └── persistent_clone.py            # Repository cloning utilities
 │

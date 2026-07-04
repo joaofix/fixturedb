@@ -510,14 +510,14 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
    - **Java**: Annotations (`@Before`, `@BeforeClass`, `@Test`, `@TestNG`), method naming patterns
    - **JavaScript/TypeScript**: Function naming conventions (`beforeEach`, `beforeAll`, `describe`, `setUp`), imports (`jest`, `mocha`)
 
-2. **Registry validation** — Detected framework is cross-referenced against `FRAMEWORK_REGISTRY` in `collection/config.py` to confirm it's a known framework
+2. **Registry validation** — Detected framework can be cross-referenced against `FRAMEWORK_REGISTRY` (via `config.is_known_framework()`/`get_known_frameworks()`) to confirm it's a known framework
 
 3. **Forward compatibility** — If a framework is detected but not in the registry, it's still recorded (allows discovery of new frameworks) and logged as a debug message
 
 **Implementation:**
-- **Detection**: `collection/detector.py::_detect_<language>()` functions (lines 775-950+ per language)
-- **Validation**: `collection/detector.py::_validate_framework()` (line 741)
-- **Registry**: `collection/config.py::FRAMEWORK_REGISTRY` (line 371+)
+- **Detection**: `collection/detector_python.py` / `detector_java.py` / `detector_javascript.py`::`_detect_<language>()`
+- **Validation**: `collection/detector_framework_registry.py::_validate_framework()` (currently unwired — no production caller today)
+- **Registry data**: `collection/config_data/framework_registry.yaml`, loaded as `collection/config.py::FRAMEWORK_REGISTRY`
 
 **Supported Frameworks** (40+ across 4 languages):
 
