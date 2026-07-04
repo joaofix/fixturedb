@@ -111,7 +111,7 @@ class TestFullPipeline:
                     assert row["clone_url"].endswith(".git")
 
     def test_load_dataset_c_repos_format(self):
-        """load_dataset_c_repos produces correct format for collect_inter_human()."""
+        """load_dataset_c_repos produces correct format for collect_dataset_c_fixtures()."""
         pr = self._project_root()
         prop_path = pr / "fixtures-from-agents" / "category_proportions.json"
         if not prop_path.exists():

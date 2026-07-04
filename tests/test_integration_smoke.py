@@ -7,7 +7,7 @@ from collection.db import initialise_db
 from collection.human_corpus import HumanCorpusCollector
 
 
-def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
+def test_integration_smoke_within(tmp_path, monkeypatch):
     clones_dir = tmp_path / "clones"
     clones_dir.mkdir()
     out_db = tmp_path / "between.db"
@@ -83,12 +83,6 @@ def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
 
     monkeypatch.setattr(
         human_corpus,
-        "stratified_sample_by_language",
-        lambda candidates, targets, seed=42: list(candidates),
-    )
-
-    monkeypatch.setattr(
-        human_corpus,
         "_human_fixture_csv_path",
         lambda language, kind, override=None: tmp_path
         / f"{language}_human_fixtures.csv",
@@ -109,16 +103,6 @@ def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
         human_corpus,
         "persist_repository_and_fixtures",
         fake_persist_repository_and_fixtures,
-    )
-
-    import collection.db as db_module
-
-    monkeypatch.setattr(
-        db_module,
-        "insert_human_inter_fixtures_coordinated",
-        lambda db_path, selected_fixtures, seed=42, batch_size=1000: len(
-            selected_fixtures
-        ),
     )
 
     initialise_db(out_db)
@@ -142,8 +126,3 @@ def test_integration_smoke_within_and_inter(tmp_path, monkeypatch):
         repos_per_language=None, language=None, only_write_test_commits=False, workers=1
     )
     assert db_path == out_db
-
-    stats_inter, db_path = collector.collect_inter_human(
-        [repo], targets={"python": 1}, workers=1
-    )
-    assert stats_inter.fixtures_collected == 1

@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Entrypoint for FixtureDB pipeline: paired study, human corpus, agent corpus, and between-group analysis."""
+"""Manual/legacy convenience CLI: paired study, human corpus, agent corpus, and
+between-group analysis.
+
+This is NOT the authoritative reproducible pipeline for the paper's Dataset
+A/B/C build — that is the numbered `collection/phase_1a_scan_agent_commits.py`
+through `collection/phase_8_final_validation.py` sequence (see AGENTS.md and
+docs/architecture/collection.md). This script predates that sequence and is
+kept around for ad-hoc manual runs of individual stages.
+"""
 
 from __future__ import annotations
 
@@ -14,10 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from collection.agent_corpus import AgentCorpusCollector
 from collection.config import DATA_DIR, LANGUAGE_CONFIGS
 from collection.corpus_utils import truncate_fixture_csvs
-from collection.human_corpus import (
-    HumanCorpusCollector,
-    select_human_corpus_repositories,
-)
+from collection.human_corpus import HumanCorpusCollector
 from collection.paired_collection import main as paired_main
 from collection.repository_quality_control.agent_commit_counter import (
     run as run_agent_commit_qc,
@@ -201,22 +206,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output file or directory for detected human test commits (default: github-search-human/2025_test_commits)",
     )
     human_parser.add_argument(
-        "--mode",
-        choices=["within", "inter", "both"],
-        default="within",
-        help="Collection mode: within (within-repo), inter (inter-repo sample), or both",
-    )
-    human_parser.add_argument(
         "--workers",
         type=int,
         default=None,
         help="Parallel workers for human collection (default: configured EXTRACT_WORKERS)",
-    )
-    human_parser.add_argument(
-        "--dataset-c-csv",
-        type=Path,
-        default=None,
-        help="Path to dataset_c_sample.csv for Dataset C proportional pre-2021 sampling",
     )
 
     # Agent corpus collection (between-group design)
@@ -373,44 +366,12 @@ def cmd_human_fixtures(args) -> int:
         if hasattr(args, "test_commits_csv"):
             human_kwargs["test_commits_csv"] = args.test_commits_csv
         collector = HumanCorpusCollector(**human_kwargs)
-        mode = getattr(args, "mode", "within")
 
-        # Dataset C: use proportional pre-2021 sample
-        if getattr(args, "dataset_c_csv", None):
-            from collection.human_corpus import load_dataset_c_repos
-
-            repos = load_dataset_c_repos(args.dataset_c_csv)
-            logger.info(
-                "Dataset C mode: loaded %d repos from %s",
-                len(repos),
-                args.dataset_c_csv,
-            )
-            stats, db_path = collector.collect_inter_human(
-                agent_repos=repos,
-                workers=getattr(args, "workers", None),
-            )
-        elif mode == "within":
-            stats, db_path = collector.run(
-                repos_per_language=args.repos_per_language,
-                language=args.language,
-                workers=getattr(args, "workers", None),
-            )
-        elif mode == "inter":
-            # Select agent-enabled repos first
-            agent_repos = select_human_corpus_repositories(
-                args.repo_qc_dir, args.repos_per_language, args.language
-            )
-            stats, db_path = collector.collect_inter_human(
-                agent_repos=agent_repos,
-                targets=None,
-                workers=getattr(args, "workers", None),
-            )
-        else:  # both
-            stats, db_path = collector.run(
-                repos_per_language=args.repos_per_language,
-                language=args.language,
-                workers=getattr(args, "workers", None),
-            )
+        stats, db_path = collector.run(
+            repos_per_language=args.repos_per_language,
+            language=args.language,
+            workers=getattr(args, "workers", None),
+        )
         print("\n✓ Human corpus collection complete")
         print(f"  Fixtures collected: {stats.fixtures_collected}")
         print(f"  Repositories analyzed: {stats.repos_passed_qc}")
