@@ -553,48 +553,10 @@ OBJECTS_PARAMETRIZED_THRESHOLD = 2
 # ---------------------------------------------------------------------------
 # Agent Detection Configuration (Two-Tier Methodology)
 # ---------------------------------------------------------------------------
-
-# Agent configuration file patterns (used in Phase 1A/1D for agent activity detection)
-AGENT_CONFIG_PATTERNS = {
-    "claude": [
-        "CLAUDE.md",
-        ".claudeignore",
-        ".claude/",
-        "anthropic/",
-    ],
-    "cursor": [
-        "CURSOR.md",
-        ".cursor/",
-        ".cursorrules",
-    ],
-    "copilot": [
-        "copilot_instructions.md",
-        "copilot-instructions.md",
-        ".copilot-instructions.md",
-        ".copilot-*.md",
-        ".copilotignore",
-        ".copilot/",
-    ],
-}
-
-# Agent signature patterns for commit author/message detection
-# Used in Phase 1B to verify Co-authored-by trailers
-AGENT_SIGNATURES = {
-    "claude": ["claude", "anthropic"],
-    "cursor": ["cursor"],
-    "copilot": ["copilot", "github.com/apps/github-copilot"],
-    "other": [
-        "aider",
-        "openhands",
-        "devin",
-        "jules",
-        "cline",
-        "junie",
-        "gemini",
-        "coderabbit",
-        "windsurf",
-    ],
-}
+# Agent config-file patterns and commit signatures live in
+# collection/heuristics/agent_heuristics.yaml, loaded via
+# collection/agent_patterns.py (AGENT_SIGNATURES, LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
+# PAPER_AGENT_CONFIG_PATTERNS) — not duplicated here.
 
 # Tier 1 assessment thresholds (Phase 1C)
 # If Tier 1 (corpus repos) falls below these, Phase 1D (matched repo discovery) is triggered

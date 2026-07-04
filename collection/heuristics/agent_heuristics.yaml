@@ -1,0 +1,96 @@
+# AI coding agent detection heuristics.
+#
+# Adding a new agent, or new patterns for an existing one, is a data change
+# here — no Python code needs to change. See collection/heuristics/__init__.py
+# for the loader and collection/agent_patterns.py for how these are consumed.
+#
+# "Peril of Multiplicity": the catalog of coding agents grows faster than any
+# fixed heuristic list can keep up with, so this file is deliberately the
+# single, version-controlled place new agents get added.
+
+# file_based: config files/directories in a repo's working tree that signal
+# a given agent was used. Matched case-insensitively; entries ending in "/"
+# match a directory name anywhere in the path, others may use fnmatch globs
+# (see collection/agent_patterns.py:path_matches_pattern).
+file_based:
+  claude:
+    - CLAUDE.md
+    - .claudeignore
+    - .claude/
+    - anthropic/
+    - claude.config
+  cursor:
+    - CURSOR.md
+    - .cursor/
+    - .cursorrules
+    - .cursor
+    - .cursorignore
+    - cursor.config
+  copilot:
+    - copilot_instructions.md
+    - copilot-instructions.md
+    - .copilot-instructions.md
+    - .copilot-*.md
+    - .copilotignore
+    - .copilot/
+  aider:
+    - .aider.conf
+    - .aider-config
+    - aider.config
+  openhands:
+    - .openhands.config
+    - .openhands
+  devin:
+    - .devin.config
+    - .devin
+  cline:
+    - .cline.config
+    - .cline
+    - .clinerules
+  codex:
+    - AGENTS.md
+  windsurf:
+    - .windsurfrules
+  roo_code:
+    - .roorules
+
+# commit_signatures: substrings matched case-insensitively against commit
+# author name/email and Co-authored-by (and similar) trailers.
+commit_signatures:
+  claude:
+    - claude
+    - anthropic
+  cursor:
+    - cursor
+  copilot:
+    - copilot
+    - github.com/apps/github-copilot
+    - github copilot
+  aider:
+    - aider
+  openhands:
+    - openhands
+  devin:
+    - devin ai
+    - devin
+  jules:
+    - google jules
+    - jules
+  cline:
+    - cline
+  junie:
+    - junie
+  gemini:
+    - gemini
+  coderabbit:
+    - coderabbit
+  windsurf:
+    - windsurf
+
+# paper_scope: the subset of file_based agents used for the paper's strict
+# repo-qualification filter (agent_corpus.py's scan_cloned_repo_for_agent_configs).
+# The broader pre-clone/lightweight scans use the full file_based catalog above.
+paper_scope:
+  - claude
+  - cursor
+  - copilot

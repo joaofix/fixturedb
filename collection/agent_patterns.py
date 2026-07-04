@@ -1,4 +1,11 @@
-"""Shared agent detection patterns and helpers."""
+"""Shared agent detection patterns and helpers.
+
+The actual agent catalogs (which config files and commit signatures signal
+which agent) live in collection/heuristics/agent_heuristics.yaml, not here —
+this module loads that data file and derives the shapes existing callers
+expect. Adding or updating an agent is a YAML edit, not a Python change; see
+that file's header comment for the schema.
+"""
 
 from __future__ import annotations
 
@@ -6,63 +13,24 @@ import fnmatch
 from pathlib import Path
 from typing import Iterable, Mapping
 
+from .heuristics import load_agent_heuristics
+
 PAPER_AGENT_REPOSITORY_LANGUAGES = {"python", "javascript", "typescript", "java"}
 
+_HEURISTICS = load_agent_heuristics()
+
+# Commit author/email + co-authored-by trailer substrings, per agent.
+AGENT_SIGNATURES = _HEURISTICS["commit_signatures"]
+
+# Full config-file/directory catalog, per agent (broad/lightweight scans).
+LIGHTWEIGHT_AGENT_CONFIG_PATTERNS = _HEURISTICS["file_based"]
+
+# Subset of the file-based catalog used for the paper's strict
+# repo-qualification filter.
 PAPER_AGENT_CONFIG_PATTERNS = {
-    "claude": ["CLAUDE.md", ".claudeignore", ".claude/", "anthropic/"],
-    "cursor": ["CURSOR.md", ".cursor/", ".cursorrules"],
-    "copilot": [
-        "copilot_instructions.md",
-        "copilot-instructions.md",
-        ".copilot-*.md",
-        ".copilotignore",
-        ".copilot/",
-    ],
-}
-
-LIGHTWEIGHT_AGENT_CONFIG_PATTERNS = {
-    "claude": [
-        ".cursorrules",
-        ".claudeignore",
-        "CLAUDE.md",
-        "claude.config",
-        ".claude/",
-        "anthropic/",
-    ],
-    "cursor": [
-        ".cursorrules",
-        ".cursor",
-        ".cursorignore",
-        "CURSOR.md",
-        "cursor.config",
-        ".cursor/",
-    ],
-    "copilot": [
-        "copilot_instructions.md",
-        ".copilot-instructions.md",
-        ".copilotignore",
-        ".copilot-*.md",
-        ".copilot/",
-    ],
-    "aider": [".aider.conf", ".aider-config", "aider.config"],
-    "openhands": [".openhands.config", ".openhands"],
-    "devin": [".devin.config", ".devin"],
-    "cline": [".cline.config", ".cline"],
-}
-
-AGENT_SIGNATURES = {
-    "claude": ["claude", "anthropic"],
-    "cursor": ["cursor"],
-    "copilot": ["copilot", "github.com/apps/github-copilot", "github copilot"],
-    "aider": ["aider"],
-    "openhands": ["openhands"],
-    "devin": ["devin ai", "devin"],
-    "jules": ["google jules", "jules"],
-    "cline": ["cline"],
-    "junie": ["junie"],
-    "gemini": ["gemini"],
-    "coderabbit": ["coderabbit"],
-    "windsurf": ["windsurf"],
+    agent: patterns
+    for agent, patterns in _HEURISTICS["file_based"].items()
+    if agent in _HEURISTICS["paper_scope"]
 }
 
 

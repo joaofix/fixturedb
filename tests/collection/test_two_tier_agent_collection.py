@@ -139,20 +139,20 @@ Co-authored-by: Cursor <cursor@anysoftware.io>"""
         assert agent == "cursor"
 
     def test_detect_aider_in_coauthored_by(self, scanner):
-        """Should detect Aider from co-authored-by trailer (classified as 'other')."""
+        """Should detect Aider from co-authored-by trailer."""
         body = """Update tests.
 
 Co-authored-by: Aider <aider@paul.pub>"""
         agent = scanner._detect_agent_in_commit("Alice", "alice@example.com", body)
-        assert agent == "other"  # Aider is grouped as "other" in config signatures
+        assert agent == "aider"
 
     def test_detect_openhands_in_coauthored_by(self, scanner):
-        """Should detect OpenHands from co-authored-by trailer (classified as 'other')."""
+        """Should detect OpenHands from co-authored-by trailer."""
         body = """Implement feature.
 
 Co-authored-by: OpenHands <openhands@example.com>"""
         agent = scanner._detect_agent_in_commit("Charlie", "charlie@example.com", body)
-        assert agent == "other"  # OpenHands is grouped as "other" in config signatures
+        assert agent == "openhands"
 
     def test_detect_case_insensitive_coauthored_by(self, scanner):
         """Should detect agents with various case styles in co-authored-by."""
@@ -231,9 +231,9 @@ Co-authored-by: Bob <bob@example.com>"""
         body4 = "Fix\n\nCo-authored-by: Cursor IDE"
         assert scanner._detect_agent_in_commit("User", "user@ex.com", body4) == "cursor"
 
-        # Agent grouped as "other"
+        # Another agent
         body5 = "Fix\n\nCo-authored-by: Aider Assistant"
-        assert scanner._detect_agent_in_commit("User", "user@ex.com", body5) == "other"
+        assert scanner._detect_agent_in_commit("User", "user@ex.com", body5) == "aider"
 
     def test_detect_only_validates_coauthor_signature(self, scanner):
         """Co-authored-by should only match known agents, not random names."""
@@ -260,22 +260,20 @@ Co-authored-by: github.com/apps/github-copilot <copilot@example.com>"""
         assert agent == "copilot"
 
     def test_detect_all_known_agents_in_coauthors(self, scanner):
-        """Should detect all known agent types in co-authored-by."""
-        # Note: config.py groups aider, openhands, devin, etc. under "other"
-        # while agent_patterns.py has fine-grained types. Using config.py here.
+        """Should detect all known agent types in co-authored-by, each by its own name."""
         test_cases = [
             ("Claude <claude@anthropic.com>", "claude"),
             ("GitHub Copilot <copilot@github.com>", "copilot"),
             ("Cursor <cursor@anysoftware.io>", "cursor"),
-            ("Aider <aider@paul.pub>", "other"),  # Grouped under "other"
-            ("OpenHands <openhands@example.com>", "other"),  # Grouped under "other"
-            ("Devin AI <devin@example.com>", "other"),  # Grouped under "other"
-            ("Google Jules <jules@example.com>", "other"),  # Grouped under "other"
-            ("Cline <cline@example.com>", "other"),  # Grouped under "other"
-            ("Junie <junie@example.com>", "other"),  # Grouped under "other"
-            ("Gemini <gemini@example.com>", "other"),  # Grouped under "other"
-            ("CodeRabbit <coderabbit@example.com>", "other"),  # Grouped under "other"
-            ("Windsurf <windsurf@example.com>", "other"),  # Grouped under "other"
+            ("Aider <aider@paul.pub>", "aider"),
+            ("OpenHands <openhands@example.com>", "openhands"),
+            ("Devin AI <devin@example.com>", "devin"),
+            ("Google Jules <jules@example.com>", "jules"),
+            ("Cline <cline@example.com>", "cline"),
+            ("Junie <junie@example.com>", "junie"),
+            ("Gemini <gemini@example.com>", "gemini"),
+            ("CodeRabbit <coderabbit@example.com>", "coderabbit"),
+            ("Windsurf <windsurf@example.com>", "windsurf"),
         ]
 
         for coauthor_str, expected_agent in test_cases:

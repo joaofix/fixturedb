@@ -184,16 +184,10 @@ For each commit in repository:
 For each extracted field:
   5. Search in author_name, author_email, commit_message for agent patterns
   
-  Agent Pattern Matching (case-insensitive regex):
-    'claude' → agent_type = 'claude'
-    'copilot' → agent_type = 'copilot'  
-    'cursor' → agent_type = 'cursor'
-    'aider' → agent_type = 'other'
-    'openhands' → agent_type = 'other'
-    'devin' → agent_type = 'other'
-    'cline' → agent_type = 'other'
-    'junie' → agent_type = 'other'
-    'gemini' → agent_type = 'other'
+  Agent Pattern Matching (case-insensitive substring match against the
+  commit_signatures catalog in collection/heuristics/agent_heuristics.yaml —
+  see "Agent Catalog" below): each matched agent keeps its own agent_type
+  (e.g. 'claude', 'aider', 'openhands' — there is no catch-all 'other' bucket)
   
   6. On FIRST match: Record {commit_sha → agent_type}, exit inner loop
   
@@ -252,19 +246,18 @@ Author: Developer <dev@company.com>
 ```
 **Detection:** agent_type = 'claude' (first match wins)
 
-### Agent Pattern Keywords
+### Agent Catalog
 
-| Agent | Name Keywords | Email Keywords |
-|-------|--------------|-----------------|
-| Claude | claude, anthropic | claude@, anthropic.com |
-| Copilot | copilot, github, co-pilot | copilot@, github.com |
-| Cursor | cursor, anysoftwarefoundation | cursor@, ycombinator |
-| Aider | aider | aider@ |
-| OpenHands | openhands, open-hands | openhands@ |
-| Devin | devin | devin@ |
-| Cline | cline | cline@ |
-| Jules | julius, junie | junie@, julius@ |
-| Gemini | gemini, google | gemini@, google.com |
+The full, current list of recognized agents and their config-file and
+commit-signature patterns lives in
+[`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml)
+— not in this document. This is deliberate: the catalog of coding agents
+grows faster than any doc or hardcoded list can be kept in sync with (the
+"Peril of Multiplicity" — see the related work this project draws on), so
+the YAML file is the single, version-controlled source of truth. Adding or
+updating an agent is a YAML edit; `collection/agent_patterns.py` loads it
+and derives the shapes used throughout the detection code (see that file's
+module docstring).
 
 ### Performance
 - **Time per repository:** O(commits × message_size)
@@ -373,7 +366,7 @@ Merge commits are excluded from agent detection. Merge commits are not represent
 - **Uses Tier 1 agent detection?** Yes (primary method)
 - **Input:** GitHub API search for agent config files (discovery only)
 - **Agent identification:** Co-authored-by trailers in commit messages
-- **Output:** Agent fixtures with `commit_kind='agent'`, `agent_type='claude'|'copilot'|'cursor'|'aider'|NULL`
+- **Output:** Agent fixtures with `commit_kind='agent'`, `agent_type=<any key from commit_signatures in agent_heuristics.yaml>|NULL`
 
 ---
 
