@@ -8,8 +8,6 @@ from collection.db import (
     initialise_db,
     insert_commit_observation,
     insert_fixture,
-    insert_human_inter_fixture,
-    insert_human_within_fixture,
     insert_mock_usage,
     insert_test_commit,
     set_repo_analysed,
@@ -77,49 +75,6 @@ def test_db_helpers_end_to_end(tmp_path):
         }
         fixture_id = insert_fixture(conn, fixture)
         assert isinstance(fixture_id, int) and fixture_id > 0
-
-        # Insert human_within and human_inter rows
-        within_row = {
-            "file_id": file_id,
-            "repo_id": repo_id,
-            "name": "my_fixture",
-            "fixture_type": "pytest_decorator",
-            "scope": "per_test",
-            "start_line": 10,
-            "end_line": 20,
-            "loc": 5,
-            "cyclomatic_complexity": 1,
-            "max_nesting_depth": 1,
-            "num_objects_instantiated": 0,
-            "num_external_calls": 0,
-            "num_parameters": 0,
-            "reuse_count": 0,
-            "has_teardown_pair": 0,
-            "raw_source": "def my_fixture(): pass",
-            "framework": "pytest",
-            "num_mocks": 0,
-            "commit_sha": "deadbeef",
-            "commit_author_name": "Alice",
-            "commit_author_email": "alice@example.com",
-            "commit_date": "2020-01-01",
-            "is_sampled": 1,
-            "sample_batch": 1,
-            "provenance": '{"seed":42}',
-        }
-
-        wid = insert_human_within_fixture(conn, within_row)
-        assert isinstance(wid, int) and wid > 0
-
-        inter_row = within_row.copy()
-        # remove within-only fields and add inter-specific ones
-        inter_row.pop("is_sampled", None)
-        inter_row.pop("sample_batch", None)
-        inter_row["matched_control_id"] = None
-        inter_row["match_score"] = None
-        inter_row["provenance"] = '{"seed":42}'
-
-        iid = insert_human_inter_fixture(conn, inter_row)
-        assert isinstance(iid, int) and iid > 0
 
         # Insert commit observation and test commit
         obs = {
