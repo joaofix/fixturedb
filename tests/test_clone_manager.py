@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from collection import clone_manager as cm
-from collection.temp_clone import _output_requests_credentials
+from collection import ephemeral_clone as cm
+from collection.clone_primitives import _output_requests_credentials
 
 
 def test_output_requests_credentials():

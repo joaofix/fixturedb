@@ -39,8 +39,8 @@ import os
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
-from collection.clone_manager import temp_clone_commit_history
 from collection.csv_adapter import get_adapter
+from collection.ephemeral_clone import temp_clone_commit_history
 
 GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
 # Default output dir for agent commit CSVs (per-language)

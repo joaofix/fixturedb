@@ -23,9 +23,9 @@ from collection.agent_patterns import (
     PAPER_AGENT_REPOSITORY_LANGUAGES,
 )
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
-from collection.clone_manager import temp_clone_commit_history
 from collection.config import EXCLUSION_KEYWORDS
 from collection.csv_adapter import get_adapter
+from collection.ephemeral_clone import temp_clone_commit_history
 from collection.logging_utils import get_logger
 from collection.utils import _normalize_language_filters
 

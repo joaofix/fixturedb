@@ -8,20 +8,28 @@ This document describes the architecture, key components, and operational guidan
 - Make CSV/IO pluggable for testability and alternate backends.
 
 ## Key Components
-- `collection/clone_manager.py`: central clone lifecycle and disk-safety logic. Exposes context managers such as `temp_clone_commit_history()` and helpers like `clone_with_function()` and `ensure_free_space()`.
+
+The collection subsystem has three layered cloning modules — pick the one matching your use case:
+- `collection/clone_primitives.py`: lowest-level primitive — clones a repo into a brand-new tempdir via subprocess, detects credential-gated (private repo) failures. No DB, no throttling, no config.
+- `collection/ephemeral_clone.py`: context managers wrapping `clone_primitives.py` with throttling (a global semaphore + retry/backoff), disk-safety checks (`ensure_free_space()`), and guaranteed cleanup on exit. Exposes `temp_clone_commit_history()` and `clone_with_function()`. Use this for transient inspection (commit-history scans, QC counters).
+- `collection/persistent_clone.py`: an independent, DB-tracked workflow that clones into the durable `CLONES_DIR` (not a tempdir), runs pre-clone quality checks, and records status in SQLite via `db.py`. Use this for the main repository corpus, not for one-off inspection.
+
+Other key components:
 - `collection/db.py`: database schema and helpers. Provides `insert_human_inter_fixtures_coordinated()` (transactional, batched insert) and lower-level insert helpers.
 - `collection/csv_adapter.py`: pluggable CSV adapter; production code uses file-backed adapter but tests can swap implementations.
 - `collection/agent_corpus.py` and `collection/human_corpus.py`: orchestration of agent and human extraction flows; they call into the clone manager and DB helpers.
 
 Paths:
-- `collection/clone_manager.py` ([collection/clone_manager.py](collection/clone_manager.py))
+- `collection/clone_primitives.py` ([collection/clone_primitives.py](collection/clone_primitives.py))
+- `collection/ephemeral_clone.py` ([collection/ephemeral_clone.py](collection/ephemeral_clone.py))
+- `collection/persistent_clone.py` ([collection/persistent_clone.py](collection/persistent_clone.py))
 - `collection/db.py` ([collection/db.py](collection/db.py))
 - `collection/csv_adapter.py` ([collection/csv_adapter.py](collection/csv_adapter.py))
 - `collection/human_corpus.py` ([collection/human_corpus.py](collection/human_corpus.py))
 - `collection/agent_corpus.py` ([collection/agent_corpus.py](collection/agent_corpus.py))
 
 ## Clone lifecycle and disk safety
-- Clones are created in a per-run temporary root and removed when the clone context exits (ephemeral clones). Use `temp_clone_commit_history()` for commit-history clones.
+- Clones are created in a per-run temporary root and removed when the clone context exits (ephemeral clones, via `ephemeral_clone.py`). Use `temp_clone_commit_history()` for commit-history clones.
 - Before cloning, `ensure_free_space(path, min_bytes)` is used to check available disk; callers can set `min_free_bytes` to fail early and avoid uncontrolled disk growth.
 - A pruning utility `prune_old_clones(clones_dir, max_age_seconds)` is provided to recover disk from stale runs.
 
@@ -52,6 +60,6 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 - If clones fill disk: raise `min_free_bytes` and run `prune_old_clones()` on the clones directory.
 
 ## Tests and CI
-- The collection subsystem has unit and integration tests under `tests/` (e.g., `tests/test_clone_manager.py`) and a small performance check for bulk inserts. CI runs these to validate logic and performance bounds. The docs intentionally avoid test-level detail.
+- The collection subsystem has unit and integration tests under `tests/` (e.g., `tests/test_clone_manager.py`, which tests `ephemeral_clone.py`) and a small performance check for bulk inserts. CI runs these to validate logic and performance bounds. The docs intentionally avoid test-level detail.
 
 If you want, I can add a short diagram or a quick-start checklist for running the collection pipeline on a new machine.

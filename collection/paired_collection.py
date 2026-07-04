@@ -13,7 +13,6 @@ from collection.logging_utils import get_logger
 
 from .agent_commit_detector import Tier1RepositoryScanner
 from .cli_utils import add_language_arg, add_repos_per_language_arg
-from .cloner import clone_repo
 from .config import CLONES_DIR, DATA_DIR, HUMAN_CORPUS_CUTOFF_DATE, LANGUAGE_CONFIGS
 from .db import (
     classify_domain,
@@ -25,6 +24,7 @@ from .db import (
     upsert_repository,
 )
 from .fixture_extractor import extract_fixtures_at_commit
+from .persistent_clone import clone_repo
 
 logger = get_logger(__name__)
 

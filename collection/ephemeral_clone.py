@@ -1,7 +1,10 @@
-"""CloneManager: small abstraction to manage clone lifecycle and disk safety.
+"""Throttled, auto-cleanup clone context managers for transient inspection.
 
-Provides context managers to clone repos (either via an injected clone function
-or into a temporary directory) and guarantees cleanup on exit.
+Wraps `clone_primitives.py`'s raw clone-to-tempdir primitive with a global
+concurrency throttle (semaphore + retry/backoff), disk-safety checks
+(`ensure_free_space`), and guaranteed `rmtree` cleanup on exit. Use this for
+one-off/transient work (commit-history scans, QC counters) — for the durable,
+DB-tracked corpus clone directory, see `persistent_clone.py` instead.
 """
 
 import os
@@ -17,7 +20,7 @@ from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
-from .temp_clone import cleanup_tempdir, clone_to_tempdir
+from .clone_primitives import cleanup_tempdir, clone_to_tempdir
 
 # Configurable concurrency limit for git clone operations
 DEFAULT_MAX_CONCURRENT_CLONES = int(os.getenv("MAX_CONCURRENT_CLONES", "4"))

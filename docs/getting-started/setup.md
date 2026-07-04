@@ -62,7 +62,7 @@ icsme-nier-2026/
 │   ├── db.py                          # Database schema and helpers
 │   ├── config.py                      # Configuration constants
 │   ├── detector.py                    # Fixture detection (tree-sitter)
-│   └── cloner.py                      # Repository cloning utilities
+│   └── persistent_clone.py            # Repository cloning utilities
 │
 ├── data/
 │   ├── corpus.db                      # Original FixtureDB corpus (INPUT)

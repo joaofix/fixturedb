@@ -24,7 +24,7 @@ from .agent_patterns import (
     PAPER_AGENT_REPOSITORY_LANGUAGES,
     repo_contains_patterns,
 )
-from .clone_manager import clone_with_function
+from .clone_primitives import _output_requests_credentials
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
@@ -51,8 +51,8 @@ from .db import (
     upsert_repository,
     upsert_test_file,
 )
+from .ephemeral_clone import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
-from .temp_clone import _output_requests_credentials
 from .test_commit_utils import collect_test_files_for_commit, write_test_commits_csv
 from .utils import (
     AGENT_TRAILER_RE,

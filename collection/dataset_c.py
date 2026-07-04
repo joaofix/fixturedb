@@ -12,13 +12,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 from collection.agent_commit_detector import _is_test_file_path
 from collection.agent_corpus import clone_repo_for_commit_scan
-from collection.clone_manager import clone_with_function
 from collection.config import (
     DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
 )
 from collection.corpus_utils import construct_repo_dict, persist_repository_and_fixtures
 from collection.db import db_session, initialise_db
+from collection.ephemeral_clone import clone_with_function
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.logging_utils import get_logger
 from collection.sampling import stratified_sample_by_language

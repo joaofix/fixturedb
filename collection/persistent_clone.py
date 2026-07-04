@@ -1,10 +1,11 @@
 """
-Clone repositories and apply post-clone quality filters.
+DB-tracked persistent clone workflow for the main repository corpus.
 
-This module is the new-collection home for the cloning workflow previously
-carried in old-collection. It keeps the repository selection, pre-checks,
-clone, and quality-filter logic in one place so other collection phases can
-reuse it directly.
+Clones into the durable `CLONES_DIR` (not a tempdir), runs pre-clone quality
+checks (min commits, min test files), and records status/pinned-commit in
+SQLite via `db.py`. This is an independent workflow from `ephemeral_clone.py`
+(which clones into throttled, auto-cleaned tempdirs for one-off inspection) —
+use this one for the durable corpus, not for transient scans.
 """
 
 import shutil
@@ -17,6 +18,7 @@ from tqdm import tqdm
 
 from collection.logging_utils import get_logger
 
+from .clone_primitives import _output_requests_credentials
 from .config import (
     CLONE_WORKERS,
     CLONES_DIR,
@@ -26,7 +28,6 @@ from .config import (
     MIN_TEST_FILES,
 )
 from .db import db_session, get_repos_by_status, set_repo_status
-from .temp_clone import _output_requests_credentials
 
 logger = get_logger(__name__)
 

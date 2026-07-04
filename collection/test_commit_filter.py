@@ -22,13 +22,13 @@ from .cli_utils import (
     add_repo_dir_arg,
     add_workers_arg,
 )
-from .clone_manager import temp_clone_commit_history
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
     HUMAN_CORPUS_CUTOFF_DATE,
     LANGUAGE_CONFIGS,
 )
+from .ephemeral_clone import temp_clone_commit_history
 from .test_commit_utils import write_test_commits_csv
 
 logger = get_logger(__name__)

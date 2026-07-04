@@ -31,7 +31,6 @@ from .cli_utils import (
     add_test_commits_csv_arg,
     add_workers_arg,
 )
-from .clone_manager import clone_with_function
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
@@ -56,6 +55,7 @@ from .db import (
     mark_global_checkpoint,
     upsert_repository,
 )
+from .ephemeral_clone import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
 from .logging_utils import get_logger
 from .sampling import stratified_sample_by_language

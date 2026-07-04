@@ -7,7 +7,6 @@ from collection.agent_commit_detector import (
     count_total_commits_since,
 )
 
-
 # ---------------------------------------------------------------------------
 # count_total_commits_since
 # ---------------------------------------------------------------------------

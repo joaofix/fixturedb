@@ -1,8 +1,8 @@
-"""Tests for temp_clone.py credential detection and skip behavior."""
+"""Tests for clone_primitives.py credential detection and skip behavior."""
 
 from unittest.mock import MagicMock, patch
 
-from collection.temp_clone import _output_requests_credentials, clone_to_tempdir
+from collection.clone_primitives import _output_requests_credentials, clone_to_tempdir
 
 
 class TestOutputRequestsCredentials:
@@ -58,7 +58,7 @@ class TestCloneToTempdirCredentialSkip:
         mock_result.returncode = 128
         mock_result.stderr = "remote: Repository not found"
 
-        with patch("collection.temp_clone.subprocess.run", return_value=mock_result):
+        with patch("collection.clone_primitives.subprocess.run", return_value=mock_result):
             repo_path, temp_root = clone_to_tempdir(
                 "owner/repo",
                 "https://github.com/owner/repo.git",
@@ -75,7 +75,7 @@ class TestCloneToTempdirCredentialSkip:
         mock_result.returncode = 128
         mock_result.stderr = "Username for 'https://github.com': "
 
-        with patch("collection.temp_clone.subprocess.run", return_value=mock_result):
+        with patch("collection.clone_primitives.subprocess.run", return_value=mock_result):
             repo_path, temp_root = clone_to_tempdir(
                 "owner/repo",
                 "https://github.com/owner/repo.git",
@@ -88,7 +88,7 @@ class TestCloneToTempdirCredentialSkip:
 
     def test_returns_path_on_success(self, tmp_path):
         """clone_to_tempdir should return path on successful clone."""
-        with patch("collection.temp_clone.subprocess.run") as mock_run:
+        with patch("collection.clone_primitives.subprocess.run") as mock_run:
             mock_result = MagicMock()
             mock_result.returncode = 0
             mock_result.stderr = ""

@@ -35,10 +35,10 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
-from collection.clone_manager import temp_clone_commit_history
+from collection.clone_primitives import _output_requests_credentials
+from collection.ephemeral_clone import temp_clone_commit_history
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.logging_utils import get_logger
-from collection.temp_clone import _output_requests_credentials
 from collection.utils import _date_only
 
 logger = get_logger(__name__)

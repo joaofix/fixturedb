@@ -17,10 +17,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from collection.logging_utils import get_logger
 
+from .clone_primitives import _output_requests_credentials
 from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, DB_PATH
 from .db import db_session
 from .detector import _get_parser, extract_fixtures
-from .temp_clone import _output_requests_credentials
 from .test_commit_utils import is_test_file_path
 
 logger = get_logger(__name__)

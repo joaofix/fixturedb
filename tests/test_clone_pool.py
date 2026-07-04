@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from collection import clone_manager as cm
+from collection import ephemeral_clone as cm
 
 
 def test_clone_with_throttle_success(tmp_path: Path):

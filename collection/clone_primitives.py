@@ -1,4 +1,11 @@
-"""Shared helpers for temporary repository clones used by QC scripts."""
+"""Lowest-level clone primitive: subprocess `git clone` into a fresh tempdir.
+
+No DB, no throttling, no config — just clone-to-tempdir plus credential-gated
+(private repo) failure detection. Two other modules build on this:
+`ephemeral_clone.py` wraps it with throttling/disk-safety/cleanup context
+managers for transient inspection, and `persistent_clone.py` is an independent,
+DB-tracked workflow for the durable corpus clone directory.
+"""
 
 from __future__ import annotations
 

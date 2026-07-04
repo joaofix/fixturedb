@@ -18,7 +18,6 @@ from .agent_detector import (
     AgentFileScanner,
     GitHubAgentFileChecker,
 )
-from .cloner import clone_repo
 from .config import (
     AGENT_CORPUS_START_DATE,
     AGENT_SIGNATURES,
@@ -31,6 +30,7 @@ from .config import (
     TIER2_MIN_TEST_FILES,
 )
 from .db import db_session
+from .persistent_clone import clone_repo
 from .utils import AGENT_TRAILER_RE
 
 logger = get_logger(__name__)
