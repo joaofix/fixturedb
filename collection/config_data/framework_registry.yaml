@@ -1,0 +1,69 @@
+# Authoritative mapping of testing frameworks per language.
+# Used to validate detected frameworks and ensure consistency (catch typos/
+# misspellings) and to document known frameworks per language.
+# Categories per language: unit, bdd, mocking, other.
+# See collection/config.py: FRAMEWORK_REGISTRY, is_known_framework(),
+# get_known_frameworks().
+
+python:
+  # Unit testing frameworks
+  - pytest # Most popular, decorator-based
+  - unittest # Standard library
+  - nose # Legacy discovery-based
+  - nose2 # Modernized nose
+  - doctest # Docstring-based
+  # BDD frameworks
+  - behave # Gherkin syntax
+  - pytest-bdd # BDD with pytest
+  # Mocking frameworks (detected in fixtures)
+  - unittest_mock # Standard library mocking
+  - pytest_mock # Pytest-style mocking
+  # Async testing
+  - pytest-asyncio # Async fixtures
+  # Other frameworks
+  - testtools # Extended assertions
+  - trial # Twisted async testing
+
+java:
+  # Unit testing frameworks
+  - junit # JUnit 3/4/5 (captured as generic "junit")
+  - testng # Annotations-based
+  # BDD frameworks
+  - spock # Groovy-based BDD
+  - cucumber # Gherkin syntax
+  # Mocking frameworks (detected in fixtures)
+  - mockito # Primary Java mocking framework
+  - easymock # Legacy Java mocking
+  - powermock # Extension to Mockito
+  # Specialized
+  - testify # Custom framework
+  - jtest # Genetic programming testing
+  - arquillian # Container testing
+
+javascript:
+  # Unit testing frameworks
+  - jest # Snapshot and coverage built-in
+  - mocha # Most flexible, often paired with chai
+  - jasmine # Behavior-driven
+  - ava # Concurrent test runner
+  - vitest # Vite-native test runner
+  # BDD frameworks
+  - cucumber # Gherkin syntax
+  # Mocking/stubbing (detected in fixtures)
+  - sinon # Spies, stubs, mocks (often with mocha/jasmine)
+  # Testing utilities
+  - tap # Test Anything Protocol
+  - uvu # Lightweight test runner
+  - node-tap # TAP version for Node
+
+typescript:
+  # Unit testing frameworks (TypeScript-native)
+  - jest # With @types/jest
+  - mocha # With typescript plugin
+  - jasmine # TypeScript support
+  - vitest # Vite-native with TypeScript
+  - ava # With TypeScript support
+  # BDD frameworks
+  - cucumber # With TypeScript support
+  # Mocking (detected in fixtures)
+  - sinon # Works with TypeScript

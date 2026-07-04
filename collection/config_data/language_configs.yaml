@@ -1,0 +1,77 @@
+# Per-language search and test-detection configuration.
+#
+# target_repos is the gold-standard final count: repositories with
+# status='analysed' AND at least one extracted fixture. The `collect` command
+# loops until this target is reached for each language.
+#
+# JavaScript and TypeScript targets are lower because many such repos are
+# frontend-only and yield few or no fixture definitions.
+#
+# min_stars and exclusion_keywords are intentionally omitted here -- they
+# fall back to LanguageConfig's class defaults (MIN_STARS / EXCLUSION_KEYWORDS
+# in collection/config.py), so there is one source of truth for those values.
+# See collection/config.py: LanguageConfig, LANGUAGE_CONFIGS.
+
+python:
+  name: Python
+  github_language: Python
+  full_target: 500
+  test_path_patterns:
+    - test/
+    - tests/
+    - testing/
+  test_file_suffixes:
+    - test_.py
+    - _test.py
+    - _tests.py
+    - conftest.py
+
+java:
+  name: Java
+  github_language: Java
+  full_target: 500
+  test_path_patterns:
+    - src/test/
+    - test/
+    - tests/
+  test_file_suffixes:
+    - Test.java
+    - Tests.java
+    - IT.java
+    - Spec.java
+
+javascript:
+  name: JavaScript
+  github_language: JavaScript
+  full_target: 250
+  test_path_patterns:
+    - test/
+    - tests/
+    - spec/
+    - __tests__/
+  test_file_suffixes:
+    - .test.js
+    - .spec.js
+    - test.js
+    - .test.jsx
+    - .spec.jsx
+    - .test.mjs
+    - .spec.mjs
+
+typescript:
+  name: TypeScript
+  github_language: TypeScript
+  full_target: 250
+  test_path_patterns:
+    - test/
+    - tests/
+    - spec/
+    - __tests__/
+  test_file_suffixes:
+    - .test.ts
+    - .spec.ts
+    - test.ts
+    - .test.tsx
+    - .spec.tsx
+    - .test.mts
+    - .spec.mts

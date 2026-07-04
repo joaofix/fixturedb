@@ -1,6 +1,12 @@
 """
 Central configuration for the fixture corpus collection pipeline.
 Edit this file to tune search parameters before a collection run.
+
+Reference-data catalogs (non-code file extensions, boilerplate-repo exclusion
+keywords, the testing-framework registry, and per-language search/detection
+settings) are not hardcoded here -- they live as YAML under
+collection/config_data/ and are loaded via collection.config_data. Edit those
+files to update a catalog; no Python change needed.
 """
 
 import os
@@ -8,6 +14,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from .config_data import (
+    load_exclusion_keywords,
+    load_framework_registry,
+    load_language_configs_data,
+    load_non_code_extensions,
+)
 
 load_dotenv()
 
@@ -118,147 +131,8 @@ DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 # Non-source-code file extensions to skip (resource files, data, config, etc.)
-# These are checked to avoid parsing non-code files that slipped through name/path filters.
-NON_CODE_EXTENSIONS = {
-    # Document & markup formats
-    ".txt",
-    ".md",
-    ".rst",
-    ".pdf",
-    ".docx",
-    ".xhtml",
-    # Data formats
-    ".json",
-    ".xml",
-    ".yaml",
-    ".yml",
-    ".csv",
-    ".tsv",
-    ".sql",
-    ".properties",
-    ".dat",
-    ".ttl",  # Turtle RDF files
-    ".pdb",
-    ".osm",  # OpenStreetMap data
-    # Web assets
-    ".html",
-    ".css",
-    ".scss",
-    ".less",
-    # Images
-    ".svg",
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".ico",
-    ".tga",
-    ".ivf",
-    ".gbk",
-    # Audio & Video
-    ".mp3",
-    ".ogg",
-    ".wav",
-    ".flac",
-    ".aac",
-    ".m4a",
-    ".wma",
-    ".opus",
-    ".aiff",
-    ".alac",
-    ".ape",
-    ".mp4",
-    # Fonts
-    ".woff",
-    ".woff2",
-    ".ttf",
-    ".eot",
-    ".otf",
-    # Build/Config artifacts
-    ".map",
-    ".lock",
-    ".yarn",
-    ".log",
-    ".out",
-    ".tmp",
-    ".dot",  # Graph visualization
-    # Geospatial files
-    ".geom",
-    ".shp",
-    # Models & ML
-    ".mlmodel",
-    # Bioinformatics
-    ".fasta",
-    ".fax",
-    ".sam",
-    ".req",
-    # Build dependency cache
-    ".bd.fast",
-    ".bd.fasta",
-    ".bd",
-    # Databases
-    ".db",
-    ".dbf",
-    # C# / .NET ecosystem
-    ".gucx",
-    ".gusx",
-    ".resx",
-    ".xaml",
-    ".csproj",
-    ".vbproj",
-    ".sln",
-    ".nuspec",
-    ".props",
-    ".targets",
-    ".ruleset",
-    ".editorconfig",
-    # Game engine files (Unity)
-    ".unity",
-    ".prefab",
-    ".anim",
-    ".controller",
-    ".mat",
-    ".asset",
-    ".uxml",
-    # Compressed archives
-    ".zip",
-    ".rar",
-    ".7z",
-    ".tar",
-    ".gz",
-    ".bz2",
-    ".xz",
-    ".iso",
-    ".dmg",
-    # Programming/Analysis formats
-    ".flf",
-    ".il",
-    ".snapshot",
-    ".raw",
-    ".tokens",
-    # Test fixtures and snapshots
-    ".golden",
-    ".snap",
-    ".input",
-    ".expected",
-    ".actual",
-    # Windows
-    ".exe",
-    ".msi",
-    ".dll",
-    # Unix
-    ".so",
-    ".dylib",  # macOS dynamic libraries
-    # Mobile
-    ".apk",
-    ".aar",  # Android archive library
-    # Java archives
-    ".jar",
-    ".war",
-    ".ear",
-    # Speech recognition
-    ".srx",
-}
+# See collection/config_data/non_code_extensions.yaml for the full catalog.
+NON_CODE_EXTENSIONS = set(load_non_code_extensions())
 
 # ---------------------------------------------------------------------------
 # Repository search filters
@@ -337,25 +211,8 @@ def get_known_frameworks(language: str) -> list[str]:
     return FRAMEWORK_REGISTRY.get(language, [])
 
 
-EXCLUSION_KEYWORDS: list[str] = [
-    "tutorial",
-    "course",
-    "homework",
-    "exercise",
-    "demo",
-    "example",
-    "sample",
-    "workshop",
-    "bootcamp",
-    "learning",
-    "practice",
-    "beginner",
-    "awesome-",
-    "cheatsheet",
-    "interview",
-    "leetcode",
-    "hackerrank",
-]
+# See collection/config_data/exclusion_keywords.yaml for the full catalog.
+EXCLUSION_KEYWORDS: list[str] = load_exclusion_keywords()
 
 
 # ---------------------------------------------------------------------------
@@ -370,54 +227,8 @@ EXCLUSION_KEYWORDS: list[str] = [
 # ---------------------------------------------------------------------------
 
 LANGUAGE_CONFIGS = {
-    "python": LanguageConfig(
-        name="Python",
-        github_language="Python",
-        min_stars=MIN_STARS,
-        full_target=500,
-        test_path_patterns=["test/", "tests/", "testing/"],
-        test_file_suffixes=["test_.py", "_test.py", "_tests.py", "conftest.py"],
-    ),
-    "java": LanguageConfig(
-        name="Java",
-        github_language="Java",
-        min_stars=MIN_STARS,
-        full_target=500,
-        test_path_patterns=["src/test/", "test/", "tests/"],
-        test_file_suffixes=["Test.java", "Tests.java", "IT.java", "Spec.java"],
-    ),
-    "javascript": LanguageConfig(
-        name="JavaScript",
-        github_language="JavaScript",
-        min_stars=MIN_STARS,
-        full_target=250,
-        test_path_patterns=["test/", "tests/", "spec/", "__tests__/"],
-        test_file_suffixes=[
-            ".test.js",
-            ".spec.js",
-            "test.js",
-            ".test.jsx",
-            ".spec.jsx",
-            ".test.mjs",
-            ".spec.mjs",
-        ],
-    ),
-    "typescript": LanguageConfig(
-        name="TypeScript",
-        github_language="TypeScript",
-        min_stars=MIN_STARS,
-        full_target=250,
-        test_path_patterns=["test/", "tests/", "spec/", "__tests__/"],
-        test_file_suffixes=[
-            ".test.ts",
-            ".spec.ts",
-            "test.ts",
-            ".test.tsx",
-            ".spec.tsx",
-            ".test.mts",
-            ".spec.mts",
-        ],
-    ),
+    lang: LanguageConfig(**fields)
+    for lang, fields in load_language_configs_data().items()
 }
 
 # ---------------------------------------------------------------------------
@@ -434,71 +245,8 @@ LANGUAGE_CONFIGS = {
 # 4. Future enhancement: generating detection patterns from registry
 # ---------------------------------------------------------------------------
 
-FRAMEWORK_REGISTRY = {
-    "python": [
-        # Unit testing frameworks
-        "pytest",  # Most popular, decorator-based
-        "unittest",  # Standard library
-        "nose",  # Legacy discovery-based
-        "nose2",  # Modernized nose
-        "doctest",  # Docstring-based
-        # BDD frameworks
-        "behave",  # Gherkin syntax
-        "pytest-bdd",  # BDD with pytest
-        # Mocking frameworks (detected in fixtures)
-        "unittest_mock",  # Standard library mocking
-        "pytest_mock",  # Pytest-style mocking
-        # Async testing
-        "pytest-asyncio",  # Async fixtures
-        # Other frameworks
-        "testtools",  # Extended assertions
-        "trial",  # Twisted async testing
-    ],
-    "java": [
-        # Unit testing frameworks
-        "junit",  # JUnit 3/4/5 (captured as generic "junit")
-        "testng",  # Annotations-based
-        # BDD frameworks
-        "spock",  # Groovy-based BDD
-        "cucumber",  # Gherkin syntax
-        # Mocking frameworks (detected in fixtures)
-        "mockito",  # Primary Java mocking framework
-        "easymock",  # Legacy Java mocking
-        "powermock",  # Extension to Mockito
-        # Specialized
-        "testify",  # Custom framework
-        "jtest",  # Genetic programming testing
-        "arquillian",  # Container testing
-    ],
-    "javascript": [
-        # Unit testing frameworks
-        "jest",  # Snapshot and coverage built-in
-        "mocha",  # Most flexible, often paired with chai
-        "jasmine",  # Behavior-driven
-        "ava",  # Concurrent test runner
-        "vitest",  # Vite-native test runner
-        # BDD frameworks
-        "cucumber",  # Gherkin syntax
-        # Mocking/stubbing (detected in fixtures)
-        "sinon",  # Spies, stubs, mocks (often with mocha/jasmine)
-        # Testing utilities
-        "tap",  # Test Anything Protocol
-        "uvu",  # Lightweight test runner
-        "node-tap",  # TAP version for Node
-    ],
-    "typescript": [
-        # Unit testing frameworks (TypeScript-native)
-        "jest",  # With @types/jest
-        "mocha",  # With typescript plugin
-        "jasmine",  # TypeScript support
-        "vitest",  # Vite-native with TypeScript
-        "ava",  # With TypeScript support
-        # BDD frameworks
-        "cucumber",  # With TypeScript support
-        # Mocking (detected in fixtures)
-        "sinon",  # Works with TypeScript
-    ],
-}
+# See collection/config_data/framework_registry.yaml for the full catalog.
+FRAMEWORK_REGISTRY = load_framework_registry()
 
 # Minimum thresholds applied after cloning
 MIN_TEST_FILES = 5  # repos with fewer test files are dropped

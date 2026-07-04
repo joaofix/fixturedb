@@ -40,7 +40,10 @@ Python, Java, JavaScript, TypeScript.
 
 ```
 collection/          # Main pipeline code (the "library")
-  config.py          # All constants, paths, thresholds
+  config.py          # Paths, thresholds, dates -- loads catalogs from config_data/ below
+  config_data/       # Reference-data catalogs as YAML (non-code extensions, boilerplate-
+                     # repo exclusion keywords, framework registry, per-language configs)
+                     # -- edit these, not config.py, to update a catalog
   db.py              # SQLite schema, upsert helpers, migrations
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)

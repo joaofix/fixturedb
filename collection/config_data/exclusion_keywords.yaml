@@ -1,0 +1,22 @@
+# Keywords whose presence in a repo name/description signals a non-research,
+# boilerplate/toy repo (tutorials, courses, coding-interview practice, etc.)
+# rather than a real production codebase.
+# See collection/config.py: EXCLUSION_KEYWORDS.
+
+- tutorial
+- course
+- homework
+- exercise
+- demo
+- example
+- sample
+- workshop
+- bootcamp
+- learning
+- practice
+- beginner
+- awesome-
+- cheatsheet
+- interview
+- leetcode
+- hackerrank
