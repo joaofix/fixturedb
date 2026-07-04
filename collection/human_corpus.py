@@ -1,9 +1,15 @@
 """
-Human corpus collection for between-group comparison.
+Builds Dataset B: human-authored fixtures, within-repo matched control.
 
 Collects human-generated fixtures from the same agent-enabled repositories
 used for the agent corpus. Commits are scanned in the same temporal window as
 the agent dataset, and only non-AI commits that fully add a fixture are kept.
+Entry point: phase_2_extract_human.py. See agent_corpus.py (Dataset A) and
+dataset_c.py (Dataset C, the cross-repo baseline) for the other two datasets.
+
+`load_dataset_c_repos()` below is a shared CSV-loading helper used by
+Dataset C's entry point (phase_2b_extract_dataset_c.py) — it lives here for
+historical reasons but does not itself build Dataset B.
 """
 
 import argparse

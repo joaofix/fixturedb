@@ -114,59 +114,56 @@ icsme-nier-2026/
 
 ## Running the Between-Group Study
 
-The between-group study uses a three-stage pipeline:
+The authoritative, reproducible pipeline for the paper's three datasets is the
+numbered `collection/phase_1a_scan_agent_commits.py` through
+`collection/phase_8_final_validation.py` sequence — run from the project
+root as modules:
 
-### Stage 1: Collect Human Corpus (Pre-2021)
 ```bash
-python pipeline.py human --repos-per-language 100
+# Phase 1A-1D: discover agent-enabled repos, scan for agent commits
+python -m collection.phase_1a_scan_agent_commits
+python -m collection.phase_1b_verify_agent_commits
+python -m collection.phase_1c_assess_tier1_yield
+python -m collection.phase_1d_discover_matched_repos  # only if Tier 1 is insufficient
+
+# Phase 2 / 2B: Dataset B (within-repo human) and Dataset C (cross-repo baseline)
+python -m collection.phase_2_extract_human
+python -m collection.phase_2b_extract_dataset_c
+
+# Phase 3: Dataset A (agent fixtures)
+python -m collection.phase_3_extract_agent
+
+# Phase 4-8: distribution analysis, stratified sampling, export, validation
+python -m collection.phase_4_analyze_distribution
+python -m collection.phase_5_stratified_sample
+python -m collection.phase_6_7_export_and_document
+python -m collection.phase_8_final_validation
 ```
 
-This collects fixtures from repositories created before 2021, when no AI agents existed.
+Each phase script prints "Next steps" pointing at the following phase. See
+[docs/architecture/collection.md](../architecture/collection.md) for the
+Dataset A/B/C → script → collector map, and
+[Reproducing Results](../usage/reproducing.md) for detailed instructions and
+optional parameters.
 
-### Stage 2: Collect Agent Corpus (2025+)
-```bash
-python pipeline.py agent --repos-per-language 100 --github-token YOUR_TOKEN
-```
-
-This collects fixtures from commits with agent authorship signals (Tier 1 detection: author metadata + co-authored-by trailers).
-
-### Stage 3: Run Between-Group Comparison
-```bash
-python pipeline.py between-group-stats
-```
-
-This performs statistical tests on control variables and generates balance reports.
-
-See [Reproducing Results](../usage/reproducing.md) for detailed instructions and optional parameters.
+The root `pipeline.py` is a separate, older manual convenience CLI (`python
+pipeline.py human-fixtures`, `agent-fixtures`, `between-group-stats`,
+`status`, ...) kept around for ad-hoc single-stage runs. It is **not** the
+authoritative pipeline above — use the phase scripts for reproducing the
+paper's datasets.
 
 ## Quick Start
 
-### Minimal Test (Human Corpus Only)
+### Minimal Test (Dataset B Only)
 ```bash
-# Test extraction without cloning
-python pipeline.py human --repos-per-language 5 --language python
+python -m collection.phase_2_extract_human --repos-per-language 5 --language python
 ```
 
 This will:
-1. Query corpus.db for pre-2021 repositories
-2. Extract fixtures from historical commits
-3. Write a small sample to between-group.db
+1. Query corpus.db for agent-enabled repositories
+2. Extract human fixtures from the same 2025+ commit window as Dataset A
+3. Write a small sample to `data/fixturedb-human.db`
 4. Complete in 5-10 minutes
-
-### Full Pipeline (30-60 minutes)
-```bash
-# Stage 1: Human corpus
-python pipeline.py human --repos-per-language 100
-
-# Stage 2: Agent corpus
-python pipeline.py agent --repos-per-language 100 --github-token $GITHUB_TOKEN
-
-# Stage 3: Statistical comparison
-python pipeline.py between-group-stats
-
-# Check outputs
-python pipeline.py status
-```
 
 ## Configuration
 
@@ -174,9 +171,9 @@ All parameters are command-line arguments. No configuration files needed:
 
 ```bash
 # See all available options
-python pipeline.py human --help
-python pipeline.py agent --help
-python pipeline.py between-group-stats --help
+python -m collection.phase_2_extract_human --help
+python -m collection.phase_2b_extract_dataset_c --help
+python -m collection.phase_3_extract_agent --help
 ```
 
 ## Database Setup
@@ -191,15 +188,15 @@ Expected output: approximately `35169` fixtures in the original corpus.
 
 ## GitHub API Setup (Optional)
 
-For higher rate limits when collecting agent corpus:
+For higher rate limits when collecting agent corpus (legacy `pipeline.py` CLI):
 
 ```bash
 # Option 1: Pass as argument
-python pipeline.py agent --github-token YOUR_GITHUB_TOKEN
+python pipeline.py agent-fixtures --github-token YOUR_GITHUB_TOKEN
 
 # Option 2: Set environment variable
 export GITHUB_TOKEN=your_token_here
-python pipeline.py agent
+python pipeline.py agent-fixtures
 ```
 
 To get a token: Visit https://github.com/settings/tokens and create a "Personal access token (classic)" with `public_repo` scope.
@@ -250,7 +247,7 @@ which git  # On Windows: where git
 ### Rate limit exceeded (GitHub API)
 **Solution:** Use an authenticated token:
 ```bash
-python pipeline.py agent --github-token YOUR_TOKEN
+python pipeline.py agent-fixtures --github-token YOUR_TOKEN
 ```
 
 ## Next Steps

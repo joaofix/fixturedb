@@ -1,4 +1,11 @@
-"""Dataset C: pre-2022 human fixtures extracted from a stratified sample snapshot."""
+"""Builds Dataset C: human-authored fixtures, cross-repo pre-2021 baseline.
+
+Extracted from a stratified sample of independent repos at a pinned pre-2021
+cutoff commit (a snapshot, not a commit-by-commit scan). Entry point:
+phase_2b_extract_dataset_c.py. See agent_corpus.py (Dataset A) and
+human_corpus.py (Dataset B, the within-repo matched control) for the other
+two datasets.
+"""
 
 import csv
 import json

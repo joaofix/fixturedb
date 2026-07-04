@@ -6,16 +6,28 @@ Directory structure and file organization for the between-group study project.
 icsme-nier-2026/
 │
 ├── MAIN CLI & PIPELINES
-│   ├── pipeline.py                          # Main CLI entrypoint
-│   │   ├── python pipeline.py human          # Stage 1: Human corpus (pre-2021)
-│   │   ├── python pipeline.py agent          # Stage 2: Agent corpus (2025+)
-│   │   └── python pipeline.py between-group-stats  # Stage 3: Comparison
+│   ├── The authoritative, reproducible pipeline is the numbered phase scripts below.
+│   │   pipeline.py (root) is a separate, older manual convenience CLI — not
+│   │   the pipeline used to build the paper's datasets.
 │   │
 │   └── collection/
 │       ├── __main__.py                      # Package CLI: `python -m collection`
-│       ├── human_corpus.py                  # Human corpus collection (430+ lines)
-│       ├── agent_corpus.py                  # Agent corpus collection (380+ lines)
-│       ├── between_group_comparison.py      # Statistical comparison (410+ lines)
+│       ├── phase_1a_scan_agent_commits.py   # Phase 1A: scan for agent commits
+│       ├── phase_1b_verify_agent_commits.py # Phase 1B: verify agent commits
+│       ├── phase_1c_assess_tier1_yield.py   # Phase 1C: assess Tier 1 yield
+│       ├── phase_1d_discover_matched_repos.py # Phase 1D: Tier 2 matched repos (optional)
+│       ├── phase_2_extract_human.py         # Phase 2: Dataset B (human, within-repo)
+│       ├── phase_2b_extract_dataset_c.py    # Phase 2B: Dataset C (human, cross-repo baseline)
+│       ├── phase_3_extract_agent.py         # Phase 3: Dataset A (agent-authored)
+│       ├── phase_4_analyze_distribution.py  # Phase 4: distribution analysis
+│       ├── phase_5_stratified_sample.py     # Phase 5: stratified sampling
+│       ├── phase_6_7_export_and_document.py # Phase 6-7: export + ZIP archives
+│       ├── phase_8_final_validation.py      # Phase 8: final validation
+│       │
+│       ├── agent_corpus.py                  # Dataset A collector (AgentCorpusCollector)
+│       ├── human_corpus.py                  # Dataset B collector (HumanCorpusCollector)
+│       ├── dataset_c.py                     # Dataset C collector (collect_dataset_c_fixtures)
+│       ├── between_group_comparison.py      # Statistical comparison
 │       ├── github_api_search.py             # GitHub API integration
 │       ├── agent_signal_primitives.py       # Agent detection in commits (formerly agent_detector.py)
 │       ├── tiered_agent_corpus_scanner.py   # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
@@ -23,15 +35,16 @@ icsme-nier-2026/
 │       ├── db.py                            # Database schema and helpers
 │       ├── config.py                        # Configuration constants
 │       ├── detector.py                      # Fixture detection (tree-sitter)
-│       └── persistent_clone.py                  # Repository cloning utilities
+│       └── persistent_clone.py              # Repository cloning utilities
 │
 ├── TEST SUITE
 │   └── tests/
 │       ├── conftest.py                      # Pytest fixtures and helpers
-│       ├── test_agent_detector.py           # Agent detection tests
-│       ├── test_fixture_extractor.py        # Fixture extraction tests
-│       ├── test_db.py                       # Database operation tests
-│       └── test_integration.py              # Integration tests (all passing)
+│       ├── test_fixture_extractor_small.py  # Fixture extraction tests
+│       ├── test_db_helpers.py                # Database operation tests
+│       └── collection/                      # Per-phase-script tests, incl.
+│                                             # test_phase_2_extract_human.py,
+│                                             # test_phase_2b_extract_dataset_c.py
 │
 ├── DATA & DATABASES
 │   ├── data/
@@ -110,32 +123,36 @@ icsme-nier-2026/
 ## Key Directories Explained
 
 ### Main CLI (Root)
-- **pipeline.py** — Entry point for all commands
-  - `python pipeline.py human` — Stage 1: Collect pre-2021 fixtures
-  - `python pipeline.py agent` — Stage 2: Collect 2025+ agent-authored fixtures
-  - `python pipeline.py between-group-stats` — Stage 3: Run statistical comparison
-  - `python pipeline.py status` — Check database and output status
+- **The numbered `collection/phase_1a...phase_8` scripts** are the authoritative,
+  reproducible entry points — run as `python -m collection.phase_N_name`.
+- **pipeline.py** — a separate, older manual convenience CLI (`human-fixtures`,
+  `agent-fixtures`, `between-group-stats`, `status`, ...) for ad-hoc single-stage
+  runs. Not the authoritative pipeline.
 
 ### collection/ Module
-Core implementation of between-group study with three main collection modules:
+Core implementation with one collector module per dataset:
 
-**1. human_corpus.py (430+ lines)**
-- Extracts pre-2021 fixtures from corpus.db
-- Computes control variables at 2020-12-31 snapshot
+**1. human_corpus.py — Dataset B (within-repo human control)**
+- Extracts human fixtures from the same agent-enabled repos and 2025+ window as Dataset A
+- Computes control variables at the `AGENT_CORPUS_START_DATE` snapshot
 - Quality filters and statistics tracking
-- Outputs JSON summary to `output/human_corpus_summary_*.json`
+- Entry point: `phase_2_extract_human.py`
 
-**2. agent_corpus.py (380+ lines)**
-- Uses GitHub API to find agent-authored commits
+**2. dataset_c.py — Dataset C (cross-repo pre-2021 baseline)**
+- Checks out each sampled repo at its pinned pre-2021 cutoff commit and extracts
+  every fixture from every test file at that snapshot
+- Entry point: `phase_2b_extract_dataset_c.py`
+
+**3. agent_corpus.py — Dataset A (agent-authored)**
+- Uses the QC'd repo/commit CSVs to find agent-authored commits
 - Tier 1 detection: author metadata + co-authored-by trailers
 - Agent type classification (claude, copilot, cursor, etc.)
-- Outputs JSON summary to `output/agent_corpus_summary_*.json`
+- Entry point: `phase_3_extract_agent.py`
 
-**3. between_group_comparison.py (410+ lines)**
+**4. between_group_comparison.py**
 - Chi-square tests for categorical controls (language, domain, star_tier)
 - Mann-Whitney U tests for continuous controls (repo_age_years)
 - Balance report generation
-- Outputs JSON to `output/between_group_comparison_*.json`
 
 Supporting modules:
 - **agent_signal_primitives.py** — Agent detection utilities (formerly agent_detector.py)
@@ -148,29 +165,21 @@ Supporting modules:
 ```
 corpus.db (input)
     ↓
-Stage 1: python pipeline.py human
-    → Reads pre-2021 repositories
-    → Extracts fixtures at 2020-12-31 snapshot
-    → Computes control variables (language, domain, star_tier, repo_age)
-    → Outputs human_corpus_summary_*.json
-    → Writes to between-group.db (commit_kind='human')
+Phase 1A-1D: discover agent-enabled repos, scan/verify agent commits
     ↓
-Stage 2: python pipeline.py agent
-    → Queries GitHub API for agent configs
-    → Detects agent commits (co-authored-by trailers)
-    → Extracts fixtures from agent commits (2025+)
-    → Computes control variables at 2025-01-01 snapshot
-    → Outputs agent_corpus_summary_*.json
-    → Appends to between-group.db (commit_kind='agent', agent_type)
+Phase 2: phase_2_extract_human.py           → Dataset B → fixturedb-human.db
+Phase 2B: phase_2b_extract_dataset_c.py     → Dataset C → fixturedb-human.db
     ↓
-Stage 3: python pipeline.py between-group-stats
-    → Loads human_corpus_summary_*.json
-    → Loads agent_corpus_summary_*.json
-    → Runs chi-square and Mann-Whitney U tests
-    → Generates balance report
-    → Outputs between_group_comparison_*.json
+Phase 3: phase_3_extract_agent.py           → Dataset A → fixturedb-agent.db
     ↓
-Final: between-group.db with both corpora + comparison summary JSON
+Phase 4-5: distribution analysis + stratified sampling
+    ↓
+Phase 6-7: export CSVs + ZIP archives per dataset
+    ↓
+Phase 8: final validation (each dataset is independently usable)
+    ↓
+Final: fixturedb-human.db (Datasets B + C) and fixturedb-agent.db (Dataset A),
+plus per-dataset CSV/ZIP exports and comparison summary JSON
 ```
 
 ### docs/ Organization
@@ -204,10 +213,9 @@ Final: between-group.db with both corpora + comparison summary JSON
 - Kept for reference but no longer the active methodology
 
 ### tests/ Organization
-- One test file per core module
+- One test file per core module (plus `tests/collection/` for phase-script tests)
 - Test fixtures in conftest.py
 - Run with: `pytest tests/ -v`
-- All 19 tests passing
 
 ## Important Files
 
@@ -227,27 +235,29 @@ Final: between-group.db with both corpora + comparison summary JSON
 
 ## Data Files Generated
 
-### Stage Outputs
+### Phase Outputs
 
-| Stage | Output Files | Format | Description |
-|-------|--------------|--------|-------------|
-| 1 | human_corpus_summary_*.json | JSON | Pre-2021 fixtures, control distributions, QC results |
-| 2 | agent_corpus_summary_*.json | JSON | Agent-authored fixtures, agent types, control distributions |
-| 3 | between_group_comparison_*.json | JSON | Chi-square/Mann-Whitney results, balance tests, p-values |
+| Dataset | Phase | Output Files | Format |
+|-------|-------|--------------|--------|
+| B | 2 | phase_2_extraction_stats_*.json | JSON |
+| C | 2B | phase_2b_extraction_stats_*.json | JSON |
+| A | 3 | (repo summary + fixture CSVs under fixtures-from-agents/) | JSON + CSV |
+| — | 4-8 | phase_4/5/6_7/8_*.json | JSON |
 
 ### Final Output
 
 ```
-data/between-group.db
-├── repositories      # Control variables (language, domain, star_tier, repo_age)
-├── test_files       # File-level metadata
-├── fixtures         # Human and agent fixtures with commit_kind, agent_type
-└── mock_usages      # Mock framework usage per fixture
+data/fixturedb-human.db      # Datasets B and C (repositories/fixtures/mock_usages)
+data/fixturedb-agent.db      # Dataset A (repositories/fixtures/mock_usages)
+
+fixtures-from-agents/        # Dataset A CSV exports
+fixtures-from-humans/        # Dataset B (same-repo/) and Dataset C (cross-repo/) CSV exports
 
 output/
-├── human_corpus_summary_YYYYMMDD_HHMMSS.json     # JSON (Stage 1)
-├── agent_corpus_summary_YYYYMMDD_HHMMSS.json     # JSON (Stage 2)
-└── between_group_comparison_YYYYMMDD_HHMMSS.json # JSON (Stage 3)
+├── phase_2_extraction_stats_YYYYMMDD_HHMMSS.json
+├── phase_2b_extraction_stats_YYYYMMDD_HHMMSS.json
+├── phase_4_distribution_analysis_*.json
+└── ... (phases 5-8)
 ```
 
 ## Documentation Navigation

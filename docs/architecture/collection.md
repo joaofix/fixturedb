@@ -15,9 +15,19 @@ The collection subsystem has three layered cloning modules — pick the one matc
 - `collection/persistent_clone.py`: an independent, DB-tracked workflow that clones into the durable `CLONES_DIR` (not a tempdir), runs pre-clone quality checks, and records status in SQLite via `db.py`. Use this for the main repository corpus, not for one-off inspection.
 
 Other key components:
-- `collection/db.py`: database schema and helpers. Provides `insert_human_inter_fixtures_coordinated()` (transactional, batched insert) and lower-level insert helpers.
+- `collection/db.py`: database schema and helpers.
 - `collection/csv_adapter.py`: pluggable CSV adapter; production code uses file-backed adapter but tests can swap implementations.
-- `collection/agent_corpus.py` and `collection/human_corpus.py`: orchestration of agent and human extraction flows; they call into the clone manager and DB helpers.
+- `collection/agent_corpus.py`, `collection/human_corpus.py`, `collection/dataset_c.py`: orchestration of the agent and human extraction flows; they call into the clone manager and DB helpers.
+
+## Dataset A / B / C build map
+
+Each dataset is built by exactly one entry script and one collector/function — there is no runtime branching that decides which dataset a given run produces:
+
+| Dataset | What it is | Entry script | Collector / function |
+|---|---|---|---|
+| A | Agent-authored fixtures | `collection/phase_3_extract_agent.py` | `agent_corpus.AgentCorpusCollector` |
+| B | Human-authored fixtures, within-repo matched control | `collection/phase_2_extract_human.py` | `human_corpus.HumanCorpusCollector.run()` |
+| C | Human-authored fixtures, cross-repo pre-2021 baseline | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
 
 Paths:
 - `collection/clone_primitives.py` ([collection/clone_primitives.py](collection/clone_primitives.py))
@@ -25,8 +35,9 @@ Paths:
 - `collection/persistent_clone.py` ([collection/persistent_clone.py](collection/persistent_clone.py))
 - `collection/db.py` ([collection/db.py](collection/db.py))
 - `collection/csv_adapter.py` ([collection/csv_adapter.py](collection/csv_adapter.py))
-- `collection/human_corpus.py` ([collection/human_corpus.py](collection/human_corpus.py))
 - `collection/agent_corpus.py` ([collection/agent_corpus.py](collection/agent_corpus.py))
+- `collection/human_corpus.py` ([collection/human_corpus.py](collection/human_corpus.py))
+- `collection/dataset_c.py` ([collection/dataset_c.py](collection/dataset_c.py))
 
 ## Clone lifecycle and disk safety
 - Clones are created in a per-run temporary root and removed when the clone context exits (ephemeral clones, via `ephemeral_clone.py`). Use `temp_clone_commit_history()` for commit-history clones.
@@ -37,26 +48,25 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 
 ## Concurrency and DB pattern
 - Extraction uses a pool of workers (ThreadPoolExecutor) to parallelize per-repository extraction while preserving a single-writer pattern for cross-references.
-- Avoid nested write transactions with SQLite. The implemented pattern is:
-  - Per-repo persistence: short-lived write transactions to insert repository, test_files, fixtures, test_commits, and commit_observations.
-  - Cross-repo sampled inserts (e.g., `human_inter_fixtures`): coordinated batched inserts inside a single transaction using `insert_human_inter_fixtures_coordinated(db_path, selected_fixtures, seed, batch_size)` to perform lookups and `executemany()` batches.
+- Avoid nested write transactions with SQLite. Per-repo persistence uses short-lived write transactions (via `corpus_utils.persist_repository_and_fixtures()`) to insert repository, test_files, fixtures, and mock_usages rows.
 - DB connection defaults: `PRAGMA journal_mode=WAL`, `PRAGMA busy_timeout` set to a generous value to reduce transient `database is locked` errors.
 
 ## Sampling modes
-- Within-repository (paired): sample human fixtures from the same repositories and same temporal window as agent fixtures, stratified by language and (optionally) repository.
-- Inter-repository (unpaired): build a candidate pool from pre-2021 commits and sample to match per-language agent totals. The pipeline supports a `--mode inter` flag to enable this flow.
+- Dataset B (within-repo, paired): sample human fixtures from the same repositories and same 2025+ temporal window as Dataset A, stratified by language.
+- Dataset C (cross-repo, unpaired): checkout each sampled repo at its pinned pre-2021 cutoff commit and extract every fixture from every test file at that snapshot (no diff/purity gating). See `phase_2b_extract_dataset_c.py`.
 
 ## CSV and IO
 - Use the `csv_adapter` to read/write CSVs and to plug alternative persistence backends. Tests override the adapter to avoid filesystem dependencies.
 
 ## Operational Runbook (concise)
 1. Ensure `clones_dir` is set to a path with sufficient free space.
-2. Run agent extraction per language to build the agent fixture set.
-3. Optionally run the human extraction flow in `within` mode (paired) or `inter` mode (pre-2021 candidate pool + coordinated bulk insert).
-4. Inspect `between-group.db` and the `human_within_fixtures` / `human_inter_fixtures` tables for sample provenance.
+2. Run `phase_2_extract_human.py` (Dataset B) and `phase_2b_extract_dataset_c.py` (Dataset C).
+3. Run `phase_3_extract_agent.py` (Dataset A).
+4. Continue with Phases 4-8 (distribution analysis, sampling, export, validation).
+5. Inspect `fixturedb-human.db` / `fixturedb-agent.db` and the `repositories` / `fixtures` / `mock_usages` tables for sample provenance.
 
 ## Troubleshooting
-- If you observe frequent SQLite `database is locked` errors: ensure callers are not opening nested write transactions and prefer the coordinated bulk-insert helper for inter-repo sampled inserts.
+- If you observe frequent SQLite `database is locked` errors: ensure callers are not opening nested write transactions.
 - If clones fill disk: raise `min_free_bytes` and run `prune_old_clones()` on the clones directory.
 
 ## Tests and CI

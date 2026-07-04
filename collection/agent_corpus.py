@@ -1,8 +1,10 @@
 """
-Agent corpus collection for between-group comparison.
+Builds Dataset A: agent-authored fixtures for the between-group comparison.
 
 Collects fixtures from agent-authored commits (Tier 1: co-authored-by trailers
-only) detected from repositories with agent configuration files.
+only) detected from repositories with agent configuration files. Entry point:
+phase_3_extract_agent.py. See human_corpus.py (Dataset B) and dataset_c.py
+(Dataset C) for the other two datasets.
 """
 
 import argparse

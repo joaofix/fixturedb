@@ -24,6 +24,14 @@ It's a master's thesis companion codebase. The pipeline detects agent-authored c
 - **Dataset B** (`fixtures-from-humans/`): human-authored fixtures from the same repos (matched control)
 - **Dataset C** (`fixtures-from-humans/cross-repo/`): human-authored fixtures from pre-2021 repos (inter-repo baseline)
 
+Each dataset is built by exactly one entry script and one collector/function — no runtime branching decides which dataset a run produces:
+
+| Dataset | Entry script | Collector / function |
+|---|---|---|
+| A | `collection/phase_3_extract_agent.py` | `agent_corpus.AgentCorpusCollector` |
+| B | `collection/phase_2_extract_human.py` | `human_corpus.HumanCorpusCollector.run()` |
+| C | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
+
 ## Languages we collect fixtures for
 
 Python, Java, JavaScript, TypeScript.
@@ -37,8 +45,9 @@ collection/          # Main pipeline code (the "library")
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
-  agent_corpus.py    # Phase 3: extract agent fixtures
-  human_corpus.py    # Phase 2: extract human fixtures (within-repo)
+  agent_corpus.py    # Dataset A: extract agent fixtures (used by phase_3_extract_agent.py)
+  human_corpus.py    # Dataset B: extract human fixtures, within-repo (used by phase_2_extract_human.py)
+  dataset_c.py        # Dataset C: extract human fixtures, cross-repo baseline (used by phase_2b_extract_dataset_c.py)
   fixture_extractor.py     # Tree-sitter AST fixture extraction
   detector.py        # Fixture pattern detection
   corpus_utils.py    # Shared repo/fixture persistence helpers
@@ -53,12 +62,13 @@ internal-docs/       # Internal notes, methodology improvements
 ## Pipeline phases
 
 1. **Phase 1A–1D**: Discover agent-enabled repos, scan for agent commits, assess yield
-2. **Phase 2**: Extract human fixtures from agent-enabled repos → `fixturedb-human.db`
-3. **Phase 3**: Extract agent fixtures from the same repos → `fixturedb-agent.db`
-4. **Phase 4**: Analyze fixture distribution
-5. **Phase 5**: Stratified sampling
-6. **Phase 6–7**: Export CSVs + ZIP archives
-7. **Phase 8**: Final validation
+2. **Phase 2**: Extract Dataset B (human fixtures, within-repo) → `fixturedb-human.db`
+3. **Phase 2B**: Extract Dataset C (human fixtures, cross-repo pre-2021 baseline) → `fixturedb-human.db`
+4. **Phase 3**: Extract Dataset A (agent fixtures) from the same repos as Dataset B → `fixturedb-agent.db`
+5. **Phase 4**: Analyze fixture distribution
+6. **Phase 5**: Stratified sampling
+7. **Phase 6–7**: Export CSVs + ZIP archives
+8. **Phase 8**: Final validation
 
 ## Database
 

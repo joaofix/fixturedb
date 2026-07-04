@@ -1,101 +1,71 @@
-# Reproducing the Between-Group Study
+# Reproducing the Study
 
-The FixtureDB between-group dataset is reproducible via the collection pipeline from agent-enabled repositories discovered through GitHub search.
+The FixtureDB datasets are reproducible via the numbered phase-script pipeline
+in `collection/`, run from agent-enabled repositories discovered through
+GitHub search.
 
 ## Overview
 
-The collection pipeline processes agent-enabled repositories to extract fixtures from both agent-authored and human-authored commits in the same temporal window. This provides paired observations within repositories for direct comparison.
+The pipeline builds three datasets from agent-enabled repositories:
+
+| Dataset | What it is | Entry script | Collector / function |
+|---|---|---|---|
+| A | Agent-authored fixtures | `collection/phase_3_extract_agent.py` | `agent_corpus.AgentCorpusCollector` |
+| B | Human-authored fixtures, within-repo matched control (same repos and 2025+ window as Dataset A) | `collection/phase_2_extract_human.py` | `human_corpus.HumanCorpusCollector.run()` |
+| C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo sample) | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
 
 **Key design principles:**
-- Agent-enabled repos sourced from `github-search/` directory
-- Single temporal window (post-2025) for both agent and human fixtures  
-- Tier 1 detection only (co-authored-by trailers, author signatures)
-- All repositories processed without per-language caps
+- Datasets A and B come from the same agent-enabled repos, scanned in the same temporal window (post-2025), giving paired within-repo observations.
+- Dataset C comes from an independent sample of repos at a pinned pre-2021 commit, giving an inter-repo baseline unaffected by AI coding agents.
+- Tier 1 agent detection only (co-authored-by trailers, author signatures).
 
 ## Collection Pipeline
 
-### Stage 1: Prepare Agent-Enabled Repository List
-
-The repository list comes from `github-search/` output (pre-computed GitHub API search results). These are repositories identified as containing agent config files.
+Run each phase as a module from the project root:
 
 ```bash
-# github-search/ contains:
-# - repositories-source-*.csv: Agent-enabled repo metadata
-# - agent-activity-*.csv: Agent commit indicators
+# Phase 1A-1D: discover agent-enabled repos, scan/verify agent commits, assess yield
+python -m collection.phase_1a_scan_agent_commits
+python -m collection.phase_1b_verify_agent_commits
+python -m collection.phase_1c_assess_tier1_yield
+python -m collection.phase_1d_discover_matched_repos   # only if Tier 1 yield is insufficient
+
+# Phase 2 / 2B: Dataset B (within-repo) and Dataset C (cross-repo baseline)
+python -m collection.phase_2_extract_human --repo-dir github-search-agent/agent_repositories
+python -m collection.phase_2b_extract_dataset_c
+
+# Phase 3: Dataset A (agent-authored), same repos as Dataset B
+python -m collection.phase_3_extract_agent --repo-dir github-search-agent/agent_repositories
+
+# Phase 4-8: analysis, sampling, export, validation
+python -m collection.phase_4_analyze_distribution
+python -m collection.phase_5_stratified_sample
+python -m collection.phase_6_7_export_and_document
+python -m collection.phase_8_final_validation
 ```
 
-### Stage 2: Collect Agent and Human Fixtures
-
-```bash
-python -m collection human_corpus --repo-dir github-search --workers 8
-python -m collection agent_corpus --repo-dir github-search --workers 8
-```
-
-Both commands:
-1. Read agent-enabled repositories from CSVs in `github-search/`
-2. Filter by language (if specified) or include all
-3. Clone and scan each repository
-4. Extract fixtures from all commits (2025-01-01 onwards)
-5. Classify commits as agent or human based on authorship signals
-6. Persist fixtures to `data/between-group.db` with `commit_kind`
-7. Generate summary JSON with statistics
+Each phase script logs its own "Next steps" pointing at what to run next.
+`--help` on any phase script lists its full argument set (`--language`,
+`--repos-per-language`, `--workers`, `--output-db`, etc.).
 
 ### Output
 
-**Database:**
-- `data/between-group.db` — SQLite with fixtures from all repositories
-- Schema: repositories, test_files, fixtures, test_commits, mock_usages
+**Databases:**
+- `data/fixturedb-human.db` — Dataset B (`same-repo`) and Dataset C (`cross-repo`) fixtures
+- `data/fixturedb-agent.db` — Dataset A fixtures
+- Schema: `repositories`, `test_files`, `fixtures`, `mock_usages` (see [Database Schema](../architecture/database-schema.md))
 
-**Summaries:**
-- `output/human_corpus_summary_*.json` — Human fixtures statistics
-- `output/agent_corpus_summary_*.json` — Agent fixtures statistics
-- Each includes: languages, domains, star tiers, fixture type distributions
+**CSV exports:**
+- `fixtures-from-agents/` — Dataset A, plus the `dataset_c_*.csv` repo samples used by Phase 2B
+- `fixtures-from-humans/same-repo/` — Dataset B
+- `fixtures-from-humans/cross-repo/` — Dataset C
 
-## Commands
-
-```bash
-# Collect all agent-enabled repositories (no capping)
-python -m collection human_corpus --repo-dir github-search
-
-# Specific language only
-python -m collection agent_corpus --repo-dir github-search --language python
-
-# Parallel processing (default: 8 workers)
-python -m collection human_corpus --repo-dir github-search --workers 12
-
-# Using custom output database
-python -m collection agent_corpus --output-db data/custom.db
-```
-
-## Parameters
-
-| Parameter | Human | Agent | Default | Meaning |
-|-----------|-------|-------|---------|---------|
-| `--repo-dir` | Required | Required | — | Path to CSV repo list (github-search/) |
-| `--language` | Optional | Optional | None | Limit to single language |
-| `--workers` | Optional | Optional | 8 | Parallel clone/extract threads |
-| `--output-db` | Optional | Optional | data/between-group.db | Output database path |
-
-## Pipeline Stages
-
-### Stage 1: Repository Selection
-- Read `*_agent_repo.csv` files from `--repo-dir`
-- Filter by language if specified
-- No per-language caps (all repos processed)
-echo "Stage 3: Between-group comparison..."
-python -m collection between-group-stats
-
-# Check outputs
-echo ""
-echo "=== Collection Complete ==="
-ls -lh output/*_summary_*.json output/between_group_comparison_*.json | tail -5
-```
-
----
+**Statistics:**
+- `output/phase_2_extraction_stats_*.json`, `output/phase_2b_extraction_stats_*.json`, `output/phase_4_distribution_analysis_*.json`, etc. — one JSON summary per phase run
 
 ## Reproducing from a Frozen Corpus
 
-To ensure reproducibility across runs, work from a frozen corpus.db:
+To ensure reproducibility across runs, work from a frozen `corpus.db`:
 
 ```bash
 # Verify corpus.db integrity
@@ -103,218 +73,81 @@ sqlite3 data/corpus.db "PRAGMA integrity_check;"
 
 # Verify clones are available
 ls clones/ | wc -l
-
-# Run human collection (will use cached repos when available)
-python -m collection human --repos-per-language 100
 ```
 
-The between-group study is deterministic given:
-1. **Fixed corpus.db** with pinned repository commits
-2. **Fixed clone directory** with repository snapshots
+The pipeline is deterministic given:
+1. **Fixed `corpus.db`** with pinned repository metadata
+2. **Fixed clone directory** with repository snapshots (Dataset C additionally pins a cutoff commit SHA per repo)
 3. **Deterministic fixture extraction** from tree-sitter AST analysis
 4. **Conservative agent detection** (Tier 1 only: co-authored-by trailers)
-5. **Fixed temporal boundaries** (2020-12-31 for human, 2025-01-01 for agent)
-
----
+5. **Fixed temporal boundaries** (`AGENT_CORPUS_START_DATE` for Datasets A/B, `HUMAN_CORPUS_CUTOFF_DATE` for Dataset C — see `collection/config.py`)
 
 ## Verification & Validation
-
-### Verify the Summary Statistics
-
-```python
-import json
-
-# Load human summary
-with open("output/human_corpus_summary_*.json") as f:
-    human = json.load(f)
-
-print(f"Human corpus: {human['summary_statistics']['fixtures_collected']} fixtures")
-print(f"  Repositories: {human['summary_statistics']['repos_passed_qc']}")
-print(f"  Domain distribution: {human['control_variables']['domain_distribution']}")
-
-# Load agent summary
-with open("output/agent_corpus_summary_*.json") as f:
-    agent = json.load(f)
-
-print(f"\nAgent corpus: {agent['summary_statistics']['fixtures_collected']} fixtures")
-print(f"  Agent types: {agent['agent_types']['distribution']}")
-print(f"  Repositories: {agent['summary_statistics']['repos_passed_qc']}")
-
-# Load comparison
-with open("output/between_group_comparison_*.json") as f:
-    comparison = json.load(f)
-
-print(f"\nBalance tests:")
-for test in comparison['balance_tests']:
-    print(f"  {test['variable']}: p={test['p_value']:.4f} (balanced={test['is_balanced']})")
-```
 
 ### Check Database Schema
 
 ```bash
-# Inspect between-group.db schema
-sqlite3 data/between-group.db ".tables"
-sqlite3 data/between-group.db ".schema fixtures"
+sqlite3 data/fixturedb-agent.db ".tables"
+sqlite3 data/fixturedb-agent.db ".schema fixtures"
 
-# Count fixtures by corpus
-sqlite3 data/between-group.db "SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;"
+# Count Dataset A fixtures
+sqlite3 data/fixturedb-agent.db "SELECT COUNT(*) FROM fixtures;"
 
-# Check control variables
-sqlite3 data/between-group.db "SELECT COUNT(DISTINCT repo_id), COUNT(DISTINCT domain) FROM repositories;"
+# Count Dataset B vs Dataset C fixtures (commit_kind distinguishes them)
+sqlite3 data/fixturedb-human.db "SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;"
 ```
 
 ### Validate Temporal Separation
 
 ```python
 import sqlite3
-import pandas as pd
 
-conn = sqlite3.connect("data/between-group.db")
-
-# Human corpus: all commits on or before 2020-12-31
-human_dates = pd.read_sql("""
-    SELECT MIN(commit_sha), MAX(commit_sha) FROM fixtures WHERE commit_kind = 'human'
-""", conn)
-
-# Agent corpus: all commits after 2025-01-01
-agent_dates = pd.read_sql("""
-    SELECT MIN(commit_sha), MAX(commit_sha) FROM fixtures WHERE commit_kind = 'agent'
-""", conn)
-
-print("Human corpus temporal range:", human_dates)
-print("Agent corpus temporal range:", agent_dates)
-print("✓ Corpora are temporally separated" if agent_dates > human_dates else "✗ Warning: temporal overlap")
+conn = sqlite3.connect("data/fixturedb-human.db")
+cur = conn.execute("SELECT commit_date FROM fixtures WHERE commit_kind = 'human' ORDER BY commit_date DESC LIMIT 1")
+print("Most recent Dataset C fixture commit date:", cur.fetchone())
 ```
-
----
 
 ## Troubleshooting
 
 ### GitHub API Rate Limiting
 
-If you hit rate limits during agent corpus collection:
-
-```bash
-# Use authenticated API with token
-python -m collection agent --github-token YOUR_GITHUB_TOKEN
-
-# Or set environment variable
-export GITHUB_TOKEN=your_token_here
-python -m collection agent
-```
+The phase scripts read from pre-computed QC CSVs and generally don't need a
+GitHub token. If a step you're running does hit rate limits, set
+`GITHUB_TOKEN` in the environment before running it.
 
 ### Large Database Performance
 
-If between-group.db becomes slow:
-
 ```bash
-# Analyze and optimize indexes
-sqlite3 data/between-group.db "VACUUM;"
-sqlite3 data/between-group.db "ANALYZE;"
-
-# Check index effectiveness
-sqlite3 data/between-group.db "PRAGMA index_list(fixtures);"
+sqlite3 data/fixturedb-human.db "VACUUM;"
+sqlite3 data/fixturedb-human.db "ANALYZE;"
 ```
 
 ### Verify Database Integrity
 
 ```bash
-# Verify between-group.db is valid
-sqlite3 data/between-group.db "PRAGMA integrity_check;"
-
-# Count fixtures by commit_kind
-sqlite3 data/between-group.db "SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;"
-
-# Verify both corpora are present
-sqlite3 data/between-group.db "
-  SELECT commit_kind, 
-         COUNT(f.id) as fixture_count,
-         COUNT(DISTINCT tf.repo_id) as repo_count,
-         ROUND(100.0 * COUNT(f.id) / (SELECT COUNT(*) FROM fixtures), 1) as pct
-  FROM fixtures f
-  JOIN test_files tf ON f.test_file_id = tf.id
-  GROUP BY f.commit_kind;
-"
+sqlite3 data/fixturedb-human.db "PRAGMA integrity_check;"
+sqlite3 data/fixturedb-agent.db "PRAGMA integrity_check;"
 ```
-
----
 
 ## Determinism & Reproducibility Guarantees
 
 ### Fully Deterministic Components
 
-- **Agent detection**: Co-authored-by trailer parsing (Tier 1, 99%+ precision)
+- **Agent detection**: Co-authored-by trailer parsing (Tier 1)
 - **Fixture extraction**: Tree-sitter-based extraction (deterministic code analysis)
 - **Control variable computation**: Snapshot-based calculation (deterministic)
 - **Statistical tests**: Chi-square and Mann-Whitney U (deterministic aggregation)
 
 ### Conditional Determinism
 
-- **Repository selection**: Depends on corpus.db and GitHub API results
-- **Temporal boundaries**: Fixed at 2020-12-31 (human) and 2025-01-01 (agent)
-- **Clone freshness**: Depends on git history at time of collection
+- **Repository selection**: Depends on `corpus.db` and the QC CSV inputs
+- **Temporal boundaries**: Fixed via `AGENT_CORPUS_START_DATE` / `HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`
+- **Clone freshness**: Depends on git history at time of collection; Dataset C pins an explicit cutoff commit SHA to avoid this issue
 
-**Guarantee**: If `data/corpus.db` and temporal boundaries are fixed, all between-group collections are reproducible.
-
----
-
-## Comparing Results Across Runs
-
-To compare two between-group runs:
-
-```python
-import json
-
-# Load two human corpus summaries
-with open("output/human_corpus_summary_20260517_143022.json") as f:
-    human_summary1 = json.load(f)
-
-with open("output/human_corpus_summary_20260517_150000.json") as f:
-    human_summary2 = json.load(f)
-
-# Compare key metrics
-print("Human Corpus Comparison:")
-print(f"Run 1 - Total fixtures: {human_summary1['summary']['total_fixtures']}")
-print(f"Run 2 - Total fixtures: {human_summary2['summary']['total_fixtures']}")
-
-# Load balance test results
-with open("output/between_group_comparison_20260517_160000.json") as f:
-    comparison = json.load(f)
-
-# Check balance test results
-print(f"\nBalance Tests (p-values):")
-for test in comparison['balance_tests']:
-    print(f"  {test['control']}: p={test['p_value']:.6f} ({'balanced' if test['p_value'] >= 0.05 else 'imbalanced'})")
-```
-
----
+**Guarantee**: If `data/corpus.db`, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
 
 ## See Also
 
-- [Database Schema](../architecture/database-schema.md) — Between-group database schema
+- [Database Schema](../architecture/database-schema.md) — Database schema
+- [Collection Architecture](../architecture/collection.md) — Dataset A/B/C build map and module layout
 - [Analyzing the Dataset](./usage.md) — Query examples and statistical analysis
-- [Collection README](../../collection/README.md) — CLI documentation
-
-
-## Limitations on Reproducibility
-
-### GitHub-Dependent Issues
-1. **Repository deletions:** If repos are deleted, Phase 1-3 cannot run
-   - **Mitigation:** Use Zenodo deposit (archives the data state)
-2. **Repository changes:** If repos are modified, Phase 1-3 gives different results
-   - **Mitigation:** Clone at fixed commit (Phase 2 already does this)
-
-### Determinism Issues
-1. **SQLite write ordering:** May vary on different systems
-   - **Mitigation:** Indexes ensure consistent query results
-2. **Floating point precision:** Statistics may differ slightly
-   - **Mitigation:** Minimal rounding - no significant impact
-
----
-
-## See Also
-
-- [Execution Guide](../split/EXECUTION_GUIDE.md) — How to run each phase
-- [Database Schema](../architecture/database-schema.md) — Data structure reference
-- [Agent Detection](../architecture/agent-detection.md) — Determinism of agent matching
-- [Data Models](../split/DATA_MODELS.md) — Schema details
