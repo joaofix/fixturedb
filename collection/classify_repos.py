@@ -40,6 +40,7 @@ from .config import (
     OPENROUTER_KEY,
     OPENROUTER_MODEL,
 )
+from .csv_adapter import get_adapter
 from .logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
@@ -155,6 +156,7 @@ class OpenRouterProvider:
     """Classify via OpenRouter API (GPT-4o-mini)."""
 
     def __init__(self) -> None:
+        """Raise `RuntimeError` if `OPENROUTER_KEY` isn't configured."""
         if not OPENROUTER_KEY:
             raise RuntimeError("OPENROUTER_KEY not set. Add it to your .env file.")
         self._client = OpenAI(
@@ -163,6 +165,7 @@ class OpenRouterProvider:
         )
 
     def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
+        """Classify *repo*, retrying up to 3 times with exponential backoff."""
         prompt = _build_user_prompt(repo, readme_excerpt)
         name = repo.get("name", "")
 
@@ -206,6 +209,7 @@ class OllamaProvider:
         self._model = OLLAMA_MODEL
 
     def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
+        """Classify *repo*, retrying up to 3 times with exponential backoff."""
         prompt = _build_user_prompt(repo, readme_excerpt)
         full_prompt = SYSTEM_PROMPT + "\n\n" + prompt
         name = repo.get("name", "")
@@ -250,6 +254,7 @@ class RepoClassifier:
         self._provider = provider
 
     def classify(self, repo: dict, readme_excerpt: str | None = None) -> dict:
+        """Delegate classification of *repo* to the configured provider."""
         return self._provider.classify(repo, readme_excerpt)
 
 
@@ -495,12 +500,7 @@ def write_result(output_dir: Path, language: str, result: dict) -> None:
     csv_path = output_dir / f"{lang_key}.csv"
 
     with _write_lock:
-        file_exists = csv_path.exists()
-        with open(csv_path, "a", encoding="utf-8", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=_OUTPUT_FIELDNAMES)
-            if not file_exists:
-                writer.writeheader()
-            writer.writerow(result)
+        get_adapter().append_dicts(csv_path, [result], _OUTPUT_FIELDNAMES)
 
 
 # ---------------------------------------------------------------------------
@@ -535,6 +535,7 @@ def _classify_one(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint: classify repositories from `github-search-raw/`."""
     import argparse
 
     parser = argparse.ArgumentParser(

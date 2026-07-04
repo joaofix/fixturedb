@@ -38,7 +38,9 @@ import os
 
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
+from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.clone_manager import temp_clone_commit_history
+from collection.csv_adapter import get_adapter
 
 GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
 # Default output dir for agent commit CSVs (per-language)
@@ -51,6 +53,7 @@ logger = get_logger(__name__)
 
 
 def read_config_positive_rows() -> list[dict]:
+    """Load repo rows flagged `has_agent_config` from `*_agent_repo.csv` files."""
     rows = []
     repo_csv_paths = sorted(
         GITHUB_SEARCH_AGENT_DIR.glob("*_agent_repo.csv"), key=lambda path: path.name
@@ -77,6 +80,7 @@ def read_config_positive_rows() -> list[dict]:
 
 
 def load_seen_commits_for_language(lang: str) -> set:
+    """Return commit SHAs already written to *lang*'s output CSV, for resuming."""
     csv_path = OUTPUT_DIR / f"{lang.lower()}_agent_commit.csv"
     seen = set()
     if csv_path.exists():
@@ -93,6 +97,7 @@ def load_seen_commits_for_language(lang: str) -> set:
 
 
 def write_commit_rows(rows: list[dict]) -> None:
+    """Append *rows* to their per-language output CSV and write a JSON checkpoint."""
     # rows may contain multiple languages; group by language
     by_lang: dict[str, list[dict]] = {}
     for r in rows:
@@ -116,23 +121,12 @@ def write_commit_rows(rows: list[dict]) -> None:
         logger.info(
             "Writing %d commit rows for language=%s to %s", len(items), lang, csv_path
         )
-        # Ensure header exists
-        if not csv_path.exists():
-            with csv_path.open("w", newline="", encoding="utf-8") as fh:
-                writer = csv.DictWriter(fh, fieldnames=fieldnames)
-                writer.writeheader()
-
         # Append rows and fsync to make progress durable for checkpoints
-        with csv_path.open("a", newline="", encoding="utf-8") as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames)
-            for it in items:
-                writer.writerow({k: it.get(k, "") for k in fieldnames})
-            try:
-                fh.flush()
-                os.fsync(fh.fileno())
-            except Exception:
-                # Best-effort durability; failures shouldn't abort the whole run
-                logger.exception("Failed to fsync %s", csv_path)
+        try:
+            get_adapter().append_dicts(csv_path, items, fieldnames, fsync=True)
+        except OSError:
+            # Best-effort durability; failures shouldn't abort the whole run
+            logger.exception("Failed to fsync %s", csv_path)
 
         # Write a small JSON checkpoint to record progress and allow fast inspection
         try:
@@ -154,6 +148,7 @@ def write_commit_rows(rows: list[dict]) -> None:
 
 
 def process_repo_for_commits(row: dict, since: str) -> list[dict]:
+    """Temp-clone the repo in *row* and return its agent commits since *since*."""
     full_name = (row.get("repo_name") or "").strip()
     clone_url = row.get("clone_url") or f"https://github.com/{full_name}.git"
     lang = (row.get("language") or "unknown").strip().lower()
@@ -204,6 +199,7 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
 
 
 def run(since: str = "2025-01-01", workers: int = 4) -> int:
+    """Scan all config-positive repos for agent commits and write per-language CSVs."""
     candidates = read_config_positive_rows()
     logger.info("Found %d config-positive repos", len(candidates))
     if not candidates:
@@ -296,6 +292,7 @@ def run(since: str = "2025-01-01", workers: int = 4) -> int:
 
 
 def main():
+    """CLI entrypoint: scan config-positive repos and write agent-commit CSVs."""
     import argparse
 
     global GITHUB_SEARCH_AGENT_DIR, OUTPUT_DIR
@@ -303,21 +300,18 @@ def main():
     parser = argparse.ArgumentParser(
         description="Full-history agent-commit counter for config-positive repos"
     )
-    parser.add_argument(
-        "--since", type=str, default="2025-01-01", help="Since date for agent commits"
-    )
-    parser.add_argument("--workers", type=int, default=4, help="Parallel workers")
+    add_since_arg(parser, help_text="Since date for agent commits")
+    add_workers_arg(parser, default=4, help_text="Parallel workers")
     parser.add_argument(
         "--input-dir",
         type=Path,
         default=GITHUB_SEARCH_AGENT_DIR,
         help="Directory containing *_agent_repo.csv files",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
+    add_output_dir_arg(
+        parser,
         default=OUTPUT_DIR,
-        help="Directory to write *_agent_commit_qc.csv files",
+        help_text="Directory to write *_agent_commit_qc.csv files",
     )
     args = parser.parse_args()
 

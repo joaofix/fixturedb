@@ -349,4 +349,5 @@ def delete_clone(full_name: str) -> None:
 
 
 def get_clone_path(full_name: str) -> Path:
+    """Return the local clone directory for `owner/repo` name *full_name*."""
     return CLONES_DIR / full_name.replace("/", "__")

@@ -22,8 +22,10 @@ from collection.agent_corpus import scan_cloned_repo_for_agent_configs
 from collection.agent_patterns import (
     PAPER_AGENT_REPOSITORY_LANGUAGES,
 )
+from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.clone_manager import temp_clone_commit_history
 from collection.config import EXCLUSION_KEYWORDS
+from collection.csv_adapter import get_adapter
 from collection.logging_utils import get_logger
 from collection.utils import _normalize_language_filters
 
@@ -35,6 +37,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def csv_path_for_language(language: str) -> Path:
+    """Return the per-language output CSV path under `OUTPUT_DIR`."""
     lang = (language or "unknown").lower()
     return OUTPUT_DIR / f"{lang}_agent_repo.csv"
 
@@ -328,6 +331,7 @@ def run(
     languages: Optional[list[str]] = None,
     language: Optional[str] = None,
 ) -> int:
+    """Detect agent config files across candidate repos and write per-language CSVs."""
     repos = read_repo_list(languages=languages, language=language)
     if not repos:
         print("No repos found in github-search-raw.")
@@ -349,13 +353,7 @@ def run(
     def write_row(row: dict) -> None:
         csv_path = csv_path_for_language(row.get("language") or "unknown")
         with write_lock:
-            file_exists = csv_path.exists()
-            with csv_path.open("a", newline="", encoding="utf-8") as fh:
-                writer = csv.DictWriter(fh, fieldnames=list(row.keys()))
-                if not file_exists:
-                    writer.writeheader()
-                writer.writerow(row)
-                fh.flush()
+            get_adapter().append_dicts(csv_path, [row], list(row.keys()))
 
     workers = max(1, int(workers or 1))
     if workers == 1:
@@ -382,6 +380,7 @@ def run(
 
 
 def main():
+    """CLI entrypoint: run the preliminary agent-config repository counter."""
     import argparse
 
     global GITHUB_SEARCH_RAW_DIR, OUTPUT_DIR
@@ -395,14 +394,9 @@ def main():
         default=0,
         help="Limit number of repos to process (0 = all)",
     )
-    parser.add_argument(
-        "--since", type=str, default="2025-01-01", help="Since date for agent commits"
-    )
-    parser.add_argument(
-        "--workers",
-        type=int,
-        default=8,
-        help="Number of worker threads for parallel processing",
+    add_since_arg(parser, help_text="Since date for agent commits")
+    add_workers_arg(
+        parser, default=8, help_text="Number of worker threads for parallel processing"
     )
     parser.add_argument(
         "--language",
@@ -421,11 +415,10 @@ def main():
         default=GITHUB_SEARCH_RAW_DIR,
         help="Directory containing github-search-raw result files",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
+    add_output_dir_arg(
+        parser,
         default=OUTPUT_DIR,
-        help="Directory where *_agent_repo.csv files are stored",
+        help_text="Directory where *_agent_repo.csv files are stored",
     )
     args = parser.parse_args()
 

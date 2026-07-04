@@ -31,6 +31,8 @@ logger = get_logger(__name__)
 
 @dataclass
 class PairedStudyStats:
+    """Aggregate counters and distributions produced by a paired-study run."""
+
     repos_scanned: int = 0
     repos_with_pairs: int = 0
     repos_passed_qc: int = 0
@@ -51,6 +53,7 @@ class PairedStudyStats:
     balance_tests: dict[str, dict] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
+        """Return the stats as a plain dict, for JSON serialization."""
         return asdict(self)
 
 
@@ -95,6 +98,7 @@ class PairedStudyCollector:
         clones_dir: Path = CLONES_DIR,
         output_db: Path | None = None,
     ):
+        """Configure paths for the corpus source DB, clone cache, and study output DB."""
         self.corpus_db_path = Path(corpus_db_path)
         self.clones_dir = Path(clones_dir)
         self.output_db = (
@@ -215,6 +219,10 @@ class PairedStudyCollector:
         max_commits_per_role: int = 8,
         seed: int = 42,
     ) -> tuple[PairedStudyStats, Path]:
+        """Run the paired study: select repos, extract fixtures, write the output DB.
+
+        Returns the run's `PairedStudyStats` and the path to the output database.
+        """
         _ = seed  # Kept for reproducibility hooks if sampling strategy changes later.
         initialise_db(self.output_db)
 

@@ -119,6 +119,8 @@ def _get_parser(language: str):
 
 @dataclass
 class MockResult:
+    """A single mock/stub usage detected inside a fixture body."""
+
     framework: str
     target_identifier: str
     num_interactions_configured: int
@@ -127,6 +129,8 @@ class MockResult:
 
 @dataclass
 class FixtureResult:
+    """A detected test fixture and its extracted structural/usage metrics."""
+
     name: str
     fixture_type: str  # see per-language constants below
     framework: Optional[str]  # testing framework: pytest, unittest, junit, nunit, testify, etc.

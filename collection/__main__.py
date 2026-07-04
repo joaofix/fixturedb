@@ -6,12 +6,13 @@ import argparse
 import sys
 
 from .classify_repos import main as classify_main
-from .cli_utils import add_language_arg, add_repos_per_language_arg
+from .cli_utils import add_language_arg, add_repos_per_language_arg, add_workers_arg
 from .config import LANGUAGE_CONFIGS
 from .paired_collection import main as paired_main
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the `python -m collection` argument parser and its subcommands."""
     parser = argparse.ArgumentParser(
         prog="collection", description="FixtureDB paired-study collection"
     )
@@ -39,11 +40,10 @@ def build_parser() -> argparse.ArgumentParser:
         ["python", "javascript", "java", "typescript"],
         "Limit to one language",
     )
-    classify_parser.add_argument(
-        "--workers",
-        type=int,
+    add_workers_arg(
+        classify_parser,
         default=10,
-        help="Number of concurrent workers (default: %(default)s)",
+        help_text="Number of concurrent workers (default: %(default)s)",
     )
     classify_parser.add_argument(
         "--skip-readme",
@@ -79,6 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint: dispatch to the `paired`, `classify`, or `status` subcommand."""
     parser = build_parser()
     args = parser.parse_args(argv)
 

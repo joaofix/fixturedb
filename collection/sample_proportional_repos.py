@@ -27,6 +27,7 @@ from .config import (
     HUMAN_CORPUS_CUTOFF_DATE,
     ROOT_DIR,
 )
+from .csv_adapter import get_adapter
 from .logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
@@ -212,30 +213,23 @@ def write_per_language_files(sampled: list[dict], output_dir: Path) -> dict[str,
     for r in sampled:
         by_lang[r["language"]].append(r)
 
+    adapter = get_adapter()
     counts: dict[str, int] = {}
     for lang in sorted(by_lang):
         path = output_dir / f"dataset_c_{lang}.csv"
-        with open(path, "w", encoding="utf-8", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=_OUTPUT_FIELDNAMES)
-            writer.writeheader()
-            for repo in by_lang[lang]:
-                writer.writerow(repo)
+        adapter.write_dicts(path, by_lang[lang], _OUTPUT_FIELDNAMES)
         counts[lang] = len(by_lang[lang])
         logger.info("  %s: %d repos → %s", lang, counts[lang], path.name)
 
-    # Combined file
-    with open(
-        output_dir / "dataset_c_sample.csv", "w", encoding="utf-8", newline=""
-    ) as fh:
-        writer = csv.DictWriter(fh, fieldnames=_OUTPUT_FIELDNAMES)
-        writer.writeheader()
-        for repo in sampled:
-            writer.writerow(repo)
+    adapter.write_dicts(
+        output_dir / "dataset_c_sample.csv", sampled, _OUTPUT_FIELDNAMES
+    )
 
     return counts
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint: sample pre-2021 repos proportionally to Dataset A's categories."""
     import argparse
 
     parser = argparse.ArgumentParser(

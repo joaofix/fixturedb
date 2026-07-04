@@ -5,13 +5,13 @@ or into a temporary directory) and guarantees cleanup on exit.
 """
 
 import os
-import shutil as _shutil
 import shutil
-import time
+import shutil as _shutil
 import threading
+import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Optional, Generator
+from typing import Callable, Generator, Optional
 
 from collection.logging_utils import get_logger
 

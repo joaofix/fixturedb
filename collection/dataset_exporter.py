@@ -6,13 +6,13 @@ Ensures both fixturedb-human and fixturedb-agent are completely independent
 and usable without cross-references or the original corpus.db.
 """
 
-import csv
 import sqlite3
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from collection.csv_adapter import get_adapter
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -92,10 +92,7 @@ class DatasetExporter:
             # Write CSV
             if data:
                 fieldnames = list(data[0].keys())
-                with open(csv_path, "w", newline="", encoding="utf-8") as f:
-                    writer = csv.DictWriter(f, fieldnames=fieldnames)
-                    writer.writeheader()
-                    writer.writerows(data)
+                get_adapter().write_dicts(csv_path, data, fieldnames)
 
                 logger.info(f"Exported {len(data)} rows to {csv_path.name}")
 

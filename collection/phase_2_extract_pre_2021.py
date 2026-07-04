@@ -11,7 +11,6 @@ Output:
 
 import argparse
 import json
-import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -23,14 +22,9 @@ from .cli_utils import (
     add_workers_arg,
 )
 from .human_corpus import HumanCorpusCollector
+from .logging_utils import configure_logging, get_logger
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
-
-# Suppress pydriller's per-commit traversal noise (keep warnings/errors)
-logging.getLogger("pydriller").setLevel(logging.WARNING)
-
-# Logging is configured via collection.logging_utils.configure_logging()
-from collection.logging_utils import get_logger
+configure_logging(fmt="%(message)s")
 
 logger = get_logger(__name__)
 

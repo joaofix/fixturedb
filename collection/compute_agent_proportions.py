@@ -132,6 +132,7 @@ def compute_proportions(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """CLI entrypoint: compute and write Dataset A's language/domain category proportions."""
     configure_logging()
     logger.info("Computing category proportions from Dataset A …")
 

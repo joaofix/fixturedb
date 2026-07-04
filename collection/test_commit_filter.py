@@ -985,6 +985,7 @@ def collect_agent_test_commits_from_repos(
 def build_pre2021_candidate_pool(
     raw_commits_dir: Path, cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE
 ) -> dict:
+    """Group pre-cutoff test commits by repo, from `*_commit*.csv` files."""
     candidates: dict[str, list[dict]] = defaultdict(list)
     for csv_path in sorted(
         Path(raw_commits_dir).glob("**/*_commit*.csv"), key=lambda p: p.name

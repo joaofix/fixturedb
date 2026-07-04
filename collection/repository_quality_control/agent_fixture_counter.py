@@ -34,6 +34,7 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
 
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
+from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.clone_manager import temp_clone_commit_history
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.logging_utils import get_logger
@@ -590,6 +591,7 @@ def run(
     workers: int,
     commit_dataset: str,
 ) -> int:
+    """Extract fixtures from agent/test commits and write per-language CSVs."""
     logger.info(
         "Starting fixture extraction (input=%s output=%s clones=%s strategy=%s clone_threshold=%d since=%s language=%s include_partial=%s workers=%d)",
         input_dir,
@@ -736,6 +738,7 @@ def run(
 
 
 def main() -> int:
+    """CLI entrypoint: extract per-language agent fixture CSVs."""
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -747,11 +750,10 @@ def main() -> int:
         default=DEFAULT_INPUT_DIR,
         help="Directory containing *_agent_commit.csv files",
     )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
+    add_output_dir_arg(
+        parser,
         default=DEFAULT_OUTPUT_DIR,
-        help="Directory for output *_agent_fixture.csv files",
+        help_text="Directory for output *_agent_fixture.csv files",
     )
     parser.add_argument(
         "--clones-dir",
@@ -759,12 +761,7 @@ def main() -> int:
         default=DEFAULT_CLONES_DIR,
         help="Directory with local clones (missing repos are fetched by commit SHA into temp repos)",
     )
-    parser.add_argument(
-        "--since",
-        type=str,
-        default="2025-01-01",
-        help="Only process commits on/after this date (YYYY-MM-DD)",
-    )
+    add_since_arg(parser)
     parser.add_argument(
         "--language",
         choices=sorted(PAPER_AGENT_REPOSITORY_LANGUAGES),
@@ -794,11 +791,10 @@ def main() -> int:
         default=DEFAULT_PROGRESS_EVERY,
         help="Emit a progress summary log every N repositories (set 0 to disable periodic heartbeats)",
     )
-    parser.add_argument(
-        "--workers",
-        type=int,
+    add_workers_arg(
+        parser,
         default=DEFAULT_WORKERS,
-        help="Number of repositories to process concurrently (set 1 for sequential execution)",
+        help_text="Number of repositories to process concurrently (set 1 for sequential execution)",
     )
     parser.add_argument(
         "--commit-dataset",

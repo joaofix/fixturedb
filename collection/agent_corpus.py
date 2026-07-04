@@ -40,6 +40,7 @@ from .corpus_utils import (
     generate_corpus_summary,
     write_fixture_csv_row,
 )
+from .csv_adapter import get_adapter
 from .db import (
     db_session,
     initialise_db,
@@ -837,36 +838,19 @@ class AgentCorpusCollector:
                         repo_list_path = (
                             repo_list_dir / f"{language_name}_agent_fixture_repos.csv"
                         )
-                        write_header = not repo_list_path.exists()
-                        with repo_list_path.open(
-                            "a", encoding="utf-8", newline=""
-                        ) as fh:
-                            writer = csv.DictWriter(
-                                fh,
-                                fieldnames=[
-                                    "repo_name",
-                                    "language",
-                                    "fixture_count",
-                                    "commit_count_with_fixtures",
-                                    "first_fixture_commit",
-                                    "last_fixture_commit",
-                                    "clone_url",
-                                ],
-                            )
-                            if write_header:
-                                writer.writeheader()
-
-                            first_sha = (
-                                repo_fixture_commit_shas[0]
-                                if repo_fixture_commit_shas
-                                else ""
-                            )
-                            last_sha = (
-                                repo_fixture_commit_shas[-1]
-                                if repo_fixture_commit_shas
-                                else ""
-                            )
-                            writer.writerow(
+                        first_sha = (
+                            repo_fixture_commit_shas[0]
+                            if repo_fixture_commit_shas
+                            else ""
+                        )
+                        last_sha = (
+                            repo_fixture_commit_shas[-1]
+                            if repo_fixture_commit_shas
+                            else ""
+                        )
+                        get_adapter().append_dicts(
+                            repo_list_path,
+                            [
                                 {
                                     "repo_name": repo_name,
                                     "language": language_name,
@@ -878,7 +862,17 @@ class AgentCorpusCollector:
                                     "last_fixture_commit": last_sha,
                                     "clone_url": repo.get("clone_url", ""),
                                 }
-                            )
+                            ],
+                            [
+                                "repo_name",
+                                "language",
+                                "fixture_count",
+                                "commit_count_with_fixtures",
+                                "first_fixture_commit",
+                                "last_fixture_commit",
+                                "clone_url",
+                            ],
+                        )
 
                         # Per-fixture CSV (new: one row per fixture)
                         fixtures_list_path = (

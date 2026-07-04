@@ -44,6 +44,7 @@ class BalanceTest:
     details: Dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
+        """Return the test result as a plain dict, for JSON serialization."""
         return asdict(self)
 
 
@@ -60,6 +61,7 @@ class BetweenGroupComparison:
     limitations: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
+        """Return the comparison as a plain dict, expanding nested `BalanceTest`s."""
         return {
             "timestamp": self.timestamp,
             "methodology": self.methodology,

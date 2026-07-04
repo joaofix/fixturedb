@@ -250,6 +250,11 @@ CREATE TABLE IF NOT EXISTS checkpoints (
 
 
 def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    """Open a WAL-mode SQLite connection at *db_path* with a 60s busy timeout.
+
+    Prefer `db_session()` for normal use — it wraps this with retries and
+    connection pooling. Use this directly only for one-off scripts/tests.
+    """
     # Use a file-backed SQLite DB with WAL and a generous busy timeout to
     # tolerate concurrent readers while writers operate. These PRAGMA settings
     # are chosen to reduce transient `database is locked` errors during
@@ -492,6 +497,7 @@ def set_repo_status(
     skip_reason: Optional[str] = None,
     pinned_commit: Optional[str] = None,
 ) -> None:
+    """Update a repo's pipeline status, optionally recording an error/skip reason."""
     conn.execute(
         """
         UPDATE repositories
@@ -527,6 +533,7 @@ def set_repo_analysed(
 
 
 def get_repos_by_status(conn: sqlite3.Connection, status: str) -> list[sqlite3.Row]:
+    """Return all repository rows with the given pipeline *status*."""
     return conn.execute(
         "SELECT * FROM repositories WHERE status = ?", (status,)
     ).fetchall()
@@ -540,6 +547,7 @@ def get_repos_by_status(conn: sqlite3.Connection, status: str) -> list[sqlite3.R
 def upsert_test_file(
     conn: sqlite3.Connection, repo_id: int, relative_path: str, language: str
 ) -> int:
+    """Insert the test file row if missing, and return its id either way."""
     conn.execute(
         """
         INSERT INTO test_files (repo_id, relative_path, language)
@@ -563,6 +571,7 @@ def update_test_file_counts(
     file_loc: int = 0,
     total_fixture_loc: int = 0,
 ) -> None:
+    """Update a test file's aggregate test/fixture counts and LOC."""
     conn.execute(
         """
         UPDATE test_files
@@ -1008,6 +1017,7 @@ def insert_human_inter_fixtures_coordinated(
 
 
 def insert_mock_usage(conn: sqlite3.Connection, mock: dict) -> None:
+    """Insert a mock/stub usage row keyed by `mock`'s dict fields."""
     try:
         conn.execute(
             """
@@ -1079,6 +1089,7 @@ def is_global_checkpoint_completed(conn: sqlite3.Connection, step: str) -> bool:
 
 
 def get_corpus_stats(conn: sqlite3.Connection) -> dict:
+    """Return repo counts by status plus total test file/fixture/mock rows."""
     stats = {}
     for status in ("discovered", "cloned", "analysed", "skipped", "error"):
         row = conn.execute(
