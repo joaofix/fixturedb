@@ -137,6 +137,7 @@ class AgentFixtureExtractor:
         self,
         repo_name: str,
         commits: Dict[str, str],
+        stats: Optional[Dict[str, int]] = None,
     ) -> List[Dict]:
         """
         Extract fixtures from agent commits in a repository.
@@ -144,6 +145,11 @@ class AgentFixtureExtractor:
         Args:
             repo_name: Repository name
             commits: Dict mapping commit_sha to agent_type
+            stats: Optional dict to accumulate commit-level purity counters into
+                (commits_skipped_commit_level, commits_proceeded,
+                commits_skipped_file_level). Callers use these to distinguish
+                commits rejected for mixed test-file diffs from commits whose
+                test files were pure additions. Left untouched when None.
 
         Returns:
             List of fixture dicts with commit_sha, agent_type, is_complete_addition
@@ -193,6 +199,10 @@ class AgentFixtureExtractor:
                             repo_name,
                         )
                         commits_skipped_commit_level += 1
+                        if stats is not None:
+                            stats["commits_skipped_commit_level"] = (
+                                stats.get("commits_skipped_commit_level", 0) + 1
+                            )
                         continue
 
                     # Extract fixtures
@@ -206,10 +216,18 @@ class AgentFixtureExtractor:
 
                     if commit_fixtures:
                         commits_proceeded += 1
+                        if stats is not None:
+                            stats["commits_proceeded"] = (
+                                stats.get("commits_proceeded", 0) + 1
+                            )
                     else:
                         # Commit passed commit-level gate but all files were filtered
                         # at file level → count as file-level skip
                         commits_skipped_file_level += 1
+                        if stats is not None:
+                            stats["commits_skipped_file_level"] = (
+                                stats.get("commits_skipped_file_level", 0) + 1
+                            )
 
                     for fixture in commit_fixtures:
                         fixture_key = (

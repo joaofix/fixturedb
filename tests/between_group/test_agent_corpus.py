@@ -580,7 +580,7 @@ class TestQualityControlledInputs:
         )
         monkeypatch.setattr(
             "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
-            lambda self, repo_name, commits: [
+            lambda self, repo_name, commits, **kwargs: [
                 {
                     "repo_name": repo_name,
                     "name": "complete_fixture",
@@ -755,7 +755,7 @@ class TestQualityControlledInputs:
         )
         monkeypatch.setattr(
             "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
-            lambda self, repo_name, commits: [
+            lambda self, repo_name, commits, **kwargs: [
                 {
                     "repo_name": repo_name,
                     "name": "complex_fixture",
@@ -829,6 +829,251 @@ class TestQualityControlledInputs:
             fixtures_csv_path.write_bytes(original_fixtures_bytes)
 
 
+def _git(repo: Path, *args: str, env: dict | None = None) -> None:
+    subprocess.run(
+        ["git", "-C", str(repo), *args],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+
+
+def _git_head(repo: Path) -> str:
+    return (
+        subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+
+
+def _dated_env(date: str) -> dict:
+    return {**os.environ, "GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
+
+
+def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatch):
+    """End-to-end (real git history, real extractor) check that
+    agent_commits_touching_tests / rejected_mixed_test_diff / accepted land
+    correctly in both the repositories DB row and the repo-summary CSV —
+    for a repo with one rejected + one accepted commit, and for a repo with
+    zero agent commits at all (which must still get a row, per the
+    always-write-a-row behavior)."""
+    repo_qc_dir = tmp_path / "repo-qc"
+    commit_qc_dir = tmp_path / "commit-qc"
+    repo_qc_dir.mkdir()
+    commit_qc_dir.mkdir()
+
+    # --- Repo 1: one commit rejected (mixed diff), one commit accepted ---
+    main_repo = tmp_path / "src_repo_main"
+    main_repo.mkdir()
+    _git(main_repo, "init", "-b", "main")
+    _git(main_repo, "config", "user.email", "human@example.com")
+    _git(main_repo, "config", "user.name", "Human")
+
+    (main_repo / "tests").mkdir()
+    (main_repo / "tests" / "test_foo.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef foo():\n    return 1\n",
+        encoding="utf-8",
+    )
+    _git(main_repo, "add", "tests/test_foo.py")
+    _git(main_repo, "commit", "-m", "base: add test_foo", env=_dated_env("2025-01-05T00:00:00"))
+
+    # Commit A: modifies tests/test_foo.py (mixed diff) -> rejected
+    (main_repo / "tests" / "test_foo.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef foo():\n    return 2\n",
+        encoding="utf-8",
+    )
+    _git(main_repo, "add", "tests/test_foo.py")
+    _git(
+        main_repo,
+        "commit",
+        "-m",
+        "modify test_foo\n\nCo-authored-by: Claude <claude@anthropic.com>",
+        env=_dated_env("2025-02-01T00:00:00"),
+    )
+    sha_rejected = _git_head(main_repo)
+
+    # Commit B: pure-addition new test file -> accepted, contributes a fixture
+    (main_repo / "tests" / "test_bar.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef bar():\n    return 3\n",
+        encoding="utf-8",
+    )
+    _git(main_repo, "add", "tests/test_bar.py")
+    _git(
+        main_repo,
+        "commit",
+        "-m",
+        "add test_bar\n\nCo-authored-by: Claude <claude@anthropic.com>",
+        env=_dated_env("2025-03-01T00:00:00"),
+    )
+    sha_accepted = _git_head(main_repo)
+
+    # --- Repo 2: agent-enabled, but zero agent commits detected ---
+    empty_repo = tmp_path / "src_repo_empty"
+    empty_repo.mkdir()
+    _git(empty_repo, "init", "-b", "main")
+    _git(empty_repo, "config", "user.email", "human@example.com")
+    _git(empty_repo, "config", "user.name", "Human")
+    (empty_repo / "README.md").write_text("hello\n", encoding="utf-8")
+    _git(empty_repo, "add", "README.md")
+    _git(empty_repo, "commit", "-m", "init", env=_dated_env("2025-01-01T00:00:00"))
+
+    with (repo_qc_dir / "python_agent_repo.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "has_agent_config",
+                "language",
+                "stars",
+                "clone_url",
+                "num_contributors",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/main-repo",
+                "has_agent_config": "1",
+                "language": "python",
+                "stars": 10,
+                "clone_url": str(main_repo),
+                "num_contributors": 1,
+            }
+        )
+        writer.writerow(
+            {
+                "repo_name": "owner/empty-repo",
+                "has_agent_config": "1",
+                "language": "python",
+                "stars": 5,
+                "clone_url": str(empty_repo),
+                "num_contributors": 1,
+            }
+        )
+
+    with (commit_qc_dir / "python_agent_commit.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "commit_sha",
+                "agent_type",
+                "commit_date",
+                "language",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/main-repo",
+                "commit_sha": sha_rejected,
+                "agent_type": "claude",
+                "commit_date": "2025-02-01",
+                "language": "python",
+            }
+        )
+        writer.writerow(
+            {
+                "repo_name": "owner/main-repo",
+                "commit_sha": sha_accepted,
+                "agent_type": "claude",
+                "commit_date": "2025-03-01",
+                "language": "python",
+            }
+        )
+        # owner/empty-repo intentionally has no commit rows at all.
+
+    def fake_clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
+        subprocess.run(
+            ["git", "clone", clone_url, str(target_dir)],
+            check=True,
+            capture_output=True,
+        )
+        return True
+
+    monkeypatch.setattr(
+        agent_corpus, "clone_repo_for_commit_scan", fake_clone_repo_for_commit_scan
+    )
+
+    repo_list_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures-from-agents"
+        / "repos"
+        / "python_agent_fixture_repos.csv"
+    )
+    fixtures_csv_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures-from-agents"
+        / "python_agent_fixtures.csv"
+    )
+    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
+    original_fixtures_bytes = (
+        fixtures_csv_path.read_bytes() if fixtures_csv_path.exists() else b""
+    )
+    # These are real, append-only project CSVs, so a stale pre-existing file
+    # (with the old header, missing the 3 new columns) would silently keep
+    # its old header on append. Start from a clean slate, same as what a
+    # fresh full pipeline run does.
+    repo_list_path.unlink(missing_ok=True)
+    fixtures_csv_path.unlink(missing_ok=True)
+
+    try:
+        collector = AgentCorpusCollector(
+            output_db=tmp_path / "between-group.db",
+            repo_qc_dir=repo_qc_dir,
+            commit_qc_dir=commit_qc_dir,
+        )
+        stats, db_path = collector.run(languages=["python"])
+
+        assert stats.fixtures_collected == 1
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        row_main = conn.execute(
+            "SELECT * FROM repositories WHERE full_name = ?", ("owner/main-repo",)
+        ).fetchone()
+        row_empty = conn.execute(
+            "SELECT * FROM repositories WHERE full_name = ?", ("owner/empty-repo",)
+        ).fetchone()
+        conn.close()
+
+        assert row_main is not None
+        assert row_main["agent_commits_touching_tests"] == 2
+        assert row_main["agent_commits_rejected_mixed_test_diff"] == 1
+        assert row_main["agent_commits_accepted"] == 1
+
+        assert row_empty is not None
+        assert row_empty["agent_commits_touching_tests"] == 0
+        assert row_empty["agent_commits_rejected_mixed_test_diff"] == 0
+        assert row_empty["agent_commits_accepted"] == 0
+
+        with repo_list_path.open("r", encoding="utf-8", newline="") as fh:
+            rows_by_repo = {r["repo_name"]: r for r in csv.DictReader(fh)}
+
+        assert rows_by_repo["owner/main-repo"]["agent_commits_touching_tests"] == "2"
+        assert rows_by_repo["owner/main-repo"]["rejected_mixed_test_diff"] == "1"
+        assert rows_by_repo["owner/main-repo"]["accepted"] == "1"
+
+        # Zero-yield repo must still get a row (always-write-a-row behavior).
+        assert "owner/empty-repo" in rows_by_repo
+        assert rows_by_repo["owner/empty-repo"]["agent_commits_touching_tests"] == "0"
+        assert rows_by_repo["owner/empty-repo"]["rejected_mixed_test_diff"] == "0"
+        assert rows_by_repo["owner/empty-repo"]["accepted"] == "0"
+    finally:
+        if original_bytes:
+            repo_list_path.write_bytes(original_bytes)
+        elif repo_list_path.exists():
+            repo_list_path.unlink()
+        if original_fixtures_bytes:
+            fixtures_csv_path.write_bytes(original_fixtures_bytes)
+        elif fixtures_csv_path.exists():
+            fixtures_csv_path.unlink()
+
+
 @contextmanager
 def _fake_clone_with_function(*args, **kwargs):
     repo_path = args[2]
@@ -884,7 +1129,7 @@ def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeyp
     monkeypatch.setattr(
         agent_corpus.AgentFixtureExtractor,
         "_extract_from_agent_commits",
-        lambda self, repo_name, commits: [],
+        lambda self, repo_name, commits, **kwargs: [],
     )
     monkeypatch.setattr(
         agent_corpus.AgentCorpusCollector,
@@ -898,18 +1143,34 @@ def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeyp
         commit_qc_dir=commit_qc_dir,
     )
 
-    stats1, db_path1 = collector.run(repos_per_language=1, language="python")
-    assert db_path1 == tmp_path / "between-group.db"
-    assert stats1.repos_scanned == 1
+    # The repo-summary CSV path is hardcoded to the real project directory,
+    # so back up/restore it around this fake "owner/repo" run.
+    repo_list_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures-from-agents"
+        / "repos"
+        / "python_agent_fixture_repos.csv"
+    )
+    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
 
-    with db_session(db_path1) as conn:
-        assert is_global_checkpoint_completed(conn, "agent_complete:python")
-        assert is_global_checkpoint_completed(conn, "agent_complete:all")
+    try:
+        stats1, db_path1 = collector.run(repos_per_language=1, language="python")
+        assert db_path1 == tmp_path / "between-group.db"
+        assert stats1.repos_scanned == 1
 
-    stats2, db_path2 = collector.run(repos_per_language=1, language="python")
-    assert db_path2 == tmp_path / "between-group.db"
-    assert stats2.repos_scanned == 0
-    assert stats2.fixtures_collected == 0
+        with db_session(db_path1) as conn:
+            assert is_global_checkpoint_completed(conn, "agent_complete:python")
+            assert is_global_checkpoint_completed(conn, "agent_complete:all")
+
+        stats2, db_path2 = collector.run(repos_per_language=1, language="python")
+        assert db_path2 == tmp_path / "between-group.db"
+        assert stats2.repos_scanned == 0
+        assert stats2.fixtures_collected == 0
+    finally:
+        if original_bytes:
+            repo_list_path.write_bytes(original_bytes)
+        elif repo_list_path.exists():
+            repo_list_path.unlink()
 
 
 def test_agent_fixture_repos_dir_no_versioned_subfolder_when_tag_empty():
@@ -966,27 +1227,46 @@ def test_incremental_checkpoint_after_repo(tmp_path):
         ]
     }
 
-    with patch("collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]):
-        with patch(
-            "collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits
-        ):
-            with patch("collection.agent_corpus.clone_with_function") as mock_clone:
-                mock_clone.return_value.__enter__ = MagicMock(
-                    return_value=tmp_path / "repo"
-                )
-                mock_clone.return_value.__exit__ = MagicMock(return_value=False)
-                with patch(
-                    "collection.agent_corpus.collect_test_files_for_commit",
-                    return_value=["tests/test_foo.py"],
-                ):
-                    with patch(
-                        "collection.agent_corpus.AgentFixtureExtractor"
-                    ) as mock_ext:
-                        instance = mock_ext.return_value
-                        instance._extract_from_agent_commits.return_value = []
-                        stats, _ = collector.run(language="java")
+    # The repo-summary CSV path is hardcoded to the real project directory,
+    # so back up/restore it around this fake "test/example" run.
+    repo_list_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures-from-agents"
+        / "repos"
+        / "java_agent_fixture_repos.csv"
+    )
+    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
 
-    assert stats.repos_scanned == 1
+    try:
+        with patch(
+            "collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]
+        ):
+            with patch(
+                "collection.agent_corpus._load_qc_agent_commits",
+                return_value=fake_commits,
+            ):
+                with patch("collection.agent_corpus.clone_with_function") as mock_clone:
+                    mock_clone.return_value.__enter__ = MagicMock(
+                        return_value=tmp_path / "repo"
+                    )
+                    mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+                    with patch(
+                        "collection.agent_corpus.collect_test_files_for_commit",
+                        return_value=["tests/test_foo.py"],
+                    ):
+                        with patch(
+                            "collection.agent_corpus.AgentFixtureExtractor"
+                        ) as mock_ext:
+                            instance = mock_ext.return_value
+                            instance._extract_from_agent_commits.return_value = []
+                            stats, _ = collector.run(language="java")
+
+        assert stats.repos_scanned == 1
+    finally:
+        if original_bytes:
+            repo_list_path.write_bytes(original_bytes)
+        elif repo_list_path.exists():
+            repo_list_path.unlink()
 
 
 def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
@@ -1024,29 +1304,48 @@ def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
         ]
     }
 
-    with patch("collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]):
-        with patch(
-            "collection.agent_corpus._load_qc_agent_commits", return_value=fake_commits
-        ):
-            with patch("collection.agent_corpus.clone_with_function") as mock_clone:
-                mock_clone.return_value.__enter__ = MagicMock(
-                    return_value=tmp_path / "repo"
-                )
-                mock_clone.return_value.__exit__ = MagicMock(return_value=False)
-                with patch(
-                    "collection.agent_corpus.collect_test_files_for_commit",
-                    return_value=["tests/test_foo.py"],
-                ):
-                    with patch(
-                        "collection.agent_corpus.AgentFixtureExtractor"
-                    ) as mock_ext:
-                        instance = mock_ext.return_value
-                        instance._extract_from_agent_commits.return_value = []
-                        stats, _ = collector.run(language="java")
+    # The repo-summary CSV path is hardcoded to the real project directory,
+    # so back up/restore it around this fake "test/java-example" run.
+    repo_list_path = (
+        Path(__file__).resolve().parents[2]
+        / "fixtures-from-agents"
+        / "repos"
+        / "java_agent_fixture_repos.csv"
+    )
+    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
 
-    assert (
-        stats.repos_scanned == 1
-    ), "Single-language run should proceed despite full-run checkpoint"
+    try:
+        with patch(
+            "collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]
+        ):
+            with patch(
+                "collection.agent_corpus._load_qc_agent_commits",
+                return_value=fake_commits,
+            ):
+                with patch("collection.agent_corpus.clone_with_function") as mock_clone:
+                    mock_clone.return_value.__enter__ = MagicMock(
+                        return_value=tmp_path / "repo"
+                    )
+                    mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+                    with patch(
+                        "collection.agent_corpus.collect_test_files_for_commit",
+                        return_value=["tests/test_foo.py"],
+                    ):
+                        with patch(
+                            "collection.agent_corpus.AgentFixtureExtractor"
+                        ) as mock_ext:
+                            instance = mock_ext.return_value
+                            instance._extract_from_agent_commits.return_value = []
+                            stats, _ = collector.run(language="java")
+
+        assert (
+            stats.repos_scanned == 1
+        ), "Single-language run should proceed despite full-run checkpoint"
+    finally:
+        if original_bytes:
+            repo_list_path.write_bytes(original_bytes)
+        elif repo_list_path.exists():
+            repo_list_path.unlink()
 
 
 def test_single_language_checkpoint_blocks_rerun(tmp_path):
@@ -1181,7 +1480,7 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
         )
         monkeypatch.setattr(
             "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
-            lambda self, repo_name, commits: [
+            lambda self, repo_name, commits, **kwargs: [
                 {
                     "repo_name": repo_name,
                     "name": "complete_fixture",

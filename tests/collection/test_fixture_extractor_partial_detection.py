@@ -998,3 +998,154 @@ def test_extract_from_agent_commits_accepts_non_test_modifications_with_pure_add
 
     names = {f["name"] for f in fixtures}
     assert "new_fixture" in names
+
+
+# ──────────────────────────────────────────────────────────────
+# Unit tests: optional `stats` param on _extract_from_agent_commits()
+# (feeds Dataset A's per-repo agent_commits_touching_tests /
+# rejected_mixed_test_diff / accepted counters in agent_corpus.py)
+# ──────────────────────────────────────────────────────────────
+
+
+def test_extract_from_agent_commits_stats_none_by_default(tmp_path):
+    """Omitting `stats` must not change behaviour (backward compatible)."""
+    sha = _init_repo_with_commits(
+        tmp_path,
+        [
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+                "msg": "add pure test\n\nCo-authored-by: Claude <claude@anthropic.com>",
+            }
+        ],
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "claude"},
+    )
+    assert len(fixtures) >= 1
+
+
+def test_extract_from_agent_commits_stats_records_rejected_for_mixed_diff(tmp_path):
+    """A commit skipped for a mixed (non-pure-addition) test diff increments
+    commits_skipped_commit_level in the caller-supplied stats dict."""
+    repo = tmp_path / "owner__repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Test"],
+        check=True,
+        capture_output=True,
+    )
+
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_foo.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef foo():\n    return 1\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "tests/test_foo.py"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "base"],
+        check=True,
+        capture_output=True,
+    )
+
+    (repo / "tests" / "test_foo.py").write_text(
+        "import pytest\n\n@pytest.fixture\ndef foo():\n    return 2\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "add", "tests/test_foo.py"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(repo),
+            "commit",
+            "-m",
+            "modify test\n\nCo-authored-by: GitHub Copilot <copilot@example.com>",
+        ],
+        check=True,
+        capture_output=True,
+    )
+    sha = (
+        subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    stats: dict = {}
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "copilot"},
+        stats=stats,
+    )
+    assert fixtures == []
+    assert stats == {"commits_skipped_commit_level": 1}
+
+
+def test_extract_from_agent_commits_stats_records_accepted_with_fixtures(tmp_path):
+    """A pure-addition commit that yields fixtures increments commits_proceeded."""
+    sha = _init_repo_with_commits(
+        tmp_path,
+        [
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+                "msg": "add pure test\n\nCo-authored-by: Claude <claude@anthropic.com>",
+            }
+        ],
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    stats: dict = {}
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "claude"},
+        stats=stats,
+    )
+    assert len(fixtures) >= 1
+    assert stats == {"commits_proceeded": 1}
+
+
+def test_extract_from_agent_commits_stats_records_accepted_without_fixtures(tmp_path):
+    """A pure-addition commit whose added test file has no fixture pattern still
+    passes the commit-level purity gate: commits_skipped_file_level, not
+    commits_skipped_commit_level."""
+    sha = _init_repo_with_commits(
+        tmp_path,
+        [
+            {
+                "path": "tests/test_plain.py",
+                "content": "def test_plain():\n    assert True\n",
+                "msg": "add plain test\n\nCo-authored-by: Claude <claude@anthropic.com>",
+            }
+        ],
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    stats: dict = {}
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "claude"},
+        stats=stats,
+    )
+    assert fixtures == []
+    assert stats == {"commits_skipped_file_level": 1}

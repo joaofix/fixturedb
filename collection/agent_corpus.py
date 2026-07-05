@@ -49,6 +49,7 @@ from .db import (
     insert_test_commit,
     is_global_checkpoint_completed,
     mark_global_checkpoint,
+    update_agent_commit_stats,
     upsert_repository,
 )
 from .ephemeral_clone import clone_with_function
@@ -585,6 +586,17 @@ class AgentCorpusCollector:
                     stats.repos_cloned += 1
                     stats.repos_with_agent_config += 1
 
+                    # Per-repo agent-commit stats (Dataset A). Initialised here so
+                    # every early-exit path below can still persist a full row.
+                    repo_commit_stats = {
+                        "agent_commits_touching_tests": 0,
+                        "rejected_mixed_test_diff": 0,
+                        "accepted": 0,
+                    }
+                    repo_fixture_count = 0
+                    repo_fixture_commit_shas: list[str] = []
+                    all_repo_fixtures: list[dict] = []
+
                     # Compute control variables at AGENT_CORPUS_START_DATE using shared utility
                     metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
                     domain = metadata["domain"]
@@ -660,6 +672,17 @@ class AgentCorpusCollector:
                         stats.qc_skip_reasons["no_agent_commits"] = (
                             stats.qc_skip_reasons.get("no_agent_commits", 0) + 1
                         )
+                        self._persist_repo_agent_commit_stats(
+                            repo_row=repo_row,
+                            repo_name=repo_name,
+                            language_name=language_name,
+                            repo=repo,
+                            repo_data=repo_data,
+                            repo_commit_stats=repo_commit_stats,
+                            repo_fixture_count=repo_fixture_count,
+                            repo_fixture_commit_shas=repo_fixture_commit_shas,
+                            all_repo_fixtures=all_repo_fixtures,
+                        )
                         continue
 
                     stats.repos_passed_qc += 1
@@ -692,6 +715,12 @@ class AgentCorpusCollector:
                             }
                         )
 
+                    # Agent test-commit detection is done: this is the same count
+                    # that lands in the *_agent_test_commit_qc.csv rows for this repo.
+                    repo_commit_stats["agent_commits_touching_tests"] = len(
+                        test_commits
+                    )
+
                     if not test_commits:
                         logger.debug(
                             f"[Agent Corpus] No agent test commits found in {repo_name}"
@@ -700,18 +729,26 @@ class AgentCorpusCollector:
                         stats.qc_skip_reasons["no_test_commits"] = (
                             stats.qc_skip_reasons.get("no_test_commits", 0) + 1
                         )
+                        self._persist_repo_agent_commit_stats(
+                            repo_row=repo_row,
+                            repo_name=repo_name,
+                            language_name=language_name,
+                            repo=repo,
+                            repo_data=repo_data,
+                            repo_commit_stats=repo_commit_stats,
+                            repo_fixture_count=repo_fixture_count,
+                            repo_fixture_commit_shas=repo_fixture_commit_shas,
+                            all_repo_fixtures=all_repo_fixtures,
+                        )
                         continue
 
                     stats.test_commits_found += len(test_commits)
                     all_test_commit_rows.extend(test_commits)
                     lang_test_commit_rows.extend(test_commits)
 
-                    # Extract fixtures from test commits
-                    # Track per-repo fixture metadata to write repo list CSV
-                    repo_fixture_count = 0
-                    repo_fixture_commit_shas: list[str] = []
-                    all_repo_fixtures: list[dict] = []
-
+                    # Extract fixtures from test commits. Per-repo fixture
+                    # metadata (repo_fixture_count etc.) was already initialised
+                    # above so early-exit paths can persist a full stats row.
                     with db_session(self.output_db) as conn:
                         for test_commit in test_commits:
                             insert_test_commit(conn, test_commit)
@@ -724,6 +761,7 @@ class AgentCorpusCollector:
                         )
 
                         try:
+                            commit_purity_stats: dict = {}
                             fixtures = agent_extractor._extract_from_agent_commits(
                                 repo_name=repo_name,
                                 commits={
@@ -731,7 +769,20 @@ class AgentCorpusCollector:
                                         "agent_type", "unknown"
                                     )
                                 },
+                                stats=commit_purity_stats,
                             )
+
+                            # Classify this commit using the commit-level diff
+                            # purity gate: rejected if any test file had
+                            # deletions/edits, accepted if all test files were
+                            # pure additions (regardless of fixture yield).
+                            if commit_purity_stats.get("commits_skipped_commit_level"):
+                                repo_commit_stats["rejected_mixed_test_diff"] += 1
+                            elif commit_purity_stats.get(
+                                "commits_proceeded"
+                            ) or commit_purity_stats.get("commits_skipped_file_level"):
+                                repo_commit_stats["accepted"] += 1
+
                             fixtures = [
                                 fixture
                                 for fixture in fixtures
@@ -766,78 +817,20 @@ class AgentCorpusCollector:
                         f"[Agent Corpus] Cleaned up clone (managed): {repo_name}"
                     )
 
-                # If we extracted fixtures from this repo, write two CSVs:
-                # 1. Per-language repo summary (for downstream human selection)
-                # 2. Per-fixture detail (one row per fixture, for analysis)
-                try:
-                    if repo_fixture_count > 0:
-                        project_root = Path(__file__).resolve().parents[1]
-                        fixture_list_dir = (
-                            project_root
-                            / "fixtures-from-agents"
-                            / COLLECTION_OUTPUT_TAG
-                        )
-                        fixture_list_dir.mkdir(parents=True, exist_ok=True)
-
-                        # Repo-level summary CSV — keep separate from fixture rows
-                        repo_list_dir = fixture_list_dir / "repos"
-                        repo_list_dir.mkdir(parents=True, exist_ok=True)
-                        repo_list_path = (
-                            repo_list_dir / f"{language_name}_agent_fixture_repos.csv"
-                        )
-                        first_sha = (
-                            repo_fixture_commit_shas[0]
-                            if repo_fixture_commit_shas
-                            else ""
-                        )
-                        last_sha = (
-                            repo_fixture_commit_shas[-1]
-                            if repo_fixture_commit_shas
-                            else ""
-                        )
-                        get_adapter().append_dicts(
-                            repo_list_path,
-                            [
-                                {
-                                    "repo_name": repo_name,
-                                    "language": language_name,
-                                    "fixture_count": repo_fixture_count,
-                                    "commit_count_with_fixtures": len(
-                                        repo_fixture_commit_shas
-                                    ),
-                                    "first_fixture_commit": first_sha,
-                                    "last_fixture_commit": last_sha,
-                                    "clone_url": repo.get("clone_url", ""),
-                                }
-                            ],
-                            [
-                                "repo_name",
-                                "language",
-                                "fixture_count",
-                                "commit_count_with_fixtures",
-                                "first_fixture_commit",
-                                "last_fixture_commit",
-                                "clone_url",
-                            ],
-                        )
-
-                        # Per-fixture DB rows + CSV (one row per fixture). Fixtures
-                        # already carry their own commit_sha/agent_type/commit_kind,
-                        # so no extra fields need injecting here.
-                        fixtures_list_path = (
-                            fixture_list_dir / f"{language_name}_agent_fixtures.csv"
-                        )
-                        persist_repository_and_fixtures(
-                            self.output_db,
-                            repo_data,
-                            all_repo_fixtures,
-                            out_path=fixtures_list_path,
-                            handle_mocks=True,
-                        )
-                except Exception as e:
-                    logger.debug(
-                        f"Failed to write agent fixture repo list for {repo_name}: {e}"
-                    )
+                # Always persist the repo-level agent-commit stats + summary row
+                # (even for repos that yielded zero fixtures), and additionally
+                # write the per-fixture detail CSV/DB rows when fixtures exist.
+                self._persist_repo_agent_commit_stats(
+                    repo_row=repo_row,
+                    repo_name=repo_name,
+                    language_name=language_name,
+                    repo=repo,
+                    repo_data=repo_data,
+                    repo_commit_stats=repo_commit_stats,
+                    repo_fixture_count=repo_fixture_count,
+                    repo_fixture_commit_shas=repo_fixture_commit_shas,
+                    all_repo_fixtures=all_repo_fixtures,
+                )
 
                 next_language = None
                 if idx + 1 < len(repos_to_collect):
@@ -920,6 +913,110 @@ class AgentCorpusCollector:
         self._generate_summary(stats)
 
         return stats, self.output_db
+
+    def _persist_repo_agent_commit_stats(
+        self,
+        repo_row: int,
+        repo_name: str,
+        language_name: str,
+        repo: dict,
+        repo_data: dict,
+        repo_commit_stats: dict,
+        repo_fixture_count: int,
+        repo_fixture_commit_shas: list[str],
+        all_repo_fixtures: list[dict],
+    ) -> None:
+        """Persist Dataset A's per-repo agent-commit stats and fixture output.
+
+        Always updates the repositories DB row and appends a row to the
+        per-language repo-summary CSV (fixtures-from-agents/repos/), even for
+        repos with zero test-touching or zero accepted commits, so the stats
+        reflect every processed agent-enabled repo. Per-fixture persistence
+        (DB rows + the *_agent_fixtures.csv detail file) still only happens
+        when the repo actually yielded fixtures.
+        """
+        try:
+            with db_session(self.output_db) as conn:
+                update_agent_commit_stats(conn, repo_row, repo_commit_stats)
+        except Exception as e:
+            logger.debug(
+                f"Failed to persist agent commit stats for {repo_name}: {e}"
+            )
+
+        try:
+            project_root = Path(__file__).resolve().parents[1]
+            fixture_list_dir = (
+                project_root / "fixtures-from-agents" / COLLECTION_OUTPUT_TAG
+            )
+            fixture_list_dir.mkdir(parents=True, exist_ok=True)
+
+            # Repo-level summary CSV — keep separate from fixture rows. Always
+            # written so every processed repo shows up, regardless of yield.
+            repo_list_dir = fixture_list_dir / "repos"
+            repo_list_dir.mkdir(parents=True, exist_ok=True)
+            repo_list_path = (
+                repo_list_dir / f"{language_name}_agent_fixture_repos.csv"
+            )
+            first_sha = (
+                repo_fixture_commit_shas[0] if repo_fixture_commit_shas else ""
+            )
+            last_sha = (
+                repo_fixture_commit_shas[-1] if repo_fixture_commit_shas else ""
+            )
+            get_adapter().append_dicts(
+                repo_list_path,
+                [
+                    {
+                        "repo_name": repo_name,
+                        "language": language_name,
+                        "fixture_count": repo_fixture_count,
+                        "commit_count_with_fixtures": len(
+                            repo_fixture_commit_shas
+                        ),
+                        "first_fixture_commit": first_sha,
+                        "last_fixture_commit": last_sha,
+                        "clone_url": repo.get("clone_url", ""),
+                        "agent_commits_touching_tests": repo_commit_stats[
+                            "agent_commits_touching_tests"
+                        ],
+                        "rejected_mixed_test_diff": repo_commit_stats[
+                            "rejected_mixed_test_diff"
+                        ],
+                        "accepted": repo_commit_stats["accepted"],
+                    }
+                ],
+                [
+                    "repo_name",
+                    "language",
+                    "fixture_count",
+                    "commit_count_with_fixtures",
+                    "first_fixture_commit",
+                    "last_fixture_commit",
+                    "clone_url",
+                    "agent_commits_touching_tests",
+                    "rejected_mixed_test_diff",
+                    "accepted",
+                ],
+            )
+
+            if repo_fixture_count > 0:
+                # Per-fixture DB rows + CSV (one row per fixture). Fixtures
+                # already carry their own commit_sha/agent_type/commit_kind,
+                # so no extra fields need injecting here.
+                fixtures_list_path = (
+                    fixture_list_dir / f"{language_name}_agent_fixtures.csv"
+                )
+                persist_repository_and_fixtures(
+                    self.output_db,
+                    repo_data,
+                    all_repo_fixtures,
+                    out_path=fixtures_list_path,
+                    handle_mocks=True,
+                )
+        except Exception as e:
+            logger.debug(
+                f"Failed to write agent fixture repo list for {repo_name}: {e}"
+            )
 
     def _generate_summary(self, stats: AgentCorpusStats) -> None:
         """Generate and save agent corpus summary."""

@@ -42,6 +42,9 @@ CREATE TABLE repositories (
     num_fixtures INTEGER DEFAULT 0,             -- Count of fixtures
     num_mock_usages INTEGER DEFAULT 0,          -- Mock usage count
     num_contributors INTEGER DEFAULT 0,         -- GitHub contributor count
+    agent_commits_touching_tests INTEGER DEFAULT 0,          -- Dataset A: agent commits touching >=1 test file
+    agent_commits_rejected_mixed_test_diff INTEGER DEFAULT 0, -- Dataset A: rejected, a test file had deletions/edits
+    agent_commits_accepted INTEGER DEFAULT 0,                 -- Dataset A: accepted, all test file diffs were pure additions
     collected_at TEXT DEFAULT CURRENT_TIMESTAMP -- When data was collected
 );
 
@@ -62,6 +65,9 @@ CREATE INDEX idx_repo_domain ON repositories(domain);
 | status | TEXT | analysed = fixtures extracted successfully |
 | num_test_files | INTEGER | Test file count in dataset |
 | num_fixtures | INTEGER | Fixture count in dataset |
+| agent_commits_touching_tests | INTEGER | Dataset A: agent commits that touched >=1 test file (set during agent test-commit detection) |
+| agent_commits_rejected_mixed_test_diff | INTEGER | Dataset A: of those, commits rejected because a test file had deletions/edits |
+| agent_commits_accepted | INTEGER | Dataset A: of those, commits accepted because all test file diffs were pure additions |
 
 ---
 

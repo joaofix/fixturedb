@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS repositories (
     star_tier       TEXT DEFAULT NULL,      -- core (>=500) or extended (<500)
     repo_age_years  REAL DEFAULT NULL,      -- repository age in years at collection time
     agent_adoption_intensity TEXT DEFAULT NULL,  -- agent commit ratio since adoption: no_commits/experimental/limited/consistent/pervasive
+    agent_commits_touching_tests INTEGER DEFAULT 0,  -- Dataset A: agent commits that touched >=1 test file
+    agent_commits_rejected_mixed_test_diff INTEGER DEFAULT 0,  -- Dataset A: rejected, a test file had deletions/edits
+    agent_commits_accepted  INTEGER DEFAULT 0,      -- Dataset A: accepted, all test file diffs were pure additions
     collected_at    TEXT DEFAULT (datetime('now'))
 );
 
@@ -464,6 +467,34 @@ def set_repo_analysed(
         WHERE id = ?
     """,
         (num_test_files, num_fixtures, num_mock_usages, num_contributors, repo_id),
+    )
+
+
+def update_agent_commit_stats(
+    conn: sqlite3.Connection,
+    repo_id: int,
+    stats: dict,
+) -> None:
+    """Persist Dataset A's per-repo agent test-commit counters.
+
+    `stats` is expected to have `agent_commits_touching_tests`,
+    `rejected_mixed_test_diff`, and `accepted` keys (see
+    AgentCorpusCollector.run()).
+    """
+    conn.execute(
+        """
+        UPDATE repositories
+        SET agent_commits_touching_tests = ?,
+            agent_commits_rejected_mixed_test_diff = ?,
+            agent_commits_accepted = ?
+        WHERE id = ?
+    """,
+        (
+            int(stats.get("agent_commits_touching_tests", 0) or 0),
+            int(stats.get("rejected_mixed_test_diff", 0) or 0),
+            int(stats.get("accepted", 0) or 0),
+            repo_id,
+        ),
     )
 
 

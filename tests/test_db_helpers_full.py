@@ -11,6 +11,7 @@ from collection.db import (
     insert_mock_usage,
     insert_test_commit,
     set_repo_analysed,
+    update_agent_commit_stats,
     upsert_repository,
     upsert_test_file,
 )
@@ -123,6 +124,57 @@ def test_db_helpers_end_to_end(tmp_path):
         )
         lang_counts = get_analyzed_count_by_language(conn)
         assert "python" in lang_counts and lang_counts["python"] >= 1
+
+
+def test_update_agent_commit_stats(tmp_path):
+    """Dataset A's repo-level agent-commit counters persist and default to 0."""
+    db_path = tmp_path / "agent_stats.db"
+    initialise_db(db_path)
+
+    repo = {
+        "github_id": 1234,
+        "full_name": "owner/agentrepo",
+        "language": "python",
+        "stars": 10,
+        "forks": 0,
+        "description": "",
+        "topics": "[]",
+        "created_at": "2020-01-01T00:00:00Z",
+        "pushed_at": "2020-01-01T00:00:00Z",
+        "clone_url": "https://github.com/owner/agentrepo.git",
+        "num_contributors": 1,
+        "domain": None,
+        "star_tier": None,
+        "repo_age_years": None,
+    }
+
+    with db_session(db_path) as conn:
+        repo_id, _ = upsert_repository(conn, repo)
+
+        # Defaults to 0 before any stats are recorded.
+        row = conn.execute(
+            "SELECT agent_commits_touching_tests, agent_commits_rejected_mixed_test_diff, "
+            "agent_commits_accepted FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert tuple(row) == (0, 0, 0)
+
+        update_agent_commit_stats(
+            conn,
+            repo_id,
+            {
+                "agent_commits_touching_tests": 5,
+                "rejected_mixed_test_diff": 2,
+                "accepted": 3,
+            },
+        )
+
+        row = conn.execute(
+            "SELECT agent_commits_touching_tests, agent_commits_rejected_mixed_test_diff, "
+            "agent_commits_accepted FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert tuple(row) == (5, 2, 3)
 
 
 def test_classify_and_age():
