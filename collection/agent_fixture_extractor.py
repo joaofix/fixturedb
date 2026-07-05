@@ -17,6 +17,7 @@ from collection.logging_utils import get_logger
 
 from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_repo_path
 from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, DB_PATH
+from .conventional_commits import classify_commit_type
 from .detector import _get_parser, extract_fixtures
 from .diff_purity import (
     _HUNK_HEADER_RE,
@@ -229,6 +230,17 @@ class AgentFixtureExtractor:
                                 stats.get("commits_skipped_file_level", 0) + 1
                             )
 
+                    # Dataset A only: classify the commit's Conventional Commits
+                    # type so fixture-producing agent commits can be compared
+                    # against literature baselines. `agent_type == "human"` is
+                    # human_corpus.py's sentinel for Dataset B commits routed
+                    # through this same method — leave those unclassified.
+                    commit_type = (
+                        classify_commit_type(commit_info.get("message", ""))
+                        if agent_type != "human"
+                        else None
+                    )
+
                     for fixture in commit_fixtures:
                         fixture_key = (
                             fixture.get("file_path"),
@@ -241,6 +253,8 @@ class AgentFixtureExtractor:
                             duplicates_skipped += 1
                             continue
                         seen_fixtures.add(fixture_key)
+                        if commit_type is not None:
+                            fixture["commit_type"] = commit_type
                         fixtures.append(fixture)
 
             except Exception as e:

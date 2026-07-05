@@ -105,6 +105,8 @@ CREATE TABLE IF NOT EXISTS fixtures (
     commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
     match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
+    commit_type             TEXT DEFAULT NULL,      -- Conventional Commits type of the originating commit
+                                    -- (Dataset A only: feat/fix/docs/refactor/test/chore/style/other/none)
     UNIQUE(file_id, name, start_line)
 );
 
@@ -595,6 +597,7 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "commit_kind",
         "match_scope",
         "is_complete_addition",
+        "commit_type",
     ]
     for col in agent_columns:
         if col in fixture:

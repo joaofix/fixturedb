@@ -372,6 +372,53 @@ class TestWriteFixtureCsvRow:
 
         assert row["agent_type"] == "copilot"
 
+    def test_write_fixture_csv_row_includes_commit_type(self, tmp_path):
+        """commit_type (Dataset A conventional-commit classification) is
+        written straight from the fixture dict."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "test_bar",
+            "fixture_type": "pytest_decorator",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 10,
+            "framework": "pytest",
+            "agent_type": "claude",
+            "commit_type": "test",
+        }
+
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+
+        assert row["commit_type"] == "test"
+
+    def test_write_fixture_csv_row_defaults_commit_type_to_empty(self, tmp_path):
+        """Fixtures with no commit_type (e.g. Dataset B/C) get an empty value."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "test_bar",
+            "fixture_type": "pytest_decorator",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 10,
+            "framework": "pytest",
+        }
+
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+
+        assert row["commit_type"] == ""
+
 
 class TestBuildGithubUrl:
     """Test _build_github_url helper."""
@@ -493,6 +540,67 @@ class TestPersistRepositoryAndFixtures:
                     content = out_path.read_text()
                     assert "owner/repo" in content
                     assert "fixture" in content
+
+    def test_persist_writes_commit_type_to_db_and_csv(self, tmp_path):
+        """commit_type (Dataset A conventional-commit classification) reaches
+        both the fixtures table and the CSV export, end-to-end against a
+        real (non-mocked) database."""
+        from collection.db import initialise_db
+
+        db_path = tmp_path / "test.db"
+        initialise_db(db_path)
+
+        repo_data = {
+            "github_id": 456,
+            "full_name": "owner/agentrepo",
+            "language": "python",
+            "stars": 10,
+            "forks": 0,
+            "description": "",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/agentrepo.git",
+            "num_contributors": 1,
+            "domain": None,
+            "star_tier": None,
+            "repo_age_years": None,
+        }
+        fixtures = [
+            {
+                "commit_sha": "abc123",
+                "file_path": "tests/test_foo.py",
+                "name": "my_fixture",
+                "fixture_type": "pytest_decorator",
+                "start_line": 1,
+                "end_line": 3,
+                "loc": 3,
+                "framework": "pytest",
+                "agent_type": "claude",
+                "commit_kind": "agent",
+                "commit_type": "test",
+                "mocks": [],
+            }
+        ]
+        out_path = tmp_path / "fixtures.csv"
+
+        persist_repository_and_fixtures(
+            db_path, repo_data, fixtures, out_path=out_path
+        )
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+        assert row["commit_type"] == "test"
+
+        import sqlite3
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        db_row = conn.execute(
+            "SELECT commit_type FROM fixtures WHERE name = 'my_fixture'"
+        ).fetchone()
+        conn.close()
+        assert db_row["commit_type"] == "test"
 
     def test_persist_with_empty_fixtures(self):
         """Verify handling of empty fixture list."""

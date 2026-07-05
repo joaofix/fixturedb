@@ -168,6 +168,7 @@ CREATE INDEX idx_fixture_framework ON fixtures(framework);
 | **commit_author_name** | TEXT | Commit author | ✗ | ✓ |
 | **commit_author_email** | TEXT | Author email | ✗ | ✓ |
 | **commit_date** | TEXT | When committed | ✗ | ✓ |
+| **commit_type** | TEXT | Conventional Commits type of the originating commit (feat/fix/docs/refactor/test/chore/style/other/none) | ✗ | ✓ |
 
 ---
 
@@ -217,6 +218,17 @@ ALTER TABLE fixtures ADD COLUMN is_complete_addition BOOLEAN;
     -- TRUE: All lines are additions (+ prefix in diff)
     -- FALSE: Modified/refactored (filtered out during extraction)
     -- Required: 100% of LLM fixtures = TRUE (by design)
+
+ALTER TABLE fixtures ADD COLUMN commit_type TEXT;
+    -- Conventional Commits classification of the originating commit's
+    -- subject line, via a regex prefix match (collection/conventional_commits.py)
+    -- Values: feat | fix | docs | refactor | test | chore | style | other | none
+    --   - one of the 7 known types on prefix match
+    --   - "other": follows `type(scope)!: ` shape but type is unrecognized (e.g. perf, build, ci)
+    --   - "none": subject does not follow Conventional Commits at all
+    -- Dataset A (agent) only — NULL for Dataset B/C fixtures
+    -- Purpose: compare fixture-producing agent commits' Conventional Commits
+    -- adherence against literature baselines (e.g. "Agentic Much?" Section 10)
     -- Used: For completeness validation
 
 ALTER TABLE fixtures ADD COLUMN commit_author_name TEXT;

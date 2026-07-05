@@ -1149,3 +1149,57 @@ def test_extract_from_agent_commits_stats_records_accepted_without_fixtures(tmp_
     )
     assert fixtures == []
     assert stats == {"commits_skipped_file_level": 1}
+
+
+# ──────────────────────────────────────────────────────────────
+# Unit tests: commit_type classification (Dataset A only) attached by
+# _extract_from_agent_commits()
+# ──────────────────────────────────────────────────────────────
+
+
+def test_extract_from_agent_commits_attaches_commit_type_for_agent_commit(tmp_path):
+    """Fixtures from a real agent commit carry the classified commit_type."""
+    sha = _init_repo_with_commits(
+        tmp_path,
+        [
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+                "msg": "test: add pure_fixture\n\nCo-authored-by: Claude <claude@anthropic.com>",
+            }
+        ],
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "claude"},
+    )
+    assert len(fixtures) >= 1
+    assert all(f["commit_type"] == "test" for f in fixtures)
+
+
+def test_extract_from_agent_commits_does_not_attach_commit_type_for_human_commit(
+    tmp_path,
+):
+    """human_corpus.py routes human commits through this method with
+    agent_type='human' — those fixtures must not get a commit_type, even
+    when the message itself looks conventional."""
+    sha = _init_repo_with_commits(
+        tmp_path,
+        [
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+                "msg": "test: add pure_fixture",
+            }
+        ],
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "human"},
+    )
+    assert len(fixtures) >= 1
+    assert all("commit_type" not in f for f in fixtures)

@@ -205,6 +205,7 @@ def write_fixture_csv_row(
         "github_url",
         "agent_type",
         "commit_kind",
+        "commit_type",
     ]
 
     if extra_fields:
@@ -253,6 +254,7 @@ def write_fixture_csv_row(
             ),
             "agent_type": fixture.get("agent_type", ""),
             "commit_kind": fixture.get("commit_kind", "unknown"),
+            "commit_type": fixture.get("commit_type", ""),
         }
 
         if extra_fields:
@@ -341,6 +343,7 @@ def persist_repository_and_fixtures(
                 "commit_kind": fixture.get("commit_kind", "unknown"),
                 "agent_type": fixture.get("agent_type"),
                 "is_complete_addition": 1,
+                "commit_type": fixture.get("commit_type"),
             }
 
             fixture_id = insert_fixture(conn, fixture_data)
