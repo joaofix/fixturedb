@@ -75,7 +75,7 @@ re-run or improve detection against the original fixture text.
 - Metaprogrammed/dynamic fixtures created at runtime
 - Non-standard fixture mechanisms that abstract framework APIs
 
-**Mitigation:** `raw_source` column in SQLite allows manual audit. Sample 100–200 test files per language to calculate project-specific recall.
+**Mitigation:** `raw_source` column in SQLite allows manual audit. Draw a manual-review sample with `collection/validation_sampling.py` (Cochran's formula, 95% confidence / 5% margin of error by default — see [Manual-Validation Sampling](../usage/validation-sampling.md)) rather than an arbitrary fixed count, to calculate project-specific recall.
 
 ---
 
@@ -91,7 +91,7 @@ re-run or improve detection against the original fixture text.
 
 ## Validation Status
 
-**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, manually inspect 50–100 fixtures per language and per corpus to establish project-specific precision and recall.
+**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, use `collection/validation_sampling.py --step agent-fixtures-dataset-a|human-fixtures-dataset-b|human-fixtures-dataset-c` to draw a Cochran-sized (95% confidence / 5% margin of error by default) sample per language and per corpus, then manually inspect it to establish project-specific precision and recall. See [Manual-Validation Sampling](../usage/validation-sampling.md).
 
 **Language-Specific Confidence:**
 

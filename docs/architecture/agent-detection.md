@@ -79,6 +79,13 @@ For each commit in repository:
 | **False Positive** | <1% | Rare case of user-added trailer unrelated to agent |
 | **False Negative** | ~20-30% | Agent-assisted commits without trailer declaration |
 
+These figures are targets/estimates from the detection design, not a
+per-run measurement. To empirically validate them against a specific
+collection run, draw a Cochran-sized manual-review sample with
+`collection/validation_sampling.py --step agent-repos` (repo-level
+detection) or `--step agent-commits-dataset-a` (commit-level detection) —
+see [Manual-Validation Sampling](../usage/validation-sampling.md).
+
 ### Why Conservative Approach?
 
 The between-group study **prioritizes precision over recall**:

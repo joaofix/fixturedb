@@ -125,6 +125,57 @@ class TestRunValidationSamplingCombinedMode:
 
         assert read_rows(meta_a) == read_rows(meta_b)
 
+    def test_mismatched_columns_across_files_are_unioned(self, tmp_path):
+        """Real per-language QC CSVs can have slightly different columns."""
+        base_csv = tmp_path / "python_agent_repo.csv"
+        extra_csv = tmp_path / "java_agent_repo.csv"
+        _write_csv(
+            base_csv, [{"repo_name": f"py/repo{i}", "language": "python"} for i in range(10)]
+        )
+        _write_csv(
+            extra_csv,
+            [
+                {
+                    "repo_name": f"java/repo{i}",
+                    "language": "java",
+                    "num_contributors": "3",  # column not present in base_csv
+                }
+                for i in range(10)
+            ],
+        )
+
+        metadata = run_validation_sampling(
+            "agent-repos",
+            [base_csv, extra_csv],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        out_path = Path(metadata["outputs"][0]["output_file"])
+        with out_path.open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert set(reader.fieldnames) == {"repo_name", "language", "num_contributors"}
+            rows = list(reader)
+        # N=20 is small enough that Cochran's formula keeps the whole population,
+        # so rows from base_csv (which lacks num_contributors) must round-trip
+        # with that column backfilled empty rather than being dropped/erroring.
+        assert len(rows) == 20
+        assert any(r["language"] == "python" and r["num_contributors"] == "" for r in rows)
+        assert any(r["language"] == "java" and r["num_contributors"] == "3" for r in rows)
+
+    def test_empty_input_file_produces_empty_sample(self, tmp_path):
+        empty_csv = tmp_path / "python_agent_repo.csv"
+        empty_csv.write_text("repo_name,language\n", encoding="utf-8")
+
+        metadata = run_validation_sampling(
+            "agent-repos", [empty_csv], output_root=tmp_path / "validation-samples"
+        )
+
+        entry = metadata["outputs"][0]
+        assert entry["population_size"] == 0
+        assert entry["sample_size"] == 0
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            assert list(csv.DictReader(fh)) == []
+
 
 class TestRunValidationSamplingPerFileMode:
     def test_one_output_per_input_file(self, tmp_path):
@@ -152,6 +203,102 @@ class TestRunValidationSamplingPerFileMode:
         out_dir = output_root / "agent-fixtures-dataset-a"
         csv_files = list(out_dir.glob("*.csv"))
         assert len(csv_files) == 2
+
+
+class TestRealPipelineCSVSchemas:
+    """Integration-style checks against the real column layouts the pipeline
+    actually produces (via tests/conftest.py's make_csv fixture), not just
+    the small synthetic dicts used above -- proves the tool round-trips real
+    headers/values, not just whatever shape the unit tests happened to use.
+    """
+
+    def test_agent_repos_real_schema_round_trips(self, tmp_path, make_csv):
+        rows = [
+            {
+                "repo_name": f"owner{i}/repo_python",
+                "full_name": f"owner{i}/repo_python",
+                "language": "python",
+                "stars": str(500 + i),
+                "forks": str(10 + i),
+                "num_contributors": str(1 + i % 5),
+                "clone_url": f"https://github.com/owner{i}/repo_python.git",
+                "has_agent_config": "1",
+            }
+            for i in range(30)
+        ]
+        csv_path = make_csv(tmp_path, "python_agent_repo.csv", rows=rows)
+
+        metadata = run_validation_sampling(
+            "agent-repos", [csv_path], output_root=tmp_path / "validation-samples"
+        )
+
+        entry = metadata["outputs"][0]
+        assert entry["population_size"] == 30
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == list(rows[0].keys())
+            sampled = list(reader)
+        assert len(sampled) == entry["sample_size"]
+        assert all(r["has_agent_config"] == "1" for r in sampled)
+
+    def test_agent_commits_dataset_a_real_schema_round_trips(self, tmp_path, make_csv):
+        rows = [
+            {
+                "repo_name": "good/repo",
+                "language": "python",
+                "commit_sha": f"sha{i}",
+                "commit_role": "agent",
+                "agent_type": "claude" if i % 2 == 0 else "copilot",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "test_file_count": "1",
+                "test_file_paths": '["tests/test_sample.py"]',
+            }
+            for i in range(30)
+        ]
+        csv_path = make_csv(tmp_path, "python_agent_test_commit_qc.csv", rows=rows)
+
+        metadata = run_validation_sampling(
+            "agent-commits-dataset-a",
+            [csv_path],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == list(rows[0].keys())
+            sampled = list(reader)
+        assert len(sampled) == entry["sample_size"]
+        assert all(r["agent_type"] in {"claude", "copilot"} for r in sampled)
+
+    def test_human_commits_dataset_b_real_schema_round_trips(self, tmp_path, make_csv):
+        rows = [
+            {
+                "repo_name": f"owner{i}/repo_python",
+                "full_name": f"owner{i}/repo_python",
+                "language": "python",
+                "commit_sha": f"sha{i}",
+                "commit_role": "human",
+                "test_file_count": "2",
+                "test_file_paths": '["tests/test_foo.py", "tests/test_bar.py"]',
+            }
+            for i in range(30)
+        ]
+        csv_path = make_csv(tmp_path, "python_human_test_commit.csv", rows=rows)
+
+        metadata = run_validation_sampling(
+            "human-commits-dataset-b",
+            [csv_path],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == list(rows[0].keys())
+            sampled = list(reader)
+        assert len(sampled) == entry["sample_size"]
+        assert all(r["commit_role"] == "human" for r in sampled)
 
 
 def test_unknown_step_raises():
