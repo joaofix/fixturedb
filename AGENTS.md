@@ -58,6 +58,7 @@ collection/          # Main pipeline code (the "library")
   corpus_utils.py    # Shared repo/fixture persistence helpers
   between_group_comparison.py  # Statistical balance tests
   phase_*.py         # Pipeline phases 1–8 (orchestration scripts)
+  validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
 tests/               # pytest suite (752 tests)
 eda/                 # Exploratory data analysis notebooks
 docs/                # Full documentation

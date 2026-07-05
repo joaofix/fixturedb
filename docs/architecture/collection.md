@@ -64,6 +64,7 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 3. Run `phase_3_extract_agent.py` (Dataset A).
 4. Continue with Phases 4-8 (distribution analysis, sampling, export, validation).
 5. Inspect `fixturedb-human.db` / `fixturedb-agent.db` and the `repositories` / `fixtures` / `mock_usages` tables for sample provenance.
+6. When a manual-validation sample is needed for the paper, run `collection/validation_sampling.py` by hand against that step's output CSV(s) — see [Manual-Validation Sampling](../usage/validation-sampling.md). Not part of this automatic runbook.
 
 ## Troubleshooting
 - If you observe frequent SQLite `database is locked` errors: ensure callers are not opening nested write transactions.

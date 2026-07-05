@@ -16,6 +16,7 @@ Start here for the between-group study comparing human and agent-authored test f
 | Understand fixture patterns | [Fixture Patterns Reference](usage/fixture-patterns-reference.md) |
 | Work with CSV exports | [CSV User Guide](data/csv-user-guide.md) |
 | Analyze the dataset | [Analysis Guide](usage/usage.md) |
+| Draw a manual-validation sample | [Manual-Validation Sampling](usage/validation-sampling.md) |
 | Review limitations | [Limitations & Threats to Validity](reference/limitations.md) |
 | Check tests and validation | [Test Suite & Validation](reference/testing.md)
 
@@ -40,6 +41,7 @@ Start here for the between-group study comparing human and agent-authored test f
 - [Using the Dataset](usage/usage.md) — Analysis examples and SQL queries
 - [Reproducing Results](usage/reproducing.md) — Three-stage collection pipeline
 - [Fixture Patterns Reference](usage/fixture-patterns-reference.md) — Complete fixture catalog
+- [Manual-Validation Sampling](usage/validation-sampling.md) — Cochran-formula sampling for human review
 - [CSV User Guide](data/csv-user-guide.md) — CSV export documentation
 - [Storage & Scale](data/storage.md) — Database sizes and storage requirements
 
