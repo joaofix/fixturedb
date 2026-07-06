@@ -18,7 +18,9 @@ class TestJavaScriptJestMockPatterns:
     """Jest mock patterns"""
 
     def test_jest_mock_function(self):
-        """Jest jest.fn() mock in beforeEach"""
+        """Jest jest.fn() mock in beforeEach -- category is a documented
+        override (\"fn\" contains no category keyword; Jest's own docs call
+        these \"mock functions\")."""
         code = """
 describe('Module', () => {
     let mockCallback;
@@ -32,6 +34,20 @@ describe('Module', () => {
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
         assert fixture.fixture_type == "before_each"
         assert fixture.mocks and fixture.mocks[0].framework == "jest"
+        assert fixture.mocks[0].category == "mock"
+
+    def test_jest_spy_on(self):
+        """jest.spyOn(...) should be classified as the "spy" category
+        (keyword-matched directly from the construct's own name)."""
+        code = """
+beforeEach(() => {
+    jest.spyOn(console, 'log');
+});
+"""
+        fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
+        assert fixture.mocks
+        assert fixture.mocks[0].framework == "jest"
+        assert fixture.mocks[0].category == "spy"
 
     def test_jest_mock_module_call_inside_fixture_body(self):
         """jest.mock('./api') is detected when it's literally inside the
@@ -44,6 +60,7 @@ beforeEach(() => {
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
         assert fixture.mocks
         assert fixture.mocks[0].framework == "jest"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "./api"
 
     def test_jest_mock_module_at_top_level_is_not_attributed_to_fixture(self):
@@ -76,6 +93,7 @@ beforeEach(() => {
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
         assert fixture.mocks
         assert fixture.mocks[0].framework == "jest"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "myModule"
 
     def test_jest_create_mock_from_module(self):
@@ -88,6 +106,7 @@ beforeEach(() => {
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
         assert fixture.mocks
         assert fixture.mocks[0].framework == "jest"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "./api"
 
 
@@ -115,11 +134,13 @@ describe('Test', function() {
         assert fixture.fixture_type == "before_each"
         assert fixture.mocks
         assert fixture.mocks[0].framework == "sinon"
-        assert fixture.mocks[0].target_identifier == "stub"
+        assert fixture.mocks[0].category == "stub"
 
     def test_sinon_fake_and_replace(self):
         """sinon.fake() and sinon.replace() were previously missing from
-        the sinon alternation (only stub|spy|mock were covered)."""
+        the sinon alternation (only stub|spy|mock were covered). Both are
+        classified as the "fake" test-double category -- sinon.replace per
+        its own docs ("replaces obj.method with the fake")."""
         code = """
 beforeEach(function() {
     const f = sinon.fake();
@@ -127,8 +148,8 @@ beforeEach(function() {
 });
 """
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
-        operations = {m.target_identifier for m in fixture.mocks}
-        assert operations == {"fake", "replace"}
+        categories = {m.category for m in fixture.mocks}
+        assert categories == {"fake"}
         assert all(m.framework == "sinon" for m in fixture.mocks)
 
     def test_sinon_create_stub_instance(self):
@@ -142,6 +163,7 @@ beforeEach(function() {
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
         assert fixture.mocks
         assert fixture.mocks[0].framework == "sinon"
+        assert fixture.mocks[0].category == "stub"
         assert fixture.mocks[0].target_identifier == "MyClass"
 
 

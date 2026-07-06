@@ -430,6 +430,7 @@ class AgentFixtureExtractor:
                                 "mocks": [
                                     {
                                         "framework": m.framework,
+                                        "category": m.category,
                                         "target_identifier": m.target_identifier,
                                         "num_interactions_configured": m.num_interactions_configured,
                                         "raw_snippet": m.raw_snippet,
@@ -501,6 +502,7 @@ class AgentFixtureExtractor:
                     "mocks": [
                         {
                             "framework": m.framework,
+                            "category": m.category,
                             "target_identifier": m.target_identifier,
                             "num_interactions_configured": m.num_interactions_configured,
                             "raw_snippet": m.raw_snippet,

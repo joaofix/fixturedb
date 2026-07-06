@@ -101,6 +101,7 @@ def extract_fixtures_at_commit(
                                 "mocks": [
                                     {
                                         "framework": m.framework,
+                                        "category": m.category,
                                         "target_identifier": m.target_identifier,
                                         "num_interactions_configured": m.num_interactions_configured,
                                         "raw_snippet": m.raw_snippet,

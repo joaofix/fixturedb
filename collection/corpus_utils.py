@@ -365,6 +365,7 @@ def persist_repository_and_fixtures(
                                     "fixture_id": fixture_id,
                                     "repo_id": repo_id,
                                     "framework": mock.get("framework"),
+                                    "category": mock.get("category", ""),
                                     "target_identifier": mock.get(
                                         "target_identifier", ""
                                     ),

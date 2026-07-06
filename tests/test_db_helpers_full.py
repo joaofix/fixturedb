@@ -109,6 +109,7 @@ def test_db_helpers_end_to_end(tmp_path):
             "fixture_id": fixture_id,
             "repo_id": repo_id,
             "framework": "unittest_mock",
+            "category": "mock",
             "target_identifier": "module.Client",
             "num_interactions_configured": 1,
             "raw_snippet": "mock.call()",

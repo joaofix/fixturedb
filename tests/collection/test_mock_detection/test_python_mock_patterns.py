@@ -30,6 +30,7 @@ def svc():
         fixture = assert_fixture_detected(code, "python", "svc")
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "unittest_mock"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "module.function"
 
     def test_unittest_mock_bare_patch(self):
@@ -79,6 +80,7 @@ def svc():
         fixture = assert_fixture_detected(code, "python", "svc")
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "unittest_mock"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "Service"
 
     def test_unittest_mock_patch_object(self):
@@ -96,10 +98,14 @@ def svc():
         fixture = assert_fixture_detected(code, "python", "svc")
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "unittest_mock"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "Service"
 
     def test_create_autospec(self):
-        """create_autospec(RealClass) should be detected as unittest_mock."""
+        """create_autospec(RealClass) should be detected as unittest_mock,
+        category "mock" -- a documented override since "create_autospec"
+        contains no category keyword itself (see category_override_reason
+        in feature_extraction_patterns.yaml)."""
         code = """
 @pytest.fixture
 def api():
@@ -108,6 +114,7 @@ def api():
         fixture = assert_fixture_detected(code, "python", "api")
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "unittest_mock"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "RealApi"
 
     def test_magicmock_usage(self):
@@ -141,6 +148,7 @@ def user_service(mocker):
         assert fixture.fixture_type == "pytest_decorator"
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "pytest_mock"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "service"
         # return_value= is one configured interaction
         assert fixture.mocks[0].num_interactions_configured >= 1
@@ -155,13 +163,16 @@ def patched(mocker):
         fixture = assert_fixture_detected(code, "python", "patched")
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "pytest_mock"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "module.function"
 
     def test_monkeypatch_fixture(self):
         """pytest's built-in monkeypatch fixture (setattr/setenv/etc.) is a
         different concept from a mock *library*, but the same
         test-isolation-via-patching idea num_mocks is meant to capture --
-        previously not covered at all."""
+        previously not covered at all. Category is "stub" (a documented
+        override): monkeypatch substitutes predetermined behavior with no
+        built-in call-verification API, unlike a mock."""
         code = """
 @pytest.fixture
 def config(monkeypatch):
@@ -172,6 +183,7 @@ def config(monkeypatch):
         assert fixture.num_parameters >= 1
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "pytest_monkeypatch"
+        assert fixture.mocks[0].category == "stub"
         assert fixture.mocks[0].target_identifier == "setenv"
 
 

@@ -178,6 +178,51 @@ def test_mock_patterns_cover_expected_frameworks():
     }
 
 
+VALID_MOCK_CATEGORIES = {"dummy", "stub", "spy", "mock", "fake"}
+
+
+def test_mock_patterns_have_valid_category():
+    """Every mock_patterns entry must classify into the five-way classic
+    test-double taxonomy (Meszaros): dummy/stub/spy/mock/fake."""
+    for entry in load_feature_extraction_patterns()["mock_patterns"]:
+        assert entry["category"] in VALID_MOCK_CATEGORIES, entry
+
+
+def test_dummy_category_is_never_assigned():
+    """Dummy detection requires data-flow analysis (is this double ever
+    configured/verified?), not a simple keyword match -- per this project's
+    preference for high-precision simple heuristics over completeness, no
+    pattern should claim to detect it. If this ever fails, make sure the
+    new "dummy" assignment is backed by a real, simple, high-precision
+    signal, not a guess."""
+    categories = {e["category"] for e in load_feature_extraction_patterns()["mock_patterns"]}
+    assert "dummy" not in categories
+
+
+def test_mock_patterns_category_overrides_are_documented():
+    """Entries without a category keyword in their own construct name
+    (i.e. the category isn't self-evident from the pattern) must carry a
+    category_override_reason explaining the classification."""
+    keyword_by_category = {
+        "stub": "stub",
+        "spy": "spy",
+        "fake": "fake",
+        "mock": "mock",
+    }
+    # Strip negative-lookbehind assertions (e.g. "(?<!mock\.)") before
+    # searching for a keyword -- otherwise the bare-patch entries would
+    # look like they self-evidently say "mock" just because the assertion
+    # excluding mock./mocker. happens to contain that substring.
+    lookbehind_re = re.compile(r"\(\?<[!=][^)]*\)")
+
+    for entry in load_feature_extraction_patterns()["mock_patterns"]:
+        keyword = keyword_by_category.get(entry["category"])
+        construct_text = lookbehind_re.sub("", entry["pattern"]).lower()
+        pattern_has_keyword = keyword is not None and keyword in construct_text
+        if not pattern_has_keyword:
+            assert entry.get("category_override_reason", "").strip(), entry
+
+
 def test_mock_patterns_are_valid_regex_with_framework():
     for entry in load_feature_extraction_patterns()["mock_patterns"]:
         re.compile(entry["pattern"])

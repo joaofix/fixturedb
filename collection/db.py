@@ -153,6 +153,8 @@ CREATE TABLE IF NOT EXISTS mock_usages (
     repo_id                     INTEGER NOT NULL REFERENCES repositories(id),
     framework                   TEXT,   -- unittest_mock/pytest_mock/mockito/
                                         -- easymock/jest/sinon/gomock/testify/...
+    category                    TEXT,   -- test-double taxonomy: dummy/stub/spy/mock/fake
+                                        -- (see feature_extraction_patterns.yaml)
     target_identifier           TEXT,   -- the string passed to mock (e.g. "mymodule.Client")
     num_interactions_configured INTEGER DEFAULT 0,
     raw_snippet                 TEXT    -- the mock call source text
@@ -166,6 +168,7 @@ CREATE INDEX IF NOT EXISTS idx_fixtures_type    ON fixtures(fixture_type);
 CREATE INDEX IF NOT EXISTS idx_fixtures_corpus  ON fixtures(commit_kind);  -- between-group: filter by corpus (human/agent)
 CREATE INDEX IF NOT EXISTS idx_mocks_fixture    ON mock_usages(fixture_id);
 CREATE INDEX IF NOT EXISTS idx_mocks_framework  ON mock_usages(framework);
+CREATE INDEX IF NOT EXISTS idx_mocks_category   ON mock_usages(category);
 CREATE INDEX IF NOT EXISTS idx_test_files_repo  ON test_files(repo_id);
 CREATE INDEX IF NOT EXISTS idx_test_commits_repo ON test_commits(repo_id);
 CREATE INDEX IF NOT EXISTS idx_test_commits_role ON test_commits(commit_role);
@@ -643,10 +646,10 @@ def insert_mock_usage(conn: sqlite3.Connection, mock: dict) -> None:
         conn.execute(
             """
             INSERT INTO mock_usages (
-                fixture_id, repo_id, framework, target_identifier,
+                fixture_id, repo_id, framework, category, target_identifier,
                 num_interactions_configured, raw_snippet
             ) VALUES (
-                :fixture_id, :repo_id, :framework, :target_identifier,
+                :fixture_id, :repo_id, :framework, :category, :target_identifier,
                 :num_interactions_configured, :raw_snippet
             )
         """,

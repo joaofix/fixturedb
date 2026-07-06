@@ -247,6 +247,15 @@ usage, and the structural fact that anything mocked outside a fixture's own
 body — most notably Jest's conventional top-level `jest.mock(...)` — is
 invisible to this detector).
 
+Each `mock_patterns` entry also carries a `category`, classifying the
+detected construct into the classic test-double taxonomy (dummy/stub/spy/
+mock/fake, per Meszaros). This is a new `mock_usages.category` column, not
+just a documentation addition — see [Fixture Detection Logic](detection.md)
+for the classification methodology (keyword match first, then a small,
+individually-justified manual-override list for the handful of constructs
+whose name contains no category keyword) and why `dummy` is deliberately
+never assigned.
+
 Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
 and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain
 plain constants directly in `collection/config.py` — they're single values

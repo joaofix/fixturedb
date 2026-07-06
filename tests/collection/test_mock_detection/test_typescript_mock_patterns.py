@@ -54,5 +54,37 @@ beforeEach(() => {
         assert fixture.fixture_type == "before_each"
 
 
+class TestTypeScriptVitestPatterns:
+    """Vitest mock patterns (previously had no dedicated test coverage)"""
+
+    def test_vi_fn(self):
+        """vi.fn() -- category is a documented override ("fn" contains no
+        category keyword; Vitest's docs also call these "mock functions",
+        same reasoning as jest.fn())."""
+        code = """
+beforeEach(() => {
+    const callback = vi.fn();
+    callback.mockReturnValue(42);
+});
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
+        assert fixture.mocks
+        assert fixture.mocks[0].framework == "vitest"
+        assert fixture.mocks[0].category == "mock"
+
+    def test_vi_mock(self):
+        """vi.mock('./module') -- category resolves via keyword match."""
+        code = """
+beforeEach(() => {
+    vi.mock('./service');
+});
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
+        assert fixture.mocks
+        assert fixture.mocks[0].framework == "vitest"
+        assert fixture.mocks[0].category == "mock"
+        assert fixture.mocks[0].target_identifier == "./service"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

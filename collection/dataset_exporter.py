@@ -365,6 +365,7 @@ Contains mock framework usage.
 | fixture_id | INTEGER | Foreign key to fixtures |
 | repo_id | INTEGER | Foreign key to repositories |
 | framework | TEXT | Mock framework (unittest.mock, pytest-mock, etc.) |
+| category | TEXT | Test-double taxonomy: dummy/stub/spy/mock/fake (Meszaros) -- see collection/config_data/feature_extraction_patterns.yaml |
 | target_identifier | TEXT | What is being mocked |
 | num_interactions_configured | INTEGER | Number of interactions/assertions |
 | raw_snippet | TEXT | Mock configuration code |

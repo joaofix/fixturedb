@@ -145,9 +145,30 @@ Mock usage is detected in a **second pass** after fixture extraction using regex
 
 For each mock detected, we record:
 - **framework**: Mock framework name (e.g., `mockito`, `unittest_mock`, `sinon`)
+- **category**: Classic test-double taxonomy (Meszaros; see also Fowler's "Mocks Aren't Stubs") — `dummy`/`stub`/`spy`/`mock`/`fake`
 - **target_identifier**: What is being mocked (if extractable)
 - **num_interactions_configured**: Count of assertions/verifications
 - **raw_snippet**: Code snippet for manual inspection
+
+**Test-double category classification**: each `mock_patterns` entry is
+classified by searching the *construct's own name* (not the captured
+target) for a category keyword, case-insensitively, in priority order
+`dummy > stub > spy > fake > mock` — "mock" is treated as the least
+specific category since both the literature and developers use it
+informally as the name for the whole family. Most constructs resolve this
+way directly (`sinon.spy` → spy, `sinon.stub` → stub). A handful contain no
+category keyword at all (`create_autospec`, bare `patch()`/`patch.object()`,
+`monkeypatch.*`, `jest.fn()`/`vi.fn()`, `sinon.replace()`,
+`gomock.NewController`, testify's `.On()`) and are classified instead by a
+documented manual override (`category_override_reason` in the YAML),
+reasoned from that construct's actual documented behavior — e.g.
+`monkeypatch` is `stub`, not `mock`, because it substitutes predetermined
+behavior with no built-in call-verification API. **`dummy` is never
+assigned**: distinguishing a dummy from a mock depends on how the double is
+*used* afterward (configured/verified, or not), which needs data-flow
+analysis of the fixture body — not a simple keyword match — so per this
+project's preference for high-precision, simple heuristics over
+completeness, it's left undetected rather than guessed.
 
 **Scope limitation**: detection only scans the fixture's own AST node
 text — a mock set up at module level or in a shared helper outside the

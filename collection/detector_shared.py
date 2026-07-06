@@ -80,6 +80,8 @@ class MockResult:
     target_identifier: str
     num_interactions_configured: int
     raw_snippet: str
+    category: str = ""  # test-double taxonomy: dummy/stub/spy/mock/fake -- see
+    # feature_extraction_patterns.yaml's "Test-double category classification"
 
 
 @dataclass
@@ -219,8 +221,9 @@ SNIPPET_CONTEXT_AFTER = 60  # characters after match in mock detection
 # Mock detection (language-agnostic heuristic pass)
 # ---------------------------------------------------------------------------
 
-MOCK_PATTERNS: list[tuple[str, str]] = [
-    (entry["pattern"], entry["framework"]) for entry in _PATTERNS["mock_patterns"]
+MOCK_PATTERNS: list[tuple[str, str, str]] = [
+    (entry["pattern"], entry["framework"], entry["category"])
+    for entry in _PATTERNS["mock_patterns"]
 ]
 
 MOCK_INTERACTION_PATTERN = "|".join(_PATTERNS["mock_interaction_keywords"])
@@ -229,7 +232,7 @@ MOCK_INTERACTION_PATTERN = "|".join(_PATTERNS["mock_interaction_keywords"])
 def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
     text = _source(node, src_bytes)
     found = []
-    for pattern, framework in MOCK_PATTERNS:
+    for pattern, framework, category in MOCK_PATTERNS:
         for m in re.finditer(pattern, text):
             target = m.group(1) if m.lastindex and m.lastindex >= 1 else ""
             snippet_start = max(m.start() - SNIPPET_CONTEXT_BEFORE, 0)
@@ -250,6 +253,7 @@ def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
                     target_identifier=target,
                     num_interactions_configured=interactions,
                     raw_snippet=snippet,
+                    category=category,
                 )
             )
     return found
