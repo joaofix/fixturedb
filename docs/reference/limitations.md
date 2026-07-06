@@ -115,7 +115,7 @@ a reviewer can check against without reading `detector_python.py` /
 
 ## Mock Detection
 
-40+ framework patterns detected (`unittest.mock`, `pytest-mock`, Mockito, Jest, Sinon, Vitest). Coverage excludes niche frameworks and non-standard APIs. Detects mocks within fixtures only, not test bodies. Treat `num_mocks=0` as reliable; use `num_mocks>0` as presence indicator, not exact count.
+16 regex patterns across 10 mock frameworks detected (`unittest.mock`, `pytest-mock`, Mockito, EasyMock, MockK, Jest, Sinon, Vitest, gomock, testify — see the full, exact list in [collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)'s `mock_patterns`). Coverage excludes niche frameworks (e.g. PowerMock) and non-standard APIs. Detects mocks within fixtures only, not test bodies. Treat `num_mocks=0` as reliable; use `num_mocks>0` as presence indicator, not exact count.
 
 ---
 

@@ -4,8 +4,11 @@ These exist to catch a malformed future edit to one of the YAML files
 (typo, empty list, wrong shape) -- not to test collection logic itself.
 """
 
+import re
+
 from collection.config_data import (
     load_exclusion_keywords,
+    load_feature_extraction_patterns,
     load_fixture_definitions,
     load_framework_registry,
     load_language_configs_data,
@@ -108,3 +111,107 @@ def test_fixture_definitions_javascript_typescript_shapes_and_scopes():
             assert fields["scope"] in VALID_SCOPES
             assert fields["fixture_type"].strip()
     assert js_defs["excluded"], "javascript_typescript must document known boundary cases"
+
+
+def _all_known_fixture_types() -> set[str]:
+    """Every fixture_type value that fixture_definitions.yaml can produce
+    (including the dormant junit4_before_class/after_class, kept in case
+    the JUnit4/TestNG ambiguity is ever disambiguated -- see java.known_imprecisions)."""
+    defs = load_fixture_definitions()
+    types: set[str] = set()
+
+    python_defs = defs["python"]
+    types.add(python_defs["pytest_decorator"]["fixture_type"])
+    types.update(python_defs["behave_steps"]["type_map"].values())
+    types.add(python_defs["unittest_setup"]["fixture_type"])
+    types.add(python_defs["pytest_class_method"]["fixture_type"])
+    types.add(python_defs["nose_fixture"]["fixture_type"])
+
+    java_defs = defs["java"]
+    types.update(f["fixture_type"] for f in java_defs["annotations"].values())
+    types.update(java_defs["junit3_fallback"]["names"].values())
+    for f in java_defs["ambiguous_annotations"].values():
+        types.add(f["junit4_fixture_type"])
+        types.add(f["testng_fixture_type"])
+
+    js_defs = defs["javascript_typescript"]
+    for section in ("hooks", "ava_patterns", "ts_decorators"):
+        types.update(f["fixture_type"] for f in js_defs[section].values())
+
+    return types
+
+
+def test_feature_extraction_patterns_has_expected_top_level_sections():
+    patterns = load_feature_extraction_patterns()
+    assert set(patterns) == {
+        "mock_patterns",
+        "mock_interaction_keywords",
+        "external_call_patterns",
+        "object_instantiation_patterns",
+        "teardown_detection",
+    }
+
+
+def test_mock_patterns_are_valid_regex_with_framework():
+    for entry in load_feature_extraction_patterns()["mock_patterns"]:
+        re.compile(entry["pattern"])
+        assert entry["framework"].strip()
+
+
+def test_external_call_patterns_are_valid_regex():
+    for entry in load_feature_extraction_patterns()["external_call_patterns"]:
+        re.compile(entry["pattern"])
+        assert entry["matches"].strip()
+
+
+def test_object_instantiation_patterns_are_valid_regex():
+    for entry in load_feature_extraction_patterns()["object_instantiation_patterns"]:
+        re.compile(entry["pattern"])
+        assert entry["languages"] is None or isinstance(entry["languages"], list)
+
+
+def test_mock_interaction_keywords_are_non_empty_strings():
+    keywords = load_feature_extraction_patterns()["mock_interaction_keywords"]
+    assert keywords
+    for kw in keywords:
+        assert isinstance(kw, str) and kw.strip()
+
+
+def test_teardown_detection_pairs_reference_only_real_fixture_types():
+    """Guardrail against the exact bug this catalog fixed: dead fixture
+    types (nunit_setup, xunit_fact, ...) that no detector produces, and
+    typos in fixture_type names, should never sneak back into the pairing
+    tables."""
+    known_types = _all_known_fixture_types()
+    teardown = load_feature_extraction_patterns()["teardown_detection"]
+
+    for fixture_type in teardown["yield_based_fixture_types"]:
+        assert fixture_type in known_types, fixture_type
+
+    for fixture_type, name_map in teardown["name_based_pairs"].items():
+        assert fixture_type in known_types, fixture_type
+        assert name_map, f"{fixture_type} must have at least one name pair"
+
+    for setup_type, teardown_type in teardown["type_based_pairs"].items():
+        assert setup_type in known_types, setup_type
+        assert teardown_type in known_types, teardown_type
+
+
+def test_teardown_detection_name_based_pairs_match_fixture_definitions_names():
+    """The exact setup->teardown name pairs here must stay in sync with
+    fixture_definitions.yaml's name maps (see the note in
+    feature_extraction_patterns.yaml's name_based_pairs)."""
+    python_defs = load_fixture_definitions()["python"]
+    name_based = load_feature_extraction_patterns()["teardown_detection"][
+        "name_based_pairs"
+    ]
+
+    for fixture_type, expected_names in (
+        ("unittest_setup", {"setUp", "setUpClass", "setUpModule"}),
+        ("pytest_class_method", {"setup_method", "setup_class"}),
+        ("nose_fixture", {"setup", "setup_module", "setup_package"}),
+    ):
+        catalog_names = set(python_defs[fixture_type]["names"])
+        pair_setup_names = set(name_based[fixture_type])
+        assert pair_setup_names == expected_names
+        assert pair_setup_names <= catalog_names

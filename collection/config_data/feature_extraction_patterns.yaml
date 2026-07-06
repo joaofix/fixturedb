@@ -1,0 +1,157 @@
+# Regex/heuristic pattern catalogs behind the quantitative fixture metrics
+# computed in collection/detector_shared.py and collection/complexity_provider.py:
+# mock-framework detection, external I/O call detection, object-instantiation
+# (constructor) detection, and setup/teardown pairing.
+#
+# Executable source of truth, loaded via
+# collection/config_data/load_feature_extraction_patterns() -- editing a
+# pattern or pairing here is a YAML change, not a Python change. Same intent
+# as fixture_definitions.yaml: make the metric-detection signal auditable
+# without reading multiple Python functions across two files.
+
+# Each entry: pattern (regex, applied case-insensitively against the
+# fixture's own source text) + the mock framework it signals. Order doesn't
+# affect results -- every pattern is scanned against every fixture body, so a
+# fixture can match more than one framework/pattern.
+mock_patterns:
+  # Python
+  - pattern: 'mock\.patch\s*\(\s*[''"]([^''"]+)[''"]'
+    framework: unittest_mock
+  - pattern: 'mocker\.patch\s*\(\s*[''"]([^''"]+)[''"]'
+    framework: pytest_mock
+  - pattern: 'MagicMock\s*\(|Mock\s*\(|AsyncMock\s*\('
+    framework: unittest_mock
+  # Java
+  - pattern: 'Mockito\.mock\s*\(\s*(\w+)\.class'
+    framework: mockito
+  - pattern: '@Mock\b'
+    framework: mockito
+  - pattern: 'EasyMock\.createMock\s*\(\s*(\w+)\.class'
+    framework: easymock
+  - pattern: 'mock\s*\(\s*(\w+)\.class'
+    framework: mockk  # MockK (Kotlin)
+  # JavaScript / TypeScript
+  - pattern: 'jest\.fn\s*\('
+    framework: jest
+  - pattern: 'jest\.spyOn\s*\('
+    framework: jest
+  - pattern: 'jest\.mock\s*\(\s*[''"]([^''"]+)[''"]'
+    framework: jest
+  - pattern: 'sinon\.(stub|spy|mock)\s*\('
+    framework: sinon
+  - pattern: 'vi\.fn\s*\('
+    framework: vitest
+  - pattern: 'vi\.mock\s*\(\s*[''"]([^''"]+)[''"]'
+    framework: vitest
+  # Go (detector_go.py is dead code / not wired in -- kept for parity with
+  # the original pattern table in case Go detection is ever enabled)
+  - pattern: 'gomock\.NewController'
+    framework: gomock
+  - pattern: 'testify/mock'
+    framework: testify_mock
+  - pattern: '\.On\s*\(\s*[''"](\w+)[''"]'
+    framework: testify_mock
+
+# Substrings counted (near a mock_patterns match) to estimate how many
+# interactions/assertions were configured on that mock.
+mock_interaction_keywords:
+  - return_value
+  - side_effect
+  - thenReturn
+  - thenThrow
+  - doReturn
+
+# Patterns counted as "external calls" (I/O / system operations), matched
+# case-insensitively against the fixture's own source text. This is a
+# custom heuristic since Lizard's external_call_count measures
+# inter-function calls within the module, not I/O specifically.
+external_call_patterns:
+  - pattern: '\bopen\s*\('
+    matches: "file I/O"
+  - pattern: '\bconnect\s*\('
+    matches: "db/network connections"
+  - pattern: '\bcreate_engine\s*\('
+    matches: "SQLAlchemy engine creation"
+  - pattern: '\bsession\s*\.'
+    matches: "db sessions"
+  - pattern: '\brequests?\.'
+    matches: "HTTP (requests library)"
+  - pattern: '\bhttpclient\b'
+    matches: "HTTP client (Go/Java)"
+  - pattern: '\bos\.environ\b'
+    matches: "environment/config access"
+  - pattern: '\bsubprocess\.'
+    matches: "subprocess calls"
+  - pattern: '\bsocket\s*\('
+    matches: "raw sockets"
+  - pattern: '\btempfile\.'
+    matches: "filesystem temp files"
+  - pattern: '\bshutil\.'
+    matches: "filesystem operations"
+
+# Patterns counted as object instantiations (constructors), filtered against
+# Lizard's external_call_count for validation (see
+# complexity_provider._count_object_instantiations). `languages: null` means
+# the pattern applies to every language; otherwise it's restricted to the
+# listed languages.
+object_instantiation_patterns:
+  - pattern: '\bnew\s+\w+\s*(?:<.+?>)?\s*\('
+    languages: null
+    note: >
+      Java/JavaScript/TypeScript: new ClassName(...) or new
+      ClassName<T>(...), including nested generics.
+  - pattern: '\b[A-Z][A-Za-z0-9_]*\s*\('
+    languages: [python]
+    note: >
+      Heuristic: capitalized call ClassName(...) -- catches real
+      constructors and factory functions styled like constructors. Not
+      restricted to Python's actual class names, so it can overcount.
+
+# Setup/teardown pairing (has_teardown_pair), split by detection mechanism:
+teardown_detection:
+  # fixture_type values where "has a teardown" is read directly from the
+  # fixture's own body (a yield statement), not paired against another
+  # fixture.
+  yield_based_fixture_types: [pytest_decorator]
+
+  # fixture_type values where setup and teardown share the SAME fixture_type
+  # and are distinguished only by name (e.g. unittest_setup covers both
+  # "setUp" and "tearDown"). Maps fixture_type -> {setup_name: teardown_name}.
+  # These names must stay in sync with this file's python.unittest_setup /
+  # python.pytest_class_method / python.nose_fixture name maps (fixture_definitions.yaml).
+  name_based_pairs:
+    unittest_setup:
+      setUp: tearDown
+      setUpClass: tearDownClass
+      setUpModule: tearDownModule
+    pytest_class_method:
+      setup_method: teardown_method
+      setup_class: teardown_class
+    nose_fixture:
+      setup: teardown
+      setup_module: teardown_module
+      setup_package: teardown_package
+
+  # fixture_type values where setup and teardown are DIFFERENT fixture_types,
+  # paired by type + matching scope (e.g. junit5_before_each's teardown is a
+  # separate junit5_after_each fixture in the same class). Maps
+  # setup_fixture_type -> teardown_fixture_type.
+  #
+  # junit4_before_class/junit4_after_class are included even though the
+  # ambiguous @BeforeClass/@AfterClass resolution currently always produces
+  # testng_before_class/testng_after_class instead (see
+  # fixture_definitions.yaml's java.known_imprecisions) -- kept dormant here
+  # so this mapping doesn't need to change if that disambiguation improves.
+  type_based_pairs:
+    junit5_before_each: junit5_after_each
+    junit5_before_all: junit5_after_all
+    junit4_before: junit4_after
+    junit4_before_class: junit4_after_class
+    testng_before_method: testng_after_method
+    testng_before_class: testng_after_class
+    junit3_setup: junit3_teardown
+    before_each: after_each
+    before_all: after_all
+    mocha_before: mocha_after
+    ava_before: ava_after
+    ava_serial_before: ava_serial_after

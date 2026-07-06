@@ -8,13 +8,17 @@ Each catalog lives in its own file, next to this one, as plain data:
 - fixture_definitions.yaml -- operational definition of "fixture" per language
   (see that file's header comment for the schema and the per-language
   `excluded` boundary-case catalog)
+- feature_extraction_patterns.yaml -- mock-framework/external-call/
+  object-instantiation regex tables and setup/teardown pairing rules behind
+  the quantitative fixture metrics (see that file's header comment)
 
 collection/config.py loads the first four and derives the module-level
 constants (NON_CODE_EXTENSIONS, EXCLUSION_KEYWORDS, FRAMEWORK_REGISTRY,
 LANGUAGE_CONFIGS) existing call sites already use; collection/detector_python.py,
 detector_java.py, and detector_javascript.py load fixture_definitions.yaml and
-derive their own pattern tables -- editing a catalog is a YAML change, not a
-Python change.
+derive their own pattern tables; collection/detector_shared.py and
+complexity_provider.py load feature_extraction_patterns.yaml -- editing a
+catalog is a YAML change, not a Python change.
 """
 
 from pathlib import Path
@@ -58,3 +62,14 @@ def load_fixture_definitions() -> Dict[str, Any]:
     documented boundary cases -- see fixture_definitions.yaml's header.
     """
     return _load_yaml("fixture_definitions.yaml")
+
+
+def load_feature_extraction_patterns() -> Dict[str, Any]:
+    """Return the parsed feature-extraction pattern catalog.
+
+    Holds mock_patterns, mock_interaction_keywords, external_call_patterns,
+    object_instantiation_patterns, and teardown_detection (yield-based,
+    name-based, and type-based setup/teardown pairing rules) -- see
+    feature_extraction_patterns.yaml's header for the full schema.
+    """
+    return _load_yaml("feature_extraction_patterns.yaml")

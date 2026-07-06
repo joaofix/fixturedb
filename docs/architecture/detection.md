@@ -137,10 +137,10 @@ For detailed metric definitions, calculations, and academic references, see **[m
 
 ## Mock Framework Detection
 
-Mock usage is detected in a **second pass** after fixture extraction using regex patterns covering **40+ patterns** across:
+Mock usage is detected in a **second pass** after fixture extraction using regex patterns across:
 
 - **Python**: `unittest.mock`, `pytest-mock`, `MagicMock`, `patch`, `Mock.assert_*()`
-- **Java**: Mockito, EasyMock, PowerMock, MockK
+- **Java**: Mockito, EasyMock, MockK
 - **JavaScript/TypeScript**: Jest, Sinon, Vitest
 
 For each mock detected, we record:
@@ -148,6 +148,14 @@ For each mock detected, we record:
 - **target_identifier**: What is being mocked (if extractable)
 - **num_interactions_configured**: Count of assertions/verifications
 - **raw_snippet**: Code snippet for manual inspection
+
+The regex patterns themselves (`mock_patterns`), the interaction keywords
+used to count `num_interactions_configured` (`mock_interaction_keywords`),
+and the I/O-call patterns behind `num_external_calls`
+(`external_call_patterns`) all live in
+[collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
+rather than hardcoded in `detector_shared.py` — see
+[configuration.md](configuration.md#reference-data-catalogs).
 
 ---
 
@@ -163,7 +171,8 @@ For each mock detected, we record:
 
 **Fixture Reuse Count** — Counts test functions using each fixture (via parameter injection in pytest).
 
-**Teardown Pairing** — Detects cleanup logic paired with setup (Python: `yield` or paired `setUp`/`tearDown`; Java: `@Before`/`@After`; JavaScript: `before`/`after`).
+**Teardown Pairing** — Detects cleanup logic paired with setup, via three mechanisms (see `feature_extraction_patterns.yaml`'s `teardown_detection`):
+a `yield` statement in the fixture's own body (pytest); the same fixture_type distinguished only by name, e.g. `setUp`/`tearDown`, `setup_method`/`teardown_method`, `setup_module`/`teardown_module` (unittest, pytest class-style, nose); or a different fixture_type at matching scope, e.g. `@BeforeEach`/`@AfterEach`, `@BeforeMethod`/`@AfterMethod` (TestNG), `beforeAll`/`afterAll`, `before`/`after` (Mocha), `test.before`/`test.after` (AVA), and JUnit3-style `setUp()`/`tearDown()`. Only the setup-side fixture is flagged (`has_teardown_pair=1`), not the teardown fixture itself.
 
 **Fixture Dependencies** (Python/pytest only) — Identifies fixture-to-fixture dependencies via parameter injection.
 

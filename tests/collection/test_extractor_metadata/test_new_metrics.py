@@ -212,10 +212,10 @@ def simple_fixture():
 class TestExample(unittest.TestCase):
     def setUp(self):
         self.resource = Resource()
-    
+
     def tearDown(self):
         self.resource.cleanup()
-    
+
     def test_something(self):
         assert True
 """
@@ -225,9 +225,11 @@ class TestExample(unittest.TestCase):
             f.write(code)
             f.flush()
             result = extract_fixtures(Path(f.name), "python")
-            # Should detect tearDown paired with setUp
-            # (Detection logic is simplified for non-Python; exact behavior depends on implementation)
-            assert len(result.fixtures) >= 0  # Just verify extraction doesn't crash
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            teardown = next(f for f in result.fixtures if f.name == "tearDown")
+            assert setup.has_teardown_pair == 1
+            # Only the setup-side fixture is flagged, not the teardown itself.
+            assert teardown.has_teardown_pair == 0
 
     def test_unittest_setup_without_teardown(self):
         """unittest setUp without tearDown should have has_teardown_pair=0."""
@@ -235,7 +237,7 @@ class TestExample(unittest.TestCase):
 class TestExample(unittest.TestCase):
     def setUp(self):
         self.resource = Resource()
-    
+
     def test_something(self):
         assert True
 """
@@ -245,8 +247,151 @@ class TestExample(unittest.TestCase):
             f.write(code)
             f.flush()
             result = extract_fixtures(Path(f.name), "python")
-            # Should detect no tearDown paired with setUp
-            assert len(result.fixtures) >= 0  # Just verify extraction doesn't crash
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.has_teardown_pair == 0
+
+    def test_pytest_class_method_setup_teardown_pair(self):
+        """pytest-style setup_method/teardown_method (snake_case, not
+        setUp/tearDown) should be paired -- this was previously broken: the
+        old code checked for a literal fixture_type of "setup_method" (which
+        never occurs; the real fixture_type is "pytest_class_method" for
+        both) and used a camelCase setUp->tearDown string replacement that
+        is a no-op on snake_case names."""
+        code = """
+class TestClass:
+    def setup_method(self):
+        self.db = connect()
+
+    def teardown_method(self):
+        self.db.close()
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setup_method")
+            teardown = next(f for f in result.fixtures if f.name == "teardown_method")
+            assert setup.fixture_type == teardown.fixture_type == "pytest_class_method"
+            assert setup.has_teardown_pair == 1
+            assert teardown.has_teardown_pair == 0
+
+    def test_nose_setup_module_teardown_module_pair(self):
+        """Nose-style setup_module/teardown_module should be paired -- this
+        fixture_type wasn't handled by any branch of the old pairing logic
+        at all."""
+        code = """
+def setup_module():
+    global db
+    db = create_db()
+
+def teardown_module():
+    db.close()
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setup_module")
+            assert setup.fixture_type == "nose_fixture"
+            assert setup.has_teardown_pair == 1
+
+    def test_java_junit3_setup_teardown_pair(self):
+        """JUnit3-style setUp()/tearDown() (no annotations) should be
+        paired -- previously unhandled because junit3_setup/junit3_teardown
+        wasn't in any pairing table at all."""
+        code = """
+public class LegacyTest extends TestCase {
+    public void setUp() {
+        resource = new Resource();
+    }
+    public void tearDown() {
+        resource.close();
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(f for f in result.fixtures if f.fixture_type == "junit3_setup")
+            assert setup.has_teardown_pair == 1
+
+    def test_java_testng_before_after_method_pair(self):
+        """TestNG @BeforeMethod/@AfterMethod should be paired -- previously
+        missing from the type-based pairing table entirely."""
+        code = """
+public class ServiceTest {
+    @BeforeMethod
+    public void setUp() { init(); }
+    @AfterMethod
+    public void tearDown() { cleanup(); }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(
+                f for f in result.fixtures if f.fixture_type == "testng_before_method"
+            )
+            assert setup.has_teardown_pair == 1
+
+    def test_javascript_mocha_before_after_pair(self):
+        """Mocha bare before()/after() should be paired -- previously
+        missing (only junit5_before_each/junit4_before/before_each were
+        mapped)."""
+        code = """
+before(function() { setup(); });
+after(function() { teardown(); });
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            setup = next(f for f in result.fixtures if f.fixture_type == "mocha_before")
+            assert setup.has_teardown_pair == 1
+
+    def test_javascript_before_all_after_all_pair(self):
+        """beforeAll/afterAll should be paired -- previously missing (only
+        before_each/after_each was mapped, not the *_all variants)."""
+        code = """
+beforeAll(() => { setup(); });
+afterAll(() => { teardown(); });
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            setup = next(f for f in result.fixtures if f.fixture_type == "before_all")
+            assert setup.has_teardown_pair == 1
+
+    def test_ava_before_after_pair(self):
+        """AVA test.before()/test.after() should be paired -- previously
+        missing from the type-based pairing table entirely."""
+        code = """
+test.before(t => { setup(); });
+test.after(t => { teardown(); });
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            setup = next(f for f in result.fixtures if f.fixture_type == "ava_before")
+            assert setup.has_teardown_pair == 1
 
 
 class TestFixtureResultStructure:

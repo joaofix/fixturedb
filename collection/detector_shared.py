@@ -8,6 +8,12 @@ post-processing passes that need to see the whole fixture list at once
 (reuse counts, dependency detection, scope propagation, teardown pairing) —
 none of these can live in a single per-language file because they either
 span languages or need the full fixture set as context.
+
+The mock/external-call/object-instantiation regex tables and the
+setup/teardown pairing rules are loaded from
+collection/config_data/feature_extraction_patterns.yaml rather than
+hardcoded here -- see that file for the full catalog and the reasoning
+behind each pairing.
 """
 
 import re
@@ -17,8 +23,11 @@ from typing import Optional
 from collection.logging_utils import get_logger
 
 from .complexity_provider import analyze_function_complexity
+from .config_data import load_feature_extraction_patterns
 
 logger = get_logger(__name__)
+
+_PATTERNS = load_feature_extraction_patterns()
 
 # ---------------------------------------------------------------------------
 # Lazy-load Tree-sitter grammars to avoid import overhead when unused
@@ -181,6 +190,11 @@ def _compute_nesting_depth(node) -> int:
 # ---------------------------------------------------------------------------
 
 
+EXTERNAL_CALL_PATTERNS: list[str] = [
+    entry["pattern"] for entry in _PATTERNS["external_call_patterns"]
+]
+
+
 def _count_external_calls(node, src_bytes: bytes) -> int:
     """
     Count calls that look like external I/O or system operations.
@@ -191,20 +205,7 @@ def _count_external_calls(node, src_bytes: bytes) -> int:
     Detects patterns like: database, network, file I/O, and subprocess calls.
     """
     text = _source(node, src_bytes).lower()
-    external_patterns = [
-        r"\bopen\s*\(",  # file
-        r"\bconnect\s*\(",  # db/network
-        r"\bcreate_engine\s*\(",  # SQLAlchemy
-        r"\bsession\s*\.",  # db sessions
-        r"\brequests?\.",  # HTTP
-        r"\bhttpclient\b",  # Go / Java
-        r"\bos\.environ\b",  # env config
-        r"\bsubprocess\.",  # subprocess
-        r"\bsocket\s*\(",  # raw sockets
-        r"\btempfile\.",  # filesystem
-        r"\bshutil\.",  # filesystem
-    ]
-    return sum(len(re.findall(p, text)) for p in external_patterns)
+    return sum(len(re.findall(p, text)) for p in EXTERNAL_CALL_PATTERNS)
 
 
 # ---------------------------------------------------------------------------
@@ -218,28 +219,11 @@ SNIPPET_CONTEXT_AFTER = 60  # characters after match in mock detection
 # Mock detection (language-agnostic heuristic pass)
 # ---------------------------------------------------------------------------
 
-MOCK_PATTERNS = [
-    # Python
-    (r"mock\.patch\s*\(\s*['\"]([^'\"]+)['\"]", "unittest_mock"),
-    (r"mocker\.patch\s*\(\s*['\"]([^'\"]+)['\"]", "pytest_mock"),
-    (r"MagicMock\s*\(|Mock\s*\(|AsyncMock\s*\(", "unittest_mock"),
-    # Java
-    (r"Mockito\.mock\s*\(\s*(\w+)\.class", "mockito"),
-    (r"@Mock\b", "mockito"),
-    (r"EasyMock\.createMock\s*\(\s*(\w+)\.class", "easymock"),
-    (r"mock\s*\(\s*(\w+)\.class", "mockk"),  # MockK (Kotlin)
-    # JavaScript / TypeScript
-    (r"jest\.fn\s*\(", "jest"),
-    (r"jest\.spyOn\s*\(", "jest"),
-    (r"jest\.mock\s*\(\s*['\"]([^'\"]+)['\"]", "jest"),
-    (r"sinon\.(stub|spy|mock)\s*\(", "sinon"),
-    (r"vi\.fn\s*\(", "vitest"),
-    (r"vi\.mock\s*\(\s*['\"]([^'\"]+)['\"]", "vitest"),
-    # Go
-    (r"gomock\.NewController", "gomock"),
-    (r"testify/mock", "testify_mock"),
-    (r"\.On\s*\(\s*['\"](\w+)['\"]", "testify_mock"),
+MOCK_PATTERNS: list[tuple[str, str]] = [
+    (entry["pattern"], entry["framework"]) for entry in _PATTERNS["mock_patterns"]
 ]
+
+MOCK_INTERACTION_PATTERN = "|".join(_PATTERNS["mock_interaction_keywords"])
 
 
 def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
@@ -255,7 +239,7 @@ def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
             # Count .return_value / .side_effect / when(...).thenReturn style
             interactions = len(
                 re.findall(
-                    r"return_value|side_effect|thenReturn|thenThrow|doReturn",
+                    MOCK_INTERACTION_PATTERN,
                     text[m.start() : m.end() + 200],
                 )
             )
@@ -623,67 +607,57 @@ def _propagate_fixture_scopes(fixtures: list[FixtureResult]) -> None:
             break
 
 
+_TEARDOWN_DETECTION = _PATTERNS["teardown_detection"]
+YIELD_BASED_TEARDOWN_TYPES: set[str] = set(
+    _TEARDOWN_DETECTION["yield_based_fixture_types"]
+)
+NAME_BASED_TEARDOWN_PAIRS: dict[str, dict[str, str]] = _TEARDOWN_DETECTION[
+    "name_based_pairs"
+]
+TYPE_BASED_TEARDOWN_PAIRS: dict[str, str] = _TEARDOWN_DETECTION["type_based_pairs"]
+
+
 def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
     """
     Post-process fixtures to detect has_teardown_pair: whether a fixture has cleanup logic.
 
-    For Python pytest:
-      - checks if fixture has 'yield' statement (fixture-style teardown)
-    For Python unittest:
-      - setUp is paired with tearDown
-    For Java/etc:
-      - @BeforeEach is paired with @AfterEach
-      - @Before is paired with @After
-      - etc.
+    Three detection mechanisms, all driven by
+    collection/config_data/feature_extraction_patterns.yaml's
+    teardown_detection table:
+      - yield_based: pytest fixtures -- checks for a 'yield' statement in the
+        fixture's own body (no pairing against another fixture needed).
+      - name_based: setup and teardown share the same fixture_type and are
+        distinguished only by name (unittest_setup, pytest_class_method,
+        nose_fixture) -- paired by exact setup-name -> teardown-name.
+      - type_based: setup and teardown are different fixture_types, paired
+        by type + matching scope (e.g. junit5_before_each/junit5_after_each).
 
-    Modifies fixtures in-place.
+    Only the setup-side fixture of a pair is flagged (has_teardown_pair=1);
+    the teardown-side fixture itself is not, matching this column's existing
+    semantics. Modifies fixtures in-place.
     """
-    # Group fixtures by type/scope to find pairs
-    fixture_types_setup = {
-        "pytest_decorator",
-        "unittest_setup",
-        "junit5_before_each",
-        "junit4_before",
-        "before_each",
-        "nunit_setup",
-        "xunit_fact",
-        "xunit_theory",
-    }
-
     for fixture in fixtures:
         has_teardown = False
 
-        # For pytest: check if source has 'yield' (fixture cleanup)
-        if fixture.fixture_type == "pytest_decorator":
+        if fixture.fixture_type in YIELD_BASED_TEARDOWN_TYPES:
             has_teardown = "yield" in fixture.raw_source
 
-        # For unittest: check if there's a matching tearDown
-        elif fixture.fixture_type in ("unittest_setup", "setup_method", "setup_class"):
-            matching_name = fixture.name.replace("setUp", "tearDown")
-            for other in fixtures:
-                if other.name == matching_name and other.fixture_type.replace(
-                    "setUp", "tearDown"
-                ) == fixture.fixture_type.replace("setUp", "tearDown"):
-                    has_teardown = True
-                    break
+        elif fixture.fixture_type in NAME_BASED_TEARDOWN_PAIRS:
+            expected_name = NAME_BASED_TEARDOWN_PAIRS[fixture.fixture_type].get(
+                fixture.name
+            )
+            if expected_name:
+                has_teardown = any(
+                    other.fixture_type == fixture.fixture_type
+                    and other.name == expected_name
+                    for other in fixtures
+                )
 
-        # For JUnit/xUnit: check for matching @After, @AfterEach, etc.
-        elif fixture.fixture_type in fixture_types_setup:
-            # Map setup types to teardown types
-            teardown_map = {
-                "junit5_before_each": "junit5_after_each",
-                "junit4_before": "junit4_after",
-                "before_each": "after_each",
-                "nunit_setup": "nunit_teardown",
-            }
-            expected_teardown = teardown_map.get(fixture.fixture_type)
-            if expected_teardown:
-                for other in fixtures:
-                    if (
-                        other.fixture_type == expected_teardown
-                        and other.scope == fixture.scope
-                    ):
-                        has_teardown = True
-                        break
+        elif fixture.fixture_type in TYPE_BASED_TEARDOWN_PAIRS:
+            expected_type = TYPE_BASED_TEARDOWN_PAIRS[fixture.fixture_type]
+            has_teardown = any(
+                other.fixture_type == expected_type and other.scope == fixture.scope
+                for other in fixtures
+            )
 
         fixture.has_teardown_pair = 1 if has_teardown else 0

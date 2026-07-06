@@ -209,6 +209,7 @@ production call site reads the YAML directly.
 | Per-language search/test-detection settings | `collection/config_data/language_configs.yaml` | `config.LANGUAGE_CONFIGS` |
 | Agent detection: config-file patterns + commit signatures | `collection/heuristics/agent_heuristics.yaml` | `agent_patterns.AGENT_SIGNATURES` / `PAPER_AGENT_CONFIG_PATTERNS` / `LIGHTWEIGHT_AGENT_CONFIG_PATTERNS` |
 | Operational definition of "fixture" per language (patterns + documented exclusions) | `collection/config_data/fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` pattern tables |
+| Mock-framework, external-call, object-instantiation regex tables + setup/teardown pairing rules | `collection/config_data/feature_extraction_patterns.yaml` | `detector_shared.py` (`MOCK_PATTERNS`, `EXTERNAL_CALL_PATTERNS`, teardown pairing) / `complexity_provider.py` (`_count_object_instantiations`) |
 
 The fixture-definitions catalog is also a reviewer-facing audit artifact, not
 just data: each language section has an `excluded` list documenting known
@@ -218,6 +219,18 @@ missing pattern is a documented decision rather than an oversight — see
 [Fixture Patterns Reference](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases),
 and [Limitations](../reference/limitations.md#fixture-detection-recall) for
 how this feeds into the paper's recall discussion.
+
+The feature-extraction-patterns catalog covers the metrics computed *after*
+a fixture is already detected (`num_mocks`, `num_external_calls`,
+`num_objects_instantiated`, `has_teardown_pair`): what regex signals a
+mock/I-O-call/constructor, and which setup fixture_types pair with which
+teardown fixture_types. Migrating this out of Python also fixed a real gap
+found while auditing it — the previous hardcoded teardown-pairing table
+referenced fixture types no detector in this codebase ever produces
+(`nunit_setup`, `xunit_fact`, `xunit_theory` — .NET frameworks, out of
+scope) while missing several pairs it should have had (TestNG, Mocha, AVA,
+`before_all`/`after_all`, JUnit3), so those fixture types never got credit
+for having a teardown even when one was present in the source.
 
 Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
 and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain

@@ -21,6 +21,10 @@ BENEFITS of using Lizard:
 - Reduces custom code maintenance burden
 - Better cross-language consistency
 - Academic credibility for published research
+
+The object-instantiation (constructor) regex patterns are loaded from
+collection/config_data/feature_extraction_patterns.yaml rather than
+hardcoded here -- see that file's `object_instantiation_patterns` section.
 """
 
 from pathlib import Path
@@ -28,9 +32,14 @@ from typing import Optional
 
 from lizard import analyze_file as lizard_analyze_file
 
+from collection.config_data import load_feature_extraction_patterns
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
+
+_OBJECT_INSTANTIATION_PATTERNS = load_feature_extraction_patterns()[
+    "object_instantiation_patterns"
+]
 
 
 def get_cyclomatic_complexity(file_path: Path, language: str) -> Optional[int]:
@@ -173,9 +182,10 @@ def _count_object_instantiations(
     constructor instantiations. This function filters the source code for constructor
     patterns and validates against Lizard's count to minimize false positives.
 
-    Constructor patterns recognized:
-    - Java/JS/TypeScript: new ClassName(...) or new ClassName<T>(...) with generics (including nested)
-    - Python: ClassName(...) where ClassName starts with uppercase (heuristic)
+    Constructor patterns are loaded from
+    collection/config_data/feature_extraction_patterns.yaml's
+    object_instantiation_patterns (Java/JS/TypeScript: new ClassName(...)
+    with generics; Python: capitalized ClassName(...) heuristic).
 
     Args:
         source_text: Source code as string
@@ -187,27 +197,18 @@ def _count_object_instantiations(
     """
     import re
 
-    # Define constructor patterns per language
     text = source_text
+    language_lower = language.lower()
 
-    # Counter for constructor patterns
-    constructor_patterns = []
-
-    # Java, JavaScript, TypeScript: new ClassName(...) or new ClassName<...>(...)
-    # Pattern handles generic type parameters, including nested generics like <String, List<T>>
-    # Greedy matching: (?:<.+?>)? matches from first < to last > to handle nesting
-    constructor_patterns.append(r"\bnew\s+\w+\s*(?:<.+?>)?\s*\(")
-
-    # Python: ClassName(...) where ClassName is capitalized (heuristic for constructors)
-    # This catches both actual constructors and factory methods that look like constructors
-    if language.lower() == "python":
-        constructor_patterns.append(r"\b[A-Z][A-Za-z0-9_]*\s*\(")
-
-    # Count matched patterns
+    # Count matches for every pattern that applies to this language (a null
+    # `languages` list means "applies to all languages" -- see
+    # feature_extraction_patterns.yaml's object_instantiation_patterns).
     constructor_count = 0
-    for pattern in constructor_patterns:
-        matches = re.findall(pattern, text)
-        constructor_count += len(matches)
+    for entry in _OBJECT_INSTANTIATION_PATTERNS:
+        allowed_languages = entry.get("languages")
+        if allowed_languages and language_lower not in allowed_languages:
+            continue
+        constructor_count += len(re.findall(entry["pattern"], text))
 
     # Validate against Lizard's count to avoid duplicates
     # Use the minimum to be conservative (avoid overcounting)
