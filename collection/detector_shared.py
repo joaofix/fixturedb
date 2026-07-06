@@ -100,9 +100,6 @@ class FixtureResult:
     num_objects_instantiated: int
     num_external_calls: int
     num_parameters: int
-    reuse_count: int = (
-        0  # number of test functions using this fixture (calculated later)
-    )
     has_teardown_pair: int = 0  # 1 if teardown/cleanup logic exists, 0 otherwise
     fixture_dependencies: list[str] = field(
         default_factory=list
@@ -322,7 +319,6 @@ def _build_result(
             node, src_bytes
         ),  # Custom regex for I/O patterns
         num_parameters=metrics.get("num_parameters", 0),
-        reuse_count=0,  # Calculated in post-processing
         has_teardown_pair=0,  # Calculated in post-processing
         raw_source=src_text,
         mocks=_extract_mocks(node, src_bytes),
@@ -447,73 +443,29 @@ def _count_test_functions(tree, src_bytes: bytes, language: str) -> int:
     return counter(tree, src_bytes) if counter else 0
 
 
-def _calculate_reuse_counts(
-    fixtures: list[FixtureResult], tree, src_bytes: bytes, language: str
-) -> None:
+def _extract_parameter_names(func_node, src_bytes: bytes) -> list[str]:
+    """Return this function/method node's parameter names, excluding `self`.
+
+    Reads each parameter's own AST node individually (not a manual
+    comma-split of the whole parameter-list text), so a default value
+    containing a `)` or `,` (e.g. `items=list()`, `data={"a": 1, "b": 2}`)
+    can't truncate or mis-split the list -- each parameter node's text
+    always starts with its own identifier regardless of what its default
+    value contains.
     """
-    Post-process fixtures to count reuse: how many test functions use each fixture.
+    params_node = func_node.child_by_field_name("parameters")
+    if not params_node:
+        return []
 
-    For pytest fixtures, counts test functions that declare the fixture as a parameter.
-    For JUnit/xUnit, counts test methods in the same class that share @BeforeEach.
-    For other frameworks, counts test functions in the same scope.
-
-    Modifies fixtures in-place.
-    """
-    if language.lower() == "python":
-        # For Python, scan for test functions and count which fixtures they declare
-        fixture_usages = {f.name: 0 for f in fixtures}
-
-        def visit(node):
-            # Find test functions (def test_...)
-            if node.type == "function_definition" and _source(
-                node.child_by_field_name("name"), src_bytes
-            ).startswith("test_"):
-                # Get parameters
-                params_node = node.child_by_field_name("parameters")
-                if params_node:
-                    for child in params_node.children:
-                        param_name = _source(child, src_bytes).strip()
-                        # Remove type hints and defaults
-                        if ":" in param_name:
-                            param_name = param_name.split(":")[0].strip()
-                        if "=" in param_name:
-                            param_name = param_name.split("=")[0].strip()
-                        # Count usage
-                        if param_name in fixture_usages:
-                            fixture_usages[param_name] += 1
-
-            for child in node.children:
-                visit(child)
-
-        visit(tree.root_node)
-
-        # Apply counts to fixtures
-        for fixture in fixtures:
-            fixture.reuse_count = fixture_usages.get(fixture.name, 0)
-
-    else:
-        # For other languages, use a simpler heuristic: count by scope
-        # (same-scope fixtures are typically reused by multiple tests)
-        scope_groups: dict[str, list] = {}
-        for fixture in fixtures:
-            key = fixture.scope
-            if key not in scope_groups:
-                scope_groups[key] = []
-            scope_groups[key].append(fixture)
-
-        # In same scope, assume fixtures are used by remaining test functions
-        for group in scope_groups.values():
-            # Simple heuristic: if scope is per_test, reuse_count is likely 1
-            # if per_class, it's likely multiple tests per class (estimate as 3-5)
-            for fixture in group:
-                if fixture.scope == "per_test":
-                    fixture.reuse_count = 1
-                elif fixture.scope == "per_class":
-                    fixture.reuse_count = max(
-                        1, len(group)
-                    )  # At least as many as fixtures
-                else:
-                    fixture.reuse_count = 1
+    names = []
+    for child in params_node.children:
+        text = _source(child, src_bytes).strip()
+        if not text or text in ("(", ")", ","):
+            continue
+        name = text.split(":")[0].split("=")[0].strip()
+        if name and name != "self":
+            names.append(name)
+    return names
 
 
 def _detect_fixture_dependencies(fixtures: list[FixtureResult]) -> None:
@@ -538,32 +490,25 @@ def _detect_fixture_dependencies(fixtures: list[FixtureResult]) -> None:
         if fixture.fixture_type != "pytest_decorator":
             continue
 
-        # Extract parameter names from raw source
-        # Pattern: def fixture_name(param1, param2, ...): or async def fixture_name(...):
-        # Use regex to extract parameters
-        # Match: def name(params) or async def name(params)
-        param_match = re.search(
-            r"(?:async\s+)?def\s+\w+\s*\(([^)]*)\)", fixture.raw_source
+        # raw_source is just this fixture's own "def name(...): ..." text
+        # (the decorator isn't included -- see detector_python.py), so it
+        # re-parses cleanly as a standalone snippet. Parsing it (rather
+        # than regexing the text) is what lets _extract_parameter_names
+        # read each parameter as its own AST node.
+        try:
+            tree = _get_parser("python").parse(fixture.raw_source.encode("utf-8"))
+        except Exception:
+            continue
+        func_node = next(
+            (c for c in tree.root_node.children if c.type == "function_definition"),
+            None,
         )
-        if not param_match:
+        if func_node is None:
             continue
 
-        params_str = param_match.group(1)
-        if not params_str.strip():
-            continue
-
-        # Parse parameter names (simple split by comma, handle type hints)
-        param_names = []
-        for param in params_str.split(","):
-            param = param.strip()
-            if not param or param == "self":
-                continue
-
-            # Extract parameter name (before : or =)
-            # Examples: "name", "name: Type", "name: Type = default", "name=default"
-            param_name = param.split(":")[0].split("=")[0].strip()
-            if param_name:
-                param_names.append(param_name)
+        param_names = _extract_parameter_names(
+            func_node, fixture.raw_source.encode("utf-8")
+        )
 
         # Check which parameters are fixtures (exist in fixtures_by_name)
         for param_name in param_names:

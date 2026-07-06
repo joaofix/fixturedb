@@ -343,7 +343,6 @@ class TestCollectionDataPersistence:
                 "num_objects_instantiated": 0,
                 "num_external_calls": 0,
                 "num_parameters": 0,
-                "reuse_count": 0,
                 "has_teardown_pair": False,
                 "raw_source": "def test_fixture(): pass",
                 "mocks": [],

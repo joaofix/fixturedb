@@ -95,7 +95,6 @@ def extract_fixtures_at_commit(
                                 "num_objects_instantiated": fixture.num_objects_instantiated,
                                 "num_external_calls": fixture.num_external_calls,
                                 "num_parameters": fixture.num_parameters,
-                                "reuse_count": fixture.reuse_count,
                                 "has_teardown_pair": fixture.has_teardown_pair,
                                 "raw_source": fixture.raw_source,
                                 "mocks": [

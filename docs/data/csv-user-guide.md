@@ -93,7 +93,6 @@ One row per extracted fixture definition.
 | `num_parameters` | INT | Number of parameters |
 | `num_objects_instantiated` | INT | Estimated object instantiations |
 | `num_external_calls` | INT | Estimated external or I/O calls |
-| `reuse_count` | INT | Number of test functions using the fixture |
 | `has_teardown_pair` | INT | 1 when teardown or cleanup logic is present |
 | `pinned_commit` | TEXT | Commit SHA analyzed for the fixture |
 | `github_url` | TEXT | Direct link to the fixture source on GitHub |

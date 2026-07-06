@@ -62,7 +62,6 @@ class FixtureData(TypedDict, total=False):
     num_objects_instantiated: int
     num_external_calls: int
     num_parameters: int
-    reuse_count: int
     has_teardown_pair: bool
     raw_source: str
     framework: Optional[str]
@@ -200,7 +199,6 @@ def write_fixture_csv_row(
         "num_parameters",
         "num_objects_instantiated",
         "num_external_calls",
-        "reuse_count",
         "has_teardown_pair",
         "github_url",
         "agent_type",
@@ -244,7 +242,6 @@ def write_fixture_csv_row(
             "num_parameters": fixture.get("num_parameters", 0),
             "num_objects_instantiated": fixture.get("num_objects_instantiated", 0),
             "num_external_calls": fixture.get("num_external_calls", 0),
-            "reuse_count": fixture.get("reuse_count", 0),
             "has_teardown_pair": fixture.get("has_teardown_pair", 0),
             "github_url": _build_github_url(
                 repo_name,
@@ -336,7 +333,6 @@ def persist_repository_and_fixtures(
                 "num_objects_instantiated": fixture.get("num_objects_instantiated"),
                 "num_external_calls": fixture.get("num_external_calls"),
                 "num_parameters": fixture.get("num_parameters"),
-                "reuse_count": fixture.get("reuse_count"),
                 "has_teardown_pair": fixture.get("has_teardown_pair"),
                 "raw_source": fixture.get("raw_source"),
                 "framework": fixture.get("framework"),

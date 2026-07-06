@@ -86,7 +86,6 @@ from .detector_shared import (
     ExtractResult,
     FixtureResult,
     MockResult,
-    _calculate_reuse_counts,
     _calculate_teardown_pairs,
     _count_file_loc,
     _detect_fixture_dependencies,
@@ -195,7 +194,6 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
         fixtures = DETECTORS[language](tree, src_bytes, language)
 
         # Post-process fixtures to calculate metrics that depend on file-wide context
-        _calculate_reuse_counts(fixtures, tree, src_bytes, language)
         _detect_fixture_dependencies(
             fixtures
         )  # Phase 4: detect pytest fixture dependencies

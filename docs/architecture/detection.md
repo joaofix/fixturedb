@@ -144,12 +144,11 @@ For each detected fixture, the system computes **14 quantitative metrics** acros
 | `num_objects_instantiated` | Count of object/instance creations | Custom regex | Filters for `new ClassName(...)` patterns |
 | `num_external_calls` | Database, HTTP, file I/O operations | Custom regex | Domain-specific; detected via patterns like `open()`, `requests.get()`, `db.query()` |
 
-### Fixture Properties (3 metrics)
+### Fixture Properties (2 metrics)
 
 | Metric | Definition | Approach |
 |--------|-----------|----------|
 | `framework` | Testing framework detected | Framework registry + regex |
-| `reuse_count` | Number of tests using this fixture | AST analysis |
 | `has_teardown_pair` | Cleanup logic paired with setup | AST pattern matching |
 
 ### Fixture Relationships (4 metrics, Python/pytest only)
@@ -271,7 +270,7 @@ Code location: [collection/detector.py](../../collection/detector.py) (slim publ
 - [collection/detector_shared.py](../../collection/detector_shared.py) — dataclasses, parser cache, mock detection, the shared fixture builder, and cross-fixture post-processing
 - [collection/detector_python.py](../../collection/detector_python.py), [collection/detector_java.py](../../collection/detector_java.py), [collection/detector_javascript.py](../../collection/detector_javascript.py) — one per-language detector each
 
-Key functions: `extract_fixtures()` (main orchestrator, in `detector.py`), `_detect_python()`/`_detect_java()`/`_detect_js()` (language-specific, one per module above), `_extract_mocks()` (mock patterns), `_build_result()` (quantitative metrics per fixture), `_calculate_reuse_counts()`/`_detect_fixture_dependencies()`/`_propagate_fixture_scopes()`/`_calculate_teardown_pairs()` (cross-fixture post-processing, all in `detector_shared.py`).
+Key functions: `extract_fixtures()` (main orchestrator, in `detector.py`), `_detect_python()`/`_detect_java()`/`_detect_js()` (language-specific, one per module above), `_extract_mocks()` (mock patterns), `_build_result()` (quantitative metrics per fixture), `_detect_fixture_dependencies()`/`_propagate_fixture_scopes()`/`_calculate_teardown_pairs()` (cross-fixture post-processing, all in `detector_shared.py`).
 
 See: [configuration.md](configuration.md), [metrics-reference.md](metrics-reference.md), [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)
 

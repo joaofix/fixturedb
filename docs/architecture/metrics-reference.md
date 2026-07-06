@@ -27,9 +27,8 @@
 | `fixture_type` | Detected pattern | AST + regex patterns |
 | `scope` | Derived scope | Framework metadata extraction |
 | `framework` | Detected framework | Registry lookup |
-| `reuse_count` | Usage Analysis | Post-processing AST |
 | `has_teardown_pair` | Resource Management | AST pattern matching |
-| `fixture_dependencies` | Relationships | Regex parsing |
+| `fixture_dependencies` | Relationships | AST parameter parsing |
 
 ---
 
@@ -388,35 +387,27 @@ After initial scope detection, pytest fixture dependencies are analyzed to enfor
 
 ---
 
-### 2.6 reuse_count (Fixture Modularity)
+### 2.6 reuse_count -- removed
 
-**What:** Number of test functions that use this fixture
-
-**How Calculated (Post-Processing):**
-1. After all fixtures detected in a file
-2. Build registry of fixture names
-3. For each fixture, scan test function signatures for its name as parameter
-4. Count matches
-
-**Implementation:** `collection/detector.py::_calculate_reuse_counts()`
-
-**Language Support:**
-- **Python/pytest**: Parameter names in test function signatures
-- **Java**: Test methods in same class as @Before
-- **JavaScript/TypeScript**: Test functions in scope
-
-**Implementation Details:**
-- Simple, verifiable metric
-- Useful for modularity analysis
-
-**Known Limitations:**
-- Only counts *direct* reuse (parameter injection)
-- Misses indirect reuse (fixtures used by other fixtures)
-- Parametrized tests counted as single function
-
-**Validation:**
-- Test suite: `tests/test_extractor_metadata/`
-- Manual spot checks on representative repositories
+`reuse_count` (number of test functions using a fixture) was removed
+entirely, for all languages, after an audit of the fixture
+post-processing logic found the metric was fabricated for Java/
+JavaScript/TypeScript, not merely approximate. Its own docstring claimed
+"For JUnit/xUnit, counts test methods in the same class that share
+@BeforeEach", but the actual implementation didn't look at test methods
+or class boundaries at all -- it grouped fixtures by `scope` string
+**across the entire file** and reported the group size for any
+`per_class` fixture. Three unrelated classes in the same file, each with
+one `@BeforeAll` and a different number of `@Test` methods, all received
+the *identical* value (the count of same-scope fixtures in the file, not
+tests). The Python/pytest branch (parameter-injection counting) was
+independently verified correct, but rather than ship a metric that's
+reliable for one language and fabricated for three others -- something a
+reviewer would have no way to tell apart by looking at the data -- the
+column was dropped everywhere. If per-language reuse analysis is needed
+later, it should be a new, explicitly-scoped metric (e.g.
+`reuse_count_python`) rather than one column silently mixing a real count
+with a fabricated one.
 
 ---
 
@@ -708,7 +699,6 @@ for the full methodology and reasoning behind every override.
 | `num_external_calls` | P1-P2 | `collection/detector.py::_count_external_calls()` | During fixture detection |
 | `fixture_type`, `scope`, `framework` | P1-P2 | `collection/detector.py::_detect_fixtures_<language>()` | During fixture detection |
 | `max_nesting_depth` | P1-P2 | `collection/detector.py::_calculate_max_nesting_depth()` | During fixture detection |
-| `reuse_count` | P3 (Post-processing) | `collection/detector.py::_calculate_reuse_counts()` | After all fixtures detected in file |
 | `has_teardown_pair` | P3 (Post-processing) | `collection/detector.py::_calculate_teardown_pairs()` | After all fixtures detected in file |
 | `fixture_dependencies` | P4 (Post-processing) | `collection/detector.py::_detect_fixture_dependencies()` | After all fixtures detected in file |
 | `file_loc`, `num_test_funcs` | P3 | `collection/complexity_provider.py` | After file analysis |
@@ -743,11 +733,6 @@ See [docs/architecture/configuration.md](configuration.md) for:
 4. **fixture_dependencies**
    - pytest-specific (not available for Java, JavaScript, etc.)
    - Does not track transitive dependencies
-
-5. **reuse_count**
-   - Only counts direct parameter injection
-   - Parametrized tests counted as single usage
-   - Indirect usage through other fixtures not tracked
 
 ### Future Enhancements
 

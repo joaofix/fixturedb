@@ -1,5 +1,5 @@
 """
-Tests for new metrics: max_nesting_depth, reuse_count, has_teardown_pair, num_contributors.
+Tests for new metrics: max_nesting_depth, has_teardown_pair, num_contributors.
 """
 
 from pathlib import Path
@@ -68,103 +68,6 @@ def fixture_with_loops():
             if result.fixtures:
                 # Nested loops should have higher nesting depth
                 assert result.fixtures[0].max_nesting_depth >= 2
-
-
-class TestReuseCounting:
-    """Test reuse_count calculation for fixtures."""
-
-    def test_pytest_fixture_used_by_single_test(self):
-        """Fixture used by one test should have reuse_count=1."""
-        code = """
-@pytest.fixture
-def my_fixture():
-    return 42
-
-def test_uses_fixture(my_fixture):
-    assert my_fixture == 42
-"""
-        from tempfile import NamedTemporaryFile
-
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(code)
-            f.flush()
-            result = extract_fixtures(Path(f.name), "python")
-            fixtures = [f for f in result.fixtures if f.name == "my_fixture"]
-            if fixtures:
-                assert fixtures[0].reuse_count == 1
-
-    def test_pytest_fixture_used_by_multiple_tests(self):
-        """Fixture used by multiple tests should have reuse_count > 1."""
-        code = """
-@pytest.fixture
-def my_fixture():
-    return 42
-
-def test_first(my_fixture):
-    assert my_fixture == 42
-
-def test_second(my_fixture):
-    assert my_fixture == 42
-
-def test_third(my_fixture):
-    assert my_fixture == 42
-"""
-        from tempfile import NamedTemporaryFile
-
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(code)
-            f.flush()
-            result = extract_fixtures(Path(f.name), "python")
-            fixtures = [f for f in result.fixtures if f.name == "my_fixture"]
-            if fixtures:
-                # Should detect multiple uses (reuse_count >= 3)
-                assert fixtures[0].reuse_count >= 3
-
-    def test_fixture_not_used_by_any_test(self):
-        """Fixture not used should have reuse_count=0."""
-        code = """
-@pytest.fixture
-def unused_fixture():
-    return 42
-
-def test_no_params():
-    assert True
-"""
-        from tempfile import NamedTemporaryFile
-
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(code)
-            f.flush()
-            result = extract_fixtures(Path(f.name), "python")
-            fixtures = [f for f in result.fixtures if f.name == "unused_fixture"]
-            if fixtures:
-                assert fixtures[0].reuse_count == 0
-
-    def test_fixture_with_multiple_params(self):
-        """Test function with multiple fixtures should count each fixture once."""
-        code = """
-@pytest.fixture
-def fixture_a():
-    return 1
-
-@pytest.fixture
-def fixture_b():
-    return 2
-
-def test_uses_both(fixture_a, fixture_b):
-    assert fixture_a + fixture_b == 3
-"""
-        from tempfile import NamedTemporaryFile
-
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(code)
-            f.flush()
-            result = extract_fixtures(Path(f.name), "python")
-            fixtures_a = [f for f in result.fixtures if f.name == "fixture_a"]
-            fixtures_b = [f for f in result.fixtures if f.name == "fixture_b"]
-            if fixtures_a and fixtures_b:
-                assert fixtures_a[0].reuse_count == 1
-                assert fixtures_b[0].reuse_count == 1
 
 
 class TestTeardownDetection:
@@ -417,14 +320,12 @@ def complete_fixture(dep):
                 fixture = result.fixtures[0]
                 # Check all required fields exist
                 assert hasattr(fixture, "max_nesting_depth")
-                assert hasattr(fixture, "reuse_count")
                 assert hasattr(fixture, "has_teardown_pair")
                 assert hasattr(fixture, "cyclomatic_complexity")
                 assert hasattr(fixture, "num_parameters")
 
                 # Verify they have sensible default values
                 assert fixture.max_nesting_depth >= 1
-                assert fixture.reuse_count >= 0
                 assert fixture.has_teardown_pair in (0, 1)
                 assert fixture.cyclomatic_complexity >= 1
                 assert fixture.num_parameters >= 0

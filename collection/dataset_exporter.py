@@ -348,7 +348,6 @@ Contains fixture definitions.
 | num_objects_instantiated | INTEGER | Objects created |
 | num_external_calls | INTEGER | External function calls |
 | num_parameters | INTEGER | Number of parameters |
-| reuse_count | INTEGER | Number of test functions using this fixture |
 | has_teardown_pair | BOOLEAN | Has teardown/cleanup |
 | raw_source | TEXT | Complete fixture source code |
 | category | TEXT | RQ1 taxonomy category |

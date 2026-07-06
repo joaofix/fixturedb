@@ -79,7 +79,6 @@ Individual fixture definitions and their quantitative metrics.
 | `num_objects_instantiated` | INTEGER | Estimated object creations inside the fixture |
 | `num_external_calls` | INTEGER | Estimated I/O or external calls inside the fixture |
 | `num_parameters` | INTEGER | Number of fixture parameters |
-| `reuse_count` | INTEGER | Number of test functions using this fixture |
 | `has_teardown_pair` | INTEGER | Binary indicator for teardown or cleanup logic |
 | `raw_source` | TEXT | Original source text for the fixture |
 | `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |

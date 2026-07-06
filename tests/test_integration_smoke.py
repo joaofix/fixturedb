@@ -66,7 +66,6 @@ def test_integration_smoke_within(tmp_path, monkeypatch):
                     "num_objects_instantiated": 0,
                     "num_external_calls": 0,
                     "num_parameters": 0,
-                    "reuse_count": 0,
                     "has_teardown_pair": 0,
                     "raw_source": "def my_fixture(): pass",
                     "framework": "pytest",

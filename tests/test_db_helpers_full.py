@@ -65,7 +65,6 @@ def test_db_helpers_end_to_end(tmp_path):
             "num_objects_instantiated": 0,
             "num_external_calls": 0,
             "num_parameters": 0,
-            "reuse_count": 0,
             "has_teardown_pair": 0,
             "raw_source": "def my_fixture(): pass",
             "framework": "pytest",

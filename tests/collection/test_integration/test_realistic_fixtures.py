@@ -527,6 +527,11 @@ def test_auth(authenticated_user):
         assert user.num_parameters == 1
         assert auth_user.num_parameters == 1
 
+        # Dependencies should be recorded by name
+        assert user_data.fixture_dependencies == []
+        assert user.fixture_dependencies == ["user_data"]
+        assert auth_user.fixture_dependencies == ["user"]
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

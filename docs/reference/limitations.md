@@ -44,11 +44,9 @@ Other languages such as Ruby (RSpec), Kotlin, Scala, Rust, and C# are not includ
 
 ## Parametrized Tests
 
-Parametrized test functions are counted as **single test functions**, not multiplied by parameter set count. Impact:
-- `reuse_count`: Fixture used by parametrized test with 10 parameter sets = reuse=1
-- Test-to-fixture ratio may under-represent reuse in projects with heavy parametrization
+Parametrized test functions are counted as **single test functions**, not multiplied by parameter set count. Test-to-fixture ratio may under-represent reuse in projects with heavy parametrization.
 
-To assess: Query `test_files` for parametrized patterns (regex: `parametrize|ParameterizedTest|test.each`), then adjust `reuse_count` estimates by observed parameter count.
+To assess: Query `test_files` for parametrized patterns (regex: `parametrize|ParameterizedTest|test.each`).
 
 ---
 

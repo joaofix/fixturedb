@@ -178,7 +178,6 @@ One row per fixture definition extracted from test code.
 | `num_parameters` | INT | Number of function parameters |
 | `num_objects_instantiated` | INT | Estimated constructor calls inside fixture |
 | `num_external_calls` | INT | Estimated I/O / external API calls |
-| `reuse_count` | INT | Number of test functions using this fixture |
 | `has_teardown_pair` | INT | Binary indicator (0/1): whether fixture includes cleanup/teardown logic |
 | `pinned_commit` | TEXT | SHA of analyzed commit |
 | `github_url` | TEXT | Direct GitHub link to fixture source code |

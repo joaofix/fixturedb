@@ -596,7 +596,6 @@ class TestQualityControlledInputs:
                     "num_objects_instantiated": 0,
                     "num_external_calls": 0,
                     "num_parameters": 0,
-                    "reuse_count": 0,
                     "has_teardown_pair": 0,
                     "raw_source": "def complete_fixture(): pass",
                     "framework": "pytest",
@@ -620,7 +619,6 @@ class TestQualityControlledInputs:
                     "num_objects_instantiated": 0,
                     "num_external_calls": 0,
                     "num_parameters": 0,
-                    "reuse_count": 0,
                     "has_teardown_pair": 0,
                     "raw_source": "def partial_fixture(): pass",
                     "framework": "pytest",
@@ -771,7 +769,6 @@ class TestQualityControlledInputs:
                     "num_objects_instantiated": 2,
                     "num_external_calls": 4,
                     "num_parameters": 5,
-                    "reuse_count": 6,
                     "has_teardown_pair": 1,
                     "raw_source": "def complex_fixture(): pass",
                     "framework": "pytest",
@@ -813,7 +810,6 @@ class TestQualityControlledInputs:
         assert fixture_row["num_objects_instantiated"] == 2
         assert fixture_row["num_external_calls"] == 4
         assert fixture_row["num_parameters"] == 5
-        assert fixture_row["reuse_count"] == 6
         assert fixture_row["has_teardown_pair"] == 1
         assert fixture_row["agent_type"] == "claude"
         assert fixture_row["commit_kind"] == "agent"
@@ -1509,7 +1505,6 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
                     "num_objects_instantiated": 0,
                     "num_external_calls": 0,
                     "num_parameters": 0,
-                    "reuse_count": 0,
                     "has_teardown_pair": 0,
                     "raw_source": "def complete_fixture(): pass",
                     "framework": "pytest",

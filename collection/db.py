@@ -94,7 +94,6 @@ CREATE TABLE IF NOT EXISTS fixtures (
     num_objects_instantiated INTEGER DEFAULT 0,
     num_external_calls      INTEGER DEFAULT 0,
     num_parameters          INTEGER DEFAULT 0,
-    reuse_count             INTEGER DEFAULT 0,      -- count of test functions using this fixture
     has_teardown_pair       INTEGER DEFAULT 0,      -- 1 if teardown/cleanup logic exists, 0 otherwise
     raw_source              TEXT,              -- original source text
     framework               TEXT,              -- testing framework (pytest, unittest, junit, nunit, testify, etc.)
@@ -586,7 +585,6 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "num_objects_instantiated",
         "num_external_calls",
         "num_parameters",
-        "reuse_count",
         "has_teardown_pair",
         "raw_source",
         "framework",
