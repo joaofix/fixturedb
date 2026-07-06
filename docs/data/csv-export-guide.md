@@ -190,7 +190,7 @@ One row per fixture definition extracted from test code.
 
 **Internal-only fields (excluded from CSV exports):**
 - `category` (fixture): internal fixture classification infrastructure removed from public CSVs
-- Detailed `mock_usages` table: available in the SQLite database for researchers who need the raw mock/framework interaction data
+- Detailed `mock_usages` table: available in the SQLite database for researchers who need the raw mock/framework interaction data, including each mock's `category` (the classic test-double taxonomy — dummy/stub/spy/mock/fake — see [Database Schema § mock_usages](../architecture/database-schema.md#mock_usages)). Only the aggregated `total_mock_usages`/`avg_mocks_per_fixture` counts above are exposed in the public statistics CSVs.
 
 ## See also
 

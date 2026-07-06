@@ -38,12 +38,13 @@ tests/
 │   └── test_fixture_types_and_scopes.py
 ├── test_extractor_edge_cases/       # Category 3: Edge case robustness
 │   └── test_edge_cases.py
-├── test_mock_detection/             # Category 5: Mock patterns
+├── test_mock_detection/             # Category 5: Mock patterns (under tests/collection/)
+│   ├── test_mock_patterns.py         # Cross-language + false-positive/negative checks
 │   ├── test_python_mock_patterns.py
 │   ├── test_java_mock_patterns.py
 │   ├── test_javascript_mock_patterns.py
 │   ├── test_typescript_mock_patterns.py
-│   └── test_csharp_mock_patterns.py
+│   └── test_go_mock_patterns.py      # Skipped: Go isn't in this study's language scope
 └── test_integration/                # Category 6: Realistic fixtures
     ├── test_python_realistic_fixtures.py
     ├── test_java_realistic_fixtures.py
@@ -76,15 +77,28 @@ tests/
 
 ### 5. Mock Detection
 
-**Scope:** Mock framework identification (across languages)
+**Scope:** Mock framework identification and test-double category
+classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across
+languages. See
+[Fixture Detection Logic § Mock Framework Detection](../architecture/detection.md#mock-framework-detection)
+for the full methodology and
+[collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
+for the exact pattern/framework/category catalog (29 patterns, 11
+frameworks).
 
 **What they test:**
-- **Python**: `unittest.mock`, `pytest-mock`, `monkeypatch`
-- **Java**: Mockito, PowerMock
-- **JavaScript**: Jest mocks, Sinon stubs
-- **TypeScript**: ts-mockito, Jest with types
+- **Python**: `unittest.mock` (`patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`), `pytest-mock` (`mocker.patch`/`mocker.patch.object`), pytest's built-in `monkeypatch`
+- **Java**: Mockito, EasyMock, MockK — **not** PowerMock (a documented exclusion, not detected)
+- **JavaScript**: Jest (`fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`), Sinon (`stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`)
+- **TypeScript**: Same Jest/Sinon patterns, plus Vitest (`vi.fn`/`vi.mock`)
+- **Go**: patterns exist for parity (`gomock`, `testify`) but are unreachable — Go detection is dead code, not in this study's scope; `test_go_mock_patterns.py` is skipped accordingly
 
-- **C#**: Moq, NSubstitute
+Every test in this category asserts on `fixture.mocks` directly (framework,
+category, target_identifier) rather than just that the surrounding fixture
+was extracted — a fixture can be detected correctly while its mock usage
+inside is silently missed, which is how several real gaps were originally
+found (see `mock_patterns_excluded` in the YAML catalog for what's still
+knowingly unhandled).
 
 ### 6. Integration Tests
 
@@ -149,7 +163,7 @@ pytest tests/test_extractor_metadata/ -v
 pytest tests/test_extractor_edge_cases/ -v
 
 # Mock detection tests
-pytest tests/test_mock_detection/ -v
+pytest tests/collection/test_mock_detection/ -v
 
 # Integration tests
 pytest tests/test_integration/ -v

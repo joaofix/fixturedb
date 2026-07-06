@@ -86,11 +86,15 @@ between-group.db
 │   ├── mock_usage TEXT
 │   └── ... (fixture details)
 │
-└── mock_usages (framework usage)
+└── mock_usages (one row per detected mock call, see database-schema.md)
     ├── id INTEGER PRIMARY KEY
     ├── fixture_id FOREIGN KEY
-    ├── framework TEXT
-    └── count INTEGER
+    ├── repo_id FOREIGN KEY
+    ├── framework TEXT        (unittest_mock, sinon, mockito, ...)
+    ├── category TEXT         (dummy|stub|spy|mock|fake test-double taxonomy)
+    ├── target_identifier TEXT
+    ├── num_interactions_configured INTEGER
+    └── raw_snippet TEXT
 ```
 
 **Key Difference from Original:**

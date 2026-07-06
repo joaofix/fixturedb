@@ -92,15 +92,21 @@ Individual fixture definitions and their quantitative metrics.
 
 ### mock_usages
 
-Per-fixture mock framework usage data.
+Per-fixture mock framework usage data — one row per detected mock call
+(a fixture with `num_mocks=3` has 3 rows here). See
+[Fixture Detection Logic § Mock Framework Detection](detection.md#mock-framework-detection)
+for how these are detected and classified, and
+[collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
+for the exact pattern/framework/category catalog.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER | Internal primary key |
 | `fixture_id` | INTEGER | Foreign key to `fixtures.id` |
 | `repo_id` | INTEGER | Foreign key to `repositories.id` |
-| `framework` | TEXT | Mocking framework or helper family |
-| `target_identifier` | TEXT | Identifier passed to the mock call |
+| `framework` | TEXT | Mocking framework or helper family (e.g. `unittest_mock`, `sinon`, `mockito`) |
+| `category` | TEXT | Classic test-double taxonomy (Meszaros): `dummy` \| `stub` \| `spy` \| `mock` \| `fake` — `dummy` is never populated by design (see detection.md) |
+| `target_identifier` | TEXT | Identifier passed to the mock call, if extractable (empty string otherwise) |
 | `num_interactions_configured` | INTEGER | Number of interactions configured on the mock |
 | `raw_snippet` | TEXT | Original source snippet for the mock usage |
 
@@ -176,6 +182,29 @@ domain_balance = pd.read_sql("""
 """, conn)
 
 print(domain_balance)
+```
+
+### Test-double category breakdown by corpus
+
+```python
+import sqlite3
+import pandas as pd
+
+conn = sqlite3.connect("between-group.db")
+
+mock_categories = pd.read_sql("""
+    SELECT
+        f.commit_kind as corpus,
+        m.category,
+        m.framework,
+        COUNT(*) as mock_count
+    FROM mock_usages m
+    JOIN fixtures f ON m.fixture_id = f.id
+    GROUP BY f.commit_kind, m.category, m.framework
+    ORDER BY f.commit_kind, mock_count DESC
+""", conn)
+
+print(mock_categories)
 ```
 
 ### Repository age and star tier balance

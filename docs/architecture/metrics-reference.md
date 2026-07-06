@@ -571,52 +571,76 @@ For consistency with file-level metrics, consider migrating to Lizard's LOC defi
 
 ---
 
-### 2.11 num_mocks (Mock Usage Count)
+### 2.11 num_mocks (Mock Usage Count) and the mock_usages table
 
 **What:** Count of distinct mock usages detected within a fixture
+(`fixtures.num_mocks`), with the per-mock detail (framework, test-double
+category, target, interaction count, source snippet) stored one row per
+mock in the separate `mock_usages` table — see
+[Database Schema § mock_usages](database-schema.md#mock_usages).
 
 **How Calculated:**
-1. Extract fixture source code (AST node)
-2. Run 15 regex patterns matching mock framework calls (Lines 277-299 in detector.py)
-3. Count number of distinct matches
-4. Store in database during post-processing
-5. Aggregate at fixture level during post-processing
+1. Extract the fixture's own source text (AST node) — mock scanning never
+   looks outside the fixture body (see Known Limitations).
+2. Scan it against every pattern in `mock_patterns` (regex, applied
+   case-insensitively).
+3. For each match, resolve `framework` and `category` from that pattern's
+   YAML entry, and estimate `num_interactions_configured` by counting
+   nearby interaction keywords (`return_value`, `side_effect`,
+   `thenReturn`, `thenThrow`, `doReturn`).
+4. `num_mocks` on the fixture is simply `len(fixture.mocks)`.
 
 **Implementation:**
-- **Detection**: `collection/detector.py::_extract_mocks()` (lines 301-333)
-- **MOCK_PATTERNS**: 15 patterns across 10 frameworks (lines 277-299)
-- **Calculation**: `len(fix.mocks)` in `collection/extractor.py` (line 361)
-- **Aggregation**: Stored directly in fixtures table, column `num_mocks`
+- **Detection**: `collection/detector_shared.py::_extract_mocks()`
+- **Pattern catalog**: `collection/config_data/feature_extraction_patterns.yaml`'s `mock_patterns` — 29 patterns across 11 frameworks, loaded via `load_feature_extraction_patterns()`, not hardcoded in Python (see [Configuration Reference § Reference-Data Catalogs](configuration.md#reference-data-catalogs))
+- **Calculation**: `len(fixture.mocks)` at fixture-build time in `collection/detector_shared.py::_build_result()`
+- **Aggregation**: Stored directly on the fixture as `num_mocks`; per-mock detail persisted separately to `mock_usages`
 
 **Supported Mock Frameworks:**
-- **Python**: unittest_mock, pytest_mock
-- **Java**: mockito, easymock, mockk (Kotlin)
-- **JavaScript**: jest, sinon, vitest
+- **Python**: `unittest_mock` (`patch`/`patch.object`, both `mock.`-qualified and bare; `MagicMock`/`Mock`/`AsyncMock`; `create_autospec`), `pytest_mock` (`mocker.patch`/`mocker.patch.object`), `pytest_monkeypatch` (pytest's built-in `monkeypatch` fixture)
+- **Java**: `mockito`, `easymock`, `mockk` (Kotlin)
+- **JavaScript/TypeScript**: `jest` (`fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`), `sinon` (`stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`), `vitest`
+- **Go** (`gomock`, `testify_mock`): patterns exist for parity but are unreachable in practice — `detector_go.py` is dead code, never wired into the language dispatch, since Go isn't in this study's scope (Python/Java/JS/TS only)
+
+**Test-double category classification (`mock_usages.category`):**
+Each detected mock is also classified into the classic test-double
+taxonomy — `dummy`/`stub`/`spy`/`mock`/`fake` (Meszaros; see also Fowler's
+"Mocks Aren't Stubs") — by keyword-matching the *construct's own name*
+(priority `dummy > stub > spy > fake > mock`), with a small set of
+individually-justified manual overrides for the handful of constructs
+whose name contains no category keyword at all (e.g. `monkeypatch` →
+`stub`, `create_autospec`/bare `patch()`/`jest.fn()`/`vi.fn()` → `mock`).
+`dummy` is deliberately never assigned — see
+[Fixture Detection Logic § Mock Framework Detection](detection.md#mock-framework-detection)
+for the full methodology and reasoning behind every override.
 
 **Example Detection:**
 
-| Fixture Code | Detected | num_mocks |
-|---|---|---|
-| `unittest.mock.patch('module.Class')` | unittest_mock | 1 |
-| `@pytest.fixture` with 3 `mocker.patch()` calls | pytest_mock | 3 |
-| `Mockito.mock(UserService.class)` | mockito | 1 |
-| `jest.fn()` and `jest.spyOn()` calls | jest | 2 |
-| No mock framework calls | (none) | 0 |
+| Fixture Code | Framework | Category | num_mocks |
+|---|---|---|---|
+| `mock.patch('module.Class')` | unittest_mock | mock | 1 |
+| `mock.patch.object(Service, 'call')` | unittest_mock | mock | 1 |
+| `@pytest.fixture` with 3 `mocker.patch()` calls | pytest_mock | mock | 3 |
+| `monkeypatch.setenv('ENV', 'test')` | pytest_monkeypatch | stub | 1 |
+| `Mockito.mock(UserService.class)` | mockito | mock | 1 |
+| `jest.fn()` and `jest.spyOn()` calls | jest | mock, spy | 2 |
+| `sinon.stub(obj, 'method')` | sinon | stub | 1 |
+| No mock framework calls | (none) | — | 0 |
 
 **Implementation Details:**
 - Objective counting — Direct regex match count
-- Deterministic — Same fixture always yields same count
-- Reproducible — Researchers can verify regex patterns
-- Language-independent — Same patterns across Python/Java/JS/TS
+- Deterministic — Same fixture always yields the same count and categories
+- Reproducible — Researchers can verify every pattern/category assignment directly in the YAML catalog
+- Language-independent — Same pattern table scanned regardless of source language
 
 **Known Limitations:**
-- Limited pattern coverage — Only explicit framework calls detected
-- Custom frameworks — Non-standard mocking libraries not captured
-- Indirect setup — Mock factories or builders may be missed
-- Scope limitation — Only detects mocks at fixture level (not test function level)
+- Limited pattern coverage — Only explicit, listed framework calls are detected; niche frameworks (e.g. PowerMock) and non-standard/custom mocking helpers are not
+- Fixture-scoped only — Detection never looks outside the fixture's own AST node text, so mock setup at module level or in a shared helper is invisible. This matters most for Jest, where `jest.mock('./module')` is conventionally written at the top of the file (auto-hoisted by babel-jest) rather than inside a `beforeEach`, so that pattern rarely fires in practice even though it's in the table
+- `category` is a per-construct classification, not a per-instance behavioral analysis — it does not verify how a given mock was actually used in that specific fixture
+- The full, current list of documented gaps lives in `feature_extraction_patterns.yaml`'s `mock_patterns_excluded`, not duplicated here
 
 **Validation:**
-- Test suite: `tests/test_mock_detection/` contains unit tests for pattern matching
+- Test suite: `tests/collection/test_mock_detection/` (per-language pattern coverage) and `tests/collection/test_config_data_loader.py` (guardrail tests for the pattern/category catalog itself)
 - Production validation: Distribution of num_mocks across the dataset
   - ~45% of fixtures have num_mocks = 0 (no mocks)
   - ~35% have 1-2 mocks
