@@ -2,6 +2,13 @@
 
 Comprehensive catalog of 50+ fixture types detected across Python, Java, JavaScript, and TypeScript.
 
+**Source of truth:** the tables below are prose explanations of what's
+actually in `collection/config_data/fixture_definitions.yaml`, which the
+detector modules (`detector_python.py`/`detector_java.py`/`detector_javascript.py`)
+load at import time — that YAML file is the executable definition, and also
+documents, per language, which boundary cases are deliberately **not**
+detected and why (see "Known Exclusions & Boundary Cases" below).
+
 ## Fixture Taxonomy Overview
 
 Fixture definitions are organized by **language** and **pattern type**. Each language has distinct mechanisms for declaring fixtures—some use decorators, others use method names or attributes. Detailed taxonomy diagrams for each language are shown in their respective sections below.
@@ -588,6 +595,41 @@ The FixtureDB can track fixture relationships to:
 - Optimize fixture reuse
 
 ---
+
+---
+
+## Known Exclusions & Boundary Cases
+
+Every pattern above is what the detector matches; just as important is what
+it deliberately does **not** match, and why. This makes the recall boundary
+explicit for reviewers instead of leaving it implicit in the source code.
+The authoritative version of this list lives in the `excluded` section of
+each language block in `collection/config_data/fixture_definitions.yaml` —
+reproduced here for readability.
+
+### Python
+
+- **Fixtures defined in installed pytest plugins / external packages** — detection is per-file AST scanning of the cloned repo; a fixture registered via `pytest_plugins` pointing at an installed package has no source file in the repo to scan.
+- **Custom decorators that wrap `@pytest.fixture` internally** (e.g. `@my_fixture_wrapper`) — matching is a literal substring check on the decorator's own text (must contain both `"pytest"` and `"fixture"`); a differently-named decorator whose *implementation* calls `pytest.fixture()` internally does not itself contain those substrings at the call site.
+- **Fixtures created dynamically** (metaprogramming, `exec()`, runtime-generated decorators) — AST-based detection requires the fixture to exist as literal source text.
+- **`mock.patch` (or any other non-fixture decorator) on an ordinary test function** — not a fixture and not matched by design; listed to make the boundary explicit.
+
+### Java
+
+- **JUnit 5 Extension lifecycle methods** (`BeforeEachCallback`, `AfterEachCallback`, etc.) — implemented via interfaces, not annotations; the detector only looks for annotation nodes.
+- **Spring `@BeforeTransaction` / `@AfterTransaction`** — not present in the annotation table; genuinely unhandled today.
+- **TestNG `@BeforeSuite` / `@AfterSuite` / `@BeforeTest` / `@AfterTest`** — only `@BeforeMethod`/`@AfterMethod` are handled; the other TestNG lifecycle levels are not in the annotation table.
+
+Two known imprecisions (detected, but not perfectly attributed) are also worth calling out:
+- `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector always attributes them to TestNG rather than inspecting imports to disambiguate.
+- Every annotation in the Java table is recorded with `framework="junit"`, even the Spring (`@Bean`, `@TestConfiguration`) and Cucumber (`@Given`/`@When`/`@Then`/`@And`/`@But`/`@Attachment`) ones — the `framework` column doesn't yet distinguish these families.
+
+### JavaScript/TypeScript
+
+- **Jest `globalSetup` / `globalTeardown`** — configured as a file path in `jest.config.js`, not an inline function call in the test file; there's no call-expression node to match.
+- **Vitest `setupFiles`** — configuration-level (`vitest.config.*`), not an inline fixture; same reasoning as Jest `globalSetup`.
+- **Custom test helpers not using a recognized framework lifecycle hook name** — detection is a fixed name/pattern lookup; a hand-rolled helper called manually inside each test body is not a lifecycle hook.
+- **AVA fixtures accessed through an aliased import** (e.g. `import ava from 'ava'; ava.before(...)`) — the AVA match requires the member-expression's object to be literally named `test` (i.e. `test.before(...)`).
 
 ---
 

@@ -6,6 +6,7 @@ These exist to catch a malformed future edit to one of the YAML files
 
 from collection.config_data import (
     load_exclusion_keywords,
+    load_fixture_definitions,
     load_framework_registry,
     load_language_configs_data,
     load_non_code_extensions,
@@ -52,3 +53,50 @@ def test_language_configs_have_required_fields():
         assert fields["test_path_patterns"], f"{lang} needs test_path_patterns"
         assert fields["test_file_suffixes"], f"{lang} needs test_file_suffixes"
         assert isinstance(fields["full_target"], int) and fields["full_target"] > 0
+
+
+VALID_SCOPES = {"per_test", "per_class", "per_module", "global"}
+
+
+def test_fixture_definitions_covers_all_languages():
+    defs = load_fixture_definitions()
+    assert set(defs) == {"python", "java", "javascript_typescript"}
+
+
+def test_fixture_definitions_python_shapes_and_scopes():
+    python_defs = load_fixture_definitions()["python"]
+    assert set(python_defs["pytest_decorator"]["scope_keyword_map"].values()) <= VALID_SCOPES
+    for section in ("unittest_setup", "pytest_class_method", "nose_fixture"):
+        names = python_defs[section]["names"]
+        assert names, f"{section} must have at least one name"
+        assert set(names.values()) <= VALID_SCOPES
+    assert python_defs["excluded"], "python must document known boundary cases"
+    for entry in python_defs["excluded"]:
+        assert entry["case"].strip() and entry["reason"].strip()
+
+
+def test_fixture_definitions_java_shapes_and_scopes():
+    java_defs = load_fixture_definitions()["java"]
+    for ann, fields in java_defs["annotations"].items():
+        assert ann.startswith("@")
+        assert fields["scope"] in VALID_SCOPES
+        assert fields["fixture_type"].strip()
+    for ann, fields in java_defs["ambiguous_annotations"].items():
+        assert ann.startswith("@")
+        assert fields["scope"] in VALID_SCOPES
+    assert set(java_defs["junit3_fallback"]["names"].values()) == {
+        "junit3_setup",
+        "junit3_teardown",
+    }
+    assert java_defs["excluded"], "java must document known boundary cases"
+
+
+def test_fixture_definitions_javascript_typescript_shapes_and_scopes():
+    js_defs = load_fixture_definitions()["javascript_typescript"]
+    for section in ("hooks", "ava_patterns", "ts_decorators"):
+        table = js_defs[section]
+        assert table, f"{section} must have at least one entry"
+        for fields in table.values():
+            assert fields["scope"] in VALID_SCOPES
+            assert fields["fixture_type"].strip()
+    assert js_defs["excluded"], "javascript_typescript must document known boundary cases"

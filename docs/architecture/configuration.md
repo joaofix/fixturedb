@@ -208,6 +208,16 @@ production call site reads the YAML directly.
 | Known testing frameworks per language | `collection/config_data/framework_registry.yaml` | `config.FRAMEWORK_REGISTRY` |
 | Per-language search/test-detection settings | `collection/config_data/language_configs.yaml` | `config.LANGUAGE_CONFIGS` |
 | Agent detection: config-file patterns + commit signatures | `collection/heuristics/agent_heuristics.yaml` | `agent_patterns.AGENT_SIGNATURES` / `PAPER_AGENT_CONFIG_PATTERNS` / `LIGHTWEIGHT_AGENT_CONFIG_PATTERNS` |
+| Operational definition of "fixture" per language (patterns + documented exclusions) | `collection/config_data/fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` pattern tables |
+
+The fixture-definitions catalog is also a reviewer-facing audit artifact, not
+just data: each language section has an `excluded` list documenting known
+boundary cases the detector deliberately does not (or cannot) catch, so a
+missing pattern is a documented decision rather than an oversight — see
+[Fixture Detection Logic](detection.md),
+[Fixture Patterns Reference](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases),
+and [Limitations](../reference/limitations.md#fixture-detection-recall) for
+how this feeds into the paper's recall discussion.
 
 Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
 and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain

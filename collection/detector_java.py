@@ -1,39 +1,32 @@
-"""Java fixture detection: JUnit3/4/5, TestNG, Spring, Cucumber annotations."""
+"""Java fixture detection: JUnit3/4/5, TestNG, Spring, Cucumber annotations.
 
+Pattern tables are loaded from
+collection/config_data/fixture_definitions.yaml rather than hardcoded here
+-- see that file for the full operational definition of "fixture" per
+language, including documented exclusions and known imprecisions (e.g. all
+annotations below are recorded with framework="junit", even the
+Spring/Cucumber ones).
+"""
+
+from .config_data import load_fixture_definitions
 from .detector_shared import FixtureResult, _build_result, _source
 
-JUNIT_FIXTURE_ANNOTATIONS = {
-    "@BeforeEach": ("junit5_before_each", "per_test"),
-    "@BeforeAll": ("junit5_before_all", "per_class"),
-    "@AfterEach": ("junit5_after_each", "per_test"),
-    "@AfterAll": ("junit5_after_all", "per_class"),
-    "@Before": ("junit4_before", "per_test"),
-    "@After": ("junit4_after", "per_test"),
-    "@BeforeMethod": ("testng_before_method", "per_test"),  # TestNG
-    "@AfterMethod": ("testng_after_method", "per_test"),  # TestNG
-    "@DataProvider": ("testng_data_provider", "per_test"),  # TestNG data-driven fixture
-    "@Rule": ("junit_rule", "per_test"),  # JUnit @Rule fixture fields
-    "@ClassRule": ("junit_class_rule", "per_class"),  # JUnit @ClassRule fixture fields
-    # Spring Framework annotations
-    "@Bean": ("spring_bean", "per_class"),  # Spring @Bean factory method
-    "@TestConfiguration": (
-        "spring_test_config",
-        "per_class",
-    ),  # Spring @TestConfiguration
-    # Cucumber BDD step definitions
-    "@Given": ("cucumber_given", "per_test"),  # Cucumber @Given step
-    "@When": ("cucumber_when", "per_test"),  # Cucumber @When step
-    "@Then": ("cucumber_then", "per_test"),  # Cucumber @Then step
-    "@And": ("cucumber_and", "per_test"),  # Cucumber @And step (context-dependent)
-    "@But": ("cucumber_but", "per_test"),  # Cucumber @But step (context-dependent)
-    "@Attachment": ("cucumber_attachment", "per_test"),  # Cucumber @Attachment hook
+_DEFS = load_fixture_definitions()["java"]
+
+JUNIT_FIXTURE_ANNOTATIONS: dict[str, tuple[str, str]] = {
+    ann: (fields["fixture_type"], fields["scope"])
+    for ann, fields in _DEFS["annotations"].items()
 }
 
 # Annotations that appear in both JUnit4 and TestNG (require context to disambiguate)
-JUNIT_TESTNG_AMBIGUOUS = {
-    "@BeforeClass": ("junit4_before_class", "testng_before_class", "per_class"),
-    "@AfterClass": ("junit4_after_class", "testng_after_class", "per_class"),
+JUNIT_TESTNG_AMBIGUOUS: dict[str, tuple[str, str, str]] = {
+    ann: (fields["junit4_fixture_type"], fields["testng_fixture_type"], fields["scope"])
+    for ann, fields in _DEFS["ambiguous_annotations"].items()
 }
+
+# JUnit3-style setUp()/tearDown() methods with no annotation at all.
+JUNIT3_FALLBACK_NAMES: dict[str, str] = _DEFS["junit3_fallback"]["names"]
+JUNIT3_FALLBACK_SCOPE: str = _DEFS["junit3_fallback"]["scope"]
 
 
 def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[FixtureResult]:
@@ -92,7 +85,7 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
             name_node = node.child_by_field_name("name")
             if name_node:
                 method_name = _source(name_node, src_bytes).strip()
-                if method_name in ("setUp", "tearDown"):
+                if method_name in JUNIT3_FALLBACK_NAMES:
                     # Check if not already matched by annotation
                     has_annotation = any(
                         ann
@@ -100,19 +93,13 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                         if "@Before" in ann or "@After" in ann
                     )
                     if not has_annotation:
-                        scope = "per_test"
-                        fixture_type = (
-                            "junit3_setup"
-                            if method_name == "setUp"
-                            else "junit3_teardown"
-                        )
                         results.append(
                             _build_result(
                                 node=node,
                                 func_node=node,
                                 src_bytes=src_bytes,
-                                fixture_type=fixture_type,
-                                scope=scope,
+                                fixture_type=JUNIT3_FALLBACK_NAMES[method_name],
+                                scope=JUNIT3_FALLBACK_SCOPE,
                                 framework="junit",
                                 language="java",
                             )

@@ -75,6 +75,13 @@ re-run or improve detection against the original fixture text.
 - Metaprogrammed/dynamic fixtures created at runtime
 - Non-standard fixture mechanisms that abstract framework APIs
 
+The three bullets above are the general pattern; the exact, per-language list
+of what counts as a fixture and what's deliberately excluded (with a reason
+for each) is `collection/config_data/fixture_definitions.yaml` — it is both
+the executable pattern table the detector is built from and the audit trail
+a reviewer can check against without reading `detector_python.py` /
+`detector_java.py` / `detector_javascript.py` directly.
+
 **Mitigation:** `raw_source` column in SQLite allows manual audit. Draw a manual-review sample with `collection/validation_sampling.py` (Cochran's formula, 95% confidence / 5% margin of error by default — see [Manual-Validation Sampling](../usage/validation-sampling.md)) rather than an arbitrary fixed count, to calculate project-specific recall.
 
 ---

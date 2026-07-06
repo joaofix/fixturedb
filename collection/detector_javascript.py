@@ -1,28 +1,32 @@
-"""JavaScript/TypeScript fixture detection: Jest/Mocha/Vitest hooks, AVA, TS decorators."""
+"""JavaScript/TypeScript fixture detection: Jest/Mocha/Vitest hooks, AVA, TS decorators.
 
+Pattern tables are loaded from
+collection/config_data/fixture_definitions.yaml rather than hardcoded here
+-- see that file for the full operational definition of "fixture" per
+language, including documented exclusions (Jest globalSetup, Vitest
+setupFiles, aliased AVA imports, etc.).
+"""
+
+from .config_data import load_fixture_definitions
 from .detector_shared import FixtureResult, _build_result, _source
 
-JS_FIXTURE_CALLS = {
-    "beforeEach": ("before_each", "per_test"),
-    "beforeAll": ("before_all", "per_class"),
-    "afterEach": ("after_each", "per_test"),
-    "afterAll": ("after_all", "per_class"),
-    "before": (
-        "mocha_before",
-        "per_test",
-    ),  # default to per_test for ambiguous mocha hooks
-    "after": (
-        "mocha_after",
-        "per_test",
-    ),  # default to per_test for ambiguous mocha hooks
+_DEFS = load_fixture_definitions()["javascript_typescript"]
+
+JS_FIXTURE_CALLS: dict[str, tuple[str, str]] = {
+    name: (fields["fixture_type"], fields["scope"])
+    for name, fields in _DEFS["hooks"].items()
 }
 
 # AVA fixture patterns - using member access like test.before()
-AVA_FIXTURE_PATTERNS = {
-    "before": ("ava_before", "per_class"),
-    "after": ("ava_after", "per_class"),
-    "serial.before": ("ava_serial_before", "per_test"),
-    "serial.after": ("ava_serial_after", "per_test"),
+AVA_FIXTURE_PATTERNS: dict[str, tuple[str, str]] = {
+    name: (fields["fixture_type"], fields["scope"])
+    for name, fields in _DEFS["ava_patterns"].items()
+}
+
+# TypeScript decorator-style hooks: @Before, @After, @BeforeEach, etc.
+TS_DECORATOR_MAP: dict[str, tuple[str, str]] = {
+    name: (fields["fixture_type"], fields["scope"])
+    for name, fields in _DEFS["ts_decorators"].items()
 }
 
 
@@ -103,18 +107,8 @@ def _detect_js(
                         # Remove @ symbol and check if it's a known decorator
                         dec_name = dec_text.lstrip("@").split("(")[0].strip()
 
-                        # Mapping of TypeScript decorators to fixture types
-                        decorator_map = {
-                            "Before": ("mocha_before", "per_test"),
-                            "After": ("mocha_after", "per_test"),
-                            "BeforeEach": ("before_each", "per_test"),
-                            "AfterEach": ("after_each", "per_test"),
-                            "BeforeAll": ("before_all", "per_class"),
-                            "AfterAll": ("after_all", "per_class"),
-                        }
-
-                        if dec_name in decorator_map:
-                            fixture_type, scope = decorator_map[dec_name]
+                        if dec_name in TS_DECORATOR_MAP:
+                            fixture_type, scope = TS_DECORATOR_MAP[dec_name]
                             results.append(
                                 _build_result(
                                     node=node,

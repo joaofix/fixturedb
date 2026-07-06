@@ -1,8 +1,24 @@
-"""Python fixture detection: pytest decorators, unittest/nose setup/teardown, Behave BDD steps."""
+"""Python fixture detection: pytest decorators, unittest/nose setup/teardown, Behave BDD steps.
+
+Pattern tables (scope keyword maps, BDD type map, setup/teardown name ->
+scope maps) are loaded from collection/config_data/fixture_definitions.yaml
+rather than hardcoded here -- see that file for the full operational
+definition of "fixture" per language, including documented exclusions.
+"""
 
 import re
 
+from .config_data import load_fixture_definitions
 from .detector_shared import FixtureResult, _build_result, _source
+
+_DEFS = load_fixture_definitions()["python"]
+
+PYTEST_SCOPE_KEYWORD_MAP: dict[str, str] = _DEFS["pytest_decorator"]["scope_keyword_map"]
+PYTEST_MATCH_SUBSTRINGS: list[str] = _DEFS["pytest_decorator"]["match_substrings"]
+BEHAVE_TYPE_MAP: dict[str, str] = _DEFS["behave_steps"]["type_map"]
+UNITTEST_SETUP_NAMES: dict[str, str] = _DEFS["unittest_setup"]["names"]
+PYTEST_CLASS_METHOD_NAMES: dict[str, str] = _DEFS["pytest_class_method"]["names"]
+NOSE_FIXTURE_NAMES: dict[str, str] = _DEFS["nose_fixture"]["names"]
 
 
 def _detect_python(
@@ -25,18 +41,13 @@ def _detect_python(
                 dec_text = _source(dec, src_bytes)
 
                 # pytest.fixture decorator
-                if "fixture" in dec_text and "pytest" in dec_text:
+                if all(s in dec_text for s in PYTEST_MATCH_SUBSTRINGS):
                     scope = "per_test"
                     scope_match = re.search(r'scope\s*=\s*["\'](\w+)["\']', dec_text)
                     if scope_match:
-                        scope_map = {
-                            "function": "per_test",
-                            "class": "per_class",
-                            "module": "per_module",
-                            "package": "per_module",
-                            "session": "global",
-                        }
-                        scope = scope_map.get(scope_match.group(1), "per_test")
+                        scope = PYTEST_SCOPE_KEYWORD_MAP.get(
+                            scope_match.group(1), "per_test"
+                        )
 
                     results.append(
                         _build_result(
@@ -54,13 +65,7 @@ def _detect_python(
                 # BDD fixtures: Behave @given, @when, @then, @step decorators
                 behave_match = re.search(r"@(given|when|then|step)\s*\(", dec_text)
                 if behave_match:
-                    fixture_type_map = {
-                        "given": "behave_given",
-                        "when": "behave_when",
-                        "then": "behave_then",
-                        "step": "behave_step",
-                    }
-                    fixture_type = fixture_type_map.get(
+                    fixture_type = BEHAVE_TYPE_MAP.get(
                         behave_match.group(1), "behave_step"
                     )
                     results.append(
@@ -83,78 +88,42 @@ def _detect_python(
                 name = _source(name_node, src_bytes)
 
                 # unittest-style fixtures: setUp/tearDown/setUpClass/tearDownClass/setUpModule/tearDownModule
-                if name in (
-                    "setUp",
-                    "tearDown",
-                    "setUpClass",
-                    "tearDownClass",
-                    "setUpModule",
-                    "tearDownModule",
-                ):
-                    scope = (
-                        "per_class"
-                        if name in ("setUpClass", "tearDownClass")
-                        else "per_test"
-                    )
-                    if "Module" in name:
-                        scope = "per_module"
+                if name in UNITTEST_SETUP_NAMES:
                     results.append(
                         _build_result(
                             node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="unittest_setup",
-                            scope=scope,
+                            scope=UNITTEST_SETUP_NAMES[name],
                             framework="unittest",
                             language="python",
                         )
                     )
 
                 # TestCase method style (setup_method/teardown_method)
-                elif name in (
-                    "setup_method",
-                    "teardown_method",
-                    "setup_class",
-                    "teardown_class",
-                ):
-                    scope = (
-                        "per_class"
-                        if name in ("setup_class", "teardown_class")
-                        else "per_test"
-                    )
+                elif name in PYTEST_CLASS_METHOD_NAMES:
                     results.append(
                         _build_result(
                             node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="pytest_class_method",
-                            scope=scope,
+                            scope=PYTEST_CLASS_METHOD_NAMES[name],
                             framework="pytest",
                             language="python",
                         )
                     )
 
                 # Nose-style fixtures: setup/teardown/setup_module/teardown_module/setup_package/teardown_package
-                elif name in (
-                    "setup",
-                    "teardown",
-                    "setup_module",
-                    "teardown_module",
-                    "setup_package",
-                    "teardown_package",
-                ):
-                    scope = "per_test"
-                    if "module" in name:
-                        scope = "per_module"
-                    elif "package" in name:
-                        scope = "per_module"
+                elif name in NOSE_FIXTURE_NAMES:
                     results.append(
                         _build_result(
                             node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="nose_fixture",
-                            scope=scope,
+                            scope=NOSE_FIXTURE_NAMES[name],
                             language="python",
                         )
                     )

@@ -1,0 +1,200 @@
+# Operational definition of "test fixture" per language -- exactly what
+# collection/detector_<language>.py treats as a fixture definition, and why.
+#
+# This file is both:
+#   1. Executable source of truth -- loaded by collection/config_data
+#      (load_fixture_definitions()) and consumed by the detector modules to
+#      build their pattern tables. Editing a name/annotation/scope here is a
+#      YAML change, not a Python change.
+#   2. The audit trail for reviewers -- the `excluded` list per language
+#      documents known boundary cases the detector deliberately does not (or
+#      cannot) catch, so absence of a pattern is a documented decision, not
+#      an oversight.
+#
+# Scope values (shared vocabulary across all languages):
+#   per_test   -- runs before/after every test function
+#   per_class  -- runs once per test class/suite
+#   per_module -- runs once per file/module
+#   global     -- runs once per test session (pytest scope="session" only)
+
+python:
+  pytest_decorator:
+    framework: pytest
+    fixture_type: pytest_decorator
+    # Decorator text must contain both substrings (case-sensitive), not an
+    # exact-name match -- this is what lets @pytest.fixture and
+    # @pytest_asyncio.fixture share one rule (see note below).
+    match_substrings: [pytest, fixture]
+    note: >
+      Matches @pytest.fixture and @pytest_asyncio.fixture alike (both
+      contain "pytest" and "fixture" as substrings) -- pytest_asyncio
+      fixtures are not a separate fixture_type. A factory fixture (a
+      @pytest.fixture-decorated function that returns a callable) is
+      detected once, as the outer function; the callable it returns is not
+      treated as a second fixture.
+    scope_keyword_map:
+      function: per_test
+      class: per_class
+      module: per_module
+      package: per_module
+      session: global
+    default_scope: per_test  # used when no explicit scope=... kwarg is present
+  behave_steps:
+    framework: behave
+    # Regex applied to the decorator's own text.
+    match_regex: '@(given|when|then|step)\s*\('
+    scope: per_test
+    type_map:
+      given: behave_given
+      when: behave_when
+      then: behave_then
+      step: behave_step
+  unittest_setup:
+    framework: unittest
+    fixture_type: unittest_setup
+    names:
+      setUp: per_test
+      tearDown: per_test
+      setUpClass: per_class
+      tearDownClass: per_class
+      setUpModule: per_module
+      tearDownModule: per_module
+  pytest_class_method:
+    framework: pytest
+    fixture_type: pytest_class_method
+    note: >
+      pytest-style TestCase subclasses using setup_method/teardown_method
+      naming instead of setUp/tearDown.
+    names:
+      setup_method: per_test
+      teardown_method: per_test
+      setup_class: per_class
+      teardown_class: per_class
+  nose_fixture:
+    framework: null
+    fixture_type: nose_fixture
+    names:
+      setup: per_test
+      teardown: per_test
+      setup_module: per_module
+      teardown_module: per_module
+      setup_package: per_module
+      teardown_package: per_module
+  excluded:
+    - case: "Fixtures defined in installed pytest plugins / external packages"
+      reason: >
+        Detection is per-file AST scanning of the cloned repo; a fixture
+        registered via pytest_plugins pointing at an installed package has
+        no source file in the repo to scan.
+    - case: "Custom decorators that wrap @pytest.fixture internally (e.g. @my_fixture_wrapper)"
+      reason: >
+        Matching is a literal substring check on the decorator's own text
+        (must contain both "pytest" and "fixture"); a differently-named
+        decorator whose *implementation* calls pytest.fixture() internally
+        does not itself contain those substrings at the call site and is
+        missed.
+    - case: "Fixtures created dynamically (metaprogramming, exec(), runtime-generated decorators)"
+      reason: >
+        AST-based detection requires the fixture to exist as literal source
+        text; there is no corresponding node for code that only exists at
+        runtime.
+    - case: "mock.patch (or any other non-fixture decorator) on an ordinary test function"
+      reason: >
+        Not a fixture and not matched by design -- listed here to make the
+        boundary explicit rather than leave it implicit.
+
+java:
+  # Every entry below results in `framework="junit"` in the current
+  # detector, even for the Spring/TestNG/Cucumber families -- `family` here
+  # is documentation only (for reviewer auditability), not consumed by code.
+  # This is a known imprecision, not a bug fix rolled into this migration.
+  annotations:
+    "@BeforeEach": {fixture_type: junit5_before_each, scope: per_test, family: junit5}
+    "@BeforeAll": {fixture_type: junit5_before_all, scope: per_class, family: junit5}
+    "@AfterEach": {fixture_type: junit5_after_each, scope: per_test, family: junit5}
+    "@AfterAll": {fixture_type: junit5_after_all, scope: per_class, family: junit5}
+    "@Before": {fixture_type: junit4_before, scope: per_test, family: junit4}
+    "@After": {fixture_type: junit4_after, scope: per_test, family: junit4}
+    "@BeforeMethod": {fixture_type: testng_before_method, scope: per_test, family: testng}
+    "@AfterMethod": {fixture_type: testng_after_method, scope: per_test, family: testng}
+    "@DataProvider": {fixture_type: testng_data_provider, scope: per_test, family: testng}
+    "@Rule": {fixture_type: junit_rule, scope: per_test, family: junit4}
+    "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4}
+    "@Bean": {fixture_type: spring_bean, scope: per_class, family: spring}
+    "@TestConfiguration": {fixture_type: spring_test_config, scope: per_class, family: spring}
+    "@Given": {fixture_type: cucumber_given, scope: per_test, family: cucumber}
+    "@When": {fixture_type: cucumber_when, scope: per_test, family: cucumber}
+    "@Then": {fixture_type: cucumber_then, scope: per_test, family: cucumber}
+    "@And": {fixture_type: cucumber_and, scope: per_test, family: cucumber}
+    "@But": {fixture_type: cucumber_but, scope: per_test, family: cucumber}
+    "@Attachment": {fixture_type: cucumber_attachment, scope: per_test, family: cucumber}
+  # Same annotation name exists in both JUnit4 and TestNG; the detector
+  # cannot disambiguate from the annotation alone and defaults to TestNG
+  # (documented imprecision -- see the "Known imprecisions" note below).
+  ambiguous_annotations:
+    "@BeforeClass": {junit4_fixture_type: junit4_before_class, testng_fixture_type: testng_before_class, scope: per_class}
+    "@AfterClass": {junit4_fixture_type: junit4_after_class, testng_fixture_type: testng_after_class, scope: per_class}
+  # Plain setUp()/tearDown() methods with no annotation at all, inside a
+  # (JUnit3-style) TestCase subclass.
+  junit3_fallback:
+    names:
+      setUp: junit3_setup
+      tearDown: junit3_teardown
+    scope: per_test
+  known_imprecisions:
+    - "@BeforeClass/@AfterClass are always attributed to TestNG when ambiguous with JUnit4, since the detector doesn't inspect imports to disambiguate -- see the TODO in detector_java.py."
+    - "Every annotation above is recorded with framework=\"junit\", even Spring (@Bean, @TestConfiguration) and Cucumber (@Given/@When/@Then/@And/@But/@Attachment) annotations -- the framework column does not yet distinguish these families."
+  excluded:
+    - case: "JUnit 5 Extension lifecycle methods (BeforeEachCallback, AfterEachCallback, etc.)"
+      reason: >
+        These are implemented via interfaces, not annotations -- the
+        detector only looks for annotation nodes on methods/fields.
+    - case: "Spring @BeforeTransaction / @AfterTransaction"
+      reason: "Not present in the annotation table above; genuinely unhandled today."
+    - case: "TestNG @BeforeSuite / @AfterSuite / @BeforeTest / @AfterTest"
+      reason: >
+        Only @BeforeMethod/@AfterMethod are handled; the other TestNG
+        lifecycle levels are not in the annotation table.
+
+javascript_typescript:
+  # Ambiguous by design: could be Jest, Mocha, Vitest, or Jasmine -- no
+  # framework attribution is attempted for these bare calls.
+  hooks:
+    beforeEach: {fixture_type: before_each, scope: per_test}
+    beforeAll: {fixture_type: before_all, scope: per_class}
+    afterEach: {fixture_type: after_each, scope: per_test}
+    afterAll: {fixture_type: after_all, scope: per_class}
+    before: {fixture_type: mocha_before, scope: per_test, note: "Mocha's bare `before` is suite-scoped; approximated as per_test here, same as the other ambiguous bare hooks."}
+    after: {fixture_type: mocha_after, scope: per_test}
+  # Matched only as `test.<pattern>` member-expression calls (the AVA test
+  # object must literally be named `test` at the call site -- see excluded).
+  ava_patterns:
+    before: {fixture_type: ava_before, scope: per_class}
+    after: {fixture_type: ava_after, scope: per_class}
+    serial.before: {fixture_type: ava_serial_before, scope: per_test}
+    serial.after: {fixture_type: ava_serial_after, scope: per_test}
+  # TypeScript decorator-style hooks (e.g. custom test-framework decorators).
+  ts_decorators:
+    Before: {fixture_type: mocha_before, scope: per_test}
+    After: {fixture_type: mocha_after, scope: per_test}
+    BeforeEach: {fixture_type: before_each, scope: per_test}
+    AfterEach: {fixture_type: after_each, scope: per_test}
+    BeforeAll: {fixture_type: before_all, scope: per_class}
+    AfterAll: {fixture_type: after_all, scope: per_class}
+  excluded:
+    - case: "Jest globalSetup / globalTeardown"
+      reason: >
+        Configured as a file path in jest.config.js, not an inline function
+        call in the test file -- there is no call-expression node to match.
+    - case: "Vitest setupFiles"
+      reason: "Configuration-level (vitest.config.*), not an inline fixture -- same reasoning as Jest globalSetup."
+    - case: "Custom test helpers not using a recognized framework lifecycle hook name"
+      reason: >
+        Detection is a fixed name/pattern lookup (hooks / ava_patterns /
+        ts_decorators above); a hand-rolled helper called manually inside
+        each test body is not a lifecycle hook and is not matched.
+    - case: "AVA fixtures accessed through an aliased import (e.g. `import ava from 'ava'; ava.before(...)`)"
+      reason: >
+        The AVA match requires the member-expression's object to be
+        literally named `test` (i.e. `test.before(...)`); a differently
+        named alias is not recognized.

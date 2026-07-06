@@ -5,10 +5,15 @@ Each catalog lives in its own file, next to this one, as plain data:
 - exclusion_keywords.yaml -- repo name/description keywords for boilerplate/toy repos
 - framework_registry.yaml -- known testing frameworks per language
 - language_configs.yaml -- per-language search and test-detection settings
+- fixture_definitions.yaml -- operational definition of "fixture" per language
+  (see that file's header comment for the schema and the per-language
+  `excluded` boundary-case catalog)
 
-collection/config.py loads these and derives the module-level constants
-(NON_CODE_EXTENSIONS, EXCLUSION_KEYWORDS, FRAMEWORK_REGISTRY, LANGUAGE_CONFIGS)
-existing call sites already use -- editing a catalog is a YAML change, not a
+collection/config.py loads the first four and derives the module-level
+constants (NON_CODE_EXTENSIONS, EXCLUSION_KEYWORDS, FRAMEWORK_REGISTRY,
+LANGUAGE_CONFIGS) existing call sites already use; collection/detector_python.py,
+detector_java.py, and detector_javascript.py load fixture_definitions.yaml and
+derive their own pattern tables -- editing a catalog is a YAML change, not a
 Python change.
 """
 
@@ -43,3 +48,13 @@ def load_framework_registry() -> Dict[str, List[str]]:
 def load_language_configs_data() -> Dict[str, Dict[str, Any]]:
     """Return raw per-language config field dicts, keyed by language."""
     return _load_yaml("language_configs.yaml")
+
+
+def load_fixture_definitions() -> Dict[str, Any]:
+    """Return the parsed fixture-definition catalog, keyed by language.
+
+    Each per-language section holds both the executable pattern tables the
+    detector modules build their lookups from, and an `excluded` list of
+    documented boundary cases -- see fixture_definitions.yaml's header.
+    """
+    return _load_yaml("fixture_definitions.yaml")

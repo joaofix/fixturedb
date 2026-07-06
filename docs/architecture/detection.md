@@ -46,6 +46,16 @@ Fixtures are defined differently across frameworks and languages. We use **frame
 
 See **[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)** for complete catalog of 50+ fixture types, detection examples, and patterns across all supported frameworks.
 
+The pattern tables themselves are not hardcoded in the per-language detector
+files — they're loaded from
+**[collection/config_data/fixture_definitions.yaml](../../collection/config_data/fixture_definitions.yaml)**,
+which is the executable, single source of truth for what counts as a
+fixture per language, and also documents (in an `excluded` list per
+language) known boundary cases the detector deliberately does not catch —
+see [configuration.md](configuration.md#reference-data-catalogs) and the
+"Known Exclusions & Boundary Cases" section of
+[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases).
+
 ### Scope Classification
 
 All detected fixtures are classified by execution scope:
