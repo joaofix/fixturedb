@@ -256,6 +256,20 @@ individually-justified manual-override list for the handful of constructs
 whose name contains no category keyword) and why `dummy` is deliberately
 never assigned.
 
+Building exhaustive, catalog-driven test coverage for `mock_patterns`
+(30 patterns total) surfaced two real precision bugs, not just gaps in
+what was tested: the bare `Mock()`/`MagicMock()`/`AsyncMock()` pattern had
+no word boundary, so it also matched inside `EasyMock.createMock(...)`
+(a Java false positive), and MockK's `mock(X.class)` pattern had no
+qualifier exclusion, so it also matched inside `Mockito.mock(X.class)`
+(double-counting one call under two frameworks). Both were fixed in the
+YAML (word boundary, negative lookbehind) rather than in
+`detector_shared.py`, since the patterns — not the detection code — were
+the source of the bug. `Mockito.spy(...)` was also added as a new pattern:
+it previously had no coverage at all, meaning Java had zero `spy`-category
+representation despite `spy` being a distinct, common Mockito API from
+`mock()`.
+
 Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
 and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain
 plain constants directly in `collection/config.py` — they're single values

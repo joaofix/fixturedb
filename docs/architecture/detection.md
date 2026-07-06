@@ -170,6 +170,22 @@ analysis of the fixture body — not a simple keyword match — so per this
 project's preference for high-precision, simple heuristics over
 completeness, it's left undetected rather than guessed.
 
+**Test coverage**: `tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`
+is parametrized directly over every entry in `mock_patterns` (not a
+hand-picked subset) and asserts two things for each: the pattern matches
+its own minimal sample, and — critically — no *other* pattern in the
+catalog also matches that sample. That second check is what caught two
+real pattern-collision bugs during this test file's own construction: the
+bare `Mock()`/`MagicMock()`/`AsyncMock()` pattern matched as a substring
+inside Java's `EasyMock.createMock(...)`, and MockK's `mock(X.class)`
+pattern matched inside `Mockito.mock(X.class)` — both fixed with a
+word-boundary and a negative lookbehind respectively, since this pattern
+list is scanned language-agnostically against every fixture regardless of
+source language. The same round of testing also found that Mockito's
+`spy(...)` API had no pattern at all, meaning Java had zero `spy`-category
+coverage despite `spy` being a distinct, common Mockito call from `mock()`
+— now added.
+
 **Scope limitation**: detection only scans the fixture's own AST node
 text — a mock set up at module level or in a shared helper outside the
 fixture body is invisible to it. This matters most for Jest, where

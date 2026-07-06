@@ -136,6 +136,32 @@ describe('Test', function() {
         assert fixture.mocks[0].framework == "sinon"
         assert fixture.mocks[0].category == "stub"
 
+    def test_sinon_spy(self):
+        """sinon.spy(obj, 'method') should be detected, category "spy"."""
+        code = """
+beforeEach(function() {
+    const spy = sinon.spy(obj, 'method');
+});
+"""
+        fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
+        assert fixture.mocks
+        assert fixture.mocks[0].framework == "sinon"
+        assert fixture.mocks[0].category == "spy"
+
+    def test_sinon_mock(self):
+        """sinon.mock(obj) -- Sinon's own distinct "mock" API (as opposed
+        to stub/spy) -- should be detected, category "mock"."""
+        code = """
+beforeEach(function() {
+    const mocked = sinon.mock(obj);
+    mocked.expects('method').once();
+});
+"""
+        fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
+        assert fixture.mocks
+        assert fixture.mocks[0].framework == "sinon"
+        assert fixture.mocks[0].category == "mock"
+
     def test_sinon_fake_and_replace(self):
         """sinon.fake() and sinon.replace() were previously missing from
         the sinon alternation (only stub|spy|mock were covered). Both are
@@ -165,6 +191,26 @@ beforeEach(function() {
         assert fixture.mocks[0].framework == "sinon"
         assert fixture.mocks[0].category == "stub"
         assert fixture.mocks[0].target_identifier == "MyClass"
+
+
+class TestJavaScriptDocumentedExclusions:
+    """Cases feature_extraction_patterns.yaml's mock_patterns_excluded
+    documents as deliberately not detected -- pinned here so a future
+    pattern addition that accidentally starts matching them is noticed."""
+
+    def test_chai_assertion_only_usage_is_not_detected(self):
+        """A fixture that only asserts via Chai/sinon-chai against a mock
+        created elsewhere (e.g. in a shared beforeEach) has no mock
+        creation call of its own -- we detect mock creation, not
+        mock-flavored assertions, so nothing is recorded here."""
+        code = """
+beforeEach(function() {
+    expect(sharedStub.calledOnce).to.be.true;
+    expect(sharedSpy).to.have.been.calledWith('value');
+});
+"""
+        fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
+        assert fixture.mocks == []
 
 
 if __name__ == "__main__":

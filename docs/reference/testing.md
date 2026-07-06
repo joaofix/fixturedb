@@ -83,7 +83,7 @@ languages. See
 [Fixture Detection Logic § Mock Framework Detection](../architecture/detection.md#mock-framework-detection)
 for the full methodology and
 [collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
-for the exact pattern/framework/category catalog (29 patterns, 11
+for the exact pattern/framework/category catalog (30 patterns, 11
 frameworks).
 
 **What they test:**

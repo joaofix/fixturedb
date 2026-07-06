@@ -90,7 +90,15 @@ mock_patterns:
     framework: unittest_mock
     category: mock
     category_override_reason: "Same reasoning as the bare patch( override above."
-  - pattern: 'MagicMock\s*\(|Mock\s*\(|AsyncMock\s*\('
+  # \b before the bare "Mock(" alternative matters: without it, this also
+  # matches as a substring inside any identifier ending in "...Mock(" --
+  # notably Java's EasyMock.createMock(...) and Kotlin/MockK's mock(...)
+  # family -- since this pattern list is scanned language-agnostically
+  # against every fixture regardless of source language. MagicMock(/
+  # AsyncMock( are unaffected either way (the leftmost-match rule means
+  # they're consumed whole by their own alternative before "Mock(" is ever
+  # tried at a later position within the same word).
+  - pattern: 'MagicMock\s*\(|\bMock\s*\(|AsyncMock\s*\('
     framework: unittest_mock
     category: mock
   # pytest's built-in monkeypatch fixture. Not a mock *library* the way the
@@ -116,10 +124,17 @@ mock_patterns:
   - pattern: '@Mock\b'
     framework: mockito
     category: mock
+  - pattern: 'Mockito\.spy\s*\(\s*(\w+)'
+    framework: mockito
+    category: spy
   - pattern: 'EasyMock\.createMock\s*\(\s*(\w+)\.class'
     framework: easymock
     category: mock
-  - pattern: 'mock\s*\(\s*(\w+)\.class'
+  # (?<!\.) excludes qualified calls like "Mockito.mock(" -- without it,
+  # this bare "mock(" pattern also matches as a substring of
+  # Mockito.mock(...), double-counting the same call site under both
+  # frameworks.
+  - pattern: '(?<!\.)\bmock\s*\(\s*(\w+)\.class'
     framework: mockk  # MockK (Kotlin)
     category: mock
   # JavaScript / TypeScript

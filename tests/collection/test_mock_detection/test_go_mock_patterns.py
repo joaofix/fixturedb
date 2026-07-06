@@ -3,6 +3,15 @@ Mock detection tests for Go fixtures.
 
 Validates that the extractor correctly identifies mock usage patterns
 in Go test fixtures.
+
+Go isn't wired into DETECTORS (see collection/detector.py's module
+docstring), so extract_fixtures(code, "go") never returns fixtures for any
+mocks to attach to -- the gomock/testify_mock patterns in
+feature_extraction_patterns.yaml exist only for parity in case Go
+detection is ever enabled. Those patterns are still verified at the regex
+level (proven to match real Go mock syntax, not dead/broken data) in
+test_mock_pattern_catalog_coverage.py, which is why this file's tests only
+assert "no crash" rather than mock detection.
 """
 
 import pytest

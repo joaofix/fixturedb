@@ -592,7 +592,7 @@ mock in the separate `mock_usages` table — see
 
 **Implementation:**
 - **Detection**: `collection/detector_shared.py::_extract_mocks()`
-- **Pattern catalog**: `collection/config_data/feature_extraction_patterns.yaml`'s `mock_patterns` — 29 patterns across 11 frameworks, loaded via `load_feature_extraction_patterns()`, not hardcoded in Python (see [Configuration Reference § Reference-Data Catalogs](configuration.md#reference-data-catalogs))
+- **Pattern catalog**: `collection/config_data/feature_extraction_patterns.yaml`'s `mock_patterns` — 30 patterns across 11 frameworks, loaded via `load_feature_extraction_patterns()`, not hardcoded in Python (see [Configuration Reference § Reference-Data Catalogs](configuration.md#reference-data-catalogs))
 - **Calculation**: `len(fixture.mocks)` at fixture-build time in `collection/detector_shared.py::_build_result()`
 - **Aggregation**: Stored directly on the fixture as `num_mocks`; per-mock detail persisted separately to `mock_usages`
 
@@ -623,6 +623,7 @@ for the full methodology and reasoning behind every override.
 | `@pytest.fixture` with 3 `mocker.patch()` calls | pytest_mock | mock | 3 |
 | `monkeypatch.setenv('ENV', 'test')` | pytest_monkeypatch | stub | 1 |
 | `Mockito.mock(UserService.class)` | mockito | mock | 1 |
+| `Mockito.spy(realService)` | mockito | spy | 1 |
 | `jest.fn()` and `jest.spyOn()` calls | jest | mock, spy | 2 |
 | `sinon.stub(obj, 'method')` | sinon | stub | 1 |
 | No mock framework calls | (none) | — | 0 |
@@ -640,7 +641,7 @@ for the full methodology and reasoning behind every override.
 - The full, current list of documented gaps lives in `feature_extraction_patterns.yaml`'s `mock_patterns_excluded`, not duplicated here
 
 **Validation:**
-- Test suite: `tests/collection/test_mock_detection/` (per-language pattern coverage) and `tests/collection/test_config_data_loader.py` (guardrail tests for the pattern/category catalog itself)
+- Test suite: `tests/collection/test_mock_detection/` (per-language pattern coverage through the real `extract_fixtures()` pipeline) plus `test_mock_pattern_catalog_coverage.py` in the same directory, which is parametrized directly over every `mock_patterns` entry and asserts each pattern matches its own sample *and* that no other pattern in the catalog also matches it — the collision check that caught the `EasyMock.createMock(...)`/`Mockito.mock(...)` false-positive bugs described above. `tests/collection/test_config_data_loader.py` adds guardrail tests for the pattern/category catalog's shape itself.
 - Production validation: Distribution of num_mocks across the dataset
   - ~45% of fixtures have num_mocks = 0 (no mocks)
   - ~35% have 1-2 mocks
