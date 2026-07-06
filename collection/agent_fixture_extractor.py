@@ -230,15 +230,14 @@ class AgentFixtureExtractor:
                                 stats.get("commits_skipped_file_level", 0) + 1
                             )
 
-                    # Dataset A only: classify the commit's Conventional Commits
-                    # type so fixture-producing agent commits can be compared
-                    # against literature baselines. `agent_type == "human"` is
-                    # human_corpus.py's sentinel for Dataset B commits routed
-                    # through this same method — leave those unclassified.
-                    commit_type = (
-                        classify_commit_type(commit_info.get("message", ""))
-                        if agent_type != "human"
-                        else None
+                    # Classify the commit's Conventional Commits type so
+                    # fixture-producing commits (agent or human) can be
+                    # compared against literature baselines and against each
+                    # other. `agent_type` is "human" for Dataset B commits
+                    # routed through this same method (human_corpus.py) —
+                    # classification applies the same way regardless.
+                    commit_type = classify_commit_type(
+                        commit_info.get("message", "")
                     )
 
                     for fixture in commit_fixtures:
@@ -253,8 +252,7 @@ class AgentFixtureExtractor:
                             duplicates_skipped += 1
                             continue
                         seen_fixtures.add(fixture_key)
-                        if commit_type is not None:
-                            fixture["commit_type"] = commit_type
+                        fixture["commit_type"] = commit_type
                         fixtures.append(fixture)
 
             except Exception as e:

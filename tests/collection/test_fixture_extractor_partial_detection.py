@@ -1152,8 +1152,8 @@ def test_extract_from_agent_commits_stats_records_accepted_without_fixtures(tmp_
 
 
 # ──────────────────────────────────────────────────────────────
-# Unit tests: commit_type classification (Dataset A only) attached by
-# _extract_from_agent_commits()
+# Unit tests: commit_type classification (agent and human commits alike)
+# attached by _extract_from_agent_commits()
 # ──────────────────────────────────────────────────────────────
 
 
@@ -1179,12 +1179,13 @@ def test_extract_from_agent_commits_attaches_commit_type_for_agent_commit(tmp_pa
     assert all(f["commit_type"] == "test" for f in fixtures)
 
 
-def test_extract_from_agent_commits_does_not_attach_commit_type_for_human_commit(
+def test_extract_from_agent_commits_attaches_commit_type_for_human_commit_too(
     tmp_path,
 ):
     """human_corpus.py routes human commits through this method with
-    agent_type='human' — those fixtures must not get a commit_type, even
-    when the message itself looks conventional."""
+    agent_type='human' — Dataset B fixtures get commit_type classified the
+    same way as Dataset A, so agent vs. human Conventional Commits adherence
+    can be compared."""
     sha = _init_repo_with_commits(
         tmp_path,
         [
@@ -1202,4 +1203,29 @@ def test_extract_from_agent_commits_does_not_attach_commit_type_for_human_commit
         commits={sha: "human"},
     )
     assert len(fixtures) >= 1
-    assert all("commit_type" not in f for f in fixtures)
+    assert all(f["commit_type"] == "test" for f in fixtures)
+
+
+def test_extract_from_agent_commits_classifies_non_conventional_human_commit(
+    tmp_path,
+):
+    """A human commit whose message doesn't follow Conventional Commits still
+    gets classified — as 'none', not left unset."""
+    sha = _init_repo_with_commits(
+        tmp_path,
+        [
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+                "msg": "Added a new fixture for the parser",
+            }
+        ],
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_agent_commits(
+        repo_name="owner__repo",
+        commits={sha: "human"},
+    )
+    assert len(fixtures) >= 1
+    assert all(f["commit_type"] == "none" for f in fixtures)

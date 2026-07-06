@@ -56,6 +56,22 @@ def test_classify_commit_type_non_conventional_is_none(message):
     assert classify_commit_type(message) == "none"
 
 
+@pytest.mark.parametrize(
+    "message",
+    [
+        "randomword: fix stuff",
+        "wip: work in progress",
+        "release: cut v1.2.3",
+    ],
+)
+def test_classify_commit_type_colon_shaped_but_unrecognized_type_is_none(message):
+    """A colon-terminated prefix that isn't one of the recognized Conventional
+    Commits types (the fixed feat/fix/.../perf/ci/build/revert allowlist)
+    does not match at all -- unlike an arbitrary word, it must not be
+    classified as "other"."""
+    assert classify_commit_type(message) == "none"
+
+
 def test_classify_commit_type_uses_subject_line_only():
     message = (
         "test: add fixture for parser\n\n"

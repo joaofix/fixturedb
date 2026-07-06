@@ -168,7 +168,7 @@ CREATE INDEX idx_fixture_framework ON fixtures(framework);
 | **commit_author_name** | TEXT | Commit author | ✗ | ✓ |
 | **commit_author_email** | TEXT | Author email | ✗ | ✓ |
 | **commit_date** | TEXT | When committed | ✗ | ✓ |
-| **commit_type** | TEXT | Conventional Commits type of the originating commit (feat/fix/docs/refactor/test/chore/style/other/none) | ✗ | ✓ |
+| **commit_type** | TEXT | Conventional Commits type of the originating commit (feat/fix/docs/refactor/test/chore/style/other/none) | ✓ | ✓ |
 
 ---
 
@@ -224,11 +224,15 @@ ALTER TABLE fixtures ADD COLUMN commit_type TEXT;
     -- subject line, via a regex prefix match (collection/conventional_commits.py)
     -- Values: feat | fix | docs | refactor | test | chore | style | other | none
     --   - one of the 7 known types on prefix match
-    --   - "other": follows `type(scope)!: ` shape but type is unrecognized (e.g. perf, build, ci)
-    --   - "none": subject does not follow Conventional Commits at all
-    -- Dataset A (agent) only — NULL for Dataset B/C fixtures
-    -- Purpose: compare fixture-producing agent commits' Conventional Commits
-    -- adherence against literature baselines (e.g. "Agentic Much?" Section 10)
+    --   - "other": recognized Conventional Commits type but not one of the 7
+    --     known ones (perf, ci, build, revert)
+    --   - "none": subject's prefix isn't a recognized Conventional Commits
+    --     type at all
+    -- Populated for both Dataset A (agent) and Dataset B (human, same-repo)
+    -- fixtures — NULL for Dataset C (no per-commit message available)
+    -- Purpose: compare fixture-producing agent vs. human commits'
+    -- Conventional Commits adherence, and against literature baselines
+    -- (e.g. "Agentic Much?" Section 10)
     -- Used: For completeness validation
 
 ALTER TABLE fixtures ADD COLUMN commit_author_name TEXT;

@@ -1,9 +1,10 @@
-"""Conventional Commits classification for agent commit messages.
+"""Conventional Commits classification for commit messages.
 
-Dataset A only: lets us check whether agent commits that actually produce
-fixtures follow the Conventional Commits convention more (or less) often
-than agents' general commit pattern, as reported in prior work (e.g. the
-"Agentic Much?" paper's Section 10 analysis of Claude Code commits).
+Used for both Dataset A (agent) and Dataset B (human, same-repo) fixtures,
+so we can compare how often each group's fixture-producing commits follow
+the Conventional Commits convention -- and in which category -- against
+prior work (e.g. the "Agentic Much?" paper's Section 10 analysis of Claude
+Code commits).
 """
 
 import re
@@ -22,20 +23,31 @@ COMMIT_TYPES = [
 
 _KNOWN_TYPES = frozenset(COMMIT_TYPES) - {"other", "none"}
 
+# Recognized Conventional Commits type prefixes, including the 4 conventional
+# types (perf/ci/build/revert) that aren't in COMMIT_TYPES' own categories
+# but still count as "other" rather than "none". Anything outside this fixed
+# list does not match at all, regardless of whether it's colon-shaped.
+_RECOGNIZED_TYPES = _KNOWN_TYPES | {"perf", "ci", "build", "revert"}
+
 # type(scope)!: description -- scope and breaking-change "!" are optional.
-_CONVENTIONAL_COMMIT_RE = re.compile(r"^([a-zA-Z][a-zA-Z0-9_-]*)(\([^)]*\))?!?:")
+_CONVENTIONAL_COMMIT_RE = re.compile(
+    r"^(" + "|".join(sorted(_RECOGNIZED_TYPES)) + r")(\([^)]+\))?!?:",
+    re.IGNORECASE,
+)
 
 
 def classify_commit_type(commit_message: str) -> str:
     """Classify a commit message's subject line by Conventional Commits type.
 
     Only the first line (subject) is examined, matching standard Conventional
-    Commits practice. Type matching is case-insensitive. Returns one of
-    COMMIT_TYPES:
+    Commits practice. Type matching is case-insensitive, and an optional
+    `(scope)` and/or breaking-change `!` marker before the colon is allowed
+    (e.g. `feat(parser)!: ...`). Returns one of COMMIT_TYPES:
       - a known type (feat/fix/docs/refactor/test/chore/style) on prefix match
-      - "other" if the subject follows the `type(scope)!: ` shape but the
-        type itself isn't one of the known ones (e.g. perf, build, ci)
-      - "none" if the subject doesn't follow Conventional Commits at all
+      - "other" if the prefix is a recognized Conventional Commits type that
+        isn't one of the 7 known ones (perf, ci, build, revert)
+      - "none" if the subject's prefix isn't one of the recognized types at
+        all (including arbitrary words that happen to be colon-terminated)
     """
     if not commit_message or not commit_message.strip():
         return "none"

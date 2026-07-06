@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS fixtures (
     match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     commit_type             TEXT DEFAULT NULL,      -- Conventional Commits type of the originating commit
-                                    -- (Dataset A only: feat/fix/docs/refactor/test/chore/style/other/none)
+                                    -- (agent or human: feat/fix/docs/refactor/test/chore/style/other/none)
     UNIQUE(file_id, name, start_line)
 );
 
