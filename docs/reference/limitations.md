@@ -91,7 +91,7 @@ re-run or improve detection against the original fixture text.
 
 ## Validation Status
 
-**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, use `collection/validation_sampling.py --step agent-fixtures-dataset-a|human-fixtures-dataset-b|human-fixtures-dataset-c` to draw a Cochran-sized (95% confidence / 5% margin of error by default) sample per language and per corpus, then manually inspect it to establish project-specific precision and recall. See [Manual-Validation Sampling](../usage/validation-sampling.md).
+**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, use `collection/validation_sampling.py --step agent-fixtures-dataset-a` to draw a Cochran-sized (95% confidence / 5% margin of error by default) sample per language, then manually inspect it to establish project-specific precision and recall. Human fixture detection uses the identical AST detector and is intentionally not sampled separately — see the reduced validation set in [Manual-Validation Sampling](../usage/validation-sampling.md).
 
 **Language-Specific Confidence:**
 

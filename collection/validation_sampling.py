@@ -1,12 +1,19 @@
 """Cochran-formula manual-validation sampling tool.
 
 Draws a statistically-sized sample from an already-built pipeline output
-(agent-repo detection, agent/human commit detection, agent/human fixtures)
 for a human reviewer to manually check, at a chosen confidence level and
 margin of error. This is a standalone tool, not part of the phase_1a-8
 pipeline — it never runs automatically; invoke it explicitly with
 `python -m collection.validation_sampling` whenever a manual-validation
 sample is needed for one of the STEPS below.
+
+Only steps with a real labelling/attribution risk are covered -- not every
+pipeline output needs a manual-validation sample. Agent test-commit
+detection and human test-commit/fixture detection are deliberately excluded
+as redundant with what's already validated (same file-matching or AST
+detection logic as their agent counterparts, just applied to a different
+corpus) -- see docs/usage/validation-sampling.md for the full reduced
+validation set and the reasoning behind each inclusion/exclusion.
 
 Sample size uses Cochran's formula with the finite-population correction:
 
@@ -53,10 +60,7 @@ class StepConfig:
 STEPS: dict[str, StepConfig] = {
     "agent-repos": StepConfig(population_mode="combined"),
     "agent-commits-dataset-a": StepConfig(population_mode="combined"),
-    "human-commits-dataset-b": StepConfig(population_mode="combined"),
     "agent-fixtures-dataset-a": StepConfig(population_mode="per_file"),
-    "human-fixtures-dataset-b": StepConfig(population_mode="per_file"),
-    "human-fixtures-dataset-c": StepConfig(population_mode="per_file"),
 }
 
 

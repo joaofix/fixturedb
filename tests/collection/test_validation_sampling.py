@@ -271,39 +271,30 @@ class TestRealPipelineCSVSchemas:
         assert len(sampled) == entry["sample_size"]
         assert all(r["agent_type"] in {"claude", "copilot"} for r in sampled)
 
-    def test_human_commits_dataset_b_real_schema_round_trips(self, tmp_path, make_csv):
-        rows = [
-            {
-                "repo_name": f"owner{i}/repo_python",
-                "full_name": f"owner{i}/repo_python",
-                "language": "python",
-                "commit_sha": f"sha{i}",
-                "commit_role": "human",
-                "test_file_count": "2",
-                "test_file_paths": '["tests/test_foo.py", "tests/test_bar.py"]',
-            }
-            for i in range(30)
-        ]
-        csv_path = make_csv(tmp_path, "python_human_test_commit.csv", rows=rows)
-
-        metadata = run_validation_sampling(
-            "human-commits-dataset-b",
-            [csv_path],
-            output_root=tmp_path / "validation-samples",
-        )
-
-        entry = metadata["outputs"][0]
-        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
-            reader = csv.DictReader(fh)
-            assert reader.fieldnames == list(rows[0].keys())
-            sampled = list(reader)
-        assert len(sampled) == entry["sample_size"]
-        assert all(r["commit_role"] == "human" for r in sampled)
-
 
 def test_unknown_step_raises():
     with pytest.raises(ValueError):
         run_validation_sampling("not-a-real-step", [Path("x.csv")])
+
+
+@pytest.mark.parametrize(
+    "excluded_step",
+    [
+        "human-commits-dataset-b",
+        "human-fixtures-dataset-b",
+        "human-fixtures-dataset-c",
+        "agent-test-commits-dataset-a",
+    ],
+)
+def test_deliberately_excluded_steps_are_not_selectable(tmp_path, excluded_step):
+    """Reduced validation set: these are redundant with an already-validated
+    step (same file-matching or AST-detection logic, different corpus) and
+    must not be reintroduced as selectable --step values.
+    """
+    with pytest.raises(ValueError):
+        run_validation_sampling(
+            excluded_step, [Path("x.csv")], output_root=tmp_path / "validation-samples"
+        )
 
 
 def test_no_input_paths_raises(tmp_path):
