@@ -39,7 +39,8 @@ class Test(unittest.TestCase):
         assert fixture.num_objects_instantiated >= 1
 
     def test_pytest_mock_fixture(self):
-        """pytest-mock mocker fixture should be detected"""
+        """pytest-mock mocker fixture should be detected, including the
+        mocker.patch.object(...) call shape (previously missed entirely)."""
         code = """
 @pytest.fixture
 def user_service(mocker):
@@ -51,6 +52,7 @@ def user_service(mocker):
         assert fixture.fixture_type == "pytest_decorator"
         # Has parameters (mocker)
         assert fixture.num_parameters >= 1
+        assert fixture.mocks and fixture.mocks[0].framework == "pytest_mock"
 
     def test_mock_as_decorator(self):
         """@patch decorator on test method (not a fixture)"""
@@ -109,7 +111,10 @@ public class UserServiceTest {
         assert fixture.fixture_type == "junit4_before"
 
     def test_powermock_setup(self):
-        """PowerMock setup in test fixture"""
+        """PowerMock setup in test fixture: the fixture itself is still
+        correctly detected, but PowerMock is a documented exclusion (see
+        feature_extraction_patterns.yaml's mock_patterns_excluded) -- no
+        mock is recorded for it."""
         code = """
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(StaticUtility.class)
@@ -122,6 +127,7 @@ public class TestClass {
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.name == "setUp"
+        assert fixture.mocks == []
 
     def test_spy_pattern(self):
         """Spy/partial mock pattern in setUp"""
@@ -179,7 +185,10 @@ describe('Test', function() {
         assert fixture.fixture_type == "before_each"
 
     def test_jest_mock_module(self):
-        """jest.mock() for module mocking"""
+        """jest.mock() at its conventional module-top-level call site is
+        NOT attributed to the beforeEach fixture below it -- mock detection
+        only scans the fixture's own AST node text (documented in
+        feature_extraction_patterns.yaml's mock_patterns_excluded)."""
         code = """
 jest.mock('./api');
 const api = require('./api');
@@ -190,6 +199,7 @@ beforeEach(() => {
 """
         fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
         assert fixture.fixture_type == "before_each"
+        assert fixture.mocks == []
 
 
 class TestTypeScriptMockPatterns:

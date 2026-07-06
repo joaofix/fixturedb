@@ -145,10 +145,36 @@ def test_feature_extraction_patterns_has_expected_top_level_sections():
     patterns = load_feature_extraction_patterns()
     assert set(patterns) == {
         "mock_patterns",
+        "mock_patterns_excluded",
         "mock_interaction_keywords",
         "external_call_patterns",
         "object_instantiation_patterns",
         "teardown_detection",
+    }
+
+
+def test_mock_patterns_excluded_are_documented():
+    for entry in load_feature_extraction_patterns()["mock_patterns_excluded"]:
+        assert entry["case"].strip() and entry["reason"].strip()
+
+
+def test_mock_patterns_cover_expected_frameworks():
+    """Guardrail for the .patch.object() gap fixed alongside this test:
+    every framework we claim to support in docs must have at least one
+    pattern, so a future edit can't silently drop one."""
+    frameworks = {e["framework"] for e in load_feature_extraction_patterns()["mock_patterns"]}
+    assert frameworks == {
+        "unittest_mock",
+        "pytest_mock",
+        "pytest_monkeypatch",
+        "mockito",
+        "easymock",
+        "mockk",
+        "jest",
+        "sinon",
+        "vitest",
+        "gomock",
+        "testify_mock",
     }
 
 

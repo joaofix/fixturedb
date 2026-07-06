@@ -139,15 +139,24 @@ For detailed metric definitions, calculations, and academic references, see **[m
 
 Mock usage is detected in a **second pass** after fixture extraction using regex patterns across:
 
-- **Python**: `unittest.mock`, `pytest-mock`, `MagicMock`, `patch`, `Mock.assert_*()`
+- **Python**: `unittest.mock` (`patch(...)`, `patch.object(...)`, `Mock`/`MagicMock`/`AsyncMock`, `create_autospec`, both `mock.patch(...)` and the bare `patch(...)` import form), `pytest-mock` (`mocker.patch(...)`, `mocker.patch.object(...)`), pytest's built-in `monkeypatch` fixture
 - **Java**: Mockito, EasyMock, MockK
-- **JavaScript/TypeScript**: Jest, Sinon, Vitest
+- **JavaScript/TypeScript**: Jest (`jest.fn/spyOn/mock/mocked/createMockFromModule`), Sinon (`stub/spy/mock/fake/replace/createStubInstance`), Vitest
 
 For each mock detected, we record:
 - **framework**: Mock framework name (e.g., `mockito`, `unittest_mock`, `sinon`)
 - **target_identifier**: What is being mocked (if extractable)
 - **num_interactions_configured**: Count of assertions/verifications
 - **raw_snippet**: Code snippet for manual inspection
+
+**Scope limitation**: detection only scans the fixture's own AST node
+text — a mock set up at module level or in a shared helper outside the
+fixture body is invisible to it. This matters most for Jest, where
+`jest.mock('./module')` is conventionally written at the top of the file
+(auto-hoisted by babel-jest) rather than inside a `beforeEach`, so that
+pattern rarely fires in practice even though it's in the table. See
+`mock_patterns_excluded` in the YAML below for the full list of documented
+gaps.
 
 The regex patterns themselves (`mock_patterns`), the interaction keywords
 used to count `num_interactions_configured` (`mock_interaction_keywords`),

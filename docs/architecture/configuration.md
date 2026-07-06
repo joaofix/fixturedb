@@ -232,6 +232,21 @@ scope) while missing several pairs it should have had (TestNG, Mocha, AVA,
 `before_all`/`after_all`, JUnit3), so those fixture types never got credit
 for having a teardown even when one was present in the source.
 
+A follow-up audit of `mock_patterns` specifically (prompted by "what do we
+actually detect as a mock?") found and fixed three more real blind spots,
+not just relocated data: `mock.patch.object(...)`/`mocker.patch.object(...)`
+(a distinct call shape from `.patch('dotted.path')` that the original regex
+structurally couldn't match), bare `patch(...)`/`patch.object(...)` (the
+`from unittest.mock import patch` form, used without a `mock.`/`mocker.`
+prefix), and several missing Sinon/Jest entry points
+(`sinon.fake/replace/createStubInstance`, `jest.mocked/createMockFromModule`).
+pytest's built-in `monkeypatch` fixture was also added as a new
+`pytest_monkeypatch` framework. `mock_patterns_excluded` documents what's
+still deliberately out of scope (PowerMock, assertion-only Chai/sinon-chai
+usage, and the structural fact that anything mocked outside a fixture's own
+body — most notably Jest's conventional top-level `jest.mock(...)` — is
+invisible to this detector).
+
 Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
 and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain
 plain constants directly in `collection/config.py` — they're single values

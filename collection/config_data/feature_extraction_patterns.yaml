@@ -17,10 +17,39 @@ mock_patterns:
   # Python
   - pattern: 'mock\.patch\s*\(\s*[''"]([^''"]+)[''"]'
     framework: unittest_mock
+  - pattern: 'mock\.patch\.object\s*\(\s*(\w+)'
+    framework: unittest_mock
+    note: >
+      mock.patch.object(target, 'attr', ...) -- a distinct call shape from
+      mock.patch('dotted.path'); previously missed entirely since the plain
+      .patch( pattern requires an opening paren immediately after "patch",
+      which .object( breaks.
+  - pattern: 'create_autospec\s*\(\s*(\w+)'
+    framework: unittest_mock
   - pattern: 'mocker\.patch\s*\(\s*[''"]([^''"]+)[''"]'
     framework: pytest_mock
+  - pattern: 'mocker\.patch\.object\s*\(\s*(\w+)'
+    framework: pytest_mock
+    note: "pytest-mock's mocker.patch.object -- same gap as mock.patch.object above."
+  # Bare patch(...)/patch.object(...), i.e. `from unittest.mock import patch`
+  # then calling it unqualified -- at least as common as the mock.patch(...)
+  # form and previously not covered at all. Negative lookbehind excludes
+  # mock.patch(/mocker.patch( so this can't double-count alongside those
+  # two patterns above.
+  - pattern: '(?<!mock\.)(?<!mocker\.)\bpatch\s*\(\s*[''"]([^''"]+)[''"]'
+    framework: unittest_mock
+  - pattern: '(?<!mock\.)(?<!mocker\.)\bpatch\.object\s*\(\s*(\w+)'
+    framework: unittest_mock
   - pattern: 'MagicMock\s*\(|Mock\s*\(|AsyncMock\s*\('
     framework: unittest_mock
+  # pytest's built-in monkeypatch fixture. Not a mock *library* the way the
+  # others are, but the same test-isolation-via-patching concept the
+  # num_mocks metric is meant to capture, and previously not covered at all.
+  # Capture group is the operation name (setattr/setenv/...), not a target
+  # identifier -- monkeypatch's first argument is too variable in shape
+  # (object reference, dotted string, or plain name) to extract reliably.
+  - pattern: 'monkeypatch\.(setattr|delattr|setenv|delenv|setitem|delitem)\s*\('
+    framework: pytest_monkeypatch
   # Java
   - pattern: 'Mockito\.mock\s*\(\s*(\w+)\.class'
     framework: mockito
@@ -37,7 +66,13 @@ mock_patterns:
     framework: jest
   - pattern: 'jest\.mock\s*\(\s*[''"]([^''"]+)[''"]'
     framework: jest
-  - pattern: 'sinon\.(stub|spy|mock)\s*\('
+  - pattern: 'jest\.mocked\s*\(\s*(\w+)'
+    framework: jest
+  - pattern: 'jest\.createMockFromModule\s*\(\s*[''"]([^''"]+)[''"]'
+    framework: jest
+  - pattern: 'sinon\.(stub|spy|mock|fake|replace)\s*\('
+    framework: sinon
+  - pattern: 'sinon\.createStubInstance\s*\(\s*(\w+)'
     framework: sinon
   - pattern: 'vi\.fn\s*\('
     framework: vitest
@@ -51,6 +86,31 @@ mock_patterns:
     framework: testify_mock
   - pattern: '\.On\s*\(\s*[''"](\w+)[''"]'
     framework: testify_mock
+
+# Known gaps -- documented for the same reason fixture_definitions.yaml
+# documents fixture-detection exclusions: absence should be a decision a
+# reviewer can see, not a silent oversight.
+mock_patterns_excluded:
+  - case: "unittest.mock context-manager/decorator wrapper helpers defined by the project itself (e.g. a custom @mock_db decorator that calls mock.patch internally)"
+    reason: "Matching is purely textual against the fixture's own source; a call to a project-defined wrapper doesn't contain any of the patterns above at the call site."
+  - case: "Chai/sinon-chai assertion-only usage with no stub/spy/mock/fake/replace/createStubInstance call in the same fixture"
+    reason: "We detect mock creation, not mock-flavored assertions; a fixture that only asserts against a mock created elsewhere (e.g. in a shared beforeEach) won't show a match in its own body."
+  - case: "PowerMock (@RunWith(PowerMockRunner.class), PowerMock.mockStatic(...), etc.)"
+    reason: >
+      Not in the mock_patterns table -- a niche/legacy framework for
+      mocking static methods and final classes, deliberately out of scope.
+      A fixture using only PowerMock APIs will have has_teardown_pair and
+      other structural metrics computed normally, but num_mocks=0.
+  - case: "jest.mock('./module') at its conventional call site (module top level, auto-hoisted by babel-jest), rather than inside a beforeEach/test body"
+    reason: >
+      Mock detection scans only the fixture's own AST node text, not
+      surrounding module-level statements. jest.mock() is idiomatically
+      written at the top of the file specifically because Jest hoists it
+      above imports -- so this pattern will rarely fire in real code even
+      though it's in the table above. This is a structural limitation of
+      fixture-scoped scanning, not specific to Jest: any mock setup placed
+      outside the fixture body (module level, a shared helper function,
+      etc.) is invisible to this detector for every language/framework.
 
 # Substrings counted (near a mock_patterns match) to estimate how many
 # interactions/assertions were configured on that mock.
