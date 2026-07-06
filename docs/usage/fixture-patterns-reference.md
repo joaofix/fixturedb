@@ -645,7 +645,7 @@ reproduced here for readability.
 
 Two known imprecisions (detected, but not perfectly attributed) are also worth calling out:
 - `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector always attributes them to TestNG (both `fixture_type` and `framework`) rather than inspecting imports to disambiguate.
-- Scope is derived purely from annotation type (`@BeforeAll` → `per_class`, `@BeforeEach` → `per_test`), regardless of the class's JUnit 5 instance lifecycle mode. A class annotated `@TestInstance(Lifecycle.PER_CLASS)` changes `@BeforeAll` from requiring a static method to an instance method shared across the class's tests — the detector does not read `@TestInstance` at all, so this distinction is not reflected in the recorded scope.
+- Fixture scope is inferred from annotation type (`@BeforeAll` → `per_class`, `@BeforeEach` → `per_test`). JUnit 5's instance lifecycle annotation (`@TestInstance(Lifecycle.PER_CLASS)`), which can modify the effective scope of `@BeforeAll` (allowing it to be a non-static, per-instance method shared across the class's tests instead of a true static per-class hook), is not currently accounted for.
 
 ### JavaScript/TypeScript
 
