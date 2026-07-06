@@ -220,6 +220,15 @@ missing pattern is a documented decision rather than an oversight — see
 and [Limitations](../reference/limitations.md#fixture-detection-recall) for
 how this feeds into the paper's recall discussion.
 
+Building exhaustive, catalog-driven test coverage for `fixture_definitions.yaml`
+(parametrized directly over every entry, not a hand-picked subset —
+`tests/collection/test_fixture_definitions_catalog_coverage.py`) surfaced
+real detection bugs in `detector_java.py`'s JUnit3 fallback: no check for
+class inheritance at all (despite the YAML's own comment restricting it
+to a TestCase subclass), and an "already annotated" guard narrow enough
+that a `@Given`-annotated method could be double-detected. See
+[Fixture Detection Logic](detection.md) for the full writeup.
+
 The feature-extraction-patterns catalog covers the metrics computed *after*
 a fixture is already detected (`num_mocks`, `num_external_calls`,
 `num_objects_instantiated`, `has_teardown_pair`): what regex signals a

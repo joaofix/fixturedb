@@ -88,8 +88,10 @@ Java Fixtures
 
 ### JUnit 3 (Legacy)
 
-**Pattern:** Method names: `setUp()`, `tearDown()`  
+**Pattern:** Method names: `setUp()`, `tearDown()`, with no annotation at all, in a class that extends `TestCase`  
 **Scope:** per_test
+
+Both conditions are required: an annotated method (even one the detector doesn't recognize, e.g. `@Test`) is never treated as a JUnit3 fixture regardless of its name, and a plain `setUp()`/`tearDown()` in a class that does **not** extend `TestCase` is not detected either.
 
 ### JUnit 4
 

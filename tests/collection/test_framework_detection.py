@@ -175,13 +175,25 @@ public class TemporaryFolderTest {
     public static ExternalResource database = new ExternalResource();
 }
 """
-        # @Rule/@ClassRule fields are detected as anonymous fixtures with specific types
         all_fixtures = extract_and_find_fixtures(code, "java")
 
         # Check for junit_rule type
         rule_fixtures = [f for f in all_fixtures if f.fixture_type == "junit_rule"]
         assert len(rule_fixtures) > 0, "@Rule fixture should be detected"
         assert rule_fixtures[0].framework == "junit"
+        # Regression check: field_declaration has no "name" field the way
+        # method_declaration does (the name lives on its
+        # variable_declarator child instead), so this fixture used to get
+        # an unhelpful "<anonymous>_N" name rather than the real field name.
+        assert rule_fixtures[0].name == "temporaryFolder"
+        # Regression check: @Rule/@ClassRule fixtures previously omitted
+        # language="java" when calling _build_result(), so complexity
+        # metrics were silently computed in Python mode. Python's object-
+        # instantiation heuristic has an extra capitalized-call pattern
+        # that doesn't apply in Java mode, so "new TemporaryFolder()"
+        # gets double-counted (2) under the Python-mode bug instead of
+        # the correct single count (1) under Java mode.
+        assert rule_fixtures[0].num_objects_instantiated == 1
 
         # Check for junit_class_rule type
         class_rule_fixtures = [
@@ -189,6 +201,8 @@ public class TemporaryFolderTest {
         ]
         assert len(class_rule_fixtures) > 0, "@ClassRule fixture should be detected"
         assert class_rule_fixtures[0].framework == "junit"
+        assert class_rule_fixtures[0].num_objects_instantiated == 1
+        assert class_rule_fixtures[0].name == "database"
 
     def test_testng_annotations_have_testng_framework(self):
         """@BeforeMethod/@AfterMethod/@DataProvider should have framework='testng'."""
@@ -286,6 +300,44 @@ public class StepDefinitions {
 
         fixtures = extract_and_find_fixtures(code, "java", "theConfirmationPageIsShown")
         assert fixtures[0].fixture_type == "cucumber_then"
+        assert fixtures[0].framework == "cucumber"
+
+    def test_cucumber_and_but_attachment_annotations(self):
+        """@And/@But/@Attachment -- previously had zero test coverage at
+        all despite being 3 of the 19 entries in fixture_definitions.yaml's
+        java.annotations table."""
+        code = """
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.But;
+import io.cucumber.java.Attachment;
+
+public class StepDefinitions {
+    @And("their session is active")
+    public void theirSessionIsActive() {
+        checkSession();
+    }
+
+    @But("they are not an admin")
+    public void theyAreNotAnAdmin() {
+        checkNotAdmin();
+    }
+
+    @Attachment
+    public byte[] captureScreenshot() {
+        return takeScreenshot();
+    }
+}
+"""
+        fixtures = extract_and_find_fixtures(code, "java", "theirSessionIsActive")
+        assert fixtures[0].fixture_type == "cucumber_and"
+        assert fixtures[0].framework == "cucumber"
+
+        fixtures = extract_and_find_fixtures(code, "java", "theyAreNotAnAdmin")
+        assert fixtures[0].fixture_type == "cucumber_but"
+        assert fixtures[0].framework == "cucumber"
+
+        fixtures = extract_and_find_fixtures(code, "java", "captureScreenshot")
+        assert fixtures[0].fixture_type == "cucumber_attachment"
         assert fixtures[0].framework == "cucumber"
 
 

@@ -175,7 +175,12 @@ def assert_fixture_metrics(
 
 
 def assert_fixture_with_type_detected(
-    code: str, language: str, fixture_type: str, scope: str = None, count: int = 1
+    code: str,
+    language: str,
+    fixture_type: str,
+    scope: str = None,
+    count: int = 1,
+    framework: str = None,
 ):
     """Assert that a fixture with given type is detected (useful for anonymous functions).
 
@@ -185,6 +190,8 @@ def assert_fixture_with_type_detected(
         fixture_type: Expected fixture type (e.g., 'before_each', 'mocha_before')
         scope: Optional expected scope
         count: Expected number of fixtures with this type (default 1)
+        framework: Optional expected framework (e.g. 'jest', 'ava'; None for
+            frameworks that are deliberately ambiguous, like bare JS hooks)
 
     Returns:
         List of matching FixtureResult objects
@@ -200,6 +207,12 @@ def assert_fixture_with_type_detected(
             assert (
                 fixture.scope == scope
             ), f"Expected scope {scope}, got {fixture.scope}"
+
+    if framework is not None:
+        for fixture in matching:
+            assert (
+                fixture.framework == framework
+            ), f"Expected framework {framework!r}, got {fixture.framework!r}"
 
     return matching[0] if count == 1 else matching
 

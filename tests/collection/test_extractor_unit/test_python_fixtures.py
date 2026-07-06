@@ -178,7 +178,7 @@ def client(app):
 
 
 class TestModuleLevelFixtures:
-    """Module-level setUp and tearDown"""
+    """Nose-style module/package-level setup and teardown"""
 
     def test_setup_module_detected(self):
         """setup_module() should be detected as module-level fixture"""
@@ -188,6 +188,8 @@ def setup_module():
     db = create_database()
 """
         fixture = assert_fixture_detected(code, "python", "setup_module")
+        assert fixture.fixture_type == "nose_fixture"
+        assert fixture.framework is None
         assert fixture.scope == "per_module"
 
     def test_teardown_module_detected(self):
@@ -197,7 +199,57 @@ def teardown_module():
     db.close()
 """
         fixture = assert_fixture_detected(code, "python", "teardown_module")
+        assert fixture.fixture_type == "nose_fixture"
         assert fixture.scope == "per_module"
+
+    def test_setup_package_detected(self):
+        """setup_package() -- previously had zero test coverage."""
+        code = """
+def setup_package():
+    global resource
+    resource = initialize()
+"""
+        fixture = assert_fixture_detected(code, "python", "setup_package")
+        assert fixture.fixture_type == "nose_fixture"
+        assert fixture.scope == "per_module"
+
+    def test_teardown_package_detected(self):
+        """teardown_package() -- previously had zero test coverage."""
+        code = """
+def teardown_package():
+    resource.release()
+"""
+        fixture = assert_fixture_detected(code, "python", "teardown_package")
+        assert fixture.fixture_type == "nose_fixture"
+        assert fixture.scope == "per_module"
+
+
+class TestPytestClassMethodClassScope:
+    """pytest-style setup_class()/teardown_class() -- the per_class-scope
+    half of pytest_class_method. Only the per_test half (setup_method/
+    teardown_method) previously had test coverage."""
+
+    def test_setup_class_detected(self):
+        code = """
+class TestSuite:
+    def setup_class(cls):
+        cls.db = connect_db()
+"""
+        fixture = assert_fixture_detected(code, "python", "setup_class")
+        assert fixture.fixture_type == "pytest_class_method"
+        assert fixture.framework == "pytest"
+        assert fixture.scope == "per_class"
+
+    def test_teardown_class_detected(self):
+        code = """
+class TestSuite:
+    def teardown_class(cls):
+        cls.db.close()
+"""
+        fixture = assert_fixture_detected(code, "python", "teardown_class")
+        assert fixture.fixture_type == "pytest_class_method"
+        assert fixture.framework == "pytest"
+        assert fixture.scope == "per_class"
 
 
 class TestFixtureFunctionFactories:
@@ -537,6 +589,66 @@ def sync_fixture():
         async_fixture = assert_fixture_detected(code, "python", "async_fixture")
         sync_fixture = assert_fixture_detected(code, "python", "sync_fixture")
         assert async_fixture.fixture_type == sync_fixture.fixture_type == "pytest_decorator"
+
+
+class TestBehaveBDDSteps:
+    """Behave BDD step decorators (@given/@when/@then/@step) -- previously
+    had zero test coverage at all despite being one of fixture_definitions.yaml's
+    5 python pattern groups."""
+
+    def test_given_step_detected(self):
+        code = """
+from behave import given
+
+@given('a logged-in user')
+def step_impl(context):
+    context.user = create_user()
+"""
+        fixture = assert_fixture_detected(code, "python", "step_impl")
+        assert fixture.fixture_type == "behave_given"
+        assert fixture.framework == "behave"
+        assert fixture.scope == "per_test"
+
+    def test_when_step_detected(self):
+        code = """
+from behave import when
+
+@when('they submit the form')
+def step_impl(context):
+    context.response = submit_form()
+"""
+        fixture = assert_fixture_detected(code, "python", "step_impl")
+        assert fixture.fixture_type == "behave_when"
+        assert fixture.framework == "behave"
+        assert fixture.scope == "per_test"
+
+    def test_then_step_detected(self):
+        code = """
+from behave import then
+
+@then('the confirmation page is shown')
+def step_impl(context):
+    assert context.response.page == 'confirmation'
+"""
+        fixture = assert_fixture_detected(code, "python", "step_impl")
+        assert fixture.fixture_type == "behave_then"
+        assert fixture.framework == "behave"
+        assert fixture.scope == "per_test"
+
+    def test_step_decorator_detected(self):
+        """@step is the generic, framework-agnostic form of the same
+        decorator family."""
+        code = """
+from behave import step
+
+@step('the system is idle')
+def step_impl(context):
+    wait_for_idle()
+"""
+        fixture = assert_fixture_detected(code, "python", "step_impl")
+        assert fixture.fixture_type == "behave_step"
+        assert fixture.framework == "behave"
+        assert fixture.scope == "per_test"
 
 
 if __name__ == "__main__":

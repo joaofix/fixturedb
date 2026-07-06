@@ -116,6 +116,72 @@ class MySuite {
         fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
         assert fixture.fixture_type == "before_each"
 
+    def test_before_decorator_detected(self):
+        """@Before -- previously untested (only @BeforeEach was covered
+        among the 6 ts_decorators entries)."""
+        code = """
+class MySuite {
+    @Before
+    setup() {
+        this.value = 1;
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "mocha_before")
+        assert fixture.scope == "per_test"
+
+    def test_after_decorator_detected(self):
+        """@After -- previously untested."""
+        code = """
+class MySuite {
+    @After
+    teardown() {
+        this.value = null;
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "mocha_after")
+        assert fixture.scope == "per_test"
+
+    def test_after_each_decorator_detected(self):
+        """@AfterEach -- previously untested."""
+        code = """
+class MySuite {
+    @AfterEach
+    teardown() {
+        this.value = null;
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "after_each")
+        assert fixture.scope == "per_test"
+
+    def test_before_all_decorator_detected(self):
+        """@BeforeAll -- previously untested."""
+        code = """
+class MySuite {
+    @BeforeAll
+    static setup() {
+        MySuite.shared = createShared();
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "before_all")
+        assert fixture.scope == "per_class"
+
+    def test_after_all_decorator_detected(self):
+        """@AfterAll -- previously untested."""
+        code = """
+class MySuite {
+    @AfterAll
+    static teardown() {
+        MySuite.shared.dispose();
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "after_all")
+        assert fixture.scope == "per_class"
+
 
 class TestTypeScriptInterfaces:
     """Fixtures with TypeScript interfaces and types"""

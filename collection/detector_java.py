@@ -34,6 +34,23 @@ JUNIT3_FALLBACK_SCOPE: str = _DEFS["junit3_fallback"]["scope"]
 JUNIT3_FALLBACK_FRAMEWORK: str = _DEFS["junit3_fallback"]["framework"]
 
 
+def _enclosing_class_extends_test_case(node, src_bytes: bytes) -> bool:
+    """Walk up from a method node to its immediately enclosing
+    class_declaration and check whether it extends TestCase -- JUnit 3's
+    own requirement for the plain setUp()/tearDown() fallback (no
+    annotations) to apply. Without this, "extends TestCase" is just a
+    comment in fixture_definitions.yaml, not something the code checks."""
+    current = node.parent
+    while current is not None:
+        if current.type == "class_declaration":
+            for child in current.children:
+                if child.type == "superclass":
+                    return "TestCase" in _source(child, src_bytes)
+            return False
+        current = current.parent
+    return False
+
+
 def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[FixtureResult]:
     results = []
 
@@ -93,25 +110,22 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
             name_node = node.child_by_field_name("name")
             if name_node:
                 method_name = _source(name_node, src_bytes).strip()
-                if method_name in JUNIT3_FALLBACK_NAMES:
-                    # Check if not already matched by annotation
-                    has_annotation = any(
-                        ann
-                        for ann in annotations
-                        if "@Before" in ann or "@After" in ann
-                    )
-                    if not has_annotation:
-                        results.append(
-                            _build_result(
-                                node=node,
-                                func_node=node,
-                                src_bytes=src_bytes,
-                                fixture_type=JUNIT3_FALLBACK_NAMES[method_name],
-                                scope=JUNIT3_FALLBACK_SCOPE,
-                                framework=JUNIT3_FALLBACK_FRAMEWORK,
-                                language="java",
-                            )
+                if (
+                    method_name in JUNIT3_FALLBACK_NAMES
+                    and not annotations
+                    and _enclosing_class_extends_test_case(node, src_bytes)
+                ):
+                    results.append(
+                        _build_result(
+                            node=node,
+                            func_node=node,
+                            src_bytes=src_bytes,
+                            fixture_type=JUNIT3_FALLBACK_NAMES[method_name],
+                            scope=JUNIT3_FALLBACK_SCOPE,
+                            framework=JUNIT3_FALLBACK_FRAMEWORK,
+                            language="java",
                         )
+                    )
 
         # Handle @Rule and @ClassRule field declarations
         elif node.type == "field_declaration":
@@ -137,6 +151,7 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                             fixture_type=fixture_type,
                             scope=scope,
                             framework=framework,
+                            language="java",
                         )
                     )
                     break

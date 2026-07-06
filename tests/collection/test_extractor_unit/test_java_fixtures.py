@@ -12,6 +12,7 @@ import pytest
 from ..conftest import (
     assert_fixture_count,
     assert_fixture_detected,
+    assert_fixture_not_detected,
     extract_and_find_fixtures,
 )
 
@@ -71,6 +72,84 @@ public class TestExample {
         assert_fixture_detected(code, "java", "tearDown")
 
 
+class TestJUnit3Fallback:
+    """JUnit3-style setUp()/tearDown() with no annotation at all, in a
+    TestCase subclass. Regression tests for three bugs found while
+    auditing this codebase's fixture-detection test rigor: the fallback's
+    old guard only checked for "@Before"/"@After" *substrings* in existing
+    annotations (missing any other annotation entirely), and it never
+    checked class inheritance at all despite fixture_definitions.yaml's
+    own comment restricting it to a TestCase subclass."""
+
+    def test_setup_teardown_in_test_case_subclass_detected(self):
+        """The genuine JUnit3 case: no annotations, extends TestCase."""
+        code = """
+public class LegacyTest extends TestCase {
+    public void setUp() {
+        resource = new Resource();
+    }
+    public void tearDown() {
+        resource.close();
+    }
+}
+"""
+        assert_fixture_count(code, "java", 2)
+        setup = assert_fixture_detected(code, "java", "setUp")
+        teardown = assert_fixture_detected(code, "java", "tearDown")
+        assert setup.fixture_type == "junit3_setup"
+        assert setup.framework == "junit"
+        assert setup.scope == "per_test"
+        assert teardown.fixture_type == "junit3_teardown"
+
+    def test_setup_not_extending_test_case_is_not_detected(self):
+        """A plain class (no TestCase inheritance) must not trigger the
+        JUnit3 fallback, even with a matching method name."""
+        code = """
+public class PlainClass {
+    public void setUp() {
+        init();
+    }
+}
+"""
+        assert_fixture_not_detected(code, "java", "setUp")
+
+    def test_annotated_method_is_not_double_detected_via_fallback(self):
+        """A method with a DIFFERENT annotation (not @Before/@After) named
+        tearDown must be detected once, via its real annotation -- not
+        also picked up by the JUnit3 fallback. Previously the fallback's
+        guard only excluded "@Before"/"@After" substrings, so a
+        @Given-annotated method named tearDown produced two fixtures
+        (cucumber_given AND a spurious junit3_teardown) for the same
+        method."""
+        code = """
+public class Steps extends TestCase {
+    @Given("a precondition")
+    public void tearDown() {
+        cleanup();
+    }
+}
+"""
+        assert_fixture_count(code, "java", 1)
+        fixture = assert_fixture_detected(code, "java", "tearDown")
+        assert fixture.fixture_type == "cucumber_given"
+        assert fixture.framework == "cucumber"
+
+    def test_test_annotated_method_named_setup_is_not_misclassified(self):
+        """A @Test-annotated method that happens to be named setUp is a
+        real test method, not a fixture -- it must not be reported as
+        junit3_setup. Previously it was: @Test contains neither
+        "@Before" nor "@After", so the old guard let it through."""
+        code = """
+public class MyTest extends TestCase {
+    @Test
+    public void setUp() {
+        assertTrue(true);
+    }
+}
+"""
+        assert_fixture_not_detected(code, "java", "setUp")
+
+
 class TestJUnitClassLevel:
     """JUnit 3/4 @BeforeClass/@AfterClass annotations"""
 
@@ -99,6 +178,8 @@ public class TestExample {
 }
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
+        assert fixture.fixture_type == "testng_after_class"
+        assert fixture.framework == "testng"
         assert fixture.scope == "per_class"
 
 
@@ -118,6 +199,8 @@ public class TestExample {
 }
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
+        assert fixture.fixture_type == "junit5_before_each"
+        assert fixture.framework == "junit"
         assert fixture.scope == "per_test"
 
     def test_beforeall_annotation(self):
@@ -133,6 +216,8 @@ public class TestExample {
 }
 """
         fixture = assert_fixture_detected(code, "java", "setUpAll")
+        assert fixture.fixture_type == "junit5_before_all"
+        assert fixture.framework == "junit"
         assert fixture.scope == "per_class"
 
 
@@ -152,6 +237,8 @@ public class TestExample {
 }
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
+        assert fixture.fixture_type == "testng_before_method"
+        assert fixture.framework == "testng"
         assert fixture.scope == "per_test"
 
     def test_aftermethod_annotation(self):
@@ -167,6 +254,8 @@ public class TestExample {
 }
 """
         fixture = assert_fixture_detected(code, "java", "tearDown")
+        assert fixture.fixture_type == "testng_after_method"
+        assert fixture.framework == "testng"
         assert fixture.scope == "per_test"
 
     def test_dataprovider_annotation(self):
@@ -204,7 +293,13 @@ class TestJavaNegativeDetection:
     """Ensure non-fixtures in Java are not detected"""
 
     def test_regular_method_not_detected(self):
-        """Regular public method should not be detected as fixture"""
+        """A plain setUp() in a class that does NOT extend TestCase must
+        not be detected as a JUnit3 fixture -- the YAML's own
+        junit3_fallback comment restricts this to "a (JUnit3-style)
+        TestCase subclass", but the code did not actually check
+        inheritance until this test was tightened (previously asserted
+        only `isinstance(fixtures, list)`, a tautology that passed
+        regardless of whether the bug was present)."""
         code = """
 public class Test {
     public void setUp() {
@@ -212,12 +307,7 @@ public class Test {
     }
 }
 """
-        # Without @Before annotation, setUp is just a regular method
-        # Detection depends on detector implementation
-        fixtures = extract_and_find_fixtures(code, "java")
-        # If detector uses only annotations, this won't be detected
-        # If detector uses naming convention, it might be
-        assert isinstance(fixtures, list)
+        assert_fixture_not_detected(code, "java", "setUp")
 
     def test_helper_method_not_detected(self):
         """Helper methods should not be detected as fixtures"""

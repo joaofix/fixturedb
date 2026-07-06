@@ -56,6 +56,36 @@ see [configuration.md](configuration.md#reference-data-catalogs) and the
 "Known Exclusions & Boundary Cases" section of
 [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases).
 
+**Test coverage**: `tests/collection/test_fixture_definitions_catalog_coverage.py`
+is parametrized directly over every language/annotation/name entry in
+`fixture_definitions.yaml` (not a hand-picked subset), and drives each one
+through the real `extract_fixtures()` pipeline. Building it surfaced real
+bugs in `detector_java.py`'s JUnit3 fallback (the `setUp()`/`tearDown()`
+detection for methods with no annotation at all), not just coverage gaps:
+
+- Its "already matched by annotation" guard only excluded annotations
+  containing the substrings `"@Before"`/`"@After"` — so a `@Given`-annotated
+  Cucumber step method named `tearDown` was detected **twice** (once
+  correctly as `cucumber_given`, once spuriously as `junit3_teardown`), and
+  a `@Test`-annotated method named `setUp` was misclassified as a fixture
+  even though it's a real test method.
+- The fallback never checked class inheritance at all, despite the YAML's
+  own comment restricting it to "a (JUnit3-style) TestCase subclass" — a
+  plain `setUp()` in any class, not just `TestCase` subclasses, was
+  detected.
+- Separately, the `@Rule`/`@ClassRule` field-declaration branch (a
+  different AST shape than method annotations) never passed `language=`
+  to `_build_result()`, so complexity metrics were silently computed in
+  Python mode for Java fixtures, and `field_declaration` nodes have no
+  `"name"` field the way `method_declaration` does (the name lives on a
+  `variable_declarator` child instead), so these fixtures got an
+  unhelpful `<anonymous>_N` name instead of the real field name.
+
+All four are fixed in `detector_java.py`/`detector_shared.py` and
+regression-tested in `tests/collection/test_extractor_unit/test_java_fixtures.py`'s
+`TestJUnit3Fallback` class and `test_framework_detection.py`'s `@Rule`
+tests.
+
 ### Async Fixtures
 
 Async fixture definitions are captured by our detector the same as sync

@@ -264,6 +264,23 @@ def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
 # ---------------------------------------------------------------------------
 
 
+def _find_name_node(func_node):
+    """Return the identifier node naming this fixture, if any.
+
+    Handles both function/method-shaped nodes (a direct "name" field) and
+    Java field_declaration nodes (e.g. @Rule/@ClassRule fixture fields),
+    whose name lives one level down on their variable_declarator child
+    instead -- field_declaration itself has no "name" field.
+    """
+    name_node = func_node.child_by_field_name("name")
+    if name_node:
+        return name_node
+    for child in func_node.children:
+        if child.type == "variable_declarator":
+            return child.child_by_field_name("name")
+    return None
+
+
 def _build_result(
     node,
     func_node,
@@ -274,7 +291,7 @@ def _build_result(
     language: str = "python",
 ) -> FixtureResult:
     src_text = _source(func_node, src_bytes)
-    name_node = func_node.child_by_field_name("name")
+    name_node = _find_name_node(func_node)
     name = (
         _source(name_node, src_bytes)
         if name_node
