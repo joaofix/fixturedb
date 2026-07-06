@@ -83,6 +83,40 @@ beforeEach(async () => {
         assert fixture.fixture_type == "before_each"
 
 
+class TestTypeScriptDecoratorHooks:
+    """Decorator-style lifecycle hooks (@BeforeEach etc. on class methods),
+    as opposed to the call-expression style (beforeEach(() => {...})) above.
+    """
+
+    def test_sync_decorator_hook_detected(self):
+        """@BeforeEach on a sync class method should be detected."""
+        code = """
+class MySuite {
+    @BeforeEach
+    setup() {
+        this.value = 1;
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
+        assert fixture.fixture_type == "before_each"
+
+    def test_async_decorator_hook_detected(self):
+        """@BeforeEach on an async class method should be detected the same
+        as the sync case -- the decorator name is the detection signal, not
+        the method's async qualifier."""
+        code = """
+class MySuite {
+    @BeforeEach
+    async setup() {
+        await this.init();
+    }
+}
+"""
+        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
+        assert fixture.fixture_type == "before_each"
+
+
 class TestTypeScriptInterfaces:
     """Fixtures with TypeScript interfaces and types"""
 

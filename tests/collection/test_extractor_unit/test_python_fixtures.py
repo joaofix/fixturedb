@@ -481,6 +481,63 @@ class TestClass:
             scope="per_test",
         )
 
+    def test_pytest_asyncio_fixture_decorator_detected(self):
+        """@pytest_asyncio.fixture is pytest-asyncio's dedicated async-fixture
+        decorator (the standard for FastAPI/async test setup) -- it must be
+        detected the same as plain @pytest.fixture, not treated as a miss."""
+        code = """
+import pytest_asyncio
+
+@pytest_asyncio.fixture
+async def async_client():
+    async with AsyncClient() as client:
+        yield client
+"""
+        fixture = assert_fixture_detected(
+            code,
+            "python",
+            "async_client",
+            fixture_type="pytest_decorator",
+            scope="per_test",
+        )
+        assert fixture.name == "async_client"
+
+    def test_pytest_asyncio_fixture_with_scope(self):
+        """@pytest_asyncio.fixture(scope=...) should resolve scope identically
+        to @pytest.fixture(scope=...)."""
+        code = """
+@pytest_asyncio.fixture(scope="session")
+async def async_engine():
+    engine = await create_engine()
+    yield engine
+    await engine.dispose()
+"""
+        assert_fixture_detected(
+            code,
+            "python",
+            "async_engine",
+            fixture_type="pytest_decorator",
+            scope="global",
+        )
+
+    def test_pytest_asyncio_and_pytest_fixture_share_fixture_type(self):
+        """@pytest_asyncio.fixture is not a separate fixture_type from
+        @pytest.fixture -- both are pytest_decorator, since the detection
+        signal is the decorator text, not the sync/async qualifier."""
+        code = """
+@pytest_asyncio.fixture
+async def async_fixture():
+    yield 1
+
+@pytest.fixture
+def sync_fixture():
+    return 1
+"""
+        assert_fixture_count(code, "python", 2)
+        async_fixture = assert_fixture_detected(code, "python", "async_fixture")
+        sync_fixture = assert_fixture_detected(code, "python", "sync_fixture")
+        assert async_fixture.fixture_type == sync_fixture.fixture_type == "pytest_decorator"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -16,6 +16,15 @@
 #   per_class  -- runs once per test class/suite
 #   per_module -- runs once per file/module
 #   global     -- runs once per test session (pytest scope="session" only)
+#
+# Async fixtures: captured identically to sync ones, in every language.
+# The lifecycle hook name / decorator / annotation is the detection signal,
+# not the function's async qualifier -- `async def` (Python), `async () =>`
+# / `async function` (JS/TS call-expression hooks), and `async` class
+# methods (TS decorator-style hooks) are all transparent to the matchers
+# below. See python.pytest_decorator's note for the @pytest_asyncio.fixture
+# case specifically, and the TestAsync* test classes in
+# tests/collection/test_extractor_unit/ for the coverage that verifies this.
 
 python:
   pytest_decorator:
@@ -158,6 +167,11 @@ java:
         lifecycle levels are not in the annotation table.
 
 javascript_typescript:
+  # Matched purely on the call's function name -- `beforeEach(async () =>
+  # {...})` matches the same as `beforeEach(() => {...})` since `async` only
+  # qualifies the callback argument, not the call_expression itself (see the
+  # top-of-file "Async fixtures" note).
+  #
   # Ambiguous by design: could be Jest, Mocha, Vitest, or Jasmine -- no
   # framework attribution is attempted for these bare calls.
   hooks:
@@ -175,6 +189,10 @@ javascript_typescript:
     serial.before: {fixture_type: ava_serial_before, scope: per_test}
     serial.after: {fixture_type: ava_serial_after, scope: per_test}
   # TypeScript decorator-style hooks (e.g. custom test-framework decorators).
+  # Matched on the decorator name regardless of whether the decorated method
+  # is declared `async` (the `async` keyword is internal to the
+  # method_definition node and doesn't change its preceding-decorator
+  # sibling relationship).
   ts_decorators:
     Before: {fixture_type: mocha_before, scope: per_test}
     After: {fixture_type: mocha_after, scope: per_test}

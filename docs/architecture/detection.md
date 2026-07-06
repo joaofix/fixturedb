@@ -56,6 +56,29 @@ see [configuration.md](configuration.md#reference-data-catalogs) and the
 "Known Exclusions & Boundary Cases" section of
 [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases).
 
+### Async Fixtures
+
+Async fixture definitions are captured by our detector the same as sync
+ones — the lifecycle hook name, decorator, or annotation is the detection
+signal, not the function's async qualifier:
+
+- **Python**: `async def` functions decorated with `@pytest.fixture` are
+  matched identically to sync ones. `@pytest_asyncio.fixture` (the
+  dedicated pytest-asyncio decorator, standard for FastAPI/async test
+  setup) is matched by the same rule as `@pytest.fixture` — the decorator
+  text only needs to contain `"pytest"` and `"fixture"` as substrings, and
+  `pytest_asyncio.fixture` contains both. It is not tracked as a separate
+  `fixture_type`.
+- **JavaScript/TypeScript**: `beforeEach(async () => {...})` is still a
+  `call_expression` whose function name is `beforeEach` — `async` only
+  qualifies the callback argument, not the call itself. The same holds for
+  TypeScript decorator-style hooks (`@BeforeEach async setup() {...}`): the
+  decorator precedes the method regardless of the method's `async` keyword.
+
+This is verified explicitly, not just assumed — see `TestAsyncPythonFixtures`,
+`TestAsyncJavaScriptFixtures`, `TestTypeScriptAsyncAwait`, and
+`TestTypeScriptDecoratorHooks` in `tests/collection/test_extractor_unit/`.
+
 ### Scope Classification
 
 All detected fixtures are classified by execution scope:

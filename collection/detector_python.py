@@ -4,6 +4,13 @@ Pattern tables (scope keyword maps, BDD type map, setup/teardown name ->
 scope maps) are loaded from collection/config_data/fixture_definitions.yaml
 rather than hardcoded here -- see that file for the full operational
 definition of "fixture" per language, including documented exclusions.
+
+Async fixtures (async def, decorated with either @pytest.fixture or
+@pytest_asyncio.fixture) are captured the same as sync ones: the decorator
+text is the detection signal, not the function's async qualifier, and
+@pytest_asyncio.fixture matches the same "pytest"+"fixture" substring check
+as @pytest.fixture (pytest_asyncio fixtures are not a separate fixture_type)
+-- see tests/collection/test_extractor_unit/test_python_fixtures.py::TestAsyncPythonFixtures.
 """
 
 import re

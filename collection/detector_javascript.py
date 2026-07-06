@@ -5,6 +5,16 @@ collection/config_data/fixture_definitions.yaml rather than hardcoded here
 -- see that file for the full operational definition of "fixture" per
 language, including documented exclusions (Jest globalSetup, Vitest
 setupFiles, aliased AVA imports, etc.).
+
+Async fixtures are captured the same as sync ones, in both matching styles
+below: `beforeEach(async () => {...})` is still a call_expression whose
+function name is "beforeEach" (the `async` keyword only qualifies the
+callback argument, not the call itself), and `@BeforeEach async setup()` is
+still a method_definition preceded by a `@BeforeEach` decorator sibling.
+The lifecycle hook name/decorator is the detection signal, not the
+function's async qualifier -- see
+tests/collection/test_extractor_unit/test_javascript_fixtures.py::TestAsyncJavaScriptFixtures
+and test_typescript_fixtures.py::TestTypeScriptDecoratorHooks.
 """
 
 from .config_data import load_fixture_definitions

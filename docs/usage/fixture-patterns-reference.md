@@ -532,6 +532,29 @@ Spring provides test fixtures via configuration classes and bean factories.
 
 ---
 
+## Async Fixtures
+
+Async fixture definitions are detected identically to sync ones: the
+lifecycle hook name, decorator, or annotation is the detection signal, not
+the function's async qualifier.
+
+| Language | Async form | Detected as |
+|---|---|---|
+| Python | `@pytest.fixture` / `@pytest_asyncio.fixture` decorating `async def` | `pytest_decorator` (same `fixture_type` as the sync form — `pytest_asyncio` is not a separate type) |
+| JavaScript/TypeScript | `beforeEach(async () => {...})`, `before(async function() {...})` | Same `fixture_type` as the sync call (the call's function name is unaffected by the callback's `async` qualifier) |
+| TypeScript (decorator style) | `@BeforeEach async setup() {...}` | Same `fixture_type` as the sync method (the decorator precedes the method regardless of `async`) |
+
+This is a load-bearing detail, not an incidental one: `@pytest_asyncio.fixture`
+is the standard way to declare async test setup for FastAPI and other async
+Python frameworks, and async `beforeEach`/`before` hooks are the norm in
+modern Jest/Mocha/Vitest suites — a detector that missed the async forms
+would systematically undercount fixtures in async-heavy codebases. Verified
+by `TestAsyncPythonFixtures`, `TestAsyncJavaScriptFixtures`,
+`TestTypeScriptAsyncAwait`, and `TestTypeScriptDecoratorHooks` in
+`tests/collection/test_extractor_unit/`.
+
+---
+
 ## Fixture Relationships
 
 ### Fixture Dependency Tracking
