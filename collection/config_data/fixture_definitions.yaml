@@ -154,6 +154,14 @@ java:
     framework: junit
   known_imprecisions:
     - "@BeforeClass/@AfterClass are always attributed to TestNG when ambiguous with JUnit4, since the detector doesn't inspect imports to disambiguate -- see the TODO in detector_java.py. framework is reported as testng to match, consistently with the chosen fixture_type."
+    - >
+      Scope is derived purely from annotation type (@BeforeAll -> per_class,
+      @BeforeEach -> per_test), regardless of the class's JUnit 5 instance
+      lifecycle mode. A class annotated @TestInstance(Lifecycle.PER_CLASS)
+      changes @BeforeAll from requiring a static method to an instance
+      method shared across the class's tests -- the detector does not read
+      @TestInstance at all, so this lifecycle distinction is not reflected
+      in the recorded scope.
   excluded:
     - case: "JUnit 5 Extension lifecycle methods (BeforeEachCallback, AfterEachCallback, etc.)"
       reason: >

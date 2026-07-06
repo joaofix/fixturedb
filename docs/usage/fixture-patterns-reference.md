@@ -643,8 +643,9 @@ reproduced here for readability.
 - **Spring `@BeforeTransaction` / `@AfterTransaction`** — not present in the annotation table; genuinely unhandled today.
 - **TestNG `@BeforeSuite` / `@AfterSuite` / `@BeforeTest` / `@AfterTest`** — only `@BeforeMethod`/`@AfterMethod` are handled; the other TestNG lifecycle levels are not in the annotation table.
 
-One known imprecision (detected, but not perfectly attributed) is also worth calling out:
+Two known imprecisions (detected, but not perfectly attributed) are also worth calling out:
 - `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector always attributes them to TestNG (both `fixture_type` and `framework`) rather than inspecting imports to disambiguate.
+- Scope is derived purely from annotation type (`@BeforeAll` → `per_class`, `@BeforeEach` → `per_test`), regardless of the class's JUnit 5 instance lifecycle mode. A class annotated `@TestInstance(Lifecycle.PER_CLASS)` changes `@BeforeAll` from requiring a static method to an instance method shared across the class's tests — the detector does not read `@TestInstance` at all, so this distinction is not reflected in the recorded scope.
 
 ### JavaScript/TypeScript
 
