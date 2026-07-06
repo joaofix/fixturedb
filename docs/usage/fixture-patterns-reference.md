@@ -620,9 +620,8 @@ reproduced here for readability.
 - **Spring `@BeforeTransaction` / `@AfterTransaction`** — not present in the annotation table; genuinely unhandled today.
 - **TestNG `@BeforeSuite` / `@AfterSuite` / `@BeforeTest` / `@AfterTest`** — only `@BeforeMethod`/`@AfterMethod` are handled; the other TestNG lifecycle levels are not in the annotation table.
 
-Two known imprecisions (detected, but not perfectly attributed) are also worth calling out:
-- `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector always attributes them to TestNG rather than inspecting imports to disambiguate.
-- Every annotation in the Java table is recorded with `framework="junit"`, even the Spring (`@Bean`, `@TestConfiguration`) and Cucumber (`@Given`/`@When`/`@Then`/`@And`/`@But`/`@Attachment`) ones — the `framework` column doesn't yet distinguish these families.
+One known imprecision (detected, but not perfectly attributed) is also worth calling out:
+- `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector always attributes them to TestNG (both `fixture_type` and `framework`) rather than inspecting imports to disambiguate.
 
 ### JavaScript/TypeScript
 

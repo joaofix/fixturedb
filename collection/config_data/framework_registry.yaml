@@ -31,6 +31,8 @@ java:
   # BDD frameworks
   - spock # Groovy-based BDD
   - cucumber # Gherkin syntax
+  # Dependency injection / test configuration
+  - spring # @Bean, @TestConfiguration fixtures
   # Mocking frameworks (detected in fixtures)
   - mockito # Primary Java mocking framework
   - easymock # Legacy Java mocking

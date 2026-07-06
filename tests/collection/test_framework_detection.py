@@ -129,7 +129,10 @@ public class TestCalculator {
         assert fixtures[0].framework == "junit"
 
     def test_junit_class_annotations(self):
-        """JUnit @BeforeClass/@AfterClass should have framework='junit'"""
+        """@BeforeClass/@AfterClass are ambiguous between JUnit4 and TestNG;
+        the detector defaults to TestNG (fixture_type=testng_before_class),
+        and framework is reported as 'testng' to match -- see the
+        known_imprecisions note in fixture_definitions.yaml."""
         code = """
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
@@ -151,12 +154,12 @@ public class ExpensiveResourceTest {
         # Check @BeforeClass
         fixtures = extract_and_find_fixtures(code, "java", "setUpClass")
         assert len(fixtures) > 0
-        assert fixtures[0].framework == "junit"
+        assert fixtures[0].framework == "testng"
 
         # Check @AfterClass
         fixtures = extract_and_find_fixtures(code, "java", "tearDownClass")
         assert len(fixtures) > 0
-        assert fixtures[0].framework == "junit"
+        assert fixtures[0].framework == "testng"
 
     def test_junit_rule_annotations(self):
         """JUnit @Rule/@ClassRule should have framework='junit'"""
@@ -186,6 +189,104 @@ public class TemporaryFolderTest {
         ]
         assert len(class_rule_fixtures) > 0, "@ClassRule fixture should be detected"
         assert class_rule_fixtures[0].framework == "junit"
+
+    def test_testng_annotations_have_testng_framework(self):
+        """@BeforeMethod/@AfterMethod/@DataProvider should have framework='testng'."""
+        code = """
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.DataProvider;
+
+public class UserServiceTest {
+    @BeforeMethod
+    public void setUp() {
+        service = new UserService();
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        service = null;
+    }
+
+    @DataProvider(name = "users")
+    public Object[][] userData() {
+        return new Object[][] { {"alice"}, {"bob"} };
+    }
+}
+"""
+        fixtures = extract_and_find_fixtures(code, "java", "setUp")
+        assert fixtures[0].fixture_type == "testng_before_method"
+        assert fixtures[0].framework == "testng"
+
+        fixtures = extract_and_find_fixtures(code, "java", "tearDown")
+        assert fixtures[0].fixture_type == "testng_after_method"
+        assert fixtures[0].framework == "testng"
+
+        fixtures = extract_and_find_fixtures(code, "java", "userData")
+        assert fixtures[0].fixture_type == "testng_data_provider"
+        assert fixtures[0].framework == "testng"
+
+    def test_spring_annotations_have_spring_framework(self):
+        """@Bean/@TestConfiguration should have framework='spring', not 'junit'."""
+        code = """
+import org.springframework.context.annotation.Bean;
+import org.springframework.boot.test.context.TestConfiguration;
+
+public class AppConfigTest {
+    @Bean
+    public DataSource dataSource() {
+        return new DataSource();
+    }
+
+    @TestConfiguration
+    public void testConfig() {
+        configure();
+    }
+}
+"""
+        fixtures = extract_and_find_fixtures(code, "java", "dataSource")
+        assert fixtures[0].fixture_type == "spring_bean"
+        assert fixtures[0].framework == "spring"
+
+        fixtures = extract_and_find_fixtures(code, "java", "testConfig")
+        assert fixtures[0].fixture_type == "spring_test_config"
+        assert fixtures[0].framework == "spring"
+
+    def test_cucumber_annotations_have_cucumber_framework(self):
+        """@Given/@When/@Then should have framework='cucumber', not 'junit'."""
+        code = """
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+
+public class StepDefinitions {
+    @Given("a logged-in user")
+    public void aLoggedInUser() {
+        login();
+    }
+
+    @When("they submit the form")
+    public void theySubmitTheForm() {
+        submit();
+    }
+
+    @Then("the confirmation page is shown")
+    public void theConfirmationPageIsShown() {
+        assertConfirmation();
+    }
+}
+"""
+        fixtures = extract_and_find_fixtures(code, "java", "aLoggedInUser")
+        assert fixtures[0].fixture_type == "cucumber_given"
+        assert fixtures[0].framework == "cucumber"
+
+        fixtures = extract_and_find_fixtures(code, "java", "theySubmitTheForm")
+        assert fixtures[0].fixture_type == "cucumber_when"
+        assert fixtures[0].framework == "cucumber"
+
+        fixtures = extract_and_find_fixtures(code, "java", "theConfirmationPageIsShown")
+        assert fixtures[0].fixture_type == "cucumber_then"
+        assert fixtures[0].framework == "cucumber"
 
 
 @pytest.mark.skip(reason="Go is not supported")

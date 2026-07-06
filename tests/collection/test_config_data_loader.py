@@ -81,13 +81,21 @@ def test_fixture_definitions_java_shapes_and_scopes():
         assert ann.startswith("@")
         assert fields["scope"] in VALID_SCOPES
         assert fields["fixture_type"].strip()
+        assert fields["framework"].strip()
     for ann, fields in java_defs["ambiguous_annotations"].items():
         assert ann.startswith("@")
         assert fields["scope"] in VALID_SCOPES
+        assert fields["framework"].strip()
     assert set(java_defs["junit3_fallback"]["names"].values()) == {
         "junit3_setup",
         "junit3_teardown",
     }
+    assert java_defs["junit3_fallback"]["framework"] == "junit"
+    # Spring/Cucumber annotations must not be mislabeled as generic "junit"
+    # -- this was a known imprecision, fixed alongside this catalog.
+    assert java_defs["annotations"]["@Bean"]["framework"] == "spring"
+    assert java_defs["annotations"]["@Given"]["framework"] == "cucumber"
+    assert java_defs["annotations"]["@BeforeMethod"]["framework"] == "testng"
     assert java_defs["excluded"], "java must document known boundary cases"
 
 

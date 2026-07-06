@@ -104,36 +104,37 @@ python:
         boundary explicit rather than leave it implicit.
 
 java:
-  # Every entry below results in `framework="junit"` in the current
-  # detector, even for the Spring/TestNG/Cucumber families -- `family` here
-  # is documentation only (for reviewer auditability), not consumed by code.
-  # This is a known imprecision, not a bug fix rolled into this migration.
+  # `family` is a finer-grained label than `framework` (distinguishes
+  # junit4 from junit5, both of which report framework: junit); `framework`
+  # is the value actually recorded on the FixtureResult.
   annotations:
-    "@BeforeEach": {fixture_type: junit5_before_each, scope: per_test, family: junit5}
-    "@BeforeAll": {fixture_type: junit5_before_all, scope: per_class, family: junit5}
-    "@AfterEach": {fixture_type: junit5_after_each, scope: per_test, family: junit5}
-    "@AfterAll": {fixture_type: junit5_after_all, scope: per_class, family: junit5}
-    "@Before": {fixture_type: junit4_before, scope: per_test, family: junit4}
-    "@After": {fixture_type: junit4_after, scope: per_test, family: junit4}
-    "@BeforeMethod": {fixture_type: testng_before_method, scope: per_test, family: testng}
-    "@AfterMethod": {fixture_type: testng_after_method, scope: per_test, family: testng}
-    "@DataProvider": {fixture_type: testng_data_provider, scope: per_test, family: testng}
-    "@Rule": {fixture_type: junit_rule, scope: per_test, family: junit4}
-    "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4}
-    "@Bean": {fixture_type: spring_bean, scope: per_class, family: spring}
-    "@TestConfiguration": {fixture_type: spring_test_config, scope: per_class, family: spring}
-    "@Given": {fixture_type: cucumber_given, scope: per_test, family: cucumber}
-    "@When": {fixture_type: cucumber_when, scope: per_test, family: cucumber}
-    "@Then": {fixture_type: cucumber_then, scope: per_test, family: cucumber}
-    "@And": {fixture_type: cucumber_and, scope: per_test, family: cucumber}
-    "@But": {fixture_type: cucumber_but, scope: per_test, family: cucumber}
-    "@Attachment": {fixture_type: cucumber_attachment, scope: per_test, family: cucumber}
+    "@BeforeEach": {fixture_type: junit5_before_each, scope: per_test, family: junit5, framework: junit}
+    "@BeforeAll": {fixture_type: junit5_before_all, scope: per_class, family: junit5, framework: junit}
+    "@AfterEach": {fixture_type: junit5_after_each, scope: per_test, family: junit5, framework: junit}
+    "@AfterAll": {fixture_type: junit5_after_all, scope: per_class, family: junit5, framework: junit}
+    "@Before": {fixture_type: junit4_before, scope: per_test, family: junit4, framework: junit}
+    "@After": {fixture_type: junit4_after, scope: per_test, family: junit4, framework: junit}
+    "@BeforeMethod": {fixture_type: testng_before_method, scope: per_test, family: testng, framework: testng}
+    "@AfterMethod": {fixture_type: testng_after_method, scope: per_test, family: testng, framework: testng}
+    "@DataProvider": {fixture_type: testng_data_provider, scope: per_test, family: testng, framework: testng}
+    "@Rule": {fixture_type: junit_rule, scope: per_test, family: junit4, framework: junit}
+    "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4, framework: junit}
+    "@Bean": {fixture_type: spring_bean, scope: per_class, family: spring, framework: spring}
+    "@TestConfiguration": {fixture_type: spring_test_config, scope: per_class, family: spring, framework: spring}
+    "@Given": {fixture_type: cucumber_given, scope: per_test, family: cucumber, framework: cucumber}
+    "@When": {fixture_type: cucumber_when, scope: per_test, family: cucumber, framework: cucumber}
+    "@Then": {fixture_type: cucumber_then, scope: per_test, family: cucumber, framework: cucumber}
+    "@And": {fixture_type: cucumber_and, scope: per_test, family: cucumber, framework: cucumber}
+    "@But": {fixture_type: cucumber_but, scope: per_test, family: cucumber, framework: cucumber}
+    "@Attachment": {fixture_type: cucumber_attachment, scope: per_test, family: cucumber, framework: cucumber}
   # Same annotation name exists in both JUnit4 and TestNG; the detector
   # cannot disambiguate from the annotation alone and defaults to TestNG
   # (documented imprecision -- see the "Known imprecisions" note below).
+  # framework matches whichever fixture_type is actually chosen at runtime
+  # (currently always testng_fixture_type -- see known_imprecisions).
   ambiguous_annotations:
-    "@BeforeClass": {junit4_fixture_type: junit4_before_class, testng_fixture_type: testng_before_class, scope: per_class}
-    "@AfterClass": {junit4_fixture_type: junit4_after_class, testng_fixture_type: testng_after_class, scope: per_class}
+    "@BeforeClass": {junit4_fixture_type: junit4_before_class, testng_fixture_type: testng_before_class, scope: per_class, framework: testng}
+    "@AfterClass": {junit4_fixture_type: junit4_after_class, testng_fixture_type: testng_after_class, scope: per_class, framework: testng}
   # Plain setUp()/tearDown() methods with no annotation at all, inside a
   # (JUnit3-style) TestCase subclass.
   junit3_fallback:
@@ -141,9 +142,9 @@ java:
       setUp: junit3_setup
       tearDown: junit3_teardown
     scope: per_test
+    framework: junit
   known_imprecisions:
-    - "@BeforeClass/@AfterClass are always attributed to TestNG when ambiguous with JUnit4, since the detector doesn't inspect imports to disambiguate -- see the TODO in detector_java.py."
-    - "Every annotation above is recorded with framework=\"junit\", even Spring (@Bean, @TestConfiguration) and Cucumber (@Given/@When/@Then/@And/@But/@Attachment) annotations -- the framework column does not yet distinguish these families."
+    - "@BeforeClass/@AfterClass are always attributed to TestNG when ambiguous with JUnit4, since the detector doesn't inspect imports to disambiguate -- see the TODO in detector_java.py. framework is reported as testng to match, consistently with the chosen fixture_type."
   excluded:
     - case: "JUnit 5 Extension lifecycle methods (BeforeEachCallback, AfterEachCallback, etc.)"
       reason: >
