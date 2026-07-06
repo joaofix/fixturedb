@@ -8,6 +8,7 @@ import pytest
 
 import collection.validation_sampling as vs
 from collection.validation_sampling import (
+    CANONICAL_FIELDNAMES,
     cochran_sample_size,
     run_validation_sampling,
     sample_rows,
@@ -58,6 +59,108 @@ class TestSampleRows:
         assert sample_rows(rows, 10, seed=1) == rows
 
 
+class TestAllocateStratified:
+    def test_sums_to_total_n(self):
+        alloc = vs._allocate_stratified({"a": 100, "b": 200, "c": 300}, 60)
+        assert sum(alloc.values()) == 60
+
+    def test_never_exceeds_stratum_size(self):
+        alloc = vs._allocate_stratified({"a": 5, "b": 500}, 60)
+        assert alloc["a"] <= 5
+        assert sum(alloc.values()) == 60
+
+    def test_exact_proportional_case(self):
+        alloc = vs._allocate_stratified({"a": 100, "b": 200, "c": 300}, 60)
+        assert alloc == {"a": 10, "b": 20, "c": 30}
+
+    def test_handles_zero_size_stratum(self):
+        alloc = vs._allocate_stratified({"a": 0, "b": 100}, 10)
+        assert alloc["a"] == 0
+        assert alloc["b"] == 10
+
+    def test_total_n_exceeds_population_caps_at_population(self):
+        alloc = vs._allocate_stratified({"a": 3, "b": 4}, 100)
+        assert alloc == {"a": 3, "b": 4}
+
+    def test_empty_strata_returns_empty(self):
+        assert vs._allocate_stratified({}, 10) == {}
+
+
+class TestNormalizers:
+    def test_normalize_repo_row_uses_matched_config_file(self):
+        row = {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "has_agent_config": "1",
+            "matched_config_file": "CLAUDE.md",
+        }
+        out = vs._normalize_repo_row(row)
+        assert out["validation_type"] == "repo"
+        assert out["repo_full_name"] == "owner/repo"
+        assert out["item_id"] == "owner/repo"
+        assert out["item_url"] == "https://github.com/owner/repo"
+        assert out["detection_signal"] == "CLAUDE.md"
+        assert out["evidence"] == "CLAUDE.md"
+
+    def test_normalize_repo_row_falls_back_without_matched_config_file(self):
+        row = {"repo_name": "owner/repo", "language": "python", "has_agent_config": "1"}
+        out = vs._normalize_repo_row(row)
+        assert out["detection_signal"] == "agent_config_present"
+        assert out["evidence"] == "agent_config_present"
+
+    def test_normalize_commit_row(self):
+        row = {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "commit_sha": "abc123",
+            "commit_url": "https://github.com/owner/repo/commit/abc123",
+            "agent_type": "claude",
+            "commit_date": "2026-01-01T00:00:00Z",
+            "author_name": "Bot",
+            "author_email": "bot@example.com",
+        }
+        out = vs._normalize_commit_row(row)
+        assert out["item_id"] == "abc123"
+        assert out["item_url"] == "https://github.com/owner/repo/commit/abc123"
+        assert out["detection_signal"] == "claude"
+        assert "agent_type=claude" in out["evidence"]
+        assert "commit_date=2026-01-01T00:00:00Z" in out["evidence"]
+        assert "Bot <bot@example.com>" in out["evidence"]
+
+    def test_normalize_commit_row_constructs_url_when_missing(self):
+        row = {"repo_name": "owner/repo", "commit_sha": "abc123"}
+        out = vs._normalize_commit_row(row)
+        assert out["item_url"] == "https://github.com/owner/repo/commit/abc123"
+
+    def test_normalize_fixture_row_uses_raw_source(self):
+        row = {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "commit_sha": "abc",
+            "file_path": "tests/conftest.py",
+            "start_line": "10",
+            "github_url": "https://github.com/owner/repo/blob/abc/tests/conftest.py#L10-L15",
+            "fixture_type": "pytest_decorator",
+            "raw_source": "@pytest.fixture\ndef foo(): ...",
+        }
+        out = vs._normalize_fixture_row(row)
+        assert out["item_id"] == "owner/repo:abc:tests/conftest.py:10"
+        assert out["item_url"] == row["github_url"]
+        assert out["detection_signal"] == "pytest_decorator"
+        assert out["evidence"] == row["raw_source"]
+
+    def test_normalize_fixture_row_falls_back_without_raw_source(self):
+        row = {
+            "repo_name": "owner/repo",
+            "commit_sha": "abc",
+            "file_path": "x.py",
+            "start_line": "1",
+            "fixture_type": "pytest_decorator",
+        }
+        out = vs._normalize_fixture_row(row)
+        assert out["evidence"] == ""
+
+
 def _write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as fh:
@@ -66,18 +169,29 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
+def _repo_row(i: int, language: str, has_agent_config: str = "1") -> dict:
+    return {
+        "repo_name": f"{language}/repo{i}",
+        "language": language,
+        "has_agent_config": has_agent_config,
+    }
+
+
+def _commit_row(i: int, language: str, agent_type: str) -> dict:
+    return {
+        "repo_name": "owner/repo",
+        "language": language,
+        "commit_sha": f"sha{i}",
+        "agent_type": agent_type,
+    }
+
+
 class TestRunValidationSamplingCombinedMode:
-    def test_combines_multiple_files_into_one_sample(self, tmp_path):
+    def test_combines_multiple_files_and_normalizes_schema(self, tmp_path):
         python_csv = tmp_path / "python_agent_repo.csv"
         java_csv = tmp_path / "java_agent_repo.csv"
-        _write_csv(
-            python_csv,
-            [{"repo_name": f"py/repo{i}", "language": "python"} for i in range(300)],
-        )
-        _write_csv(
-            java_csv,
-            [{"repo_name": f"java/repo{i}", "language": "java"} for i in range(300)],
-        )
+        _write_csv(python_csv, [_repo_row(i, "python") for i in range(300)])
+        _write_csv(java_csv, [_repo_row(i, "java") for i in range(300)])
         output_root = tmp_path / "validation-samples"
 
         metadata = run_validation_sampling(
@@ -97,17 +211,90 @@ class TestRunValidationSamplingCombinedMode:
         out_path = Path(entry["output_file"])
         assert out_path.exists()
         with out_path.open(encoding="utf-8") as fh:
-            rows = list(csv.DictReader(fh))
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
+            rows = list(reader)
         assert len(rows) == expected_n
+        assert all(r["validation_type"] == "repo" for r in rows)
+        assert all(r["label"] == "" and r["reviewer_notes"] == "" for r in rows)
+        assert {r["validation_id"] for r in rows} == {
+            f"agent-repos-{i + 1:04d}" for i in range(expected_n)
+        }
 
         metadata_files = list((output_root / "agent-repos").glob("sample_metadata_*.json"))
         assert len(metadata_files) == 1
         with metadata_files[0].open(encoding="utf-8") as fh:
             assert json.load(fh) == metadata
 
+    def test_filters_out_repos_not_flagged_agent_positive(self, tmp_path):
+        rows = [_repo_row(i, "python", "1") for i in range(10)] + [
+            _repo_row(i, "python", "0") for i in range(20)
+        ]
+        csv_path = tmp_path / "python_agent_repo.csv"
+        _write_csv(csv_path, rows)
+
+        metadata = run_validation_sampling(
+            "agent-repos", [csv_path], output_root=tmp_path / "validation-samples"
+        )
+
+        assert metadata["outputs"][0]["population_size"] == 10
+
+    def test_repo_step_stratifies_by_language_proportionally(self, tmp_path):
+        python_csv = tmp_path / "python_agent_repo.csv"
+        java_csv = tmp_path / "java_agent_repo.csv"
+        _write_csv(python_csv, [_repo_row(i, "python") for i in range(300)])
+        _write_csv(java_csv, [_repo_row(i, "java") for i in range(300)])
+
+        metadata = run_validation_sampling(
+            "agent-repos",
+            [python_csv, java_csv],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        strata = {s["key"]["language"]: s for s in entry["strata"]}
+        assert set(strata) == {"python", "java"}
+        assert strata["python"]["population_size"] == 300
+        assert strata["java"]["population_size"] == 300
+        assert abs(strata["python"]["sample_size"] - strata["java"]["sample_size"]) <= 1
+        assert (
+            strata["python"]["sample_size"] + strata["java"]["sample_size"]
+            == entry["sample_size"]
+        )
+
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert len([r for r in rows if r["language"] == "python"]) == strata["python"][
+            "sample_size"
+        ]
+        assert len([r for r in rows if r["language"] == "java"]) == strata["java"][
+            "sample_size"
+        ]
+
+    def test_commit_step_stratifies_by_language_and_agent_type(self, tmp_path):
+        csv_path = tmp_path / "python_agent_commit.csv"
+        rows = [_commit_row(i, "python", "claude") for i in range(150)] + [
+            _commit_row(i, "python", "copilot") for i in range(50)
+        ]
+        _write_csv(csv_path, rows)
+
+        metadata = run_validation_sampling(
+            "agent-commits-dataset-a",
+            [csv_path],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        assert entry["population_size"] == 200
+        strata_sizes = {
+            (s["key"]["language"], s["key"]["agent_type"]): s["population_size"]
+            for s in entry["strata"]
+        }
+        assert strata_sizes == {("python", "claude"): 150, ("python", "copilot"): 50}
+
     def test_deterministic_across_two_runs_same_seed(self, tmp_path):
-        csv_path = tmp_path / "agent_commits.csv"
-        _write_csv(csv_path, [{"commit_sha": f"sha{i}"} for i in range(200)])
+        csv_path = tmp_path / "python_agent_commit.csv"
+        _write_csv(csv_path, [_commit_row(i, "python", "claude") for i in range(200)])
         root_a = tmp_path / "run_a"
         root_b = tmp_path / "run_b"
 
@@ -125,22 +312,17 @@ class TestRunValidationSamplingCombinedMode:
 
         assert read_rows(meta_a) == read_rows(meta_b)
 
-    def test_mismatched_columns_across_files_are_unioned(self, tmp_path):
-        """Real per-language QC CSVs can have slightly different columns."""
+    def test_normalizes_despite_differing_source_columns(self, tmp_path):
+        """Real per-language QC CSVs can have slightly different columns
+        (e.g. matched_config_file only present on newer collector output)."""
         base_csv = tmp_path / "python_agent_repo.csv"
         extra_csv = tmp_path / "java_agent_repo.csv"
-        _write_csv(
-            base_csv, [{"repo_name": f"py/repo{i}", "language": "python"} for i in range(10)]
-        )
+        _write_csv(base_csv, [_repo_row(i, "python") for i in range(5)])
         _write_csv(
             extra_csv,
             [
-                {
-                    "repo_name": f"java/repo{i}",
-                    "language": "java",
-                    "num_contributors": "3",  # column not present in base_csv
-                }
-                for i in range(10)
+                {**_repo_row(i, "java"), "matched_config_file": "CLAUDE.md"}
+                for i in range(5)
             ],
         )
 
@@ -153,18 +335,15 @@ class TestRunValidationSamplingCombinedMode:
         out_path = Path(metadata["outputs"][0]["output_file"])
         with out_path.open(encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
-            assert set(reader.fieldnames) == {"repo_name", "language", "num_contributors"}
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
             rows = list(reader)
-        # N=20 is small enough that Cochran's formula keeps the whole population,
-        # so rows from base_csv (which lacks num_contributors) must round-trip
-        # with that column backfilled empty rather than being dropped/erroring.
-        assert len(rows) == 20
-        assert any(r["language"] == "python" and r["num_contributors"] == "" for r in rows)
-        assert any(r["language"] == "java" and r["num_contributors"] == "3" for r in rows)
+        assert len(rows) == 10  # N=10 is below the Cochran floor, all included
+        assert any(r["detection_signal"] == "CLAUDE.md" for r in rows)
+        assert any(r["detection_signal"] == "agent_config_present" for r in rows)
 
     def test_empty_input_file_produces_empty_sample(self, tmp_path):
         empty_csv = tmp_path / "python_agent_repo.csv"
-        empty_csv.write_text("repo_name,language\n", encoding="utf-8")
+        empty_csv.write_text("repo_name,language,has_agent_config\n", encoding="utf-8")
 
         metadata = run_validation_sampling(
             "agent-repos", [empty_csv], output_root=tmp_path / "validation-samples"
@@ -178,11 +357,24 @@ class TestRunValidationSamplingCombinedMode:
 
 
 class TestRunValidationSamplingPerFileMode:
+    def _fixture_row(self, i: int, language: str) -> dict:
+        return {
+            "repo_name": "owner/repo",
+            "language": language,
+            "commit_sha": f"sha{i}",
+            "file_path": f"tests/test_{i}.py",
+            "fixture_name": f"fixture{i}",
+            "fixture_type": "pytest_decorator",
+            "start_line": str(i),
+            "github_url": f"https://github.com/owner/repo/blob/sha{i}/tests/test_{i}.py#L{i}",
+            "raw_source": f"@pytest.fixture\ndef fixture{i}(): ...",
+        }
+
     def test_one_output_per_input_file(self, tmp_path):
         python_csv = tmp_path / "python_agent_fixtures.csv"
         java_csv = tmp_path / "java_agent_fixtures.csv"
-        _write_csv(python_csv, [{"name": f"fixture{i}"} for i in range(500)])
-        _write_csv(java_csv, [{"name": f"fixture{i}"} for i in range(50)])
+        _write_csv(python_csv, [self._fixture_row(i, "python") for i in range(500)])
+        _write_csv(java_csv, [self._fixture_row(i, "java") for i in range(50)])
         output_root = tmp_path / "validation-samples"
 
         metadata = run_validation_sampling(
@@ -199,20 +391,28 @@ class TestRunValidationSamplingPerFileMode:
         assert by_source[str(python_csv)]["sample_size"] == cochran_sample_size(500)
         assert by_source[str(java_csv)]["population_size"] == 50
         assert by_source[str(java_csv)]["sample_size"] == cochran_sample_size(50)
+        assert "strata" not in by_source[str(python_csv)]
 
         out_dir = output_root / "agent-fixtures-dataset-a"
         csv_files = list(out_dir.glob("*.csv"))
         assert len(csv_files) == 2
 
+        with csv_files[0].open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
+            row = next(reader)
+            assert row["validation_type"] == "fixture"
+            assert row["evidence"]  # raw_source round-tripped, non-empty
+
 
 class TestRealPipelineCSVSchemas:
-    """Integration-style checks against the real column layouts the pipeline
-    actually produces (via tests/conftest.py's make_csv fixture), not just
-    the small synthetic dicts used above -- proves the tool round-trips real
-    headers/values, not just whatever shape the unit tests happened to use.
+    """Round-trip checks against the real column layouts the pipeline
+    actually produces (via tests/conftest.py's make_csv fixture) -- proves
+    the normalizer maps real headers/values into the fixed schema, not just
+    the small synthetic dicts used above.
     """
 
-    def test_agent_repos_real_schema_round_trips(self, tmp_path, make_csv):
+    def test_agent_repos_real_schema_normalizes(self, tmp_path, make_csv):
         rows = [
             {
                 "repo_name": f"owner{i}/repo_python",
@@ -223,6 +423,7 @@ class TestRealPipelineCSVSchemas:
                 "num_contributors": str(1 + i % 5),
                 "clone_url": f"https://github.com/owner{i}/repo_python.git",
                 "has_agent_config": "1",
+                "matched_config_file": "CLAUDE.md",
             }
             for i in range(30)
         ]
@@ -236,26 +437,29 @@ class TestRealPipelineCSVSchemas:
         assert entry["population_size"] == 30
         with Path(entry["output_file"]).open(encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
-            assert reader.fieldnames == list(rows[0].keys())
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
             sampled = list(reader)
         assert len(sampled) == entry["sample_size"]
-        assert all(r["has_agent_config"] == "1" for r in sampled)
+        assert all(r["detection_signal"] == "CLAUDE.md" for r in sampled)
+        assert all(r["item_url"].startswith("https://github.com/owner") for r in sampled)
 
-    def test_agent_commits_dataset_a_real_schema_round_trips(self, tmp_path, make_csv):
+    def test_agent_commits_dataset_a_real_schema_normalizes(self, tmp_path, make_csv):
         rows = [
             {
                 "repo_name": "good/repo",
-                "language": "python",
                 "commit_sha": f"sha{i}",
-                "commit_role": "agent",
+                "commit_url": f"https://github.com/good/repo/commit/sha{i}",
                 "agent_type": "claude" if i % 2 == 0 else "copilot",
                 "commit_date": "2026-05-21T00:00:00Z",
-                "test_file_count": "1",
-                "test_file_paths": '["tests/test_sample.py"]',
+                "author_name": "Some Bot",
+                "author_email": "bot@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/good/repo.git",
+                "processed_at": "2026-05-21T00:00:00Z",
             }
             for i in range(30)
         ]
-        csv_path = make_csv(tmp_path, "python_agent_test_commit_qc.csv", rows=rows)
+        csv_path = make_csv(tmp_path, "python_agent_commit.csv", rows=rows)
 
         metadata = run_validation_sampling(
             "agent-commits-dataset-a",
@@ -266,10 +470,11 @@ class TestRealPipelineCSVSchemas:
         entry = metadata["outputs"][0]
         with Path(entry["output_file"]).open(encoding="utf-8") as fh:
             reader = csv.DictReader(fh)
-            assert reader.fieldnames == list(rows[0].keys())
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
             sampled = list(reader)
         assert len(sampled) == entry["sample_size"]
-        assert all(r["agent_type"] in {"claude", "copilot"} for r in sampled)
+        assert all(r["detection_signal"] in {"claude", "copilot"} for r in sampled)
+        assert all("agent_type=" in r["evidence"] for r in sampled)
 
 
 def test_unknown_step_raises():
@@ -304,10 +509,40 @@ def test_no_input_paths_raises(tmp_path):
         )
 
 
+def test_readme_written_with_label_vocabulary(tmp_path):
+    csv_path = tmp_path / "python_agent_repo.csv"
+    _write_csv(csv_path, [_repo_row(i, "python") for i in range(5)])
+    output_root = tmp_path / "validation-samples"
+
+    run_validation_sampling("agent-repos", [csv_path], output_root=output_root)
+
+    readme = (output_root / "README.md").read_text(encoding="utf-8")
+    assert "TP" in readme
+    assert "FP" in readme
+    assert "Unsure" in readme
+    assert "404" in readme
+
+
 class TestCLI:
     def test_main_invokes_run_validation_sampling(self, monkeypatch, tmp_path):
         csv_path = tmp_path / "python_agent_fixtures.csv"
-        _write_csv(csv_path, [{"name": f"fixture{i}"} for i in range(20)])
+        _write_csv(
+            csv_path,
+            [
+                {
+                    "repo_name": "owner/repo",
+                    "language": "python",
+                    "commit_sha": f"sha{i}",
+                    "file_path": f"tests/test_{i}.py",
+                    "fixture_name": f"fixture{i}",
+                    "fixture_type": "pytest_decorator",
+                    "start_line": str(i),
+                    "github_url": f"https://github.com/owner/repo/blob/sha{i}#L{i}",
+                    "raw_source": "@pytest.fixture\ndef f(): ...",
+                }
+                for i in range(20)
+            ],
+        )
         output_root = tmp_path / "validation-samples"
 
         captured = {}

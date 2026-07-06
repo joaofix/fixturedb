@@ -346,7 +346,7 @@ def shallow_clone_repo(clone_url: str, target_dir: Path) -> bool:
         return False
 
 
-def scan_cloned_repo_for_agent_configs(repo_path: Path) -> bool:
+def scan_cloned_repo_for_agent_configs(repo_path: Path) -> str | None:
     """
     Check if a cloned repo contains any agent config files.
 
@@ -354,16 +354,16 @@ def scan_cloned_repo_for_agent_configs(repo_path: Path) -> bool:
         repo_path: Path to cloned repository
 
     Returns:
-        True if any agent config file found, False otherwise
+        The matched config-file pattern (e.g. "CLAUDE.md") if found, else None.
     """
     if not repo_path.exists():
-        return False
+        return None
 
     try:
         return repo_contains_patterns(repo_path, PAPER_AGENT_CONFIG_PATTERNS)
     except Exception as e:
         logger.debug(f"Error scanning for agent files in {repo_path}: {e}")
-        return False
+        return None
 
 
 def shallow_clone_and_check_repo(clone_url: str, clones_dir: Path) -> Optional[Path]:

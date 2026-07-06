@@ -55,18 +55,23 @@ def path_matches_pattern(path: Path | str, pattern: str) -> bool:
 
 def repo_contains_patterns(
     repo_path: Path, patterns: Mapping[str, Iterable[str]]
-) -> bool:
-    """Return True if any path in repo_path matches any of the provided patterns."""
+) -> str | None:
+    """Return the first pattern matched by a path in repo_path, or None.
+
+    Truthiness is unchanged for existing callers (a matched pattern string is
+    truthy, None is falsy) -- this just avoids discarding which pattern
+    actually matched (e.g. the specific agent-config filename found).
+    """
     if not repo_path.exists():
-        return False
+        return None
 
     all_paths = list(repo_path.rglob("*"))
     for pattern_list in patterns.values():
         for pattern in pattern_list:
             for found_path in all_paths:
                 if path_matches_pattern(found_path.relative_to(repo_path), pattern):
-                    return True
-    return False
+                    return pattern
+    return None
 
 
 def iter_exact_filename_patterns(patterns: Mapping[str, Iterable[str]]) -> list[str]:

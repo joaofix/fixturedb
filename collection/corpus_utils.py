@@ -206,6 +206,7 @@ def write_fixture_csv_row(
         "agent_type",
         "commit_kind",
         "commit_type",
+        "raw_source",
     ]
 
     if extra_fields:
@@ -255,6 +256,7 @@ def write_fixture_csv_row(
             "agent_type": fixture.get("agent_type", ""),
             "commit_kind": fixture.get("commit_kind", "unknown"),
             "commit_type": fixture.get("commit_type", ""),
+            "raw_source": fixture.get("raw_source", ""),
         }
 
         if extra_fields:

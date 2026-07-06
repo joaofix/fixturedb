@@ -51,6 +51,26 @@ def test_repo_contains_patterns_returns_false_if_missing(tmp_path):
     )
 
 
+def test_repo_contains_patterns_returns_matched_pattern_string(tmp_path):
+    """The matched pattern (e.g. the specific config filename) is returned,
+    not just a bool -- validation_sampling.py surfaces it as detection_signal
+    evidence for repo-detection review."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "CLAUDE.md").write_text("x")
+
+    matched = ap.repo_contains_patterns(repo, ap.PAPER_AGENT_CONFIG_PATTERNS)
+
+    assert matched == "CLAUDE.md"
+
+
+def test_repo_contains_patterns_returns_none_if_missing(tmp_path):
+    assert (
+        ap.repo_contains_patterns(tmp_path / "does-not-exist", ap.PAPER_AGENT_CONFIG_PATTERNS)
+        is None
+    )
+
+
 def test_iter_exact_filename_patterns_uniqueness():
     files = ap.iter_exact_filename_patterns(ap.LIGHTWEIGHT_AGENT_CONFIG_PATTERNS)
     # ensure there are no duplicates

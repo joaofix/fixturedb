@@ -5,7 +5,9 @@ sample — not every pipeline output, only the ones where a detection error
 would actually mislabel or contaminate the study's data (see "Reduced
 validation set" below). `collection/validation_sampling.py` draws a
 statistically-sized sample for a reviewer to manually check, sized with
-Cochran's formula rather than an arbitrary fixed count.
+Cochran's formula rather than an arbitrary fixed count, and normalizes every
+sample to one fixed reviewer-facing CSV schema regardless of which pipeline
+step produced it.
 
 **This tool is not part of the automatic phase pipeline.** It never runs on
 its own — invoke it by hand, whenever a manual-validation sample is actually
@@ -30,8 +32,9 @@ n  = n0 / (1 + (n0 - 1) / N)        (N = population size)
   than exist).
 
 Defaults match the paper's stated methodology: **95% confidence, 5% margin of
-error**. Both are CLI flags, not hardcoded, in case a future validation step
-needs different rigor.
+error, seed 42**. All three are CLI flags, not hardcoded, in case a future
+validation step needs different rigor — but the seed default should stay
+fixed across runs so the paper's reported sample is reproducible.
 
 **Sampling is deterministic by content, not just by seed.** Rows are sorted
 by a hash of their full content before the seeded random sample is drawn, so
@@ -40,6 +43,64 @@ rows happen to appear in the source CSV (which can vary run-to-run under
 threaded export). This matters because the sampled rows are a citable
 research artifact — re-running the tool against the same underlying data
 must reproduce the same reviewed sample.
+
+**Repo and commit steps are stratified**, not pooled-and-drawn-uniformly:
+`agent-repos` stratifies by `language`; `agent-commits-dataset-a` stratifies
+by `(language, agent_type)`. Each stratum gets a proportional share of the
+total sample size (largest-remainder allocation, so the shares always sum
+exactly to the computed `n`), so the reviewed set mirrors the corpus'
+language/agent composition instead of skewing toward whichever language or
+agent happens to dominate row count. `agent-fixtures-dataset-a` needs no
+extra stratification: it already draws one independent sample per language
+file (see "The three steps" below).
+
+## Fixed output schema
+
+Every validation CSV — regardless of step — has exactly these columns, in
+this order:
+
+| Column | Meaning |
+|---|---|
+| `validation_id` | Unique row identifier (`<step>-<n>`, e.g. `agent-repos-0001`) |
+| `validation_type` | `repo` \| `commit` \| `fixture` |
+| `language` | The item's language |
+| `repo_full_name` | `owner/repo` slug |
+| `item_id` | Repo full name / commit SHA / composite fixture key (`repo:commit:file:start_line`) |
+| `item_url` | Direct clickable GitHub URL to the item being judged |
+| `detection_signal` | What triggered detection (matched config filename, agent type, or fixture type) |
+| `evidence` | Text for the reviewer to judge the detection against |
+| `label` | Empty — reviewer fills in: `TP` \| `FP` \| `Unsure` \| `404` |
+| `reviewer_notes` | Empty — reviewer fills in optional free text |
+
+A `README.md` documenting this schema and the label vocabulary is written
+(and refreshed) at the root of `validation-samples/` on every run, so it's
+readable straight from the output directory without needing this doc.
+
+### Per-type field mapping and known gaps
+
+| | `repo` | `commit` | `fixture` |
+|---|---|---|---|
+| `item_url` | `https://github.com/{repo_full_name}` | `commit_url` column (or reconstructed from repo + SHA) | `github_url` column (already precomputed at collection time) |
+| `detection_signal` | The matched agent-config filename (e.g. `CLAUDE.md`), or `agent_config_present` for CSVs collected before this column existed | `agent_type` (e.g. `claude`, `copilot`) | `fixture_type` (e.g. `pytest_decorator`) |
+| `evidence` | Same as `detection_signal` — no full config-file content is captured today, so the filename is the best available evidence | `agent_type` + `commit_date` + author — **not** the commit message or diff text (see "Known gap" below) | `raw_source` — the full fixture source text |
+
+**Known gap — commit evidence is best-effort.** The original spec for this
+tool assumed commit message + diff lines were "stored in DB"; they aren't.
+`agent_commit_counter.py` doesn't yet know which files in a commit are test
+files (that's determined later, in `test_commit_filter.py`), and no diff
+content is captured at all. Building real message/diff evidence would mean
+new git-diff capture logic threaded through an earlier pipeline stage. Until
+that exists, commit evidence is `agent_type`/`commit_date`/author only — a
+reviewer judging a sampled commit needs to open `item_url` on GitHub to see
+the actual message and diff.
+
+**Repo/fixture evidence requires the current collector code.** The
+`matched_config_file` and `raw_source` columns are populated by
+`agent_repository_counter.py` and `agent_corpus.py`'s fixture CSV export,
+respectively (as of the change that introduced the fixed schema above). CSVs
+collected before that change won't have these columns; the tool falls back
+to `agent_config_present` / an empty `evidence` string for those older files
+rather than erroring.
 
 ## Reduced validation set
 
@@ -66,21 +127,27 @@ than merely documenting it separately from the code.
 
 | `--step` | What it validates | Typical `--input` | Population |
 |---|---|---|---|
-| `agent-repos` | Agent-enabled repository detection | `github-search-agent/agent_repositories/*_agent_repo.csv` (all languages) | Combined — one pooled sample |
-| `agent-commits-dataset-a` | Agent commit attribution | `github-search-agent/agent_repositories/*_agent_commit_qc.csv` (all languages; the raw agent-commit detection output, *before* the test-file filter) | Combined — one pooled sample |
+| `agent-repos` | Agent-enabled repository detection | `github-search-agent/agent_repositories/*_agent_repo.csv` (all languages) | Combined, stratified by language — rows with `has_agent_config != 1` are filtered out before sampling |
+| `agent-commits-dataset-a` | Agent commit attribution | `github-search-agent/agent_commits/*_agent_commit.csv` (all languages) | Combined, stratified by `(language, agent_type)` |
 | `agent-fixtures-dataset-a` | Dataset A fixture extraction | `fixtures-from-agents/{language}_agent_fixtures.csv` | Per-language — one sample per file |
 
 The two detection steps are language-agnostic: even though their QC CSVs are
 split per language on disk, pass them all in one invocation and they're
-pooled into a single population with one sample size. The fixture step is
+pooled into a single population, then a proportional sample is drawn per
+language (and per agent type, for commits). The fixture step is
 language-specific (extraction differs per language/grammar), so each
 language file you pass is sampled as its own independent population,
 producing one output CSV per file.
 
+For `agent-repos`, only rows already flagged `has_agent_config=1` are
+sampled — the source CSV also contains scanned-but-negative repos, and
+validating "agent repository detection" means checking the claimed
+positives, not the whole scanned candidate pool.
+
 ## Usage
 
 ```bash
-# Combined-mode step: pool all languages into one sample
+# Combined-mode step: pool all languages into one stratified sample
 python -m collection.validation_sampling \
   --step agent-repos \
   --input github-search-agent/agent_repositories/python_agent_repo.csv \
@@ -107,6 +174,7 @@ Full flag reference: `python -m collection.validation_sampling --help`.
 
 ```
 validation-samples/
+  README.md                          # schema + label vocabulary, refreshed every run
   agent-repos/
     agent-repos_sample_<timestamp>.csv
     sample_metadata_<timestamp>.json
@@ -119,8 +187,11 @@ validation-samples/
 
 Each run also writes a `sample_metadata_<timestamp>.json` recording the
 population size (N), computed sample size (n), confidence level, margin of
-error, assumed proportion, and seed for every output file produced — this is
-what the paper's methodology section should cite per validated step.
+error, assumed proportion, and seed for every output file produced. For
+stratified steps, it also includes a `strata` breakdown — each stratum's key
+(e.g. `{"language": "python"}` or `{"language": "python", "agent_type":
+"claude"}`), population size, and sample size — this is what the paper's
+methodology section should cite per validated step.
 
 `validation-samples/` is committed to the repository (not gitignored): the
 specific sampled rows are the actual artifact a reviewer checks against for

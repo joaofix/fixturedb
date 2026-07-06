@@ -419,6 +419,52 @@ class TestWriteFixtureCsvRow:
 
         assert row["commit_type"] == ""
 
+    def test_write_fixture_csv_row_includes_raw_source(self, tmp_path):
+        """raw_source is written straight from the fixture dict, so the
+        validation-sampling tool can use it as reviewer evidence without a
+        DB join."""
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "test_bar",
+            "fixture_type": "pytest_decorator",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 10,
+            "framework": "pytest",
+            "raw_source": "@pytest.fixture\ndef test_bar():\n    yield 1\n",
+        }
+
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+
+        assert row["raw_source"] == "@pytest.fixture\ndef test_bar():\n    yield 1\n"
+
+    def test_write_fixture_csv_row_defaults_raw_source_to_empty(self, tmp_path):
+        out_path = tmp_path / "fixtures.csv"
+
+        fixture = {
+            "commit_sha": "abc123",
+            "file_path": "test_foo.py",
+            "name": "test_bar",
+            "fixture_type": "pytest_decorator",
+            "start_line": 10,
+            "end_line": 20,
+            "loc": 10,
+            "framework": "pytest",
+        }
+
+        write_fixture_csv_row(out_path, "owner/repo", "python", fixture)
+
+        with out_path.open(newline="") as fh:
+            row = next(csv.DictReader(fh))
+
+        assert row["raw_source"] == ""
+
 
 class TestBuildGithubUrl:
     """Test _build_github_url helper."""

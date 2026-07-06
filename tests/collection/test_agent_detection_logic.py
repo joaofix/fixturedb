@@ -18,14 +18,14 @@ def test_scan_cloned_repo_for_agent_configs_is_case_insensitive(tmp_path):
     repo_path = _make_repo(tmp_path)
     (repo_path / "CLAUDE.MD").write_text("# Claude instructions\n")
 
-    assert scan_cloned_repo_for_agent_configs(repo_path) is True
+    assert scan_cloned_repo_for_agent_configs(repo_path) is not None
 
 
 def test_scan_cloned_repo_for_agent_configs_matches_copilot_wildcard(tmp_path):
     repo_path = _make_repo(tmp_path)
     (repo_path / ".copilot-SETUP.md").write_text("# Copilot\n")
 
-    assert scan_cloned_repo_for_agent_configs(repo_path) is True
+    assert scan_cloned_repo_for_agent_configs(repo_path) is not None
 
 
 def test_scan_cloned_repo_for_agent_configs_matches_nested_directory(tmp_path):
@@ -34,7 +34,7 @@ def test_scan_cloned_repo_for_agent_configs_matches_nested_directory(tmp_path):
     nested.mkdir()
     (nested / "README.md").write_text("# Anthropic\n")
 
-    assert scan_cloned_repo_for_agent_configs(repo_path) is True
+    assert scan_cloned_repo_for_agent_configs(repo_path) is not None
 
 
 def test_github_api_checker_recurses_one_level_for_nested_configs(monkeypatch):

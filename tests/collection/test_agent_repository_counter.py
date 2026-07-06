@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+from contextlib import contextmanager
 from pathlib import Path
 
 import collection.repository_quality_control.agent_repository_counter as qc
@@ -61,3 +62,38 @@ def test_read_repo_list_can_filter_multiple_languages(monkeypatch, tmp_path):
         "owner/javascript-repo",
     ]
     assert {repo["language"] for repo in repos} == {"java", "javascript"}
+
+
+def _fake_temp_clone(repo_path: Path):
+    @contextmanager
+    def _ctx(clone_url, full_name, prefix="", timeout=60):
+        yield repo_path
+
+    return _ctx
+
+
+def test_process_single_records_matched_config_file(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: "CLAUDE.md"
+    )
+    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+
+    row = qc._process_single(
+        {"full_name": "owner/repo", "language": "python", "stars": 10}, since="2025-01-01"
+    )
+
+    assert row["has_agent_config"] == 1
+    assert row["matched_config_file"] == "CLAUDE.md"
+
+
+def test_process_single_empty_matched_config_file_when_no_match(monkeypatch, tmp_path):
+    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+
+    row = qc._process_single(
+        {"full_name": "owner/repo", "language": "python", "stars": 10}, since="2025-01-01"
+    )
+
+    assert row["has_agent_config"] == 0
+    assert row["matched_config_file"] == ""
+    assert row["qc_reason"] == "no_agent_config"

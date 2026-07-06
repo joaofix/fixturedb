@@ -292,7 +292,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
 
         raw_clone_url = meta.get("clone_url") or f"https://github.com/{full_name}.git"
         clone_url = str(raw_clone_url).strip()
-        has_agent_config = False
+        matched_config_file: Optional[str] = None
         qc_reason = ""
 
         with temp_clone_commit_history(
@@ -300,8 +300,8 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         ) as repo_path:
             try:
                 if repo_path and repo_path.exists():
-                    has_agent_config = scan_cloned_repo_for_agent_configs(repo_path)
-                    if not has_agent_config:
+                    matched_config_file = scan_cloned_repo_for_agent_configs(repo_path)
+                    if not matched_config_file:
                         qc_reason = "no_agent_config"
                 else:
                     qc_reason = "clone_failed_or_missing"
@@ -310,12 +310,13 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
 
         row = {
             "repo_name": full_name,
-            "has_agent_config": int(bool(has_agent_config)),
+            "has_agent_config": int(bool(matched_config_file)),
             "language": meta.get("language"),
             "stars": meta.get("stars"),
             "clone_url": meta.get("clone_url"),
             "num_contributors": meta.get("num_contributors"),
             "qc_reason": qc_reason,
+            "matched_config_file": matched_config_file or "",
             "processed_at": datetime.now(timezone.utc).isoformat(),
         }
         return row
