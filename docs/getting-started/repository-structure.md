@@ -28,7 +28,6 @@ icsme-nier-2026/
 │       ├── human_corpus.py                  # Dataset B collector (HumanCorpusCollector)
 │       ├── dataset_c.py                     # Dataset C collector (collect_dataset_c_fixtures)
 │       ├── between_group_comparison.py      # Statistical comparison
-│       ├── github_api_search.py             # GitHub API integration
 │       ├── agent_signal_primitives.py       # Agent detection in commits (formerly agent_detector.py)
 │       ├── tiered_agent_corpus_scanner.py   # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
 │       ├── fixture_extractor.py             # Fixture extraction at commit level
