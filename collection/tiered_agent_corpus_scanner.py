@@ -397,8 +397,11 @@ _ADOPTION_THRESHOLD_CONSISTENT = 0.20     # 5–20%
 def count_total_commits_since(repo_path: Path, start_date: str) -> int:
     """Count total non-merge commits in a repo since *start_date*.
 
-    Uses ``git rev-list --count`` for performance (avoids full PyDriller
-    traversal when only the count is needed).
+    Uses ``git rev-list --count`` (via GitPython) for performance (avoids
+    full PyDriller traversal when only the count is needed) -- a local,
+    read-only operation, so no subprocess-level timeout guard is needed
+    (unlike clone/fetch, which stay subprocess calls elsewhere in this
+    codebase for exactly that reason).
 
     Args:
         repo_path: Path to a git repository on disk.
@@ -407,24 +410,20 @@ def count_total_commits_since(repo_path: Path, start_date: str) -> int:
     Returns:
         Number of non-merge commits since *start_date*, or 0 on failure.
     """
-    import subprocess
+    import git as gitpython
 
     try:
-        result = subprocess.run(
-            [
-                "git", "-C", str(repo_path),
-                "rev-list", "--count", "--no-merges",
-                f"--since={start_date}", "HEAD",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
+        repo = gitpython.Repo(repo_path)
+        count = repo.git.rev_list(
+            "--count",
+            "--no-merges",
+            f"--since={start_date}",
+            "HEAD",
+            kill_after_timeout=30,
         )
-        if result.returncode == 0:
-            return int(result.stdout.strip() or 0)
-    except (subprocess.TimeoutExpired, ValueError, OSError):
-        pass
-    return 0
+        return int(count or 0)
+    except (gitpython.GitError, ValueError, OSError):
+        return 0
 
 
 def compute_adoption_intensity(

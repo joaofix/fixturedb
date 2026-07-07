@@ -13,6 +13,7 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+import git
 import requests
 from tqdm import tqdm
 
@@ -168,15 +169,7 @@ def clone_repo(
 
 
 def _get_head_sha(repo_dir: Path) -> str:
-    result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=repo_dir,
-        capture_output=True,
-        text=True,
-        timeout=10,
-    )
-    result.check_returncode()
-    return result.stdout.strip()
+    return git.Repo(repo_dir).head.commit.hexsha
 
 
 def _is_accessible_remote(clone_url: str) -> tuple[bool, bool]:
@@ -248,7 +241,13 @@ def _has_sufficient_test_files(full_name: str, language: str) -> bool:
 
 
 def _count_commits(repo_dir: Path) -> int:
-    """Fetch a small amount of history, then count commits on HEAD."""
+    """Fetch a small amount of history, then count commits on HEAD.
+
+    The fetch step stays a subprocess call (a network operation that relies
+    on subprocess's own timeout= to avoid hanging on an unresponsive remote
+    -- GitPython's clone/fetch helpers don't expose the same guard). The
+    count step is local/read-only, so it uses GitPython directly.
+    """
     try:
         subprocess.run(
             ["git", "fetch", "--depth", "500", "origin"],
@@ -256,14 +255,7 @@ def _count_commits(repo_dir: Path) -> int:
             capture_output=True,
             timeout=60,
         )
-        result = subprocess.run(
-            ["git", "rev-list", "--count", "HEAD"],
-            cwd=repo_dir,
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        return int(result.stdout.strip())
+        return int(git.Repo(repo_dir).git.rev_list("--count", "HEAD", kill_after_timeout=10))
     except Exception:
         return 0
 
