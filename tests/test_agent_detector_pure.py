@@ -63,6 +63,32 @@ def test_detect_agent_no_match():
     )
 
 
+def test_detect_agent_word_boundary_rejects_compound_word_collision():
+    """Regression test: a bare substring check on author name/email
+    incorrectly matched the "cline"/"devin" agent keywords inside unrelated
+    compound words/surnames (e.g. "McLine"). Word-boundary matching fixes
+    this class of false positive (though not the case of an exact common
+    first name -- see test_detect_agent_exact_name_collision_is_a_known_limitation)."""
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    assert (
+        scanner._detect_agent_in_commit("Sean McLine", "smcline@example.com", "")
+        is None
+    )
+
+
+def test_detect_agent_exact_name_collision_is_a_known_limitation():
+    """Documents a known, inherent limitation (not something this fix
+    resolves): a human author whose name is an exact match for an agent's
+    bare-word signature (e.g. "Devin") is still misattributed, since word
+    boundaries only rule out partial/compound-word matches, not whole-word
+    name collisions. See agent_heuristics.yaml's module comment."""
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    assert (
+        scanner._detect_agent_in_commit("Devin Smith", "devin.smith@gmail.com", "")
+        == "devin"
+    )
+
+
 def test_detect_agent_bot_authors_are_excluded():
     scanner = Tier1RepositoryScanner(Path("/tmp"))
 
@@ -255,6 +281,60 @@ def test_is_test_file_path_javascript():
     assert _is_test_file_path("__tests__/my.test.js", "javascript")
     assert _is_test_file_path("spec/my.spec.js", "javascript")
     assert not _is_test_file_path("lib/foo.js", "javascript")
+
+
+def test_agent_commit_verifier_ignores_prose_mentions_in_commit_message():
+    """Regression test: AgentCommitVerifier._detect_agent_in_commit used to
+    fall back to scanning the entire free-text commit message body, so a
+    prose mention of an agent's name with no real trailer (or an unrelated
+    word coinciding with an agent's keyword) was misattributed as agent
+    authorship. Only the trailer/author-identity fields are legitimate
+    signal."""
+    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
+
+    assert (
+        verifier._detect_agent_in_commit(
+            {
+                "sha": "abc123",
+                "author_name": "Alice Human",
+                "author_email": "alice@example.com",
+                "message": (
+                    "Revert a bad Claude suggestion from last week's PR\n\n"
+                    "This undoes the regression."
+                ),
+            }
+        )
+        is None
+    )
+
+    assert (
+        verifier._detect_agent_in_commit(
+            {
+                "sha": "def456",
+                "author_name": "Bob Human",
+                "author_email": "bob@example.com",
+                "message": "Fix cursor blinking bug in the text editor widget",
+            }
+        )
+        is None
+    )
+
+
+def test_agent_commit_verifier_word_boundary_rejects_compound_word_collision():
+    """Regression test: same word-boundary fix as Tier1RepositoryScanner,
+    applied to AgentCommitVerifier's author name/email check."""
+    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
+    assert (
+        verifier._detect_agent_in_commit(
+            {
+                "sha": "abc123",
+                "author_name": "Sean McLine",
+                "author_email": "smcline@example.com",
+                "message": "Refactor build script",
+            }
+        )
+        is None
+    )
 
 
 def test_agent_commit_verifier_detects_trailers(tmp_path):

@@ -2,9 +2,10 @@
 Unit tests for agent corpus collection.
 
 Tests the 2025+ agent-authored fixture collection including:
-- Agent type detection from commit messages (Tier 1)
 - Repository scanning for agent configuration files
-- Agent commit discovery from git history
+- Agent commit discovery from git history (delegates to the real Tier 1
+  detector in tiered_agent_corpus_scanner.py -- see tests/test_agent_detector_pure.py
+  for direct unit tests of that detector)
 - Control variable computation at snapshot date
 - Statistics aggregation
 """
@@ -19,75 +20,19 @@ from unittest.mock import MagicMock, patch
 
 import collection.agent_corpus as agent_corpus
 from collection.agent_corpus import (
-    AGENT_SIGNATURES,
     AgentCorpusCollector,
     AgentCorpusStats,
     _load_qc_agent_commits,
     _load_qc_repo_rows,
-    detect_agent_in_commit,
-    detect_agent_type,
     get_agent_commits,
 )
+from collection.agent_patterns import AGENT_SIGNATURES
 from collection.config import AGENT_CORPUS_START_DATE
 from collection.db import (
     compute_repo_age_at_date,
     db_session,
     is_global_checkpoint_completed,
 )
-
-
-class TestAgentDetection:
-    """Test agent type detection from commit messages."""
-
-    def test_detect_claude_from_message(self):
-        """Should detect Claude from co-authored-by trailer."""
-        message = "Fix bug\n\nCo-authored-by: Claude <claude@anthropic.com>"
-        agent_type = detect_agent_type(message)
-        assert agent_type == "claude"
-
-    def test_detect_copilot_from_message(self):
-        """Should detect GitHub Copilot from commit message."""
-        message = "Add feature\n\nCo-authored-by: GitHub Copilot <copilot@github.com>"
-        agent_type = detect_agent_type(message)
-        assert agent_type == "copilot"
-
-    def test_detect_cursor_from_message(self):
-        """Should detect Cursor from commit message."""
-        message = "Refactor code\n\nCo-authored-by: Cursor <cursor@anysoftware.io>"
-        agent_type = detect_agent_type(message)
-        assert agent_type == "cursor"
-
-    def test_detect_aider_from_message(self):
-        """Should detect Aider from commit message."""
-        message = "Update tests\n\nCo-authored-by: Aider <aider@paul.pub>"
-        agent_type = detect_agent_type(message)
-        assert agent_type == "aider"
-
-    def test_detect_lowercase_variants(self):
-        """Should detect agent types regardless of case."""
-        message_claude = "Fix\n\nco-authored-by: claude"
-        assert detect_agent_type(message_claude) == "claude"
-
-        message_copilot = "Fix\n\nco-authored-by: copilot"
-        assert detect_agent_type(message_copilot) == "copilot"
-
-    def test_detect_no_agent_in_message(self):
-        """Should return None for non-agent commits."""
-        message = "Fix bug\n\nCo-authored-by: Alice <alice@example.com>"
-        agent_type = detect_agent_type(message)
-        assert agent_type is None
-
-    def test_detect_empty_message(self):
-        """Should return None for empty message."""
-        agent_type = detect_agent_type("")
-        assert agent_type is None
-
-    def test_detect_first_matching_agent(self):
-        """Should return first matching agent type in signature order."""
-        # If message contains multiple agents, should return first match
-        message = "Fix\n\nCo-authored-by: Claude and Co-authored-by: Copilot"
-        agent_type = detect_agent_type(message)
-        assert agent_type in ("claude", "copilot")  # One of the two
 
 
 class TestAgentSignatures:
@@ -178,94 +123,9 @@ class TestAgentCorpusTemporalBoundary:
         assert 0.4 < age < 0.5  # Roughly 5 months
 
 
-class TestAgentDetectionTier1Precision:
-    """Test that Tier 1 detection uses co-authored-by trailers only."""
-
-    def test_tier1_uses_commit_trailers(self):
-        """Tier 1 should detect co-authored-by git trailers."""
-        # This tests the documented methodology
-        message_with_trailer = "Code\n\nCo-authored-by: Claude <claude@anthropic.com>"
-        assert detect_agent_type(message_with_trailer) == "claude"
-
-    def test_tier1_detection_is_substring_based(self):
-        """Tier 1 uses case-insensitive substring matching of agent keywords."""
-        # Implementation matches agent keywords anywhere in commit body
-        # This is correct for detecting trailers, as trailer lines contain the keywords
-        message_with_claude_mention = "This was helped by claude to fix the issue"
-        result = detect_agent_type(message_with_claude_mention)
-        assert result == "claude"  # Will match on "claude" keyword
-
-    def test_tier1_cursor_detection(self):
-        """Should detect cursor keyword in commit message."""
-        # Similar to claude, any mention of "cursor" will match
-        message_with_cursor = "Cursor helped with this feature"
-        result = detect_agent_type(message_with_cursor)
-        assert result == "cursor"  # Will match on "cursor" keyword
-
-    def test_tier1_no_match_without_keywords(self):
-        """Should NOT detect when no agent keywords present."""
-        message = "Fixed a bug in the code"
-        assert detect_agent_type(message) is None
-
-
-class TestAgentCommitMetadataDetection:
-    """Test the stricter commit-metadata detector used by agent commit scans."""
-
-    def test_detect_agent_from_coauthored_by_trailer(self):
-        agent_type, matched_field = detect_agent_in_commit(
-            author_name="Someone",
-            author_email="someone@example.com",
-            commit_body="Refactor\n\nCo-authored-by: Claude <claude@anthropic.com>",
-        )
-
-        assert agent_type == "claude"
-        assert matched_field == "coauthored-by"
-
-    def test_detect_agent_from_author_identity(self):
-        agent_type, matched_field = detect_agent_in_commit(
-            author_name="GitHub Copilot",
-            author_email="copilot@github.com",
-            commit_body="Fix typo",
-        )
-
-        assert agent_type == "copilot"
-        assert matched_field == "author"
-
-    def test_bot_authors_are_excluded_from_agent_detection(self):
-        """Bot accounts like copilot-swe-agent[bot] must not be classified as agents."""
-        # swe-agent bot — author name contains [bot]
-        agent_type, _ = detect_agent_in_commit(
-            author_name="copilot-swe-agent[bot]",
-            author_email="198982749+Copilot@users.noreply.github.com",
-            commit_body="Some commit",
-        )
-        assert agent_type is None
-
-        # anthropic-code-agent bot
-        agent_type2, _ = detect_agent_in_commit(
-            author_name="anthropic-code-agent[bot]",
-            author_email="242468646+Claude@users.noreply.github.com",
-            commit_body="Some commit",
-        )
-        assert agent_type2 is None
-
-        # Non-bot with copilot keyword should still match
-        agent_type3, _ = detect_agent_in_commit(
-            author_name="GitHub Copilot",
-            author_email="copilot@github.com",
-            commit_body="Fix typo",
-        )
-        assert agent_type3 == "copilot"
-
-    def test_reject_non_agent_commit_metadata(self):
-        agent_type, matched_field = detect_agent_in_commit(
-            author_name="Alice Example",
-            author_email="alice@example.com",
-            commit_body="Fix typo",
-        )
-
-        assert agent_type is None
-        assert matched_field == ""
+class TestGetAgentCommits:
+    """Test get_agent_commits(), which delegates to the real production Tier 1
+    detector (Tier1RepositoryScanner._detect_agent_in_commit)."""
 
     def test_get_agent_commits_detects_copilot_in_git_history(self, tmp_path):
         repo_path = tmp_path / "repo"

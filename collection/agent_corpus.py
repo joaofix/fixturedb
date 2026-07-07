@@ -21,7 +21,6 @@ from tqdm import tqdm
 from collection.logging_utils import get_logger
 
 from .agent_patterns import (
-    AGENT_SIGNATURES,
     PAPER_AGENT_CONFIG_PATTERNS,
     PAPER_AGENT_REPOSITORY_LANGUAGES,
     repo_contains_patterns,
@@ -55,11 +54,7 @@ from .db import (
 from .ephemeral_clone import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
 from .test_commit_utils import collect_test_files_for_commit, write_test_commits_csv
-from .utils import (
-    AGENT_TRAILER_RE,
-    _normalize_language_filters,
-    build_repo_row,
-)
+from .utils import _normalize_language_filters, build_repo_row
 
 logger = get_logger(__name__)
 
@@ -71,65 +66,6 @@ class AgentCorpusStats(BaseCorpusStats):
     repos_with_agent_config: int = 0
     agent_commits_found: int = 0
     agent_types_distribution: Dict[str, int] = field(default_factory=dict)
-
-
-def detect_agent_type(commit_message: str) -> Optional[str]:
-    """
-    Detect agent type from commit metadata.
-
-    Tier 1: Matches author name/email or co-authored-by trailers
-
-    Returns:
-        Agent type (claude, copilot, cursor, aider) or None
-    """
-    message_lower = commit_message.lower()
-
-    for agent_type, signatures in AGENT_SIGNATURES.items():
-        for sig in signatures:
-            if sig.lower() in message_lower:
-                return agent_type
-
-    return None
-
-
-def _extract_coauthors(commit_body: str) -> list[str]:
-    """Extract agent trailer values (co-authored-by, assisted-by, generated-by) from the commit body."""
-    if not commit_body:
-        return []
-    return [
-        match.strip()
-        for match in AGENT_TRAILER_RE.findall(commit_body)
-        if match.strip()
-    ]
-
-
-def detect_agent_in_commit(
-    author_name: str, author_email: str, commit_body: str
-) -> tuple[Optional[str], str]:
-    """
-    Detect agent type from commit author metadata and co-authored-by trailers.
-
-    Returns:
-        (agent_type, matched_field) where matched_field is one of
-        {"author", "coauthored-by"} or "" if no match.
-    """
-    if "[bot]" in author_name.lower():
-        return None, ""
-
-    author_text = f"{author_name} {author_email}".lower()
-    for agent_type, signatures in AGENT_SIGNATURES.items():
-        for sig in signatures:
-            if sig.lower() in author_text:
-                return agent_type, "author"
-
-    for coauthor in _extract_coauthors(commit_body):
-        coauthor_lower = coauthor.lower()
-        for agent_type, signatures in AGENT_SIGNATURES.items():
-            for sig in signatures:
-                if sig.lower() in coauthor_lower:
-                    return agent_type, "coauthored-by"
-
-    return None, ""
 
 
 def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:

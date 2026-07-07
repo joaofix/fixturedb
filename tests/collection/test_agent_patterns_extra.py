@@ -19,6 +19,48 @@ def test_path_matches_pattern_dir_marker():
     assert not ap.path_matches_pattern(Path("someanthropic/file"), "anthropic/")
 
 
+def test_path_matches_pattern_dir_marker_rejects_plain_file():
+    """Regression test: a dir-marker pattern (e.g. ".claude/") must not
+    match a plain FILE that merely happens to share the directory's name --
+    only a real directory entry should count. is_dir defaults to True (old
+    behavior, for callers with no filesystem/API type info), so this must
+    be explicitly passed as False to exercise the fix."""
+    assert ap.path_matches_pattern(Path(".claude"), ".claude/", is_dir=True)
+    assert not ap.path_matches_pattern(Path(".claude"), ".claude/", is_dir=False)
+
+
+def test_repo_contains_patterns_dir_marker_rejects_plain_file(tmp_path):
+    """Regression test (end-to-end via the real filesystem): a plain file
+    named ".claude" (not a directory -- .claude/ has no bare-name sibling
+    pattern in the catalog, unlike .cursor) must not satisfy the ".claude/"
+    pattern."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".claude").write_text("just a file, not a directory")
+    assert ap.repo_contains_patterns(repo, ap.PAPER_AGENT_CONFIG_PATTERNS) is None
+
+    (repo / ".claude").unlink()
+    (repo / ".claude").mkdir()
+    assert ap.repo_contains_patterns(repo, ap.PAPER_AGENT_CONFIG_PATTERNS) == ".claude/"
+
+
+def test_repo_contains_patterns_ignores_vendored_dependency_config(tmp_path):
+    """Regression test: an agent-config-shaped file inside node_modules (a
+    vendored dependency's own docs, unrelated to whether *this* repo used
+    the agent) must not count, and .git internals must not be walked into
+    either."""
+    repo = tmp_path / "repo"
+    vendor = repo / "node_modules" / "some-package"
+    vendor.mkdir(parents=True)
+    (vendor / "CLAUDE.md").write_text("vendor's own docs")
+
+    assert ap.repo_contains_patterns(repo, ap.PAPER_AGENT_CONFIG_PATTERNS) is None
+
+    # A real, top-level CLAUDE.md in the same repo must still be found.
+    (repo / "CLAUDE.md").write_text("this repo's own instructions")
+    assert ap.repo_contains_patterns(repo, ap.PAPER_AGENT_CONFIG_PATTERNS) == "CLAUDE.md"
+
+
 def test_iter_exact_filename_patterns_excludes_globs_and_dirs():
     exact = ap.iter_exact_filename_patterns(ap.PAPER_AGENT_CONFIG_PATTERNS)
     assert "CLAUDE.md" in exact

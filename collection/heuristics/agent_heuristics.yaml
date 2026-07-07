@@ -7,6 +7,23 @@
 # "Peril of Multiplicity": the catalog of coding agents grows faster than any
 # fixed heuristic list can keep up with, so this file is deliberately the
 # single, version-controlled place new agents get added.
+#
+# Known, inherent limitation (commit_signatures matching, not file_based):
+# several agent signatures below (devin, jules, claude, cline, cursor,
+# gemini, windsurf) are also common human first names or ordinary English
+# words. Matching is word-boundary-based (collection/agent_patterns.py's
+# match_agent_keyword), which rules out a keyword matching inside an
+# unrelated compound word/surname (e.g. "cline" no longer matches inside
+# "McLine"), but it CANNOT rule out an exact whole-word collision -- a
+# commit author literally named "Devin Smith" is still misattributed to
+# the Devin agent. This is a fundamental limit of text-only heuristics
+# applied to a freely-editable author-name field, not something a smarter
+# regex can close; there is no verified, universal bot-email-domain
+# convention to fall back on across all these tools. If false-positive
+# rate matters for a specific analysis, prefer commits verified via the
+# `Co-authored-by` trailer path (a more constrained, deliberate signal)
+# over bare author-name matches, or manually spot-check via
+# collection/validation_sampling.py.
 
 # file_based: config files/directories in a repo's working tree that signal
 # a given agent was used. Matched case-insensitively; entries ending in "/"

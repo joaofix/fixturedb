@@ -17,7 +17,7 @@ from pydriller import Repository
 
 from collection.logging_utils import get_logger
 
-from .agent_patterns import AGENT_SIGNATURES
+from .agent_patterns import AGENT_SIGNATURES, match_agent_keyword
 from .agent_signal_primitives import (
     AgentCommitVerifier,
     AgentFileScanner,
@@ -287,21 +287,17 @@ class Tier1RepositoryScanner:
         if "[bot]" in author_name.lower():
             return "bot"
 
-        author_text = f"{author_name} {author_email}".lower()
-        for agent_type, keywords in self.agent_signatures.items():
-            for keyword in keywords:
-                if keyword.lower() in author_text:
-                    return agent_type
+        author_text = f"{author_name} {author_email}"
+        agent_type = match_agent_keyword(author_text, self.agent_signatures)
+        if agent_type:
+            return agent_type
 
         # Extract and check agent trailers (case-insensitive)
         if body:
-            agent_matches = AGENT_TRAILER_RE.findall(body)
-            for agent_line in agent_matches:
-                agent_lower = agent_line.lower()
-                for agent_type, keywords in self.agent_signatures.items():
-                    for keyword in keywords:
-                        if keyword.lower() in agent_lower:
-                            return agent_type
+            for agent_line in AGENT_TRAILER_RE.findall(body):
+                agent_type = match_agent_keyword(agent_line, self.agent_signatures)
+                if agent_type:
+                    return agent_type
 
         return None
 

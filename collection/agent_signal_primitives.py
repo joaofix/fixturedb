@@ -13,6 +13,7 @@ Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline
 
 import fnmatch
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -27,8 +28,10 @@ from pydriller import Repository
 from collection.logging_utils import get_logger
 
 from .agent_patterns import (
+    _EXCLUDED_DIR_NAMES,
     AGENT_SIGNATURES,
     LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
+    match_agent_keyword,
     path_matches_pattern,
 )
 from .config import AGENT_CORPUS_START_DATE
@@ -124,7 +127,9 @@ class GitHubAgentFileChecker:
                 for config_file in config_files:
                     if any(
                         path_matches_pattern(
-                            item.get("path", item.get("name", "")), config_file
+                            item.get("path", item.get("name", "")),
+                            config_file,
+                            is_dir=item.get("type") == "dir",
                         )
                         for item in contents
                     ):
@@ -348,7 +353,17 @@ class AgentFileScanner:
         file_names = patterns.get("file_names", [])
         regex_patterns = patterns.get("patterns", [])
 
-        all_paths = list(repo_path.rglob("*"))
+        # os.walk with in-place dirname pruning (rather than rglob("*"))
+        # skips .git/node_modules/vendor/etc entirely instead of merely
+        # filtering their entries afterward -- avoids both false positives
+        # from a vendored dependency's own config file and the wasted I/O
+        # of walking .git's internal objects/hooks on every scan.
+        all_paths: List[Path] = []
+        for dirpath, dirnames, filenames in os.walk(repo_path):
+            dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIR_NAMES]
+            base = Path(dirpath)
+            all_paths.extend(base / d for d in dirnames)
+            all_paths.extend(base / f for f in filenames)
 
         # Search by exact filename (case-insensitive)
         for file_name in file_names:
@@ -618,8 +633,16 @@ class AgentCommitVerifier:
 
         Checks in order:
         1. Co-Authored-By trailer (highest confidence)
-        2. Author name for agent keywords
-        3. Commit message for agent keywords
+        2. Author name
+        3. Author email
+
+        Deliberately does NOT scan the free-text commit message body: a
+        prose mention of an agent's name (e.g. "Revert a bad Claude
+        suggestion", or "Fix cursor blinking bug" -- "cursor" the UI
+        element, not the agent) is not evidence of agent authorship, and
+        scanning it produced verified false positives. The structured
+        fields above (trailer/author identity) are the legitimate Tier 2
+        signal.
 
         Args:
             commit_data: Dict with sha, date, author_name, author_email, message
@@ -628,7 +651,13 @@ class AgentCommitVerifier:
             Agent type (claude|copilot|cursor|etc) or None if no match
 
         Note:
-            Matching is case-insensitive. First match wins.
+            Matching is word-boundary-based (not a bare substring check),
+            case-insensitive. First match wins. Word boundaries prevent a
+            keyword from matching inside an unrelated compound word/surname
+            (e.g. "cline" inside "McLine"), but cannot distinguish a keyword
+            that is *also* a common standalone first name (e.g. an author
+            literally named "Devin") -- see agent_heuristics.yaml's module
+            comment for this known, inherent limitation.
         """
         message = commit_data["message"]
         author_name = commit_data["author_name"]
@@ -638,7 +667,7 @@ class AgentCommitVerifier:
         for match in re.finditer(
             r"co-authored-by:\s*([^<]+)<[^>]+>", message, re.IGNORECASE
         ):
-            co_author = match.group(1).strip().lower()
+            co_author = match.group(1).strip()
             agent_type = self._match_agent_keywords(co_author)
             if agent_type:
                 return agent_type
@@ -647,17 +676,12 @@ class AgentCommitVerifier:
             return None
 
         # Check author name
-        agent_type = self._match_agent_keywords(author_name.lower())
+        agent_type = self._match_agent_keywords(author_name)
         if agent_type:
             return agent_type
 
         # Check author email
-        agent_type = self._match_agent_keywords(author_email.lower())
-        if agent_type:
-            return agent_type
-
-        # Check commit message
-        agent_type = self._match_agent_keywords(message.lower())
+        agent_type = self._match_agent_keywords(author_email)
         if agent_type:
             return agent_type
 
@@ -665,20 +689,15 @@ class AgentCommitVerifier:
 
     def _match_agent_keywords(self, text: str) -> Optional[str]:
         """
-        Match agent keywords in text.
+        Match agent keywords in text as whole words/phrases.
 
         Args:
-            text: Text to search (should already be lowercase)
+            text: Text to search
 
         Returns:
             Agent type if matched, None otherwise
         """
-        for agent_name, keywords in self.AGENT_KEYWORDS.items():
-            for keyword in keywords:
-                if keyword.lower() in text:
-                    return agent_name
-
-        return None
+        return match_agent_keyword(text, self.AGENT_KEYWORDS)
 
     def get_verification_summary(
         self, verification_results: Dict[str, AgentCommitVerificationResult]
