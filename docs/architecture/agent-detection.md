@@ -1,117 +1,43 @@
 # Agent Detection Methodology
 
-Identifying AI agent involvement in commits for the between-group study.
+Identifying AI coding agent involvement in commits for the between-group study.
+
+**Module layering**: `collection/agent_patterns.py` holds the shared, low-level
+matching primitives (`match_agent_keyword()`, `path_matches_pattern()`,
+`repo_contains_patterns()`) and loads the agent catalog from
+[`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml).
+`collection/agent_signal_primitives.py` builds single-repo detection blocks on
+top of those primitives (config-file scanning, commit-trailer verification).
+`collection/tiered_agent_corpus_scanner.py` is the corpus-scale orchestrator
+and the actual pipeline entry point for both tiers below.
 
 ---
 
-## Overview
+## Tier 1: Author Metadata + Co-authored-by Trailers (primary method)
 
-Agent detection uses **Tier 1: author metadata + co-authored-by trailer detection**.
+Used for Dataset A (the between-group study's main agent corpus). Checked in order, first match wins:
 
-- Commits where the agent is the **primary author** (name/email in the commit's `Author` field)
-- Commits explicitly marked with agent co-author attribution (git trailers)
-- High confidence due to explicit attribution
-- Minimal false positives
-- Recognizes: Claude, Copilot, Cursor, Aider, and other agents
+1. **Author metadata** — the commit's `Author` name + email checked against the `commit_signatures` catalog (some tools set themselves as the primary author).
+2. **Co-authored-by trailers** — the commit body is scanned for `Co-authored-by:`, `Assisted-by:`, `Generated-by:` lines (case-insensitive); the trailer value is checked the same way.
 
-**Module layering**: `collection/agent_signal_primitives.py` holds the low-level,
-single-repo detection building blocks (config-file scanning, commit-trailer
-verification). `collection/tiered_agent_corpus_scanner.py` is the Tier1/Tier2
-corpus-scale orchestrator and the actual pipeline entry point — it imports and
-calls into `agent_signal_primitives.py`'s primitives for its Tier 2 path.
+Matching is **word-boundary-based** (`agent_patterns.py::match_agent_keyword()`), not a bare substring check — this rules out a keyword matching inside an unrelated compound word (e.g. "cline" no longer matches inside "McLine"). It does **not** rule out an exact whole-word collision with a common name (see "Known Limitations" below).
 
----
+Implementation: `Tier1RepositoryScanner._detect_agent_in_commit()` in `tiered_agent_corpus_scanner.py`.
 
-## Detection Method
+### Why this design
 
-### Two detection paths (checked in order)
-
-1. **Author metadata** — The commit's `Author` field (name + email) is checked against known agent signatures. Some AI coding tools set themselves as the primary author of the commit instead of (or in addition to) using a co-authored-by trailer.
-
-2. **Co-authored-by trailers** — The commit body is scanned for `Co-authored-by:`, `Assisted-by:`, and `Generated-by:` trailers (case-insensitive). The trailer values are checked against known agent signatures.
-
-Both paths can match simultaneously (e.g., an agent sets itself as author *and* adds a co-authored-by trailer). The first match wins.
-
-### Detection Method
-
-Scan commit bodies for patterns like:
-
-```
-Implement authentication tests
-
-Co-authored-by: Claude <claude@anthropic.com>
-```
-
-The detection extracts the author line and checks against known agent email domains.
-
-### Agent Classification
-
-Recognized agents and their signature patterns:
-For each commit in repository:
-  Extract commit author name and email
-  Check author metadata against AGENT_SIGNATURES:
-    If match found:
-      Classify agent type (claude, copilot, cursor, aider, etc.)
-      Record as agent commit (matched_field="author")
-      Mark fixture as commit_kind='agent', agent_type=<type>
-  
-  If no author match:
-    Parse commit body for trailers (Co-authored-by, Assisted-by, Generated-by):
-      For each trailer:
-        Check trailer value against AGENT_SIGNATURES:
-          If match found:
-            Classify agent type
-            Record as agent commit (matched_field="coauthored-by")
-            Mark fixture as commit_kind='agent', agent_type=<type>
-  
-  If no match in either path:
-    Mark fixture as commit_kind='human', agent_type=NULL
-  
-  Output: { commit_sha: { agent_type: 'claude', detected_by: 'author'|'coauthored-by' } }
-```
-
-### Precision & Recall
-
-| Aspect | Metric | Notes |
-|--------|--------|-------|
-| **Precision** | >99% | Trailers are explicit; minimal false positives |
-| **Recall** | ~70-80% | Only commits with deliberate trailer attribution |
-| **False Positive** | <1% | Rare case of user-added trailer unrelated to agent |
-| **False Negative** | ~20-30% | Agent-assisted commits without trailer declaration |
-
-These figures are targets/estimates from the detection design, not a
-per-run measurement. To empirically validate them against a specific
-collection run, draw a Cochran-sized manual-review sample with
-`collection/validation_sampling.py --step agent-repos` (repo-level
-detection) or `--step agent-commits-dataset-a` (commit-level detection) —
-see [Manual-Validation Sampling](../usage/validation-sampling.md).
-
-### Why Conservative Approach?
-
-The between-group study **prioritizes precision over recall**:
-- False positives (classifying human code as agent-assisted) compromise validity
-- False negatives (missing agent-assisted code) reduce power but don't invalidate results
-- Co-authored-by trailers are explicit, unambiguous evidence
-- Tier 2/3 methods have higher false positive rates, so not used in main analysis
+The study prioritizes precision over recall for the main analysis: a false positive (classifying human code as agent-assisted) threatens validity more than a false negative (an uncredited agent commit just reduces statistical power). Explicit `Co-authored-by` trailers and matched author identity are the most constrained, deliberate signal available; free-text commit-message scanning is deliberately **not** used for this reason (see "Known Limitations").
 
 ### Pure-Addition Filter for Test Files
 
-Even after identifying an agent-authored commit, not all fixtures within that commit are equally trustworthy. To ensure fixtures are **100% agent-generated** (not human-refactored test code), the pipeline applies a **pure-addition filter** at two levels:
+Identifying an agent-authored commit isn't sufficient on its own — a commit could still mix agent-added fixtures with human-edited test code. The pipeline additionally requires that a fixture's own diff span be **100% newly added**, never modified, via two gates:
 
-#### Commit-Level Gate
-Before extracting any fixtures from a commit, the pipeline inspects the commit's diff. If **any** test file in the commit contains deletions, renames, or copies, the **entire commit is rejected**. This prevents mixing agent-added fixtures with human-modified test code.
+- **Commit-level**: if any test file in the commit has a deletion, rename, or copy, the whole commit is rejected.
+- **File-level**: within an accepted commit, each fixture's own line span (preferring an AST-node-precise check, falling back to a line-range check) must consist exclusively of added lines.
 
-#### File-Level Gate
-Within a commit that passes the commit-level gate, each individual test file is inspected. Only files whose diff consists **exclusively of added lines** are accepted. Files with any `-` (deletion) lines in their hunks are skipped.
+Implementation: `collection/diff_purity.py` (`_raw_diff_commit_is_pure_addition()`, `_raw_diff_file_is_pure_addition()`), `collection/agent_fixture_extractor.py` (`_is_fixture_completely_added()`, `_build_diff_line_maps()`). Tests: `tests/collection/test_fixture_extractor_partial_detection.py`, `tests/test_fixture_extractor_small.py`.
 
-#### Rationale
-- **Deletions in test files** indicate pre-existing test code was modified or removed — this could be human refactoring, not pure agent generation.
-- **Renames/copies** suggest the test file was moved or duplicated from elsewhere, breaking the "pure addition" provenance chain.
-- **Pure additions** (new test files, or existing test files with only `+` lines) provide high confidence that the fixture was generated by the agent in that commit.
-
-#### Example: Accepted vs Rejected
-
-**Accepted (pure addition):**
+**Example — accepted (pure addition):**
 ```diff
 diff --git a/tests/test_new_feature.py b/tests/test_new_feature.py
 new file mode 100644
@@ -125,361 +51,64 @@ new file mode 100644
 +    return "agent_generated"
 ```
 
-**Rejected (contains deletion):**
+**Example — rejected (contains a deletion):**
 ```diff
 diff --git a/tests/test_existing.py b/tests/test_existing.py
 --- a/tests/test_existing.py
 +++ b/tests/test_existing.py
 @@ -3,7 +3,7 @@
  import pytest
- 
+
  @pytest.fixture
 -def old_fixture():
 +def renamed_fixture():
      return 42
 ```
-The `-def old_fixture():` / `+def renamed_fixture():` line means this file had existing code modified, so it is rejected.
-
-#### Implementation
-- `collection/diff_purity.py`: `_raw_diff_commit_is_pure_addition()` and `_raw_diff_file_is_pure_addition()` (re-exported from `collection.fixture_extractor` for backward compatibility)
-- Tests: `tests/collection/test_fixture_extractor_partial_detection.py`
-
-### Example Output
-
-```json
-{
-  "timestamp": "2026-05-16T12:00:00",
-  "stage": "agent_corpus_collection",
-  "tier": "tier_1_trailers",
-  "summary": {
-    "total_commits_scanned": 15000,
-    "commits_with_trailers": 487,
-    "agent_commits_by_type": {
-      "claude": 234,
-      "copilot": 156,
-      "cursor": 78,
-      "aider": 19
-    }
-  },
-  "sample_commits": [
-    {
-      "commit_sha": "abc123def456",
-      "agent_type": "claude",
-      "detected_by": "co-authored-by_trailer",
-      "confidence": "high"
-    }
-  ]
-}
-```
 
 ---
 
-## Tier 2: Repository-Level File Scanning (Optional/Supplementary)
+## Tier 2: Repository Discovery via Config Files (supplementary)
 
-### Purpose
-Identify repositories that **likely used** AI assistants by detecting configuration files commonly created by these tools. Used for sensitivity analysis only.
+Used to discover *additional* candidate repositories beyond Dataset A's existing corpus, for sensitivity analysis — not part of the main between-group comparison.
 
-### Parsing Algorithm
+1. **GitHub API pre-filter** (`GitHubAgentFileChecker`) — cheap Contents-API check for known agent config files/directories (`CLAUDE.md`, `.cursorrules`, `.claude/`, etc.), before cloning anything.
+2. **Local file scan** (`AgentFileScanner`) — after cloning a candidate, re-confirms agent config files are present in the actual working tree, walking the tree with `os.walk` while pruning `.git/`, `node_modules/`, `vendor/`, `build/`, `dist/`, and similar dependency/artifact directories (both to avoid false positives from a vendored dependency's own config file, and to avoid the wasted I/O of walking `.git`'s internal objects).
+3. **Commit verification** (`AgentCommitVerifier`) — once a repo passes both file checks, its commits are checked the same way as Tier 1 (word-boundary match against author identity and trailers — **not** the free-text commit message body; see "Known Limitations").
 
-```
-For each commit in repository:
-  1. Get commit message body
-  2. Search for "Co-authored-by:" trailers (case-insensitive)
-  3. Parse: Co-authored-by: {agent_name} <{agent_email}>
-  4. Extract agent name and email
-  
-For each extracted field:
-  5. Search in author_name, author_email, commit_message for agent patterns
-  
-  Agent Pattern Matching (case-insensitive substring match against the
-  commit_signatures catalog in collection/heuristics/agent_heuristics.yaml —
-  see "Agent Catalog" below): each matched agent keeps its own agent_type
-  (e.g. 'claude', 'aider', 'openhands' — there is no catch-all 'other' bucket)
-  
-  6. On FIRST match: Record {commit_sha → agent_type}, exit inner loop
-  
-Date Filtering:
-  7. Check commit date >= 2020-12-31 (LLM era cutoff)
-  8. Keep only commits 2021+
-```
+Implementation: `Tier2RepoMatcher` in `tiered_agent_corpus_scanner.py`, delegating to `GitHubAgentFileChecker`/`AgentFileScanner`/`AgentCommitVerifier` in `agent_signal_primitives.py`.
 
-### Examples
-
-#### Claude Example
-```
-commit a1b2c3d4...
-Author: Developer <dev@company.com>
-Date: 2024-03-15 10:30:00
-
-  Add test for new feature
-
-  Co-authored-by: Claude <claude@anthropic.com>
-```
-**Detection:** agent_type = 'claude'
-
-#### Copilot Example
-```
-commit b2c3d4e5...
-Author: Developer <dev@company.com>
-Date: 2024-03-16 14:45:00
-
-  Fix bug with AI assistance
-
-  Co-authored-by: GitHub Copilot <noreply@github.com>
-```
-**Detection:** agent_type = 'copilot'
-
-#### Cursor Example
-```
-commit c3d4e5f6...
-Author: Developer <dev@company.com>
-Date: 2024-03-17 09:15:00
-
-  Refactor module
-
-  Co-authored-by: Cursor AI <cursor@ycombinator.com>
-```
-**Detection:** agent_type = 'cursor'
-
-#### Multiple Agents Example
-```
-commit d4e5f6a7...
-Author: Developer <dev@company.com>
-
-  Feature written with AI
-
-  Co-authored-by: Claude <claude@anthropic.com>
-  Co-authored-by: GitHub Copilot <noreply@github.com>
-```
-**Detection:** agent_type = 'claude' (first match wins)
-
-### Agent Catalog
-
-The full, current list of recognized agents and their config-file and
-commit-signature patterns lives in
-[`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml)
-— not in this document. This is deliberate: the catalog of coding agents
-grows faster than any doc or hardcoded list can be kept in sync with (the
-"Peril of Multiplicity" — see the related work this project draws on), so
-the YAML file is the single, version-controlled source of truth. Adding or
-updating an agent is a YAML edit; `collection/agent_patterns.py` loads it
-and derives the shapes used throughout the detection code (see that file's
-module docstring).
-
-### Performance
-- **Time per repository:** O(commits × message_size)
-  - git log extraction: Linear in commit count
-  - Pattern matching: Linear in message size
-  - Example: commit log parsing scales with repository history size
-  - Per-repo time: 10-100ms (typical)
-
-- **Total time for the verified corpus:**
-  - 20-150 minutes depending on parallelization
-  - With 8-16 parallel workers: ~20-40 minutes
-
-### Validation & Accuracy
-
-**Baseline Validation (from Advisor's Paper):**
-- Manual review of 500+ commits with Co-authored-by trailers
-- 100% precision: All manually verified commits matched agent patterns
-- No false positives found in sample
-- Conclusion: Co-authored-by pattern is highly reliable
-
-**Limitations:**
-- **False negatives:** Agents without Co-authored-by trailers are missed
-  - Example: Developer manually credits agent in commit message (free text)
-  - Example: Agent contributions without explicit trailer
-  - Estimated impact: ~5-10% of actual agent contributions missed
-
-- **False positives:** Unlikely but theoretically possible
-  - Example: Developer naming variable "claude" or "copilot"
-  - Mitigated by: Strict matching on Co-authored-by trailer structure
-  - Estimated false positive rate: <1%
-
-**Overall Confidence:** 100% precision (verified) + low false-negative rate = **Conservative but reliable detection**
-
-### Output Format
-
-```json
-{
-  "timestamp": "2026-05-16T12:15:00",
-  "summary": {
-    "total_repositories_processed": 1219,
-    "total_agent_commits_found": 48563,
-    "date_range": "2020-12-31 to 2026-05-16",
-    "agent_distribution": {
-      "copilot": 25472,
-      "claude": 19043,
-      "cursor": 3298,
-      "other": 750
-    }
-  },
-  "repositories": {
-    "repo_name__repo": {
-      "agent_commits": {
-        "a1b2c3d4e5f6...": "copilot",
-        "b2c3d4e5f6a7...": "claude",
-        "c3d4e5f6a7b8...": "copilot"
-      },
-      "total_agent_commits": 3
-    }
-  }
-}
-```
+The full, current catalog of recognized agents and their config-file/commit-signature patterns lives in [`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml), not duplicated here — the catalog of coding agents grows faster than any doc can track, so the YAML is the single source of truth. Adding or updating an agent is a data change, not a code change.
 
 ---
 
 ## Exclusions
 
-### Merge Commits
+**Merge commits** are excluded everywhere — they're version-control artifacts (PR merges, branch integration), not individual developer or agent activity. All `git log` invocations in this pipeline use `--no-merges`.
 
-Merge commits are excluded from agent detection. Merge commits are not representative of individual developer or agent activity—they are artifacts of version control workflows (e.g., pull request merges, branch integrations) and typically contain no substantive code changes. All `git log` invocations in the collection pipeline use `--no-merges` to skip them:
-
-- `collection/tiered_agent_corpus_scanner.py` (formerly `agent_commit_detector.py`): `scan_repo_for_agent_commits` and `scan_repo_commit_roles`
-- `collection/agent_signal_primitives.py` (formerly `agent_detector.py`): `verify_repository`
+**Bot accounts** (author name containing `[bot]`, e.g. `copilot-swe-agent[bot]`) are classified separately (`"bot"`), not attributed to a specific coding agent — a repo's own CI/automation bots are a different thing from an interactive coding assistant.
 
 ---
 
-## Data Quality & Validation
+## Known Limitations
 
-### Tier 1 Validation (Co-authored-by Trailers)
+**Name/word collisions in author-identity matching.** Several agent signatures (`devin`, `jules`, `claude`, `cline`, `cursor`, `gemini`, `windsurf`) are also common human first names or ordinary English words. Word-boundary matching (added after an audit this session) rules out a keyword matching inside an unrelated compound word or surname (e.g. "cline" no longer matches inside "McLine"), but it cannot rule out an exact whole-word collision — a commit author literally named "Devin Smith" is still misattributed to the Devin agent. This is a fundamental limit of text-only heuristics on a freely-editable author-name field, not something a smarter regex closes; there's no verified, universal bot-email-domain convention across these tools to fall back on instead. If false-positive rate matters for a specific analysis, prefer commits verified via the `Co-authored-by` trailer path over bare author-name matches, or manually spot-check via `collection/validation_sampling.py`. (Documented in `agent_heuristics.yaml`'s module comment too.)
 
-| Check | Method | Expected |
-|-------|--------|----------|
-| Trailer detection | Regex on commit messages | 100% (all trailers found) |
-| Agent pattern matching | Email/name keyword matching | 100% precision |
-| Date filtering | Datetime comparison (2025-01-01) | 100% (deterministic) |
-| Commit SHA validity | git rev-parse | 100% (git enforces) |
+**Free-text commit messages are not scanned.** Only structured fields (author name/email, trailer lines) are checked. An audit this session found that scanning the full commit-message body for agent keywords produced real false positives — e.g. "Revert a bad Claude suggestion" (prose mention, no real attribution) and "Fix cursor blinking bug" (an unrelated UI element, not the Cursor agent) — so this path was removed rather than kept as a broader-recall option.
 
-### Tier 2 Validation (Optional File Scanning)
+**Explicit attribution required.** An agent-assisted commit with no trailer and no agent-identity author is not detected at all (Tier 1) — this is a deliberate false-negative tradeoff for precision, not a bug. Tier 2's file-presence check is a coarser, supplementary signal for exactly this reason and is not used for the main comparison.
 
-| Check | Method | Expected |
-|-------|--------|----------|
-| File existence | File system stat | 100% (deterministic) |
-| Pattern accuracy | Manual sample review | ~95%+ precision |
-| Coverage | Compare to Tier 1 | ~90% (heuristic) |
-
----
-
-## Integration with Between-Group Pipeline
-
-### Stage 1: Human Corpus (Pre-2021)
-- **Uses Tier 1 agent detection?** No
-- **Reason:** Pre-2021 is snapshot-based (no agent involvement possible)
-- **Data source:** corpus.db at 2020-12-31 snapshot
-- **Output:** Human fixtures with `commit_kind='human'`, `agent_type=NULL`
-
-### Stage 2: Agent Corpus (2025+)
-- **Uses Tier 1 agent detection?** Yes (primary method)
-- **Input:** GitHub API search for agent config files (discovery only)
-- **Agent identification:** Co-authored-by trailers in commit messages
-- **Output:** Agent fixtures with `commit_kind='agent'`, `agent_type=<any key from commit_signatures in agent_heuristics.yaml>|NULL`
-
----
-
-## Limitations & Edge Cases
-
-### Detection Limitations (Tier 1)
-
-1. **Agent Detection Requires Explicit Attribution**
-   - Problem: Developers may not use Co-authored-by trailers
-   - Impact: Underestimates true agent usage (~20-30% false negatives)
-   - **Why this is OK:** Conservative approach prioritizes precision over recall
-
-2. **Case Sensitivity in Email Patterns**
-   - Problem: Agent email variations (claude@anthropic.com, claude@company.com)
-   - Mitigation: Keyword matching on agent name (claude, copilot, cursor, aider)
-
-3. **Date Cutoff (2025-01-01)**
-   - Problem: Agent emergence varies by agent and region
-   - Assumption: All agent types mature enough by 2025-01
-   - **Alternative:** Tier 2 file scanning for earlier detection
-
-### Edge Cases
-
-**Case 1: Commit With Multiple Agents**
-```
-Co-authored-by: Claude <claude@anthropic.com>
-Co-authored-by: Copilot <copilot@github.com>
-```
-**Handling:** First agent match is used (claude takes precedence)
-
-**Case 2: Manual Attribution in Commit Body**
-```
-Commit message: "Written with Claude help"
-But NO Co-authored-by trailer
-```
-**Handling:** NOT detected in Tier 1 (only trailers matched). Would be detected in Tier 2 optional file scanning.
-
-**Case 3: Agent as Author (Not Co-author)**
-```
-Author: Claude <claude@anthropic.com>
-Committer: Human Developer <dev@company.com>
-```
-**Handling:** Detected only if "claude" keyword found in Author field
-
-**Case 4: Pre-2021 Agent-like Patterns**
-```
-Commit from 2020 with Claude-named Co-author
-```
-**Handling:** Filtered out by date check (2025-01-01 boundary)
+**Date cutoff (`AGENT_CORPUS_START_DATE`, 2025-01-01).** Chosen as a window where all catalogued agents are assumed mature enough to detect; commits before this date are excluded from Dataset A regardless of any agent signal they might carry.
 
 ---
 
 ## Reproducibility
 
-### Deterministic Aspects
-- ✓ Co-authored-by trailer detection (same results on same commits)
-- ✓ Regex pattern matching (deterministic)
-- ✓ Date filtering (fixed cutoff: 2025-01-01)
-- ✓ Commit SHA matching (immutable)
-
-### Non-Deterministic Aspects
-- ✗ Repository state varies (commits added over time)
-- ✗ Live GitHub API availability (may timeout or return different results)
-
-### Reproducibility Guarantee
-**Results are reproducible IF:**
-1. Repository state is frozen (specific commit SHA pinned)
-2. Pattern library is identical (same trailer patterns)
-3. Date filter is identical (same cutoff: 2025-01-01)
-4. Agent types are consistent
+Detection is fully deterministic given a pinned commit SHA: the same repository state, pattern catalog, and date cutoff always produce the same classification. The only non-deterministic inputs are external — repository state changing over time (new commits), and live GitHub API availability during Tier 2 discovery.
 
 ---
 
-## Comparison: Tier 1 (Trailers) vs Tier 2 (Files)
+## See Also
 
-| Aspect | Tier 1 (Trailers) | Tier 2 (Files) |
-|--------|-------------------|----------------|
-| **Method** | Co-authored-by parsing | File system scan |
-| **Precision** | 99%+ | ~95% |
-| **Recall** | ~70-80% | ~85-90% |
-| **Data Source** | Git history | Repo filesystem |
-| **Overhead** | Low (log parsing) | Low (FS checks) |
-| **Deterministic** | Yes | Yes |
-| **Usage** | Primary (between-group) | Supplementary/sensitivity analysis |
-
----
-
-## Citations & References
-
-**Baseline Validation:**
-- Manual verification of 500+ commits with Co-authored-by trailers
-- Cross-check with GitHub API Collaborators endpoint
-- 100% precision in agent pattern detection
-- Foundation for this methodology
-
-**Co-authored-by Trailer Format:**
-- GitHub Documentation: https://docs.github.com/en/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors
-- Git Format: RFC 5322 compliant email trailers in commit messages
-
----
-
-## Summary
-
-Agent detection is a **two-phase, conservative, high-confidence** approach:
-
-1. **Phase 1A** identifies repositories with agent tools
-2. **Phase 1B** verifies agent involvement via commit metadata
-3. **Combined** provides agent breakdown (Claude/Copilot/Cursor/other) with 100% precision
-4. **Result** enables fair comparison of human vs LLM-generated fixtures
+- [Fixture Detection Logic](detection.md) — how fixtures themselves are found and measured (a separate concern from *who* authored the commit)
+- [Manual-Validation Sampling](../usage/validation-sampling.md) — drawing a review sample to spot-check detection precision on a specific collection run
+- `tests/test_agent_detector_pure.py`, `tests/collection/test_two_tier_agent_collection.py`, `tests/collection/test_agent_file_scanner.py`, `tests/collection/test_agent_patterns_extra.py`, `tests/collection/test_agent_patterns_thorough.py` — the real, current test coverage for everything described above
