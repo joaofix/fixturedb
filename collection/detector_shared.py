@@ -5,7 +5,7 @@ Holds the tree-sitter parser cache, the `FixtureResult`/`MockResult`/
 nesting depth), mock detection (one flat pattern table scanned regardless of
 source language), the shared `_build_result()` fixture builder, and the
 post-processing passes that need to see the whole fixture list at once
-(reuse counts, dependency detection, scope propagation, teardown pairing) —
+(dependency detection, scope propagation, teardown pairing) —
 none of these can live in a single per-language file because they either
 span languages or need the full fixture set as context.
 
@@ -154,24 +154,28 @@ def _compute_nesting_depth(node) -> int:
     """
     max_depth = 1
 
+    # Each of these node types is itself the one unit of nesting a control
+    # construct contributes. Their body is a generic wrapper node ("block" in
+    # Python/Java, "def" is just the literal `def` keyword token) that must
+    # NOT also be counted, or every level gets bumped twice: once for e.g.
+    # `if_statement`, again for the `block` node that is that statement's own
+    # body. Likewise `catch_clause`/`finally_clause` are alternate branches of
+    # the *same* `try_statement` nesting level, not an additional level nested
+    # inside it, so they are deliberately excluded too.
+    block_types = {
+        "if_statement",
+        "while_statement",
+        "for_statement",
+        "try_statement",
+        "with_statement",
+        "class_definition",
+        "for_in_statement",
+        "foreach_statement",
+        "do_statement",
+    }
+
     def visit(node, current_depth=1):
         nonlocal max_depth
-        # Identify block-creating nodes
-        block_types = {
-            "if_statement",
-            "while_statement",
-            "for_statement",
-            "try_statement",
-            "with_statement",
-            "def",
-            "class_definition",
-            "block",
-            "for_in_statement",
-            "foreach_statement",
-            "do_statement",
-            "catch_clause",
-            "finally_clause",
-        }
 
         if node.type in block_types:
             current_depth += 1
@@ -279,7 +283,6 @@ def _find_name_node(func_node):
 
 
 def _build_result(
-    node,
     func_node,
     src_bytes: bytes,
     fixture_type: str,
@@ -287,17 +290,39 @@ def _build_result(
     framework: Optional[str] = None,
     language: str = "python",
 ) -> FixtureResult:
+    """Build a FixtureResult from a single node spanning the whole fixture.
+
+    Every metric (line range, raw_source, external calls, mocks, complexity)
+    is derived from this one node. Python's pytest-decorator/behave-step
+    detection used to pass a wider `decorated_definition` node for the line
+    range/external-calls/mocks scan while using the bare `function_definition`
+    for raw_source/complexity -- so a fixture's reported line range disagreed
+    with its own raw_source text by exactly the decorator line, and an
+    `open(...)`/`MagicMock()` call sitting in the decorator's own arguments
+    (e.g. `@pytest.fixture(params=[...])`) leaked into that fixture's
+    num_external_calls/mocks even though it isn't part of the fixture body.
+    Callers now always pass the fixture's own function/method node (decorator
+    excluded), never the decorated wrapper.
+    """
     src_text = _source(func_node, src_bytes)
     name_node = _find_name_node(func_node)
     name = (
         _source(name_node, src_bytes)
         if name_node
-        else f"<anonymous>_{node.start_point[0]}"
+        else f"<anonymous>_{func_node.start_point[0]}"
     )
 
     # Get metrics from Lizard via complexity_provider
     # Includes: cyclomatic_complexity, num_parameters
     metrics = analyze_function_complexity(src_text, language)
+
+    if language == "python":
+        # Lizard counts `self`/`cls` as an ordinary parameter, inflating
+        # num_parameters by 1 for nearly every unittest/pytest-class-method/
+        # nose-style fixture (anything defined as a method, not a bare
+        # function). Java/JS/TS have no equivalent implicit first parameter,
+        # so this override is Python-only.
+        metrics["num_parameters"] = len(_extract_parameter_names(func_node, src_bytes))
 
     # Compute nesting depth from AST (Lizard's max_nesting_depth doesn't work for functions)
     nesting_depth = _compute_nesting_depth(func_node)
@@ -307,8 +332,8 @@ def _build_result(
         fixture_type=fixture_type,
         framework=framework,
         scope=scope,
-        start_line=node.start_point[0] + 1,
-        end_line=node.end_point[0] + 1,
+        start_line=func_node.start_point[0] + 1,
+        end_line=func_node.end_point[0] + 1,
         loc=_count_loc(src_text),  # Custom counting (non-blank lines)
         cyclomatic_complexity=metrics.get("cyclomatic_complexity", 1),
         max_nesting_depth=nesting_depth,
@@ -316,12 +341,12 @@ def _build_result(
             "num_objects_instantiated", 0
         ),  # Via Lizard + post-processing
         num_external_calls=_count_external_calls(
-            node, src_bytes
+            func_node, src_bytes
         ),  # Custom regex for I/O patterns
         num_parameters=metrics.get("num_parameters", 0),
         has_teardown_pair=0,  # Calculated in post-processing
         raw_source=src_text,
-        mocks=_extract_mocks(node, src_bytes),
+        mocks=_extract_mocks(func_node, src_bytes),
     )
 
 
@@ -444,7 +469,8 @@ def _count_test_functions(tree, src_bytes: bytes, language: str) -> int:
 
 
 def _extract_parameter_names(func_node, src_bytes: bytes) -> list[str]:
-    """Return this function/method node's parameter names, excluding `self`.
+    """Return this function/method node's parameter names, excluding
+    `self`/`cls`.
 
     Reads each parameter's own AST node individually (not a manual
     comma-split of the whole parameter-list text), so a default value
@@ -463,7 +489,7 @@ def _extract_parameter_names(func_node, src_bytes: bytes) -> list[str]:
         if not text or text in ("(", ")", ","):
             continue
         name = text.split(":")[0].split("=")[0].strip()
-        if name and name != "self":
+        if name and name not in ("self", "cls"):
             names.append(name)
     return names
 

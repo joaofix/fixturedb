@@ -273,11 +273,15 @@ external_call_patterns:
 # the pattern applies to every language; otherwise it's restricted to the
 # listed languages.
 object_instantiation_patterns:
-  - pattern: '\bnew\s+\w+\s*(?:<.+?>)?\s*\('
+  - pattern: '\bnew\s+[\w.]+\s*(?:<.+?>)?\s*\('
     languages: null
     note: >
-      Java/JavaScript/TypeScript: new ClassName(...) or new
-      ClassName<T>(...), including nested generics.
+      Java/JavaScript/TypeScript: new ClassName(...), new
+      ClassName<T>(...) including nested generics, and dotted/namespaced
+      constructors such as new java.util.ArrayList() or new
+      THREE.Vector3() (a common JS/TS idiom this pattern previously
+      missed, since it required the class name to be a single \w+
+      token).
   - pattern: '\b[A-Z][A-Za-z0-9_]*\s*\('
     languages: [python]
     note: >

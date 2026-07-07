@@ -94,7 +94,6 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                 if fixture_type and scope:
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type=fixture_type,
@@ -117,7 +116,6 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                 ):
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type=JUNIT3_FALLBACK_NAMES[method_name],
@@ -145,7 +143,6 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                     fixture_type, scope, framework = JUNIT_FIXTURE_ANNOTATIONS[ann_key]
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type=fixture_type,

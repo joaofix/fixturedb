@@ -93,7 +93,7 @@ Individual fixture definitions and their quantitative metrics.
 
 Per-fixture mock framework usage data — one row per detected mock call
 (a fixture with `num_mocks=3` has 3 rows here). See
-[Fixture Detection Logic § Mock Framework Detection](detection.md#mock-framework-detection)
+[Fixture Detection Logic § Mock Detection](detection.md#mock-detection)
 for how these are detected and classified, and
 [collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
 for the exact pattern/framework/category catalog.

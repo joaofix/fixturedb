@@ -85,7 +85,6 @@ def _detect_go(tree, src_bytes: bytes, language: str = "go") -> list[FixtureResu
                 if name == "TestMain":
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="test_main",
@@ -97,7 +96,6 @@ def _detect_go(tree, src_bytes: bytes, language: str = "go") -> list[FixtureResu
                 elif name in multi_used_helpers_all:
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="go_helper",
@@ -126,7 +124,6 @@ def _detect_go(tree, src_bytes: bytes, language: str = "go") -> list[FixtureResu
                     }
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type=fixture_type_map[name],

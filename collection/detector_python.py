@@ -58,7 +58,6 @@ def _detect_python(
 
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=func_def,
                             src_bytes=src_bytes,
                             fixture_type="pytest_decorator",
@@ -77,7 +76,6 @@ def _detect_python(
                     )
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=func_def,
                             src_bytes=src_bytes,
                             fixture_type=fixture_type,
@@ -98,7 +96,6 @@ def _detect_python(
                 if name in UNITTEST_SETUP_NAMES:
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="unittest_setup",
@@ -112,7 +109,6 @@ def _detect_python(
                 elif name in PYTEST_CLASS_METHOD_NAMES:
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="pytest_class_method",
@@ -126,7 +122,6 @@ def _detect_python(
                 elif name in NOSE_FIXTURE_NAMES:
                     results.append(
                         _build_result(
-                            node=node,
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="nose_fixture",

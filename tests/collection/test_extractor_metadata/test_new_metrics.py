@@ -8,12 +8,22 @@ from collection.detector import extract_fixtures
 
 
 class TestMaxNestingDepth:
-    """Test max_nesting_depth extraction from Lizard."""
+    """Test max_nesting_depth extraction.
+
+    Assertions are exact, not loose lower bounds (`>= 1`, `>= 2`) -- loose
+    bounds previously let a real double-counting bug (each level of nesting
+    was counted twice, because a compound statement's own body wrapper node
+    -- "block" in Python/Java's tree-sitter grammars -- was counted as an
+    *additional* nesting level on top of the statement itself) go completely
+    undetected: reported values were 2x-plus the true depth, but `>= 1`/`>= 2`
+    still passed. See collection/detector_shared.py::_compute_nesting_depth.
+    """
 
     def test_simple_fixture_no_nesting(self):
         """Fixture with no nesting should have max_nesting_depth=1."""
         code = """
-def test_simple():
+@pytest.fixture
+def fixture_simple():
     x = 1
     y = 2
     return x + y
@@ -24,11 +34,12 @@ def test_simple():
             f.write(code)
             f.flush()
             result = extract_fixtures(Path(f.name), "python")
-            # All fixtures should have max_nesting_depth >= 1
-            assert all(f.max_nesting_depth >= 1 for f in result.fixtures)
+            fixture = next(f for f in result.fixtures if f.name == "fixture_simple")
+            assert fixture.max_nesting_depth == 1
 
     def test_nested_if_statements(self):
-        """Fixture with nested if statements should have higher max_nesting_depth."""
+        """Three levels of nested `if` should report max_nesting_depth=4
+        (function body=1, plus one level per nested if)."""
         code = """
 @pytest.fixture
 def fixture_with_nesting():
@@ -44,12 +55,11 @@ def fixture_with_nesting():
             f.write(code)
             f.flush()
             result = extract_fixtures(Path(f.name), "python")
-            # Should detect nesting depth
-            if result.fixtures:
-                assert result.fixtures[0].max_nesting_depth >= 2
+            fixture = next(f for f in result.fixtures if f.name == "fixture_with_nesting")
+            assert fixture.max_nesting_depth == 4
 
     def test_nested_loops(self):
-        """Fixture with nested loops should have higher max_nesting_depth."""
+        """Three levels of nested `for` should report max_nesting_depth=4."""
         code = """
 @pytest.fixture
 def fixture_with_loops():
@@ -65,9 +75,74 @@ def fixture_with_loops():
             f.write(code)
             f.flush()
             result = extract_fixtures(Path(f.name), "python")
-            if result.fixtures:
-                # Nested loops should have higher nesting depth
-                assert result.fixtures[0].max_nesting_depth >= 2
+            fixture = next(f for f in result.fixtures if f.name == "fixture_with_loops")
+            assert fixture.max_nesting_depth == 4
+
+    def test_one_level_if_java(self):
+        """Java: one level of `if` nesting inside a fixture method should
+        report max_nesting_depth=2 (method body=1, if=2), not 4."""
+        code = """
+public class ServiceTest {
+    @Before
+    public void setUp() {
+        if (true) {
+            int x = 1;
+        }
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            fixture = next(f for f in result.fixtures if f.name == "setUp")
+            assert fixture.max_nesting_depth == 2
+
+    def test_try_catch_java(self):
+        """Java: a try/catch is one nesting level total -- the catch clause
+        is an alternate branch of the same try, not an additional level
+        nested inside it."""
+        code = """
+public class ServiceTest {
+    @Before
+    public void setUp() {
+        try {
+            int x = 1;
+        } catch (Exception e) {
+            int y = 2;
+        }
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            fixture = next(f for f in result.fixtures if f.name == "setUp")
+            assert fixture.max_nesting_depth == 2
+
+    def test_one_level_if_javascript(self):
+        """JavaScript was never affected by the double-counting bug (its
+        block-body node is named "statement_block", not "block"), but is
+        covered here as a same-input cross-language guard."""
+        code = """
+beforeEach(function() {
+    if (true) {
+        x = 1;
+    }
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            assert result.fixtures[0].max_nesting_depth == 2
 
 
 class TestTeardownDetection:
@@ -352,3 +427,159 @@ def baseline_fixture(a, b):
                 # Verify phase 1+2 metrics are still computed
                 assert fixture.cyclomatic_complexity >= 1  # Lizard
                 assert fixture.num_parameters == 2  # Lizard (a, b)
+
+
+class TestPythonSelfClsExcludedFromParameterCount:
+    """num_parameters must not count the implicit `self`/`cls` receiver --
+    Java/JS/TS have no equivalent implicit first parameter, so leaving it in
+    (Lizard's native behavior) silently inflated every Python method-style
+    fixture (unittest/pytest-class-method/nose) by 1 relative to an
+    equivalent bare pytest_decorator function or a same-shaped Java/JS
+    fixture. See collection/detector_shared.py::_build_result."""
+
+    def test_self_only_is_zero_parameters(self):
+        code = """
+class TestExample(unittest.TestCase):
+    def setUp(self):
+        self.x = 1
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_parameters == 0
+
+    def test_self_plus_two_explicit_params(self):
+        code = """
+class TestExample(unittest.TestCase):
+    def setUp(self, a, b):
+        self.x = a + b
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_parameters == 2
+
+    def test_cls_only_is_zero_parameters(self):
+        code = """
+class TestExample(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        pass
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUpClass")
+            assert setup.num_parameters == 0
+
+
+class TestPythonDecoratorExcludedFromFixtureScope:
+    """A pytest/behave decorator's own arguments are not part of the
+    fixture's body -- start_line/end_line, num_external_calls, and mocks
+    must all be scoped to the function only, consistent with raw_source
+    (which was already function-only). Previously the decorated_definition
+    node (decorator included) was used for line range/external-calls/mocks
+    while the bare function_definition was used for raw_source/complexity,
+    so the reported line range disagreed with raw_source by exactly the
+    decorator line, and any I/O call or mock construct sitting in the
+    decorator's own arguments leaked into that fixture's metrics. See
+    collection/detector_shared.py::_build_result."""
+
+    def test_line_range_matches_raw_source_not_decorator(self):
+        code = """
+@pytest.fixture
+def my_fixture():
+    return create_object()
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "my_fixture")
+            # Decorator on line 2, function on line 3-4
+            assert fixture.start_line == 3
+            assert fixture.end_line == 4
+            assert fixture.raw_source == "def my_fixture():\n    return create_object()"
+
+    def test_external_call_in_decorator_args_not_counted(self):
+        code = """
+@pytest.fixture(params=[open("leak.txt")])
+def my_fixture():
+    return 1
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "my_fixture")
+            assert fixture.num_external_calls == 0
+
+    def test_mock_in_decorator_args_not_attributed_to_fixture(self):
+        code = """
+@pytest.fixture(params=[MagicMock()])
+def my_fixture():
+    return 1
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "my_fixture")
+            assert fixture.mocks == []
+
+
+class TestDottedConstructorInstantiation:
+    """new Namespace.ClassName(...) -- a common JS/TS idiom (e.g.
+    new THREE.Vector3()) and valid Java (new java.util.ArrayList()) -- must
+    be counted, not just a single bare identifier before the constructor
+    call. See collection/config_data/feature_extraction_patterns.yaml's
+    object_instantiation_patterns."""
+
+    def test_javascript_dotted_constructor_counted(self):
+        code = """
+beforeEach(function() {
+    x = new THREE.Vector3();
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            assert result.fixtures[0].num_objects_instantiated == 1
+
+    def test_java_dotted_constructor_counted(self):
+        code = """
+public class ServiceTest {
+    @Before
+    public void setUp() {
+        java.util.List x = new java.util.ArrayList();
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_objects_instantiated == 1

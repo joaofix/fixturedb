@@ -1,294 +1,124 @@
 # Fixture Detection Logic
 
-## Executive Summary
+FixtureDB detects test fixture definitions across Python, Java, JavaScript, and TypeScript in two phases:
 
-FixtureDB detects test fixture definitions across Python, Java, JavaScript, and TypeScript using a **two-phase pipeline**:
-
-1. **Phase 1: AST-Based Detection** — Tree-sitter parses source code into Abstract Syntax Trees (ASTs) to identify fixture-defining constructs (decorators, annotations, method names) with language-specific patterns
-2. **Phase 2: Metrics & Relationships** — Computes quantitative metrics (complexity, scope, dependencies) and post-processes to detect fixture relationships and reuse patterns
-
-**Detection Pipeline Overview:**
+1. **Detection** — Tree-sitter parses each file into an AST; language-specific pattern tables identify which nodes are fixture definitions (decorators, annotations, method names) and classify their scope/framework.
+2. **Metrics & post-processing** — Each detected fixture gets a fixed set of quantitative metrics (§ Fixture Metrics), then a second pass over the whole fixture list detects cross-fixture relationships (teardown pairing, pytest fixture dependencies, scope propagation).
 
 ![Detection Pipeline Diagram](detection-diagram.png)
 
-*For Mermaid diagram source code, see [Appendix: Mermaid Diagram Source](#appendix-mermaid-diagram-source) at the end of this document.*
+*Mermaid source: [Appendix](#appendix-mermaid-diagram-source).*
 
----
+## Fixture Detection vs. Agent Detection
 
-## Important: Fixture Detection vs Agent Detection
-
-**This document describes FIXTURE DETECTION** — the process of identifying test fixture definitions (setup methods, fixtures, mocks) in source code.
-
-This is DIFFERENT from **AGENT DETECTION** — the process of identifying which commits were authored/co-authored by AI assistants. For agent detection, see [Agent Detection Methodology](./agent-detection.md).
-
-**Key Distinction:**
-- **Fixture Detection:** Answers "What is a test fixture?" (AST parsing for setup/teardown)
-- **Agent Detection:** Answers "Who wrote this code?" (Git history parsing for Co-authored-by trailers)
-
-Both are essential for the FixtureDB between-group study:
-1. Agent Detection identifies AI-generated commits (via trailers)
-2. Fixture Detection extracts and analyzes the fixtures themselves
-
+This document covers **fixture detection**: identifying test fixture definitions in source code (AST parsing). It is unrelated to **agent detection**: identifying which commits were authored by an AI assistant (git trailer parsing) — see [Agent Detection Methodology](./agent-detection.md).
 
 ## How Fixtures Are Detected
 
-### Language-Specific Patterns
-
-Fixtures are defined differently across frameworks and languages. We use **framework-specific detection patterns** to identify them accurately:
-
 | Language | Detection Method | Examples |
 |----------|-----------------|----------|
-| **Python** | Decorators & method names | `@pytest.fixture`, `setUp()`, `@given()` (Behave BDD) |
-| **Java** | Annotations & method patterns | `@Before`, `@BeforeEach`, `@BeforeMethod`, `@Bean` (Spring) |
-| **JavaScript/TypeScript** | Hook function calls | `beforeEach()`, `beforeAll()`, `before()` (Jest/Mocha) |
+| Python | Decorators & method names | `@pytest.fixture`, `setUp()`, `@given()` (Behave) |
+| Java | Annotations & method names | `@Before`, `@BeforeEach`, `@Rule` |
+| JavaScript/TypeScript | Hook function calls | `beforeEach()`, `beforeAll()`, `before()` |
 
-**Key Design Decision**: Framework-specific detection is necessary because no general-purpose tool can distinguish between fixture setup, helper functions, and regular methods without understanding framework semantics.
+No general-purpose tool can distinguish a fixture from a helper function without encoding framework semantics, so detection is pattern-based per language/framework rather than a single generic rule.
 
-See **[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)** for complete catalog of 50+ fixture types, detection examples, and patterns across all supported frameworks.
+The pattern tables are not hardcoded in the per-language detector files — they are loaded from
+[collection/config_data/fixture_definitions.yaml](../../collection/config_data/fixture_definitions.yaml),
+the single source of truth for what counts as a fixture per language. Each language section also
+carries an `excluded` list documenting known boundary cases the detector deliberately does not catch
+(see [configuration.md](configuration.md#reference-data-catalogs) and
+[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases)).
 
-The pattern tables themselves are not hardcoded in the per-language detector
-files — they're loaded from
-**[collection/config_data/fixture_definitions.yaml](../../collection/config_data/fixture_definitions.yaml)**,
-which is the executable, single source of truth for what counts as a
-fixture per language, and also documents (in an `excluded` list per
-language) known boundary cases the detector deliberately does not catch —
-see [configuration.md](configuration.md#reference-data-catalogs) and the
-"Known Exclusions & Boundary Cases" section of
-[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases).
-
-**Test coverage**: `tests/collection/test_fixture_definitions_catalog_coverage.py`
-is parametrized directly over every language/annotation/name entry in
-`fixture_definitions.yaml` (not a hand-picked subset), and drives each one
-through the real `extract_fixtures()` pipeline. Building it surfaced real
-bugs in `detector_java.py`'s JUnit3 fallback (the `setUp()`/`tearDown()`
-detection for methods with no annotation at all), not just coverage gaps:
-
-- Its "already matched by annotation" guard only excluded annotations
-  containing the substrings `"@Before"`/`"@After"` — so a `@Given`-annotated
-  Cucumber step method named `tearDown` was detected **twice** (once
-  correctly as `cucumber_given`, once spuriously as `junit3_teardown`), and
-  a `@Test`-annotated method named `setUp` was misclassified as a fixture
-  even though it's a real test method.
-- The fallback never checked class inheritance at all, despite the YAML's
-  own comment restricting it to "a (JUnit3-style) TestCase subclass" — a
-  plain `setUp()` in any class, not just `TestCase` subclasses, was
-  detected.
-- Separately, the `@Rule`/`@ClassRule` field-declaration branch (a
-  different AST shape than method annotations) never passed `language=`
-  to `_build_result()`, so complexity metrics were silently computed in
-  Python mode for Java fixtures, and `field_declaration` nodes have no
-  `"name"` field the way `method_declaration` does (the name lives on a
-  `variable_declarator` child instead), so these fixtures got an
-  unhelpful `<anonymous>_N` name instead of the real field name.
-
-All four are fixed in `detector_java.py`/`detector_shared.py` and
-regression-tested in `tests/collection/test_extractor_unit/test_java_fixtures.py`'s
-`TestJUnit3Fallback` class and `test_framework_detection.py`'s `@Rule`
-tests.
+**Test coverage:** `tests/collection/test_fixture_definitions_catalog_coverage.py` is parametrized directly over every entry in `fixture_definitions.yaml` (not a hand-picked subset), driving each one through the real `extract_fixtures()` pipeline. Building it surfaced and fixed real bugs in Java's JUnit3 fallback (setUp()/tearDown() detection for un-annotated methods): it could double-detect an already-annotated method, never checked that the enclosing class actually extends `TestCase`, and the `@Rule`/`@ClassRule` field-declaration branch computed complexity metrics in the wrong language mode and produced `<anonymous>_N` names instead of the real field name. Fixed in `detector_java.py`/`detector_shared.py`, regression-tested in `test_java_fixtures.py::TestJUnit3Fallback` and `test_framework_detection.py`'s `@Rule` tests.
 
 ### Async Fixtures
 
-Async fixture definitions are captured by our detector the same as sync
-ones — the lifecycle hook name, decorator, or annotation is the detection
-signal, not the function's async qualifier:
-
-- **Python**: `async def` functions decorated with `@pytest.fixture` are
-  matched identically to sync ones. `@pytest_asyncio.fixture` (the
-  dedicated pytest-asyncio decorator, standard for FastAPI/async test
-  setup) is matched by the same rule as `@pytest.fixture` — the decorator
-  text only needs to contain `"pytest"` and `"fixture"` as substrings, and
-  `pytest_asyncio.fixture` contains both. It is not tracked as a separate
-  `fixture_type`.
-- **JavaScript/TypeScript**: `beforeEach(async () => {...})` is still a
-  `call_expression` whose function name is `beforeEach` — `async` only
-  qualifies the callback argument, not the call itself. The same holds for
-  TypeScript decorator-style hooks (`@BeforeEach async setup() {...}`): the
-  decorator precedes the method regardless of the method's `async` keyword.
-
-This is verified explicitly, not just assumed — see `TestAsyncPythonFixtures`,
-`TestAsyncJavaScriptFixtures`, `TestTypeScriptAsyncAwait`, and
-`TestTypeScriptDecoratorHooks` in `tests/collection/test_extractor_unit/`.
+Async qualifiers do not change detection: the decorator/annotation/method name is the signal, not whether the function is `async`. `@pytest_asyncio.fixture` matches the same substring check as `@pytest.fixture`. JS/TS `beforeEach(async () => {...})` is still a `call_expression` named `beforeEach` — `async` only qualifies the callback argument. See `TestAsyncPythonFixtures`, `TestAsyncJavaScriptFixtures`, `TestTypeScriptAsyncAwait` in `tests/collection/test_extractor_unit/`.
 
 ### Scope Classification
 
-All detected fixtures are classified by execution scope:
+Every fixture is classified into one of four scopes, derived deterministically from explicit framework syntax (never inferred/heuristic):
 
-- **per_test**: Runs before/after each individual test (most common)
-- **per_class**: Runs once per test class or suite
-- **per_module**: Runs once per test file (Python-specific)
-- **global**: Runs once for entire test suite
+- **per_test** — before/after each test (most common)
+- **per_class** — before/after each test class/suite
+- **per_module** — before/after the whole test file (Python-specific)
+- **global** — once per test session
 
-Scope is consistently mapped across frameworks (e.g., `@Before` = per_test, `@BeforeClass` = per_class in Java; `beforeEach` = per_test, `beforeAll` = per_class in JavaScript).
+Mapping is per-language (e.g. Java `@Before`→per_test, `@BeforeClass`→per_class; JS `beforeEach`→per_test, `beforeAll`→per_class; pytest's explicit `scope=` keyword is read directly). Full per-framework mapping tables: [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md).
 
 ---
 
 ## Fixture Metrics
 
-For each detected fixture, the system computes **14 quantitative metrics** across three categories:
+Each detected fixture carries these fields (`collection/detector_shared.py::FixtureResult`):
 
-### Code Complexity (2 metrics)
+| Metric | How computed | Notes |
+|--------|-----------|-------|
+| `fixture_type`, `framework`, `scope` | AST pattern match against `fixture_definitions.yaml` | Per-language detector |
+| `loc` | Non-blank line count of the fixture's own text | `_count_loc()` |
+| `cyclomatic_complexity`, `num_parameters` | Lizard, run on the fixture's isolated source | `complexity_provider.py` |
+| `max_nesting_depth` | Custom tree-sitter traversal (Lizard doesn't do function-level nesting) | `_compute_nesting_depth()` |
+| `num_objects_instantiated` | Regex over constructor patterns (`new X(...)` for Java/JS/TS, capitalized-call heuristic for Python) | `_count_object_instantiations()` |
+| `num_external_calls` | Regex over I/O patterns (db/http/file/subprocess) | `_count_external_calls()` |
+| `has_teardown_pair` | Post-processing, paired against other fixtures in the file | `_calculate_teardown_pairs()` |
+| `fixture_dependencies` | Post-processing, pytest-only | `_detect_fixture_dependencies()` |
+| `num_mocks`, `mocks` | Regex over mock-framework patterns | `_extract_mocks()` |
+| `raw_source`, `start_line`, `end_line` | Verbatim fixture text and location, for manual audit | — |
 
-| Metric | Definition | Tool(s) | Notes |
-|--------|-----------|---------|-------|
-| `cyclomatic_complexity` | McCabe complexity (decision points) | Lizard | Standard metric; Python, Java, JavaScript, TypeScript |
-| `max_nesting_depth` | Maximum control structure nesting | Tree-sitter AST | Structural measure independent of complexity |
+Full per-metric methodology, exact regex catalogs, and known limitations: [metrics-reference.md](metrics-reference.md).
 
-**Note on Cognitive Complexity:** Originally, we attempted to compute cognitive complexity (a nesting-weighted understandability metric) using the SonarQube algorithm in Python and a formula fallback for other languages. However, since `complexipy` (the only programmatic implementation) only supports Python and no equivalent alternatives exist for Java, JavaScript, or TypeScript, we removed this metric entirely to avoid inconsistent/unreliable cross-language metrics.
+Cognitive complexity was evaluated and dropped entirely (not shipped as a Python-only or formula-approximated metric): its only programmatic implementation (`complexipy`) is Python-specific, and no equivalent exists for Java/JS/TS.
 
-### Code Structure (4 metrics)
-
-| Metric | Definition | Approach | Notes |
-|--------|-----------|----------|-------|
-| `loc` | Lines of code (non-blank, non-comment) | Lizard | Consistent with industry standard |
-| `num_parameters` | Count of parameters in fixture signature | Lizard | Direct extraction |
-| `num_objects_instantiated` | Count of object/instance creations | Custom regex | Filters for `new ClassName(...)` patterns |
-| `num_external_calls` | Database, HTTP, file I/O operations | Custom regex | Domain-specific; detected via patterns like `open()`, `requests.get()`, `db.query()` |
-
-### Fixture Properties (2 metrics)
-
-| Metric | Definition | Approach |
-|--------|-----------|----------|
-| `framework` | Testing framework detected | Framework registry + regex |
-| `has_teardown_pair` | Cleanup logic paired with setup | AST pattern matching |
-
-### Fixture Relationships (4 metrics, Python/pytest only)
-
-| Metric | Definition | Implementation |
-|--------|-----------|-----------------|
-| `fixture_dependencies` | Other fixtures this fixture depends on | Parameter injection pattern matching |
-| `fixture_scope` | Execution scope (per_test, per_class, etc.) | Annotation/decorator parsing + scope propagation |
-| `num_objects_mocked` | Number of mock usages detected | Regex patterns for mock frameworks |
-| `raw_source` | Source code snippet | Text extraction |
-
-For detailed metric definitions, calculations, and academic references, see **[metrics-reference.md](metrics-reference.md)**.
+**Bugs found and fixed by this session's audit** (all regression-tested in `tests/collection/test_extractor_metadata/test_new_metrics.py`):
+- `max_nesting_depth` was double-counting every level of nesting for Python and Java — a compound statement's own body-wrapper node (`block`) was counted as an *additional* level on top of the statement itself, and Java's `catch_clause`/`finally_clause` were double-counted against their own `try_statement`. JS/TS were unaffected (different grammar node name). Fixed in `_compute_nesting_depth()`.
+- For Python's `pytest_decorator`/`behave_step` fixtures, the reported line range and `num_external_calls`/`mocks` were scanned over the decorator-inclusive node while `raw_source` used the function-only node — so an `open(...)` or `MagicMock()` call sitting in the decorator's own arguments (e.g. `@pytest.fixture(params=[...])`) leaked into that fixture's metrics, and the reported line range disagreed with `raw_source` by exactly the decorator line. Fixed by scoping every metric to the same node (`_build_result()`).
+- `num_parameters` counted Python's implicit `self`/`cls` as an ordinary parameter (Lizard's native behavior), inflating it by 1 for nearly every method-style fixture relative to a bare function or an equivalent Java/JS fixture. Now stripped for Python.
+- `new Namespace.ClassName(...)` (e.g. `new THREE.Vector3()`, `new java.util.ArrayList()`) was undercounted by `num_objects_instantiated` — the constructor pattern required a single bare identifier. Fixed in `feature_extraction_patterns.yaml`.
 
 ---
 
-## Mock Framework Detection
+## Mock Detection
 
-Mock usage is detected in a **second pass** after fixture extraction using regex patterns across:
+Mocks are detected in a second pass over each fixture's own already-isolated AST text (not the whole file), against a flat, language-agnostic regex catalog covering `unittest.mock`/`pytest-mock`/`monkeypatch` (Python), Mockito/EasyMock/MockK (Java), and Jest/Sinon/Vitest (JS/TS). Each match records `framework`, a Meszaros test-double `category` (dummy/stub/spy/mock/fake — `dummy` is never assigned, since distinguishing it needs data-flow analysis this detector doesn't do), `target_identifier`, and an interaction-keyword count. Full methodology, pattern catalog, and known scope limits (fixture-local scanning only — module-level `jest.mock(...)` is invisible): [metrics-reference.md § num_mocks](metrics-reference.md#num_mocks-and-the-mock_usages-table).
 
-- **Python**: `unittest.mock` (`patch(...)`, `patch.object(...)`, `Mock`/`MagicMock`/`AsyncMock`, `create_autospec`, both `mock.patch(...)` and the bare `patch(...)` import form), `pytest-mock` (`mocker.patch(...)`, `mocker.patch.object(...)`), pytest's built-in `monkeypatch` fixture
-- **Java**: Mockito, EasyMock, MockK
-- **JavaScript/TypeScript**: Jest (`jest.fn/spyOn/mock/mocked/createMockFromModule`), Sinon (`stub/spy/mock/fake/replace/createStubInstance`), Vitest
-
-For each mock detected, we record:
-- **framework**: Mock framework name (e.g., `mockito`, `unittest_mock`, `sinon`)
-- **category**: Classic test-double taxonomy (Meszaros; see also Fowler's "Mocks Aren't Stubs") — `dummy`/`stub`/`spy`/`mock`/`fake`
-- **target_identifier**: What is being mocked (if extractable)
-- **num_interactions_configured**: Count of assertions/verifications
-- **raw_snippet**: Code snippet for manual inspection
-
-**Test-double category classification**: each `mock_patterns` entry is
-classified by searching the *construct's own name* (not the captured
-target) for a category keyword, case-insensitively, in priority order
-`dummy > stub > spy > fake > mock` — "mock" is treated as the least
-specific category since both the literature and developers use it
-informally as the name for the whole family. Most constructs resolve this
-way directly (`sinon.spy` → spy, `sinon.stub` → stub). A handful contain no
-category keyword at all (`create_autospec`, bare `patch()`/`patch.object()`,
-`monkeypatch.*`, `jest.fn()`/`vi.fn()`, `sinon.replace()`,
-`gomock.NewController`, testify's `.On()`) and are classified instead by a
-documented manual override (`category_override_reason` in the YAML),
-reasoned from that construct's actual documented behavior — e.g.
-`monkeypatch` is `stub`, not `mock`, because it substitutes predetermined
-behavior with no built-in call-verification API. **`dummy` is never
-assigned**: distinguishing a dummy from a mock depends on how the double is
-*used* afterward (configured/verified, or not), which needs data-flow
-analysis of the fixture body — not a simple keyword match — so per this
-project's preference for high-precision, simple heuristics over
-completeness, it's left undetected rather than guessed.
-
-**Test coverage**: `tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`
-is parametrized directly over every entry in `mock_patterns` (not a
-hand-picked subset) and asserts two things for each: the pattern matches
-its own minimal sample, and — critically — no *other* pattern in the
-catalog also matches that sample. That second check is what caught two
-real pattern-collision bugs during this test file's own construction: the
-bare `Mock()`/`MagicMock()`/`AsyncMock()` pattern matched as a substring
-inside Java's `EasyMock.createMock(...)`, and MockK's `mock(X.class)`
-pattern matched inside `Mockito.mock(X.class)` — both fixed with a
-word-boundary and a negative lookbehind respectively, since this pattern
-list is scanned language-agnostically against every fixture regardless of
-source language. The same round of testing also found that Mockito's
-`spy(...)` API had no pattern at all, meaning Java had zero `spy`-category
-coverage despite `spy` being a distinct, common Mockito call from `mock()`
-— now added.
-
-**Scope limitation**: detection only scans the fixture's own AST node
-text — a mock set up at module level or in a shared helper outside the
-fixture body is invisible to it. This matters most for Jest, where
-`jest.mock('./module')` is conventionally written at the top of the file
-(auto-hoisted by babel-jest) rather than inside a `beforeEach`, so that
-pattern rarely fires in practice even though it's in the table. See
-`mock_patterns_excluded` in the YAML below for the full list of documented
-gaps.
-
-The regex patterns themselves (`mock_patterns`), the interaction keywords
-used to count `num_interactions_configured` (`mock_interaction_keywords`),
-and the I/O-call patterns behind `num_external_calls`
-(`external_call_patterns`) all live in
-[collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
-rather than hardcoded in `detector_shared.py` — see
-[configuration.md](configuration.md#reference-data-catalogs).
+Pattern/category tables live in [feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml), not hardcoded — see [configuration.md](configuration.md#reference-data-catalogs). Catalog-driven exhaustive tests (`tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`) parametrize over every pattern and assert no other pattern in the catalog also matches the same sample — this caught two real false-positive collisions (`Mock()` matching inside `EasyMock.createMock(...)`; MockK's `mock(X.class)` matching inside `Mockito.mock(X.class)`), both fixed with a word boundary and a negative lookbehind respectively.
 
 ---
 
-## Why Certain Metrics Are Custom
+## Post-Processing (cross-fixture passes)
 
-**num_external_calls** — We detect I/O operations (database, HTTP, file, network) specifically, not all external function calls. Lizard's `external_call_count` measures architectural coupling; we measure infrastructure dependencies.
+Run once per file, after every fixture in it has been detected:
 
-**Framework Detection** — No general-purpose tool can distinguish fixtures from helper functions without understanding framework semantics (decorators, method naming conventions, API calls). Custom pattern matching encodes framework-specific knowledge.
+- **Teardown pairing** (`_calculate_teardown_pairs`) — flags the setup-side fixture (`has_teardown_pair=1`) via three mechanisms: a `yield` in the fixture's own body (pytest); same fixture_type distinguished by name (`setUp`/`tearDown`); or a different fixture_type at matching scope (`@BeforeEach`/`@AfterEach`, `beforeAll`/`afterAll`, etc.). Pairing rules: `feature_extraction_patterns.yaml`'s `teardown_detection`.
+- **Fixture dependencies** (`_detect_fixture_dependencies`, pytest-only) — a fixture's own parameters are cross-referenced against other fixture names in the same file to build a dependency list.
+- **Scope propagation** (`_propagate_fixture_scopes`, pytest-only) — if fixture A depends on fixture B and B's scope is narrower than A's declared scope, A is downgraded (an impossible configuration otherwise, e.g. a module-scoped fixture depending on a test-scoped one).
 
----
-
-## Post-Processing & Relationship Detection
-
-**Fixture Reuse Count** — Counts test functions using each fixture (via parameter injection in pytest).
-
-**Teardown Pairing** — Detects cleanup logic paired with setup, via three mechanisms (see `feature_extraction_patterns.yaml`'s `teardown_detection`):
-a `yield` statement in the fixture's own body (pytest); the same fixture_type distinguished only by name, e.g. `setUp`/`tearDown`, `setup_method`/`teardown_method`, `setup_module`/`teardown_module` (unittest, pytest class-style, nose); or a different fixture_type at matching scope, e.g. `@BeforeEach`/`@AfterEach`, `@BeforeMethod`/`@AfterMethod` (TestNG), `beforeAll`/`afterAll`, `before`/`after` (Mocha), `test.before`/`test.after` (AVA), and JUnit3-style `setUp()`/`tearDown()`. Only the setup-side fixture is flagged (`has_teardown_pair=1`), not the teardown fixture itself.
-
-**Fixture Dependencies** (Python/pytest only) — Identifies fixture-to-fixture dependencies via parameter injection.
-
-**Scope Propagation** (Python/pytest only) — Validates scope constraints. If a broader-scoped fixture depends on a narrower-scoped one, downgrades scope automatically.
-
----
-
-## Supported Frameworks (44+ across 4 languages)
-
-For complete list of supported testing and mocking frameworks with official documentation links, see:
-
-- **[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)** — Comprehensive catalog of detection patterns and framework examples
-- **[metrics-reference.md](metrics-reference.md)** — Tool versions, metric calculations, and academic references
+`reuse_count` (test functions using a fixture) was removed entirely rather than fixed — see [metrics-reference.md § reuse_count — removed](metrics-reference.md#reuse_count-removed) for why.
 
 ---
 
 ## Implementation
 
-Code location: [collection/detector.py](../../collection/detector.py) (slim public facade) plus:
-- [collection/detector_shared.py](../../collection/detector_shared.py) — dataclasses, parser cache, mock detection, the shared fixture builder, and cross-fixture post-processing
+- [collection/detector.py](../../collection/detector.py) — slim public facade (`extract_fixtures()`)
+- [collection/detector_shared.py](../../collection/detector_shared.py) — dataclasses, parser cache, mock detection, `_build_result()`, cross-fixture post-processing
 - [collection/detector_python.py](../../collection/detector_python.py), [collection/detector_java.py](../../collection/detector_java.py), [collection/detector_javascript.py](../../collection/detector_javascript.py) — one per-language detector each
 
-Key functions: `extract_fixtures()` (main orchestrator, in `detector.py`), `_detect_python()`/`_detect_java()`/`_detect_js()` (language-specific, one per module above), `_extract_mocks()` (mock patterns), `_build_result()` (quantitative metrics per fixture), `_detect_fixture_dependencies()`/`_propagate_fixture_scopes()`/`_calculate_teardown_pairs()` (cross-fixture post-processing, all in `detector_shared.py`).
-
-See: [configuration.md](configuration.md), [metrics-reference.md](metrics-reference.md), [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)
+See also: [configuration.md](configuration.md), [metrics-reference.md](metrics-reference.md), [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md)
 
 ---
 
 ## Appendix: Mermaid Diagram Source
 
-The detection pipeline diagram above is generated from the following Mermaid source code. This can be used to regenerate or modify the diagram:
-
 ```mermaid
 flowchart TB
     A["Source Code<br>(Python, Java,<br>JS, TS)"] --> B["Phase 1:<br>Parse &amp; Identify Fixtures<br>(Tree-sitter AST)"]
     B --> C["Phase 2:<br>Compute Metrics<br>(Complexity &amp; Structure)"]
-    C --> D["Post-Process:<br>Analyze Relationships<br>(Dependencies &amp; Reuse)"]
+    C --> D["Post-Process:<br>Analyze Relationships<br>(Dependencies &amp; Teardown)"]
     D --> E["Export<br>(SQLite + CSV)"]
     B1["- Parse code into AST<br>- Detect framework patterns<br>- Identify annotations,<br>  decorators, method names<br>- Classify fixture scope"] -.- B
-    C1["- Measure cyclomatic<br>  &amp; cognitive complexity<br>- Count code structure<br>  (LOC, parameters)<br>- Detect I/O operations<br>- Calculate nesting depth"] -.- C
-    D1["- Find fixture-to-fixture<br>  dependencies<br>- Count fixture reuse<br>- Validate scope constraints<br>- Detect teardown pairing"] -.- D
+    C1["- Measure cyclomatic<br>  complexity &amp; nesting<br>- Count code structure<br>  (LOC, parameters)<br>- Detect I/O operations<br>  &amp; object instantiation"] -.- C
+    D1["- Find fixture-to-fixture<br>  dependencies<br>- Validate scope constraints<br>- Detect teardown pairing"] -.- D
 
     style A fill:#e3f2fd,stroke:#1976d2
     style B fill:#f3e5f5,stroke:#7b1fa2

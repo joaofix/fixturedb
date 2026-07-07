@@ -17,24 +17,33 @@ For each of the supported languages, we define:
 2. **Mock patterns** — How to identify mock usages within a fixture
    Uses regex-based heuristics to detect mock framework calls:
    - unittest_mock (Python), Mockito (Java), Jest (JS), Sinon (JS), etc.
-   - ~40 framework-specific patterns across 12 mock frameworks
-   - Detects both mock *instantiation* and mock *usage*
+   - See collection/config_data/feature_extraction_patterns.yaml's
+     mock_patterns for the exact catalog.
 
 3. **Fixture metrics** — Quantitative properties of the fixture
    - LOC: Lines of code (custom: non-blank line count)
    - Cyclomatic Complexity: Branch count via Lizard library
-   - Cognitive Complexity: Nesting-depth-weighted via cognitive-complexity (Python) + formula
    - num_objects_instantiated: Custom count of new X(...) constructor calls
+     (Java/JS/TS) or capitalized-call heuristic (Python)
    - num_external_calls: Custom regex detection of I/O patterns (db, file, http, network)
-   - num_parameters: Function signature parameter count via Lizard library
+   - num_parameters: Function signature parameter count via Lizard library,
+     with self/cls stripped back out for Python methods
+   - max_nesting_depth: Custom tree-sitter AST traversal (Lizard's nesting
+     metric doesn't work at function granularity)
+
+   Cognitive complexity was evaluated and dropped: the only programmatic
+   implementation (complexipy) is Python-only, and no equivalent exists for
+   Java/JS/TS, so it was removed rather than shipped as a Python-only metric
+   or an unreliable cross-language formula.
 
 MODULE LAYOUT
 =============
 
 This is a slim facade over per-language detector modules:
   - detector_shared.py: dataclasses, tree-sitter parser cache, AST helpers,
-    mock detection, the shared fixture builder, and cross-language
-    post-processing passes (reuse counts, teardown pairing, scope propagation)
+    mock detection, the shared fixture builder, and cross-fixture
+    post-processing passes (teardown pairing, dependency detection, scope
+    propagation)
   - detector_python.py / detector_java.py / detector_javascript.py: one
     `_detect_<language>()` function per language, each self-contained; their
     pattern tables (annotation/decorator/name -> fixture_type + scope) are
@@ -47,13 +56,15 @@ This is a slim facade over per-language detector modules:
     verification (dead code, preserved as-is — see its module docstring)
 
 The detector delegates metric calculation to industry-standard tools:
-- Lizard (v1.21+): cyclomatic complexity, cognitive complexity, parameters
-- cognitive-complexity (v1.3+): Python-specific SonarQube-standard complexity
-- Tree-sitter: AST parsing for fixture detection and scope analysis
-- Regex: Custom I/O pattern detection (external_calls, object_instantiation)
+- Lizard: cyclomatic complexity, parameter count
+- Tree-sitter: AST parsing for fixture detection, scope analysis, and
+  nesting depth
+- Regex: I/O and constructor-call pattern detection (external_calls,
+  object_instantiation), catalogued in
+  collection/config_data/feature_extraction_patterns.yaml
 
-See collection/complexity_provider.py for metric facade and docs/COMPLEXITY_METRICS_MIGRATION.md
-for full methodology and justification.
+See collection/complexity_provider.py for the Lizard integration and
+docs/architecture/metrics-reference.md for full per-metric methodology.
 
 PUBLIC INTERFACE
 ================

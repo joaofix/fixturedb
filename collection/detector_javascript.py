@@ -64,7 +64,6 @@ def _detect_js(
                     fixture_type, scope = JS_FIXTURE_CALLS[name]
                     results.append(
                         _build_result(
-                            node=target,
                             func_node=target,
                             src_bytes=src_bytes,
                             fixture_type=fixture_type,
@@ -87,7 +86,6 @@ def _detect_js(
                             fixture_type, scope = AVA_FIXTURE_PATTERNS[ava_pattern]
                             results.append(
                                 _build_result(
-                                    node=target,
                                     func_node=target,
                                     src_bytes=src_bytes,
                                     fixture_type=fixture_type,
@@ -121,7 +119,6 @@ def _detect_js(
                             fixture_type, scope = TS_DECORATOR_MAP[dec_name]
                             results.append(
                                 _build_result(
-                                    node=node,
                                     func_node=node,
                                     src_bytes=src_bytes,
                                     fixture_type=fixture_type,

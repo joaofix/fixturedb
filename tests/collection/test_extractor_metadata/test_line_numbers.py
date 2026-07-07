@@ -59,7 +59,11 @@ def setUp(self):
         assert fixture.start_line < fixture.end_line
 
     def test_pytest_fixture_line_numbers(self):
-        """Pytest fixtures should have accurate line numbers"""
+        """Pytest fixtures' line range covers the function only, not its
+        decorator -- consistent with raw_source, which is also
+        function-only. (Previously start_line included the decorator line
+        while raw_source didn't, so the reported range and the actual
+        source text disagreed by one line.)"""
         code = """
 @pytest.fixture
 def my_fixture():
@@ -67,9 +71,9 @@ def my_fixture():
 """
         fixture = assert_fixture_detected(code, "python", "my_fixture")
         # Decorator is on line 2, function starts on line 3
-        # Line range should include decorator
-        assert fixture.start_line == 2  # Starts at decorator
+        assert fixture.start_line == 3
         assert fixture.end_line == 4  # Ends after return
+        assert fixture.raw_source == "def my_fixture():\n    return create_object()"
 
 
 class TestLineOfCodeCounting:
