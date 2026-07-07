@@ -6,12 +6,24 @@ calls `detector.extract_fixtures()` per file, and tags each fixture with
 whether its exact span was 100% newly added (via AST-node completeness
 checking, falling back to line-based diff state) — the core "no partial
 credit for modified fixtures" rule of the agent-corpus methodology.
+
+Commit metadata and diffs come from PyDriller's `Git`/`Commit` objects, not
+hand-rolled `git log`/`git show` subprocess calls with regex/string-prefix
+text parsing. PyDriller's `ModifiedFile.diff_parsed` already gives
+structured (line_no, text) tuples for added/deleted lines, `.change_type`
+already distinguishes ADD/MODIFY/RENAME/DELETE, and `.new_path`/`.old_path`
+are plain strings -- eliminating an entire class of diff-text-parsing bugs
+(several found and fixed earlier this session: "---"/"+++" prefix
+collisions with real diff content, and space-in-path ambiguity in
+"diff --git a/X b/Y" headers) by construction, not by adding more parsing
+special-cases.
 """
 
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+from pydriller import Git
 
 from collection.logging_utils import get_logger
 
@@ -19,12 +31,7 @@ from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_rep
 from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, DB_PATH
 from .conventional_commits import classify_commit_type
 from .detector import _get_parser, extract_fixtures
-from .diff_purity import (
-    _HUNK_HEADER_RE,
-    DiffLineMap,
-    _raw_diff_commit_is_pure_addition,
-    _raw_diff_file_is_pure_addition,
-)
+from .diff_purity import DiffLineMap, commit_is_pure_addition, is_pure_addition
 from .language_utils import get_language_static
 from .test_commit_utils import is_test_file_path
 
@@ -160,6 +167,8 @@ class AgentFixtureExtractor:
         if not repo_path.exists():
             raise RuntimeError(f"Repository not found: {repo_path}")
 
+        git_repo = Git(str(repo_path))
+
         fixtures = []
         seen_fixtures: set[tuple] = set()
 
@@ -173,26 +182,26 @@ class AgentFixtureExtractor:
         for commit_sha, agent_type in commits.items():
             try:
                 with _repo_worktree_lock(repo_path):
-                    # Checkout commit
+                    # Checkout commit (needed so extract_fixtures() can read
+                    # the actual working-tree files; PyDriller's Commit
+                    # object below is independent of working-tree state --
+                    # it reads historical metadata/diffs from git's object
+                    # database directly).
                     _checkout_commit(repo_path, commit_sha)
 
-                    # Get commit metadata
-                    commit_info = self._get_commit_info(repo_path, commit_sha)
-                    if not commit_info:
+                    try:
+                        commit = git_repo.get_commit(commit_sha)
+                    except Exception as e:
+                        logger.debug(f"Failed to get commit {commit_sha}: {e}")
                         continue
 
                     # Check if commit date is within range
-                    if commit_info["date"] < self.start_date:
+                    commit_date = commit.author_date.strftime("%Y-%m-%d")
+                    if commit_date < self.start_date:
                         continue
-
-                    # Get diff to check for complete additions
-                    diff_info = self._get_commit_diff(repo_path, commit_sha)
 
                     # ── Commit‑level purity gate ──
-                    if not diff_info:
-                        continue
-
-                    if not _raw_diff_commit_is_pure_addition(diff_info):
+                    if not commit_is_pure_addition(commit):
                         logger.debug(
                             "Skipping entire commit %s in %s: a test file contains "
                             "deletions, is deleted, or is renamed",
@@ -207,10 +216,10 @@ class AgentFixtureExtractor:
                         continue
 
                     # Extract fixtures
-                    commit_fixtures = self._extract_from_diff(
+                    commit_fixtures = self._extract_from_commit(
                         repo_path=repo_path,
                         repo_name=repo_name,
-                        diff_info=diff_info,
+                        commit=commit,
                         commit_sha=commit_sha,
                         agent_type=agent_type,
                     )
@@ -236,9 +245,7 @@ class AgentFixtureExtractor:
                     # other. `agent_type` is "human" for Dataset B commits
                     # routed through this same method (human_corpus.py) —
                     # classification applies the same way regardless.
-                    commit_type = classify_commit_type(
-                        commit_info.get("message", "")
-                    )
+                    commit_type = classify_commit_type(commit.msg or "")
 
                     for fixture in commit_fixtures:
                         fixture_key = (
@@ -273,82 +280,16 @@ class AgentFixtureExtractor:
 
         return fixtures
 
-    def _get_commit_info(self, repo_path: Path, commit_sha: str) -> Optional[Dict]:
-        """
-        Get commit metadata (date, author, message).
-
-        Args:
-            repo_path: Path to repository
-            commit_sha: Commit SHA
-
-        Returns:
-            Dict with commit info or None
-        """
-        try:
-            result = subprocess.run(
-                ["git", "log", "-1", "--pretty=format:%ai|%an|%ae|%B", commit_sha],
-                cwd=repo_path,
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=True,
-            )
-
-            parts = result.stdout.strip().split("|", 3)
-            if len(parts) < 4:
-                return None
-
-            timestamp = parts[0]
-            date = timestamp.split(" ")[0]  # Extract YYYY-MM-DD
-
-            return {
-                "date": date,
-                "author_name": parts[1],
-                "author_email": parts[2],
-                "message": parts[3] if len(parts) > 3 else "",
-            }
-
-        except Exception as e:
-            logger.debug(f"Failed to get commit info: {e}")
-            return None
-
-    def _get_commit_diff(self, repo_path: Path, commit_sha: str) -> Optional[str]:
-        """
-        Get unified diff for a commit.
-
-        Args:
-            repo_path: Path to repository
-            commit_sha: Commit SHA
-
-        Returns:
-            Unified diff string or None
-        """
-        try:
-            result = subprocess.run(
-                ["git", "show", "--unified=3", commit_sha],
-                cwd=repo_path,
-                capture_output=True,
-                text=True,
-                timeout=30,
-                check=True,
-            )
-
-            return result.stdout
-
-        except Exception as e:
-            logger.debug(f"Failed to get diff: {e}")
-            return None
-
-    def _extract_from_diff(
+    def _extract_from_commit(
         self,
         repo_path: Path,
         repo_name: str,
-        diff_info: str,
+        commit,
         commit_sha: str,
         agent_type: str,
     ) -> List[Dict]:
         """
-        Extract fixtures from commit diff.
+        Extract fixtures from a commit.
 
         CRITICAL: Only include fixtures that are completely added (100% new lines).
         No modifications or refactoring.
@@ -356,33 +297,26 @@ class AgentFixtureExtractor:
         Args:
             repo_path: Path to repository
             repo_name: Repository name (for tracking)
-            diff_info: Unified diff output
+            commit: PyDriller Commit object
             commit_sha: Commit SHA
             agent_type: Agent type (from Phase 1B)
 
         Returns:
             List of fixtures completely added in this commit
         """
-        if not diff_info:
-            return []
-
         fixtures = []
-        diff_maps = self._build_diff_line_maps(diff_info)
-
-        # Parse diff to find added test functions/methods with fixture decorator
-        # This is a simplified implementation - real implementation would parse diff
-        # and detect fixture definitions line by line
-
-        # For now, extract all fixtures and mark as complete/partial based on
-        # whether all lines in the diff are additions (not modifications)
-
-        test_files = self._find_added_test_files(diff_info)
+        diff_maps = self._build_diff_line_maps(commit)
+        test_files = self._find_added_test_files(commit)
+        modified_files_by_path = {
+            (mf.new_path or mf.old_path): mf for mf in commit.modified_files
+        }
 
         purity_skipped_count = 0
 
         for file_path in test_files:
             # ── Purity gate: only extract from files whose diff is 100% additions ──
-            if not _raw_diff_file_is_pure_addition(diff_info, file_path):
+            modified_file = modified_files_by_path.get(file_path)
+            if modified_file is None or not is_pure_addition(modified_file):
                 logger.debug(
                     "Skipping %s in %s: diff contains deletions or is a rename",
                     file_path,
@@ -623,93 +557,54 @@ class AgentFixtureExtractor:
         visit(node)
         return lines
 
-    def _find_added_test_files(self, diff: str) -> List[str]:
+    def _find_added_test_files(self, commit) -> List[str]:
         """
-        Find test files that were added in the diff.
+        Find test files present in this commit's new state.
+
+        Any change type is included here -- the pure-addition purity gate is
+        applied separately, per file, in _extract_from_commit(). A deleted
+        file has no new_path (PyDriller sets it to None), so it's naturally
+        excluded without any special-casing.
+
         Args:
-            diff: Unified diff output
+            commit: PyDriller Commit object
 
         Returns:
             List of test file paths
         """
         files = []
-
-        # Read the path from the "+++ b/<path>" header rather than
-        # space-splitting "diff --git a/<path> b/<path>": that line packs
-        # both the old and new path into one whitespace-separated string, so
-        # a path containing a space (a rare but real possibility) makes the
-        # split ambiguous and silently extracts a truncated/garbage path.
-        # "+++ b/<path>" has only one path and one unambiguous prefix.
-        for line in diff.split("\n"):
-            if line.startswith("+++ b/"):
-                file_path = line[len("+++ b/") :].strip()
-                path_obj = Path(file_path)
-                language = self._get_language(path_obj)
-
-                if language != "unknown" and is_test_file_path(file_path, language):
-                    files.append(file_path)
-
+        for modified_file in commit.modified_files:
+            file_path = modified_file.new_path
+            if file_path is None:
+                continue
+            language = self._get_language(Path(file_path))
+            if language != "unknown" and is_test_file_path(file_path, language):
+                files.append(file_path)
         return files
 
-    def _build_diff_line_maps(self, diff: str) -> Dict[str, DiffLineMap]:
+    def _build_diff_line_maps(self, commit) -> Dict[str, DiffLineMap]:
         """
-        considered completely added when every line in its [start_line, end_line]
-        span is marked as ``added``.
+        Build a per-file map of new-file line numbers to diff states.
+
+        Sourced directly from PyDriller's own parsed diff
+        (ModifiedFile.diff_parsed's "added" list of (line_no, text) tuples)
+        -- no hand-rolled hunk-header or line-prefix parsing needed.
+        DiffLineMap.fixture_is_completely_added() only ever checks for the
+        "added" state, so a line being context, deleted, or simply absent
+        from this map are all equivalent (anything not explicitly "added"
+        fails the check) -- there's no need to track "context" separately.
         """
-        file_states: Dict[str, Dict[int, str]] = {}
-        current_file: Optional[str] = None
-        new_line_no: Optional[int] = None
-        in_hunk = False
-
-        for raw_line in diff.splitlines():
-            if raw_line.startswith("diff --git"):
-                current_file = None
-                new_line_no = None
-                in_hunk = False
+        diff_maps: Dict[str, DiffLineMap] = {}
+        for modified_file in commit.modified_files:
+            path = modified_file.new_path or modified_file.old_path
+            if path is None:
                 continue
-
-            # The "+++ b/path" file header only ever appears before the first
-            # hunk. Gating this on `not in_hunk` (rather than matching
-            # "+++ b/" unconditionally on every line) matters because once
-            # inside a hunk, an *added* line whose own content starts with
-            # "++" (e.g. `++counter;`, or embedded diff/patch text used as
-            # test fixture data) renders as a "+++"-prefixed hunk line --
-            # unconditional matching would misparse it as a bogus file
-            # header instead of recording it as added, corrupting/truncating
-            # the line map for the real file.
-            if not in_hunk and raw_line.startswith("+++ b/"):
-                current_file = raw_line[len("+++ b/") :].strip()
-                file_states.setdefault(current_file, {})
-                continue
-
-            hunk_match = _HUNK_HEADER_RE.match(raw_line)
-            if hunk_match:
-                in_hunk = True
-                new_line_no = int(hunk_match.group("new_start"))
-                continue
-
-            if current_file is None or new_line_no is None:
-                continue
-
-            # Once inside a hunk, only the line's first character is the diff
-            # marker -- the rest is raw file content that can itself start
-            # with any characters, including more "+"/"-". Checking only
-            # `raw_line[:1]` (rather than a multi-character "+++"/"---"
-            # prefix check) is what lets an added line like "++weird;" still
-            # be recognized as added instead of falling through unmatched
-            # and silently desyncing every subsequent line number in the hunk.
-            marker = raw_line[:1]
-            if marker == " ":
-                file_states[current_file][new_line_no] = "context"
-                new_line_no += 1
-            elif marker == "+":
-                file_states[current_file][new_line_no] = "added"
-                new_line_no += 1
-            elif marker == "-":
-                # Deletions do not advance the new-file line number.
-                continue
-
-        return {path: DiffLineMap(states) for path, states in file_states.items()}
+            added_lines = {
+                line_no: "added"
+                for line_no, _ in modified_file.diff_parsed.get("added", [])
+            }
+            diff_maps[path] = DiffLineMap(added_lines)
+        return diff_maps
 
     def _get_language(self, file_path: Path) -> str:
         """Infer language from file extension (delegates to the shared mapping)."""

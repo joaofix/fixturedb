@@ -35,7 +35,7 @@ Identifying an agent-authored commit isn't sufficient on its own — a commit co
 - **Commit-level**: if any test file in the commit has a deletion, rename, or copy, the whole commit is rejected.
 - **File-level**: within an accepted commit, each fixture's own line span (preferring an AST-node-precise check, falling back to a line-range check) must consist exclusively of added lines.
 
-Implementation: `collection/diff_purity.py` (`_raw_diff_commit_is_pure_addition()`, `_raw_diff_file_is_pure_addition()`), `collection/agent_fixture_extractor.py` (`_is_fixture_completely_added()`, `_build_diff_line_maps()`). Tests: `tests/collection/test_fixture_extractor_partial_detection.py`, `tests/test_fixture_extractor_small.py`.
+Implementation: `collection/diff_purity.py` (`commit_is_pure_addition()`, `is_pure_addition()`, PyDriller-`Commit`-based), `collection/agent_fixture_extractor.py` (`_is_fixture_completely_added()`, `_build_diff_line_maps()`, both built from PyDriller's `ModifiedFile.diff_parsed`/`.change_type` directly rather than hand-parsed diff text). `diff_purity.py` also has raw-unified-diff-text equivalents (`_raw_diff_commit_is_pure_addition()`, `_raw_diff_file_is_pure_addition()`) for callers without a PyDriller `Commit` object in hand; the agent-corpus pipeline itself always has one, so it uses the `Commit`-based versions. Tests: `tests/collection/test_fixture_extractor_partial_detection.py`, `tests/test_fixture_extractor_small.py`.
 
 **Example — accepted (pure addition):**
 ```diff

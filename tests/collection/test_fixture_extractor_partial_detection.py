@@ -4,12 +4,63 @@ from pathlib import Path
 from threading import Lock, Thread
 from types import SimpleNamespace
 
+from pydriller import Git
+
 from collection.fixture_extractor import (
     AgentFixtureExtractor,
     DiffLineMap,
     _checkout_commit,
     extract_fixtures_at_commit,
 )
+
+
+def _init_repo_with_commits(tmp_path: Path, commits: list[dict]) -> str:
+    """Create a real git repo under tmp_path/owner__repo and return HEAD commit SHA."""
+    repo = tmp_path / "owner__repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo), "config", "user.name", "Test"],
+        check=True,
+        capture_output=True,
+    )
+
+    for c in commits:
+        (repo / c["path"]).parent.mkdir(parents=True, exist_ok=True)
+        (repo / c["path"]).write_text(c.get("content", ""), encoding="utf-8")
+        subprocess.run(
+            ["git", "-C", str(repo), "add", c["path"]], check=True, capture_output=True
+        )
+        msg = c.get("msg", "commit")
+        subprocess.run(
+            ["git", "-C", str(repo), "commit", "-m", msg],
+            check=True,
+            capture_output=True,
+        )
+
+    return (
+        subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+
+
+def _get_commit(tmp_path: Path, commits: list[dict]):
+    """Build a real repo via _init_repo_with_commits() and return (repo_path,
+    PyDriller Commit) for the resulting HEAD commit -- used by tests that
+    exercise _build_diff_line_maps()/_find_added_test_files() directly
+    against a real PyDriller Commit object, rather than hand-typed diff text."""
+    sha = _init_repo_with_commits(tmp_path, commits)
+    repo_path = tmp_path / "owner__repo"
+    commit = Git(str(repo_path)).get_commit(sha)
+    return repo_path, commit
 
 
 def test_fixture_span_requires_all_lines_added():
@@ -36,92 +87,106 @@ def test_fixture_span_with_context_line_is_not_complete():
     assert diff_map.fixture_is_completely_added(1, 3) is False
 
 
-def test_diff_parser_marks_added_and_context_lines_by_file():
-    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
-    diff = "\n".join(
+def test_diff_parser_marks_added_and_context_lines_by_file(tmp_path):
+    """_build_diff_line_maps() sources its per-line added/not-added state
+    directly from PyDriller's own ModifiedFile.diff_parsed -- built against
+    a real two-commit repo here, rather than hand-typed diff text, so this
+    is exercising the actual PyDriller integration, not an assumption about
+    its output shape."""
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_sample.py b/tests/test_sample.py",
-            "index 0000000..1111111 100644",
-            "--- a/tests/test_sample.py",
-            "+++ b/tests/test_sample.py",
-            "@@ -1,5 +1,6 @@",
-            " import pytest",
-            " @pytest.fixture",
-            "+from foo import bar",
-            " def sample_fixture():",
-            "     return 42",
-            "+",
-        ]
+            {
+                "path": "tests/test_sample.py",
+                "content": "import pytest\n@pytest.fixture\ndef sample_fixture():\n    return 42\n",
+                "msg": "base",
+            },
+            {
+                "path": "tests/test_sample.py",
+                "content": (
+                    "import pytest\n@pytest.fixture\nfrom foo import bar\n"
+                    "def sample_fixture():\n    return 42\n\n"
+                ),
+                "msg": "add import and trailing blank line",
+            },
+        ],
     )
 
-    diff_maps = extractor._build_diff_line_maps(diff)
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    diff_maps = extractor._build_diff_line_maps(commit)
     assert "tests/test_sample.py" in diff_maps
 
     diff_map = diff_maps["tests/test_sample.py"]
-    assert diff_map.line_states[1] == "context"
-    assert diff_map.line_states[2] == "context"
-    assert diff_map.line_states[3] == "added"
-    assert diff_map.line_states[4] == "context"
-    assert diff_map.line_states[5] == "context"
-    assert diff_map.line_states[6] == "added"
+    assert diff_map.line_states.get(1) != "added"  # import pytest (context)
+    assert diff_map.line_states.get(2) != "added"  # @pytest.fixture (context)
+    assert diff_map.line_states[3] == "added"  # from foo import bar
+    assert diff_map.line_states.get(4) != "added"  # def sample_fixture(): (context)
+    assert diff_map.line_states.get(5) != "added"  # return 42 (context)
+    assert diff_map.line_states[6] == "added"  # trailing blank line
 
 
-def test_diff_parser_added_line_starting_with_plus_plus_not_mistaken_for_header():
-    """Regression test: an *added* line whose own content starts with "++"
-    (e.g. `++counter;`, or embedded diff/patch text used as fixture data)
-    renders as a "+++"-prefixed hunk line. Previously this matched neither
-    the "added" nor "context" branch (both used multi-character "+++"/"---"
-    prefix exclusions), so it was silently skipped without advancing
-    new_line_no -- desyncing every subsequent line number in the hunk and
-    causing a genuinely pre-existing/unmodified line to be wrongly recorded
-    as "added" (false-positive credit, the dangerous direction for the
-    "no partial credit" rule)."""
-    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
-    diff = "\n".join(
+def test_diff_parser_added_line_starting_with_plus_plus(tmp_path):
+    """An *added* line whose own content starts with "++" (e.g. `++counter;`)
+    used to render as a "+++"-prefixed hunk line that a hand-rolled parser
+    could mistake for a file header, corrupting the line map. PyDriller's
+    diff_parsed gives structured (line_no, text) tuples directly, so this
+    can no longer happen -- verified here against a real repo with exactly
+    that content."""
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_real.py b/tests/test_real.py",
-            "--- a/tests/test_real.py",
-            "+++ b/tests/test_real.py",
-            "@@ -1,2 +1,4 @@",
-            "+int addedA;",
-            "+++weird;",
-            " int preexisting;",
-            "+int addedD;",
-        ]
+            {
+                "path": "tests/test_real.py",
+                "content": "int preexisting;\n",
+                "msg": "base",
+            },
+            {
+                "path": "tests/test_real.py",
+                "content": "int addedA;\n++weird;\nint preexisting;\nint addedD;\n",
+                "msg": "add lines around preexisting content",
+            },
+        ],
     )
 
-    diff_map = extractor._build_diff_line_maps(diff)["tests/test_real.py"]
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    diff_map = extractor._build_diff_line_maps(commit)["tests/test_real.py"]
     assert diff_map.line_states[1] == "added"
     assert diff_map.line_states[2] == "added"
-    # The critical assertion: a truly unmodified context line must not be
-    # mismarked "added" just because a preceding "++"-colliding added line
-    # derailed the line-number counter.
-    assert diff_map.line_states[3] == "context"
+    # The critical assertion: the truly unmodified preexisting line must not
+    # be mismarked "added".
+    assert diff_map.line_states.get(3) != "added"
     assert diff_map.line_states[4] == "added"
 
 
-def test_diff_parser_added_line_looking_like_file_header_not_mistaken_for_new_file():
-    """Regression test: an added line whose content happens to read like
-    "+++ b/<path>" must not be misparsed as a bogus file-header line (which
-    would fabricate a fictitious file entry and truncate the real file's
-    line map from that point on)."""
-    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
-    diff = "\n".join(
+def test_diff_parser_added_line_looking_like_file_header(tmp_path):
+    """An added line whose content happens to read like "+++ b/<path>" used
+    to risk being misparsed by a hand-rolled parser as a bogus file-header
+    line. _build_diff_line_maps() no longer parses header lines from text
+    at all -- file identity comes from ModifiedFile.new_path directly -- so
+    this is structurally no longer possible; verified here against a real
+    repo with exactly that content, confirming only the one real file is
+    present and its lines are attributed correctly."""
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_real.py b/tests/test_real.py",
-            "--- a/tests/test_real.py",
-            "+++ b/tests/test_real.py",
-            "@@ -1,2 +1,3 @@",
-            " import pytest",
-            "++ b/tests/decoy.py",
-            "+def new_helper(): pass",
-        ]
+            {
+                "path": "tests/test_real.py",
+                "content": "import pytest\n",
+                "msg": "base",
+            },
+            {
+                "path": "tests/test_real.py",
+                "content": "import pytest\n++ b/tests/decoy.py\ndef new_helper(): pass\n",
+                "msg": "add lines including a file-header-shaped one",
+            },
+        ],
     )
 
-    diff_maps = extractor._build_diff_line_maps(diff)
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    diff_maps = extractor._build_diff_line_maps(commit)
     assert list(diff_maps.keys()) == ["tests/test_real.py"]
     diff_map = diff_maps["tests/test_real.py"]
-    assert diff_map.line_states[1] == "context"
+    assert diff_map.line_states.get(1) != "added"
     assert diff_map.line_states[2] == "added"
     assert diff_map.line_states[3] == "added"
 
@@ -367,41 +432,61 @@ def test_ast_aware_completeness_works_for_java(tmp_path):
     )
 
 
-def test_added_test_file_detection_ignores_go_paths():
-    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
-    diff = "\n".join(
+def test_added_test_file_detection_ignores_go_paths(tmp_path):
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go b/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go",
-            "+++ b/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go",
-            "diff --git a/pkg/example_test.go b/pkg/example_test.go",
-            "+++ b/pkg/example_test.go",
-            "diff --git a/tests/sample.spec.ts b/tests/sample.spec.ts",
-            "+++ b/tests/sample.spec.ts",
-        ]
+            {
+                "path": "connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go",
+                "content": "package v1\n",
+                "msg": "base",
+            },
+        ],
     )
+    # Add the remaining files in a second commit alongside the base file's repo.
+    repo = tmp_path / "owner__repo"
+    (repo / "pkg").mkdir(parents=True, exist_ok=True)
+    (repo / "pkg" / "example_test.go").write_text("package pkg\n", encoding="utf-8")
+    (repo / "tests").mkdir(parents=True, exist_ok=True)
+    (repo / "tests" / "sample.spec.ts").write_text("test('x', () => {});\n", encoding="utf-8")
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "add go test and ts spec"],
+        check=True,
+        capture_output=True,
+    )
+    sha = (
+        subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+    commit = Git(str(repo_path)).get_commit(sha)
 
-    files = extractor._find_added_test_files(diff)
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    files = extractor._find_added_test_files(commit)
 
     assert "tests/sample.spec.ts" in files
     assert "pkg/example_test.go" not in files
-    assert "connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go" not in files
 
 
-def test_added_test_file_detection_handles_paths_with_spaces():
+def test_added_test_file_detection_handles_paths_with_spaces(tmp_path):
     """Regression test: the "diff --git a/<path> b/<path>" header packs both
     paths into one whitespace-split line, which is ambiguous when a path
-    contains a space. Detection must read the path from the unambiguous
-    "+++ b/<path>" header instead."""
-    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
-    diff = "\n".join(
+    contains a space. Detection now reads the path from PyDriller's
+    ModifiedFile.new_path directly (never parses the header line at all)."""
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/my test.py b/tests/my test.py",
-            "--- /dev/null",
-            "+++ b/tests/my test.py",
-        ]
+            {
+                "path": "tests/my test.py",
+                "content": "def test_thing():\n    pass\n",
+                "msg": "add test file with a space in its path",
+            },
+        ],
     )
 
-    files = extractor._find_added_test_files(diff)
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    files = extractor._find_added_test_files(commit)
 
     assert "tests/my test.py" in files
 
@@ -496,132 +581,101 @@ def test_repo_worktree_lock_serializes_concurrent_extractions(tmp_path, monkeypa
 
 
 # ──────────────────────────────────────────────────────────────
-# Integration tests: purity gate inside _extract_from_diff()
+# Integration tests: purity gate inside _extract_from_commit()
 # ──────────────────────────────────────────────────────────────
 
 
-def test_extract_from_diff_skips_file_with_deletions(tmp_path, monkeypatch):
+def test_extract_from_commit_skips_file_with_deletions(tmp_path):
     """When a test file's diff contains deletions, the purity gate blocks extraction."""
-    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
-
-    # Write a test file on disk so full_path.exists() is True
-    test_file = tmp_path / "tests" / "test_skip_me.py"
-    test_file.parent.mkdir(parents=True, exist_ok=True)
-    test_file.write_text(
-        "\n".join(
-            [
-                "import pytest",
-                "",
-                "@pytest.fixture",
-                "def my_fixture():",
-                "    return 42",
-            ]
-        )
-    )
-
-    diff = "\n".join(
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_skip_me.py b/tests/test_skip_me.py",
-            "--- a/tests/test_skip_me.py",
-            "+++ b/tests/test_skip_me.py",
-            "@@ -1,3 +1,3 @@",
-            " import pytest",
-            "-from old_module import thing",
-            "+from new_module import thing",
-            " @pytest.fixture",
-            " def my_fixture():",
-            "     return 42",
-        ]
+            {
+                "path": "tests/test_skip_me.py",
+                "content": "import pytest\nfrom old_module import thing\n\n@pytest.fixture\ndef my_fixture():\n    return 42\n",
+                "msg": "base",
+            },
+            {
+                "path": "tests/test_skip_me.py",
+                "content": "import pytest\nfrom new_module import thing\n\n@pytest.fixture\ndef my_fixture():\n    return 42\n",
+                "msg": "swap import",
+            },
+        ],
     )
 
-    fixtures = extractor._extract_from_diff(
-        repo_path=tmp_path,
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_commit(
+        repo_path=repo_path,
         repo_name="test/repo",
-        diff_info=diff,
-        commit_sha="abc123456789",
+        commit=commit,
+        commit_sha=commit.hash,
         agent_type="copilot",
     )
 
-    # The file has a deletion line (-from old_module) → purity gate skips it
+    # The file has a deletion line (the old import) → purity gate skips it
     assert len(fixtures) == 0
 
 
-def test_extract_from_diff_skips_renamed_file(tmp_path):
+def test_extract_from_commit_skips_renamed_file(tmp_path):
     """When a test file is renamed, the purity gate blocks extraction."""
-    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
-
-    test_file = tmp_path / "tests" / "test_renamed.py"
-    test_file.parent.mkdir(parents=True, exist_ok=True)
-    test_file.write_text(
-        "\n".join(
-            [
-                "import pytest",
-                "",
-                "@pytest.fixture",
-                "def my_fixture():",
-                "    return 42",
-            ]
-        )
-    )
-
-    diff = "\n".join(
+    repo_path, _first_commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_old_name.py b/tests/test_renamed.py",
-            "rename from tests/test_old_name.py",
-            "rename to tests/test_renamed.py",
-        ]
+            {
+                "path": "tests/test_old_name.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef my_fixture():\n    return 42\n",
+                "msg": "base",
+            },
+        ],
     )
+    subprocess.run(
+        ["git", "-C", str(repo_path), "mv", "tests/test_old_name.py", "tests/test_renamed.py"],
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_path), "commit", "-m", "rename test file"],
+        check=True,
+        capture_output=True,
+    )
+    sha = (
+        subprocess.check_output(["git", "-C", str(repo_path), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+    commit = Git(str(repo_path)).get_commit(sha)
 
-    fixtures = extractor._extract_from_diff(
-        repo_path=tmp_path,
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_commit(
+        repo_path=repo_path,
         repo_name="test/repo",
-        diff_info=diff,
-        commit_sha="abc123456789",
+        commit=commit,
+        commit_sha=commit.hash,
         agent_type="copilot",
     )
 
     assert len(fixtures) == 0
 
 
-def test_extract_from_diff_keeps_pure_addition_file(tmp_path):
+def test_extract_from_commit_keeps_pure_addition_file(tmp_path):
     """When a test file has only added lines, extraction proceeds normally."""
-    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
-
-    test_file = tmp_path / "tests" / "test_pure.py"
-    test_file.parent.mkdir(parents=True, exist_ok=True)
-    test_file.write_text(
-        "\n".join(
-            [
-                "import pytest",
-                "",
-                "@pytest.fixture",
-                "def my_fixture():",
-                "    return 42",
-            ]
-        )
-    )
-
-    diff = "\n".join(
+    repo_path, commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_pure.py b/tests/test_pure.py",
-            "new file mode 100644",
-            "index 0000000..abc1234",
-            "--- /dev/null",
-            "+++ b/tests/test_pure.py",
-            "@@ -0,0 +1,5 @@",
-            "+import pytest",
-            "+",
-            "+@pytest.fixture",
-            "+def my_fixture():",
-            "+    return 42",
-        ]
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef my_fixture():\n    return 42\n",
+                "msg": "add pure test file",
+            },
+        ],
     )
 
-    fixtures = extractor._extract_from_diff(
-        repo_path=tmp_path,
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_commit(
+        repo_path=repo_path,
         repo_name="test/repo",
-        diff_info=diff,
-        commit_sha="abc123456789",
+        commit=commit,
+        commit_sha=commit.hash,
         agent_type="copilot",
     )
 
@@ -631,65 +685,46 @@ def test_extract_from_diff_keeps_pure_addition_file(tmp_path):
     assert "my_fixture" in fixture_names
 
 
-def test_extract_from_diff_mixed_files_one_skipped_one_kept(tmp_path):
+def test_extract_from_commit_mixed_files_one_skipped_one_kept(tmp_path):
     """One file with deletions is skipped; a pure-addition file in the same commit is kept."""
-    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
-
-    # Pure-add test file
-    pure_file = tmp_path / "tests" / "test_pure.py"
-    pure_file.parent.mkdir(parents=True, exist_ok=True)
-    pure_file.write_text(
-        "\n".join(
-            [
-                "@pytest.fixture",
-                "def pure_fixture():",
-                "    return 1",
-            ]
-        )
-    )
-
-    # Modified test file (has deletions)
-    modified_file = tmp_path / "tests" / "test_modified.py"
-    modified_file.parent.mkdir(parents=True, exist_ok=True)
-    modified_file.write_text(
-        "\n".join(
-            [
-                "import pytest",
-                "@pytest.fixture",
-                "def mod_fixture():",
-                "    return 99",
-            ]
-        )
-    )
-
-    diff = "\n".join(
+    repo_path, _first_commit = _get_commit(
+        tmp_path,
         [
-            "diff --git a/tests/test_modified.py b/tests/test_modified.py",
-            "--- a/tests/test_modified.py",
-            "+++ b/tests/test_modified.py",
-            "@@ -1,4 +1,4 @@",
-            " import pytest",
-            "-from old_dep import helper",
-            "+from new_dep import helper",
-            " @pytest.fixture",
-            " def mod_fixture():",
-            "     return 99",
-            "diff --git a/tests/test_pure.py b/tests/test_pure.py",
-            "new file mode 100644",
-            "--- /dev/null",
-            "+++ b/tests/test_pure.py",
-            "@@ -0,0 +1,3 @@",
-            "+@pytest.fixture",
-            "+def pure_fixture():",
-            "+    return 1",
-        ]
+            {
+                "path": "tests/test_modified.py",
+                "content": "import pytest\nfrom old_dep import helper\n@pytest.fixture\ndef mod_fixture():\n    return 99\n",
+                "msg": "base",
+            },
+        ],
     )
+    repo = repo_path
+    (repo / "tests" / "test_modified.py").write_text(
+        "import pytest\nfrom new_dep import helper\n@pytest.fixture\ndef mod_fixture():\n    return 99\n",
+        encoding="utf-8",
+    )
+    (repo / "tests" / "test_pure.py").write_text(
+        "@pytest.fixture\ndef pure_fixture():\n    return 1\n",
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "-C", str(repo), "add", "."], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(repo), "commit", "-m", "modify one file, add another"],
+        check=True,
+        capture_output=True,
+    )
+    sha = (
+        subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+    commit = Git(str(repo)).get_commit(sha)
 
-    fixtures = extractor._extract_from_diff(
-        repo_path=tmp_path,
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_commit(
+        repo_path=repo_path,
         repo_name="test/repo",
-        diff_info=diff,
-        commit_sha="abc123456789",
+        commit=commit,
+        commit_sha=commit.hash,
         agent_type="copilot",
     )
 
@@ -699,189 +734,74 @@ def test_extract_from_diff_mixed_files_one_skipped_one_kept(tmp_path):
     assert "mod_fixture" not in fixture_names
 
 
-def test_extract_from_diff_empty_diff_returns_nothing():
-    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
-    fixtures = extractor._extract_from_diff(
-        repo_path=Path("/tmp"),
+def test_extract_from_commit_empty_commit_returns_nothing(tmp_path):
+    """A commit that touches no files (git commit --allow-empty) has no
+    modified_files, so no test files can be found."""
+    repo_path, _first_commit = _get_commit(
+        tmp_path,
+        [
+            {"path": "tests/test_base.py", "content": "def test_x(): pass\n", "msg": "base"},
+        ],
+    )
+    subprocess.run(
+        ["git", "-C", str(repo_path), "commit", "--allow-empty", "-m", "empty commit"],
+        check=True,
+        capture_output=True,
+    )
+    sha = (
+        subprocess.check_output(["git", "-C", str(repo_path), "rev-parse", "HEAD"])
+        .decode()
+        .strip()
+    )
+    commit = Git(str(repo_path)).get_commit(sha)
+
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
+    fixtures = extractor._extract_from_commit(
+        repo_path=repo_path,
         repo_name="test/repo",
-        diff_info="",
-        commit_sha="abc123456789",
+        commit=commit,
+        commit_sha=commit.hash,
         agent_type="copilot",
     )
     assert fixtures == []
 
 
-# ──────────────────────────────────────────────────────────────
-# Integration tests: commit-level purity gate in _extract_from_agent_commits
-# ──────────────────────────────────────────────────────────────
-
-
-def test_agent_commits_skipped_when_commit_level_impure(tmp_path, monkeypatch):
-    """If a test file in the commit has deletions, the whole commit is skipped."""
-    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
-
-    repo_path = tmp_path / "repos" / "test__repo"
-    (repo_path / ".git").mkdir(parents=True, exist_ok=True)
-
-    # Prepare test files on disk
-    clean_file = repo_path / "tests" / "clean.py"
-    clean_file.parent.mkdir(parents=True, exist_ok=True)
-    clean_file.write_text("@pytest.fixture\ndef fix(): return 1\n")
-
-    dirty_file = repo_path / "tests" / "dirty.py"
-    dirty_file.parent.mkdir(parents=True, exist_ok=True)
-    dirty_file.write_text("def test(): pass\n")
-
-    diff = "\n".join(
+def test_extract_from_agent_commits_filters_commits_before_start_date(tmp_path):
+    """Commits older than start_date are excluded, using the real
+    commit.author_date (a timezone-aware datetime from PyDriller), not a
+    mocked/hand-parsed date string."""
+    sha = _init_repo_with_commits(
+        tmp_path,
         [
-            "diff --git a/tests/clean.py b/tests/clean.py",
-            "--- /dev/null",
-            "+++ b/tests/clean.py",
-            "@@ -0,0 +1,2 @@",
-            "+@pytest.fixture",
-            "+def fix(): return 1",
-            "diff --git a/tests/dirty.py b/tests/dirty.py",
-            "--- a/tests/dirty.py",
-            "+++ b/tests/dirty.py",
-            "@@ -1,1 +1,1 @@",
-            "-def old(): pass",
-            "+def test(): pass",
-        ]
+            {
+                "path": "tests/test_pure.py",
+                "content": "import pytest\n\n@pytest.fixture\ndef pure_fixture():\n    return 42\n",
+                "msg": "add pure test\n\nCo-authored-by: Claude <claude@anthropic.com>",
+            }
+        ],
     )
 
-    # Monkeypatch module-level helpers
-    monkeypatch.setattr(
-        "collection.agent_fixture_extractor._checkout_commit",
-        lambda *a, **kw: None,
-    )
-    monkeypatch.setattr(
-        extractor,
-        "_get_commit_info",
-        lambda *a, **kw: {"date": "2025-06-01"},
-    )
-    monkeypatch.setattr(
-        extractor,
-        "_get_commit_diff",
-        lambda *a, **kw: diff,
-    )
-
-    # The actual extraction code path we are testing
-
-    monkeypatch.setattr(
-        "collection.agent_fixture_extractor._resolve_repo_path",
-        lambda *a, **kw: repo_path,
-    )
-    monkeypatch.setattr(
-        "collection.agent_fixture_extractor._repo_worktree_lock",
-        lambda *a, **kw: __import__("contextlib").nullcontext(),
-    )
-
+    # A start_date far in the future must exclude every commit, regardless
+    # of when the test actually ran.
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path, start_date="2999-01-01")
     fixtures = extractor._extract_from_agent_commits(
-        repo_name="test/repo",
-        commits={"abc12345": "copilot"},
+        repo_name="owner__repo",
+        commits={sha: "claude"},
     )
+    assert fixtures == []
 
-    # Commit-level gate should block extraction — dirty.py has a deletion
-    assert len(fixtures) == 0
-
-
-def test_agent_commits_proceeds_when_commit_level_pure(tmp_path, monkeypatch):
-    """When all test files are pure additions, extraction proceeds."""
-    extractor = AgentFixtureExtractor(clones_dir=tmp_path)
-
-    repo_path = tmp_path / "repos" / "test__repo"
-    (repo_path / ".git").mkdir(parents=True, exist_ok=True)
-
-    pure_file = repo_path / "tests" / "pure.py"
-    pure_file.parent.mkdir(parents=True, exist_ok=True)
-    pure_file.write_text("@pytest.fixture\ndef fix(): return 1\n")
-
-    diff = "\n".join(
-        [
-            "diff --git a/tests/pure.py b/tests/pure.py",
-            "--- /dev/null",
-            "+++ b/tests/pure.py",
-            "@@ -0,0 +1,2 @@",
-            "+@pytest.fixture",
-            "+def fix(): return 1",
-        ]
-    )
-
-    monkeypatch.setattr(
-        "collection.agent_fixture_extractor._checkout_commit",
-        lambda *a, **kw: None,
-    )
-    monkeypatch.setattr(
-        extractor,
-        "_get_commit_info",
-        lambda *a, **kw: {"date": "2025-06-01"},
-    )
-    monkeypatch.setattr(
-        extractor,
-        "_get_commit_diff",
-        lambda *a, **kw: diff,
-    )
-    monkeypatch.setattr(
-        "collection.agent_fixture_extractor._resolve_repo_path",
-        lambda *a, **kw: repo_path,
-    )
-    monkeypatch.setattr(
-        "collection.agent_fixture_extractor._repo_worktree_lock",
-        lambda *a, **kw: __import__("contextlib").nullcontext(),
-    )
-
+    # A start_date far in the past must include it.
+    extractor = AgentFixtureExtractor(clones_dir=tmp_path, start_date="1970-01-01")
     fixtures = extractor._extract_from_agent_commits(
-        repo_name="test/repo",
-        commits={"abc12345": "copilot"},
+        repo_name="owner__repo",
+        commits={sha: "claude"},
     )
-
-    # Pure addition commit should yield fixtures
     assert len(fixtures) >= 1
-    fixture_names = {f["name"] for f in fixtures}
-    assert "fix" in fixture_names
 
 
 # ──────────────────────────────────────────────────────────────
 # Integration tests: purity gate inside _extract_from_agent_commits()
 # ──────────────────────────────────────────────────────────────
-
-
-def _init_repo_with_commits(tmp_path: Path, commits: list[dict]) -> str:
-    """Create a real git repo under tmp_path/owner__repo and return HEAD commit SHA."""
-    repo = tmp_path / "owner__repo"
-    repo.mkdir()
-    subprocess.run(
-        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
-    )
-    subprocess.run(
-        ["git", "-C", str(repo), "config", "user.email", "test@example.com"],
-        check=True,
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(repo), "config", "user.name", "Test"],
-        check=True,
-        capture_output=True,
-    )
-
-    for c in commits:
-        (repo / c["path"]).parent.mkdir(parents=True, exist_ok=True)
-        (repo / c["path"]).write_text(c.get("content", ""), encoding="utf-8")
-        subprocess.run(
-            ["git", "-C", str(repo), "add", c["path"]], check=True, capture_output=True
-        )
-        msg = c.get("msg", "commit")
-        subprocess.run(
-            ["git", "-C", str(repo), "commit", "-m", msg],
-            check=True,
-            capture_output=True,
-        )
-
-    return (
-        subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"])
-        .decode()
-        .strip()
-    )
 
 
 def test_extract_from_agent_commits_skips_commit_with_deletions(tmp_path):

@@ -2,12 +2,16 @@
 
 Used by `AgentFixtureExtractor` to enforce the "only extract fixtures that
 were completely added, never modified" rule central to the agent-corpus
-methodology. Two implementations exist for the same question — PyDriller's
-parsed `ModifiedFile`/`Commit` objects (`is_pure_addition`,
-`commit_is_pure_addition`) and raw unified-diff text parsing
-(`_raw_diff_file_is_pure_addition`, `_raw_diff_commit_is_pure_addition`) —
-because some call sites only have raw `git show` output, not a PyDriller
-`Commit` object.
+methodology. `AgentFixtureExtractor` itself always has a PyDriller `Commit`
+object in hand and uses the PyDriller-based `is_pure_addition`/
+`commit_is_pure_addition` (structured `ModifiedFile.diff_parsed`/
+`.change_type`, not text parsing). The raw-unified-diff-text equivalents
+(`_raw_diff_file_is_pure_addition`, `_raw_diff_commit_is_pure_addition`) are
+kept as general-purpose utilities for any future caller that only has raw
+`git show`/`git diff` text and no repo/PyDriller access (e.g. a diff blob
+from an API payload) -- exercised directly by their own exhaustive test
+suite (`tests/test_fixture_extractor_small.py`), not by the production
+pipeline.
 """
 
 import re
