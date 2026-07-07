@@ -13,6 +13,7 @@ python -m collection.test_commit_filter agent \
 """
 
 import json
+import statistics
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -260,14 +261,10 @@ def compute_continuous_balance(
                     float(sum(agent_vals) / len(agent_vals)) if agent_vals else None
                 ),
                 "human_median": (
-                    float(sorted(human_vals)[len(human_vals) // 2])
-                    if human_vals
-                    else None
+                    float(statistics.median(human_vals)) if human_vals else None
                 ),
                 "agent_median": (
-                    float(sorted(agent_vals)[len(agent_vals) // 2])
-                    if agent_vals
-                    else None
+                    float(statistics.median(agent_vals)) if agent_vals else None
                 ),
                 "u_statistic": float(statistic),
             },

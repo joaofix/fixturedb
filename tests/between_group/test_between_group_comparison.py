@@ -297,6 +297,25 @@ class TestContinuousBalance:
         # Should handle gracefully (probably return high p-value or special case)
         assert result.variable == "repo_age_years"
 
+    def test_median_correct_for_even_length_list(self):
+        """Regression test: the median was previously computed as
+        sorted(vals)[len(vals) // 2] -- the sorted list's middle-index
+        element, which is only correct for odd-length lists. For an
+        even-length list this silently reports the upper-middle element
+        instead of the true median (the average of the two middle
+        elements), corrupting the balance report's human_median/agent_median
+        fields (though not the p_value/is_balanced verdict itself, which
+        comes from scipy's mannwhitneyu, unaffected by this bug)."""
+        human_values = [1.0, 2.0, 3.0, 4.0]  # true median = 2.5
+        agent_values = [5.0, 6.0, 7.0, 8.0, 100.0]  # true median = 7.0
+
+        result = compute_continuous_balance(
+            human_values, agent_values, "repo_age_years"
+        )
+
+        assert result.details["human_median"] == 2.5
+        assert result.details["agent_median"] == 7.0
+
 
 class TestVariableDistribution:
     """Test querying fixture distributions by control variables."""
