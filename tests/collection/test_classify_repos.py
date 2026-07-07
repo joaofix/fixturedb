@@ -311,21 +311,18 @@ class TestGitHubRateLimiter:
 
 class TestREADMEEnricher:
     def test_fetch_readme_success(self, monkeypatch):
+        import requests
+
         enricher = READMEEnricher()
 
         class FakeResponse:
-            def read(self):
-                return b"Hello world. " * 150
+            text = "Hello world. " * 150
 
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
+            def raise_for_status(self):
                 pass
 
         monkeypatch.setattr(
-            "collection.classify_repos.urllib.request.urlopen",
-            lambda req, timeout=None: FakeResponse(),
+            requests, "get", lambda url, headers=None, timeout=None: FakeResponse()
         )
 
         excerpt = enricher.fetch("owner/repo")
@@ -335,42 +332,44 @@ class TestREADMEEnricher:
         assert words[0] == "Hello"
 
     def test_fetch_readme_404(self, monkeypatch):
-        import urllib.error
+        import requests
 
         enricher = READMEEnricher()
 
-        def fake_urlopen(req, timeout=None):
-            raise urllib.error.HTTPError("url", 404, "Not Found", {}, None)
+        class FakeResponse:
+            status_code = 404
+            headers: dict = {}
+
+            def raise_for_status(self):
+                error = requests.HTTPError("404")
+                error.response = self
+                raise error
 
         monkeypatch.setattr(
-            "collection.classify_repos.urllib.request.urlopen", fake_urlopen
+            requests, "get", lambda url, headers=None, timeout=None: FakeResponse()
         )
 
         excerpt = enricher.fetch("owner/nonexistent")
         assert excerpt is None
 
     def test_fetch_readme_cached(self, monkeypatch):
+        import requests
+
         enricher = READMEEnricher()
         call_count = 0
 
         class FakeResponse:
-            def read(self):
-                return b"Cached content here. " * 50
+            text = "Cached content here. " * 50
 
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
+            def raise_for_status(self):
                 pass
 
-        def fake_urlopen(req, timeout=None):
+        def fake_get(url, headers=None, timeout=None):
             nonlocal call_count
             call_count += 1
             return FakeResponse()
 
-        monkeypatch.setattr(
-            "collection.classify_repos.urllib.request.urlopen", fake_urlopen
-        )
+        monkeypatch.setattr(requests, "get", fake_get)
 
         first = enricher.fetch("owner/repo")
         second = enricher.fetch("owner/repo")
@@ -378,19 +377,26 @@ class TestREADMEEnricher:
         assert call_count == 1
 
     def test_fetch_readme_cached_none(self, monkeypatch):
-        import urllib.error
+        import requests
 
         enricher = READMEEnricher()
         call_count = 0
 
-        def fake_urlopen(req, timeout=None):
+        class FakeResponse:
+            status_code = 404
+            headers: dict = {}
+
+            def raise_for_status(self):
+                error = requests.HTTPError("404")
+                error.response = self
+                raise error
+
+        def fake_get(url, headers=None, timeout=None):
             nonlocal call_count
             call_count += 1
-            raise urllib.error.HTTPError("url", 404, "Not Found", {}, None)
+            return FakeResponse()
 
-        monkeypatch.setattr(
-            "collection.classify_repos.urllib.request.urlopen", fake_urlopen
-        )
+        monkeypatch.setattr(requests, "get", fake_get)
 
         first = enricher.fetch("owner/noreadme")
         second = enricher.fetch("owner/noreadme")
@@ -399,14 +405,14 @@ class TestREADMEEnricher:
         assert call_count == 1
 
     def test_fetch_readme_network_error(self, monkeypatch):
+        import requests
+
         enricher = READMEEnricher()
 
-        def fake_urlopen(req, timeout=None):
-            raise OSError("Network unreachable")
+        def fake_get(url, headers=None, timeout=None):
+            raise requests.ConnectionError("Network unreachable")
 
-        monkeypatch.setattr(
-            "collection.classify_repos.urllib.request.urlopen", fake_urlopen
-        )
+        monkeypatch.setattr(requests, "get", fake_get)
 
         excerpt = enricher.fetch("owner/repo")
         assert excerpt is None

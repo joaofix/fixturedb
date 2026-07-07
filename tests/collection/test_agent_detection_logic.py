@@ -58,3 +58,59 @@ def test_github_api_checker_recurses_one_level_for_nested_configs(monkeypatch):
 
     assert has_files is True
     assert any("CLAUDE" in item.upper() for item in found)
+
+
+def test_get_repo_contents_parses_directory_listing(monkeypatch):
+    """Direct test of _get_repo_contents() against a mocked requests.Response,
+    covering the real HTTP-call implementation (not monkeypatched away, as
+    the test above does for has_agent_config_files)."""
+    checker = GitHubAgentFileChecker()
+
+    class FakeResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return [{"name": "CLAUDE.md", "path": "CLAUDE.md", "type": "file"}]
+
+    captured = {}
+
+    def fake_get(url, headers=None, params=None, timeout=None):
+        captured["url"] = url
+        captured["params"] = params
+        return FakeResponse()
+
+    import requests
+
+    monkeypatch.setattr(requests, "get", fake_get)
+
+    result = checker._get_repo_contents("owner/repo")
+
+    assert result == [{"name": "CLAUDE.md", "path": "CLAUDE.md", "type": "file"}]
+    assert captured["url"] == "https://api.github.com/repos/owner/repo/contents/"
+    assert captured["params"] is None
+
+
+def test_get_repo_contents_returns_none_on_404(monkeypatch):
+    checker = GitHubAgentFileChecker()
+
+    class FakeResponse:
+        status_code = 404
+
+        def raise_for_status(self):
+            import requests
+
+            error = requests.HTTPError("404")
+            error.response = self
+            raise error
+
+        def json(self):
+            return {}
+
+    import requests
+
+    monkeypatch.setattr(requests, "get", lambda *a, **kw: FakeResponse())
+
+    result = checker._get_repo_contents("owner/missing-repo")
+
+    assert result is None

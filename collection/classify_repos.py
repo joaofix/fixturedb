@@ -19,8 +19,6 @@ import random
 import sys
 import threading
 import time
-import urllib.error
-import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Protocol
@@ -351,13 +349,13 @@ class READMEEnricher:
 
         try:
             url = f"https://api.github.com/repos/{repo_full_name}/readme"
-            req = urllib.request.Request(url)
-            req.add_header("Accept", "application/vnd.github.v3.raw")
+            headers = {"Accept": "application/vnd.github.v3.raw"}
             if GITHUB_TOKEN:
-                req.add_header("Authorization", f"token {GITHUB_TOKEN}")
+                headers["Authorization"] = f"token {GITHUB_TOKEN}"
 
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                text = resp.read().decode("utf-8", errors="replace")
+            resp = requests.get(url, headers=headers, timeout=15)
+            resp.raise_for_status()
+            text = resp.text
 
             words = text.split()
             excerpt = " ".join(words[: self._README_WORD_LIMIT])
@@ -366,14 +364,15 @@ class READMEEnricher:
                 self._cache[repo_full_name] = excerpt
             return excerpt
 
-        except urllib.error.HTTPError as exc:
+        except requests.HTTPError as exc:
+            status = exc.response.status_code if exc.response is not None else None
             # 403 can mean: private repo, rate-limited, or blocked
-            if exc.code == 403:
-                # Try to read rate-limit headers to distinguish cause
-                try:
-                    remaining = exc.headers.get("X-RateLimit-Remaining", "?")
-                except Exception:
-                    remaining = "?"
+            if status == 403:
+                remaining = (
+                    exc.response.headers.get("X-RateLimit-Remaining", "?")
+                    if exc.response is not None
+                    else "?"
+                )
                 if remaining == "0":
                     logger.warning("README 403 (rate limited): %s", repo_full_name)
                 else:
@@ -382,12 +381,12 @@ class READMEEnricher:
                         remaining,
                         repo_full_name,
                     )
-            elif exc.code != 404:
-                logger.debug("README HTTP %d for %s", exc.code, repo_full_name)
+            elif status != 404:
+                logger.debug("README HTTP %s for %s", status, repo_full_name)
             with self._lock:
                 self._cache[repo_full_name] = None
             return None
-        except (urllib.error.URLError, OSError, TimeoutError) as exc:
+        except requests.RequestException as exc:
             logger.warning("README network error for %s: %s", repo_full_name, exc)
             with self._lock:
                 self._cache[repo_full_name] = None

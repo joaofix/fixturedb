@@ -12,17 +12,15 @@ Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline
 """
 
 import fnmatch
-import json
 import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from urllib.error import HTTPError
-from urllib.request import Request, urlopen
 
 import platformdirs
+import requests
 from pydriller import Repository
 
 from collection.logging_utils import get_logger
@@ -159,28 +157,30 @@ class GitHubAgentFileChecker:
             List of file/folder info dicts, or None if API call fails
         """
         url = f"https://api.github.com/repos/{full_repo_name}/contents/{path}"
-        if ref and ref != "HEAD":
-            url += f"?ref={ref}"
+        params = {"ref": ref} if ref and ref != "HEAD" else None
 
         headers = {"Accept": "application/vnd.github.v3+json"}
         if self.github_token:
             headers["Authorization"] = f"token {self.github_token}"
 
         try:
-            request = Request(url, headers=headers)
-            with urlopen(request, timeout=timeout) as response:
-                data = json.loads(response.read().decode("utf-8"))
-                # Handle single file vs directory listing
-                if isinstance(data, list):
-                    return data
-                return [data] if isinstance(data, dict) else None
-        except HTTPError as e:
-            if e.code == 404:
+            response = requests.get(
+                url, headers=headers, params=params, timeout=timeout
+            )
+            response.raise_for_status()
+            data = response.json()
+            # Handle single file vs directory listing
+            if isinstance(data, list):
+                return data
+            return [data] if isinstance(data, dict) else None
+        except requests.HTTPError as e:
+            status = e.response.status_code if e.response is not None else None
+            if status == 404:
                 logger.debug(f"[github-api] Not found: {full_repo_name}")
             else:
-                logger.debug(f"[github-api] HTTP {e.code}: {full_repo_name}")
+                logger.debug(f"[github-api] HTTP {status}: {full_repo_name}")
             return None
-        except Exception as e:
+        except requests.RequestException as e:
             logger.debug(f"[github-api] Exception fetching {full_repo_name}: {e}")
             return None
 
