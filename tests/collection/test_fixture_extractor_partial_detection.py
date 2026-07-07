@@ -66,6 +66,66 @@ def test_diff_parser_marks_added_and_context_lines_by_file():
     assert diff_map.line_states[6] == "added"
 
 
+def test_diff_parser_added_line_starting_with_plus_plus_not_mistaken_for_header():
+    """Regression test: an *added* line whose own content starts with "++"
+    (e.g. `++counter;`, or embedded diff/patch text used as fixture data)
+    renders as a "+++"-prefixed hunk line. Previously this matched neither
+    the "added" nor "context" branch (both used multi-character "+++"/"---"
+    prefix exclusions), so it was silently skipped without advancing
+    new_line_no -- desyncing every subsequent line number in the hunk and
+    causing a genuinely pre-existing/unmodified line to be wrongly recorded
+    as "added" (false-positive credit, the dangerous direction for the
+    "no partial credit" rule)."""
+    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
+    diff = "\n".join(
+        [
+            "diff --git a/tests/test_real.py b/tests/test_real.py",
+            "--- a/tests/test_real.py",
+            "+++ b/tests/test_real.py",
+            "@@ -1,2 +1,4 @@",
+            "+int addedA;",
+            "+++weird;",
+            " int preexisting;",
+            "+int addedD;",
+        ]
+    )
+
+    diff_map = extractor._build_diff_line_maps(diff)["tests/test_real.py"]
+    assert diff_map.line_states[1] == "added"
+    assert diff_map.line_states[2] == "added"
+    # The critical assertion: a truly unmodified context line must not be
+    # mismarked "added" just because a preceding "++"-colliding added line
+    # derailed the line-number counter.
+    assert diff_map.line_states[3] == "context"
+    assert diff_map.line_states[4] == "added"
+
+
+def test_diff_parser_added_line_looking_like_file_header_not_mistaken_for_new_file():
+    """Regression test: an added line whose content happens to read like
+    "+++ b/<path>" must not be misparsed as a bogus file-header line (which
+    would fabricate a fictitious file entry and truncate the real file's
+    line map from that point on)."""
+    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
+    diff = "\n".join(
+        [
+            "diff --git a/tests/test_real.py b/tests/test_real.py",
+            "--- a/tests/test_real.py",
+            "+++ b/tests/test_real.py",
+            "@@ -1,2 +1,3 @@",
+            " import pytest",
+            "++ b/tests/decoy.py",
+            "+def new_helper(): pass",
+        ]
+    )
+
+    diff_maps = extractor._build_diff_line_maps(diff)
+    assert list(diff_maps.keys()) == ["tests/test_real.py"]
+    diff_map = diff_maps["tests/test_real.py"]
+    assert diff_map.line_states[1] == "context"
+    assert diff_map.line_states[2] == "added"
+    assert diff_map.line_states[3] == "added"
+
+
 def test_ast_aware_completeness_ignores_blank_lines_inside_fixture_span(tmp_path):
     fixture_file = tmp_path / "test_sample.py"
     fixture_file.write_text(
@@ -135,6 +195,54 @@ def test_ast_aware_completeness_ignores_comments_inside_python_fixture(tmp_path)
             fixture=fixture,
             diff_map=diff_map,
             language="python",
+        )
+        is True
+    )
+
+
+def test_ast_aware_completeness_ignores_comments_inside_java_fixture(tmp_path):
+    """Regression test: Java's tree-sitter grammar names comment nodes
+    "line_comment"/"block_comment", not "comment" (unlike Python/JS/TS) --
+    a check for the literal string "comment" silently never excluded Java
+    comments, so a comment line landing on "context" in the diff (e.g. a
+    generic comment the diff algorithm matched elsewhere) rejected an
+    otherwise-100%-added Java fixture that the identical Python/JS/TS case
+    would have accepted."""
+    fixture_file = tmp_path / "SampleTest.java"
+    fixture_file.write_text(
+        "\n".join(
+            [
+                "import org.junit.Before;",
+                "",
+                "public class SampleTest {",
+                "    @Before",
+                "    public void setUp() {",
+                "        // comment line",
+                "        int value = 42;",
+                "    }",
+                "}",
+            ]
+        )
+    )
+
+    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
+    fixture = SimpleNamespace(start_line=4, end_line=8)
+    diff_map = DiffLineMap(
+        {
+            4: "added",
+            5: "added",
+            6: "context",
+            7: "added",
+            8: "added",
+        }
+    )
+
+    assert (
+        extractor._is_fixture_completely_added(
+            full_path=fixture_file,
+            fixture=fixture,
+            diff_map=diff_map,
+            language="java",
         )
         is True
     )
@@ -264,8 +372,11 @@ def test_added_test_file_detection_ignores_go_paths():
     diff = "\n".join(
         [
             "diff --git a/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go b/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go",
+            "+++ b/connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go",
             "diff --git a/pkg/example_test.go b/pkg/example_test.go",
+            "+++ b/pkg/example_test.go",
             "diff --git a/tests/sample.spec.ts b/tests/sample.spec.ts",
+            "+++ b/tests/sample.spec.ts",
         ]
     )
 
@@ -274,6 +385,25 @@ def test_added_test_file_detection_ignores_go_paths():
     assert "tests/sample.spec.ts" in files
     assert "pkg/example_test.go" not in files
     assert "connect-go/gen/proto/wg/cosmo/platform/v1/platform.pb.go" not in files
+
+
+def test_added_test_file_detection_handles_paths_with_spaces():
+    """Regression test: the "diff --git a/<path> b/<path>" header packs both
+    paths into one whitespace-split line, which is ambiguous when a path
+    contains a space. Detection must read the path from the unambiguous
+    "+++ b/<path>" header instead."""
+    extractor = AgentFixtureExtractor(clones_dir=Path("/tmp"))
+    diff = "\n".join(
+        [
+            "diff --git a/tests/my test.py b/tests/my test.py",
+            "--- /dev/null",
+            "+++ b/tests/my test.py",
+        ]
+    )
+
+    files = extractor._find_added_test_files(diff)
+
+    assert "tests/my test.py" in files
 
 
 def test_checkout_commit_removes_stale_index_lock_and_retries(tmp_path, monkeypatch):

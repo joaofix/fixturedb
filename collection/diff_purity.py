@@ -22,6 +22,16 @@ _HUNK_HEADER_RE = re.compile(
     r"^@@ -(?P<old_start>\d+)(?:,\d+)? \+(?P<new_start>\d+)(?:,\d+)? @@"
 )
 
+# Matches an unrenamed file's "diff --git a/<path> b/<path>" header, where
+# <path> is identical on both sides. Naively space-splitting this line
+# breaks when <path> itself contains a space (the two paths become
+# impossible to tell apart); a backreference lets the regex engine find the
+# correct split by construction, since the path text after "a/" must
+# reappear verbatim after "b/". A renamed file (different old/new path)
+# won't match this at all -- which is fine, since a rename is rejected
+# regardless further down, whether or not its exact paths were captured.
+_UNRENAMED_DIFF_GIT_HEADER_RE = re.compile(r"^diff --git a/(?P<path>.+) b/(?P=path)$")
+
 
 def is_pure_addition(modified_file) -> bool:
     """Return True if the modified file's diff contains exclusively added lines.
@@ -65,14 +75,20 @@ def _raw_diff_file_is_pure_addition(diff_text: str, file_path: str) -> bool:
         if line.startswith("diff --git"):
             in_target = False
             in_hunk = False
-            parts = line.split()
-            if len(parts) >= 4:
-                a_path = parts[2][2:]  # strip "a/"
-                b_path = parts[3][2:]  # strip "b/"
-                if b_path == file_path or a_path == file_path:
+            match = _UNRENAMED_DIFF_GIT_HEADER_RE.match(line)
+            if match:
+                path = match.group("path")
+                if path == file_path:
                     in_target = True
-                    old_path = a_path
-                    new_path = b_path
+                    old_path = path
+                    new_path = path
+            # A renamed file's header (differing a/ and b/ paths) won't
+            # match _UNRENAMED_DIFF_GIT_HEADER_RE at all -- in_target simply
+            # stays False for that block. That's fine: if file_path is the
+            # rename's old or new name, this file's chunk is then treated as
+            # "not found" rather than "found but renamed", but the caller
+            # gets the same answer (False) either way, since the final
+            # `old_path is None` check below also returns False.
             continue
 
         if not in_target:
@@ -165,31 +181,54 @@ def _raw_diff_commit_is_pure_addition(diff_text: str) -> bool:
     current_test_lang: Optional[str] = None
     in_hunk = False
 
+    def _lang_for(path: str) -> Optional[str]:
+        lang = get_language_static(Path(path))
+        if lang != "unknown" and is_test_file_path(path, lang):
+            return lang
+        return None
+
     for line in lines:
         if line.startswith("diff --git"):
             current_file = None
             current_test_lang = None
             in_hunk = False
-            parts = line.split()
-            if len(parts) >= 4:
-                b_path = parts[3][2:]  # strip "b/"
-                current_file = b_path
-                path_obj = Path(current_file)
-                lang = get_language_static(path_obj)
-                if lang != "unknown" and is_test_file_path(current_file, lang):
-                    current_test_lang = lang
+            # The common (unrenamed) case is resolved robustly even if the
+            # path contains a space (see _UNRENAMED_DIFF_GIT_HEADER_RE's
+            # docstring). A renamed/copied file (differing a/ and b/ paths)
+            # falls back to a plain split here -- if that guess is wrong
+            # because the path *also* contains a space, it self-corrects
+            # below via the "rename to "/"copy to " marker line, which
+            # carries a single, unambiguous path.
+            match = _UNRENAMED_DIFF_GIT_HEADER_RE.match(line)
+            if match:
+                current_file = match.group("path")
+            else:
+                parts = line.split()
+                if len(parts) >= 4:
+                    current_file = parts[3][2:]  # strip "b/"
+            if current_file is not None:
+                current_test_lang = _lang_for(current_file)
             continue
 
         if current_file is None:
             continue
 
-        # Rename / copy / delete markers
-        if line.startswith("rename from ") or line.startswith("rename to "):
+        # Rename / copy / delete markers. "rename to "/"copy to " give the
+        # definitive new path directly (one path, no ambiguity) -- re-derive
+        # current_test_lang from it in case the diff --git header's fallback
+        # split above guessed wrong for a renamed/copied path containing a
+        # space.
+        if line.startswith("rename to ") or line.startswith("copy to "):
+            prefix_len = len("rename to ") if line.startswith("rename to ") else len(
+                "copy to "
+            )
+            current_file = line[prefix_len:].strip()
+            current_test_lang = _lang_for(current_file)
             if current_test_lang is not None:
                 return False
             continue
 
-        if line.startswith("copy from ") or line.startswith("copy to "):
+        if line.startswith("rename from ") or line.startswith("copy from "):
             if current_test_lang is not None:
                 return False
             continue

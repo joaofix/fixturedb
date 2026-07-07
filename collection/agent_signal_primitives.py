@@ -40,15 +40,26 @@ DEFAULT_CLONES_DIR = Path(platformdirs.user_data_dir("icsme-nier", "clones"))
 
 @dataclass
 class AgentFileDetectionResult:
-    """Result of scanning a single repository for agent files."""
+    """Result of scanning a single repository for agent files.
+
+    total_agent_files is a property, not a stored field computed once at
+    construction time: scan_repository() builds this object with an empty
+    agents_found and populates it afterward via direct dict mutation
+    (result.agents_found[agent_name] = files_found), so a value computed in
+    __post_init__ would freeze at 0 and never reflect what was actually
+    found -- which is exactly what happened before this was a property (the
+    Tier 2 gate `if agent_files.total_agent_files <= 0: continue` in
+    tiered_agent_corpus_scanner.py rejected every repository unconditionally,
+    regardless of agent, since total_agent_files could never be anything but
+    its construction-time default of 0).
+    """
 
     repo_name: str
     agents_found: Dict[str, List[str]] = field(default_factory=dict)
-    total_agent_files: int = 0
 
-    def __post_init__(self):
-        """Calculate total agent files found."""
-        self.total_agent_files = sum(len(files) for files in self.agents_found.values())
+    @property
+    def total_agent_files(self) -> int:
+        return sum(len(files) for files in self.agents_found.values())
 
 
 class GitHubAgentFileChecker:
@@ -203,12 +214,12 @@ class AgentFileScanner:
     AGENT_FILE_PATTERNS = {
         "claude": {
             "file_names": [
-                ".cursorrules",  # Common for Claude in Cursor editor
-                ".cursorignore",
-                ".cursor",
+                "CLAUDE.md",
+                ".claudeignore",
+                ".claude",
                 "claude.config",
             ],
-            "patterns": [r"\.cursorrules?$", r"claude\.config$"],
+            "patterns": [r"claude\.md$", r"\.claudeignore$", r"\.claude$", r"claude\.config$"],
         },
         "cursor": {
             "file_names": [

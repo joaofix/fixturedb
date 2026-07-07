@@ -589,6 +589,15 @@ class AgentFixtureExtractor:
         visit(root)
         return best_node
 
+    # Comment node type names across this project's supported grammars.
+    # Python/JavaScript/TypeScript all use "comment"; Java is the odd one out
+    # with separate "line_comment"/"block_comment" types -- a single
+    # `== "comment"` check silently never excluded Java comments, causing a
+    # comment line inside an otherwise-100%-added Java fixture to be
+    # evaluated (and potentially rejected) differently than the identical
+    # Python/JS/TS case.
+    _COMMENT_NODE_TYPES = frozenset({"comment", "line_comment", "block_comment"})
+
     def _collect_named_node_lines(self, node) -> set[int]:
         """Collect line numbers covered by named leaf AST nodes under a target node."""
         lines: set[int] = set()
@@ -596,7 +605,10 @@ class AgentFixtureExtractor:
         def visit(current):
             named_children = list(getattr(current, "named_children", []))
 
-            if getattr(current, "type", None) == "comment":
+            if (
+                getattr(current, "type", None)
+                in AgentFixtureExtractor._COMMENT_NODE_TYPES
+            ):
                 return
 
             if getattr(current, "is_named", False) and not named_children:
@@ -622,17 +634,20 @@ class AgentFixtureExtractor:
         """
         files = []
 
+        # Read the path from the "+++ b/<path>" header rather than
+        # space-splitting "diff --git a/<path> b/<path>": that line packs
+        # both the old and new path into one whitespace-separated string, so
+        # a path containing a space (a rare but real possibility) makes the
+        # split ambiguous and silently extracts a truncated/garbage path.
+        # "+++ b/<path>" has only one path and one unambiguous prefix.
         for line in diff.split("\n"):
-            if line.startswith("diff --git"):
-                # Extract file path
-                parts = line.split()
-                if len(parts) >= 4:
-                    file_path = parts[3][2:]  # Remove 'b/' prefix
-                    path_obj = Path(file_path)
-                    language = self._get_language(path_obj)
+            if line.startswith("+++ b/"):
+                file_path = line[len("+++ b/") :].strip()
+                path_obj = Path(file_path)
+                language = self._get_language(path_obj)
 
-                    if language != "unknown" and is_test_file_path(file_path, language):
-                        files.append(file_path)
+                if language != "unknown" and is_test_file_path(file_path, language):
+                    files.append(file_path)
 
         return files
 
@@ -644,33 +659,53 @@ class AgentFixtureExtractor:
         file_states: Dict[str, Dict[int, str]] = {}
         current_file: Optional[str] = None
         new_line_no: Optional[int] = None
+        in_hunk = False
 
         for raw_line in diff.splitlines():
             if raw_line.startswith("diff --git"):
                 current_file = None
                 new_line_no = None
+                in_hunk = False
                 continue
 
-            if raw_line.startswith("+++ b/"):
+            # The "+++ b/path" file header only ever appears before the first
+            # hunk. Gating this on `not in_hunk` (rather than matching
+            # "+++ b/" unconditionally on every line) matters because once
+            # inside a hunk, an *added* line whose own content starts with
+            # "++" (e.g. `++counter;`, or embedded diff/patch text used as
+            # test fixture data) renders as a "+++"-prefixed hunk line --
+            # unconditional matching would misparse it as a bogus file
+            # header instead of recording it as added, corrupting/truncating
+            # the line map for the real file.
+            if not in_hunk and raw_line.startswith("+++ b/"):
                 current_file = raw_line[len("+++ b/") :].strip()
                 file_states.setdefault(current_file, {})
                 continue
 
             hunk_match = _HUNK_HEADER_RE.match(raw_line)
             if hunk_match:
+                in_hunk = True
                 new_line_no = int(hunk_match.group("new_start"))
                 continue
 
             if current_file is None or new_line_no is None:
                 continue
 
-            if raw_line.startswith(" "):
+            # Once inside a hunk, only the line's first character is the diff
+            # marker -- the rest is raw file content that can itself start
+            # with any characters, including more "+"/"-". Checking only
+            # `raw_line[:1]` (rather than a multi-character "+++"/"---"
+            # prefix check) is what lets an added line like "++weird;" still
+            # be recognized as added instead of falling through unmatched
+            # and silently desyncing every subsequent line number in the hunk.
+            marker = raw_line[:1]
+            if marker == " ":
                 file_states[current_file][new_line_no] = "context"
                 new_line_no += 1
-            elif raw_line.startswith("+") and not raw_line.startswith("+++"):
+            elif marker == "+":
                 file_states[current_file][new_line_no] = "added"
                 new_line_no += 1
-            elif raw_line.startswith("-") and not raw_line.startswith("---"):
+            elif marker == "-":
                 # Deletions do not advance the new-file line number.
                 continue
 

@@ -263,6 +263,39 @@ class TestRawDiffFileIsPureAddition:
         )
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
 
+    def test_space_in_path_pure_addition(self):
+        """Regression test: "diff --git a/<path> b/<path>" packs both paths
+        into one whitespace-split line, ambiguous when <path> contains a
+        space -- a backreference-based header match resolves this without
+        space-splitting."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/my test.py b/tests/my test.py",
+                "--- /dev/null",
+                "+++ b/tests/my test.py",
+                "@@ -0,0 +1,2 @@",
+                "+def test_thing():",
+                "+    pass",
+            ]
+        )
+        assert _raw_diff_file_is_pure_addition(diff, "tests/my test.py") is True
+
+    def test_space_in_path_with_deletion(self):
+        """Regression test: a real deletion in a file whose path contains a
+        space must still be detected."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/my test.py b/tests/my test.py",
+                "--- a/tests/my test.py",
+                "+++ b/tests/my test.py",
+                "@@ -1,2 +1,2 @@",
+                "-def old():",
+                "+def new():",
+                " pass",
+            ]
+        )
+        assert _raw_diff_file_is_pure_addition(diff, "tests/my test.py") is False
+
     # ── rename ──
 
     def test_old_and_new_paths_differ(self):
@@ -814,3 +847,52 @@ class TestRawDiffCommitIsPureAddition:
         )
         # File not recognized → treated as non-test → commit is pure
         assert _raw_diff_commit_is_pure_addition(diff) is True
+
+    # ── paths containing spaces ──
+
+    def test_space_in_path_pure_addition(self):
+        """Regression test: the "diff --git a/<path> b/<path>" header packs
+        both paths into one whitespace-split line, ambiguous when <path>
+        contains a space. A pure addition of such a file must still be
+        recognized as pure."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/my test.py b/tests/my test.py",
+                "--- /dev/null",
+                "+++ b/tests/my test.py",
+                "@@ -0,0 +1,2 @@",
+                "+def test_thing():",
+                "+    pass",
+            ]
+        )
+        assert _raw_diff_commit_is_pure_addition(diff) is True
+
+    def test_space_in_path_with_deletion_is_tainted(self):
+        """Regression test: a real deletion in a file whose path contains a
+        space must still be detected (not lost to header-parsing ambiguity)."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/my test.py b/tests/my test.py",
+                "--- a/tests/my test.py",
+                "+++ b/tests/my test.py",
+                "@@ -1,2 +1,2 @@",
+                "-def old():",
+                "+def new():",
+                " pass",
+            ]
+        )
+        assert _raw_diff_commit_is_pure_addition(diff) is False
+
+    def test_space_in_path_renamed_test_file_is_tainted(self):
+        """Regression test: a renamed test file whose *new* path contains a
+        space must still be recognized as a test file and rejected as a
+        rename, via the unambiguous "rename to " marker line correcting any
+        misparse from the "diff --git" header's fallback split."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/old.py b/tests/my new test.py",
+                "rename from tests/old.py",
+                "rename to tests/my new test.py",
+            ]
+        )
+        assert _raw_diff_commit_is_pure_addition(diff) is False
