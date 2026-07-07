@@ -226,6 +226,43 @@ class TestRawDiffFileIsPureAddition:
         )
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
 
+    def test_deletion_line_starting_with_double_dash_not_mistaken_for_header(self):
+        """A deleted line whose own content starts with "--" (no space at
+        position 4, e.g. a CLI-flag example string "--verbose") renders as a
+        "---"-prefixed hunk line. Regression test: this must still be
+        detected as a deletion, not silently skipped as if it were the
+        "--- a/path" file header."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,2 +1,2 @@",
+                " import pytest",
+                "---verbose flag",
+                "+def new_helper():",
+            ]
+        )
+        assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
+
+    def test_deletion_line_looking_like_sql_comment_not_mistaken_for_header(self):
+        """A deleted line whose content is a SQL/Lua-style "-- comment"
+        renders as "--- comment" -- three dashes plus a space, textually
+        identical in shape to a real "--- a/path" file header. Regression
+        test: must still be detected as a deletion."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,2 +1,2 @@",
+                " import pytest",
+                "--- comment",
+                "+def new_helper():",
+            ]
+        )
+        assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
+
     # ── rename ──
 
     def test_old_and_new_paths_differ(self):
@@ -610,6 +647,40 @@ class TestRawDiffCommitIsPureAddition:
                 " def test():",
                 "-    old = 1",
                 "+    new = 2",
+            ]
+        )
+        assert _raw_diff_commit_is_pure_addition(diff) is False
+
+    def test_deletion_line_starting_with_double_dash_not_mistaken_for_header(self):
+        """Regression test (commit-level): a deleted line starting with "--"
+        renders as a "---"-prefixed hunk line and must still count as a
+        deletion, not be mistaken for the "--- a/path" file header."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,2 +1,2 @@",
+                " import pytest",
+                "---verbose flag",
+                "+def new_helper():",
+            ]
+        )
+        assert _raw_diff_commit_is_pure_addition(diff) is False
+
+    def test_deletion_line_looking_like_sql_comment_not_mistaken_for_header(self):
+        """Regression test (commit-level): a deleted SQL/Lua-style "--
+        comment" renders as "--- comment", textually identical in shape to a
+        real file header, and must still count as a deletion."""
+        diff = "\n".join(
+            [
+                "diff --git a/tests/test_foo.py b/tests/test_foo.py",
+                "--- a/tests/test_foo.py",
+                "+++ b/tests/test_foo.py",
+                "@@ -1,2 +1,2 @@",
+                " import pytest",
+                "--- comment",
+                "+def new_helper():",
             ]
         )
         assert _raw_diff_commit_is_pure_addition(diff) is False

@@ -57,12 +57,14 @@ def _raw_diff_file_is_pure_addition(diff_text: str, file_path: str) -> bool:
     """
     lines = diff_text.splitlines()
     in_target = False
+    in_hunk = False
     old_path = None
     new_path = None
 
     for line in lines:
         if line.startswith("diff --git"):
             in_target = False
+            in_hunk = False
             parts = line.split()
             if len(parts) >= 4:
                 a_path = parts[2][2:]  # strip "a/"
@@ -86,11 +88,24 @@ def _raw_diff_file_is_pure_addition(diff_text: str, file_path: str) -> bool:
         if line.startswith("deleted file mode"):
             return False
 
-        if line.startswith("--- ") or line.startswith("+++ "):
+        if _HUNK_HEADER_RE.match(line):
+            in_hunk = True
             continue
 
-        # Hunk lines: a deletion line means the file is not a pure addition
-        if line.startswith("-") and not line.startswith("---"):
+        # The "--- a/path"/"+++ b/path" file headers only ever appear before
+        # the first hunk. Once inside a hunk, a line's first character alone
+        # is the diff marker -- the rest is raw file content that can itself
+        # start with any characters, including more dashes (e.g. a deleted
+        # SQL/Lua "-- comment" or Markdown "---" divider renders as a
+        # "---"-prefixed hunk line). Gating this check on in_hunk (rather
+        # than matching "--- "/"+++ " unconditionally) is what lets such a
+        # deletion still be recognized as a deletion below, instead of being
+        # mistaken for a file header and silently skipped.
+        if not in_hunk and (line.startswith("--- ") or line.startswith("+++ ")):
+            continue
+
+        # Hunk lines: a deletion line means the file is not a pure addition.
+        if in_hunk and line.startswith("-"):
             return False
 
         # Once we hit the next file header, we're done with this file's chunk
@@ -148,11 +163,13 @@ def _raw_diff_commit_is_pure_addition(diff_text: str) -> bool:
     lines = diff_text.splitlines()
     current_file: Optional[str] = None
     current_test_lang: Optional[str] = None
+    in_hunk = False
 
     for line in lines:
         if line.startswith("diff --git"):
             current_file = None
             current_test_lang = None
+            in_hunk = False
             parts = line.split()
             if len(parts) >= 4:
                 b_path = parts[3][2:]  # strip "b/"
@@ -182,11 +199,21 @@ def _raw_diff_commit_is_pure_addition(diff_text: str) -> bool:
                 return False
             continue
 
-        if line.startswith("--- ") or line.startswith("+++ "):
+        if _HUNK_HEADER_RE.match(line):
+            in_hunk = True
+            continue
+
+        # See the matching comment in _raw_diff_file_is_pure_addition: the
+        # "--- a/path"/"+++ b/path" file headers only appear before the first
+        # hunk, so this check must not fire once inside a hunk, or a deleted
+        # line whose own content starts with "--"/"---" (e.g. a SQL/Lua "--"
+        # comment or a Markdown "---" divider) would be mistaken for a file
+        # header and silently skipped instead of being counted as a deletion.
+        if not in_hunk and (line.startswith("--- ") or line.startswith("+++ ")):
             continue
 
         # A deletion line in a hunk
-        if line.startswith("-") and not line.startswith("---"):
+        if in_hunk and line.startswith("-"):
             if current_test_lang is not None:
                 return False
 
