@@ -63,6 +63,21 @@ def test_detect_agent_no_match():
     )
 
 
+def test_detect_codex_and_roo_code_via_commit_signatures():
+    """Regression test: codex/roo_code previously had zero commit_signatures
+    entries (file_based only), so they could never be detected via author
+    identity or trailers -- only by scanning the repo's file tree."""
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+
+    assert scanner._detect_agent_in_commit("Someone", "codex@openai.com", "") == "codex"
+
+    body = "Fix bug\n\nCo-authored-by: Roo Code <roomote@roocode.com>"
+    assert (
+        scanner._detect_agent_in_commit("Someone", "someone@example.com", body)
+        == "roo_code"
+    )
+
+
 def test_detect_agent_word_boundary_rejects_compound_word_collision():
     """Regression test: a bare substring check on author name/email
     incorrectly matched the "cline"/"devin" agent keywords inside unrelated

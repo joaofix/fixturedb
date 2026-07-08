@@ -10,8 +10,8 @@
 #
 # Known, inherent limitation (commit_signatures matching, not file_based):
 # several agent signatures below (devin, jules, claude, cline, cursor,
-# gemini, windsurf) are also common human first names or ordinary English
-# words. Matching is word-boundary-based (collection/agent_patterns.py's
+# gemini, windsurf, codex) are also common human first names or ordinary
+# English words. Matching is word-boundary-based (collection/agent_patterns.py's
 # match_agent_keyword), which rules out a keyword matching inside an
 # unrelated compound word/surname (e.g. "cline" no longer matches inside
 # "McLine"), but it CANNOT rule out an exact whole-word collision -- a
@@ -29,12 +29,20 @@
 # a given agent was used. Matched case-insensitively; entries ending in "/"
 # match a directory name anywhere in the path, others may use fnmatch globs
 # (see collection/agent_patterns.py:path_matches_pattern).
+#
+# Cross-checked against labri-progress/agent-mining (github.com/labri-progress/agent-mining),
+# a community-maintained catalog of agent-detection heuristics where every
+# pattern is backed by a live GitHub code/commit search link -- used here
+# only to validate/extend patterns for agents we already track, not to
+# adopt their additional heuristic categories (branch names, PR labels,
+# commit-message prefixes, .gitignore contents) or their broader agent
+# list, which are out of scope for this project's methodology.
 file_based:
   claude:
     - CLAUDE.md
     - .claudeignore
     - .claude/
-    - anthropic/
+    - .anthropic/
     - claude.config
   cursor:
     - CURSOR.md
@@ -50,10 +58,14 @@ file_based:
     - .copilot-*.md
     - .copilotignore
     - .copilot/
+    - copilot-instructions/
+    - .github/instructions/
   aider:
-    - .aider.conf
-    - .aider-config
-    - aider.config
+    - .aider.conf.yml
+    - .aider.conf.yaml
+    - .aider/
+    - .aiderignore
+    - .aiderrules
   openhands:
     - .openhands.config
     - .openhands
@@ -65,11 +77,23 @@ file_based:
     - .cline
     - .clinerules
   codex:
-    - AGENTS.md
+    - .codex/
   windsurf:
     - .windsurfrules
+    - .windsurf/
+    - .codeium/
   roo_code:
     - .roorules
+    - .roo/
+  jules:
+    - .jules/
+  junie:
+    - .junie/
+    - .jetbrains/instructions.md
+    - .junieignore
+  gemini:
+    - GEMINI.md
+    - .gemini/
 
 # commit_signatures: substrings matched case-insensitively against commit
 # author name/email and Co-authored-by (and similar) trailers.
@@ -103,6 +127,11 @@ commit_signatures:
     - coderabbit
   windsurf:
     - windsurf
+  codex:
+    - codex
+  roo_code:
+    - roomote
+    - roo code
 
 # paper_scope: the subset of file_based agents used for the paper's strict
 # repo-qualification filter (agent_corpus.py's scan_cloned_repo_for_agent_configs).

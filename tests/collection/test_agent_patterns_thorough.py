@@ -27,12 +27,22 @@ def test_all_patterns_have_matching_root_and_nested(mapping, tmp_path):
         for pattern in patterns:
             counter += 1
             name = make_match_name(pattern)
+            # A "file" pattern containing its own "/" (e.g. ".jetbrains/instructions.md")
+            # is only meant to match at that exact relative path from the repo
+            # root -- unlike a bare filename or a dir-marker (matched by
+            # directory name anywhere in the path), matching the full
+            # fnmatch'd relative path string means it can't also match once
+            # nested under an extra directory. So it gets root-only coverage.
+            is_multi_segment_file = not pattern.endswith("/") and "/" in name
             # create each pattern in its own subdirectory to avoid collisions
             base = repo / f"unit_{counter}"
             base.mkdir(parents=True, exist_ok=True)
             if pattern.endswith("/"):
                 (base / name).mkdir(parents=True, exist_ok=True)
                 (base / "nested" / name).mkdir(parents=True, exist_ok=True)
+            elif is_multi_segment_file:
+                (base / name).parent.mkdir(parents=True, exist_ok=True)
+                (base / name).write_text("ok")
             else:
                 (base / name).write_text("ok")
                 (base / "nested").mkdir(parents=True, exist_ok=True)

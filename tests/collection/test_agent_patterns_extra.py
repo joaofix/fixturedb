@@ -73,9 +73,9 @@ def test_repo_contains_patterns_detects_files_and_dirs(tmp_path):
     (repo / "docs").mkdir(parents=True)
     # file matching copilot exact name
     (repo / "copilot_instructions.md").write_text("x")
-    # directory marker for anthropic
-    (repo / "anthropic").mkdir()
-    (repo / "anthropic" / "config.yaml").write_text("y")
+    # directory marker for claude's .anthropic/ (dotfile convention)
+    (repo / ".anthropic").mkdir()
+    (repo / ".anthropic" / "config.yaml").write_text("y")
 
     assert ap.repo_contains_patterns(repo, ap.PAPER_AGENT_CONFIG_PATTERNS)
 

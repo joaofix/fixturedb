@@ -30,7 +30,7 @@ def test_scan_cloned_repo_for_agent_configs_matches_copilot_wildcard(tmp_path):
 
 def test_scan_cloned_repo_for_agent_configs_matches_nested_directory(tmp_path):
     repo_path = _make_repo(tmp_path)
-    nested = repo_path / "anthropic"
+    nested = repo_path / ".anthropic"
     nested.mkdir()
     (nested / "README.md").write_text("# Anthropic\n")
 

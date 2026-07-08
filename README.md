@@ -10,6 +10,10 @@ Replication package for the paper:
 
 FixtureDB is a between-group study of test fixtures extracted from agent-enabled GitHub repositories. It is the companion code for a master's degree thesis in Software Engineering. The collection pipeline detects agent commits, extracts fixtures, and compares agent-authored and human-authored test code within the same repositories. It also includes a separate human-only dataset collected from pre-agent repositories for inter-repository baseline comparison.
 
+## Acknowledgments
+
+Some of our agent-commit detection heuristics (co-authored-by trailer parsing, config-file patterns for individual agents) were cross-checked and improved against [agent-mining](https://github.com/labri-progress/agent-mining), a community-maintained, empirically-verified catalog of AI coding agent detection heuristics maintained by the [LaBRI](https://www.labri.fr/) research group. We're grateful for their work being openly available.
+
 ## Datasets
 
 The repository contains three main datasets. The fixture collections will be regenerated during the next collection cycle.
@@ -35,7 +39,6 @@ FixtureDB covers **Python, Java, JavaScript, and TypeScript**. For each fixture 
 | `fixture_type` | Detected pattern (e.g. `pytest_decorator`, `unittest_setUp`) |
 | `scope` | Execution scope (`per_test`, `per_class`, `per_module`, `global`) |
 | `framework` | Detected testing framework (`pytest`, `unittest`, `junit`, `jest`, `mocha`, etc.) |
-| `reuse_count` | Number of test functions that use this fixture |
 | `has_teardown_pair` | Whether the fixture has a teardown or cleanup counterpart |
 | `fixture_dependencies` | Other fixtures or setup functions this fixture depends on |
 | `mock_usages` | Mock framework usages associated with the fixture |
