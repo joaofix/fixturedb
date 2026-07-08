@@ -16,7 +16,14 @@ logger = logging.getLogger(__name__)
 import re
 
 AGENT_TRAILER_RE = re.compile(
-    r"^\s*(?:co-authored-by|assisted-by|generated-by):\s*(.+?)\s*$",
+    # "co-?authored-?by" (both hyphens optional) rather than a literal
+    # "co-authored-by": some agents emit "Coauthored-by"/"Co-authoredby"
+    # with a hyphen missing on either side -- a real, empirically observed
+    # variant (see labri-progress/agent-mining's _iter_coauthors()), not a
+    # hypothetical one. assisted-by/generated-by are this project's own
+    # additional trailer conventions and are matched literally, since no
+    # equivalent hyphen-variant has been observed for those.
+    r"^\s*(?:co-?authored-?by|assisted-by|generated-by):\s*(.+?)\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 

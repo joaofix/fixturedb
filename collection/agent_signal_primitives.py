@@ -33,6 +33,7 @@ from .agent_patterns import (
     path_matches_pattern,
 )
 from .config import AGENT_CORPUS_START_DATE
+from .utils import AGENT_TRAILER_RE
 
 logger = get_logger(__name__)
 
@@ -663,12 +664,16 @@ class AgentCommitVerifier:
         author_name = commit_data["author_name"]
         author_email = commit_data["author_email"]
 
-        # Check Co-Authored-By trailers (highest confidence)
-        for match in re.finditer(
-            r"co-authored-by:\s*([^<]+)<[^>]+>", message, re.IGNORECASE
-        ):
-            co_author = match.group(1).strip()
-            agent_type = self._match_agent_keywords(co_author)
+        # Check Co-Authored-By/Assisted-by/Generated-by trailers (highest
+        # confidence). Uses the same AGENT_TRAILER_RE as Tier1RepositoryScanner
+        # (collection/utils.py) rather than a separate ad-hoc regex here --
+        # previously this method had its own inline pattern that required a
+        # literal "co-authored-by" (hyphens mandatory) and an angle-bracket
+        # email, so it silently missed the "assisted-by"/"generated-by"
+        # trailer forms and hyphen-omitted variants ("Coauthored-by") that
+        # AGENT_TRAILER_RE already handles.
+        for trailer_value in AGENT_TRAILER_RE.findall(message):
+            agent_type = self._match_agent_keywords(trailer_value)
             if agent_type:
                 return agent_type
 

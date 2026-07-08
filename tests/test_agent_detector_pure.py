@@ -89,6 +89,48 @@ def test_detect_agent_exact_name_collision_is_a_known_limitation():
     )
 
 
+def test_agent_trailer_re_tolerates_missing_hyphens():
+    """Regression test: some agents emit "Coauthored-by"/"Co-authoredby"/
+    "Coauthoredby" trailers with a hyphen missing on either side of "by" --
+    a real, empirically observed variant (see labri-progress/agent-mining's
+    _iter_coauthors(), which uses the same co-?authored-?by pattern). The
+    previous regex required the literal "co-authored-by" and silently
+    missed all three variants."""
+    for trailer in (
+        "Co-authored-by",
+        "Coauthored-by",
+        "Co-authoredby",
+        "Coauthoredby",
+    ):
+        body = f"Fix bug\n\n{trailer}: Claude <claude@anthropic.com>"
+        matches = AGENT_TRAILER_RE.findall(body)
+        assert matches == ["Claude <claude@anthropic.com>"], trailer
+
+
+def test_detect_agent_tolerates_missing_hyphens_in_trailer():
+    """Same regression, exercised end-to-end through both detection paths
+    (Tier1RepositoryScanner and AgentCommitVerifier)."""
+    from collection.agent_signal_primitives import AgentCommitVerifier
+
+    body = "Fix bug\n\nCoauthoredby: Claude <claude@anthropic.com>"
+
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    assert scanner._detect_agent_in_commit("Someone", "someone@example.com", body) == "claude"
+
+    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
+    assert (
+        verifier._detect_agent_in_commit(
+            {
+                "sha": "abc123",
+                "author_name": "Someone",
+                "author_email": "someone@example.com",
+                "message": body,
+            }
+        )
+        == "claude"
+    )
+
+
 def test_detect_agent_bot_authors_are_excluded():
     scanner = Tier1RepositoryScanner(Path("/tmp"))
 

@@ -18,7 +18,7 @@ and the actual pipeline entry point for both tiers below.
 Used for Dataset A (the between-group study's main agent corpus). Checked in order, first match wins:
 
 1. **Author metadata** — the commit's `Author` name + email checked against the `commit_signatures` catalog (some tools set themselves as the primary author).
-2. **Co-authored-by trailers** — the commit body is scanned for `Co-authored-by:`, `Assisted-by:`, `Generated-by:` lines (case-insensitive); the trailer value is checked the same way.
+2. **Co-authored-by trailers** — the commit body is scanned for `Co-authored-by:`, `Assisted-by:`, `Generated-by:` lines (case-insensitive, and hyphen-tolerant on "co-authored-by" specifically — `Coauthored-by`/`Co-authoredby`/`Coauthoredby` all match too, a real variant some agents emit, not just the canonical spelling); the trailer value is checked the same way. Both Tier 1 (`Tier1RepositoryScanner`) and Tier 2 (`AgentCommitVerifier`) share the exact same trailer regex (`AGENT_TRAILER_RE` in `collection/utils.py`) — they used to have two independently-maintained patterns that drifted (Tier 2's didn't tolerate the hyphen variants and didn't recognize `Assisted-by`/`Generated-by` at all).
 
 Matching is **word-boundary-based** (`agent_patterns.py::match_agent_keyword()`), not a bare substring check — this rules out a keyword matching inside an unrelated compound word (e.g. "cline" no longer matches inside "McLine"). It does **not** rule out an exact whole-word collision with a common name (see "Known Limitations" below).
 
