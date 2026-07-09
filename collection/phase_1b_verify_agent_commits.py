@@ -4,7 +4,7 @@ Phase 1B: Verify AI agent commits via Co-authored-by trailer parsing.
 This script takes the repositories identified in Phase 1A and verifies agent commits
 by parsing Co-authored-by trailers and other metadata from git log.
 
-Input: phase_1a_agent_files_*.json (output from Phase 1A)
+Input: phase_1a_agent_commits_tier1_*.json (output from Phase 1A)
 Output: JSON file with verified agent commits per repository for the test-commit-aware extraction pipeline.
 """
 
@@ -21,6 +21,28 @@ from .config import AGENT_CORPUS_START_DATE
 from .resume_utils import latest_matching_file
 
 logger = get_logger(__name__)
+
+
+def _load_phase1a_candidates(output_dir: Path) -> list[str] | None:
+    """Return repo names discovered by Phase 1A, or None if unavailable.
+
+    Returns None (caller should fall back to scanning all cloned repos) when
+    no Phase 1A output file is found or it fails to parse.
+    """
+    phase_1a_files = sorted(output_dir.glob("phase_1a_agent_commits_tier1_*.json"))
+    if not phase_1a_files:
+        return None
+
+    phase_1a_file = phase_1a_files[-1]  # Use latest
+    logger.info(f"Loading Phase 1A results from: {phase_1a_file}")
+    try:
+        with open(phase_1a_file) as f:
+            phase_1a_results = json.load(f)
+        return list(phase_1a_results["repo_details"].keys())
+    except Exception as e:
+        logger.error(f"Failed to load Phase 1A results: {e}")
+        logger.info("Will scan all cloned repositories instead")
+        return None
 
 
 def main():
@@ -56,26 +78,13 @@ def main():
 
     # Find and load Phase 1A results if available
     # This is optional - we can work with all repos if Phase 1A not run
-    phase_1a_results = None
-    phase_1a_files = sorted(output_dir.glob("phase_1a_agent_files_*.json"))
-
-    if phase_1a_files:
-        phase_1a_file = phase_1a_files[-1]  # Use latest
-        logger.info(f"Loading Phase 1A results from: {phase_1a_file}")
-        try:
-            with open(phase_1a_file) as f:
-                phase_1a_results = json.load(f)
-            repo_candidates = list(phase_1a_results["repositories"].keys())
-            logger.info(
-                f"Found {len(repo_candidates)} repositories with agent files from Phase 1A"
-            )
-        except Exception as e:
-            logger.error(f"Failed to load Phase 1A results: {e}")
-            logger.info("Will scan all cloned repositories instead")
-            phase_1a_results = None
-
-    # If Phase 1A results not available, use all cloned repositories
-    if phase_1a_results is None:
+    repo_candidates = _load_phase1a_candidates(output_dir)
+    if repo_candidates is not None:
+        logger.info(
+            f"Found {len(repo_candidates)} repositories with agent files from Phase 1A"
+        )
+    else:
+        # Phase 1A results not available, use all cloned repositories
         repo_candidates = [d.name for d in clones_dir.iterdir() if d.is_dir()]
         logger.info(
             f"No Phase 1A results found. Will verify all {len(repo_candidates)} cloned repositories"

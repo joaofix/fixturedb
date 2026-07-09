@@ -26,7 +26,6 @@ from .agent_signal_primitives import (
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
-    LANGUAGE_CONFIGS,
     TIER1_MINIMUM_AGENT_COMMITS,
     TIER1_MINIMUM_REPOS_WITH_AGENT,
     TIER2_MATCHING_MAX_STARS,
@@ -35,6 +34,7 @@ from .config import (
 )
 from .db import db_session
 from .persistent_clone import clone_repo
+from .test_commit_utils import is_test_file_path as _shared_is_test_file_path
 from .utils import AGENT_TRAILER_RE
 
 logger = get_logger(__name__)
@@ -72,48 +72,17 @@ def _parse_since_date(start_date: str) -> datetime:
 
 
 def _is_test_file_path(relative_path: str, language: Optional[str] = None) -> bool:
+    """Thin wrapper around the canonical `test_commit_utils.is_test_file_path`.
+
+    This used to be an independent, duplicated implementation that drifted
+    from its sibling: a false-positive fix applied to `test_commit_utils.py`
+    (bare suffixes like "IT.java"/"test.js" matching unrelated files, e.g.
+    "Deposit.java"/"latest.js") was never applied here, so the same bug
+    stayed live at this call site. Delegating avoids future drift.
+    """
     if language is None:
         return False
-    config = LANGUAGE_CONFIGS.get(language)
-    if config is None:
-        return False
-
-    rel = relative_path.replace("\\", "/").strip()
-    if not rel:
-        return False
-
-    name = Path(rel).name
-    name_lower = name.lower()
-
-    if "." not in name:
-        return False
-
-    matched = False
-    for pattern in config.test_file_suffixes:
-        pattern_lower = pattern.lower()
-        if pattern_lower.startswith("test_"):
-            if name_lower.startswith("test_") and name_lower.endswith(
-                pattern_lower.split("test_")[1]
-            ):
-                matched = True
-                break
-        elif pattern_lower == "conftest.py":
-            if name_lower == "conftest.py":
-                matched = True
-                break
-        else:
-            if name_lower.endswith(pattern_lower):
-                matched = True
-                break
-
-    if not matched:
-        rel_parts = rel.lower().split("/")
-        for pattern in config.test_path_patterns:
-            if pattern.lower().rstrip("/") in rel_parts:
-                matched = True
-                break
-
-    return matched
+    return _shared_is_test_file_path(relative_path, language)
 
 
 def _collect_test_files_from_pydriller(commit, language: str) -> list[str]:

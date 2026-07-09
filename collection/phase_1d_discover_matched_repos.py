@@ -22,10 +22,22 @@ from .config import (
     TIER1_MINIMUM_AGENT_COMMITS,
     TIER1_MINIMUM_REPOS_WITH_AGENT,
 )
+from .phase_1b_verify_agent_commits import _load_phase1a_candidates
 from .resume_utils import latest_matching_file
 from .tiered_agent_corpus_scanner import Tier2RepoMatcher
 
 logger = get_logger(__name__)
+
+
+def _tier2_exclude_repo_names(output_dir: Path) -> set[str]:
+    """Repo names already counted in Tier 1, to exclude from Tier 2 discovery.
+
+    Without this, Tier 2 can re-select/re-verify repos Tier 1 already
+    counted, double-counting them across both tiers' yield. Phase 1C's own
+    assessment only stores aggregate counts, not repo names, so this loads
+    the underlying Phase 1A repo list directly (same source Phase 1B uses).
+    """
+    return set(_load_phase1a_candidates(output_dir) or [])
 
 
 def main() -> int:
@@ -72,12 +84,17 @@ def main() -> int:
         logger.warning("Tier 1 is already sufficient; Phase 1D is optional.")
 
     logger.info(f"Tier 1 gap: {repos_needed} repos / {commits_needed} commits")
+
+    tier1_repo_names = _tier2_exclude_repo_names(output_dir)
+    logger.info(
+        f"Excluding {len(tier1_repo_names)} repos already counted in Tier 1"
+    )
     logger.info("Discovering Tier 2 candidates using the shared matcher...")
 
     matcher = Tier2RepoMatcher(corpus_db_path=DATA_DIR / "corpus.db")
     verified_commits = matcher.collect_matched_agent_commits(
         target_repo_count=max(1, repos_needed),
-        exclude_repo_names=set(),
+        exclude_repo_names=tier1_repo_names,
         language=None,
         show_progress=True,
     )

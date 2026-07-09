@@ -22,6 +22,21 @@ def test_is_test_file_path_python_cases():
     assert not _is_test_file_path("", "python")
 
 
+def test_is_test_file_path_delegates_to_shared_boundary_fix():
+    """Regression: this module used to have its own independent copy of
+    is_test_file_path that drifted from test_commit_utils.py's version --
+    a false-positive fix there (bare suffixes like "IT.java"/"test.js"
+    matching unrelated files) was never applied here. Now it delegates, so
+    the same boundary cases must hold true here too."""
+    assert not _is_test_file_path("src/main/java/com/example/Deposit.java", "java")
+    assert not _is_test_file_path("src/main/java/com/example/Credit.java", "java")
+    assert not _is_test_file_path("src/latest.js", "javascript")
+    assert not _is_test_file_path("src/contest.js", "javascript")
+    assert _is_test_file_path(
+        "src/main/java/com/example/OrderServiceIT.java", "java"
+    )
+
+
 def test_detect_agent_in_commit_author_and_coauthor():
     scanner = Tier1RepositoryScanner(Path("/tmp"))
 

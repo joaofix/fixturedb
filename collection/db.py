@@ -7,6 +7,7 @@ will not duplicate existing records.
 """
 
 import json
+import re
 import sqlite3
 import time
 from contextlib import contextmanager
@@ -106,7 +107,7 @@ CREATE TABLE IF NOT EXISTS fixtures (
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     commit_type             TEXT DEFAULT NULL,      -- Conventional Commits type of the originating commit
                                     -- (agent or human: feat/fix/docs/refactor/test/chore/style/other/none)
-    UNIQUE(file_id, name, start_line)
+    UNIQUE(file_id, name, start_line, commit_sha)
 );
 
 -- -------------------------------------------------------------------------
@@ -604,6 +605,17 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         if col in fixture:
             columns.append(col)
 
+    # commit_sha must always be part of the row (defaulting to "" when the
+    # caller didn't provide one, e.g. Dataset C's pre2021 extractor) so it
+    # can safely be part of the UNIQUE constraint below. Dataset A/B walk
+    # full repo history and persist one row per qualifying commit, so
+    # dedup must be per-commit, not just per (file, name, line) -- but
+    # SQLite treats NULL as always-distinct in UNIQUE indexes, which would
+    # silently disable dedup entirely for any caller that left it NULL.
+    if "commit_sha" not in columns:
+        columns.append("commit_sha")
+        fixture = {**fixture, "commit_sha": fixture.get("commit_sha") or ""}
+
     # Build the INSERT statement
     cols_str = ", ".join(columns)
     placeholders = ", ".join([f":{col}" for col in columns])
@@ -612,7 +624,7 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         f"""
         INSERT INTO fixtures ({cols_str})
         VALUES ({placeholders})
-        ON CONFLICT(file_id, name, start_line) DO NOTHING
+        ON CONFLICT(file_id, name, start_line, commit_sha) DO NOTHING
         """,
         fixture,
     )
@@ -620,13 +632,14 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         rowid = cursor.lastrowid
         return rowid if rowid is not None else 0
     row = conn.execute(
-        "SELECT id FROM fixtures WHERE file_id=? AND name=? AND start_line=?",
-        (fixture["file_id"], fixture["name"], fixture["start_line"]),
+        "SELECT id FROM fixtures WHERE file_id=? AND name=? AND start_line=? AND commit_sha=?",
+        (fixture["file_id"], fixture["name"], fixture["start_line"], fixture["commit_sha"]),
     ).fetchone()
     if row is None:
         raise ValueError(
             f"Fixture insert conflict but SELECT returned no rows: "
-            f"file_id={fixture['file_id']}, name={fixture['name']}, start_line={fixture['start_line']}"
+            f"file_id={fixture['file_id']}, name={fixture['name']}, "
+            f"start_line={fixture['start_line']}, commit_sha={fixture['commit_sha']}"
         )
     return row["id"]
 
@@ -877,8 +890,12 @@ def classify_domain(topics_str: str | None, description_str: str | None) -> str:
         ],
     }
 
+    # Word-boundary matching, not a plain substring check: several keywords
+    # are short/common enough to collide with unrelated English words (e.g.
+    # "ai" inside "email", "os" inside "postgresql", "auth" inside "author"),
+    # which previously mis-tagged ordinary repo descriptions.
     for domain, keywords in domain_keywords.items():
-        if any(kw in text for kw in keywords):
+        if any(re.search(rf"\b{re.escape(kw)}\b", text) for kw in keywords):
             return domain
 
     return "other"

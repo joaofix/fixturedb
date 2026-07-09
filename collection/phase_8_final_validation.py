@@ -132,8 +132,13 @@ class DatasetValidator:
                             first_line = f.readline().decode("utf-8").strip()
                             columns = first_line.split(",")
 
-                            # Count rows
-                            row_count = sum(1 for _ in f) - 1  # -1 for header
+                            # Count remaining (data) rows. readline() above
+                            # already consumed the header line, so the
+                            # iterator below only sees data rows -- do NOT
+                            # subtract 1 again here, or a header-only CSV
+                            # (0 data rows) reports row_count=-1 and every
+                            # other CSV undercounts by one row.
+                            row_count = sum(1 for _ in f)
 
                             result[csv_name] = {
                                 "valid": True,
@@ -272,6 +277,7 @@ class DatasetValidator:
                 report["human_dataset"]["zip_validation"]["required_files"].values()  # type: ignore[union-attr]
             )
             and report["human_dataset"]["independence_validation"]["is_independent"]
+            and self._csv_content_valid(report["human_dataset"]["csv_validation"])
         )
 
         agent_valid = (
@@ -281,11 +287,31 @@ class DatasetValidator:
             )
             and report["agent_dataset"]["zip_validation"]["agents_md_present"]
             and report["agent_dataset"]["independence_validation"]["is_independent"]
+            and self._csv_content_valid(report["agent_dataset"]["csv_validation"])
         )
 
         report["validation_passed"] = human_valid and agent_valid
 
         return report
+
+    @staticmethod
+    def _csv_content_valid(csv_validation: dict[str, Any]) -> bool:
+        """Gate validation_passed on the CSV content checks that
+        validate_csv_files() already computes.
+
+        Previously csv_validation was computed and stored in the report but
+        never read again -- an empty (header-only) or unreadable CSV would
+        still leave validation_passed True as long as the ZIP had the right
+        filenames and a few expected header columns.
+        """
+        if not all(csv["valid"] for csv in csv_validation.values()):
+            return False
+        # mock_usages.csv may legitimately have zero rows; the other three
+        # core CSVs should never be empty in a real export.
+        return all(
+            csv_validation[name]["row_count"] > 0
+            for name in ("repositories", "test_files", "fixtures")
+        )
 
 
 def main():
@@ -343,6 +369,11 @@ def main():
         ]
         logger.info(f"  Independent: {'✓' if human_indep_valid else '✗'}")
 
+        human_csv_valid = DatasetValidator._csv_content_valid(
+            report["human_dataset"]["csv_validation"]
+        )
+        logger.info(f"  CSV content: {'✓' if human_csv_valid else '✗'}")
+
         logger.info("")
         logger.info("Agent Dataset:")
         agent_zip_valid = report["agent_dataset"]["zip_validation"]["zip_readable"]
@@ -360,6 +391,11 @@ def main():
             "is_independent"
         ]
         logger.info(f"  Independent: {'✓' if agent_indep_valid else '✗'}")
+
+        agent_csv_valid = DatasetValidator._csv_content_valid(
+            report["agent_dataset"]["csv_validation"]
+        )
+        logger.info(f"  CSV content: {'✓' if agent_csv_valid else '✗'}")
 
         logger.info("")
         logger.info("=" * 70)

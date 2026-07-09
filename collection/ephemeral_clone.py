@@ -109,7 +109,20 @@ def clone_with_function(
     except Exception:
         ok = False
 
-    if not ok or not target_dir.exists():
+    if not ok:
+        # clone_fn may have already created target_dir (e.g. mkdir before
+        # `git clone` fails) before reporting failure. Removing it here
+        # matters even though `ok=False` means no yielded work depends on
+        # it: without this, a leftover partial `.git` directory blocks all
+        # future clone attempts for this repo with "destination path
+        # already exists and is not an empty directory", since callers
+        # reuse a fixed, non-tempdir path keyed by repo name.
+        if target_dir.exists():
+            _shutil.rmtree(target_dir, ignore_errors=True)
+        yield None
+        return
+
+    if not target_dir.exists():
         yield None
         return
 

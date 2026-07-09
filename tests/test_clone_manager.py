@@ -60,6 +60,30 @@ def test_clone_with_function_failure(tmp_path):
     assert not target.exists()
 
 
+def test_clone_with_function_cleans_up_partial_dir_on_failure(tmp_path):
+    """Regression: clone_repo_for_commit_scan (the real clone_fn used
+    everywhere) calls target_dir.mkdir() before running `git clone`, then
+    returns False on failure (timeout, 404, etc). The old code only ran
+    rmtree in the success branch, so this partial directory was left behind
+    permanently -- and since callers reuse a fixed, non-tempdir path keyed
+    by repo name (not a fresh tempdir), the next attempt's `git clone`
+    would then fail with "destination path already exists", permanently
+    blocking that repo from ever cloning successfully again."""
+    target = tmp_path / "owner__repo"
+
+    def fake_clone_fail_after_mkdir(url, td: Path):
+        td.mkdir(parents=True, exist_ok=True)
+        (td / ".git").mkdir()  # partial clone state, like an interrupted git clone
+        return False
+
+    with cm.clone_with_function(
+        fake_clone_fail_after_mkdir, "url", target
+    ) as repo_path:
+        assert repo_path is None
+
+    assert not target.exists()
+
+
 def test_clone_with_function_disk_guard(monkeypatch, tmp_path):
     target = tmp_path / "owner__repo"
 
