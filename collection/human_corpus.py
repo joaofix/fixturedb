@@ -924,6 +924,7 @@ class HumanCorpusCollector:
         lang_results = []
         lang_all_fixtures = []
         lang_test_commit_rows = []
+        lang_fixtures_collected = 0
 
         if workers <= 1:
             for repo in lang_repos:
@@ -1018,9 +1019,10 @@ class HumanCorpusCollector:
                 )
                 with progress_lock:
                     stats.fixtures_collected += fixture_count
+                    lang_fixtures_collected += fixture_count
                     if stats.repos_by_language[current_lang] > 0:
                         language_progress[current_lang]["avg_fixtures_per_repo"] = (
-                            stats.fixtures_collected
+                            lang_fixtures_collected
                             / stats.repos_by_language[current_lang]
                         )
 

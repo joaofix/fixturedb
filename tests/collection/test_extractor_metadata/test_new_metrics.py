@@ -125,6 +125,32 @@ public class ServiceTest {
             fixture = next(f for f in result.fixtures if f.name == "setUp")
             assert fixture.max_nesting_depth == 2
 
+    def test_enhanced_for_each_java(self):
+        """Regression: Java's for-each loop ("enhanced_for_statement" in
+        tree-sitter-java) was missing from the nesting-depth block-type set,
+        so it was silently invisible to the metric -- an `if` nested inside
+        a for-each reported depth 2 instead of 3."""
+        code = """
+public class ServiceTest {
+    @Before
+    public void setUp() {
+        for (String item : items) {
+            if (item != null) {
+                process(item);
+            }
+        }
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            fixture = next(f for f in result.fixtures if f.name == "setUp")
+            assert fixture.max_nesting_depth == 3
+
     def test_one_level_if_javascript(self):
         """JavaScript was never affected by the double-counting bug (its
         block-body node is named "statement_block", not "block"), but is

@@ -11,6 +11,9 @@ from pydriller.domain.commit import ModificationType
 
 from .config import LANGUAGE_CONFIGS, NON_CODE_EXTENSIONS
 from .csv_adapter import get_adapter
+from .logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 
 def is_test_file_path(relative_path: str, language: str) -> bool:
@@ -46,8 +49,30 @@ def is_test_file_path(relative_path: str, language: str) -> bool:
             if name_lower == "conftest.py":
                 matched = True
                 break
-        else:
+        elif pattern[:1] in (".", "_", "-"):
+            # Pattern already embeds its own left boundary (e.g. ".test.js"),
+            # so a plain suffix match can't false-positive on an unrelated
+            # word that merely ends the same way.
             if name_lower.endswith(pattern_lower):
+                matched = True
+                break
+        elif pattern[:1].isupper():
+            # PascalCase suffix convention (e.g. "WidgetTest.java",
+            # "WidgetIT.java"). Match case-sensitively so a short/generic
+            # suffix like "IT" only matches its capitalized form, not a
+            # coincidental lowercase substring inside an unrelated word
+            # (e.g. "Deposit.java", "Credit.java").
+            if name.endswith(pattern):
+                matched = True
+                break
+        else:
+            # Bare lowercase suffix with no built-in separator (e.g.
+            # "test.js"). Require it to be the whole name or preceded by a
+            # separator, so it doesn't match an unrelated word that merely
+            # ends the same way (e.g. "latest.js", "contest.js").
+            if name_lower == pattern_lower or any(
+                name_lower.endswith(f"{sep}{pattern_lower}") for sep in (".", "_", "-")
+            ):
                 matched = True
                 break
 
@@ -69,6 +94,9 @@ def collect_test_files_for_commit(
     try:
         commits = list(Repository(str(repo_path), single=commit_sha).traverse_commits())
     except Exception:
+        logger.debug(
+            "Failed to traverse commit %s in %s", commit_sha, repo_path, exc_info=True
+        )
         return []
 
     if not commits:

@@ -20,6 +20,25 @@ def test_is_test_file_path_uses_language_heuristics() -> None:
     assert not is_test_file_path("src/widget.py", "python")
 
 
+def test_is_test_file_path_bare_suffix_requires_case_match() -> None:
+    """Regression: bare PascalCase suffixes like "IT.java" previously matched
+    case-insensitively, so any file ending in "it.java" (e.g. Deposit.java,
+    Credit.java) false-positived as a test file."""
+    assert is_test_file_path("src/main/java/com/example/OrderServiceIT.java", "java")
+    assert not is_test_file_path("src/main/java/com/example/Deposit.java", "java")
+    assert not is_test_file_path("src/main/java/com/example/Credit.java", "java")
+
+
+def test_is_test_file_path_bare_lowercase_suffix_requires_boundary() -> None:
+    """Regression: the bare "test.js"/"test.ts" suffixes previously matched
+    any filename ending in that substring, so ordinary files like latest.js
+    or contest.js false-positived as test files."""
+    assert is_test_file_path("test.js", "javascript")
+    assert is_test_file_path("src/my-test.js", "javascript")
+    assert not is_test_file_path("src/latest.js", "javascript")
+    assert not is_test_file_path("src/contest.js", "javascript")
+
+
 def test_collect_test_files_for_commit_detects_modified_test_files(
     tmp_path: Path,
 ) -> None:

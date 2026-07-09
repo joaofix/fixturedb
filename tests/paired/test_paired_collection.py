@@ -311,6 +311,33 @@ class TestChiSquareBalance:
             assert result["status"] == "insufficient_data"
 
 
+class TestComputeFixtureRates:
+    """Regression tests: fixtures_per_agent_commit / fixtures_per_human_commit
+    must use per-role fixture counts, not the combined total."""
+
+    def test_uses_per_role_fixture_counts_not_combined_total(self):
+        stats = PairedStudyStats(
+            agent_commits=10,
+            human_commits=10,
+            fixtures_observed=80,
+            agent_fixtures_observed=50,
+            human_fixtures_observed=30,
+        )
+
+        rates = PairedStudyCollector._compute_fixture_rates(stats)
+
+        assert rates["fixtures_per_agent_commit"] == 5.0
+        assert rates["fixtures_per_human_commit"] == 3.0
+
+    def test_zero_commits_does_not_divide_by_zero(self):
+        stats = PairedStudyStats(agent_commits=0, human_commits=0)
+
+        rates = PairedStudyCollector._compute_fixture_rates(stats)
+
+        assert rates["fixtures_per_agent_commit"] == 0
+        assert rates["fixtures_per_human_commit"] == 0
+
+
 class TestPairedStudyStats:
     """Test PairedStudyStats dataclass."""
 

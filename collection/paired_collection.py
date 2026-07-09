@@ -42,6 +42,8 @@ class PairedStudyStats:
     human_commits: int = 0
     observations_inserted: int = 0
     fixtures_observed: int = 0
+    agent_fixtures_observed: int = 0
+    human_fixtures_observed: int = 0
     mock_usages_observed: int = 0
     repos_by_language: dict[str, int] = field(default_factory=dict)
     agent_type_breakdown: dict[str, int] = field(default_factory=dict)
@@ -131,6 +133,24 @@ class PairedStudyCollector:
         # For now, we accept SEART-filtered repos.
         # Quality filtering happens per-commit during extraction.
         return True, None
+
+    @staticmethod
+    def _compute_fixture_rates(stats: PairedStudyStats) -> dict:
+        """Compute per-role fixture observation rates from paired-study stats."""
+        return {
+            "total_fixtures_observed": stats.fixtures_observed,
+            "total_mock_usages_observed": stats.mock_usages_observed,
+            "fixtures_per_agent_commit": (
+                stats.agent_fixtures_observed / stats.agent_commits
+                if stats.agent_commits > 0
+                else 0
+            ),
+            "fixtures_per_human_commit": (
+                stats.human_fixtures_observed / stats.human_commits
+                if stats.human_commits > 0
+                else 0
+            ),
+        }
 
     def _compute_chi_square_balance(
         self, agent_counts: dict[str, int], human_counts: dict[str, int]
@@ -364,6 +384,10 @@ class PairedStudyCollector:
 
                     stats.observations_inserted += 1
                     stats.fixtures_observed += fixture_count
+                    if role == "agent":
+                        stats.agent_fixtures_observed += fixture_count
+                    else:
+                        stats.human_fixtures_observed += fixture_count
                     stats.mock_usages_observed += mock_usage_count
 
                     # Track agent type
@@ -462,20 +486,7 @@ class PairedStudyCollector:
                         else 0
                     ),
                 },
-                "fixtures_and_mocks": {
-                    "total_fixtures_observed": stats.fixtures_observed,
-                    "total_mock_usages_observed": stats.mock_usages_observed,
-                    "fixtures_per_agent_commit": (
-                        stats.fixtures_observed / stats.agent_commits
-                        if stats.agent_commits > 0
-                        else 0
-                    ),
-                    "fixtures_per_human_commit": (
-                        stats.fixtures_observed / stats.human_commits
-                        if stats.human_commits > 0
-                        else 0
-                    ),
-                },
+                "fixtures_and_mocks": self._compute_fixture_rates(stats),
                 "repositories_by_language": dict(stats.repos_by_language),
             },
             "control_variables": {

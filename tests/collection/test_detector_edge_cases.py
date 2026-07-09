@@ -348,6 +348,26 @@ def parametrized_fixture(request, arg1, arg2, arg3, arg4, arg5):
         # Should count parameters correctly (5 in this case, not counting request)
         assert fixture.num_parameters >= 5
 
+    def test_keyword_only_and_positional_only_separators_not_counted(self, tmp_path):
+        """Regression: tree-sitter-python emits standalone "keyword_separator"
+        (bare `*`) and "positional_separator" (bare `/`) nodes for
+        keyword-only/positional-only argument markers. These were previously
+        counted as parameter names, inflating num_parameters."""
+        py_file = tmp_path / "test_separators.py"
+        py_file.write_text("""
+import pytest
+
+@pytest.fixture
+def my_fixture(a, *, b=1):
+    return a + b
+""")
+
+        result = extract_fixtures(py_file, "python")
+
+        assert len(result.fixtures) > 0
+        fixture = result.fixtures[0]
+        assert fixture.num_parameters == 2
+
 
 class TestDetectorConsistency:
     """Test consistency of detector results across repeated runs."""

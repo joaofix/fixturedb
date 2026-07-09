@@ -66,6 +66,27 @@ def test_should_process_file_extension_and_size(tmp_path):
     assert not extractor._should_process_file(flarge, "python")
 
 
+def test_find_test_files_detects_flat_prefix_convention(tmp_path):
+    """Regression: the old rglob("*test_.py") glob only matched filenames
+    ENDING in "test_.py", never the standard "test_*.py" PREFIX convention
+    (e.g. a flat-layout "test_widget.py" with no tests/ subdirectory), so
+    such repos were silently scanned as having zero test files."""
+    extractor = Pre2021FixtureExtractor(clones_dir=tmp_path)
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "widget.py").write_text("def value():\n    return 1\n")
+    (repo / "test_widget.py").write_text(
+        "def test_value():\n    assert value() == 1\n"
+    )
+
+    found = extractor._find_test_files(repo, "python")
+    found_names = {p.name for p in found}
+
+    assert "test_widget.py" in found_names
+    assert "widget.py" not in found_names
+
+
 # ──────────────────────────────────────────────────────────────
 # is_pure_addition() — PyDriller-based purity gate
 # ──────────────────────────────────────────────────────────────

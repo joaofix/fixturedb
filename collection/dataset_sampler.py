@@ -102,8 +102,12 @@ class StratifiedSampler:
                 f"({proportion * 100:.1f}%)"
             )
 
-        # Adjust to exact target if needed (rounding may cause differences)
-        while len(sampled) < target_count and sampled:
+        # Adjust to exact target if needed (rounding may cause differences).
+        # Note: this must run even when `sampled` is still empty (every
+        # stratum's proportional count rounded down to 0), or a small
+        # target_count relative to the number of strata silently produces an
+        # empty/under-filled sample instead of backfilling to target_count.
+        while len(sampled) < target_count:
             # Add more fixtures to reach exact target
             additional_needed = target_count - len(sampled)
 

@@ -171,6 +171,7 @@ def _compute_nesting_depth(node) -> int:
         "class_definition",
         "for_in_statement",
         "foreach_statement",
+        "enhanced_for_statement",
         "do_statement",
     }
 
@@ -483,8 +484,15 @@ def _extract_parameter_names(func_node, src_bytes: bytes) -> list[str]:
     if not params_node:
         return []
 
+    # "keyword_separator" (bare `*`) and "positional_separator" (bare `/`)
+    # mark keyword-only/positional-only argument boundaries (e.g.
+    # `def f(a, *, b)`, `def f(a, b, /, c)`) -- they are not parameters.
+    separator_node_types = {"keyword_separator", "positional_separator"}
+
     names = []
     for child in params_node.children:
+        if child.type in separator_node_types:
+            continue
         text = _source(child, src_bytes).strip()
         if not text or text in ("(", ")", ","):
             continue

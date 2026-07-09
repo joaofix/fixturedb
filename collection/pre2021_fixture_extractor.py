@@ -16,6 +16,7 @@ from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_rep
 from .config import CLONES_DIR, DB_PATH
 from .db import db_session
 from .detector import extract_fixtures
+from .test_commit_utils import is_test_file_path
 
 logger = get_logger(__name__)
 
@@ -261,27 +262,14 @@ class Pre2021FixtureExtractor:
             return []
 
         test_files: List[Path] = []
-        seen: set[Path] = set()
 
-        # First pass: canonical test filename conventions (fast and precise).
-        for suffix in config.test_file_suffixes:
-            for match in repo_path.rglob(f"*{suffix}"):
-                if match.is_file() and self._should_process_file(match, language):
-                    if match not in seen:
-                        seen.add(match)
-                        test_files.append(match)
-
-        # Second pass: fallback to files located under common test directories.
-        path_markers = [p.strip("/") for p in config.test_path_patterns]
         for match in repo_path.rglob("*"):
             if not match.is_file() or not self._should_process_file(match, language):
                 continue
 
-            rel_parts = set(match.relative_to(repo_path).parts)
-            if any(marker in rel_parts for marker in path_markers):
-                if match not in seen:
-                    seen.add(match)
-                    test_files.append(match)
+            rel_path = match.relative_to(repo_path).as_posix()
+            if is_test_file_path(rel_path, language.lower()):
+                test_files.append(match)
 
         return test_files
 
