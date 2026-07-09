@@ -80,8 +80,19 @@ def path_matches_pattern(
     if pattern.endswith("/"):
         if not is_dir:
             return False
-        needle = pattern_cf.rstrip("/")
-        return any(part.casefold() == needle for part in path_obj.parts)
+        # Split into segments so multi-segment dir markers (e.g.
+        # ".github/instructions/") are matched as a contiguous run of path
+        # components, not compared whole against a single component (which
+        # could never match, since path_obj.parts never contains "/").
+        needle_parts = tuple(p for p in pattern_cf.rstrip("/").split("/") if p)
+        if not needle_parts:
+            return False
+        path_parts_cf = tuple(part.casefold() for part in path_obj.parts)
+        n = len(needle_parts)
+        return any(
+            path_parts_cf[i : i + n] == needle_parts
+            for i in range(len(path_parts_cf) - n + 1)
+        )
 
     # match exact filename, filename globs, or full-path globs (all casefolded)
     name_cf = path_obj.name.casefold()

@@ -14,6 +14,7 @@ Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline
 import fnmatch
 import os
 import re
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -142,8 +143,38 @@ class GitHubAgentFileChecker:
             logger.debug(f"[github-api] Error checking {full_repo_name}: {e}")
             return False, []
 
+    @staticmethod
+    def _is_rate_limited(response: Optional[requests.Response]) -> bool:
+        """True for a 429, or a 403 GitHub reports as exhausted rate limit
+        (as opposed to a 403 for a private/blocked repo, which has no
+        X-RateLimit-Remaining: 0 header)."""
+        if response is None:
+            return False
+        if response.status_code == 429:
+            return True
+        return (
+            response.status_code == 403
+            and response.headers.get("X-RateLimit-Remaining") == "0"
+        )
+
+    @staticmethod
+    def _rate_limit_wait_seconds(response: requests.Response, attempt: int) -> float:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return max(float(retry_after), 0.5)
+            except ValueError:
+                pass
+        return min(2**attempt, 30)
+
     def _get_repo_contents(
-        self, full_repo_name: str, path: str = "", ref: str = "HEAD", timeout: int = 5
+        self,
+        full_repo_name: str,
+        path: str = "",
+        ref: str = "HEAD",
+        timeout: int = 5,
+        *,
+        max_retries: int = 3,
     ) -> Optional[List[Dict]]:
         """
         Fetch repository contents from GitHub API.
@@ -155,7 +186,14 @@ class GitHubAgentFileChecker:
             timeout: Request timeout
 
         Returns:
-            List of file/folder info dicts, or None if API call fails
+            List of file/folder info dicts, or None if the API call fails --
+            either genuinely (404, private repo) or after exhausting retries
+            on a rate-limited response. Both cases return the same shape
+            since callers treat None as "unavailable," but a rate-limited
+            None is logged distinctly (warning, not debug) so it's visible:
+            it means "unknown," not "verified absent," even though
+            has_agent_config_files() currently has no way to represent that
+            distinction to its own callers.
         """
         url = f"https://api.github.com/repos/{full_repo_name}/contents/{path}"
         params = {"ref": ref} if ref and ref != "HEAD" else None
@@ -164,26 +202,42 @@ class GitHubAgentFileChecker:
         if self.github_token:
             headers["Authorization"] = f"token {self.github_token}"
 
-        try:
-            response = requests.get(
-                url, headers=headers, params=params, timeout=timeout
-            )
-            response.raise_for_status()
-            data = response.json()
-            # Handle single file vs directory listing
-            if isinstance(data, list):
-                return data
-            return [data] if isinstance(data, dict) else None
-        except requests.HTTPError as e:
-            status = e.response.status_code if e.response is not None else None
-            if status == 404:
-                logger.debug(f"[github-api] Not found: {full_repo_name}")
-            else:
-                logger.debug(f"[github-api] HTTP {status}: {full_repo_name}")
-            return None
-        except requests.RequestException as e:
-            logger.debug(f"[github-api] Exception fetching {full_repo_name}: {e}")
-            return None
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.get(
+                    url, headers=headers, params=params, timeout=timeout
+                )
+                response.raise_for_status()
+                data = response.json()
+                # Handle single file vs directory listing
+                if isinstance(data, list):
+                    return data
+                return [data] if isinstance(data, dict) else None
+            except requests.HTTPError as e:
+                if self._is_rate_limited(e.response) and attempt < max_retries:
+                    wait_seconds = self._rate_limit_wait_seconds(e.response, attempt)
+                    logger.warning(
+                        f"[github-api] Rate limited fetching {full_repo_name} "
+                        f"(attempt {attempt + 1}/{max_retries + 1}); "
+                        f"retrying in {wait_seconds:.1f}s"
+                    )
+                    time.sleep(wait_seconds)
+                    continue
+                if self._is_rate_limited(e.response):
+                    logger.warning(
+                        f"[github-api] Rate limited fetching {full_repo_name}; "
+                        "exhausted retries"
+                    )
+                elif e.response is not None and e.response.status_code == 404:
+                    logger.debug(f"[github-api] Not found: {full_repo_name}")
+                else:
+                    status = e.response.status_code if e.response is not None else None
+                    logger.debug(f"[github-api] HTTP {status}: {full_repo_name}")
+                return None
+            except requests.RequestException as e:
+                logger.debug(f"[github-api] Exception fetching {full_repo_name}: {e}")
+                return None
+        return None
 
     def _get_repo_contents_one_level(
         self,
