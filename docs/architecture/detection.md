@@ -17,7 +17,7 @@ This document covers **fixture detection**: identifying test fixture definitions
 
 | Language | Detection Method | Examples |
 |----------|-----------------|----------|
-| Python | Decorators & method names | `@pytest.fixture`, `setUp()`, `@given()` (Behave) |
+| Python | Decorators & method names | `@pytest.fixture`, `setUp()`, `asyncSetUp()` |
 | Java | Annotations & method names | `@Before`, `@BeforeEach`, `@Rule` |
 | JavaScript/TypeScript | Hook function calls | `beforeEach()`, `beforeAll()`, `before()` |
 

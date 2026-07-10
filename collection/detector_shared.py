@@ -294,7 +294,7 @@ def _build_result(
     """Build a FixtureResult from a single node spanning the whole fixture.
 
     Every metric (line range, raw_source, external calls, mocks, complexity)
-    is derived from this one node. Python's pytest-decorator/behave-step
+    is derived from this one node. Python's pytest-decorator
     detection used to pass a wider `decorated_definition` node for the line
     range/external-calls/mocks scan while using the bare `function_definition`
     for raw_source/complexity -- so a fixture's reported line range disagreed
@@ -319,10 +319,10 @@ def _build_result(
 
     if language == "python":
         # Lizard counts `self`/`cls` as an ordinary parameter, inflating
-        # num_parameters by 1 for nearly every unittest/pytest-class-method/
-        # nose-style fixture (anything defined as a method, not a bare
-        # function). Java/JS/TS have no equivalent implicit first parameter,
-        # so this override is Python-only.
+        # num_parameters by 1 for nearly every unittest/pytest-class-method
+        # fixture (anything defined as a method, not a bare function).
+        # Java/JS/TS have no equivalent implicit first parameter, so this
+        # override is Python-only.
         metrics["num_parameters"] = len(_extract_parameter_names(func_node, src_bytes))
 
     # Compute nesting depth from AST (Lizard's max_nesting_depth doesn't work for functions)
