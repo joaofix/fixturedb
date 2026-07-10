@@ -254,6 +254,51 @@ class TestExample(unittest.TestCase):
             setup = next(f for f in result.fixtures if f.name == "setUp")
             assert setup.has_teardown_pair == 0
 
+    def test_unittest_setup_with_addCleanup_has_teardown_pair(self):
+        """Regression: setUp() registering cleanup inline via
+        self.addCleanup(...) -- the modern, docs-recommended pattern -- and
+        defining no separate tearDown() at all was previously reported as
+        has_teardown_pair=0, despite genuinely having teardown logic."""
+        code = """
+class TestExample(unittest.TestCase):
+    def setUp(self):
+        self.resource = Resource()
+        self.addCleanup(self.resource.cleanup)
+
+    def test_something(self):
+        assert True
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.has_teardown_pair == 1
+
+    def test_unittest_setupclass_with_enterClassContext_has_teardown_pair(self):
+        """Same as addCleanup, but for the class-level equivalent:
+        setUpClass() using cls.enterClassContext(...) with no separate
+        tearDownClass()."""
+        code = """
+class TestExample(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = cls.enterClassContext(make_server())
+
+    def test_something(self):
+        assert True
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUpClass")
+            assert setup.has_teardown_pair == 1
+
     def test_pytest_class_method_setup_teardown_pair(self):
         """pytest-style setup_method/teardown_method (snake_case, not
         setUp/tearDown) should be paired -- this was previously broken: the

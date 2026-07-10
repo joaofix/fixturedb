@@ -615,13 +615,16 @@ NAME_BASED_TEARDOWN_PAIRS: dict[str, dict[str, str]] = _TEARDOWN_DETECTION[
     "name_based_pairs"
 ]
 TYPE_BASED_TEARDOWN_PAIRS: dict[str, str] = _TEARDOWN_DETECTION["type_based_pairs"]
+SELF_REGISTERED_CLEANUP: dict[str, dict[str, list[str]]] = _TEARDOWN_DETECTION.get(
+    "self_registered_cleanup", {}
+)
 
 
 def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
     """
     Post-process fixtures to detect has_teardown_pair: whether a fixture has cleanup logic.
 
-    Three detection mechanisms, all driven by
+    Four detection mechanisms, all driven by
     collection/config_data/feature_extraction_patterns.yaml's
     teardown_detection table:
       - yield_based: pytest fixtures -- checks for a 'yield' statement in the
@@ -629,6 +632,11 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
       - name_based: setup and teardown share the same fixture_type and are
         distinguished only by name (unittest_setup, pytest_class_method,
         nose_fixture) -- paired by exact setup-name -> teardown-name.
+      - self_registered_cleanup: some setup-side fixtures (unittest's setUp/
+        setUpClass) can register their own teardown inline via a cleanup
+        call (self.addCleanup(...), self.enterContext(...), etc.) instead of
+        a separately-named teardown method -- checked as an OR alongside
+        name_based, by substring in the setup fixture's own raw_source.
       - type_based: setup and teardown are different fixture_types, paired
         by type + matching scope (e.g. junit5_before_each/junit5_after_each).
 
@@ -652,6 +660,14 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
                     and other.name == expected_name
                     for other in fixtures
                 )
+
+            cleanup_substrings = SELF_REGISTERED_CLEANUP.get(
+                fixture.fixture_type, {}
+            ).get(fixture.name)
+            if cleanup_substrings and any(
+                substring in fixture.raw_source for substring in cleanup_substrings
+            ):
+                has_teardown = True
 
         elif fixture.fixture_type in TYPE_BASED_TEARDOWN_PAIRS:
             expected_type = TYPE_BASED_TEARDOWN_PAIRS[fixture.fixture_type]

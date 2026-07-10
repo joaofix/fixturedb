@@ -60,6 +60,35 @@ class TestExample(unittest.TestCase):
         assert "setUp" in names
         assert "tearDown" in names
 
+    def test_asyncSetUp_and_asyncTearDown_detected(self):
+        """IsolatedAsyncioTestCase's asyncSetUp/asyncTearDown are distinct
+        method names the framework calls in addition to setUp/tearDown, not
+        just async-qualified versions of them -- must be recognized on
+        their own."""
+        code = """
+class TestExample(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.client = await make_client()
+
+    async def asyncTearDown(self):
+        await self.client.close()
+"""
+        assert_fixture_count(code, "python", 2)
+        assert_fixture_detected(
+            code,
+            "python",
+            "asyncSetUp",
+            fixture_type="unittest_setup",
+            scope="per_test",
+        )
+        assert_fixture_detected(
+            code,
+            "python",
+            "asyncTearDown",
+            fixture_type="unittest_setup",
+            scope="per_test",
+        )
+
     def test_setUpClass_method_detected(self):
         """setUpClass should be detected as class-level fixture"""
         code = """

@@ -68,6 +68,12 @@ python:
       tearDownClass: per_class
       setUpModule: per_module
       tearDownModule: per_module
+      # IsolatedAsyncioTestCase's own async lifecycle hooks -- distinct
+      # method names the framework calls in addition to (not instead of)
+      # setUp/tearDown: setUp() -> asyncSetUp() -> test -> asyncTearDown()
+      # -> tearDown(). https://docs.python.org/3/library/unittest.html#unittest.IsolatedAsyncioTestCase.asyncSetUp
+      asyncSetUp: per_test
+      asyncTearDown: per_test
   pytest_class_method:
     framework: pytest
     fixture_type: pytest_class_method

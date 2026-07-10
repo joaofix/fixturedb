@@ -20,7 +20,7 @@ Fixture definitions are organized by **language** and **pattern type**. Each lan
 | Framework | Language | Fixture Type | Pattern | Scope |
 |-----------|----------|--------------|---------|-------|
 | pytest | Python | pytest_decorator | `@pytest.fixture` | per_test, per_class, per_module, global |
-| unittest | Python | unittest_setup | `def setUp/tearDown/setUpClass/tearDownClass` | per_test, per_class, per_module |
+| unittest | Python | unittest_setup | `def setUp/tearDown/setUpClass/tearDownClass/asyncSetUp/asyncTearDown` | per_test, per_class, per_module |
 | nose | Python | nose_fixture | `def setup/teardown/setup_module/teardown_module` | per_test, per_module |
 | behave | Python | behave_given/when/then/step | `@given/@when/@then/@step(...)` | per_test |
 | JUnit 3 | Java | junit3_setup/junit3_teardown | `def setUp()/tearDown()` | per_test |
@@ -48,6 +48,7 @@ Python Fixtures
 │   ├── setUp/tearDown
 │   ├── setUpClass/tearDownClass
 │   ├── setUpModule/tearDownModule
+│   ├── asyncSetUp/asyncTearDown (IsolatedAsyncioTestCase)
 │   └── setup/teardown (nose)
 └── Scope: per_test, per_class, per_module, global
 ```
@@ -59,8 +60,10 @@ Python Fixtures
 
 ### unittest Fixtures
 
-**Pattern:** Method names: `setUp()`, `tearDown()`, `setUpClass()`, `tearDownClass()`, `setUpModule()`, `tearDownModule()`  
+**Pattern:** Method names: `setUp()`, `tearDown()`, `setUpClass()`, `tearDownClass()`, `setUpModule()`, `tearDownModule()`, `asyncSetUp()`, `asyncTearDown()` (the last two are `IsolatedAsyncioTestCase`'s own hooks, called in addition to `setUp()`/`tearDown()`, not a replacement for them)
 **Scope:** Determined by method name and class context
+
+**Teardown pairing (`has_teardown_pair`):** in addition to a same-scope, separately-named teardown method (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`), a `setUp()`/`setUpClass()` fixture is also flagged as having a teardown pair if its own body registers cleanup inline via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class) — the modern, docs-recommended alternative to a separate teardown method. See `collection/config_data/feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table.
 
 ### nose Fixtures
 
@@ -678,7 +681,7 @@ graph TD
     B --> B1["Scope: function<br/>class / module<br/>session"]
     B --> B2["@given/@when/@then<br/>Behave BDD"]
     A --> C["Method Names<br/>unittest"]
-    C --> C1["setUp/tearDown<br/>setUpClass/tearDownClass<br/>setUpModule/tearDownModule"]
+    C --> C1["setUp/tearDown<br/>setUpClass/tearDownClass<br/>setUpModule/tearDownModule<br/>asyncSetUp/asyncTearDown"]
     A --> D["Method Names<br/>nose"]
     D --> D1["setup/teardown<br/>setup_module/teardown_module"]
 ```

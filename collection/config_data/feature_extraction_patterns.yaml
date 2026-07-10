@@ -314,6 +314,25 @@ teardown_detection:
       setup_module: teardown_module
       setup_package: teardown_package
 
+  # Some setup-side fixtures can ALSO register their own teardown inline,
+  # via a cleanup-registration call made in the setup fixture's own body,
+  # instead of (or in addition to) a separately-named teardown method --
+  # e.g. unittest's self.addCleanup(...)/self.enterContext(...) inside
+  # setUp(), or cls.addClassCleanup(...)/cls.enterClassContext(...) inside
+  # setUpClass(). Without this, a setUp() that only uses addCleanup and
+  # defines no separate tearDown() -- the modern, docs-recommended pattern
+  # -- was reported as has_teardown_pair=0 despite genuinely having
+  # teardown logic. Checked as an OR alongside name_based_pairs above, not
+  # a replacement for it. Maps fixture_type -> {setup_name: [substrings
+  # that, if found in the setup fixture's own raw_source, count as
+  # evidence of self-registered teardown]}.
+  # Note: there is no module-level equivalent (no addModuleCleanup exists
+  # in unittest as of this writing), so setUpModule has no entry here.
+  self_registered_cleanup:
+    unittest_setup:
+      setUp: ["addCleanup(", "enterContext("]
+      setUpClass: ["addClassCleanup(", "enterClassContext("]
+
   # fixture_type values where setup and teardown are DIFFERENT fixture_types,
   # paired by type + matching scope (e.g. junit5_before_each's teardown is a
   # separate junit5_after_each fixture in the same class). Maps
