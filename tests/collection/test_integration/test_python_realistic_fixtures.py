@@ -177,11 +177,11 @@ def reset_state():
     yield
     cleanup_state()
 
-def setup_module():
+def setUpModule():
     global MODULE_SETUP_DONE
     MODULE_SETUP_DONE = True
 
-def teardown_module():
+def tearDownModule():
     global MODULE_SETUP_DONE
     MODULE_SETUP_DONE = False
 """

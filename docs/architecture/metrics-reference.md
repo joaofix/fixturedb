@@ -95,7 +95,7 @@ false-positive on a string literal that happens to contain a matched substring.
 
 Lizard's parameter count, with one Python-specific correction: Lizard counts a method's implicit
 `self`/`cls` as an ordinary parameter, which inflated `num_parameters` by 1 for essentially every
-unittest/pytest-class-method/nose-style fixture relative to a bare pytest_decorator function or an
+unittest/pytest-class-method fixture relative to a bare pytest_decorator function or an
 equivalent Java/JS fixture (neither of which has an implicit first parameter). **Fixed this session**:
 for Python, `num_parameters` is now computed by reading each parameter's own AST node directly
 (`_extract_parameter_names()`) and excluding `self`/`cls`, instead of using Lizard's raw count.
@@ -149,7 +149,7 @@ the double is used afterward, not a keyword match. Full framework list and patte
 [detection.md § Mock Detection](detection.md#mock-detection).
 
 **Fixed this session:** mocks were previously scanned from a wider node than the fixture's own body for
-Python's `pytest_decorator`/`behave_step` types, so a mock construct sitting purely in a decorator's own
+Python's `pytest_decorator` type, so a mock construct sitting purely in a decorator's own
 arguments (e.g. `@pytest.fixture(params=[MagicMock()])`) was incorrectly attributed to the fixture. Now
 scoped consistently to the fixture's own function node (`_build_result()`).
 

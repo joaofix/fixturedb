@@ -1,4 +1,9 @@
-"""Java fixture detection: JUnit3/4/5, TestNG, Spring, Cucumber annotations.
+"""Java fixture detection: JUnit3/4/5, TestNG annotations.
+
+Only JUnit and TestNG are covered -- these are Java's two dominant,
+actively-maintained testing frameworks. Other frameworks layered on top of
+them (Spring, Cucumber) are deliberately out of scope; see
+fixture_definitions.yaml's java.excluded list for why.
 
 Pattern tables are loaded from
 collection/config_data/fixture_definitions.yaml rather than hardcoded here

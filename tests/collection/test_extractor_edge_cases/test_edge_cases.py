@@ -172,11 +172,11 @@ class Test:
     def test_no_indentation_module_level(self):
         """Module-level fixtures should be detected without class indentation"""
         code = """
-def setup_module():
+def setUpModule():
     global resource
     resource = create()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_module")
+        fixture = assert_fixture_detected(code, "python", "setUpModule")
         assert fixture.scope == "per_module"
 
 

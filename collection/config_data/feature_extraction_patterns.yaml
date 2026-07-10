@@ -300,7 +300,7 @@ teardown_detection:
   # and are distinguished only by name (e.g. unittest_setup covers both
   # "setUp" and "tearDown"). Maps fixture_type -> {setup_name: teardown_name}.
   # These names must stay in sync with this file's python.unittest_setup /
-  # python.pytest_class_method / python.nose_fixture name maps (fixture_definitions.yaml).
+  # python.pytest_class_method name maps (fixture_definitions.yaml).
   name_based_pairs:
     unittest_setup:
       setUp: tearDown
@@ -309,10 +309,6 @@ teardown_detection:
     pytest_class_method:
       setup_method: teardown_method
       setup_class: teardown_class
-    nose_fixture:
-      setup: teardown
-      setup_module: teardown_module
-      setup_package: teardown_package
 
   # Some setup-side fixtures can ALSO register their own teardown inline,
   # via a cleanup-registration call made in the setup fixture's own body,

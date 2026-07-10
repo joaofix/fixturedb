@@ -207,50 +207,39 @@ def client(app):
 
 
 class TestModuleLevelFixtures:
-    """Nose-style module/package-level setup and teardown"""
+    """Nose-style module/package-level setup and teardown are deliberately
+    NOT detected -- only pytest and unittest are in scope for Python (see
+    fixture_definitions.yaml's python.excluded list)."""
 
-    def test_setup_module_detected(self):
-        """setup_module() should be detected as module-level fixture"""
+    def test_setup_module_not_detected(self):
         code = """
 def setup_module():
     global db
     db = create_database()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_module")
-        assert fixture.fixture_type == "nose_fixture"
-        assert fixture.framework is None
-        assert fixture.scope == "per_module"
+        assert_fixture_count(code, "python", 0)
 
-    def test_teardown_module_detected(self):
-        """teardown_module() should be detected"""
+    def test_teardown_module_not_detected(self):
         code = """
 def teardown_module():
     db.close()
 """
-        fixture = assert_fixture_detected(code, "python", "teardown_module")
-        assert fixture.fixture_type == "nose_fixture"
-        assert fixture.scope == "per_module"
+        assert_fixture_count(code, "python", 0)
 
-    def test_setup_package_detected(self):
-        """setup_package() -- previously had zero test coverage."""
+    def test_setup_package_not_detected(self):
         code = """
 def setup_package():
     global resource
     resource = initialize()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_package")
-        assert fixture.fixture_type == "nose_fixture"
-        assert fixture.scope == "per_module"
+        assert_fixture_count(code, "python", 0)
 
-    def test_teardown_package_detected(self):
-        """teardown_package() -- previously had zero test coverage."""
+    def test_teardown_package_not_detected(self):
         code = """
 def teardown_package():
     resource.release()
 """
-        fixture = assert_fixture_detected(code, "python", "teardown_package")
-        assert fixture.fixture_type == "nose_fixture"
-        assert fixture.scope == "per_module"
+        assert_fixture_count(code, "python", 0)
 
 
 class TestPytestClassMethodClassScope:
@@ -419,37 +408,24 @@ async def async_configured_db(request):
         )
         assert fixture.name == "async_configured_db"
 
-    def test_async_setup_module_detected(self):
-        """Async setup_module() should be detected"""
+    def test_async_setup_module_not_detected(self):
+        """Nose's setup_module (async or not) is deliberately not detected
+        -- only pytest and unittest are in scope for Python."""
         code = """
 async def setup_module():
     global test_resource
     test_resource = await initialize_resource()
 """
-        assert_fixture_detected(
-            code,
-            "python",
-            "setup_module",
-            fixture_type="nose_fixture",
-            scope="per_module",
-        )
+        assert_fixture_count(code, "python", 0)
 
-    def test_async_teardown_module_detected(self):
-        """Async teardown_module() should be detected"""
+    def test_async_teardown_module_not_detected(self):
         code = """
 async def teardown_module():
     await cleanup_resource()
 """
-        assert_fixture_detected(
-            code,
-            "python",
-            "teardown_module",
-            fixture_type="nose_fixture",
-            scope="per_module",
-        )
+        assert_fixture_count(code, "python", 0)
 
-    def test_async_setup_and_teardown_module(self):
-        """Both async setup_module and teardown_module"""
+    def test_async_setup_and_teardown_module_not_detected(self):
         code = """
 async def setup_module():
     await create_test_db()
@@ -457,33 +433,27 @@ async def setup_module():
 async def teardown_module():
     await drop_test_db()
 """
-        assert_fixture_count(code, "python", 2)
-        assert_fixture_detected(code, "python", "setup_module")
-        assert_fixture_detected(code, "python", "teardown_module")
+        assert_fixture_count(code, "python", 0)
 
-    def test_async_setup_function_detected(self):
-        """Async setup() function (nose style)"""
+    def test_async_setup_function_not_detected(self):
+        """Nose-style setup() (async or not) is deliberately not detected."""
         code = """
 async def setup():
     global resource
     resource = await get_resource()
 """
-        assert_fixture_detected(
-            code, "python", "setup", fixture_type="nose_fixture", scope="per_test"
-        )
+        assert_fixture_count(code, "python", 0)
 
-    def test_async_teardown_function_detected(self):
-        """Async teardown() function (nose style)"""
+    def test_async_teardown_function_not_detected(self):
         code = """
 async def teardown():
     await release_resource()
 """
-        assert_fixture_detected(
-            code, "python", "teardown", fixture_type="nose_fixture", scope="per_test"
-        )
+        assert_fixture_count(code, "python", 0)
 
     def test_mixed_async_and_sync_fixtures(self):
-        """File with both async and sync fixtures"""
+        """File with both async and sync fixtures; the nose-style
+        setup_module is not a recognized fixture and must not be counted."""
         code = """
 @pytest.fixture
 def sync_fixture():
@@ -497,10 +467,9 @@ async def async_fixture():
 async def setup_module():
     pass
 """
-        assert_fixture_count(code, "python", 3)
+        assert_fixture_count(code, "python", 2)
         assert_fixture_detected(code, "python", "sync_fixture")
         assert_fixture_detected(code, "python", "async_fixture")
-        assert_fixture_detected(code, "python", "setup_module")
 
     def test_async_pytest_mark_asyncio(self):
         """@pytest.mark.asyncio decorated async test (not a fixture)"""
@@ -621,11 +590,11 @@ def sync_fixture():
 
 
 class TestBehaveBDDSteps:
-    """Behave BDD step decorators (@given/@when/@then/@step) -- previously
-    had zero test coverage at all despite being one of fixture_definitions.yaml's
-    5 python pattern groups."""
+    """Behave BDD step decorators (@given/@when/@then/@step) are
+    deliberately NOT detected -- only pytest and unittest are in scope for
+    Python (see fixture_definitions.yaml's python.excluded list)."""
 
-    def test_given_step_detected(self):
+    def test_given_step_not_detected(self):
         code = """
 from behave import given
 
@@ -633,12 +602,9 @@ from behave import given
 def step_impl(context):
     context.user = create_user()
 """
-        fixture = assert_fixture_detected(code, "python", "step_impl")
-        assert fixture.fixture_type == "behave_given"
-        assert fixture.framework == "behave"
-        assert fixture.scope == "per_test"
+        assert_fixture_count(code, "python", 0)
 
-    def test_when_step_detected(self):
+    def test_when_step_not_detected(self):
         code = """
 from behave import when
 
@@ -646,12 +612,9 @@ from behave import when
 def step_impl(context):
     context.response = submit_form()
 """
-        fixture = assert_fixture_detected(code, "python", "step_impl")
-        assert fixture.fixture_type == "behave_when"
-        assert fixture.framework == "behave"
-        assert fixture.scope == "per_test"
+        assert_fixture_count(code, "python", 0)
 
-    def test_then_step_detected(self):
+    def test_then_step_not_detected(self):
         code = """
 from behave import then
 
@@ -659,14 +622,9 @@ from behave import then
 def step_impl(context):
     assert context.response.page == 'confirmation'
 """
-        fixture = assert_fixture_detected(code, "python", "step_impl")
-        assert fixture.fixture_type == "behave_then"
-        assert fixture.framework == "behave"
-        assert fixture.scope == "per_test"
+        assert_fixture_count(code, "python", 0)
 
-    def test_step_decorator_detected(self):
-        """@step is the generic, framework-agnostic form of the same
-        decorator family."""
+    def test_step_decorator_not_detected(self):
         code = """
 from behave import step
 
@@ -674,10 +632,7 @@ from behave import step
 def step_impl(context):
     wait_for_idle()
 """
-        fixture = assert_fixture_detected(code, "python", "step_impl")
-        assert fixture.fixture_type == "behave_step"
-        assert fixture.framework == "behave"
-        assert fixture.scope == "per_test"
+        assert_fixture_count(code, "python", 0)
 
 
 if __name__ == "__main__":

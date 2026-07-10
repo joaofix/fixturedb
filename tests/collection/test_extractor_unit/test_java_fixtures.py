@@ -114,13 +114,15 @@ public class PlainClass {
         assert_fixture_not_detected(code, "java", "setUp")
 
     def test_annotated_method_is_not_double_detected_via_fallback(self):
-        """A method with a DIFFERENT annotation (not @Before/@After) named
-        tearDown must be detected once, via its real annotation -- not
-        also picked up by the JUnit3 fallback. Previously the fallback's
-        guard only excluded "@Before"/"@After" substrings, so a
-        @Given-annotated method named tearDown produced two fixtures
-        (cucumber_given AND a spurious junit3_teardown) for the same
-        method."""
+        """A method with a DIFFERENT, unrecognized annotation (not
+        @Before/@After) named tearDown must not be picked up by the JUnit3
+        fallback. Previously the fallback's guard only excluded
+        "@Before"/"@After" substrings, so an (at the time) @Given-annotated
+        method named tearDown produced two fixtures (cucumber_given AND a
+        spurious junit3_teardown) for the same method. @Given is no longer a
+        recognized annotation at all (Cucumber is out of scope -- see
+        fixture_definitions.yaml's java.excluded), so the correct outcome
+        now is zero fixtures for this method, not a double-count."""
         code = """
 public class Steps extends TestCase {
     @Given("a precondition")
@@ -129,10 +131,7 @@ public class Steps extends TestCase {
     }
 }
 """
-        assert_fixture_count(code, "java", 1)
-        fixture = assert_fixture_detected(code, "java", "tearDown")
-        assert fixture.fixture_type == "cucumber_given"
-        assert fixture.framework == "cucumber"
+        assert_fixture_count(code, "java", 0)
 
     def test_test_annotated_method_named_setup_is_not_misclassified(self):
         """A @Test-annotated method that happens to be named setUp is a

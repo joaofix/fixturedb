@@ -240,8 +240,11 @@ public class UserServiceTest {
         assert fixtures[0].fixture_type == "testng_data_provider"
         assert fixtures[0].framework == "testng"
 
-    def test_spring_annotations_have_spring_framework(self):
-        """@Bean/@TestConfiguration should have framework='spring', not 'junit'."""
+    def test_spring_annotations_not_detected(self):
+        """@Bean/@TestConfiguration are deliberately NOT detected -- Spring
+        is a dependency-injection framework, not a testing framework (only
+        JUnit and TestNG are in scope for Java; see fixture_definitions.yaml's
+        java.excluded list)."""
         code = """
 import org.springframework.context.annotation.Bean;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -258,20 +261,20 @@ public class AppConfigTest {
     }
 }
 """
-        fixtures = extract_and_find_fixtures(code, "java", "dataSource")
-        assert fixtures[0].fixture_type == "spring_bean"
-        assert fixtures[0].framework == "spring"
+        assert extract_and_find_fixtures(code, "java", "dataSource") == []
+        assert extract_and_find_fixtures(code, "java", "testConfig") == []
 
-        fixtures = extract_and_find_fixtures(code, "java", "testConfig")
-        assert fixtures[0].fixture_type == "spring_test_config"
-        assert fixtures[0].framework == "spring"
-
-    def test_cucumber_annotations_have_cucumber_framework(self):
-        """@Given/@When/@Then should have framework='cucumber', not 'junit'."""
+    def test_cucumber_annotations_not_detected(self):
+        """@Given/@When/@Then/@And/@But/@Attachment are deliberately NOT
+        detected -- Cucumber is a BDD framework, not JUnit or TestNG (see
+        fixture_definitions.yaml's java.excluded list)."""
         code = """
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.But;
+import io.cucumber.java.Attachment;
 
 public class StepDefinitions {
     @Given("a logged-in user")
@@ -288,30 +291,7 @@ public class StepDefinitions {
     public void theConfirmationPageIsShown() {
         assertConfirmation();
     }
-}
-"""
-        fixtures = extract_and_find_fixtures(code, "java", "aLoggedInUser")
-        assert fixtures[0].fixture_type == "cucumber_given"
-        assert fixtures[0].framework == "cucumber"
 
-        fixtures = extract_and_find_fixtures(code, "java", "theySubmitTheForm")
-        assert fixtures[0].fixture_type == "cucumber_when"
-        assert fixtures[0].framework == "cucumber"
-
-        fixtures = extract_and_find_fixtures(code, "java", "theConfirmationPageIsShown")
-        assert fixtures[0].fixture_type == "cucumber_then"
-        assert fixtures[0].framework == "cucumber"
-
-    def test_cucumber_and_but_attachment_annotations(self):
-        """@And/@But/@Attachment -- previously had zero test coverage at
-        all despite being 3 of the 19 entries in fixture_definitions.yaml's
-        java.annotations table."""
-        code = """
-import io.cucumber.java.en.And;
-import io.cucumber.java.en.But;
-import io.cucumber.java.Attachment;
-
-public class StepDefinitions {
     @And("their session is active")
     public void theirSessionIsActive() {
         checkSession();
@@ -328,17 +308,15 @@ public class StepDefinitions {
     }
 }
 """
-        fixtures = extract_and_find_fixtures(code, "java", "theirSessionIsActive")
-        assert fixtures[0].fixture_type == "cucumber_and"
-        assert fixtures[0].framework == "cucumber"
-
-        fixtures = extract_and_find_fixtures(code, "java", "theyAreNotAnAdmin")
-        assert fixtures[0].fixture_type == "cucumber_but"
-        assert fixtures[0].framework == "cucumber"
-
-        fixtures = extract_and_find_fixtures(code, "java", "captureScreenshot")
-        assert fixtures[0].fixture_type == "cucumber_attachment"
-        assert fixtures[0].framework == "cucumber"
+        for method_name in (
+            "aLoggedInUser",
+            "theySubmitTheForm",
+            "theConfirmationPageIsShown",
+            "theirSessionIsActive",
+            "theyAreNotAnAdmin",
+            "captureScreenshot",
+        ):
+            assert extract_and_find_fixtures(code, "java", method_name) == []
 
 
 @pytest.mark.skip(reason="Go is not supported")

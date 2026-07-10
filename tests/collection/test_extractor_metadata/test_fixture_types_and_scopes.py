@@ -7,6 +7,7 @@ Validates that fixtures are correctly classified by type and scope.
 import pytest
 
 from ..conftest import (
+    assert_fixture_count,
     assert_fixture_detected,
 )
 
@@ -120,40 +121,33 @@ def my_fixture():
 
 
 class TestModuleLevelFixtures:
-    """Validate module-level fixture detection"""
+    """nose's module-level setup_module/teardown_module/setup_package are
+    deliberately NOT detected -- only pytest and unittest are in scope for
+    Python (see fixture_definitions.yaml's python.excluded list)."""
 
-    def test_setup_module_is_module_scope(self):
-        """setup_module() should be type='nose_fixture' with per_module scope"""
+    def test_setup_module_not_detected(self):
         code = """
 def setup_module():
     global db
     db = create_database()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_module")
-        assert fixture.fixture_type == "nose_fixture"
-        assert fixture.scope == "per_module"
+        assert_fixture_count(code, "python", 0)
 
-    def test_teardown_module_is_module_scope(self):
-        """teardown_module() should be type='nose_fixture' with per_module scope"""
+    def test_teardown_module_not_detected(self):
         code = """
 def teardown_module():
     global db
     db.close()
 """
-        fixture = assert_fixture_detected(code, "python", "teardown_module")
-        assert fixture.fixture_type == "nose_fixture"
-        assert fixture.scope == "per_module"
+        assert_fixture_count(code, "python", 0)
 
-    def test_setup_package_is_package_scope(self):
-        """setup_package() if detected should be type='nose_fixture'"""
+    def test_setup_package_not_detected(self):
         code = """
 def setup_package():
     global resource
     resource = initialize()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_package")
-        assert fixture.fixture_type == "nose_fixture"
-        # Scope could be per_package or per_module depending on implementation
+        assert_fixture_count(code, "python", 0)
 
 
 class TestPytestFixtureScopes:

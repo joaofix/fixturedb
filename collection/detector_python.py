@@ -1,9 +1,14 @@
-"""Python fixture detection: pytest decorators, unittest/nose setup/teardown, Behave BDD steps.
+"""Python fixture detection: pytest decorators, unittest setup/teardown.
 
-Pattern tables (scope keyword maps, BDD type map, setup/teardown name ->
-scope maps) are loaded from collection/config_data/fixture_definitions.yaml
-rather than hardcoded here -- see that file for the full operational
-definition of "fixture" per language, including documented exclusions.
+Only pytest and unittest are covered -- these are Python's two dominant,
+actively-maintained testing frameworks. Other frameworks (nose, Behave) are
+deliberately out of scope; see fixture_definitions.yaml's python.excluded
+list for why.
+
+Pattern tables (scope keyword maps, setup/teardown name -> scope maps) are
+loaded from collection/config_data/fixture_definitions.yaml rather than
+hardcoded here -- see that file for the full operational definition of
+"fixture" per language, including documented exclusions.
 
 Async fixtures (async def, decorated with either @pytest.fixture or
 @pytest_asyncio.fixture) are captured the same as sync ones: the decorator
@@ -22,10 +27,8 @@ _DEFS = load_fixture_definitions()["python"]
 
 PYTEST_SCOPE_KEYWORD_MAP: dict[str, str] = _DEFS["pytest_decorator"]["scope_keyword_map"]
 PYTEST_MATCH_SUBSTRINGS: list[str] = _DEFS["pytest_decorator"]["match_substrings"]
-BEHAVE_TYPE_MAP: dict[str, str] = _DEFS["behave_steps"]["type_map"]
 UNITTEST_SETUP_NAMES: dict[str, str] = _DEFS["unittest_setup"]["names"]
 PYTEST_CLASS_METHOD_NAMES: dict[str, str] = _DEFS["pytest_class_method"]["names"]
-NOSE_FIXTURE_NAMES: dict[str, str] = _DEFS["nose_fixture"]["names"]
 
 
 def _detect_python(
@@ -68,24 +71,6 @@ def _detect_python(
                     )
                     break
 
-                # BDD fixtures: Behave @given, @when, @then, @step decorators
-                behave_match = re.search(r"@(given|when|then|step)\s*\(", dec_text)
-                if behave_match:
-                    fixture_type = BEHAVE_TYPE_MAP.get(
-                        behave_match.group(1), "behave_step"
-                    )
-                    results.append(
-                        _build_result(
-                            func_node=func_def,
-                            src_bytes=src_bytes,
-                            fixture_type=fixture_type,
-                            scope="per_test",  # BDD steps are per-test
-                            framework="behave",
-                            language="python",
-                        )
-                    )
-                    break
-
         # unittest setUp/tearDown inside TestCase subclass and setup_method/teardown_method
         elif node.type == "function_definition":
             name_node = node.child_by_field_name("name")
@@ -114,18 +99,6 @@ def _detect_python(
                             fixture_type="pytest_class_method",
                             scope=PYTEST_CLASS_METHOD_NAMES[name],
                             framework="pytest",
-                            language="python",
-                        )
-                    )
-
-                # Nose-style fixtures: setup/teardown/setup_module/teardown_module/setup_package/teardown_package
-                elif name in NOSE_FIXTURE_NAMES:
-                    results.append(
-                        _build_result(
-                            func_node=node,
-                            src_bytes=src_bytes,
-                            fixture_type="nose_fixture",
-                            scope=NOSE_FIXTURE_NAMES[name],
                             language="python",
                         )
                     )

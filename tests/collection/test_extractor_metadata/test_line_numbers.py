@@ -7,6 +7,7 @@ Validates that extracted fixture metadata (line numbers, LOC, scope, type, metri
 import pytest
 
 from ..conftest import (
+    assert_fixture_count,
     assert_fixture_detected,
     assert_fixture_metrics,
     assert_line_range,
@@ -161,16 +162,15 @@ def my_data():
         fixture = assert_fixture_detected(code, "python", "my_data")
         assert fixture.fixture_type == "pytest_decorator"
 
-    def test_setup_module_type(self):
-        """setup_module should be classified as nose_fixture"""
+    def test_setup_module_not_detected(self):
+        """nose's setup_module is deliberately not detected -- only pytest
+        and unittest are in scope for Python."""
         code = """
 def setup_module():
     global db
     db = create_db()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_module")
-        # Should be nose_fixture
-        assert fixture.fixture_type == "nose_fixture"
+        assert_fixture_count(code, "python", 0)
 
 
 class TestFixtureScopeDetection:
@@ -198,13 +198,13 @@ class Test(unittest.TestCase):
         assert fixture.scope == "per_class"
 
     def test_per_module_scope(self):
-        """setup_module should be per_module scope"""
+        """setUpModule should be per_module scope"""
         code = """
-def setup_module():
+def setUpModule():
     global resource
     resource = create_resource()
 """
-        fixture = assert_fixture_detected(code, "python", "setup_module")
+        fixture = assert_fixture_detected(code, "python", "setUpModule")
         assert fixture.scope == "per_module"
 
     def test_pytest_fixture_default_scope(self):

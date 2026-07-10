@@ -326,28 +326,6 @@ class TestClass:
             assert setup.has_teardown_pair == 1
             assert teardown.has_teardown_pair == 0
 
-    def test_nose_setup_module_teardown_module_pair(self):
-        """Nose-style setup_module/teardown_module should be paired -- this
-        fixture_type wasn't handled by any branch of the old pairing logic
-        at all."""
-        code = """
-def setup_module():
-    global db
-    db = create_db()
-
-def teardown_module():
-    db.close()
-"""
-        from tempfile import NamedTemporaryFile
-
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(code)
-            f.flush()
-            result = extract_fixtures(Path(f.name), "python")
-            setup = next(f for f in result.fixtures if f.name == "setup_module")
-            assert setup.fixture_type == "nose_fixture"
-            assert setup.has_teardown_pair == 1
-
     def test_java_junit3_setup_teardown_pair(self):
         """JUnit3-style setUp()/tearDown() (no annotations) should be
         paired -- previously unhandled because junit3_setup/junit3_teardown

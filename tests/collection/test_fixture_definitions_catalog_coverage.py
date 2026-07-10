@@ -77,26 +77,6 @@ def fx():
     return cases
 
 
-def _python_behave_cases():
-    cases = []
-    behave_info = _PYTHON_DEFS["behave_steps"]
-    for keyword, fixture_type in behave_info["type_map"].items():
-        code = f"""
-from behave import {keyword}
-
-@{keyword}('some text')
-def step_impl(context):
-    pass
-"""
-        cases.append(
-            pytest.param(
-                code, fixture_type, behave_info["scope"], behave_info["framework"],
-                id=f"behave_steps:{keyword}",
-            )
-        )
-    return cases
-
-
 def _python_class_body_name_cases(group_key: str):
     """unittest_setup and pytest_class_method: names are methods inside a class."""
     cases = []
@@ -116,30 +96,10 @@ class T:
     return cases
 
 
-def _python_module_level_name_cases(group_key: str):
-    """nose_fixture: names are module-level functions."""
-    cases = []
-    info = _PYTHON_DEFS[group_key]
-    for name, scope in info["names"].items():
-        code = f"""
-def {name}():
-    pass
-"""
-        cases.append(
-            pytest.param(
-                code, info["fixture_type"], scope, info["framework"],
-                id=f"{group_key}:{name}",
-            )
-        )
-    return cases
-
-
 PYTHON_CASES = (
     _python_pytest_decorator_cases()
-    + _python_behave_cases()
     + _python_class_body_name_cases("unittest_setup")
     + _python_class_body_name_cases("pytest_class_method")
-    + _python_module_level_name_cases("nose_fixture")
 )
 
 
@@ -153,16 +113,14 @@ def test_python_catalog_entry_detected(code, fixture_type, scope, framework):
 
 
 def test_python_catalog_case_count_matches_yaml():
-    """Guardrail: every name/keyword entry across all 5 python pattern
+    """Guardrail: every name/keyword entry across all 3 python pattern
     groups must have a generated case -- if a future YAML edit adds a new
     name/scope keyword, this count must be updated alongside it (a silent
     mismatch here means the new entry isn't actually being exercised)."""
     expected = (
         len(_PYTHON_DEFS["pytest_decorator"]["scope_keyword_map"]) + 1  # + no-explicit-scope
-        + len(_PYTHON_DEFS["behave_steps"]["type_map"])
         + len(_PYTHON_DEFS["unittest_setup"]["names"])
         + len(_PYTHON_DEFS["pytest_class_method"]["names"])
-        + len(_PYTHON_DEFS["nose_fixture"]["names"])
     )
     assert len(PYTHON_CASES) == expected
 

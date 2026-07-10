@@ -69,7 +69,7 @@ def test_fixture_definitions_covers_all_languages():
 def test_fixture_definitions_python_shapes_and_scopes():
     python_defs = load_fixture_definitions()["python"]
     assert set(python_defs["pytest_decorator"]["scope_keyword_map"].values()) <= VALID_SCOPES
-    for section in ("unittest_setup", "pytest_class_method", "nose_fixture"):
+    for section in ("unittest_setup", "pytest_class_method"):
         names = python_defs[section]["names"]
         assert names, f"{section} must have at least one name"
         assert set(names.values()) <= VALID_SCOPES
@@ -94,11 +94,11 @@ def test_fixture_definitions_java_shapes_and_scopes():
         "junit3_teardown",
     }
     assert java_defs["junit3_fallback"]["framework"] == "junit"
-    # Spring/Cucumber annotations must not be mislabeled as generic "junit"
-    # -- this was a known imprecision, fixed alongside this catalog.
-    assert java_defs["annotations"]["@Bean"]["framework"] == "spring"
-    assert java_defs["annotations"]["@Given"]["framework"] == "cucumber"
     assert java_defs["annotations"]["@BeforeMethod"]["framework"] == "testng"
+    # Only JUnit/TestNG are in scope -- Spring/Cucumber were removed (see
+    # java.excluded) since they're not testing frameworks.
+    assert "@Bean" not in java_defs["annotations"]
+    assert "@Given" not in java_defs["annotations"]
     assert java_defs["excluded"], "java must document known boundary cases"
 
 
@@ -122,10 +122,8 @@ def _all_known_fixture_types() -> set[str]:
 
     python_defs = defs["python"]
     types.add(python_defs["pytest_decorator"]["fixture_type"])
-    types.update(python_defs["behave_steps"]["type_map"].values())
     types.add(python_defs["unittest_setup"]["fixture_type"])
     types.add(python_defs["pytest_class_method"]["fixture_type"])
-    types.add(python_defs["nose_fixture"]["fixture_type"])
 
     java_defs = defs["java"]
     types.update(f["fixture_type"] for f in java_defs["annotations"].values())
@@ -280,7 +278,6 @@ def test_teardown_detection_name_based_pairs_match_fixture_definitions_names():
     for fixture_type, expected_names in (
         ("unittest_setup", {"setUp", "setUpClass", "setUpModule"}),
         ("pytest_class_method", {"setup_method", "setup_class"}),
-        ("nose_fixture", {"setup", "setup_module", "setup_package"}),
     ):
         catalog_names = set(python_defs[fixture_type]["names"])
         pair_setup_names = set(name_based[fixture_type])

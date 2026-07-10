@@ -630,8 +630,8 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
       - yield_based: pytest fixtures -- checks for a 'yield' statement in the
         fixture's own body (no pairing against another fixture needed).
       - name_based: setup and teardown share the same fixture_type and are
-        distinguished only by name (unittest_setup, pytest_class_method,
-        nose_fixture) -- paired by exact setup-name -> teardown-name.
+        distinguished only by name (unittest_setup, pytest_class_method)
+        -- paired by exact setup-name -> teardown-name.
       - self_registered_cleanup: some setup-side fixtures (unittest's setUp/
         setUpClass) can register their own teardown inline via a cleanup
         call (self.addCleanup(...), self.enterContext(...), etc.) instead of

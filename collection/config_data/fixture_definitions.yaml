@@ -48,16 +48,6 @@ python:
       package: per_module
       session: global
     default_scope: per_test  # used when no explicit scope=... kwarg is present
-  behave_steps:
-    framework: behave
-    # Regex applied to the decorator's own text.
-    match_regex: '@(given|when|then|step)\s*\('
-    scope: per_test
-    type_map:
-      given: behave_given
-      when: behave_when
-      then: behave_then
-      step: behave_step
   unittest_setup:
     framework: unittest
     fixture_type: unittest_setup
@@ -85,16 +75,6 @@ python:
       teardown_method: per_test
       setup_class: per_class
       teardown_class: per_class
-  nose_fixture:
-    framework: null
-    fixture_type: nose_fixture
-    names:
-      setup: per_test
-      teardown: per_test
-      setup_module: per_module
-      teardown_module: per_module
-      setup_package: per_module
-      teardown_package: per_module
   excluded:
     - case: "Fixtures defined in installed pytest plugins / external packages"
       reason: >
@@ -117,6 +97,18 @@ python:
       reason: >
         Not a fixture and not matched by design -- listed here to make the
         boundary explicit rather than leave it implicit.
+    - case: "nose/nose2 setup()/teardown()/setup_module()/etc. (no decorator/annotation, bare names)"
+      reason: >
+        Scope decision: only the dominant, actively-maintained testing
+        frameworks per language are covered (pytest and unittest for
+        Python) -- nose has been unmaintained/deprecated for years and
+        adding it back reopens the question of where the line is for every
+        other niche framework, which isn't answerable. See java's Spring/
+        Cucumber exclusions below for the same reasoning applied to Java.
+    - case: "Behave BDD step decorators (@given/@when/@then/@step)"
+      reason: >
+        Same scope decision as nose above: Behave is a BDD framework, not
+        one of Python's two dominant testing frameworks (pytest, unittest).
 
 java:
   # `family` is a finer-grained label than `framework` (distinguishes
@@ -134,14 +126,6 @@ java:
     "@DataProvider": {fixture_type: testng_data_provider, scope: per_test, family: testng, framework: testng}
     "@Rule": {fixture_type: junit_rule, scope: per_test, family: junit4, framework: junit}
     "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4, framework: junit}
-    "@Bean": {fixture_type: spring_bean, scope: per_class, family: spring, framework: spring}
-    "@TestConfiguration": {fixture_type: spring_test_config, scope: per_class, family: spring, framework: spring}
-    "@Given": {fixture_type: cucumber_given, scope: per_test, family: cucumber, framework: cucumber}
-    "@When": {fixture_type: cucumber_when, scope: per_test, family: cucumber, framework: cucumber}
-    "@Then": {fixture_type: cucumber_then, scope: per_test, family: cucumber, framework: cucumber}
-    "@And": {fixture_type: cucumber_and, scope: per_test, family: cucumber, framework: cucumber}
-    "@But": {fixture_type: cucumber_but, scope: per_test, family: cucumber, framework: cucumber}
-    "@Attachment": {fixture_type: cucumber_attachment, scope: per_test, family: cucumber, framework: cucumber}
   # Same annotation name exists in both JUnit4 and TestNG; the detector
   # cannot disambiguate from the annotation alone and defaults to TestNG
   # (documented imprecision -- see the "Known imprecisions" note below).
@@ -172,12 +156,25 @@ java:
       reason: >
         These are implemented via interfaces, not annotations -- the
         detector only looks for annotation nodes on methods/fields.
-    - case: "Spring @BeforeTransaction / @AfterTransaction"
-      reason: "Not present in the annotation table above; genuinely unhandled today."
     - case: "TestNG @BeforeSuite / @AfterSuite / @BeforeTest / @AfterTest"
       reason: >
         Only @BeforeMethod/@AfterMethod are handled; the other TestNG
         lifecycle levels are not in the annotation table.
+    - case: "Spring (all annotations, e.g. @Bean, @TestConfiguration, @BeforeTransaction/@AfterTransaction)"
+      reason: >
+        Scope decision: only the dominant, actively-maintained testing
+        frameworks per language are covered (JUnit and TestNG for Java).
+        Spring is a dependency-injection framework, not a testing
+        framework; its test-context annotations were previously included,
+        but there is no principled place to stop once one non-testing
+        framework's own conventions are in scope -- every other framework
+        that projects layer on top of JUnit/TestNG would have an equally
+        valid claim to inclusion. See python's nose/Behave exclusions above
+        for the same reasoning applied to Python.
+    - case: "Cucumber (all annotations, e.g. @Given, @When, @Then, @And, @But, @Attachment)"
+      reason: >
+        Same scope decision as Spring above: Cucumber is a BDD framework,
+        not JUnit or TestNG.
 
 javascript_typescript:
   # Matched purely on the call's function name -- `beforeEach(async () =>
