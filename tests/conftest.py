@@ -190,7 +190,7 @@ def assert_fixture_with_type_detected(
         fixture_type: Expected fixture type (e.g., 'before_each', 'mocha_before')
         scope: Optional expected scope
         count: Expected number of fixtures with this type (default 1)
-        framework: Optional expected framework (e.g. 'jest', 'ava'; None for
+        framework: Optional expected framework (e.g. 'testng'; None for
             frameworks that are deliberately ambiguous, like bare JS hooks)
 
     Returns:

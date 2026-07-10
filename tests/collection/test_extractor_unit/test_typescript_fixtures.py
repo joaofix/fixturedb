@@ -11,6 +11,7 @@ Tests positive and negative detection of TypeScript fixtures using:
 import pytest
 
 from ..conftest import (
+    assert_fixture_count,
     assert_fixture_with_type_detected,
     extract_and_find_fixtures,
 )
@@ -68,6 +69,23 @@ describe('Suite', () => {
         assert fixture.fixture_type == "mocha_before"
 
 
+class TestTypeScriptVitestAroundHooks:
+    """Vitest 4.1+ aroundEach/aroundAll in TypeScript."""
+
+    def test_around_each_with_types(self):
+        code = """
+import { aroundEach, test } from 'vitest'
+
+aroundEach(async (runTest: () => Promise<void>) => {
+    await db.transaction(runTest)
+})
+"""
+        fixture = assert_fixture_with_type_detected(
+            code, "typescript", "vitest_around_each"
+        )
+        assert fixture.scope == "per_test"
+
+
 class TestTypeScriptAsyncAwait:
     """Async/await patterns in TypeScript fixtures"""
 
@@ -83,13 +101,15 @@ beforeEach(async () => {
         assert fixture.fixture_type == "before_each"
 
 
-class TestTypeScriptDecoratorHooks:
-    """Decorator-style lifecycle hooks (@BeforeEach etc. on class methods),
-    as opposed to the call-expression style (beforeEach(() => {...})) above.
-    """
+class TestTypeScriptDecoratorHooksNotDetected:
+    """Decorator-style lifecycle hooks (@BeforeEach etc. on class methods)
+    are deliberately NOT detected -- verified that no currently real,
+    actively-used package provides this exact decorator convention (the
+    obvious candidate, mocha-typescript, is deprecated; its successor
+    @testdeck/mocha uses plain before()/after() methods, not decorators;
+    see fixture_definitions.yaml's javascript_typescript.excluded list)."""
 
-    def test_sync_decorator_hook_detected(self):
-        """@BeforeEach on a sync class method should be detected."""
+    def test_before_each_decorator_not_detected(self):
         code = """
 class MySuite {
     @BeforeEach
@@ -98,27 +118,9 @@ class MySuite {
     }
 }
 """
-        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
-        assert fixture.fixture_type == "before_each"
+        assert_fixture_count(code, "typescript", 0)
 
-    def test_async_decorator_hook_detected(self):
-        """@BeforeEach on an async class method should be detected the same
-        as the sync case -- the decorator name is the detection signal, not
-        the method's async qualifier."""
-        code = """
-class MySuite {
-    @BeforeEach
-    async setup() {
-        await this.init();
-    }
-}
-"""
-        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
-        assert fixture.fixture_type == "before_each"
-
-    def test_before_decorator_detected(self):
-        """@Before -- previously untested (only @BeforeEach was covered
-        among the 6 ts_decorators entries)."""
+    def test_before_decorator_not_detected(self):
         code = """
 class MySuite {
     @Before
@@ -127,60 +129,7 @@ class MySuite {
     }
 }
 """
-        fixture = assert_fixture_with_type_detected(code, "typescript", "mocha_before")
-        assert fixture.scope == "per_test"
-
-    def test_after_decorator_detected(self):
-        """@After -- previously untested."""
-        code = """
-class MySuite {
-    @After
-    teardown() {
-        this.value = null;
-    }
-}
-"""
-        fixture = assert_fixture_with_type_detected(code, "typescript", "mocha_after")
-        assert fixture.scope == "per_test"
-
-    def test_after_each_decorator_detected(self):
-        """@AfterEach -- previously untested."""
-        code = """
-class MySuite {
-    @AfterEach
-    teardown() {
-        this.value = null;
-    }
-}
-"""
-        fixture = assert_fixture_with_type_detected(code, "typescript", "after_each")
-        assert fixture.scope == "per_test"
-
-    def test_before_all_decorator_detected(self):
-        """@BeforeAll -- previously untested."""
-        code = """
-class MySuite {
-    @BeforeAll
-    static setup() {
-        MySuite.shared = createShared();
-    }
-}
-"""
-        fixture = assert_fixture_with_type_detected(code, "typescript", "before_all")
-        assert fixture.scope == "per_class"
-
-    def test_after_all_decorator_detected(self):
-        """@AfterAll -- previously untested."""
-        code = """
-class MySuite {
-    @AfterAll
-    static teardown() {
-        MySuite.shared.dispose();
-    }
-}
-"""
-        fixture = assert_fixture_with_type_detected(code, "typescript", "after_all")
-        assert fixture.scope == "per_class"
+        assert_fixture_count(code, "typescript", 0)
 
 
 class TestTypeScriptInterfaces:

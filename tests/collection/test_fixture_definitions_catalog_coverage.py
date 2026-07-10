@@ -260,24 +260,7 @@ def _js_hook_cases():
     return cases
 
 
-def _js_ava_cases():
-    cases = []
-    for name, fields in _JS_DEFS["ava_patterns"].items():
-        call = f"test.{name}"
-        code = f"""
-{call}(t => {{
-    doSetup();
-}});
-"""
-        cases.append(
-            pytest.param(
-                code, fields["fixture_type"], fields["scope"], id=f"ava_patterns:{name}"
-            )
-        )
-    return cases
-
-
-JS_CALL_CASES = _js_hook_cases() + _js_ava_cases()
+JS_CALL_CASES = _js_hook_cases()
 
 
 @pytest.mark.parametrize("code,fixture_type,scope", JS_CALL_CASES)
@@ -288,40 +271,9 @@ def test_javascript_catalog_entry_detected(code, fixture_type, scope):
     assert matching[0].scope == scope
 
 
-def _ts_decorator_cases():
-    cases = []
-    for name, fields in _JS_DEFS["ts_decorators"].items():
-        code = f"""
-class MySuite {{
-    @{name}
-    m() {{
-    }}
-}}
-"""
-        cases.append(
-            pytest.param(
-                code, fields["fixture_type"], fields["scope"], id=f"ts_decorators:{name}"
-            )
-        )
-    return cases
-
-
-TS_DECORATOR_CASES = _ts_decorator_cases()
-
-
-@pytest.mark.parametrize("code,fixture_type,scope", TS_DECORATOR_CASES)
-def test_typescript_decorator_catalog_entry_detected(code, fixture_type, scope):
-    fixtures = _run(code, "typescript", ".test.ts")
-    matching = [f for f in fixtures if f.fixture_type == fixture_type]
-    assert matching, f"No fixture of type {fixture_type!r} detected in:\n{code}"
-    assert matching[0].scope == scope
-
-
 def test_javascript_typescript_catalog_case_count_matches_yaml():
-    expected_call = len(_JS_DEFS["hooks"]) + len(_JS_DEFS["ava_patterns"])
-    expected_decorator = len(_JS_DEFS["ts_decorators"])
+    expected_call = len(_JS_DEFS["hooks"])
     assert len(JS_CALL_CASES) == expected_call
-    assert len(TS_DECORATOR_CASES) == expected_decorator
 
 
 if __name__ == "__main__":

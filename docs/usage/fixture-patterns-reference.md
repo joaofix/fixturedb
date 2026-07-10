@@ -1,6 +1,6 @@
 # Fixture Patterns Reference
 
-Comprehensive catalog of 30+ fixture types detected across Python, Java, JavaScript, and TypeScript.
+Comprehensive catalog of 25+ fixture types detected across Python, Java, JavaScript, and TypeScript.
 
 **Scope policy:** only the dominant, actively-maintained testing frameworks
 per language are covered (pytest/unittest for Python, JUnit/TestNG for
@@ -36,7 +36,7 @@ Fixture definitions are organized by **language** and **pattern type**. Each lan
 | TestNG | Java | testng_before_method/after_method/before_class/after_class | `@BeforeMethod/@AfterMethod/@BeforeClass/@AfterClass` | per_test, per_class |
 | Jest/Mocha/Jasmine/Vitest | JavaScript | before_each/after_each/before_all/after_all | `beforeEach/afterEach/beforeAll/afterAll(...)` | per_test, per_class |
 | Mocha | JavaScript | mocha_before/mocha_after | `before/after(...)` | per_test |
-| AVA | JavaScript/TypeScript | ava_before/after/serial_before/serial_after | `test.before/.after/.serial.before/.serial.after(...)` | per_test, per_class |
+| Vitest | JavaScript/TypeScript | vitest_around_each/vitest_around_all | `aroundEach/aroundAll(...)` | per_test, per_class |
 
 ---
 
@@ -243,12 +243,11 @@ JavaScript/TypeScript Fixtures
 │   ├── beforeEach/afterEach (per-test)
 │   ├── beforeAll/afterAll (per-suite)
 │   └── Supported by: Jest, Jasmine, Vitest, Mocha
-├── AVA Hooks (Serial execution)
-│   ├── test.before/test.after
-│   └── test.serial.before/test.serial.after
-└── Scope: per_test (beforeEach/afterEach, test.before)
-         per_class (beforeAll/afterAll)
-         serial (AVA serial hooks)
+├── Vitest-only Hooks (4.1+)
+│   ├── aroundEach (wraps setup+teardown around one test)
+│   └── aroundAll (wraps setup+teardown around a whole suite)
+└── Scope: per_test (beforeEach/afterEach, aroundEach)
+         per_class (beforeAll/afterAll, aroundAll)
 ```
 
 ### Jest/Jasmine/Vitest (Standard Hooks)
@@ -303,10 +302,25 @@ describe('User Service', () => {
 
 **Pattern:** `before()`, `after()` — Scope determined by nesting (per-test by default)
 
-### AVA
+### Vitest (`aroundEach`/`aroundAll`)
 
-**Pattern:** `test.before()`, `test.after()`, `test.serial.before()`, `test.serial.after()`  
-**Scope:** Serial/non-serial determines per-test vs. per-class behavior
+**Type:** `vitest_around_each`, `vitest_around_all`  
+**Framework:** Vitest (4.1+) -- unlike the hooks above, these are Vitest-only, no other dominant framework has an equivalent  
+**Pattern:** Wraps setup *and* teardown in a single function via a `runTest`/`runSuite` callback the body must call:
+
+```typescript
+import { aroundEach, test } from 'vitest'
+
+aroundEach(async (runTest) => {
+    await db.transaction(runTest)
+})
+
+test('insert user', async () => {
+    await db.insert({ name: 'Alice' })
+})
+```
+
+**Scope:** `aroundEach` → per_test, `aroundAll` → per_class
 
 ---
 
@@ -320,16 +334,14 @@ the function's async qualifier.
 |---|---|---|
 | Python | `@pytest.fixture` / `@pytest_asyncio.fixture` decorating `async def` | `pytest_decorator` (same `fixture_type` as the sync form — `pytest_asyncio` is not a separate type) |
 | JavaScript/TypeScript | `beforeEach(async () => {...})`, `before(async function() {...})` | Same `fixture_type` as the sync call (the call's function name is unaffected by the callback's `async` qualifier) |
-| TypeScript (decorator style) | `@BeforeEach async setup() {...}` | Same `fixture_type` as the sync method (the decorator precedes the method regardless of `async`) |
 
 This is a load-bearing detail, not an incidental one: `@pytest_asyncio.fixture`
 is the standard way to declare async test setup for FastAPI and other async
 Python frameworks, and async `beforeEach`/`before` hooks are the norm in
 modern Jest/Mocha/Vitest suites — a detector that missed the async forms
 would systematically undercount fixtures in async-heavy codebases. Verified
-by `TestAsyncPythonFixtures`, `TestAsyncJavaScriptFixtures`,
-`TestTypeScriptAsyncAwait`, and `TestTypeScriptDecoratorHooks` in
-`tests/collection/test_extractor_unit/`.
+by `TestAsyncPythonFixtures`, `TestAsyncJavaScriptFixtures`, and
+`TestTypeScriptAsyncAwait` in `tests/collection/test_extractor_unit/`.
 
 ---
 
@@ -433,7 +445,9 @@ Two known imprecisions (detected, but not perfectly attributed) are also worth c
 - **Jest `globalSetup` / `globalTeardown`** — configured as a file path in `jest.config.js`, not an inline function call in the test file; there's no call-expression node to match.
 - **Vitest `setupFiles`** — configuration-level (`vitest.config.*`), not an inline fixture; same reasoning as Jest `globalSetup`.
 - **Custom test helpers not using a recognized framework lifecycle hook name** — detection is a fixed name/pattern lookup; a hand-rolled helper called manually inside each test body is not a lifecycle hook.
-- **AVA fixtures accessed through an aliased import** (e.g. `import ava from 'ava'; ava.before(...)`) — the AVA match requires the member-expression's object to be literally named `test` (i.e. `test.before(...)`).
+- **Vitest `onTestFinished` / `onTestFailed`** — real, documented Vitest hooks, but a structurally different shape from everything else in this table: they're methods called from inside a test body off the test's own context parameter (e.g. `test('x', ({ onTestFinished }) => { onTestFinished(() => {...}) })`), not a top-level call-expression in a describe block. Not implemented yet.
+- **AVA** (`test.before`/`test.after`/`test.serial.before`/`test.serial.after`) — scope decision: only the dominant, actively-maintained testing frameworks are covered (Jest, Mocha, Vitest). AVA's npm download share is roughly 1% of Jest's, putting it in the same tier as nose/Behave/Spring/Cucumber, already excluded for Python/Java for the same reason.
+- **TypeScript decorator-style hooks** (`@Before`/`@After`/`@BeforeEach`/`@AfterEach`/`@BeforeAll`/`@AfterAll` on class methods) — removed after verifying no currently real, actively-used package provides this exact decorator convention: mocha-typescript (the obvious candidate) is formally deprecated, its successor `@testdeck/mocha` only provides `@suite`/`@test` (setup/teardown via plain methods, not decorators), and the one package matching this naming (`testyts`) is functionally dead (~56 weekly downloads, last published 2021).
 
 ---
 
@@ -483,9 +497,7 @@ graph TD
     B --> B1["Jest, Jasmine, Vitest, Mocha"]
     A --> B2["Describe Block Hooks<br/>beforeAll/afterAll"]
     B2 --> B2a["Jest, Jasmine, Vitest, Mocha"]
-    A --> C["AVA Hooks<br/>test.before/test.after"]
-    C --> C1["Normal execution"]
-    A --> C2["AVA Hooks<br/>test.serial.before/after"]
-    C2 --> C2a["Serial execution"]
+    A --> C["Vitest-only Hooks (4.1+)<br/>aroundEach/aroundAll"]
+    C --> C1["Wraps setup+teardown<br/>in one function"]
 ```
 

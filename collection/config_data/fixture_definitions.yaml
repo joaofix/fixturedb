@@ -182,8 +182,15 @@ javascript_typescript:
   # qualifies the callback argument, not the call_expression itself (see the
   # top-of-file "Async fixtures" note).
   #
-  # Ambiguous by design: could be Jest, Mocha, Vitest, or Jasmine -- no
-  # framework attribution is attempted for these bare calls.
+  # Only Jest, Mocha, and Vitest are in scope (Jasmine shares these exact
+  # bare hook names too, so it rides along for free; AVA and TS decorator-
+  # style hooks are out of scope -- see excluded below). beforeEach/
+  # beforeAll/afterEach/afterAll are ambiguous by design: could be any of
+  # the three, so no framework attribution is attempted. before/after are
+  # attributed to Mocha specifically via their fixture_type name (Jest/
+  # Vitest don't document bare before/after as hooks). aroundEach/aroundAll
+  # are Vitest-only (added in Vitest 4.1) but kept unattributed here too,
+  # for consistency with the rest of this table.
   hooks:
     beforeEach: {fixture_type: before_each, scope: per_test}
     beforeAll: {fixture_type: before_all, scope: per_class}
@@ -191,25 +198,8 @@ javascript_typescript:
     afterAll: {fixture_type: after_all, scope: per_class}
     before: {fixture_type: mocha_before, scope: per_test, note: "Mocha's bare `before` is suite-scoped; approximated as per_test here, same as the other ambiguous bare hooks."}
     after: {fixture_type: mocha_after, scope: per_test}
-  # Matched only as `test.<pattern>` member-expression calls (the AVA test
-  # object must literally be named `test` at the call site -- see excluded).
-  ava_patterns:
-    before: {fixture_type: ava_before, scope: per_class}
-    after: {fixture_type: ava_after, scope: per_class}
-    serial.before: {fixture_type: ava_serial_before, scope: per_test}
-    serial.after: {fixture_type: ava_serial_after, scope: per_test}
-  # TypeScript decorator-style hooks (e.g. custom test-framework decorators).
-  # Matched on the decorator name regardless of whether the decorated method
-  # is declared `async` (the `async` keyword is internal to the
-  # method_definition node and doesn't change its preceding-decorator
-  # sibling relationship).
-  ts_decorators:
-    Before: {fixture_type: mocha_before, scope: per_test}
-    After: {fixture_type: mocha_after, scope: per_test}
-    BeforeEach: {fixture_type: before_each, scope: per_test}
-    AfterEach: {fixture_type: after_each, scope: per_test}
-    BeforeAll: {fixture_type: before_all, scope: per_class}
-    AfterAll: {fixture_type: after_all, scope: per_class}
+    aroundEach: {fixture_type: vitest_around_each, scope: per_test, note: "Vitest 4.1+. Wraps setup+teardown around a single test via a runTest() callback: aroundEach(async (runTest) => { ...; await runTest(); ...; })."}
+    aroundAll: {fixture_type: vitest_around_all, scope: per_class, note: "Vitest 4.1+. Wraps setup+teardown around a whole suite via a runSuite() callback."}
   excluded:
     - case: "Jest globalSetup / globalTeardown"
       reason: >
@@ -219,11 +209,36 @@ javascript_typescript:
       reason: "Configuration-level (vitest.config.*), not an inline fixture -- same reasoning as Jest globalSetup."
     - case: "Custom test helpers not using a recognized framework lifecycle hook name"
       reason: >
-        Detection is a fixed name/pattern lookup (hooks / ava_patterns /
-        ts_decorators above); a hand-rolled helper called manually inside
-        each test body is not a lifecycle hook and is not matched.
-    - case: "AVA fixtures accessed through an aliased import (e.g. `import ava from 'ava'; ava.before(...)`)"
+        Detection is a fixed name/pattern lookup (hooks above); a
+        hand-rolled helper called manually inside each test body is not a
+        lifecycle hook and is not matched.
+    - case: "Vitest onTestFinished / onTestFailed"
       reason: >
-        The AVA match requires the member-expression's object to be
-        literally named `test` (i.e. `test.before(...)`); a differently
-        named alias is not recognized.
+        Real, documented Vitest hooks, but a structurally different shape
+        from everything else in this table: they're methods called from
+        inside a test body off the test's own context parameter (e.g.
+        `test('x', ({ onTestFinished }) => { onTestFinished(() => {...}) })`),
+        not a top-level call-expression in a describe block. Detecting this
+        correctly would mean distinguishing it from an unrelated function
+        that happens to share the name, and handling both the destructured-
+        parameter and `context.onTestFinished(...)` call styles -- not
+        implemented yet.
+    - case: "AVA (test.before/test.after/test.serial.before/test.serial.after)"
+      reason: >
+        Scope decision: only the dominant, actively-maintained testing
+        frameworks are covered (Jest, Mocha, Vitest for JS/TS -- see the
+        `hooks` comment above). AVA's npm download share is roughly 1% of
+        Jest's and under Jasmine's, putting it in the same tier as
+        nose/Behave/Spring/Cucumber, already excluded for Python/Java for
+        the same reason: once one non-dominant framework's own conventions
+        are in scope, there's no principled place to stop.
+    - case: "TypeScript decorator-style hooks (@Before/@After/@BeforeEach/@AfterEach/@BeforeAll/@AfterAll on class methods)"
+      reason: >
+        Removed after verifying no currently real, actively-used package
+        provides this exact decorator convention: mocha-typescript (the
+        obvious candidate) is formally deprecated, its successor
+        @testdeck/mocha only provides @suite/@test (setup/teardown via
+        plain methods, not decorators), and the one package matching this
+        naming (testyts) is functionally dead (~56 weekly downloads, last
+        published 2021). Unlike AVA (a real but smaller framework), this
+        pattern didn't correspond to any live ecosystem at all.

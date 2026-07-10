@@ -104,12 +104,16 @@ def test_fixture_definitions_java_shapes_and_scopes():
 
 def test_fixture_definitions_javascript_typescript_shapes_and_scopes():
     js_defs = load_fixture_definitions()["javascript_typescript"]
-    for section in ("hooks", "ava_patterns", "ts_decorators"):
-        table = js_defs[section]
-        assert table, f"{section} must have at least one entry"
-        for fields in table.values():
-            assert fields["scope"] in VALID_SCOPES
-            assert fields["fixture_type"].strip()
+    table = js_defs["hooks"]
+    assert table, "hooks must have at least one entry"
+    for fields in table.values():
+        assert fields["scope"] in VALID_SCOPES
+        assert fields["fixture_type"].strip()
+    # Only Jest/Mocha/Vitest are in scope -- AVA/ts_decorators were removed
+    # (see javascript_typescript.excluded) since AVA is niche and no real
+    # package uses the ts_decorators convention.
+    assert "ava_patterns" not in js_defs
+    assert "ts_decorators" not in js_defs
     assert js_defs["excluded"], "javascript_typescript must document known boundary cases"
 
 
@@ -133,8 +137,7 @@ def _all_known_fixture_types() -> set[str]:
         types.add(f["testng_fixture_type"])
 
     js_defs = defs["javascript_typescript"]
-    for section in ("hooks", "ava_patterns", "ts_decorators"):
-        types.update(f["fixture_type"] for f in js_defs[section].values())
+    types.update(f["fixture_type"] for f in js_defs["hooks"].values())
 
     return types
 

@@ -10,6 +10,7 @@ Tests positive and negative detection of JavaScript fixtures using:
 import pytest
 
 from ..conftest import (
+    assert_fixture_count,
     assert_fixture_with_type_detected,
     extract_and_find_fixtures,
 )
@@ -65,6 +66,38 @@ describe('Tests', () => {
 """
         fixture = assert_fixture_with_type_detected(code, "javascript", "after_each")
         assert fixture.scope == "per_test"
+
+
+class TestVitestAroundHooks:
+    """Vitest 4.1+ aroundEach/aroundAll -- wrap setup+teardown around a
+    single test/suite via a runTest()/runSuite() callback the body must
+    call. Vitest-only, no other dominant framework has an equivalent."""
+
+    def test_around_each_detected(self):
+        code = """
+import { aroundEach, test } from 'vitest'
+
+aroundEach(async (runTest) => {
+    await db.transaction(runTest)
+})
+"""
+        fixture = assert_fixture_with_type_detected(
+            code, "javascript", "vitest_around_each"
+        )
+        assert fixture.scope == "per_test"
+
+    def test_around_all_detected(self):
+        code = """
+import { aroundAll, test } from 'vitest'
+
+aroundAll(async (runSuite) => {
+    await tracer.trace('test-suite', runSuite)
+})
+"""
+        fixture = assert_fixture_with_type_detected(
+            code, "javascript", "vitest_around_all"
+        )
+        assert fixture.scope == "per_class"
 
 
 class TestJestHooks:
@@ -146,11 +179,12 @@ function createTestData() {
         assert isinstance(fixtures, list)
 
 
-class TestAVAFixtures:
-    """AVA test framework fixtures"""
+class TestAVANotDetected:
+    """AVA is deliberately NOT detected -- only Jest, Mocha, and Vitest are
+    in scope (see fixture_definitions.yaml's javascript_typescript.excluded
+    list: AVA's npm download share is roughly 1% of Jest's)."""
 
-    def test_ava_before_detected(self):
-        """AVA test.before() should be detected"""
+    def test_ava_before_not_detected(self):
         code = """
 import test from 'ava';
 
@@ -158,60 +192,15 @@ test.before(t => {
     t.context.db = setupDatabase();
 });
 """
-        fixtures = extract_and_find_fixtures(code, "javascript")
-        assert any(f.fixture_type == "ava_before" for f in fixtures)
+        assert_fixture_count(code, "javascript", 0)
 
-    def test_ava_after_detected(self):
-        """AVA test.after() should be detected"""
-        code = """
-test.after(t => {
-    t.context.db.close();
-});
-"""
-        fixtures = extract_and_find_fixtures(code, "javascript")
-        assert any(f.fixture_type == "ava_after" for f in fixtures)
-
-    def test_ava_serial_before_detected(self):
-        """AVA test.serial.before() should be detected as per-test"""
+    def test_ava_serial_before_not_detected(self):
         code = """
 test.serial.before(t => {
     setupSerialResources();
 });
 """
-        fixtures = extract_and_find_fixtures(code, "javascript")
-        assert any(
-            f.fixture_type == "ava_serial_before" and f.scope == "per_test"
-            for f in fixtures
-        )
-
-    def test_ava_serial_after_detected(self):
-        """AVA test.serial.after() should be detected"""
-        code = """
-test.serial.after(t => {
-    cleanupSerialResources();
-});
-"""
-        fixtures = extract_and_find_fixtures(code, "javascript")
-        assert any(f.fixture_type == "ava_serial_after" for f in fixtures)
-
-    def test_ava_fixture_scopes(self):
-        """AVA fixture scopes: before/after are per-class, serial.* are per-test"""
-        code = """
-import test from 'ava';
-
-test.before(t => { setup(); });
-test.after(t => { cleanup(); });
-test.serial.before(t => { setupSerial(); });
-"""
-        fixtures = extract_and_find_fixtures(code, "javascript")
-
-        # before/after should be per_class
-        before_fixtures = [f for f in fixtures if f.fixture_type == "ava_before"]
-        assert any(f.scope == "per_class" for f in before_fixtures)
-
-        # serial.before should be per_test
-        serial_fixtures = [f for f in fixtures if f.fixture_type == "ava_serial_before"]
-        assert any(f.scope == "per_test" for f in serial_fixtures)
+        assert_fixture_count(code, "javascript", 0)
 
 
 class TestJavaScriptNegativeDetection:

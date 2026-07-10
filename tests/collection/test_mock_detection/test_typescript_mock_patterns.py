@@ -8,7 +8,6 @@ in TypeScript test fixtures.
 import pytest
 
 from ..conftest import (
-    assert_fixture_detected,
     assert_fixture_with_type_detected,
 )
 
@@ -17,22 +16,19 @@ class TestTypeScriptMockitoPatterns:
     """ts-mockito patterns"""
 
     def test_ts_mockito_setup(self):
-        """ts-mockito setup in @Before"""
+        """ts-mockito setup in beforeEach"""
         code = """
 import { mock, instance, when } from 'ts-mockito';
 
-export class TestClass {
-    private mockRepository: UserRepository;
-    
-    @Before
-    public setUp(): void {
-        this.mockRepository = mock(UserRepository);
-        when(this.mockRepository.getUser(1)).thenReturn({id: 1});
-    }
-}
+let mockRepository: UserRepository;
+
+beforeEach(() => {
+    mockRepository = mock(UserRepository);
+    when(mockRepository.getUser(1)).thenReturn({id: 1});
+});
 """
-        fixture = assert_fixture_detected(code, "typescript", "setUp")
-        assert fixture.name == "setUp"
+        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
+        assert fixture.fixture_type == "before_each"
 
 
 class TestTypeScriptJestMockPatterns:

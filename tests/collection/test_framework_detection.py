@@ -405,10 +405,12 @@ func TestDatabaseTestSuite(t *testing.T) {
 
 
 class TestJavaScriptTypeScriptFrameworkDetection:
-    """Test JavaScript/TypeScript framework detection (AVA, Jest/Mocha ambiguous)"""
+    """Test JavaScript/TypeScript framework detection (Jest/Mocha/Vitest ambiguous)"""
 
-    def test_ava_before_after_framework(self):
-        """AVA test.before/test.after should have framework='ava'"""
+    def test_ava_not_detected(self):
+        """AVA is deliberately not detected -- only Jest, Mocha, and Vitest
+        are in scope (see fixture_definitions.yaml's
+        javascript_typescript.excluded list)."""
         code = """
 import test from 'ava';
 
@@ -428,15 +430,9 @@ test('query test', t => {
   t.assert.is(t.context.db.query('SELECT 1'), 1);
 });
 """
-        # All AVA fixtures should have framework='ava'
         all_fixtures = extract_and_find_fixtures(code, "typescript")
         ava_fixtures = [f for f in all_fixtures if "ava" in f.fixture_type.lower()]
-
-        assert len(ava_fixtures) > 0, "AVA fixtures should be detected"
-        for fixture in ava_fixtures:
-            assert (
-                fixture.framework == "ava"
-            ), f"AVA fixture {fixture.name} should have framework='ava', got {fixture.framework}"
+        assert ava_fixtures == []
 
     def test_jest_mocha_ambiguous_framework(self):
         """Jest/Mocha beforeEach should have framework=None (ambiguous)"""
@@ -469,8 +465,7 @@ describe('Database', () => {
                 fixture.framework is None
             ), f"Jest/Mocha hook {fixture.name} should have framework=None (ambiguous), got {fixture.framework}"
 
-    def test_ava_javascript(self):
-        """AVA in JavaScript should also have framework='ava'"""
+    def test_ava_not_detected_in_javascript(self):
         code = """
 import test from 'ava';
 
@@ -484,8 +479,7 @@ test('main', t => {
 """
         all_fixtures = extract_and_find_fixtures(code, "javascript")
         ava_fixtures = [f for f in all_fixtures if f.framework == "ava"]
-
-        assert len(ava_fixtures) > 0, "AVA fixtures should be detected in JavaScript"
+        assert ava_fixtures == []
 
 
 class TestFrameworkDetectionConsistency:

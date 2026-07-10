@@ -1,20 +1,23 @@
-"""JavaScript/TypeScript fixture detection: Jest/Mocha/Vitest hooks, AVA, TS decorators.
+"""JavaScript/TypeScript fixture detection: Jest/Mocha/Vitest hooks.
+
+Only Jest, Mocha, and Vitest are covered -- these are JS/TS's dominant,
+actively-maintained testing frameworks. Other frameworks (AVA) and
+speculative patterns not tied to any real, currently-used package (TS
+decorator-style hooks) are deliberately out of scope; see
+fixture_definitions.yaml's javascript_typescript.excluded list for why.
 
 Pattern tables are loaded from
 collection/config_data/fixture_definitions.yaml rather than hardcoded here
 -- see that file for the full operational definition of "fixture" per
 language, including documented exclusions (Jest globalSetup, Vitest
-setupFiles, aliased AVA imports, etc.).
+setupFiles/onTestFinished, etc.).
 
-Async fixtures are captured the same as sync ones, in both matching styles
-below: `beforeEach(async () => {...})` is still a call_expression whose
-function name is "beforeEach" (the `async` keyword only qualifies the
-callback argument, not the call itself), and `@BeforeEach async setup()` is
-still a method_definition preceded by a `@BeforeEach` decorator sibling.
-The lifecycle hook name/decorator is the detection signal, not the
-function's async qualifier -- see
-tests/collection/test_extractor_unit/test_javascript_fixtures.py::TestAsyncJavaScriptFixtures
-and test_typescript_fixtures.py::TestTypeScriptDecoratorHooks.
+Async fixtures are captured the same as sync ones: `beforeEach(async () =>
+{...})` is still a call_expression whose function name is "beforeEach" (the
+`async` keyword only qualifies the callback argument, not the call itself).
+The lifecycle hook name is the detection signal, not the function's async
+qualifier -- see
+tests/collection/test_extractor_unit/test_javascript_fixtures.py::TestAsyncJavaScriptFixtures.
 """
 
 from .config_data import load_fixture_definitions
@@ -25,18 +28,6 @@ _DEFS = load_fixture_definitions()["javascript_typescript"]
 JS_FIXTURE_CALLS: dict[str, tuple[str, str]] = {
     name: (fields["fixture_type"], fields["scope"])
     for name, fields in _DEFS["hooks"].items()
-}
-
-# AVA fixture patterns - using member access like test.before()
-AVA_FIXTURE_PATTERNS: dict[str, tuple[str, str]] = {
-    name: (fields["fixture_type"], fields["scope"])
-    for name, fields in _DEFS["ava_patterns"].items()
-}
-
-# TypeScript decorator-style hooks: @Before, @After, @BeforeEach, etc.
-TS_DECORATOR_MAP: dict[str, tuple[str, str]] = {
-    name: (fields["fixture_type"], fields["scope"])
-    for name, fields in _DEFS["ts_decorators"].items()
 }
 
 
@@ -59,7 +50,7 @@ def _detect_js(
             if func_node:
                 name = _source(func_node, src_bytes).strip()
 
-                # Check standard hooks (Jest/Mocha style) - ambiguous, so framework=None
+                # Check standard hooks (Jest/Mocha/Vitest) - ambiguous, so framework=None
                 if name in JS_FIXTURE_CALLS:
                     fixture_type, scope = JS_FIXTURE_CALLS[name]
                     results.append(
@@ -68,64 +59,10 @@ def _detect_js(
                             src_bytes=src_bytes,
                             fixture_type=fixture_type,
                             scope=scope,
-                            framework=None,  # Ambiguous: could be Jest, Mocha, Vitest, Jasmine, etc.
+                            framework=None,  # Ambiguous: could be Jest, Mocha, or Vitest
                             language=language,
                         )
                     )
-
-                # Check AVA patterns: test.before, test.after, test.serial.before, test.serial.after
-                # These appear as member_access_expression like "test.before" or "test.serial.before"
-                elif func_node.type == "member_expression":
-                    # Get the full member access chain
-                    member_src = _source(func_node, src_bytes).strip()
-
-                    # Check if it's a test.* pattern
-                    if member_src.startswith("test."):
-                        ava_pattern = member_src[5:]  # Remove "test." prefix
-                        if ava_pattern in AVA_FIXTURE_PATTERNS:
-                            fixture_type, scope = AVA_FIXTURE_PATTERNS[ava_pattern]
-                            results.append(
-                                _build_result(
-                                    func_node=target,
-                                    src_bytes=src_bytes,
-                                    fixture_type=fixture_type,
-                                    scope=scope,
-                                    framework="ava",
-                                    language=language,
-                                )
-                            )
-
-        # TypeScript decorator patterns: @Before, @After, @BeforeEach, etc.
-        elif node.type == "method_definition":
-            # Check if there's a preceding decorator node
-            parent = node.parent
-            if parent:
-                # Find this node's index in its parent's children
-                node_index = None
-                for i, child in enumerate(parent.children):
-                    if child == node:
-                        node_index = i
-                        break
-
-                # Check if the preceding sibling is a decorator
-                if node_index is not None and node_index > 0:
-                    prev_sibling = parent.children[node_index - 1]
-                    if prev_sibling.type == "decorator":
-                        dec_text = _source(prev_sibling, src_bytes).strip()
-                        # Remove @ symbol and check if it's a known decorator
-                        dec_name = dec_text.lstrip("@").split("(")[0].strip()
-
-                        if dec_name in TS_DECORATOR_MAP:
-                            fixture_type, scope = TS_DECORATOR_MAP[dec_name]
-                            results.append(
-                                _build_result(
-                                    func_node=node,
-                                    src_bytes=src_bytes,
-                                    fixture_type=fixture_type,
-                                    scope=scope,
-                                    language=language,
-                                )
-                            )
 
         for child in node.children:
             visit(child)

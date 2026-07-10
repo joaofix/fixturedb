@@ -404,23 +404,6 @@ afterAll(() => { teardown(); });
             setup = next(f for f in result.fixtures if f.fixture_type == "before_all")
             assert setup.has_teardown_pair == 1
 
-    def test_ava_before_after_pair(self):
-        """AVA test.before()/test.after() should be paired -- previously
-        missing from the type-based pairing table entirely."""
-        code = """
-test.before(t => { setup(); });
-test.after(t => { teardown(); });
-"""
-        from tempfile import NamedTemporaryFile
-
-        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
-            f.write(code)
-            f.flush()
-            result = extract_fixtures(Path(f.name), "javascript")
-            setup = next(f for f in result.fixtures if f.fixture_type == "ava_before")
-            assert setup.has_teardown_pair == 1
-
-
 class TestFixtureResultStructure:
     """Test that FixtureResult contains all new fields."""
 

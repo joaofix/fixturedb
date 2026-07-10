@@ -350,5 +350,3 @@ teardown_detection:
     before_each: after_each
     before_all: after_all
     mocha_before: mocha_after
-    ava_before: ava_after
-    ava_serial_before: ava_serial_after
