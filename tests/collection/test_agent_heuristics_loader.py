@@ -1,16 +1,30 @@
-"""Guardrail tests for the agent heuristics YAML catalog and its loader.
+"""Guardrail tests for the agent heuristics catalog (YAML + CSVs) and its loader.
 
-These exist to catch a malformed future edit to agent_heuristics.yaml
-(typo, empty list, missing key) -- not to test detection logic itself,
-which is covered by test_agent_patterns_extra.py / test_agent_patterns_thorough.py.
+These exist to catch a malformed future edit to agent_heuristics.yaml,
+agent_authors.csv, or bots.csv (typo, empty list, missing key, unmapped
+tool) -- not to test detection logic itself, which is covered by
+test_agent_patterns_extra.py / test_agent_patterns_thorough.py.
 """
 
-from collection.heuristics import load_agent_heuristics
+import csv
+
+from collection.heuristics import (
+    _AUTHORS_CSV_PATH,
+    _BOTS_CSV_PATH,
+    _TOOL_TO_AGENT_TYPE,
+    _non_comment_lines,
+    load_agent_heuristics,
+)
 
 
 def test_loader_returns_expected_top_level_keys():
     data = load_agent_heuristics()
-    assert set(data.keys()) == {"file_based", "commit_signatures", "paper_scope"}
+    assert set(data.keys()) == {
+        "file_based",
+        "commit_signatures",
+        "bot_patterns",
+        "paper_scope",
+    }
 
 
 def test_paper_scope_agents_all_have_file_based_patterns():
@@ -110,3 +124,195 @@ def test_codex_roo_code_have_commit_signatures():
     assert "codex" in data["commit_signatures"]
     assert "roo_code" in data["commit_signatures"]
     assert "roomote" in data["commit_signatures"]["roo_code"]
+
+
+def _read_authors_csv_rows():
+    with _AUTHORS_CSV_PATH.open("r", encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(_non_comment_lines(fh)))
+
+
+def test_authors_csv_has_boundary_comment_line():
+    """A plain '#'-prefixed line marks where labri-progress/agent-mining's
+    upstream content ends and this project's own additions begin -- this
+    must exist in the raw file (for a human reading it directly) and must
+    NOT show up as a parsed data row (covered by the row-count assertions
+    in the two tests below, which would fail if it leaked through)."""
+    with _AUTHORS_CSV_PATH.open("r", encoding="utf-8") as fh:
+        raw_lines = fh.readlines()
+    comment_lines = [line for line in raw_lines if line.lstrip().startswith("#")]
+    assert len(comment_lines) == 1
+    assert "own additions" in comment_lines[0]
+    # The snapshot date makes the upstream copy independently reproducible
+    # (agent-mining/authors.csv is itself actively maintained and can drift
+    # from what's copied here) -- a future edit that drops it should fail
+    # loudly rather than silently lose that provenance.
+    assert "snapshotted verbatim on" in comment_lines[0]
+
+
+def test_authors_csv_schema_matches_upstream():
+    """agent_authors.csv deliberately mirrors labri-progress/agent-mining's
+    own authors.csv column schema, so a reviewer can diff the two files
+    directly -- a header drift here breaks that citation link."""
+    with _AUTHORS_CSV_PATH.open("r", encoding="utf-8", newline="") as fh:
+        header = next(csv.reader(fh))
+    assert header == ["pattern", "tool", "start_date", "end_date"]
+
+
+def test_authors_csv_every_tool_has_agent_type_mapping():
+    rows = _read_authors_csv_rows()
+    assert rows, "agent_authors.csv must have at least one data row"
+    for row in rows:
+        assert row["tool"] in _TOOL_TO_AGENT_TYPE, (
+            f"tool {row['tool']!r} (pattern {row['pattern']!r}) has no "
+            "_TOOL_TO_AGENT_TYPE mapping in collection/heuristics/__init__.py"
+        )
+
+
+def test_authors_csv_first_80_rows_are_upstream_verbatim():
+    """The file's first 80 data rows must be labri-progress/agent-mining's
+    authors.csv content, unmodified and in its original order -- this is
+    the whole point of the CSV (a reviewer-checkable citation), not just a
+    convenient format. Spot-checks a sample spanning the full file rather
+    than asserting all 80 rows verbatim, so the test doesn't itself become
+    an unreadable copy of the source file."""
+    rows = _read_authors_csv_rows()
+    upstream_rows = rows[:80]
+    assert len(upstream_rows) == 80
+    expected_samples = [
+        {"pattern": "aider", "tool": "Aider"},
+        {"pattern": "Claude", "tool": "Claude Code"},
+        {"pattern": "AI [Aa]ssistant", "tool": "Generic"},
+        {"pattern": "factory-droid[bot]", "tool": "Factory Droid"},
+        {"pattern": "Codex (gpt-5.2-codex)", "tool": "Codex"},
+        {"pattern": "noreply@paperclip.ing", "tool": "Paperclip"},
+    ]
+    for expected in expected_samples:
+        assert any(
+            row["pattern"] == expected["pattern"] and row["tool"] == expected["tool"]
+            for row in upstream_rows
+        ), f"upstream row {expected} not found verbatim in the first 80 rows"
+    # Last upstream row (line 81 of the source file) must be the final row
+    # of the 80-row block, proving the appended rows come strictly after it.
+    assert upstream_rows[-1] == {
+        "pattern": "noreply@paperclip.ing",
+        "tool": "Paperclip",
+        "start_date": "",
+        "end_date": "",
+    }
+
+
+def test_authors_csv_our_additions_are_appended_after_upstream_block():
+    rows = _read_authors_csv_rows()
+    our_additions = rows[80:]
+    added_patterns = {row["pattern"] for row in our_additions}
+    assert added_patterns == {
+        "anthropic",
+        "openhands",
+        "devin ai",
+        "devin",
+        "google jules",
+        "jules",
+        "gemini",
+        "windsurf",
+        "codex",
+        "github.com/apps/github-copilot",
+        "github copilot",
+    }
+
+
+def test_case_class_pattern_normalized_for_matching():
+    """The upstream "AI [Aa]ssistant" row is kept verbatim in the CSV, but
+    our own matching is already fully case-insensitive, so the loader must
+    collapse it to a plain literal ("AI assistant") rather than let it be
+    treated as literal bracket characters via re.escape."""
+    data = load_agent_heuristics()
+    assert "AI assistant" in data["commit_signatures"]["generic"]
+    assert "AI [Aa]ssistant" not in data["commit_signatures"]["generic"]
+
+
+def _read_bots_csv_rows():
+    with _BOTS_CSV_PATH.open("r", encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(_non_comment_lines(fh)))
+
+
+def test_bots_csv_schema_matches_upstream():
+    """bots.csv deliberately mirrors labri-progress/agent-mining's own
+    bots.csv column schema (no start_date/end_date here, unlike
+    authors.csv), so a reviewer can diff the two files directly."""
+    with _BOTS_CSV_PATH.open("r", encoding="utf-8", newline="") as fh:
+        header = next(csv.reader(fh))
+    assert header == ["pattern", "tool"]
+
+
+def test_bots_csv_has_boundary_comment_line():
+    """A plain '#'-prefixed line marks where labri-progress/agent-mining's
+    upstream content ends and this project's own (short, individually-
+    verified) additions begin -- must not show up as a parsed data row
+    (covered by the row-count assertions in the tests below)."""
+    with _BOTS_CSV_PATH.open("r", encoding="utf-8") as fh:
+        raw_lines = fh.readlines()
+    comment_lines = [line for line in raw_lines if line.lstrip().startswith("#")]
+    assert len(comment_lines) == 1
+    assert "own additions" in comment_lines[0]
+    assert "snapshotted verbatim on" in comment_lines[0]
+
+
+def test_bots_csv_first_84_rows_are_upstream_verbatim():
+    """The file's first 84 data rows must be labri-progress/agent-mining's
+    bots.csv content, unmodified and in its original order. Spot-checks a
+    sample spanning the full file (including its real, verbatim-preserved
+    duplicate/inconsistent-tool rows) rather than asserting all 84 rows,
+    so the test doesn't itself become an unreadable copy of the source
+    file."""
+    rows = _read_bots_csv_rows()
+    upstream_rows = rows[:84]
+    assert len(upstream_rows) == 84
+    expected_samples = [
+        {"pattern": "dependabot\\[bot\\]", "tool": "dependabot"},
+        {"pattern": "Microsoft Open Source", "tool": "Bot"},
+        {"pattern": "gh-action-bump-version@users.noreply.github.com", "tool": "github actions"},
+        {"pattern": "sentry-autofix\\[bot\\]", "tool": "Bot"},
+    ]
+    for expected in expected_samples:
+        assert any(
+            row["pattern"] == expected["pattern"] and row["tool"] == expected["tool"]
+            for row in upstream_rows
+        ), f"upstream row {expected} not found verbatim in the first 84 rows"
+    # Exact duplicate rows in the upstream source (e.g. dotnet-maestro\[bot\]
+    # appears twice, pytorchbot appears twice with the same tool,
+    # microsoft-github-policy-service\[bot\] appears twice with *different*
+    # tool values) are kept verbatim rather than deduplicated -- citation
+    # fidelity to the messy real source, not a cleaned-up derivative.
+    assert [r["pattern"] for r in upstream_rows].count("dotnet-maestro\\[bot\\]") == 2
+    assert [r["pattern"] for r in upstream_rows].count("pytorchbot") == 2
+    policy_service_tools = {
+        r["tool"]
+        for r in upstream_rows
+        if r["pattern"] == "microsoft-github-policy-service\\[bot\\]"
+    }
+    assert policy_service_tools == {"microsoft", "Bot"}
+    # Last upstream row (line 85 of the source file) must be the final row
+    # of the 84-row block, proving the appended rows come strictly after it.
+    assert upstream_rows[-1] == {"pattern": "sentry-autofix\\[bot\\]", "tool": "Bot"}
+
+
+def test_bots_csv_our_additions_are_appended_after_upstream_block():
+    """This project's own bot-pattern additions must be a short, explicit
+    list of individually-verified real accounts, not a generic catch-all
+    (e.g. NOT a bare "\\[bot\\]" wildcard) -- see agent-detection.md's Known
+    Limitations for why that tradeoff was deliberately made."""
+    rows = _read_bots_csv_rows()
+    our_additions = rows[84:]
+    assert our_additions == [
+        {"pattern": "copilot-swe-agent\\[bot\\]", "tool": "Bot"},
+        {"pattern": "anthropic-code-agent\\[bot\\]", "tool": "Bot"},
+    ]
+
+
+def test_bot_patterns_loaded_as_flat_list_in_original_order():
+    data = load_agent_heuristics()
+    bot_patterns = data["bot_patterns"]
+    assert isinstance(bot_patterns, list) and bot_patterns
+    assert bot_patterns[0] == "dependabot\\[bot\\]"
+    assert bot_patterns[-1] == "anthropic-code-agent\\[bot\\]"
+    assert len(bot_patterns) == 86

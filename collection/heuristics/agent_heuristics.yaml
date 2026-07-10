@@ -95,43 +95,15 @@ file_based:
     - GEMINI.md
     - .gemini/
 
-# commit_signatures: substrings matched case-insensitively against commit
-# author name/email and Co-authored-by (and similar) trailers.
-commit_signatures:
-  claude:
-    - claude
-    - anthropic
-  cursor:
-    - cursor
-  copilot:
-    - copilot
-    - github.com/apps/github-copilot
-    - github copilot
-  aider:
-    - aider
-  openhands:
-    - openhands
-  devin:
-    - devin ai
-    - devin
-  jules:
-    - google jules
-    - jules
-  cline:
-    - cline
-  junie:
-    - junie
-  gemini:
-    - gemini
-  coderabbit:
-    - coderabbit
-  windsurf:
-    - windsurf
-  codex:
-    - codex
-  roo_code:
-    - roomote
-    - roo code
+# commit_signatures now lives in agent_authors.csv, next to this file, not
+# here -- substrings matched case-insensitively against commit author
+# name/email and Co-authored-by (and similar) trailers. It's a separate,
+# flat `pattern,tool,start_date,end_date` CSV (not YAML) specifically so it
+# mirrors labri-progress/agent-mining's own authors.csv
+# (github.com/labri-progress/agent-mining/blob/main/patterns/authors.csv)
+# schema and content verbatim -- a paper reviewer can diff the two files
+# directly. See collection/heuristics/__init__.py's module docstring and
+# agent_patterns.py's AGENT_SIGNATURES for how it's loaded and consumed.
 
 # paper_scope: the subset of file_based agents used for the paper's strict
 # repo-qualification filter (agent_corpus.py's scan_cloned_repo_for_agent_configs).

@@ -58,6 +58,45 @@ PAPER_AGENT_CONFIG_PATTERNS = {
     if agent in _HEURISTICS["paper_scope"]
 }
 
+# Flat list of commit author/email patterns identifying CI/automation bot
+# accounts (dependabot, renovate, github-actions, etc.) rather than a human
+# or one of the coding agents in AGENT_SIGNATURES -- loaded from
+# collection/heuristics/bots.csv. See that file and is_bot_author() below.
+BOT_PATTERNS: list[str] = _HEURISTICS["bot_patterns"]
+
+
+def _bot_pattern_regex(pattern: str) -> re.Pattern[str]:
+    """Compile one bots.csv pattern into a case-insensitive regex.
+
+    Unlike match_agent_keyword's AGENT_SIGNATURES patterns, these are NOT
+    passed through re.escape() -- bots.csv's pattern column is already
+    regex-ready as copied from upstream (e.g. "dependabot\\[bot\\]" has its
+    brackets pre-escaped in the source file itself), so re-escaping here
+    would double-escape the backslashes and break every bracketed pattern.
+    The same asymmetric boundary logic as match_agent_keyword still applies
+    -- a boundary assertion is only added on a side whose adjacent literal
+    character is itself a word character, so a pattern ending in "]" (e.g.
+    the ones above) isn't broken by a trailing \\b that can never match
+    right after a non-word character.
+    """
+    prefix = r"(?<!\w)" if re.match(r"\w", pattern) else ""
+    suffix = r"(?!\w)" if re.search(r"\w$", pattern) else ""
+    return re.compile(prefix + pattern + suffix, re.IGNORECASE)
+
+
+_BOT_REGEXES = [_bot_pattern_regex(pattern) for pattern in BOT_PATTERNS]
+
+
+def is_bot_author(text: str) -> bool:
+    """Return True if text (typically "{author_name} {author_email}") matches
+    a known CI/automation bot pattern from collection/heuristics/bots.csv.
+
+    Used to exclude bot-authored commits from both the human baseline and
+    the agent corpus -- a bot account is neither a human developer nor one
+    of the coding agents tracked in AGENT_SIGNATURES.
+    """
+    return any(regex.search(text) for regex in _BOT_REGEXES)
+
 
 def path_matches_pattern(
     path: Path | str, pattern: str, is_dir: bool = True
@@ -148,11 +187,25 @@ def match_agent_keyword(
     commit-message text can fully rule that out. See
     collection/heuristics/agent_heuristics.yaml's module comment for this
     known, inherent limitation of name-based Tier 1/Tier 2 detection.
+
+    Boundary assertions are only applied on a side whose adjacent keyword
+    character is itself a word character. A plain `\\b` on both sides breaks
+    for keywords that start or end in punctuation (e.g. "Codex (gpt-5.2-codex)"
+    or "factory-droid[bot]", both real entries in agent_authors.csv): `\\b`
+    right after a closing ")" requires a *word* character on the other side
+    to form a boundary, so it never matches at end-of-string or before a
+    space/newline -- exactly where a commit author field would end. Using
+    `(?<!\\w)`/`(?!\\w)` only where the keyword's own edge is a word character
+    avoids that false negative while keeping identical behavior for ordinary
+    alphanumeric keywords.
     """
     text_lower = text.lower()
     for agent_type, keywords in signatures.items():
         for keyword in keywords:
-            pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
+            keyword_lower = keyword.lower()
+            prefix = r"(?<!\w)" if re.match(r"\w", keyword_lower) else ""
+            suffix = r"(?!\w)" if re.search(r"\w$", keyword_lower) else ""
+            pattern = prefix + re.escape(keyword_lower) + suffix
             if re.search(pattern, text_lower):
                 return agent_type
     return None

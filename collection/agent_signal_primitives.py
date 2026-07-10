@@ -30,6 +30,7 @@ from .agent_patterns import (
     _EXCLUDED_DIR_NAMES,
     AGENT_SIGNATURES,
     LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
+    is_bot_author,
     match_agent_keyword,
     path_matches_pattern,
 )
@@ -731,7 +732,7 @@ class AgentCommitVerifier:
             if agent_type:
                 return agent_type
 
-        if "[bot]" in author_name.lower():
+        if is_bot_author(f"{author_name} {author_email}"):
             return None
 
         # Check author name

@@ -50,7 +50,9 @@ collection/          # Main pipeline code (the "library")
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
   agent_patterns.py  # Loads the agent catalog (see heuristics/ below) and derives detection dicts
-  heuristics/agent_heuristics.yaml  # THE agent catalog (file patterns + commit signatures) -- edit here to add/update an agent, not in .py files
+  heuristics/agent_heuristics.yaml  # File-based config patterns + paper_scope -- edit here to add/update an agent's file markers, not in .py files
+  heuristics/agent_authors.csv  # Commit author/trailer signatures (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's authors.csv schema+content for citation
+  heuristics/bots.csv  # CI/automation bot account patterns (pattern,tool) -- mirrors labri-progress/agent-mining's bots.csv schema+content for citation
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   agent_corpus.py    # Dataset A: extract agent fixtures (used by phase_3_extract_agent.py)
   human_corpus.py    # Dataset B: extract human fixtures, within-repo (used by phase_2_extract_human.py)

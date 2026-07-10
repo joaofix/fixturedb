@@ -17,7 +17,7 @@ from pydriller import Repository
 
 from collection.logging_utils import get_logger
 
-from .agent_patterns import AGENT_SIGNATURES, match_agent_keyword
+from .agent_patterns import AGENT_SIGNATURES, is_bot_author, match_agent_keyword
 from .agent_signal_primitives import (
     AgentCommitVerifier,
     AgentFileScanner,
@@ -253,10 +253,10 @@ class Tier1RepositoryScanner:
             Agent type (any key in AGENT_SIGNATURES, e.g. claude/cursor/copilot/
             aider/...), None for human-authored, or "bot" for bot-authored commits.
         """
-        if "[bot]" in author_name.lower():
+        author_text = f"{author_name} {author_email}"
+        if is_bot_author(author_text):
             return "bot"
 
-        author_text = f"{author_name} {author_email}"
         agent_type = match_agent_keyword(author_text, self.agent_signatures)
         if agent_type:
             return agent_type
