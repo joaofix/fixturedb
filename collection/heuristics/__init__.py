@@ -1,12 +1,16 @@
 """Loader for the AI coding agent detection heuristics catalog.
 
-file_based and paper_scope live in agent_heuristics.yaml, next to this file
-— see that file's header comment for the schema. commit_signatures and
+paper_scope lives in agent_heuristics.yaml, next to this file -- see that
+file's header comment for the schema. file_based, commit_signatures, and
 bot_patterns each live in their own CSV, next to this file too, deliberately
 mirroring labri-progress/agent-mining's own data files
 (github.com/labri-progress/agent-mining/tree/main/patterns) schema and
 content, so a paper reviewer can compare the files directly:
 
+- agent_files.csv: flat `pattern,tool,start_date,end_date` table (mirrors
+  files.csv). First 95 data rows are that file's content verbatim, in its
+  original order; everything after a `#`-prefixed boundary comment line is
+  this project's own additions.
 - agent_authors.csv: flat `pattern,tool,start_date,end_date` table (mirrors
   authors.csv). First 80 data rows are that file's content verbatim, in its
   original order; everything after a `#`-prefixed boundary comment line is
@@ -35,16 +39,20 @@ from typing import Any, Dict, List
 import yaml
 
 _HEURISTICS_PATH = Path(__file__).parent / "agent_heuristics.yaml"
+_FILES_CSV_PATH = Path(__file__).parent / "agent_files.csv"
 _AUTHORS_CSV_PATH = Path(__file__).parent / "agent_authors.csv"
 _BOTS_CSV_PATH = Path(__file__).parent / "bots.csv"
 
-# Maps agent_authors.csv's "tool" column (a display name, matching
-# labri-progress/agent-mining's own naming) to this project's internal
-# agent_type key -- the short lowercase identifier used everywhere else in
-# collection/ (file_based's keys, paper_scope's entries, DB columns, CSV
-# outputs). Every distinct "tool" value in the CSV must have an entry here;
-# _load_commit_signatures() raises a plain KeyError at import time otherwise
-# so a new tool added to the CSV without a mapping fails loudly, not silently.
+# Maps agent_files.csv/agent_authors.csv's "tool" column (a display name,
+# matching labri-progress/agent-mining's own naming) to this project's
+# internal agent_type key -- the short lowercase identifier used everywhere
+# else in collection/ (file_based's/commit_signatures' keys, paper_scope's
+# entries, DB columns, CSV outputs). Shared across both CSVs so the same
+# tool (e.g. "Claude Code") always maps to the same agent_type regardless of
+# which file it was read from. Every distinct "tool" value in either CSV
+# must have an entry here; _load_file_based_patterns()/_load_commit_
+# signatures() raise a plain KeyError at import time otherwise, so a new
+# tool added to either CSV without a mapping fails loudly, not silently.
 _TOOL_TO_AGENT_TYPE: Dict[str, str] = {
     "Aider": "aider",
     "Claude Code": "claude",
@@ -87,6 +95,29 @@ _TOOL_TO_AGENT_TYPE: Dict[str, str] = {
     "Microsoft Amplifier": "microsoft_amplifier",
     "Verdent": "verdent",
     "Paperclip": "paperclip",
+    # New tools introduced by agent_files.csv (not present in agent_authors.csv):
+    "Augment Code": "augment_code",
+    "Taskmaster": "taskmaster",
+    "SpecKit": "speckit",
+    "Trae": "trae",
+    "Goose": "goose",
+    "Plandex": "plandex",
+    "Continue": "continue",
+    "Brokk": "brokk",
+    "Amazon Q": "amazon_q",
+    "Codebuddy": "codebuddy",
+    "Baidu Comate": "baidu_comate",
+    "Alibaba Lingma": "alibaba_lingma",
+    "Tessl": "tessl",
+    "Serena": "serena",
+    "Rulesync": "rulesync",
+    "Qodo": "qodo",
+    "Charlie": "charlie",
+    "Kimi Code": "kimi_code",
+    "Pi": "pi",
+    "Atlassian Rovodev": "atlassian_rovodev",
+    "SpecStory": "specstory",
+    "Superpowers": "superpowers",
 }
 
 # Collapses a single-letter case-class like the CSV's "AI [Aa]ssistant" (row
@@ -110,6 +141,28 @@ def _non_comment_lines(fh):
         stripped = line.strip()
         if stripped and not stripped.startswith("#"):
             yield line
+
+
+def _load_file_based_patterns(path: Path = _FILES_CSV_PATH) -> Dict[str, List[str]]:
+    """Group agent_files.csv's flat pattern rows by internal agent_type key.
+
+    The first 95 rows are labri-progress/agent-mining's files.csv content
+    verbatim, in its original order; this project's own additions after the
+    boundary comment are patterns already covered by this project's own
+    prior detection logic but not present upstream (e.g. Aider's non-dotted
+    "aider.config" would collide with a real file, so the bare-dotfile
+    variants like ".devin"/".openhands"/".cline" and the "*.config" variants
+    this project has historically also matched were kept).
+
+    start_date/end_date are read from the file but deliberately unused
+    here, same as agent_authors.csv -- see that loader's docstring.
+    """
+    patterns: Dict[str, List[str]] = {}
+    with path.open("r", encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(_non_comment_lines(fh)):
+            agent_type = _TOOL_TO_AGENT_TYPE[row["tool"]]
+            patterns.setdefault(agent_type, []).append(row["pattern"])
+    return patterns
 
 
 def _load_commit_signatures(path: Path = _AUTHORS_CSV_PATH) -> Dict[str, List[str]]:
@@ -163,12 +216,14 @@ def load_agent_heuristics(path: Path = _HEURISTICS_PATH) -> Dict[str, Any]:
     """Parse and return the agent heuristics catalog (file_based,
     commit_signatures, bot_patterns, paper_scope).
 
-    file_based/paper_scope come from agent_heuristics.yaml; commit_signatures
-    comes from agent_authors.csv and bot_patterns comes from bots.csv (see
-    this module's docstring for why they're separate CSVs).
+    paper_scope comes from agent_heuristics.yaml; file_based comes from
+    agent_files.csv, commit_signatures comes from agent_authors.csv, and
+    bot_patterns comes from bots.csv (see this module's docstring for why
+    they're separate CSVs).
     """
     with path.open("r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
+    data["file_based"] = _load_file_based_patterns()
     data["commit_signatures"] = _load_commit_signatures()
     data["bot_patterns"] = _load_bot_patterns()
     return data

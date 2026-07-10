@@ -25,75 +25,18 @@
 # over bare author-name matches, or manually spot-check via
 # collection/validation_sampling.py.
 
-# file_based: config files/directories in a repo's working tree that signal
-# a given agent was used. Matched case-insensitively; entries ending in "/"
-# match a directory name anywhere in the path, others may use fnmatch globs
-# (see collection/agent_patterns.py:path_matches_pattern).
-#
-# Cross-checked against labri-progress/agent-mining (github.com/labri-progress/agent-mining),
-# a community-maintained catalog of agent-detection heuristics where every
-# pattern is backed by a live GitHub code/commit search link -- used here
-# only to validate/extend patterns for agents we already track, not to
-# adopt their additional heuristic categories (branch names, PR labels,
-# commit-message prefixes, .gitignore contents) or their broader agent
-# list, which are out of scope for this project's methodology.
-file_based:
-  claude:
-    - CLAUDE.md
-    - .claudeignore
-    - .claude/
-    - .anthropic/
-    - claude.config
-  cursor:
-    - CURSOR.md
-    - .cursor/
-    - .cursorrules
-    - .cursor
-    - .cursorignore
-    - cursor.config
-  copilot:
-    - copilot_instructions.md
-    - copilot-instructions.md
-    - .copilot-instructions.md
-    - .copilot-*.md
-    - .copilotignore
-    - .copilot/
-    - copilot-instructions/
-    - .github/instructions/
-  aider:
-    - .aider.conf.yml
-    - .aider.conf.yaml
-    - .aider/
-    - .aiderignore
-    - .aiderrules
-  openhands:
-    - .openhands.config
-    - .openhands
-  devin:
-    - .devin.config
-    - .devin
-  cline:
-    - .cline.config
-    - .cline
-    - .clinerules
-  codex:
-    - .codex/
-  windsurf:
-    - .windsurfrules
-    - .windsurf/
-    - .codeium/
-  roo_code:
-    - .roorules
-    - .roo/
-  jules:
-    - .jules/
-  junie:
-    - .junie/
-    - .jetbrains/instructions.md
-    - .junieignore
-  gemini:
-    - GEMINI.md
-    - .gemini/
+# file_based now lives in agent_files.csv, next to this file, not here --
+# config files/directories in a repo's working tree that signal a given
+# agent was used. Matched case-insensitively; entries ending in "/" match a
+# directory name anywhere in the path, others may use fnmatch globs (see
+# collection/agent_patterns.py:path_matches_pattern). It's a separate, flat
+# `pattern,tool,start_date,end_date` CSV (not YAML) specifically so it
+# mirrors labri-progress/agent-mining's own files.csv
+# (github.com/labri-progress/agent-mining/blob/main/patterns/files.csv)
+# schema and content verbatim -- a paper reviewer can diff the two files
+# directly. See collection/heuristics/__init__.py's module docstring and
+# agent_patterns.py's LIGHTWEIGHT_AGENT_CONFIG_PATTERNS for how it's loaded
+# and consumed.
 
 # commit_signatures now lives in agent_authors.csv, next to this file, not
 # here -- substrings matched case-insensitively against commit author

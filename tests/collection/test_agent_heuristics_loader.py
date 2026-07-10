@@ -1,9 +1,9 @@
 """Guardrail tests for the agent heuristics catalog (YAML + CSVs) and its loader.
 
 These exist to catch a malformed future edit to agent_heuristics.yaml,
-agent_authors.csv, or bots.csv (typo, empty list, missing key, unmapped
-tool) -- not to test detection logic itself, which is covered by
-test_agent_patterns_extra.py / test_agent_patterns_thorough.py.
+agent_files.csv, agent_authors.csv, or bots.csv (typo, empty list, missing
+key, unmapped tool) -- not to test detection logic itself, which is covered
+by test_agent_patterns_extra.py / test_agent_patterns_thorough.py.
 """
 
 import csv
@@ -11,6 +11,7 @@ import csv
 from collection.heuristics import (
     _AUTHORS_CSV_PATH,
     _BOTS_CSV_PATH,
+    _FILES_CSV_PATH,
     _TOOL_TO_AGENT_TYPE,
     _non_comment_lines,
     load_agent_heuristics,
@@ -316,3 +317,99 @@ def test_bot_patterns_loaded_as_flat_list_in_original_order():
     assert bot_patterns[0] == "dependabot\\[bot\\]"
     assert bot_patterns[-1] == "anthropic-code-agent\\[bot\\]"
     assert len(bot_patterns) == 86
+
+
+def _read_files_csv_rows():
+    with _FILES_CSV_PATH.open("r", encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(_non_comment_lines(fh)))
+
+
+def test_files_csv_schema_matches_upstream():
+    """agent_files.csv deliberately mirrors labri-progress/agent-mining's
+    own files.csv column schema, so a reviewer can diff the two files
+    directly."""
+    with _FILES_CSV_PATH.open("r", encoding="utf-8", newline="") as fh:
+        header = next(csv.reader(fh))
+    assert header == ["pattern", "tool", "start_date", "end_date"]
+
+
+def test_files_csv_has_boundary_comment_line():
+    with _FILES_CSV_PATH.open("r", encoding="utf-8") as fh:
+        raw_lines = fh.readlines()
+    comment_lines = [line for line in raw_lines if line.lstrip().startswith("#")]
+    assert len(comment_lines) == 1
+    assert "own additions" in comment_lines[0]
+    assert "snapshotted verbatim on" in comment_lines[0]
+
+
+def test_files_csv_first_95_rows_are_upstream_verbatim():
+    """The file's first 95 data rows must be labri-progress/agent-mining's
+    files.csv content, unmodified and in its original order -- this is the
+    whole point of the CSV (a reviewer-checkable citation), not just a
+    convenient format. Spot-checks a sample spanning the full file rather
+    than asserting all 95 rows verbatim, so the test doesn't itself become
+    an unreadable copy of the source file."""
+    rows = _read_files_csv_rows()
+    upstream_rows = rows[:95]
+    assert len(upstream_rows) == 95
+    expected_samples = [
+        {"pattern": "CLAUDE.md", "tool": "Claude Code"},
+        {"pattern": "AGENTS.md", "tool": "Generic"},
+        {"pattern": ".copilot-*.md", "tool": "Copilot"},
+        {"pattern": ".superpowers/", "tool": "Superpowers"},
+    ]
+    for expected in expected_samples:
+        assert any(
+            row["pattern"] == expected["pattern"] and row["tool"] == expected["tool"]
+            for row in upstream_rows
+        ), f"upstream row {expected} not found verbatim in the first 95 rows"
+    # Last upstream row (line 96 of the source file) must be the final row
+    # of the 95-row block, proving the appended rows come strictly after it.
+    assert upstream_rows[-1] == {
+        "pattern": ".superpowers/",
+        "tool": "Superpowers",
+        "start_date": "",
+        "end_date": "",
+    }
+
+
+def test_files_csv_our_additions_are_appended_after_upstream_block():
+    rows = _read_files_csv_rows()
+    our_additions = rows[95:]
+    added_patterns = {row["pattern"] for row in our_additions}
+    assert added_patterns == {
+        "claude.config",
+        ".cursor",
+        ".cursorignore",
+        "cursor.config",
+        ".copilot-instructions.md",
+        ".openhands.config",
+        ".openhands",
+        ".devin.config",
+        ".devin",
+        ".cline.config",
+        ".cline",
+    }
+
+
+def test_files_csv_every_tool_has_agent_type_mapping():
+    rows = _read_files_csv_rows()
+    assert rows, "agent_files.csv must have at least one data row"
+    for row in rows:
+        assert row["tool"] in _TOOL_TO_AGENT_TYPE, (
+            f"tool {row['tool']!r} (pattern {row['pattern']!r}) has no "
+            "_TOOL_TO_AGENT_TYPE mapping in collection/heuristics/__init__.py"
+        )
+
+
+def test_file_based_loaded_covers_new_upstream_only_agents():
+    """Sanity check that agents introduced solely by agent_files.csv (never
+    present in agent_authors.csv/bots.csv) actually make it into the merged
+    file_based dict, not just parsed and discarded."""
+    data = load_agent_heuristics()
+    assert data["file_based"]["augment_code"] == [
+        ".augment/",
+        ".augmentignore",
+        ".augment-guidelines",
+    ]
+    assert ".superpowers/" in data["file_based"]["superpowers"]
