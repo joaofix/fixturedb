@@ -53,14 +53,14 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 
 ## Sampling modes
 - Dataset B (within-repo, paired): sample human fixtures from the same repositories and same 2025+ temporal window as Dataset A, stratified by language.
-- Dataset C (cross-repo, unpaired): checkout each sampled repo at its pinned pre-2021 cutoff commit and extract every fixture from every test file at that snapshot (no diff/purity gating). See `phase_2b_extract_dataset_c.py`.
+- Dataset C (cross-repo, unpaired): repos are selected (not sampled) by `select_dataset_c_repos.py` -- every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no stratification or cap. `dataset_c.py` then checks out each one at its own pinned pre-2021 cutoff commit and extracts every fixture from every test file at that snapshot (no diff/purity gating). See `phase_2b_extract_dataset_c.py`.
 
 ## CSV and IO
 - Use the `csv_adapter` to read/write CSVs and to plug alternative persistence backends. Tests override the adapter to avoid filesystem dependencies.
 
 ## Operational Runbook (concise)
 1. Ensure `clones_dir` is set to a path with sufficient free space.
-2. Run `phase_2_extract_human.py` (Dataset B) and `phase_2b_extract_dataset_c.py` (Dataset C).
+2. Run `phase_2_extract_human.py` (Dataset B), `select_dataset_c_repos.py` then `phase_2b_extract_dataset_c.py` (Dataset C).
 3. Run `phase_3_extract_agent.py` (Dataset A).
 4. Continue with Phases 4-8 (distribution analysis, sampling, export, validation).
 5. Inspect `fixturedb-human.db` / `fixturedb-agent.db` and the `repositories` / `fixtures` / `mock_usages` tables for sample provenance.

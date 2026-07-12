@@ -128,6 +128,7 @@ python -m collection.phase_1d_discover_matched_repos  # only if Tier 1 is insuff
 
 # Phase 2 / 2B: Dataset B (within-repo human) and Dataset C (cross-repo baseline)
 python -m collection.phase_2_extract_human
+python -m collection.select_dataset_c_repos   # writes dataset_c_{lang}.csv, no sampling
 python -m collection.phase_2b_extract_dataset_c
 
 # Phase 3: Dataset A (agent fixtures)

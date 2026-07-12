@@ -59,8 +59,8 @@ python -m collection.phase_2b_extract_dataset_c [OPTIONS]
 | `--language` | STR | (all `dataset_c_*.csv` found) | Specific language; uses `dataset_c_{lang}.csv` |
 | `--workers` | INT | 4 | Parallel worker threads |
 
-Reads its repo sample from `fixtures-from-agents/dataset_c_*.csv` (produced
-by `sample_proportional_repos.py`) rather than `corpus.db` — there is no
+Reads its repo list from `fixtures-from-agents/dataset_c_*.csv` (produced
+by `select_dataset_c_repos.py`) rather than `corpus.db` — there is no
 `--repo-dir` option.
 
 ### Example
@@ -144,11 +144,17 @@ Fixed dates from `collection/config.py` (not configurable via CLI):
 | Constant | Value | Used by | Rationale |
 |----------|-------|---------|-----------|
 | `AGENT_CORPUS_START_DATE` | 2025-01-01 | Dataset A, Dataset B | Agent availability window |
-| `HUMAN_CORPUS_CUTOFF_DATE` | 2020-12-31 | Dataset C | Pre-AI-agent era cutoff |
+| `HUMAN_CORPUS_CUTOFF_DATE` | 2020-12-31 | Dataset C | Pre-AI-agent era cutoff, and upper bound of the repo creation-date window |
+| `DATASET_C_MIN_CREATED_DATE` | 2016-01-01 | Dataset C | Lower bound of the repo creation-date window |
 
 These dates ensure Dataset C has no possible agent involvement (cutoff in
 2020, agents available from 2025), while Datasets A and B are directly
 comparable since they're drawn from the same repos and the same window.
+`DATASET_C_MIN_CREATED_DATE`/`HUMAN_CORPUS_CUTOFF_DATE` together bound a
+Dataset C repo's age at snapshot time to a fixed ~5-year window, the same
+value for every language — see
+[internal-docs/methodology-improvements/dataset-c-repo-selection.md](../../internal-docs/methodology-improvements/dataset-c-repo-selection.md)
+for why.
 
 ## Database Configuration
 
@@ -176,7 +182,13 @@ Shared thresholds from `collection/config.py`: `MIN_STARS = 500`,
 - Tier 1 agent detection only (no heuristics)
 
 ### Dataset C
-- Independent repo sample, stratified to match Dataset A's per-language/domain proportions
+- Independent repo set, created within `[DATASET_C_MIN_CREATED_DATE, HUMAN_CORPUS_CUTOFF_DATE]` — no
+  domain/category stratification, no per-language cap (see `select_dataset_c_repos.py`)
+- **No `MIN_STARS` filter.** GitHub's live star count only reflects today's popularity, not the repo's
+  standing at the pre-2021 snapshot — see the methodology doc linked above for why this would bias the
+  sample toward repos that happened to succeed later.
+- `MIN_COMMITS`/`MIN_TEST_FILES` are still enforced, but measured from the repo's real git history as of
+  its own cutoff commit (`dataset_c.py::count_commits_up_to()`), not from GitHub's live metadata
 - Pinned pre-2021 cutoff commit per repo (no diff/purity gating — full snapshot extraction)
 
 ## Logging and Monitoring

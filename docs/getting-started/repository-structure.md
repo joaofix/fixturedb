@@ -17,6 +17,7 @@ icsme-nier-2026/
 │       ├── phase_1c_assess_tier1_yield.py   # Phase 1C: assess Tier 1 yield
 │       ├── phase_1d_discover_matched_repos.py # Phase 1D: Tier 2 matched repos (optional)
 │       ├── phase_2_extract_human.py         # Phase 2: Dataset B (human, within-repo)
+│       ├── select_dataset_c_repos.py        # Selects Dataset C repos (creation-date window, no sampling) -- run before Phase 2B
 │       ├── phase_2b_extract_dataset_c.py    # Phase 2B: Dataset C (human, cross-repo baseline)
 │       ├── phase_3_extract_agent.py         # Phase 3: Dataset A (agent-authored)
 │       ├── phase_4_analyze_distribution.py  # Phase 4: distribution analysis
@@ -139,8 +140,12 @@ Core implementation with one collector module per dataset:
 - Entry point: `phase_2_extract_human.py`
 
 **2. dataset_c.py — Dataset C (cross-repo pre-2021 baseline)**
-- Checks out each sampled repo at its pinned pre-2021 cutoff commit and extracts
+- Repos come from `select_dataset_c_repos.py`: every repo created within a fixed
+  window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no sampling
+- Checks out each one at its pinned pre-2021 cutoff commit and extracts
   every fixture from every test file at that snapshot
+- Commit-count/test-file-count quality floor measured from real git history at
+  the cutoff commit, not GitHub's live metadata (`count_commits_up_to()`)
 - Entry point: `phase_2b_extract_dataset_c.py`
 
 **3. agent_corpus.py — Dataset A (agent-authored)**
@@ -168,6 +173,7 @@ corpus.db (input)
 Phase 1A-1D: discover agent-enabled repos, scan/verify agent commits
     ↓
 Phase 2: phase_2_extract_human.py           → Dataset B → fixturedb-human.db
+select_dataset_c_repos.py                   → dataset_c_{lang}.csv (repo list, no sampling)
 Phase 2B: phase_2b_extract_dataset_c.py     → Dataset C → fixturedb-human.db
     ↓
 Phase 3: phase_3_extract_agent.py           → Dataset A → fixturedb-agent.db

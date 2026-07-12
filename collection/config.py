@@ -52,6 +52,14 @@ HUMAN_CORPUS_CUTOFF_DATE = "2020-12-31"
 # Agent corpus: fixtures from 2025+ repositories with agent commits
 AGENT_CORPUS_START_DATE = "2025-01-01"
 
+# Dataset C only: lower bound on repo creation date. Combined with
+# HUMAN_CORPUS_CUTOFF_DATE above, this bounds a Dataset C repo's age at
+# snapshot time to a fixed window (2016-01-01 to 2020-12-31, ~5 years),
+# instead of an unbounded "any pre-cutoff repo" pool. Same value for every
+# language, deliberately -- see internal-docs/methodology-improvements/
+# dataset-c-repo-selection.md for the empirical basis and full reasoning.
+DATASET_C_MIN_CREATED_DATE = "2016-01-01"
+
 # Quality thresholds for corpus filtering (same for both)
 # Project minimum star floor for repository quality filtering
 MIN_STARS = 500

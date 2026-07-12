@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Compute domain category proportions from Dataset A agent fixture repos.
+"""DEACTIVATED, kept for reference -- not called by the current pipeline.
+
+Only consumer was sample_proportional_repos.py, itself deactivated -- see
+that module's docstring and internal-docs/methodology-improvements/
+dataset-c-repo-selection.md section 7. Code below is otherwise unchanged
+and still works standalone if re-activated.
+
+Original docstring:
+
+Compute domain category proportions from Dataset A agent fixture repos.
 
 Reads the agent fixture repository list and joins with the domain classification
 data to compute per-language and global category proportions. Outputs a JSON file

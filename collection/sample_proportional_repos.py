@@ -1,5 +1,18 @@
 #!/usr/bin/env python3
-"""Sample pre-2021 repositories proportionally to Dataset A's category distribution.
+"""DEACTIVATED, kept for reference -- not called by the current pipeline.
+
+Superseded by collection/select_dataset_c_repos.py. This script's
+proportional sampling existed to cap Dataset C's candidate volume, which is
+no longer needed now that Dataset C is bounded to a fixed creation-date
+window (DATASET_C_MIN_CREATED_DATE to HUMAN_CORPUS_CUTOFF_DATE in
+config.py) -- that window alone already keeps the candidate pool a
+manageable size. See internal-docs/methodology-improvements/
+dataset-c-repo-selection.md section 7 for the reasoning. Code below is
+otherwise unchanged and still works standalone if re-activated.
+
+Original docstring:
+
+Sample pre-2021 repositories proportionally to Dataset A's category distribution.
 
 Reads the category proportions computed by ``compute_agent_proportions.py`` and
 samples repositories from ``github-search-raw/`` that were created before the

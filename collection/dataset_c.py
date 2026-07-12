@@ -1,10 +1,18 @@
 """Builds Dataset C: human-authored fixtures, cross-repo pre-2021 baseline.
 
-Extracted from a stratified sample of independent repos at a pinned pre-2021
-cutoff commit (a snapshot, not a commit-by-commit scan). Entry point:
-phase_2b_extract_dataset_c.py. See agent_corpus.py (Dataset A) and
-human_corpus.py (Dataset B, the within-repo matched control) for the other
-two datasets.
+Extracted from an independent, unsampled set of repos created within a
+fixed window (DATASET_C_MIN_CREATED_DATE to HUMAN_CORPUS_CUTOFF_DATE, see
+collection/select_dataset_c_repos.py), checked out at each repo's own
+pinned pre-2021 cutoff commit (a snapshot, not a commit-by-commit scan).
+Entry point: phase_2b_extract_dataset_c.py. See agent_corpus.py (Dataset A)
+and human_corpus.py (Dataset B, the within-repo matched control) for the
+other two datasets.
+
+Repo quality (commit count, test file count) is enforced in _process_repo()
+below from each repo's real git history as of its cutoff commit, not from
+GitHub's live metadata -- see that function's docstring for why. See
+internal-docs/methodology-improvements/dataset-c-repo-selection.md for the
+full reasoning behind this module's current design.
 """
 
 import csv
@@ -21,6 +29,8 @@ from collection.agent_corpus import clone_repo_for_commit_scan
 from collection.config import (
     DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
+    MIN_COMMITS,
+    MIN_TEST_FILES,
 )
 from collection.corpus_utils import construct_repo_dict, persist_repository_and_fixtures
 from collection.db import db_session, initialise_db
@@ -75,6 +85,34 @@ def find_cutoff_commit(
     except Exception as exc:
         logger.debug("Failed to find cutoff commit in %s: %s", repo_path, exc)
         return None
+
+
+def count_commits_up_to(repo_path: Path, commit_sha: str) -> int:
+    """Count commits reachable from commit_sha -- i.e. commits made on or
+    before the cutoff commit, in the clone's own (single-branch) history.
+
+    This is the repo's real commit count as of the cutoff, not GitHub's
+    live "commits" field. That field is a single present-day crawl value
+    (see internal-docs/methodology-improvements/dataset-c-repo-selection.md
+    section 3): a repo could have accumulated most of its commits well
+    after 2020, so "has 100+ commits today" says nothing about whether it
+    had 100+ commits back at the Dataset C snapshot. `git rev-list --count`
+    against the actual cutoff commit answers that honestly.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo_path), "rev-list", "--count", commit_sha],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=True,
+        )
+        return int(result.stdout.strip())
+    except Exception as exc:
+        logger.debug(
+            "Failed to count commits up to %s in %s: %s", commit_sha, repo_path, exc
+        )
+        return 0
 
 
 def find_test_files_at_commit(
@@ -185,6 +223,21 @@ def _process_repo(
             cutoff_sha = cutoff_info["sha"]
             cutoff_date_val = cutoff_info["date"]
 
+        # Real quality floor, measured at the cutoff commit itself -- not
+        # GitHub's live metadata. Checked before checkout since it's a
+        # cheap ref lookup (no working-tree changes needed), so a repo
+        # that fails it skips the more expensive checkout + file walk.
+        commit_count = count_commits_up_to(actual_repo_path, cutoff_sha)
+        if commit_count < MIN_COMMITS:
+            logger.debug(
+                "[Dataset C] %s has only %d commits at cutoff %s (need %d)",
+                repo_name,
+                commit_count,
+                cutoff_sha[:8],
+                MIN_COMMITS,
+            )
+            return True, []
+
         try:
             subprocess.run(
                 ["git", "-C", str(actual_repo_path), "checkout", cutoff_sha, "--force"],
@@ -205,9 +258,11 @@ def _process_repo(
         test_files = find_test_files_at_commit(
             actual_repo_path, language if language != "unknown" else None
         )
-        if not test_files:
+        if len(test_files) < MIN_TEST_FILES:
             logger.debug(
-                "[Dataset C] No test files in %s at cutoff %s",
+                "[Dataset C] Only %d test files (need %d) in %s at cutoff %s",
+                len(test_files),
+                MIN_TEST_FILES,
                 repo_name,
                 cutoff_sha[:8],
             )
@@ -246,7 +301,15 @@ def _process_repo(
                 len(repo_fixtures),
             )
             return True, [
-                (repo, {**fixture, "repo_full_name": repo_name, "language": language})
+                (
+                    repo,
+                    {
+                        **fixture,
+                        "repo_full_name": repo_name,
+                        "language": language,
+                        "github_id": repo.get("github_id", 0),
+                    },
+                )
                 for fixture in repo_fixtures
             ]
         return True, []
@@ -450,11 +513,22 @@ def collect_dataset_c_fixtures(
         language_val = fixtures_list[0].get("language") if fixtures_list else "unknown"
         if language_val is None:
             language_val = "unknown"
+        # github_id is required: construct_repo_dict() defaults it to 0 when
+        # absent, and the repositories table's github_id UNIQUE constraint
+        # (ON CONFLICT DO UPDATE) means every repo with github_id=0 collides
+        # on the same row -- an entire run's repos silently collapse into
+        # one, with every fixture misattributed to whichever repo happened
+        # to insert first. See internal-docs/methodology-improvements/
+        # dataset-c-repo-selection.md for how this was found (a toy
+        # end-to-end run, not a unit test -- every existing test mocked
+        # _process_repo, so this path was never actually exercised).
+        github_id = fixtures_list[0].get("github_id", 0) if fixtures_list else 0
         repo_data = construct_repo_dict(
             full_name=repo_full,
             language=str(language_val),
             stars=0,
             forks=0,
+            github_id=github_id,
         )
         try:
             from collection.human_corpus import _human_fixture_csv_path

@@ -80,7 +80,13 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
 
     Works with both the combined ``dataset_c_sample.csv`` and per-language
     ``dataset_c_{lang}.csv`` files. Returns a list of dicts with keys:
-    *full_name*, *language*, *clone_url*.
+    *full_name*, *language*, *clone_url*, *github_id*.
+
+    github_id defaults to 0 when the column is absent (older CSVs written
+    before select_dataset_c_repos.py carried it through) -- callers must
+    not persist repos with github_id=0 without being aware every such repo
+    will collide on the repositories table's github_id UNIQUE constraint.
+    See internal-docs/methodology-improvements/dataset-c-repo-selection.md.
     """
     repos: list[dict] = []
     with open(csv_path, encoding="utf-8", newline="") as fh:
@@ -89,6 +95,10 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
             name = (row.get("repo_name") or "").strip()
             if not name or "/" not in name:
                 continue
+            try:
+                github_id = int((row.get("github_id") or "0").strip())
+            except ValueError:
+                github_id = 0
             repos.append(
                 {
                     "full_name": name,
@@ -96,6 +106,7 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
                     "clone_url": (
                         row.get("clone_url") or f"https://github.com/{name}.git"
                     ).strip(),
+                    "github_id": github_id,
                 }
             )
     logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)

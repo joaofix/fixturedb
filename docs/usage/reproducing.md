@@ -12,11 +12,11 @@ The pipeline builds three datasets from agent-enabled repositories:
 |---|---|---|---|
 | A | Agent-authored fixtures | `collection/phase_3_extract_agent.py` | `agent_corpus.AgentCorpusCollector` |
 | B | Human-authored fixtures, within-repo matched control (same repos and 2025+ window as Dataset A) | `collection/phase_2_extract_human.py` | `human_corpus.HumanCorpusCollector.run()` |
-| C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo sample) | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
+| C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo set) | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
 
 **Key design principles:**
 - Datasets A and B come from the same agent-enabled repos, scanned in the same temporal window (post-2025), giving paired within-repo observations.
-- Dataset C comes from an independent sample of repos at a pinned pre-2021 commit, giving an inter-repo baseline unaffected by AI coding agents.
+- Dataset C comes from an independent set of repos created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`, 2016–2020), each checked out at its own pinned pre-2021 commit — no domain sampling, no per-language cap. Bounds repo age at snapshot time instead of relying on a live popularity filter; see [internal-docs/methodology-improvements/dataset-c-repo-selection.md](../../internal-docs/methodology-improvements/dataset-c-repo-selection.md).
 - Tier 1 agent detection only (co-authored-by trailers, author signatures).
 
 ## Collection Pipeline
@@ -32,6 +32,7 @@ python -m collection.phase_1d_discover_matched_repos   # only if Tier 1 yield is
 
 # Phase 2 / 2B: Dataset B (within-repo) and Dataset C (cross-repo baseline)
 python -m collection.phase_2_extract_human --repo-dir github-search-agent/agent_repositories
+python -m collection.select_dataset_c_repos   # writes dataset_c_{lang}.csv, no sampling
 python -m collection.phase_2b_extract_dataset_c
 
 # Phase 3: Dataset A (agent-authored), same repos as Dataset B
@@ -56,7 +57,7 @@ Each phase script logs its own "Next steps" pointing at what to run next.
 - Schema: `repositories`, `test_files`, `fixtures`, `mock_usages` (see [Database Schema](../architecture/database-schema.md))
 
 **CSV exports:**
-- `fixtures-from-agents/` — Dataset A, plus the `dataset_c_*.csv` repo samples used by Phase 2B
+- `fixtures-from-agents/` — Dataset A, plus the `dataset_c_*.csv` repo lists (from `select_dataset_c_repos.py`) used by Phase 2B
 - `fixtures-from-humans/same-repo/` — Dataset B
 - `fixtures-from-humans/cross-repo/` — Dataset C
 

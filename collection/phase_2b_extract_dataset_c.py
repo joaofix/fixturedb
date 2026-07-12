@@ -1,12 +1,13 @@
 """Phase 2B: Extract Dataset C — human-authored fixtures from an independent
 pre-2021 repo sample (the cross-repo baseline).
 
-Reads the stratified `dataset_c_*.csv` repo samples (see
-sample_proportional_repos.py) and delegates to
-collection.dataset_c.collect_dataset_c_fixtures(), which clones each repo,
-checks out its pinned pre-2021 cutoff commit, and extracts every fixture from
-every test file at that snapshot (no diff/purity gating, since this is a
-snapshot rather than a commit-by-commit scan).
+Reads the `dataset_c_*.csv` repo lists (see select_dataset_c_repos.py,
+which selects every repo created within a fixed window -- no sampling) and
+delegates to collection.dataset_c.collect_dataset_c_fixtures(), which
+clones each repo, checks out its pinned pre-2021 cutoff commit, and
+extracts every fixture from every test file at that snapshot (no
+diff/purity gating, since this is a snapshot rather than a commit-by-commit
+scan).
 
 For Dataset B (the within-repo matched human control), see
 phase_2_extract_human.py instead.
@@ -103,7 +104,7 @@ def main():
             return 1
     elif not available:
         logger.error(f"No dataset_c_*.csv repo samples found under {dataset_c_dir}")
-        logger.error("Please run sample_proportional_repos.py first")
+        logger.error("Please run select_dataset_c_repos.py first")
         return 1
 
     logger.info("")
