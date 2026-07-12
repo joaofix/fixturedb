@@ -121,7 +121,7 @@ def test_repo_contains_patterns_detects_files_and_dirs(tmp_path):
 def test_repo_contains_patterns_matches_lightweight_aliases(tmp_path):
     repo = tmp_path / "repo2"
     repo.mkdir()
-    (repo / "claude.config").write_text("z")
+    (repo / ".cursorignore").write_text("z")
     assert ap.repo_contains_patterns(repo, ap.LIGHTWEIGHT_AGENT_CONFIG_PATTERNS)
 
 

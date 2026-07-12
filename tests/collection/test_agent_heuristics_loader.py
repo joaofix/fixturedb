@@ -338,7 +338,7 @@ def test_files_csv_has_boundary_comment_line():
         raw_lines = fh.readlines()
     comment_lines = [line for line in raw_lines if line.lstrip().startswith("#")]
     assert len(comment_lines) == 1
-    assert "own additions" in comment_lines[0]
+    assert "own addition" in comment_lines[0]
     assert "snapshotted verbatim on" in comment_lines[0]
 
 
@@ -373,23 +373,21 @@ def test_files_csv_first_95_rows_are_upstream_verbatim():
     }
 
 
-def test_files_csv_our_additions_are_appended_after_upstream_block():
+def test_files_csv_our_addition_is_appended_after_upstream_block():
+    """Only .cursorignore is appended -- individually confirmed against
+    Cursor's official docs (cursor.com/docs/reference/ignore-file) and
+    missing from upstream's own list. Ten other candidates (claude.config,
+    bare .cursor, cursor.config, .copilot-instructions.md,
+    .openhands.config, bare .openhands, .devin.config, bare .devin,
+    .cline.config, bare .cline) were checked the same way and dropped:
+    none were documented, and each was already redundant with an upstream
+    directory-marker pattern (.claude/, .cursor/, .openhands/, .devin/,
+    .cline/ match regardless of what's inside them)."""
     rows = _read_files_csv_rows()
     our_additions = rows[95:]
-    added_patterns = {row["pattern"] for row in our_additions}
-    assert added_patterns == {
-        "claude.config",
-        ".cursor",
-        ".cursorignore",
-        "cursor.config",
-        ".copilot-instructions.md",
-        ".openhands.config",
-        ".openhands",
-        ".devin.config",
-        ".devin",
-        ".cline.config",
-        ".cline",
-    }
+    assert our_additions == [
+        {"pattern": ".cursorignore", "tool": "Cursor", "start_date": "", "end_date": ""}
+    ]
 
 
 def test_files_csv_every_tool_has_agent_type_mapping():

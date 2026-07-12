@@ -10,7 +10,12 @@ content, so a paper reviewer can compare the files directly:
 - agent_files.csv: flat `pattern,tool,start_date,end_date` table (mirrors
   files.csv). First 95 data rows are that file's content verbatim, in its
   original order; everything after a `#`-prefixed boundary comment line is
-  this project's own additions.
+  this project's own addition -- a single pattern (`.cursorignore`)
+  individually confirmed against Cursor's official docs. Ten other
+  candidate additions were considered and dropped after failing that same
+  verification: each was either undocumented or already covered by an
+  upstream directory-marker pattern (`.claude/`, `.cursor/`, `.openhands/`,
+  `.devin/`, `.cline/` already match regardless of what's inside them).
 - agent_authors.csv: flat `pattern,tool,start_date,end_date` table (mirrors
   authors.csv). First 80 data rows are that file's content verbatim, in its
   original order; everything after a `#`-prefixed boundary comment line is
@@ -147,12 +152,15 @@ def _load_file_based_patterns(path: Path = _FILES_CSV_PATH) -> Dict[str, List[st
     """Group agent_files.csv's flat pattern rows by internal agent_type key.
 
     The first 95 rows are labri-progress/agent-mining's files.csv content
-    verbatim, in its original order; this project's own additions after the
-    boundary comment are patterns already covered by this project's own
-    prior detection logic but not present upstream (e.g. Aider's non-dotted
-    "aider.config" would collide with a real file, so the bare-dotfile
-    variants like ".devin"/".openhands"/".cline" and the "*.config" variants
-    this project has historically also matched were kept).
+    verbatim, in its original order; this project's own single addition
+    after the boundary comment (`.cursorignore`) was individually confirmed
+    against Cursor's official docs before being added. Ten other candidate
+    additions carried over from this project's pre-migration detection
+    logic (bare ".devin"/".openhands"/".cline", "*.config" variants, etc.)
+    were checked the same way and dropped: none were documented, and each
+    was already redundant with an upstream directory-marker pattern
+    (".claude/", ".cursor/", ".openhands/", ".devin/", ".cline/" match
+    regardless of what's inside them).
 
     start_date/end_date are read from the file but deliberately unused
     here, same as agent_authors.csv -- see that loader's docstring.
