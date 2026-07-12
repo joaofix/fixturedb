@@ -534,6 +534,23 @@ def build_parser() -> argparse.ArgumentParser:
         "--repos", type=int, default=5, help="Number of repos to process (default: 5)"
     )
     toy_parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help=(
+            "Concurrent worker threads for clone/scan-bound stages (default: "
+            "each stage's own tuned default, currently 8). Workers only "
+            "parallelize network/CPU-bound cloning and scanning -- DB and CSV "
+            "writes always happen back on the main thread, so this is safe to "
+            "raise. Dataset A's fixture-extraction stage is the one exception: "
+            "it interleaves DB writes into its per-repo loop and stays "
+            "single-threaded regardless of this flag. A very high value here "
+            "won't corrupt anything but can still bottleneck on GitHub rate "
+            "limits or the single SQLite writer; keep it in the 4-16 range "
+            "unless you've tested higher."
+        ),
+    )
+    toy_parser.add_argument(
         "--stratified",
         action="store_true",
         help=(
@@ -598,6 +615,7 @@ def main(argv: list[str] | None = None) -> int:
             language=args.language,
             repos=args.repos,
             stratified=args.stratified,
+            workers=args.workers,
         )
 
     if args.command == "status":

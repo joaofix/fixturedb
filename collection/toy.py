@@ -101,6 +101,7 @@ def run_toy(
     language: str | None = None,
     repos: int = DEFAULT_TOY_REPOS,
     stratified: bool = False,
+    workers: int | None = None,
 ) -> int:
     """Build one dataset end-to-end under toy-dataset/.
 
@@ -111,6 +112,15 @@ def run_toy(
     already-collected population -- a representative validation run instead
     of a quick smoke test. See internal-docs/methodology-improvements/ for
     the sample-size derivation.
+
+    `workers` overrides each stage's own default worker-thread count where
+    it's safe to (every stage except Dataset A's fixture-extraction, which
+    interleaves DB writes into its per-repo loop and stays single-threaded).
+    Every other stage already confines DB/CSV writes to the main thread --
+    worker threads only clone/scan -- so raising this is safe with respect
+    to data correctness; it's still bounded by GitHub rate limits and
+    SQLite's single writer at high values. None keeps each stage's own
+    tuned default.
     """
     root = paths.TOY_ROOT
     db_root = _toy_db_root()
@@ -158,18 +168,24 @@ def run_toy(
                 languages=languages,
                 source_dir=paths.RAW_SEARCH_DIR,
                 output_dir=paths.stage_dir("a", "repos", root=root),
+                workers=workers if workers is not None else 8,
             )
         logger.info("[toy a] scanning commit history for agent commits (stage 2/4)")
         agent_commit_counter.run(
             input_dir=paths.stage_dir("a", "repos", root=root),
             output_dir=paths.stage_dir("a", "commits", root=root),
+            workers=workers if workers is not None else 4,
         )
         logger.info("[toy a] filtering to test-touching commits (stage 3/4)")
         collect_agent_test_commits(
             paths.stage_dir("a", "commits", root=root),
             paths.stage_dir("a", "test-commits", root=root),
+            workers=workers if workers is not None else 12,
         )
-        logger.info("[toy a] extracting fixtures (stage 4/4)")
+        logger.info(
+            "[toy a] extracting fixtures (stage 4/4, single-threaded -- see "
+            "run_toy docstring)"
+        )
         collector = AgentCorpusCollector(
             output_db=paths.db_path("a", root=db_root),
             repo_qc_dir=paths.stage_dir("a", "repos", root=root),
@@ -205,7 +221,9 @@ def run_toy(
             fixtures_output_dir=paths.stage_dir("b", "fixtures", root=root),
         )
         stats, db_path = collector.run(
-            repos_per_language=None if stratified else repos, language=language
+            repos_per_language=None if stratified else repos,
+            language=language,
+            workers=workers,
         )
         logger.info(f"[toy b] done: {stats.fixtures_collected} fixtures in {db_path}")
         return 0
@@ -238,12 +256,24 @@ def run_toy(
         )
         logger.info("[toy c] selected repos per language: %s", write_counts)
 
+        # Re-read from the CSV just written rather than passing `selected`
+        # straight through: collect_dataset_c_fixtures's _process_repo()
+        # indexes repo["full_name"], but `selected` here is repo_name-keyed
+        # (select_dataset_c_repos.py's schema). load_dataset_c_repos() is
+        # the same repo_name -> full_name mapping the real (non-toy)
+        # extract-fixtures --dataset c CLI path already uses.
+        from .human_corpus import load_dataset_c_repos
+
+        repos_for_extraction = load_dataset_c_repos(
+            paths.stage_dir("c", "repos", root=root) / "all.csv"
+        )
+
         logger.info("[toy c] extracting fixtures (stage 2/2)")
         counts, db_path = collect_dataset_c_fixtures(
-            selected,
+            repos_for_extraction,
             clones_dir=paths.ROOT_DIR / "clones",
             output_db=paths.db_path("c", root=db_root),
-            workers=4,
+            workers=workers if workers is not None else 4,
             language=language,
             fixtures_output_dir=paths.stage_dir("c", "fixtures", root=root),
         )
