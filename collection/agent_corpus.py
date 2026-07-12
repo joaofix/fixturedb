@@ -953,14 +953,30 @@ class AgentCorpusCollector:
                 # Per-fixture DB rows + CSV (one row per fixture). Fixtures
                 # already carry their own commit_sha/agent_type/commit_kind,
                 # so no extra fields need injecting here.
-                fixtures_list_path = fixture_list_dir / f"{language_name}_fixtures.csv"
-                persist_repository_and_fixtures(
-                    self.output_db,
-                    repo_data,
-                    all_repo_fixtures,
-                    out_path=fixtures_list_path,
-                    handle_mocks=True,
-                )
+                #
+                # Bucket by each fixture's OWN detected language, not the
+                # repo's aggregate `language_name` -- a repo's SEART-assigned
+                # language is a single tag for the whole repo, but agent
+                # commits in a multi-language repo (e.g. a Java backend with
+                # a JS frontend) can touch test files in more than one
+                # language. Writing everything into
+                # f"{language_name}_fixtures.csv" regardless of each
+                # fixture's real language mislabels and misfiles those rows
+                # (a junit fixture ending up in javascript_fixtures.csv).
+                fixtures_by_language: dict[str, list[dict]] = {}
+                for fx in all_repo_fixtures:
+                    fx_lang = (fx.get("language") or language_name).strip().lower()
+                    fixtures_by_language.setdefault(fx_lang, []).append(fx)
+
+                for fx_lang, fx_group in fixtures_by_language.items():
+                    fixtures_list_path = fixture_list_dir / f"{fx_lang}_fixtures.csv"
+                    persist_repository_and_fixtures(
+                        self.output_db,
+                        repo_data,
+                        fx_group,
+                        out_path=fixtures_list_path,
+                        handle_mocks=True,
+                    )
         except Exception as e:
             logger.debug(
                 f"Failed to write agent fixture repo list for {repo_name}: {e}"
@@ -974,7 +990,17 @@ class AgentCorpusCollector:
             output_db=self.output_db,
             temporal_scope=f"after {AGENT_CORPUS_START_DATE}",
             extra_metadata={
-                "detection_tier": "Tier 1 (co-authored-by trailers only)",
+                # Matches tiered_agent_corpus_scanner.py's
+                # _detect_agent_in_commit() priority order exactly -- not
+                # trailer-only. Author-name/email matching is a known,
+                # accepted source of false positives (e.g. a human named
+                # "Claude" or "Devin"); see agent_heuristics.yaml's module
+                # comment for the full rationale and mitigation guidance.
+                "detection_tier": (
+                    "Tier 1 (priority order: bot-account check, then "
+                    "Co-authored-by/Assisted-by/Generated-by trailers, then "
+                    "author name/email fallback against AGENT_SIGNATURES)"
+                ),
                 "agent_corpus_start_date": AGENT_CORPUS_START_DATE,
                 "agent_config_patterns": PAPER_AGENT_CONFIG_PATTERNS,
                 "min_commits": MIN_COMMITS,

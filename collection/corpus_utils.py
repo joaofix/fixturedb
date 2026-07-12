@@ -301,7 +301,15 @@ def persist_repository_and_fixtures(
                 write_fixture_csv_row(
                     out_path,
                     repo_name,
-                    language,
+                    # Fixtures carry their own per-file language (detected
+                    # from the actual file extension -- see
+                    # agent_fixture_extractor.py's _get_language()), which
+                    # can differ from the repo's aggregate language for
+                    # multi-language repos (e.g. a Java test file inside a
+                    # repo whose overall SEART-assigned language is
+                    # JavaScript). Falling back to the repo-level `language`
+                    # only covers extraction paths that don't set it.
+                    fixture.get("language") or language,
                     fixture,
                     extra_fields={"is_complete_addition": 1},
                 )
@@ -310,13 +318,20 @@ def persist_repository_and_fixtures(
         test_files_cache = {}
         for fixture in fixtures:
             file_path = fixture.get("file_path", "unknown")
+            fixture_language = fixture.get("language") or language
 
-            # Cache test file lookups
-            if file_path not in test_files_cache:
-                test_file_id = upsert_test_file(conn, repo_id, file_path, language)
-                test_files_cache[file_path] = test_file_id
+            # Cache test file lookups (per file_path AND language -- the
+            # same relative path could theoretically appear in two
+            # differently-labeled scans, though in practice a given
+            # file_path has one real language).
+            cache_key = (file_path, fixture_language)
+            if cache_key not in test_files_cache:
+                test_file_id = upsert_test_file(
+                    conn, repo_id, file_path, fixture_language
+                )
+                test_files_cache[cache_key] = test_file_id
             else:
-                test_file_id = test_files_cache[file_path]
+                test_file_id = test_files_cache[cache_key]
 
             # Build and insert fixture data
             fixture_data: dict[str, Any] = {
