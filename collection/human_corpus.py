@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from pydriller import Repository
+from tqdm import tqdm
 
 from . import paths
 from .agent_corpus import clone_repo_for_commit_scan
@@ -372,13 +373,13 @@ class HumanCorpusCollector:
         language_name = repo["language"]
         repo_path = self.clones_dir / repo_name.replace("/", "__")
 
-        logger.info(f"[Human Corpus] Processing {repo_name}")
+        logger.debug(f"[Human Corpus] Processing {repo_name}")
 
         if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
             shutil.rmtree(repo_path, ignore_errors=True)
 
         # Clone inside a managed context to guarantee cleanup and respect disk guards.
-        logger.info(
+        logger.debug(
             f"[Human Corpus] Cloning {repo_name} with full history for commit scan..."
         )
         with clone_with_function(
@@ -532,7 +533,7 @@ class HumanCorpusCollector:
 
         fixtures = []
         if human_commits:
-            logger.info(
+            logger.debug(
                 f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits"
             )
             fixtures = extractor._extract_from_agent_commits(
@@ -814,7 +815,9 @@ class HumanCorpusCollector:
         lang_fixtures_collected = 0
 
         if workers <= 1:
-            for repo in lang_repos:
+            for repo in tqdm(
+                lang_repos, desc=f"[Human Corpus] {current_lang}", unit="repo"
+            ):
                 lang_results.append(self._process_human_repository(repo))
         else:
             with ThreadPoolExecutor(max_workers=workers) as executor:
@@ -822,7 +825,12 @@ class HumanCorpusCollector:
                     executor.submit(self._process_human_repository, repo): repo
                     for repo in lang_repos
                 }
-                for future in as_completed(futures):
+                for future in tqdm(
+                    as_completed(futures),
+                    total=len(futures),
+                    desc=f"[Human Corpus] {current_lang}",
+                    unit="repo",
+                ):
                     lang_results.append(future.result())
 
         for result in lang_results:

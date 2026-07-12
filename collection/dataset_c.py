@@ -23,6 +23,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from tqdm import tqdm
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 from collection.agent_corpus import clone_repo_for_commit_scan
@@ -268,7 +270,7 @@ def _process_repo(
             )
             return True, []
 
-        logger.info(
+        logger.debug(
             "[Dataset C] %s: %d test files at cutoff %s",
             repo_name,
             len(test_files),
@@ -295,7 +297,7 @@ def _process_repo(
                 )
 
         if repo_fixtures:
-            logger.info(
+            logger.debug(
                 "[Dataset C] %s: %d fixtures extracted",
                 repo_name,
                 len(repo_fixtures),
@@ -341,6 +343,7 @@ def collect_dataset_c_fixtures(
     seed: int = DATASET_C_SAMPLING_SEED,
     targets: Optional[Dict[str, int]] = None,
     language: Optional[str] = None,
+    fixtures_output_dir: Optional[Path] = None,
 ) -> Tuple[Dict[str, int], Path]:
     """Extract human_pre2022 fixtures from a stratified repo sample via snapshot extraction.
 
@@ -352,6 +355,10 @@ def collect_dataset_c_fixtures(
     5. Extract ALL fixtures from each test file (no diff filter, no pure-addition gate)
     6. Tag each fixture with agent_type='human_pre2022' and cutoff commit metadata
     7. Persist sampled fixtures to DB
+
+    fixtures_output_dir overrides where the per-language fixture CSVs land
+    (default: datasets/c/fixtures/) -- required for toy runs so they don't
+    write into the real dataset.
     """
     workers = max(1, int(workers or 1))
     initialise_db(output_db)
@@ -446,7 +453,7 @@ def collect_dataset_c_fixtures(
     successful_repos: Set[str] = set()
 
     if workers <= 1:
-        for repo in pending_repos:
+        for repo in tqdm(pending_repos, desc="[Dataset C]", unit="repo"):
             success, results = _process_repo(repo, cutoffs, extractor, clones_dir)
             if success:
                 successful_repos.add(repo["full_name"])
@@ -459,7 +466,12 @@ def collect_dataset_c_fixtures(
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {executor.submit(_submit, repo): repo for repo in pending_repos}
             try:
-                for future in as_completed(futures):
+                for future in tqdm(
+                    as_completed(futures),
+                    total=len(futures),
+                    desc="[Dataset C]",
+                    unit="repo",
+                ):
                     success, results = future.result()
                     if success:
                         successful_repos.add(futures[future]["full_name"])
@@ -484,7 +496,7 @@ def collect_dataset_c_fixtures(
             if lang is None:
                 lang = "unknown"
             try:
-                csv_path = _human_fixture_csv_path(lang, "c")
+                csv_path = _human_fixture_csv_path(lang, "c", fixtures_output_dir)
                 if csv_path.exists():
                     csv_path.unlink()
                     logger.debug(
@@ -533,7 +545,9 @@ def collect_dataset_c_fixtures(
         try:
             from collection.human_corpus import _human_fixture_csv_path
 
-            fixture_out_path = _human_fixture_csv_path(repo_data["language"], "c")
+            fixture_out_path = _human_fixture_csv_path(
+                repo_data["language"], "c", fixtures_output_dir
+            )
             persist_repository_and_fixtures(
                 output_db,
                 repo_data,

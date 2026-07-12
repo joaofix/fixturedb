@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
+from tqdm import tqdm
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
@@ -293,7 +295,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             or f"https://github.com/{full_name}.git",
             "num_contributors": int(entry.get("num_contributors") or 0),
         }
-        print(f"Processing {full_name} (lang={lang})")
+        logger.debug("Processing %s (lang=%s)", full_name, lang)
 
         raw_clone_url = meta.get("clone_url") or f"https://github.com/{full_name}.git"
         clone_url = str(raw_clone_url).strip()
@@ -374,21 +376,27 @@ def run(
     workers = max(1, int(workers or 1))
     if workers == 1:
         count = 0
-        for entry in to_process:
-            res = _process_single(entry, since)
-            if res:
-                write_row(res)
-                count += 1
+        with tqdm(total=len(to_process), desc="discover-repos", unit="repo") as pbar:
+            for entry in to_process:
+                res = _process_single(entry, since)
+                if res:
+                    write_row(res)
+                    count += 1
+                pbar.set_postfix(agent_config=count)
+                pbar.update(1)
         print(f"Processed {count} repos; CSVs stored in {output_dir}")
     else:
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
             futures = [ex.submit(_process_single, entry, since) for entry in to_process]
             count = 0
-            for fut in concurrent.futures.as_completed(futures):
-                r = fut.result()
-                if r:
-                    write_row(r)
-                    count += 1
+            with tqdm(total=len(futures), desc="discover-repos", unit="repo") as pbar:
+                for fut in concurrent.futures.as_completed(futures):
+                    r = fut.result()
+                    if r:
+                        write_row(r)
+                        count += 1
+                    pbar.set_postfix(agent_config=count)
+                    pbar.update(1)
         print(
             f"Processed {count} repos with {workers} workers; CSVs stored in {output_dir}"
         )

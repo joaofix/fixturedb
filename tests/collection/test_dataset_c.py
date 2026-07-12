@@ -737,16 +737,12 @@ def test_collect_dataset_c_repos_with_distinct_github_ids_get_distinct_db_rows(
 
     # This test deliberately exercises the real persist_repository_and_
     # fixtures() path (see docstring), which also writes a CSV side-output
-    # via human_corpus._human_fixture_csv_path() -- that path is NOT
-    # parameterized by output_db/clones_dir, so without this patch it
-    # writes into the real, tracked fixtures-from-humans/cross-repo/
-    # directory on every test run. Redirect it into tmp_path instead.
+    # via human_corpus._human_fixture_csv_path() -- redirect it into
+    # tmp_path via fixtures_output_dir instead of writing into the real,
+    # tracked datasets/c/fixtures/ directory on every test run.
     with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
         "collection.dataset_c.stratified_sample_by_language",
         side_effect=lambda c, t, seed=42: c,
-    ), patch(
-        "collection.human_corpus._human_fixture_csv_path",
-        side_effect=lambda language, kind: tmp_path / f"{language}_human_fixtures.csv",
     ):
         stats, db_path = collect_dataset_c_fixtures(
             agent_repos=repos,
@@ -755,6 +751,7 @@ def test_collect_dataset_c_repos_with_distinct_github_ids_get_distinct_db_rows(
             workers=1,
             language="python",
             targets={},
+            fixtures_output_dir=tmp_path,
         )
 
     assert stats["repos_persisted"] == 2

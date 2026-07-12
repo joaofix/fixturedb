@@ -10,6 +10,8 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from tqdm import tqdm
+
 from collection.logging_utils import get_logger
 
 from . import paths
@@ -276,33 +278,29 @@ def _collect_human_test_commits_from_repo_rows(
         )
 
     if workers == 1:
-        for repo_name, repo_rows_for_name in repos_to_process.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = process_fn(
-                repo_rows_for_name[0]
-            )
-            repos_processed += repo_count
-            commits_scanned += repo_commits_scanned
-            new_rows = []
-            lang_seen = seen_commit_shas_by_language.setdefault(language, set())
-            for row in repo_test_commits:
-                commit_sha = (row.get("commit_sha") or "").strip()
-                if commit_sha and commit_sha not in lang_seen:
-                    lang_seen.add(commit_sha)
-                    new_rows.append(row)
-            if new_rows:
-                repos_with_test_commits += 1
-                test_commit_rows_by_language[language].extend(new_rows)
-            completed_repos.add(repo_name)
-            persist_progress()
-            pct = (repos_processed / total_repos * 100) if total_repos else 100
-            logger.info(
-                "[human-test-commits] Progress: %d/%d repos (%.1f%%), %d commits scanned, %d repos completed",
-                repos_processed,
-                total_repos,
-                pct,
-                commits_scanned,
-                len(completed_repos),
-            )
+        with tqdm(total=total_repos, desc="[human-test-commits]", unit="repo") as pbar:
+            for repo_name, repo_rows_for_name in repos_to_process.items():
+                language, repo_test_commits, repo_count, repo_commits_scanned = process_fn(
+                    repo_rows_for_name[0]
+                )
+                repos_processed += repo_count
+                commits_scanned += repo_commits_scanned
+                new_rows = []
+                lang_seen = seen_commit_shas_by_language.setdefault(language, set())
+                for row in repo_test_commits:
+                    commit_sha = (row.get("commit_sha") or "").strip()
+                    if commit_sha and commit_sha not in lang_seen:
+                        lang_seen.add(commit_sha)
+                        new_rows.append(row)
+                if new_rows:
+                    repos_with_test_commits += 1
+                    test_commit_rows_by_language[language].extend(new_rows)
+                completed_repos.add(repo_name)
+                persist_progress()
+                pbar.set_postfix(commits=commits_scanned, test_commits=sum(
+                    len(v) for v in test_commit_rows_by_language.values()
+                ))
+                pbar.update(1)
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
@@ -310,35 +308,31 @@ def _collect_human_test_commits_from_repo_rows(
                 for repo_name, repo_rows_for_name in repos_to_process.items()
             }
             try:
-                for future in as_completed(futures):
-                    language, repo_test_commits, repo_count, repo_commits_scanned = (
-                        future.result()
-                    )
-                    repos_processed += repo_count
-                    commits_scanned += repo_commits_scanned
-                    new_rows = []
-                    lang_seen = seen_commit_shas_by_language.setdefault(language, set())
-                    for row in repo_test_commits:
-                        commit_sha = (row.get("commit_sha") or "").strip()
-                        if commit_sha and commit_sha not in lang_seen:
-                            lang_seen.add(commit_sha)
-                            new_rows.append(row)
-                    if new_rows:
-                        repos_with_test_commits += 1
-                        test_commit_rows_by_language[language].extend(new_rows)
-                    repo_name = futures.get(future, None)
-                    if repo_name:
-                        completed_repos.add(repo_name)
-                    persist_progress()
-                    pct = (repos_processed / total_repos * 100) if total_repos else 100
-                    logger.info(
-                        "[human-test-commits] Progress: %d/%d repos completed (%.1f%%), %d commits scanned, %d repos completed",
-                        repos_processed,
-                        total_repos,
-                        pct,
-                        commits_scanned,
-                        len(completed_repos),
-                    )
+                with tqdm(total=total_repos, desc="[human-test-commits]", unit="repo") as pbar:
+                    for future in as_completed(futures):
+                        language, repo_test_commits, repo_count, repo_commits_scanned = (
+                            future.result()
+                        )
+                        repos_processed += repo_count
+                        commits_scanned += repo_commits_scanned
+                        new_rows = []
+                        lang_seen = seen_commit_shas_by_language.setdefault(language, set())
+                        for row in repo_test_commits:
+                            commit_sha = (row.get("commit_sha") or "").strip()
+                            if commit_sha and commit_sha not in lang_seen:
+                                lang_seen.add(commit_sha)
+                                new_rows.append(row)
+                        if new_rows:
+                            repos_with_test_commits += 1
+                            test_commit_rows_by_language[language].extend(new_rows)
+                        repo_name = futures.get(future, None)
+                        if repo_name:
+                            completed_repos.add(repo_name)
+                        persist_progress()
+                        pbar.set_postfix(commits=commits_scanned, test_commits=sum(
+                            len(v) for v in test_commit_rows_by_language.values()
+                        ))
+                        pbar.update(1)
             except KeyboardInterrupt:
                 logger.warning(
                     "[human-test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs..."
@@ -389,7 +383,7 @@ def _process_repo_test_commits(
     ).strip()
     language = (repo_rows[0].get("language") or "unknown").strip().lower()
 
-    logger.info("[test-commits] Cloning %s (%s)", repo_name, language)
+    logger.debug("[test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
         clone_url, repo_name, prefix="agent-test-commits-", timeout=300
     ) as repo_path:
@@ -420,7 +414,7 @@ def _process_repo_test_commits(
                 }
             )
 
-    logger.info(
+    logger.debug(
         "[test-commits] %s (%s): scanned %d commits, found %d test commits",
         repo_name,
         language,
@@ -498,33 +492,29 @@ def collect_agent_test_commits(
         _save_agent_test_commit_resume_state(output_dir, counts, completed_repos)
 
     if workers == 1:
-        for repo_name, repo_rows in repos_to_process.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = (
-                _process_repo_test_commits(repo_name, repo_rows)
-            )
-            repos_processed += repo_count
-            commits_scanned += repo_commits_scanned
-            new_rows = []
-            lang_seen = seen_commit_shas_by_language.setdefault(language, set())
-            for row in repo_test_commits:
-                commit_sha = (row.get("commit_sha") or "").strip()
-                if commit_sha and commit_sha not in lang_seen:
-                    lang_seen.add(commit_sha)
-                    new_rows.append(row)
-            if new_rows:
-                repos_with_test_commits += 1
-                test_commit_rows_by_language[language].extend(new_rows)
-            completed_repos.add(repo_name)
-            persist_progress()
-            pct = (repos_processed / total_repos * 100) if total_repos else 100
-            logger.info(
-                "[test-commits] Progress: %d/%d repos (%.1f%%), %d commits scanned, %d repos completed",
-                repos_processed,
-                total_repos,
-                pct,
-                commits_scanned,
-                len(completed_repos),
-            )
+        with tqdm(total=total_repos, desc="[test-commits]", unit="repo") as pbar:
+            for repo_name, repo_rows in repos_to_process.items():
+                language, repo_test_commits, repo_count, repo_commits_scanned = (
+                    _process_repo_test_commits(repo_name, repo_rows)
+                )
+                repos_processed += repo_count
+                commits_scanned += repo_commits_scanned
+                new_rows = []
+                lang_seen = seen_commit_shas_by_language.setdefault(language, set())
+                for row in repo_test_commits:
+                    commit_sha = (row.get("commit_sha") or "").strip()
+                    if commit_sha and commit_sha not in lang_seen:
+                        lang_seen.add(commit_sha)
+                        new_rows.append(row)
+                if new_rows:
+                    repos_with_test_commits += 1
+                    test_commit_rows_by_language[language].extend(new_rows)
+                completed_repos.add(repo_name)
+                persist_progress()
+                pbar.set_postfix(commits=commits_scanned, test_commits=sum(
+                    len(v) for v in test_commit_rows_by_language.values()
+                ))
+                pbar.update(1)
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
@@ -534,34 +524,30 @@ def collect_agent_test_commits(
                 for repo_name, repo_rows in repos_to_process.items()
             }
             try:
-                for future in as_completed(futures):
-                    repo_name = futures[future]
-                    language, repo_test_commits, repo_count, repo_commits_scanned = (
-                        future.result()
-                    )
-                    repos_processed += repo_count
-                    commits_scanned += repo_commits_scanned
-                    new_rows = []
-                    lang_seen = seen_commit_shas_by_language.setdefault(language, set())
-                    for row in repo_test_commits:
-                        commit_sha = (row.get("commit_sha") or "").strip()
-                        if commit_sha and commit_sha not in lang_seen:
-                            lang_seen.add(commit_sha)
-                            new_rows.append(row)
-                    if new_rows:
-                        repos_with_test_commits += 1
-                        test_commit_rows_by_language[language].extend(new_rows)
-                    completed_repos.add(repo_name)
-                    persist_progress()
-                    pct = (repos_processed / total_repos * 100) if total_repos else 100
-                    logger.info(
-                        "[test-commits] Progress: %d/%d repos completed (%.1f%%), %d commits scanned, %d repos completed",
-                        repos_processed,
-                        total_repos,
-                        pct,
-                        commits_scanned,
-                        len(completed_repos),
-                    )
+                with tqdm(total=total_repos, desc="[test-commits]", unit="repo") as pbar:
+                    for future in as_completed(futures):
+                        repo_name = futures[future]
+                        language, repo_test_commits, repo_count, repo_commits_scanned = (
+                            future.result()
+                        )
+                        repos_processed += repo_count
+                        commits_scanned += repo_commits_scanned
+                        new_rows = []
+                        lang_seen = seen_commit_shas_by_language.setdefault(language, set())
+                        for row in repo_test_commits:
+                            commit_sha = (row.get("commit_sha") or "").strip()
+                            if commit_sha and commit_sha not in lang_seen:
+                                lang_seen.add(commit_sha)
+                                new_rows.append(row)
+                        if new_rows:
+                            repos_with_test_commits += 1
+                            test_commit_rows_by_language[language].extend(new_rows)
+                        completed_repos.add(repo_name)
+                        persist_progress()
+                        pbar.set_postfix(commits=commits_scanned, test_commits=sum(
+                            len(v) for v in test_commit_rows_by_language.values()
+                        ))
+                        pbar.update(1)
             except KeyboardInterrupt:
                 logger.warning(
                     "[test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs..."
@@ -614,7 +600,7 @@ def _process_repo_human_test_commits_pre2021(
     ).strip()
     language = (repo_row.get("language") or "unknown").strip().lower()
 
-    logger.info("[human-test-commits] Cloning %s (%s)", repo_name, language)
+    logger.debug("[human-test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
         clone_url, repo_name, prefix="human-test-commits-", timeout=300
     ) as repo_path:
@@ -676,7 +662,7 @@ def _process_repo_human_test_commits_2025(
     ).strip()
     language = (repo_row.get("language") or "unknown").strip().lower()
 
-    logger.info("[human-test-commits] Cloning %s (%s)", repo_name, language)
+    logger.debug("[human-test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
         clone_url, repo_name, prefix="human-test-commits-", timeout=300
     ) as repo_path:
@@ -808,7 +794,7 @@ def _process_repo_agent_test_commits(
     ).strip()
     language = (repo_row.get("language") or "unknown").strip().lower()
 
-    logger.info("[agent-test-commits] Cloning %s (%s)", repo_name, language)
+    logger.debug("[agent-test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
         clone_url, repo_name, prefix="agent-test-commits-", timeout=300
     ) as repo_path:
@@ -846,7 +832,7 @@ def _process_repo_agent_test_commits(
                 }
             )
 
-    logger.info(
+    logger.debug(
         "[agent-test-commits] %s (%s): scanned %d commits, found %d agent test commits",
         repo_name,
         language,
@@ -893,23 +879,20 @@ def collect_agent_test_commits_from_repos(
     )
 
     if workers == 1:
-        for _repo_name, repo_rows in grouped.items():
-            language, repo_test_commits, repo_count, repo_commits_scanned = (
-                _process_repo_agent_test_commits(repo_rows[0])
-            )
-            repos_processed += repo_count
-            commits_scanned += repo_commits_scanned
-            if repo_test_commits:
-                repos_with_test_commits += 1
-                test_commit_rows_by_language[language].extend(repo_test_commits)
-            pct = (repos_processed / total_repos * 100) if total_repos else 100
-            logger.info(
-                "[agent-test-commits] Progress: %d/%d repos (%.1f%%), %d commits scanned",
-                repos_processed,
-                total_repos,
-                pct,
-                commits_scanned,
-            )
+        with tqdm(total=total_repos, desc="[agent-test-commits]", unit="repo") as pbar:
+            for _repo_name, repo_rows in grouped.items():
+                language, repo_test_commits, repo_count, repo_commits_scanned = (
+                    _process_repo_agent_test_commits(repo_rows[0])
+                )
+                repos_processed += repo_count
+                commits_scanned += repo_commits_scanned
+                if repo_test_commits:
+                    repos_with_test_commits += 1
+                    test_commit_rows_by_language[language].extend(repo_test_commits)
+                pbar.set_postfix(commits=commits_scanned, test_commits=sum(
+                    len(v) for v in test_commit_rows_by_language.values()
+                ))
+                pbar.update(1)
     else:
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {
@@ -919,23 +902,20 @@ def collect_agent_test_commits_from_repos(
                 for repo_name, repo_rows in grouped.items()
             }
             try:
-                for future in as_completed(futures):
-                    language, repo_test_commits, repo_count, repo_commits_scanned = (
-                        future.result()
-                    )
-                    repos_processed += repo_count
-                    commits_scanned += repo_commits_scanned
-                    if repo_test_commits:
-                        repos_with_test_commits += 1
-                        test_commit_rows_by_language[language].extend(repo_test_commits)
-                    pct = (repos_processed / total_repos * 100) if total_repos else 100
-                    logger.info(
-                        "[agent-test-commits] Progress: %d/%d repos completed (%.1f%%), %d commits scanned",
-                        repos_processed,
-                        total_repos,
-                        pct,
-                        commits_scanned,
-                    )
+                with tqdm(total=total_repos, desc="[agent-test-commits]", unit="repo") as pbar:
+                    for future in as_completed(futures):
+                        language, repo_test_commits, repo_count, repo_commits_scanned = (
+                            future.result()
+                        )
+                        repos_processed += repo_count
+                        commits_scanned += repo_commits_scanned
+                        if repo_test_commits:
+                            repos_with_test_commits += 1
+                            test_commit_rows_by_language[language].extend(repo_test_commits)
+                        pbar.set_postfix(commits=commits_scanned, test_commits=sum(
+                            len(v) for v in test_commit_rows_by_language.values()
+                        ))
+                        pbar.update(1)
             except KeyboardInterrupt:
                 logger.warning(
                     "[agent-test-commits] Interrupted by user (KeyboardInterrupt). Cancelling remaining jobs..."

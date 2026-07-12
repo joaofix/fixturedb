@@ -204,6 +204,7 @@ def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
     # multi-worker extraction and insertion:
     #  - `journal_mode=WAL` allows concurrent reads and a single writer
     #  - `busy_timeout` / `timeout` give SQLite time to resolve brief locks
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path, timeout=60.0)  # 60 second timeout for lock waits
     conn.row_factory = sqlite3.Row  # rows behave like dicts
     conn.execute("PRAGMA journal_mode=WAL")  # safe for concurrent reads

@@ -116,6 +116,15 @@ def run_toy(
     db_root = _toy_db_root()
     languages = [language] if language else None
 
+    logger.info(
+        "[toy] starting dataset=%s language=%s stratified=%s repos=%s root=%s",
+        dataset,
+        language or "all",
+        stratified,
+        "n/a (stratified)" if stratified else repos,
+        root,
+    )
+
     if dataset == "a":
         from .agent_corpus import AgentCorpusCollector
         from .repository_quality_control import (
@@ -126,62 +135,79 @@ def run_toy(
         from .test_commit_filter import collect_agent_test_commits
 
         if stratified:
+            logger.info("[toy a] sampling from real datasets/a/repos/ (stage 1/4)")
             sampled = sample_stratified_by_population(
                 _read_real_agent_positive_rows(language), language=language
             )
             _write_repo_csvs_per_language(
                 sampled, paths.stage_dir("a", "repos", root=root)
             )
+            by_lang: dict[str, int] = {}
+            for r in sampled:
+                by_lang[r.get("language", "")] = by_lang.get(r.get("language", ""), 0) + 1
             logger.info(
-                "[toy a stratified] sampled %d repos across %d language(s)",
+                "[toy a] sampled %d repos across %d language(s): %s",
                 len(sampled),
-                len({r.get("language") for r in sampled}),
+                len(by_lang),
+                dict(sorted(by_lang.items())),
             )
         else:
+            logger.info("[toy a] discovering repos from github-search-raw/ (stage 1/4)")
             agent_repository_counter.run(
                 limit=repos,
                 languages=languages,
                 source_dir=paths.RAW_SEARCH_DIR,
                 output_dir=paths.stage_dir("a", "repos", root=root),
             )
+        logger.info("[toy a] scanning commit history for agent commits (stage 2/4)")
         agent_commit_counter.run(
             input_dir=paths.stage_dir("a", "repos", root=root),
             output_dir=paths.stage_dir("a", "commits", root=root),
         )
+        logger.info("[toy a] filtering to test-touching commits (stage 3/4)")
         collect_agent_test_commits(
             paths.stage_dir("a", "commits", root=root),
             paths.stage_dir("a", "test-commits", root=root),
         )
+        logger.info("[toy a] extracting fixtures (stage 4/4)")
         collector = AgentCorpusCollector(
             output_db=paths.db_path("a", root=db_root),
             repo_qc_dir=paths.stage_dir("a", "repos", root=root),
             commit_qc_dir=paths.stage_dir("a", "test-commits", root=root),
+            fixtures_output_dir=paths.stage_dir("a", "fixtures", root=root),
         )
         stats, db_path = collector.run(
             repos_per_language=None if stratified else repos, language=language
         )
-        logger.info(f"[toy a] {stats.fixtures_collected} fixtures in {db_path}")
+        logger.info(f"[toy a] done: {stats.fixtures_collected} fixtures in {db_path}")
         return 0
 
     if dataset == "b":
         from .human_corpus import HumanCorpusCollector
         from .repo_resolve import resolve_dataset_b_repos
 
-        resolve_dataset_b_repos(
+        logger.info(
+            "[toy b] resolving repos from Dataset A's already-collected pool "
+            "(stage 1/2, requires toy --dataset a to have run under this root)"
+        )
+        resolved_counts = resolve_dataset_b_repos(
             source_dir=paths.default_repo_source("b", root=root),
             output_dir=paths.stage_dir("b", "repos", root=root),
             language=language,
             stratified=stratified,
         )
+        logger.info("[toy b] resolved repos per language: %s", resolved_counts)
+        logger.info("[toy b] extracting fixtures (stage 2/2)")
         collector = HumanCorpusCollector(
             output_db=paths.db_path("b", root=db_root),
             repo_qc_dir=paths.stage_dir("b", "repos", root=root),
             test_commits_csv=paths.stage_dir("b", "test-commits", root=root),
+            fixtures_output_dir=paths.stage_dir("b", "fixtures", root=root),
         )
         stats, db_path = collector.run(
             repos_per_language=None if stratified else repos, language=language
         )
-        logger.info(f"[toy b] {stats.fixtures_collected} fixtures in {db_path}")
+        logger.info(f"[toy b] done: {stats.fixtures_collected} fixtures in {db_path}")
         return 0
 
     if dataset == "c":
@@ -191,10 +217,14 @@ def run_toy(
         from .select_dataset_c_repos import select_repos, write_per_language_files
 
         if stratified:
+            logger.info("[toy c] sampling from real datasets/c/repos/ (stage 1/2)")
             selected = sample_stratified_by_population(
                 _read_real_dataset_c_rows(language), language=language
             )
         else:
+            logger.info(
+                "[toy c] selecting repos from github-search-raw/ by creation date (stage 1/2)"
+            )
             selected = select_repos(
                 raw_dir=paths.RAW_SEARCH_DIR,
                 min_created=DATASET_C_MIN_CREATED_DATE,
@@ -203,16 +233,21 @@ def run_toy(
             if language:
                 selected = [r for r in selected if r.get("language") == language]
             selected = selected[:repos]
-        write_per_language_files(selected, paths.stage_dir("c", "repos", root=root))
+        write_counts = write_per_language_files(
+            selected, paths.stage_dir("c", "repos", root=root)
+        )
+        logger.info("[toy c] selected repos per language: %s", write_counts)
 
+        logger.info("[toy c] extracting fixtures (stage 2/2)")
         counts, db_path = collect_dataset_c_fixtures(
             selected,
             clones_dir=paths.ROOT_DIR / "clones",
             output_db=paths.db_path("c", root=db_root),
             workers=4,
             language=language,
+            fixtures_output_dir=paths.stage_dir("c", "fixtures", root=root),
         )
-        logger.info(f"[toy c] {counts} -> {db_path}")
+        logger.info(f"[toy c] done: {counts} -> {db_path}")
         return 0
 
     raise ValueError(f"unknown dataset {dataset!r}; expected one of {paths.DATASETS}")

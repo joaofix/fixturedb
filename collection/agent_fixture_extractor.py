@@ -265,7 +265,11 @@ class AgentFixtureExtractor:
             except Exception as e:
                 logger.debug(f"Failed to extract from {commit_sha}: {e}")
 
-        logger.info(
+        # agent_corpus.py's per-repo loop calls this once per commit (a
+        # single-commit dict each time), so this fires once per commit, not
+        # once per repo -- debug, not info, to avoid flooding at thousands
+        # of commits scale.
+        logger.debug(
             "Repo %s: %d commits found, %d skipped (commit-level), "
             "%d skipped (file-level), %d proceeded to extraction, "
             "%d duplicates skipped, %d fixtures extracted",
@@ -380,7 +384,7 @@ class AgentFixtureExtractor:
                     logger.debug(f"Failed to extract from {file_path}: {e}")
 
         if purity_skipped_count > 0:
-            logger.info(
+            logger.debug(
                 "Commit %s: purity filter skipped %d file(s) (deletions or rename detected)",
                 commit_sha[:8],
                 purity_skipped_count,

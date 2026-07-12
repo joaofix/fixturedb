@@ -21,7 +21,7 @@ from .cli_utils import add_language_arg, add_repos_per_language_arg, add_workers
 from .config import CLONES_DIR, LANGUAGE_CONFIGS
 from .csv_adapter import get_adapter
 from .db import db_session
-from .logging_utils import get_logger
+from .logging_utils import configure_logging, get_logger
 from .paired_collection import main as paired_main
 
 logger = get_logger(__name__)
@@ -550,6 +550,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint: dispatch to the appropriate subcommand."""
+    # Every module's own `logger.info(...)` calls are invisible until the
+    # root logger has a level/handler -- each phase script used to call this
+    # itself from its own `if __name__ == "__main__":` block, but those are
+    # dead code now that everything routes through this single entrypoint.
+    configure_logging()
     parser = build_parser()
     args = parser.parse_args(argv)
 

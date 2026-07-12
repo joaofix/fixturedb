@@ -30,6 +30,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from tqdm import tqdm
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
@@ -121,7 +123,7 @@ def write_commit_rows(rows: list[dict], output_dir: Path = OUTPUT_DIR) -> None:
             "clone_url",
             "processed_at",
         ]
-        logger.info(
+        logger.debug(
             "Writing %d commit rows for language=%s to %s", len(items), lang, csv_path
         )
         # Append rows and fsync to make progress durable for checkpoints
@@ -163,7 +165,7 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
         "--no-tags",
         "--no-checkout",
     ]
-    logger.info("Cloning %s (lang=%s) args=%s", full_name, lang, clone_args)
+    logger.debug("Cloning %s (lang=%s) args=%s", full_name, lang, clone_args)
     out_rows = []
     with temp_clone_commit_history(
         clone_url, full_name, prefix="agent-commits-", timeout=300
@@ -174,7 +176,7 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
 
         if repo_path and repo_path.exists():
             commits = get_agent_commits(repo_path, since)
-            logger.info(
+            logger.debug(
                 "Found %d candidate agent commits in %s", len(commits), full_name
             )
             for c in commits:
@@ -235,44 +237,17 @@ def run(
 
     workers = max(1, int(workers or 1))
     processed_count = 0
+    commits_found = 0
     logger.info("Starting processing with %d workers", workers)
     if workers == 1:
-        for r in unique:
-            lang = (r.get("language") or "unknown").strip().lower()
-            logger.info(
-                "Processing (sync) %s (lang=%s)", (r.get("repo_name") or ""), lang
-            )
-            rows = process_repo_for_commits(r, since)
-            # filter out seen shas
-            new_rows = [
-                rr
-                for rr in rows
-                if rr.get("commit_sha") not in lang_seen.get(lang, set())
-            ]
-            if new_rows:
-                write_commit_rows(new_rows, output_dir)
-                # update seen set
-                lang_seen.setdefault(lang, set()).update(
-                    [rr.get("commit_sha") for rr in new_rows if rr.get("commit_sha")]
+        with tqdm(total=len(unique), desc="discover-commits", unit="repo") as pbar:
+            for r in unique:
+                lang = (r.get("language") or "unknown").strip().lower()
+                logger.debug(
+                    "Processing (sync) %s (lang=%s)", (r.get("repo_name") or ""), lang
                 )
-                logger.info(
-                    "Wrote %d new commit rows for %s",
-                    len(new_rows),
-                    (r.get("repo_name") or ""),
-                )
-            processed_count += 1
-    else:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
-            futures = {ex.submit(process_repo_for_commits, r, since): r for r in unique}
-            logger.info("Submitted %d tasks to executor", len(futures))
-            for fut in concurrent.futures.as_completed(futures):
-                src = futures[fut]
-                lang = (src.get("language") or "unknown").strip().lower()
-                try:
-                    rows = fut.result()
-                except Exception as e:
-                    logger.exception("Error processing %s: %s", src.get("repo_name"), e)
-                    continue
+                rows = process_repo_for_commits(r, since)
+                # filter out seen shas
                 new_rows = [
                     rr
                     for rr in rows
@@ -280,19 +255,58 @@ def run(
                 ]
                 if new_rows:
                     write_commit_rows(new_rows, output_dir)
+                    # update seen set
                     lang_seen.setdefault(lang, set()).update(
-                        [
-                            rr.get("commit_sha")
-                            for rr in new_rows
-                            if rr.get("commit_sha")
-                        ]
+                        [rr.get("commit_sha") for rr in new_rows if rr.get("commit_sha")]
                     )
-                    logger.info(
+                    commits_found += len(new_rows)
+                    logger.debug(
                         "Wrote %d new commit rows for %s",
                         len(new_rows),
-                        src.get("repo_name"),
+                        (r.get("repo_name") or ""),
                     )
                 processed_count += 1
+                pbar.set_postfix(commits=commits_found)
+                pbar.update(1)
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+            futures = {ex.submit(process_repo_for_commits, r, since): r for r in unique}
+            logger.info("Submitted %d tasks to executor", len(futures))
+            with tqdm(total=len(futures), desc="discover-commits", unit="repo") as pbar:
+                for fut in concurrent.futures.as_completed(futures):
+                    src = futures[fut]
+                    lang = (src.get("language") or "unknown").strip().lower()
+                    try:
+                        rows = fut.result()
+                    except Exception as e:
+                        logger.exception(
+                            "Error processing %s: %s", src.get("repo_name"), e
+                        )
+                        pbar.update(1)
+                        continue
+                    new_rows = [
+                        rr
+                        for rr in rows
+                        if rr.get("commit_sha") not in lang_seen.get(lang, set())
+                    ]
+                    if new_rows:
+                        write_commit_rows(new_rows, output_dir)
+                        lang_seen.setdefault(lang, set()).update(
+                            [
+                                rr.get("commit_sha")
+                                for rr in new_rows
+                                if rr.get("commit_sha")
+                            ]
+                        )
+                        commits_found += len(new_rows)
+                        logger.debug(
+                            "Wrote %d new commit rows for %s",
+                            len(new_rows),
+                            src.get("repo_name"),
+                        )
+                    processed_count += 1
+                    pbar.set_postfix(commits=commits_found)
+                    pbar.update(1)
 
     print(
         f"Processed {processed_count} config-positive repos; per-language commit CSVs stored in {output_dir}"

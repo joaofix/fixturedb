@@ -484,17 +484,19 @@ class AgentCorpusCollector:
         lang_test_commit_rows: list[dict] = []
 
         try:
-            for idx, repo in tqdm(
+            progress = tqdm(
                 enumerate(repos_to_collect, 1),
                 total=len(repos_to_collect),
                 desc="Agent Corpus",
-            ):
+            )
+            for idx, repo in progress:
                 stats.repos_scanned += 1
                 repo_name = repo.get("full_name", "unknown")
                 language_name = repo.get("language", "unknown")
                 repo_path = self.clones_dir / repo_name.replace("/", "__")
+                progress.set_postfix(fixtures=stats.fixtures_collected)
 
-                logger.info(
+                logger.debug(
                     f"[Agent Corpus] Processing {repo_name} ({stats.repos_scanned}/{len(repos_to_collect)})"
                 )
 
@@ -502,13 +504,13 @@ class AgentCorpusCollector:
                 if repo_path.exists():
                     shallow_flag = repo_path / ".git" / "shallow"
                     if shallow_flag.exists():
-                        logger.info(
+                        logger.debug(
                             f"[Agent Corpus] Replacing shallow clone for {repo_name} with full-history clone..."
                         )
                         shutil.rmtree(repo_path, ignore_errors=True)
 
                 # Use managed clone context to ensure cleanup and disk guards.
-                logger.info(
+                logger.debug(
                     f"[Agent Corpus] Cloning {repo_name} with history for commit scan..."
                 )
                 with clone_with_function(
@@ -556,7 +558,7 @@ class AgentCorpusCollector:
 
                     # Find agent commits from the QCed commit dataset.
                     agent_commits = commits_by_repo.get(repo_name, [])
-                    logger.info(
+                    logger.debug(
                         f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent commits to inspect"
                     )
 
@@ -575,7 +577,7 @@ class AgentCorpusCollector:
                         agent_commit_count=len(agent_commits),
                         total_commit_count=total_commits,
                     )
-                    logger.info(
+                    logger.debug(
                         f"[Agent Corpus] {repo_name}: {len(agent_commits)} agent / "
                         f"{total_commits} total commits → {adoption_intensity}"
                     )
@@ -730,7 +732,7 @@ class AgentCorpusCollector:
                                 if fixture.get("is_complete_addition")
                             ]
 
-                            logger.info(
+                            logger.debug(
                                 f"[Agent Corpus] {repo_name}: commit {commit_info['commit_sha'][:8]} yielded {len(fixtures)} complete fixtures"
                             )
 

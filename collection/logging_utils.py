@@ -7,21 +7,18 @@ import logging
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Return a configured logger for `name`.
+    """Return a plain module logger for `name`.
 
-    The helper ensures a basic console formatter is set if no handlers exist.
+    Deliberately does not attach its own handler: every real entrypoint
+    (this package's `__main__.py`, and each script's own `if __name__ ==
+    "__main__":` block) calls `configure_logging()` once, which sets up the
+    root logger's single handler. Records propagate up to it. Attaching a
+    handler here too used to double-print every message (once via this
+    logger's own handler, once via root's) whenever `configure_logging()`
+    ran after this module had already been imported -- which is always,
+    since imports resolve before `main()` runs.
     """
-    logger = logging.getLogger(name)
-    # If the logger doesn't have handlers and the root logger has none,
-    # attach a default stream handler so modules can emit logs without
-    # requiring explicit configuration. If the root logger has handlers
-    # (e.g., after `configure_logging()`), rely on those instead.
-    if not logger.handlers and not logging.getLogger().handlers:
-        handler = logging.StreamHandler()
-        fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
-        handler.setFormatter(fmt)
-        logger.addHandler(handler)
-    return logger
+    return logging.getLogger(name)
 
 
 def configure_logging(level: int = logging.INFO, fmt: str | None = None) -> None:
