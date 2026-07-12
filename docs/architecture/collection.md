@@ -21,13 +21,16 @@ Other key components:
 
 ## Dataset A / B / C build map
 
-Each dataset is built by exactly one entry script and one collector/function — there is no runtime branching that decides which dataset a given run produces:
+Each dataset is built through the same `python -m collection <verb> --dataset
+{a,b,c}` CLI, calling exactly one collector/function per dataset for each
+verb — there is no runtime branching that decides which dataset a given run
+produces:
 
-| Dataset | What it is | Entry script | Collector / function |
+| Dataset | What it is | `extract-fixtures` entry point | Collector / function |
 |---|---|---|---|
-| A | Agent-authored fixtures | `collection/phase_3_extract_agent.py` | `agent_corpus.AgentCorpusCollector` |
-| B | Human-authored fixtures, within-repo matched control | `collection/phase_2_extract_human.py` | `human_corpus.HumanCorpusCollector.run()` |
-| C | Human-authored fixtures, cross-repo pre-2021 baseline | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
+| A | Agent-authored fixtures | `extract-fixtures --dataset a` | `agent_corpus.AgentCorpusCollector` |
+| B | Human-authored fixtures, within-repo matched control | `extract-fixtures --dataset b` | `human_corpus.HumanCorpusCollector.run()` |
+| C | Human-authored fixtures, cross-repo pre-2021 baseline | `extract-fixtures --dataset c` | `dataset_c.collect_dataset_c_fixtures()` |
 
 Paths:
 - `collection/clone_primitives.py` ([collection/clone_primitives.py](collection/clone_primitives.py))
@@ -53,17 +56,17 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 
 ## Sampling modes
 - Dataset B (within-repo, paired): sample human fixtures from the same repositories and same 2025+ temporal window as Dataset A, stratified by language.
-- Dataset C (cross-repo, unpaired): repos are selected (not sampled) by `select_dataset_c_repos.py` -- every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no stratification or cap. `dataset_c.py` then checks out each one at its own pinned pre-2021 cutoff commit and extracts every fixture from every test file at that snapshot (no diff/purity gating). See `phase_2b_extract_dataset_c.py`.
+- Dataset C (cross-repo, unpaired): repos are selected (not sampled) by `discover-repos --dataset c` (wraps `select_dataset_c_repos.py`) -- every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no stratification or cap. `dataset_c.py` then checks out each one at its own pinned pre-2021 cutoff commit and extracts every fixture from every test file at that snapshot (no diff/purity gating).
 
 ## CSV and IO
 - Use the `csv_adapter` to read/write CSVs and to plug alternative persistence backends. Tests override the adapter to avoid filesystem dependencies.
 
 ## Operational Runbook (concise)
 1. Ensure `clones_dir` is set to a path with sufficient free space.
-2. Run `phase_2_extract_human.py` (Dataset B), `select_dataset_c_repos.py` then `phase_2b_extract_dataset_c.py` (Dataset C).
-3. Run `phase_3_extract_agent.py` (Dataset A).
-4. Continue with Phases 4-8 (distribution analysis, sampling, export, validation).
-5. Inspect `fixturedb-human.db` / `fixturedb-agent.db` and the `repositories` / `fixtures` / `mock_usages` tables for sample provenance.
+2. Run `discover-repos`/`filter-test-commits`/`extract-fixtures --dataset b` (Dataset B), then `discover-repos`/`extract-fixtures --dataset c` (Dataset C).
+3. Run `discover-repos`/`discover-commits`/`filter-test-commits`/`extract-fixtures --dataset a` (Dataset A).
+4. Continue with `analyze-distribution`/`sample`/`export`/`validate` (per dataset).
+5. Inspect `db/{a,b,c}.db` and the `repositories` / `fixtures` / `mock_usages` tables for sample provenance.
 6. When a manual-validation sample is needed for the paper, run `collection/validation_sampling.py` by hand against that step's output CSV(s) — see [Manual-Validation Sampling](../usage/validation-sampling.md). Not part of this automatic runbook.
 
 ## Troubleshooting

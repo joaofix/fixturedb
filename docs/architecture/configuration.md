@@ -1,32 +1,34 @@
 # Configuration Reference
 
-This document describes configuration options for the phase-based collection
-pipeline. See [Collection Architecture](./collection.md) for the Dataset
-A/B/C build map, and [Reproducing Results](../usage/reproducing.md) for the
-full phase sequence.
+This document describes configuration options for the `python -m collection`
+CLI. See [Collection Architecture](./collection.md) for the Dataset A/B/C
+build map, and [Reproducing Results](../usage/reproducing.md) for the full
+verb sequence.
 
 Per-run parameters (which repos, which language, output paths) are all via
-command-line arguments — each phase script supports `--help` for its full
-argument list. Fixed reference data (file-type filters, the testing-framework
-registry, per-language search settings, and the agent-detection catalog) is
-instead kept as YAML under `collection/config_data/` and
-`collection/heuristics/` — see "Reference-Data Catalogs" below.
+command-line arguments — every verb supports `--help` for its full argument
+list, and every default input/output directory is resolved through
+`collection/paths.py`. Fixed reference data (file-type filters, the
+testing-framework registry, per-language search settings, and the
+agent-detection catalog) is instead kept as YAML under
+`collection/config_data/` and `collection/heuristics/` — see
+"Reference-Data Catalogs" below.
 
-## Dataset B: `phase_2_extract_human.py`
+## Dataset B: `extract-fixtures --dataset b`
 
 ```bash
-python -m collection.phase_2_extract_human [OPTIONS]
+python -m collection extract-fixtures --dataset b [OPTIONS]
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `--output-db` | PATH | data/fixturedb-human.db | SQLite database output path |
+| `--output-db` | PATH | db/b.db | SQLite database output path |
 | `--repos-per-language` | INT | (all) | Target repos per language |
-| `--repo-dir` | PATH | github-search-agent/agent_repositories | Directory with `*_agent_repo.csv` QC files |
-| `--source-db` | PATH | data/corpus.db | Source corpus database |
-| `--clones-dir` | PATH | clones/ | Directory with repository clones |
+| `--repo-dir` | PATH | datasets/b/repos/ | Directory with `*_repo.csv` files (see `discover-repos --dataset b`) |
+| `--commit-dir` | PATH | datasets/b/test-commits/ | Directory to also write discovered test-commit CSVs to |
 | `--language` | STR | (all) | Specific language: python, java, javascript, typescript |
 | `--workers` | INT | 4 | Parallel worker threads |
+| `--force` | FLAG | off | Re-extract even if `--output-db` already has fixture rows |
 
 ### Control Variables (Fixed)
 
@@ -43,45 +45,49 @@ Computed automatically at the `AGENT_CORPUS_START_DATE` snapshot (same window as
 ### Example
 
 ```bash
-python -m collection.phase_2_extract_human --repos-per-language 100 --language python
+python -m collection discover-repos      --dataset b --language python
+python -m collection extract-fixtures    --dataset b --repos-per-language 100 --language python
 ```
 
-## Dataset C: `phase_2b_extract_dataset_c.py`
+## Dataset C: `extract-fixtures --dataset c`
 
 ```bash
-python -m collection.phase_2b_extract_dataset_c [OPTIONS]
+python -m collection extract-fixtures --dataset c [OPTIONS]
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `--output-db` | PATH | data/fixturedb-human.db | SQLite database output path (shared with Dataset B) |
-| `--clones-dir` | PATH | clones/ | Directory with repository clones |
-| `--language` | STR | (all `dataset_c_*.csv` found) | Specific language; uses `dataset_c_{lang}.csv` |
-| `--workers` | INT | 4 | Parallel worker threads |
+| `--output-db` | PATH | db/c.db | SQLite database output path |
+| `--repo-dir` | PATH | datasets/c/repos/ | Directory containing `{lang}_repo.csv`/`all.csv` |
+| `--language` | STR | (all, reads `all.csv`) | Specific language; reads `{lang}_repo.csv` instead |
+| `--workers` | INT | 8 | Parallel worker threads |
+| `--force` | FLAG | off | Re-extract even if `--output-db` already has fixture rows |
 
-Reads its repo list from `fixtures-from-agents/dataset_c_*.csv` (produced
-by `select_dataset_c_repos.py`) rather than `corpus.db` — there is no
-`--repo-dir` option.
+Reads its repo list from `datasets/c/repos/` (produced by
+`discover-repos --dataset c`, which wraps `select_dataset_c_repos.py`)
+rather than `corpus.db`.
 
 ### Example
 
 ```bash
-python -m collection.phase_2b_extract_dataset_c --language python
+python -m collection discover-repos   --dataset c
+python -m collection extract-fixtures --dataset c --language python
 ```
 
-## Dataset A: `phase_3_extract_agent.py`
+## Dataset A: `extract-fixtures --dataset a`
 
 ```bash
-python -m collection.phase_3_extract_agent [OPTIONS]
+python -m collection extract-fixtures --dataset a [OPTIONS]
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `--output-db` | PATH | data/fixturedb-agent.db | SQLite database output path |
-| `--repo-dir` | PATH | github-search-agent/agent_repositories | Directory with `*_agent_repo.csv` QC files |
-| `--commit-dir` | PATH | github-search-agent/agent_repositories | Directory with `*_agent_commit_qc.csv` files |
+| `--output-db` | PATH | db/a.db | SQLite database output path |
+| `--repo-dir` | PATH | datasets/a/repos/ | Directory with `*_repo.csv` files |
+| `--commit-dir` | PATH | datasets/a/test-commits/ | Directory with `*_test_commit.csv`/`*_commit.csv` files |
 | `--repos-per-language` | INT | (all) | Target repos per language |
 | `--languages` | STR (multi) | (all) | Limit to one or more of: python, java, javascript, typescript |
+| `--force` | FLAG | off | Re-extract even if `--output-db` already has fixture rows |
 
 ### Control Variables (Fixed)
 
@@ -111,20 +117,22 @@ Agent patterns recognized:
 ### Example
 
 ```bash
-python -m collection.phase_3_extract_agent --languages python javascript --repos-per-language 100
+python -m collection discover-repos      --dataset a
+python -m collection discover-commits    --dataset a
+python -m collection filter-test-commits --dataset a
+python -m collection extract-fixtures    --dataset a --languages python javascript --repos-per-language 100
 ```
 
 ## Statistical Comparison
 
-`collection/between_group_comparison.py` compares Dataset A vs Dataset B (the
-within-repo pair) by querying a single database for both `commit_kind='agent'`
-and `commit_kind='human'` rows. No phase script (1-8) currently calls it —
-it's only wired up via the legacy `pipeline.py between-group-stats` command,
-which expects one shared database (historically `data/between-group.db`).
-Since the phase-based pipeline writes Dataset A and Dataset B to separate
-databases (`fixturedb-agent.db` / `fixturedb-human.db`), running this command
-against the phase-produced outputs requires first pointing `--db` at (or
-merging into) a database containing both corpora's `fixtures` rows.
+`collection/between_group_comparison.py` compares two datasets' `fixtures`
+tables. Since each dataset now has its own database (`db/a.db`, `db/b.db`,
+`db/c.db`), comparing two of them means pointing it at both DB paths
+directly rather than filtering one shared database by `commit_kind`.
+`python -m collection analyze-distribution --dataset a --against b` covers
+the same "are these two corpora comparable in size" question at the fixture-
+count level; `between_group_comparison.py` goes deeper with per-control
+statistical tests.
 
 | Control | Test | Interpretation |
 |---------|------|-----------------|
@@ -132,10 +140,6 @@ merging into) a database containing both corpora's `fixtures` rows.
 | domain | Chi-square test | p ≥ 0.05 → balanced |
 | star_tier | Chi-square test | p ≥ 0.05 → balanced |
 | repo_age_years | Mann-Whitney U | p ≥ 0.05 → balanced |
-
-```bash
-python pipeline.py between-group-stats --db data/between-group.db
-```
 
 ## Temporal Boundaries
 
@@ -158,17 +162,17 @@ for why.
 
 ## Database Configuration
 
-Dataset A and Datasets B/C use **separate** databases:
+Each dataset has its own, fully separate database:
 
 ```sql
--- Dataset A
--- (data/fixturedb-agent.db)
+-- Dataset A (db/a.db)
 SELECT COUNT(*) FROM fixtures;
 
--- Dataset B vs Dataset C
--- (data/fixturedb-human.db) -- commit_kind distinguishes within-repo (human,
--- same 2025+ window as A) from the cross-repo baseline
-SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;
+-- Dataset B (db/b.db) -- within-repo, same 2025+ window as A
+SELECT COUNT(*) FROM fixtures;
+
+-- Dataset C (db/c.db) -- cross-repo pre-2021 baseline
+SELECT COUNT(*) FROM fixtures;
 ```
 
 ## Quality Filters
@@ -193,13 +197,13 @@ Shared thresholds from `collection/config.py`: `MIN_STARS = 500`,
 
 ## Logging and Monitoring
 
-Each phase produces a JSON summary in `output/`:
+Extraction and sampling produce JSON summaries in `output/`:
 
 ```
 output/
-├── phase_2_extraction_stats_YYYYMMDD_HHMMSS.json   # Dataset B
-├── phase_2b_extraction_stats_YYYYMMDD_HHMMSS.json  # Dataset C
-├── phase_4_distribution_analysis_YYYYMMDD_HHMMSS.json
+├── human_corpus_summary_*.json    # Dataset B extraction run summary
+├── agent_corpus_summary_*.json    # Dataset A extraction run summary
+├── sample_a.json, sample_b.json, sample_c.json   # per-dataset sample results
 └── ...
 ```
 
@@ -303,7 +307,7 @@ tuned for this study's design, not open-ended catalogs expected to grow.
 
 | Variable | Usage | Example |
 |----------|-------|---------|
-| `GITHUB_TOKEN` | GitHub API auth (used by the legacy `pipeline.py agent-fixtures` convenience command) | github_pat_1A2B3C4D5E6F |
+| `GITHUB_TOKEN` | GitHub API auth (rate-limit relief for repo-discovery pre-checks) | github_pat_1A2B3C4D5E6F |
 | `PYTHONPATH` | Module import path | `export PYTHONPATH=$PWD` |
 
 ## Advanced Options
@@ -312,11 +316,11 @@ tuned for this study's design, not open-ended catalogs expected to grow.
 
 ```bash
 # Rebuild indexes after collection
-sqlite3 data/fixturedb-human.db "VACUUM; ANALYZE;"
-sqlite3 data/fixturedb-agent.db "VACUUM; ANALYZE;"
+sqlite3 db/b.db "VACUUM; ANALYZE;"
+sqlite3 db/a.db "VACUUM; ANALYZE;"
 
 # Check database health
-sqlite3 data/fixturedb-human.db "PRAGMA integrity_check;"
+sqlite3 db/b.db "PRAGMA integrity_check;"
 ```
 
 ## See Also

@@ -4,9 +4,9 @@ Extracted from an independent, unsampled set of repos created within a
 fixed window (DATASET_C_MIN_CREATED_DATE to HUMAN_CORPUS_CUTOFF_DATE, see
 collection/select_dataset_c_repos.py), checked out at each repo's own
 pinned pre-2021 cutoff commit (a snapshot, not a commit-by-commit scan).
-Entry point: phase_2b_extract_dataset_c.py. See agent_corpus.py (Dataset A)
-and human_corpus.py (Dataset B, the within-repo matched control) for the
-other two datasets.
+Entry point: `python -m collection extract-fixtures --dataset c`. See
+agent_corpus.py (Dataset A) and human_corpus.py (Dataset B, the within-repo
+matched control) for the other two datasets.
 
 Repo quality (commit count, test file count) is enforced in _process_repo()
 below from each repo's real git history as of its cutoff commit, not from
@@ -484,7 +484,7 @@ def collect_dataset_c_fixtures(
             if lang is None:
                 lang = "unknown"
             try:
-                csv_path = _human_fixture_csv_path(lang, "inter")
+                csv_path = _human_fixture_csv_path(lang, "c")
                 if csv_path.exists():
                     csv_path.unlink()
                     logger.debug(
@@ -533,7 +533,7 @@ def collect_dataset_c_fixtures(
         try:
             from collection.human_corpus import _human_fixture_csv_path
 
-            fixture_out_path = _human_fixture_csv_path(repo_data["language"], "inter")
+            fixture_out_path = _human_fixture_csv_path(repo_data["language"], "c")
             persist_repository_and_fixtures(
                 output_db,
                 repo_data,

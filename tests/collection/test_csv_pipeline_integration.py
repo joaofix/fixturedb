@@ -121,102 +121,18 @@ class TestCSVRepositorySelection:
         # Should have all 5 repos
         assert len(repos) == 5
 
-    def test_select_human_corpus_restricts_to_agent_test_commits(
+    def test_select_human_corpus_reads_only_resolved_repo_csvs(
         self, tmp_path, make_csv
     ):
-        """When agent test-commit CSVs exist, selection is restricted to those repos."""
+        """select_human_corpus_repositories no longer guesses across
+        fixtures-from-agents/, *_human_test_commit.csv, or a tests_commits/
+        subdirectory -- that resolution now happens once, upstream, in
+        collection.repo_resolve.resolve_dataset_b_repos() (see
+        tests/collection/test_repo_resolve.py). This function just reads
+        whatever *_repo.csv files are already in repo_qc_dir."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
-
-        # Create tests_commits subdir with a single agent test-commit repo
-        tests_dir = input_dir / "tests_commits"
-        tests_dir.mkdir()
-
-        tpath = tests_dir / "python_agent_test_commit.csv"
-        with open(tpath, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(
-                f,
-                fieldnames=[
-                    "repo_name",
-                    "language",
-                    "commit_sha",
-                    "commit_role",
-                    "agent_type",
-                    "commit_date",
-                    "test_file_count",
-                    "test_file_paths",
-                ],
-            )
-            writer.writeheader()
-            writer.writerow(
-                {
-                    "repo_name": "owner/only_test_repo",
-                    "language": "python",
-                    "commit_sha": "abc123",
-                    "commit_role": "agent",
-                    "agent_type": "claude",
-                    "commit_date": "2026-01-01T00:00:00Z",
-                    "test_file_count": "1",
-                    "test_file_paths": '["tests/test_foo.py"]',
-                }
-            )
-
-        # Create agent_repo csv containing two repos, only one of which appears
-        # Create sample repo CSV and test-commit CSV for selection test
-        make_csv(
-            input_dir,
-            "python_agent_test_commit.csv",
-            dest_name="tests_commits/python_agent_test_commit.csv",
-        )
-
-        # Write agent_repo CSV that lists the two repos referenced in this test
-        csv_path = input_dir / "python_agent_repo.csv"
-        rows = [
-            {
-                "repo_name": "owner/only_test_repo",
-                "full_name": "owner/only_test_repo",
-                "language": "python",
-                "stars": 100,
-                "forks": 10,
-                "num_contributors": 1,
-                "clone_url": "",
-                "has_agent_config": "1",
-            },
-            {
-                "repo_name": "owner/other_repo",
-                "full_name": "owner/other_repo",
-                "language": "python",
-                "stars": 50,
-                "forks": 5,
-                "num_contributors": 1,
-                "clone_url": "",
-                "has_agent_config": "1",
-            },
-        ]
-
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-            writer.writeheader()
-            writer.writerows(rows)
-
-        repos = select_human_corpus_repositories(
-            input_dir, repos_per_language=None, language="python"
-        )
-
-        assert len(repos) == 1
-        assert repos[0]["full_name"] == "owner/only_test_repo"
-
-    def test_select_human_corpus_fallback_when_no_tests_commits(
-        self, tmp_path, make_csv
-    ):
-        """When no tests_commits directory exists, selection falls back to agent_repo CSVs."""
-        input_dir = tmp_path / "input"
-        input_dir.mkdir()
-
-        # Use committed small sample CSV with exactly two repos (copy into expected name)
-        make_csv(
-            input_dir, "python_agent_repo_small.csv", dest_name="python_agent_repo.csv"
-        )
+        make_csv(input_dir, "python_agent_repo_small.csv", dest_name="python_repo.csv")
 
         repos = select_human_corpus_repositories(
             input_dir, repos_per_language=None, language="python"
@@ -224,71 +140,29 @@ class TestCSVRepositorySelection:
 
         assert len(repos) == 2
 
-    def test_select_human_corpus_prefers_agent_fixture_repo_list(
-        self, tmp_path, make_csv
-    ):
-        """When an agent fixture repo list exists, it should be preferred."""
+    def test_select_human_corpus_strict_raises_when_no_repo_csvs(self, tmp_path):
+        """Strict mode raises immediately when repo_qc_dir has no *_repo.csv
+        files, rather than falling back across several other directories."""
+        import pytest
+
         input_dir = tmp_path / "input"
         input_dir.mkdir()
 
-        # Create fixtures-from-agents directory with a per-language repo list
-        fixtures_dir = input_dir / "fixtures-from-agents"
-        fixtures_dir.mkdir()
-        make_csv(
-            fixtures_dir,
-            "python_agent_fixture_repos.csv",
-            dest_name="repos/python_agent_fixture_repos.csv",
-        )
+        with pytest.raises(ValueError, match="discover-repos --dataset b"):
+            select_human_corpus_repositories(
+                input_dir,
+                repos_per_language=None,
+                language="python",
+                require_fixture_repo_list=True,
+            )
 
-        # Also create agent_repo with another repo that should be ignored
-        csv_path = input_dir / "python_agent_repo.csv"
-        rows = [
-            {
-                "repo_name": "owner/fixture_repo",
-                "full_name": "owner/fixture_repo",
-                "language": "python",
-                "stars": 100,
-                "forks": 10,
-                "num_contributors": 1,
-                "clone_url": "",
-                "has_agent_config": "1",
-            },
-            {
-                "repo_name": "owner/other_repo",
-                "full_name": "owner/other_repo",
-                "language": "python",
-                "stars": 50,
-                "forks": 5,
-                "num_contributors": 1,
-                "clone_url": "",
-                "has_agent_config": "1",
-            },
-        ]
-
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-            writer.writeheader()
-            writer.writerows(rows)
-
-        repos = select_human_corpus_repositories(
-            input_dir, repos_per_language=None, language="python"
-        )
-
-        assert len(repos) == 1
-        assert repos[0]["full_name"] == "owner/fixture_repo"
-
-    def test_select_human_corpus_strict_requires_fixture_repo_list(
+    def test_select_human_corpus_strict_succeeds_when_repo_csv_present(
         self, tmp_path, make_csv
     ):
-        """Strict mode falls back to project-level fixtures-from-agents when local dir missing."""
         input_dir = tmp_path / "input"
         input_dir.mkdir()
+        make_csv(input_dir, "python_agent_repo.csv", dest_name="python_repo.csv")
 
-        make_csv(input_dir, "python_agent_repo.csv", dest_name="python_agent_repo.csv")
-
-        # With require_fixture_repo_list=True and no local fixtures-from-agents/,
-        # the function falls back to the project-level fixtures-from-agents/repos/.
-        # Since the real project has those files, this should succeed (not raise).
         repos = select_human_corpus_repositories(
             input_dir,
             repos_per_language=None,
@@ -296,7 +170,6 @@ class TestCSVRepositorySelection:
             require_fixture_repo_list=True,
         )
 
-        # Should find repos from the project-level fixture lists
         assert len(repos) >= 1
         assert all(repo["language"] == "python" for repo in repos)
 

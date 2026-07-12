@@ -77,6 +77,15 @@ class DatasetExporter:
 
             if not rows:
                 logger.warning(f"No rows found in {table_name}")
+                # Still write a header-only CSV: downstream export/validation
+                # steps stat() and zip every file returned from here, and a
+                # table with zero matching rows (e.g. mock_usages for a
+                # sample with no mocks) is a legitimate, expected case, not
+                # an error.
+                fieldnames = [
+                    row[1] for row in conn.execute(f"PRAGMA table_info({table_name})")
+                ]
+                get_adapter().write_dicts(csv_path, [], fieldnames)
                 return csv_path
 
             # Convert to dicts

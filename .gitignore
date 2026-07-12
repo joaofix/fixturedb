@@ -208,10 +208,11 @@ __marimo__/
 
 # FixtureDB — pipeline-generated directories
 clones/                 # Temporary git clones (deleted after extraction)
-data/                   # SQLite database and collected data
+db/                     # Per-dataset SQLite databases (secondary; datasets/ CSVs are the real output)
+export/                 # Final per-dataset export ZIPs
+toy-dataset/            # Output of `python -m collection toy` -- mirrors datasets/+db/, never committed
 logs/                   # Pipeline execution logs
-output/                 # EDA output and analysis results
+output/                 # Internal bookkeeping (EDA output, analysis results)
 internal-docs/*         # Internal documentation and notes
-data/between-group.db
 github-search-human/pre_2021_test_commits/
 *.checkpoint.json       # Pipeline checkpoint files (runtime artifacts)

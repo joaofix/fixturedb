@@ -19,6 +19,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import collection.agent_corpus as agent_corpus
+from collection import paths
 from collection.agent_corpus import (
     AgentCorpusCollector,
     AgentCorpusStats,
@@ -273,8 +274,8 @@ class TestQualityControlledInputs:
             },
         ]
 
-        make_csv(repo_qc_dir, "python_agent_repo.csv", rows=repo_rows)
-        make_csv(commit_qc_dir, "python_agent_commit_qc.csv", rows=commit_rows)
+        make_csv(repo_qc_dir, "python_repo.csv", rows=repo_rows)
+        make_csv(commit_qc_dir, "python_commit.csv", rows=commit_rows)
 
         repos = _load_qc_repo_rows(repo_qc_dir, repos_per_language=10)
         commits = _load_qc_agent_commits(commit_qc_dir)
@@ -326,9 +327,9 @@ class TestQualityControlledInputs:
 
         make_csv(
             tmp_path,
-            "python_agent_test_commit_qc.csv",
+            "python_test_commit.csv",
             rows=test_rows,
-            dest_name="tests-commits/python_agent_test_commit_qc.csv",
+            dest_name="tests-commits/python_test_commit.csv",
         )
 
         commits = _load_qc_agent_commits(commit_qc_dir)
@@ -341,28 +342,11 @@ class TestQualityControlledInputs:
     def test_agent_corpus_keeps_only_complete_additions(self, tmp_path, monkeypatch):
         repo_qc_dir = tmp_path / "repo-qc"
         commit_qc_dir = tmp_path / "commit-qc"
+        fixtures_output_dir = tmp_path / "fixtures-out"
         repo_qc_dir.mkdir()
         commit_qc_dir.mkdir()
 
-        repo_list_path = (
-            Path(__file__).resolve().parents[2]
-            / "fixtures-from-agents"
-            / "repos"
-            / "python_agent_fixture_repos.csv"
-        )
-        fixtures_csv_path = (
-            Path(__file__).resolve().parents[2]
-            / "fixtures-from-agents"
-            / "python_agent_fixtures.csv"
-        )
-        original_bytes = b""
-        original_fixtures_bytes = b""
-        if repo_list_path.exists():
-            original_bytes = repo_list_path.read_bytes()
-        if fixtures_csv_path.exists():
-            original_fixtures_bytes = fixtures_csv_path.read_bytes()
-
-        with (repo_qc_dir / "python_agent_repo.csv").open(
+        with (repo_qc_dir / "python_repo.csv").open(
             "w", newline="", encoding="utf-8"
         ) as fh:
             writer = csv.DictWriter(
@@ -392,7 +376,7 @@ class TestQualityControlledInputs:
                 }
             )
 
-        with (commit_qc_dir / "python_agent_commit.csv").open(
+        with (commit_qc_dir / "python_commit.csv").open(
             "w", newline="", encoding="utf-8"
         ) as fh:
             writer = csv.DictWriter(
@@ -494,6 +478,7 @@ class TestQualityControlledInputs:
             output_db=tmp_path / "between-group.db",
             repo_qc_dir=repo_qc_dir,
             commit_qc_dir=commit_qc_dir,
+            fixtures_output_dir=fixtures_output_dir,
         )
         stats, db_path = collector.run(repos_per_language=1, languages=["python"])
 
@@ -504,11 +489,6 @@ class TestQualityControlledInputs:
         assert stats.fixtures_collected == 1
         assert count == 1
 
-        if repo_list_path.exists() and original_bytes:
-            repo_list_path.write_bytes(original_bytes)
-        if fixtures_csv_path.exists() and original_fixtures_bytes:
-            fixtures_csv_path.write_bytes(original_fixtures_bytes)
-
     def test_agent_corpus_persists_full_metrics_and_mocks(self, tmp_path, monkeypatch):
         """Regression test: agent fixture rows must keep their real computed
         metrics and agent_type, and their mocks must reach mock_usages —
@@ -516,26 +496,11 @@ class TestQualityControlledInputs:
         after agent_corpus.py stopped hand-rolling its own insertion loop."""
         repo_qc_dir = tmp_path / "repo-qc"
         commit_qc_dir = tmp_path / "commit-qc"
+        fixtures_output_dir = tmp_path / "fixtures-out"
         repo_qc_dir.mkdir()
         commit_qc_dir.mkdir()
 
-        repo_list_path = (
-            Path(__file__).resolve().parents[2]
-            / "fixtures-from-agents"
-            / "repos"
-            / "python_agent_fixture_repos.csv"
-        )
-        fixtures_csv_path = (
-            Path(__file__).resolve().parents[2]
-            / "fixtures-from-agents"
-            / "python_agent_fixtures.csv"
-        )
-        original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
-        original_fixtures_bytes = (
-            fixtures_csv_path.read_bytes() if fixtures_csv_path.exists() else b""
-        )
-
-        with (repo_qc_dir / "python_agent_repo.csv").open(
+        with (repo_qc_dir / "python_repo.csv").open(
             "w", newline="", encoding="utf-8"
         ) as fh:
             writer = csv.DictWriter(
@@ -565,7 +530,7 @@ class TestQualityControlledInputs:
                 }
             )
 
-        with (commit_qc_dir / "python_agent_commit.csv").open(
+        with (commit_qc_dir / "python_commit.csv").open(
             "w", newline="", encoding="utf-8"
         ) as fh:
             writer = csv.DictWriter(
@@ -651,6 +616,7 @@ class TestQualityControlledInputs:
             output_db=tmp_path / "between-group.db",
             repo_qc_dir=repo_qc_dir,
             commit_qc_dir=commit_qc_dir,
+            fixtures_output_dir=fixtures_output_dir,
         )
         stats, db_path = collector.run(repos_per_language=1, languages=["python"])
 
@@ -678,11 +644,6 @@ class TestQualityControlledInputs:
         assert mock_row is not None
         assert mock_row["framework"] == "unittest_mock"
         assert mock_row["target_identifier"] == "requests.get"
-
-        if repo_list_path.exists() and original_bytes:
-            repo_list_path.write_bytes(original_bytes)
-        if fixtures_csv_path.exists() and original_fixtures_bytes:
-            fixtures_csv_path.write_bytes(original_fixtures_bytes)
 
 
 def _git(repo: Path, *args: str, env: dict | None = None) -> None:
@@ -773,7 +734,7 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
     _git(empty_repo, "add", "README.md")
     _git(empty_repo, "commit", "-m", "init", env=_dated_env("2025-01-01T00:00:00"))
 
-    with (repo_qc_dir / "python_agent_repo.csv").open(
+    with (repo_qc_dir / "python_repo.csv").open(
         "w", newline="", encoding="utf-8"
     ) as fh:
         writer = csv.DictWriter(
@@ -809,7 +770,7 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
             }
         )
 
-    with (commit_qc_dir / "python_agent_commit.csv").open(
+    with (commit_qc_dir / "python_commit.csv").open(
         "w", newline="", encoding="utf-8"
     ) as fh:
         writer = csv.DictWriter(
@@ -855,92 +816,65 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
         agent_corpus, "clone_repo_for_commit_scan", fake_clone_repo_for_commit_scan
     )
 
-    repo_list_path = (
-        Path(__file__).resolve().parents[2]
-        / "fixtures-from-agents"
-        / "repos"
-        / "python_agent_fixture_repos.csv"
+    fixtures_output_dir = tmp_path / "fixtures-out"
+    repo_list_path = fixtures_output_dir / "repos" / "python_fixture_repos.csv"
+    fixtures_csv_path = fixtures_output_dir / "python_fixtures.csv"
+
+    collector = AgentCorpusCollector(
+        output_db=tmp_path / "between-group.db",
+        repo_qc_dir=repo_qc_dir,
+        commit_qc_dir=commit_qc_dir,
+        fixtures_output_dir=fixtures_output_dir,
     )
-    fixtures_csv_path = (
-        Path(__file__).resolve().parents[2]
-        / "fixtures-from-agents"
-        / "python_agent_fixtures.csv"
-    )
-    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
-    original_fixtures_bytes = (
-        fixtures_csv_path.read_bytes() if fixtures_csv_path.exists() else b""
-    )
-    # These are real, append-only project CSVs, so a stale pre-existing file
-    # (with the old header, missing the 3 new columns) would silently keep
-    # its old header on append. Start from a clean slate, same as what a
-    # fresh full pipeline run does.
-    repo_list_path.unlink(missing_ok=True)
-    fixtures_csv_path.unlink(missing_ok=True)
+    stats, db_path = collector.run(languages=["python"])
 
-    try:
-        collector = AgentCorpusCollector(
-            output_db=tmp_path / "between-group.db",
-            repo_qc_dir=repo_qc_dir,
-            commit_qc_dir=commit_qc_dir,
-        )
-        stats, db_path = collector.run(languages=["python"])
+    assert stats.fixtures_collected == 1
 
-        assert stats.fixtures_collected == 1
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    row_main = conn.execute(
+        "SELECT * FROM repositories WHERE full_name = ?", ("owner/main-repo",)
+    ).fetchone()
+    row_empty = conn.execute(
+        "SELECT * FROM repositories WHERE full_name = ?", ("owner/empty-repo",)
+    ).fetchone()
+    # The only fixture came from the "test: add test_bar" commit, which
+    # is Conventional-Commits-shaped with type "test".
+    fixture_row = conn.execute(
+        "SELECT commit_type FROM fixtures WHERE name = 'bar'"
+    ).fetchone()
+    conn.close()
 
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        row_main = conn.execute(
-            "SELECT * FROM repositories WHERE full_name = ?", ("owner/main-repo",)
-        ).fetchone()
-        row_empty = conn.execute(
-            "SELECT * FROM repositories WHERE full_name = ?", ("owner/empty-repo",)
-        ).fetchone()
-        # The only fixture came from the "test: add test_bar" commit, which
-        # is Conventional-Commits-shaped with type "test".
-        fixture_row = conn.execute(
-            "SELECT commit_type FROM fixtures WHERE name = 'bar'"
-        ).fetchone()
-        conn.close()
+    assert fixture_row is not None
+    assert fixture_row["commit_type"] == "test"
 
-        assert fixture_row is not None
-        assert fixture_row["commit_type"] == "test"
+    with fixtures_csv_path.open("r", encoding="utf-8", newline="") as fh:
+        fixture_rows = list(csv.DictReader(fh))
+    assert len(fixture_rows) == 1
+    assert fixture_rows[0]["commit_type"] == "test"
 
-        with fixtures_csv_path.open("r", encoding="utf-8", newline="") as fh:
-            fixture_rows = list(csv.DictReader(fh))
-        assert len(fixture_rows) == 1
-        assert fixture_rows[0]["commit_type"] == "test"
+    assert row_main is not None
+    assert row_main["agent_commits_touching_tests"] == 2
+    assert row_main["agent_commits_rejected_mixed_test_diff"] == 1
+    assert row_main["agent_commits_accepted"] == 1
 
-        assert row_main is not None
-        assert row_main["agent_commits_touching_tests"] == 2
-        assert row_main["agent_commits_rejected_mixed_test_diff"] == 1
-        assert row_main["agent_commits_accepted"] == 1
+    assert row_empty is not None
+    assert row_empty["agent_commits_touching_tests"] == 0
+    assert row_empty["agent_commits_rejected_mixed_test_diff"] == 0
+    assert row_empty["agent_commits_accepted"] == 0
 
-        assert row_empty is not None
-        assert row_empty["agent_commits_touching_tests"] == 0
-        assert row_empty["agent_commits_rejected_mixed_test_diff"] == 0
-        assert row_empty["agent_commits_accepted"] == 0
+    with repo_list_path.open("r", encoding="utf-8", newline="") as fh:
+        rows_by_repo = {r["repo_name"]: r for r in csv.DictReader(fh)}
 
-        with repo_list_path.open("r", encoding="utf-8", newline="") as fh:
-            rows_by_repo = {r["repo_name"]: r for r in csv.DictReader(fh)}
+    assert rows_by_repo["owner/main-repo"]["agent_commits_touching_tests"] == "2"
+    assert rows_by_repo["owner/main-repo"]["rejected_mixed_test_diff"] == "1"
+    assert rows_by_repo["owner/main-repo"]["accepted"] == "1"
 
-        assert rows_by_repo["owner/main-repo"]["agent_commits_touching_tests"] == "2"
-        assert rows_by_repo["owner/main-repo"]["rejected_mixed_test_diff"] == "1"
-        assert rows_by_repo["owner/main-repo"]["accepted"] == "1"
-
-        # Zero-yield repo must still get a row (always-write-a-row behavior).
-        assert "owner/empty-repo" in rows_by_repo
-        assert rows_by_repo["owner/empty-repo"]["agent_commits_touching_tests"] == "0"
-        assert rows_by_repo["owner/empty-repo"]["rejected_mixed_test_diff"] == "0"
-        assert rows_by_repo["owner/empty-repo"]["accepted"] == "0"
-    finally:
-        if original_bytes:
-            repo_list_path.write_bytes(original_bytes)
-        elif repo_list_path.exists():
-            repo_list_path.unlink()
-        if original_fixtures_bytes:
-            fixtures_csv_path.write_bytes(original_fixtures_bytes)
-        elif fixtures_csv_path.exists():
-            fixtures_csv_path.unlink()
+    # Zero-yield repo must still get a row (always-write-a-row behavior).
+    assert "owner/empty-repo" in rows_by_repo
+    assert rows_by_repo["owner/empty-repo"]["agent_commits_touching_tests"] == "0"
+    assert rows_by_repo["owner/empty-repo"]["rejected_mixed_test_diff"] == "0"
+    assert rows_by_repo["owner/empty-repo"]["accepted"] == "0"
 
 
 @contextmanager
@@ -1010,47 +944,29 @@ def test_agent_collection_records_and_skips_completed_language(tmp_path, monkeyp
         output_db=tmp_path / "between-group.db",
         repo_qc_dir=repo_qc_dir,
         commit_qc_dir=commit_qc_dir,
+        fixtures_output_dir=tmp_path / "fixtures-out",
     )
 
-    # The repo-summary CSV path is hardcoded to the real project directory,
-    # so back up/restore it around this fake "owner/repo" run.
-    repo_list_path = (
-        Path(__file__).resolve().parents[2]
-        / "fixtures-from-agents"
-        / "repos"
-        / "python_agent_fixture_repos.csv"
-    )
-    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
+    stats1, db_path1 = collector.run(repos_per_language=1, language="python")
+    assert db_path1 == tmp_path / "between-group.db"
+    assert stats1.repos_scanned == 1
 
-    try:
-        stats1, db_path1 = collector.run(repos_per_language=1, language="python")
-        assert db_path1 == tmp_path / "between-group.db"
-        assert stats1.repos_scanned == 1
+    with db_session(db_path1) as conn:
+        assert is_global_checkpoint_completed(conn, "agent_complete:python")
+        assert is_global_checkpoint_completed(conn, "agent_complete:all")
 
-        with db_session(db_path1) as conn:
-            assert is_global_checkpoint_completed(conn, "agent_complete:python")
-            assert is_global_checkpoint_completed(conn, "agent_complete:all")
-
-        stats2, db_path2 = collector.run(repos_per_language=1, language="python")
-        assert db_path2 == tmp_path / "between-group.db"
-        assert stats2.repos_scanned == 0
-        assert stats2.fixtures_collected == 0
-    finally:
-        if original_bytes:
-            repo_list_path.write_bytes(original_bytes)
-        elif repo_list_path.exists():
-            repo_list_path.unlink()
+    stats2, db_path2 = collector.run(repos_per_language=1, language="python")
+    assert db_path2 == tmp_path / "between-group.db"
+    assert stats2.repos_scanned == 0
+    assert stats2.fixtures_collected == 0
 
 
 def test_agent_fixture_repos_dir_no_versioned_subfolder_when_tag_empty():
-    """With empty COLLECTION_OUTPUT_TAG, fixture list goes to root fixtures-from-agents."""
-    from pathlib import Path
-
+    """With empty COLLECTION_OUTPUT_TAG, fixture list goes to root datasets/a/fixtures."""
     from collection.config import COLLECTION_OUTPUT_TAG
 
-    # When tag is empty, the code appends directly to fixtures-from-agents/
-    project_root = Path(".").resolve()
-    expected_dir = project_root / "fixtures-from-agents"
+    # When tag is empty, the code appends directly to datasets/a/fixtures/
+    expected_dir = paths.stage_dir("a", "fixtures")
     assert COLLECTION_OUTPUT_TAG == ""
     # Verify the path does not contain a versioned subfolder
     assert not str(expected_dir).endswith("v1-initial-2026-05")
@@ -1062,7 +978,7 @@ def test_single_language_filter_limits_repos():
     from collection.agent_corpus import _load_qc_repo_rows
 
     rows = _load_qc_repo_rows(
-        Path("fixtures-from-agents"),
+        paths.stage_dir("a", "repos"),
         language="java",
     )
     for row in rows:
@@ -1075,9 +991,10 @@ def test_incremental_checkpoint_after_repo(tmp_path):
 
     collector = AgentCorpusCollector(
         output_db=tmp_path / "corpus.db",
-        repo_qc_dir=Path("fixtures-from-agents"),
-        commit_qc_dir=Path("github-search-agent/agent_commits"),
+        repo_qc_dir=tmp_path / "repos",
+        commit_qc_dir=tmp_path / "commits",
         test_commits_csv=tmp_path / "test_commits",
+        fixtures_output_dir=tmp_path / "fixtures-out",
     )
 
     fake_repo = {
@@ -1096,46 +1013,30 @@ def test_incremental_checkpoint_after_repo(tmp_path):
         ]
     }
 
-    # The repo-summary CSV path is hardcoded to the real project directory,
-    # so back up/restore it around this fake "test/example" run.
-    repo_list_path = (
-        Path(__file__).resolve().parents[2]
-        / "fixtures-from-agents"
-        / "repos"
-        / "java_agent_fixture_repos.csv"
-    )
-    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
-
-    try:
+    with patch(
+        "collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]
+    ):
         with patch(
-            "collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]
+            "collection.agent_corpus._load_qc_agent_commits",
+            return_value=fake_commits,
         ):
-            with patch(
-                "collection.agent_corpus._load_qc_agent_commits",
-                return_value=fake_commits,
-            ):
-                with patch("collection.agent_corpus.clone_with_function") as mock_clone:
-                    mock_clone.return_value.__enter__ = MagicMock(
-                        return_value=tmp_path / "repo"
-                    )
-                    mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+            with patch("collection.agent_corpus.clone_with_function") as mock_clone:
+                mock_clone.return_value.__enter__ = MagicMock(
+                    return_value=tmp_path / "repo"
+                )
+                mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+                with patch(
+                    "collection.agent_corpus.collect_test_files_for_commit",
+                    return_value=["tests/test_foo.py"],
+                ):
                     with patch(
-                        "collection.agent_corpus.collect_test_files_for_commit",
-                        return_value=["tests/test_foo.py"],
-                    ):
-                        with patch(
-                            "collection.agent_corpus.AgentFixtureExtractor"
-                        ) as mock_ext:
-                            instance = mock_ext.return_value
-                            instance._extract_from_agent_commits.return_value = []
-                            stats, _ = collector.run(language="java")
+                        "collection.agent_corpus.AgentFixtureExtractor"
+                    ) as mock_ext:
+                        instance = mock_ext.return_value
+                        instance._extract_from_agent_commits.return_value = []
+                        stats, _ = collector.run(language="java")
 
-        assert stats.repos_scanned == 1
-    finally:
-        if original_bytes:
-            repo_list_path.write_bytes(original_bytes)
-        elif repo_list_path.exists():
-            repo_list_path.unlink()
+    assert stats.repos_scanned == 1
 
 
 def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
@@ -1147,9 +1048,10 @@ def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
     initialise_db(db_path)
     collector = AgentCorpusCollector(
         output_db=db_path,
-        repo_qc_dir=Path("fixtures-from-agents"),
-        commit_qc_dir=Path("github-search-agent/agent_commits"),
+        repo_qc_dir=tmp_path / "repos",
+        commit_qc_dir=tmp_path / "commits",
         test_commits_csv=tmp_path / "test_commits",
+        fixtures_output_dir=tmp_path / "fixtures-out",
     )
 
     # Simulate a completed full run by writing the "all completed" checkpoint
@@ -1173,48 +1075,32 @@ def test_full_run_checkpoint_does_not_block_single_language_run(tmp_path):
         ]
     }
 
-    # The repo-summary CSV path is hardcoded to the real project directory,
-    # so back up/restore it around this fake "test/java-example" run.
-    repo_list_path = (
-        Path(__file__).resolve().parents[2]
-        / "fixtures-from-agents"
-        / "repos"
-        / "java_agent_fixture_repos.csv"
-    )
-    original_bytes = repo_list_path.read_bytes() if repo_list_path.exists() else b""
-
-    try:
+    with patch(
+        "collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]
+    ):
         with patch(
-            "collection.agent_corpus._load_qc_repo_rows", return_value=[fake_repo]
+            "collection.agent_corpus._load_qc_agent_commits",
+            return_value=fake_commits,
         ):
-            with patch(
-                "collection.agent_corpus._load_qc_agent_commits",
-                return_value=fake_commits,
-            ):
-                with patch("collection.agent_corpus.clone_with_function") as mock_clone:
-                    mock_clone.return_value.__enter__ = MagicMock(
-                        return_value=tmp_path / "repo"
-                    )
-                    mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+            with patch("collection.agent_corpus.clone_with_function") as mock_clone:
+                mock_clone.return_value.__enter__ = MagicMock(
+                    return_value=tmp_path / "repo"
+                )
+                mock_clone.return_value.__exit__ = MagicMock(return_value=False)
+                with patch(
+                    "collection.agent_corpus.collect_test_files_for_commit",
+                    return_value=["tests/test_foo.py"],
+                ):
                     with patch(
-                        "collection.agent_corpus.collect_test_files_for_commit",
-                        return_value=["tests/test_foo.py"],
-                    ):
-                        with patch(
-                            "collection.agent_corpus.AgentFixtureExtractor"
-                        ) as mock_ext:
-                            instance = mock_ext.return_value
-                            instance._extract_from_agent_commits.return_value = []
-                            stats, _ = collector.run(language="java")
+                        "collection.agent_corpus.AgentFixtureExtractor"
+                    ) as mock_ext:
+                        instance = mock_ext.return_value
+                        instance._extract_from_agent_commits.return_value = []
+                        stats, _ = collector.run(language="java")
 
-        assert (
-            stats.repos_scanned == 1
-        ), "Single-language run should proceed despite full-run checkpoint"
-    finally:
-        if original_bytes:
-            repo_list_path.write_bytes(original_bytes)
-        elif repo_list_path.exists():
-            repo_list_path.unlink()
+    assert (
+        stats.repos_scanned == 1
+    ), "Single-language run should proceed despite full-run checkpoint"
 
 
 def test_single_language_checkpoint_blocks_rerun(tmp_path):
@@ -1226,9 +1112,10 @@ def test_single_language_checkpoint_blocks_rerun(tmp_path):
     initialise_db(db_path)
     collector = AgentCorpusCollector(
         output_db=db_path,
-        repo_qc_dir=Path("fixtures-from-agents"),
-        commit_qc_dir=Path("github-search-agent/agent_commits"),
+        repo_qc_dir=tmp_path / "repos",
+        commit_qc_dir=tmp_path / "commits",
         test_commits_csv=tmp_path / "test_commits",
+        fixtures_output_dir=tmp_path / "fixtures-out",
     )
 
     # Simulate a completed java run
@@ -1251,160 +1138,144 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
     repo_qc_dir.mkdir()
     commit_qc_dir.mkdir()
 
-    # Save/restore real CSV files that the collector writes to
-    project_root = Path(__file__).resolve().parents[2]
-    fixture_list_dir = project_root / "fixtures-from-agents"
+    fixture_list_dir = tmp_path / "fixtures-out"
     repos_dir = fixture_list_dir / "repos"
 
-    fixtures_csv = fixture_list_dir / "python_agent_fixtures.csv"
-    repos_csv = repos_dir / "python_agent_fixture_repos.csv"
+    fixtures_csv = fixture_list_dir / "python_fixtures.csv"
+    repos_csv = repos_dir / "python_fixture_repos.csv"
 
-    original_fixtures = fixtures_csv.read_bytes() if fixtures_csv.exists() else b""
-    original_repos = repos_csv.read_bytes() if repos_csv.exists() else b""
+    # Pre-populate with old data to simulate a previous run
+    fixture_list_dir.mkdir(parents=True, exist_ok=True)
+    repos_dir.mkdir(parents=True, exist_ok=True)
+    fixtures_csv.write_text("repo_name,language\nold/repo,python\n")
+    repos_csv.write_text("repo_name,language\nold/repo,python\n")
 
-    try:
-        # Pre-populate with old data to simulate a previous run
-        fixture_list_dir.mkdir(parents=True, exist_ok=True)
-        repos_dir.mkdir(parents=True, exist_ok=True)
-        fixtures_csv.write_text("repo_name,language\nold/repo,python\n")
-        repos_csv.write_text("repo_name,language\nold/repo,python\n")
-
-        # Create a fake repo QC CSV
-        with (repo_qc_dir / "python_agent_repo.csv").open(
-            "w", newline="", encoding="utf-8"
-        ) as fh:
-            writer = csv.DictWriter(
-                fh,
-                fieldnames=[
-                    "repo_name",
-                    "has_agent_config",
-                    "language",
-                    "stars",
-                    "clone_url",
-                    "num_contributors",
-                    "qc_reason",
-                    "processed_at",
-                ],
-            )
-            writer.writeheader()
-            writer.writerow(
-                {
-                    "repo_name": "good/repo",
-                    "has_agent_config": "1",
-                    "language": "python",
-                    "stars": 123,
-                    "clone_url": "https://github.com/good/repo.git",
-                    "num_contributors": 4,
-                    "qc_reason": "",
-                    "processed_at": "2026-05-28T00:00:00Z",
-                }
-            )
-
-        # Create a fake commit QC CSV
-        with (commit_qc_dir / "python_agent_commit.csv").open(
-            "w", newline="", encoding="utf-8"
-        ) as fh:
-            writer = csv.DictWriter(
-                fh,
-                fieldnames=[
-                    "repo_name",
-                    "commit_sha",
-                    "commit_url",
-                    "agent_type",
-                    "commit_date",
-                    "author_name",
-                    "author_email",
-                    "language",
-                    "clone_url",
-                    "processed_at",
-                ],
-            )
-            writer.writeheader()
-            writer.writerow(
-                {
-                    "repo_name": "good/repo",
-                    "commit_sha": "abc123",
-                    "commit_url": "https://github.com/good/repo/commit/abc123",
-                    "agent_type": "claude",
-                    "commit_date": "2026-05-21T00:00:00Z",
-                    "author_name": "Alice",
-                    "author_email": "alice@example.com",
-                    "language": "python",
-                    "clone_url": "https://github.com/good/repo.git",
-                    "processed_at": "2026-05-28T00:00:00Z",
-                }
-            )
-
-        def fake_clone(clone_url, target_dir):
-            target_dir.mkdir(parents=True, exist_ok=True)
-            (target_dir / ".git").mkdir(parents=True, exist_ok=True)
-            return True
-
-        monkeypatch.setattr(
-            "collection.agent_corpus.clone_repo_for_commit_scan", fake_clone
-        )
-        monkeypatch.setattr(
-            "collection.agent_corpus.collect_test_files_for_commit",
-            lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
-        )
-        monkeypatch.setattr(
-            "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
-            lambda self, repo_name, commits, **kwargs: [
-                {
-                    "repo_name": repo_name,
-                    "name": "complete_fixture",
-                    "fixture_type": "pytest_decorator",
-                    "scope": "per_test",
-                    "loc": 3,
-                    "language": "python",
-                    "file_path": "tests/test_sample.py",
-                    "start_line": 1,
-                    "end_line": 3,
-                    "cyclomatic_complexity": 1,
-                    "max_nesting_depth": 0,
-                    "num_objects_instantiated": 0,
-                    "num_external_calls": 0,
-                    "num_parameters": 0,
-                    "has_teardown_pair": 0,
-                    "raw_source": "def complete_fixture(): pass",
-                    "framework": "pytest",
-                    "mocks": [],
-                    "commit_sha": "abc123",
-                    "agent_type": "claude",
-                    "is_complete_addition": True,
-                },
+    # Create a fake repo QC CSV
+    with (repo_qc_dir / "python_repo.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "has_agent_config",
+                "language",
+                "stars",
+                "clone_url",
+                "num_contributors",
+                "qc_reason",
+                "processed_at",
             ],
         )
-
-        collector = AgentCorpusCollector(
-            output_db=tmp_path / "between-group.db",
-            repo_qc_dir=repo_qc_dir,
-            commit_qc_dir=commit_qc_dir,
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "good/repo",
+                "has_agent_config": "1",
+                "language": "python",
+                "stars": 123,
+                "clone_url": "https://github.com/good/repo.git",
+                "num_contributors": 4,
+                "qc_reason": "",
+                "processed_at": "2026-05-28T00:00:00Z",
+            }
         )
-        # Simulate pipeline truncation before run
-        truncate_fixture_csvs([fixtures_csv, repos_csv])
-        stats, db_path = collector.run(repos_per_language=1, languages=["python"])
 
-        assert stats.fixtures_collected == 1
+    # Create a fake commit QC CSV
+    with (commit_qc_dir / "python_commit.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "commit_sha",
+                "commit_url",
+                "agent_type",
+                "commit_date",
+                "author_name",
+                "author_email",
+                "language",
+                "clone_url",
+                "processed_at",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "good/repo",
+                "commit_sha": "abc123",
+                "commit_url": "https://github.com/good/repo/commit/abc123",
+                "agent_type": "claude",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "author_name": "Alice",
+                "author_email": "alice@example.com",
+                "language": "python",
+                "clone_url": "https://github.com/good/repo.git",
+                "processed_at": "2026-05-28T00:00:00Z",
+            }
+        )
 
-        # Verify CSV was truncated and rewritten (old data gone)
-        assert fixtures_csv.exists()
-        content = fixtures_csv.read_text()
-        assert "old/repo" not in content
-        assert "good/repo" in content
+    def fake_clone(clone_url, target_dir):
+        target_dir.mkdir(parents=True, exist_ok=True)
+        (target_dir / ".git").mkdir(parents=True, exist_ok=True)
+        return True
 
-        assert repos_csv.exists()
-        repos_content = repos_csv.read_text()
-        assert "old/repo" not in repos_content
-        assert "good/repo" in repos_content
+    monkeypatch.setattr(
+        "collection.agent_corpus.clone_repo_for_commit_scan", fake_clone
+    )
+    monkeypatch.setattr(
+        "collection.agent_corpus.collect_test_files_for_commit",
+        lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
+    )
+    monkeypatch.setattr(
+        "collection.agent_corpus.AgentFixtureExtractor._extract_from_agent_commits",
+        lambda self, repo_name, commits, **kwargs: [
+            {
+                "repo_name": repo_name,
+                "name": "complete_fixture",
+                "fixture_type": "pytest_decorator",
+                "scope": "per_test",
+                "loc": 3,
+                "language": "python",
+                "file_path": "tests/test_sample.py",
+                "start_line": 1,
+                "end_line": 3,
+                "cyclomatic_complexity": 1,
+                "max_nesting_depth": 0,
+                "num_objects_instantiated": 0,
+                "num_external_calls": 0,
+                "num_parameters": 0,
+                "has_teardown_pair": 0,
+                "raw_source": "def complete_fixture(): pass",
+                "framework": "pytest",
+                "mocks": [],
+                "commit_sha": "abc123",
+                "agent_type": "claude",
+                "is_complete_addition": True,
+            },
+        ],
+    )
 
-    finally:
-        # Restore original files
-        if original_fixtures:
-            fixtures_csv.write_bytes(original_fixtures)
-        elif fixtures_csv.exists():
-            fixtures_csv.unlink()
-        if original_repos:
-            repos_csv.write_bytes(original_repos)
-        elif repos_csv.exists():
-            repos_csv.unlink()
+    collector = AgentCorpusCollector(
+        output_db=tmp_path / "between-group.db",
+        repo_qc_dir=repo_qc_dir,
+        commit_qc_dir=commit_qc_dir,
+        fixtures_output_dir=fixture_list_dir,
+    )
+    # Simulate pipeline truncation before run
+    truncate_fixture_csvs([fixtures_csv, repos_csv])
+    stats, db_path = collector.run(repos_per_language=1, languages=["python"])
+
+    assert stats.fixtures_collected == 1
+
+    # Verify CSV was truncated and rewritten (old data gone)
+    assert fixtures_csv.exists()
+    content = fixtures_csv.read_text()
+    assert "old/repo" not in content
+    assert "good/repo" in content
+
+    assert repos_csv.exists()
+    repos_content = repos_csv.read_text()
+    assert "old/repo" not in repos_content
+    assert "good/repo" in repos_content

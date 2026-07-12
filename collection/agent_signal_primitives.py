@@ -2,8 +2,8 @@
 Low-level, single-repo agent-detection primitives.
 
 Two independent building blocks used by `tiered_agent_corpus_scanner.py`'s
-Tier 2 discovery path (and directly by `phase_1b_verify_agent_commits.py`):
-scanning a repo's file tree for AI agent configuration files, and verifying/
+Tier 2 discovery path: scanning a repo's file tree for AI agent configuration
+files, and verifying/
 classifying agent-authored commits via `Co-authored-by`/author-metadata
 trailer parsing. This module does not orchestrate corpus-scale scanning
 itself — see `tiered_agent_corpus_scanner.py` for that.

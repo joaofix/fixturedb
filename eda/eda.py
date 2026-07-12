@@ -32,7 +32,7 @@ warnings.filterwarnings("ignore")
 # ---------------------------------------------------------------------------
 
 ROOT = Path(__file__).parent.parent
-DB_PATH = ROOT / "data" / "corpus.db"
+DB_PATH = ROOT / "db" / "corpus.db"
 DEFAULT_OUT = ROOT / "output" / "eda"
 
 # ---------------------------------------------------------------------------
@@ -558,7 +558,7 @@ def plot_domain_distribution(conn, out_dir, show):
     )
     if repos.empty or repos["domain"].nunique() < 2:
         print(
-            "  [skip] Domain data not classified yet. Run `python pipeline.py classify`."
+            "  [skip] Domain data not classified yet. Run `python -m collection` domain classification (not yet migrated)."
         )
         return
 
@@ -685,7 +685,7 @@ def plot_fork_star_ratio(conn, out_dir, show):
 def plot_fixture_distribution(conn, out_dir, show):
     """Plot 6a: Fixture distribution per repository (ridge plot)"""
     if not has_data(conn, "fixtures"):
-        print("  [skip] No fixture data yet. Run `python pipeline.py extract`.")
+        print("  [skip] No fixture data yet. Run `python -m collection extract-fixtures --dataset a/b/c`.")
         return
 
     fixtures = qdf(
@@ -773,7 +773,7 @@ def plot_fixture_distribution(conn, out_dir, show):
 def plot_fixture_types(conn, out_dir, show):
     """Plot 6b: Fixture scope distribution per language (stacked bar)"""
     if not has_data(conn, "fixtures"):
-        print("  [skip] No fixture data yet. Run `python pipeline.py extract`.")
+        print("  [skip] No fixture data yet. Run `python -m collection extract-fixtures --dataset a/b/c`.")
         return
 
     fixtures = qdf(
@@ -888,7 +888,7 @@ def plot_fixture_overview(conn, out_dir, show):
 def plot_mock_prevalence_chart(conn, out_dir, show):
     """Plot 7a: Mock prevalence (bar chart)"""
     if not has_data(conn, "mock_usages"):
-        print("  [skip] No mock data yet. Run `python pipeline.py extract`.")
+        print("  [skip] No mock data yet. Run `python -m collection extract-fixtures --dataset a/b/c`.")
         return
 
     fixtures = qdf(
@@ -952,7 +952,7 @@ def plot_mock_prevalence_chart(conn, out_dir, show):
 def plot_framework_usage(conn, out_dir, show):
     """Plot 7b: Framework usage (stacked bar chart)"""
     if not has_data(conn, "mock_usages"):
-        print("  [skip] No mock data yet. Run `python pipeline.py extract`.")
+        print("  [skip] No mock data yet. Run `python -m collection extract-fixtures --dataset a/b/c`.")
         return
 
     fixtures = qdf(
@@ -1055,7 +1055,7 @@ def plot_fixture_categories(conn, out_dir, show):
     )
     if fixtures.empty or fixtures["category"].isna().all():
         print(
-            "  [skip] No fixture categories yet. Run `python pipeline.py categorize`."
+            "  [skip] No fixture categories yet. Run `python -m collection` domain classification (not yet migrated)."
         )
         return
 

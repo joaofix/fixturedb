@@ -3,8 +3,8 @@ Builds Dataset A: agent-authored fixtures for the between-group comparison.
 
 Collects fixtures from agent-authored commits (Tier 1: co-authored-by trailers
 only) detected from repositories with agent configuration files. Entry point:
-phase_3_extract_agent.py. See human_corpus.py (Dataset B) and dataset_c.py
-(Dataset C) for the other two datasets.
+`python -m collection extract-fixtures --dataset a`. See human_corpus.py
+(Dataset B) and dataset_c.py (Dataset C) for the other two datasets.
 """
 
 import argparse
@@ -20,6 +20,7 @@ from tqdm import tqdm
 
 from collection.logging_utils import get_logger
 
+from . import paths
 from .agent_patterns import (
     PAPER_AGENT_CONFIG_PATTERNS,
     PAPER_AGENT_REPOSITORY_LANGUAGES,
@@ -30,7 +31,6 @@ from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
     COLLECTION_OUTPUT_TAG,
-    DATA_DIR,
     LANGUAGE_CONFIGS,
     MIN_COMMITS,
 )
@@ -82,8 +82,10 @@ def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:
     try:
         from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
-        project_root = Path(__file__).resolve().parents[1]
-        scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
+        # corpus_db_path is stored but never read by scan_repo_for_agent_commits
+        # (only Tier2RepoMatcher's candidate queries actually open the DB), so
+        # this works whether or not db/corpus.db exists on disk.
+        scanner = Tier1RepositoryScanner(paths.corpus_db_path())
         commits = scanner.scan_repo_for_agent_commits(repo_path, start_date=start_date)
         return [
             {
@@ -112,7 +114,7 @@ def _load_qc_repo_rows(
     grouped: dict[str, list[dict]] = {}
 
     repo_csv_paths = sorted(
-        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+        Path(repo_qc_dir).glob("*_repo.csv"), key=lambda path: path.name
     )
 
     for csv_path in repo_csv_paths:
@@ -169,16 +171,15 @@ def _load_qc_agent_commits(
     commits_by_repo: dict[str, list[dict]] = {}
     seen_shas: dict[str, set[str]] = {}
 
-    # Accept both raw agent-commit CSVs and pre-filtered agent test-commit CSVs.
-    patterns = [
-        "*_agent_commit.csv",
-        "*_agent_commit_qc.csv",
-        "*_agent_test_commit.csv",
-        "*_agent_test_commit_qc.csv",
-    ]
-    csv_paths = []
-    for pat in patterns:
-        csv_paths.extend(sorted(Path(commit_qc_dir).glob(pat)))
+    # Accept both raw agent-commit CSVs (datasets/a/commits/) and pre-filtered
+    # agent test-commit CSVs (datasets/a/test-commits/) -- a file matching both
+    # `*_commit.csv` and `*_test_commit.csv` (e.g. "python_test_commit.csv")
+    # is deduplicated via the set before reading.
+    patterns = ["*_commit.csv", "*_test_commit.csv"]
+    csv_paths = sorted(
+        {p for pat in patterns for p in Path(commit_qc_dir).glob(pat)},
+        key=lambda path: path.name,
+    )
     for csv_path in csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
@@ -329,6 +330,7 @@ class AgentCorpusCollector:
         repo_qc_dir: Path | None = None,
         commit_qc_dir: Path | None = None,
         test_commits_csv: Path | None = None,
+        fixtures_output_dir: Path | None = None,
     ):
         """
         Initialize agent corpus collector.
@@ -336,26 +338,29 @@ class AgentCorpusCollector:
         Args:
             clones_dir: Directory for repository clones
             github_token: Optional GitHub API token
-            output_db: Path to output database (default: data/between-group.db)
-            repo_qc_dir: Directory containing *_agent_repo.csv files
-            commit_qc_dir: Directory containing *_agent_commit_qc.csv files
+            output_db: Path to output database (default: db/a.db)
+            repo_qc_dir: Directory containing *_repo.csv files (default: datasets/a/repos)
+            commit_qc_dir: Directory containing *_commit.csv or *_test_commit.csv
+                files (default: datasets/a/test-commits)
+            fixtures_output_dir: Override for fixture/repo-summary CSV output
+                directory (default: datasets/a/fixtures). Tests must always
+                pass this (e.g. tmp_path) rather than let it fall through to
+                the real datasets/ tree.
         """
         self.clones_dir = Path(clones_dir)
         self.github_token = github_token
-        self.output_db = (
-            Path(output_db) if output_db else (DATA_DIR / "between-group.db")
-        )
+        self.output_db = Path(output_db) if output_db else paths.db_path("a")
         self.test_commits_csv = Path(test_commits_csv) if test_commits_csv else None
-        project_root = Path(__file__).resolve().parents[1]
         self.repo_qc_dir = (
-            Path(repo_qc_dir)
-            if repo_qc_dir
-            else (project_root / "github-search-agent" / "agent_repositories")
+            Path(repo_qc_dir) if repo_qc_dir else paths.stage_dir("a", "repos")
         )
         self.commit_qc_dir = (
             Path(commit_qc_dir)
             if commit_qc_dir
-            else (project_root / "github-search-agent" / "agent_repositories")
+            else paths.stage_dir("a", "test-commits")
+        )
+        self.fixtures_output_dir = (
+            Path(fixtures_output_dir) if fixtures_output_dir else None
         )
 
     def run(
@@ -865,10 +870,10 @@ class AgentCorpusCollector:
         """Persist Dataset A's per-repo agent-commit stats and fixture output.
 
         Always updates the repositories DB row and appends a row to the
-        per-language repo-summary CSV (fixtures-from-agents/repos/), even for
+        per-language repo-summary CSV (datasets/a/fixtures/repos/), even for
         repos with zero test-touching or zero accepted commits, so the stats
         reflect every processed agent-enabled repo. Per-fixture persistence
-        (DB rows + the *_agent_fixtures.csv detail file) still only happens
+        (DB rows + the *_fixtures.csv detail file) still only happens
         when the repo actually yielded fixtures.
         """
         try:
@@ -880,9 +885,10 @@ class AgentCorpusCollector:
             )
 
         try:
-            project_root = Path(__file__).resolve().parents[1]
             fixture_list_dir = (
-                project_root / "fixtures-from-agents" / COLLECTION_OUTPUT_TAG
+                self.fixtures_output_dir
+                if self.fixtures_output_dir
+                else paths.stage_dir("a", "fixtures") / COLLECTION_OUTPUT_TAG
             )
             fixture_list_dir.mkdir(parents=True, exist_ok=True)
 
@@ -890,9 +896,7 @@ class AgentCorpusCollector:
             # written so every processed repo shows up, regardless of yield.
             repo_list_dir = fixture_list_dir / "repos"
             repo_list_dir.mkdir(parents=True, exist_ok=True)
-            repo_list_path = (
-                repo_list_dir / f"{language_name}_agent_fixture_repos.csv"
-            )
+            repo_list_path = repo_list_dir / f"{language_name}_fixture_repos.csv"
             first_sha = (
                 repo_fixture_commit_shas[0] if repo_fixture_commit_shas else ""
             )
@@ -939,9 +943,7 @@ class AgentCorpusCollector:
                 # Per-fixture DB rows + CSV (one row per fixture). Fixtures
                 # already carry their own commit_sha/agent_type/commit_kind,
                 # so no extra fields need injecting here.
-                fixtures_list_path = (
-                    fixture_list_dir / f"{language_name}_agent_fixtures.csv"
-                )
+                fixtures_list_path = fixture_list_dir / f"{language_name}_fixtures.csv"
                 persist_repository_and_fixtures(
                     self.output_db,
                     repo_data,

@@ -65,7 +65,7 @@ from eda.quantitative.p05i_repo_maturity import plot_repo_maturity_vs_fixture_qu
 # ---------------------------------------------------------------------------
 
 ROOT = Path(__file__).parent.parent
-DB_PATH = ROOT / "data" / "corpus.db"
+DB_PATH = ROOT / "db" / "corpus.db"
 DEFAULT_OUT = ROOT / "output" / "eda" / "quantitative"
 
 

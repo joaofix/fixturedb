@@ -27,7 +27,7 @@ from scipy.stats import chi2_contingency, mannwhitneyu
 
 from collection.logging_utils import get_logger
 
-from .config import DATA_DIR
+from .config import DB_DIR
 from .db import db_session
 
 logger = get_logger(__name__)
@@ -320,7 +320,7 @@ class BetweenGroupComparator:
         Args:
             db_path: Path to between-group.db (default: data/between-group.db)
         """
-        self.db_path = Path(db_path) if db_path else (DATA_DIR / "between-group.db")
+        self.db_path = Path(db_path) if db_path else (DB_DIR / "between-group.db")
 
     def run(
         self,

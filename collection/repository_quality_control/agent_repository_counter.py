@@ -18,6 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
 
+from collection import paths
 from collection.agent_corpus import scan_cloned_repo_for_agent_configs
 from collection.agent_patterns import (
     PAPER_AGENT_REPOSITORY_LANGUAGES,
@@ -31,15 +32,19 @@ from collection.utils import _normalize_language_filters
 
 logger = get_logger(__name__)
 
-GITHUB_SEARCH_RAW_DIR = PROJECT_ROOT / "github-search-raw"
-OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# Defaults, resolved through the central path registry (collection.paths) so
+# `discover-repos --dataset a` and this module's standalone CLI agree on
+# where repo-discovery output lives. Not created at import time -- `run()`
+# creates `output_dir` once it knows the real value, so importing this module
+# for a toy run (root=TOY_ROOT) never touches the real datasets/ tree.
+GITHUB_SEARCH_RAW_DIR = paths.RAW_SEARCH_DIR
+OUTPUT_DIR = paths.stage_dir("a", "repos")
 
 
-def csv_path_for_language(language: str) -> Path:
-    """Return the per-language output CSV path under `OUTPUT_DIR`."""
+def csv_path_for_language(language: str, output_dir: Path = OUTPUT_DIR) -> Path:
+    """Return the per-language output CSV path under `output_dir`."""
     lang = (language or "unknown").lower()
-    return OUTPUT_DIR / f"{lang}_agent_repo.csv"
+    return output_dir / f"{lang}_repo.csv"
 
 
 def _to_int(value: object) -> int:
@@ -253,23 +258,23 @@ def _language_from_raw_filename(file_name: str) -> str:
 
 
 def read_repo_list(
-    languages: Optional[list[str]] = None, language: Optional[str] = None
+    languages: Optional[list[str]] = None,
+    language: Optional[str] = None,
+    raw_dir: Path = GITHUB_SEARCH_RAW_DIR,
 ) -> List[dict]:
-    """Read candidate repos from github-search-raw."""
+    """Read candidate repos from `raw_dir` (default: github-search-raw)."""
     selected_languages = _normalize_language_filters(languages, language)
-    files_raw = _collect_result_files(GITHUB_SEARCH_RAW_DIR, selected_languages)
+    files_raw = _collect_result_files(raw_dir, selected_languages)
     repos = _read_repos_from_files(files_raw, selected_languages)
     if selected_languages:
         logger.info(
             "Loaded %d repo candidates from %s for languages=%s",
             len(repos),
-            GITHUB_SEARCH_RAW_DIR,
+            raw_dir,
             ",".join(selected_languages),
         )
     else:
-        logger.info(
-            "Loaded %d repo candidates from %s", len(repos), GITHUB_SEARCH_RAW_DIR
-        )
+        logger.info("Loaded %d repo candidates from %s", len(repos), raw_dir)
     return repos
 
 
@@ -331,11 +336,14 @@ def run(
     workers: int = 8,
     languages: Optional[list[str]] = None,
     language: Optional[str] = None,
+    source_dir: Path = GITHUB_SEARCH_RAW_DIR,
+    output_dir: Path = OUTPUT_DIR,
 ) -> int:
     """Detect agent config files across candidate repos and write per-language CSVs."""
-    repos = read_repo_list(languages=languages, language=language)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    repos = read_repo_list(languages=languages, language=language, raw_dir=source_dir)
     if not repos:
-        print("No repos found in github-search-raw.")
+        print(f"No repos found in {source_dir}.")
         return 0
     limit = int(limit or 0)
 
@@ -352,7 +360,7 @@ def run(
     write_lock = threading.Lock()
 
     def write_row(row: dict) -> None:
-        csv_path = csv_path_for_language(row.get("language") or "unknown")
+        csv_path = csv_path_for_language(row.get("language") or "unknown", output_dir)
         with write_lock:
             get_adapter().append_dicts(csv_path, [row], list(row.keys()))
 
@@ -364,7 +372,7 @@ def run(
             if res:
                 write_row(res)
                 count += 1
-        print(f"Processed {count} repos; CSVs stored in {OUTPUT_DIR}")
+        print(f"Processed {count} repos; CSVs stored in {output_dir}")
     else:
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
             futures = [ex.submit(_process_single, entry, since) for entry in to_process]
@@ -375,7 +383,7 @@ def run(
                     write_row(r)
                     count += 1
         print(
-            f"Processed {count} repos with {workers} workers; CSVs stored in {OUTPUT_DIR}"
+            f"Processed {count} repos with {workers} workers; CSVs stored in {output_dir}"
         )
     return 0
 
@@ -383,8 +391,6 @@ def run(
 def main():
     """CLI entrypoint: run the preliminary agent-config repository counter."""
     import argparse
-
-    global GITHUB_SEARCH_RAW_DIR, OUTPUT_DIR
 
     parser = argparse.ArgumentParser(
         description="Preliminary QC of agent candidate repos"
@@ -419,13 +425,9 @@ def main():
     add_output_dir_arg(
         parser,
         default=OUTPUT_DIR,
-        help_text="Directory where *_agent_repo.csv files are stored",
+        help_text="Directory where *_repo.csv files are stored",
     )
     args = parser.parse_args()
-
-    GITHUB_SEARCH_RAW_DIR = Path(args.source_dir)
-    OUTPUT_DIR = Path(args.output_dir)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     selected_languages = []
     if args.language:
@@ -439,6 +441,8 @@ def main():
             since=args.since,
             workers=args.workers,
             languages=selected_languages or None,
+            source_dir=Path(args.source_dir),
+            output_dir=Path(args.output_dir),
         )
     )
 

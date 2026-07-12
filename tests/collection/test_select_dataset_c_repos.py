@@ -180,9 +180,9 @@ class TestWritePerLanguageFiles:
         counts = write_per_language_files(selected, out_dir)
 
         assert counts == {"python": 2, "java": 1}
-        assert (out_dir / "dataset_c_python.csv").exists()
-        assert (out_dir / "dataset_c_java.csv").exists()
-        assert (out_dir / "dataset_c_sample.csv").exists()
+        assert (out_dir / "python_repo.csv").exists()
+        assert (out_dir / "java_repo.csv").exists()
+        assert (out_dir / "all.csv").exists()
 
     def test_output_schema_includes_github_id(self, tmp_path):
         """No domain classification step anymore (unlike
@@ -194,7 +194,7 @@ class TestWritePerLanguageFiles:
         out_dir = tmp_path / "out"
         write_per_language_files(selected, out_dir)
 
-        with (out_dir / "dataset_c_sample.csv").open(newline="", encoding="utf-8") as fh:
+        with (out_dir / "all.csv").open(newline="", encoding="utf-8") as fh:
             header = next(csv.reader(fh))
         assert header == ["repo_name", "language", "clone_url", "github_id"]
 
@@ -202,4 +202,4 @@ class TestWritePerLanguageFiles:
         out_dir = tmp_path / "out"
         counts = write_per_language_files([], out_dir)
         assert counts == {}
-        assert (out_dir / "dataset_c_sample.csv").exists()
+        assert (out_dir / "all.csv").exists()

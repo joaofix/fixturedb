@@ -13,17 +13,30 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     clones_dir.mkdir()
     repo_qc_dir = tmp_path / "repo_qc"
     repo_qc_dir.mkdir()
-    fixtures_dir = repo_qc_dir / "fixtures-from-agents"
-    fixtures_dir.mkdir()
     out_db = tmp_path / "between.db"
     test_commits_dir = tmp_path / "test_commits"
 
     initialise_db(out_db)
 
-    # Create a minimal agent fixture repo list so strict within-mode selection is satisfied
-    repos_dir = fixtures_dir / "repos"
-    repos_dir.mkdir()
-    make_csv(repos_dir, "python_agent_fixture_repos.csv")
+    # Create a minimal, already-resolved repo list (as discover-repos --dataset b
+    # would write) so strict within-mode selection is satisfied.
+    make_csv(
+        repo_qc_dir,
+        "python_agent_repo.csv",
+        rows=[
+            {
+                "repo_name": "owner/fixture_repo",
+                "full_name": "owner/fixture_repo",
+                "language": "python",
+                "stars": "100",
+                "forks": "10",
+                "num_contributors": "1",
+                "clone_url": "https://github.com/owner/fixture_repo.git",
+                "has_agent_config": "1",
+            }
+        ],
+        dest_name="python_repo.csv",
+    )
 
     # Monkeypatch cloning to create repo directory
     def fake_clone(url, path):

@@ -1,67 +1,99 @@
 # Collection Package
 
-This package implements the paired within-repository study for FixtureDB.
+This package implements the FixtureDB collection pipeline: three datasets
+(A: agent-authored fixtures, B: human-authored within-repo matched control,
+C: human-authored cross-repo pre-2021 baseline), built through one CLI with
+uniform step verbs selected by `--dataset {a,b,c}`.
 
 ## Primary Command
 
 ```bash
-python -m collection paired
+python -m collection <verb> --dataset {a,b,c} [OPTIONS]
 ```
 
-The paired command samples repositories that contain both human and agent commits, extracts fixtures at the commit level, and writes a paired-study summary plus the study database.
+Every verb resolves its default input/output directories through
+`collection/paths.py`. CSVs under `datasets/{a,b,c}/` are the real,
+reviewable output of each stage; the per-dataset SQLite databases under
+`db/` are secondary/derived.
 
 ## Command Reference
 
-- `python -m collection paired` - run the paired study
-- `python -m collection status` - print a short status message
+| Verb | a | b | c |
+|---|---|---|---|
+| `discover-repos` | ✓ | ✓ (resolved from A) | ✓ |
+| `discover-commits [--tier2]` | ✓ | — | — |
+| `filter-test-commits` | ✓ | ✓ | — |
+| `extract-fixtures` | ✓ | ✓ | ✓ |
+| `analyze-distribution --against Y` | ✓ | ✓ | ✓ |
+| `sample` | ✓ | ✓ | ✓ |
+| `export` | ✓ | ✓ | ✓ |
+| `validate` | ✓ | ✓ | ✓ |
+| `toy [--repos N]` | ✓ | ✓ | ✓ |
 
-The top-level wrapper `python pipeline.py paired` is equivalent.
+Invoking a verb for a dataset it doesn't apply to (e.g. `discover-commits --dataset c`)
+exits 1 with an explicit message rather than silently doing nothing.
 
-## Agent-first Workflow (recommended)
+Also: `python -m collection paired` bootstraps `db/corpus.db` (only needed for
+`discover-commits --tier2`); `python -m collection status` prints a short
+per-dataset status summary.
 
-You can run lower-level collection commands directly to implement an agent-first extraction flow:
-
-- Build the repo-QC CSVs from `github-search-raw/`:
-
-```bash
-python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories --languages java javascript
-```
-
-- Run agent extraction (detect agent commits, extract fixtures, and write per-language fixture repo lists):
-
-```bash
-python -m collection.agent_corpus --languages java javascript --repos-per-language 50
-```
-
-- Build the agent test-commit dataset from the agent commit CSVs:
+## Example: Dataset A end-to-end
 
 ```bash
-python -m collection.test_commit_filter --mode agent --commit-dir github-search-agent/agent_commits --output-dir github-search-agent/tests_commits --workers 8
+python -m collection discover-repos      --dataset a --language python
+python -m collection discover-commits    --dataset a
+python -m collection filter-test-commits --dataset a
+python -m collection extract-fixtures    --dataset a --repos-per-language 50
 ```
 
-- Optionally export human test-commit CSVs (useful as an intermediate step):
+## Example: Dataset B end-to-end
+
+Dataset B's repo population is by definition the same agent-enabled repos
+Dataset A already found, so its `discover-repos` step resolves from Dataset
+A's output rather than an independent GitHub search:
 
 ```bash
-python -m collection.test_commit_filter --mode human --raw-search-dir github-search-raw --output-dir github-search-human/2025_test_commits --workers 8
+python -m collection discover-repos      --dataset b --language python
+python -m collection filter-test-commits --dataset b
+python -m collection extract-fixtures    --dataset b
 ```
 
- - Run human fixture extraction (the human collector will prefer the agent-produced repo lists under `fixtures-from-agents`):
+## Example: Dataset C end-to-end
 
 ```bash
-python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python
+python -m collection discover-repos   --dataset c
+python -m collection extract-fixtures --dataset c --language python
 ```
 
-Backwards compatibility: if the agent fixture repo lists are not present, the human collector falls back to `github-search-agent/tests_commits/*_agent_test_commit.csv` and then to `*_agent_repo.csv`.
+## Example: analyze, sample, export, validate
 
-## Study Model
+```bash
+python -m collection analyze-distribution --dataset a --against b
+python -m collection sample    --dataset a --target-count 5000
+python -m collection export    --dataset a
+python -m collection validate  --dataset a
+```
+
+## Toy runs
+
+Before a full collection, smoke-test the same code path end-to-end at small
+scale, entirely under `toy-dataset/` (structurally isolated from the real
+`datasets/`/`db/` tree — every path is resolved with `root=TOY_ROOT`):
+
+```bash
+python -m collection toy --dataset a --repos 5
+```
+
+## Study Model (paired command)
+
+`python -m collection paired` is a separate, rarely-run bootstrap that builds
+`db/corpus.db`:
 
 - unit of comparison: commit
 - pairing container: repository
 - primary outcome: commit-level fixture observations
 - statistical framing: paired comparisons within the same repository
 
-This is intentionally not a human-vs-agent repository split. The repository provides the matching context for the pair, not a class label for the whole dataset.
-
-## Internal Phases
-
-The phase scripts remain available for lower-level inspection and troubleshooting, but they are implementation details of the paired pipeline rather than the main user workflow.
+This is intentionally not a human-vs-agent repository split. The repository
+provides the matching context for the pair, not a class label for the whole
+dataset.

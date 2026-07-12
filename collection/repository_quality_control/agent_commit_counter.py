@@ -36,27 +36,30 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 
 import os
 
+from collection import paths
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.csv_adapter import get_adapter
 from collection.ephemeral_clone import temp_clone_commit_history
 
-GITHUB_SEARCH_AGENT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_repositories"
-# Default output dir for agent commit CSVs (per-language)
-OUTPUT_DIR = PROJECT_ROOT / "github-search-agent" / "agent_commits"
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+# Defaults, resolved through the central path registry (collection.paths).
+# Not created at import time -- `run()` creates `output_dir` once it knows
+# the real value, so importing this module for a toy run never touches the
+# real datasets/ tree.
+GITHUB_SEARCH_AGENT_DIR = paths.stage_dir("a", "repos")
+OUTPUT_DIR = paths.stage_dir("a", "commits")
 
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
 
-def read_config_positive_rows() -> list[dict]:
-    """Load repo rows flagged `has_agent_config` from `*_agent_repo.csv` files."""
+def read_config_positive_rows(input_dir: Path = GITHUB_SEARCH_AGENT_DIR) -> list[dict]:
+    """Load repo rows flagged `has_agent_config` from `*_repo.csv` files in `input_dir`."""
     rows = []
     repo_csv_paths = sorted(
-        GITHUB_SEARCH_AGENT_DIR.glob("*_agent_repo.csv"), key=lambda path: path.name
+        input_dir.glob("*_repo.csv"), key=lambda path: path.name
     )
 
     for fp in repo_csv_paths:
@@ -79,9 +82,9 @@ def read_config_positive_rows() -> list[dict]:
     return rows
 
 
-def load_seen_commits_for_language(lang: str) -> set:
+def load_seen_commits_for_language(lang: str, output_dir: Path = OUTPUT_DIR) -> set:
     """Return commit SHAs already written to *lang*'s output CSV, for resuming."""
-    csv_path = OUTPUT_DIR / f"{lang.lower()}_agent_commit.csv"
+    csv_path = output_dir / f"{lang.lower()}_commit.csv"
     seen = set()
     if csv_path.exists():
         try:
@@ -96,7 +99,7 @@ def load_seen_commits_for_language(lang: str) -> set:
     return seen
 
 
-def write_commit_rows(rows: list[dict]) -> None:
+def write_commit_rows(rows: list[dict], output_dir: Path = OUTPUT_DIR) -> None:
     """Append *rows* to their per-language output CSV and write a JSON checkpoint."""
     # rows may contain multiple languages; group by language
     by_lang: dict[str, list[dict]] = {}
@@ -105,7 +108,7 @@ def write_commit_rows(rows: list[dict]) -> None:
         by_lang.setdefault(lang, []).append(r)
 
     for lang, items in by_lang.items():
-        csv_path = OUTPUT_DIR / f"{lang}_agent_commit.csv"
+        csv_path = output_dir / f"{lang}_commit.csv"
         fieldnames = [
             "repo_name",
             "commit_sha",
@@ -135,7 +138,7 @@ def write_commit_rows(rows: list[dict]) -> None:
                 "rows_written": len(items),
                 "last_written_at": datetime.now(timezone.utc).isoformat(),
             }
-            cp_path = OUTPUT_DIR / f"{lang}_agent_commit.checkpoint.json"
+            cp_path = output_dir / f"{lang}_commit.checkpoint.json"
             with cp_path.open("w", encoding="utf-8") as cfh:
                 json.dump(checkpoint, cfh)
                 cfh.flush()
@@ -198,12 +201,18 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
     return out_rows
 
 
-def run(since: str = "2025-01-01", workers: int = 4) -> int:
+def run(
+    since: str = "2025-01-01",
+    workers: int = 4,
+    input_dir: Path = GITHUB_SEARCH_AGENT_DIR,
+    output_dir: Path = OUTPUT_DIR,
+) -> int:
     """Scan all config-positive repos for agent commits and write per-language CSVs."""
-    candidates = read_config_positive_rows()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    candidates = read_config_positive_rows(input_dir)
     logger.info("Found %d config-positive repos", len(candidates))
     if not candidates:
-        print(f"No config-positive repos found in {GITHUB_SEARCH_AGENT_DIR}")
+        print(f"No config-positive repos found in {input_dir}")
         return 0
 
     # Deduplicate by repo_name, keep first occurrence
@@ -222,7 +231,7 @@ def run(since: str = "2025-01-01", workers: int = 4) -> int:
     for r in unique:
         lang = (r.get("language") or "unknown").strip().lower()
         if lang not in lang_seen:
-            lang_seen[lang] = load_seen_commits_for_language(lang)
+            lang_seen[lang] = load_seen_commits_for_language(lang, output_dir)
 
     workers = max(1, int(workers or 1))
     processed_count = 0
@@ -241,7 +250,7 @@ def run(since: str = "2025-01-01", workers: int = 4) -> int:
                 if rr.get("commit_sha") not in lang_seen.get(lang, set())
             ]
             if new_rows:
-                write_commit_rows(new_rows)
+                write_commit_rows(new_rows, output_dir)
                 # update seen set
                 lang_seen.setdefault(lang, set()).update(
                     [rr.get("commit_sha") for rr in new_rows if rr.get("commit_sha")]
@@ -270,7 +279,7 @@ def run(since: str = "2025-01-01", workers: int = 4) -> int:
                     if rr.get("commit_sha") not in lang_seen.get(lang, set())
                 ]
                 if new_rows:
-                    write_commit_rows(new_rows)
+                    write_commit_rows(new_rows, output_dir)
                     lang_seen.setdefault(lang, set()).update(
                         [
                             rr.get("commit_sha")
@@ -286,7 +295,7 @@ def run(since: str = "2025-01-01", workers: int = 4) -> int:
                 processed_count += 1
 
     print(
-        f"Processed {processed_count} config-positive repos; per-language commit CSVs stored in {OUTPUT_DIR}"
+        f"Processed {processed_count} config-positive repos; per-language commit CSVs stored in {output_dir}"
     )
     return 0
 
@@ -294,8 +303,6 @@ def run(since: str = "2025-01-01", workers: int = 4) -> int:
 def main():
     """CLI entrypoint: scan config-positive repos and write agent-commit CSVs."""
     import argparse
-
-    global GITHUB_SEARCH_AGENT_DIR, OUTPUT_DIR
 
     parser = argparse.ArgumentParser(
         description="Full-history agent-commit counter for config-positive repos"
@@ -306,20 +313,23 @@ def main():
         "--input-dir",
         type=Path,
         default=GITHUB_SEARCH_AGENT_DIR,
-        help="Directory containing *_agent_repo.csv files",
+        help="Directory containing *_repo.csv files",
     )
     add_output_dir_arg(
         parser,
         default=OUTPUT_DIR,
-        help_text="Directory to write *_agent_commit_qc.csv files",
+        help_text="Directory to write *_commit.csv files",
     )
     args = parser.parse_args()
 
-    GITHUB_SEARCH_AGENT_DIR = Path(args.input_dir)
-    OUTPUT_DIR = Path(args.output_dir)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    raise SystemExit(run(since=args.since, workers=args.workers))
+    raise SystemExit(
+        run(
+            since=args.since,
+            workers=args.workers,
+            input_dir=Path(args.input_dir),
+            output_dir=Path(args.output_dir),
+        )
+    )
 
 
 if __name__ == "__main__":

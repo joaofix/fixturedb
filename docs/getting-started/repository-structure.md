@@ -3,37 +3,35 @@
 Directory structure and file organization for the between-group study project.
 
 ```
-icsme-nier-2026/
+fixturedb/
 │
-├── MAIN CLI & PIPELINES
-│   ├── The authoritative, reproducible pipeline is the numbered phase scripts below.
-│   │   pipeline.py (root) is a separate, older manual convenience CLI — not
-│   │   the pipeline used to build the paper's datasets.
-│   │
+├── MAIN CLI
 │   └── collection/
-│       ├── __main__.py                      # Package CLI: `python -m collection`
-│       ├── phase_1a_scan_agent_commits.py   # Phase 1A: scan for agent commits
-│       ├── phase_1b_verify_agent_commits.py # Phase 1B: verify agent commits
-│       ├── phase_1c_assess_tier1_yield.py   # Phase 1C: assess Tier 1 yield
-│       ├── phase_1d_discover_matched_repos.py # Phase 1D: Tier 2 matched repos (optional)
-│       ├── phase_2_extract_human.py         # Phase 2: Dataset B (human, within-repo)
-│       ├── select_dataset_c_repos.py        # Selects Dataset C repos (creation-date window, no sampling) -- run before Phase 2B
-│       ├── phase_2b_extract_dataset_c.py    # Phase 2B: Dataset C (human, cross-repo baseline)
-│       ├── phase_3_extract_agent.py         # Phase 3: Dataset A (agent-authored)
-│       ├── phase_4_analyze_distribution.py  # Phase 4: distribution analysis
-│       ├── phase_5_stratified_sample.py     # Phase 5: stratified sampling
-│       ├── phase_6_7_export_and_document.py # Phase 6-7: export + ZIP archives
-│       ├── phase_8_final_validation.py      # Phase 8: final validation
+│       ├── __main__.py                      # `python -m collection <verb> --dataset {a,b,c}`
+│       ├── paths.py                         # Central path registry: datasets/{a,b,c}/{stage}, db/*.db, export/*.zip
 │       │
-│       ├── agent_corpus.py                  # Dataset A collector (AgentCorpusCollector)
-│       ├── human_corpus.py                  # Dataset B collector (HumanCorpusCollector)
-│       ├── dataset_c.py                     # Dataset C collector (collect_dataset_c_fixtures)
+│       ├── repository_quality_control/
+│       │   ├── agent_repository_counter.py  # discover-repos --dataset a
+│       │   └── agent_commit_counter.py      # discover-commits --dataset a
+│       ├── repo_resolve.py                  # discover-repos --dataset b
+│       ├── select_dataset_c_repos.py        # discover-repos --dataset c
+│       ├── test_commit_filter.py            # filter-test-commits --dataset {a,b}
+│       ├── tier2_discovery.py               # Tier-1/Tier-2 agent-commit discovery (discover-commits --tier2)
+│       │
+│       ├── agent_corpus.py                  # Dataset A collector (AgentCorpusCollector) -- extract-fixtures --dataset a
+│       ├── human_corpus.py                  # Dataset B collector (HumanCorpusCollector) -- extract-fixtures --dataset b
+│       ├── dataset_c.py                     # Dataset C collector (collect_dataset_c_fixtures) -- extract-fixtures --dataset c
+│       │
+│       ├── dataset_pipeline.py              # analyze-distribution / sample / export
+│       ├── dataset_validator.py             # validate
+│       ├── toy.py                           # toy --dataset {a,b,c}: small real run under toy-dataset/
+│       │
 │       ├── between_group_comparison.py      # Statistical comparison
 │       ├── agent_signal_primitives.py       # Agent detection in commits (formerly agent_detector.py)
 │       ├── tiered_agent_corpus_scanner.py   # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
 │       ├── fixture_extractor.py             # Fixture extraction at commit level
 │       ├── db.py                            # Database schema and helpers
-│       ├── config.py                        # Paths, thresholds, dates -- loads catalogs from config_data/
+│       ├── config.py                        # Thresholds, dates -- loads catalogs from config_data/
 │       ├── config_data/                     # Reference-data catalogs as YAML (extensions, frameworks, ...)
 │       ├── detector.py                      # Fixture detection (tree-sitter)
 │       └── persistent_clone.py              # Repository cloning utilities
@@ -43,25 +41,29 @@ icsme-nier-2026/
 │       ├── conftest.py                      # Pytest fixtures and helpers
 │       ├── test_fixture_extractor_small.py  # Fixture extraction tests
 │       ├── test_db_helpers.py                # Database operation tests
-│       └── collection/                      # Per-phase-script tests, incl.
-│                                             # test_phase_2_extract_human.py,
-│                                             # test_phase_2b_extract_dataset_c.py
+│       └── collection/                      # Unit tests per collection/ module, incl.
+│                                             # test_main_cli.py (CLI dispatch),
+│                                             # test_dataset_pipeline.py, test_repo_resolve.py, test_toy.py
 │
 ├── DATA & DATABASES
-│   ├── data/
-│   │   ├── corpus.db                        # Original FixtureDB (INPUT)
-│   │   └── between-group.db                 # Between-group results (OUTPUT)
+│   ├── datasets/                            # The real, reviewable output -- CSV files, one tree per dataset
+│   │   ├── a/{repos,commits,test-commits,fixtures}/
+│   │   ├── b/{repos,test-commits,fixtures}/
+│   │   └── c/{repos,fixtures}/
 │   │
-│   ├── clones/                              # Git repositories (auto-populated)
-│   │   ├── pytest__pytest/
-│   │   ├── django__django/
-│   │   ├── owner__repo/
-│   │   └── ... (for agent corpus only)
+│   ├── db/                                  # Secondary: per-dataset SQLite DBs
+│   │   ├── a.db, b.db, c.db
+│   │   └── corpus.db                        # Paired-study bootstrap DB (only needed for --tier2)
 │   │
-│   └── output/                              # Collection outputs
-│       ├── human_corpus_summary_*.json      # Human corpus statistics
-│       ├── agent_corpus_summary_*.json      # Agent corpus statistics
-│       └── between_group_comparison_*.json  # Balance tests and comparison
+│   ├── export/                              # Final per-dataset export ZIPs (a.zip, b.zip, c.zip)
+│   │
+│   ├── toy-dataset/                         # Output of `toy --dataset X` -- mirrors datasets/+db/, gitignored
+│   │
+│   ├── github-search-raw/                   # SEART search export (dataset-agnostic input for A/C)
+│   │
+│   ├── clones/                              # Git repositories (auto-populated, ephemeral)
+│   │
+│   └── output/                              # Internal bookkeeping: summaries, sample_{dataset}.json
 │
 ├── DOCUMENTATION
 │   ├── docs/
@@ -124,11 +126,12 @@ icsme-nier-2026/
 ## Key Directories Explained
 
 ### Main CLI (Root)
-- **The numbered `collection/phase_1a...phase_8` scripts** are the authoritative,
-  reproducible entry points — run as `python -m collection.phase_N_name`.
-- **pipeline.py** — a separate, older manual convenience CLI (`human-fixtures`,
-  `agent-fixtures`, `between-group-stats`, `status`, ...) for ad-hoc single-stage
-  runs. Not the authoritative pipeline.
+- **`python -m collection <verb> --dataset {a,b,c}`** is the one, authoritative CLI
+  surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only),
+  `filter-test-commits` (A/B only), `extract-fixtures`, `analyze-distribution`,
+  `sample`, `export`, `validate`, `toy`, `paired`, `status`.
+- There is no longer a separate root-level `pipeline.py` convenience CLI — it was
+  retired once every verb it exposed had an equivalent under `python -m collection`.
 
 ### collection/ Module
 Core implementation with one collector module per dataset:
@@ -137,22 +140,23 @@ Core implementation with one collector module per dataset:
 - Extracts human fixtures from the same agent-enabled repos and 2025+ window as Dataset A
 - Computes control variables at the `AGENT_CORPUS_START_DATE` snapshot
 - Quality filters and statistics tracking
-- Entry point: `phase_2_extract_human.py`
+- Entry point: `python -m collection extract-fixtures --dataset b`
 
 **2. dataset_c.py — Dataset C (cross-repo pre-2021 baseline)**
-- Repos come from `select_dataset_c_repos.py`: every repo created within a fixed
-  window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no sampling
+- Repos come from `select_dataset_c_repos.py` (`discover-repos --dataset c`): every
+  repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to
+  `HUMAN_CORPUS_CUTOFF_DATE`), no sampling
 - Checks out each one at its pinned pre-2021 cutoff commit and extracts
   every fixture from every test file at that snapshot
 - Commit-count/test-file-count quality floor measured from real git history at
   the cutoff commit, not GitHub's live metadata (`count_commits_up_to()`)
-- Entry point: `phase_2b_extract_dataset_c.py`
+- Entry point: `python -m collection extract-fixtures --dataset c`
 
 **3. agent_corpus.py — Dataset A (agent-authored)**
 - Uses the QC'd repo/commit CSVs to find agent-authored commits
 - Tier 1 detection: author metadata + co-authored-by trailers
 - Agent type classification (claude, copilot, cursor, etc.)
-- Entry point: `phase_3_extract_agent.py`
+- Entry point: `python -m collection extract-fixtures --dataset a`
 
 **4. between_group_comparison.py**
 - Chi-square tests for categorical controls (language, domain, star_tier)
@@ -164,28 +168,32 @@ Supporting modules:
 - **fixture_extractor.py** — Fixture extraction at commit level
 - **db.py** — Database schema, helpers, and control variable functions
 - **config.py** — Configuration constants (temporal boundaries, thresholds); loads reference-data catalogs from **config_data/** (see [Configuration Reference](../architecture/configuration.md))
+- **paths.py** — Central path registry for every dataset's `repos`/`commits`/`test-commits`/`fixtures` stage directories, `db/*.db`, `export/*.zip`
 
 ### Data Flow
 
 ```
-corpus.db (input)
+github-search-raw/ (SEART export, dataset-agnostic input for A/C)
     ↓
-Phase 1A-1D: discover agent-enabled repos, scan/verify agent commits
+discover-repos --dataset a   → datasets/a/repos/
+discover-repos --dataset c   → datasets/c/repos/
+discover-repos --dataset b   → datasets/b/repos/ (resolved from Dataset A's repos)
     ↓
-Phase 2: phase_2_extract_human.py           → Dataset B → fixturedb-human.db
-select_dataset_c_repos.py                   → dataset_c_{lang}.csv (repo list, no sampling)
-Phase 2B: phase_2b_extract_dataset_c.py     → Dataset C → fixturedb-human.db
+discover-commits --dataset a [--tier2]      → datasets/a/commits/
     ↓
-Phase 3: phase_3_extract_agent.py           → Dataset A → fixturedb-agent.db
+filter-test-commits --dataset a             → datasets/a/test-commits/
+filter-test-commits --dataset b             → datasets/b/test-commits/
     ↓
-Phase 4-5: distribution analysis + stratified sampling
+extract-fixtures --dataset a   → Dataset A → db/a.db, datasets/a/fixtures/
+extract-fixtures --dataset b   → Dataset B → db/b.db, datasets/b/fixtures/
+extract-fixtures --dataset c   → Dataset C → db/c.db, datasets/c/fixtures/
     ↓
-Phase 6-7: export CSVs + ZIP archives per dataset
+analyze-distribution --dataset X --against Y   (recommend a balanced sample size)
+sample --dataset {a,b,c}                       → output/sample_{dataset}.json
+export --dataset {a,b,c}                       → export/{dataset}.zip
+validate --dataset {a,b,c}                     (each dataset is independently usable)
     ↓
-Phase 8: final validation (each dataset is independently usable)
-    ↓
-Final: fixturedb-human.db (Datasets B + C) and fixturedb-agent.db (Dataset A),
-plus per-dataset CSV/ZIP exports and comparison summary JSON
+Final: db/a.db, db/b.db, db/c.db, plus export/a.zip, export/b.zip, export/c.zip
 ```
 
 ### docs/ Organization
@@ -227,10 +235,10 @@ plus per-dataset CSV/ZIP exports and comparison summary JSON
 
 | File | Purpose | Between-Group? |
 |------|---------|---------|
-| pipeline.py | CLI entrypoint | Yes (3 new commands) |
-| collection/*.py | Core modules | Yes (1,800+ new lines) |
-| data/corpus.db | Original corpus | Input only (read-only) |
-| data/between-group.db | Between-group results | Output (created during collection) |
+| collection/__main__.py | CLI entrypoint | Yes |
+| collection/*.py | Core modules | Yes |
+| db/corpus.db | Paired-study bootstrap DB | Input only (only needed for `--tier2`) |
+| db/{a,b,c}.db | Per-dataset results | Output (created during collection) |
 | conftest.py | Test fixtures | Yes (updated) |
 | requirements.txt | Dependencies | Yes (updated) |
 | docs/INDEX.md | Documentation hub | Yes (updated) |
@@ -241,29 +249,34 @@ plus per-dataset CSV/ZIP exports and comparison summary JSON
 
 ## Data Files Generated
 
-### Phase Outputs
+### Stage Outputs
 
-| Dataset | Phase | Output Files | Format |
+| Dataset | Stage (verb) | Output Files | Format |
 |-------|-------|--------------|--------|
-| B | 2 | phase_2_extraction_stats_*.json | JSON |
-| C | 2B | phase_2b_extraction_stats_*.json | JSON |
-| A | 3 | (repo summary + fixture CSVs under fixtures-from-agents/) | JSON + CSV |
-| — | 4-8 | phase_4/5/6_7/8_*.json | JSON |
+| A | `discover-repos` | `datasets/a/repos/{lang}_repo.csv` | CSV |
+| A | `discover-commits` | `datasets/a/commits/{lang}_commit.csv` | CSV |
+| A/B | `filter-test-commits` | `datasets/{a,b}/test-commits/{lang}_test_commit.csv` | CSV |
+| A/B/C | `extract-fixtures` | `datasets/{a,b,c}/fixtures/{lang}_fixtures.csv` + `db/{a,b,c}.db` | CSV + SQLite |
+| A/B/C | `sample` | `output/sample_{dataset}.json` | JSON |
+| A/B/C | `export` | `export/{dataset}.zip` | ZIP (CSV + docs) |
 
 ### Final Output
 
 ```
-data/fixturedb-human.db      # Datasets B and C (repositories/fixtures/mock_usages)
-data/fixturedb-agent.db      # Dataset A (repositories/fixtures/mock_usages)
+db/a.db, db/b.db, db/c.db    # Per-dataset repositories/fixtures/mock_usages
 
-fixtures-from-agents/        # Dataset A CSV exports
-fixtures-from-humans/        # Dataset B (same-repo/) and Dataset C (cross-repo/) CSV exports
+datasets/a/                  # Dataset A CSV exports (repos, commits, test-commits, fixtures)
+datasets/b/                  # Dataset B CSV exports (repos, test-commits, fixtures)
+datasets/c/                  # Dataset C CSV exports (repos, fixtures)
+
+export/
+├── a.zip                    # Dataset A standalone export
+├── b.zip                    # Dataset B standalone export
+└── c.zip                    # Dataset C standalone export
 
 output/
-├── phase_2_extraction_stats_YYYYMMDD_HHMMSS.json
-├── phase_2b_extraction_stats_YYYYMMDD_HHMMSS.json
-├── phase_4_distribution_analysis_*.json
-└── ... (phases 5-8)
+├── sample_a.json / sample_b.json / sample_c.json
+└── ... (internal bookkeeping, summaries)
 ```
 
 ## Documentation Navigation

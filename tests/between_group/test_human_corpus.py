@@ -19,7 +19,7 @@ from collection.db import (
 from collection.human_corpus import (
     HumanCorpusCollector,
     HumanCorpusStats,
-    _human_fixtures_root,
+    _human_fixtures_dir,
     select_human_corpus_repositories,
 )
 
@@ -453,9 +453,7 @@ def test_validate_quality_filters_returns_tuple(tmp_path):
     assert result[1] is None or isinstance(result[1], str)
 
 
-def test_human_fixtures_root_no_versioned_subfolder_when_tag_empty():
-    """With empty COLLECTION_OUTPUT_TAG, root points directly to fixtures-from-humans."""
-    root = _human_fixtures_root()
-    assert str(root).endswith("fixtures-from-humans")
-    assert (root / "same-repo").exists() or True
-    assert (root / "cross-repo").exists() or True
+def test_human_fixtures_dir_no_versioned_subfolder_when_tag_empty():
+    """With empty COLLECTION_OUTPUT_TAG, dir points directly to datasets/b/fixtures."""
+    root = _human_fixtures_dir("b")
+    assert str(root).endswith(str(Path("datasets") / "b" / "fixtures"))

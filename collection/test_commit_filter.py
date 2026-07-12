@@ -12,6 +12,7 @@ from pathlib import Path
 
 from collection.logging_utils import get_logger
 
+from . import paths
 from .agent_corpus import collect_test_files_for_commit
 from .cli_utils import (
     add_commit_dir_arg,
@@ -40,13 +41,7 @@ HUMAN_TEST_COMMITS_CHECKPOINT = "human_test_commits.checkpoint.json"
 def _load_agent_commit_rows(commit_qc_dir: Path) -> list[dict]:
     rows: list[dict] = []
     commit_dir = Path(commit_qc_dir)
-    csv_paths = sorted(
-        {
-            *commit_dir.glob("*_agent_commit.csv"),
-            *commit_dir.glob("*_agent_commit_qc.csv"),
-        },
-        key=lambda path: path.name,
-    )
+    csv_paths = sorted(commit_dir.glob("*_commit.csv"), key=lambda path: path.name)
     for csv_path in csv_paths:
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             rows.extend(dict(row) for row in csv.DictReader(fh))
@@ -71,12 +66,8 @@ def _load_test_commit_resume_state(
     }
 
     output_dir = Path(output_dir)
-    pattern = (
-        "*_agent_test_commit_qc.csv" if role == "agent" else "*_human_test_commit.csv"
-    )
-    suffix = (
-        "_agent_test_commit_qc.csv" if role == "agent" else "_human_test_commit.csv"
-    )
+    pattern = "*_test_commit.csv" if role == "agent" else "*_human_test_commit.csv"
+    suffix = "_test_commit.csv" if role == "agent" else "_human_test_commit.csv"
     checkpoint_name = (
         AGENT_TEST_COMMITS_CHECKPOINT
         if role == "agent"
@@ -502,7 +493,7 @@ def collect_agent_test_commits(
         )
         for language, language_rows in sorted(test_commit_rows_by_language.items()):
             write_test_commits_csv(
-                language_rows, output_dir / f"{language}_agent_test_commit_qc.csv"
+                language_rows, output_dir / f"{language}_test_commit.csv"
             )
         _save_agent_test_commit_resume_state(output_dir, counts, completed_repos)
 
@@ -583,7 +574,7 @@ def collect_agent_test_commits(
     output_files: dict[str, str] = {}
     total_test_commits = 0
     for language, language_rows in sorted(test_commit_rows_by_language.items()):
-        output_path = output_dir / f"{language}_agent_test_commit_qc.csv"
+        output_path = output_dir / f"{language}_test_commit.csv"
         output_files[language] = str(output_path)
         total_test_commits += len(language_rows)
         logger.info(
@@ -635,8 +626,7 @@ def _process_repo_human_test_commits_pre2021(
 
         test_commit_rows: list[dict] = []
         commits_scanned = 0
-        project_root = Path(__file__).resolve().parents[1]
-        scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
+        scanner = Tier1RepositoryScanner(paths.corpus_db_path())
         commit_roles = scanner.scan_repo_commit_roles(
             repo_path,
             start_date=HUMAN_CORPUS_CUTOFF_DATE,
@@ -698,8 +688,7 @@ def _process_repo_human_test_commits_2025(
 
         test_commit_rows: list[dict] = []
         commits_scanned = 0
-        project_root = Path(__file__).resolve().parents[1]
-        scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
+        scanner = Tier1RepositoryScanner(paths.corpus_db_path())
         commit_roles = scanner.scan_repo_commit_roles(
             repo_path,
             start_date=AGENT_CORPUS_START_DATE,
@@ -755,7 +744,7 @@ def collect_human_test_commits(
     grouped: dict[str, list[dict]] = defaultdict(list)
     language_filter = (language or "").strip().lower() or None
     for csv_path in sorted(
-        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+        Path(repo_qc_dir).glob("*_repo.csv"), key=lambda path: path.name
     ):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             for row in csv.DictReader(fh):
@@ -831,8 +820,7 @@ def _process_repo_agent_test_commits(
 
         test_commit_rows: list[dict] = []
         commits_scanned = 0
-        project_root = Path(__file__).resolve().parents[1]
-        scanner = Tier1RepositoryScanner(project_root / "data" / "corpus.db")
+        scanner = Tier1RepositoryScanner(paths.corpus_db_path())
         commit_roles = scanner.scan_repo_commit_roles(
             repo_path,
             start_date=AGENT_CORPUS_START_DATE,
@@ -877,7 +865,7 @@ def collect_agent_test_commits_from_repos(
     """Filter agent-config repositories to agent-authored commits that touch test files."""
     grouped: dict[str, list[dict]] = defaultdict(list)
     for csv_path in sorted(
-        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
+        Path(repo_qc_dir).glob("*_repo.csv"), key=lambda path: path.name
     ):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             for row in csv.DictReader(fh):
@@ -961,7 +949,7 @@ def collect_agent_test_commits_from_repos(
     output_files: dict[str, str] = {}
     total_test_commits = 0
     for language, language_rows in sorted(test_commit_rows_by_language.items()):
-        output_path = output_dir / f"{language}_agent_test_commit_qc.csv"
+        output_path = output_dir / f"{language}_test_commit.csv"
         write_test_commits_csv(language_rows, output_path)
         output_files[language] = str(output_path)
         total_test_commits += len(language_rows)
@@ -1015,17 +1003,17 @@ def _cli_main() -> None:
     parser.add_argument("--mode", choices=["agent", "human"], default="agent")
     add_commit_dir_arg(
         parser,
-        Path("github-search-agent") / "agent_commits",
-        "Directory containing *_agent_commit.csv files",
+        paths.stage_dir("a", "commits"),
+        "Directory containing *_commit.csv files",
     )
-    add_repo_dir_arg(parser, Path("github-search-agent") / "agent_repositories")
+    add_repo_dir_arg(parser, paths.stage_dir("a", "repos"))
     add_raw_search_dir_arg(
         parser,
         "Directory containing github-search-raw *.csv.gz repository search files",
     )
     add_output_dir_arg(
         parser,
-        Path("github-search-agent") / "test-commits",
+        paths.stage_dir("a", "test-commits"),
         "Output directory for filtered test commits",
     )
     add_language_arg(
@@ -1037,7 +1025,7 @@ def _cli_main() -> None:
     args = parser.parse_args()
 
     repo_qc_files = (
-        list(Path(args.repo_qc_dir).glob("*_agent_repo.csv"))
+        list(Path(args.repo_qc_dir).glob("*_repo.csv"))
         if Path(args.repo_qc_dir).exists()
         else []
     )

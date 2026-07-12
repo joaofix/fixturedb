@@ -4,12 +4,13 @@ Builds Dataset B: human-authored fixtures, within-repo matched control.
 Collects human-generated fixtures from the same agent-enabled repositories
 used for the agent corpus. Commits are scanned in the same temporal window as
 the agent dataset, and only non-AI commits that fully add a fixture are kept.
-Entry point: phase_2_extract_human.py. See agent_corpus.py (Dataset A) and
-dataset_c.py (Dataset C, the cross-repo baseline) for the other two datasets.
+Entry point: `python -m collection extract-fixtures --dataset b`. See
+agent_corpus.py (Dataset A) and dataset_c.py (Dataset C, the cross-repo
+baseline) for the other two datasets.
 
 `load_dataset_c_repos()` below is a shared CSV-loading helper used by
-Dataset C's entry point (phase_2b_extract_dataset_c.py) — it lives here for
-historical reasons but does not itself build Dataset B.
+Dataset C's entry point (`python -m collection extract-fixtures --dataset c`)
+— it lives here for historical reasons but does not itself build Dataset B.
 """
 
 import argparse
@@ -27,6 +28,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydriller import Repository
 
+from . import paths
 from .agent_corpus import clone_repo_for_commit_scan
 from .cli_utils import (
     add_language_arg,
@@ -40,7 +42,6 @@ from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
     COLLECTION_OUTPUT_TAG,
-    DATA_DIR,
     EXTRACT_WORKERS,
     LANGUAGE_CONFIGS,
 )
@@ -78,9 +79,9 @@ logger = get_logger(__name__)
 def load_dataset_c_repos(csv_path: Path) -> list[dict]:
     """Load repos from a Dataset C CSV file.
 
-    Works with both the combined ``dataset_c_sample.csv`` and per-language
-    ``dataset_c_{lang}.csv`` files. Returns a list of dicts with keys:
-    *full_name*, *language*, *clone_url*, *github_id*.
+    Works with both the combined ``all.csv`` and per-language
+    ``{lang}_repo.csv`` files under datasets/c/repos/. Returns a list of
+    dicts with keys: *full_name*, *language*, *clone_url*, *github_id*.
 
     github_id defaults to 0 when the column is absent (older CSVs written
     before select_dataset_c_repos.py carried it through) -- callers must
@@ -113,35 +114,32 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
     return repos
 
 
-def _human_fixtures_root(override: Path | None = None) -> Path:
+def _human_fixtures_dir(dataset: str, override: Path | None = None) -> Path:
+    """Fixture output dir for `dataset` ('b' or 'c'), default datasets/{dataset}/fixtures."""
     if override is not None:
         return override
-    return (
-        Path(__file__).resolve().parents[1]
-        / "fixtures-from-humans"
-        / COLLECTION_OUTPUT_TAG
-    )
+    return paths.stage_dir(dataset, "fixtures") / COLLECTION_OUTPUT_TAG
 
 
 def _human_fixture_csv_path(
-    language: str, collection_kind: str, override: Path | None = None
+    language: str, dataset: str, override: Path | None = None
 ) -> Path:
-    subdir = "same-repo" if collection_kind == "within" else "cross-repo"
-    return _human_fixtures_root(override) / subdir / f"{language}_human_fixtures.csv"
+    return _human_fixtures_dir(dataset, override) / f"{language}_fixtures.csv"
 
 
-def _warn_stale_human_fixture_csvs(fixtures_output_dir: Path | None = None) -> None:
+def _warn_stale_human_fixture_csvs(
+    dataset: str, fixtures_output_dir: Path | None = None
+) -> None:
     """Log a warning if stale human fixture CSVs exist from a previous run."""
-    root = _human_fixtures_root(fixtures_output_dir)
-    same_repo_dir = root / "same-repo"
-    if same_repo_dir.exists() and same_repo_dir.is_dir():
-        existing = list(same_repo_dir.glob("*_human_fixtures.csv"))
+    root = _human_fixtures_dir(dataset, fixtures_output_dir)
+    if root.exists() and root.is_dir():
+        existing = list(root.glob("*_fixtures.csv"))
         if existing:
             logger.warning(
                 "[Human Corpus] Found %d existing human fixture CSV(s) in %s "
                 "from a previous run. These will be overwritten with fresh data.",
                 len(existing),
-                same_repo_dir,
+                root,
             )
             for p in sorted(existing):
                 logger.warning(
@@ -168,11 +166,12 @@ def select_human_corpus_repositories(
     Queries the repo-QC CSV exports for repositories with agent config files.
 
     Args:
-        repo_qc_dir: Directory containing *_agent_repo.csv files
+        repo_qc_dir: Directory containing already-resolved *_repo.csv files
+            (default: datasets/b/repos/, see collection.repo_resolve)
         repos_per_language: Optional per-language cap. None means include all rows.
         language: Optional filter to single language
-        require_fixture_repo_list: If True, require repositories to come only from
-            *_agent_fixture_repos.csv files and fail otherwise.
+        require_fixture_repo_list: If True, raise if repo_qc_dir has no *_repo.csv
+            files rather than silently returning an empty selection.
 
     Returns:
         List of repository dicts with required metadata
@@ -257,138 +256,19 @@ def select_human_corpus_repositories(
 
         return selected
 
-    # Fallback: read repo-QC CSVs
-    grouped_csv: dict[str, list[dict]] = {}
-    # First preference: per-language agent fixture repo lists produced by
-    # the agent extraction step. These files list repositories that actually
-    # yielded agent fixtures and should be used as the canonical selection.
-    project_root = Path(__file__).resolve().parents[1]
-    # Prefer fixture lists in the provided repo_qc_dir (backwards compatible
-    # with earlier behavior), then fall back to the project-level fixtures
-    # directory used by centralized runs.
-    # Prefer fixture lists in the provided repo_qc_dir (backwards compatible
-    # with earlier behavior), but also fall back to the project-level
-    # `fixtures-from-agents` so shared fixture lists remain discoverable even
-    # when the caller points repo_qc_dir at a different CSV directory.
-    candidate_dirs = []
-    try:
-        local_fixture_dir = Path(repo_qc_dir) / "fixtures-from-agents"
-        if local_fixture_dir.exists() and local_fixture_dir.is_dir():
-            candidate_dirs.append(local_fixture_dir)
-        elif require_fixture_repo_list:
-            # When strict mode is on and the repo_qc_dir doesn't have its own
-            # fixtures-from-agents/ subdirectory, fall back to the project-level
-            # fixture lists (fixtures-from-agents/repos/).
-            project_fixture_dir = project_root / "fixtures-from-agents"
-            if project_fixture_dir.exists() and project_fixture_dir.is_dir():
-                logger.info(
-                    "[Human Corpus] No local fixture-repo lists at %s; "
-                    "falling back to project-level %s",
-                    local_fixture_dir,
-                    project_fixture_dir,
-                )
-                candidate_dirs.append(project_fixture_dir)
-    except Exception:
-        # If resolution fails for any reason, do not add the project-level fallback
-        pass
-    for fixture_list_dir in candidate_dirs:
-        if fixture_list_dir.exists() and fixture_list_dir.is_dir():
-            for search_dir in [fixture_list_dir, fixture_list_dir / "repos"]:
-                if not search_dir.is_dir():
-                    continue
-                for fpath in sorted(search_dir.glob("*_agent_fixture_repos.csv")):
-                    with fpath.open("r", encoding="utf-8", newline="") as fh:
-                        reader = csv.DictReader(fh)
-                        for row in reader:
-                            repo_name = (
-                                row.get("repo_name") or row.get("full_name") or ""
-                            ).strip()
-                            lang = (row.get("language") or "unknown").strip().lower()
-                            if not repo_name or "/" not in repo_name:
-                                continue
-                            if language and lang != language:
-                                continue
-                            repo_row = build_repo_row(
-                                repo_name,
-                                lang,
-                            )
-                            grouped_csv.setdefault(lang, [])
-                            if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
-                                grouped_csv[lang].append(repo_row)
-
-    # If we found fixture-list repos, return those (respecting per-language cap)
-    if grouped_csv:
-        for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
-            if not lang:
-                continue
-            lang_repos = grouped_csv.get(lang, [])
-            selected.extend(
-                lang_repos
-                if repos_per_language is None
-                else lang_repos[:repos_per_language]
-            )
-        return selected
-
-    if require_fixture_repo_list:
+    # `repo_qc_dir` is a directory of already-resolved `*_repo.csv` files
+    # (default: datasets/b/repos/, written by `discover-repos --dataset b` /
+    # collection.repo_resolve.resolve_dataset_b_repos()). Resolution across
+    # Dataset A's several possible source directories happens once, upstream,
+    # in that step -- this function no longer guesses between them.
+    if require_fixture_repo_list and not any(Path(repo_qc_dir).glob("*_repo.csv")):
         raise ValueError(
-            "Strict within-mode requires *_agent_fixture_repos.csv under "
-            f"{Path(repo_qc_dir) / 'fixtures-from-agents'}"
+            f"No *_repo.csv files found under {repo_qc_dir}; run "
+            "`python -m collection discover-repos --dataset b` first"
         )
-    # New fallback: accept per-language human test-commit CSVs produced earlier
-    # e.g., python_human_test_commit.csv. These contain `repo_name` and
-    # `language` columns and can be used to select repositories directly.
-    # Increase CSV field size limit to handle very large `test_file_paths` fields
-    try:
-        csv.field_size_limit(10**7)
-    except Exception:
-        pass
 
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_human_test_commit.csv")):
-        with csv_path.open("r", encoding="utf-8", newline="") as fh:
-            reader = csv.DictReader(fh)
-            for row in reader:
-                repo_name = (row.get("repo_name") or row.get("full_name") or "").strip()
-                lang = (row.get("language") or "unknown").strip().lower()
-                if not repo_name or "/" not in repo_name:
-                    continue
-                if language and lang != language:
-                    continue
-                repo_row = build_repo_row(
-                    repo_name,
-                    lang,
-                )
-                grouped_csv.setdefault(lang, [])
-                if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
-                    grouped_csv[lang].append(repo_row)
-
-    # Prefer agent test-commit CSVs (if present) which indicate positive
-    # detection of agent activity in test files. If such files exist under
-    # the `tests_commits` subdirectory of `repo_qc_dir`, use those repo
-    # names as the canonical selection. Otherwise fall back to repo QC CSVs.
-    # CSVs as before.
-    tests_commits_dir = Path(repo_qc_dir) / "tests_commits"
-
-    agent_test_repos: set[tuple[str, str]] = set()
-    if tests_commits_dir.exists() and tests_commits_dir.is_dir():
-        for tpath in sorted(tests_commits_dir.glob("*_agent_test_commit.csv")):
-            with tpath.open("r", encoding="utf-8", newline="") as fh:
-                reader = csv.DictReader(fh)
-                for row in reader:
-                    repo_name = (
-                        row.get("repo_name") or row.get("full_name") or ""
-                    ).strip()
-                    lang = (row.get("language") or "unknown").strip().lower()
-                    if not repo_name or "/" not in repo_name:
-                        continue
-                    if language and lang != language:
-                        continue
-                    agent_test_repos.add((repo_name, lang))
-
-    repo_csv_paths = sorted(
-        Path(repo_qc_dir).glob("*_agent_repo.csv"), key=lambda path: path.name
-    )
-
-    for csv_path in repo_csv_paths:
+    grouped_csv: dict[str, list[dict]] = {}
+    for csv_path in sorted(Path(repo_qc_dir).glob("*_repo.csv"), key=lambda p: p.name):
         with csv_path.open("r", encoding="utf-8", newline="") as fh:
             reader = csv.DictReader(fh)
             for row in reader:
@@ -403,10 +283,6 @@ def select_human_corpus_repositories(
                 if not repo_name or "/" not in repo_name:
                     continue
                 if language and lang != language:
-                    continue
-
-                # If agent test-commit selection exists, restrict to that set
-                if agent_test_repos and (repo_name, lang) not in agent_test_repos:
                     continue
 
                 repo_row = build_repo_row(
@@ -438,7 +314,7 @@ class HumanCorpusCollector:
 
     def __init__(
         self,
-        corpus_db_path: Path,
+        corpus_db_path: Path | None = None,
         clones_dir: Path = CLONES_DIR,
         output_db: Path | None = None,
         repo_qc_dir: Path | None = None,
@@ -449,27 +325,27 @@ class HumanCorpusCollector:
         Initialize human corpus collector.
 
         Args:
-            corpus_db_path: Path to source corpus.db (kept for metadata lookups)
+            corpus_db_path: Path to source corpus.db (default: db/corpus.db).
+                Threaded through to Tier1RepositoryScanner/AgentFixtureExtractor,
+                but stored and never read by either -- kept for API compatibility,
+                not because anything here actually opens that DB.
             clones_dir: Directory for temporary clones
-            output_db: Path to output database (default: data/between-group.db)
-            repo_qc_dir: Directory containing *_agent_repo.csv files
+            output_db: Path to output database (default: db/b.db)
+            repo_qc_dir: Directory containing *_repo.csv files (default: datasets/b/repos)
             test_commits_csv: Directory containing test-commit CSVs
             fixtures_output_dir: Override for fixture CSV output directory
         """
-        self.corpus_db_path = Path(corpus_db_path)
-        self.clones_dir = Path(clones_dir)
-        self.output_db = (
-            Path(output_db) if output_db else (DATA_DIR / "between-group.db")
+        self.corpus_db_path = (
+            Path(corpus_db_path) if corpus_db_path else paths.corpus_db_path()
         )
+        self.clones_dir = Path(clones_dir)
+        self.output_db = Path(output_db) if output_db else paths.db_path("b")
         self.test_commits_csv = Path(test_commits_csv) if test_commits_csv else None
         self.fixtures_output_dir = (
             Path(fixtures_output_dir) if fixtures_output_dir else None
         )
-        project_root = Path(__file__).resolve().parents[1]
         self.repo_qc_dir = (
-            Path(repo_qc_dir)
-            if repo_qc_dir
-            else (project_root / "github-search-agent" / "agent_repositories")
+            Path(repo_qc_dir) if repo_qc_dir else paths.stage_dir("b", "repos")
         )
 
     def _validate_quality_filters(
@@ -728,7 +604,7 @@ class HumanCorpusCollector:
         )
 
         # Warn if stale fixture CSVs exist from a previous run
-        _warn_stale_human_fixture_csvs(self.fixtures_output_dir)
+        _warn_stale_human_fixture_csvs("b", self.fixtures_output_dir)
 
         within_all_step = "human_within_complete:all"
 
@@ -1018,7 +894,7 @@ class HumanCorpusCollector:
                 f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
             )
             fixtures_out_path = _human_fixture_csv_path(
-                current_lang, "within", self.fixtures_output_dir
+                current_lang, "b", self.fixtures_output_dir
             )
             for repo_data, fixtures_list in lang_all_fixtures:
                 fixture_count = persist_repository_and_fixtures(
@@ -1086,13 +962,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--corpus-db",
         type=Path,
-        default=DATA_DIR / "corpus.db",
+        default=paths.corpus_db_path(),
         help="Path to source corpus.db",
     )
     add_output_db_arg(
         parser,
         None,
-        "Path to output between-group.db (default: data/between-group.db)",
+        "Path to output database (default: db/b.db)",
     )
     add_repos_per_language_arg(parser, None)
     add_language_arg(parser, LANGUAGE_CONFIGS.keys())

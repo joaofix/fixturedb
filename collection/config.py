@@ -30,8 +30,11 @@ load_dotenv()
 
 ROOT_DIR = Path(__file__).parent.parent
 CLONES_DIR = ROOT_DIR / "clones"  # temporary, deleted after extraction
-DATA_DIR = ROOT_DIR / "data"
-DB_PATH = DATA_DIR / "corpus.db"
+# Secondary/bootstrap SQLite databases (per-dataset DBs live in db/{a,b,c}.db,
+# see collection/paths.py -- this is only corpus.db and the older
+# paired-study/between-group bootstrap DBs).
+DB_DIR = ROOT_DIR / "db"
+DB_PATH = DB_DIR / "corpus.db"
 
 # ---------------------------------------------------------------------------
 # Collection run label
@@ -74,7 +77,7 @@ MIN_TEST_FILES = 5
 # Target repositories per language (NEW: between-group design)
 TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP = 500
 
-for _d in (CLONES_DIR, DATA_DIR, LOGS_DIR):
+for _d in (CLONES_DIR, DB_DIR, LOGS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
@@ -84,46 +87,6 @@ for _d in (CLONES_DIR, DATA_DIR, LOGS_DIR):
 # Optional: GitHub token for API rate limit relief during cloning pre-checks
 # (not required for core functionality; pre-checks fail gracefully without it)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # set in .env
-
-# ---------------------------------------------------------------------------
-# OpenRouter / LLM classification
-# ---------------------------------------------------------------------------
-
-OPENROUTER_KEY = os.getenv("OPENROUTER_KEY", "")
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-OPENROUTER_MODEL = "openai/gpt-4o-mini"
-
-# Ollama (local, university server)
-OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "qwen3:14b"
-
-# Max concurrent LLM API calls (OpenRouter free-tier allows moderate parallelism)
-# GitHub API calls are rate-limited separately via a token-bucket in classify_repos.py
-# (4,500 req/hr target, staying under the 5,000/hr authenticated limit).
-# With the rate limiter, workers > GitHub req/s just queue up safely.
-CLASSIFY_WORKERS = 10
-
-# Input directory for repository domain classification (raw source)
-CLASSIFY_INPUT_DIR = ROOT_DIR / "github-search-raw"
-
-# ---------------------------------------------------------------------------
-# Classification Output Configuration
-# ---------------------------------------------------------------------------
-
-# Base directory for classified repository outputs (model-specific subfolders)
-CLASSIFY_CLASSIFIED_DIR = ROOT_DIR / "github-search-classified"
-
-# Model identifier for subdirectory naming (derived from OPENROUTER_MODEL/OLLAMA_MODEL)
-# For OpenRouter: "openai/gpt-4o-mini" → "openai_gpt-4o-mini"
-# For Ollama: "qwen3:14b" → "qwen3-14b"
-# Override via env var to control which model's classifications are used.
-CLASSIFY_MODEL_NAME = os.getenv("CLASSIFY_MODEL_NAME", "openai_gpt-4o-mini")
-
-# Full path to classified CSVs for the active model
-CLASSIFY_OUTPUT_DIR = CLASSIFY_CLASSIFIED_DIR / CLASSIFY_MODEL_NAME
-
-# Classification model in use (for display/logging)
-CLASSIFICATION_MODEL = os.getenv("CLASSIFICATION_MODEL", OPENROUTER_MODEL)
 
 # Dataset C sampling seed
 DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))

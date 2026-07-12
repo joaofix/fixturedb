@@ -1,18 +1,21 @@
 # Reproducing the Study
 
-The FixtureDB datasets are reproducible via the numbered phase-script pipeline
-in `collection/`, run from agent-enabled repositories discovered through
-GitHub search.
+The FixtureDB datasets are reproducible via the unified `python -m collection`
+CLI, run from agent-enabled repositories discovered through GitHub search.
+Every verb takes `--dataset {a,b,c}` and resolves its default input/output
+directories through `collection/paths.py` — CSVs under `datasets/{a,b,c}/`
+are the real, reviewable output; the per-dataset SQLite DBs under `db/` are
+secondary/derived.
 
 ## Overview
 
 The pipeline builds three datasets from agent-enabled repositories:
 
-| Dataset | What it is | Entry script | Collector / function |
-|---|---|---|---|
-| A | Agent-authored fixtures | `collection/phase_3_extract_agent.py` | `agent_corpus.AgentCorpusCollector` |
-| B | Human-authored fixtures, within-repo matched control (same repos and 2025+ window as Dataset A) | `collection/phase_2_extract_human.py` | `human_corpus.HumanCorpusCollector.run()` |
-| C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo set) | `collection/phase_2b_extract_dataset_c.py` | `dataset_c.collect_dataset_c_fixtures()` |
+| Dataset | What it is | `extract-fixtures` collector |
+|---|---|---|
+| A | Agent-authored fixtures | `agent_corpus.AgentCorpusCollector` |
+| B | Human-authored fixtures, within-repo matched control (same repos and 2025+ window as Dataset A) | `human_corpus.HumanCorpusCollector.run()` |
+| C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo set) | `dataset_c.collect_dataset_c_fixtures()` |
 
 **Key design principles:**
 - Datasets A and B come from the same agent-enabled repos, scanned in the same temporal window (post-2025), giving paired within-repo observations.
@@ -21,48 +24,62 @@ The pipeline builds three datasets from agent-enabled repositories:
 
 ## Collection Pipeline
 
-Run each phase as a module from the project root:
+Run each verb from the project root, one dataset at a time:
 
 ```bash
-# Phase 1A-1D: discover agent-enabled repos, scan/verify agent commits, assess yield
-python -m collection.phase_1a_scan_agent_commits
-python -m collection.phase_1b_verify_agent_commits
-python -m collection.phase_1c_assess_tier1_yield
-python -m collection.phase_1d_discover_matched_repos   # only if Tier 1 yield is insufficient
+# Dataset A: discover repos, scan for agent commits, filter to test-touching commits, extract
+python -m collection discover-repos      --dataset a
+python -m collection discover-commits    --dataset a [--tier2]   # --tier2 only if Tier 1 yield is insufficient
+python -m collection filter-test-commits --dataset a
+python -m collection extract-fixtures    --dataset a
 
-# Phase 2 / 2B: Dataset B (within-repo) and Dataset C (cross-repo baseline)
-python -m collection.phase_2_extract_human --repo-dir github-search-agent/agent_repositories
-python -m collection.select_dataset_c_repos   # writes dataset_c_{lang}.csv, no sampling
-python -m collection.phase_2b_extract_dataset_c
+# Dataset B: resolve repo list from Dataset A, filter test commits, extract
+python -m collection discover-repos      --dataset b
+python -m collection filter-test-commits --dataset b
+python -m collection extract-fixtures    --dataset b
 
-# Phase 3: Dataset A (agent-authored), same repos as Dataset B
-python -m collection.phase_3_extract_agent --repo-dir github-search-agent/agent_repositories
+# Dataset C: select repos in the fixed creation-date window, extract at the pinned cutoff commit
+python -m collection discover-repos   --dataset c
+python -m collection extract-fixtures --dataset c
 
-# Phase 4-8: analysis, sampling, export, validation
-python -m collection.phase_4_analyze_distribution
-python -m collection.phase_5_stratified_sample
-python -m collection.phase_6_7_export_and_document
-python -m collection.phase_8_final_validation
+# Cross-cutting: balance, sample, export, validate -- one dataset at a time
+python -m collection analyze-distribution --dataset a --against b
+python -m collection sample    --dataset a --target-count N
+python -m collection sample    --dataset b --target-count N
+python -m collection sample    --dataset c
+python -m collection export    --dataset a
+python -m collection export    --dataset b
+python -m collection export    --dataset c
+python -m collection validate  --dataset a
+python -m collection validate  --dataset b
+python -m collection validate  --dataset c
 ```
 
-Each phase script logs its own "Next steps" pointing at what to run next.
-`--help` on any phase script lists its full argument set (`--language`,
-`--repos-per-language`, `--workers`, `--output-db`, etc.).
+`--help` on any verb lists its full argument set (`--language`,
+`--repos-per-language`, `--workers`, `--output-db`, etc.). Before a full
+collection run, use `python -m collection toy --dataset {a,b,c} --repos N`
+to smoke-test the same code path end-to-end at small scale, entirely under
+`toy-dataset/` (never touches `datasets/`/`db/`).
 
 ### Output
 
 **Databases:**
-- `data/fixturedb-human.db` — Dataset B (`same-repo`) and Dataset C (`cross-repo`) fixtures
-- `data/fixturedb-agent.db` — Dataset A fixtures
+- `db/a.db` — Dataset A fixtures
+- `db/b.db` — Dataset B fixtures
+- `db/c.db` — Dataset C fixtures
 - Schema: `repositories`, `test_files`, `fixtures`, `mock_usages` (see [Database Schema](../architecture/database-schema.md))
 
-**CSV exports:**
-- `fixtures-from-agents/` — Dataset A, plus the `dataset_c_*.csv` repo lists (from `select_dataset_c_repos.py`) used by Phase 2B
-- `fixtures-from-humans/same-repo/` — Dataset B
-- `fixtures-from-humans/cross-repo/` — Dataset C
+**CSV exports (the primary, reviewable output):**
+- `datasets/a/{repos,commits,test-commits,fixtures}/`
+- `datasets/b/{repos,test-commits,fixtures}/`
+- `datasets/c/{repos,fixtures}/`
+
+**Final export ZIPs:**
+- `export/a.zip`, `export/b.zip`, `export/c.zip` — one standalone, independently-usable archive per dataset
 
 **Statistics:**
-- `output/phase_2_extraction_stats_*.json`, `output/phase_2b_extraction_stats_*.json`, `output/phase_4_distribution_analysis_*.json`, etc. — one JSON summary per phase run
+- `output/sample_{a,b,c}.json` — per-dataset stratified-sampling results
+- `output/*_corpus_summary_*.json` — extraction run summaries
 
 ## Reproducing from a Frozen Corpus
 
@@ -70,7 +87,7 @@ To ensure reproducibility across runs, work from a frozen `corpus.db`:
 
 ```bash
 # Verify corpus.db integrity
-sqlite3 data/corpus.db "PRAGMA integrity_check;"
+sqlite3 db/corpus.db "PRAGMA integrity_check;"
 
 # Verify clones are available
 ls clones/ | wc -l
@@ -88,14 +105,15 @@ The pipeline is deterministic given:
 ### Check Database Schema
 
 ```bash
-sqlite3 data/fixturedb-agent.db ".tables"
-sqlite3 data/fixturedb-agent.db ".schema fixtures"
+sqlite3 db/a.db ".tables"
+sqlite3 db/a.db ".schema fixtures"
 
 # Count Dataset A fixtures
-sqlite3 data/fixturedb-agent.db "SELECT COUNT(*) FROM fixtures;"
+sqlite3 db/a.db "SELECT COUNT(*) FROM fixtures;"
 
-# Count Dataset B vs Dataset C fixtures (commit_kind distinguishes them)
-sqlite3 data/fixturedb-human.db "SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;"
+# Count Dataset B fixtures and Dataset C fixtures separately (each has its own DB)
+sqlite3 db/b.db "SELECT COUNT(*) FROM fixtures;"
+sqlite3 db/c.db "SELECT COUNT(*) FROM fixtures;"
 ```
 
 ### Validate Temporal Separation
@@ -103,8 +121,8 @@ sqlite3 data/fixturedb-human.db "SELECT commit_kind, COUNT(*) FROM fixtures GROU
 ```python
 import sqlite3
 
-conn = sqlite3.connect("data/fixturedb-human.db")
-cur = conn.execute("SELECT commit_date FROM fixtures WHERE commit_kind = 'human' ORDER BY commit_date DESC LIMIT 1")
+conn = sqlite3.connect("db/c.db")
+cur = conn.execute("SELECT commit_date FROM fixtures ORDER BY commit_date DESC LIMIT 1")
 print("Most recent Dataset C fixture commit date:", cur.fetchone())
 ```
 
@@ -112,22 +130,22 @@ print("Most recent Dataset C fixture commit date:", cur.fetchone())
 
 ### GitHub API Rate Limiting
 
-The phase scripts read from pre-computed QC CSVs and generally don't need a
+Most verbs read from pre-computed QC CSVs and generally don't need a
 GitHub token. If a step you're running does hit rate limits, set
 `GITHUB_TOKEN` in the environment before running it.
 
 ### Large Database Performance
 
 ```bash
-sqlite3 data/fixturedb-human.db "VACUUM;"
-sqlite3 data/fixturedb-human.db "ANALYZE;"
+sqlite3 db/b.db "VACUUM;"
+sqlite3 db/b.db "ANALYZE;"
 ```
 
 ### Verify Database Integrity
 
 ```bash
-sqlite3 data/fixturedb-human.db "PRAGMA integrity_check;"
-sqlite3 data/fixturedb-agent.db "PRAGMA integrity_check;"
+sqlite3 db/b.db "PRAGMA integrity_check;"
+sqlite3 db/a.db "PRAGMA integrity_check;"
 ```
 
 ## Determinism & Reproducibility Guarantees
@@ -145,7 +163,7 @@ sqlite3 data/fixturedb-agent.db "PRAGMA integrity_check;"
 - **Temporal boundaries**: Fixed via `AGENT_CORPUS_START_DATE` / `HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`
 - **Clone freshness**: Depends on git history at time of collection; Dataset C pins an explicit cutoff commit SHA to avoid this issue
 
-**Guarantee**: If `data/corpus.db`, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
+**Guarantee**: If `db/corpus.db`, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
 
 ## See Also
 

@@ -12,7 +12,7 @@ from pathlib import Path
 from collection.logging_utils import get_logger
 
 from .cli_utils import add_language_arg, add_repos_per_language_arg
-from .config import CLONES_DIR, DATA_DIR, HUMAN_CORPUS_CUTOFF_DATE, LANGUAGE_CONFIGS
+from .config import CLONES_DIR, DB_DIR, HUMAN_CORPUS_CUTOFF_DATE, LANGUAGE_CONFIGS
 from .db import (
     classify_domain,
     compute_repo_age_years,
@@ -104,7 +104,7 @@ class PairedStudyCollector:
         self.corpus_db_path = Path(corpus_db_path)
         self.clones_dir = Path(clones_dir)
         self.output_db = (
-            Path(output_db) if output_db else (DATA_DIR / "paired-study.db")
+            Path(output_db) if output_db else (DB_DIR / "paired-study.db")
         )
         self.scanner = Tier1RepositoryScanner(corpus_db_path=self.corpus_db_path)
 
@@ -542,7 +542,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     collector = PairedStudyCollector(
-        corpus_db_path=DATA_DIR / "corpus.db", clones_dir=CLONES_DIR
+        corpus_db_path=DB_DIR / "corpus.db", clones_dir=CLONES_DIR
     )
     stats, summary_path = collector.run(
         repos_per_language=args.repos_per_language,

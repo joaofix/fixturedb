@@ -4,11 +4,11 @@
 Replaces sample_proportional_repos.py's role. Filters github-search-raw/
 to repos created between DATASET_C_MIN_CREATED_DATE and
 HUMAN_CORPUS_CUTOFF_DATE and writes every qualifying repo straight to
-dataset_c_{lang}.csv -- no domain classification, no stratification, no
-per-language cap. The date window itself is what bounds fixture-age risk
-and candidate volume; a proportional sample on top of it is no longer
-needed. See internal-docs/methodology-improvements/dataset-c-repo-selection.md
-for why.
+datasets/c/repos/{lang}_repo.csv (plus a combined all.csv) -- no domain
+classification, no stratification, no per-language cap. The date window
+itself is what bounds fixture-age risk and candidate volume; a proportional
+sample on top of it is no longer needed. See
+internal-docs/methodology-improvements/dataset-c-repo-selection.md for why.
 
 The actual repo quality floor (commit count, test file count) is enforced
 later in dataset_c.py, measured from each repo's real git history as of
@@ -17,7 +17,7 @@ today's popularity, not the repo's state at the time. See that module's
 _process_repo() docstring.
 
 Usage:
-    python -m collection.select_dataset_c_repos
+    python -m collection discover-repos --dataset c
 """
 
 from __future__ import annotations
@@ -28,24 +28,20 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from .config import (
-    CLASSIFY_INPUT_DIR,
-    DATASET_C_MIN_CREATED_DATE,
-    HUMAN_CORPUS_CUTOFF_DATE,
-    ROOT_DIR,
-)
+from . import paths
+from .config import DATASET_C_MIN_CREATED_DATE, HUMAN_CORPUS_CUTOFF_DATE
 from .csv_adapter import get_adapter
 from .logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
 
-OUTPUT_DIR = ROOT_DIR / "fixtures-from-agents"
+OUTPUT_DIR = paths.stage_dir("c", "repos")
 
 _OUTPUT_FIELDNAMES = ["repo_name", "language", "clone_url", "github_id"]
 
 
 def select_repos(
-    raw_dir: Path = CLASSIFY_INPUT_DIR,
+    raw_dir: Path = paths.RAW_SEARCH_DIR,
     min_created: str = DATASET_C_MIN_CREATED_DATE,
     cutoff_date: str = HUMAN_CORPUS_CUTOFF_DATE,
 ) -> list[dict]:
@@ -102,7 +98,8 @@ def select_repos(
 
 
 def write_per_language_files(selected: list[dict], output_dir: Path) -> dict[str, int]:
-    """Write one CSV per language in output_dir, plus a combined file.
+    """Write one CSV per language in output_dir (`{lang}_repo.csv`), plus a
+    combined file (`all.csv`).
 
     Returns a dict of {language: row_count}.
     """
@@ -114,14 +111,12 @@ def write_per_language_files(selected: list[dict], output_dir: Path) -> dict[str
     adapter = get_adapter()
     counts: dict[str, int] = {}
     for lang in sorted(by_lang):
-        path = output_dir / f"dataset_c_{lang}.csv"
+        path = output_dir / f"{lang}_repo.csv"
         adapter.write_dicts(path, by_lang[lang], _OUTPUT_FIELDNAMES)
         counts[lang] = len(by_lang[lang])
         logger.info("  %s: %d repos -> %s", lang, counts[lang], path.name)
 
-    adapter.write_dicts(
-        output_dir / "dataset_c_sample.csv", selected, _OUTPUT_FIELDNAMES
-    )
+    adapter.write_dicts(output_dir / "all.csv", selected, _OUTPUT_FIELDNAMES)
 
     return counts
 

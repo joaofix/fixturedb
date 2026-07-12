@@ -33,7 +33,7 @@ from .qualitative.p08_fixture_categories import plot_fixture_categories
 # ---------------------------------------------------------------------------
 
 ROOT = Path(__file__).parent.parent
-DB_PATH = ROOT / "data" / "corpus.db"
+DB_PATH = ROOT / "db" / "corpus.db"
 DEFAULT_OUT = ROOT / "output" / "eda" / "qualitative"
 
 

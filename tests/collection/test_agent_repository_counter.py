@@ -53,9 +53,7 @@ def test_read_repo_list_can_filter_multiple_languages(monkeypatch, tmp_path):
         ],
     )
 
-    monkeypatch.setattr(qc, "GITHUB_SEARCH_RAW_DIR", raw_dir)
-
-    repos = qc.read_repo_list(languages=["java", "javascript"])
+    repos = qc.read_repo_list(languages=["java", "javascript"], raw_dir=raw_dir)
 
     assert [repo["full_name"] for repo in repos] == [
         "owner/java-repo",

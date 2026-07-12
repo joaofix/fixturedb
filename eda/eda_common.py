@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 # ---------------------------------------------------------------------------
 
 ROOT = Path(__file__).parent.parent  # Up one level from eda/ to workspace root
-DB_PATH = ROOT / "data" / "corpus.db"
+DB_PATH = ROOT / "db" / "corpus.db"
 DEFAULT_OUT = ROOT / "output" / "eda"
 
 # ---------------------------------------------------------------------------
