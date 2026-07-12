@@ -323,6 +323,13 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "qc_reason": qc_reason,
             "matched_config_file": matched_config_file or "",
             "processed_at": datetime.now(timezone.utc).isoformat(),
+            # 1 = discovered directly from github-search-raw (this scan); 2 =
+            # discovered via Tier-2 SEART matching (see __main__.py's
+            # _merge_tier2_repos_into_csv). Always present, both writers use
+            # the same column set/order, so append_dicts()'s "only write the
+            # header if the file doesn't already exist" behavior can't leave
+            # a subset of rows misaligned with the header.
+            "discovery_tier": 1,
         }
         return row
     except Exception as e:

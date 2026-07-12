@@ -1,7 +1,7 @@
 """
 Agent commit counter
 
-For each repository marked `has_agent_config` in the selected `*_agent_repo.csv` input directory,
+For each repository marked `has_agent_config` in the selected `*_repo.csv` input directory,
 this script clones the repository using the shared commit-scan clone helper,
 scans the git history for agent commits using the shared collection logic, and writes
 one CSV per language containing one row per detected agent commit.
