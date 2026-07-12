@@ -1,0 +1,92 @@
+{
+  "timestamp": "2026-07-12T22:29:25.392600",
+  "methodology": {
+    "corpus": "agent_fixtures",
+    "temporal_scope": "after 2025-01-01"
+  },
+  "parameters": {
+    "detection_tier": "Tier 1 (co-authored-by trailers only)",
+    "agent_corpus_start_date": "2025-01-01",
+    "agent_config_patterns": {
+      "copilot": [
+        "copilot-instructions.md",
+        "copilot_instructions.md",
+        "copilot-instructions/",
+        ".github/instructions/",
+        ".copilot-*.md",
+        ".copilotignore",
+        ".copilot/",
+        ".github/workflows/copilot/"
+      ],
+      "cursor": [
+        ".cursor/",
+        ".cursorrules",
+        "CURSOR.md",
+        ".cursorignore"
+      ],
+      "claude": [
+        "CLAUDE.md",
+        ".claude/",
+        ".anthropic/",
+        ".claudeignore",
+        ".github/workflows/claude"
+      ]
+    },
+    "min_commits": 100,
+    "repos_with_agent_config": 932,
+    "repos_cloned": 932,
+    "agent_commits_found": 22875,
+    "agent_types_distribution": {
+      "claude": 17948,
+      "codex": 89,
+      "copilot": 2926,
+      "jules": 80,
+      "cursor": 775,
+      "amp": 5,
+      "gemini": 323,
+      "junie": 8,
+      "cline": 2,
+      "coderabbit": 2,
+      "qwen_coder": 2,
+      "devin": 651,
+      "aider": 7,
+      "sentry_seer": 8,
+      "opencode": 5,
+      "openhands": 2,
+      "sourcery": 11,
+      "factory_droid": 2,
+      "codegen": 2,
+      "deepsource": 2,
+      "ona": 24,
+      "chatgpt": 1
+    }
+  },
+  "summary_statistics": {
+    "repos_scanned": 936,
+    "repos_passed_qc": 608,
+    "repos_failed_qc": 328,
+    "qc_skip_reasons": {
+      "no_agent_commits": 324,
+      "clone_failed": 4
+    },
+    "fixtures_collected": 6581,
+    "test_commits_found": 22875,
+    "repos_by_language": {
+      "java": 101,
+      "javascript": 89,
+      "python": 194,
+      "typescript": 224
+    }
+  },
+  "control_variables": {
+    "domain_distribution": {
+      "other": 932
+    },
+    "star_tier_distribution": {
+      "core": 932
+    },
+    "mean_repo_age_years": 0.0,
+    "mean_contributors": 0.0
+  },
+  "output_database": "/home/joao_freitas_almeida/fixturedb/toy-dataset/db/a.db"
+}
