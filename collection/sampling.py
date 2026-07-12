@@ -6,6 +6,7 @@ targets. Fallback strategies (expand pool or reduce targets) are intentionally
 not implemented here — they'll be added later after initial collection tests.
 """
 
+import math
 import random
 from collections import defaultdict
 from typing import Dict, List
@@ -84,3 +85,53 @@ def stratified_sample_by_language(
                 available_repos.remove(rid)
 
     return selected
+
+
+def cochran_sample_size(
+    population: int,
+    margin: float = 0.05,
+    confidence_z: float = 1.96,
+    p: float = 0.5,
+) -> int:
+    """Minimum sample size to estimate a proportion within `margin` at the
+    confidence level implied by `confidence_z`, corrected for finite
+    `population`. Capped at `population`.
+
+    Used by `toy --stratified` to size each language's validation sample
+    against its own real population rather than applying one flat count
+    uniformly (or globally) across languages.
+    """
+    if population <= 0:
+        return 0
+    n0 = (confidence_z**2) * p * (1 - p) / (margin**2)
+    n = n0 / (1 + (n0 - 1) / population)
+    return min(population, math.ceil(n))
+
+
+def sample_stratified_by_population(
+    rows: List[dict],
+    language_key: str = "language",
+    language: str | None = None,
+) -> List[dict]:
+    """Per-language sample of `rows`, each language's size set by
+    `cochran_sample_size` against that language's own real row count.
+
+    Unlike `stratified_sample_by_language`, this has no caller-supplied
+    `targets` -- the sample size itself is derived statistically per
+    language, which is what a representative validation run needs.
+    """
+    grouped: Dict[str, List[dict]] = defaultdict(list)
+    for row in rows:
+        lang = (row.get(language_key) or "").strip().lower()
+        if lang:
+            grouped[lang].append(row)
+
+    if language:
+        grouped = {language: grouped.get(language, [])}
+
+    sampled: List[dict] = []
+    for lang in sorted(grouped):
+        pool = grouped[lang]
+        n = cochran_sample_size(len(pool))
+        sampled.extend(pool[:n])
+    return sampled

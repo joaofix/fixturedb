@@ -533,6 +533,16 @@ def build_parser() -> argparse.ArgumentParser:
     toy_parser.add_argument(
         "--repos", type=int, default=5, help="Number of repos to process (default: 5)"
     )
+    toy_parser.add_argument(
+        "--stratified",
+        action="store_true",
+        help=(
+            "Ignore --repos; draw a per-language sample sized by Cochran's "
+            "formula against each language's real, already-collected "
+            "population, for a statistically representative validation run "
+            "instead of a quick smoke test"
+        ),
+    )
 
     subparsers.add_parser("status", help="Print a brief pipeline status summary")
     return parser
@@ -578,7 +588,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "toy":
         from .toy import run_toy
 
-        return run_toy(args.dataset, language=args.language, repos=args.repos)
+        return run_toy(
+            args.dataset,
+            language=args.language,
+            repos=args.repos,
+            stratified=args.stratified,
+        )
 
     if args.command == "status":
         return _cmd_status()

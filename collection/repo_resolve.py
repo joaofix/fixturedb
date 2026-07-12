@@ -41,6 +41,7 @@ def resolve_dataset_b_repos(
     source_dir: Path | None = None,
     output_dir: Path | None = None,
     language: str | None = None,
+    stratified: bool = False,
 ) -> dict[str, int]:
     """Read Dataset A's repo list from `source_dir` and write a normalized
     copy per language to `output_dir`.
@@ -51,6 +52,11 @@ def resolve_dataset_b_repos(
     former is populated. Both source schemas share `repo_name`/`language`/
     `clone_url`; only the fixture-repos source contributes `has_agent_config`
     implicitly (every row there yielded a fixture, so it's always positive).
+
+    `stratified=True` caps each language's rows at `sampling.cochran_sample_size`
+    of that language's own real row count (95% confidence, +/-5% margin)
+    instead of writing every resolved row -- used by `toy --dataset b
+    --stratified` for a representative validation sample.
 
     Returns a dict of {language: row_count}.
     """
@@ -99,10 +105,23 @@ def resolve_dataset_b_repos(
                     }
                 )
 
+    if not by_lang:
+        raise RuntimeError(
+            f"No repos resolved for dataset b from {source_dir} -- has "
+            f"discover-repos/extract-fixtures --dataset a run for this root yet? "
+            f"Dataset B's repo pool is by definition Dataset A's already-collected "
+            f"repos, so this step depends on Dataset A having run first (for a "
+            f"toy run, both datasets must use the same --dataset a toy root)."
+        )
+
     output_dir.mkdir(parents=True, exist_ok=True)
     adapter = get_adapter()
     counts: dict[str, int] = {}
     for lang, rows in sorted(by_lang.items()):
+        if stratified:
+            from .sampling import cochran_sample_size
+
+            rows = rows[: cochran_sample_size(len(rows))]
         adapter.write_dicts(
             output_dir / f"{lang}_repo.csv", rows, _OUTPUT_FIELDNAMES
         )
