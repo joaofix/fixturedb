@@ -49,10 +49,30 @@ class CSVAdapter:
         Used by long-running scans that persist results incrementally rather
         than buffering everything in memory. Pass `fsync=True` to force the
         rows to disk immediately (e.g. for crash-safe checkpointing).
+
+        Raises ValueError if *path* already exists with a different header
+        than *fieldnames* -- silently appending would misalign every column
+        after the point of divergence (each row is written positionally
+        against *fieldnames*, but read back positionally against the file's
+        original first line). This happens whenever a writer's schema grows
+        a column and it runs again against a file an older schema version
+        produced; fail loudly so the caller can migrate or regenerate the
+        file deliberately instead of getting silently corrupted data.
         """
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         write_header = not path.exists()
+        if not write_header:
+            with path.open("r", encoding="utf-8", newline="") as fh:
+                existing_header = next(csv.reader(fh), [])
+            if existing_header and existing_header != fieldnames:
+                raise ValueError(
+                    f"append_dicts: {path} already has header {existing_header}, "
+                    f"which does not match the fieldnames being appended "
+                    f"{fieldnames}. Appending would silently misalign columns "
+                    f"past the point of divergence. Migrate or delete the "
+                    f"existing file before writing with the new schema."
+                )
         with path.open("a", encoding="utf-8", newline="") as fh:
             writer = csv.DictWriter(fh, fieldnames=fieldnames)
             if write_header:

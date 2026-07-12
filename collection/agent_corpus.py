@@ -142,6 +142,8 @@ def _load_qc_repo_rows(
                     stars=row.get("stars") or 0,
                     clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
+                    created_at=row.get("created_at") or "",
+                    topics=row.get("topics") or "[]",
                 )
                 grouped.setdefault(lang, [])
                 if repo_name not in {r["full_name"] for r in grouped[lang]}:
@@ -481,6 +483,7 @@ class AgentCorpusCollector:
 
         # Trackers for statistics
         repo_ages = []
+        repo_contributor_counts = []
         lang_test_commit_rows: list[dict] = []
 
         try:
@@ -555,6 +558,7 @@ class AgentCorpusCollector:
                     )
                     if repo_age is not None:
                         repo_ages.append(repo_age)
+                    repo_contributor_counts.append(int(repo.get("num_contributors") or 0))
 
                     # Find agent commits from the QCed commit dataset.
                     agent_commits = commits_by_repo.get(repo_name, [])
@@ -840,6 +844,10 @@ class AgentCorpusCollector:
         # Compute means
         if repo_ages:
             stats.mean_repo_age_years = sum(repo_ages) / len(repo_ages)
+        if repo_contributor_counts:
+            stats.mean_contributors = sum(repo_contributor_counts) / len(
+                repo_contributor_counts
+            )
 
         if self.test_commits_csv:
             if not (self.test_commits_csv.suffix == ""):

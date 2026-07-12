@@ -100,6 +100,8 @@ _TIER2_REPO_FIELDNAMES = [
     "qc_reason",
     "matched_config_file",
     "processed_at",
+    "created_at",
+    "topics",
     "discovery_tier",
 ]
 
@@ -117,8 +119,8 @@ def _merge_tier2_repos_into_csv(
     with db_session(corpus_db) as conn:
         placeholders = ",".join("?" for _ in names)
         rows = conn.execute(
-            f"SELECT full_name, language, stars, clone_url FROM repositories "
-            f"WHERE full_name IN ({placeholders})",
+            f"SELECT full_name, language, stars, clone_url, created_at, topics "
+            f"FROM repositories WHERE full_name IN ({placeholders})",
             names,
         ).fetchall()
 
@@ -137,6 +139,8 @@ def _merge_tier2_repos_into_csv(
                 "qc_reason": "",
                 "matched_config_file": "",
                 "processed_at": now,
+                "created_at": row["created_at"] or "",
+                "topics": row["topics"] or "[]",
                 "discovery_tier": 2,
             }
         )

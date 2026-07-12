@@ -157,6 +157,15 @@ def _read_repos_from_files(
                             continue
                         stars = row.get("stargazers") or row.get("watchers") or 0
                         contributors = row.get("contributors") or 0
+                        # SEART exports topics as a ';'-separated string, not
+                        # JSON -- convert here so classify_domain() (which
+                        # expects a JSON array string, matching
+                        # construct_repo_dict()'s convention) can actually
+                        # read it, rather than silently failing to parse.
+                        topics_raw = (row.get("topics") or "").strip()
+                        topics_json = json.dumps(
+                            [t for t in topics_raw.split(";") if t]
+                        )
                         repos.append(
                             {
                                 "full_name": name,
@@ -165,6 +174,8 @@ def _read_repos_from_files(
                                 "clone_url": f"https://github.com/{name}.git",
                                 "stars": _to_int(stars),
                                 "num_contributors": _to_int(contributors),
+                                "created_at": (row.get("createdAt") or "").strip(),
+                                "topics": topics_json,
                             }
                         )
             elif f.suffix in (".txt", ".list"):
@@ -294,6 +305,8 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "clone_url": entry.get("clone_url")
             or f"https://github.com/{full_name}.git",
             "num_contributors": int(entry.get("num_contributors") or 0),
+            "created_at": entry.get("created_at") or "",
+            "topics": entry.get("topics") or "[]",
         }
         logger.debug("Processing %s (lang=%s)", full_name, lang)
 
@@ -325,6 +338,12 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "qc_reason": qc_reason,
             "matched_config_file": matched_config_file or "",
             "processed_at": datetime.now(timezone.utc).isoformat(),
+            # Carried through so compute_repo_metadata() (domain
+            # classification + repo-age control variables) has real data
+            # instead of always defaulting to domain="other" / age=None --
+            # both are genuinely present in the raw SEART export.
+            "created_at": meta.get("created_at") or "",
+            "topics": meta.get("topics") or "[]",
             # 1 = discovered directly from github-search-raw (this scan); 2 =
             # discovered via Tier-2 SEART matching (see __main__.py's
             # _merge_tier2_repos_into_csv). Always present, both writers use
