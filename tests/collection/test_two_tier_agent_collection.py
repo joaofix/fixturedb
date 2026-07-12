@@ -170,8 +170,13 @@ Co-authored-by: OpenHands <openhands@example.com>"""
         body3 = "Fix\n\nCo-Authored-By: Cursor <cursor@anysoftware.io>"
         assert scanner._detect_agent_in_commit("User", "user@ex.com", body3) == "cursor"
 
-    def test_detect_agent_in_author_takes_precedence(self, scanner):
-        """Should detect from author name if present (checked first)."""
+    def test_detect_agent_in_author_when_no_trailer_present(self, scanner):
+        """Should detect from author name when there's no trailer to check
+        first (bot -> trailer -> author is the priority order; author is
+        the fallback, not the first check -- see
+        test_detect_agent_trailer_overrides_author_name_collision in
+        tests/test_agent_detector_pure.py for the case where both are
+        present)."""
         body = "Regular commit"
         agent = scanner._detect_agent_in_commit("Claude", "claude@anthropic.com", body)
         assert agent == "claude"

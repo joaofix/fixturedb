@@ -687,10 +687,20 @@ class AgentCommitVerifier:
         """
         Detect agent type from commit metadata.
 
-        Checks in order:
-        1. Co-Authored-By trailer (highest confidence)
-        2. Author name
-        3. Author email
+        Checks in order, first match wins:
+        1. Bot status (author name/email against bots.csv) -- never
+           overridable by a later signal. A bot-authored commit whose
+           message happens to contain an agent-style trailer (e.g. a
+           templated "Generated-by:" line some tooling stamps onto
+           dependency-bump commits) must still be excluded as bot, not
+           misattributed to that agent.
+        2. Co-Authored-By/Assisted-by/Generated-by trailer (highest
+           confidence agent signal, since it's a deliberate, structured
+           convention only agents/tooling emit -- as opposed to author
+           identity below, which is a freely-editable field real humans
+           also populate).
+        3. Author name
+        4. Author email
 
         Deliberately does NOT scan the free-text commit message body: a
         prose mention of an agent's name (e.g. "Revert a bad Claude
@@ -713,27 +723,30 @@ class AgentCommitVerifier:
             (e.g. "cline" inside "McLine"), but cannot distinguish a keyword
             that is *also* a common standalone first name (e.g. an author
             literally named "Devin") -- see agent_heuristics.yaml's module
-            comment for this known, inherent limitation.
+            comment for this known, inherent limitation. Checking the
+            trailer before author identity (see order above) avoids this
+            collision whenever a commit has both a colliding author name
+            and a correct, unambiguous trailer.
         """
         message = commit_data["message"]
         author_name = commit_data["author_name"]
         author_email = commit_data["author_email"]
 
-        # Check Co-Authored-By/Assisted-by/Generated-by trailers (highest
-        # confidence). Uses the same AGENT_TRAILER_RE as Tier1RepositoryScanner
-        # (collection/utils.py) rather than a separate ad-hoc regex here --
-        # previously this method had its own inline pattern that required a
-        # literal "co-authored-by" (hyphens mandatory) and an angle-bracket
-        # email, so it silently missed the "assisted-by"/"generated-by"
-        # trailer forms and hyphen-omitted variants ("Coauthored-by") that
-        # AGENT_TRAILER_RE already handles.
+        if is_bot_author(f"{author_name} {author_email}"):
+            return None
+
+        # Check Co-Authored-By/Assisted-by/Generated-by trailers. Uses the
+        # same AGENT_TRAILER_RE as Tier1RepositoryScanner (collection/utils.py)
+        # rather than a separate ad-hoc regex here -- previously this method
+        # had its own inline pattern that required a literal "co-authored-by"
+        # (hyphens mandatory) and an angle-bracket email, so it silently
+        # missed the "assisted-by"/"generated-by" trailer forms and
+        # hyphen-omitted variants ("Coauthored-by") that AGENT_TRAILER_RE
+        # already handles.
         for trailer_value in AGENT_TRAILER_RE.findall(message):
             agent_type = self._match_agent_keywords(trailer_value)
             if agent_type:
                 return agent_type
-
-        if is_bot_author(f"{author_name} {author_email}"):
-            return None
 
         # Check author name
         agent_type = self._match_agent_keywords(author_name)

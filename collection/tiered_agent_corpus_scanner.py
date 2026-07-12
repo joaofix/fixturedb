@@ -242,7 +242,20 @@ class Tier1RepositoryScanner:
     ) -> str | None:
         """Detect if commit author indicates agent authorship.
 
-        Checks signatures in author name/email and commit message body.
+        Checks in order, first match wins:
+        1. Bot status (author name/email against bots.csv) -- never
+           overridable by a later signal. A bot-authored commit whose
+           message happens to contain an agent-style trailer (e.g. a
+           templated "Generated-by:" line some tooling stamps onto
+           dependency-bump commits) must still be excluded as bot, not
+           misattributed to that agent.
+        2. Co-authored-by/Assisted-by/Generated-by trailers -- the least
+           collision-prone signal, since it's a deliberate, structured
+           convention only agents/tooling emit (as opposed to author
+           identity, which is a freely-editable field real humans also
+           populate -- see agent_heuristics.yaml's module comment on the
+           "Devin Smith" collision problem).
+        3. Author name/email against AGENT_SIGNATURES.
 
         Args:
             author_name: Commit author name
@@ -257,18 +270,13 @@ class Tier1RepositoryScanner:
         if is_bot_author(author_text):
             return "bot"
 
-        agent_type = match_agent_keyword(author_text, self.agent_signatures)
-        if agent_type:
-            return agent_type
-
-        # Extract and check agent trailers (case-insensitive)
         if body:
             for agent_line in AGENT_TRAILER_RE.findall(body):
                 agent_type = match_agent_keyword(agent_line, self.agent_signatures)
                 if agent_type:
                     return agent_type
 
-        return None
+        return match_agent_keyword(author_text, self.agent_signatures)
 
     def assess_tier1(self, corpus_repos: List[Dict]) -> Tier1Assessment:
         """

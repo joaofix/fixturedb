@@ -109,14 +109,93 @@ def test_detect_agent_word_boundary_rejects_compound_word_collision():
 def test_detect_agent_exact_name_collision_is_a_known_limitation():
     """Documents a known, inherent limitation (not something this fix
     resolves): a human author whose name is an exact match for an agent's
-    bare-word signature (e.g. "Devin") is still misattributed, since word
-    boundaries only rule out partial/compound-word matches, not whole-word
-    name collisions. See agent_heuristics.yaml's module comment."""
+    bare-word signature (e.g. "Devin") is still misattributed when there's
+    no trailer to disambiguate, since word boundaries only rule out
+    partial/compound-word matches, not whole-word name collisions. See
+    agent_heuristics.yaml's module comment. When a trailer IS present, see
+    test_detect_agent_trailer_overrides_author_name_collision below --
+    that case is resolved."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     assert (
         scanner._detect_agent_in_commit("Devin Smith", "devin.smith@gmail.com", "")
         == "devin"
     )
+
+
+def test_detect_agent_trailer_overrides_author_name_collision():
+    """Regression: _detect_agent_in_commit used to check author identity
+    before the commit trailer, so a human author whose name collides with
+    an agent keyword (e.g. "Devin Smith") was misattributed to that agent
+    even when the commit carried a correct, unambiguous trailer crediting a
+    *different* real agent. Trailer is now checked before author identity
+    specifically because it's the less collision-prone signal -- a
+    deliberate, structured convention only agents/tooling emit, unlike a
+    freely-editable author-name field a human can also happen to share."""
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    body = "Fix bug\n\nCo-authored-by: Claude <claude@anthropic.com>"
+    assert (
+        scanner._detect_agent_in_commit("Devin Smith", "devin.smith@gmail.com", body)
+        == "claude"
+    )
+
+
+def test_agent_commit_verifier_trailer_overrides_author_name_collision():
+    """Same regression as test_detect_agent_trailer_overrides_author_name_collision,
+    exercised through AgentCommitVerifier (Tier 2). This path already
+    checked trailer before author identity prior to this fix -- kept here
+    as an explicit lock-in test alongside Tier 1's, so both detectors are
+    covered for the same scenario."""
+    from collection.agent_signal_primitives import AgentCommitVerifier
+
+    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
+    result = verifier._detect_agent_in_commit(
+        {
+            "sha": "abc123",
+            "author_name": "Devin Smith",
+            "author_email": "devin.smith@gmail.com",
+            "message": "Fix bug\n\nCo-authored-by: Claude <claude@anthropic.com>",
+        }
+    )
+    assert result == "claude"
+
+
+def test_detect_agent_bot_status_overrides_coincidental_trailer():
+    """A bot-authored commit whose message happens to contain an
+    agent-style trailer (e.g. templated tooling stamping a "Generated-by:"
+    line onto a dependency-bump commit) must still be excluded as bot, not
+    misattributed to that agent. Bot status is checked before the trailer
+    for exactly this reason."""
+    scanner = Tier1RepositoryScanner(Path("/tmp"))
+    body = "Bump lodash from 1.0 to 2.0\n\nGenerated-by: Claude <claude@anthropic.com>"
+    assert (
+        scanner._detect_agent_in_commit(
+            "dependabot[bot]", "dependabot@users.noreply.github.com", body
+        )
+        is _BOT
+    )
+
+
+def test_agent_commit_verifier_bot_status_overrides_coincidental_trailer():
+    """Regression: AgentCommitVerifier._detect_agent_in_commit (Tier 2)
+    used to check the trailer before bot status, so a bot-authored commit
+    whose message happened to contain an agent-style trailer was
+    misattributed to that agent instead of being excluded as bot -- verified
+    by direct reproduction before this fix (dependabot[bot] + a
+    "Generated-by: Claude" line in the body returned "claude", not None).
+    Bot status is now checked first, matching Tier 1's already-correct
+    behavior for the same scenario."""
+    from collection.agent_signal_primitives import AgentCommitVerifier
+
+    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
+    result = verifier._detect_agent_in_commit(
+        {
+            "sha": "abc123",
+            "author_name": "dependabot[bot]",
+            "author_email": "dependabot@users.noreply.github.com",
+            "message": "Bump lodash from 1.0 to 2.0\n\nGenerated-by: Claude <claude@anthropic.com>",
+        }
+    )
+    assert result is None
 
 
 def test_agent_trailer_re_tolerates_missing_hyphens():
