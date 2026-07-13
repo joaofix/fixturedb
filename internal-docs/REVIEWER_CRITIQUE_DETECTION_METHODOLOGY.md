@@ -16,7 +16,7 @@ top of (deliberately not duplicated below).
 | 2 | Differential recall across authorship groups | **Discussed, documented, unresolved.** Detector-broadening mitigation considered and rejected (not pursued). Written up as a threats-to-validity entry in `docs/reference/limitations.md` ("Differential Recall Across Authorship Groups"). The concrete follow-up (validate the human corpus explicitly, not skip it as redundant) is queued into gap #1's eventual execution — see that gap's updated note below. Revisit at a later moment, not today. |
 | 3 | Purity-gate rejection rate not compared between corpora | **Addressed (2026-07-13).** Not wired into `between_group_comparison.py` as originally proposed -- instead landed as a standalone `summarize --dataset {a,b,c}` verb writing `{dataset}/summary.yaml`, auditable per-dataset without running a comparison. Also fixed a real gap found along the way: Dataset B never tracked purity accept/reject counts at all (`human_corpus.py` discarded them silently); now written to `test-commits/{lang}_purity_stats.csv`. Real number from toy data: Dataset A's acceptance rate is 47% overall. |
 | 4 | Dataset B's elevated false-negative floor not called out specifically | **Addressed (2026-07-13).** Documentation-only, as proposed — no code change. New subsection in `docs/reference/limitations.md` ("Differential False-Negative Risk: Dataset B vs. Dataset C"). The optional cheap-signal-for-B idea (scanning sibling PR/branch commits for trailers) was not pursued. |
-| 5 | No regression protection on recall claims over time | Queued for later today (2026-07-13). |
+| 5 | No regression protection on recall claims over time | **Addressed (2026-07-13).** New `tests/collection/test_gold_fixture_regression.py`: 4 real, hand-verified fixtures (one per language, sourced from this project's own toy-dataset review, byte-verified against live GitHub) with exact expected output locked in. Confirmed it actually catches regressions by reverting the double-detection fix and re-running — failed exactly as expected, then re-passed once restored. Runs automatically in CI (`pytest -q` already picks up the whole `tests/` tree, no wiring needed). |
 
 ## What already holds up
 
@@ -214,16 +214,34 @@ regression when detector code changes. So the ">95%" figure in
 hand-checked fixtures per language, re-run in CI — distinct from the existing
 rule-level unit tests, that would catch future detector drift end-to-end.
 
+**Update (2026-07-13):** Addressed as proposed. New
+`tests/collection/test_gold_fixture_regression.py`: one hand-verified real
+case per language (Python, Java, JavaScript, TypeScript), each copied
+verbatim from an actual commit in this project's own collected corpus and
+re-verified byte-for-byte against `raw.githubusercontent.com` when added
+(provenance — repo, commit SHA, path, line range — recorded in each case's
+docstring). The Python case is the exact `dagster-io/dagster`
+double-detection regression this gap cites; the JavaScript case
+(`dyo/dyo`, 8 fixtures packed into 4 comma-expression lines) locks in an
+unusual real-world shape a synthetic catalog test wouldn't surface.
+Sanity-checked the suite is load-bearing, not just passing by
+construction: reverted the double-detection fix
+(`git show 7c82466 -- collection/detector_python.py | git apply -R`),
+reran, watched it fail with the exact wrong count (2 instead of 1), then
+restored the fix and confirmed it passes again. Runs in CI automatically
+— no workflow change needed, `pytest -q` already collects the whole
+`tests/` tree.
+
 ## Suggested priority order
 
 1. Run `validation_sampling.py` on real data, get it manually reviewed, report
    precision/recall/kappa (closes #1, and stratifying by group also closes #2).
 2. ~~Wire purity-gate acceptance-rate-by-group into `between_group_comparison.py`~~
    **Done (2026-07-13)** — as a standalone `summarize` verb instead (closes #3).
-3. Add the B-vs-C residual-risk sensitivity note to `limitations.md` (closes #4;
-   documentation-only, no code).
-4. Add a versioned gold-label CI regression test (closes #5; moderate effort,
-   ongoing payoff).
+3. ~~Add the B-vs-C residual-risk sensitivity note to `limitations.md`~~
+   **Done (2026-07-13)** (closes #4).
+4. ~~Add a versioned gold-label CI regression test~~ **Done (2026-07-13)** (closes #5).
 
-None of this is being actioned right now — parked here per explicit instruction
-to return to after the Dataset C toy-output review.
+Only #1 (and, folded into it, #2's stratified-by-group validation) remains —
+deferred until the full (non-toy) dataset is collected, per explicit
+instruction.
