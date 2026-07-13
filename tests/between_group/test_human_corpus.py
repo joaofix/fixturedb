@@ -453,6 +453,49 @@ def test_validate_quality_filters_returns_tuple(tmp_path):
     assert result[1] is None or isinstance(result[1], str)
 
 
+def test_scan_and_extract_tags_fixtures_as_human(tmp_path):
+    """Regression: _extract_from_agent_commits (shared with agent_corpus.py,
+    which tags its own results "agent" afterward) leaves commit_kind unset,
+    defaulting to corpus_utils.py's "unknown" -- which breaks
+    between_group_comparison.py's WHERE f.commit_kind = 'human' query.
+    _scan_and_extract must tag its fixtures "human" the same way."""
+    from unittest.mock import MagicMock
+
+    from collection.tiered_agent_corpus_scanner import CommitRoleInfo
+
+    collector = HumanCorpusCollector(corpus_db_path=tmp_path / "corpus.db")
+
+    commit_role = CommitRoleInfo(
+        commit_sha="abc123",
+        commit_role="human",
+        agent_type=None,
+        commit_date="2023-01-01T00:00:00",
+        author_name="Jane Doe",
+        author_email="jane@example.com",
+        is_test_commit=True,
+        test_files=["test_foo.py"],
+    )
+    scanner = MagicMock()
+    scanner.scan_repo_commit_roles.return_value = [commit_role]
+
+    extractor = MagicMock()
+    extractor._extract_from_agent_commits.return_value = [
+        {
+            "repo_name": "owner/repo",
+            "commit_sha": "abc123",
+            "agent_type": "human",
+            "is_complete_addition": True,
+        }
+    ]
+
+    _test_commit_rows, fixtures, _adoption = collector._scan_and_extract(
+        tmp_path, "python", "owner/repo", scanner, extractor
+    )
+
+    assert len(fixtures) == 1
+    assert fixtures[0]["commit_kind"] == "human"
+
+
 def test_human_fixtures_dir_no_versioned_subfolder_when_tag_empty():
     """With empty COLLECTION_OUTPUT_TAG, dir points directly to datasets/b/fixtures."""
     root = _human_fixtures_dir("b")

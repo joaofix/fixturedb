@@ -551,6 +551,13 @@ class HumanCorpusCollector:
             fixtures = [
                 fixture for fixture in fixtures if fixture.get("is_complete_addition")
             ]
+            # Persistence reads commit_kind for the between-group comparison
+            # (between_group_comparison.py's WHERE f.commit_kind = 'human'),
+            # but _extract_from_agent_commits doesn't set it -- same shared
+            # extractor agent_corpus.py uses, tagged "agent" there. Tag here
+            # so it isn't left at corpus_utils.py's "unknown" default.
+            for fixture in fixtures:
+                fixture["commit_kind"] = "human"
 
         return test_commit_rows, fixtures, adoption_intensity
 
