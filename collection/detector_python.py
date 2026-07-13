@@ -36,6 +36,14 @@ def _detect_python(
 ) -> list[FixtureResult]:
     results = []
     root = tree.root_node
+    # Functions already counted via their @pytest.fixture-style decorator --
+    # visit() also reaches the same function_definition node as a plain
+    # child of decorated_definition, so without this a method like
+    # `@pytest.fixture(autouse=True) def setup_method(self):` would be
+    # detected twice: once as pytest_decorator, once by name as
+    # pytest_class_method. See toy Dataset B review (dagster-io/dagster
+    # test_freshness_result_condition.py).
+    decorator_matched_funcs: set[int] = set()
 
     def visit(node):
         # pytest.fixture decorator pattern
@@ -69,10 +77,11 @@ def _detect_python(
                             language="python",
                         )
                     )
+                    decorator_matched_funcs.add(id(func_def))
                     break
 
         # unittest setUp/tearDown inside TestCase subclass and setup_method/teardown_method
-        elif node.type == "function_definition":
+        elif node.type == "function_definition" and id(node) not in decorator_matched_funcs:
             name_node = node.child_by_field_name("name")
             if name_node:
                 name = _source(name_node, src_bytes)

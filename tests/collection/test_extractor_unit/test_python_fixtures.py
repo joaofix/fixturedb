@@ -270,6 +270,38 @@ class TestSuite:
         assert fixture.scope == "per_class"
 
 
+class TestPytestClassMethodNotDoubleCountedWithDecorator:
+    """Regression: a method matching both the @pytest.fixture decorator
+    pattern AND the setup_method/teardown_method name convention must be
+    counted once, not twice. Found via real-world data (dagster-io/dagster
+    test_freshness_result_condition.py) in toy Dataset B review."""
+
+    def test_decorated_setup_method_counted_once(self):
+        code = """
+class TestSuite:
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
+        self.instance = create()
+        yield
+        self.instance = None
+"""
+        assert_fixture_count(code, "python", 1)
+        fixture = extract_and_find_fixtures(code, "python")[0]
+        assert fixture.fixture_type == "pytest_decorator"
+        assert fixture.framework == "pytest"
+
+    def test_undecorated_setup_method_still_detected(self):
+        """Without a pytest.fixture decorator, name-based detection must
+        still fire -- the fix must not suppress the normal case."""
+        code = """
+class TestSuite:
+    def setup_method(self):
+        self.instance = create()
+"""
+        fixture = assert_fixture_detected(code, "python", "setup_method")
+        assert fixture.fixture_type == "pytest_class_method"
+
+
 class TestFixtureFunctionFactories:
     """Fixture factories and parameterized fixtures"""
 
