@@ -8,6 +8,16 @@ actioned yet; parked here to return to after Dataset C's review. See
 existing, already-published threats-to-validity disclosures this critique builds on
 top of (deliberately not duplicated below).
 
+## Status (as of 2026-07-13)
+
+| # | Gap | Status |
+|---|-----|--------|
+| 1 | No completed empirical validation study | **Deferred** — waits until the full (non-toy) dataset is collected. |
+| 2 | Differential recall across authorship groups | **Discussed, documented, unresolved.** Detector-broadening mitigation considered and rejected (not pursued). Written up as a threats-to-validity entry in `docs/reference/limitations.md` ("Differential Recall Across Authorship Groups"). The concrete follow-up (validate the human corpus explicitly, not skip it as redundant) is queued into gap #1's eventual execution — see that gap's updated note below. Revisit at a later moment, not today. |
+| 3 | Purity-gate rejection rate not compared between corpora | Queued for later today (2026-07-13). |
+| 4 | Dataset B's elevated false-negative floor not called out specifically | Queued for later today (2026-07-13). |
+| 5 | No regression protection on recall claims over time | Queued for later today (2026-07-13). |
+
 ## What already holds up
 
 A rigorous reviewer would not get far with generic complaints — most of the obvious
@@ -45,6 +55,16 @@ infrastructure to close it already exists, it just has never been run.
 **Fix:** Run `validation_sampling.py` end-to-end on real (not toy) data, have
 it manually reviewed, and report actual precision/recall/kappa.
 
+**Update (2026-07-13):** When this eventually runs, it must not follow
+`docs/usage/validation-sampling.md`'s current "Reduced validation set" table
+verbatim — that table marks human-fixture-detection validation "No, uses the
+identical AST fixture detector" and skips it as redundant with Dataset A's.
+That reasoning covers code-path correctness but not recall, which can depend
+on the input distribution (see gap #2). Draw an explicit comparison sample
+from the human corpus (B and/or C) as part of this run, specifically to test
+whether recall differs by authorship group — this resolves gap #2 as a
+byproduct rather than needing a separate validation effort.
+
 ### 2. Detection recall may correlate with the independent variable itself (agent vs. human) — a differential-misclassification confound, not yet discussed anywhere
 
 Both agent-detection and fixture-detection are pattern/trailer-based. If
@@ -63,6 +83,27 @@ measured."
 `agent_type`/`commit_kind` so recall-by-group is directly measurable. Either
 resolves the concern (recall statistically indistinguishable across groups) or
 quantifies a correctable bias.
+
+**Update (2026-07-13):** Discussed. Broadening detector recall for
+non-canonical/non-textbook fixture patterns (an alternative mitigation that
+would shrink the ceiling on this bias regardless of direction, without
+needing measurement) was considered and is **not being pursued**. As a
+partial, informal check, a canary comparison was run on already-collected
+toy data (fixture-type distribution for A vs. B *within the same
+repos*, ~51 overlapping Python repos / ~35 Java repos — not rigorous, small
+N, not citable, just illustrative): Python `pytest_class_method` was 9.9%
+of agent fixtures vs. 2.2% of human fixtures in the same repos; Java
+`junit5_before_each` was 37.2% vs. 27.9%. A real compositional shift is
+visible even at toy scale — consistent with either a genuine behavioral
+difference (the actual research question) or a detection-recall artifact;
+the toy data can't distinguish these without ground truth. Formally
+documented as an unresolved threat to validity in
+`docs/reference/limitations.md` ("Differential Recall Across Authorship
+Groups", added 2026-07-13), including the A-vs-B / A-vs-C asymmetry (B
+shares repos with A, so both are constrained to whatever framework the
+repo's maintainers already chose — a structural, partial mitigation that
+does not apply to C). No further action until gap #1's validation study
+runs — see that gap's updated note above for the concrete follow-up.
 
 ### 3. Purity-gate rejection rate is tracked per-repo but never compared between corpora — an unmeasured selection-bias risk
 

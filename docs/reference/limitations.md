@@ -84,6 +84,45 @@ a reviewer can check against without reading `detector_python.py` /
 
 ---
 
+## Differential Recall Across Authorship Groups
+
+Fixture detection uses the identical AST-pattern detector for both the agent
+and human corpora — the same code path, just applied to different input.
+Detection is pattern/idiom-based (decorator conventions, naming conventions),
+so recall could differ by authorship group even with zero code defects, if
+agent-generated code follows canonical framework idioms more consistently
+than human-written code (which includes older, idiosyncratic, or
+framework-violating styles). If so, a reported between-group difference in
+fixture prevalence or characteristics could be partly a detection artifact
+rather than a true behavioral difference.
+
+This has not been measured. The current manual-validation design (see
+[Manual-Validation Sampling](../usage/validation-sampling.md)'s "Reduced
+validation set" table) treats human-fixture-detection validation as
+redundant with Dataset A's, on the reasoning that it's "the identical AST
+fixture detector" — that justification covers code-path correctness, not
+recall, which can depend on the input distribution rather than the code path
+alone.
+
+The two between-group comparisons carry different residual risk here:
+Dataset B is drawn from the same repositories as Dataset A, so both corpora
+are constrained to whatever test framework a repo's human maintainers
+already established — an agent cannot introduce a different framework than
+what's already in use, which structurally limits (but does not eliminate)
+this risk for the A-vs-B comparison. Dataset C (cross-repo) does not share
+this constraint.
+
+**Status:** Documented, unresolved. Broadening detector recall for
+non-canonical/non-textbook fixture patterns was considered as a mitigation
+and is not being pursued.
+
+**Mitigation (deferred):** When the full-dataset manual-validation study is
+run, draw an explicit comparison sample from the human corpus (B and/or C)
+rather than skipping it as redundant, specifically to test whether recall
+differs by authorship group.
+
+---
+
 ## Advanced Metrics Limitations
 
 | Metric | Limitation | Mitigation |
