@@ -9,48 +9,36 @@
 # single, version-controlled place new agents get added.
 #
 # Known, inherent limitation (commit_signatures matching, not file_based):
-# several agent signatures below (devin, jules, claude, cline, cursor,
-# gemini, windsurf, codex) are also common human first names or ordinary
-# English words. Matching is word-boundary-based (collection/agent_patterns.py's
-# match_agent_keyword), which rules out a keyword matching inside an
-# unrelated compound word/surname (e.g. "cline" no longer matches inside
-# "McLine"), but it CANNOT rule out an exact whole-word collision -- a
-# commit author literally named "Devin Smith" is still misattributed to
-# the Devin agent. This is a fundamental limit of text-only heuristics
-# applied to a freely-editable author-name field, not something a smarter
-# regex can close; there is no verified, universal bot-email-domain
-# convention to fall back on across all these tools. If false-positive
-# rate matters for a specific analysis, prefer commits verified via the
-# `Co-authored-by` trailer path (a more constrained, deliberate signal)
-# over bare author-name matches, or manually spot-check via
-# collection/validation_sampling.py.
+# several agent signatures in agent-mining/agent_authors.csv (devin, jules,
+# claude, cline, cursor, gemini, windsurf, codex) are also common human first
+# names or ordinary English words. Matching is word-boundary-based
+# (collection/agent_patterns.py's match_agent_keyword), which rules out a
+# keyword matching inside an unrelated compound word/surname (e.g. "cline"
+# no longer matches inside "McLine"), but it CANNOT rule out an exact
+# whole-word collision -- a commit author literally named "Devin Smith" is
+# still misattributed to the Devin agent. This is a fundamental limit of
+# text-only heuristics applied to a freely-editable author-name field, not
+# something a smarter regex can close; there is no verified, universal
+# bot-email-domain convention to fall back on across all these tools. If
+# false-positive rate matters for a specific analysis, prefer commits
+# verified via the `Co-authored-by` trailer path (a more constrained,
+# deliberate signal) over bare author-name matches, or manually spot-check
+# via collection/validation_sampling.py.
 
-# file_based now lives in agent_files.csv, next to this file, not here --
-# config files/directories in a repo's working tree that signal a given
-# agent was used. Matched case-insensitively; entries ending in "/" match a
-# directory name anywhere in the path, others may use fnmatch globs (see
-# collection/agent_patterns.py:path_matches_pattern). It's a separate, flat
-# `pattern,tool,start_date,end_date` CSV (not YAML) specifically so it
-# mirrors labri-progress/agent-mining's own files.csv
-# (github.com/labri-progress/agent-mining/blob/main/patterns/files.csv)
-# schema and content verbatim -- a paper reviewer can diff the two files
-# directly. See collection/heuristics/__init__.py's module docstring and
-# agent_patterns.py's LIGHTWEIGHT_AGENT_CONFIG_PATTERNS for how it's loaded
-# and consumed.
-
-# commit_signatures now lives in agent_authors.csv, next to this file, not
-# here -- substrings matched case-insensitively against commit author
-# name/email and Co-authored-by (and similar) trailers. It's a separate,
-# flat `pattern,tool,start_date,end_date` CSV (not YAML) specifically so it
-# mirrors labri-progress/agent-mining's own authors.csv
-# (github.com/labri-progress/agent-mining/blob/main/patterns/authors.csv)
-# schema and content verbatim -- a paper reviewer can diff the two files
-# directly. See collection/heuristics/__init__.py's module docstring and
-# agent_patterns.py's AGENT_SIGNATURES for how it's loaded and consumed.
+# file_based and commit_signatures no longer live here -- they moved to
+# collection/heuristics/agent-mining/agent_files.csv and agent_authors.csv
+# respectively (flat CSVs mirroring labri-progress/agent-mining's own
+# files.csv/authors.csv schema and content verbatim, so a paper reviewer can
+# diff the two directly). See collection/heuristics/__init__.py's module
+# docstring for the full schema and provenance of those two files, and
+# agent_patterns.py's LIGHTWEIGHT_AGENT_CONFIG_PATTERNS / AGENT_SIGNATURES
+# for how they're loaded and consumed. This file now holds only paper_scope
+# below -- this project's own data, not sourced from anywhere upstream.
 
 # paper_scope: the subset of file_based agents used for the paper's strict
 # repo-qualification filter (agent_corpus.py's scan_cloned_repo_for_agent_configs).
-# The broader pre-clone/lightweight scans use the full file_based catalog above.
+# The broader pre-clone/lightweight scans use the full file_based catalog
+# (agent-mining/agent_files.csv).
 paper_scope:
   - claude
   - cursor
