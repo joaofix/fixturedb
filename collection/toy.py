@@ -16,6 +16,7 @@ import csv
 from pathlib import Path
 
 from . import paths
+from .dataset_summary import write_summary
 from .logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -196,6 +197,8 @@ def run_toy(
             repos_per_language=None if stratified else repos, language=language
         )
         logger.info(f"[toy a] done: {stats.fixtures_collected} fixtures in {db_path}")
+        summary_path = write_summary("a", root=root)
+        logger.info(f"[toy a] wrote {summary_path}")
         return 0
 
     if dataset == "b":
@@ -226,6 +229,8 @@ def run_toy(
             workers=workers,
         )
         logger.info(f"[toy b] done: {stats.fixtures_collected} fixtures in {db_path}")
+        summary_path = write_summary("b", root=root)
+        logger.info(f"[toy b] wrote {summary_path}")
         return 0
 
     if dataset == "c":
@@ -278,6 +283,8 @@ def run_toy(
             fixtures_output_dir=paths.stage_dir("c", "fixtures", root=root),
         )
         logger.info(f"[toy c] done: {counts} -> {db_path}")
+        summary_path = write_summary("c", root=root)
+        logger.info(f"[toy c] wrote {summary_path}")
         return 0
 
     raise ValueError(f"unknown dataset {dataset!r}; expected one of {paths.DATASETS}")

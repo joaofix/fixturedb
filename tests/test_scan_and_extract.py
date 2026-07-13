@@ -37,7 +37,7 @@ def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
             return commits
 
     class FakeExtractor:
-        def _extract_from_agent_commits(self, repo_name, commits):
+        def _extract_from_agent_commits(self, repo_name, commits, stats=None):
             # Only produce fixtures for the human commit
             return [
                 {
@@ -61,7 +61,7 @@ def test_scan_and_extract_filters_and_formats(tmp_path, monkeypatch):
     scanner = FakeScanner()
     extractor = FakeExtractor()
 
-    test_rows, fixtures, adoption = collector._scan_and_extract(
+    test_rows, fixtures, adoption, _accepted, _rejected = collector._scan_and_extract(
         Path("/tmp"), "python", "owner/repo", scanner, extractor
     )
 

@@ -402,6 +402,8 @@ class HumanCorpusCollector:
                     "skip_reason": "clone_failed",
                     "test_commit_rows": [],
                     "fixtures": [],
+                    "commits_accepted": 0,
+                    "commits_rejected": 0,
                 }
 
             passes_qc, skip_reason = self._validate_quality_filters(
@@ -415,6 +417,8 @@ class HumanCorpusCollector:
                     "skip_reason": skip_reason or "commit_count_failed",
                     "test_commit_rows": [],
                     "fixtures": [],
+                    "commits_accepted": 0,
+                    "commits_rejected": 0,
                 }
 
             scanner = Tier1RepositoryScanner(self.corpus_db_path)
@@ -435,6 +439,8 @@ class HumanCorpusCollector:
             test_commit_rows = scan_result[0]
             fixtures = scan_result[1]
             adoption_intensity = scan_result[2]
+            commits_accepted = scan_result[3]
+            commits_rejected = scan_result[4]
 
             return {
                 "repo_name": repo_name,
@@ -464,6 +470,8 @@ class HumanCorpusCollector:
                 ),
                 "test_commit_rows": test_commit_rows,
                 "fixtures": fixtures,
+                "commits_accepted": commits_accepted,
+                "commits_rejected": commits_rejected,
             }
 
     def _scan_and_extract(
@@ -473,7 +481,7 @@ class HumanCorpusCollector:
         repo_name: str,
         scanner: Tier1RepositoryScanner,
         extractor: AgentFixtureExtractor,
-    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], Any]:
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], Any, int, int]:
         """Scan commit roles for a repository and extract complete human fixtures.
 
         This helper runs the provided `scanner` to obtain commit role objects,
@@ -491,12 +499,18 @@ class HumanCorpusCollector:
                 `_extract_from_agent_commits(repo_name, commits)`.
 
         Returns:
-            tuple: (test_commit_rows, fixtures, adoption_intensity)
+            tuple: (test_commit_rows, fixtures, adoption_intensity, commits_accepted, commits_rejected)
                 - test_commit_rows (list[dict]): Rows suitable for CSV/DB insertion
                   describing each human test commit discovered.
                 - fixtures (list[dict]): Extracted fixture dictionaries filtered
                   to only include complete additions.
                 - adoption_intensity (str | None): Agent adoption intensity category.
+                - commits_accepted (int): Human test commits that passed the
+                  commit-level purity gate (every touched test file was a
+                  pure addition), regardless of fixture yield.
+                - commits_rejected (int): Human test commits rejected by the
+                  gate because some touched test file had a deletion, was
+                  deleted, or was renamed.
         """
         commit_roles = scanner.scan_repo_commit_roles(
             managed_repo_path,
@@ -541,16 +555,28 @@ class HumanCorpusCollector:
         }
 
         fixtures = []
+        commits_accepted = 0
+        commits_rejected = 0
         if human_commits:
             logger.debug(
                 f"[Human Corpus] {repo_name}: scanning {len(human_commits)} human commits"
             )
+            purity_stats: Dict[str, int] = {}
             fixtures = extractor._extract_from_agent_commits(
-                repo_name=repo_name, commits=human_commits
+                repo_name=repo_name, commits=human_commits, stats=purity_stats
             )
             fixtures = [
                 fixture for fixture in fixtures if fixture.get("is_complete_addition")
             ]
+            # Same commit-level purity gate agent_corpus.py reports via
+            # fixture_repos.csv's rejected_mixed_test_diff/accepted columns --
+            # mirrored here so Dataset B's acceptance rate is measurable too
+            # (see internal-docs/REVIEWER_CRITIQUE_DETECTION_METHODOLOGY.md
+            # gap #3: this was previously silently discarded).
+            commits_rejected = purity_stats.get("commits_skipped_commit_level", 0)
+            commits_accepted = purity_stats.get(
+                "commits_proceeded", 0
+            ) + purity_stats.get("commits_skipped_file_level", 0)
             # Persistence reads commit_kind for the between-group comparison
             # (between_group_comparison.py's WHERE f.commit_kind = 'human'),
             # but _extract_from_agent_commits doesn't set it -- same shared
@@ -559,7 +585,7 @@ class HumanCorpusCollector:
             for fixture in fixtures:
                 fixture["commit_kind"] = "human"
 
-        return test_commit_rows, fixtures, adoption_intensity
+        return test_commit_rows, fixtures, adoption_intensity, commits_accepted, commits_rejected
 
     def run(
         self,
@@ -829,6 +855,8 @@ class HumanCorpusCollector:
         lang_all_fixtures = []
         lang_test_commit_rows = []
         lang_fixtures_collected = 0
+        lang_commits_accepted = 0
+        lang_commits_rejected = 0
 
         if workers <= 1:
             for repo in tqdm(
@@ -894,6 +922,8 @@ class HumanCorpusCollector:
             test_commit_rows_by_language[current_lang].extend(test_commit_rows)
             all_test_commit_rows.extend(test_commit_rows)
             stats.test_commits_found += len(test_commit_rows)
+            lang_commits_accepted += result.get("commits_accepted", 0)
+            lang_commits_rejected += result.get("commits_rejected", 0)
 
             if fixtures:
                 lang_all_fixtures.append((repo_data, fixtures))
@@ -965,6 +995,28 @@ class HumanCorpusCollector:
                 write_test_commits_csv(lang_test_commit_rows, out_path)
                 self._write_human_progress_snapshot(
                     progress_file, stats, language_progress
+                )
+
+            # Commit-level purity-gate outcome for this language -- one row,
+            # written unconditionally (not gated on only_write_test_commits)
+            # since it's cheap and always available once repos have been
+            # scanned. This is what makes Dataset B's purity acceptance rate
+            # auditable after the fact (see collection/dataset_summary.py);
+            # previously this data was computed in memory and discarded.
+            purity_out_dir = Path(self.test_commits_csv)
+            purity_out_dir.mkdir(parents=True, exist_ok=True)
+            purity_out_path = purity_out_dir / f"{current_lang}_purity_stats.csv"
+            with purity_out_path.open("w", newline="", encoding="utf-8") as fh:
+                writer = csv.DictWriter(
+                    fh, fieldnames=["language", "commits_accepted", "commits_rejected"]
+                )
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "language": current_lang,
+                        "commits_accepted": lang_commits_accepted,
+                        "commits_rejected": lang_commits_rejected,
+                    }
                 )
 
         with db_session(self.output_db) as conn:

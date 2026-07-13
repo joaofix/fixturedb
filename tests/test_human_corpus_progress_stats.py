@@ -116,3 +116,65 @@ def test_avg_fixtures_per_repo_is_not_contaminated_by_prior_language(
         [_fake_result("owner/js1", "javascript", 20)],
     )
     assert language_progress["javascript"]["avg_fixtures_per_repo"] == 20
+
+
+def test_purity_stats_csv_written_per_language(tmp_path, monkeypatch):
+    """_process_human_within_language must persist commits_accepted/
+    commits_rejected to {lang}_purity_stats.csv -- this is the only place
+    Dataset B's purity-gate acceptance rate is recorded to disk (previously
+    not recorded at all, see collection/dataset_summary.py)."""
+    out_db = tmp_path / "out.db"
+    initialise_db(out_db)
+    commits_dir = tmp_path / "test-commits"
+
+    collector = HumanCorpusCollector(
+        corpus_db_path=tmp_path / "corpus.db",
+        clones_dir=tmp_path / "clones",
+        output_db=out_db,
+        repo_qc_dir=tmp_path,
+        fixtures_output_dir=tmp_path,
+        test_commits_csv=commits_dir,
+    )
+    monkeypatch.setattr(
+        human_corpus,
+        "persist_repository_and_fixtures",
+        lambda output_db, repo_data, fixtures_list, out_path=None, handle_mocks=True: len(
+            fixtures_list
+        ),
+    )
+
+    results = iter(
+        [
+            {**_fake_result("owner/py1", "python", 3), "commits_accepted": 4, "commits_rejected": 1},
+            {**_fake_result("owner/py2", "python", 0), "commits_accepted": 2, "commits_rejected": 3},
+        ]
+    )
+    monkeypatch.setattr(
+        collector, "_process_human_repository", lambda repo: next(results)
+    )
+
+    collector._process_human_within_language(
+        current_lang="python",
+        lang_repos=[{"repo_name": "owner/py1"}, {"repo_name": "owner/py2"}],
+        workers=1,
+        only_write_test_commits=False,
+        stats=HumanCorpusStats(),
+        progress_lock=threading.Lock(),
+        language_progress={"python": {"total_repos": 2, "completed": 0, "avg_fixtures_per_repo": 0}},
+        repo_ages=[],
+        repo_contributors=[],
+        all_test_commit_rows=[],
+        test_commit_rows_by_language={"python": []},
+        progress_file=tmp_path / "progress.json",
+    )
+
+    import csv
+
+    out_path = commits_dir / "python_purity_stats.csv"
+    assert out_path.exists()
+    with out_path.open(newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    assert len(rows) == 1
+    assert rows[0]["language"] == "python"
+    assert int(rows[0]["commits_accepted"]) == 6
+    assert int(rows[0]["commits_rejected"]) == 4

@@ -488,12 +488,62 @@ def test_scan_and_extract_tags_fixtures_as_human(tmp_path):
         }
     ]
 
-    _test_commit_rows, fixtures, _adoption = collector._scan_and_extract(
+    _test_commit_rows, fixtures, _adoption, _accepted, _rejected = collector._scan_and_extract(
         tmp_path, "python", "owner/repo", scanner, extractor
     )
 
     assert len(fixtures) == 1
     assert fixtures[0]["commit_kind"] == "human"
+
+
+def test_scan_and_extract_reports_purity_gate_counts(tmp_path):
+    """Regression: _extract_from_agent_commits accepts a `stats` dict to
+    accumulate commit-level purity-gate counters into (mirrors
+    agent_corpus.py's own accounting, which writes rejected_mixed_test_diff/
+    accepted into fixture_repos.csv) -- but human_corpus.py never passed it,
+    so Dataset B's purity acceptance rate was silently uncomputable. See
+    internal-docs/REVIEWER_CRITIQUE_DETECTION_METHODOLOGY.md gap #3."""
+    from unittest.mock import MagicMock
+
+    from collection.tiered_agent_corpus_scanner import CommitRoleInfo
+
+    collector = HumanCorpusCollector(corpus_db_path=tmp_path / "corpus.db")
+
+    commit_roles = [
+        CommitRoleInfo(
+            commit_sha=f"sha{i}",
+            commit_role="human",
+            agent_type=None,
+            commit_date="2023-01-01T00:00:00",
+            author_name="Jane Doe",
+            author_email="jane@example.com",
+            is_test_commit=True,
+            test_files=["test_foo.py"],
+        )
+        for i in range(3)
+    ]
+    scanner = MagicMock()
+    scanner.scan_repo_commit_roles.return_value = commit_roles
+
+    def fake_extract(repo_name, commits, stats=None):
+        # Mirrors AgentFixtureExtractor._extract_from_agent_commits's real
+        # accounting: 2 commits accepted (1 yielded a fixture, 1 didn't),
+        # 1 rejected by the commit-level purity gate.
+        if stats is not None:
+            stats["commits_proceeded"] = 1
+            stats["commits_skipped_file_level"] = 1
+            stats["commits_skipped_commit_level"] = 1
+        return [{"repo_name": repo_name, "is_complete_addition": True}]
+
+    extractor = MagicMock()
+    extractor._extract_from_agent_commits.side_effect = fake_extract
+
+    _rows, _fixtures, _adoption, accepted, rejected = collector._scan_and_extract(
+        tmp_path, "python", "owner/repo", scanner, extractor
+    )
+
+    assert accepted == 2
+    assert rejected == 1
 
 
 def test_human_fixtures_dir_no_versioned_subfolder_when_tag_empty():

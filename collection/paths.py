@@ -104,3 +104,14 @@ def corpus_db_path(*, root: Path = DB_ROOT) -> Path:
 def export_path(dataset: str, *, root: Path = EXPORT_ROOT) -> Path:
     _check_dataset(dataset)
     return root / f"{dataset}.zip"
+
+
+def summary_path(dataset: str, *, root: Path = DATASETS_ROOT) -> Path:
+    """Where `summarize --dataset {dataset}` writes summary.yaml.
+
+    A sibling of the dataset's stage directories (root/dataset/summary.yaml),
+    not nested under any one stage -- it's a dataset-level artifact computed
+    from all of them. Pass `root=TOY_ROOT` for a toy run's equivalent.
+    """
+    _check_dataset(dataset)
+    return root / dataset / "summary.yaml"

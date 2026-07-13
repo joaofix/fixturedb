@@ -93,7 +93,7 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
         def __init__(self, clones_dir=None, source_db=None, start_date=None):
             pass
 
-        def _extract_from_agent_commits(self, repo_name, commits):
+        def _extract_from_agent_commits(self, repo_name, commits, stats=None):
             return [
                 {
                     "name": "my_fixture",

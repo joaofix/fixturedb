@@ -75,6 +75,7 @@ collection/          # Main pipeline code (the "library")
   dataset_c.py        # Dataset C: extract human fixtures, cross-repo baseline (extract-fixtures --dataset c)
   dataset_pipeline.py # analyze-distribution / sample / export cross-cutting stages
   dataset_validator.py # validate stage
+  dataset_summary.py  # summarize stage -- writes {dataset}/summary.yaml (repo/commit/fixture counts, purity-gate rate for a/b); also run automatically at the end of `toy`
   toy.py              # `toy --dataset {a,b,c}`: small real end-to-end run under toy-dataset/
   fixture_extractor.py     # Tree-sitter AST fixture extraction
   detector.py        # Fixture pattern detection
@@ -100,6 +101,7 @@ python -m collection analyze-distribution --dataset a --against b
 python -m collection sample               --dataset {a,b,c}
 python -m collection export               --dataset {a,b,c}
 python -m collection validate             --dataset {a,b,c}
+python -m collection summarize            --dataset {a,b,c}
 python -m collection toy                  --dataset {a,b,c} [--repos N]
 ```
 

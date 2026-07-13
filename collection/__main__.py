@@ -349,6 +349,14 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_summarize(args: argparse.Namespace) -> int:
+    from .dataset_summary import write_summary
+
+    out_path = write_summary(args.dataset)
+    logger.info(f"[summarize {args.dataset}] wrote {out_path}")
+    return 0
+
+
 def _cmd_validate(args: argparse.Namespace) -> int:
     from .dataset_pipeline import validate_dataset
 
@@ -515,6 +523,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_dataset_arg(validate)
 
+    summarize = subparsers.add_parser(
+        "summarize",
+        help="Write datasets/{dataset}/summary.yaml: repo/commit/fixture counts, "
+        "purity-gate acceptance rate (a/b), and per-repo/file fixture averages",
+    )
+    _add_dataset_arg(summarize)
+
     paired_parser = subparsers.add_parser(
         "paired", help="Bootstrap db/corpus.db via the paired within-repository study"
     )
@@ -610,6 +625,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validate":
         return _cmd_validate(args)
+
+    if args.command == "summarize":
+        return _cmd_summarize(args)
 
     if args.command == "toy":
         from .toy import run_toy
