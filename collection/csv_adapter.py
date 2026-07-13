@@ -8,8 +8,17 @@ from __future__ import annotations
 
 import csv
 import os
+import sys
 from pathlib import Path
 from typing import Iterable, Iterator
+
+# A single commit can legitimately touch tens of thousands of test files
+# (e.g. a mass baseline-regeneration commit), pushing test_file_paths past
+# the csv module's default 128KB field limit -- confirmed against a real
+# microsoft/TypeScript commit (1.5MB test_file_paths, 21640 files) in
+# Dataset B's toy output. Raise it process-wide so read_dicts/append_dicts
+# don't crash on real, non-adversarial data.
+csv.field_size_limit(sys.maxsize)
 
 
 class CSVAdapter:
