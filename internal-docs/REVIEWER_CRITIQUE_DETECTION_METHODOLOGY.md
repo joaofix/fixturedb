@@ -14,7 +14,7 @@ top of (deliberately not duplicated below).
 |---|-----|--------|
 | 1 | No completed empirical validation study | **Deferred** — waits until the full (non-toy) dataset is collected. |
 | 2 | Differential recall across authorship groups | **Discussed, documented, unresolved.** Detector-broadening mitigation considered and rejected (not pursued). Written up as a threats-to-validity entry in `docs/reference/limitations.md` ("Differential Recall Across Authorship Groups"). The concrete follow-up (validate the human corpus explicitly, not skip it as redundant) is queued into gap #1's eventual execution — see that gap's updated note below. Revisit at a later moment, not today. |
-| 3 | Purity-gate rejection rate not compared between corpora | Queued for later today (2026-07-13). |
+| 3 | Purity-gate rejection rate not compared between corpora | **Addressed (2026-07-13).** Not wired into `between_group_comparison.py` as originally proposed -- instead landed as a standalone `summarize --dataset {a,b,c}` verb writing `{dataset}/summary.yaml`, auditable per-dataset without running a comparison. Also fixed a real gap found along the way: Dataset B never tracked purity accept/reject counts at all (`human_corpus.py` discarded them silently); now written to `test-commits/{lang}_purity_stats.csv`. Real number from toy data: Dataset A's acceptance rate is 47% overall. |
 | 4 | Dataset B's elevated false-negative floor not called out specifically | Queued for later today (2026-07-13). |
 | 5 | No regression protection on recall claims over time | Queued for later today (2026-07-13). |
 
@@ -124,6 +124,25 @@ just never surfaced as a between-group diagnostic.
 `between_group_comparison.py`'s output, split by group. Cheap — the raw counts
 already exist.
 
+**Update (2026-07-13):** Addressed, differently than proposed above. Rather
+than folding this into `between_group_comparison.py` (a pairwise-comparison
+tool), it's now a standalone per-dataset artifact: `python -m collection
+summarize --dataset {a,b,c}` writes `{dataset}/summary.yaml` (real:
+`datasets/{dataset}/`, toy: `toy-dataset/{dataset}/`, also written
+automatically at the end of `toy`), covering repo/test-commit/fixture counts,
+avg fixtures per repo/file, and -- for A and B -- the purity-gate acceptance
+rate by language. Building this surfaced a second, real gap: Dataset B's
+`human_corpus.py` never tracked purity accept/reject counts at all (Dataset
+A's `agent_corpus.py` did, via `fixture_repos.csv`'s `rejected_mixed_test_diff`/
+`accepted` columns; B's `_extract_from_agent_commits()` call never passed the
+`stats=` dict needed to capture them, so the data didn't exist anywhere to
+report). Fixed in `human_corpus.py`; now written to
+`test-commits/{lang}_purity_stats.csv`. Real result from the toy data
+already on disk: Dataset A's purity-gate acceptance rate is 47% overall
+(java 48%, javascript 56%, python 45%, typescript 47%) -- once Dataset B is
+collected (real or toy), its rate will be directly comparable via the same
+file, which is exactly what this gap asked for.
+
 ### 4. Dataset B's "human" baseline has a structurally elevated false-negative floor that the general "Agent Detection Conservatism" section doesn't call out specifically
 
 B draws its repo pool from the *same* agent-adopting repos as A (confirmed
@@ -167,8 +186,8 @@ rule-level unit tests, that would catch future detector drift end-to-end.
 
 1. Run `validation_sampling.py` on real data, get it manually reviewed, report
    precision/recall/kappa (closes #1, and stratifying by group also closes #2).
-2. Wire purity-gate acceptance-rate-by-group into `between_group_comparison.py`
-   (closes #3; cheap, data already exists).
+2. ~~Wire purity-gate acceptance-rate-by-group into `between_group_comparison.py`~~
+   **Done (2026-07-13)** — as a standalone `summarize` verb instead (closes #3).
 3. Add the B-vs-C residual-risk sensitivity note to `limitations.md` (closes #4;
    documentation-only, no code).
 4. Add a versioned gold-label CI regression test (closes #5; moderate effort,
