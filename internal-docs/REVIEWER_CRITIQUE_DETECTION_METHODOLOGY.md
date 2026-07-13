@@ -143,6 +143,28 @@ already on disk: Dataset A's purity-gate acceptance rate is 47% overall
 collected (real or toy), its rate will be directly comparable via the same
 file, which is exactly what this gap asked for.
 
+**Second-pass review (2026-07-13):** a self-review of `summary.yaml` from a
+deliberately hostile-reviewer stance caught a real correctness bug, not just
+presentation nits: `avg_fixtures_per_repo` divided fixture count by repos
+*appearing in fixtures.csv only* -- a repo scanned but yielding zero
+fixtures never gets a row there, so it silently vanished from the
+denominator instead of pulling the average down. Verified against real toy
+data: Dataset A's Python average was reported as 14.93, while the true
+corpus-wide average (`fixtures.total / repos.total`, including the 64% of
+repos that yielded nothing) is 5.4 -- a 2.76x inflation presented as fact.
+Fixed: the old metric is now explicitly named
+`avg_fixtures_per_repo_with_fixtures`, and a real
+`avg_fixtures_per_repo_overall` (unconditional, overall-only) sits next to
+it so the gap is visible instead of hidden. Also fixed on the same pass:
+`by_language` was ambiguous between two genuinely different partitions in
+this file (a repo's assigned language vs. each fixture's own detected
+language) -- renamed to `by_repo_language`/`by_fixture_language`
+throughout so the distinction is legible from the key name alone, no prose
+explanation required; `sampling_seed` (permanently null for A/B, verified
+no RNG is used anywhere in their real `--stratified` path) is now omitted
+for those two rather than shown as always-empty; added `schema_version`
+and switched the timestamp to explicit UTC.
+
 ### 4. Dataset B's "human" baseline has a structurally elevated false-negative floor that the general "Agent Detection Conservatism" section doesn't call out specifically
 
 B draws its repo pool from the *same* agent-adopting repos as A (confirmed
