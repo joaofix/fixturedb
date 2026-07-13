@@ -101,6 +101,10 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
                 github_id = int((row.get("github_id") or "0").strip())
             except ValueError:
                 github_id = 0
+            try:
+                stars = int((row.get("stars") or "0").strip())
+            except ValueError:
+                stars = 0
             repos.append(
                 {
                     "full_name": name,
@@ -109,6 +113,9 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
                         row.get("clone_url") or f"https://github.com/{name}.git"
                     ).strip(),
                     "github_id": github_id,
+                    "created_at": row.get("created_at") or "",
+                    "topics": row.get("topics") or "[]",
+                    "stars": stars,
                 }
             )
     logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)
@@ -292,6 +299,8 @@ def select_human_corpus_repositories(
                     stars=row.get("stars") or 0,
                     clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
+                    created_at=row.get("created_at") or "",
+                    topics=row.get("topics") or "[]",
                 )
                 grouped_csv.setdefault(lang, [])
                 if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
@@ -901,17 +910,31 @@ class HumanCorpusCollector:
             logger.info(
                 f"[Human Corpus] Writing {len(lang_all_fixtures)} repositories' fixtures to CSV for {current_lang}"
             )
-            fixtures_out_path = _human_fixture_csv_path(
-                current_lang, "b", self.fixtures_output_dir
-            )
             for repo_data, fixtures_list in lang_all_fixtures:
-                fixture_count = persist_repository_and_fixtures(
-                    self.output_db,
-                    repo_data,
-                    fixtures_list,
-                    out_path=fixtures_out_path,
-                    handle_mocks=True,
-                )
+                # Bucket by each fixture's OWN detected language, not the
+                # repo's aggregate current_lang -- a repo's SEART-assigned
+                # language is a single tag for the whole repo, but a
+                # multi-language repo (e.g. a Java backend with a JS
+                # frontend) can have human commits touching test files in
+                # more than one language. Same fix as agent_corpus.py's
+                # _persist_repo_agent_commit_stats().
+                fixtures_by_language: dict[str, list[dict]] = {}
+                for fx in fixtures_list:
+                    fx_lang = (fx.get("language") or current_lang).strip().lower()
+                    fixtures_by_language.setdefault(fx_lang, []).append(fx)
+
+                fixture_count = 0
+                for fx_lang, fx_group in fixtures_by_language.items():
+                    fixtures_out_path = _human_fixture_csv_path(
+                        fx_lang, "b", self.fixtures_output_dir
+                    )
+                    fixture_count += persist_repository_and_fixtures(
+                        self.output_db,
+                        repo_data,
+                        fx_group,
+                        out_path=fixtures_out_path,
+                        handle_mocks=True,
+                    )
                 with progress_lock:
                     stats.fixtures_collected += fixture_count
                     lang_fixtures_collected += fixture_count

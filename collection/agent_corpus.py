@@ -933,6 +933,13 @@ class AgentCorpusCollector:
                             "rejected_mixed_test_diff"
                         ],
                         "accepted": repo_commit_stats["accepted"],
+                        # Carried through so Dataset B's discover-repos --dataset
+                        # b (which prefers this file as its source when
+                        # populated -- see paths.default_repo_source) inherits
+                        # real domain/repo-age control-variable inputs instead
+                        # of the dead defaults this file used to force.
+                        "created_at": repo.get("created_at") or "",
+                        "topics": repo.get("topics") or "[]",
                     }
                 ],
                 [
@@ -946,6 +953,8 @@ class AgentCorpusCollector:
                     "agent_commits_touching_tests",
                     "rejected_mixed_test_diff",
                     "accepted",
+                    "created_at",
+                    "topics",
                 ],
             )
 

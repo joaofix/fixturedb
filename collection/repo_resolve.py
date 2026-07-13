@@ -34,6 +34,8 @@ _OUTPUT_FIELDNAMES = [
     "qc_reason",
     "matched_config_file",
     "processed_at",
+    "created_at",
+    "topics",
 ]
 
 
@@ -102,6 +104,8 @@ def resolve_dataset_b_repos(
                         "qc_reason": "",
                         "matched_config_file": row.get("matched_config_file") or "",
                         "processed_at": now,
+                        "created_at": row.get("created_at") or "",
+                        "topics": row.get("topics") or "[]",
                     }
                 )
 

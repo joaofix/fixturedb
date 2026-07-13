@@ -185,9 +185,13 @@ class TestWritePerLanguageFiles:
         assert (out_dir / "all.csv").exists()
 
     def test_output_schema_includes_github_id(self, tmp_path):
-        """No domain classification step anymore (unlike
+        """No domain classification step happens here (unlike
         sample_proportional_repos.py's output), but github_id is required
-        -- see test_github_id_is_distinct_per_repo for why."""
+        -- see test_github_id_is_distinct_per_repo for why. created_at/
+        topics/stars are carried through as raw inputs for
+        compute_repo_metadata(), which dataset_c.py calls downstream at
+        fixture-persist time -- see agent_repository_counter.py's identical
+        fix (and dataset_c.py's) for why they can't be dropped here."""
         selected = [
             {"repo_name": "o/r", "language": "python", "clone_url": "u", "github_id": 1}
         ]
@@ -196,7 +200,15 @@ class TestWritePerLanguageFiles:
 
         with (out_dir / "all.csv").open(newline="", encoding="utf-8") as fh:
             header = next(csv.reader(fh))
-        assert header == ["repo_name", "language", "clone_url", "github_id"]
+        assert header == [
+            "repo_name",
+            "language",
+            "clone_url",
+            "github_id",
+            "created_at",
+            "topics",
+            "stars",
+        ]
 
     def test_empty_selection(self, tmp_path):
         out_dir = tmp_path / "out"

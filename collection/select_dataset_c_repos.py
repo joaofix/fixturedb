@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import json
 import sys
 from collections import defaultdict
 from pathlib import Path
@@ -37,7 +38,15 @@ logger = get_logger(__name__)
 
 OUTPUT_DIR = paths.stage_dir("c", "repos")
 
-_OUTPUT_FIELDNAMES = ["repo_name", "language", "clone_url", "github_id"]
+_OUTPUT_FIELDNAMES = [
+    "repo_name",
+    "language",
+    "clone_url",
+    "github_id",
+    "created_at",
+    "topics",
+    "stars",
+]
 
 
 def select_repos(
@@ -85,12 +94,26 @@ def select_repos(
                     .strip()
                     .lower()
                 )
+                # SEART exports topics as a ';'-separated string, not JSON --
+                # convert here so classify_domain() (which expects a JSON
+                # array string) can actually read it. Same fix as Dataset A's
+                # agent_repository_counter.py.
+                topics_raw = (row.get("topics") or "").strip()
+                topics_json = json.dumps([t for t in topics_raw.split(";") if t])
+                stars = row.get("stargazers") or row.get("watchers") or 0
+                try:
+                    stars = int(float(stars))
+                except (TypeError, ValueError):
+                    stars = 0
                 selected.append(
                     {
                         "repo_name": name,
                         "language": lang,
                         "clone_url": f"https://github.com/{name}.git",
                         "github_id": github_id,
+                        "created_at": created,
+                        "topics": topics_json,
+                        "stars": stars,
                     }
                 )
 

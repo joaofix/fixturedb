@@ -34,7 +34,11 @@ from collection.config import (
     MIN_COMMITS,
     MIN_TEST_FILES,
 )
-from collection.corpus_utils import construct_repo_dict, persist_repository_and_fixtures
+from collection.corpus_utils import (
+    compute_repo_metadata,
+    construct_repo_dict,
+    persist_repository_and_fixtures,
+)
 from collection.db import db_session, initialise_db
 from collection.ephemeral_clone import clone_with_function
 from collection.fixture_extractor import AgentFixtureExtractor
@@ -310,6 +314,14 @@ def _process_repo(
                         "repo_full_name": repo_name,
                         "language": language,
                         "github_id": repo.get("github_id", 0),
+                        # Threaded through the same way as github_id --
+                        # `repo` itself is discarded downstream
+                        # (flat_candidates keeps only the fixture half of
+                        # this tuple), so anything compute_repo_metadata()
+                        # needs later has to ride along on the fixture dict.
+                        "repo_created_at": repo.get("created_at", ""),
+                        "repo_topics": repo.get("topics", "[]"),
+                        "repo_stars": repo.get("stars", 0),
                     },
                 )
                 for fixture in repo_fixtures
@@ -535,26 +547,56 @@ def collect_dataset_c_fixtures(
         # end-to-end run, not a unit test -- every existing test mocked
         # _process_repo, so this path was never actually exercised).
         github_id = fixtures_list[0].get("github_id", 0) if fixtures_list else 0
+        first_fixture = fixtures_list[0] if fixtures_list else {}
+        repo_created_at = first_fixture.get("repo_created_at", "")
+        repo_topics = first_fixture.get("repo_topics", "[]")
+        repo_stars = first_fixture.get("repo_stars", 0)
+        # Dataset C's own temporal reference is HUMAN_CORPUS_CUTOFF_DATE
+        # (the pre-2022 human baseline window), not AGENT_CORPUS_START_DATE
+        # -- repo age here means "age as of the human-era cutoff", matching
+        # how Dataset B/A compute age at their own respective reference
+        # dates rather than "today".
+        metadata = compute_repo_metadata(
+            {"topics": repo_topics, "created_at": repo_created_at, "stars": repo_stars},
+            HUMAN_CORPUS_CUTOFF_DATE,
+        )
         repo_data = construct_repo_dict(
             full_name=repo_full,
             language=str(language_val),
-            stars=0,
+            stars=repo_stars,
             forks=0,
             github_id=github_id,
+            description="",
+            topics=repo_topics,
+            created_at=repo_created_at,
+            domain=metadata["domain"],
+            star_tier=metadata["star_tier"],
+            repo_age_years=metadata["repo_age_years"],
         )
         try:
             from collection.human_corpus import _human_fixture_csv_path
 
-            fixture_out_path = _human_fixture_csv_path(
-                repo_data["language"], "c", fixtures_output_dir
-            )
-            persist_repository_and_fixtures(
-                output_db,
-                repo_data,
-                fixtures_list,
-                out_path=fixture_out_path,
-                handle_mocks=True,
-            )
+            # Bucket by each fixture's OWN language, not just the first
+            # fixture's language for the whole repo -- a multi-language repo
+            # can have fixtures spanning more than one real language. Same
+            # fix as agent_corpus.py's _persist_repo_agent_commit_stats() and
+            # human_corpus.py's _process_human_within_language().
+            fixtures_by_language: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+            for fx in fixtures_list:
+                fx_lang = (fx.get("language") or language_val or "unknown")
+                fixtures_by_language[str(fx_lang).strip().lower()].append(fx)
+
+            for fx_lang, fx_group in fixtures_by_language.items():
+                fixture_out_path = _human_fixture_csv_path(
+                    fx_lang, "c", fixtures_output_dir
+                )
+                persist_repository_and_fixtures(
+                    output_db,
+                    repo_data,
+                    fx_group,
+                    out_path=fixture_out_path,
+                    handle_mocks=True,
+                )
             counts["repos_persisted"] = counts.get("repos_persisted", 0) + 1
             counts["fixtures_persisted"] = counts.get("fixtures_persisted", 0) + len(
                 fixtures_list
