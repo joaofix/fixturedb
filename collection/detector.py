@@ -47,7 +47,7 @@ This is a slim facade over per-language detector modules:
   - detector_python.py / detector_java.py / detector_javascript.py: one
     `_detect_<language>()` function per language, each self-contained; their
     pattern tables (annotation/decorator/name -> fixture_type + scope) are
-    loaded from collection/config_data/fixture_definitions.yaml rather than
+    loaded from collection/heuristics/fixture_definitions.yaml rather than
     hardcoded -- that file is the operational definition of "fixture" per
     language, including a documented `excluded` list of known boundary cases
   - detector_go.py: implemented but not wired into DETECTORS below (dead code,

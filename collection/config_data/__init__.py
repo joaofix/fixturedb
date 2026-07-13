@@ -5,12 +5,15 @@ Each catalog lives in its own file, next to this one, as plain data:
 - exclusion_keywords.yaml -- repo name/description keywords for boilerplate/toy repos
 - framework_registry.yaml -- known testing frameworks per language
 - language_configs.yaml -- per-language search and test-detection settings
-- fixture_definitions.yaml -- operational definition of "fixture" per language
-  (see that file's header comment for the schema and the per-language
-  `excluded` boundary-case catalog)
 - feature_extraction_patterns.yaml -- mock-framework/external-call/
   object-instantiation regex tables and setup/teardown pairing rules behind
   the quantitative fixture metrics (see that file's header comment)
+
+fixture_definitions.yaml -- operational definition of "fixture" per language
+(see that file's header comment for the schema and the per-language
+`excluded` boundary-case catalog) -- lives in collection/heuristics/, not
+here, alongside the other detection-heuristic catalogs (agent_heuristics.yaml,
+agent-mining/); load_fixture_definitions() below reads it from there.
 
 collection/config.py loads the first four and derives the module-level
 constants (NON_CODE_EXTENSIONS, EXCLUSION_KEYWORDS, FRAMEWORK_REGISTRY,
@@ -27,10 +30,11 @@ from typing import Any, Dict, List
 import yaml
 
 _DATA_DIR = Path(__file__).parent
+_HEURISTICS_DIR = Path(__file__).parent.parent / "heuristics"
 
 
-def _load_yaml(filename: str) -> Any:
-    with (_DATA_DIR / filename).open("r", encoding="utf-8") as fh:
+def _load_yaml(filename: str, directory: Path = _DATA_DIR) -> Any:
+    with (directory / filename).open("r", encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 
@@ -60,8 +64,10 @@ def load_fixture_definitions() -> Dict[str, Any]:
     Each per-language section holds both the executable pattern tables the
     detector modules build their lookups from, and an `excluded` list of
     documented boundary cases -- see fixture_definitions.yaml's header.
+    Lives in collection/heuristics/, not config_data/ -- see this module's
+    docstring.
     """
-    return _load_yaml("fixture_definitions.yaml")
+    return _load_yaml("fixture_definitions.yaml", directory=_HEURISTICS_DIR)
 
 
 def load_feature_extraction_patterns() -> Dict[str, Any]:

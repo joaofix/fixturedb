@@ -227,7 +227,7 @@ production call site reads the YAML directly.
 | Agent detection: paper's strict-scope agent subset | `collection/heuristics/agent_heuristics.yaml` (`paper_scope`) | `agent_patterns.PAPER_AGENT_CONFIG_PATTERNS` |
 | Agent detection: commit author/trailer signatures | `collection/heuristics/agent-mining/agent_authors.csv` (mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s `authors.csv` schema+content) | `agent_patterns.AGENT_SIGNATURES` |
 | Bot-account detection: CI/automation bot patterns | `collection/heuristics/agent-mining/bots.csv` (mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s `bots.csv` schema+content) | `agent_patterns.BOT_PATTERNS` / `is_bot_author()` |
-| Operational definition of "fixture" per language (patterns + documented exclusions) | `collection/config_data/fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` pattern tables |
+| Operational definition of "fixture" per language (patterns + documented exclusions) | `collection/heuristics/fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` pattern tables |
 | Mock-framework, external-call, object-instantiation regex tables + setup/teardown pairing rules | `collection/config_data/feature_extraction_patterns.yaml` | `detector_shared.py` (`MOCK_PATTERNS`, `EXTERNAL_CALL_PATTERNS`, teardown pairing) / `complexity_provider.py` (`_count_object_instantiations`) |
 
 The fixture-definitions catalog is also a reviewer-facing audit artifact, not

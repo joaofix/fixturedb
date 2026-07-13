@@ -12,7 +12,7 @@ claim to inclusion. See "Known Exclusions & Boundary Cases" below for the
 full list and reasoning.
 
 **Source of truth:** the tables below are prose explanations of what's
-actually in `collection/config_data/fixture_definitions.yaml`, which the
+actually in `collection/heuristics/fixture_definitions.yaml`, which the
 detector modules (`detector_python.py`/`detector_java.py`/`detector_javascript.py`)
 load at import time — that YAML file is the executable definition, and also
 documents, per language, which boundary cases are deliberately **not**
@@ -417,7 +417,7 @@ Every pattern above is what the detector matches; just as important is what
 it deliberately does **not** match, and why. This makes the recall boundary
 explicit for reviewers instead of leaving it implicit in the source code.
 The authoritative version of this list lives in the `excluded` section of
-each language block in `collection/config_data/fixture_definitions.yaml` —
+each language block in `collection/heuristics/fixture_definitions.yaml` —
 reproduced here for readability.
 
 ### Python

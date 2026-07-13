@@ -24,7 +24,7 @@ This document covers **fixture detection**: identifying test fixture definitions
 No general-purpose tool can distinguish a fixture from a helper function without encoding framework semantics, so detection is pattern-based per language/framework rather than a single generic rule.
 
 The pattern tables are not hardcoded in the per-language detector files — they are loaded from
-[collection/config_data/fixture_definitions.yaml](../../collection/config_data/fixture_definitions.yaml),
+[collection/heuristics/fixture_definitions.yaml](../../collection/heuristics/fixture_definitions.yaml),
 the single source of truth for what counts as a fixture per language. Each language section also
 carries an `excluded` list documenting known boundary cases the detector deliberately does not catch
 (see [configuration.md](configuration.md#reference-data-catalogs) and

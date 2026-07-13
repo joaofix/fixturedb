@@ -6,7 +6,7 @@ them (Spring, Cucumber) are deliberately out of scope; see
 fixture_definitions.yaml's java.excluded list for why.
 
 Pattern tables are loaded from
-collection/config_data/fixture_definitions.yaml rather than hardcoded here
+collection/heuristics/fixture_definitions.yaml rather than hardcoded here
 -- see that file for the full operational definition of "fixture" per
 language, including documented exclusions and known imprecisions (e.g. an
 ambiguous @BeforeClass/@AfterClass is always attributed to TestNG).

@@ -75,7 +75,7 @@ re-run or improve detection against the original fixture text.
 
 The three bullets above are the general pattern; the exact, per-language list
 of what counts as a fixture and what's deliberately excluded (with a reason
-for each) is `collection/config_data/fixture_definitions.yaml` — it is both
+for each) is `collection/heuristics/fixture_definitions.yaml` — it is both
 the executable pattern table the detector is built from and the audit trail
 a reviewer can check against without reading `detector_python.py` /
 `detector_java.py` / `detector_javascript.py` directly.

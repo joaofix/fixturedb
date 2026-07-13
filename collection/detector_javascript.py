@@ -7,7 +7,7 @@ decorator-style hooks) are deliberately out of scope; see
 fixture_definitions.yaml's javascript_typescript.excluded list for why.
 
 Pattern tables are loaded from
-collection/config_data/fixture_definitions.yaml rather than hardcoded here
+collection/heuristics/fixture_definitions.yaml rather than hardcoded here
 -- see that file for the full operational definition of "fixture" per
 language, including documented exclusions (Jest globalSetup, Vitest
 setupFiles/onTestFinished, etc.).

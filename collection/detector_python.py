@@ -6,7 +6,7 @@ deliberately out of scope; see fixture_definitions.yaml's python.excluded
 list for why.
 
 Pattern tables (scope keyword maps, setup/teardown name -> scope maps) are
-loaded from collection/config_data/fixture_definitions.yaml rather than
+loaded from collection/heuristics/fixture_definitions.yaml rather than
 hardcoded here -- see that file for the full operational definition of
 "fixture" per language, including documented exclusions.
 

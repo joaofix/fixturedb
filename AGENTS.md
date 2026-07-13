@@ -48,9 +48,7 @@ collection/          # Main pipeline code (the "library")
   config.py          # Thresholds, dates -- loads catalogs from config_data/ below
   config_data/       # Reference-data catalogs as YAML (non-code extensions, boilerplate-
                      # repo exclusion keywords, framework registry, per-language configs,
-                     # fixture_definitions.yaml) -- edit these, not the .py files, to update a catalog
-                     # fixture_definitions.yaml also documents per-language `excluded` boundary
-                     # cases the fixture detectors deliberately don't catch (reviewer audit trail)
+                     # feature extraction patterns) -- edit these, not the .py files, to update a catalog
   db.py              # SQLite schema, upsert helpers, migrations
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
@@ -60,6 +58,7 @@ collection/          # Main pipeline code (the "library")
   heuristics/agent-mining/agent_files.csv  # Config-file/directory patterns (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's files.csv schema+content for citation
   heuristics/agent-mining/agent_authors.csv  # Commit author/trailer signatures (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's authors.csv schema+content for citation
   heuristics/agent-mining/bots.csv  # CI/automation bot account patterns (pattern,tool) -- mirrors labri-progress/agent-mining's bots.csv schema+content for citation
+  heuristics/fixture_definitions.yaml  # Operational definition of "fixture" per language -- edit here to update a detector pattern; also documents per-language `excluded` boundary cases the fixture detectors deliberately don't catch (reviewer audit trail)
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a

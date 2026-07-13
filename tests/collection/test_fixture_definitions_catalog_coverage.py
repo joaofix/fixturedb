@@ -4,7 +4,7 @@ Same idea as tests/collection/test_mock_detection/test_mock_pattern_catalog_cove
 applied to fixture detection instead of mock detection: rather than a
 hand-picked selection of example fixtures, this file is parametrized
 directly over every language/annotation/name entry in
-collection/config_data/fixture_definitions.yaml, and each case is driven
+collection/heuristics/fixture_definitions.yaml, and each case is driven
 through the real extract_fixtures() pipeline (not a bare regex check --
 fixture detection is AST-based, so this exercises the actual
 detector_python.py / detector_java.py / detector_javascript.py code paths).
