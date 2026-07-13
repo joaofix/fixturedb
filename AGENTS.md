@@ -56,10 +56,10 @@ collection/          # Main pipeline code (the "library")
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
   agent_patterns.py  # Loads the agent catalog (see heuristics/ below) and derives detection dicts
   tier2_discovery.py # Tier-1 corpus assessment + Tier-2 SEART discovery (discover-commits --dataset a --tier2)
-  heuristics/agent_heuristics.yaml  # paper_scope only now -- edit here to change the paper's strict-scope agent subset
-  heuristics/agent_files.csv  # Config-file/directory patterns (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's files.csv schema+content for citation
-  heuristics/agent_authors.csv  # Commit author/trailer signatures (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's authors.csv schema+content for citation
-  heuristics/bots.csv  # CI/automation bot account patterns (pattern,tool) -- mirrors labri-progress/agent-mining's bots.csv schema+content for citation
+  heuristics/agent_heuristics.yaml  # paper_scope only now -- edit here to change the paper's strict-scope agent subset (this project's own catalog, kept at heuristics/ root)
+  heuristics/agent-mining/agent_files.csv  # Config-file/directory patterns (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's files.csv schema+content for citation
+  heuristics/agent-mining/agent_authors.csv  # Commit author/trailer signatures (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's authors.csv schema+content for citation
+  heuristics/agent-mining/bots.csv  # CI/automation bot account patterns (pattern,tool) -- mirrors labri-progress/agent-mining's bots.csv schema+content for citation
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a

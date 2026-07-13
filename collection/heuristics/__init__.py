@@ -1,35 +1,40 @@
 """Loader for the AI coding agent detection heuristics catalog.
 
-paper_scope lives in agent_heuristics.yaml, next to this file -- see that
-file's header comment for the schema. file_based, commit_signatures, and
-bot_patterns each live in their own CSV, next to this file too, deliberately
-mirroring labri-progress/agent-mining's own data files
+paper_scope lives in agent_heuristics.yaml, next to this file -- this
+project's own catalog, not sourced from anywhere upstream, so it stays at
+this package's root. file_based, commit_signatures, and bot_patterns each
+live in their own CSV under agent-mining/, a dedicated subfolder that
+deliberately mirrors labri-progress/agent-mining's own data files
 (github.com/labri-progress/agent-mining/tree/main/patterns) schema and
-content, so a paper reviewer can compare the files directly:
+content, so a paper reviewer can compare the files directly -- kept
+separate from this project's own YAML so what's upstream-sourced vs.
+project-authored is a directory boundary, not just a comment:
 
-- agent_files.csv: flat `pattern,tool,start_date,end_date` table (mirrors
-  files.csv). First 95 data rows are that file's content verbatim, in its
-  original order; everything after a `#`-prefixed boundary comment line is
-  this project's own addition -- a single pattern (`.cursorignore`)
-  individually confirmed against Cursor's official docs. Ten other
-  candidate additions were considered and dropped after failing that same
-  verification: each was either undocumented or already covered by an
-  upstream directory-marker pattern (`.claude/`, `.cursor/`, `.openhands/`,
-  `.devin/`, `.cline/` already match regardless of what's inside them).
-- agent_authors.csv: flat `pattern,tool,start_date,end_date` table (mirrors
-  authors.csv). First 80 data rows are that file's content verbatim, in its
-  original order; everything after a `#`-prefixed boundary comment line is
-  this project's own additions.
-- bots.csv: flat `pattern,tool` table (mirrors bots.csv). First 84 data
-  rows are that file's content verbatim, in its original order; everything
-  after the boundary comment is this project's own additions -- deliberately
-  a short list of specific, individually-verified real bot accounts seen in
-  this project's own corpus but missing from the upstream list (e.g.
-  copilot-swe-agent[bot]), NOT a generic catch-all pattern. A bot name that
-  is neither in upstream's list nor in this project's short addition is
-  simply not detected; see docs/architecture/agent-detection.md's Known
-  Limitations for that deliberate tradeoff (verified-list precision over
-  a broader, unverified catch-all).
+- agent-mining/agent_files.csv: flat `pattern,tool,start_date,end_date`
+  table (mirrors files.csv). First 95 data rows are that file's content
+  verbatim, in its original order; everything after a `#`-prefixed
+  boundary comment line is this project's own addition -- a single pattern
+  (`.cursorignore`) individually confirmed against Cursor's official docs.
+  Ten other candidate additions were considered and dropped after failing
+  that same verification: each was either undocumented or already covered
+  by an upstream directory-marker pattern (`.claude/`, `.cursor/`,
+  `.openhands/`, `.devin/`, `.cline/` already match regardless of what's
+  inside them).
+- agent-mining/agent_authors.csv: flat `pattern,tool,start_date,end_date`
+  table (mirrors authors.csv). First 80 data rows are that file's content
+  verbatim, in its original order; everything after a `#`-prefixed boundary
+  comment line is this project's own additions.
+- agent-mining/bots.csv: flat `pattern,tool` table (mirrors bots.csv).
+  First 84 data rows are that file's content verbatim, in its original
+  order; everything after the boundary comment is this project's own
+  additions -- deliberately a short list of specific, individually-verified
+  real bot accounts seen in this project's own corpus but missing from the
+  upstream list (e.g. copilot-swe-agent[bot]), NOT a generic catch-all
+  pattern. A bot name that is neither in upstream's list nor in this
+  project's short addition is simply not detected; see
+  docs/architecture/agent-detection.md's Known Limitations for that
+  deliberate tradeoff (verified-list precision over a broader, unverified
+  catch-all).
 
 This module is the only place that reads any of these files;
 collection/agent_patterns.py consumes the merged result and derives the
@@ -44,9 +49,10 @@ from typing import Any, Dict, List
 import yaml
 
 _HEURISTICS_PATH = Path(__file__).parent / "agent_heuristics.yaml"
-_FILES_CSV_PATH = Path(__file__).parent / "agent_files.csv"
-_AUTHORS_CSV_PATH = Path(__file__).parent / "agent_authors.csv"
-_BOTS_CSV_PATH = Path(__file__).parent / "bots.csv"
+_AGENT_MINING_DIR = Path(__file__).parent / "agent-mining"
+_FILES_CSV_PATH = _AGENT_MINING_DIR / "agent_files.csv"
+_AUTHORS_CSV_PATH = _AGENT_MINING_DIR / "agent_authors.csv"
+_BOTS_CSV_PATH = _AGENT_MINING_DIR / "bots.csv"
 
 # Maps agent_files.csv/agent_authors.csv's "tool" column (a display name,
 # matching labri-progress/agent-mining's own naming) to this project's

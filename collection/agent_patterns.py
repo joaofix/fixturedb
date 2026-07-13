@@ -61,7 +61,8 @@ PAPER_AGENT_CONFIG_PATTERNS = {
 # Flat list of commit author/email patterns identifying CI/automation bot
 # accounts (dependabot, renovate, github-actions, etc.) rather than a human
 # or one of the coding agents in AGENT_SIGNATURES -- loaded from
-# collection/heuristics/bots.csv. See that file and is_bot_author() below.
+# collection/heuristics/agent-mining/bots.csv. See that file and
+# is_bot_author() below.
 BOT_PATTERNS: list[str] = _HEURISTICS["bot_patterns"]
 
 
@@ -89,7 +90,8 @@ _BOT_REGEXES = [_bot_pattern_regex(pattern) for pattern in BOT_PATTERNS]
 
 def is_bot_author(text: str) -> bool:
     """Return True if text (typically "{author_name} {author_email}") matches
-    a known CI/automation bot pattern from collection/heuristics/bots.csv.
+    a known CI/automation bot pattern from
+    collection/heuristics/agent-mining/bots.csv.
 
     Used to exclude bot-authored commits from both the human baseline and
     the agent corpus -- a bot account is neither a human developer nor one
