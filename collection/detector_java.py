@@ -12,8 +12,8 @@ language, including documented exclusions and known imprecisions (e.g. an
 ambiguous @BeforeClass/@AfterClass is always attributed to TestNG).
 """
 
-from .config_data import load_fixture_definitions
 from .detector_shared import FixtureResult, _build_result, _source
+from .heuristics import load_fixture_definitions
 
 _DEFS = load_fixture_definitions()["java"]
 

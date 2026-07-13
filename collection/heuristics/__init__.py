@@ -1,4 +1,7 @@
-"""Loader for the AI coding agent detection heuristics catalog.
+"""Loader for detection-heuristic catalogs: pattern/keyword tables that
+drive a classification decision (agent vs. human, fixture vs. not,
+boilerplate repo vs. not), as opposed to plain settings (see
+collection/study_parameters/).
 
 - agent_heuristics.yaml (this package's root): paper_scope, this project's
   own data.
@@ -7,10 +10,17 @@
   labri-progress/agent-mining's own data files so a reviewer can diff them
   directly. Each has upstream's rows verbatim, followed by this project's
   own additions after a `#`-prefixed boundary comment line (CSV has no
-  native comment syntax).
+  native comment syntax). Full schema/provenance: docs/architecture/agent-detection.md.
+- fixture_definitions.yaml: operational definition of "fixture" per
+  language. Full schema: that file's own header comment.
+- exclusion_keywords.yaml: repo name/description keywords that signal a
+  boilerplate/toy repo.
+- feature_extraction_patterns.yaml: mock-framework/external-call/
+  object-instantiation regex tables and setup/teardown pairing rules.
 
-Full schema, row-provenance, and rationale: docs/architecture/agent-detection.md.
-collection/agent_patterns.py consumes this module's merged output.
+collection/agent_patterns.py consumes load_agent_heuristics()'s merged
+output; collection/config.py and the per-language detector modules consume
+the other three loaders directly.
 """
 
 import csv
@@ -20,11 +30,43 @@ from typing import Any, Dict, List
 
 import yaml
 
-_HEURISTICS_PATH = Path(__file__).parent / "agent_heuristics.yaml"
-_AGENT_MINING_DIR = Path(__file__).parent / "agent-mining"
+_DATA_DIR = Path(__file__).parent
+_HEURISTICS_PATH = _DATA_DIR / "agent_heuristics.yaml"
+_AGENT_MINING_DIR = _DATA_DIR / "agent-mining"
 _FILES_CSV_PATH = _AGENT_MINING_DIR / "agent_files.csv"
 _AUTHORS_CSV_PATH = _AGENT_MINING_DIR / "agent_authors.csv"
 _BOTS_CSV_PATH = _AGENT_MINING_DIR / "bots.csv"
+
+
+def _load_yaml(filename: str) -> Any:
+    with (_DATA_DIR / filename).open("r", encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+def load_fixture_definitions() -> Dict[str, Any]:
+    """Return the parsed fixture-definition catalog, keyed by language.
+
+    Each per-language section holds both the executable pattern tables the
+    detector modules build their lookups from, and an `excluded` list of
+    documented boundary cases -- see fixture_definitions.yaml's header.
+    """
+    return _load_yaml("fixture_definitions.yaml")
+
+
+def load_exclusion_keywords() -> List[str]:
+    """Return repo name/description keywords that signal a boilerplate/toy repo."""
+    return _load_yaml("exclusion_keywords.yaml")
+
+
+def load_feature_extraction_patterns() -> Dict[str, Any]:
+    """Return the parsed feature-extraction pattern catalog.
+
+    Holds mock_patterns, mock_interaction_keywords, external_call_patterns,
+    object_instantiation_patterns, and teardown_detection (yield-based,
+    name-based, and type-based setup/teardown pairing rules) -- see
+    feature_extraction_patterns.yaml's header for the full schema.
+    """
+    return _load_yaml("feature_extraction_patterns.yaml")
 
 # Maps each CSV's "tool" display name to this project's internal agent_type
 # key. Every "tool" value in either CSV must have an entry here -- a

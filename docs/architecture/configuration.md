@@ -9,9 +9,10 @@ Per-run parameters (which repos, which language, output paths) are all via
 command-line arguments — every verb supports `--help` for its full argument
 list, and every default input/output directory is resolved through
 `collection/paths.py`. Fixed reference data (file-type filters, the
-testing-framework registry, per-language search settings, and the
-agent-detection catalog) is instead kept as YAML under
-`collection/config_data/` and `collection/heuristics/` — see
+testing-framework registry, per-language search settings, study-design
+constants, and the agent/fixture-detection catalogs) is instead kept as
+YAML under `collection/study_parameters/` (settings) and
+`collection/heuristics/` (detection-heuristic pattern catalogs) — see
 "Reference-Data Catalogs" below.
 
 ## Dataset B: `extract-fixtures --dataset b`
@@ -214,15 +215,17 @@ Python — editing a catalog is a data change, not a code change, and
 reviewers can scan the exact list without reading Python. `collection/config.py`
 loads all of these at import time and derives the module-level constants
 (`NON_CODE_EXTENSIONS`, `EXCLUSION_KEYWORDS`, `FRAMEWORK_REGISTRY`,
-`LANGUAGE_CONFIGS`) that the rest of the codebase already imports — no
-production call site reads the YAML directly.
+`LANGUAGE_CONFIGS`, and every temporal/threshold/sampling constant listed
+below) that the rest of the codebase already imports — no production call
+site reads the YAML directly.
 
 | Catalog | File | Loaded by |
 |---|---|---|
-| Non-code file extensions to skip during test-file scanning | `collection/config_data/non_code_extensions.yaml` | `config.NON_CODE_EXTENSIONS` |
+| Non-code file extensions to skip during test-file scanning | `collection/study_parameters/non_code_extensions.yaml` | `config.NON_CODE_EXTENSIONS` |
 | Repo name/description keywords for boilerplate/toy repos | `collection/heuristics/exclusion_keywords.yaml` | `config.EXCLUSION_KEYWORDS` |
-| Known testing frameworks per language | `collection/config_data/framework_registry.yaml` | `config.FRAMEWORK_REGISTRY` |
-| Per-language search/test-detection settings | `collection/config_data/language_configs.yaml` | `config.LANGUAGE_CONFIGS` |
+| Known testing frameworks per language | `collection/study_parameters/framework_registry.yaml` | `config.FRAMEWORK_REGISTRY` |
+| Per-language search/test-detection settings | `collection/study_parameters/language_configs.yaml` | `config.LANGUAGE_CONFIGS` |
+| Temporal boundaries, quality thresholds, sampling parameters | `collection/study_parameters/study_parameters.yaml` | `config.HUMAN_CORPUS_CUTOFF_DATE` / `MIN_STARS` / `MIN_COMMITS` / `MIN_TEST_FILES` / `MIN_FIXTURES_FOUND` / `TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP` / `DATASET_C_SAMPLING_SEED` / `TIER1_*` / `TIER2_*` |
 | Agent detection: config-file patterns | `collection/heuristics/agent-mining/agent_files.csv` (mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s `files.csv` schema+content) | `agent_patterns.PAPER_AGENT_CONFIG_PATTERNS` / `LIGHTWEIGHT_AGENT_CONFIG_PATTERNS` |
 | Agent detection: paper's strict-scope agent subset | `collection/heuristics/agent_heuristics.yaml` (`paper_scope`) | `agent_patterns.PAPER_AGENT_CONFIG_PATTERNS` |
 | Agent detection: commit author/trailer signatures | `collection/heuristics/agent-mining/agent_authors.csv` (mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s `authors.csv` schema+content) | `agent_patterns.AGENT_SIGNATURES` |

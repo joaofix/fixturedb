@@ -20,8 +20,8 @@ as @pytest.fixture (pytest_asyncio fixtures are not a separate fixture_type)
 
 import re
 
-from .config_data import load_fixture_definitions
 from .detector_shared import FixtureResult, _build_result, _source
+from .heuristics import load_fixture_definitions
 
 _DEFS = load_fixture_definitions()["python"]
 

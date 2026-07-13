@@ -1,0 +1,31 @@
+# Study-design constants for the between-group corpus collection methodology:
+# temporal boundaries, quality-filter thresholds, and sampling parameters.
+# Kept as data here, not hardcoded in collection/config.py, so a reviewer has
+# one place to find every numeric/date parameter that shapes the study.
+# See docs/architecture/configuration.md for how each is used downstream.
+
+# Temporal boundaries
+human_corpus_cutoff_date: "2020-12-31" # Dataset C: pre-agent-era snapshot
+agent_corpus_start_date: "2025-01-01" # Datasets A/B: agent-availability window
+dataset_c_min_created_date: "2016-01-01" # Dataset C: lower bound of repo creation-date window
+
+# Quality thresholds applied to every collected repo
+min_stars: 500
+min_commits: 100
+min_test_files: 5
+min_fixtures_found: 1 # repos where we detect zero fixtures are dropped
+
+# Sampling
+target_repos_per_language_between_group: 500
+dataset_c_sampling_seed: 42 # overridable via the DATASET_C_SAMPLING_SEED env var
+
+# Tier-2 supplementary repo discovery (sensitivity analysis, not the main
+# between-group comparison -- see docs/architecture/agent-detection.md)
+tier1_minimum_repos_with_agent: 30 # below this, Tier-2 discovery is triggered
+tier1_minimum_agent_commits: 100
+tier2_matching_min_stars: 50
+tier2_matching_max_stars: 50000
+tier2_matching_star_tolerance: 2.0 # allow repos within 2x star count of corpus median
+tier2_min_commits: 100
+tier2_min_test_files: 5
+tier2_must_have_agent_configs: true

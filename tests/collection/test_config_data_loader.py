@@ -1,4 +1,5 @@
-"""Guardrail tests for the config_data YAML catalogs and their loaders.
+"""Guardrail tests for the study_parameters/heuristics YAML catalogs and
+their loaders.
 
 These exist to catch a malformed future edit to one of the YAML files
 (typo, empty list, wrong shape) -- not to test collection logic itself.
@@ -6,10 +7,12 @@ These exist to catch a malformed future edit to one of the YAML files
 
 import re
 
-from collection.config_data import (
+from collection.heuristics import (
     load_exclusion_keywords,
     load_feature_extraction_patterns,
     load_fixture_definitions,
+)
+from collection.study_parameters import (
     load_framework_registry,
     load_language_configs_data,
     load_non_code_extensions,

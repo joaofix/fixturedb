@@ -31,8 +31,9 @@ fixturedb/
 │       ├── tiered_agent_corpus_scanner.py   # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
 │       ├── fixture_extractor.py             # Fixture extraction at commit level
 │       ├── db.py                            # Database schema and helpers
-│       ├── config.py                        # Thresholds, dates -- loads catalogs from config_data/
-│       ├── config_data/                     # Reference-data catalogs as YAML (extensions, frameworks, ...)
+│       ├── config.py                        # Thresholds, dates -- re-exports catalogs from study_parameters/ and heuristics/
+│       ├── study_parameters/                # Settings + study-design constants as YAML (extensions, frameworks, ...)
+│       ├── heuristics/                      # Detection-heuristic catalogs as YAML/CSV (agent, fixture, mock patterns)
 │       ├── detector.py                      # Fixture detection (tree-sitter)
 │       └── persistent_clone.py              # Repository cloning utilities
 │
@@ -167,7 +168,7 @@ Supporting modules:
 - **agent_signal_primitives.py** — Agent detection utilities (formerly agent_detector.py)
 - **fixture_extractor.py** — Fixture extraction at commit level
 - **db.py** — Database schema, helpers, and control variable functions
-- **config.py** — Configuration constants (temporal boundaries, thresholds); loads reference-data catalogs from **config_data/** (see [Configuration Reference](../architecture/configuration.md))
+- **config.py** — Configuration constants (temporal boundaries, thresholds); re-exports reference-data catalogs loaded from **study_parameters/** and **heuristics/** (see [Configuration Reference](../architecture/configuration.md))
 - **paths.py** — Central path registry for every dataset's `repos`/`commits`/`test-commits`/`fixtures` stage directories, `db/*.db`, `export/*.zip`
 
 ### Data Flow

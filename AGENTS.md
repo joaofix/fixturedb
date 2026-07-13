@@ -45,20 +45,25 @@ Python, Java, JavaScript, TypeScript.
 collection/          # Main pipeline code (the "library")
   __main__.py        # `python -m collection <verb> --dataset {a,b,c}` -- the one CLI surface
   paths.py           # Central path registry: datasets/{a,b,c}/{stage}, db/{a,b,c}.db, export/{a,b,c}.zip
-  config.py          # Thresholds, dates -- loads catalogs from config_data/ below
-  config_data/       # Reference-data catalogs as YAML (non-code extensions, boilerplate-
-                     # repo exclusion keywords, framework registry, per-language configs,
-                     # feature extraction patterns) -- edit these, not the .py files, to update a catalog
+  config.py          # Thresholds, dates -- re-exports constants loaded from study_parameters/ and heuristics/ below
+  study_parameters/  # Settings + study-design constants as YAML (non-code extensions, framework
+                     # registry, per-language configs, and study_parameters.yaml: temporal
+                     # boundaries/quality thresholds/sampling params) -- edit these, not config.py
   db.py              # SQLite schema, upsert helpers, migrations
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
   agent_patterns.py  # Loads the agent catalog (see heuristics/ below) and derives detection dicts
   tier2_discovery.py # Tier-1 corpus assessment + Tier-2 SEART discovery (discover-commits --dataset a --tier2)
+  heuristics/        # Detection-heuristic catalogs as YAML/CSV -- pattern/keyword tables that
+                     # drive a classification decision (agent vs. human, fixture vs. not,
+                     # boilerplate repo vs. not), as opposed to study_parameters/'s plain settings
   heuristics/agent_heuristics.yaml  # paper_scope only now -- edit here to change the paper's strict-scope agent subset (this project's own catalog, kept at heuristics/ root)
   heuristics/agent-mining/agent_files.csv  # Config-file/directory patterns (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's files.csv schema+content for citation
   heuristics/agent-mining/agent_authors.csv  # Commit author/trailer signatures (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's authors.csv schema+content for citation
   heuristics/agent-mining/bots.csv  # CI/automation bot account patterns (pattern,tool) -- mirrors labri-progress/agent-mining's bots.csv schema+content for citation
   heuristics/fixture_definitions.yaml  # Operational definition of "fixture" per language -- edit here to update a detector pattern; also documents per-language `excluded` boundary cases the fixture detectors deliberately don't catch (reviewer audit trail)
+  heuristics/exclusion_keywords.yaml  # Repo name/description keywords that signal a boilerplate/toy repo
+  heuristics/feature_extraction_patterns.yaml  # Mock-framework/external-call/object-instantiation regex tables + setup/teardown pairing rules
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a

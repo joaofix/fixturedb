@@ -31,8 +31,8 @@ import re
 
 import pytest
 
-from collection.config_data import load_feature_extraction_patterns
 from collection.detector_shared import MOCK_PATTERNS
+from collection.heuristics import load_feature_extraction_patterns
 
 MOCK_PATTERNS_CATALOG = load_feature_extraction_patterns()["mock_patterns"]
 

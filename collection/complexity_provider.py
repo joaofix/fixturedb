@@ -32,7 +32,7 @@ from typing import Optional
 
 from lizard import analyze_file as lizard_analyze_file
 
-from collection.config_data import load_feature_extraction_patterns
+from collection.heuristics import load_feature_extraction_patterns
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)

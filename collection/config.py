@@ -2,11 +2,16 @@
 Central configuration for the fixture corpus collection pipeline.
 Edit this file to tune search parameters before a collection run.
 
-Reference-data catalogs (non-code file extensions, boilerplate-repo exclusion
-keywords, the testing-framework registry, and per-language search/detection
-settings) are not hardcoded here -- they live as YAML under
-collection/config_data/ and are loaded via collection.config_data. Edit those
-files to update a catalog; no Python change needed.
+Reference data is not hardcoded here -- it lives as YAML in two places:
+- collection/study_parameters/: settings and study-design constants
+  (non-code file extensions, testing-framework registry, per-language
+  search/detection settings, temporal boundaries, quality thresholds,
+  sampling parameters).
+- collection/heuristics/: detection-heuristic catalogs (pattern/keyword
+  tables driving a classification decision) -- boilerplate-repo exclusion
+  keywords, plus agent/fixture/mock detection (loaded directly by their
+  own consumer modules, not here).
+Edit the YAML to update a catalog; no Python change needed.
 """
 
 import os
@@ -15,14 +20,17 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .config_data import (
-    load_exclusion_keywords,
+from .heuristics import load_exclusion_keywords
+from .study_parameters import (
     load_framework_registry,
     load_language_configs_data,
     load_non_code_extensions,
+    load_study_parameters,
 )
 
 load_dotenv()
+
+_STUDY_PARAMS = load_study_parameters()
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -45,37 +53,30 @@ COLLECTION_OUTPUT_TAG = ""
 LOGS_DIR = ROOT_DIR / "logs"
 
 # ---------------------------------------------------------------------------
-# Temporal boundaries for between-group comparison methodology
+# Temporal boundaries, quality thresholds, and sampling parameters for the
+# between-group comparison methodology -- values live in
+# collection/study_parameters/study_parameters.yaml (see that file's header);
+# Dataset C's min-created-date reasoning is in internal-docs/methodology-
+# improvements/dataset-c-repo-selection.md.
 # ---------------------------------------------------------------------------
 
-# Between-group methodology uses different boundaries
-# Human corpus: fixtures from pre-2021 repositories (before agent era)
-HUMAN_CORPUS_CUTOFF_DATE = "2020-12-31"
+HUMAN_CORPUS_CUTOFF_DATE = _STUDY_PARAMS["human_corpus_cutoff_date"]
+AGENT_CORPUS_START_DATE = _STUDY_PARAMS["agent_corpus_start_date"]
+DATASET_C_MIN_CREATED_DATE = _STUDY_PARAMS["dataset_c_min_created_date"]
 
-# Agent corpus: fixtures from 2025+ repositories with agent commits
-AGENT_CORPUS_START_DATE = "2025-01-01"
-
-# Dataset C only: lower bound on repo creation date. Combined with
-# HUMAN_CORPUS_CUTOFF_DATE above, this bounds a Dataset C repo's age at
-# snapshot time to a fixed window (2016-01-01 to 2020-12-31, ~5 years),
-# instead of an unbounded "any pre-cutoff repo" pool. Same value for every
-# language, deliberately -- see internal-docs/methodology-improvements/
-# dataset-c-repo-selection.md for the empirical basis and full reasoning.
-DATASET_C_MIN_CREATED_DATE = "2016-01-01"
-
-# Quality thresholds for corpus filtering (same for both)
-# Project minimum star floor for repository quality filtering
-MIN_STARS = 500
-MIN_COMMITS = 100
-MIN_TEST_FILES = 5
+MIN_STARS = _STUDY_PARAMS["min_stars"]
+MIN_COMMITS = _STUDY_PARAMS["min_commits"]
+MIN_TEST_FILES = _STUDY_PARAMS["min_test_files"]
+MIN_FIXTURES_FOUND = _STUDY_PARAMS["min_fixtures_found"]
 
 # Agent configuration files are defined in `collection/agent_patterns.py` as
 # explicit pattern lists (with wildcard and directory markers) and imported by
 # detection modules. Keep patterns centralized in `agent_patterns.py` to avoid
 # duplication and preserve explicit, readable patterns.
 
-# Target repositories per language (NEW: between-group design)
-TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP = 500
+TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP = _STUDY_PARAMS[
+    "target_repos_per_language_between_group"
+]
 
 for _d in (CLONES_DIR, DB_DIR, LOGS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
@@ -88,8 +89,10 @@ for _d in (CLONES_DIR, DB_DIR, LOGS_DIR):
 # (not required for core functionality; pre-checks fail gracefully without it)
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")  # set in .env
 
-# Dataset C sampling seed
-DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))
+# Dataset C sampling seed (default lives in study_parameters.yaml, overridable via env)
+DATASET_C_SAMPLING_SEED = int(
+    os.getenv("DATASET_C_SAMPLING_SEED", str(_STUDY_PARAMS["dataset_c_sampling_seed"]))
+)
 
 # ---------------------------------------------------------------------------
 # File size and type filters
@@ -102,7 +105,7 @@ DATASET_C_SAMPLING_SEED = int(os.getenv("DATASET_C_SAMPLING_SEED", "42"))
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
 # Non-source-code file extensions to skip (resource files, data, config, etc.)
-# See collection/config_data/non_code_extensions.yaml for the full catalog.
+# See collection/study_parameters/non_code_extensions.yaml for the full catalog.
 NON_CODE_EXTENSIONS = set(load_non_code_extensions())
 
 # ---------------------------------------------------------------------------
@@ -216,24 +219,8 @@ LANGUAGE_CONFIGS = {
 # 4. Future enhancement: generating detection patterns from registry
 # ---------------------------------------------------------------------------
 
-# See collection/config_data/framework_registry.yaml for the full catalog.
+# See collection/study_parameters/framework_registry.yaml for the full catalog.
 FRAMEWORK_REGISTRY = load_framework_registry()
-
-# Minimum thresholds applied after cloning
-MIN_TEST_FILES = 5  # repos with fewer test files are dropped
-MIN_COMMITS = 100  # repos with fewer commits are dropped
-MIN_FIXTURES_FOUND = 1  # repos where we detect zero fixtures are dropped
-
-# Per-language survival rates (discovered → analyzed with fixtures)
-# These are empirically observed rates used to calculate discovery estimates.
-# They are updated as we collect data for each language.
-# Format: {language: survival_rate}
-LANGUAGE_SURVIVAL_RATES = {
-    "python": 0.076,  # 7.6% actual from completed collection
-    "java": 0.15,  # estimate (Java typically has higher survival)
-    "javascript": 0.08,  # estimate
-    "typescript": 0.08,  # estimate
-}
 
 # Clone batch size (used by `clone` command for incremental cloning)
 CLONE_BATCH_SIZE = 50
@@ -263,30 +250,25 @@ MAX_COLLECTION_ITERATIONS = 10
 # File size warning threshold in MB (log warning if file exceeds this during extraction)
 FILE_SIZE_WARN_MB = 10
 
-# Fixture complexity thresholds for fixture categorization
-# Data builder: repos with many objects instantiated (likely factory pattern)
-OBJECTS_DATA_BUILDER_THRESHOLD = 5
-# Parametrized fixtures: repos with moderate reuse/complexity
-OBJECTS_PARAMETRIZED_THRESHOLD = 2
-
 # ---------------------------------------------------------------------------
 # Agent Detection Configuration (Two-Tier Methodology)
 # ---------------------------------------------------------------------------
 # Agent config-file patterns and commit signatures live in
 # collection/heuristics/agent_heuristics.yaml, loaded via
 # collection/agent_patterns.py (AGENT_SIGNATURES, LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
-# PAPER_AGENT_CONFIG_PATTERNS) — not duplicated here.
+# PAPER_AGENT_CONFIG_PATTERNS) — not duplicated here. Thresholds below live in
+# collection/study_parameters/study_parameters.yaml.
 
 # Tier 1 assessment thresholds (Phase 1C)
 # If Tier 1 (corpus repos) falls below these, Phase 1D (matched repo discovery) is triggered
-TIER1_MINIMUM_REPOS_WITH_AGENT = 30  # minimum repos needed from corpus
-TIER1_MINIMUM_AGENT_COMMITS = 100  # minimum agent commits needed from corpus
+TIER1_MINIMUM_REPOS_WITH_AGENT = _STUDY_PARAMS["tier1_minimum_repos_with_agent"]
+TIER1_MINIMUM_AGENT_COMMITS = _STUDY_PARAMS["tier1_minimum_agent_commits"]
 
 # Tier 2 matching criteria (Phase 1D: SEART-based discovery)
 # Parameters for finding supplementary repos when Tier 1 insufficient
-TIER2_MATCHING_MIN_STARS = 50  # lower bound for matched repos
-TIER2_MATCHING_MAX_STARS = 50000  # upper bound for matched repos
-TIER2_MATCHING_STAR_TOLERANCE = 2.0  # allow repos within 2x star count of corpus median
-TIER2_MIN_COMMITS = 100  # matched repos must have >= commits
-TIER2_MIN_TEST_FILES = 5  # matched repos must have >= test files
-TIER2_MUST_HAVE_AGENT_CONFIGS = True  # matched repos MUST have agent config files
+TIER2_MATCHING_MIN_STARS = _STUDY_PARAMS["tier2_matching_min_stars"]
+TIER2_MATCHING_MAX_STARS = _STUDY_PARAMS["tier2_matching_max_stars"]
+TIER2_MATCHING_STAR_TOLERANCE = _STUDY_PARAMS["tier2_matching_star_tolerance"]
+TIER2_MIN_COMMITS = _STUDY_PARAMS["tier2_min_commits"]
+TIER2_MIN_TEST_FILES = _STUDY_PARAMS["tier2_min_test_files"]
+TIER2_MUST_HAVE_AGENT_CONFIGS = _STUDY_PARAMS["tier2_must_have_agent_configs"]

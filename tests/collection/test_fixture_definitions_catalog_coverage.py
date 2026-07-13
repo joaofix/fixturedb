@@ -29,8 +29,8 @@ from pathlib import Path
 
 import pytest
 
-from collection.config_data import load_fixture_definitions
 from collection.detector import extract_fixtures
+from collection.heuristics import load_fixture_definitions
 
 _DEFS = load_fixture_definitions()
 

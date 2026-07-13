@@ -23,7 +23,7 @@ from typing import Optional
 from collection.logging_utils import get_logger
 
 from .complexity_provider import analyze_function_complexity
-from .config_data import load_feature_extraction_patterns
+from .heuristics import load_feature_extraction_patterns
 
 logger = get_logger(__name__)
 

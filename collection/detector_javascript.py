@@ -20,8 +20,8 @@ qualifier -- see
 tests/collection/test_extractor_unit/test_javascript_fixtures.py::TestAsyncJavaScriptFixtures.
 """
 
-from .config_data import load_fixture_definitions
 from .detector_shared import FixtureResult, _build_result, _source
+from .heuristics import load_fixture_definitions
 
 _DEFS = load_fixture_definitions()["javascript_typescript"]
 
