@@ -170,7 +170,6 @@ def test_mock_patterns_cover_expected_frameworks():
         "pytest_monkeypatch",
         "mockito",
         "easymock",
-        "mockk",
         "jest",
         "sinon",
         "vitest",

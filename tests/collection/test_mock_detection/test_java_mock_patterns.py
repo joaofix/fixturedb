@@ -123,13 +123,17 @@ public class ServiceTest {
         assert fixture.mocks[0].target_identifier == "UserRepository"
 
 
-class TestJavaMockKPatterns:
-    """MockK (Kotlin) mock patterns, as they'd appear in a .java-scanned
-    source snippet (the pattern itself is language-agnostic text matching)."""
+class TestJavaStaticImportMockitoPatterns:
+    """Static-import Mockito usage (`import static
+    org.mockito.Mockito.mock;` then a bare `mock(X.class)` call) -- not
+    Kotlin's MockK, which was this pattern's label until a real toy
+    Dataset A run showed every hit was Java code (MockK's class-literal
+    syntax is `X::class`, never the Java-only `X.class` this pattern
+    requires)."""
 
-    def test_mockk_mock_call(self):
-        """mock(X.class) (MockK style) should be detected, category
-        "mock"."""
+    def test_static_import_mock_call(self):
+        """Bare mock(X.class) (static-import Mockito) should be detected,
+        category "mock"."""
         code = """
 public class ServiceTest {
     @Before
@@ -140,7 +144,7 @@ public class ServiceTest {
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert len(fixture.mocks) == 1
-        assert fixture.mocks[0].framework == "mockk"
+        assert fixture.mocks[0].framework == "mockito"
         assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "UserRepository"
 

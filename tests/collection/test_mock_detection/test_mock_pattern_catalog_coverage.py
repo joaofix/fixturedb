@@ -112,7 +112,7 @@ def test_sample_does_not_trigger_any_other_pattern(entry):
     a collision would mean two frameworks/categories get recorded for one
     real mock call (double-counting num_mocks) or a wrong category is
     assigned. This is exactly the class of bug found in
-    MagicMock|Mock|AsyncMock vs EasyMock.createMock(...) and mockk's
+    MagicMock|Mock|AsyncMock vs EasyMock.createMock(...) and static-import
     mock(X.class) vs Mockito.mock(X.class)."""
     sample = SAMPLES[entry["pattern"]]
     matches = [

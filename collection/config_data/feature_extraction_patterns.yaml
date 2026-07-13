@@ -130,12 +130,19 @@ mock_patterns:
   - pattern: 'EasyMock\.createMock\s*\(\s*(\w+)\.class'
     framework: easymock
     category: mock
-  # (?<!\.) excludes qualified calls like "Mockito.mock(" -- without it,
-  # this bare "mock(" pattern also matches as a substring of
-  # Mockito.mock(...), double-counting the same call site under both
-  # frameworks.
+  # Static-import Mockito usage (`import static org.mockito.Mockito.mock;`
+  # then a bare `mock(Foo.class)` call) -- NOT Kotlin's MockK, despite an
+  # earlier version of this pattern being labeled that way. MockK's own
+  # class-literal syntax is `Foo::class`, never `Foo.class` (a Java-only
+  # construct), so this pattern -- which requires a literal ".class" --
+  # can only ever match Java source, confirmed via a real toy Dataset A
+  # run where every "mockk"-labeled hit was Java code using this exact
+  # static-import idiom. (?<!\.) excludes qualified calls like
+  # "Mockito.mock(" -- without it, this bare "mock(" pattern also matches
+  # as a substring of Mockito.mock(...), double-counting the same call
+  # site under both patterns.
   - pattern: '(?<!\.)\bmock\s*\(\s*(\w+)\.class'
-    framework: mockk  # MockK (Kotlin)
+    framework: mockito
     category: mock
   # JavaScript / TypeScript
   - pattern: 'jest\.fn\s*\('
