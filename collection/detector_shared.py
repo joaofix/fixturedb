@@ -11,7 +11,7 @@ span languages or need the full fixture set as context.
 
 The mock/external-call/object-instantiation regex tables and the
 setup/teardown pairing rules are loaded from
-collection/config_data/feature_extraction_patterns.yaml rather than
+collection/heuristics/feature_extraction_patterns.yaml rather than
 hardcoded here -- see that file for the full catalog and the reasoning
 behind each pairing.
 """
@@ -625,7 +625,7 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
     Post-process fixtures to detect has_teardown_pair: whether a fixture has cleanup logic.
 
     Four detection mechanisms, all driven by
-    collection/config_data/feature_extraction_patterns.yaml's
+    collection/heuristics/feature_extraction_patterns.yaml's
     teardown_detection table:
       - yield_based: pytest fixtures -- checks for a 'yield' statement in the
         fixture's own body (no pairing against another fixture needed).

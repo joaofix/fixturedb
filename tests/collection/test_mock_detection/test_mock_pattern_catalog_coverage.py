@@ -2,7 +2,7 @@
 
 Unlike the per-language test files (which exercise real fixtures through
 the full extract_fixtures() pipeline), this file is parametrized directly
-over collection/config_data/feature_extraction_patterns.yaml's
+over collection/heuristics/feature_extraction_patterns.yaml's
 mock_patterns list. That makes two guarantees the per-language tests
 can't, by construction:
 

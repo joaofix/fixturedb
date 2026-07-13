@@ -2,26 +2,24 @@
 
 Each catalog lives in its own file, next to this one, as plain data:
 - non_code_extensions.yaml -- file extensions skipped during test-file scanning
-- exclusion_keywords.yaml -- repo name/description keywords for boilerplate/toy repos
 - framework_registry.yaml -- known testing frameworks per language
 - language_configs.yaml -- per-language search and test-detection settings
-- feature_extraction_patterns.yaml -- mock-framework/external-call/
-  object-instantiation regex tables and setup/teardown pairing rules behind
-  the quantitative fixture metrics (see that file's header comment)
 
-fixture_definitions.yaml -- operational definition of "fixture" per language
-(see that file's header comment for the schema and the per-language
-`excluded` boundary-case catalog) -- lives in collection/heuristics/, not
-here, alongside the other detection-heuristic catalogs (agent_heuristics.yaml,
-agent-mining/); load_fixture_definitions() below reads it from there.
+Detection-heuristic catalogs (pattern/keyword tables that drive a
+classification decision, not just settings) live in collection/heuristics/
+instead, alongside agent_heuristics.yaml/agent-mining/: fixture_definitions.yaml,
+exclusion_keywords.yaml, feature_extraction_patterns.yaml.
+load_fixture_definitions()/load_exclusion_keywords()/
+load_feature_extraction_patterns() below read them from there.
 
-collection/config.py loads the first four and derives the module-level
-constants (NON_CODE_EXTENSIONS, EXCLUSION_KEYWORDS, FRAMEWORK_REGISTRY,
-LANGUAGE_CONFIGS) existing call sites already use; collection/detector_python.py,
-detector_java.py, and detector_javascript.py load fixture_definitions.yaml and
-derive their own pattern tables; collection/detector_shared.py and
-complexity_provider.py load feature_extraction_patterns.yaml -- editing a
-catalog is a YAML change, not a Python change.
+collection/config.py loads all three of the above plus exclusion_keywords.yaml
+and derives the module-level constants (NON_CODE_EXTENSIONS,
+EXCLUSION_KEYWORDS, FRAMEWORK_REGISTRY, LANGUAGE_CONFIGS) existing call
+sites already use; collection/detector_python.py, detector_java.py, and
+detector_javascript.py load fixture_definitions.yaml and derive their own
+pattern tables; collection/detector_shared.py and complexity_provider.py
+load feature_extraction_patterns.yaml -- editing a catalog is a YAML
+change, not a Python change.
 """
 
 from pathlib import Path
@@ -44,8 +42,12 @@ def load_non_code_extensions() -> List[str]:
 
 
 def load_exclusion_keywords() -> List[str]:
-    """Return repo name/description keywords that signal a boilerplate/toy repo."""
-    return _load_yaml("exclusion_keywords.yaml")
+    """Return repo name/description keywords that signal a boilerplate/toy repo.
+
+    Lives in collection/heuristics/, not config_data/ -- see this module's
+    docstring.
+    """
+    return _load_yaml("exclusion_keywords.yaml", directory=_HEURISTICS_DIR)
 
 
 def load_framework_registry() -> Dict[str, List[str]]:
@@ -76,6 +78,7 @@ def load_feature_extraction_patterns() -> Dict[str, Any]:
     Holds mock_patterns, mock_interaction_keywords, external_call_patterns,
     object_instantiation_patterns, and teardown_detection (yield-based,
     name-based, and type-based setup/teardown pairing rules) -- see
-    feature_extraction_patterns.yaml's header for the full schema.
+    feature_extraction_patterns.yaml's header for the full schema. Lives in
+    collection/heuristics/, not config_data/ -- see this module's docstring.
     """
-    return _load_yaml("feature_extraction_patterns.yaml")
+    return _load_yaml("feature_extraction_patterns.yaml", directory=_HEURISTICS_DIR)

@@ -23,7 +23,7 @@ BENEFITS of using Lizard:
 - Academic credibility for published research
 
 The object-instantiation (constructor) regex patterns are loaded from
-collection/config_data/feature_extraction_patterns.yaml rather than
+collection/heuristics/feature_extraction_patterns.yaml rather than
 hardcoded here -- see that file's `object_instantiation_patterns` section.
 """
 
@@ -183,7 +183,7 @@ def _count_object_instantiations(
     patterns and validates against Lizard's count to minimize false positives.
 
     Constructor patterns are loaded from
-    collection/config_data/feature_extraction_patterns.yaml's
+    collection/heuristics/feature_extraction_patterns.yaml's
     object_instantiation_patterns (Java/JS/TypeScript: new ClassName(...)
     with generics; Python: capitalized ClassName(...) heuristic).
 

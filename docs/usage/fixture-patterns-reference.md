@@ -66,7 +66,7 @@ Python Fixtures
 **Pattern:** Method names: `setUp()`, `tearDown()`, `setUpClass()`, `tearDownClass()`, `setUpModule()`, `tearDownModule()`, `asyncSetUp()`, `asyncTearDown()` (the last two are `IsolatedAsyncioTestCase`'s own hooks, called in addition to `setUp()`/`tearDown()`, not a replacement for them)
 **Scope:** Determined by method name and class context
 
-**Teardown pairing (`has_teardown_pair`):** in addition to a same-scope, separately-named teardown method (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`), a `setUp()`/`setUpClass()` fixture is also flagged as having a teardown pair if its own body registers cleanup inline via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class) — the modern, docs-recommended alternative to a separate teardown method. See `collection/config_data/feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table.
+**Teardown pairing (`has_teardown_pair`):** in addition to a same-scope, separately-named teardown method (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`), a `setUp()`/`setUpClass()` fixture is also flagged as having a teardown pair if its own body registers cleanup inline via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class) — the modern, docs-recommended alternative to a separate teardown method. See `collection/heuristics/feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table.
 
 ---
 

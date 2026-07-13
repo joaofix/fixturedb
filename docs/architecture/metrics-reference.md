@@ -21,7 +21,7 @@ fixture is found in the first place), see [detection.md](detection.md).
 | `raw_source`, `start_line`, `end_line` | Verbatim text/location of the fixture's own node | `detector_shared.py::_build_result()` | all |
 
 All regex catalogs (I/O patterns, constructor patterns, mock patterns, teardown-pairing rules) live in
-[feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml), not
+[feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml), not
 hardcoded in Python — see [configuration.md](configuration.md#reference-data-catalogs).
 
 ---

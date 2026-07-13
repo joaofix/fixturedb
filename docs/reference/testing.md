@@ -82,7 +82,7 @@ classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across
 languages. See
 [Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection)
 for the full methodology and
-[collection/config_data/feature_extraction_patterns.yaml](../../collection/config_data/feature_extraction_patterns.yaml)
+[collection/heuristics/feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml)
 for the exact pattern/framework/category catalog (30 patterns, 11
 frameworks).
 

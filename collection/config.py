@@ -182,7 +182,7 @@ def get_known_frameworks(language: str) -> list[str]:
     return FRAMEWORK_REGISTRY.get(language, [])
 
 
-# See collection/config_data/exclusion_keywords.yaml for the full catalog.
+# See collection/heuristics/exclusion_keywords.yaml for the full catalog.
 EXCLUSION_KEYWORDS: list[str] = load_exclusion_keywords()
 
 

@@ -17,7 +17,7 @@ For each of the supported languages, we define:
 2. **Mock patterns** — How to identify mock usages within a fixture
    Uses regex-based heuristics to detect mock framework calls:
    - unittest_mock (Python), Mockito (Java), Jest (JS), Sinon (JS), etc.
-   - See collection/config_data/feature_extraction_patterns.yaml's
+   - See collection/heuristics/feature_extraction_patterns.yaml's
      mock_patterns for the exact catalog.
 
 3. **Fixture metrics** — Quantitative properties of the fixture
@@ -61,7 +61,7 @@ The detector delegates metric calculation to industry-standard tools:
   nesting depth
 - Regex: I/O and constructor-call pattern detection (external_calls,
   object_instantiation), catalogued in
-  collection/config_data/feature_extraction_patterns.yaml
+  collection/heuristics/feature_extraction_patterns.yaml
 
 See collection/complexity_provider.py for the Lizard integration and
 docs/architecture/metrics-reference.md for full per-metric methodology.
