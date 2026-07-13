@@ -15,7 +15,7 @@ top of (deliberately not duplicated below).
 | 1 | No completed empirical validation study | **Deferred** — waits until the full (non-toy) dataset is collected. |
 | 2 | Differential recall across authorship groups | **Discussed, documented, unresolved.** Detector-broadening mitigation considered and rejected (not pursued). Written up as a threats-to-validity entry in `docs/reference/limitations.md` ("Differential Recall Across Authorship Groups"). The concrete follow-up (validate the human corpus explicitly, not skip it as redundant) is queued into gap #1's eventual execution — see that gap's updated note below. Revisit at a later moment, not today. |
 | 3 | Purity-gate rejection rate not compared between corpora | **Addressed (2026-07-13).** Not wired into `between_group_comparison.py` as originally proposed -- instead landed as a standalone `summarize --dataset {a,b,c}` verb writing `{dataset}/summary.yaml`, auditable per-dataset without running a comparison. Also fixed a real gap found along the way: Dataset B never tracked purity accept/reject counts at all (`human_corpus.py` discarded them silently); now written to `test-commits/{lang}_purity_stats.csv`. Real number from toy data: Dataset A's acceptance rate is 47% overall. |
-| 4 | Dataset B's elevated false-negative floor not called out specifically | Queued for later today (2026-07-13). |
+| 4 | Dataset B's elevated false-negative floor not called out specifically | **Addressed (2026-07-13).** Documentation-only, as proposed — no code change. New subsection in `docs/reference/limitations.md` ("Differential False-Negative Risk: Dataset B vs. Dataset C"). The optional cheap-signal-for-B idea (scanning sibling PR/branch commits for trailers) was not pursued. |
 | 5 | No regression protection on recall claims over time | Queued for later today (2026-07-13). |
 
 ## What already holds up
@@ -187,6 +187,16 @@ magnitude explicitly. Optionally, a cheap additional signal for B specifically
 when the specific commit under test lacks one — without resorting to full
 free-text scanning (which was already tried and rejected for good reason, see
 "What already holds up" above).
+
+**Update (2026-07-13):** Addressed via the documentation-only half of the
+fix. New subsection in `docs/reference/limitations.md`, "Differential
+False-Negative Risk: Dataset B vs. Dataset C", placed directly after "Agent
+Detection Conservatism" (same section family, same bullet/Mitigation
+format as its siblings there) — states plainly that B and C are not
+interchangeable "human" baselines and that A-vs-B/A-vs-C should be treated
+as related but distinct comparisons, not pooled. The optional
+sibling-commit-trailer-scanning signal for B was not pursued — no code
+change, this gap is purely a disclosure gap, not a detection gap.
 
 ### 5. No regression protection ties the published recall claims to the actual detector code over time
 

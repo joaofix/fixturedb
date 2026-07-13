@@ -18,6 +18,13 @@ The between-group methodology collects human and agent corpora at different time
 
 **Mitigation:** Use conservative Tier 1 estimates. Tier 2/3 (heuristic-based) detection documented in [Agent Detection Methodology](../architecture/agent-detection.md).
 
+### Differential False-Negative Risk: Dataset B vs. Dataset C
+- **Dataset B** draws its repo pool from the *same* agent-adopting repositories as Dataset A (every B repo is a subset of A's agent-config-having pool). This is a real strength for controlling repo-level confounds (domain, maturity) — but it also means B's "human"-labeled commits sit in repos where agent use is actively encouraged, so an untrailed, informally-agent-assisted commit (see "Agent Detection Conservatism" above) is more likely to occur in B than it would in a naive agent-free control.
+- **Dataset C** draws from a different, non-agent-config repo pool and does not share this specific elevated risk to the same degree.
+- **Impact:** B and C are not interchangeable "human" baselines with respect to this risk. The A-vs-B ("within-repo") and A-vs-C ("cross-repo") comparisons carry different residual confidence even though both nominally compare agent commits against a "human" corpus.
+
+**Mitigation:** None currently measured or applied — this is a structural property of each dataset's repo-selection strategy, not a detection bug to fix. Treat A-vs-B and A-vs-C findings as testing related but distinct questions rather than pooling them into one undifferentiated "agent vs. human" conclusion.
+
 ### Repository Availability
 - **Human corpus:** Assumes pre-2021 repositories are still publicly available
 - **Agent corpus:** Depends on GitHub API availability and rate limits
