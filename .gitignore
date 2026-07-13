@@ -207,12 +207,48 @@ marimo/_lsp/
 __marimo__/
 
 # FixtureDB — pipeline-generated directories
-clones/                 # Temporary git clones (deleted after extraction)
-db/                     # Per-dataset SQLite databases (secondary; datasets/ CSVs are the real output)
-export/                 # Final per-dataset export ZIPs
-toy-dataset/            # Output of `python -m collection toy` -- mirrors datasets/+db/, never committed
-logs/                   # Pipeline execution logs
-output/                 # Internal bookkeeping (EDA output, analysis results)
-internal-docs/*         # Internal documentation and notes
+#
+# NOTE: git .gitignore does not support inline trailing comments -- a `#`
+# after a pattern on the same line is literal pattern text, not a comment,
+# and silently makes the rule match nothing. Every pattern below must have
+# its comment on its own line, not trailing the pattern (confirmed via a
+# clean-repo check-ignore test; several lines here were silently broken
+# this way -- see internal-docs/ note further below for the one case that
+# is left as-is rather than fixed).
+#
+# Temporary git clones (deleted after extraction)
+clones/
+# Per-dataset SQLite databases (secondary; datasets/ CSVs are the real output)
+db/
+# Final per-dataset export ZIPs
+export/
+# Output of `python -m collection toy` -- mirrors datasets/+db/, never committed
+toy-dataset/
+# toy-dataset/{a,b,c} CSVs get force-added (git add -f) for manual review,
+# which defeats the directory-level rule above for the whole tree (git must
+# recurse once anything inside is tracked). Explicit rules below keep
+# runtime-only artifacts (DBs, checkpoints, progress/summary files) out even
+# when a sibling CSV is force-tracked.
+# SQLite DBs -- only meaningful on the machine that produced them
+toy-dataset/db/
+toy-dataset/**/*.checkpoint.json
+toy-dataset/**/*_progress.json
+toy-dataset/**/*_checkpoint_*.json
+toy-dataset/**/*_corpus_summary_*.json
+# Pipeline execution logs
+logs/
+# Internal bookkeeping (EDA output, analysis results)
+output/
+# internal-docs/* was intended to be ignored ("internal documentation and
+# notes") but the inline-comment bug above made this a silent no-op --
+# 28 files are already tracked there, including ones committed this
+# session at explicit request, so it's being used as real, versioned
+# documentation in practice. Left non-functional deliberately rather than
+# "fixed" -- ask before changing, since making it actually ignore would
+# silently block future `git add` here without `-f`, diverging from
+# current usage. Left commented out (still inert) rather than deleted, so
+# the original intent stays visible if this is ever revisited.
+# internal-docs/*
 github-search-human/pre_2021_test_commits/
-*.checkpoint.json       # Pipeline checkpoint files (runtime artifacts)
+# Pipeline checkpoint files (runtime artifacts)
+*.checkpoint.json
