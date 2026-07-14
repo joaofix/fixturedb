@@ -9,7 +9,7 @@ The between-group methodology collects human and agent corpora at different time
 - **Agent corpus:** 2025+ repositories with agent commits (fixture collection snapshot at 2025-01-01)
 - **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement
 
-**Mitigation:** Control variables (language, domain, star_tier, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U). Balance report generated after Stage 3 confirms no significant differences (p ≥ 0.05).
+**Mitigation:** Control variables (language, domain, star_tier, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U) — see `collection/between_group_comparison.py` and [Analyzing the Datasets § Comparing two datasets](../usage/usage.md#comparing-two-datasets). Balance report confirms no significant differences (p ≥ 0.05).
 
 ### Agent Detection Conservatism
 - **Tier 1 detection only:** Agents identified via `co-authored-by` commit trailers only
@@ -30,7 +30,7 @@ The between-group methodology collects human and agent corpora at different time
 - **Agent corpus:** Depends on GitHub API availability and rate limits
 - **Impact:** Extinct or private repositories cannot be collected
 
-**Mitigation:** Stage 1 uses corpus.db (pre-curated); Stage 2 queries live GitHub API with error handling.
+**Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling; `--tier2` agent discovery additionally falls back to the pre-curated `db/corpus.db`.
 
 ---
 

@@ -23,53 +23,61 @@ This design enables within-repository comparison of fixtures written by agents v
 
 ## What the Pipeline Produces
 
-**Unified database:**
-- Single `between-group.db` with fixtures from all agent-enabled repositories
-- Each fixture labeled: `commit_kind` (human|agent), `agent_type` (when applicable)
-- Control variables computed at temporal snapshot (2025-01-01)
+**Per-dataset databases** (`db/a.db`, `db/b.db`, `db/c.db` — see
+[Database Schema](../architecture/database-schema.md)):
+- Dataset A fixtures tagged `commit_kind='agent'` + `agent_type`; Dataset B tagged
+  `commit_kind='human'`; Dataset C has no commit-level tagging (see schema doc for why)
+- Control variables computed at each dataset's own temporal snapshot (2025-01-01 for
+  A/B, 2020-12-31 for C)
 - Fixture metrics: type, scope, complexity, dependencies, mocks
 
-**Collection summary:**
+**Collection summary** (`datasets/{dataset}/summary.yaml`, via
+`python -m collection summarize --dataset {a,b,c}`):
 - Repository statistics: languages, domains, star tiers, contributor counts
 - Fixture statistics: extraction rates by language, fixture type distributions
-- Agent type breakdown when applicable
+- Purity-gate acceptance rate (Datasets A/B)
 
 **Analysis ready:**
-- Paired observations for statistical comparison
+- Independent per-dataset samples for unpaired statistical comparison (A-vs-B, A-vs-C)
 - Fixture-level metrics for distribution analysis
 - Repository-level context for stratified analysis
 
 ## Recommended Extraction Flow
 
-To ensure the human control sample is drawn only from repositories where agents actually produced fixtures, follow this order:
+All collection runs through one unified CLI: `python -m collection <verb> --dataset {a,b,c}`.
+To ensure the human control sample (Dataset B) is drawn only from repositories where agents
+actually produced fixtures, run the verbs in this order:
 
-0. Build the repo-QC inputs from `github-search-raw/`. This step scans the raw repository search results, detects agent configuration files, and writes the per-language repo lists to `github-search-agent/agent_repositories/{language}_agent_repo.csv`. You can limit the run to one or more languages with `--languages`.
-
-	Example:
-
-	```bash
-	python -m collection.repository_quality_control.agent_repository_counter --source-dir github-search-raw --output-dir github-search-agent/agent_repositories --languages java javascript
-	```
-
-1. Run the agent extraction step (per-language). This detects agent test commits, extracts fixtures, and writes per-language repo lists of repositories that yielded agent fixtures to `fixtures-from-agents/repos/{language}_agent_fixture_repos.csv`.
-
-	Example:
+1. `discover-repos --dataset a` — scans `github-search-raw/`, detects agent configuration
+   files, and writes the per-language repo lists to `datasets/a/repos/{language}_repo.csv`.
 
 	```bash
-	python -m collection.agent_corpus --languages java javascript --repos-per-language 50
+	python -m collection discover-repos --dataset a --language java
 	```
 
-2. Optionally write per-language human test-commit CSVs (the human collector will prefer the agent-produced repo lists). This is useful if you only want to collect test-commit rows without running full fixture extraction.
+2. `discover-commits --dataset a` then `filter-test-commits --dataset a` then
+   `extract-fixtures --dataset a` — detects agent test commits and extracts Dataset A's
+   fixtures, writing the per-language repo lists that yielded fixtures to
+   `datasets/a/fixtures/repos/{language}_fixture_repos.csv`. Dataset B's repo pool (below)
+   is resolved from this output.
 
 	```bash
-	python -m collection.test_commit_filter --mode human --raw-search-dir github-search-raw --output-dir github-search-human/2025_test_commits --workers 8
+	python -m collection discover-commits    --dataset a
+	python -m collection filter-test-commits --dataset a
+	python -m collection extract-fixtures    --dataset a --language java
 	```
 
-3. Run the human fixture extraction step. The human collector writes fixtures to `fixtures-from-humans/same-repo/{language}_human_fixtures.csv` now, and will use `fixtures-from-humans/cross-repo/{language}_human_fixtures.csv` for the inter-repository collection later. It still prefers `fixtures-from-agents/repos/{language}_agent_fixture_repos.csv` when selecting repositories.
+3. `discover-repos --dataset b` then `filter-test-commits --dataset b` then
+   `extract-fixtures --dataset b` — resolves Dataset B's repo list from Dataset A's
+   already-collected repos (same agent-enabled repos, human-authored commits only), and
+   writes fixtures to `datasets/b/fixtures/{language}_fixtures.csv`.
 
 	```bash
-	python -m collection.human_corpus --corpus-db data/corpus.db --repo-dir github-search-agent/agent_repositories --language python
+	python -m collection discover-repos      --dataset b
+	python -m collection filter-test-commits --dataset b
+	python -m collection extract-fixtures    --dataset b --language java
 	```
 
-Backwards compatibility: if the agent fixture repo lists are not present, the human collector falls back to `github-search-agent/tests_commits/*_agent_test_commit.csv` and then to `github-search-agent/agent_repositories/*_agent_repo.csv`.
+See [Repository Structure](repository-structure.md) for the full verb-to-dataset matrix
+and AGENTS.md for which verbs apply to Dataset C.
 

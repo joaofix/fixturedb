@@ -1,17 +1,24 @@
-# Database Schema - FixtureDB Between-Group Study
+# Database Schema
 
-The between-group study stores fixture data from two separate populations: human-authored (pre-2021) and agent-authored (2025+). The database enables comparison of fixture characteristics across populations while tracking control variables.
+FixtureDB collects three separate datasets — see
+[Repository Structure](../getting-started/repository-structure.md) — each written to
+its own SQLite database rather than one shared file:
 
 ## Database overview
 
-| Database | Purpose | Scope |
-|----------|---------|-------|
-| `corpus.db` | Original repository corpus with pinned commits | Source data for both corpora |
-| `between-group.db` | Human and agent fixture populations | Between-group comparison and statistical analysis |
+| Database | Purpose | `fixtures.commit_kind` |
+|----------|---------|-------------------------|
+| `db/corpus.db` | Pre-A/B/C paired-study repository corpus with pinned commits (only needed for `--tier2` agent discovery, see [Agent Detection](agent-detection.md)) | n/a |
+| `db/a.db` | Dataset A: agent-authored fixtures (2025+, Tier 1 detection) | always `'agent'` |
+| `db/b.db` | Dataset B: human-authored fixtures, within-repo control (same repos as A, non-agent commits) | always `'human'` |
+| `db/c.db` | Dataset C: human-authored fixtures, cross-repo baseline (independent pre-2021 repo pool, snapshot extraction) | not set (Dataset C has no commit-level agent/human distinction to make — every fixture in it is human-authored by construction) |
 
-Both databases use SQLite with WAL mode enabled for safe concurrent reads.
+All four use the identical schema below (defined once in `collection/db_schema.py`)
+and run in SQLite WAL mode for safe concurrent reads. Because each dataset is a
+separate file, there is no single query that spans all three — see
+[Query examples](#query-examples) for the recommended cross-dataset pattern.
 
-## Between-Group Schema
+## Schema
 
 ### repositories
 
@@ -41,7 +48,7 @@ Repository metadata and control variables computed at fixture writing time.
 | **Control Variables** |
 | `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
 | `star_tier` | TEXT | Star classification (`core` ≥500 stars, `extended` <500 stars) |
-| `repo_age_years` | REAL | Repository age in years at fixture writing time (2020-12-31 for human, 2025-01-01 for agent) |
+| `repo_age_years` | REAL | Repository age in years at fixture writing time (2025-01-01 for Datasets A/B, 2020-12-31 for Dataset C) |
 | `collected_at` | TEXT | Timestamp of insertion |
 
 ### test_files
@@ -83,9 +90,9 @@ Individual fixture definitions and their quantitative metrics.
 | `raw_source` | TEXT | Original source text for the fixture |
 | `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |
 | `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
-| **Between-Group Labeling** |
-| `commit_sha` | TEXT | Commit SHA that introduced this fixture |
-| `commit_kind` | TEXT | Corpus label: `human` (pre-2021) or `agent` (2025+) |
+| **Dataset Labeling** |
+| `commit_sha` | TEXT | Commit SHA that introduced this fixture (empty string in `db/c.db`, whose fixtures come from a repo-snapshot extraction, not a commit scan) |
+| `commit_kind` | TEXT | `'agent'` in `db/a.db`, `'human'` in `db/b.db`; not set in `db/c.db` (see [Database overview](#database-overview)) |
 | `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored, NULL otherwise |
 | `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
 
@@ -112,45 +119,47 @@ for the exact pattern/framework/category catalog.
 
 ## Query examples
 
-### Compare human vs agent fixture characteristics
+Each database is a single dataset (see [Database overview](#database-overview)), so
+within-database queries never need a `commit_kind` filter to isolate a corpus — every
+row in `db/a.db` already is Dataset A. Cross-dataset comparisons instead load each
+database separately and combine in pandas.
+
+### Within one dataset: fixture characteristics
 
 ```python
-import pandas as pd
 import sqlite3
+import pandas as pd
 
-conn = sqlite3.connect("between-group.db")
+conn = sqlite3.connect("db/a.db")
 
-# Aggregate fixtures by corpus
-fixtures_by_corpus = pd.read_sql("""
-    SELECT 
-        f.commit_kind as corpus,
+summary = pd.read_sql("""
+    SELECT
         COUNT(f.id) as fixture_count,
         ROUND(AVG(f.loc), 2) as avg_loc,
         ROUND(AVG(f.cyclomatic_complexity), 2) as avg_complexity,
         ROUND(AVG(f.num_parameters), 2) as avg_parameters
     FROM fixtures f
-    GROUP BY f.commit_kind
 """, conn)
 
-print(fixtures_by_corpus)
+print(summary)
 ```
 
-### Analyze agent type distribution (agent corpus only)
+### Within one dataset: agent type distribution (Dataset A only)
 
 ```python
 import sqlite3
 import pandas as pd
 
-conn = sqlite3.connect("between-group.db")
+conn = sqlite3.connect("db/a.db")
 
 agent_breakdown = pd.read_sql("""
-    SELECT 
+    SELECT
         f.agent_type,
         COUNT(DISTINCT f.commit_sha) as commits,
         COUNT(f.id) as fixtures,
         ROUND(AVG(f.loc), 2) as avg_loc
     FROM fixtures f
-    WHERE f.commit_kind = 'agent' AND f.agent_type IS NOT NULL
+    WHERE f.agent_type IS NOT NULL
     GROUP BY f.agent_type
     ORDER BY commits DESC
 """, conn)
@@ -158,107 +167,66 @@ agent_breakdown = pd.read_sql("""
 print(agent_breakdown)
 ```
 
-### Check control variable distributions
+### Cross-dataset: compare A vs B (same repos, agent vs human)
+
+Load each database into its own DataFrame, tag with the dataset it came from, then
+concatenate — this is the general pattern for any A-vs-B or A-vs-C comparison:
 
 ```python
 import sqlite3
 import pandas as pd
 
-conn = sqlite3.connect("between-group.db")
+def load_fixtures(dataset: str) -> pd.DataFrame:
+    conn = sqlite3.connect(f"db/{dataset}.db")
+    df = pd.read_sql("""
+        SELECT f.*, r.language, r.domain, r.star_tier, r.repo_age_years
+        FROM fixtures f
+        JOIN repositories r ON f.repo_id = r.id
+    """, conn)
+    df["dataset"] = dataset
+    return df
 
-# Domain distribution by corpus
-domain_balance = pd.read_sql("""
-    SELECT 
-        r.domain,
-        f.commit_kind as corpus,
-        COUNT(DISTINCT r.id) as repos,
-        COUNT(f.id) as fixtures
-    FROM fixtures f
-    JOIN repositories r ON f.repo_id = r.id
-    WHERE r.domain IS NOT NULL
-    GROUP BY r.domain, f.commit_kind
-    ORDER BY r.domain, f.commit_kind
-""", conn)
+combined = pd.concat([load_fixtures("a"), load_fixtures("b")], ignore_index=True)
 
-print(domain_balance)
+comparison = combined.groupby("dataset").agg(
+    fixture_count=("id", "count"),
+    avg_loc=("loc", "mean"),
+    avg_complexity=("cyclomatic_complexity", "mean"),
+)
+print(comparison)
 ```
 
-### Test-double category breakdown by corpus
+Dataset B's `dataset` column here plays the role Dataset A's `commit_kind='agent'` /
+`commit_kind='human'` distinction used to play in the old single-database design —
+prefer `dataset` (which one you loaded from) over `commit_kind` for A-vs-B/A-vs-C
+comparisons, since `commit_kind` is not populated at all in `db/c.db`.
+
+### Test-double category breakdown, one dataset
 
 ```python
 import sqlite3
 import pandas as pd
 
-conn = sqlite3.connect("between-group.db")
+conn = sqlite3.connect("db/a.db")
 
 mock_categories = pd.read_sql("""
     SELECT
-        f.commit_kind as corpus,
         m.category,
         m.framework,
         COUNT(*) as mock_count
     FROM mock_usages m
     JOIN fixtures f ON m.fixture_id = f.id
-    GROUP BY f.commit_kind, m.category, m.framework
-    ORDER BY f.commit_kind, mock_count DESC
+    GROUP BY m.category, m.framework
+    ORDER BY mock_count DESC
 """, conn)
 
 print(mock_categories)
 ```
 
-### Repository age and star tier balance
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect("between-group.db")
-
-# Age and star tier by corpus
-control_balance = pd.read_sql("""
-    SELECT 
-        r.star_tier,
-        f.commit_kind as corpus,
-        COUNT(DISTINCT r.id) as repos,
-        ROUND(AVG(r.repo_age_years), 2) as avg_age_years
-    FROM fixtures f
-    JOIN repositories r ON f.repo_id = r.id
-    WHERE r.star_tier IS NOT NULL
-    GROUP BY r.star_tier, f.commit_kind
-    ORDER BY r.star_tier, f.commit_kind
-""", conn)
-
-print(control_balance)
-```
-
-### Inspect frameworks used in agent vs human fixtures
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect("data/between-group.db")
-
-framework_comparison = pd.read_sql("""
-    SELECT 
-        f.framework,
-        f.commit_kind,
-        COUNT(*) as fixture_count,
-        ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM fixtures), 1) as pct
-    FROM fixtures f
-    WHERE f.framework IS NOT NULL
-    GROUP BY f.framework, f.commit_kind
-    ORDER BY fixture_count DESC
-""", conn)
-
-print(framework_comparison)
-```
-
 ## Data quality guarantees
 
 - The schema is append-safe and re-runnable; existing records are not duplicated during collection.
-- Fixtures are labeled by corpus (`commit_kind`) and agent type, enabling unpaired statistical analysis.
-- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at temporal boundaries (2020-12-31 for human, 2025-01-01 for agent).
+- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C).
 - Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
 
 ## Accessing the database
@@ -266,19 +234,18 @@ print(framework_comparison)
 ### CLI
 
 ```bash
-# Count fixtures by commit_kind (corpus)
-sqlite3 data/between-group.db "SELECT commit_kind, COUNT(*) FROM fixtures GROUP BY commit_kind;"
+# Fixture count for one dataset
+sqlite3 db/a.db "SELECT COUNT(*) FROM fixtures;"
 
-# Agent type breakdown
-sqlite3 data/between-group.db "SELECT agent_type, COUNT(*) FROM fixtures WHERE agent_type IS NOT NULL GROUP BY agent_type;"
+# Agent type breakdown (Dataset A only)
+sqlite3 db/a.db "SELECT agent_type, COUNT(*) FROM fixtures WHERE agent_type IS NOT NULL GROUP BY agent_type;"
 
-# Compare fixture counts
-sqlite3 data/between-group.db "
-  SELECT commit_kind, 
-         COUNT(f.id) as fixture_count,
-         ROUND(AVG(f.cyclomatic_complexity), 2) as avg_complexity
+# Fixture count by star tier
+sqlite3 db/a.db "
+  SELECT r.star_tier, COUNT(f.id) as fixture_count
   FROM fixtures f
-  GROUP BY f.commit_kind;
+  JOIN repositories r ON f.repo_id = r.id
+  GROUP BY r.star_tier;
 "
 ```
 
@@ -287,28 +254,22 @@ sqlite3 data/between-group.db "
 ```python
 import sqlite3
 
-conn = sqlite3.connect("data/between-group.db")
+conn = sqlite3.connect("db/a.db")
 
-# Human vs agent fixture count
-corpus_counts = conn.execute(
-    "SELECT commit_kind, COUNT(*) as count FROM fixtures GROUP BY commit_kind"
-).fetchall()
-
-for corpus, count in corpus_counts:
-    print(f"{corpus}: {count} fixtures")
+count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+print(f"Dataset A: {count} fixtures")
 ```
 
 ### R
 
 ```r
 library(DBI)
-con <- dbConnect(RSQLite::SQLite(), "data/between-group.db")
+con <- dbConnect(RSQLite::SQLite(), "db/a.db")
 
-# Fixture counts by agent type
 dbGetQuery(con, "
   SELECT agent_type, COUNT(*) AS fixture_count
   FROM fixtures
-  WHERE commit_kind = 'agent' AND agent_type IS NOT NULL
+  WHERE agent_type IS NOT NULL
   GROUP BY agent_type
   ORDER BY fixture_count DESC
 ")
@@ -316,7 +277,7 @@ dbGetQuery(con, "
 
 ## Notes
 
-- The between-group database preserves control variables (language, domain, star_tier, repo_age_years) computed at temporal boundaries for reproducibility and validity assessment.
-- The schema is designed for between-group unpaired comparisons using statistical tests appropriate for independent samples.
-- Balance test results enable assessment of control variable distributions across human and agent corpora.
+- Control variables (language, domain, star_tier, repo_age_years) are computed at each dataset's temporal boundary for reproducibility and validity assessment.
+- The schema supports unpaired statistical tests appropriate for independent samples (Mann-Whitney U for continuous variables, chi-square for categorical) — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design).
+- `python -m collection summarize --dataset {a,b,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
 
