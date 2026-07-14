@@ -30,10 +30,10 @@ from collection.agent_corpus import (
 from collection.agent_patterns import AGENT_SIGNATURES
 from collection.config import AGENT_CORPUS_START_DATE
 from collection.db import (
-    compute_repo_age_at_date,
     db_session,
     is_global_checkpoint_completed,
 )
+from collection.repo_metadata import compute_repo_age_at_date
 
 
 class TestAgentSignatures:

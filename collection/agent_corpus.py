@@ -7,7 +7,6 @@ only) detected from repositories with agent configuration files. Entry point:
 (Dataset B) and dataset_c.py (Dataset C) for the other two datasets.
 """
 
-import argparse
 import csv
 import json
 import shutil
@@ -24,14 +23,12 @@ from . import paths
 from .agent_patterns import (
     PAPER_AGENT_CONFIG_PATTERNS,
     PAPER_AGENT_REPOSITORY_LANGUAGES,
-    repo_contains_patterns,
 )
-from .clone_primitives import _output_requests_credentials
+from .clone_primitives import clone_repo_for_commit_scan
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
     COLLECTION_OUTPUT_TAG,
-    LANGUAGE_CONFIGS,
     MIN_COMMITS,
 )
 from .corpus_utils import (
@@ -214,111 +211,6 @@ def _load_qc_agent_commits(
                 )
 
     return commits_by_repo
-
-
-def clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
-    """
-    Clone a repository with full commit history but without downloading large blobs.
-
-    This is the history used for agent-commit detection and fixture extraction.
-    Returns False if the repo requires credentials (private/removed repo).
-    """
-    try:
-        target_dir.mkdir(parents=True, exist_ok=True)
-        result = subprocess.run(
-            [
-                "git",
-                "clone",
-                "--filter=blob:limit=10m",
-                "--single-branch",
-                "--no-tags",
-                clone_url,
-                str(target_dir),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
-        if _output_requests_credentials(result.stderr):
-            return False
-        return bool(
-            result.returncode == 0
-            and target_dir.exists()
-            and (list(target_dir.glob(".git")) or list(target_dir.iterdir()))
-        )
-    except subprocess.TimeoutExpired:
-        logger.warning(f"Timeout cloning history for {clone_url}")
-        return False
-    except Exception as e:
-        logger.warning(f"Failed to clone history for {clone_url}: {e}")
-        return False
-
-
-def shallow_clone_repo(clone_url: str, target_dir: Path) -> bool:
-    """
-    Shallow-clone a repository (depth 1) for quick agent config detection.
-
-    Returns False if the repo requires credentials (private/removed repo).
-    """
-    try:
-        target_dir.mkdir(parents=True, exist_ok=True)
-        result = subprocess.run(
-            [
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--single-branch",
-                "--no-tags",
-                clone_url,
-                str(target_dir),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        if _output_requests_credentials(result.stderr):
-            return False
-        return result.returncode == 0 and target_dir.exists()
-    except Exception as e:
-        logger.warning(f"Failed to shallow-clone {clone_url}: {e}")
-        return False
-
-
-def scan_cloned_repo_for_agent_configs(repo_path: Path) -> str | None:
-    """
-    Check if a cloned repo contains any agent config files.
-
-    Args:
-        repo_path: Path to cloned repository
-
-    Returns:
-        The matched config-file pattern (e.g. "CLAUDE.md") if found, else None.
-    """
-    if not repo_path.exists():
-        return None
-
-    try:
-        return repo_contains_patterns(repo_path, PAPER_AGENT_CONFIG_PATTERNS)
-    except Exception as e:
-        logger.debug(f"Error scanning for agent files in {repo_path}: {e}")
-        return None
-
-
-def shallow_clone_and_check_repo(clone_url: str, clones_dir: Path) -> Optional[Path]:
-    """
-    Shallow-clone a repo and return its path if it contains agent configs.
-
-    Returns:
-        Path to cloned repo if agent configs found, None otherwise
-    """
-    repo_name = clone_url.split("/")[-1].replace(".git", "")
-    repo_path = clones_dir / repo_name
-    if shallow_clone_repo(clone_url, repo_path) and scan_cloned_repo_for_agent_configs(
-        repo_path
-    ):
-        return repo_path
-    return None
 
 
 class AgentCorpusCollector:
@@ -1020,56 +912,3 @@ class AgentCorpusCollector:
             },
             output_dir=self.output_db.parent,
         )
-
-
-def main(args):
-    """CLI entry point for agent corpus collection."""
-    collector = AgentCorpusCollector(
-        github_token=args.github_token,
-        output_db=args.output_db,
-    )
-    stats, db_path = collector.run(
-        repos_per_language=args.repos_per_language,
-        languages=args.languages,
-        language=args.language,
-    )
-    logger.info(
-        f"Agent corpus collection complete: {stats.fixtures_collected} fixtures in {db_path}"
-    )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Collect agent corpus (Tier 1 agent-authored commits)"
-    )
-    parser.add_argument(
-        "--github-token",
-        type=str,
-        default=None,
-        help="GitHub API token (optional for rate limits)",
-    )
-    parser.add_argument(
-        "--output-db",
-        type=Path,
-        default=None,
-        help="Path to output between-group.db (default: data/between-group.db)",
-    )
-    parser.add_argument(
-        "--repos-per-language",
-        type=int,
-        default=None,
-        help="Number of repos per language (None = all repos)",
-    )
-    parser.add_argument(
-        "--languages",
-        nargs="+",
-        choices=sorted(PAPER_AGENT_REPOSITORY_LANGUAGES),
-        help="Limit collection to one or more languages",
-    )
-    parser.add_argument(
-        "--language",
-        choices=list(LANGUAGE_CONFIGS.keys()),
-        help="Limit to one language",
-    )
-    args = parser.parse_args()
-    main(args)

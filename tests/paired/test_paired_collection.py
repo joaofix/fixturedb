@@ -14,14 +14,14 @@ from unittest.mock import patch
 
 import pytest
 
-from collection.db import (
-    classify_domain,
-    compute_repo_age_years,
-    compute_star_tier,
-)
 from collection.paired_collection import (
     PairedStudyCollector,
     PairedStudyStats,
+)
+from collection.repo_metadata import (
+    classify_domain,
+    compute_repo_age_years,
+    compute_star_tier,
 )
 
 

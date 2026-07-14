@@ -1,7 +1,4 @@
 from collection.db import (
-    classify_domain,
-    compute_repo_age_at_date,
-    compute_star_tier,
     db_session,
     get_analyzed_count_by_language,
     get_corpus_stats,
@@ -14,6 +11,11 @@ from collection.db import (
     update_agent_commit_stats,
     upsert_repository,
     upsert_test_file,
+)
+from collection.repo_metadata import (
+    classify_domain,
+    compute_repo_age_at_date,
+    compute_star_tier,
 )
 
 

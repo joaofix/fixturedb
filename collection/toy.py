@@ -267,7 +267,7 @@ def run_toy(
         # (select_dataset_c_repos.py's schema). load_dataset_c_repos() is
         # the same repo_name -> full_name mapping the real (non-toy)
         # extract-fixtures --dataset c CLI path already uses.
-        from .human_corpus import load_dataset_c_repos
+        from .dataset_c import load_dataset_c_repos
 
         repos_for_extraction = load_dataset_c_repos(
             paths.stage_dir("c", "repos", root=root) / "all.csv"

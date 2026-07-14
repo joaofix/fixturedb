@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
-from collection.test_commit_filter import (
+from collection.human_test_commit_filter import (
     collect_human_test_commits,
     collect_human_test_commits_from_raw_search,
 )
@@ -58,7 +58,7 @@ def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
     init_minimal_repo(repo_dir)
 
     monkeypatch.setattr(
-        "collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner
+        "collection.human_test_commit_filter.Tier1RepositoryScanner", FakeScanner
     )
 
     repo_qc_dir = tmp_path / "repo_qc"
@@ -103,7 +103,7 @@ def test_collect_human_test_commits_from_raw_search(tmp_path: Path, monkeypatch)
     commit_sha = init_minimal_repo(repo_dir)
 
     monkeypatch.setattr(
-        "collection.test_commit_filter.Tier1RepositoryScanner", FakeScanner
+        "collection.human_test_commit_filter.Tier1RepositoryScanner", FakeScanner
     )
 
     raw_dir = tmp_path / "github-search-raw"

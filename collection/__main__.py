@@ -200,10 +200,10 @@ def _cmd_discover_commits(args: argparse.Namespace) -> int:
 
 
 def _cmd_filter_test_commits(args: argparse.Namespace) -> int:
-    from . import test_commit_filter as tcf
-
     if args.dataset == "a":
-        tcf.collect_agent_test_commits(
+        from .test_commit_filter import collect_agent_test_commits
+
+        collect_agent_test_commits(
             args.input_dir or paths.stage_dir("a", "commits"),
             args.output_dir or paths.stage_dir("a", "test-commits"),
             workers=args.workers,
@@ -211,7 +211,9 @@ def _cmd_filter_test_commits(args: argparse.Namespace) -> int:
         return 0
 
     if args.dataset == "b":
-        tcf.collect_human_test_commits(
+        from .human_test_commit_filter import collect_human_test_commits
+
+        collect_human_test_commits(
             args.input_dir or paths.stage_dir("b", "repos"),
             args.output_dir or paths.stage_dir("b", "test-commits"),
             workers=args.workers,
@@ -283,8 +285,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
         return 0
 
     if args.dataset == "c":
-        from .dataset_c import collect_dataset_c_fixtures
-        from .human_corpus import load_dataset_c_repos
+        from .dataset_c import collect_dataset_c_fixtures, load_dataset_c_repos
         from .resume_utils import database_has_rows
 
         output_db = args.output_db or paths.db_path("c")

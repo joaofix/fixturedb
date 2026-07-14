@@ -27,7 +27,7 @@ from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-from collection.agent_corpus import clone_repo_for_commit_scan
+from collection.clone_primitives import clone_repo_for_commit_scan
 from collection.config import (
     DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
@@ -47,6 +47,51 @@ from collection.sampling import stratified_sample_by_language
 from collection.tiered_agent_corpus_scanner import _is_test_file_path
 
 logger = get_logger(__name__)
+
+
+def load_dataset_c_repos(csv_path: Path) -> list[dict]:
+    """Load repos from a Dataset C CSV file.
+
+    Works with both the combined ``all.csv`` and per-language
+    ``{lang}_repo.csv`` files under datasets/c/repos/. Returns a list of
+    dicts with keys: *full_name*, *language*, *clone_url*, *github_id*.
+
+    github_id defaults to 0 when the column is absent (older CSVs written
+    before select_dataset_c_repos.py carried it through) -- callers must
+    not persist repos with github_id=0 without being aware every such repo
+    will collide on the repositories table's github_id UNIQUE constraint.
+    See internal-docs/methodology-improvements/dataset-c-repo-selection.md.
+    """
+    repos: list[dict] = []
+    with open(csv_path, encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            name = (row.get("repo_name") or "").strip()
+            if not name or "/" not in name:
+                continue
+            try:
+                github_id = int((row.get("github_id") or "0").strip())
+            except ValueError:
+                github_id = 0
+            try:
+                stars = int((row.get("stars") or "0").strip())
+            except ValueError:
+                stars = 0
+            repos.append(
+                {
+                    "full_name": name,
+                    "language": (row.get("language") or "").strip().lower(),
+                    "clone_url": (
+                        row.get("clone_url") or f"https://github.com/{name}.git"
+                    ).strip(),
+                    "github_id": github_id,
+                    "created_at": row.get("created_at") or "",
+                    "topics": row.get("topics") or "[]",
+                    "stars": stars,
+                }
+            )
+    logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)
+    return repos
 
 
 def load_repo_cutoffs(csv_path: Path) -> Dict[str, Dict[str, str]]:

@@ -189,7 +189,7 @@ class TestFilterTestCommits:
 
     def test_dataset_b(self):
         with patch(
-            "collection.test_commit_filter.collect_human_test_commits"
+            "collection.human_test_commit_filter.collect_human_test_commits"
         ) as mock_run:
             rc = main(["filter-test-commits", "--dataset", "b"])
 
@@ -270,7 +270,7 @@ class TestExtractFixtures:
         fake_repos = [{"full_name": "o/r", "language": "python"}]
         with patch("collection.resume_utils.database_has_rows", return_value=False):
             with patch(
-                "collection.human_corpus.load_dataset_c_repos",
+                "collection.dataset_c.load_dataset_c_repos",
                 return_value=fake_repos,
             ) as mock_load:
                 with patch(
@@ -292,7 +292,7 @@ class TestExtractFixtures:
     def test_dataset_c_language_filter_selects_per_language_csv(self):
         with patch("collection.resume_utils.database_has_rows", return_value=False):
             with patch(
-                "collection.human_corpus.load_dataset_c_repos", return_value=[]
+                "collection.dataset_c.load_dataset_c_repos", return_value=[]
             ) as mock_load:
                 with patch(
                     "collection.dataset_c.collect_dataset_c_fixtures",

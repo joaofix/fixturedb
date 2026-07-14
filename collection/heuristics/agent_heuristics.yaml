@@ -4,7 +4,7 @@
 # for the full detection methodology and known limitations.
 
 # paper_scope: subset of agents used for the paper's strict repo-qualification
-# filter (agent_corpus.py's scan_cloned_repo_for_agent_configs). Broader
+# filter (agent_patterns.py's scan_cloned_repo_for_agent_configs). Broader
 # pre-clone/lightweight scans use the full agent-mining/agent_files.csv catalog.
 paper_scope:
   - claude

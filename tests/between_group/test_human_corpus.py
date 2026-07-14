@@ -11,16 +11,16 @@ import tempfile
 from pathlib import Path
 
 from collection.config import AGENT_CORPUS_START_DATE
-from collection.db import (
-    classify_domain,
-    compute_repo_age_at_date,
-    compute_star_tier,
-)
 from collection.human_corpus import (
     HumanCorpusCollector,
     HumanCorpusStats,
     _human_fixtures_dir,
-    select_human_corpus_repositories,
+)
+from collection.human_corpus_repo_selection import select_human_corpus_repositories
+from collection.repo_metadata import (
+    classify_domain,
+    compute_repo_age_at_date,
+    compute_star_tier,
 )
 
 

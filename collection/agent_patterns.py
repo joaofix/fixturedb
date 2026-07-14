@@ -16,6 +16,9 @@ from pathlib import Path
 from typing import Iterable, Mapping
 
 from .heuristics import load_agent_heuristics
+from .logging_utils import get_logger
+
+logger = get_logger(__name__)
 
 PAPER_AGENT_REPOSITORY_LANGUAGES = {"python", "javascript", "typescript", "java"}
 
@@ -173,6 +176,26 @@ def repo_contains_patterns(
                 ):
                     return pattern
     return None
+
+
+def scan_cloned_repo_for_agent_configs(repo_path: Path) -> str | None:
+    """
+    Check if a cloned repo contains any agent config files.
+
+    Args:
+        repo_path: Path to cloned repository
+
+    Returns:
+        The matched config-file pattern (e.g. "CLAUDE.md") if found, else None.
+    """
+    if not repo_path.exists():
+        return None
+
+    try:
+        return repo_contains_patterns(repo_path, PAPER_AGENT_CONFIG_PATTERNS)
+    except Exception as e:
+        logger.debug(f"Error scanning for agent files in {repo_path}: {e}")
+        return None
 
 
 def match_agent_keyword(

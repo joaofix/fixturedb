@@ -6,14 +6,11 @@ used for the agent corpus. Commits are scanned in the same temporal window as
 the agent dataset, and only non-AI commits that fully add a fixture are kept.
 Entry point: `python -m collection extract-fixtures --dataset b`. See
 agent_corpus.py (Dataset A) and dataset_c.py (Dataset C, the cross-repo
-baseline) for the other two datasets.
-
-`load_dataset_c_repos()` below is a shared CSV-loading helper used by
-Dataset C's entry point (`python -m collection extract-fixtures --dataset c`)
-— it lives here for historical reasons but does not itself build Dataset B.
+baseline) for the other two datasets. Repository selection lives in
+human_corpus_repo_selection.py, kept separate since it's pure CSV/DB
+querying with no fixture-extraction logic of its own.
 """
 
-import argparse
 import csv
 import json
 import shutil
@@ -30,21 +27,12 @@ from pydriller import Repository
 from tqdm import tqdm
 
 from . import paths
-from .agent_corpus import clone_repo_for_commit_scan
-from .cli_utils import (
-    add_language_arg,
-    add_output_db_arg,
-    add_repo_dir_arg,
-    add_repos_per_language_arg,
-    add_test_commits_csv_arg,
-    add_workers_arg,
-)
+from .clone_primitives import clone_repo_for_commit_scan
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
     COLLECTION_OUTPUT_TAG,
     EXTRACT_WORKERS,
-    LANGUAGE_CONFIGS,
 )
 from .corpus_utils import (
     BaseCorpusStats,
@@ -62,64 +50,12 @@ from .db import (
 )
 from .ephemeral_clone import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
+from .human_corpus_repo_selection import select_human_corpus_repositories
 from .logging_utils import get_logger
 from .test_commit_utils import write_test_commits_csv
 from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
-from .utils import (
-    build_repo_row,
-)
 
 logger = get_logger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# Dataset C loader
-# ---------------------------------------------------------------------------
-
-
-def load_dataset_c_repos(csv_path: Path) -> list[dict]:
-    """Load repos from a Dataset C CSV file.
-
-    Works with both the combined ``all.csv`` and per-language
-    ``{lang}_repo.csv`` files under datasets/c/repos/. Returns a list of
-    dicts with keys: *full_name*, *language*, *clone_url*, *github_id*.
-
-    github_id defaults to 0 when the column is absent (older CSVs written
-    before select_dataset_c_repos.py carried it through) -- callers must
-    not persist repos with github_id=0 without being aware every such repo
-    will collide on the repositories table's github_id UNIQUE constraint.
-    See internal-docs/methodology-improvements/dataset-c-repo-selection.md.
-    """
-    repos: list[dict] = []
-    with open(csv_path, encoding="utf-8", newline="") as fh:
-        reader = csv.DictReader(fh)
-        for row in reader:
-            name = (row.get("repo_name") or "").strip()
-            if not name or "/" not in name:
-                continue
-            try:
-                github_id = int((row.get("github_id") or "0").strip())
-            except ValueError:
-                github_id = 0
-            try:
-                stars = int((row.get("stars") or "0").strip())
-            except ValueError:
-                stars = 0
-            repos.append(
-                {
-                    "full_name": name,
-                    "language": (row.get("language") or "").strip().lower(),
-                    "clone_url": (
-                        row.get("clone_url") or f"https://github.com/{name}.git"
-                    ).strip(),
-                    "github_id": github_id,
-                    "created_at": row.get("created_at") or "",
-                    "topics": row.get("topics") or "[]",
-                    "stars": stars,
-                }
-            )
-    logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)
-    return repos
 
 
 def _human_fixtures_dir(dataset: str, override: Path | None = None) -> Path:
@@ -160,163 +96,6 @@ class HumanCorpusStats(BaseCorpusStats):
     """Statistics for human corpus collection (inherits from base)."""
 
     pass
-
-
-def select_human_corpus_repositories(
-    repo_qc_dir: Path,
-    repos_per_language: Optional[int] = None,
-    language: Optional[str] = None,
-    require_fixture_repo_list: bool = False,
-) -> list[dict]:
-    """
-    Select agent-enabled repositories for human corpus collection.
-
-    Queries the repo-QC CSV exports for repositories with agent config files.
-
-    Args:
-        repo_qc_dir: Directory containing already-resolved *_repo.csv files
-            (default: datasets/b/repos/, see collection.repo_resolve)
-        repos_per_language: Optional per-language cap. None means include all rows.
-        language: Optional filter to single language
-        require_fixture_repo_list: If True, raise if repo_qc_dir has no *_repo.csv
-            files rather than silently returning an empty selection.
-
-    Returns:
-        List of repository dicts with required metadata
-    """
-    # Backwards-compatible behaviour: if a SQLite corpus DB path is provided,
-    # query the `repositories` table for pre-2021 repos. Otherwise fall back to
-    # reading repo-QC CSV exports in `repo_qc_dir`.
-    repo_path = Path(repo_qc_dir)
-    selected: list[dict] = []
-
-    if repo_path.exists() and repo_path.is_file():
-        # Treat as corpus DB
-        import sqlite3
-
-        conn = sqlite3.connect(str(repo_path))
-        cur = conn.cursor()
-        cur.execute(
-            """
-            SELECT id, github_id, full_name, language, stars, forks, description,
-                   topics, created_at, pushed_at, clone_url, status, num_contributors, num_test_files
-            FROM repositories
-            WHERE created_at >= ? AND status IN ('analysed', 'cloned')
-            ORDER BY language ASC, created_at ASC
-            """,
-            (AGENT_CORPUS_START_DATE,),  # Use agent temporal window (post-2025)
-        )
-        rows = cur.fetchall()
-        conn.close()
-
-        grouped: dict[str, list[dict]] = {}
-        for row in rows:
-            (
-                _id,
-                github_id,
-                full_name,
-                lang,
-                stars,
-                forks,
-                description,
-                topics,
-                created_at,
-                pushed_at,
-                clone_url,
-                status,
-                num_contributors,
-                num_test_files,
-            ) = row
-
-            lang = (lang or "unknown").strip().lower()
-            if language and lang != language:
-                continue
-            if lang not in LANGUAGE_CONFIGS:
-                continue
-
-            repo_row = {
-                "id": _id,
-                "github_id": github_id,
-                "full_name": full_name,
-                "language": lang,
-                "stars": stars,
-                "forks": forks,
-                "description": description or "",
-                "topics": topics or "[]",
-                "created_at": created_at or "",
-                "pushed_at": pushed_at or "",
-                "clone_url": clone_url or f"https://github.com/{full_name}.git",
-                "num_contributors": num_contributors or 0,
-                "status": status,
-            }
-            grouped.setdefault(lang, [])
-            grouped[lang].append(repo_row)
-
-        for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
-            if not lang:
-                continue
-            lang_repos = grouped.get(lang, [])
-            selected.extend(
-                lang_repos
-                if repos_per_language is None
-                else lang_repos[:repos_per_language]
-            )
-
-        return selected
-
-    # `repo_qc_dir` is a directory of already-resolved `*_repo.csv` files
-    # (default: datasets/b/repos/, written by `discover-repos --dataset b` /
-    # collection.repo_resolve.resolve_dataset_b_repos()). Resolution across
-    # Dataset A's several possible source directories happens once, upstream,
-    # in that step -- this function no longer guesses between them.
-    if require_fixture_repo_list and not any(Path(repo_qc_dir).glob("*_repo.csv")):
-        raise ValueError(
-            f"No *_repo.csv files found under {repo_qc_dir}; run "
-            "`python -m collection discover-repos --dataset b` first"
-        )
-
-    grouped_csv: dict[str, list[dict]] = {}
-    for csv_path in sorted(Path(repo_qc_dir).glob("*_repo.csv"), key=lambda p: p.name):
-        with csv_path.open("r", encoding="utf-8", newline="") as fh:
-            reader = csv.DictReader(fh)
-            for row in reader:
-                if str(row.get("has_agent_config") or "").strip().lower() not in {
-                    "1",
-                    "true",
-                }:
-                    continue
-
-                repo_name = (row.get("repo_name") or row.get("full_name") or "").strip()
-                lang = (row.get("language") or "unknown").strip().lower()
-                if not repo_name or "/" not in repo_name:
-                    continue
-                if language and lang != language:
-                    continue
-
-                repo_row = build_repo_row(
-                    repo_name,
-                    lang,
-                    stars=row.get("stars") or 0,
-                    clone_url=row.get("clone_url") or "",
-                    num_contributors=row.get("num_contributors") or 0,
-                    created_at=row.get("created_at") or "",
-                    topics=row.get("topics") or "[]",
-                )
-                grouped_csv.setdefault(lang, [])
-                if repo_name not in {r["full_name"] for r in grouped_csv[lang]}:
-                    grouped_csv[lang].append(repo_row)
-
-    for lang in [language] if language else list(LANGUAGE_CONFIGS.keys()):
-        if not lang:
-            continue
-        lang_repos = grouped_csv.get(lang, [])
-        selected.extend(
-            lang_repos
-            if repos_per_language is None
-            else lang_repos[:repos_per_language]
-        )
-
-    return selected
 
 
 class HumanCorpusCollector:
@@ -1022,95 +801,3 @@ class HumanCorpusCollector:
         with db_session(self.output_db) as conn:
             mark_global_checkpoint(conn, f"human_within_complete:{current_lang}")
 
-
-def main(args):
-    """CLI entry point for human corpus collection."""
-    collector = HumanCorpusCollector(
-        corpus_db_path=args.corpus_db,
-        output_db=args.output_db,
-        repo_qc_dir=args.repo_qc_dir,
-    )
-    stats, db_path = collector.run(
-        repos_per_language=args.repos_per_language,
-        language=args.language,
-        only_write_test_commits=args.only_write_test_commits,
-        workers=args.workers,
-    )
-    logger.info(
-        f"Human corpus collection complete: {stats.fixtures_collected} fixtures in {db_path}"
-    )
-
-
-if __name__ == "__main__":
-    # Ensure logging is configured for CLI runs so INFO progress messages are visible
-    from collection.logging_utils import configure_logging
-
-    configure_logging()
-    parser = argparse.ArgumentParser(
-        description="Collect human corpus from agent-enabled repositories"
-    )
-    parser.add_argument(
-        "--corpus-db",
-        type=Path,
-        default=paths.corpus_db_path(),
-        help="Path to source corpus.db",
-    )
-    add_output_db_arg(
-        parser,
-        None,
-        "Path to output database (default: db/b.db)",
-    )
-    add_repos_per_language_arg(parser, None)
-    add_language_arg(parser, LANGUAGE_CONFIGS.keys())
-    add_test_commits_csv_arg(
-        parser,
-        "Directory path to write per-language human test-commit CSVs and exit",
-    )
-    parser.add_argument(
-        "--only-write-test-commits",
-        action="store_true",
-        help="If set, write per-language human test-commit CSVs and skip fixture extraction",
-    )
-    add_workers_arg(
-        parser,
-        EXTRACT_WORKERS,
-        "Number of concurrent worker threads for repo processing",
-    )
-    add_repo_dir_arg(
-        parser,
-        None,
-        "Directory containing repo-QC CSVs or per-language human test-commit CSVs (overrides default)",
-    )
-    args = parser.parse_args()
-    # If user provided a test-commits path, wire it into the collector and run in write-only mode
-    if args.test_commits_csv:
-        args.test_commits_csv = Path(args.test_commits_csv)
-        collector = HumanCorpusCollector(
-            corpus_db_path=args.corpus_db,
-            output_db=args.output_db,
-            test_commits_csv=args.test_commits_csv,
-            repo_qc_dir=args.repo_qc_dir,
-        )
-        stats, db_path = collector.run(
-            repos_per_language=args.repos_per_language,
-            language=args.language,
-            only_write_test_commits=True,
-            workers=args.workers,
-        )
-        logger.info(f"Wrote human test-commit CSVs to {args.test_commits_csv}")
-    else:
-        # Build collector with optional repo_qc_dir and run normally
-        collector = HumanCorpusCollector(
-            corpus_db_path=args.corpus_db,
-            output_db=args.output_db,
-            repo_qc_dir=args.repo_qc_dir,
-        )
-        stats, db_path = collector.run(
-            repos_per_language=args.repos_per_language,
-            language=args.language,
-            only_write_test_commits=False,
-            workers=args.workers,
-        )
-        logger.info(
-            f"Human corpus collection complete: {stats.fixtures_collected} fixtures in {db_path}"
-        )

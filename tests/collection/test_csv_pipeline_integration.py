@@ -12,9 +12,7 @@ import csv
 
 import pytest
 
-from collection.human_corpus import (
-    select_human_corpus_repositories,
-)
+from collection.human_corpus_repo_selection import select_human_corpus_repositories
 
 
 @pytest.fixture

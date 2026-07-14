@@ -1,9 +1,7 @@
-# Authoritative mapping of testing frameworks per language.
-# Used to validate detected frameworks and ensure consistency (catch typos/
-# misspellings) and to document known frameworks per language.
-# Categories per language: unit, bdd, mocking, other.
-# See collection/config.py: FRAMEWORK_REGISTRY, is_known_framework(),
-# get_known_frameworks().
+# Authoritative mapping of testing frameworks per language, for audit/
+# reference purposes -- documents which frameworks are recognized, one
+# category (unit, bdd, mocking, other) per entry.
+# See collection/config.py: FRAMEWORK_REGISTRY.
 
 python:
   # Unit testing frameworks

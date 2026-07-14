@@ -49,7 +49,9 @@ collection/          # Main pipeline code (the "library")
   study_parameters/  # Settings + study-design constants as YAML (non-code extensions, framework
                      # registry, per-language configs, and study_parameters.yaml: temporal
                      # boundaries/quality thresholds/sampling params) -- edit these, not config.py
-  db.py              # SQLite schema, upsert helpers, migrations
+  db.py              # Connection/query helpers, upsert helpers, migrations
+  db_schema.py       # SQLite DDL (CREATE TABLE/INDEX statements)
+  repo_metadata.py   # Domain/star-tier/repo-age computation (no DB dependency)
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
   agent_patterns.py  # Loads the agent catalog (see heuristics/ below) and derives detection dicts
@@ -69,9 +71,12 @@ collection/          # Main pipeline code (the "library")
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a
   repo_resolve.py    # discover-repos --dataset b (resolves Dataset B's repo list from Dataset A's)
   select_dataset_c_repos.py  # discover-repos --dataset c
-  test_commit_filter.py      # filter-test-commits --dataset {a,b}
+  test_commit_filter.py       # filter-test-commits --dataset a
+  human_test_commit_filter.py # filter-test-commits --dataset b (+ pre-2021 helper used by Dataset C tooling)
+  test_commit_resume_state.py # checkpoint/resume state shared by both filters above
   agent_corpus.py    # Dataset A: extract agent fixtures (extract-fixtures --dataset a)
   human_corpus.py    # Dataset B: extract human fixtures, within-repo (extract-fixtures --dataset b)
+  human_corpus_repo_selection.py  # Dataset B's repo selection, split out of human_corpus.py
   dataset_c.py        # Dataset C: extract human fixtures, cross-repo baseline (extract-fixtures --dataset c)
   dataset_pipeline.py # analyze-distribution / sample / export cross-cutting stages
   dataset_validator.py # validate stage

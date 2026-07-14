@@ -16,14 +16,12 @@ from typing import Any, Dict, Optional, TypedDict
 from collection.logging_utils import get_logger
 
 from .db import (
-    classify_domain,
-    compute_repo_age_at_date,
-    compute_star_tier,
     db_session,
     insert_fixture,
     upsert_repository,
     upsert_test_file,
 )
+from .repo_metadata import classify_domain, compute_repo_age_at_date, compute_star_tier
 
 logger = get_logger(__name__)
 

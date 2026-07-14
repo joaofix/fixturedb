@@ -76,3 +76,69 @@ def cleanup_tempdir(temp_root: Path | None) -> None:
     """Delete the temporary clone root directory if it exists."""
     if temp_root is not None:
         shutil.rmtree(temp_root, ignore_errors=True)
+
+
+def clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
+    """
+    Clone a repository with full commit history but without downloading large blobs.
+
+    This is the history used for agent-commit detection and fixture extraction.
+    Returns False if the repo requires credentials (private/removed repo).
+    """
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            [
+                "git",
+                "clone",
+                "--filter=blob:limit=10m",
+                "--single-branch",
+                "--no-tags",
+                clone_url,
+                str(target_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        if _output_requests_credentials(result.stderr):
+            return False
+        return bool(
+            result.returncode == 0
+            and target_dir.exists()
+            and (list(target_dir.glob(".git")) or list(target_dir.iterdir()))
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    except Exception:
+        return False
+
+
+def shallow_clone_repo(clone_url: str, target_dir: Path) -> bool:
+    """
+    Shallow-clone a repository (depth 1) for quick agent config detection.
+
+    Returns False if the repo requires credentials (private/removed repo).
+    """
+    try:
+        target_dir.mkdir(parents=True, exist_ok=True)
+        result = subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--single-branch",
+                "--no-tags",
+                clone_url,
+                str(target_dir),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if _output_requests_credentials(result.stderr):
+            return False
+        return result.returncode == 0 and target_dir.exists()
+    except Exception:
+        return False

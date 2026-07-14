@@ -14,9 +14,6 @@ from collection.logging_utils import get_logger
 from .cli_utils import add_language_arg, add_repos_per_language_arg
 from .config import CLONES_DIR, DB_DIR, HUMAN_CORPUS_CUTOFF_DATE, LANGUAGE_CONFIGS
 from .db import (
-    classify_domain,
-    compute_repo_age_years,
-    compute_star_tier,
     db_session,
     initialise_db,
     insert_commit_observation,
@@ -24,6 +21,7 @@ from .db import (
 )
 from .fixture_extractor import extract_fixtures_at_commit
 from .persistent_clone import clone_repo
+from .repo_metadata import classify_domain, compute_repo_age_years, compute_star_tier
 from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
 logger = get_logger(__name__)

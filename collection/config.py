@@ -149,42 +149,6 @@ class LanguageConfig:
 # ---------------------------------------------------------------------------
 
 
-def is_known_framework(framework: str, language: str) -> bool:
-    """
-    Check if a detected framework is in the official registry for the language.
-
-    This is used to validate framework detection results and catch misdetections.
-    Framework names are case-insensitive for comparison.
-
-    Args:
-        framework: Detected framework name (e.g., "pytest", "junit")
-        language: Programming language (e.g., "python", "java")
-
-    Returns:
-        True if framework is in FRAMEWORK_REGISTRY for the language, False otherwise
-    """
-    if language not in FRAMEWORK_REGISTRY:
-        return False
-
-    # Normalize to lowercase for comparison
-    framework_lower = framework.lower()
-    known_frameworks = [f.lower() for f in FRAMEWORK_REGISTRY[language]]
-    return framework_lower in known_frameworks
-
-
-def get_known_frameworks(language: str) -> list[str]:
-    """
-    Get the list of known frameworks for a language.
-
-    Args:
-        language: Programming language (e.g., "python", "java")
-
-    Returns:
-        List of canonical framework names for the language, or empty list if language not found
-    """
-    return FRAMEWORK_REGISTRY.get(language, [])
-
-
 # See collection/heuristics/exclusion_keywords.yaml for the full catalog.
 EXCLUSION_KEYWORDS: list[str] = load_exclusion_keywords()
 

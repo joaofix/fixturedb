@@ -50,10 +50,13 @@ This is a slim facade over per-language detector modules:
     loaded from collection/heuristics/fixture_definitions.yaml rather than
     hardcoded -- that file is the operational definition of "fixture" per
     language, including a documented `excluded` list of known boundary cases
-  - detector_go.py: implemented but not wired into DETECTORS below (dead code,
-    preserved as-is — see its module docstring)
-  - detector_framework_registry.py: unused mock-framework dependency-file
-    verification (dead code, preserved as-is — see its module docstring)
+
+Go support (a fixture detector module) and mock-framework dependency-file
+verification (cross-checking a detected mock framework against the repo's
+actual requirements.txt/pom.xml/package.json) both existed as unwired,
+never-called modules and were deleted rather than kept as dead code; see
+git history for `detector_go.py` / `detector_framework_registry.py` if
+either is revived.
 
 The detector delegates metric calculation to industry-standard tools:
 - Lizard: cyclomatic complexity, parameter count

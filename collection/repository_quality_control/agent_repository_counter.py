@@ -21,9 +21,9 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(PROJECT_ROOT))
 
 from collection import paths
-from collection.agent_corpus import scan_cloned_repo_for_agent_configs
 from collection.agent_patterns import (
     PAPER_AGENT_REPOSITORY_LANGUAGES,
+    scan_cloned_repo_for_agent_configs,
 )
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.config import EXCLUSION_KEYWORDS
