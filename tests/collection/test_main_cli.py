@@ -266,6 +266,32 @@ class TestExtractFixtures:
             test_commits_csv=paths.stage_dir("b", "test-commits"),
         )
 
+    def test_dataset_b_run_call_matches_real_signature(self):
+        """Regression: `collector.run(...)` was called with `languages=...`, a
+        kwarg HumanCorpusCollector.run() has never accepted (it takes
+        `language`, singular, no plural form) -- a plain MagicMock swallows
+        any kwarg silently, so this TypeError was invisible to
+        test_dataset_b_resolves_defaults above and would only surface on a
+        real, non-mocked run. autospec=True makes the mock enforce the real
+        method signature instead."""
+        stats = MagicMock(fixtures_collected=5)
+        with patch("collection.resume_utils.database_has_rows", return_value=False):
+            with patch(
+                "collection.human_corpus.HumanCorpusCollector", autospec=True
+            ) as MockCollector:
+                MockCollector.return_value.run.return_value = (
+                    stats,
+                    paths.db_path("b"),
+                )
+                rc = main(["extract-fixtures", "--dataset", "b", "--workers", "16"])
+
+        assert rc == 0
+        MockCollector.return_value.run.assert_called_once_with(
+            repos_per_language=None,
+            language=None,
+            workers=16,
+        )
+
     def test_dataset_c_resolves_defaults(self):
         fake_repos = [{"full_name": "o/r", "language": "python"}]
         with patch("collection.resume_utils.database_has_rows", return_value=False):

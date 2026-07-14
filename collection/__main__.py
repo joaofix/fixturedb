@@ -276,8 +276,8 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
         )
         stats, db_path = collector.run(
             repos_per_language=args.repos_per_language,
-            languages=args.languages,
             language=args.language,
+            workers=args.workers,
         )
         logger.info(
             f"Dataset B extraction complete: {stats.fixtures_collected} fixtures in {db_path}"
