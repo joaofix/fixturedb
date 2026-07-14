@@ -44,23 +44,23 @@ one command to paste.
 
 ```bash
 # Dataset A (agent-authored fixtures)
-python -m collection discover-repos --dataset a --workers 8 \
-  && python -m collection discover-commits --dataset a --workers 8 \
-  && python -m collection filter-test-commits --dataset a --workers 8 \
-  && python -m collection extract-fixtures --dataset a --workers 8
+python -m collection discover-repos --dataset a --workers 16 \
+  && python -m collection discover-commits --dataset a --workers 16 \
+  && python -m collection filter-test-commits --dataset a --workers 16 \
+  && python -m collection extract-fixtures --dataset a
 ```
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
-python -m collection discover-repos --dataset b --workers 8 \
-  && python -m collection filter-test-commits --dataset b --workers 8 \
-  && python -m collection extract-fixtures --dataset b --workers 8
+python -m collection discover-repos --dataset b --workers 16 \
+  && python -m collection filter-test-commits --dataset b --workers 16 \
+  && python -m collection extract-fixtures --dataset b --workers 16
 ```
 
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
-python -m collection discover-repos --dataset c --workers 8 \
-  && python -m collection extract-fixtures --dataset c --workers 8
+python -m collection discover-repos --dataset c --workers 16 \
+  && python -m collection extract-fixtures --dataset c --workers 16
 ```
 
 Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
@@ -68,11 +68,30 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
 ### Notes
 
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
-  work; DB and CSV writes stay on the main thread regardless. Every verb in the
-  chains above accepts it with its own tuned default if omitted (`discover-repos`:
-  8, `discover-commits`: 4, `filter-test-commits`: 12, `extract-fixtures`: 8) — the
-  commands above pin all of them to 8 for a predictable, uniform load; raise or
-  lower per verb as your machine and GitHub rate limits allow.
+  work; DB and CSV writes stay on the main thread regardless. All of this is git
+  clone / disk I/O, not GitHub REST API calls, so the real ceiling is GitHub's
+  concurrent-connection abuse detection and the single SQLite writer serializing DB
+  inserts — **not CPU core count**. More cores don't relax either constraint, so
+  even on a 24-core box the commands above pin every verb to 16, the top of the
+  range the codebase itself documents as safe without further testing (see
+  `--workers`'s help text on the `toy` verb, `collection/__main__.py`, for the exact
+  reasoning). Push higher only after you've watched a run for clone failures /
+  `database is locked` retries at 16 and confirmed there's headroom.
+  - `discover-repos`/`discover-commits`/`filter-test-commits` all honor `--workers`
+    directly.
+  - `extract-fixtures --dataset a` **ignores `--workers` entirely** — its collector
+    interleaves DB writes into a per-repo loop and stays single-threaded by design
+    (confirmed: no `ThreadPoolExecutor` anywhere in `agent_corpus.py`). Passing the
+    flag wouldn't error, just silently do nothing, so it's omitted above rather than
+    left in as a no-op that looks like it's doing something.
+  - `extract-fixtures --dataset b` *did* silently drop `--workers` the same way
+    until `collection/__main__.py` was fixed to actually pass it through to
+    `HumanCorpusCollector.run()` — that same fix also removed a `languages=...` kwarg
+    the collector never accepted, which meant a real (non-mocked) `extract-fixtures
+    --dataset b` run crashed with `TypeError` before reaching any fixture extraction
+    at all. Caught via `tests/collection/test_main_cli.py`'s
+    `test_dataset_b_run_call_matches_real_signature` (uses `autospec=True` so the
+    mock enforces the real method signature instead of silently accepting anything).
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
 - **`--tier2`** (Dataset A's `discover-commits` only): if Tier-1 commit-trailer
