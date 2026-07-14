@@ -44,29 +44,35 @@ one command to paste.
 
 ```bash
 # Dataset A (agent-authored fixtures)
-python -m collection discover-repos --dataset a \
-  && python -m collection discover-commits --dataset a \
-  && python -m collection filter-test-commits --dataset a \
-  && python -m collection extract-fixtures --dataset a
+python -m collection discover-repos --dataset a --workers 8 \
+  && python -m collection discover-commits --dataset a --workers 8 \
+  && python -m collection filter-test-commits --dataset a --workers 8 \
+  && python -m collection extract-fixtures --dataset a --workers 8
 ```
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
-python -m collection discover-repos --dataset b \
-  && python -m collection filter-test-commits --dataset b \
-  && python -m collection extract-fixtures --dataset b
+python -m collection discover-repos --dataset b --workers 8 \
+  && python -m collection filter-test-commits --dataset b --workers 8 \
+  && python -m collection extract-fixtures --dataset b --workers 8
 ```
 
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
-python -m collection discover-repos --dataset c \
-  && python -m collection extract-fixtures --dataset c
+python -m collection discover-repos --dataset c --workers 8 \
+  && python -m collection extract-fixtures --dataset c --workers 8
 ```
 
 Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
 
 ### Notes
 
+- **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
+  work; DB and CSV writes stay on the main thread regardless. Every verb in the
+  chains above accepts it with its own tuned default if omitted (`discover-repos`:
+  8, `discover-commits`: 4, `filter-test-commits`: 12, `extract-fixtures`: 8) — the
+  commands above pin all of them to 8 for a predictable, uniform load; raise or
+  lower per verb as your machine and GitHub rate limits allow.
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
 - **`--tier2`** (Dataset A's `discover-commits` only): if Tier-1 commit-trailer
