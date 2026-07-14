@@ -17,7 +17,7 @@ from pydriller import Repository
 
 from collection.logging_utils import get_logger
 
-from .agent_patterns import AGENT_SIGNATURES, is_bot_author, match_agent_keyword
+from .agent_patterns import AGENT_SIGNATURES, is_bot_author
 from .agent_signal_primitives import (
     AgentCommitVerifier,
     AgentFileScanner,
@@ -35,7 +35,7 @@ from .config import (
 from .db import db_session
 from .persistent_clone import clone_repo
 from .test_commit_utils import is_test_file_path as _shared_is_test_file_path
-from .utils import AGENT_TRAILER_RE
+from .utils import detect_agent_in_commit
 
 logger = get_logger(__name__)
 
@@ -242,41 +242,26 @@ class Tier1RepositoryScanner:
     ) -> str | None:
         """Detect if commit author indicates agent authorship.
 
-        Checks in order, first match wins:
-        1. Bot status (author name/email against bots.csv) -- never
-           overridable by a later signal. A bot-authored commit whose
-           message happens to contain an agent-style trailer (e.g. a
-           templated "Generated-by:" line some tooling stamps onto
-           dependency-bump commits) must still be excluded as bot, not
-           misattributed to that agent.
-        2. Co-authored-by/Assisted-by/Generated-by trailers -- the least
-           collision-prone signal, since it's a deliberate, structured
-           convention only agents/tooling emit (as opposed to author
-           identity, which is a freely-editable field real humans also
-           populate -- see agent_heuristics.yaml's module comment on the
-           "Devin Smith" collision problem).
-        3. Author name/email against AGENT_SIGNATURES.
-
-        Args:
-            author_name: Commit author name
-            author_email: Commit author email
-            body: Commit body text
+        Thin wrapper around `utils.detect_agent_in_commit` (the priority
+        order -- bot, then trailer, then author name, then author email --
+        and its full rationale live there, shared with Tier 2's
+        `AgentCommitVerifier`). The only thing specific to this call site is
+        the external contract: callers here need to distinguish "excluded
+        as bot" (returns the `_BOT` sentinel, so `scan_repo_for_agent_commits`
+        can skip it without counting it as either agent or human activity)
+        from "no agent detected" (returns None) -- `detect_agent_in_commit`
+        itself collapses both to None, so that check is done here first.
 
         Returns:
             Agent type (any key in AGENT_SIGNATURES, e.g. claude/cursor/copilot/
-            aider/...), None for human-authored, or "bot" for bot-authored commits.
+            aider/...), None for human-authored, or `_BOT` for bot-authored commits.
         """
-        author_text = f"{author_name} {author_email}"
-        if is_bot_author(author_text):
-            return "bot"
+        if is_bot_author(f"{author_name} {author_email}"):
+            return _BOT
 
-        if body:
-            for agent_line in AGENT_TRAILER_RE.findall(body):
-                agent_type = match_agent_keyword(agent_line, self.agent_signatures)
-                if agent_type:
-                    return agent_type
-
-        return match_agent_keyword(author_text, self.agent_signatures)
+        return detect_agent_in_commit(
+            author_name, author_email, body, self.agent_signatures
+        )
 
     def assess_tier1(self, corpus_repos: List[Dict]) -> Tier1Assessment:
         """

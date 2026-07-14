@@ -55,6 +55,27 @@ def test_scan_repository_no_agent_files(tmp_path):
     assert result.total_agent_files == 0
 
 
+def test_scan_repository_recognizes_agents_outside_old_hardcoded_list(tmp_path):
+    """Regression test: this scanner used to match against its own
+    hardcoded ~9-agent AGENT_FILE_PATTERNS dict, out of sync with
+    GitHubAgentFileChecker's ~60-agent LIGHTWEIGHT_AGENT_CONFIG_PATTERNS
+    catalog used one class up in this same module for the pre-clone API
+    check -- a repo with e.g. Windsurf's config file would pass that API
+    pre-filter, then be silently rejected here in Tier2RepoMatcher's local
+    re-scan (`if agent_files.total_agent_files <= 0: continue`), since
+    Windsurf was never in the old hardcoded dict. Now both checks share one
+    catalog, so this must be found."""
+    repo = tmp_path / "myorg__myrepo"
+    repo.mkdir()
+    (repo / ".windsurfrules").write_text("rules")
+
+    scanner = AgentFileScanner(clones_dir=tmp_path)
+    result = scanner.scan_repository("myorg__myrepo")
+
+    assert "windsurf" in result.agents_found
+    assert result.total_agent_files > 0
+
+
 def test_scan_repository_ignores_vendored_dependency_config(tmp_path):
     """Regression test: an agent-config-shaped file inside node_modules (a
     vendored dependency's own docs) must not count as this repo's own

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from typing import Iterable, Mapping
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +29,94 @@ AGENT_TRAILER_RE = re.compile(
 )
 
 # ---------------------------------------------------------------------------
+# Commit-level agent detection
+# ---------------------------------------------------------------------------
+from .agent_patterns import (
+    AGENT_SIGNATURES,
+    PAPER_AGENT_REPOSITORY_LANGUAGES,
+    is_bot_author,
+    match_agent_keyword,
+)
+
+
+def detect_agent_in_commit(
+    author_name: str,
+    author_email: str,
+    message: str,
+    signatures: Mapping[str, Iterable[str]] = AGENT_SIGNATURES,
+) -> str | None:
+    """Detect agent authorship from a single commit's metadata.
+
+    Checks in order, first match wins:
+    1. Bot status (author name/email against bots.csv) -- never overridable
+       by a later signal. A bot-authored commit whose message happens to
+       contain an agent-style trailer (e.g. a templated "Generated-by:"
+       line some tooling stamps onto dependency-bump commits) must still be
+       excluded as bot, not misattributed to that agent.
+    2. Co-authored-by/Assisted-by/Generated-by trailer (AGENT_TRAILER_RE) --
+       the least collision-prone signal, since it's a deliberate,
+       structured convention only agents/tooling emit, unlike author
+       identity below, a freely-editable field real humans also populate.
+    3. Author name.
+    4. Author email.
+
+    Deliberately does NOT scan the free-text commit message body outside
+    the trailer: a prose mention of an agent's name (e.g. "Revert a bad
+    Claude suggestion", or "Fix cursor blinking bug" -- "cursor" the UI
+    element, not the agent) is not evidence of agent authorship, and
+    scanning it produced verified false positives during this project's own
+    review. The trailer/author-identity fields above are the legitimate
+    signal.
+
+    Returns None for both "no agent detected" and "bot-authored" -- no
+    current caller needs to distinguish the two through this function
+    alone; a caller that does should call is_bot_author() itself.
+
+    This is the single implementation shared by Tier 1
+    (`Tier1RepositoryScanner` in tiered_agent_corpus_scanner.py, the
+    corpus's primary detection method) and Tier 2 (`AgentCommitVerifier` in
+    agent_signal_primitives.py, supplementary discovery). Each used to carry
+    its own independently hand-rolled copy of this same priority order --
+    already flagged as a recurring failure mode elsewhere in this codebase
+    (see tiered_agent_corpus_scanner.py's `_is_test_file_path` docstring for
+    a prior, already-fixed instance of the same pattern): a fix applied to
+    one copy (e.g. checking bot status before the trailer, or the
+    AGENT_TRAILER_RE hyphen-tolerance fix) had to be independently
+    rediscovered and reapplied to the other, and the two disagreed on
+    priority between author name and email until this consolidation (one
+    checked them as a single combined string, the other as two separate,
+    ordered fields -- see git history for the fix if the distinction
+    matters for a specific commit).
+
+    Matching is word-boundary-based (not a bare substring check),
+    case-insensitive. This prevents a keyword from matching inside an
+    unrelated compound word/surname (e.g. "cline" inside "McLine"), but
+    cannot distinguish a keyword that is *also* a common standalone first
+    name (e.g. an author literally named "Devin") -- see
+    agent_heuristics.yaml's module comment for this known, inherent
+    limitation. Checking the trailer before author identity (see order
+    above) avoids this collision whenever a commit has both a colliding
+    author name and a correct, unambiguous trailer.
+    """
+    if is_bot_author(f"{author_name} {author_email}"):
+        return None
+
+    if message:
+        for trailer_value in AGENT_TRAILER_RE.findall(message):
+            agent_type = match_agent_keyword(trailer_value, signatures)
+            if agent_type:
+                return agent_type
+
+    agent_type = match_agent_keyword(author_name, signatures)
+    if agent_type:
+        return agent_type
+
+    return match_agent_keyword(author_email, signatures)
+
+
+# ---------------------------------------------------------------------------
 # Repo ID helpers
 # ---------------------------------------------------------------------------
-from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 
 
 def _stable_repo_id(full_name: str) -> int:

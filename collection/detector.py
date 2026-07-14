@@ -92,7 +92,7 @@ from collection.logging_utils import get_logger
 
 from .ast_cache import parse_bytes as parse_src_bytes
 from .complexity_provider import get_file_function_count
-from .config import MAX_FILE_SIZE_BYTES
+from .config import MAX_FILE_SIZE_BYTES, NON_CODE_EXTENSIONS
 from .detector_java import _detect_java
 from .detector_javascript import _detect_js
 from .detector_python import _detect_python
@@ -105,15 +105,18 @@ from .detector_shared import (
     _detect_fixture_dependencies,
     _get_parser,
     _propagate_fixture_scopes,
+    fixture_result_to_dict,
 )
 
 logger = get_logger(__name__)
 
 __all__ = [
+    "ALLOWED_EXTS",
     "ExtractResult",
     "FixtureResult",
     "MockResult",
     "extract_fixtures",
+    "fixture_result_to_dict",
     "_get_parser",
 ]
 
@@ -122,6 +125,24 @@ DETECTORS = {
     "java": _detect_java,
     "javascript": _detect_js,
     "typescript": _detect_js,  # TypeScript shares JS grammar for this purpose
+}
+
+# Conservative per-language allowlist of source file extensions, checked by
+# extract_fixtures() below. This ensures we do not run heavy analysis on
+# non-source files. We still keep `NON_CODE_EXTENSIONS` (from config) for a
+# broad blacklist used elsewhere in the codebase; here we use it as an early
+# exit plus a language-specific whitelist to be stricter for the languages
+# under study. Module-level (not function-local) and imported by
+# pre2021_fixture_extractor.py's own pre-filter rather than that module
+# hand-copying its own extension set: it previously did, and had already
+# drifted (missing .pyw/.pyi for python; a .cts entry for typescript that
+# would pass that file's own filter only to be silently rejected here one
+# step later, since this is the authoritative check).
+ALLOWED_EXTS = {
+    "python": {".py", ".pyw", ".pyi"},
+    "javascript": {".js", ".mjs", ".cjs", ".jsx"},
+    "typescript": {".ts", ".tsx", ".mts"},
+    "java": {".java"},
 }
 
 
@@ -136,20 +157,6 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
     if language not in DETECTORS:
         logger.warning(f"No detector for language '{language}'")
         return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
-
-    # Conservative per-language allowlist of source file extensions. This
-    # ensures we do not run heavy analysis on non-source files. We still keep
-    # `NON_CODE_EXTENSIONS` (from config) for a broad blacklist used elsewhere
-    # in the codebase; here we use it as an early exit plus a language-specific
-    # whitelist to be stricter for the languages under study.
-    from .config import NON_CODE_EXTENSIONS
-
-    ALLOWED_EXTS = {
-        "python": {".py", ".pyw", ".pyi"},
-        "javascript": {".js", ".mjs", ".cjs", ".jsx"},
-        "typescript": {".ts", ".tsx", ".mts"},
-        "java": {".java"},
-    }
 
     ext = file_path.suffix.lower()
     # First, skip anything explicitly marked as non-code.
@@ -170,7 +177,6 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
     try:
         file_size_bytes = file_path.stat().st_size
         file_size_mb = file_size_bytes / (1024 * 1024)
-        # logger.info(f"[extract] Reading {file_path.name} ({file_size_mb:.2f} MB) for {language}")
 
         # Skip files larger than MAX_FILE_SIZE_BYTES (not real test files)
         if file_size_bytes > MAX_FILE_SIZE_BYTES:

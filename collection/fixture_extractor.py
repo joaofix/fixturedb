@@ -26,7 +26,7 @@ from collection.logging_utils import get_logger
 from .agent_fixture_extractor import AgentExtractionStats, AgentFixtureExtractor
 from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_repo_path
 from .config import DB_PATH
-from .detector import extract_fixtures
+from .detector import extract_fixtures, fixture_result_to_dict
 from .diff_purity import (
     DiffLineMap,
     _raw_diff_commit_is_pure_addition,
@@ -80,34 +80,11 @@ def extract_fixtures_at_commit(
                     result = extract_fixtures(test_file, language)
                     for fixture in result.fixtures:
                         fixtures.append(
-                            {
-                                "name": fixture.name,
-                                "fixture_type": fixture.fixture_type,
-                                "framework": fixture.framework,
-                                "scope": fixture.scope,
-                                "loc": fixture.loc,
-                                "language": language,
-                                "file_path": str(test_file.relative_to(repo_path)),
-                                "start_line": fixture.start_line,
-                                "end_line": fixture.end_line,
-                                "cyclomatic_complexity": fixture.cyclomatic_complexity,
-                                "max_nesting_depth": fixture.max_nesting_depth,
-                                "num_objects_instantiated": fixture.num_objects_instantiated,
-                                "num_external_calls": fixture.num_external_calls,
-                                "num_parameters": fixture.num_parameters,
-                                "has_teardown_pair": fixture.has_teardown_pair,
-                                "raw_source": fixture.raw_source,
-                                "mocks": [
-                                    {
-                                        "framework": m.framework,
-                                        "category": m.category,
-                                        "target_identifier": m.target_identifier,
-                                        "num_interactions_configured": m.num_interactions_configured,
-                                        "raw_snippet": m.raw_snippet,
-                                    }
-                                    for m in fixture.mocks
-                                ],
-                            }
+                            fixture_result_to_dict(
+                                fixture,
+                                language=language,
+                                file_path=str(test_file.relative_to(repo_path)),
+                            )
                         )
                 except Exception as exc:
                     logger.debug(f"Failed to extract from {test_file}: {exc}")

@@ -2,18 +2,18 @@
 Low-level, single-repo agent-detection primitives.
 
 Two independent building blocks used by `tiered_agent_corpus_scanner.py`'s
-Tier 2 discovery path: scanning a repo's file tree for AI agent configuration
-files, and verifying/
-classifying agent-authored commits via `Co-authored-by`/author-metadata
-trailer parsing. This module does not orchestrate corpus-scale scanning
-itself — see `tiered_agent_corpus_scanner.py` for that.
+Tier 2 discovery path: scanning a repo's file tree for AI agent
+configuration files, and verifying/classifying agent-authored commits via
+`Co-authored-by`/author-metadata trailer parsing. This module does not
+orchestrate corpus-scale scanning itself — see `tiered_agent_corpus_scanner.py`
+for that.
 
-Supported agents: Claude, Cursor, Copilot, Aider, OpenHands, Devin, Jules, Cline, Junie, Gemini
+Supported agents are whatever `collection/heuristics/agent_heuristics.yaml`
+catalogs (~60 as of this writing, see that file's provenance comment) --
+not a fixed list hardcoded here.
 """
 
-import fnmatch
 import os
-import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -30,12 +30,10 @@ from .agent_patterns import (
     _EXCLUDED_DIR_NAMES,
     AGENT_SIGNATURES,
     LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
-    is_bot_author,
-    match_agent_keyword,
     path_matches_pattern,
 )
 from .config import AGENT_CORPUS_START_DATE
-from .utils import AGENT_TRAILER_RE
+from .utils import detect_agent_in_commit
 
 logger = get_logger(__name__)
 
@@ -269,80 +267,24 @@ class GitHubAgentFileChecker:
 
 
 class AgentFileScanner:
-    """Scan repositories for agent configuration files."""
+    """Scan a cloned repository's working tree for agent configuration files.
 
-    # Agent configuration file patterns (case-insensitive)
-    AGENT_FILE_PATTERNS = {
-        "claude": {
-            "file_names": [
-                "CLAUDE.md",
-                ".claudeignore",
-                ".claude",
-                "claude.config",
-            ],
-            "patterns": [r"claude\.md$", r"\.claudeignore$", r"\.claude$", r"claude\.config$"],
-        },
-        "cursor": {
-            "file_names": [
-                ".cursor",
-                ".cursorrules",
-                ".cursorignore",
-                "cursor.config",
-            ],
-            "patterns": [r"\.cursor(rules|ignore)?$", r"cursor\.config$"],
-        },
-        "copilot": {
-            "file_names": [
-                ".copilot",
-                ".copilot.config",
-                ".copilot-config",
-                "copilot.config",
-            ],
-            "patterns": [r"\.copilot", r"copilot\.config"],
-        },
-        "aider": {
-            "file_names": [
-                ".aider.conf",
-                ".aider.conf.json",
-                ".aider-config",
-                "aider.config",
-            ],
-            "patterns": [r"\.aider", r"aider\.config", r"aider\.conf"],
-        },
-        "openhands": {
-            "file_names": [
-                ".openhands.config",
-                ".openhands",
-                "openhands.config",
-            ],
-            "patterns": [r"\.openhands", r"openhands\.config"],
-        },
-        "devin": {
-            "file_names": [
-                ".devin.config",
-                ".devin",
-                "devin.config",
-            ],
-            "patterns": [r"\.devin", r"devin\.config"],
-        },
-        "cline": {
-            "file_names": [
-                ".cline.config",
-                ".cline",
-                "cline.config",
-            ],
-            "patterns": [r"\.cline", r"cline\.config"],
-        },
-        "other_agents": {
-            "file_names": [
-                ".junie.config",
-                ".gemini.config",
-                ".julius.config",
-                "agent.config",
-            ],
-            "patterns": [r"\.junie", r"\.gemini", r"\.julius", r"agent\.config"],
-        },
-    }
+    Matches against `agent_patterns.LIGHTWEIGHT_AGENT_CONFIG_PATTERNS` -- the
+    same YAML-driven catalog `GitHubAgentFileChecker` above uses for its
+    pre-clone API check -- rather than a separate hardcoded pattern table.
+    This module used to carry its own ~9-agent hardcoded dict here, out of
+    sync with the ~60-agent catalog the API check already used: a repo could
+    pass `GitHubAgentFileChecker`'s pre-filter on an agent this dict didn't
+    know about (Windsurf, Roo Code, Trae, Gemini, Codex, ...), then get
+    silently rejected by this local re-scan in `Tier2RepoMatcher._verify_candidates()`
+    (`if agent_files.total_agent_files <= 0: continue`) -- the two halves of
+    Tier 2's own verification pipeline disagreeing on what counts as agent
+    evidence. That hardcoded dict had also, independently, mislabeled
+    Cursor's own file patterns under the "claude" key (see git history /
+    tests/collection/test_agent_file_scanner.py) -- a second, unrelated bug
+    from maintaining the same catalog twice. Sharing one catalog removes
+    both bug classes at the root instead of patching each instance found.
+    """
 
     def __init__(self, clones_dir: Optional[Path] = None):
         """
@@ -383,65 +325,45 @@ class AgentFileScanner:
 
         result = AgentFileDetectionResult(repo_name=repo_name)
 
-        # Scan for each agent type
-        for agent_name, patterns in self.AGENT_FILE_PATTERNS.items():
-            files_found = self._find_agent_files(repo_path, patterns)
-
+        entries = self._walk_repo_entries(repo_path)
+        for agent_name, patterns in LIGHTWEIGHT_AGENT_CONFIG_PATTERNS.items():
+            files_found = [
+                str(rel_path)
+                for rel_path, is_dir in entries
+                if any(
+                    path_matches_pattern(rel_path, pattern, is_dir=is_dir)
+                    for pattern in patterns
+                )
+            ]
             if files_found:
                 result.agents_found[agent_name] = files_found
 
         return result
 
-    def _find_agent_files(
-        self, repo_path: Path, patterns: Dict[str, List]
-    ) -> List[str]:
+    @staticmethod
+    def _walk_repo_entries(repo_path: Path) -> List[Tuple[Path, bool]]:
+        """Return (path relative to repo_path, is_dir) for every entry under
+        repo_path.
+
+        os.walk with in-place dirname pruning (rather than rglob("*")) skips
+        .git/node_modules/vendor/etc entirely instead of merely filtering
+        their entries afterward -- avoids both false positives from a
+        vendored dependency's own config file and the wasted I/O of walking
+        .git's internal objects/hooks on every scan. Same exclusion list and
+        walk shape as `agent_patterns.repo_contains_patterns()`, which this
+        mirrors rather than calls directly since that helper returns only
+        the first pattern matched across all agents, not a per-agent
+        breakdown of every match.
         """
-        Find agent configuration files matching patterns.
-
-        Args:
-            repo_path: Path to repository
-            patterns: Dict with 'file_names' and 'patterns' lists
-
-        Returns:
-            List of relative paths to found files
-        """
-        found_files = []
-        file_names = patterns.get("file_names", [])
-        regex_patterns = patterns.get("patterns", [])
-
-        # os.walk with in-place dirname pruning (rather than rglob("*"))
-        # skips .git/node_modules/vendor/etc entirely instead of merely
-        # filtering their entries afterward -- avoids both false positives
-        # from a vendored dependency's own config file and the wasted I/O
-        # of walking .git's internal objects/hooks on every scan.
-        all_paths: List[Path] = []
+        entries: List[Tuple[Path, bool]] = []
         for dirpath, dirnames, filenames in os.walk(repo_path):
             dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIR_NAMES]
             base = Path(dirpath)
-            all_paths.extend(base / d for d in dirnames)
-            all_paths.extend(base / f for f in filenames)
-
-        # Search by exact filename (case-insensitive)
-        for file_name in file_names:
-            file_name_lower = file_name.lower()
-            for found_path in all_paths:
-                rel_path = found_path.relative_to(repo_path)
-                rel_lower = str(rel_path).lower()
-                if found_path.name.lower() == file_name_lower or fnmatch.fnmatchcase(
-                    rel_lower, file_name_lower
-                ):
-                    found_files.append(str(rel_path))
-
-        # Search by regex pattern (case-insensitive)
-        for pattern in regex_patterns:
-            compiled = re.compile(pattern, re.IGNORECASE)
-            for found_path in all_paths:
-                if compiled.search(found_path.name):
-                    rel_path = found_path.relative_to(repo_path)
-                    found_files.append(str(rel_path))
-
-        # Remove duplicates while preserving order
-        return list(dict.fromkeys(found_files))
+            for d in dirnames:
+                entries.append(((base / d).relative_to(repo_path), True))
+            for f in filenames:
+                entries.append(((base / f).relative_to(repo_path), False))
+        return entries
 
     def scan_all(
         self, show_progress: bool = True
@@ -684,93 +606,29 @@ class AgentCommitVerifier:
         return results
 
     def _detect_agent_in_commit(self, commit_data: Dict) -> Optional[str]:
-        """
-        Detect agent type from commit metadata.
+        """Detect agent type from commit metadata.
 
-        Checks in order, first match wins:
-        1. Bot status (author name/email against bots.csv) -- never
-           overridable by a later signal. A bot-authored commit whose
-           message happens to contain an agent-style trailer (e.g. a
-           templated "Generated-by:" line some tooling stamps onto
-           dependency-bump commits) must still be excluded as bot, not
-           misattributed to that agent.
-        2. Co-Authored-By/Assisted-by/Generated-by trailer (highest
-           confidence agent signal, since it's a deliberate, structured
-           convention only agents/tooling emit -- as opposed to author
-           identity below, which is a freely-editable field real humans
-           also populate).
-        3. Author name
-        4. Author email
-
-        Deliberately does NOT scan the free-text commit message body: a
-        prose mention of an agent's name (e.g. "Revert a bad Claude
-        suggestion", or "Fix cursor blinking bug" -- "cursor" the UI
-        element, not the agent) is not evidence of agent authorship, and
-        scanning it produced verified false positives. The structured
-        fields above (trailer/author identity) are the legitimate Tier 2
-        signal.
+        Thin wrapper around `utils.detect_agent_in_commit` -- the priority
+        order (bot, then trailer, then author name, then author email) and
+        its full rationale live there, shared with Tier 1's
+        `Tier1RepositoryScanner`, so both tiers of this project's detection
+        methodology stay behaviorally identical by construction rather than
+        by two independently-maintained copies agreeing by coincidence.
 
         Args:
             commit_data: Dict with sha, date, author_name, author_email, message
 
         Returns:
-            Agent type (claude|copilot|cursor|etc) or None if no match
-
-        Note:
-            Matching is word-boundary-based (not a bare substring check),
-            case-insensitive. First match wins. Word boundaries prevent a
-            keyword from matching inside an unrelated compound word/surname
-            (e.g. "cline" inside "McLine"), but cannot distinguish a keyword
-            that is *also* a common standalone first name (e.g. an author
-            literally named "Devin") -- see agent_heuristics.yaml's module
-            comment for this known, inherent limitation. Checking the
-            trailer before author identity (see order above) avoids this
-            collision whenever a commit has both a colliding author name
-            and a correct, unambiguous trailer.
+            Agent type (claude|copilot|cursor|etc), or None for both
+            "no match" and "bot-authored" (this class has no caller that
+            needs to distinguish the two).
         """
-        message = commit_data["message"]
-        author_name = commit_data["author_name"]
-        author_email = commit_data["author_email"]
-
-        if is_bot_author(f"{author_name} {author_email}"):
-            return None
-
-        # Check Co-Authored-By/Assisted-by/Generated-by trailers. Uses the
-        # same AGENT_TRAILER_RE as Tier1RepositoryScanner (collection/utils.py)
-        # rather than a separate ad-hoc regex here -- previously this method
-        # had its own inline pattern that required a literal "co-authored-by"
-        # (hyphens mandatory) and an angle-bracket email, so it silently
-        # missed the "assisted-by"/"generated-by" trailer forms and
-        # hyphen-omitted variants ("Coauthored-by") that AGENT_TRAILER_RE
-        # already handles.
-        for trailer_value in AGENT_TRAILER_RE.findall(message):
-            agent_type = self._match_agent_keywords(trailer_value)
-            if agent_type:
-                return agent_type
-
-        # Check author name
-        agent_type = self._match_agent_keywords(author_name)
-        if agent_type:
-            return agent_type
-
-        # Check author email
-        agent_type = self._match_agent_keywords(author_email)
-        if agent_type:
-            return agent_type
-
-        return None
-
-    def _match_agent_keywords(self, text: str) -> Optional[str]:
-        """
-        Match agent keywords in text as whole words/phrases.
-
-        Args:
-            text: Text to search
-
-        Returns:
-            Agent type if matched, None otherwise
-        """
-        return match_agent_keyword(text, self.AGENT_KEYWORDS)
+        return detect_agent_in_commit(
+            commit_data["author_name"],
+            commit_data["author_email"],
+            commit_data["message"],
+            self.AGENT_KEYWORDS,
+        )
 
     def get_verification_summary(
         self, verification_results: Dict[str, AgentCommitVerificationResult]

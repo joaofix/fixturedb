@@ -4,10 +4,10 @@ from pathlib import Path
 from collection.agent_signal_primitives import AgentCommitVerifier
 from collection.tiered_agent_corpus_scanner import (
     _BOT,
-    AGENT_TRAILER_RE,
     Tier1RepositoryScanner,
     _is_test_file_path,
 )
+from collection.utils import AGENT_TRAILER_RE
 
 
 def test_is_test_file_path_python_cases():

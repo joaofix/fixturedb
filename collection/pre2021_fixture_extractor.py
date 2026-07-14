@@ -15,7 +15,7 @@ from collection.logging_utils import get_logger
 from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_repo_path
 from .config import CLONES_DIR, DB_PATH
 from .db import db_session
-from .detector import extract_fixtures
+from .detector import extract_fixtures, fixture_result_to_dict
 from .test_commit_utils import is_test_file_path
 
 logger = get_logger(__name__)
@@ -205,35 +205,12 @@ class Pre2021FixtureExtractor:
 
                         for fixture in result.fixtures:
                             fixtures.append(
-                                {
-                                    "repo_name": repo_name,
-                                    "name": fixture.name,
-                                    "fixture_type": fixture.fixture_type,
-                                    "framework": fixture.framework,
-                                    "scope": fixture.scope,
-                                    "loc": fixture.loc,
-                                    "language": language,
-                                    "file_path": str(test_file.relative_to(repo_path)),
-                                    "start_line": fixture.start_line,
-                                    "end_line": fixture.end_line,
-                                    "cyclomatic_complexity": fixture.cyclomatic_complexity,
-                                    "max_nesting_depth": fixture.max_nesting_depth,
-                                    "num_objects_instantiated": fixture.num_objects_instantiated,
-                                    "num_external_calls": fixture.num_external_calls,
-                                    "num_parameters": fixture.num_parameters,
-                                    "has_teardown_pair": fixture.has_teardown_pair,
-                                    "raw_source": fixture.raw_source,
-                                    "mocks": [
-                                        {
-                                            "framework": m.framework,
-                                            "category": m.category,
-                                            "target_identifier": m.target_identifier,
-                                            "num_interactions_configured": m.num_interactions_configured,
-                                            "raw_snippet": m.raw_snippet,
-                                        }
-                                        for m in fixture.mocks
-                                    ],
-                                }
+                                fixture_result_to_dict(
+                                    fixture,
+                                    language=language,
+                                    file_path=str(test_file.relative_to(repo_path)),
+                                    repo_name=repo_name,
+                                )
                             )
 
                     except Exception as e:
@@ -277,6 +254,16 @@ class Pre2021FixtureExtractor:
         """
         Check if a file should be processed.
 
+        A pre-filter ahead of the rglob walk in _find_test_files -- avoids
+        queuing files extract_fixtures() would reject anyway. Uses
+        detector.py's own ALLOWED_EXTS rather than a separate hand-copied
+        extension set: this file used to carry its own, and it had already
+        drifted from the authoritative one in detector.py (missing .pyw/.pyi
+        for python; an extra .cts entry for typescript that would pass this
+        filter only to be silently rejected by extract_fixtures()'s own
+        allowlist check one step later, since that check -- not this one --
+        is what actually gates which files get analyzed).
+
         Args:
             file_path: Path to file
             language: Programming language
@@ -285,16 +272,10 @@ class Pre2021FixtureExtractor:
             True if file should be processed
         """
         from .config import MAX_FILE_SIZE_BYTES, NON_CODE_EXTENSIONS
-
-        language_extensions = {
-            "python": {".py"},
-            "java": {".java"},
-            "javascript": {".js", ".jsx", ".mjs", ".cjs"},
-            "typescript": {".ts", ".tsx", ".mts", ".cts"},
-        }
+        from .detector import ALLOWED_EXTS
 
         # Check extension
-        allowed_extensions = language_extensions.get(language.lower(), set())
+        allowed_extensions = ALLOWED_EXTS.get(language.lower(), set())
         if not allowed_extensions or file_path.suffix.lower() not in allowed_extensions:
             return False
         if file_path.suffix.lower() in NON_CODE_EXTENSIONS:

@@ -66,6 +66,31 @@ def test_should_process_file_extension_and_size(tmp_path):
     assert not extractor._should_process_file(flarge, "python")
 
 
+def test_should_process_file_matches_detector_allowed_exts(tmp_path):
+    """Regression test: _should_process_file used to carry its own,
+    independently hand-copied extension allowlist that had already drifted
+    from detector.py's ALLOWED_EXTS (the check that actually gates
+    extract_fixtures()) -- missing .pyw/.pyi for python, and an extra .cts
+    entry for typescript that would pass this pre-filter only to be
+    silently rejected one step later. Now both read the same catalog, so
+    this must hold for every language/extension pair in it."""
+    from collection.detector import ALLOWED_EXTS
+
+    extractor = Pre2021FixtureExtractor(clones_dir=tmp_path)
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    for language, extensions in ALLOWED_EXTS.items():
+        for ext in extensions:
+            f = repo / f"test_case{ext}"
+            f.write_text("// test\n")
+            assert extractor._should_process_file(f, language), (language, ext)
+
+    # A python-only extension must not be accepted for an unrelated language.
+    stray = repo / "test_case.pyi"
+    assert not extractor._should_process_file(stray, "javascript")
+
+
 def test_find_test_files_detects_flat_prefix_convention(tmp_path):
     """Regression: the old rglob("*test_.py") glob only matched filenames
     ENDING in "test_.py", never the standard "test_*.py" PREFIX convention

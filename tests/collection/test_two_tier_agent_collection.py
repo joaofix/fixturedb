@@ -12,10 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from collection.tiered_agent_corpus_scanner import (
-    AGENT_TRAILER_RE,
-    Tier1RepositoryScanner,
-)
+from collection.tiered_agent_corpus_scanner import Tier1RepositoryScanner
+from collection.utils import AGENT_TRAILER_RE
 
 
 class TestAgentTrailerDetection:

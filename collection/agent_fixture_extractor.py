@@ -30,7 +30,7 @@ from collection.logging_utils import get_logger
 from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_repo_path
 from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, DB_PATH
 from .conventional_commits import classify_commit_type
-from .detector import _get_parser, extract_fixtures
+from .detector import _get_parser, extract_fixtures, fixture_result_to_dict
 from .diff_purity import DiffLineMap, commit_is_pure_addition, is_pure_addition
 from .language_utils import get_language_static
 from .test_commit_utils import is_test_file_path
@@ -346,38 +346,15 @@ class AgentFixtureExtractor:
                         )
 
                         fixtures.append(
-                            {
-                                "repo_name": repo_name,
-                                "name": fixture.name,
-                                "fixture_type": fixture.fixture_type,
-                                "scope": fixture.scope,
-                                "loc": fixture.loc,
-                                "language": language,
-                                "file_path": file_path,
-                                "start_line": fixture.start_line,
-                                "end_line": fixture.end_line,
-                                "cyclomatic_complexity": fixture.cyclomatic_complexity,
-                                "max_nesting_depth": fixture.max_nesting_depth,
-                                "num_objects_instantiated": fixture.num_objects_instantiated,
-                                "num_external_calls": fixture.num_external_calls,
-                                "num_parameters": fixture.num_parameters,
-                                "has_teardown_pair": fixture.has_teardown_pair,
-                                "raw_source": fixture.raw_source,
-                                "framework": fixture.framework,
-                                "mocks": [
-                                    {
-                                        "framework": m.framework,
-                                        "category": m.category,
-                                        "target_identifier": m.target_identifier,
-                                        "num_interactions_configured": m.num_interactions_configured,
-                                        "raw_snippet": m.raw_snippet,
-                                    }
-                                    for m in fixture.mocks
-                                ],
-                                "commit_sha": commit_sha,
-                                "agent_type": agent_type,
-                                "is_complete_addition": is_complete,
-                            }
+                            fixture_result_to_dict(
+                                fixture,
+                                language=language,
+                                file_path=file_path,
+                                repo_name=repo_name,
+                                commit_sha=commit_sha,
+                                agent_type=agent_type,
+                                is_complete_addition=is_complete,
+                            )
                         )
 
                 except Exception as e:
@@ -417,40 +394,17 @@ class AgentFixtureExtractor:
         fixtures = []
         for fixture in result.fixtures:
             fixtures.append(
-                {
-                    "repo_name": repo_path.name,
-                    "name": fixture.name,
-                    "fixture_type": fixture.fixture_type,
-                    "scope": fixture.scope,
-                    "loc": fixture.loc,
-                    "language": language,
-                    "file_path": file_path,
-                    "start_line": fixture.start_line,
-                    "end_line": fixture.end_line,
-                    "cyclomatic_complexity": fixture.cyclomatic_complexity,
-                    "max_nesting_depth": fixture.max_nesting_depth,
-                    "num_objects_instantiated": fixture.num_objects_instantiated,
-                    "num_external_calls": fixture.num_external_calls,
-                    "num_parameters": fixture.num_parameters,
-                    "has_teardown_pair": fixture.has_teardown_pair,
-                    "raw_source": fixture.raw_source,
-                    "framework": fixture.framework,
-                    "mocks": [
-                        {
-                            "framework": m.framework,
-                            "category": m.category,
-                            "target_identifier": m.target_identifier,
-                            "num_interactions_configured": m.num_interactions_configured,
-                            "raw_snippet": m.raw_snippet,
-                        }
-                        for m in fixture.mocks
-                    ],
-                    "commit_sha": cutoff_commit_sha,
-                    "commit_date": cutoff_commit_date,
-                    "agent_type": "human_pre2022",
-                    "commit_kind": "human",
-                    "is_complete_addition": 1,
-                }
+                fixture_result_to_dict(
+                    fixture,
+                    language=language,
+                    file_path=file_path,
+                    repo_name=repo_path.name,
+                    commit_sha=cutoff_commit_sha,
+                    commit_date=cutoff_commit_date,
+                    agent_type="human_pre2022",
+                    commit_kind="human",
+                    is_complete_addition=1,
+                )
             )
         return fixtures
 

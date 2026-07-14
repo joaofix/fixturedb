@@ -18,7 +18,7 @@ behind each pairing.
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 from collection.logging_utils import get_logger
 
@@ -351,6 +351,61 @@ def _build_result(
     )
 
 
+def fixture_result_to_dict(
+    fixture: FixtureResult, *, language: str, file_path: str, **extra: Any
+) -> dict:
+    """Flatten a FixtureResult (plus its mocks) into the flat dict shape
+    every extraction call site writes into fixtures.csv / the fixtures DB
+    table.
+
+    `language`/`file_path` are call-site context a FixtureResult doesn't
+    carry itself (it's produced per-file, but doesn't know its own
+    filename or which language detector produced it). `**extra` adds
+    whatever further fields a specific extraction path needs on top of the
+    common core -- e.g. `repo_name`, `commit_sha`, `agent_type`,
+    `is_complete_addition` for a commit-level extraction, or `commit_kind`
+    for a snapshot one.
+
+    Previously each of four call sites (agent_fixture_extractor.py's
+    `_extract_from_commit`/`_extract_from_snapshot_file`,
+    pre2021_fixture_extractor.py's `_extract_from_repo`, and
+    fixture_extractor.py's `extract_fixtures_at_commit`) hand-rolled its own
+    ~20-key dict literal from the same FixtureResult fields, with nothing
+    enforcing the four stayed in sync -- a new FixtureResult field added
+    later could easily be wired into one call site and silently forgotten
+    in the other three.
+    """
+    return {
+        "name": fixture.name,
+        "fixture_type": fixture.fixture_type,
+        "framework": fixture.framework,
+        "scope": fixture.scope,
+        "loc": fixture.loc,
+        "language": language,
+        "file_path": file_path,
+        "start_line": fixture.start_line,
+        "end_line": fixture.end_line,
+        "cyclomatic_complexity": fixture.cyclomatic_complexity,
+        "max_nesting_depth": fixture.max_nesting_depth,
+        "num_objects_instantiated": fixture.num_objects_instantiated,
+        "num_external_calls": fixture.num_external_calls,
+        "num_parameters": fixture.num_parameters,
+        "has_teardown_pair": fixture.has_teardown_pair,
+        "raw_source": fixture.raw_source,
+        "mocks": [
+            {
+                "framework": m.framework,
+                "category": m.category,
+                "target_identifier": m.target_identifier,
+                "num_interactions_configured": m.num_interactions_configured,
+                "raw_snippet": m.raw_snippet,
+            }
+            for m in fixture.mocks
+        ],
+        **extra,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Test function counting helpers
 # ---------------------------------------------------------------------------
@@ -424,31 +479,6 @@ def _count_test_functions_js(tree, src_bytes: bytes) -> int:
             if func:
                 func_name = _source(func, src_bytes).strip().split("(")[0].strip()
                 if func_name in ("it", "test", "describe"):
-                    count += 1
-        for child in node.children:
-            visit(child)
-
-    visit(tree.root_node)
-    return count
-
-
-def _count_test_functions_go(tree, src_bytes: bytes) -> int:
-    """Count test functions in Go (functions starting with Test)."""
-    count = 0
-
-    def visit(node):
-        nonlocal count
-        if node.type == "function_declaration":
-            name_node = node.child_by_field_name("name")
-            if name_node:
-                name = _source(name_node, src_bytes)
-                if name.startswith("Test"):
-                    count += 1
-        elif node.type == "method_declaration":
-            name_node = node.child_by_field_name("name")
-            if name_node:
-                name = _source(name_node, src_bytes)
-                if name.startswith("Test"):
                     count += 1
         for child in node.children:
             visit(child)
