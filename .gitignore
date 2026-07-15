@@ -252,3 +252,6 @@ output/
 github-search-human/pre_2021_test_commits/
 # Pipeline checkpoint files (runtime artifacts)
 *.checkpoint.json
+# Academic paper draft (working markdown, not the collection pipeline --
+# kept local/unpublished; papers/ above is unrelated, tracked reference PDFs)
+paper-draft/
