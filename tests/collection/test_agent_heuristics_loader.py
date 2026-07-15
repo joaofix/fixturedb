@@ -348,16 +348,32 @@ def test_files_csv_has_boundary_comment_line():
     assert "snapshotted verbatim on" in comment_lines[0]
 
 
-def test_files_csv_first_95_rows_are_upstream_verbatim():
-    """The file's first 95 data rows must be labri-progress/agent-mining's
+def test_files_csv_first_94_rows_are_upstream_verbatim():
+    """The file's first 94 data rows must be labri-progress/agent-mining's
     files.csv content, unmodified and in its original order -- this is the
     whole point of the CSV (a reviewer-checkable citation), not just a
     convenient format. Spot-checks a sample spanning the full file rather
-    than asserting all 95 rows verbatim, so the test doesn't itself become
-    an unreadable copy of the source file."""
+    than asserting all 94 rows verbatim, so the test doesn't itself become
+    an unreadable copy of the source file.
+
+    94, not upstream's original 95: this project removed upstream's
+    "CURSOR.md" row on 2026-07-15 after Dataset A validation sampling found
+    it producing confirmed false positives (matching unrelated files
+    literally named cursor.md -- CSS "cursor"-property docs, a blog post
+    about Cursor-IDE support -- since "cursor" is also an ordinary word and
+    the pattern isn't root-anchored), and Cursor's own docs
+    (cursor.com/docs/rules) don't document any CURSOR.md convention. This is
+    the one deliberate exception to "verbatim" -- see the source file's own
+    boundary comment and docs/architecture/agent-detection.md's Known
+    Limitations section.
+    """
     rows = _read_files_csv_rows()
-    upstream_rows = rows[:95]
-    assert len(upstream_rows) == 95
+    upstream_rows = rows[:94]
+    assert len(upstream_rows) == 94
+    assert not any(row["pattern"] == "CURSOR.md" for row in rows), (
+        "CURSOR.md should have been removed as an unverified, "
+        "false-positive-prone upstream entry -- see boundary comment"
+    )
     expected_samples = [
         {"pattern": "CLAUDE.md", "tool": "Claude Code"},
         {"pattern": "AGENTS.md", "tool": "Generic"},
@@ -368,9 +384,9 @@ def test_files_csv_first_95_rows_are_upstream_verbatim():
         assert any(
             row["pattern"] == expected["pattern"] and row["tool"] == expected["tool"]
             for row in upstream_rows
-        ), f"upstream row {expected} not found verbatim in the first 95 rows"
-    # Last upstream row (line 96 of the source file) must be the final row
-    # of the 95-row block, proving the appended rows come strictly after it.
+        ), f"upstream row {expected} not found verbatim in the first 94 rows"
+    # Last upstream row must be the final row of the 94-row block, proving
+    # the appended rows come strictly after it.
     assert upstream_rows[-1] == {
         "pattern": ".superpowers/",
         "tool": "Superpowers",
@@ -388,9 +404,12 @@ def test_files_csv_our_addition_is_appended_after_upstream_block():
     .cline.config, bare .cline) were checked the same way and dropped:
     none were documented, and each was already redundant with an upstream
     directory-marker pattern (.claude/, .cursor/, .openhands/, .devin/,
-    .cline/ match regardless of what's inside them)."""
+    .cline/ match regardless of what's inside them). CURSOR.md is not
+    replaced with anything here -- it was an upstream row this project
+    removed (see test_files_csv_first_94_rows_are_upstream_verbatim), not
+    an addition being appended."""
     rows = _read_files_csv_rows()
-    our_additions = rows[95:]
+    our_additions = rows[94:]
     assert our_additions == [
         {"pattern": ".cursorignore", "tool": "Cursor", "start_date": "", "end_date": ""}
     ]
