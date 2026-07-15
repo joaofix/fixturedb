@@ -1,25 +1,43 @@
 # FixtureDB and the Between-Group Study
 
-FixtureDB is a cross-language dataset of test fixtures extracted from agent-enabled GitHub repositories.
+FixtureDB is a cross-language dataset of test fixtures comparing agent-authored and
+human-authored code across three independent corpora.
 
-The study design is a **between-group comparison within repositories**:
+The study design is a **between-group comparison across three datasets**:
 
-- **Dataset basis:** Agent-enabled repositories (containing agent config files like `.claude.md`, `.cursorrules`, etc.)
-- **Temporal window:** Post-agent emergence (2025-01-01 onwards)
-- **Agent fixtures:** From commits with agent authorship signals (Tier 1 detection: co-authored-by trailers, author signatures)
-- **Human fixtures:** From non-agent commits in the same repositories, same temporal window
-- **Control variables:** Language, domain, repository star tier, repository age
-- **Statistical approach:** Paired tests within repositories (Wilcoxon signed-rank for continuous, McNemar for categorical)
+- **Dataset A (agent):** Fixtures introduced by AI coding agents in agent-enabled
+  repositories, commits since 2025-01-01.
+- **Dataset B (contemporary human):** Fixtures introduced by humans in the *same*
+  repositories as Dataset A, same 2025-01-01+ window — a within-repo control that holds
+  repository-level confounds (domain, maturity, agent adoption context) fixed.
+- **Dataset C (pre-LLM human):** Fixtures introduced by humans in an independent pool of
+  repositories created between 2016-01-01 and 2020-12-31, predating LLM-based coding
+  assistance entirely — a cross-repo, pre-agent-era baseline.
+- **Agent detection:** Tier 1 (co-authored-by/assisted-by/generated-by trailers, author
+  identity), checked in that priority order — see
+  [Agent Detection](../architecture/agent-detection.md).
+- **Control variables:** Language, domain, repository age — computed at each dataset's
+  own temporal reference point.
+- **Statistical approach:** Unpaired tests (Mann-Whitney U for continuous variables,
+  chi-square for categorical), since A/B/C are three separate databases rather than
+  matched pairs within one table.
 
-This design enables within-repository comparison of fixtures written by agents vs humans, controlling for repository context.
+This design supports two related but distinct comparisons: A-vs-B ("within-repo," same
+repos, same window, isolates authorship) and A-vs-C ("cross-repo," different repos,
+different era, isolates the pre-/post-agent distinction). Treat them as separate
+questions — see [Analyzing the Datasets](../usage/usage.md) for why they shouldn't be
+pooled into one undifferentiated "agent vs. human" comparison.
 
-## Why Within-Repository Design?
+## Why Three Datasets?
 
-- Agents and humans contribute to the same codebases, providing natural pairs
-- Within-repository comparison controls for language, framework, and project structure
-- Same temporal window prevents temporal confounding
-- Paired tests are more powerful than unpaired tests with matched units
-- Direct observation of agent adoption effects within repositories
+- A-vs-B alone can't distinguish "agents write fixtures differently" from "any commit in
+  an agent-adopting repo looks different" — the same-repo control isolates authorship.
+- A-vs-B alone also can't distinguish a genuine agent effect from a general secular trend
+  in how fixtures are written over time — Dataset C's pre-agent-era baseline is what
+  separates those two explanations (at the cost of a different repo pool; see
+  [Limitations](../reference/limitations.md)).
+- Three independent per-dataset databases, rather than one shared table with a role
+  column, keep each dataset's provenance and temporal reference point unambiguous.
 
 ## What the Pipeline Produces
 
@@ -33,7 +51,7 @@ This design enables within-repository comparison of fixtures written by agents v
 
 **Collection summary** (`datasets/{dataset}/summary.yaml`, via
 `python -m collection summarize --dataset {a,b,c}`):
-- Repository statistics: languages, domains, star tiers, contributor counts
+- Repository statistics: languages, domains, contributor counts
 - Fixture statistics: extraction rates by language, fixture type distributions
 - Purity-gate acceptance rate (Datasets A/B)
 
@@ -78,6 +96,7 @@ actually produced fixtures, run the verbs in this order:
 	python -m collection extract-fixtures    --dataset b --language java
 	```
 
-See [Repository Structure](repository-structure.md) for the full verb-to-dataset matrix
-and AGENTS.md for which verbs apply to Dataset C.
-
+Dataset C is independent of A/B and can be collected in any order — see
+`discover-repos --dataset c` / `extract-fixtures --dataset c` in
+[Repository Structure](repository-structure.md) for the full verb-to-dataset matrix and
+AGENTS.md for details.
