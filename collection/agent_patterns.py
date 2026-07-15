@@ -68,27 +68,40 @@ PAPER_AGENT_CONFIG_PATTERNS = {
 # is_bot_author() below.
 BOT_PATTERNS: list[str] = _HEURISTICS["bot_patterns"]
 
+# Flat list of author/email patterns identifying specific, individually-
+# verified real humans whose name or email collides with an
+# AGENT_SIGNATURES keyword -- loaded from
+# collection/heuristics/agent-mining/known_human_collisions.csv. See that
+# file and is_known_human_author() below.
+KNOWN_HUMAN_COLLISION_PATTERNS: list[str] = _HEURISTICS[
+    "known_human_collision_patterns"
+]
 
-def _bot_pattern_regex(pattern: str) -> re.Pattern[str]:
-    """Compile one bots.csv pattern into a case-insensitive regex.
+
+def _compile_boundary_pattern(pattern: str) -> re.Pattern[str]:
+    """Compile one regex-ready catalog pattern (bots.csv or
+    known_human_collisions.csv) into a case-insensitive regex.
 
     Unlike match_agent_keyword's AGENT_SIGNATURES patterns, these are NOT
-    passed through re.escape() -- bots.csv's pattern column is already
-    regex-ready as copied from upstream (e.g. "dependabot\\[bot\\]" has its
-    brackets pre-escaped in the source file itself), so re-escaping here
-    would double-escape the backslashes and break every bracketed pattern.
-    The same asymmetric boundary logic as match_agent_keyword still applies
-    -- a boundary assertion is only added on a side whose adjacent literal
+    passed through re.escape() -- both source CSVs' pattern columns are
+    already regex-ready (e.g. "dependabot\\[bot\\]" has its brackets
+    pre-escaped in the source file itself), so re-escaping here would
+    double-escape the backslashes and break every bracketed pattern. The
+    same asymmetric boundary logic as match_agent_keyword still applies --
+    a boundary assertion is only added on a side whose adjacent literal
     character is itself a word character, so a pattern ending in "]" (e.g.
-    the ones above) isn't broken by a trailing \\b that can never match
-    right after a non-word character.
+    a bot pattern like the ones above) isn't broken by a trailing \\b that
+    can never match right after a non-word character.
     """
     prefix = r"(?<!\w)" if re.match(r"\w", pattern) else ""
     suffix = r"(?!\w)" if re.search(r"\w$", pattern) else ""
     return re.compile(prefix + pattern + suffix, re.IGNORECASE)
 
 
-_BOT_REGEXES = [_bot_pattern_regex(pattern) for pattern in BOT_PATTERNS]
+_BOT_REGEXES = [_compile_boundary_pattern(pattern) for pattern in BOT_PATTERNS]
+_HUMAN_COLLISION_REGEXES = [
+    _compile_boundary_pattern(pattern) for pattern in KNOWN_HUMAN_COLLISION_PATTERNS
+]
 
 
 def is_bot_author(text: str) -> bool:
@@ -101,6 +114,26 @@ def is_bot_author(text: str) -> bool:
     of the coding agents tracked in AGENT_SIGNATURES.
     """
     return any(regex.search(text) for regex in _BOT_REGEXES)
+
+
+def is_known_human_author(text: str) -> bool:
+    """Return True if text (typically "{author_name} {author_email}") matches
+    a specific, individually-verified real human author from
+    collection/heuristics/agent-mining/known_human_collisions.csv whose
+    identity collides with an agent keyword (e.g. a Django core developer
+    literally named "Claude" colliding with the Claude agent's own
+    author-identity pattern).
+
+    Unlike is_bot_author(), this does NOT mean "exclude this commit
+    outright" -- it means "do not trust author-identity matching for this
+    specific person" (see detect_agent_in_commit() in utils.py, which
+    checks this only for the author-name/author-email steps, after the
+    trailer check: a genuine Co-authored-by trailer on one of these
+    authors' commits still counts, since a trailer is a deliberate,
+    structured signal independent of the freely-editable author field this
+    exclusion guards against).
+    """
+    return any(regex.search(text) for regex in _HUMAN_COLLISION_REGEXES)
 
 
 def path_matches_pattern(

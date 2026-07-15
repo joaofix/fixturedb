@@ -1,0 +1,22 @@
+# Specific, individually-verified human authors whose real name or email
+# happens to collide with an agent keyword in agent_authors.csv, causing a
+# false-positive author-identity match (Tier 1 step 3/4) even though the
+# commit was not agent-authored. Unlike bots.csv/agent_authors.csv, this
+# file has no upstream counterpart -- it is entirely this project's own,
+# and only grows by individually confirming a specific real collision
+# found in this project's own corpus, the same verification bar bots.csv's
+# own additions section already uses. Never a generic catch-all pattern.
+#
+# This exclusion applies ONLY to the author-identity matching step -- a
+# genuine Co-authored-by/Assisted-by/Generated-by trailer on one of these
+# authors' commits still overrides it, since a trailer is a deliberate,
+# structured signal independent of the freely-editable author-name/email
+# field this file exists to guard against. See
+# collection/utils.py::detect_agent_in_commit() and
+# collection/agent_patterns.py::is_known_human_author().
+#
+# pattern is regex-ready (matched the same way as bots.csv's pattern
+# column -- word-boundary-wrapped, case-insensitive, not re.escape()'d
+# here since none of these need escaping yet).
+pattern,note
+claude@2xlibre\.net,"Claude Paroz, real Django core developer -- literal first name/email collides with the Claude agent's own catalog entry (agent_authors.csv's upstream ""Claude"" pattern). Confirmed via Dataset A collection review, 2026-07-15 (commit 2c47207 and others in django/django)."

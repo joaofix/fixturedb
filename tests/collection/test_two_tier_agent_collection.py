@@ -198,11 +198,25 @@ Co-authored-by: Bob <bob@example.com>"""
         agent = scanner._detect_agent_in_commit("Charlie", "charlie@example.com", body)
         assert agent is None
 
-    def test_detect_agent_in_email_anthropic(self, scanner):
-        """Should detect agent from email domain (anthropic)."""
+    def test_detect_agent_in_email_anthropic_specific_address(self, scanner):
+        """Should detect agent from one of the catalog's specific Claude
+        Code service addresses."""
+        body = "Regular commit"
+        agent = scanner._detect_agent_in_commit("User", "claude@anthropic.com", body)
+        assert agent == "claude"
+
+    def test_bare_anthropic_domain_does_not_match(self, scanner):
+        """Regression test: a bare "anthropic" domain-substring pattern
+        used to match ANY @anthropic.com sender regardless of agent
+        involvement -- removed after it caused a real false positive
+        during Dataset A collection (an Anthropic employee's personal
+        commit under their own name and work email, no agent signal at
+        all). The catalog's specific service addresses
+        (claude@/noreply@/assistant@anthropic.com) still match; a generic
+        address at the same domain no longer does."""
         body = "Regular commit"
         agent = scanner._detect_agent_in_commit("User", "user@anthropic.com", body)
-        assert agent == "claude"
+        assert agent is None
 
     def test_detect_agent_with_whitespace_variations(self, scanner):
         """Should handle co-authored-by with various whitespace."""
@@ -246,11 +260,16 @@ Co-authored-by: RandomDeveloper <random@example.com>"""
         agent = scanner._detect_agent_in_commit("User", "user@example.com", body)
         assert agent is None
 
-    def test_detect_anthropic_keyword_in_coauthor(self, scanner):
-        """Should detect Claude via 'anthropic' keyword in co-authored-by."""
+    def test_detect_anthropic_specific_address_in_coauthor(self, scanner):
+        """Should detect Claude via one of the catalog's specific service
+        addresses in a co-authored-by trailer. (A bare "anthropic" domain
+        substring used to match here too, e.g. a synthetic
+        "ai@anthropic.com" address -- removed for being more permissive
+        than upstream's own catalog, which only lists specific addresses
+        for this reason; see test_bare_anthropic_domain_does_not_match.)"""
         body = """Fix.
 
-Co-authored-by: AI Assistant <ai@anthropic.com>"""
+Co-authored-by: Claude <claude@anthropic.com>"""
         agent = scanner._detect_agent_in_commit("User", "user@example.com", body)
         assert agent == "claude"
 

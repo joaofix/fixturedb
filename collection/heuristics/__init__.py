@@ -11,6 +11,10 @@ collection/study_parameters/).
   directly. Each has upstream's rows verbatim, followed by this project's
   own additions after a `#`-prefixed boundary comment line (CSV has no
   native comment syntax). Full schema/provenance: docs/architecture/agent-detection.md.
+- agent-mining/known_human_collisions.csv: known_human_collision_patterns --
+  no upstream counterpart, entirely this project's own, individually-
+  verified real authors whose identity collides with an agent_authors.csv
+  keyword. See agent_patterns.py's is_known_human_author().
 - fixture_definitions.yaml: operational definition of "fixture" per
   language. Full schema: that file's own header comment.
 - exclusion_keywords.yaml: repo name/description keywords that signal a
@@ -36,6 +40,7 @@ _AGENT_MINING_DIR = _DATA_DIR / "agent-mining"
 _FILES_CSV_PATH = _AGENT_MINING_DIR / "agent_files.csv"
 _AUTHORS_CSV_PATH = _AGENT_MINING_DIR / "agent_authors.csv"
 _BOTS_CSV_PATH = _AGENT_MINING_DIR / "bots.csv"
+_HUMAN_COLLISIONS_CSV_PATH = _AGENT_MINING_DIR / "known_human_collisions.csv"
 
 
 def _load_yaml(filename: str) -> Any:
@@ -189,13 +194,28 @@ def _load_bot_patterns(path: Path = _BOTS_CSV_PATH) -> List[str]:
     return patterns
 
 
+def _load_known_human_collision_patterns(
+    path: Path = _HUMAN_COLLISIONS_CSV_PATH,
+) -> List[str]:
+    """Read known_human_collisions.csv's flat pattern column, in file
+    order. Same regex-ready-pattern contract as _load_bot_patterns() --
+    see agent_patterns.py's is_known_human_author()."""
+    patterns: List[str] = []
+    with path.open("r", encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(_non_comment_lines(fh)):
+            patterns.append(row["pattern"])
+    return patterns
+
+
 def load_agent_heuristics(path: Path = _HEURISTICS_PATH) -> Dict[str, Any]:
     """Parse and return the agent heuristics catalog (file_based,
-    commit_signatures, bot_patterns, paper_scope) -- see this module's
-    docstring for where each piece comes from."""
+    commit_signatures, bot_patterns, known_human_collision_patterns,
+    paper_scope) -- see this module's docstring for where each piece comes
+    from."""
     with path.open("r", encoding="utf-8") as fh:
         data = yaml.safe_load(fh)
     data["file_based"] = _load_file_based_patterns()
     data["commit_signatures"] = _load_commit_signatures()
     data["bot_patterns"] = _load_bot_patterns()
+    data["known_human_collision_patterns"] = _load_known_human_collision_patterns()
     return data

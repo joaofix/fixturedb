@@ -35,6 +35,7 @@ from .agent_patterns import (
     AGENT_SIGNATURES,
     PAPER_AGENT_REPOSITORY_LANGUAGES,
     is_bot_author,
+    is_known_human_author,
     match_agent_keyword,
 )
 
@@ -57,8 +58,9 @@ def detect_agent_in_commit(
        the least collision-prone signal, since it's a deliberate,
        structured convention only agents/tooling emit, unlike author
        identity below, a freely-editable field real humans also populate.
-    3. Author name.
-    4. Author email.
+    3. Author name (skipped for known human/agent-name collisions -- see
+       is_known_human_author() below).
+    4. Author email (same skip).
 
     Deliberately does NOT scan the free-text commit message body outside
     the trailer: a prose mention of an agent's name (e.g. "Revert a bad
@@ -94,9 +96,14 @@ def detect_agent_in_commit(
     cannot distinguish a keyword that is *also* a common standalone first
     name (e.g. an author literally named "Devin") -- see
     agent_heuristics.yaml's module comment for this known, inherent
-    limitation. Checking the trailer before author identity (see order
-    above) avoids this collision whenever a commit has both a colliding
-    author name and a correct, unambiguous trailer.
+    limitation of name-based matching in general. Checking the trailer
+    before author identity (see order above) avoids this collision
+    whenever a commit has both a colliding author name and a correct,
+    unambiguous trailer. For the specific, individually-verified
+    collisions this project has actually found in its own corpus (as
+    opposed to the general risk any name could theoretically pose),
+    is_known_human_author() additionally skips steps 3/4 outright -- see
+    collection/heuristics/agent-mining/known_human_collisions.csv.
     """
     if is_bot_author(f"{author_name} {author_email}"):
         return None
@@ -106,6 +113,9 @@ def detect_agent_in_commit(
             agent_type = match_agent_keyword(trailer_value, signatures)
             if agent_type:
                 return agent_type
+
+    if is_known_human_author(f"{author_name} {author_email}"):
+        return None
 
     agent_type = match_agent_keyword(author_name, signatures)
     if agent_type:

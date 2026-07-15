@@ -41,7 +41,12 @@ def test_detect_agent_in_commit_author_and_coauthor():
     scanner = Tier1RepositoryScanner(Path("/tmp"))
 
     # author email containing keyword
-    agent = scanner._detect_agent_in_commit("Alice", "alice@anthropic.com", "")
+    # Uses one of the catalog's specific upstream Claude Code service
+    # addresses (not a bare "anthropic" domain match -- that project-added
+    # pattern was removed after it caused a real false positive on an
+    # Anthropic employee's personal commit; see
+    # test_bare_anthropic_domain_no_longer_matches_claude).
+    agent = scanner._detect_agent_in_commit("Alice", "claude@anthropic.com", "")
     assert agent == "claude"
 
     # author name containing keyword
@@ -268,7 +273,12 @@ def test_detect_agent_bot_authors_are_excluded():
     )
 
     # Regular author with bot-like email but no [bot] in name should still be checked
-    agent = scanner._detect_agent_in_commit("Alice", "alice@anthropic.com", "")
+    # Uses one of the catalog's specific upstream Claude Code service
+    # addresses (not a bare "anthropic" domain match -- that project-added
+    # pattern was removed after it caused a real false positive on an
+    # Anthropic employee's personal commit; see
+    # test_bare_anthropic_domain_no_longer_matches_claude).
+    agent = scanner._detect_agent_in_commit("Alice", "claude@anthropic.com", "")
     assert agent == "claude"
 
     # Bot name without agent keyword should also be excluded
@@ -541,3 +551,53 @@ def test_agent_commit_verifier_detects_trailers(tmp_path):
     assert result.total_agent_commits == 1
     assert result.repo_name == repo.name
     assert list(result.agent_commits.values()) == ["claude"]
+
+
+def test_known_human_collision_excludes_author_identity_match():
+    """Regression test: a real Django core developer named "Claude Paroz"
+    was misattributed to the Claude agent via bare author-name matching
+    during Dataset A's real collection (2026-07-15 review) -- no trailer
+    involved, just his own literal first name colliding with the agent
+    catalog's "Claude" entry. known_human_collisions.csv now excludes this
+    specific, individually-verified identity from author-identity matching."""
+    from collection.utils import detect_agent_in_commit
+
+    assert (
+        detect_agent_in_commit("Claude Paroz", "claude@2xlibre.net", "Fix a bug")
+        is None
+    )
+
+
+def test_known_human_collision_does_not_override_a_real_trailer():
+    """A known human collision only suppresses author-identity matching
+    (steps 3/4) -- a genuine trailer on one of their commits is a
+    deliberate, structured signal and still counts."""
+    from collection.utils import detect_agent_in_commit
+
+    body = "Fix a bug\n\nCo-authored-by: GitHub Copilot <copilot@github.com>"
+    assert (
+        detect_agent_in_commit("Claude Paroz", "claude@2xlibre.net", body)
+        == "copilot"
+    )
+
+
+def test_bare_anthropic_domain_no_longer_matches_claude():
+    """Regression test: agent_authors.csv used to carry a project-added
+    bare "anthropic" substring pattern that matched any @anthropic.com
+    sender regardless of agent involvement -- found via a real false
+    positive in Dataset A (an Anthropic employee's personal commit under
+    their own name, no agent signal at all). That bare-domain entry was
+    this project's own addition (not upstream data), so it was removed
+    outright rather than added to the human-collision denylist; the
+    upstream catalog's own specific bot/service addresses
+    (claude@anthropic.com, noreply@anthropic.com, assistant@anthropic.com)
+    are untouched and still match."""
+    from collection.utils import detect_agent_in_commit
+
+    assert (
+        detect_agent_in_commit("Ashwin Bhat", "ashwin@anthropic.com", "Fix a bug")
+        is None
+    )
+    assert (
+        detect_agent_in_commit("Someone", "claude@anthropic.com", "") == "claude"
+    )

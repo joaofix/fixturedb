@@ -80,7 +80,6 @@ verdent@verdent.ai,Verdent,,
 noreply@verdent.ai,Verdent,,
 noreply@paperclip.ing,Paperclip,,
 # ---------- Everything above this line is labri-progress/agent-mining's authors.csv content, snapshotted verbatim on 2026-07-10 in its original order (github.com/labri-progress/agent-mining/blob/main/patterns/authors.csv -- an upstream, actively-maintained file, so a later re-diff may show drift from this snapshot). Everything below is this project's own additions, not part of that upstream file. ----------
-anthropic,Claude Code,,
 openhands,OpenHands,,
 devin ai,Devin,,
 devin,Devin,,

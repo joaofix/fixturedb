@@ -24,6 +24,7 @@ def test_loader_returns_expected_top_level_keys():
         "file_based",
         "commit_signatures",
         "bot_patterns",
+        "known_human_collision_patterns",
         "paper_scope",
     }
 
@@ -203,11 +204,16 @@ def test_authors_csv_first_80_rows_are_upstream_verbatim():
 
 
 def test_authors_csv_our_additions_are_appended_after_upstream_block():
+    """"anthropic" (a bare company-domain substring, matching any
+    @anthropic.com sender regardless of agent involvement) was removed
+    from this set after it caused a real false positive during Dataset A
+    collection -- see docs/architecture/agent-detection.md's Known
+    Limitations and tests/test_agent_detector_pure.py's
+    test_bare_anthropic_domain_no_longer_matches_claude."""
     rows = _read_authors_csv_rows()
     our_additions = rows[80:]
     added_patterns = {row["pattern"] for row in our_additions}
     assert added_patterns == {
-        "anthropic",
         "openhands",
         "devin ai",
         "devin",
