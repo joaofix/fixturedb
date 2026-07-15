@@ -19,9 +19,8 @@ Updated the test suite to reflect the migration from the split human-vs-agent me
 ## Test Coverage
 
 ### Control Variable Computation (`TestControlVariableComputation`)
-Tests domain classification, star tier computation, and repository age calculation:
+Tests domain classification and repository age calculation:
 - Domain classification from topics and description (web, systems, ml, security, database, devops, other)
-- Star tier classification (core ≥500 stars, extended <500 stars)
 - Repository age computation from ISO date strings
 - Boundary cases and invalid input handling
 
@@ -29,9 +28,8 @@ Tests domain classification, star tier computation, and repository age calculati
 
 ### Paired Study Collector Control Variables (`TestPairedStudyCollectorControlVariables`)
 Tests the `_collect_control_variables()` method:
-- Returns dict with all required fields (domain, star_tier, repo_age_years)
+- Returns dict with all required fields (domain, repo_age_years)
 - Correctly classifies domains
-- Properly computes star tiers
 - Handles repo age calculation
 
 **Tests:** 4 ✅
@@ -76,7 +74,7 @@ Tests `select_paired_repositories()` function:
 Tests accumulation of statistics across repositories:
 - Repos scanned count
 - Agent and human commit accumulation
-- Control variable distribution tracking (domain, star tier)
+- Control variable distribution tracking (domain)
 - Mean values computation (repo age, contributors)
 - Agent type breakdown tracking
 

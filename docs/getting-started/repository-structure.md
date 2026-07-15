@@ -160,7 +160,7 @@ Core implementation with one collector module per dataset:
 - Entry point: `python -m collection extract-fixtures --dataset a`
 
 **4. between_group_comparison.py**
-- Chi-square tests for categorical controls (language, domain, star_tier)
+- Chi-square tests for categorical controls (language, domain)
 - Mann-Whitney U tests for continuous controls (repo_age_years)
 - Balance report generation
 

@@ -21,7 +21,7 @@ from .db import (
 )
 from .fixture_extractor import extract_fixtures_at_commit
 from .persistent_clone import clone_repo
-from .repo_metadata import classify_domain, compute_repo_age_years, compute_star_tier
+from .repo_metadata import classify_domain, compute_repo_age_years
 from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
 logger = get_logger(__name__)
@@ -46,7 +46,6 @@ class PairedStudyStats:
     repos_by_language: dict[str, int] = field(default_factory=dict)
     agent_type_breakdown: dict[str, int] = field(default_factory=dict)
     domain_distribution: dict[str, int] = field(default_factory=dict)
-    star_tier_distribution: dict[str, int] = field(default_factory=dict)
     language_distribution: dict[str, dict[str, int]] = field(default_factory=dict)
     mean_repo_age_years: float = 0.0
     mean_contributors: float = 0.0
@@ -107,14 +106,12 @@ class PairedStudyCollector:
         self.scanner = Tier1RepositoryScanner(corpus_db_path=self.corpus_db_path)
 
     def _collect_control_variables(self, repo: dict) -> dict:
-        """Collect control variables (domain, star_tier, repo_age_years) for a repository."""
+        """Collect control variables (domain, repo_age_years) for a repository."""
         domain = classify_domain(repo.get("topics"), repo.get("description"))
-        star_tier = compute_star_tier(repo.get("stars"))
         repo_age = compute_repo_age_years(repo.get("created_at"))
 
         return {
             "domain": domain,
-            "star_tier": star_tier,
             "repo_age_years": repo_age,
         }
 
@@ -268,15 +265,11 @@ class PairedStudyCollector:
             # Collect control variables
             control_vars = self._collect_control_variables(repo)
             domain = control_vars["domain"]
-            star_tier = control_vars["star_tier"]
             repo_age = control_vars["repo_age_years"]
 
             # Track distributions
             stats.domain_distribution[domain] = (
                 stats.domain_distribution.get(domain, 0) + 1
-            )
-            stats.star_tier_distribution[star_tier] = (
-                stats.star_tier_distribution.get(star_tier, 0) + 1
             )
             if repo_age is not None:
                 repo_ages.append(repo_age)
@@ -344,7 +337,6 @@ class PairedStudyCollector:
                         "pushed_at": repo.get("pushed_at", ""),
                         "clone_url": repo.get("clone_url", ""),
                         "domain": domain,
-                        "star_tier": star_tier,
                         "repo_age_years": repo_age,
                         "num_contributors": repo.get("num_contributors", 0),
                     },
@@ -489,7 +481,6 @@ class PairedStudyCollector:
             },
             "control_variables": {
                 "domain_distribution": dict(stats.domain_distribution),
-                "star_tier_distribution": dict(stats.star_tier_distribution),
                 "mean_repo_age_years": float(stats.mean_repo_age_years),
                 "mean_contributors": float(stats.mean_contributors),
             },

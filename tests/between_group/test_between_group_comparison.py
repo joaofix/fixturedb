@@ -2,7 +2,7 @@
 Unit tests for between-group comparison and balance testing.
 
 Tests statistical comparison of human vs agent corpora including:
-- Chi-square tests for categorical variables (language, domain, star_tier)
+- Chi-square tests for categorical variables (language, domain)
 - Mann-Whitney U tests for continuous variables (repo_age_years)
 - Balance test interpretation (p >= 0.05 = balanced)
 - Comparison results aggregation and reporting
@@ -33,7 +33,6 @@ def _create_test_between_group_db(db_path: Path) -> None:
             github_id TEXT,
             language TEXT,
             domain TEXT,
-            star_tier TEXT,
             repo_age_years REAL,
             created_at TEXT,
             num_contributors INTEGER,
@@ -58,33 +57,33 @@ def _create_test_between_group_db(db_path: Path) -> None:
 
     # Add human repositories (pre-2021, snapshot at 2020-12-31)
     human_repos = [
-        (1, "gh1", "python", "web", "core", 5.0, "2015-01-01T00:00:00Z", 10, 5),
-        (2, "gh2", "python", "ml", "core", 4.0, "2016-01-01T00:00:00Z", 15, 6),
-        (3, "gh3", "javascript", "web", "extended", 3.0, "2017-01-01T00:00:00Z", 8, 3),
-        (4, "gh4", "java", "other", "extended", 6.0, "2014-01-01T00:00:00Z", 5, 2),
+        (1, "gh1", "python", "web", 5.0, "2015-01-01T00:00:00Z", 10, 5),
+        (2, "gh2", "python", "ml", 4.0, "2016-01-01T00:00:00Z", 15, 6),
+        (3, "gh3", "javascript", "web", 3.0, "2017-01-01T00:00:00Z", 8, 3),
+        (4, "gh4", "java", "other", 6.0, "2014-01-01T00:00:00Z", 5, 2),
     ]
 
     for repo in human_repos:
         conn.execute(
             """
-            INSERT INTO repositories VALUES 
-            (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO repositories VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?)
         """,
             repo,
         )
 
     # Add agent repositories (2025+, snapshot at 2025-01-01)
     agent_repos = [
-        (5, "gh5", "python", "web", "core", 0.4, "2023-01-01T00:00:00Z", 7, 4),
-        (6, "gh6", "python", "database", "core", 0.3, "2023-02-01T00:00:00Z", 6, 3),
-        (7, "gh7", "javascript", "web", "extended", 0.2, "2023-03-01T00:00:00Z", 5, 2),
+        (5, "gh5", "python", "web", 0.4, "2023-01-01T00:00:00Z", 7, 4),
+        (6, "gh6", "python", "database", 0.3, "2023-02-01T00:00:00Z", 6, 3),
+        (7, "gh7", "javascript", "web", 0.2, "2023-03-01T00:00:00Z", 5, 2),
     ]
 
     for repo in agent_repos:
         conn.execute(
             """
-            INSERT INTO repositories VALUES 
-            (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO repositories VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?)
         """,
             repo,
         )
@@ -155,7 +154,7 @@ class TestBalanceTest:
     def test_balance_test_to_dict(self):
         """Should convert to dictionary for JSON serialization."""
         test = BalanceTest(
-            variable="star_tier",
+            variable="domain",
             test_type="chi-square",
             p_value=0.85,
             is_balanced=True,
@@ -164,7 +163,7 @@ class TestBalanceTest:
 
         test_dict = test.to_dict()
 
-        assert test_dict["variable"] == "star_tier"
+        assert test_dict["variable"] == "domain"
         assert test_dict["p_value"] == 0.85
         assert test_dict["is_balanced"] is True
 
@@ -216,10 +215,10 @@ class TestCategoricalBalance:
 
     def test_chi_square_with_real_data(self):
         """Chi-square should handle realistic distribution differences."""
-        human_dist = {"core": 70, "extended": 30}
-        agent_dist = {"core": 65, "extended": 35}
+        human_dist = {"web": 70, "ml": 30}
+        agent_dist = {"web": 65, "ml": 35}
 
-        result = compute_categorical_balance(human_dist, agent_dist, "star_tier")
+        result = compute_categorical_balance(human_dist, agent_dist, "domain")
 
         assert result.test_type == "chi-square"
         assert result.p_value >= 0.05  # Should be balanced (similar distributions)
@@ -360,19 +359,6 @@ class TestVariableDistribution:
             assert "web" in agent_dist
             assert "database" in agent_dist
 
-    def test_get_fixtures_by_star_tier(self):
-        """Should work for star_tier variable."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            _create_test_between_group_db(db_path)
-
-            human_dist = get_human_fixtures_by_variable(db_path, "star_tier")
-            get_agent_fixtures_by_variable(db_path, "star_tier")
-
-            assert "core" in human_dist
-            assert "extended" in human_dist
-            assert sum(human_dist.values()) == 40  # 4 repos * 10 fixtures
-
 
 class TestBetweenGroupComparison:
     """Test BetweenGroupComparison result aggregation."""
@@ -422,7 +408,6 @@ class TestBetweenGroupComparison:
         balance_tests = [
             BalanceTest("language", "chi-square", 0.5, True),
             BalanceTest("domain", "chi-square", 0.3, True),
-            BalanceTest("star_tier", "chi-square", 0.6, True),
             BalanceTest("repo_age_years", "mann-whitney-u", 0.4, True),
         ]
 
@@ -443,7 +428,7 @@ class TestBetweenGroupComparison:
         balance_tests = [
             BalanceTest("language", "chi-square", 0.5, True),
             BalanceTest("domain", "chi-square", 0.02, False),  # Imbalanced
-            BalanceTest("star_tier", "chi-square", 0.6, True),
+            BalanceTest("repo_age_years", "mann-whitney-u", 0.6, True),
         ]
 
         comparison = BetweenGroupComparison(

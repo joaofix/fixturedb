@@ -15,7 +15,6 @@ from collection.db import (
 from collection.repo_metadata import (
     classify_domain,
     compute_repo_age_at_date,
-    compute_star_tier,
 )
 
 
@@ -37,7 +36,6 @@ def test_db_helpers_end_to_end(tmp_path):
         "clone_url": "https://github.com/owner/testrepo.git",
         "num_contributors": 2,
         "domain": None,
-        "star_tier": None,
         "repo_age_years": None,
     }
 
@@ -151,7 +149,6 @@ def test_insert_fixture_dedupes_per_commit_not_across_commits(tmp_path):
         "clone_url": "https://github.com/owner/deduprepo.git",
         "num_contributors": 1,
         "domain": None,
-        "star_tier": None,
         "repo_age_years": None,
     }
 
@@ -224,7 +221,6 @@ def test_insert_fixture_dedupes_when_commit_sha_omitted(tmp_path):
         "clone_url": "https://github.com/owner/pre2021repo.git",
         "num_contributors": 1,
         "domain": None,
-        "star_tier": None,
         "repo_age_years": None,
     }
 
@@ -281,7 +277,6 @@ def test_update_agent_commit_stats(tmp_path):
         "clone_url": "https://github.com/owner/agentrepo.git",
         "num_contributors": 1,
         "domain": None,
-        "star_tier": None,
         "repo_age_years": None,
     }
 
@@ -319,10 +314,6 @@ def test_classify_and_age():
     topic = '["django", "rest"]'
     desc = "A web framework project"
     assert classify_domain(topic, desc) == "web"
-
-    # compute_star_tier
-    assert compute_star_tier(600) == "core"
-    assert compute_star_tier(10) == "extended"
 
     # compute_repo_age_at_date
     created = "2019-01-01T00:00:00Z"

@@ -18,7 +18,6 @@ def _repo_data(name: str, language: str) -> dict:
         "pushed_at": "2020-01-01",
         "clone_url": f"https://github.com/{name}.git",
         "domain": "other",
-        "star_tier": "extended",
         "repo_age_years": 1.0,
         "num_contributors": 5,
     }
@@ -29,7 +28,6 @@ def _fake_result(repo_name: str, language: str, num_fixtures: int) -> dict:
         "status": "ok",
         "repo_name": repo_name,
         "domain": "other",
-        "star_tier": "extended",
         "repo_age": 1.0,
         "num_contributors": 5,
         "repo_data": _repo_data(repo_name, language),

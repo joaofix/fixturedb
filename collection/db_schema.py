@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS repositories (
     num_mock_usages INTEGER DEFAULT 0,      -- count of mock usages detected
     num_contributors INTEGER DEFAULT 0,     -- GitHub API: repository contributor count
     domain          TEXT DEFAULT NULL,      -- classified domain (web/systems/ml/etc)
-    star_tier       TEXT DEFAULT NULL,      -- core (>=500) or extended (<500)
     repo_age_years  REAL DEFAULT NULL,      -- repository age in years at collection time
     agent_adoption_intensity TEXT DEFAULT NULL,  -- agent commit ratio since adoption: no_commits/experimental/limited/consistent/pervasive
     agent_commits_touching_tests INTEGER DEFAULT 0,  -- Dataset A: agent commits that touched >=1 test file

@@ -39,7 +39,6 @@ Computed automatically at the `AGENT_CORPUS_START_DATE` snapshot (same window as
 |----------|-------------|
 | `language` | Programming language |
 | `domain` | Repository domain (computed from topics/description) |
-| `star_tier` | GitHub stars tier (core: ≥500, extended: 100-499) |
 | `repo_age_years` | Repository age in years at the snapshot date |
 | `agent_adoption_intensity` | Share of agent vs. human commits in the repo |
 
@@ -98,7 +97,6 @@ Computed automatically at the `AGENT_CORPUS_START_DATE` snapshot:
 |----------|-------------|
 | `language` | Programming language |
 | `domain` | Repository domain |
-| `star_tier` | GitHub stars tier at snapshot |
 | `repo_age_years` | Repository age in years at snapshot |
 | `agent_type` | Agent classifier: claude, copilot, cursor, aider, or unknown |
 | `commit_kind` | Always `'agent'` |
@@ -139,7 +137,6 @@ statistical tests.
 |---------|------|-----------------|
 | language | Chi-square test | p ≥ 0.05 → balanced |
 | domain | Chi-square test | p ≥ 0.05 → balanced |
-| star_tier | Chi-square test | p ≥ 0.05 → balanced |
 | repo_age_years | Mann-Whitney U | p ≥ 0.05 → balanced |
 
 ## Temporal Boundaries

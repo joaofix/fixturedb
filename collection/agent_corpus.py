@@ -438,15 +438,11 @@ class AgentCorpusCollector:
                     # Compute control variables at AGENT_CORPUS_START_DATE using shared utility
                     metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
                     domain = metadata["domain"]
-                    star_tier = metadata["star_tier"]
                     repo_age = metadata["repo_age_years"]
 
                     # Track distributions
                     stats.domain_distribution[domain] = (
                         stats.domain_distribution.get(domain, 0) + 1
-                    )
-                    stats.star_tier_distribution[star_tier] = (
-                        stats.star_tier_distribution.get(star_tier, 0) + 1
                     )
                     if repo_age is not None:
                         repo_ages.append(repo_age)
@@ -496,7 +492,6 @@ class AgentCorpusCollector:
                         github_id=repo.get("github_id"),
                         num_contributors=repo.get("num_contributors", 0),
                         domain=domain,
-                        star_tier=star_tier,
                         repo_age_years=repo_age,
                         agent_adoption_intensity=adoption_intensity,
                     )

@@ -20,7 +20,6 @@ from collection.human_corpus_repo_selection import select_human_corpus_repositor
 from collection.repo_metadata import (
     classify_domain,
     compute_repo_age_at_date,
-    compute_star_tier,
 )
 
 
@@ -180,27 +179,6 @@ class TestControlVariableComputation:
         topics = '["random", "tags"]'
         domain = classify_domain(topics, "Some random description")
         assert domain == "other"
-
-    def test_compute_star_tier_core(self):
-        """Repositories with 500+ stars should be classified as 'core'."""
-        tier = compute_star_tier(500)
-        assert tier == "core"
-
-        tier = compute_star_tier(1000)
-        assert tier == "core"
-
-    def test_compute_star_tier_extended(self):
-        """Repositories with <500 stars should be classified as 'extended'."""
-        tier = compute_star_tier(100)
-        assert tier == "extended"
-
-        tier = compute_star_tier(499)
-        assert tier == "extended"
-
-    def test_compute_star_tier_boundary(self):
-        """Boundary case: exactly 500 stars should be 'core'."""
-        tier = compute_star_tier(500)
-        assert tier == "core"
 
     def test_compute_repo_age_years_at_snapshot_date(self):
         """Repository age should be computed relative to snapshot date."""

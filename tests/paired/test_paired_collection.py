@@ -2,7 +2,7 @@
 Unit tests for paired study collection and control variable computation.
 
 Tests the paired within-repository methodology including:
-- Control variable collection (domain classification, star tier, repo age)
+- Control variable collection (domain classification, repo age)
 - Quality filter validation
 - Chi-square balance testing
 - Repository selection logic
@@ -21,7 +21,6 @@ from collection.paired_collection import (
 from collection.repo_metadata import (
     classify_domain,
     compute_repo_age_years,
-    compute_star_tier,
 )
 
 
@@ -59,27 +58,6 @@ class TestControlVariableComputation:
         domain = classify_domain(topics, "Some random description")
         assert domain == "other"
 
-    def test_compute_star_tier_core(self):
-        """Repositories with 500+ stars should be classified as 'core'."""
-        tier = compute_star_tier(500)
-        assert tier == "core"
-
-        tier = compute_star_tier(1000)
-        assert tier == "core"
-
-    def test_compute_star_tier_extended(self):
-        """Repositories with <500 stars should be classified as 'extended'."""
-        tier = compute_star_tier(100)
-        assert tier == "extended"
-
-        tier = compute_star_tier(499)
-        assert tier == "extended"
-
-    def test_compute_star_tier_boundary(self):
-        """Boundary case: exactly 500 stars should be 'core'."""
-        tier = compute_star_tier(500)
-        assert tier == "core"
-
     def test_compute_repo_age_years_recent(self):
         """Repository created recently should have small age."""
         date_str = "2023-01-01T00:00:00Z"
@@ -114,7 +92,7 @@ class TestPairedStudyCollectorControlVariables:
     """Test PairedStudyCollector control variable collection."""
 
     def test_collect_control_variables_returns_dict(self):
-        """Should return dict with domain, star_tier, repo_age_years."""
+        """Should return dict with domain, repo_age_years."""
         with tempfile.TemporaryDirectory() as tmpdir:
             collector = PairedStudyCollector(
                 corpus_db_path=Path(tmpdir) / "corpus.db",
@@ -130,7 +108,6 @@ class TestPairedStudyCollectorControlVariables:
             control_vars = collector._collect_control_variables(repo)
 
             assert "domain" in control_vars
-            assert "star_tier" in control_vars
             assert "repo_age_years" in control_vars
 
     def test_collect_control_variables_domain_classification(self):
@@ -149,23 +126,6 @@ class TestPairedStudyCollectorControlVariables:
 
             control_vars = collector._collect_control_variables(repo)
             assert control_vars["domain"] == "ml"
-
-    def test_collect_control_variables_star_tier_core(self):
-        """Star tier should be 'core' for 500+ stars."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            collector = PairedStudyCollector(
-                corpus_db_path=Path(tmpdir) / "corpus.db",
-            )
-
-            repo = {
-                "topics": "[]",
-                "description": "",
-                "stars": 1000,
-                "created_at": "2020-01-01T00:00:00Z",
-            }
-
-            control_vars = collector._collect_control_variables(repo)
-            assert control_vars["star_tier"] == "core"
 
     def test_collect_control_variables_repo_age(self):
         """Repo age should be computed in years."""
@@ -370,14 +330,12 @@ class TestPairedStudyStats:
         """Dict should contain control variable fields."""
         stats = PairedStudyStats(
             domain_distribution={"web": 5, "ml": 3},
-            star_tier_distribution={"core": 6, "extended": 2},
             mean_repo_age_years=5.5,
         )
 
         result = stats.to_dict()
 
         assert "domain_distribution" in result
-        assert "star_tier_distribution" in result
         assert "mean_repo_age_years" in result
 
 

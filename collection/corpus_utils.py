@@ -21,7 +21,7 @@ from .db import (
     upsert_repository,
     upsert_test_file,
 )
-from .repo_metadata import classify_domain, compute_repo_age_at_date, compute_star_tier
+from .repo_metadata import classify_domain, compute_repo_age_at_date
 
 logger = get_logger(__name__)
 
@@ -83,7 +83,6 @@ class BaseCorpusStats:
     test_commits_found: int = 0
     repos_by_language: Dict[str, int] = field(default_factory=dict)
     domain_distribution: Dict[str, int] = field(default_factory=dict)
-    star_tier_distribution: Dict[str, int] = field(default_factory=dict)
     mean_repo_age_years: float = 0.0
     mean_contributors: float = 0.0
 
@@ -101,7 +100,12 @@ def compute_repo_metadata(
     repo: Dict[str, Any], temporal_reference: str
 ) -> Dict[str, Any]:
     """
-    Compute repository metadata (domain, star_tier, repo_age).
+    Compute repository metadata (domain, repo_age).
+
+    Star count is not part of this: every repo in the corpus already clears
+    a hard >=500-star floor at the github-search-raw/ seeding stage (see
+    repo_metadata.get_control_variables_at_date's docstring), so a derived
+    tier would be constant and uninformative.
 
     Args:
         repo: Repository metadata dictionary
@@ -111,12 +115,10 @@ def compute_repo_metadata(
         Dictionary with computed metadata
     """
     domain = classify_domain(repo.get("topics"), repo.get("description"))
-    star_tier = compute_star_tier(repo.get("stars", 0))
     repo_age = compute_repo_age_at_date(repo.get("created_at", ""), temporal_reference)
 
     return {
         "domain": domain,
-        "star_tier": star_tier,
         "repo_age_years": repo_age,
     }
 
@@ -408,7 +410,6 @@ def construct_repo_dict(
     github_id: Optional[int] = None,
     num_contributors: int = 0,
     domain: Optional[str] = None,
-    star_tier: Optional[str] = None,
     repo_age_years: Optional[float] = None,
     agent_adoption_intensity: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -437,7 +438,6 @@ def construct_repo_dict(
         "pushed_at": pushed_at or "",
         "clone_url": clone_url or f"https://github.com/{full_name}.git",
         "domain": domain,
-        "star_tier": star_tier,
         "repo_age_years": repo_age_years,
         "num_contributors": num_contributors or 0,
         "agent_adoption_intensity": agent_adoption_intensity,
@@ -492,7 +492,6 @@ def generate_corpus_summary(
         },
         "control_variables": {
             "domain_distribution": dict(stats.domain_distribution),
-            "star_tier_distribution": dict(stats.star_tier_distribution),
             "mean_repo_age_years": float(stats.mean_repo_age_years),
             "mean_contributors": float(stats.mean_contributors),
         },

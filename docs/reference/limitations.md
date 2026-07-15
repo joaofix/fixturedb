@@ -9,7 +9,7 @@ The between-group methodology collects human and agent corpora at different time
 - **Agent corpus:** 2025+ repositories with agent commits (fixture collection snapshot at 2025-01-01)
 - **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement
 
-**Mitigation:** Control variables (language, domain, star_tier, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U) — see `collection/between_group_comparison.py` and [Analyzing the Datasets § Comparing two datasets](../usage/usage.md#comparing-two-datasets). Balance report confirms no significant differences (p ≥ 0.05).
+**Mitigation:** Control variables (language, domain, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U) — see `collection/between_group_comparison.py` and [Analyzing the Datasets § Comparing two datasets](../usage/usage.md#comparing-two-datasets). Balance report confirms no significant differences (p ≥ 0.05).
 
 ### Agent Detection Conservatism
 - **Tier 1 detection only:** Agents identified via `co-authored-by` commit trailers only
@@ -167,7 +167,7 @@ Each detected mock is also classified into the classic test-double taxonomy (Mes
 
 ## Control Variable Balance
 
-The between-group study balances control variables (language, domain, star_tier, repo_age_years) across human and agent corpora. Balance is verified using:
+The between-group study balances control variables (language, domain, repo_age_years) across human and agent corpora. Balance is verified using:
 
 - **Chi-square test:** Categorical controls (p ≥ 0.05 indicates balance)
 - **Mann-Whitney U test:** Continuous controls (p ≥ 0.05 indicates balance)

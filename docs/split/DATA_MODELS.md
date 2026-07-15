@@ -34,7 +34,6 @@ CREATE TABLE repositories (
     clone_url TEXT NOT NULL UNIQUE,             -- Clone URL
     pinned_commit TEXT,                         -- Fixed commit SHA (for snapshots)
     domain TEXT,                                -- Domain classification
-    star_tier TEXT,                             -- Star count tier
     status TEXT DEFAULT 'discovered',           -- Status (analysed|cloned|discovered|skipped|error)
     error_message TEXT,                         -- Error details if status=error
     skip_reason TEXT,                           -- Reason if status=skipped

@@ -47,7 +47,6 @@ Repository metadata and control variables computed at fixture writing time.
 | `num_contributors` | INTEGER | Contributor count from GitHub |
 | **Control Variables** |
 | `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
-| `star_tier` | TEXT | Star classification (`core` ≥500 stars, `extended` <500 stars) |
 | `repo_age_years` | REAL | Repository age in years at fixture writing time (2025-01-01 for Datasets A/B, 2020-12-31 for Dataset C) |
 | `collected_at` | TEXT | Timestamp of insertion |
 
@@ -179,7 +178,7 @@ import pandas as pd
 def load_fixtures(dataset: str) -> pd.DataFrame:
     conn = sqlite3.connect(f"db/{dataset}.db")
     df = pd.read_sql("""
-        SELECT f.*, r.language, r.domain, r.star_tier, r.repo_age_years
+        SELECT f.*, r.language, r.domain, r.repo_age_years
         FROM fixtures f
         JOIN repositories r ON f.repo_id = r.id
     """, conn)
@@ -226,7 +225,7 @@ print(mock_categories)
 ## Data quality guarantees
 
 - The schema is append-safe and re-runnable; existing records are not duplicated during collection.
-- Control variables (`language`, `domain`, `star_tier`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C).
+- Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C).
 - Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
 
 ## Accessing the database
@@ -239,14 +238,6 @@ sqlite3 db/a.db "SELECT COUNT(*) FROM fixtures;"
 
 # Agent type breakdown (Dataset A only)
 sqlite3 db/a.db "SELECT agent_type, COUNT(*) FROM fixtures WHERE agent_type IS NOT NULL GROUP BY agent_type;"
-
-# Fixture count by star tier
-sqlite3 db/a.db "
-  SELECT r.star_tier, COUNT(f.id) as fixture_count
-  FROM fixtures f
-  JOIN repositories r ON f.repo_id = r.id
-  GROUP BY r.star_tier;
-"
 ```
 
 ### Python
@@ -277,7 +268,7 @@ dbGetQuery(con, "
 
 ## Notes
 
-- Control variables (language, domain, star_tier, repo_age_years) are computed at each dataset's temporal boundary for reproducibility and validity assessment.
+- Control variables (language, domain, repo_age_years) are computed at each dataset's temporal boundary for reproducibility and validity assessment.
 - The schema supports unpaired statistical tests appropriate for independent samples (Mann-Whitney U for continuous variables, chi-square for categorical) — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design).
 - `python -m collection summarize --dataset {a,b,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
 

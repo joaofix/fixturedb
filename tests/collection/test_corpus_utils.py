@@ -70,7 +70,7 @@ class TestComputeRepoMetadata:
     """Test repository metadata computation."""
 
     def test_compute_repo_metadata_returns_all_fields(self):
-        """Verify function returns domain, star_tier, and repo_age."""
+        """Verify function returns domain and repo_age."""
         repo = {
             "topics": '["django", "web"]',
             "description": "Web framework",
@@ -81,10 +81,8 @@ class TestComputeRepoMetadata:
         result = compute_repo_metadata(repo, "2020-12-31")
 
         assert "domain" in result
-        assert "star_tier" in result
         assert "repo_age_years" in result
         assert isinstance(result["domain"], str)
-        assert isinstance(result["star_tier"], str)
 
     def test_compute_repo_metadata_with_web_domain(self):
         """Verify web domain is detected from topics."""
@@ -109,18 +107,6 @@ class TestComputeRepoMetadata:
 
         result = compute_repo_metadata(repo, "2020-12-31")
         assert result["domain"] == "ml"
-
-    def test_compute_repo_metadata_star_tier_low(self):
-        """Verify star_tier classification for low stars."""
-        repo = {
-            "topics": "[]",
-            "description": "",
-            "stars": 100,
-            "created_at": "2015-01-01",
-        }
-
-        result = compute_repo_metadata(repo, "2020-12-31")
-        assert result["star_tier"] in ["extended", "core"]
 
     def test_compute_repo_metadata_repo_age(self):
         """Verify repo age is computed correctly."""
@@ -201,7 +187,6 @@ class TestConstructRepoDict:
             github_id=12345,
             num_contributors=5,
             domain="web",
-            star_tier="tier_mid",
             repo_age_years=1.5,
         )
 
@@ -211,7 +196,6 @@ class TestConstructRepoDict:
         assert result["forks"] == 10
         assert result["description"] == "Test repo"
         assert result["domain"] == "web"
-        assert result["star_tier"] == "tier_mid"
         assert result["repo_age_years"] == 1.5
 
 
@@ -609,7 +593,6 @@ class TestPersistRepositoryAndFixtures:
             "clone_url": "https://github.com/owner/agentrepo.git",
             "num_contributors": 1,
             "domain": None,
-            "star_tier": None,
             "repo_age_years": None,
         }
         fixtures = [
@@ -717,7 +700,6 @@ class TestGenerateCorpusSummary:
             fixtures_collected=1500,
             test_commits_found=500,
             domain_distribution={"web": 50, "ml": 30},
-            star_tier_distribution={"tier_low": 60, "tier_high": 40},
             mean_repo_age_years=3.5,
             mean_contributors=8.2,
         )

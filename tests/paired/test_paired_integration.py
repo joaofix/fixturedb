@@ -233,9 +233,9 @@ class TestPairedStudyStatsAccumulation:
         stats = PairedStudyStats()
 
         repos_data = [
-            {"domain": "web", "tier": "core", "age": 5.0, "contrib": 10},
-            {"domain": "ml", "tier": "extended", "age": 3.0, "contrib": 5},
-            {"domain": "web", "tier": "core", "age": 7.0, "contrib": 20},
+            {"domain": "web", "age": 5.0, "contrib": 10},
+            {"domain": "ml", "age": 3.0, "contrib": 5},
+            {"domain": "web", "age": 7.0, "contrib": 20},
         ]
 
         ages = []
@@ -245,11 +245,6 @@ class TestPairedStudyStatsAccumulation:
             domain = repo["domain"]
             stats.domain_distribution[domain] = (
                 stats.domain_distribution.get(domain, 0) + 1
-            )
-
-            tier = repo["tier"]
-            stats.star_tier_distribution[tier] = (
-                stats.star_tier_distribution.get(tier, 0) + 1
             )
 
             ages.append(repo["age"])
@@ -262,8 +257,6 @@ class TestPairedStudyStatsAccumulation:
 
         assert stats.domain_distribution["web"] == 2
         assert stats.domain_distribution["ml"] == 1
-        assert stats.star_tier_distribution["core"] == 2
-        assert stats.star_tier_distribution["extended"] == 1
         assert stats.mean_repo_age_years == pytest.approx(5.0)
         assert stats.mean_contributors == pytest.approx(11.666, rel=0.1)
 

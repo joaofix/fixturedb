@@ -30,7 +30,11 @@ from ..eda_common import (
 
 
 def plot_corpus_composition(conn, out_dir, show):
-    repos = qdf(conn, "SELECT language, star_tier, status FROM repositories")
+    # No star-tier breakdown here: every repo in the corpus is sourced from
+    # github-search-raw/, itself seeded with a hard >=500-star query filter
+    # (see github-search-raw/details.txt), so a core/extended split would
+    # always be 100%/0% -- removed as uninformative rather than plotted.
+    repos = qdf(conn, "SELECT language, status FROM repositories")
     if repos.empty:
         print("  [skip] No repositories in DB yet.")
         return
@@ -38,66 +42,23 @@ def plot_corpus_composition(conn, out_dir, show):
     fig, axes = plt.subplots(1, 2, figsize=(14, 5), facecolor="#FAFAFA")
     fig.suptitle("Corpus Composition", fontsize=14, fontweight="bold", y=1.02)
 
-    # ── 1a: repos per language, tier as opacity ──────────────────────────────
+    # ── 1a: repos per language ────────────────────────────────────────────
     ax = axes[0]
     present = [l for l in LANG_ORDER if l in repos["language"].values]
 
-    tier_alpha = {"core": 1.0, "extended": 0.40}
-    tier_label = {"core": "≥500 stars (core)", "extended": "100–499 stars (extended)"}
-    tier_order = ["core", "extended"]
-
-    bottoms = [0] * len(present)
-    for tier in tier_order:
-        vals = [
-            int(repos.query("language==@lang and star_tier==@tier").shape[0])
-            for lang in present
-        ]
-        for i, (lang, v) in enumerate(zip(present, vals)):
-            colour = LANG_PALETTE[lang]
-            bar = ax.bar(
-                i,
-                v,
-                bottom=bottoms[i],
-                width=0.6,
-                color=colour,
-                alpha=tier_alpha[tier],
-                zorder=3,
-                label=tier_label[tier] if i == 0 else "_nolegend_",
+    counts = [int((repos["language"] == lang).sum()) for lang in present]
+    colours = [LANG_PALETTE[lang] for lang in present]
+    ax.bar(range(len(present)), counts, width=0.6, color=colours, zorder=3)
+    for i, v in enumerate(counts):
+        if v > 0:
+            ax.text(
+                i, v, str(v), ha="center", va="bottom", fontsize=9, fontweight="bold"
             )
-            if v > 0:
-                ax.text(
-                    i,
-                    bottoms[i] + v / 2,
-                    str(v),
-                    ha="center",
-                    va="center",
-                    fontsize=8,
-                    color="white",
-                    fontweight="bold",
-                )
-        bottoms = [b + v for b, v in zip(bottoms, vals)]
 
-    # Colour patches for language legend
-    import matplotlib.patches as mpatches
-
-    lang_handles = [
-        mpatches.Patch(color=LANG_PALETTE[l], label=lang_display(l)) for l in present
-    ]
-    tier_handles = [
-        mpatches.Patch(color="#888888", alpha=tier_alpha[t], label=tier_label[t])
-        for t in tier_order
-    ]
-    ax.legend(
-        handles=lang_handles + tier_handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.12),
-        ncol=4,
-        fontsize=8,
-    )
     ax.set_xticks(range(len(present)))
     ax.set_xticklabels([lang_display(l) for l in present])
     ax.set_ylabel("Repositories")
-    ax.set_title("Repos by Language & Star Tier")
+    ax.set_title("Repos by Language")
     ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
     # ── 1b: pipeline status breakdown — linear scale, count labels ──────────

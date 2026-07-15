@@ -4,7 +4,7 @@ Database layer — connection/query helpers over the schema in db_schema.py.
 All analysis reads from this DB; all collection writes to it.
 Schema is designed to be append-safe: re-running the pipeline on new repos
 will not duplicate existing records. Repo-metadata computation (domain,
-star tier, age) has no DB dependency and lives in repo_metadata.py instead.
+age) has no DB dependency and lives in repo_metadata.py instead.
 """
 
 import sqlite3
@@ -238,19 +238,18 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
         INSERT INTO repositories (
             github_id, full_name, language, stars, forks,
             description, topics, created_at, pushed_at, clone_url,
-            domain, star_tier, repo_age_years, num_contributors,
+            domain, repo_age_years, num_contributors,
             agent_adoption_intensity
         ) VALUES (
             :github_id, :full_name, :language, :stars, :forks,
             :description, :topics, :created_at, :pushed_at, :clone_url,
-            :domain, :star_tier, :repo_age_years, :num_contributors,
+            :domain, :repo_age_years, :num_contributors,
             :agent_adoption_intensity
         )
         ON CONFLICT(github_id) DO UPDATE SET
             stars       = excluded.stars,
             pushed_at   = excluded.pushed_at,
             domain      = excluded.domain,
-            star_tier   = excluded.star_tier,
             repo_age_years = excluded.repo_age_years,
             num_contributors = excluded.num_contributors,
             agent_adoption_intensity = excluded.agent_adoption_intensity

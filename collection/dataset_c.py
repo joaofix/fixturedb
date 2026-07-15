@@ -615,7 +615,6 @@ def collect_dataset_c_fixtures(
             topics=repo_topics,
             created_at=repo_created_at,
             domain=metadata["domain"],
-            star_tier=metadata["star_tier"],
             repo_age_years=metadata["repo_age_years"],
         )
         try:

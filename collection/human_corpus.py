@@ -210,7 +210,6 @@ class HumanCorpusCollector:
             # Compute control variables using shared utility
             metadata = compute_repo_metadata(dict(repo), AGENT_CORPUS_START_DATE)
             domain = metadata["domain"]
-            star_tier = metadata["star_tier"]
             repo_age = metadata["repo_age_years"]
             scan_result = self._scan_and_extract(
                 managed_repo_path, language_name, repo_name, scanner, extractor
@@ -227,7 +226,6 @@ class HumanCorpusCollector:
                 "status": "ok",
                 "skip_reason": None,
                 "domain": domain,
-                "star_tier": star_tier,
                 "repo_age": repo_age,
                 "num_contributors": repo.get("num_contributors", 0),
                 "repo_data": construct_repo_dict(
@@ -243,7 +241,6 @@ class HumanCorpusCollector:
                     github_id=repo.get("github_id"),
                     num_contributors=repo.get("num_contributors", 0),
                     domain=domain,
-                    star_tier=star_tier,
                     repo_age_years=repo_age,
                     agent_adoption_intensity=adoption_intensity,
                 ),
@@ -673,7 +670,6 @@ class HumanCorpusCollector:
             stats.repos_passed_qc += 1
 
             domain = result["domain"]
-            star_tier = result["star_tier"]
             repo_age = result["repo_age"]
             if repo_age is not None:
                 repo_ages.append(repo_age)
@@ -682,9 +678,6 @@ class HumanCorpusCollector:
 
             stats.domain_distribution[domain] = (
                 stats.domain_distribution.get(domain, 0) + 1
-            )
-            stats.star_tier_distribution[star_tier] = (
-                stats.star_tier_distribution.get(star_tier, 0) + 1
             )
 
             repo_data = result["repo_data"]

@@ -101,17 +101,6 @@ def classify_domain(topics_str: str | None, description_str: str | None) -> str:
     return "other"
 
 
-def compute_star_tier(stars: int | None) -> str:
-    """
-    Classify repository into star tier based on GitHub stars.
-
-    Returns: "core" (>=500 stars) or "extended" (<500 stars)
-    """
-    if stars is None:
-        return "extended"
-    return "core" if stars >= 500 else "extended"
-
-
 def compute_repo_age_years(created_at_str: str | None) -> float | None:
     """
     Compute repository age in years from creation date string (ISO format).
@@ -165,28 +154,32 @@ def compute_repo_age_at_date(
 
 def get_control_variables_at_date(repo: dict, target_date: str) -> dict:
     """
-    Compute control variables (domain, star_tier, repo_age) at a specific date.
+    Compute control variables (domain, repo_age) at a specific date.
 
     For between-group comparison, control variables should reflect repo state
     at fixture writing time (2020-12-31 for human, 2025-01-01 for agent).
 
+    Star count is not a control variable here: every repository in the
+    corpus is sourced from github-search-raw/, itself seeded from SEART GHS
+    with a hard >=500-star query filter (see github-search-raw/details.txt),
+    so no repository this pipeline ever sees can fall below that floor --
+    a computed "core (>=500) / extended (<500)" tier could only ever
+    evaluate to "core" and carried no real information. Previously computed
+    here as `star_tier` and removed as dead weight.
+
     Args:
-        repo: Repository metadata dict with keys: topics, description, stars, created_at
+        repo: Repository metadata dict with keys: topics, description, created_at
         target_date: ISO date string (e.g., "2020-12-31")
 
     Returns:
         Dict with control_variables keys:
         - domain: str (web, systems, ml, security, database, devops, other)
-        - star_tier: str (core >=500, extended <500) — current stars only
         - repo_age_years: float (age at target_date) or None
     """
     domain = classify_domain(repo.get("topics"), repo.get("description"))
-    # Note: Star tier uses current stars (historical unavailable from API)
-    star_tier = compute_star_tier(repo.get("stars"))
     repo_age = compute_repo_age_at_date(repo.get("created_at"), target_date)
 
     return {
         "domain": domain,
-        "star_tier": star_tier,
         "repo_age_years": repo_age,
     }

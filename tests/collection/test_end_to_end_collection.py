@@ -247,7 +247,6 @@ class TestCollectionDatabaseSchema:
             "language",
             "stars",
             "domain",
-            "star_tier",
             "repo_age_years",
         }
 
@@ -281,7 +280,6 @@ class TestCollectionDataPersistence:
             "clone_url": "https://github.com/owner/repo.git",
             "num_contributors": 5,
             "domain": "web",
-            "star_tier": "core",
             "repo_age_years": 2.0,
         }
 
@@ -323,7 +321,6 @@ class TestCollectionDataPersistence:
             "clone_url": "https://github.com/owner/repo.git",
             "num_contributors": 5,
             "domain": "web",
-            "star_tier": "core",
             "repo_age_years": 2.0,
         }
 

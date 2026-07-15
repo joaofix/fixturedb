@@ -2,7 +2,7 @@
 Between-group comparison and balance testing.
 
 Compares human vs agent fixture corpora on control variables (language, domain,
-star tier, repository age). Uses chi-square for categorical variables and
+repository age). Uses chi-square for categorical variables and
 Mann-Whitney U for continuous variables.
 
 python -m collection.test_commit_filter agent \
@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
 
-ALLOWED_CATEGORICAL_VARIABLES = {"language", "domain", "star_tier"}
+ALLOWED_CATEGORICAL_VARIABLES = {"language", "domain"}
 ALLOWED_CONTINUOUS_VARIABLES = {"repo_age_years"}
 ALLOWED_VARIABLES = ALLOWED_CATEGORICAL_VARIABLES | ALLOWED_CONTINUOUS_VARIABLES
 
@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 class BalanceTest:
     """Result of a single control variable balance test."""
 
-    variable: str  # e.g., "domain", "star_tier", "repo_age_years"
+    variable: str  # e.g., "domain", "repo_age_years"
     test_type: str  # "chi-square" or "mann-whitney-u"
     p_value: float
     is_balanced: bool  # p >= 0.05
@@ -80,7 +80,7 @@ def get_human_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
 
     Args:
         db_path: Path to between-group.db
-        variable: One of: "language", "domain", "star_tier"
+        variable: One of: "language", "domain"
 
     Returns:
         Dict with value → count
@@ -108,7 +108,7 @@ def get_agent_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
 
     Args:
         db_path: Path to between-group.db
-        variable: One of: "language", "domain", "star_tier"
+        variable: One of: "language", "domain"
 
     Returns:
         Dict with value → count
@@ -340,7 +340,7 @@ class BetweenGroupComparator:
         balance_tests = []
 
         # Test categorical variables
-        categorical_vars = ["language", "domain", "star_tier"]
+        categorical_vars = ["language", "domain"]
         for var in categorical_vars:
             human_dist = get_human_fixtures_by_variable(self.db_path, var)
             agent_dist = get_agent_fixtures_by_variable(self.db_path, var)
@@ -380,7 +380,6 @@ class BetweenGroupComparator:
                 "control_variables": [
                     "language",
                     "domain",
-                    "star_tier",
                     "repo_age_years",
                 ],
                 "statistical_tests": {

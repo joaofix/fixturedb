@@ -17,7 +17,7 @@ query one dataset and how to compare across two.
   repo pool from a pre-2021 window — a different baseline with different residual
   risk (see [Limitations § Differential False-Negative Risk](../reference/limitations.md#differential-false-negative-risk-dataset-b-vs-dataset-c)).
 - **Agent identification:** Tier 1 only (co-authored-by trailers, author signatures).
-- **Control variables:** language, domain, star tier, repository age — computed at
+- **Control variables:** language, domain, repository age — computed at
   each dataset's own temporal snapshot.
 - **Statistical approach:** unpaired tests (Mann-Whitney U for continuous variables,
   chi-square for categorical), since A/B/C are separate databases rather than paired
@@ -115,7 +115,7 @@ def load_fixtures(dataset: str) -> pd.DataFrame:
     """dataset: 'a', 'b', or 'c'."""
     conn = sqlite3.connect(f"db/{dataset}.db")
     df = pd.read_sql("""
-        SELECT f.*, r.language, r.domain, r.star_tier, r.repo_age_years
+        SELECT f.*, r.language, r.domain, r.repo_age_years
         FROM fixtures f
         JOIN repositories r ON f.repo_id = r.id
     """, conn)
@@ -164,7 +164,6 @@ combined = pd.concat([load_fixtures("a"), load_fixtures("b")], ignore_index=True
 balance = combined.groupby("dataset").agg(
     most_common_language=("language", lambda x: x.value_counts().index[0]),
     most_common_domain=("domain", lambda x: x.value_counts().index[0]),
-    most_common_star_tier=("star_tier", lambda x: x.value_counts().index[0]),
     mean_repo_age_years=("repo_age_years", "mean"),
     median_repo_age_years=("repo_age_years", "median"),
 )
@@ -180,12 +179,12 @@ from sklearn.linear_model import LinearRegression
 combined = pd.concat([load_fixtures("a"), load_fixtures("b")], ignore_index=True)
 df = combined[combined["cyclomatic_complexity"].notna()].copy()
 
-for col, default in [("language", "unknown"), ("domain", "other"), ("star_tier", "extended")]:
+for col, default in [("language", "unknown"), ("domain", "other")]:
     df[col] = df[col].fillna(default)
     df[col] = LabelEncoder().fit_transform(df[col])
 df["dataset_code"] = LabelEncoder().fit_transform(df["dataset"])  # a=0, b=1
 
-X = df[["dataset_code", "language", "domain", "star_tier", "repo_age_years"]]
+X = df[["dataset_code", "language", "domain", "repo_age_years"]]
 y = df["cyclomatic_complexity"]
 
 model = LinearRegression()
@@ -215,12 +214,6 @@ FROM fixtures f
 JOIN repositories r ON f.repo_id = r.id
 GROUP BY r.language
 ORDER BY count DESC;
-
--- Star tier distribution within a dataset
-SELECT r.star_tier, COUNT(*) as count
-FROM fixtures f
-JOIN repositories r ON f.repo_id = r.id
-GROUP BY r.star_tier;
 
 -- Fixture complexity summary
 SELECT COUNT(*), AVG(cyclomatic_complexity), MIN(cyclomatic_complexity), MAX(cyclomatic_complexity)
