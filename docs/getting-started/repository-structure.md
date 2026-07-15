@@ -108,7 +108,7 @@ fixturedb/
 │   │
 │   ├── README.md                            # Project README
 │   ├── LICENSE                              # Project license
-│   └── papers/                              # Associated papers and references
+│   └── references/                          # Associated papers and references (tracked PDFs)
 │
 ├── PROJECT FILES
 │   ├── requirements.txt                     # Python dependencies
