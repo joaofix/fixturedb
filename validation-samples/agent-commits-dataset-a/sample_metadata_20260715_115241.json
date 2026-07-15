@@ -1,0 +1,792 @@
+{
+  "step": "agent-commits-dataset-a",
+  "population_mode": "combined",
+  "confidence_level": 0.95,
+  "margin_of_error": 0.05,
+  "proportion": 0.5,
+  "seed": 42,
+  "timestamp": "20260715_115241",
+  "outputs": [
+    {
+      "source_files": [
+        "datasets/a/commits/python_commit.csv",
+        "datasets/a/commits/java_commit.csv",
+        "datasets/a/commits/javascript_commit.csv",
+        "datasets/a/commits/typescript_commit.csv"
+      ],
+      "output_file": "validation-samples/agent-commits-dataset-a/agent-commits-dataset-a_sample_20260715_115241.csv",
+      "population_size": 358429,
+      "sample_size": 384,
+      "strata": [
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "amp"
+          },
+          "population_size": 3,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "chatgpt"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "claude"
+          },
+          "population_size": 13262,
+          "sample_size": 14
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "cline"
+          },
+          "population_size": 10,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "coderabbit"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "codex"
+          },
+          "population_size": 47,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "copilot"
+          },
+          "population_size": 2794,
+          "sample_size": 3
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "cursor"
+          },
+          "population_size": 1038,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "devin"
+          },
+          "population_size": 5,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "factory_droid"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "gemini"
+          },
+          "population_size": 113,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "jules"
+          },
+          "population_size": 161,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "junie"
+          },
+          "population_size": 10,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "ona"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "qwen_coder"
+          },
+          "population_size": 9,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "sourcery"
+          },
+          "population_size": 10,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "java",
+            "agent_type": "windsurf"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "amp"
+          },
+          "population_size": 5,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "chatgpt"
+          },
+          "population_size": 6,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "claude"
+          },
+          "population_size": 21153,
+          "sample_size": 23
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "coderabbit"
+          },
+          "population_size": 6,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "codex"
+          },
+          "population_size": 63,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "copilot"
+          },
+          "population_size": 1339,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "crush"
+          },
+          "population_size": 2,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "cursor"
+          },
+          "population_size": 692,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "deepsource"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "devin"
+          },
+          "population_size": 153,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "factory_droid"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "gemini"
+          },
+          "population_size": 430,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "jules"
+          },
+          "population_size": 20,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "junie"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "mistral_vibe"
+          },
+          "population_size": 40,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "openhands"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "paperclip"
+          },
+          "population_size": 45,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "qwen_coder"
+          },
+          "population_size": 3,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "agent_type": "sourcery"
+          },
+          "population_size": 5,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "aider"
+          },
+          "population_size": 447,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "amp"
+          },
+          "population_size": 50,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "chatgpt"
+          },
+          "population_size": 3,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "claude"
+          },
+          "population_size": 86136,
+          "sample_size": 92
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "cline"
+          },
+          "population_size": 6,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "codegen"
+          },
+          "population_size": 50,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "coderabbit"
+          },
+          "population_size": 20,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "codex"
+          },
+          "population_size": 428,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "copilot"
+          },
+          "population_size": 8842,
+          "sample_size": 10
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "crush"
+          },
+          "population_size": 2,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "cursor"
+          },
+          "population_size": 5493,
+          "sample_size": 6
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "deepsource"
+          },
+          "population_size": 3,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "devin"
+          },
+          "population_size": 3145,
+          "sample_size": 3
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "factory_droid"
+          },
+          "population_size": 26,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "gemini"
+          },
+          "population_size": 1585,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "generic"
+          },
+          "population_size": 22,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "jules"
+          },
+          "population_size": 222,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "junie"
+          },
+          "population_size": 3,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "langchain_open_swe"
+          },
+          "population_size": 368,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "letta_code"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "mistral_vibe"
+          },
+          "population_size": 31,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "opencode"
+          },
+          "population_size": 8,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "openhands"
+          },
+          "population_size": 38,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "paperclip"
+          },
+          "population_size": 11,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "qwen_coder"
+          },
+          "population_size": 126,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "sentry_seer"
+          },
+          "population_size": 18,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "sketch"
+          },
+          "population_size": 4,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "sourcery"
+          },
+          "population_size": 156,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "agent_type": "windsurf"
+          },
+          "population_size": 22,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "aider"
+          },
+          "population_size": 63,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "amp"
+          },
+          "population_size": 116,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "chatgpt"
+          },
+          "population_size": 8,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "claude"
+          },
+          "population_size": 169225,
+          "sample_size": 181
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "cline"
+          },
+          "population_size": 2086,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "codegen"
+          },
+          "population_size": 99,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "coderabbit"
+          },
+          "population_size": 16,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "codex"
+          },
+          "population_size": 5083,
+          "sample_size": 6
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "copilot"
+          },
+          "population_size": 13681,
+          "sample_size": 15
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "crush"
+          },
+          "population_size": 7,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "cursor"
+          },
+          "population_size": 7135,
+          "sample_size": 8
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "deepsource"
+          },
+          "population_size": 59,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "devin"
+          },
+          "population_size": 6925,
+          "sample_size": 7
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "factory_droid"
+          },
+          "population_size": 96,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "gemini"
+          },
+          "population_size": 909,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "generic"
+          },
+          "population_size": 37,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "gpt_engineer"
+          },
+          "population_size": 2,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "gru"
+          },
+          "population_size": 8,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "jules"
+          },
+          "population_size": 172,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "junie"
+          },
+          "population_size": 4,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "langchain_open_swe"
+          },
+          "population_size": 13,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "letta_code"
+          },
+          "population_size": 1582,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "mistral_vibe"
+          },
+          "population_size": 2,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "ona"
+          },
+          "population_size": 86,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "opencode"
+          },
+          "population_size": 287,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "openhands"
+          },
+          "population_size": 35,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "paperclip"
+          },
+          "population_size": 1121,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "qwen_coder"
+          },
+          "population_size": 811,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "sentry_seer"
+          },
+          "population_size": 15,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "sourcery"
+          },
+          "population_size": 46,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "agent_type": "windsurf"
+          },
+          "population_size": 1,
+          "sample_size": 0
+        }
+      ]
+    }
+  ]
+}
