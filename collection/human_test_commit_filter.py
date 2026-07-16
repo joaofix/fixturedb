@@ -14,6 +14,7 @@ import gzip
 import json
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from pathlib import Path
 
 from tqdm import tqdm
@@ -138,6 +139,46 @@ def _write_disagreements_csv(disagreements: list[dict], output_path: Path) -> No
     adapter.write_dicts(output_path, disagreements, _DISAGREEMENT_FIELDNAMES)
 
 
+def _write_scan_summary(
+    commits_scanned_by_lang: dict[str, int],
+    disagreement_count: int,
+    output_dir: Path,
+) -> None:
+    """Write a human-readable summary.md sibling to the per-language human
+    test-commit CSVs -- same rationale as Dataset A's
+    agent_commit_counter.write_commit_scan_totals(): this number only needs
+    to be read by a person, not parsed by another pipeline stage, so plain
+    markdown rather than JSON. Overwritten on every call, safe to refresh
+    mid-run."""
+    summary_path = output_dir / "summary.md"
+    lines = [
+        "# Dataset B -- commit scan summary",
+        "",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+        "",
+        '"Total commits scanned" counts every commit examined in the '
+        "collection window (human and agent alike) -- not just the human "
+        "test-commit rows already present in the per-language CSVs in this "
+        "directory.",
+        "",
+        "| Language | Total commits scanned |",
+        "|---|---:|",
+    ]
+    for lang, total in sorted(commits_scanned_by_lang.items()):
+        lines.append(f"| {lang} | {total:,} |")
+    lines.append("")
+    if disagreement_count:
+        lines.append(
+            f"{disagreement_count} Dataset A cross-check disagreement(s) logged "
+            "to commit_role_disagreements.csv in this directory."
+        )
+        lines.append("")
+    try:
+        summary_path.write_text("\n".join(lines), encoding="utf-8")
+    except OSError:
+        logger.exception("Failed to write %s", summary_path)
+
+
 def _load_pre2021_raw_repo_rows(
     raw_search_dir: Path, language: str | None = None
 ) -> list[dict]:
@@ -215,6 +256,9 @@ def _collect_human_test_commits_from_repo_rows(
 
     repos_processed = counts.get("repos_processed", 0)
     commits_scanned = counts.get("commits_scanned", 0)
+    commits_scanned_by_lang: dict[str, int] = defaultdict(
+        int, counts.get("commits_scanned_by_language", {})
+    )
     repos_with_test_commits = counts.get("repos_with_test_commits", 0)
     workers = max(1, int(workers or 1))
 
@@ -264,6 +308,7 @@ def _collect_human_test_commits_from_repo_rows(
             {
                 "repos_processed": repos_processed,
                 "commits_scanned": commits_scanned,
+                "commits_scanned_by_language": dict(commits_scanned_by_lang),
                 "repos_with_test_commits": repos_with_test_commits,
                 "test_commits_found": sum(
                     len(language_rows)
@@ -280,6 +325,7 @@ def _collect_human_test_commits_from_repo_rows(
             _write_disagreements_csv(
                 disagreements, output_dir / "commit_role_disagreements.csv"
             )
+        _write_scan_summary(commits_scanned_by_lang, len(disagreements), output_dir)
         _save_test_commit_resume_state(
             output_dir, counts, completed_repos, role="human"
         )
@@ -296,6 +342,7 @@ def _collect_human_test_commits_from_repo_rows(
                 ) = process_fn(repo_rows_for_name[0])
                 repos_processed += repo_count
                 commits_scanned += repo_commits_scanned
+                commits_scanned_by_lang[language] += repo_commits_scanned
                 disagreements.extend(repo_disagreements)
                 new_rows = []
                 lang_seen = seen_commit_shas_by_language.setdefault(language, set())
@@ -331,6 +378,7 @@ def _collect_human_test_commits_from_repo_rows(
                         ) = future.result()
                         repos_processed += repo_count
                         commits_scanned += repo_commits_scanned
+                        commits_scanned_by_lang[language] += repo_commits_scanned
                         disagreements.extend(repo_disagreements)
                         new_rows = []
                         lang_seen = seen_commit_shas_by_language.setdefault(language, set())
@@ -373,6 +421,8 @@ def _collect_human_test_commits_from_repo_rows(
         _write_disagreements_csv(disagreements, out_path)
         disagreements_path = str(out_path)
 
+    _write_scan_summary(commits_scanned_by_lang, len(disagreements), output_dir)
+
     disagreement_summary = (
         f", {len(disagreements)} Dataset A disagreement(s) logged to {disagreements_path}"
         if disagreements
@@ -390,6 +440,7 @@ def _collect_human_test_commits_from_repo_rows(
         {
             "repos_processed": repos_processed,
             "commits_scanned": commits_scanned,
+            "commits_scanned_by_language": dict(commits_scanned_by_lang),
             "repos_with_test_commits": repos_with_test_commits,
             "test_commits_found": total_test_commits,
         }
@@ -398,6 +449,7 @@ def _collect_human_test_commits_from_repo_rows(
     return {
         "repos_processed": repos_processed,
         "commits_scanned": commits_scanned,
+        "commits_scanned_by_language": dict(commits_scanned_by_lang),
         "repos_with_test_commits": repos_with_test_commits,
         "test_commits_found": total_test_commits,
         "output_files": output_files,

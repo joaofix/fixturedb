@@ -137,6 +137,7 @@ def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
     out_dir = tmp_path / "out"
     result = collect_human_test_commits(repo_qc_dir, out_dir, workers=1)
     assert result["test_commits_found"] >= 1
+    assert result["commits_scanned_by_language"] == {"python": 1}
 
     out_csv = out_dir / "python_human_test_commit.csv"
     assert out_csv.exists()
@@ -145,6 +146,68 @@ def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
         reader = csv.DictReader(fh)
         rows = list(reader)
     assert any(r["commit_sha"] == "deadbeef" for r in rows)
+
+
+def test_collect_human_test_commits_scanned_totals_are_split_by_language(
+    tmp_path: Path, monkeypatch
+):
+    """commits_scanned_by_language must be a real per-language breakdown, not
+    just the pre-existing flat aggregate repartitioned by accident -- two
+    repos in different languages must each contribute to their own key."""
+    python_repo_dir = tmp_path / "python_repo"
+    init_minimal_repo(python_repo_dir)
+    java_repo_dir = tmp_path / "java_repo"
+    init_minimal_repo(java_repo_dir)
+
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner",
+        make_fake_scanner(commit_role="human", agent_type=None, commit_sha="deadbeef"),
+    )
+
+    repo_qc_dir = tmp_path / "repo_qc"
+    write_repo_qc_csv(repo_qc_dir, "owner/python-repo", python_repo_dir)
+    # write_repo_qc_csv always writes "python_agent_repo.csv" -- add the java
+    # row directly so both repos are picked up from separate QC files.
+    java_csv = repo_qc_dir / "java_agent_repo.csv"
+    with java_csv.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "language",
+                "clone_url",
+                "has_agent_config",
+                "stars",
+                "num_contributors",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/java-repo",
+                "language": "java",
+                "clone_url": str(java_repo_dir),
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+
+    out_dir = tmp_path / "out"
+    result = collect_human_test_commits(repo_qc_dir, out_dir, workers=1)
+
+    assert result["commits_scanned_by_language"] == {"python": 1, "java": 1}
+    assert result["commits_scanned"] == 2
+
+    summary_path = out_dir / "summary.md"
+    assert summary_path.exists()
+    summary_text = summary_path.read_text()
+    assert "Dataset B -- commit scan summary" in summary_text
+    assert "| python | 1 |" in summary_text
+    assert "| java | 1 |" in summary_text
+    # No disagreements in this scenario (no Dataset A lookup was set up) --
+    # the summary must not claim any.
+    assert "disagreement" not in summary_text.lower()
 
 
 def test_collect_human_test_commits_from_raw_search(tmp_path: Path, monkeypatch):
@@ -355,6 +418,10 @@ def test_dataset_a_cross_check_flags_mismatch_agent_vs_human(tmp_path: Path, mon
     assert rows[0]["reason"] == "mismatch"
     assert rows[0]["dataset_a_agent_type"] == "claude"
     assert rows[0]["dataset_b_role"] == "human"
+
+    summary_text = (tmp_path / "out" / "summary.md").read_text()
+    assert "1 Dataset A cross-check disagreement(s)" in summary_text
+    assert "commit_role_disagreements.csv" in summary_text
 
 
 def test_dataset_a_cross_check_flags_mismatch_different_agent_types(

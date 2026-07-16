@@ -151,6 +151,19 @@ class TestGetAgentCommits:
                 "commit",
                 "--allow-empty",
                 "-m",
+                "Plain human commit, no agent signal",
+            ],
+            cwd=repo_path,
+            check=True,
+            capture_output=True,
+            env=env,
+        )
+        subprocess.run(
+            [
+                "git",
+                "commit",
+                "--allow-empty",
+                "-m",
                 "Add feature\n\nCo-authored-by: GitHub Copilot <copilot@github.com>",
             ],
             cwd=repo_path,
@@ -159,12 +172,16 @@ class TestGetAgentCommits:
             env=env,
         )
 
-        commits = get_agent_commits(repo_path, "2025-01-01")
+        commits, total_examined = get_agent_commits(repo_path, "2025-01-01")
 
         assert len(commits) == 1
         assert commits[0]["agent_type"] == "copilot"
         assert commits[0]["author_name"] == "Alice Example"
         assert commits[0]["author_email"] == "alice@example.com"
+        # total_examined counts every commit in the window (agent + human),
+        # not just the agent-matched one -- this is the whole point of the
+        # second return value.
+        assert total_examined == 2
 
 
 class TestMultipleAgentTypes:

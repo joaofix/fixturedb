@@ -65,7 +65,7 @@ class AgentCorpusStats(BaseCorpusStats):
     agent_types_distribution: Dict[str, int] = field(default_factory=dict)
 
 
-def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:
+def get_agent_commits(repo_path: Path, start_date: str) -> tuple[list[dict], int]:
     """
     Get commits with agent metadata after start_date.
 
@@ -74,7 +74,11 @@ def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:
         start_date: ISO date string
 
     Returns:
-        List of dicts with commit_sha, agent_type, commit_date
+        (commits, total_examined): commits is a list of dicts with
+        commit_sha, agent_type, commit_date, author_name, author_email;
+        total_examined is every commit examined in the date window (agent,
+        human, and bot alike), not just the agent-matched ones -- see
+        Tier1RepositoryScanner.scan_repo_for_agent_commits.
     """
     try:
         from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
@@ -83,20 +87,25 @@ def get_agent_commits(repo_path: Path, start_date: str) -> list[dict]:
         # (only Tier2RepoMatcher's candidate queries actually open the DB), so
         # this works whether or not db/corpus.db exists on disk.
         scanner = Tier1RepositoryScanner(paths.corpus_db_path())
-        commits = scanner.scan_repo_for_agent_commits(repo_path, start_date=start_date)
-        return [
-            {
-                "commit_sha": commit.commit_sha,
-                "agent_type": commit.agent_type,
-                "commit_date": commit.commit_date,
-                "author_name": commit.author_name,
-                "author_email": commit.author_email,
-            }
-            for commit in commits
-        ]
+        commits, total_examined = scanner.scan_repo_for_agent_commits(
+            repo_path, start_date=start_date
+        )
+        return (
+            [
+                {
+                    "commit_sha": commit.commit_sha,
+                    "agent_type": commit.agent_type,
+                    "commit_date": commit.commit_date,
+                    "author_name": commit.author_name,
+                    "author_email": commit.author_email,
+                }
+                for commit in commits
+            ],
+            total_examined,
+        )
     except (subprocess.TimeoutExpired, Exception) as e:
         logger.debug(f"Failed to get agent commits for {repo_path}: {e}")
-        return []
+        return [], 0
 
 
 def _load_qc_repo_rows(

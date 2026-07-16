@@ -27,6 +27,7 @@ By default the clone is blob-limited so large file contents are not downloaded; 
 import concurrent.futures
 import csv
 import json
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -152,13 +153,16 @@ def write_commit_rows(rows: list[dict], output_dir: Path = OUTPUT_DIR) -> None:
             logger.exception("Failed to write checkpoint for language=%s", lang)
 
 
-def process_repo_for_commits(row: dict, since: str) -> list[dict]:
-    """Temp-clone the repo in *row* and return its agent commits since *since*."""
+def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
+    """Temp-clone the repo in *row* and return (agent commits, total commits
+    examined) since *since*. The total counts every commit the scan looked
+    at in the date window -- agent, human, and bot alike -- not just the
+    agent-matched ones returned in the first element."""
     full_name = (row.get("repo_name") or "").strip()
     clone_url = row.get("clone_url") or f"https://github.com/{full_name}.git"
     lang = (row.get("language") or "unknown").strip().lower()
     if not full_name:
-        return []
+        return [], 0
     clone_args = [
         "--filter=blob:limit=10m",
         "--single-branch",
@@ -172,12 +176,15 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
     ) as repo_path:
         if repo_path is None:
             logger.warning("Clone failed for %s (clone_url=%s)", full_name, clone_url)
-            return []
+            return [], 0
 
         if repo_path and repo_path.exists():
-            commits = get_agent_commits(repo_path, since)
+            commits, total_examined = get_agent_commits(repo_path, since)
             logger.debug(
-                "Found %d candidate agent commits in %s", len(commits), full_name
+                "Found %d candidate agent commits in %s (of %d examined)",
+                len(commits),
+                full_name,
+                total_examined,
             )
             for c in commits:
                 commit_sha = c.get("commit_sha")
@@ -199,8 +206,44 @@ def process_repo_for_commits(row: dict, since: str) -> list[dict]:
                         "processed_at": datetime.now(timezone.utc).isoformat(),
                     }
                 )
+        else:
+            return out_rows, 0
 
-    return out_rows
+    return out_rows, total_examined
+
+
+def write_commit_scan_totals(
+    commits_scanned_by_lang: dict[str, int], output_dir: Path = OUTPUT_DIR
+) -> None:
+    """Write the per-language "total commits examined" summary as a
+    human-readable summary.md sibling to the per-language commit CSVs --
+    counts agent, human, and bot commits alike, not just the agent-attributed
+    rows already present in those CSVs. Plain markdown rather than JSON: this
+    number only ever needs to be read by a person (filling in or checking the
+    paper's results table), not parsed by another pipeline stage. Overwritten
+    on every call, safe to refresh mid-run for visibility into a killed/
+    still-running collection."""
+    summary_path = output_dir / "summary.md"
+    lines = [
+        "# Dataset A -- commit scan summary",
+        "",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
+        "",
+        '"Total commits scanned" counts every commit examined in the '
+        "collection window (agent, human, and bot alike) -- not just the "
+        "agent-attributed rows already present in the per-language commit "
+        "CSVs in this directory.",
+        "",
+        "| Language | Total commits scanned |",
+        "|---|---:|",
+    ]
+    for lang, total in sorted(commits_scanned_by_lang.items()):
+        lines.append(f"| {lang} | {total:,} |")
+    lines.append("")
+    try:
+        summary_path.write_text("\n".join(lines), encoding="utf-8")
+    except OSError:
+        logger.exception("Failed to write %s", summary_path)
 
 
 def run(
@@ -238,6 +281,7 @@ def run(
     workers = max(1, int(workers or 1))
     processed_count = 0
     commits_found = 0
+    commits_scanned_by_lang: dict[str, int] = defaultdict(int)
     logger.info("Starting processing with %d workers", workers)
     if workers == 1:
         with tqdm(total=len(unique), desc="discover-commits", unit="repo") as pbar:
@@ -246,7 +290,8 @@ def run(
                 logger.debug(
                     "Processing (sync) %s (lang=%s)", (r.get("repo_name") or ""), lang
                 )
-                rows = process_repo_for_commits(r, since)
+                rows, total_examined = process_repo_for_commits(r, since)
+                commits_scanned_by_lang[lang] += total_examined
                 # filter out seen shas
                 new_rows = [
                     rr
@@ -268,6 +313,8 @@ def run(
                 processed_count += 1
                 pbar.set_postfix(commits=commits_found)
                 pbar.update(1)
+                if processed_count % 50 == 0:
+                    write_commit_scan_totals(commits_scanned_by_lang, output_dir)
     else:
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
             futures = {ex.submit(process_repo_for_commits, r, since): r for r in unique}
@@ -277,13 +324,14 @@ def run(
                     src = futures[fut]
                     lang = (src.get("language") or "unknown").strip().lower()
                     try:
-                        rows = fut.result()
+                        rows, total_examined = fut.result()
                     except Exception as e:
                         logger.exception(
                             "Error processing %s: %s", src.get("repo_name"), e
                         )
                         pbar.update(1)
                         continue
+                    commits_scanned_by_lang[lang] += total_examined
                     new_rows = [
                         rr
                         for rr in rows
@@ -307,9 +355,13 @@ def run(
                     processed_count += 1
                     pbar.set_postfix(commits=commits_found)
                     pbar.update(1)
+                    if processed_count % 50 == 0:
+                        write_commit_scan_totals(commits_scanned_by_lang, output_dir)
 
+    write_commit_scan_totals(commits_scanned_by_lang, output_dir)
     print(
-        f"Processed {processed_count} config-positive repos; per-language commit CSVs stored in {output_dir}"
+        f"Processed {processed_count} config-positive repos; per-language commit CSVs "
+        f"stored in {output_dir}; commit scan totals: {dict(commits_scanned_by_lang)}"
     )
     return 0
 

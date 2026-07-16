@@ -131,7 +131,7 @@ class Tier1RepositoryScanner:
 
     def scan_repo_for_agent_commits(
         self, repo_path: Path, start_date: str = AGENT_CORPUS_START_DATE
-    ) -> List[AgentCommitInfo]:
+    ) -> tuple[List[AgentCommitInfo], int]:
         """
         Scan a single repository for agent commits (Co-authored-by trailers).
 
@@ -140,12 +140,19 @@ class Tier1RepositoryScanner:
             start_date: Only include commits after this date (ISO format)
 
         Returns:
-            List of AgentCommitInfo for agent commits found
+            (commits, total_examined): commits is the list of AgentCommitInfo
+            for agent commits found; total_examined is every commit this scan
+            looked at in the date window (agent, human, and bot alike) -- the
+            total this class already computes internally via the same
+            traversal but historically discarded once it filtered down to
+            agent-only rows. Callers that only need the agent commits can
+            ignore the second element.
         """
         if not repo_path.is_dir():
-            return []
+            return [], 0
 
         commits = []
+        total_examined = 0
 
         try:
             since_date = _parse_since_date(start_date)
@@ -154,6 +161,7 @@ class Tier1RepositoryScanner:
                 since=since_date,
                 only_no_merge=True,
             ).traverse_commits():
+                total_examined += 1
                 commit_sha = commit.hash
                 author_name = commit.author.name
                 author_email = commit.author.email
@@ -181,7 +189,7 @@ class Tier1RepositoryScanner:
         except Exception as e:
             logger.error(f"Error scanning {repo_path.name}: {e}")
 
-        return commits
+        return commits, total_examined
 
     def scan_repo_commit_roles(
         self,
