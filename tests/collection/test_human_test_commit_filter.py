@@ -210,6 +210,154 @@ def test_collect_human_test_commits_scanned_totals_are_split_by_language(
     assert "disagreement" not in summary_text.lower()
 
 
+def test_collect_human_test_commits_multi_worker_accumulates_correctly(
+    tmp_path: Path, monkeypatch
+):
+    """workers=1 exercises a plain sequential loop; the ThreadPoolExecutor
+    branch (what a real --dataset b run actually uses) is separate code and
+    must be verified independently -- several repos per language, enough for
+    real concurrent execution."""
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner",
+        make_fake_scanner(commit_role="human", agent_type=None),
+    )
+
+    repo_qc_dir = tmp_path / "repo_qc"
+    repo_qc_dir.mkdir()
+    header = [
+        "repo_name",
+        "language",
+        "clone_url",
+        "has_agent_config",
+        "stars",
+        "num_contributors",
+    ]
+
+    python_rows = []
+    for i in range(4):
+        repo_dir = tmp_path / f"python_repo_{i}"
+        init_minimal_repo(repo_dir)
+        python_rows.append(
+            {
+                "repo_name": f"owner/python-repo-{i}",
+                "language": "python",
+                "clone_url": str(repo_dir),
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+    with (repo_qc_dir / "python_agent_repo.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as fh:
+        writer = csv.DictWriter(fh, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(python_rows)
+
+    java_rows = []
+    for i in range(3):
+        repo_dir = tmp_path / f"java_repo_{i}"
+        init_minimal_repo(repo_dir)
+        java_rows.append(
+            {
+                "repo_name": f"owner/java-repo-{i}",
+                "language": "java",
+                "clone_url": str(repo_dir),
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+    with (repo_qc_dir / "java_agent_repo.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as fh:
+        writer = csv.DictWriter(fh, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(java_rows)
+
+    out_dir = tmp_path / "out"
+    result = collect_human_test_commits(repo_qc_dir, out_dir, workers=4)
+
+    assert result["commits_scanned_by_language"] == {"python": 4, "java": 3}
+    assert result["commits_scanned"] == 7
+    assert result["repos_processed"] == 7
+
+    summary_text = (out_dir / "summary.md").read_text()
+    assert "| python | 4 |" in summary_text
+    assert "| java | 3 |" in summary_text
+
+
+def test_collect_human_test_commits_resume_preserves_prior_per_language_totals(
+    tmp_path: Path, monkeypatch
+):
+    """Simulates an interrupted-and-resumed collection: a second call against
+    the SAME output_dir, with one repo already completed and one new repo
+    added, must report the combined total from both calls -- not just the
+    second call's contribution. This specifically catches the bug where
+    _save_test_commit_resume_state silently dropped commits_scanned_by_language
+    (a fixed, hardcoded key whitelist that didn't include it), which would
+    make a resumed run's per-language totals reset to only what the resumed
+    run itself processed."""
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner",
+        make_fake_scanner(commit_role="human", agent_type=None, commit_sha="sha-a"),
+    )
+
+    repo_a_dir = tmp_path / "repo_a"
+    init_minimal_repo(repo_a_dir)
+    repo_qc_dir = tmp_path / "repo_qc"
+    write_repo_qc_csv(repo_qc_dir, "owner/repo-a", repo_a_dir)
+
+    out_dir = tmp_path / "out"
+    first_result = collect_human_test_commits(repo_qc_dir, out_dir, workers=1)
+    assert first_result["commits_scanned_by_language"] == {"python": 1}
+    assert first_result["repos_processed"] == 1
+
+    # Second "run": repo-a is already completed and must be skipped; repo-b
+    # is new. Point the scanner at a different SHA so this call's commit is
+    # distinguishable from the first, though commits_scanned counting itself
+    # doesn't dedupe by SHA regardless.
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner",
+        make_fake_scanner(commit_role="human", agent_type=None, commit_sha="sha-b"),
+    )
+    repo_b_dir = tmp_path / "repo_b"
+    init_minimal_repo(repo_b_dir)
+    repo_qc_csv = repo_qc_dir / "python_agent_repo.csv"
+    with repo_qc_csv.open("a", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "language",
+                "clone_url",
+                "has_agent_config",
+                "stars",
+                "num_contributors",
+            ],
+        )
+        writer.writerow(
+            {
+                "repo_name": "owner/repo-b",
+                "language": "python",
+                "clone_url": str(repo_b_dir),
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+
+    second_result = collect_human_test_commits(repo_qc_dir, out_dir, workers=1)
+
+    # The bug this test guards against: without the fix, this would be
+    # {"python": 1} (only repo-b's contribution, repo-a's prior progress lost).
+    assert second_result["commits_scanned_by_language"] == {"python": 2}
+    assert second_result["repos_processed"] == 2
+
+    summary_text = (out_dir / "summary.md").read_text()
+    assert "| python | 2 |" in summary_text
+
+
 def test_collect_human_test_commits_from_raw_search(tmp_path: Path, monkeypatch):
     repo_dir = tmp_path / "repo"
     commit_sha = init_minimal_repo(repo_dir)

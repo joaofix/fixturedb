@@ -23,7 +23,7 @@ HUMAN_TEST_COMMITS_CHECKPOINT = "human_test_commits.checkpoint.json"
 
 def _load_test_commit_resume_state(
     output_dir: Path, role: str = "agent"
-) -> tuple[dict[str, list[dict]], dict[str, set[str]], set[str], dict[str, int]]:
+) -> tuple[dict[str, list[dict]], dict[str, set[str]], set[str], dict]:
     """Generic resume loader for test-commit filtering.
 
     role: 'agent' or 'human' determines filename patterns and checkpoint name.
@@ -31,11 +31,12 @@ def _load_test_commit_resume_state(
     rows_by_language: dict[str, list[dict]] = defaultdict(list)
     seen_commit_shas_by_language: dict[str, set[str]] = defaultdict(set)
     completed_repos: set[str] = set()
-    counts = {
+    counts: dict = {
         "repos_processed": 0,
         "commits_scanned": 0,
         "repos_with_test_commits": 0,
         "test_commits_found": 0,
+        "commits_scanned_by_language": {},
     }
 
     output_dir = Path(output_dir)
@@ -63,7 +64,14 @@ def _load_test_commit_resume_state(
         with checkpoint_path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
         for key in counts:
+            if key == "commits_scanned_by_language":
+                continue
             counts[key] = int(data.get(key, 0) or 0)
+        raw_by_lang = data.get("commits_scanned_by_language") or {}
+        if isinstance(raw_by_lang, dict):
+            counts["commits_scanned_by_language"] = {
+                str(lang): int(total or 0) for lang, total in raw_by_lang.items()
+            }
         completed_repos.update(
             str(repo_name).strip()
             for repo_name in data.get("completed_repos", [])
@@ -75,7 +83,7 @@ def _load_test_commit_resume_state(
 
 def _save_test_commit_resume_state(
     output_dir: Path,
-    counts: dict[str, int],
+    counts: dict,
     completed_repos: set[str],
     role: str = "agent",
 ) -> None:
@@ -91,11 +99,16 @@ def _save_test_commit_resume_state(
         else HUMAN_TEST_COMMITS_CHECKPOINT
     )
     checkpoint_path = output_dir / checkpoint_name
+    commits_scanned_by_language = counts.get("commits_scanned_by_language") or {}
     checkpoint = {
         "repos_processed": int(counts.get("repos_processed", 0) or 0),
         "commits_scanned": int(counts.get("commits_scanned", 0) or 0),
         "repos_with_test_commits": int(counts.get("repos_with_test_commits", 0) or 0),
         "test_commits_found": int(counts.get("test_commits_found", 0) or 0),
+        "commits_scanned_by_language": {
+            str(lang): int(total or 0)
+            for lang, total in commits_scanned_by_language.items()
+        },
         "completed_repos": sorted(completed_repos),
     }
     with checkpoint_path.open("w", encoding="utf-8") as fh:

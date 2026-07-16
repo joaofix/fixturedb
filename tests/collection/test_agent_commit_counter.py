@@ -175,6 +175,57 @@ def test_run_accumulates_per_language_totals_across_repos(tmp_path: Path):
     assert "| java | 1 |" in summary_text
 
 
+def test_run_multi_worker_accumulates_per_language_totals_correctly(tmp_path: Path):
+    """workers=1 uses a plain sequential loop; the ThreadPoolExecutor branch
+    (what a real collection run actually uses) is separate code and must be
+    verified independently -- several repos per language, enough for real
+    concurrent execution, not just a single repo that happens to pass either
+    way."""
+    repo_qc_dir = tmp_path / "repo_qc"
+    python_rows = []
+    java_rows = []
+    expected_python_total = 0
+    expected_java_total = 0
+
+    for i in range(4):
+        repo_dir = tmp_path / f"python_repo_{i}"
+        commits = [f"Human commit {i}.{j}" for j in range(i + 1)]
+        _make_repo(repo_dir, commits)
+        expected_python_total += len(commits)
+        python_rows.append(
+            {
+                "repo_name": f"owner/python-repo-{i}",
+                "language": "python",
+                "clone_url": str(repo_dir),
+                "has_agent_config": "1",
+            }
+        )
+
+    for i in range(3):
+        repo_dir = tmp_path / f"java_repo_{i}"
+        commits = [f"Human commit {i}.{j}" for j in range(i + 2)]
+        _make_repo(repo_dir, commits)
+        expected_java_total += len(commits)
+        java_rows.append(
+            {
+                "repo_name": f"owner/java-repo-{i}",
+                "language": "java",
+                "clone_url": str(repo_dir),
+                "has_agent_config": "1",
+            }
+        )
+
+    _write_repo_qc_csv(repo_qc_dir, "python_agent_repo.csv", python_rows)
+    _write_repo_qc_csv(repo_qc_dir, "java_agent_repo.csv", java_rows)
+
+    output_dir = tmp_path / "out"
+    run(since="2025-01-01", workers=4, input_dir=repo_qc_dir, output_dir=output_dir)
+
+    summary_text = (output_dir / "summary.md").read_text()
+    assert f"| python | {expected_python_total} |" in summary_text
+    assert f"| java | {expected_java_total} |" in summary_text
+
+
 def test_run_skips_repos_missing_agent_config(tmp_path: Path):
     """read_config_positive_rows already filters to has_agent_config=1 --
     confirm a non-qualifying repo contributes nothing to the totals."""
