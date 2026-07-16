@@ -5,9 +5,7 @@ FixtureDB detects test fixture definitions across Python, Java, JavaScript, and 
 1. **Detection** — Tree-sitter parses each file into an AST; language-specific pattern tables identify which nodes are fixture definitions (decorators, annotations, method names) and classify their scope/framework.
 2. **Metrics & post-processing** — Each detected fixture gets a fixed set of quantitative metrics (§ Fixture Metrics), then a second pass over the whole fixture list detects cross-fixture relationships (teardown pairing, pytest fixture dependencies, scope propagation).
 
-![Detection Pipeline Diagram](detection-diagram.png)
-
-*Mermaid source: [Appendix](#appendix-mermaid-diagram-source).*
+See [Appendix](#appendix-mermaid-diagram-source) for a diagram of the pipeline.
 
 ## Fixture Detection vs. Agent Detection
 
@@ -55,16 +53,18 @@ Each detected fixture carries these fields (`collection/detector_shared.py::Fixt
 
 | Metric | How computed | Notes |
 |--------|-----------|-------|
-| `fixture_type`, `framework`, `scope` | AST pattern match against `fixture_definitions.yaml` | Per-language detector |
+| `name`, `fixture_type`, `framework`, `scope` | AST pattern match against `fixture_definitions.yaml` | Per-language detector |
 | `loc` | Non-blank line count of the fixture's own text | `_count_loc()` |
 | `cyclomatic_complexity`, `num_parameters` | Lizard, run on the fixture's isolated source | `complexity_provider.py` |
 | `max_nesting_depth` | Custom tree-sitter traversal (Lizard doesn't do function-level nesting) | `_compute_nesting_depth()` |
-| `num_objects_instantiated` | Regex over constructor patterns (`new X(...)` for Java/JS/TS, capitalized-call heuristic for Python) | `_count_object_instantiations()` |
+| `num_objects_instantiated` | Regex over constructor patterns (`new X(...)` for Java/JS/TS, capitalized-call heuristic for Python) | `_count_object_instantiations()` in `complexity_provider.py` |
 | `num_external_calls` | Regex over I/O patterns (db/http/file/subprocess) | `_count_external_calls()` |
 | `has_teardown_pair` | Post-processing, paired against other fixtures in the file | `_calculate_teardown_pairs()` |
 | `fixture_dependencies` | Post-processing, pytest-only | `_detect_fixture_dependencies()` |
-| `num_mocks`, `mocks` | Regex over mock-framework patterns | `_extract_mocks()` |
+| `mocks` | Regex over mock-framework patterns | `_extract_mocks()` |
 | `raw_source`, `start_line`, `end_line` | Verbatim fixture text and location, for manual audit | — |
+
+`num_mocks` is not a `FixtureResult` field — it's derived downstream as `len(mocks)` at export time (`corpus_utils.py`, `db.py`), not stored on the dataclass itself.
 
 Full per-metric methodology, exact regex catalogs, and known limitations: [metrics-reference.md](metrics-reference.md).
 
