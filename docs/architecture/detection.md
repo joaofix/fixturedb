@@ -28,7 +28,7 @@ carries an `excluded` list documenting known boundary cases the detector deliber
 (see [configuration.md](configuration.md#reference-data-catalogs) and
 [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases)).
 
-**Test coverage:** `tests/collection/test_fixture_definitions_catalog_coverage.py` is parametrized directly over every entry in `fixture_definitions.yaml` (not a hand-picked subset), driving each one through the real `extract_fixtures()` pipeline. Building it surfaced and fixed real bugs in Java's JUnit3 fallback (setUp()/tearDown() detection for un-annotated methods): it could double-detect an already-annotated method, never checked that the enclosing class actually extends `TestCase`, and the `@Rule`/`@ClassRule` field-declaration branch computed complexity metrics in the wrong language mode and produced `<anonymous>_N` names instead of the real field name. Fixed in `detector_java.py`/`detector_shared.py`, regression-tested in `test_java_fixtures.py::TestJUnit3Fallback` and `test_framework_detection.py`'s `@Rule` tests.
+**Test coverage:** `tests/collection/test_fixture_definitions_catalog_coverage.py` is parametrized directly over every entry in `fixture_definitions.yaml` (not a hand-picked subset), driving each one through the real `extract_fixtures()` pipeline. Java's JUnit3 fallback (`setUp()`/`tearDown()` detection for un-annotated methods) checks that the enclosing class extends `TestCase` and guards against double-detecting an already-annotated method; the `@Rule`/`@ClassRule` field-declaration branch computes complexity metrics in the correct language mode and reports the real field name. Regression-tested in `test_java_fixtures.py::TestJUnit3Fallback` and `test_framework_detection.py`'s `@Rule` tests.
 
 ### Async Fixtures
 
@@ -70,11 +70,7 @@ Full per-metric methodology, exact regex catalogs, and known limitations: [metri
 
 Cognitive complexity was evaluated and dropped entirely (not shipped as a Python-only or formula-approximated metric): its only programmatic implementation (`complexipy`) is Python-specific, and no equivalent exists for Java/JS/TS.
 
-**Bugs found and fixed by this session's audit** (all regression-tested in `tests/collection/test_extractor_metadata/test_new_metrics.py`):
-- `max_nesting_depth` was double-counting every level of nesting for Python and Java — a compound statement's own body-wrapper node (`block`) was counted as an *additional* level on top of the statement itself, and Java's `catch_clause`/`finally_clause` were double-counted against their own `try_statement`. JS/TS were unaffected (different grammar node name). Fixed in `_compute_nesting_depth()`.
-- For Python's `pytest_decorator` fixtures, the reported line range and `num_external_calls`/`mocks` were scanned over the decorator-inclusive node while `raw_source` used the function-only node — so an `open(...)` or `MagicMock()` call sitting in the decorator's own arguments (e.g. `@pytest.fixture(params=[...])`) leaked into that fixture's metrics, and the reported line range disagreed with `raw_source` by exactly the decorator line. Fixed by scoping every metric to the same node (`_build_result()`).
-- `num_parameters` counted Python's implicit `self`/`cls` as an ordinary parameter (Lizard's native behavior), inflating it by 1 for nearly every method-style fixture relative to a bare function or an equivalent Java/JS fixture. Now stripped for Python.
-- `new Namespace.ClassName(...)` (e.g. `new THREE.Vector3()`, `new java.util.ArrayList()`) was undercounted by `num_objects_instantiated` — the constructor pattern required a single bare identifier. Fixed in `feature_extraction_patterns.yaml`.
+All metrics on this page are regression-tested in `tests/collection/test_extractor_metadata/test_new_metrics.py`.
 
 ---
 
@@ -82,7 +78,7 @@ Cognitive complexity was evaluated and dropped entirely (not shipped as a Python
 
 Mocks are detected in a second pass over each fixture's own already-isolated AST text (not the whole file), against a flat, language-agnostic regex catalog covering `unittest.mock`/`pytest-mock`/`monkeypatch` (Python), Mockito/EasyMock/MockK (Java), and Jest/Sinon/Vitest (JS/TS). Each match records `framework`, a Meszaros test-double `category` (dummy/stub/spy/mock/fake — `dummy` is never assigned, since distinguishing it needs data-flow analysis this detector doesn't do), `target_identifier`, and an interaction-keyword count. Full methodology, pattern catalog, and known scope limits (fixture-local scanning only — module-level `jest.mock(...)` is invisible): [metrics-reference.md § num_mocks](metrics-reference.md#num_mocks-and-the-mock_usages-table).
 
-Pattern/category tables live in [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml), not hardcoded — see [configuration.md](configuration.md#reference-data-catalogs). Catalog-driven exhaustive tests (`tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`) parametrize over every pattern and assert no other pattern in the catalog also matches the same sample — this caught two real false-positive collisions (`Mock()` matching inside `EasyMock.createMock(...)`; MockK's `mock(X.class)` matching inside `Mockito.mock(X.class)`), both fixed with a word boundary and a negative lookbehind respectively.
+Pattern/category tables live in [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml), not hardcoded — see [configuration.md](configuration.md#reference-data-catalogs). Catalog-driven exhaustive tests (`tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`) parametrize over every pattern and assert no other pattern in the catalog also matches the same sample — e.g. `Mock()` is word-boundary-scoped so it does not match inside `EasyMock.createMock(...)`, and MockK's `mock(X.class)` pattern excludes `Mockito.mock(X.class)` via a negative lookbehind.
 
 ---
 

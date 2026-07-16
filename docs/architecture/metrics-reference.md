@@ -59,12 +59,9 @@ Maximum nesting level of control structures (if/for/while/try) inside the fixtur
 tree-sitter traversal that increments a counter at each control-construct node type
 (`if_statement`, `while_statement`, `for_statement`, `try_statement`, `with_statement`, etc.).
 
-**Fixed this session:** the traversal previously also incremented on the compound statement's own
-body-wrapper node (`"block"` in Python/Java's tree-sitter grammars) and on Java's `catch_clause`/
-`finally_clause` — both of which double-counted a nesting level already attributed to the enclosing
-statement, inflating every Python and Java fixture's reported depth (JS/TS were unaffected; their
-body-wrapper node has a different type name, `statement_block`, so the collision didn't occur there).
-A flat function now correctly reports 1, one level of `if` reports 2. Regression tests with exact
+The compound statement's own body-wrapper node (`"block"` in Python/Java's tree-sitter grammars) and
+Java's `catch_clause`/`finally_clause` are not counted as their own extra level — only the enclosing
+statement is. A flat function reports 1, one level of `if` reports 2. Regression tests with exact
 (not lower-bound) assertions: `tests/collection/test_extractor_metadata/test_new_metrics.py::TestMaxNestingDepth`.
 
 ### num_objects_instantiated
@@ -74,9 +71,7 @@ Regex count of constructor-call patterns: `new ClassName(...)` (with optional ge
 `new THREE.Vector3()`) for Java/JS/TS, and a capitalized-call heuristic (`ClassName(...)`) for Python.
 The count is capped at Lizard's own external-call count to avoid overcounting.
 
-**Fixed this session:** the Java/JS/TS pattern required the class name to be a single bare identifier,
-undercounting the dotted/namespaced form. Pattern now in
-`feature_extraction_patterns.yaml`'s `object_instantiation_patterns`.
+Pattern catalog: `feature_extraction_patterns.yaml`'s `object_instantiation_patterns`.
 
 **Known limitation:** the Python heuristic (capitalization) may miss lowercase-named classes or
 factory functions, and doesn't distinguish library classes from user-defined ones.
@@ -94,10 +89,10 @@ false-positive on a string literal that happens to contain a matched substring.
 ### num_parameters
 
 Lizard's parameter count, with one Python-specific correction: Lizard counts a method's implicit
-`self`/`cls` as an ordinary parameter, which inflated `num_parameters` by 1 for essentially every
+`self`/`cls` as an ordinary parameter, which would inflate `num_parameters` by 1 for essentially every
 unittest/pytest-class-method fixture relative to a bare pytest_decorator function or an
-equivalent Java/JS fixture (neither of which has an implicit first parameter). **Fixed this session**:
-for Python, `num_parameters` is now computed by reading each parameter's own AST node directly
+equivalent Java/JS fixture (neither of which has an implicit first parameter). For Python,
+`num_parameters` is computed by reading each parameter's own AST node directly
 (`_extract_parameter_names()`) and excluding `self`/`cls`, instead of using Lizard's raw count.
 
 ### fixture_type, framework, scope
@@ -126,9 +121,9 @@ Only the setup-side fixture is flagged; the teardown fixture itself is not. Pair
 A fixture's own parameter names are cross-referenced against every other fixture name detected in the
 same file; a match means "this fixture depends on that one." Implemented by re-parsing each pytest
 fixture's `raw_source` and reading each parameter as its own AST node
-(`_extract_parameter_names()`) rather than regex-splitting the parameter list text — the earlier regex
-(`[^)]*`) truncated at the first `)`, silently losing any parameter after a default value like
-`items=list()`. Fixed and regression-tested (`tests/collection/test_extractor_metadata/test_fixture_dependencies.py`).
+(`_extract_parameter_names()`) rather than regex-splitting the parameter list text — a naive
+`[^)]*` regex truncates at the first `)`, silently losing any parameter after a default value like
+`items=list()`. Regression-tested: `tests/collection/test_extractor_metadata/test_fixture_dependencies.py`.
 
 **Known limitation:** pytest-specific (no equivalent for Java/JS fixtures); transitive/indirect
 dependencies are not tracked beyond one hop.
@@ -148,10 +143,9 @@ manual overrides for constructs whose name contains no category keyword (e.g. `m
 the double is used afterward, not a keyword match. Full framework list and pattern catalog:
 [detection.md § Mock Detection](detection.md#mock-detection).
 
-**Fixed this session:** mocks were previously scanned from a wider node than the fixture's own body for
-Python's `pytest_decorator` type, so a mock construct sitting purely in a decorator's own
-arguments (e.g. `@pytest.fixture(params=[MagicMock()])`) was incorrectly attributed to the fixture. Now
-scoped consistently to the fixture's own function node (`_build_result()`).
+Mocks are scoped consistently to the fixture's own function node (`_build_result()`), including for
+Python's `pytest_decorator` type — a mock construct sitting purely in a decorator's own arguments
+(e.g. `@pytest.fixture(params=[MagicMock()])`) is not attributed to the fixture.
 
 ### reuse_count — removed
 

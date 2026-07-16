@@ -239,64 +239,51 @@ missing pattern is a documented decision rather than an oversight — see
 and [Limitations](../reference/limitations.md#fixture-detection-recall) for
 how this feeds into the paper's recall discussion.
 
-Building exhaustive, catalog-driven test coverage for `fixture_definitions.yaml`
-(parametrized directly over every entry, not a hand-picked subset —
-`tests/collection/test_fixture_definitions_catalog_coverage.py`) surfaced
-real detection bugs in `detector_java.py`'s JUnit3 fallback: no check for
-class inheritance at all (despite the YAML's own comment restricting it
-to a TestCase subclass), and an "already annotated" guard narrow enough
-that a `@Given`-annotated method could be double-detected. See
-[Fixture Detection Logic](detection.md) for the full writeup.
+`tests/collection/test_fixture_definitions_catalog_coverage.py` is
+parametrized directly over every entry in `fixture_definitions.yaml` (not a
+hand-picked subset), exercising the real `extract_fixtures()` pipeline for
+each one — see [Fixture Detection Logic](detection.md) for what this
+verifies in `detector_java.py`'s JUnit3 fallback (class-inheritance check,
+already-annotated guard).
 
 The feature-extraction-patterns catalog covers the metrics computed *after*
 a fixture is already detected (`num_mocks`, `num_external_calls`,
 `num_objects_instantiated`, `has_teardown_pair`): what regex signals a
 mock/I-O-call/constructor, and which setup fixture_types pair with which
-teardown fixture_types. Migrating this out of Python also fixed a real gap
-found while auditing it — the previous hardcoded teardown-pairing table
-referenced fixture types no detector in this codebase ever produces
-(`nunit_setup`, `xunit_fact`, `xunit_theory` — .NET frameworks, out of
-scope) while missing several pairs it should have had (TestNG, Mocha, AVA,
-`before_all`/`after_all`, JUnit3), so those fixture types never got credit
-for having a teardown even when one was present in the source.
+teardown fixture_types. The teardown-pairing table only lists fixture types
+this codebase's detectors actually produce (TestNG, Mocha, AVA,
+`before_all`/`after_all`, JUnit3, JUnit4/pytest, ...) — .NET-only types like
+`nunit_setup`/`xunit_fact`/`xunit_theory` are out of scope and not
+included.
 
-A follow-up audit of `mock_patterns` specifically (prompted by "what do we
-actually detect as a mock?") found and fixed three more real blind spots,
-not just relocated data: `mock.patch.object(...)`/`mocker.patch.object(...)`
-(a distinct call shape from `.patch('dotted.path')` that the original regex
-structurally couldn't match), bare `patch(...)`/`patch.object(...)` (the
-`from unittest.mock import patch` form, used without a `mock.`/`mocker.`
-prefix), and several missing Sinon/Jest entry points
-(`sinon.fake/replace/createStubInstance`, `jest.mocked/createMockFromModule`).
-pytest's built-in `monkeypatch` fixture was also added as a new
-`pytest_monkeypatch` framework. `mock_patterns_excluded` documents what's
-still deliberately out of scope (PowerMock, assertion-only Chai/sinon-chai
-usage, and the structural fact that anything mocked outside a fixture's own
-body — most notably Jest's conventional top-level `jest.mock(...)` — is
-invisible to this detector).
+`mock_patterns` covers `mock.patch.object(...)`/`mocker.patch.object(...)`
+(distinct from `.patch('dotted.path')`), bare `patch(...)`/`patch.object(...)`
+(the `from unittest.mock import patch` form, used without a `mock.`/
+`mocker.` prefix), pytest's built-in `monkeypatch` fixture (as
+`pytest_monkeypatch`), and Sinon/Jest entry points including
+`sinon.fake/replace/createStubInstance` and
+`jest.mocked/createMockFromModule`. `mock_patterns_excluded` documents
+what's still deliberately out of scope (PowerMock, assertion-only
+Chai/sinon-chai usage, and the structural fact that anything mocked outside
+a fixture's own body — most notably Jest's conventional top-level
+`jest.mock(...)` — is invisible to this detector).
 
 Each `mock_patterns` entry also carries a `category`, classifying the
 detected construct into the classic test-double taxonomy (dummy/stub/spy/
-mock/fake, per Meszaros). This is a new `mock_usages.category` column, not
-just a documentation addition — see [Fixture Detection Logic](detection.md)
-for the classification methodology (keyword match first, then a small,
-individually-justified manual-override list for the handful of constructs
-whose name contains no category keyword) and why `dummy` is deliberately
-never assigned.
+mock/fake, per Meszaros), stored in the `mock_usages.category` column — see
+[Fixture Detection Logic](detection.md) for the classification methodology
+(keyword match first, then a small, individually-justified manual-override
+list for the handful of constructs whose name contains no category
+keyword) and why `dummy` is deliberately never assigned.
 
-Building exhaustive, catalog-driven test coverage for `mock_patterns`
-(30 patterns total) surfaced two real precision bugs, not just gaps in
-what was tested: the bare `Mock()`/`MagicMock()`/`AsyncMock()` pattern had
-no word boundary, so it also matched inside `EasyMock.createMock(...)`
-(a Java false positive), and MockK's `mock(X.class)` pattern had no
-qualifier exclusion, so it also matched inside `Mockito.mock(X.class)`
-(double-counting one call under two frameworks). Both were fixed in the
-YAML (word boundary, negative lookbehind) rather than in
-`detector_shared.py`, since the patterns — not the detection code — were
-the source of the bug. `Mockito.spy(...)` was also added as a new pattern:
-it previously had no coverage at all, meaning Java had zero `spy`-category
-representation despite `spy` being a distinct, common Mockito API from
-`mock()`.
+`tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`
+parametrizes over all 30 `mock_patterns` entries and asserts no other
+pattern in the catalog also matches the same sample: the bare
+`Mock()`/`MagicMock()`/`AsyncMock()` pattern is word-boundary-scoped (it
+does not match inside `EasyMock.createMock(...)`), and MockK's
+`mock(X.class)` pattern excludes `Mockito.mock(X.class)` via a negative
+lookbehind. `Mockito.spy(...)` is its own pattern, giving Java
+`spy`-category coverage distinct from `mock()`.
 
 Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
 and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain
