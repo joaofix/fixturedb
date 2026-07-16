@@ -95,16 +95,11 @@ fixturedb/
 │   │   │   ├── storage.md                   # Storage and size estimates
 │   │   │   └── ...
 │   │   │
-│   │   ├── reference/                       # Reference material
-│   │   │   ├── license.md                   # MIT (code) + CC BY 4.0 (data)
-│   │   │   ├── references.md                # Academic citations
-│   │   │   ├── limitations.md               # Study limitations
-│   │   │   └── testing.md                   # Test suite documentation
-│   │   │
-│   │   └── split/                           # DEPRECATED: Paired study documentation
-│   │       ├── README.md                    # Paired methodology (legacy)
-│   │       ├── OVERVIEW.md                  # Paired design notes (legacy)
-│   │       └── ... (archived for reference)
+│   │   └── reference/                       # Reference material
+│   │       ├── license.md                   # MIT (code) + CC BY 4.0 (data)
+│   │       ├── references.md                # Academic citations
+│   │       ├── limitations.md               # Study limitations
+│   │       └── testing.md                   # Test suite documentation
 │   │
 │   ├── README.md                            # Project README
 │   ├── LICENSE                              # Project license
@@ -222,10 +217,6 @@ Final: db/a.db, db/b.db, db/c.db, plus export/a.zip, export/b.zip, export/c.zip
 **reference/** — Citations and limitations
 - **limitations.md** — Study limitations and threats to validity
 - **references.md** — Academic citations and how to cite
-
-**split/** — DEPRECATED
-- Legacy documentation for paired within-repository design
-- Kept for reference but no longer the active methodology
 
 ### tests/ Organization
 - One test file per core module (plus `tests/collection/` for phase-script tests)

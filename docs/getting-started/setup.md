@@ -257,9 +257,3 @@ python -m collection discover-repos --dataset a
 2. **Run the pipeline:** [Reproducing Results](../usage/reproducing.md)
 3. **Analyze the dataset:** [Analysis Guide](../usage/usage.md)
 4. **Understand the design:** [Between-Group Study](intro.md)
-
-
-1. **Understand the approach:** Read [OVERVIEW](../split/OVERVIEW.md)
-2. **Run the pipeline:** Follow [Execution Guide](../split/EXECUTION_GUIDE.md)
-3. **Explore the data:** Use [Usage Guide](../usage/usage.md) for SQL examples
-4. **Review results:** Check [Implementation Status](../split/IMPLEMENTATION_STATUS.md)
