@@ -7,7 +7,7 @@ produced it:
 | Column | Meaning |
 |---|---|
 | `validation_id` | Unique row identifier (`<step>-<n>`), stable for a given sampling run |
-| `validation_type` | `repo` \| `commit` \| `fixture` |
+| `validation_type` | `repo` \| `commit` \| `fixture` \| `human_commit` \| `human_test_commit` |
 | `language` | Language of the item (`all` is never used -- each row's own language) |
 | `repo_full_name` | `owner/repo` slug |
 | `item_id` | repo full name / commit SHA / composite fixture key |

@@ -1,0 +1,52 @@
+{
+  "step": "human-commits-dataset-b",
+  "population_mode": "combined",
+  "confidence_level": 0.95,
+  "margin_of_error": 0.05,
+  "proportion": 0.5,
+  "seed": 42,
+  "timestamp": "20260716_225139",
+  "outputs": [
+    {
+      "source_files": [
+        "datasets/b/test-commits/python_human_test_commit.csv",
+        "datasets/b/test-commits/java_human_test_commit.csv",
+        "datasets/b/test-commits/javascript_human_test_commit.csv",
+        "datasets/b/test-commits/typescript_human_test_commit.csv"
+      ],
+      "output_file": "/home/joao/fixturedb/validation-samples/human-commits-dataset-b/human-commits-dataset-b_sample_20260716_225139.csv",
+      "population_size": 878456,
+      "sample_size": 384,
+      "strata": [
+        {
+          "key": {
+            "language": "java"
+          },
+          "population_size": 153121,
+          "sample_size": 67
+        },
+        {
+          "key": {
+            "language": "javascript"
+          },
+          "population_size": 40768,
+          "sample_size": 18
+        },
+        {
+          "key": {
+            "language": "python"
+          },
+          "population_size": 287099,
+          "sample_size": 125
+        },
+        {
+          "key": {
+            "language": "typescript"
+          },
+          "population_size": 397468,
+          "sample_size": 174
+        }
+      ]
+    }
+  ]
+}

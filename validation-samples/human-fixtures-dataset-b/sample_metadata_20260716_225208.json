@@ -1,0 +1,43 @@
+{
+  "step": "human-fixtures-dataset-b",
+  "population_mode": "per_file",
+  "confidence_level": 0.95,
+  "margin_of_error": 0.05,
+  "proportion": 0.5,
+  "seed": 42,
+  "timestamp": "20260716_225208",
+  "outputs": [
+    {
+      "source_files": [
+        "datasets/b/fixtures/python_fixtures.csv"
+      ],
+      "output_file": "/home/joao/fixturedb/validation-samples/human-fixtures-dataset-b/python_fixtures_sample_20260716_225208.csv",
+      "population_size": 56764,
+      "sample_size": 382
+    },
+    {
+      "source_files": [
+        "datasets/b/fixtures/java_fixtures.csv"
+      ],
+      "output_file": "/home/joao/fixturedb/validation-samples/human-fixtures-dataset-b/java_fixtures_sample_20260716_225208.csv",
+      "population_size": 18544,
+      "sample_size": 377
+    },
+    {
+      "source_files": [
+        "datasets/b/fixtures/javascript_fixtures.csv"
+      ],
+      "output_file": "/home/joao/fixturedb/validation-samples/human-fixtures-dataset-b/javascript_fixtures_sample_20260716_225208.csv",
+      "population_size": 10496,
+      "sample_size": 371
+    },
+    {
+      "source_files": [
+        "datasets/b/fixtures/typescript_fixtures.csv"
+      ],
+      "output_file": "/home/joao/fixturedb/validation-samples/human-fixtures-dataset-b/typescript_fixtures_sample_20260716_225208.csv",
+      "population_size": 98968,
+      "sample_size": 383
+    }
+  ]
+}

@@ -160,6 +160,41 @@ class TestNormalizers:
         out = vs._normalize_fixture_row(row)
         assert out["evidence"] == ""
 
+    def test_normalize_human_commit_row(self):
+        row = {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "commit_sha": "abc123",
+            "commit_role": "human",
+            "agent_type": "",
+            "commit_date": "2026-01-01T00:00:00Z",
+            "test_file_count": "2",
+        }
+        out = vs._normalize_human_commit_row(row)
+        assert out["validation_type"] == "human_commit"
+        assert out["item_id"] == "abc123"
+        assert out["item_url"] == "https://github.com/owner/repo/commit/abc123"
+        assert out["detection_signal"] == "classified_as_human"
+        assert "commit_role=human" in out["evidence"]
+        assert "commit_date=2026-01-01T00:00:00Z" in out["evidence"]
+        assert "test_file_count=2" in out["evidence"]
+
+    def test_normalize_human_test_commit_row(self):
+        row = {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "commit_sha": "abc123",
+            "commit_role": "human",
+            "test_file_count": "1",
+            "test_file_paths": '["tests/test_foo.py"]',
+        }
+        out = vs._normalize_human_test_commit_row(row)
+        assert out["validation_type"] == "human_test_commit"
+        assert out["item_id"] == "abc123"
+        assert out["item_url"] == "https://github.com/owner/repo/commit/abc123"
+        assert out["detection_signal"] == "test_file_count=1"
+        assert out["evidence"] == '["tests/test_foo.py"]'
+
 
 def _write_csv(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -405,6 +440,116 @@ class TestRunValidationSamplingPerFileMode:
             assert row["evidence"]  # raw_source round-tripped, non-empty
 
 
+def _human_test_commit_row(i: int, language: str, test_file_count: int = 1) -> dict:
+    return {
+        "repo_name": "owner/repo",
+        "language": language,
+        "commit_sha": f"sha{i}",
+        "commit_role": "human",
+        "agent_type": "",
+        "commit_date": "2026-05-21T00:00:00Z",
+        "test_file_count": str(test_file_count),
+        "test_file_paths": json.dumps([f"tests/test_{i}.py"]),
+    }
+
+
+class TestRunValidationSamplingDatasetBSteps:
+    """`human-commits-dataset-b` (classification/contamination check),
+    `human-test-commits-dataset-b` (file-path match check), and
+    `human-fixtures-dataset-b` (fixture extraction check) close the
+    Dataset-B-side gap in the reduced validation set: Dataset A's own
+    samples only validate the claimed-agent side of the same detectors."""
+
+    def test_human_commits_step_stratifies_by_language(self, tmp_path):
+        python_csv = tmp_path / "python_human_test_commit.csv"
+        java_csv = tmp_path / "java_human_test_commit.csv"
+        _write_csv(python_csv, [_human_test_commit_row(i, "python") for i in range(300)])
+        _write_csv(java_csv, [_human_test_commit_row(i, "java") for i in range(300)])
+
+        metadata = run_validation_sampling(
+            "human-commits-dataset-b",
+            [python_csv, java_csv],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        assert entry["population_size"] == 600
+        strata = {s["key"]["language"]: s for s in entry["strata"]}
+        assert set(strata) == {"python", "java"}
+
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
+            rows = list(reader)
+        assert all(r["validation_type"] == "human_commit" for r in rows)
+        assert all(r["detection_signal"] == "classified_as_human" for r in rows)
+
+    def test_human_test_commits_step_evidence_is_test_file_paths(self, tmp_path):
+        csv_path = tmp_path / "python_human_test_commit.csv"
+        _write_csv(csv_path, [_human_test_commit_row(i, "python") for i in range(20)])
+
+        metadata = run_validation_sampling(
+            "human-test-commits-dataset-b",
+            [csv_path],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert all(r["validation_type"] == "human_test_commit" for r in rows)
+        assert all(r["evidence"].startswith("[") for r in rows)
+
+    def test_human_fixtures_step_one_output_per_language_file(self, tmp_path):
+        fixture_row = TestRunValidationSamplingPerFileMode()._fixture_row
+        python_csv = tmp_path / "python_fixtures.csv"
+        java_csv = tmp_path / "java_fixtures.csv"
+        _write_csv(python_csv, [fixture_row(i, "python") for i in range(500)])
+        _write_csv(java_csv, [fixture_row(i, "java") for i in range(50)])
+        output_root = tmp_path / "validation-samples"
+
+        metadata = run_validation_sampling(
+            step="human-fixtures-dataset-b",
+            input_paths=[python_csv, java_csv],
+            output_root=output_root,
+        )
+
+        assert metadata["population_mode"] == "per_file"
+        assert len(metadata["outputs"]) == 2
+        out_dir = output_root / "human-fixtures-dataset-b"
+        assert len(list(out_dir.glob("*.csv"))) == 2
+
+    def test_human_commits_real_schema_normalizes(self, tmp_path, make_csv):
+        rows = [
+            {
+                "repo_name": "owner/repo",
+                "language": "python",
+                "commit_sha": f"sha{i}",
+                "commit_role": "human",
+                "agent_type": "",
+                "commit_date": "2026-05-21T00:00:00Z",
+                "test_file_count": "1",
+                "test_file_paths": json.dumps([f"tests/test_{i}.py"]),
+            }
+            for i in range(30)
+        ]
+        csv_path = make_csv(tmp_path, "python_human_test_commit.csv", rows=rows)
+
+        metadata = run_validation_sampling(
+            "human-commits-dataset-b",
+            [csv_path],
+            output_root=tmp_path / "validation-samples",
+        )
+
+        entry = metadata["outputs"][0]
+        with Path(entry["output_file"]).open(encoding="utf-8") as fh:
+            reader = csv.DictReader(fh)
+            assert reader.fieldnames == CANONICAL_FIELDNAMES
+            sampled = list(reader)
+        assert len(sampled) == entry["sample_size"]
+        assert all(r["item_url"].startswith("https://github.com/owner/repo/commit/") for r in sampled)
+
+
 class TestRealPipelineCSVSchemas:
     """Round-trip checks against the real column layouts the pipeline
     actually produces (via tests/conftest.py's make_csv fixture) -- proves
@@ -485,8 +630,6 @@ def test_unknown_step_raises():
 @pytest.mark.parametrize(
     "excluded_step",
     [
-        "human-commits-dataset-b",
-        "human-fixtures-dataset-b",
         "human-fixtures-dataset-c",
         "agent-test-commits-dataset-a",
     ],
