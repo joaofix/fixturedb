@@ -30,7 +30,12 @@ from collection.logging_utils import get_logger
 from .commit_checkout import _checkout_commit, _repo_worktree_lock, _resolve_repo_path
 from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, DB_PATH
 from .conventional_commits import classify_commit_type
-from .detector import _get_parser, extract_fixtures, fixture_result_to_dict
+from .detector import (
+    _get_parser,
+    _parser_key_for_file,
+    extract_fixtures,
+    fixture_result_to_dict,
+)
 from .diff_purity import DiffLineMap, commit_is_pure_addition, is_pure_addition
 from .language_utils import get_language_static
 from .test_commit_utils import is_test_file_path
@@ -423,7 +428,7 @@ class AgentFixtureExtractor:
             return False
 
         try:
-            parser = _get_parser(language)
+            parser = _get_parser(_parser_key_for_file(full_path, language))
             source_bytes = full_path.read_bytes()
             tree = parser.parse(source_bytes)
             target_node = self._find_enclosing_node(

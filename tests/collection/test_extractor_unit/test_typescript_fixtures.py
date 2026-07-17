@@ -166,5 +166,82 @@ const regularFunction = (): number => {
         assert not any(f.name == "regularFunction" for f in fixtures)
 
 
+class TestTsxJsxParsing:
+    """.tsx files contain JSX and need `tree_sitter_typescript.language_tsx()`,
+    not the plain `.ts` grammar (`language_typescript()`, not JSX-aware) --
+    parsing JSX with the wrong grammar produces a malformed tree. Found via
+    manual review of Dataset B's fixture sample (2026-07-16/17): a
+    `before_each` hook's raw_source bled into an unrelated trailing test
+    block because of exactly this mismatch. `extract_and_find_fixtures`
+    (tests/conftest.py) always writes a `.ts` file, so these tests build
+    their own `.tsx` temp file to exercise the real code path.
+    """
+
+    def _extract_tsx(self, code: str):
+        import tempfile
+        from pathlib import Path
+
+        from collection.detector import extract_fixtures
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".tsx", delete=False
+        ) as f:
+            f.write(code)
+            temp_path = Path(f.name)
+        try:
+            return extract_fixtures(temp_path, "typescript").fixtures
+        finally:
+            temp_path.unlink()
+
+    def test_before_each_boundary_not_widened_by_following_jsx(self):
+        """The exact shape of the real bug: a beforeEach(...) hook followed
+        by a JSX-containing sibling (render(<Component />) inside another
+        block) must not have its own raw_source/end_line swallow that
+        trailing code."""
+        code = """
+describe('Widget', () => {
+  beforeEach(async () => {
+    await setup()
+  })
+
+  it.skip('renders', async () => {
+    render(<Widget prop="value" />)
+    expect(true).toBe(true)
+  })
+})
+"""
+        fixtures = self._extract_tsx(code)
+        before_each = [f for f in fixtures if f.fixture_type == "before_each"]
+        assert len(before_each) == 1
+        fixture = before_each[0]
+        assert "setup" in fixture.raw_source
+        assert "render" not in fixture.raw_source
+        assert "it.skip" not in fixture.raw_source
+
+    def test_jsx_in_fixture_body_itself_is_captured_correctly(self):
+        """A fixture whose own body contains JSX should still parse cleanly
+        and report the fixture's own real boundary, not bleed into what
+        follows it."""
+        code = """
+describe('Parallax', () => {
+  beforeEach(async () => {
+    await page.viewport(WIDTH, HEIGHT)
+    render(<WrappedStickyDemo />)
+  })
+
+  afterEach(() => {
+    cleanup()
+  })
+})
+"""
+        fixtures = self._extract_tsx(code)
+        by_type = {f.fixture_type: f for f in fixtures}
+        assert "before_each" in by_type
+        assert "afterEach" not in by_type["before_each"].raw_source
+        assert "cleanup" not in by_type["before_each"].raw_source
+        assert "after_each" in by_type
+        assert "cleanup" in by_type["after_each"].raw_source
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

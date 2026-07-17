@@ -37,7 +37,21 @@ _PARSERS: dict = {}
 
 
 def _get_parser(language: str):
-    """Return (and cache) a tree_sitter.Parser for the given language key."""
+    """Return (and cache) a tree_sitter.Parser for the given language key.
+
+    "tsx" is a distinct parser key from "typescript": it's the *only* key
+    with JSX support (`tree_sitter_typescript.language_tsx()` vs. the plain
+    `language_typescript()` grammar), needed for `.tsx` files. It exists
+    purely as a parser-selection key -- the "language" value used for
+    reporting/CSV/DB (`fixture_type` tables, the `language` column, etc.)
+    stays "typescript" for both `.ts` and `.tsx` files; only
+    `extract_fixtures()`'s parser lookup distinguishes them (see
+    `_parser_key_for_file()`). Parsing a `.tsx` file's JSX syntax (e.g.
+    `<Component />`) with the non-JSX grammar produces a malformed tree --
+    found via manual review of Dataset B's fixture sample (2026-07-16/17),
+    where it caused a `before_each` fixture's raw_source to bleed into
+    unrelated trailing code.
+    """
     if language in _PARSERS:
         return _PARSERS[language]
 
@@ -53,6 +67,7 @@ def _get_parser(language: str):
             "java": Language(tree_sitter_java.language()),
             "javascript": Language(tree_sitter_javascript.language()),
             "typescript": Language(tree_sitter_typescript.language_typescript()),
+            "tsx": Language(tree_sitter_typescript.language_tsx()),
         }
         for key, lang in lang_map.items():
             p = Parser(lang)

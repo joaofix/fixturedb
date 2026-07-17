@@ -146,6 +146,20 @@ ALLOWED_EXTS = {
 }
 
 
+def _parser_key_for_file(file_path: Path, language: str) -> str:
+    """Parser-selection key for `file_path` -- distinct from `language`.
+
+    `.tsx` files contain JSX and need `_get_parser`'s "tsx" grammar
+    (`tree_sitter_typescript.language_tsx()`), not the plain "typescript"
+    one (`language_typescript()`, not JSX-aware) that every other
+    `.ts`/`.mts` file uses. The reported `language` stays "typescript" for
+    both -- only the grammar used to build the AST differs.
+    """
+    if language == "typescript" and file_path.suffix.lower() == ".tsx":
+        return "tsx"
+    return language
+
+
 def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
     """
     Parse a test file and return all fixture definitions found in it,
@@ -205,7 +219,7 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
     try:
         # Use cached parser results when possible to avoid repeated tree-sitter
         # parses of identical file contents during bulk extraction.
-        tree = parse_src_bytes(src_bytes, language)
+        tree = parse_src_bytes(src_bytes, _parser_key_for_file(file_path, language))
     except Exception as e:
         logger.warning(f"Parse error in {file_path}: {e}")
         return ExtractResult(fixtures=[], file_loc=0, num_test_functions=0)
