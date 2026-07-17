@@ -237,11 +237,11 @@ def match_agent_keyword(
     """Return the first agent whose keyword matches text as a whole word/phrase.
 
     Word-boundary matching (not a bare substring `in` check) so a short
-    keyword like "cline" doesn't match inside an unrelated compound word or
-    surname (e.g. "McLine"). This does NOT protect against a keyword that is
-    *also* a common standalone first name or word (e.g. a human commit
-    author literally named "Devin", or a commit message mentioning a text
-    "cursor") -- no purely textual heuristic on freely-editable author/
+    keyword doesn't match inside an unrelated compound word or surname (e.g.
+    "gemini" inside "McGeminicorp"). This does NOT protect against a keyword
+    that is *also* a common standalone first name or word (e.g. a human
+    commit author literally named "Claude", or a commit message mentioning a
+    text "cursor") -- no purely textual heuristic on freely-editable author/
     commit-message text can fully rule that out. See
     collection/heuristics/agent_heuristics.yaml's module comment for this
     known, inherent limitation of name-based Tier 1/Tier 2 detection.

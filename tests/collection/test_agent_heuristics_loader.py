@@ -170,16 +170,20 @@ def test_authors_csv_every_tool_has_agent_type_mapping():
         )
 
 
-def test_authors_csv_first_80_rows_are_upstream_verbatim():
-    """The file's first 80 data rows must be labri-progress/agent-mining's
+def test_authors_csv_first_78_rows_are_upstream_verbatim():
+    """The file's first 78 data rows must be labri-progress/agent-mining's
     authors.csv content, unmodified and in its original order -- this is
     the whole point of the CSV (a reviewer-checkable citation), not just a
     convenient format. Spot-checks a sample spanning the full file rather
-    than asserting all 80 rows verbatim, so the test doesn't itself become
-    an unreadable copy of the source file."""
+    than asserting all 78 rows verbatim, so the test doesn't itself become
+    an unreadable copy of the source file.
+
+    78, not the original 80: upstream's "cline"/"cline@example.com" rows
+    were removed on 2026-07-17 -- see agent_authors.csv's boundary comment
+    and test_authors_csv_cline_removed_as_deliberate_exception below."""
     rows = _read_authors_csv_rows()
-    upstream_rows = rows[:80]
-    assert len(upstream_rows) == 80
+    upstream_rows = rows[:78]
+    assert len(upstream_rows) == 78
     expected_samples = [
         {"pattern": "aider", "tool": "Aider"},
         {"pattern": "Claude", "tool": "Claude Code"},
@@ -192,9 +196,9 @@ def test_authors_csv_first_80_rows_are_upstream_verbatim():
         assert any(
             row["pattern"] == expected["pattern"] and row["tool"] == expected["tool"]
             for row in upstream_rows
-        ), f"upstream row {expected} not found verbatim in the first 80 rows"
-    # Last upstream row (line 81 of the source file) must be the final row
-    # of the 80-row block, proving the appended rows come strictly after it.
+        ), f"upstream row {expected} not found verbatim in the first 78 rows"
+    # Last upstream row must be the final row of the 78-row block, proving
+    # the appended rows come strictly after it.
     assert upstream_rows[-1] == {
         "pattern": "noreply@paperclip.ing",
         "tool": "Paperclip",
@@ -203,20 +207,40 @@ def test_authors_csv_first_80_rows_are_upstream_verbatim():
     }
 
 
+def test_authors_csv_cline_removed_as_deliberate_exception():
+    """Unlike the rest of the upstream block, "cline" and "cline@example.com"
+    were individually removed on 2026-07-17 -- Dataset A validation sampling
+    found real humans (a surname collision, and multiple actual employees of
+    the Cline company committing under an @cline.bot work email) misattributed
+    to the Cline agent, and a check of Cline's official docs found no
+    auto-commit-under-its-own-identity feature or Co-authored-by/Assisted-by
+    trailer convention at all -- the same evidentiary bar the CURSOR.md
+    removal from agent_files.csv used. See agent_authors.csv's boundary
+    comment for the full rationale."""
+    rows = _read_authors_csv_rows()
+    patterns = {row["pattern"] for row in rows}
+    assert "cline" not in patterns
+    assert "cline@example.com" not in patterns
+
+
 def test_authors_csv_our_additions_are_appended_after_upstream_block():
     """"anthropic" (a bare company-domain substring, matching any
     @anthropic.com sender regardless of agent involvement) was removed
     from this set after it caused a real false positive during Dataset A
     collection -- see docs/architecture/agent-detection.md's Known
     Limitations and tests/test_agent_detector_pure.py's
-    test_bare_anthropic_domain_no_longer_matches_claude."""
+    test_bare_anthropic_domain_no_longer_matches_claude. "devin ai"/"devin"
+    were removed on 2026-07-17 for the same reason (real name collisions,
+    e.g. an author literally named "Devin Smith") -- redundant anyway, since
+    the upstream "devin-ai-integration" pattern (kept) already catches every
+    real Devin AI bot commit found in the corpus. See
+    tests/test_agent_detector_pure.py's
+    test_devin_cline_exact_name_collision_is_fixed."""
     rows = _read_authors_csv_rows()
-    our_additions = rows[80:]
+    our_additions = rows[78:]
     added_patterns = {row["pattern"] for row in our_additions}
     assert added_patterns == {
         "openhands",
-        "devin ai",
-        "devin",
         "google jules",
         "jules",
         "gemini",

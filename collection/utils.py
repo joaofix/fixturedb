@@ -92,18 +92,35 @@ def detect_agent_in_commit(
 
     Matching is word-boundary-based (not a bare substring check),
     case-insensitive. This prevents a keyword from matching inside an
-    unrelated compound word/surname (e.g. "cline" inside "McLine"), but
-    cannot distinguish a keyword that is *also* a common standalone first
-    name (e.g. an author literally named "Devin") -- see
-    agent_heuristics.yaml's module comment for this known, inherent
-    limitation of name-based matching in general. Checking the trailer
-    before author identity (see order above) avoids this collision
+    unrelated compound word/surname, but cannot distinguish a keyword that
+    is *also* a common standalone first name or employer domain (e.g. an
+    author literally named "Claude", or "Devin" before the fix described
+    below) -- see agent_heuristics.yaml's module comment for this known,
+    inherent limitation of name-based matching in general. Checking the
+    trailer before author identity (see order above) avoids this collision
     whenever a commit has both a colliding author name and a correct,
     unambiguous trailer. For the specific, individually-verified
     collisions this project has actually found in its own corpus (as
     opposed to the general risk any name could theoretically pose),
     is_known_human_author() additionally skips steps 3/4 outright -- see
     collection/heuristics/agent-mining/known_human_collisions.csv.
+
+    "devin"/"cline" were a special case, closed at the root rather than
+    via is_known_human_author(): manual validation review (2026-07-17)
+    found both producing real name/domain collisions (an author literally
+    named "Devin Smith"; a human surnamed "Cline"; actual Cline-company
+    employees committing under an @cline.bot work email). For "devin",
+    the bare "devin"/"devin ai" patterns turned out to be this project's
+    own redundant addition -- the upstream "devin-ai-integration"
+    bot-identity pattern (kept) already catches every real Devin AI
+    commit found in the corpus, so the broader patterns added only
+    false-positive risk with no detection benefit and were removed
+    outright. For "cline", checking Cline's official docs found no
+    auto-commit-under-its-own-identity feature and no
+    Co-authored-by/Assisted-by trailer convention at all -- it satisfies
+    neither half of this detection methodology, so it was removed from
+    the catalog entirely (same evidentiary bar as the CURSOR.md removal
+    in agent_files.csv). See agent_authors.csv's boundary comment.
     """
     if is_bot_author(f"{author_name} {author_email}"):
         return None

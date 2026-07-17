@@ -282,16 +282,27 @@ Co-authored-by: github.com/apps/github-copilot <copilot@example.com>"""
         assert agent == "copilot"
 
     def test_detect_all_known_agents_in_coauthors(self, scanner):
-        """Should detect all known agent types in co-authored-by, each by its own name."""
+        """Should detect all known agent types in co-authored-by, each by its own name.
+
+        No "Cline" case: removed from the catalog entirely on 2026-07-17 --
+        Cline has no bot identity or trailer convention of its own to match
+        (see agent_authors.csv's boundary comment). "Devin AI" now uses its
+        real bot identity (devin-ai-integration[bot]) rather than a bare
+        "devin@example.com" address, since the bare "devin" pattern that used
+        to match the old address was removed the same day (real name
+        collisions, e.g. "Devin Smith") -- devin-ai-integration is the one
+        pattern that's actually specific to the real bot."""
         test_cases = [
             ("Claude <claude@anthropic.com>", "claude"),
             ("GitHub Copilot <copilot@github.com>", "copilot"),
             ("Cursor <cursor@anysoftware.io>", "cursor"),
             ("Aider <aider@paul.pub>", "aider"),
             ("OpenHands <openhands@example.com>", "openhands"),
-            ("Devin AI <devin@example.com>", "devin"),
+            (
+                "devin-ai-integration[bot] <158243242+devin-ai-integration[bot]@users.noreply.github.com>",
+                "devin",
+            ),
             ("Google Jules <jules@example.com>", "jules"),
-            ("Cline <cline@example.com>", "cline"),
             ("Junie <junie@example.com>", "junie"),
             ("Gemini <gemini@example.com>", "gemini"),
             ("CodeRabbit <coderabbit@example.com>", "coderabbit"),

@@ -100,29 +100,57 @@ def test_detect_codex_and_roo_code_via_commit_signatures():
 
 def test_detect_agent_word_boundary_rejects_compound_word_collision():
     """Regression test: a bare substring check on author name/email
-    incorrectly matched the "cline"/"devin" agent keywords inside unrelated
-    compound words/surnames (e.g. "McLine"). Word-boundary matching fixes
-    this class of false positive (though not the case of an exact common
-    first name -- see test_detect_agent_exact_name_collision_is_a_known_limitation)."""
+    incorrectly matched agent keywords inside unrelated compound
+    words/surnames (e.g. "gemini" inside "McGeminicorp" -- a synthetic
+    example, since no real such collision has been found in this project's
+    own corpus for any keyword still in the catalog). Word-boundary matching
+    fixes this class of false positive (though not the case of an exact
+    common first name -- see test_devin_cline_exact_name_collision_is_fixed
+    for the specific instances of that problem already found and closed,
+    and agent_heuristics.yaml's module comment for the general residual
+    risk on other keywords)."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     assert (
-        scanner._detect_agent_in_commit("Sean McLine", "smcline@example.com", "")
+        scanner._detect_agent_in_commit(
+            "Gina McGeminicorp", "gmcgeminicorp@example.com", ""
+        )
         is None
     )
 
 
-def test_detect_agent_exact_name_collision_is_a_known_limitation():
-    """Documents a known, inherent limitation (not something this fix
-    resolves): a human author whose name is an exact match for an agent's
-    bare-word signature (e.g. "Devin") is still misattributed when there's
-    no trailer to disambiguate, since word boundaries only rule out
-    partial/compound-word matches, not whole-word name collisions. See
-    agent_heuristics.yaml's module comment. When a trailer IS present, see
-    test_detect_agent_trailer_overrides_author_name_collision below --
-    that case is resolved."""
+def test_devin_cline_exact_name_collision_is_fixed():
+    """Regression test, not a documented limitation: manual validation review
+    of Dataset A's agent-commits sample (2026-07-17) found real humans
+    misattributed to "devin"/"cline" via exact whole-word name/email
+    collisions with no trailer to disambiguate (e.g. an author literally
+    named "Devin Smith", or an employee of the Cline company committing
+    under an @cline.bot work email). Unlike the general name-collision risk
+    documented in agent_heuristics.yaml's module comment (still real for
+    keywords like "claude", handled case-by-case via
+    known_human_collisions.csv), this specific case is closed at the root:
+    the bare "devin"/"devin ai" patterns were this project's own redundant
+    addition (the upstream "devin-ai-integration" bot-identity pattern
+    already catches every real Devin AI commit found in the corpus), and
+    "cline" was removed from the catalog entirely (see
+    agent_authors.csv's boundary comment -- Cline has no bot identity or
+    trailer convention to match at all)."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     assert (
         scanner._detect_agent_in_commit("Devin Smith", "devin.smith@gmail.com", "")
+        is None
+    )
+    assert (
+        scanner._detect_agent_in_commit("Aiden Cline", "aidenpcline@gmail.com", "")
+        is None
+    )
+    # The real bot identity still matches -- this fix removes the collision-
+    # prone bare "devin" pattern, not the safe, specific one.
+    assert (
+        scanner._detect_agent_in_commit(
+            "devin-ai-integration[bot]",
+            "158243242+devin-ai-integration[bot]@users.noreply.github.com",
+            "",
+        )
         == "devin"
     )
 
@@ -489,8 +517,8 @@ def test_agent_commit_verifier_word_boundary_rejects_compound_word_collision():
         verifier._detect_agent_in_commit(
             {
                 "sha": "abc123",
-                "author_name": "Sean McLine",
-                "author_email": "smcline@example.com",
+                "author_name": "Gina McGeminicorp",
+                "author_email": "gmcgeminicorp@example.com",
                 "message": "Refactor build script",
             }
         )
