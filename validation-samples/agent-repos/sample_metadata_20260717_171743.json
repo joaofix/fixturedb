@@ -5,7 +5,7 @@
   "margin_of_error": 0.05,
   "proportion": 0.5,
   "seed": 42,
-  "timestamp": "20260715_115232",
+  "timestamp": "20260717_171743",
   "outputs": [
     {
       "source_files": [
@@ -14,37 +14,37 @@
         "datasets/a/repos/javascript_repo.csv",
         "datasets/a/repos/typescript_repo.csv"
       ],
-      "output_file": "validation-samples/agent-repos/agent-repos_sample_20260715_115232.csv",
-      "population_size": 3852,
+      "output_file": "/home/joao/fixturedb/validation-samples/agent-repos/agent-repos_sample_20260717_171743.csv",
+      "population_size": 3836,
       "sample_size": 350,
       "strata": [
         {
           "key": {
             "language": "java"
           },
-          "population_size": 336,
-          "sample_size": 31
+          "population_size": 333,
+          "sample_size": 30
         },
         {
           "key": {
             "language": "javascript"
           },
-          "population_size": 365,
+          "population_size": 364,
           "sample_size": 33
         },
         {
           "key": {
             "language": "python"
           },
-          "population_size": 1223,
+          "population_size": 1216,
           "sample_size": 111
         },
         {
           "key": {
             "language": "typescript"
           },
-          "population_size": 1928,
-          "sample_size": 175
+          "population_size": 1923,
+          "sample_size": 176
         }
       ]
     }

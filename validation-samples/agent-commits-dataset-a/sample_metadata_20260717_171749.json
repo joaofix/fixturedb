@@ -5,7 +5,7 @@
   "margin_of_error": 0.05,
   "proportion": 0.5,
   "seed": 42,
-  "timestamp": "20260715_115241",
+  "timestamp": "20260717_171749",
   "outputs": [
     {
       "source_files": [
@@ -14,7 +14,7 @@
         "datasets/a/commits/javascript_commit.csv",
         "datasets/a/commits/typescript_commit.csv"
       ],
-      "output_file": "validation-samples/agent-commits-dataset-a/agent-commits-dataset-a_sample_20260715_115241.csv",
+      "output_file": "/home/joao/fixturedb/validation-samples/agent-commits-dataset-a/agent-commits-dataset-a_sample_20260717_171749.csv",
       "population_size": 358429,
       "sample_size": 384,
       "strata": [

@@ -137,9 +137,9 @@ one exclusion rather than merely documenting it separately from the code.
 
 | `--step` | What it validates | Typical `--input` | Population |
 |---|---|---|---|
-| `agent-repos` | Agent-enabled repository detection | `github-search-agent/agent_repositories/*_agent_repo.csv` (all languages) | Combined, stratified by language — rows with `has_agent_config != 1` are filtered out before sampling |
-| `agent-commits-dataset-a` | Agent commit attribution (precision) | `github-search-agent/agent_commits/*_agent_commit.csv` (all languages) | Combined, stratified by `(language, agent_type)` |
-| `agent-fixtures-dataset-a` | Dataset A fixture extraction | `fixtures-from-agents/{language}_agent_fixtures.csv` | Per-language — one sample per file |
+| `agent-repos` | Agent-enabled repository detection | `datasets/a/repos/*_repo.csv` (all languages) | Combined, stratified by language — rows with `has_agent_config != 1` are filtered out before sampling |
+| `agent-commits-dataset-a` | Agent commit attribution (precision) | `datasets/a/commits/*_commit.csv` (all languages) | Combined, stratified by `(language, agent_type)` |
+| `agent-fixtures-dataset-a` | Dataset A fixture extraction | `datasets/a/fixtures/{language}_fixtures.csv` | Per-language — one sample per file |
 | `human-commits-dataset-b` | Human/control-corpus classification (recall, contamination check) | `datasets/b/test-commits/{language}_human_test_commit.csv` (all languages) | Combined, stratified by `language` |
 | `human-test-commits-dataset-b` | Dataset B test-commit file-path matching | `datasets/b/test-commits/{language}_human_test_commit.csv` (all languages) | Combined, stratified by `language` |
 | `human-fixtures-dataset-b` | Dataset B fixture extraction | `datasets/b/fixtures/{language}_fixtures.csv` | Per-language — one sample per file |
@@ -173,16 +173,16 @@ positives, not the whole scanned candidate pool.
 # Combined-mode step: pool all languages into one stratified sample
 python -m collection.validation_sampling \
   --step agent-repos \
-  --input github-search-agent/agent_repositories/python_agent_repo.csv \
-          github-search-agent/agent_repositories/java_agent_repo.csv \
-          github-search-agent/agent_repositories/javascript_agent_repo.csv \
-          github-search-agent/agent_repositories/typescript_agent_repo.csv
+  --input datasets/a/repos/python_repo.csv \
+          datasets/a/repos/java_repo.csv \
+          datasets/a/repos/javascript_repo.csv \
+          datasets/a/repos/typescript_repo.csv
 
 # Per-language-mode step: one output per input file
 python -m collection.validation_sampling \
   --step agent-fixtures-dataset-a \
-  --input fixtures-from-agents/python_agent_fixtures.csv \
-          fixtures-from-agents/java_agent_fixtures.csv
+  --input datasets/a/fixtures/python_fixtures.csv \
+          datasets/a/fixtures/java_fixtures.csv
 
 # Dataset B: human-corpus contamination check
 python -m collection.validation_sampling \
@@ -195,7 +195,7 @@ python -m collection.validation_sampling \
 # Override confidence level / margin of error / seed
 python -m collection.validation_sampling \
   --step agent-fixtures-dataset-a \
-  --input fixtures-from-agents/python_agent_fixtures.csv \
+  --input datasets/a/fixtures/python_fixtures.csv \
   --confidence-level 0.99 --margin-error 0.03 --seed 7
 ```
 
