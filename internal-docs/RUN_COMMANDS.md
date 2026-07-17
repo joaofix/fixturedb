@@ -60,6 +60,8 @@ python -m collection discover-repos --dataset b --workers 16 \
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
 python -m collection discover-repos --dataset c --workers 16 \
+  && python -m collection.dedupe_dataset_c_repos \
+  && python -m collection discover-repos --dataset c --workers 16 \
   && python -m collection extract-fixtures --dataset c --workers 16
 ```
 
@@ -69,12 +71,14 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
 
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
   work; DB and CSV writes stay on the main thread regardless. **Not CPU core
-  count** is the ceiling here — the commands below make zero GitHub REST API calls
-  (verified: the only two `api.github.com` call sites in the whole package,
+  count** is the ceiling here — the `discover-repos`/`discover-commits`/
+  `filter-test-commits`/`extract-fixtures` commands above make zero GitHub REST API
+  calls (verified: the only two `api.github.com` call sites in the whole package,
   `agent_signal_primitives.py`'s Contents-API check and `persistent_clone.py`'s
   Code-Search-API call, both live exclusively inside `Tier2RepoMatcher` in
   `tiered_agent_corpus_scanner.py`, reachable only via `discover-commits --dataset a
-  --tier2`, which none of the commands below use). Every clone here is also plain
+  --tier2`, which none of those commands use — `dedupe_dataset_c_repos.py` is a
+  separate, real exception, see below). Every clone here is also plain
   anonymous `git clone` over HTTPS — `clone_primitives.py`/`ephemeral_clone.py`
   never read `GITHUB_TOKEN`, so there's no authenticated-tier allowance to raise
   even if you set one. So the actual ceiling is GitHub's own throttling on many
@@ -105,6 +109,26 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     at all. Caught via `tests/collection/test_main_cli.py`'s
     `test_dataset_b_run_call_matches_real_signature` (uses `autospec=True` so the
     mock enforces the real method signature instead of silently accepting anything).
+- **Dataset C's `discover-repos` runs twice, with `dedupe_dataset_c_repos.py` in
+  between.** `dedupe_dataset_c_repos.py` needs Dataset C's already-selected
+  candidate pool to check for repos sharing an identical commit at
+  `HUMAN_CORPUS_CUTOFF_DATE` (org transfers / independently-created "shadow
+  copies" — see `docs/architecture/collection.md`'s "Repository deduplication"
+  section) — that pool is written by the *first* `discover-repos --dataset c`
+  call. Its own output (`datasets/c/repos/duplicate_repos.csv`) is only
+  consulted by a *subsequent* `discover-repos --dataset c` call, which is why
+  the command chain runs it twice. A missing `duplicate_repos.csv` is not an
+  error — `select_dataset_c_repos.py` just treats it as "no known
+  duplicates" — so skipping this step doesn't fail loudly, it silently leaves
+  duplicate content in the corpus: the last full run found 16.2% of the whole
+  Dataset C corpus was duplicate content this way (worst cluster: 5
+  OpenJDK-derived repos sharing one commit). Requires `GITHUB_TOKEN` (one
+  `commits?until=...` API call per candidate repo — real GitHub REST API
+  traffic, unlike every other command in this file) and is independently
+  checkpointed/resumable — see `collection/dedupe_dataset_c_repos.py`'s module
+  docstring. Standalone/manual by design: only rerun it when
+  `github-search-raw/` is refreshed or Dataset C's candidate pool otherwise
+  changes, not on every Dataset C build.
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
 - **`--tier2`** (Dataset A's `discover-commits` only): if Tier-1 commit-trailer
