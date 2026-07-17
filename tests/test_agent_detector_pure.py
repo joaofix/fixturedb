@@ -609,6 +609,39 @@ def test_known_human_collision_does_not_override_a_real_trailer():
     )
 
 
+def test_known_human_collision_excludes_placeholder_bot_identity():
+    """Regression test: codex-review@example.com is a repo-internal
+    placeholder bot identity (Yeachan-Heo/oh-my-claude-sisyphus's own
+    multi-agent-orchestration tooling), not real OpenAI Codex -- found via
+    Dataset A's agent-commits-dataset-a validation review (2026-07-17),
+    226 commits / 204 fixtures in the current corpus. Unlike devin/cline,
+    the bare "codex" pattern itself can't be removed (most real Codex
+    commits are trailer-based, e.g. "Assisted-by: Codex:gpt-5.5", and don't
+    contain "codex" in the author name/email at all), so this is a
+    known_human_collisions.csv exclusion, the same shape as "Claude
+    Paroz" -- a specific bad identity, not a removable root pattern."""
+    from collection.utils import detect_agent_in_commit
+
+    assert (
+        detect_agent_in_commit(
+            "Codex Review", "codex-review@example.com", "Automated review pass"
+        )
+        is None
+    )
+
+
+def test_known_human_collision_placeholder_bot_does_not_override_a_real_trailer():
+    """Same as test_known_human_collision_does_not_override_a_real_trailer,
+    for the codex-review@example.com exclusion."""
+    from collection.utils import detect_agent_in_commit
+
+    body = "Automated review pass\n\nCo-authored-by: Claude <claude@anthropic.com>"
+    assert (
+        detect_agent_in_commit("Codex Review", "codex-review@example.com", body)
+        == "claude"
+    )
+
+
 def test_bare_anthropic_domain_no_longer_matches_claude():
     """Regression test: agent_authors.csv used to carry a project-added
     bare "anthropic" substring pattern that matched any @anthropic.com

@@ -1,11 +1,14 @@
-# Specific, individually-verified human authors whose real name or email
-# happens to collide with an agent keyword in agent_authors.csv, causing a
-# false-positive author-identity match (Tier 1 step 3/4) even though the
-# commit was not agent-authored. Unlike bots.csv/agent_authors.csv, this
-# file has no upstream counterpart -- it is entirely this project's own,
-# and only grows by individually confirming a specific real collision
-# found in this project's own corpus, the same verification bar bots.csv's
-# own additions section already uses. Never a generic catch-all pattern.
+# Specific, individually-verified authors -- almost always real humans, but
+# also covers a non-human, non-genuine-agent identity like a repo's own
+# placeholder/internal-tooling bot name (see codex-review@example.com below)
+# -- whose name or email happens to collide with an agent keyword in
+# agent_authors.csv, causing a false-positive author-identity match (Tier 1
+# step 3/4) even though the commit was not agent-authored. Unlike
+# bots.csv/agent_authors.csv, this file has no upstream counterpart -- it is
+# entirely this project's own, and only grows by individually confirming a
+# specific real collision found in this project's own corpus, the same
+# verification bar bots.csv's own additions section already uses. Never a
+# generic catch-all pattern.
 #
 # This exclusion applies ONLY to the author-identity matching step -- a
 # genuine Co-authored-by/Assisted-by/Generated-by trailer on one of these
@@ -20,3 +23,4 @@
 # here since none of these need escaping yet).
 pattern,note
 claude@2xlibre\.net,"Claude Paroz, real Django core developer -- literal first name/email collides with the Claude agent's own catalog entry (agent_authors.csv's upstream ""Claude"" pattern). Confirmed via Dataset A collection review, 2026-07-15 (commit 2c47207 and others in django/django)."
+codex-review@example\.com,"Not a human, and not real OpenAI Codex either -- example.com is a reserved documentation/placeholder domain. A repo-internal bot identity used by Yeachan-Heo/oh-my-claude-sisyphus's own multi-agent-orchestration tooling, colliding with agent_authors.csv's project-added bare ""codex"" pattern (needed for real trailer-based Codex detection elsewhere, so not removable the way devin/cline were). Confirmed via Dataset A's agent-commits-dataset-a validation review, 2026-07-17 -- 226 commits / 204 already-extracted fixtures in the current corpus."
