@@ -39,6 +39,42 @@ _OUTPUT_FIELDNAMES = [
 ]
 
 
+def _dataset_a_repos_dir(source_dir: Path) -> Path | None:
+    """Find the sibling `datasets/a/repos/` directory (real `stars`/
+    `num_contributors`) from whatever `source_dir` Dataset B is actually
+    resolving from.
+
+    `default_repo_source("b")` prefers `datasets/a/fixtures/repos/`, whose
+    schema doesn't carry `stars`/`num_contributors` at all (see
+    `resolve_dataset_b_repos`'s docstring) -- returns None when `source_dir`
+    already *is* `.../a/repos/` (nothing to enrich from) or when no `a`
+    ancestor is found at all (e.g. a synthetic source_dir in a test).
+    """
+    for parent in (source_dir, *source_dir.parents):
+        if parent.name == "a":
+            candidate = parent / "repos"
+            return candidate if candidate != source_dir else None
+    return None
+
+
+def _load_repo_metadata(repos_dir: Path) -> dict[str, tuple[str, str]]:
+    """Build a `{repo_name: (stars, num_contributors)}` lookup from an
+    already-collected `datasets/a/repos/*.csv` directory."""
+    lookup: dict[str, tuple[str, str]] = {}
+    if not repos_dir.exists():
+        return lookup
+    for csv_path in sorted(repos_dir.glob("*.csv"), key=lambda p: p.name):
+        with csv_path.open("r", encoding="utf-8", newline="") as fh:
+            for row in csv.DictReader(fh):
+                repo_name = (row.get("repo_name") or "").strip()
+                if repo_name and repo_name not in lookup:
+                    lookup[repo_name] = (
+                        row.get("stars") or "0",
+                        row.get("num_contributors") or "0",
+                    )
+    return lookup
+
+
 def resolve_dataset_b_repos(
     source_dir: Path | None = None,
     output_dir: Path | None = None,
@@ -54,6 +90,10 @@ def resolve_dataset_b_repos(
     former is populated. Both source schemas share `repo_name`/`language`/
     `clone_url`; only the fixture-repos source contributes `has_agent_config`
     implicitly (every row there yielded a fixture, so it's always positive).
+    The fixture-repos schema also has no `stars`/`num_contributors` columns
+    at all, so those two fields are backfilled from the sibling
+    `datasets/a/repos/` directory (`_load_repo_metadata`) rather than left at
+    the previous silent `0` default when resolving from that source.
 
     `stratified=True` caps each language's rows at `sampling.cochran_sample_size`
     of that language's own real row count (95% confidence, +/-5% margin)
@@ -64,6 +104,9 @@ def resolve_dataset_b_repos(
     """
     source_dir = Path(source_dir) if source_dir else paths.default_repo_source("b")
     output_dir = Path(output_dir) if output_dir else paths.stage_dir("b", "repos")
+
+    a_repos_dir = _dataset_a_repos_dir(source_dir)
+    metadata_lookup = _load_repo_metadata(a_repos_dir) if a_repos_dir else {}
 
     by_lang: dict[str, list[dict]] = {}
     now = datetime.now(timezone.utc).isoformat()
@@ -92,15 +135,19 @@ def resolve_dataset_b_repos(
                     continue
                 lang_seen.add(repo_name)
 
+                fallback_stars, fallback_contributors = metadata_lookup.get(
+                    repo_name, ("0", "0")
+                )
                 by_lang.setdefault(lang, []).append(
                     {
                         "repo_name": repo_name,
                         "has_agent_config": 1,
                         "language": lang,
-                        "stars": row.get("stars") or 0,
+                        "stars": row.get("stars") or fallback_stars,
                         "clone_url": row.get("clone_url")
                         or f"https://github.com/{repo_name}.git",
-                        "num_contributors": row.get("num_contributors") or 0,
+                        "num_contributors": row.get("num_contributors")
+                        or fallback_contributors,
                         "qc_reason": "",
                         "matched_config_file": row.get("matched_config_file") or "",
                         "processed_at": now,

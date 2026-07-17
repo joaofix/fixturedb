@@ -120,6 +120,111 @@ class TestResolveFromFixtureReposCsvs:
         assert rows[0]["has_agent_config"] == "1"
 
 
+class TestBackfillsStarsAndContributors:
+    """datasets/a/fixtures/repos/*_fixture_repos.csv has no stars/
+    num_contributors columns at all (see TestResolveFromFixtureReposCsvs) --
+    resolving Dataset B from that source must not silently default those
+    fields to 0 when the sibling datasets/a/repos/ directory has the real
+    values for the same repo."""
+
+    def test_backfills_from_sibling_dataset_a_repos_dir(self, tmp_path):
+        from collection import paths
+
+        root = tmp_path / "datasets"
+        fixture_repos_dir = paths.stage_dir("a", "fixtures", root=root) / "repos"
+        _write_csv(
+            fixture_repos_dir / "python_fixture_repos.csv",
+            [
+                {
+                    "repo_name": "owner/repo",
+                    "language": "python",
+                    "clone_url": "https://github.com/owner/repo.git",
+                }
+            ],
+        )
+        _write_csv(
+            paths.stage_dir("a", "repos", root=root) / "python_repo.csv",
+            [
+                {
+                    "repo_name": "owner/repo",
+                    "has_agent_config": "1",
+                    "language": "python",
+                    "stars": "3272",
+                    "num_contributors": "93",
+                }
+            ],
+        )
+        out_dir = tmp_path / "b-repos"
+
+        resolve_dataset_b_repos(source_dir=fixture_repos_dir, output_dir=out_dir)
+
+        with (out_dir / "python_repo.csv").open(newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert rows[0]["stars"] == "3272"
+        assert rows[0]["num_contributors"] == "93"
+
+    def test_falls_back_to_zero_when_repo_missing_from_dataset_a_repos(self, tmp_path):
+        from collection import paths
+
+        root = tmp_path / "datasets"
+        fixture_repos_dir = paths.stage_dir("a", "fixtures", root=root) / "repos"
+        _write_csv(
+            fixture_repos_dir / "python_fixture_repos.csv",
+            [{"repo_name": "owner/orphan", "language": "python"}],
+        )
+        # datasets/a/repos/ exists but has no row for owner/orphan.
+        _write_csv(
+            paths.stage_dir("a", "repos", root=root) / "python_repo.csv",
+            [
+                {
+                    "repo_name": "owner/other",
+                    "has_agent_config": "1",
+                    "language": "python",
+                    "stars": "10",
+                    "num_contributors": "2",
+                }
+            ],
+        )
+        out_dir = tmp_path / "b-repos"
+
+        resolve_dataset_b_repos(source_dir=fixture_repos_dir, output_dir=out_dir)
+
+        with (out_dir / "python_repo.csv").open(newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert rows[0]["stars"] == "0"
+        assert rows[0]["num_contributors"] == "0"
+
+    def test_uses_own_stars_when_source_already_has_them(self, tmp_path):
+        """Resolving directly from datasets/a/repos/ (the non-preferred
+        fallback source) already carries real stars/num_contributors --
+        the backfill lookup must not override a real value with itself
+        incorrectly or blow up when source_dir == the lookup dir."""
+        from collection import paths
+
+        root = tmp_path / "datasets"
+        a_repos_dir = paths.stage_dir("a", "repos", root=root)
+        _write_csv(
+            a_repos_dir / "python_repo.csv",
+            [
+                {
+                    "repo_name": "owner/repo",
+                    "has_agent_config": "1",
+                    "language": "python",
+                    "stars": "42",
+                    "num_contributors": "7",
+                }
+            ],
+        )
+        out_dir = tmp_path / "b-repos"
+
+        resolve_dataset_b_repos(source_dir=a_repos_dir, output_dir=out_dir)
+
+        with (out_dir / "python_repo.csv").open(newline="", encoding="utf-8") as fh:
+            rows = list(csv.DictReader(fh))
+        assert rows[0]["stars"] == "42"
+        assert rows[0]["num_contributors"] == "7"
+
+
 class TestDefaultSourcePriority:
     def test_prefers_fixtures_repos_when_populated(self, tmp_path, monkeypatch):
         """Mirrors collection.paths.default_repo_source('b')'s priority: prefer
