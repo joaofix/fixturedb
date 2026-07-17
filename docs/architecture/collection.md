@@ -58,6 +58,38 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 - Dataset B (within-repo, paired): sample human fixtures from the same repositories and same 2025+ temporal window as Dataset A, stratified by language.
 - Dataset C (cross-repo, unpaired): repos are selected (not sampled) by `discover-repos --dataset c` (wraps `select_dataset_c_repos.py`) -- every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no stratification or cap. `dataset_c.py` then checks out each one at its own pinned pre-2021 cutoff commit and extracts every fixture from every test file at that snapshot (no diff/purity gating).
 
+## Repository deduplication
+
+`github-search-raw/`'s source query excludes GitHub-native forks (`isFork`), but not
+org transfers or independently-created "shadow copies" -- two different `repo_name`s
+that share partly or fully identical git history. A shared commit SHA is a
+cryptographic guarantee of identical content, so it's used directly as the dedup key.
+Two mechanisms, matched to each dataset's shape, share their tie-break/clustering
+logic via `collection/repo_dedup_utils.py` (`pick_cluster_survivor()`: highest stars,
+tie-break lowest `github_id`; `find_duplicate_clusters()`: groups by an injected key
+function):
+
+- **Dataset C** (`collection/dedupe_dataset_c_repos.py`): a single fixed-cutoff
+  snapshot per repo, so one GitHub API call per candidate (`commits?until=...`)
+  resolves each repo's commit at `HUMAN_CORPUS_CUTOFF_DATE`; repos resolving to the
+  same commit are clustered. Standalone/manual tool, not part of the automatic
+  pipeline -- rerun by hand (`python -m collection.dedupe_dataset_c_repos`) whenever
+  `github-search-raw/` is refreshed. Output: `datasets/c/repos/duplicate_repos.csv`,
+  consulted by `select_dataset_c_repos.py` at build time (pure CSV filter, no API
+  calls at runtime).
+- **Dataset A** (`agent_repository_counter.py::_dedupe_by_last_commit_sha()`): no API
+  calls, no separate run -- groups candidates by `lastCommitSHA` (already present in
+  the raw SEART export for free) inline, every time `discover-repos --dataset a` runs,
+  before the has_agent_config clone check. Zero-cost but only a partial fix: it
+  catches repos still byte-identical *today*, not pairs that have since diverged.
+  Also persists the same rows to
+  `github-search-raw/duplicate_repos_by_current_commit.csv`.
+- **Dataset B**: no code needed -- its repo pool is resolved from Dataset A's own
+  (already-deduped) output.
+
+Full rationale, empirical checks, and what was deliberately left out of scope:
+`internal-docs/methodology-improvements/repo-deduplication.md`.
+
 ## CSV and IO
 - Use the `csv_adapter` to read/write CSVs and to plug alternative persistence backends. Tests override the adapter to avoid filesystem dependencies.
 

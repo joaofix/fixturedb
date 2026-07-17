@@ -32,6 +32,13 @@ The between-group methodology collects human and agent corpora at different time
 
 **Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling; `--tier2` agent discovery additionally falls back to the pre-curated `db/corpus.db`.
 
+### Repository-Level Duplication (Forks, Org Transfers, Shadow Copies)
+- **Problem:** Two different `repo_name`s in `github-search-raw/` can share partly or fully identical git history — GitHub org transfers, community mirrors, and independently-created "shadow copies" (a raw `git push` of one repo's history into a brand-new repo object). Each is counted as an independent repository, silently inflating sample size and duplicating fixtures. Not caught by the "exclude forks" query filter applied at source — `isFork=true` appears zero times across the entire raw candidate pool, since GitHub's own fork bookkeeping only covers repos created via its "Fork" button/API.
+- **Measured impact on already-collected data** (grouping fixtures by `commit_sha`, flagging SHAs shared across >1 `repo_name`): Dataset A 0.3% (132/46,831), Dataset B 17.9% (33,002/184,772), Dataset C 16.2% (34,653/214,436). Worst single cluster: 5 OpenJDK-derived repos sharing one commit, 21.9% of Java's entire Dataset C corpus.
+- **Mitigation (forward-looking, not retroactive):** Dataset C now checks each candidate's commit at the fixed cutoff date against every other candidate via the GitHub API before selection (`collection/dedupe_dataset_c_repos.py`) — a shared commit SHA is a cryptographic guarantee of identical content, never a false positive. Dataset A automatically drops repos currently sharing a HEAD commit (`lastCommitSHA`, already present in the raw SEART export for free) before cloning. Dataset B inherits Dataset A's fix automatically, since its repo pool is resolved from Dataset A's own output. See `internal-docs/methodology-improvements/repo-deduplication.md` for the full investigation.
+- **Residual gap, deliberately deferred:** Dataset A's free check only catches repos still byte-identical *today* — a pair that was mirrored for a while and has since diverged (confirmed real example: `datahub-project/datahub`/`linkedin/datahub`, whose SEART-crawled `lastCommitSHA` is stale) is not caught. A complete fix needs full in-window commit-set comparison per repo, not a point-in-time fingerprint. Not implemented.
+- **Impact:** the percentages above describe the datasets as currently collected; neither mechanism has been applied retroactively. Analysis drawing on the existing `datasets/{a,b,c}/fixtures/*.csv` should account for this known duplication rate until a re-collection (or an explicitly-scoped retroactive patch) is done.
+
 ---
 
 ## Sampling bias

@@ -151,7 +151,10 @@ for Dataset C's repo-selection rationale.
 
 1. **Repository seeding**: All candidate repositories are seeded from SEART GHS
    (`github-search-raw/`), a hard ≥500-star / ≥100-commit / ≥5k-LOC / non-fork query
-   filter applied at source.
+   filter applied at source. This filter does not catch org transfers or
+   independently-created "shadow copies" (repos with identical git history but no
+   GitHub-native fork relationship) — see "Repository-Level Duplication" below and
+   [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies).
 2. **Dataset A repo qualification**: candidates whose working tree contains a
    Claude/Cursor/Copilot config file (a strict subset of the ~60-agent detection
    catalog, chosen for unambiguous, high-adoption qualification signal).
@@ -199,6 +202,22 @@ modification of pre-existing code):
   renames, or copies.
 - **Fixture-level gate**: Accept only fixtures whose own line span is exclusively added
   lines (AST-node-precise, falling back to a line-range check).
+
+### Repository-Level Duplication
+
+Two different `repo_name`s can share partly or fully identical git history (org
+transfers, mirrors, shadow copies) — invisible to the "non-fork" filter in step 1,
+since GitHub's own fork bookkeeping doesn't track this. Two forward-looking
+mechanisms detect and drop these before selection: Dataset C checks each
+candidate's commit at the fixed cutoff date against every other candidate
+(`collection/dedupe_dataset_c_repos.py`); Dataset A automatically drops repos
+currently sharing a HEAD commit before cloning (Dataset B inherits this
+automatically, since its repo pool is resolved from Dataset A's). A shared commit
+SHA is a cryptographic guarantee of identical content, never a false positive.
+Neither mechanism is retroactive — see
+[Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies)
+and `internal-docs/methodology-improvements/repo-deduplication.md` for the full
+investigation and measured duplication rates.
 
 ---
 
@@ -312,6 +331,10 @@ current, authoritative treatment. Summary:
 5. **Domain classification**: heuristic keyword-based; accuracy depends on topics/
    description quality.
 6. **Sampling bias**: all repositories have ≥500 stars.
+7. **Repository-level duplication**: not caught by the source query's "non-fork"
+   filter (org transfers, shadow copies). Forward-looking detection is now in
+   place for future collections but has not been applied retroactively — see
+   [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies).
 
 ---
 
