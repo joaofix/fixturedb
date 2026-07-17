@@ -255,3 +255,6 @@ github-search-human/pre_2021_test_commits/
 # Academic paper draft (working markdown, not the collection pipeline --
 # kept local/unpublished; papers/ above is unrelated, tracked reference PDFs)
 paper-draft/
+# Archived dataset collection runs (datasets/{a,b,c} snapshots moved aside
+# before a recollection), grouped by week e.g. past-datasets/13-17-jul-2026/
+past-datasets/
