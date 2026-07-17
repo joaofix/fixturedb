@@ -11,7 +11,11 @@ import csv
 import gzip
 from pathlib import Path
 
-from collection.select_dataset_c_repos import select_repos, write_per_language_files
+from collection.select_dataset_c_repos import (
+    filter_known_duplicates,
+    select_repos,
+    write_per_language_files,
+)
 
 
 def _write_gz_csv(path: Path, rows: list[dict]) -> None:
@@ -215,3 +219,66 @@ class TestWritePerLanguageFiles:
         counts = write_per_language_files([], out_dir)
         assert counts == {}
         assert (out_dir / "all.csv").exists()
+
+
+class TestFilterKnownDuplicates:
+    """Consult-only dedup: reads the static lookup table built by
+    `python -m collection.dedupe_dataset_c_repos`, drops known duplicates.
+    Pure CSV filtering -- no API calls, no cloning, at build time."""
+
+    def _write_duplicates_csv(self, path: Path, rows: list[dict]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fieldnames = [
+            "repo_to_remove",
+            "repo_to_keep",
+            "shared_commit_sha",
+            "cluster_size",
+            "language",
+            "stars_removed",
+            "stars_kept",
+        ]
+        with path.open("w", newline="", encoding="utf-8") as fh:
+            writer = csv.DictWriter(fh, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+
+    def test_drops_repo_to_remove_entries(self, tmp_path):
+        selected = [
+            {"repo_name": "openjdk/loom", "language": "java", "stars": 100},
+            {"repo_name": "openjdk/jdk", "language": "java", "stars": 500},
+            {"repo_name": "other/unrelated", "language": "python", "stars": 10},
+        ]
+        dup_csv = tmp_path / "duplicate_repos.csv"
+        self._write_duplicates_csv(
+            dup_csv,
+            [
+                {
+                    "repo_to_remove": "openjdk/loom",
+                    "repo_to_keep": "openjdk/jdk",
+                    "shared_commit_sha": "abc123",
+                    "cluster_size": 2,
+                    "language": "java",
+                    "stars_removed": 100,
+                    "stars_kept": 500,
+                }
+            ],
+        )
+
+        filtered = filter_known_duplicates(selected, duplicate_repos_csv=dup_csv)
+
+        names = {r["repo_name"] for r in filtered}
+        assert names == {"openjdk/jdk", "other/unrelated"}
+
+    def test_missing_duplicates_csv_returns_unfiltered(self, tmp_path):
+        selected = [{"repo_name": "o/r", "language": "python", "stars": 1}]
+        filtered = filter_known_duplicates(
+            selected, duplicate_repos_csv=tmp_path / "does-not-exist.csv"
+        )
+        assert filtered == selected
+
+    def test_empty_duplicates_csv_returns_unfiltered(self, tmp_path):
+        selected = [{"repo_name": "o/r", "language": "python", "stars": 1}]
+        dup_csv = tmp_path / "duplicate_repos.csv"
+        self._write_duplicates_csv(dup_csv, [])
+        filtered = filter_known_duplicates(selected, duplicate_repos_csv=dup_csv)
+        assert filtered == selected

@@ -120,6 +120,40 @@ def select_repos(
     return selected
 
 
+def filter_known_duplicates(
+    selected: list[dict],
+    duplicate_repos_csv: Path = OUTPUT_DIR / "duplicate_repos.csv",
+) -> list[dict]:
+    """Drop repos listed as `repo_to_remove` in the known-duplicates lookup
+    table built by `python -m collection.dedupe_dataset_c_repos` (repos that
+    share an identical commit at HUMAN_CORPUS_CUTOFF_DATE with another repo
+    in the pool -- forks/org-transfers/shadow-copies GitHub's own "exclude
+    forks" doesn't catch; see that module's docstring).
+
+    Pure CSV filtering, no API calls -- the real cost was already paid when
+    the lookup table was built. A missing `duplicate_repos_csv` is not an
+    error (the tool may not have been run yet); `selected` is returned
+    unfiltered in that case.
+    """
+    if not duplicate_repos_csv.exists():
+        return selected
+    adapter = get_adapter()
+    to_remove = {
+        row["repo_to_remove"].strip()
+        for row in adapter.read_dicts(duplicate_repos_csv)
+        if row.get("repo_to_remove")
+    }
+    if not to_remove:
+        return selected
+    filtered = [r for r in selected if r["repo_name"] not in to_remove]
+    dropped = len(selected) - len(filtered)
+    if dropped:
+        logger.info(
+            "Dropped %d known-duplicate repos (see %s)", dropped, duplicate_repos_csv
+        )
+    return filtered
+
+
 def write_per_language_files(selected: list[dict], output_dir: Path) -> dict[str, int]:
     """Write one CSV per language in output_dir (`{lang}_repo.csv`), plus a
     combined file (`all.csv`).
@@ -155,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     selected = select_repos()
+    selected = filter_known_duplicates(selected)
     counts = write_per_language_files(selected, OUTPUT_DIR)
 
     logger.info("Selected %d repos total", len(selected))
