@@ -126,13 +126,14 @@ reader who wants to judge the methodology without reading the source code.
 | Agent fixture detection (per language) | **Yes** | Fixture extraction (AST-pattern-based, per language grammar) produces the metric-bearing unit of analysis for the whole study. A false positive/negative here directly changes reported fixture counts and characteristics. |
 | Human test-commit detection | **Yes** | Uses the identical file-path/pattern-matching logic as agent test-commit detection, just applied to non-agent commits — code-correctness risk, same as the agent-side row above, is genuinely low. Sampled anyway so Dataset B's own reported precision has independent, corpus-specific evidence rather than resting on an inference from Dataset A's review. |
 | Human fixture detection (per language) | **Yes** | Uses the identical AST fixture detector as agent fixture detection (the same `detector.extract_fixtures()` call), just run against human-authored files instead of agent-authored ones. Same reasoning as the row above: independently sampled for Dataset B rather than assumed from Dataset A's review. |
+| Dataset C fixture detection (per language) | **Yes** | Same `detector.extract_fixtures()` call again, on Dataset C's pre-2021 snapshot corpus. Demonstrated necessary, not just theoretically prudent: manual review of Dataset B's own sample found two real false-positive classes (a `pytest_decorator` substring collision, a `.tsx`/JSX grammar mismatch) that Dataset A's review — on the same detector — did not happen to surface. Each dataset's corpus can exercise different edge cases of shared code. |
 
 Concretely, `collection/validation_sampling.py` only exposes `--step`
-choices for the six "Yes" rows — "Agent test-commit detection" is the one
+choices for the seven "Yes" rows — "Agent test-commit detection" is the one
 deliberately not selectable, so the tool's own surface area reflects that
 one exclusion rather than merely documenting it separately from the code.
 
-## The six steps
+## The seven steps
 
 | `--step` | What it validates | Typical `--input` | Population |
 |---|---|---|---|
@@ -142,12 +143,13 @@ one exclusion rather than merely documenting it separately from the code.
 | `human-commits-dataset-b` | Human/control-corpus classification (recall, contamination check) | `datasets/b/test-commits/{language}_human_test_commit.csv` (all languages) | Combined, stratified by `language` |
 | `human-test-commits-dataset-b` | Dataset B test-commit file-path matching | `datasets/b/test-commits/{language}_human_test_commit.csv` (all languages) | Combined, stratified by `language` |
 | `human-fixtures-dataset-b` | Dataset B fixture extraction | `datasets/b/fixtures/{language}_fixtures.csv` | Per-language — one sample per file |
+| `human-fixtures-dataset-c` | Dataset C fixture extraction | `datasets/c/fixtures/{language}_fixtures.csv` | Per-language — one sample per file |
 
 The three combined-mode steps are language-agnostic: even though their
 source CSVs are split per language on disk, pass them all in one invocation
 and they're pooled into a single population, then a proportional sample is
 drawn per language (and per agent type, for `agent-commits-dataset-a`). The
-two fixture steps are language-specific (extraction differs per
+three fixture steps are language-specific (extraction differs per
 language/grammar), so each language file you pass is sampled as its own
 independent population, producing one output CSV per file.
 
@@ -215,6 +217,10 @@ validation-samples/
   human-commits-dataset-b/
   human-test-commits-dataset-b/
   human-fixtures-dataset-b/
+    python_fixtures_sample_<timestamp>.csv
+    java_fixtures_sample_<timestamp>.csv
+    sample_metadata_<timestamp>.json
+  human-fixtures-dataset-c/
     python_fixtures_sample_<timestamp>.csv
     java_fixtures_sample_<timestamp>.csv
     sample_metadata_<timestamp>.json

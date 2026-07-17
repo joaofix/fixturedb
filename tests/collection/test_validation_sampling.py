@@ -519,6 +519,25 @@ class TestRunValidationSamplingDatasetBSteps:
         out_dir = output_root / "human-fixtures-dataset-b"
         assert len(list(out_dir.glob("*.csv"))) == 2
 
+    def test_human_fixtures_dataset_c_step_one_output_per_language_file(self, tmp_path):
+        fixture_row = TestRunValidationSamplingPerFileMode()._fixture_row
+        python_csv = tmp_path / "python_fixtures.csv"
+        java_csv = tmp_path / "java_fixtures.csv"
+        _write_csv(python_csv, [fixture_row(i, "python") for i in range(500)])
+        _write_csv(java_csv, [fixture_row(i, "java") for i in range(50)])
+        output_root = tmp_path / "validation-samples"
+
+        metadata = run_validation_sampling(
+            step="human-fixtures-dataset-c",
+            input_paths=[python_csv, java_csv],
+            output_root=output_root,
+        )
+
+        assert metadata["population_mode"] == "per_file"
+        assert len(metadata["outputs"]) == 2
+        out_dir = output_root / "human-fixtures-dataset-c"
+        assert len(list(out_dir.glob("*.csv"))) == 2
+
     def test_human_commits_real_schema_normalizes(self, tmp_path, make_csv):
         rows = [
             {
@@ -630,7 +649,6 @@ def test_unknown_step_raises():
 @pytest.mark.parametrize(
     "excluded_step",
     [
-        "human-fixtures-dataset-c",
         "agent-test-commits-dataset-a",
     ],
 )

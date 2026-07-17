@@ -25,6 +25,15 @@ steps close that gap and separately re-validate test-commit file-matching
 and fixture extraction against Dataset B's own corpus rather than assuming
 Dataset A's review transfers.
 
+`human-fixtures-dataset-c` is covered for the same reason: Dataset C uses
+the identical `detector.extract_fixtures()` call as A/B, but on a real
+sample it turned up two false-positive classes (a substring collision in
+the pytest_decorator pattern, a `.tsx`/JSX grammar mismatch) that Dataset
+A's own review happened not to catch, since neither edge case appeared in
+its particular sample. "Same detector, already validated once" is not
+sufficient justification on its own -- each dataset's own corpus can
+exercise different edge cases of the same code.
+
 Every step normalizes its source rows to one fixed reviewer-facing schema
 (`validation_id, validation_type, language, repo_full_name, item_id,
 item_url, detection_signal, evidence, label, reviewer_notes`) regardless of
@@ -279,6 +288,9 @@ STEPS: dict[str, StepConfig] = {
         stratify_by=("language",),
     ),
     "human-fixtures-dataset-b": StepConfig(
+        population_mode="per_file", validation_type="fixture", stratify_by=()
+    ),
+    "human-fixtures-dataset-c": StepConfig(
         population_mode="per_file", validation_type="fixture", stratify_by=()
     ),
 }
