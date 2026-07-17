@@ -192,6 +192,7 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
             output_db=output_db,
             workers=1,
             language="python",
+            fixtures_output_dir=tmp_path,
         )
 
     assert processed == ["owner/pending"]
@@ -259,6 +260,7 @@ def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
             output_db=output_db,
             workers=1,
             language="python",
+            fixtures_output_dir=tmp_path,
         )
 
     assert stats["fixtures_persisted"] == 3
@@ -322,6 +324,7 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
             output_db=output_db,
             workers=1,
             language="java",
+            fixtures_output_dir=tmp_path,
         )
 
     assert "owner/done-java" not in processed
@@ -343,6 +346,7 @@ def test_dataset_c_checkpoint_is_language_specific(tmp_path):
             output_db=output_db,
             workers=1,
             language="typescript",
+            fixtures_output_dir=tmp_path,
         )
 
     assert "owner/done-ts" not in processed
@@ -445,6 +449,7 @@ def test_collect_dataset_c_empty_targets_selects_all(tmp_path):
             workers=1,
             language="python",
             targets={},
+            fixtures_output_dir=tmp_path,
         )
 
     assert stats["fixtures_persisted"] == 3
@@ -494,6 +499,7 @@ def test_dataset_c_persistence_error_logs_warning(tmp_path, caplog):
                 output_db=output_db,
                 workers=1,
                 language="python",
+                fixtures_output_dir=tmp_path,
             )
 
     assert any("Failed to persist" in record.message for record in caplog.records)
