@@ -59,7 +59,14 @@ Python Fixtures
 ### pytest Fixtures
 
 **Pattern:** `@pytest.fixture` decorator  
-**Scope:** Configurable via `scope="function|class|module|session"`
+**Scope:** Configurable via `scope="function|class|module|session"` — but the
+declared scope isn't always the final one: if a fixture depends on another
+(narrower-scoped) fixture as a parameter, its own scope is automatically
+downgraded to match (an impossible configuration otherwise). See
+[Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)
+for the detection mechanism and its limits (pytest-only, single-hop). This
+computed dependency list itself is not persisted in the database or CSV
+exports — only its effect on the final `scope` value is.
 
 ### unittest Fixtures
 
@@ -93,32 +100,22 @@ Both conditions are required: an annotated method (even one the detector doesn't
 
 ### JUnit 4
 
-**Pattern:** Annotations: `@Before`, `@After`, `@BeforeClass`, `@AfterClass`  
+**Pattern:** Annotations: `@Before`, `@After`  
 **Scope:** Determined by annotation type
 
 **Scope Mapping:**
 - `@Before` → per_test
 - `@After` → per_test
-- `@BeforeClass` → per_class
-- `@AfterClass` → per_class
+
+`@BeforeClass`/`@AfterClass` are also JUnit 4 annotations but are **not**
+attributed to JUnit 4 by this detector — see "Known Exclusions & Boundary
+Cases" below for why they're always classified as TestNG instead.
 
 **Detection Logic:**
 1. Find `method_declaration` nodes
 2. Scan for `modifiers` child with annotations
 3. Extract annotation name (`@Before`, etc.)
 4. Look up in JUNIT_FIXTURE_ANNOTATIONS dict
-
-### JUnit 5
-
-**Pattern:** Annotations: `@BeforeEach`, `@AfterEach`, `@BeforeAll`, `@AfterAll`  
-**Scope:** Determined by annotation type
-
-### TestNG
-
-**Pattern:** Annotations: `@BeforeMethod`, `@AfterMethod`, `@BeforeClass`, `@AfterClass`  
-**Scope:** Method or class level
-
----
 
 ### JUnit 5 (Jupiter)
 
@@ -342,72 +339,6 @@ modern Jest/Mocha/Vitest suites — a detector that missed the async forms
 would systematically undercount fixtures in async-heavy codebases. Verified
 by `TestAsyncPythonFixtures`, `TestAsyncJavaScriptFixtures`, and
 `TestTypeScriptAsyncAwait` in `tests/collection/test_extractor_unit/`.
-
----
-
-## Fixture Relationships
-
-### Fixture Dependency Tracking
-
-Fixture relationships capture how fixtures depend on each other:
-
-```
-Example: pytest fixture dependency
-
-@pytest.fixture(scope="session")
-def database():
-    db = Database.open()
-    yield db
-    db.close()
-
-@pytest.fixture
-def user(database):  # ← depends on 'database' fixture
-    user = User.create(database)
-    yield user
-    user.delete()
-
-def test_user_profile(user):  # ← depends on 'user' fixture
-    assert user.id is not None
-```
-
-**Relationship Types:**
-
-1. **Direct Dependency** — Fixture A requires Fixture B as a parameter
-   ```python
-   def fixture_a(fixture_b):  # A depends on B
-       pass
-   ```
-
-2. **Scope Hierarchy** — Broader-scope fixtures enable narrower-scope fixtures
-   ```python
-   @pytest.fixture(scope="module")
-   def module_db():  # Broader scope
-       pass
-   
-   @pytest.fixture(scope="function")
-   def test_db(module_db):  # Narrower scope depends on broader
-       pass
-   ```
-
-3. **Framework Nesting** — Describe blocks nest beforeEach hooks
-   ```javascript
-   describe("outer", () => {
-       beforeAll(() => setup1());
-       
-       describe("inner", () => {
-           beforeAll(() => setup2());  // setup2 runs after outer setup1
-       });
-   });
-   ```
-
-**Future Enhancement:**
-The FixtureDB can track fixture relationships to:
-- Build fixture dependency graphs
-- Analyze fixture initialization order
-- Detect circular dependencies
-- Optimize fixture reuse
-
----
 
 ---
 

@@ -7,7 +7,6 @@ Instructions for setting up the FixtureDB between-group study collection environ
 ### Required
 - **Python 3.10+** (tested with 3.12.3)
 - **Git** (must be on PATH, required for repository cloning and agent detection)
-- **corpus.db** (original FixtureDB database with repository list)
 
 ### Optional
 - **clones/ directory** (for repository cloning during collection)
@@ -15,13 +14,15 @@ Instructions for setting up the FixtureDB between-group study collection environ
   - Only needed once `discover-commits`/`extract-fixtures` actually clones repos
 - **GitHub API token** (for higher rate limits when discovering agent repositories)
   - Can be set via `--github-token` flag or `GITHUB_TOKEN` environment variable
+- **corpus.db** (paired-study bootstrap database) — only read by `discover-commits --tier2`;
+  the default Tier 1 collection path for all three datasets doesn't touch it at all
 
 ## Installation
 
 ### 1. Clone Repository
 ```bash
 git clone <repo-url>
-cd icsme-nier-2026
+cd fixturedb
 ```
 
 ### 2. Create Virtual Environment
@@ -46,56 +47,8 @@ python3 -m collection status
 
 ## Project Structure
 
-```
-fixturedb/
-├── collection/
-│   ├── __init__.py
-│   ├── __main__.py                    # Package CLI (python -m collection)
-│   ├── human_corpus.py                # Human corpus collection (pre-2021)
-│   ├── agent_corpus.py                # Agent corpus collection (2025+)
-│   ├── between_group_comparison.py    # Statistical comparison
-│   ├── agent_signal_primitives.py     # Agent detection in commits (formerly agent_detector.py)
-│   ├── tiered_agent_corpus_scanner.py # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
-│   ├── fixture_extractor.py           # Fixture extraction
-│   ├── db.py                          # Database schema and helpers
-│   ├── config.py                      # Paths, thresholds, dates -- re-exports catalogs from study_parameters/ and heuristics/
-│   ├── study_parameters/              # Settings + study-design constants as YAML (extensions, frameworks, ...)
-│   ├── heuristics/                    # Detection-heuristic catalogs as YAML/CSV (agent, fixture, mock patterns)
-│   ├── detector.py                    # Fixture detection (tree-sitter)
-│   └── persistent_clone.py            # Repository cloning utilities
-│
-├── db/
-│   ├── corpus.db                      # Paired-study bootstrap DB (INPUT, only needed for --tier2)
-│   └── a.db, b.db, c.db                # Per-dataset databases (OUTPUT)
-│
-├── datasets/                          # Per-dataset CSV output (the real, reviewable artifact)
-│   ├── a/{repos,commits,test-commits,fixtures}/
-│   ├── b/{repos,test-commits,fixtures}/
-│   └── c/{repos,fixtures}/
-│
-├── clones/                            # Git repositories (auto-populated)
-│   ├── pytest__pytest/
-│   ├── django__django/
-│   └── ...
-│
-├── output/                            # Collection outputs
-│   ├── human_corpus_summary_*.json    # Human corpus statistics
-│   ├── agent_corpus_summary_*.json    # Agent corpus statistics
-│   └── between_group_comparison_*.json # Statistical comparison
-│
-├── docs/                              # This documentation
-│   ├── getting-started/               # Quick start guides
-│   ├── architecture/                  # Technical documentation
-│   ├── usage/                         # Analysis guides
-│   ├── data/                          # Data format documentation
-│   └── reference/                     # Citations and reference material
-│
-├── tests/                             # Test suite
-│   ├── conftest.py
-│   └── test_*.py
-│
-└── requirements.txt
-```
+See [Repository Structure](repository-structure.md) for the full, authoritative
+directory layout — not duplicated here to avoid the two pages drifting apart.
 
 ## Dependencies
 
@@ -211,10 +164,10 @@ pytest tests/ -v
 pytest tests/ --cov=collection --cov-report=html
 
 # Run specific test file
-pytest tests/test_agent_detector.py -v
+pytest tests/test_agent_detector_pure.py -v
 ```
 
-Current status: All tests passing.
+See [Test Suite & Validation](../reference/testing.md) for test organization and categories.
 
 ## Troubleshooting
 
@@ -226,9 +179,10 @@ python -m collection --help
 ```
 
 ### sqlite3.OperationalError: no such table
-**Solution:** Verify db/corpus.db exists and is valid:
+**Solution:** Verify the relevant dataset's database exists and is valid
+(run `extract-fixtures --dataset {a,b,c}` first if not):
 ```bash
-sqlite3 db/corpus.db ".tables"  # Should show: fixtures repositories test_files
+sqlite3 db/a.db ".tables"  # Should show: fixtures repositories test_files mock_usages
 ```
 
 ### Python version error
@@ -256,4 +210,3 @@ python -m collection discover-repos --dataset a
 1. **Read the overview:** [What is FixtureDB?](intro.md)
 2. **Run the pipeline:** [Reproducing Results](../usage/reproducing.md)
 3. **Analyze the dataset:** [Analysis Guide](../usage/usage.md)
-4. **Understand the design:** [Between-Group Study](intro.md)

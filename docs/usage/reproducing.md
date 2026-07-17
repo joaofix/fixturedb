@@ -81,24 +81,28 @@ to smoke-test the same code path end-to-end at small scale, entirely under
 - `output/sample_{a,b,c}.json` — per-dataset stratified-sampling results
 - `output/*_corpus_summary_*.json` — extraction run summaries
 
-## Reproducing from a Frozen Corpus
+## Reproducing from Frozen Inputs
 
-To ensure reproducibility across runs, work from a frozen `corpus.db`:
+`db/corpus.db` is **not** part of the default reproduction path — it's only
+read by `discover-commits --tier2` (see [Database Schema § Database overview](../architecture/database-schema.md#database-overview)).
+The default Tier 1 path for all three datasets reproduces from `github-search-raw/`
+and each stage's own CSV output under `datasets/{a,b,c}/`, not from `corpus.db`.
 
 ```bash
-# Verify corpus.db integrity
-sqlite3 db/corpus.db "PRAGMA integrity_check;"
-
 # Verify clones are available
 ls clones/ | wc -l
+
+# Only relevant if a run used --tier2:
+sqlite3 db/corpus.db "PRAGMA integrity_check;"
 ```
 
 The pipeline is deterministic given:
-1. **Fixed `corpus.db`** with pinned repository metadata
+1. **Fixed `github-search-raw/` snapshot** and the CSV outputs each stage produces from it
 2. **Fixed clone directory** with repository snapshots (Dataset C additionally pins a cutoff commit SHA per repo)
 3. **Deterministic fixture extraction** from tree-sitter AST analysis
 4. **Conservative agent detection** (Tier 1 only: co-authored-by trailers)
 5. **Fixed temporal boundaries** (`AGENT_CORPUS_START_DATE` for Datasets A/B, `HUMAN_CORPUS_CUTOFF_DATE` for Dataset C — see `collection/config.py`)
+6. **Fixed `corpus.db`**, only if a run used `--tier2`
 
 ## Verification & Validation
 
@@ -118,12 +122,18 @@ sqlite3 db/c.db "SELECT COUNT(*) FROM fixtures;"
 
 ### Validate Temporal Separation
 
+Dataset C has no per-fixture commit date (`fixtures.commit_sha` is an empty
+string in `db/c.db` — it's a single-snapshot extraction, not a commit-by-commit
+scan; see [Database Schema](../architecture/database-schema.md#fixtures)).
+The temporal claim to validate instead is on `repositories.created_at`:
+
 ```python
 import sqlite3
 
 conn = sqlite3.connect("db/c.db")
-cur = conn.execute("SELECT commit_date FROM fixtures ORDER BY commit_date DESC LIMIT 1")
-print("Most recent Dataset C fixture commit date:", cur.fetchone())
+cur = conn.execute("SELECT MIN(created_at), MAX(created_at) FROM repositories")
+print("Dataset C repo creation-date range:", cur.fetchone())
+# Expect DATASET_C_MIN_CREATED_DATE .. HUMAN_CORPUS_CUTOFF_DATE (collection/config.py)
 ```
 
 ## Troubleshooting
@@ -159,11 +169,12 @@ sqlite3 db/a.db "PRAGMA integrity_check;"
 
 ### Conditional Determinism
 
-- **Repository selection**: Depends on `corpus.db` and the QC CSV inputs
+- **Repository selection**: Depends on the `github-search-raw/` snapshot and each stage's own QC CSV outputs (plus `corpus.db`, only for a `--tier2` run)
 - **Temporal boundaries**: Fixed via `AGENT_CORPUS_START_DATE` / `HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`
 - **Clone freshness**: Depends on git history at time of collection; Dataset C pins an explicit cutoff commit SHA to avoid this issue
+- **Live GitHub state**: repos can go private/be deleted between runs — see [Limitations § Repository Availability](../reference/limitations.md#repository-availability)
 
-**Guarantee**: If `db/corpus.db`, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
+**Guarantee**: If the `github-search-raw/` snapshot, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
 
 ## See Also
 

@@ -54,16 +54,15 @@ Start here for the between-group study comparing human and agent-authored test f
 
 ## Study Design
 
-The current FixtureDB methodology compares agent and human fixtures within repositories:
+FixtureDB is a **between-group comparison across three independent datasets**:
+Dataset A (agent-authored fixtures, 2025+), Dataset B (human-authored fixtures,
+within-repo control, same repos and window as A), and Dataset C (human-authored
+fixtures, cross-repo pre-2021 baseline). Agent identification uses Tier 1
+detection (co-authored-by trailers, author signatures); comparisons are unpaired
+(Mann-Whitney U / chi-square), since each dataset is its own database rather than
+matched pairs in one table.
 
-- **Basis:** Agent-enabled repositories (with agent config files)
-- **Temporal window:** 2025-01-01 onwards (post-agent emergence)
-- **Agent fixtures:** From commits with agent authorship signals (Tier 1: author metadata + co-authored-by trailers)
-- **Human fixtures:** From non-agent commits in the same repositories
-- **Control variables:** Language, domain, repository age (at temporal snapshot)
-- **Analysis:** Paired comparisons within repositories
-
-See [introduction](getting-started/intro.md) for methodology details.
+See [introduction](getting-started/intro.md) for the full methodology.
 
 ## Citation
 

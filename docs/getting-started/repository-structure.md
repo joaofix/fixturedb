@@ -41,10 +41,12 @@ fixturedb/
 │   └── tests/
 │       ├── conftest.py                      # Pytest fixtures and helpers
 │       ├── test_fixture_extractor_small.py  # Fixture extraction tests
-│       ├── test_db_helpers.py                # Database operation tests
+│       ├── test_db_helpers_full.py          # Database operation tests
+│       ├── between_group/, paired/, eda/    # Corpus-comparison, legacy paired, and EDA tests
 │       └── collection/                      # Unit tests per collection/ module, incl.
 │                                             # test_main_cli.py (CLI dispatch),
 │                                             # test_dataset_pipeline.py, test_repo_resolve.py, test_toy.py
+│                                             # -- see docs/reference/testing.md for the fixture-detector categories
 │
 ├── DATA & DATABASES
 │   ├── datasets/                            # The real, reviewable output -- CSV files, one tree per dataset
@@ -208,7 +210,7 @@ Final: db/a.db, db/b.db, db/c.db, plus export/a.zip, export/b.zip, export/c.zip
 **usage/** — How to analyze results
 - **reproducing.md** — Three-stage pipeline with parameters
 - **usage.md** — SQL queries for analysis, statistical tests
-- **fixture-patterns-reference.md** — Catalog of 50+ fixture types
+- **fixture-patterns-reference.md** — Catalog of 25+ fixture types
 
 **data/** — Data format documentation
 - **csv-user-guide.md** — How to use CSV exports
@@ -225,19 +227,19 @@ Final: db/a.db, db/b.db, db/c.db, plus export/a.zip, export/b.zip, export/c.zip
 
 ## Important Files
 
-| File | Purpose | Between-Group? |
-|------|---------|---------|
-| collection/__main__.py | CLI entrypoint | Yes |
-| collection/*.py | Core modules | Yes |
-| db/corpus.db | Paired-study bootstrap DB | Input only (only needed for `--tier2`) |
-| db/{a,b,c}.db | Per-dataset results | Output (created during collection) |
-| conftest.py | Test fixtures | Yes (updated) |
-| requirements.txt | Dependencies | Yes (updated) |
-| docs/INDEX.md | Documentation hub | Yes (updated) |
-| docs/getting-started/intro.md | Overview | Yes (new) |
-| docs/architecture/database-schema.md | Schema | Yes (updated) |
-| docs/usage/reproducing.md | Pipeline guide | Yes (updated) |
-| collection/README.md | Package docs | Yes (updated) |
+| File | Purpose |
+|------|---------|
+| collection/__main__.py | CLI entrypoint |
+| collection/*.py | Core modules |
+| db/corpus.db | Paired-study bootstrap DB (input only, only needed for `--tier2`) |
+| db/{a,b,c}.db | Per-dataset results (output, created during collection) |
+| conftest.py | Shared pytest fixtures |
+| requirements.txt | Dependencies |
+| docs/INDEX.md | Documentation hub |
+| docs/getting-started/intro.md | Study design overview |
+| docs/architecture/database-schema.md | Schema |
+| docs/usage/reproducing.md | Pipeline guide |
+| collection/README.md | Package docs |
 
 ## Data Files Generated
 

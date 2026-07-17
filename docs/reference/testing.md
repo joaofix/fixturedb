@@ -4,78 +4,74 @@ This document describes the comprehensive test suite for FixtureDB, including te
 
 ## Test Overview
 
-The test suite validates the **fixture extraction module** (`collection/detector.py`), which uses Tree-sitter ASTs to detect test fixtures. The suite is organized into multiple test categories.
+The test suite validates the **fixture extraction module** (`collection/detector.py`), which uses Tree-sitter ASTs to detect test fixtures, plus the rest of the collection pipeline (agent detection, dataset collectors, sampling, dedup). 431 test files across `tests/` as of this writing.
 
 **Coverage:**
-- Comprehensive test coverage across all categories
-- **Languages covered**: Python, Java, JavaScript, TypeScript
-- **Language-specific test files** for clarity in academic papers
-- **Test framework**: pytest with custom assertion helpers
+- **Languages covered**: Python, Java, JavaScript, TypeScript (Go patterns exist for structural parity but are dead code — out of this study's scope; see "Mock Detection" below)
+- **Test framework**: pytest with custom assertion helpers (`tests/conftest.py`)
 
 ## Test Organization
 
 ### Directory Structure
 
+The fixture-detector test categories described below live under `tests/collection/`,
+alongside per-module unit tests for the rest of the `collection/` package
+(agent detection, dataset collectors, sampling, dedup, etc.). Top-level `tests/`
+also has `between_group/` (agent/human corpus + comparison tests), `paired/`
+(legacy paired-collection tests), and `eda/` (exploratory-analysis scripts).
+
 ```
 tests/
 ├── conftest.py                      # Shared pytest fixtures and helpers
-├── TEST_PLAN.md                     # Comprehensive test strategy document
-├── fixtures/                        # Test data files (future use)
-├── test_split_agent_detector.py     # Agent detection unit tests
-├── test_split_fixture_extractor.py  # Fixture extraction tests
-├── test_split_dataset_sampler.py    # Dataset sampling tests
-├── test_split_dataset_exporter.py   # Dataset export tests
-├── test_split_integration.py        # Integration tests
-├── test_agent_detection_end_to_end.py  # E2E agent detection tests
-├── test_extractor_unit/             # Category 1: Unit tests
-│   ├── test_python_fixtures.py
-│   ├── test_java_fixtures.py
-│   ├── test_javascript_fixtures.py
-│   ├── test_typescript_fixtures.py
-│   └── test_csharp_fixtures.py
-├── test_extractor_metadata/         # Category 2: Metadata accuracy
-│   ├── test_line_numbers.py
-│   └── test_fixture_types_and_scopes.py
-├── test_extractor_edge_cases/       # Category 3: Edge case robustness
-│   └── test_edge_cases.py
-├── test_mock_detection/             # Category 5: Mock patterns (under tests/collection/)
-│   ├── test_mock_patterns.py         # Cross-language + false-positive/negative checks
-│   ├── test_python_mock_patterns.py
-│   ├── test_java_mock_patterns.py
-│   ├── test_javascript_mock_patterns.py
-│   ├── test_typescript_mock_patterns.py
-│   └── test_go_mock_patterns.py      # Skipped: Go isn't in this study's language scope
-└── test_integration/                # Category 6: Realistic fixtures
-    ├── test_python_realistic_fixtures.py
-    ├── test_java_realistic_fixtures.py
-    ├── test_javascript_realistic_fixtures.py
-    ├── test_typescript_realistic_fixtures.py
-    └── test_csharp_realistic_fixtures.py
+├── TEST_PLAN.md                     # Test strategy document
+├── test_*.py                        # Module-level tests (clone manager, sampling, db, ...)
+├── between_group/                   # Agent/human corpus + between-group comparison tests
+├── paired/                          # Legacy paired-collection tests
+├── eda/                             # Exploratory data-analysis scripts
+├── fixtures/                        # Static test data (see fixtures/README.md)
+└── collection/                      # Per-module tests for collection/, including:
+    ├── test_extractor_unit/         # Category 1: small-snippet detection unit tests
+    │   ├── test_python_fixtures.py
+    │   ├── test_java_fixtures.py
+    │   ├── test_javascript_fixtures.py
+    │   ├── test_typescript_fixtures.py
+    │   └── test_go_fixtures.py      # Skipped: Go isn't in this study's language scope
+    ├── test_extractor_metadata/     # Category 2: metadata accuracy
+    │   ├── test_line_numbers.py
+    │   ├── test_fixture_types_and_scopes.py
+    │   ├── test_fixture_dependencies.py
+    │   ├── test_new_metrics.py
+    │   └── test_object_instantiations.py
+    ├── test_extractor_edge_cases/   # Category 3: edge-case robustness
+    │   └── test_edge_cases.py
+    ├── test_mock_detection/         # Category 4: mock framework patterns
+    │   ├── test_mock_patterns.py    # Cross-language + false-positive/negative checks
+    │   ├── test_mock_pattern_catalog_coverage.py
+    │   ├── test_python_mock_patterns.py
+    │   ├── test_java_mock_patterns.py
+    │   ├── test_javascript_mock_patterns.py
+    │   ├── test_typescript_mock_patterns.py
+    │   └── test_go_mock_patterns.py # Skipped: Go isn't in this study's language scope
+    ├── test_integration/            # Category 5: realistic fixtures
+    │   ├── test_python_realistic_fixtures.py
+    │   ├── test_java_realistic_fixtures.py
+    │   ├── test_javascript_realistic_fixtures.py
+    │   ├── test_typescript_realistic_fixtures.py
+    │   ├── test_realistic_fixtures.py
+    │   └── test_go_realistic_fixtures.py  # Skipped: same reason as above
+    └── test_*.py                    # Per-module tests: agent detection, dataset
+                                      # collectors (A/B/C), dedup, sampling, CLI, ...
 ```
 
 ## Test Categories
 
 **1. Unit Tests** — Small code snippets (1-10 lines). Validate fixture detection and scope classification across all languages.
 
-**2. Metadata Tests** — Line numbers, LOC, fixture type, scope, complexity metrics (cyclomatic, cognitive), code metrics (parameters, objects instantiated, I/O calls).
+**2. Metadata Tests** — Line numbers, LOC, fixture type, scope, complexity metrics (cyclomatic, cognitive), code metrics (parameters, objects instantiated, I/O calls), fixture dependency detection and scope propagation (pytest only — see [Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)).
 
 **3. Edge Cases** — Large fixtures (100+ lines), deep nesting, false positive prevention, unicode, special characters, indentation variations, empty fixtures, malformed code.
 
-**4. Mock Detection** — Framework-specific mock patterns (unittest.mock, pytest-mock, Mockito, Jest, Sinon, etc.) across all languages.
-
-**5. Integration Tests** — Realistic fixtures from actual open-source repositories, testing extraction and metric computation end-to-end.
-
-**Scope:** Framework-specific patterns
-
-**Will test:**
-- All documented fixture types per language
-- Language-specific syntax variations
-- Async/await patterns and generators
-- Context managers and lifecycle
-- Inheritance-based fixtures
-- Parameterized/data-driven fixtures
-
-### 5. Mock Detection
+**4. Mock Detection**
 
 **Scope:** Mock framework identification and test-double category
 classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across
@@ -100,7 +96,7 @@ inside is silently missed, which is how several real gaps were originally
 found (see `mock_patterns_excluded` in the YAML catalog for what's still
 knowingly unhandled).
 
-### 6. Integration Tests
+### 5. Integration Tests
 
 **Scope:** Realistic, multi-language test code
 
@@ -110,7 +106,6 @@ knowingly unhandled).
 - Jest with beforeAll/afterAll (JavaScript)
 - Type-annotated Jest (TypeScript)
 - Implicit vs. explicit setup patterns
-- xUnit collection fixtures (C#)
 - Complex fixture dependencies
 - Large test modules with many fixtures
 
@@ -250,49 +245,27 @@ class Test(unittest.TestCase):
     assert_loc(fixture, 1)
 ```
 
-## Agent Detection Tests (End-to-End)
+## Agent Detection Tests
 
-The `test_agent_detection_end_to_end.py` module provides comprehensive validation of the agent detection pipeline, including:
+Agent detection (file scanning, commit-trailer/author-identity matching, fixture
+completeness marking — see [Agent Detection Methodology](../architecture/agent-detection.md))
+is covered across several files under `tests/collection/`, not one single
+end-to-end module:
 
-### Test Coverage
-
-1. **Agent File Scanner** — Detects agent-specific files (`.copilot-instructions.md`, `.cursorrules`, etc.)
-2. **Agent Commit Verifier** — Detects agent signatures in author metadata (name/email) and `Co-authored-by`/`Assisted-by`/`Generated-by` trailers in commit messages
-3. **AGENT Fixture Extraction** — Validates extraction of fixtures from agent commits and `is_complete_addition` marking
-4. **Multiple Agent Types** — Tests Copilot, Cursor, Claude, and other agent detection
-5. **Partial Modifications** — Validates that modified (not wholly-added) fixtures are marked accordingly
-6. **Edge Cases** — Commits without fixtures, commits with deletions, refactoring scenarios
-
-### Running Agent Detection Tests
+- `test_agent_detection_logic.py` — agent config file scanning, GitHub API
+  file-listing helper (retry/rate-limit handling)
+- `test_agent_patterns_thorough.py`, `test_agent_patterns_extra.py` — agent
+  signature catalog matching (author identity, trailers)
+- `test_conventional_commits.py` — commit-trailer parsing
+- `test_end_to_end_collection.py` — collector initialization, DB persistence,
+  concurrency, error handling for both Dataset A and B collectors
+- `tests/between_group/test_agent_corpus.py` — Dataset A's collector, using
+  real git repositories in `tmp_path` with `Co-authored-by` trailers
 
 ```bash
-# Run only agent detection tests
-pytest tests/test_agent_detection_end_to_end.py -v
-
-# Run specific agent detection test
-pytest tests/test_agent_detection_end_to_end.py::test_agent_file_scanner_detects_agent_files -v
-
-# Run with coverage
-pytest tests/test_agent_detection_end_to_end.py --cov=collection.agent_detector --cov-report=term-missing -v
-```
-
-### Test Structure
-
-The tests use real git repositories created in temporary directories (`tmp_path`) to validate:
-
-- **Real git operations**: Commits are created with proper `Co-authored-by` trailers
-- **Actual file detection**: Agent config files are physically created and scanned
-- **Complete extraction flow**: Diff parsing and fixture extraction with completeness validation
-
-Example:
-
-```python
-def test_agent_commit_and_agent_extraction_end_to_end(tmp_path: Path, monkeypatch):
-    """Validates detection of Copilot-authored commits and fixture extraction."""
-    # Create temp git repo with agent commits
-    # Verify agent commit is detected
-    # Extract fixtures from agent commits
-    # Validate is_complete_addition marking
+pytest tests/collection/test_agent_detection_logic.py -v
+pytest tests/collection/ -v -k agent
+pytest tests/collection/test_agent_detection_logic.py --cov=collection.agent_patterns --cov=collection.agent_signal_primitives --cov-report=term-missing -v
 ```
 
 ## pytest Configuration
@@ -325,12 +298,12 @@ pytest --override-ini testpaths=tests  # Alternative: override at runtime
 
 ### 1. Identify the Category
 
-- **Unit tests**: Single fixture patterns (use `test_extractor_unit/test_<language>_fixtures.py`)
-- **Metadata tests**: Fixture metadata accuracy (use `test_extractor_metadata/`)
-- **Edge cases**: Unusual patterns (use `test_extractor_edge_cases/`)
-- **Mock detection**: Mock framework patterns (use `test_mock_detection/test_<language>_mock_patterns.py`)
-- **Integration tests**: Real-world code (use `test_integration/test_<language>_realistic_fixtures.py`)
-- **Agent detection**: Agent commit and file detection (use `test_agent_detection_end_to_end.py`)
+- **Unit tests**: Single fixture patterns (use `tests/collection/test_extractor_unit/test_<language>_fixtures.py`)
+- **Metadata tests**: Fixture metadata accuracy (use `tests/collection/test_extractor_metadata/`)
+- **Edge cases**: Unusual patterns (use `tests/collection/test_extractor_edge_cases/`)
+- **Mock detection**: Mock framework patterns (use `tests/collection/test_mock_detection/test_<language>_mock_patterns.py`)
+- **Integration tests**: Real-world code (use `tests/collection/test_integration/test_<language>_realistic_fixtures.py`)
+- **Agent detection**: Agent commit and file detection (use `tests/collection/test_agent_detection_logic.py` or a new file under `tests/collection/`)
 
 ### 2. Use Existing Helpers
 
@@ -372,6 +345,7 @@ def test_setUp_with_parameters(self):
     """setUp method with multiple initialization parameters"""
     code = """..."""
     fixture = assert_fixture_detected(code, 'python', 'setUp')
+    assert fixture.fixture_type == 'unittest_setup'  # not the method name itself
     assert fixture.num_parameters >= 2
 ```
 
@@ -403,20 +377,9 @@ cd /path/to/project
 pip install -e .
 ```
 
-## Future Test Categories
-
-Planned but not yet implemented:
-
-- **Category 4**: Language-specific pattern tests
-- **Category 7**: Integration tests with real test files from popular projects
-- **Category 8**: Regression tests for known issues and tricky cases
-- **Category 9**: Performance tests (file timeout validation, large file handling)
-
-See `tests/TEST_PLAN.md` for complete specification.
-
 ## References
 
-- **Test Plan**: [tests/TEST_PLAN.md](../tests/TEST_PLAN.md)
-- **Detector Implementation**: [collection/detector.py](../collection/detector.py)
-- **FixtureResult Dataclass**: [collection/detector.py](../collection/detector.py#L75-L91)
+- **Test Plan**: [tests/TEST_PLAN.md](../../tests/TEST_PLAN.md)
+- **Detector Implementation**: [collection/detector.py](../../collection/detector.py)
+- **FixtureResult Dataclass**: [collection/detector_shared.py](../../collection/detector_shared.py)
 - **Pytest Documentation**: https://docs.pytest.org/

@@ -32,16 +32,6 @@ produces:
 | B | Human-authored fixtures, within-repo matched control | `extract-fixtures --dataset b` | `human_corpus.HumanCorpusCollector.run()` |
 | C | Human-authored fixtures, cross-repo pre-2021 baseline | `extract-fixtures --dataset c` | `dataset_c.collect_dataset_c_fixtures()` |
 
-Paths:
-- `collection/clone_primitives.py` ([collection/clone_primitives.py](collection/clone_primitives.py))
-- `collection/ephemeral_clone.py` ([collection/ephemeral_clone.py](collection/ephemeral_clone.py))
-- `collection/persistent_clone.py` ([collection/persistent_clone.py](collection/persistent_clone.py))
-- `collection/db.py` ([collection/db.py](collection/db.py))
-- `collection/csv_adapter.py` ([collection/csv_adapter.py](collection/csv_adapter.py))
-- `collection/agent_corpus.py` ([collection/agent_corpus.py](collection/agent_corpus.py))
-- `collection/human_corpus.py` ([collection/human_corpus.py](collection/human_corpus.py))
-- `collection/dataset_c.py` ([collection/dataset_c.py](collection/dataset_c.py))
-
 ## Clone lifecycle and disk safety
 - Clones are created in a per-run temporary root and removed when the clone context exits (ephemeral clones, via `ephemeral_clone.py`). Use `temp_clone_commit_history()` for commit-history clones.
 - Before cloning, `ensure_free_space(path, min_bytes)` is used to check available disk; callers can set `min_free_bytes` to fail early and avoid uncontrolled disk growth.
