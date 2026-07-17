@@ -26,7 +26,7 @@ from .heuristics import load_fixture_definitions
 _DEFS = load_fixture_definitions()["python"]
 
 PYTEST_SCOPE_KEYWORD_MAP: dict[str, str] = _DEFS["pytest_decorator"]["scope_keyword_map"]
-PYTEST_MATCH_SUBSTRINGS: list[str] = _DEFS["pytest_decorator"]["match_substrings"]
+PYTEST_FIXTURE_DECORATOR_RE = re.compile(_DEFS["pytest_decorator"]["match_pattern"])
 UNITTEST_SETUP_NAMES: dict[str, str] = _DEFS["unittest_setup"]["names"]
 PYTEST_CLASS_METHOD_NAMES: dict[str, str] = _DEFS["pytest_class_method"]["names"]
 
@@ -59,7 +59,7 @@ def _detect_python(
                 dec_text = _source(dec, src_bytes)
 
                 # pytest.fixture decorator
-                if all(s in dec_text for s in PYTEST_MATCH_SUBSTRINGS):
+                if PYTEST_FIXTURE_DECORATOR_RE.search(dec_text):
                     scope = "per_test"
                     scope_match = re.search(r'scope\s*=\s*["\'](\w+)["\']', dec_text)
                     if scope_match:

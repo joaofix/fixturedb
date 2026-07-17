@@ -205,6 +205,32 @@ def client(app):
 """
         assert_fixture_count(code, "python", 2)
 
+    def test_pytest_mark_usefixtures_not_detected(self):
+        """@pytest.mark.usefixtures(...) contains both "pytest" and
+        "fixture" as substrings (from "use-fixture-s") without being
+        @pytest.fixture -- it's a marker on a *test* function declaring a
+        fixture dependency, not a fixture definition itself. Found as a
+        real false positive during Dataset B's manual validation review
+        (2026-07-16/17)."""
+        code = """
+@pytest.mark.usefixtures("some_fixture")
+def test_something():
+    assert do_the_thing()
+"""
+        assert_fixture_count(code, "python", 0)
+
+    def test_pytest_mark_parametrize_lazy_fixture_not_detected(self):
+        """@pytest.mark.parametrize(..., lazy_fixture(...)) contains
+        "pytest" and "fixture" (from "lazy_fixture" in the argument list)
+        without being @pytest.fixture -- same false-positive class as
+        usefixtures above."""
+        code = """
+@pytest.mark.parametrize("value", [lazy_fixture("some_fixture")])
+def test_something(value):
+    assert value is not None
+"""
+        assert_fixture_count(code, "python", 0)
+
 
 class TestModuleLevelFixtures:
     """Nose-style module/package-level setup and teardown are deliberately

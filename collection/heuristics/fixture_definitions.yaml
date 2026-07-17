@@ -30,13 +30,18 @@ python:
   pytest_decorator:
     framework: pytest
     fixture_type: pytest_decorator
-    # Decorator text must contain both substrings (case-sensitive), not an
-    # exact-name match -- this is what lets @pytest.fixture and
-    # @pytest_asyncio.fixture share one rule (see note below).
-    match_substrings: [pytest, fixture]
+    # Decorator text must match this regex, not just contain "pytest" and
+    # "fixture" as independent substrings anywhere -- that looser check
+    # also matched @pytest.mark.usefixtures(...) ("fixture" comes from
+    # "usefixtures") and @pytest.mark.parametrize(..., lazy_fixture(...))
+    # ("fixture" comes from "lazy_fixture" in the argument list), both real
+    # test-function markers, not fixture definitions. Confirmed as false
+    # positives via manual review of Dataset B's validation sample
+    # (2026-07-16/17) before this pattern was tightened.
+    match_pattern: 'pytest\w*\.fixture\b'
     note: >
-      Matches @pytest.fixture and @pytest_asyncio.fixture alike (both
-      contain "pytest" and "fixture" as substrings) -- pytest_asyncio
+      Matches @pytest.fixture and @pytest_asyncio.fixture alike ("fixture"
+      immediately follows "pytest" or "pytest_asyncio") -- pytest_asyncio
       fixtures are not a separate fixture_type. A factory fixture (a
       @pytest.fixture-decorated function that returns a callable) is
       detected once, as the outer function; the callable it returns is not
@@ -83,10 +88,11 @@ python:
         no source file in the repo to scan.
     - case: "Custom decorators that wrap @pytest.fixture internally (e.g. @my_fixture_wrapper)"
       reason: >
-        Matching is a literal substring check on the decorator's own text
-        (must contain both "pytest" and "fixture"); a differently-named
-        decorator whose *implementation* calls pytest.fixture() internally
-        does not itself contain those substrings at the call site and is
+        Matching is a literal pattern check on the decorator's own text
+        (must match match_pattern, i.e. contain "pytest.fixture" or
+        "pytest_asyncio.fixture"); a differently-named decorator whose
+        *implementation* calls pytest.fixture() internally does not itself
+        contain that pattern at the call site and is
         missed.
     - case: "Fixtures created dynamically (metaprogramming, exec(), runtime-generated decorators)"
       reason: >

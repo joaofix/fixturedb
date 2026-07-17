@@ -423,7 +423,7 @@ reproduced here for readability.
 ### Python
 
 - **Fixtures defined in installed pytest plugins / external packages** — detection is per-file AST scanning of the cloned repo; a fixture registered via `pytest_plugins` pointing at an installed package has no source file in the repo to scan.
-- **Custom decorators that wrap `@pytest.fixture` internally** (e.g. `@my_fixture_wrapper`) — matching is a literal substring check on the decorator's own text (must contain both `"pytest"` and `"fixture"`); a differently-named decorator whose *implementation* calls `pytest.fixture()` internally does not itself contain those substrings at the call site.
+- **Custom decorators that wrap `@pytest.fixture` internally** (e.g. `@my_fixture_wrapper`) — matching is a literal pattern check on the decorator's own text (must contain `pytest.fixture` or `pytest_asyncio.fixture`); a differently-named decorator whose *implementation* calls `pytest.fixture()` internally does not itself contain that pattern at the call site.
 - **Fixtures created dynamically** (metaprogramming, `exec()`, runtime-generated decorators) — AST-based detection requires the fixture to exist as literal source text.
 - **`mock.patch` (or any other non-fixture decorator) on an ordinary test function** — not a fixture and not matched by design; listed to make the boundary explicit.
 - **nose/nose2 `setup()`/`teardown()`/`setup_module()`/etc.** — scope decision: only pytest and unittest are covered, the two dominant, actively-maintained Python testing frameworks. nose has been unmaintained/deprecated for years; adding it back reopens the question of where the line is for every other niche framework, which isn't answerable.
