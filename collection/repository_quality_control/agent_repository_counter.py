@@ -30,6 +30,10 @@ from collection.config import EXCLUSION_KEYWORDS
 from collection.csv_adapter import get_adapter
 from collection.ephemeral_clone import temp_clone_commit_history
 from collection.logging_utils import get_logger
+from collection.repo_dedup_utils import (
+    find_duplicate_clusters,
+    write_duplicate_repos_csv,
+)
 from collection.utils import _normalize_language_filters
 
 logger = get_logger(__name__)
@@ -41,6 +45,14 @@ logger = get_logger(__name__)
 # for a toy run (root=TOY_ROOT) never touches the real datasets/ tree.
 GITHUB_SEARCH_RAW_DIR = paths.RAW_SEARCH_DIR
 OUTPUT_DIR = paths.stage_dir("a", "repos")
+
+# Lives alongside the raw SEART exports, not under datasets/a/ -- this check
+# (current-HEAD collisions via lastCommitSHA) is a property of the raw
+# candidate pool itself, not parameterized by any dataset-specific value
+# (contrast with dedupe_dataset_c_repos.py's duplicate_repos.csv, which is
+# specific to Dataset C's own HUMAN_CORPUS_CUTOFF_DATE and lives under
+# datasets/c/repos/ instead -- see that module's docstring).
+DUPLICATE_REPOS_ARTIFACT_PATH = GITHUB_SEARCH_RAW_DIR / "duplicate_repos_by_current_commit.csv"
 
 
 def csv_path_for_language(language: str, output_dir: Path = OUTPUT_DIR) -> Path:
@@ -166,6 +178,10 @@ def _read_repos_from_files(
                         topics_json = json.dumps(
                             [t for t in topics_raw.split(";") if t]
                         )
+                        try:
+                            github_id = int(row.get("id") or 0) or None
+                        except (TypeError, ValueError):
+                            github_id = None
                         repos.append(
                             {
                                 "full_name": name,
@@ -176,6 +192,18 @@ def _read_repos_from_files(
                                 "num_contributors": _to_int(contributors),
                                 "created_at": (row.get("createdAt") or "").strip(),
                                 "topics": topics_json,
+                                "github_id": github_id,
+                                # Current HEAD as of the SEART crawl -- used
+                                # only for the cheap, zero-cost duplicate
+                                # check below (_dedupe_by_last_commit_sha).
+                                # Not a substitute for a real cutoff-commit
+                                # check: catches only repos still identical
+                                # *today*, not ones that were mirrored for a
+                                # while and have since diverged. See that
+                                # function's docstring.
+                                "last_commit_sha": (
+                                    row.get("lastCommitSHA") or ""
+                                ).strip(),
                             }
                         )
             elif f.suffix in (".txt", ".list"):
@@ -291,6 +319,63 @@ def read_repo_list(
     return repos
 
 
+def _find_last_commit_sha_duplicates(repos: List[dict]) -> list[dict]:
+    """Return one removal row per repo that is still byte-identical, right
+    now, to another repo in the candidate pool -- checked via
+    `last_commit_sha` (SEART's `lastCommitSHA` column, that repo's current
+    HEAD as of the crawl), which is already present on every candidate for
+    free. Two repos sharing a commit SHA have identical git history up to
+    that commit by construction of how git hashes work -- this can never
+    produce a false-positive drop, only a false negative if a real duplicate
+    has since diverged. Pure -- no I/O; see `write_last_commit_sha_duplicates_csv()`
+    for the persisted version.
+
+    This is a cheap, automatic, *partial* fix, not a complete one: it only
+    catches repos still in sync *today*. A pair that was mirrored for a
+    while and has since diverged (e.g. one side going stale after an org
+    transfer) won't share a current `last_commit_sha` and is not caught here
+    -- that needs full in-window commit-set comparison, deliberately not
+    attempted (see internal-docs; same class of problem Dataset C's
+    `dedupe_dataset_c_repos.py` solves differently, for its own single-
+    snapshot case).
+    """
+    return find_duplicate_clusters(repos, key_fn=lambda r: r.get("last_commit_sha"))
+
+
+def write_last_commit_sha_duplicates_csv(
+    repos: List[dict], artifact_path: Path = DUPLICATE_REPOS_ARTIFACT_PATH
+) -> list[dict]:
+    """Compute and persist `_find_last_commit_sha_duplicates()`'s rows to
+    `artifact_path` (default: `github-search-raw/duplicate_repos_by_current_commit.csv`)
+    -- a static, consultable record of what this run found/would drop.
+    """
+    rows = _find_last_commit_sha_duplicates(repos)
+    write_duplicate_repos_csv(rows, artifact_path)
+    return rows
+
+
+def _dedupe_by_last_commit_sha(repos: List[dict]) -> List[dict]:
+    """Drop repos that are still byte-identical, right now, to another repo
+    in the candidate pool (see `_find_last_commit_sha_duplicates()`). Run
+    before the has_agent_config clone check so dropped duplicates never get
+    cloned at all.
+    """
+    rows = _find_last_commit_sha_duplicates(repos)
+    if not rows:
+        return repos
+    to_remove = {r["repo_to_remove"] for r in rows}
+    survivors = [
+        repo for repo in repos if (repo.get("full_name") or repo.get("repo_name")) not in to_remove
+    ]
+    logger.info(
+        "[dedupe-a] Dropped %d repos with a currently-identical duplicate "
+        "elsewhere in the candidate pool (%d remaining)",
+        len(rows),
+        len(survivors),
+    )
+    return survivors
+
+
 def _process_single(entry: dict, since: str) -> Optional[dict]:
     full_name = entry.get("full_name")
     try:
@@ -373,6 +458,10 @@ def run(
     if not repos:
         print(f"No repos found in {source_dir}.")
         return 0
+    write_last_commit_sha_duplicates_csv(
+        repos, source_dir / "duplicate_repos_by_current_commit.csv"
+    )
+    repos = _dedupe_by_last_commit_sha(repos)
     limit = int(limit or 0)
 
     to_process: list[dict] = []
