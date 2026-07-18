@@ -268,13 +268,14 @@ Chai/sinon-chai usage, and the structural fact that anything mocked outside
 a fixture's own body — most notably Jest's conventional top-level
 `jest.mock(...)` — is invisible to this detector).
 
-Each `mock_patterns` entry also carries a `category`, classifying the
-detected construct into the classic test-double taxonomy (dummy/stub/spy/
-mock/fake, per Meszaros), stored in the `mock_usages.category` column — see
-[Fixture Detection Logic](detection.md) for the classification methodology
-(keyword match first, then a small, individually-justified manual-override
-list for the handful of constructs whose name contains no category
-keyword) and why `dummy` is deliberately never assigned.
+Each detected fixture is also classified into the classic test-double
+taxonomy (dummy/stub/spy/mock/fake, per Meszaros), stored in the
+`mock_usages.category` column — see [Fixture Detection Logic](detection.md)
+for the classification methodology: a case-insensitive keyword scan of the
+fixture's own full body text, in priority order, falling back to `mock`
+when no keyword is found. `mock_category_keywords` (a separate top-level
+section from `mock_patterns`, which only detects that a mock construct
+exists) holds this keyword table.
 
 `tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`
 parametrizes over all 30 `mock_patterns` entries and asserts no other

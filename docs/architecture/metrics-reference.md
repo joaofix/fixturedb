@@ -136,12 +136,13 @@ conventional top-level `jest.mock(...)`). Per-mock detail (framework, test-doubl
 interaction count, source snippet) is stored one row per mock in the `mock_usages` table — see
 [Database Schema § mock_usages](database-schema.md#mock_usages).
 
-Each match is also classified into the classic test-double taxonomy (Meszaros) — `dummy`/`stub`/`spy`/
-`mock`/`fake` — by keyword-matching the construct's own name, with a small set of individually-justified
-manual overrides for constructs whose name contains no category keyword (e.g. `monkeypatch` → `stub`).
-`dummy` is deliberately never assigned — distinguishing it from a mock needs data-flow analysis of how
-the double is used afterward, not a keyword match. Full framework list and pattern catalog:
-[detection.md § Mock Detection](detection.md#mock-detection).
+Each fixture is also classified into the classic test-double taxonomy (Meszaros) — `dummy`/`stub`/`spy`/
+`mock`/`fake` — by scanning the fixture's own full body text, case-insensitively, for one of the five
+category terms in priority order (dummy > stub > spy > fake > mock; falls back to `mock`, the
+least-specific term, when none is found). One category is computed per fixture and applied to every mock
+recorded in it. This is the same identifier-keyword method used in related work: `dummy` is a real,
+reachable category (e.g. a `dummy_request = Mock()` fixture), not a value that can never appear. Full
+framework list and pattern catalog: [detection.md § Mock Detection](detection.md#mock-detection).
 
 Mocks are scoped consistently to the fixture's own function node (`_build_result()`), including for
 Python's `pytest_decorator` type — a mock construct sitting purely in a decorator's own arguments

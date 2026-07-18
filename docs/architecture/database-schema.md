@@ -110,7 +110,7 @@ for the exact pattern/framework/category catalog.
 | `fixture_id` | INTEGER | Foreign key to `fixtures.id` |
 | `repo_id` | INTEGER | Foreign key to `repositories.id` |
 | `framework` | TEXT | Mocking framework or helper family (e.g. `unittest_mock`, `sinon`, `mockito`) |
-| `category` | TEXT | Classic test-double taxonomy (Meszaros): `dummy` \| `stub` \| `spy` \| `mock` \| `fake` — `dummy` is never populated by design (see detection.md) |
+| `category` | TEXT | Classic test-double taxonomy (Meszaros): `dummy` \| `stub` \| `spy` \| `mock` \| `fake` — one value computed per fixture via an identifier-keyword scan, applied to every mock in it (see detection.md) |
 | `target_identifier` | TEXT | Identifier passed to the mock call, if extractable (empty string otherwise) |
 | `num_interactions_configured` | INTEGER | Number of interactions configured on the mock |
 | `raw_snippet` | TEXT | Original source snippet for the mock usage |
