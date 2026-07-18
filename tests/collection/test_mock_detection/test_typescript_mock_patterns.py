@@ -54,9 +54,10 @@ class TestTypeScriptVitestPatterns:
     """Vitest mock patterns (previously had no dedicated test coverage)"""
 
     def test_vi_fn(self):
-        """vi.fn() -- category is a documented override ("fn" contains no
-        category keyword; Vitest's docs also call these "mock functions",
-        same reasoning as jest.fn())."""
+        """vi.fn() -- "fn" itself contains no category keyword, but the
+        trailing "callback.mockReturnValue(42)" falls inside the scanned
+        snippet's after-window, so category resolves to "mock" from
+        there."""
         code = """
 beforeEach(() => {
     const callback = vi.fn();
@@ -69,7 +70,8 @@ beforeEach(() => {
         assert fixture.mocks[0].category == "mock"
 
     def test_vi_mock(self):
-        """vi.mock('./module') -- category resolves via keyword match."""
+        """vi.mock('./module') -- category "mock" is a substring of
+        "vi.mock(" itself."""
         code = """
 beforeEach(() => {
     vi.mock('./service');

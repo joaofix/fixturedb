@@ -11,52 +11,48 @@
 #
 # Test-double category classification
 # ====================================
-# Each mock_patterns entry also carries a `category`, classifying the
-# construct into the classic test-double taxonomy (Meszaros; see also
-# Fowler's "Mocks Aren't Stubs"): dummy, stub, spy, mock, fake. Developers
-# and the testing literature both use "mock" loosely as the informal name
-# for the whole family, so it is treated as the least specific category,
-# not the default -- a more specific keyword always wins.
+# mock_patterns below only detects THAT a mock construct exists (which
+# framework, what's being targeted) -- it no longer carries the
+# construct's category. Category (dummy/stub/spy/mock/fake -- the classic
+# Meszaros taxonomy; see also Fowler's "Mocks Aren't Stubs") is computed at
+# detection time, per match, by scanning the actual matched code (the
+# snippet around the call plus its captured target identifier) for one of
+# `mock_category_keywords` below, case-insensitively, substring match, in
+# list order (first match wins). This is deliberately the same method used
+# in related work: parse the code, check whether any nearby identifier
+# contains one of the category terms.
 #
-# Method: search the construct's own fixed identifier (not the captured
-# target_identifier, which is often a variable/class name, not a category
-# word) for one of the five category keywords, case-insensitively, in
-# priority order dummy > stub > spy > fake > mock. Most entries resolve
-# this way (e.g. sinon.spy -> spy, jest.spyOn -> spy, Mockito.mock -> mock).
-#
-# For the handful of constructs whose identifier contains no category
-# keyword at all (create_autospec, bare patch()/patch.object(), monkeypatch,
-# jest.fn()/vi.fn(), sinon.replace(), gomock.NewController, testify's
-# .On()), the category is a manual override, each justified inline via
-# `category_override_reason` from that construct's actual documented
-# behavior -- not a mechanical fallback, since silently defaulting an
-# unmatched construct to "mock" would overstate how many detected doubles
-# actually verify interactions.
-#
-# "dummy" is deliberately never assigned: a dummy is defined by how it's
-# *used* (passed in but never configured or verified), not by which
-# constructor created it -- the same Mock()/MagicMock() call can be a
-# dummy, stub, or full mock depending on what the fixture does with it
-# afterwards. Distinguishing that reliably would require data-flow
-# analysis of the fixture body, not a simple keyword/regex match, so per
-# this project's preference for high-precision, simple heuristics over
-# completeness, dummy detection is not attempted. The value remains a
-# valid category (for taxonomic completeness) but never appears in the
-# collected data.
+# "mock" is developers' and the testing literature's own informal name for
+# the whole family, so it is listed last and doubles as the fallback when
+# no more specific term is found nearby -- not a special case, just the
+# least specific term. Unlike the old per-pattern-entry static category,
+# `dummy` is now a real, reachable outcome: a construct assigned to an
+# identifier containing "dummy" (e.g. `dummy_request = Mock()`) is
+# classified dummy, since the classification is driven by what the code
+# actually calls the thing, not by which library function created it.
+mock_category_keywords:
+  - category: dummy
+    terms: [dummy, dummies]
+  - category: stub
+    terms: [stub]
+  - category: spy
+    terms: [spy, spies]
+  - category: fake
+    terms: [fake]
+  - category: mock
+    terms: [mock]
 
 # Each entry: pattern (regex, applied case-insensitively against the
-# fixture's own source text) + the mock framework it signals + a test-double
-# `category` (see "Test-double category classification" below). Order
-# doesn't affect results -- every pattern is scanned against every fixture
-# body, so a fixture can match more than one framework/pattern.
+# fixture's own source text) + the mock framework it signals. Category is
+# no longer part of this table (see "Test-double category classification"
+# above). Order doesn't affect results -- every pattern is scanned against
+# every fixture body, so a fixture can match more than one framework/pattern.
 mock_patterns:
   # Python
   - pattern: 'mock\.patch\s*\(\s*[''"]([^''"]+)[''"]'
     framework: unittest_mock
-    category: mock
   - pattern: 'mock\.patch\.object\s*\(\s*(\w+)'
     framework: unittest_mock
-    category: mock
     note: >
       mock.patch.object(target, 'attr', ...) -- a distinct call shape from
       mock.patch('dotted.path'); previously missed entirely since the plain
@@ -64,18 +60,10 @@ mock_patterns:
       which .object( breaks.
   - pattern: 'create_autospec\s*\(\s*(\w+)'
     framework: unittest_mock
-    category: mock
-    category_override_reason: >
-      "create_autospec" contains no category keyword; it produces
-      Mock/NonCallableMock instances constrained to a spec, per the
-      unittest.mock docs' own "autospeccing... creates mock objects"
-      description.
   - pattern: 'mocker\.patch\s*\(\s*[''"]([^''"]+)[''"]'
     framework: pytest_mock
-    category: mock
   - pattern: 'mocker\.patch\.object\s*\(\s*(\w+)'
     framework: pytest_mock
-    category: mock
     note: "pytest-mock's mocker.patch.object -- same gap as mock.patch.object above."
   # Bare patch(...)/patch.object(...), i.e. `from unittest.mock import patch`
   # then calling it unqualified -- at least as common as the mock.patch(...)
@@ -84,12 +72,8 @@ mock_patterns:
   # two patterns above.
   - pattern: '(?<!mock\.)(?<!mocker\.)\bpatch\s*\(\s*[''"]([^''"]+)[''"]'
     framework: unittest_mock
-    category: mock
-    category_override_reason: "Bare \"patch(\" contains no keyword; unittest.mock.patch installs a MagicMock in place of the target by default."
   - pattern: '(?<!mock\.)(?<!mocker\.)\bpatch\.object\s*\(\s*(\w+)'
     framework: unittest_mock
-    category: mock
-    category_override_reason: "Same reasoning as the bare patch( override above."
   # \b before the bare "Mock(" alternative matters: without it, this also
   # matches as a substring inside any identifier ending in "...Mock(" --
   # notably Java's EasyMock.createMock(...) and Kotlin/MockK's mock(...)
@@ -100,7 +84,6 @@ mock_patterns:
   # tried at a later position within the same word).
   - pattern: 'MagicMock\s*\(|\bMock\s*\(|AsyncMock\s*\('
     framework: unittest_mock
-    category: mock
   # pytest's built-in monkeypatch fixture. Not a mock *library* the way the
   # others are, but the same test-isolation-via-patching concept the
   # num_mocks metric is meant to capture, and previously not covered at all.
@@ -109,27 +92,15 @@ mock_patterns:
   # (object reference, dotted string, or plain name) to extract reliably.
   - pattern: 'monkeypatch\.(setattr|delattr|setenv|delenv|setitem|delitem)\s*\('
     framework: pytest_monkeypatch
-    category: stub
-    category_override_reason: >
-      "monkeypatch" contains no category keyword. Classified as stub, not
-      mock: it substitutes a predetermined value/behavior for the
-      duration of a test (Meszaros' stub definition) and pytest exposes
-      no built-in call-verification API for it the way Mock objects have
-      assert_called_with -- any verification is left entirely to the
-      caller's own assertions, unlike a mock.
   # Java
   - pattern: 'Mockito\.mock\s*\(\s*(\w+)\.class'
     framework: mockito
-    category: mock
   - pattern: '@Mock\b'
     framework: mockito
-    category: mock
   - pattern: 'Mockito\.spy\s*\(\s*(\w+)'
     framework: mockito
-    category: spy
   - pattern: 'EasyMock\.createMock\s*\(\s*(\w+)\.class'
     framework: easymock
-    category: mock
   # Static-import Mockito usage (`import static org.mockito.Mockito.mock;`
   # then a bare `mock(Foo.class)` call) -- NOT Kotlin's MockK, despite an
   # earlier version of this pattern being labeled that way. MockK's own
@@ -143,74 +114,44 @@ mock_patterns:
   # site under both patterns.
   - pattern: '(?<!\.)\bmock\s*\(\s*(\w+)\.class'
     framework: mockito
-    category: mock
   # JavaScript / TypeScript
   - pattern: 'jest\.fn\s*\('
     framework: jest
-    category: mock
-    category_override_reason: '"fn" contains no category keyword; Jest''s own docs call these "mock functions" (verifiable via toHaveBeenCalledWith etc.).'
   - pattern: 'jest\.spyOn\s*\('
     framework: jest
-    category: spy
   - pattern: 'jest\.mock\s*\(\s*[''"]([^''"]+)[''"]'
     framework: jest
-    category: mock
   - pattern: 'jest\.mocked\s*\(\s*(\w+)'
     framework: jest
-    category: mock
   - pattern: 'jest\.createMockFromModule\s*\(\s*[''"]([^''"]+)[''"]'
     framework: jest
-    category: mock
   # sinon.(stub|spy|mock|fake|replace) used to be one alternation; split so
-  # each verb can carry its own category (a single YAML entry can't map to
-  # 5 different categories).
+  # each verb keeps its own regex entry (its own call site should still be
+  # counted as a distinct match even though category no longer lives here).
   - pattern: 'sinon\.stub\s*\('
     framework: sinon
-    category: stub
   - pattern: 'sinon\.spy\s*\('
     framework: sinon
-    category: spy
   - pattern: 'sinon\.mock\s*\('
     framework: sinon
-    category: mock
   - pattern: 'sinon\.fake\s*\('
     framework: sinon
-    category: fake
   - pattern: 'sinon\.replace\s*\('
     framework: sinon
-    category: fake
-    category_override_reason: '"replace" contains no category keyword; Sinon''s own docs describe it as replacing "obj.method with the fake."'
   - pattern: 'sinon\.createStubInstance\s*\(\s*(\w+)'
     framework: sinon
-    category: stub
   - pattern: 'vi\.fn\s*\('
     framework: vitest
-    category: mock
-    category_override_reason: '"fn" contains no category keyword; same reasoning as jest.fn() above (Vitest'' docs also call these "mock functions").'
   - pattern: 'vi\.mock\s*\(\s*[''"]([^''"]+)[''"]'
     framework: vitest
-    category: mock
   # Go (detector_go.py is dead code / not wired in -- kept for parity with
   # the original pattern table in case Go detection is ever enabled)
   - pattern: 'gomock\.NewController'
     framework: gomock
-    category: mock
-    category_override_reason: >
-      "NewController" contains no category keyword; gomock is fundamentally
-      a mock-object-generation and expectation-verification framework, and
-      the controller is what verifies those expectations.
   - pattern: 'testify/mock'
     framework: testify_mock
-    category: mock
   - pattern: '\.On\s*\(\s*[''"](\w+)[''"]'
     framework: testify_mock
-    category: mock
-    category_override_reason: >
-      ".On(" contains no category keyword; it's testify's mock.Mock
-      struct's stubbing API, and the same struct also supports
-      AssertExpectations() interaction verification -- part of the same
-      "mock" construct as the testify/mock import above, not a separate
-      double.
 
 # Known gaps -- documented for the same reason fixture_definitions.yaml
 # documents fixture-detection exclusions: absence should be a decision a

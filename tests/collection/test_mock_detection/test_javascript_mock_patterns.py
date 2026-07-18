@@ -18,9 +18,9 @@ class TestJavaScriptJestMockPatterns:
     """Jest mock patterns"""
 
     def test_jest_mock_function(self):
-        """Jest jest.fn() mock in beforeEach -- category is a documented
-        override (\"fn\" contains no category keyword; Jest's own docs call
-        these \"mock functions\")."""
+        """Jest jest.fn() mock in beforeEach -- category "mock" comes from
+        the "mockCallback" identifier itself, in the scanned snippet around
+        the call ("fn" is not a category keyword)."""
         code = """
 describe('Module', () => {
     let mockCallback;
@@ -37,8 +37,9 @@ describe('Module', () => {
         assert fixture.mocks[0].category == "mock"
 
     def test_jest_spy_on(self):
-        """jest.spyOn(...) should be classified as the "spy" category
-        (keyword-matched directly from the construct's own name)."""
+        """jest.spyOn(...) should be classified as the "spy" category --
+        "spy" is a substring of "spyOn" itself, in the scanned snippet
+        (no assigned variable name is needed here)."""
         code = """
 beforeEach(() => {
     jest.spyOn(console, 'log');
@@ -150,7 +151,8 @@ beforeEach(function() {
 
     def test_sinon_mock(self):
         """sinon.mock(obj) -- Sinon's own distinct "mock" API (as opposed
-        to stub/spy) -- should be detected, category "mock"."""
+        to stub/spy) -- should be detected, category "mock" (a substring of
+        "sinon.mock(" itself)."""
         code = """
 beforeEach(function() {
     const mocked = sinon.mock(obj);
@@ -165,8 +167,14 @@ beforeEach(function() {
     def test_sinon_fake_and_replace(self):
         """sinon.fake() and sinon.replace() were previously missing from
         the sinon alternation (only stub|spy|mock were covered). Both are
-        classified as the "fake" test-double category -- sinon.replace per
-        its own docs ("replaces obj.method with the fake")."""
+        classified as the "fake" test-double category here -- "fake" is a
+        substring of "sinon.fake(" directly, and sinon.replace(...)'s own
+        call text has no category keyword, but the two calls sit close
+        enough together in this fixture that "fake" from the neighboring
+        sinon.fake() call falls inside its scanned snippet window too. A
+        sinon.replace(...) call far from any "fake"-containing text would
+        classify as the "mock" fallback instead -- a known quirk of a
+        fixed-size snippet window, not a per-call-name rule."""
         code = """
 beforeEach(function() {
     const f = sinon.fake();

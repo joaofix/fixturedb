@@ -103,9 +103,8 @@ def svc():
 
     def test_create_autospec(self):
         """create_autospec(RealClass) should be detected as unittest_mock,
-        category "mock" -- a documented override since "create_autospec"
-        contains no category keyword itself (see category_override_reason
-        in feature_extraction_patterns.yaml)."""
+        category "mock" -- the fallback, since neither "create_autospec"
+        nor "RealApi" contains any of the five category keywords."""
         code = """
 @pytest.fixture
 def api():
@@ -170,9 +169,11 @@ def patched(mocker):
         """pytest's built-in monkeypatch fixture (setattr/setenv/etc.) is a
         different concept from a mock *library*, but the same
         test-isolation-via-patching idea num_mocks is meant to capture --
-        previously not covered at all. Category is "stub" (a documented
-        override): monkeypatch substitutes predetermined behavior with no
-        built-in call-verification API, unlike a mock."""
+        previously not covered at all. Category is "mock", the generic
+        fallback: neither "monkeypatch" nor "setenv" contains any of the
+        five category keywords, so classification (a keyword scan of the
+        matched snippet/target, not a per-pattern override) falls back to
+        the least-specific term."""
         code = """
 @pytest.fixture
 def config(monkeypatch):
@@ -183,7 +184,7 @@ def config(monkeypatch):
         assert fixture.num_parameters >= 1
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "pytest_monkeypatch"
-        assert fixture.mocks[0].category == "stub"
+        assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "setenv"
 
 

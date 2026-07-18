@@ -238,18 +238,52 @@ SNIPPET_CONTEXT_AFTER = 60  # characters after match in mock detection
 # Mock detection (language-agnostic heuristic pass)
 # ---------------------------------------------------------------------------
 
-MOCK_PATTERNS: list[tuple[str, str, str]] = [
-    (entry["pattern"], entry["framework"], entry["category"])
-    for entry in _PATTERNS["mock_patterns"]
+MOCK_PATTERNS: list[tuple[str, str]] = [
+    (entry["pattern"], entry["framework"]) for entry in _PATTERNS["mock_patterns"]
 ]
 
 MOCK_INTERACTION_PATTERN = "|".join(_PATTERNS["mock_interaction_keywords"])
 
+# (category, [terms]) in priority order -- first term found wins. See
+# feature_extraction_patterns.yaml's "Test-double category classification"
+# for the method and rationale (matches the identifier-keyword approach
+# used in related work).
+MOCK_CATEGORY_KEYWORDS: list[tuple[str, list[str]]] = [
+    (entry["category"], entry["terms"]) for entry in _PATTERNS["mock_category_keywords"]
+]
+
+
+def _classify_mock_category(text: str) -> str:
+    """Return the test-double category for *text*, by case-insensitive
+    substring match against MOCK_CATEGORY_KEYWORDS in priority order.
+    Falls back to "mock" (the least-specific, catch-all term) when no
+    keyword is found.
+
+    Callers pass the *whole fixture body*, not just a match's own nearby
+    snippet -- deliberately: a mock is frequently created and named several
+    lines away from where it's instantiated (e.g. a `dummy_request`
+    fixture that just does `return Mock()`, with no keyword anywhere near
+    the call itself), so a small fixed-size window around the match misses
+    real identifiers a whole-body scan catches. This matches the
+    identifier-keyword method used in related work, which parses a whole
+    code block for identifiers rather than a windowed excerpt around one
+    call site. The one precision cost: if a single fixture legitimately
+    creates two differently-named mocks (e.g. both a `dummy_x` and a
+    `real_service_mock`), both still get the same category, since this
+    scans the fixture once, not per match.
+    """
+    lowered = text.lower()
+    for category, terms in MOCK_CATEGORY_KEYWORDS:
+        if any(term in lowered for term in terms):
+            return category
+    return "mock"
+
 
 def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
     text = _source(node, src_bytes)
+    category = _classify_mock_category(text)
     found = []
-    for pattern, framework, category in MOCK_PATTERNS:
+    for pattern, framework in MOCK_PATTERNS:
         for m in re.finditer(pattern, text):
             target = m.group(1) if m.lastindex and m.lastindex >= 1 else ""
             snippet_start = max(m.start() - SNIPPET_CONTEXT_BEFORE, 0)

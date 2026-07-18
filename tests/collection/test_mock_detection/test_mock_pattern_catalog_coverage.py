@@ -91,13 +91,13 @@ def test_every_catalog_pattern_has_a_sample():
 @pytest.mark.parametrize(
     "entry",
     MOCK_PATTERNS_CATALOG,
-    ids=[f"{e['framework']}:{e['category']}:{e['pattern'][:30]}" for e in MOCK_PATTERNS_CATALOG],
+    ids=[f"{e['framework']}:{e['pattern'][:30]}" for e in MOCK_PATTERNS_CATALOG],
 )
 def test_pattern_matches_its_own_sample(entry):
     """Each pattern must actually match the sample written for it."""
     sample = SAMPLES[entry["pattern"]]
     assert re.search(entry["pattern"], sample), (
-        f"{entry['framework']}/{entry['category']} pattern {entry['pattern']!r} "
+        f"{entry['framework']} pattern {entry['pattern']!r} "
         f"did not match its own sample {sample!r}"
     )
 
@@ -105,23 +105,22 @@ def test_pattern_matches_its_own_sample(entry):
 @pytest.mark.parametrize(
     "entry",
     MOCK_PATTERNS_CATALOG,
-    ids=[f"{e['framework']}:{e['category']}:{e['pattern'][:30]}" for e in MOCK_PATTERNS_CATALOG],
+    ids=[f"{e['framework']}:{e['pattern'][:30]}" for e in MOCK_PATTERNS_CATALOG],
 )
 def test_sample_does_not_trigger_any_other_pattern(entry):
     """No sample should be matched by more than its own intended pattern --
-    a collision would mean two frameworks/categories get recorded for one
-    real mock call (double-counting num_mocks) or a wrong category is
-    assigned. This is exactly the class of bug found in
-    MagicMock|Mock|AsyncMock vs EasyMock.createMock(...) and static-import
-    mock(X.class) vs Mockito.mock(X.class)."""
+    a collision would mean two frameworks get recorded for one real mock
+    call (double-counting num_mocks). This is exactly the class of bug
+    found in MagicMock|Mock|AsyncMock vs EasyMock.createMock(...) and
+    static-import mock(X.class) vs Mockito.mock(X.class)."""
     sample = SAMPLES[entry["pattern"]]
     matches = [
-        (other["pattern"], other["framework"], other["category"])
+        (other["pattern"], other["framework"])
         for other in MOCK_PATTERNS_CATALOG
         if re.search(other["pattern"], sample)
     ]
-    assert matches == [(entry["pattern"], entry["framework"], entry["category"])], (
-        f"sample {sample!r} (intended for {entry['framework']}/{entry['category']}) "
+    assert matches == [(entry["pattern"], entry["framework"])], (
+        f"sample {sample!r} (intended for {entry['framework']}) "
         f"was also matched by: {[m for m in matches if m[0] != entry['pattern']]}"
     )
 
@@ -130,8 +129,6 @@ def test_mock_patterns_constant_matches_yaml_catalog():
     """detector_shared.MOCK_PATTERNS (what actually runs at detection time)
     must be derived from the same YAML entries this test parametrizes
     over, not a stale cached copy."""
-    from_yaml = {
-        (e["pattern"], e["framework"], e["category"]) for e in MOCK_PATTERNS_CATALOG
-    }
+    from_yaml = {(e["pattern"], e["framework"]) for e in MOCK_PATTERNS_CATALOG}
     from_constant = set(MOCK_PATTERNS)
     assert from_yaml == from_constant

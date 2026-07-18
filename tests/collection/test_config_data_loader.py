@@ -150,6 +150,7 @@ def test_feature_extraction_patterns_has_expected_top_level_sections():
     assert set(patterns) == {
         "mock_patterns",
         "mock_patterns_excluded",
+        "mock_category_keywords",
         "mock_interaction_keywords",
         "external_call_patterns",
         "object_instantiation_patterns",
@@ -184,46 +185,43 @@ def test_mock_patterns_cover_expected_frameworks():
 VALID_MOCK_CATEGORIES = {"dummy", "stub", "spy", "mock", "fake"}
 
 
-def test_mock_patterns_have_valid_category():
-    """Every mock_patterns entry must classify into the five-way classic
-    test-double taxonomy (Meszaros): dummy/stub/spy/mock/fake."""
+def test_mock_patterns_no_longer_carry_category():
+    """Category classification moved off individual mock_patterns entries
+    and into a runtime identifier-keyword scan (see
+    collection.detector_shared._classify_mock_category and
+    mock_category_keywords below) -- guardrail against silently
+    reintroducing a static per-entry category."""
     for entry in load_feature_extraction_patterns()["mock_patterns"]:
-        assert entry["category"] in VALID_MOCK_CATEGORIES, entry
+        assert "category" not in entry
+        assert "category_override_reason" not in entry
 
 
-def test_dummy_category_is_never_assigned():
-    """Dummy detection requires data-flow analysis (is this double ever
-    configured/verified?), not a simple keyword match -- per this project's
-    preference for high-precision simple heuristics over completeness, no
-    pattern should claim to detect it. If this ever fails, make sure the
-    new "dummy" assignment is backed by a real, simple, high-precision
-    signal, not a guess."""
-    categories = {e["category"] for e in load_feature_extraction_patterns()["mock_patterns"]}
-    assert "dummy" not in categories
+def test_mock_category_keywords_cover_the_full_taxonomy():
+    """mock_category_keywords must classify into the five-way classic
+    test-double taxonomy (Meszaros): dummy/stub/spy/mock/fake -- and, unlike
+    the old per-pattern static category, "dummy" is now a real, reachable
+    category (see test_mock_detection/test_mock_category_classification.py)."""
+    categories = {e["category"] for e in load_feature_extraction_patterns()["mock_category_keywords"]}
+    assert categories == VALID_MOCK_CATEGORIES
 
 
-def test_mock_patterns_category_overrides_are_documented():
-    """Entries without a category keyword in their own construct name
-    (i.e. the category isn't self-evident from the pattern) must carry a
-    category_override_reason explaining the classification."""
-    keyword_by_category = {
-        "stub": "stub",
-        "spy": "spy",
-        "fake": "fake",
-        "mock": "mock",
-    }
-    # Strip negative-lookbehind assertions (e.g. "(?<!mock\.)") before
-    # searching for a keyword -- otherwise the bare-patch entries would
-    # look like they self-evidently say "mock" just because the assertion
-    # excluding mock./mocker. happens to contain that substring.
-    lookbehind_re = re.compile(r"\(\?<[!=][^)]*\)")
+def test_mock_category_keywords_priority_order_is_most_specific_first():
+    """"mock" is the informal, least-specific term (Meszaros/Fowler), so it
+    must be checked last -- a more specific keyword should always win when
+    an identifier contains more than one."""
+    categories_in_order = [
+        e["category"] for e in load_feature_extraction_patterns()["mock_category_keywords"]
+    ]
+    assert categories_in_order[-1] == "mock"
+    assert categories_in_order[0] == "dummy"
 
-    for entry in load_feature_extraction_patterns()["mock_patterns"]:
-        keyword = keyword_by_category.get(entry["category"])
-        construct_text = lookbehind_re.sub("", entry["pattern"]).lower()
-        pattern_has_keyword = keyword is not None and keyword in construct_text
-        if not pattern_has_keyword:
-            assert entry.get("category_override_reason", "").strip(), entry
+
+def test_mock_category_keywords_terms_are_nonempty_lowercase():
+    for entry in load_feature_extraction_patterns()["mock_category_keywords"]:
+        assert entry["category"] in VALID_MOCK_CATEGORIES
+        assert entry["terms"], entry
+        for term in entry["terms"]:
+            assert term == term.lower() and term.strip(), entry
 
 
 def test_mock_patterns_are_valid_regex_with_framework():
