@@ -528,3 +528,41 @@ def test_human_fixtures_dir_no_versioned_subfolder_when_tag_empty():
     """With empty COLLECTION_OUTPUT_TAG, dir points directly to datasets/b/fixtures."""
     root = _human_fixtures_dir("b")
     assert str(root).endswith(str(Path("datasets") / "b" / "fixtures"))
+
+
+def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
+    """Regression test: `extract-fixtures --dataset b --force` against an
+    already-completed DB used to silently produce 0 fixtures. --force only
+    bypassed the CLI's own "database already has fixture rows" check
+    (collection/__main__.py) -- it was never threaded into
+    HumanCorpusCollector.run(), whose own completion-checkpoint gate fired
+    regardless and returned immediately. Without force, the checkpoint
+    must still gate; with force=True, it must not."""
+    from collection.db import db_session, initialise_db, mark_global_checkpoint
+
+    output_db = tmp_path / "b.db"
+    initialise_db(output_db)
+    with db_session(output_db) as conn:
+        mark_global_checkpoint(conn, "human_within_complete:all")
+
+    fake_repo = {"full_name": "org/repo", "language": "python"}
+    monkeypatch.setattr(
+        "collection.human_corpus.select_human_corpus_repositories",
+        lambda *a, **kw: [fake_repo],
+    )
+
+    processed_languages = []
+    monkeypatch.setattr(
+        HumanCorpusCollector,
+        "_process_human_within_language",
+        lambda self, **kw: processed_languages.append(kw["current_lang"]),
+    )
+
+    collector = HumanCorpusCollector(output_db=output_db, repo_qc_dir=tmp_path)
+
+    stats, _ = collector.run(force=False)
+    assert processed_languages == []
+    assert stats.repos_scanned == 0
+
+    stats, _ = collector.run(force=True)
+    assert processed_languages == ["python"]

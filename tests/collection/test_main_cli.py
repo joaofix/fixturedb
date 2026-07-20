@@ -290,6 +290,7 @@ class TestExtractFixtures:
             repos_per_language=None,
             language=None,
             workers=16,
+            force=False,
         )
 
     def test_dataset_c_resolves_defaults(self):

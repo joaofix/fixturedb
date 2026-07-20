@@ -251,6 +251,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
             repos_per_language=args.repos_per_language,
             languages=args.languages,
             language=args.language,
+            force=args.force,
         )
         logger.info(
             f"Dataset A extraction complete: {stats.fixtures_collected} fixtures in {db_path}"
@@ -278,6 +279,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
             repos_per_language=args.repos_per_language,
             language=args.language,
             workers=args.workers,
+            force=args.force,
         )
         logger.info(
             f"Dataset B extraction complete: {stats.fixtures_collected} fixtures in {db_path}"

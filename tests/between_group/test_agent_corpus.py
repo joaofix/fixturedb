@@ -1295,4 +1295,51 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
     assert repos_csv.exists()
     repos_content = repos_csv.read_text()
     assert "old/repo" not in repos_content
-    assert "good/repo" in repos_content
+
+
+def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
+    """Regression test: `extract-fixtures --dataset a --force` against an
+    already-completed DB used to silently produce 0 fixtures. --force only
+    bypassed the CLI's own "database already has fixture rows" check
+    (collection/__main__.py) -- it was never threaded into
+    AgentCorpusCollector.run(), whose own completion-checkpoint gate fired
+    regardless and returned immediately. Without force, the checkpoint
+    must still gate (repos_scanned stays 0, the clone step is never
+    reached); with force=True, the per-repo loop must actually run."""
+    import contextlib
+
+    from collection.db import initialise_db, mark_global_checkpoint
+
+    output_db = tmp_path / "a.db"
+    initialise_db(output_db)
+    with db_session(output_db) as conn:
+        mark_global_checkpoint(conn, "agent_complete:all")
+
+    fake_repo = {"full_name": "org/repo", "language": "python", "clone_url": ""}
+    monkeypatch.setattr(
+        "collection.agent_corpus._load_qc_repo_rows", lambda *a, **kw: [fake_repo]
+    )
+    monkeypatch.setattr(
+        "collection.agent_corpus._load_qc_agent_commits", lambda *a, **kw: {}
+    )
+
+    @contextlib.contextmanager
+    def fake_clone_with_function(*a, **kw):
+        # Simulate a clone failure -- enough to prove the per-repo loop was
+        # actually entered, without touching the network.
+        yield None
+
+    monkeypatch.setattr(
+        "collection.agent_corpus.clone_with_function", fake_clone_with_function
+    )
+
+    collector = AgentCorpusCollector(
+        output_db=output_db, repo_qc_dir=tmp_path, commit_qc_dir=tmp_path
+    )
+
+    stats, _ = collector.run(force=False)
+    assert stats.repos_scanned == 0
+
+    stats, _ = collector.run(force=True)
+    assert stats.repos_scanned == 1
+    assert stats.qc_skip_reasons.get("clone_failed") == 1

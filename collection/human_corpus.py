@@ -370,6 +370,7 @@ class HumanCorpusCollector:
         only_write_test_commits: bool = False,
         workers: Optional[int] = None,
         seed: int = 42,
+        force: bool = False,
     ) -> tuple[HumanCorpusStats, Path]:
         """
         Collect human corpus with sequential language processing and progress tracking.
@@ -382,6 +383,14 @@ class HumanCorpusCollector:
             language: Optional filter to single language
             workers: Optional number of parallel workers. None uses the configured default.
             seed: Random seed (for reproducibility)
+            force: Re-process every selected repository even if a prior run's
+                completion checkpoint says this language (or all languages)
+                are already done. Without this, a re-run against a DB that
+                already finished collection returns 0 fixtures immediately,
+                regardless of the caller having asked for a fresh extraction
+                (e.g. via `extract-fixtures --force`) -- inserts downstream
+                are idempotent (`ON CONFLICT DO NOTHING`/upsert), so forcing
+                a re-run is safe and does not duplicate rows.
 
         Returns:
             (stats, output_db_path)
@@ -442,36 +451,41 @@ class HumanCorpusCollector:
             repos_by_language[lang].append(repo)
 
         completed_languages: set[str] = set()
-        with db_session(self.output_db) as conn:
-            if is_global_checkpoint_completed(conn, within_all_step):
+        if not force:
+            with db_session(self.output_db) as conn:
+                if is_global_checkpoint_completed(conn, within_all_step):
+                    logger.info(
+                        "[Human Corpus] Completion checkpoint found; skipping within collection"
+                    )
+                    return stats, self.output_db
+
+                for lang in repos_by_language:
+                    if is_global_checkpoint_completed(conn, within_step(lang)):
+                        completed_languages.add(lang)
+
+            if language and language.lower() in completed_languages:
                 logger.info(
-                    "[Human Corpus] Completion checkpoint found; skipping within collection"
+                    f"[Human Corpus] Completion checkpoint found for {language}; skipping within collection"
                 )
                 return stats, self.output_db
 
-            for lang in repos_by_language:
-                if is_global_checkpoint_completed(conn, within_step(lang)):
-                    completed_languages.add(lang)
+            repos_by_language = {
+                lang: repos
+                for lang, repos in repos_by_language.items()
+                if lang not in completed_languages
+            }
 
-        if language and language.lower() in completed_languages:
+            if not repos_by_language:
+                with db_session(self.output_db) as conn:
+                    mark_global_checkpoint(conn, within_all_step)
+                logger.info(
+                    "[Human Corpus] All selected languages already completed; skipping within collection"
+                )
+                return stats, self.output_db
+        else:
             logger.info(
-                f"[Human Corpus] Completion checkpoint found for {language}; skipping within collection"
+                "[Human Corpus] --force: ignoring completion checkpoints, re-processing all selected repositories"
             )
-            return stats, self.output_db
-
-        repos_by_language = {
-            lang: repos
-            for lang, repos in repos_by_language.items()
-            if lang not in completed_languages
-        }
-
-        if not repos_by_language:
-            with db_session(self.output_db) as conn:
-                mark_global_checkpoint(conn, within_all_step)
-            logger.info(
-                "[Human Corpus] All selected languages already completed; skipping within collection"
-            )
-            return stats, self.output_db
 
         logger.info(
             f"[Human Corpus] Languages to process: {', '.join(sorted(repos_by_language.keys()))}"

@@ -271,6 +271,7 @@ class AgentCorpusCollector:
         repos_per_language: Optional[int] = None,
         languages: Optional[list[str]] = None,
         language: Optional[str] = None,
+        force: bool = False,
     ) -> tuple[AgentCorpusStats, Path]:
         """
         Collect agent-authored fixtures from repositories with agent commits.
@@ -279,6 +280,15 @@ class AgentCorpusCollector:
             repos_per_language: Optional per-language cap. None means include all rows.
             languages: Optional list of languages to include
             language: Optional filter to single language
+            force: Re-process every selected repository even if a prior run's
+                completion checkpoint says this language (or all languages)
+                are already done. Without this, a re-run against a DB that
+                already finished collection returns 0 fixtures immediately,
+                regardless of the caller having asked for a fresh extraction
+                (e.g. via `extract-fixtures --force`) -- downstream inserts
+                are idempotent (`persist_repository_and_fixtures`'s
+                upsert/`ON CONFLICT DO NOTHING`), so forcing a re-run is
+                safe and does not duplicate rows.
 
         Returns:
             (stats, output_db_path)
@@ -327,31 +337,37 @@ class AgentCorpusCollector:
                 language,
             )
 
-        with db_session(self.output_db) as conn:
-            # Only check the "all completed" checkpoint when running without
-            # a single-language filter. Otherwise a completed full run would
-            # block every subsequent single-language run.
-            if not language and is_global_checkpoint_completed(
-                conn, completion_all_step
-            ):
-                logger.info(
-                    "[Agent Corpus] Completion checkpoint found; skipping agent collection"
-                )
-                return stats, self.output_db
+        completed_languages: set[str] = set()
+        if not force:
+            with db_session(self.output_db) as conn:
+                # Only check the "all completed" checkpoint when running
+                # without a single-language filter. Otherwise a completed
+                # full run would block every subsequent single-language run.
+                if not language and is_global_checkpoint_completed(
+                    conn, completion_all_step
+                ):
+                    logger.info(
+                        "[Agent Corpus] Completion checkpoint found; skipping agent collection"
+                    )
+                    return stats, self.output_db
 
-            if language and is_global_checkpoint_completed(
-                conn, completion_step(language)
-            ):
-                logger.info(
-                    f"[Agent Corpus] Completion checkpoint found for {language}; skipping agent collection"
-                )
-                return stats, self.output_db
+                if language and is_global_checkpoint_completed(
+                    conn, completion_step(language)
+                ):
+                    logger.info(
+                        f"[Agent Corpus] Completion checkpoint found for {language}; skipping agent collection"
+                    )
+                    return stats, self.output_db
 
-            completed_languages = {
-                lang
-                for lang in selected_languages
-                if is_global_checkpoint_completed(conn, completion_step(lang))
-            }
+                completed_languages = {
+                    lang
+                    for lang in selected_languages
+                    if is_global_checkpoint_completed(conn, completion_step(lang))
+                }
+        else:
+            logger.info(
+                "[Agent Corpus] --force: ignoring completion checkpoints, re-processing all selected repositories"
+            )
 
         repos_to_collect = [
             repo
