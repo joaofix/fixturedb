@@ -52,16 +52,16 @@ python -m collection discover-repos --dataset a --workers 16 \
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
-python -m collection discover-repos --dataset b --workers 16 \
+python -m collection discover-repos --dataset b \
   && python -m collection filter-test-commits --dataset b --workers 16 \
   && python -m collection extract-fixtures --dataset b --workers 16
 ```
 
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
-python -m collection discover-repos --dataset c --workers 16 \
+python -m collection discover-repos --dataset c \
   && python -m collection.dedupe_dataset_c_repos \
-  && python -m collection discover-repos --dataset c --workers 16 \
+  && python -m collection discover-repos --dataset c \
   && python -m collection extract-fixtures --dataset c --workers 16
 ```
 
@@ -94,8 +94,13 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     matters a lot there, and 16 concurrent workers hammering that endpoint would
     exhaust it almost immediately. Not a concern for the commands below since none
     use `--tier2`.
-  - `discover-repos`/`discover-commits`/`filter-test-commits` all honor `--workers`
-    directly.
+  - `discover-commits`/`filter-test-commits` honor `--workers` directly.
+    `discover-repos` only does for `--dataset a` (`agent_repository_counter.run()`
+    threads its clone-probe step) -- `--dataset b`/`--dataset c` are both a pure
+    local CSV/file transform with no `workers` parameter at all
+    (`resolve_dataset_b_repos()`, `select_repos()`), so `--workers` there would be
+    a silent no-op; omitted above rather than left in as a no-op that looks like
+    it's doing something.
   - `extract-fixtures --dataset a` **ignores `--workers` entirely** — its collector
     interleaves DB writes into a per-repo loop and stays single-threaded by design
     (confirmed: no `ThreadPoolExecutor` anywhere in `agent_corpus.py`). Passing the
