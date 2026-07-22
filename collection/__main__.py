@@ -69,7 +69,11 @@ def _cmd_discover_repos(args: argparse.Namespace) -> int:
 
     if args.dataset == "c":
         from .config import DATASET_C_MIN_CREATED_DATE, HUMAN_CORPUS_CUTOFF_DATE
-        from .select_dataset_c_repos import select_repos, write_per_language_files
+        from .select_dataset_c_repos import (
+            filter_known_duplicates,
+            select_repos,
+            write_per_language_files,
+        )
 
         selected = select_repos(
             raw_dir=args.source_dir or paths.default_repo_source("c"),
@@ -78,9 +82,11 @@ def _cmd_discover_repos(args: argparse.Namespace) -> int:
         )
         if args.language:
             selected = [r for r in selected if r.get("language") == args.language]
-        write_per_language_files(
-            selected, args.output_dir or paths.stage_dir("c", "repos")
+        repos_dir = args.output_dir or paths.stage_dir("c", "repos")
+        selected = filter_known_duplicates(
+            selected, duplicate_repos_csv=repos_dir / "duplicate_repos.csv"
         )
+        write_per_language_files(selected, repos_dir)
         return 0
 
     return _unsupported("discover-repos", args.dataset, _DATASET_CHOICES)

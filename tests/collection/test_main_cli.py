@@ -63,16 +63,84 @@ class TestDiscoverRepos:
             return_value=[{"repo_name": "o/r", "language": "python"}],
         ) as mock_select:
             with patch(
-                "collection.select_dataset_c_repos.write_per_language_files",
-                return_value={"python": 1},
-            ) as mock_write:
-                rc = main(["discover-repos", "--dataset", "c"])
+                "collection.select_dataset_c_repos.filter_known_duplicates",
+                return_value=[{"repo_name": "o/r", "language": "python"}],
+            ):
+                with patch(
+                    "collection.select_dataset_c_repos.write_per_language_files",
+                    return_value={"python": 1},
+                ) as mock_write:
+                    rc = main(["discover-repos", "--dataset", "c"])
 
         assert rc == 0
         mock_select.assert_called_once()
         mock_write.assert_called_once_with(
             [{"repo_name": "o/r", "language": "python"}],
             paths.stage_dir("c", "repos"),
+        )
+
+    def test_dataset_c_filters_known_duplicates_before_writing(self):
+        """Regression test: discover-repos --dataset c used to never call
+        filter_known_duplicates() at all, so the "run discover-repos twice"
+        workflow documented in RUN_COMMANDS.md never actually dropped known
+        duplicate repos -- see internal-docs/RUN_COMMANDS.md's dedup note.
+        """
+        with patch(
+            "collection.select_dataset_c_repos.select_repos",
+            return_value=[
+                {"repo_name": "keep/me", "language": "python"},
+                {"repo_name": "drop/me", "language": "python"},
+            ],
+        ):
+            with patch(
+                "collection.select_dataset_c_repos.filter_known_duplicates",
+                return_value=[{"repo_name": "keep/me", "language": "python"}],
+            ) as mock_filter:
+                with patch(
+                    "collection.select_dataset_c_repos.write_per_language_files",
+                    return_value={"python": 1},
+                ) as mock_write:
+                    rc = main(["discover-repos", "--dataset", "c"])
+
+        assert rc == 0
+        mock_filter.assert_called_once_with(
+            [
+                {"repo_name": "keep/me", "language": "python"},
+                {"repo_name": "drop/me", "language": "python"},
+            ],
+            duplicate_repos_csv=paths.stage_dir("c", "repos") / "duplicate_repos.csv",
+        )
+        # write_per_language_files must receive the *filtered* list, not
+        # select_repos()'s raw output -- "drop/me" must never reach it.
+        mock_write.assert_called_once_with(
+            [{"repo_name": "keep/me", "language": "python"}],
+            paths.stage_dir("c", "repos"),
+        )
+
+    def test_dataset_c_duplicate_csv_follows_custom_output_dir(self, tmp_path):
+        with patch(
+            "collection.select_dataset_c_repos.select_repos", return_value=[]
+        ):
+            with patch(
+                "collection.select_dataset_c_repos.filter_known_duplicates",
+                return_value=[],
+            ) as mock_filter:
+                with patch(
+                    "collection.select_dataset_c_repos.write_per_language_files",
+                    return_value={},
+                ):
+                    main(
+                        [
+                            "discover-repos",
+                            "--dataset",
+                            "c",
+                            "--output-dir",
+                            str(tmp_path),
+                        ]
+                    )
+
+        mock_filter.assert_called_once_with(
+            [], duplicate_repos_csv=tmp_path / "duplicate_repos.csv"
         )
 
     def test_invalid_dataset_rejected_by_argparse(self):
