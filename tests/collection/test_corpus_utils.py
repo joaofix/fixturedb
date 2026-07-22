@@ -631,6 +631,75 @@ class TestPersistRepositoryAndFixtures:
         conn.close()
         assert db_row["commit_type"] == "test"
 
+    def test_persist_marks_repo_analysed_with_correct_counts(self, tmp_path):
+        """Regression test: repositories.status/num_test_files/num_fixtures/
+        num_mock_usages used to stay at their defaults ('discovered'/0/0/0)
+        forever -- set_repo_analysed() existed and was tested in isolation
+        but no collector ever called it. Also verifies num_contributors
+        (set separately via upsert_repository from GitHub metadata) survives
+        the call unchanged rather than being zeroed."""
+        from collection.db import initialise_db
+
+        db_path = tmp_path / "test.db"
+        initialise_db(db_path)
+
+        repo_data = {
+            "github_id": 789,
+            "full_name": "owner/analysedrepo",
+            "language": "python",
+            "stars": 10,
+            "forks": 0,
+            "description": "",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/analysedrepo.git",
+            "num_contributors": 42,
+            "domain": None,
+            "repo_age_years": None,
+        }
+        fixtures = [
+            {
+                "commit_sha": "abc123",
+                "file_path": "tests/test_foo.py",
+                "name": "my_fixture",
+                "fixture_type": "pytest_decorator",
+                "start_line": 1,
+                "end_line": 3,
+                "loc": 3,
+                "framework": "pytest",
+                "mocks": [
+                    {
+                        "framework": "unittest_mock",
+                        "category": "mock",
+                        "target_identifier": "module.Client",
+                        "num_interactions_configured": 0,
+                        "raw_snippet": "mock.Mock()",
+                    }
+                ],
+            }
+        ]
+
+        persist_repository_and_fixtures(
+            db_path, repo_data, fixtures, handle_mocks=True
+        )
+
+        import sqlite3
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT status, num_test_files, num_fixtures, num_mock_usages, "
+            "num_contributors FROM repositories WHERE full_name = 'owner/analysedrepo'"
+        ).fetchone()
+        conn.close()
+
+        assert row["status"] == "analysed"
+        assert row["num_test_files"] == 1
+        assert row["num_fixtures"] == 1
+        assert row["num_mock_usages"] == 1
+        assert row["num_contributors"] == 42
+
     def test_persist_with_empty_fixtures(self):
         """Verify handling of empty fixture list."""
         repo_data = {

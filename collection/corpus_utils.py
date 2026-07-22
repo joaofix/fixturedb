@@ -18,6 +18,7 @@ from collection.logging_utils import get_logger
 from .db import (
     db_session,
     insert_fixture,
+    set_repo_analysed,
     upsert_repository,
     upsert_test_file,
 )
@@ -390,6 +391,29 @@ def persist_repository_and_fixtures(
                             logger.debug(
                                 f"Failed to insert mock for fixture {fixture_id} in {repo_name}: {e}"
                             )
+        # Re-sync the repositories-table summary counts to their true,
+        # current totals -- this function is called once per fixture
+        # language-group, potentially several times per repo, so these are
+        # fresh COUNTs scoped to repo_id rather than accumulated locals
+        # (correct regardless of call count/order, and self-healing if a
+        # prior run only got partway through a repo's language groups).
+        num_test_files_total = conn.execute(
+            "SELECT COUNT(*) FROM test_files WHERE repo_id = ?", (repo_id,)
+        ).fetchone()[0]
+        num_fixtures_total = conn.execute(
+            "SELECT COUNT(*) FROM fixtures WHERE repo_id = ?", (repo_id,)
+        ).fetchone()[0]
+        num_mock_usages_total = conn.execute(
+            "SELECT COUNT(*) FROM mock_usages WHERE repo_id = ?", (repo_id,)
+        ).fetchone()[0]
+        set_repo_analysed(
+            conn,
+            repo_id,
+            num_test_files=num_test_files_total,
+            num_fixtures=num_fixtures_total,
+            num_mock_usages=num_mock_usages_total,
+        )
+
         duration = time.time() - start_ts
         logger.debug(
             f"persist_repository_and_fixtures: persisted {fixture_count} fixtures for {repo_name} in {duration:.3f}s"

@@ -294,20 +294,26 @@ def set_repo_analysed(
     num_test_files: int,
     num_fixtures: int,
     num_mock_usages: int,
-    num_contributors: int = 0,
+    num_contributors: int | None = None,
 ) -> None:
-    """Mark a repo as analysed and store the extraction counts."""
+    """Mark a repo as analysed and store the extraction counts.
+
+    num_contributors defaults to None (left unchanged via COALESCE) rather
+    than 0 -- it's set separately from GitHub metadata by upsert_repository(),
+    and callers here (persist_repository_and_fixtures(), re-syncing counts
+    after every fixture-persist call) have no reason to know or touch it.
+    """
     conn.execute(
         """
         UPDATE repositories
         SET status = 'analysed',
+            num_contributors = COALESCE(?, num_contributors),
             num_test_files = ?,
             num_fixtures = ?,
-            num_mock_usages = ?,
-            num_contributors = ?
+            num_mock_usages = ?
         WHERE id = ?
     """,
-        (num_test_files, num_fixtures, num_mock_usages, num_contributors, repo_id),
+        (num_contributors, num_test_files, num_fixtures, num_mock_usages, repo_id),
     )
 
 
