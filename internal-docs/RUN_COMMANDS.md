@@ -125,8 +125,13 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   the command chain runs it twice. A missing `duplicate_repos.csv` is not an
   error — `select_dataset_c_repos.py` just treats it as "no known
   duplicates" — so skipping this step doesn't fail loudly, it silently leaves
-  duplicate content in the corpus: the last full run found 16.2% of the whole
-  Dataset C corpus was duplicate content this way (worst cluster: 5
+  duplicate content in the corpus. Until this was fixed, the *second*
+  `discover-repos --dataset c` call never actually applied the filter either
+  (`__main__.py` called `select_repos()`/`write_per_language_files()`
+  directly, skipping `filter_known_duplicates()` entirely) — every run
+  through at least 2026-07-21 silently kept all known duplicates regardless
+  of how many times this command chain ran; one such run measured 16.2% of
+  the whole Dataset C corpus as duplicate content this way (worst cluster: 5
   OpenJDK-derived repos sharing one commit). Requires `GITHUB_TOKEN` (one
   `commits?until=...` API call per candidate repo — real GitHub REST API
   traffic, unlike every other command in this file) and is independently
