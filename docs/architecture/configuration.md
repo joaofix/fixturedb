@@ -39,7 +39,8 @@ Computed automatically at the `AGENT_CORPUS_START_DATE` snapshot (same window as
 |----------|-------------|
 | `language` | Programming language |
 | `domain` | Repository domain (computed from topics/description) |
-| `repo_age_years` | Repository age in years at the snapshot date |
+| `repo_age_years` | Repository age in years at the snapshot date; NULL if the repo was created after it |
+| `repo_age_at_collection_years` | Repository age as of collection time — always defined |
 | `agent_adoption_intensity` | Share of agent vs. human commits in the repo |
 
 ### Example
@@ -97,9 +98,11 @@ Computed automatically at the `AGENT_CORPUS_START_DATE` snapshot:
 |----------|-------------|
 | `language` | Programming language |
 | `domain` | Repository domain |
-| `repo_age_years` | Repository age in years at snapshot |
+| `repo_age_years` | Repository age in years at snapshot; NULL if the repo was created after it |
+| `repo_age_at_collection_years` | Repository age as of collection time — always defined |
 | `agent_type` | Agent classifier: claude, copilot, cursor, aider, or unknown |
 | `commit_kind` | Always `'agent'` |
+| `repo_age_at_commit_years` (fixture-level) | Repo age at the fixture's own commit — always defined |
 
 ### Agent Detection
 

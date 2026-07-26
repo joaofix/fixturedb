@@ -47,7 +47,8 @@ Repository metadata and control variables computed at fixture writing time.
 | `num_contributors` | INTEGER | Contributor count from GitHub |
 | **Control Variables** |
 | `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
-| `repo_age_years` | REAL | Repository age in years at fixture writing time (2025-01-01 for Datasets A/B, 2020-12-31 for Dataset C) |
+| `repo_age_years` | REAL | Repository age in years at each dataset's fixed temporal reference (2025-01-01 for Datasets A/B, 2020-12-31 for Dataset C); NULL when the repo was created after that date |
+| `repo_age_at_collection_years` | REAL | Repository age in years as of whenever collection actually ran (relative to "now", not a fixed reference) — always defined, unlike `repo_age_years` |
 | `collected_at` | TEXT | Timestamp of insertion |
 
 ### test_files
@@ -90,10 +91,12 @@ Individual fixture definitions and their quantitative metrics.
 | `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |
 | `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
 | **Dataset Labeling** |
-| `commit_sha` | TEXT | Commit SHA that introduced this fixture (empty string in `db/c.db`, whose fixtures come from a repo-snapshot extraction, not a commit scan) |
-| `commit_kind` | TEXT | `'agent'` in `db/a.db`, `'human'` in `db/b.db`; not set in `db/c.db` (see [Database overview](#database-overview)) |
-| `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored, NULL otherwise |
+| `commit_sha` | TEXT | Commit that introduced this fixture; in `db/c.db` this is the repo's pinned cutoff commit (one per repo, shared by every fixture in it), not a per-fixture commit |
+| `commit_date` | TEXT | ISO date-only string of `commit_sha`'s own commit date |
+| `commit_kind` | TEXT | `'agent'` in `db/a.db`, `'human'` in `db/b.db` and `db/c.db` |
+| `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored; a fixed provenance tag (`'human'`, `'human_pre2022'`) otherwise |
 | `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
+| `repo_age_at_commit_years` | REAL | Repo age at `commit_date` (`created_at` → `commit_date`) — always defined, unlike `repositories.repo_age_years` |
 
 ### mock_usages
 
