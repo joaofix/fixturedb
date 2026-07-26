@@ -616,6 +616,7 @@ def collect_dataset_c_fixtures(
             created_at=repo_created_at,
             domain=metadata["domain"],
             repo_age_years=metadata["repo_age_years"],
+            repo_age_at_collection_years=metadata["repo_age_at_collection_years"],
         )
         try:
             from collection.human_corpus import _human_fixture_csv_path

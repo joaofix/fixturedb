@@ -22,7 +22,11 @@ from .db import (
     upsert_repository,
     upsert_test_file,
 )
-from .repo_metadata import classify_domain, compute_repo_age_at_date
+from .repo_metadata import (
+    classify_domain,
+    compute_repo_age_at_date,
+    compute_repo_age_years,
+)
 
 logger = get_logger(__name__)
 
@@ -117,10 +121,12 @@ def compute_repo_metadata(
     """
     domain = classify_domain(repo.get("topics"), repo.get("description"))
     repo_age = compute_repo_age_at_date(repo.get("created_at", ""), temporal_reference)
+    repo_age_at_collection = compute_repo_age_years(repo.get("created_at", ""))
 
     return {
         "domain": domain,
         "repo_age_years": repo_age,
+        "repo_age_at_collection_years": repo_age_at_collection,
     }
 
 
@@ -206,6 +212,8 @@ def write_fixture_csv_row(
         "commit_kind",
         "commit_type",
         "raw_source",
+        "commit_date",
+        "repo_age_at_commit_years",
     ]
 
     if extra_fields:
@@ -255,6 +263,8 @@ def write_fixture_csv_row(
             "commit_kind": fixture.get("commit_kind", "unknown"),
             "commit_type": fixture.get("commit_type", ""),
             "raw_source": fixture.get("raw_source", ""),
+            "commit_date": fixture.get("commit_date", ""),
+            "repo_age_at_commit_years": fixture.get("repo_age_at_commit_years"),
         }
 
         if extra_fields:
@@ -294,6 +304,18 @@ def persist_repository_and_fixtures(
 
         if not fixtures:
             return 0
+
+        # Age of the repo at each fixture's own commit -- always defined (a
+        # commit can't precede its own repo's creation), unlike
+        # repo_data["repo_age_years"] which is NULL for repos created after
+        # the dataset's fixed temporal reference. Computed once here so both
+        # the CSV export below and the DB insert further down can read it
+        # off the fixture dict.
+        repo_created_at = repo_data.get("created_at", "")
+        for fixture in fixtures:
+            fixture["repo_age_at_commit_years"] = compute_repo_age_at_date(
+                repo_created_at, fixture.get("commit_date", "")
+            )
 
         # Export to CSV if path provided
         if out_path:
@@ -354,10 +376,12 @@ def persist_repository_and_fixtures(
                 "framework": fixture.get("framework"),
                 "num_mocks": len(fixture.get("mocks", []) or []),
                 "commit_sha": fixture.get("commit_sha", ""),
+                "commit_date": fixture.get("commit_date", ""),
                 "commit_kind": fixture.get("commit_kind", "unknown"),
                 "agent_type": fixture.get("agent_type"),
                 "is_complete_addition": 1,
                 "commit_type": fixture.get("commit_type"),
+                "repo_age_at_commit_years": fixture.get("repo_age_at_commit_years"),
             }
 
             fixture_id = insert_fixture(conn, fixture_data)
@@ -435,6 +459,7 @@ def construct_repo_dict(
     num_contributors: int = 0,
     domain: Optional[str] = None,
     repo_age_years: Optional[float] = None,
+    repo_age_at_collection_years: Optional[float] = None,
     agent_adoption_intensity: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
@@ -463,6 +488,7 @@ def construct_repo_dict(
         "clone_url": clone_url or f"https://github.com/{full_name}.git",
         "domain": domain,
         "repo_age_years": repo_age_years,
+        "repo_age_at_collection_years": repo_age_at_collection_years,
         "num_contributors": num_contributors or 0,
         "agent_adoption_intensity": agent_adoption_intensity,
     }

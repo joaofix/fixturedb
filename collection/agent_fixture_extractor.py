@@ -357,6 +357,7 @@ class AgentFixtureExtractor:
                                 file_path=file_path,
                                 repo_name=repo_name,
                                 commit_sha=commit_sha,
+                                commit_date=commit.author_date.date().isoformat(),
                                 agent_type=agent_type,
                                 is_complete_addition=is_complete,
                             )

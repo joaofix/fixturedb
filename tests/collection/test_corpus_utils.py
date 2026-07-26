@@ -123,6 +123,43 @@ class TestComputeRepoMetadata:
         if result["repo_age_years"] is not None:
             assert result["repo_age_years"] > 5  # Approximate
 
+    def test_compute_repo_metadata_returns_repo_age_at_collection(self):
+        """repo_age_at_collection_years is age relative to now, independent
+        of temporal_reference."""
+        repo = {
+            "topics": "[]",
+            "description": "",
+            "stars": 0,
+            "created_at": "2015-01-01",
+        }
+
+        result = compute_repo_metadata(repo, "2020-12-31")
+        assert "repo_age_at_collection_years" in result
+        # created 2015 -> age relative to "now" is well past 6 years
+        assert result["repo_age_at_collection_years"] > 6
+
+    def test_compute_repo_metadata_repo_age_at_collection_defined_when_repo_age_years_is_none(
+        self,
+    ):
+        """Regression test: repo_age_years is None for a repo created after
+        the fixed temporal_reference (negative age is undefined) -- this
+        used to be the *only* age signal, so 41% of Dataset A's
+        fixture-bearing repos (created during the agent era, after its
+        2025-01-01 reference) had no age info at all.
+        repo_age_at_collection_years must still be defined in that case,
+        since it isn't relative to temporal_reference at all."""
+        repo = {
+            "topics": "[]",
+            "description": "",
+            "stars": 0,
+            "created_at": "2026-06-01",
+        }
+
+        result = compute_repo_metadata(repo, "2025-01-01")
+        assert result["repo_age_years"] is None
+        assert result["repo_age_at_collection_years"] is not None
+        assert result["repo_age_at_collection_years"] > 0
+
 
 class TestConstructRepoDict:
     """Test repository dictionary construction."""
@@ -188,6 +225,7 @@ class TestConstructRepoDict:
             num_contributors=5,
             domain="web",
             repo_age_years=1.5,
+            repo_age_at_collection_years=6.5,
         )
 
         assert result["full_name"] == "owner/repo"
@@ -197,6 +235,7 @@ class TestConstructRepoDict:
         assert result["description"] == "Test repo"
         assert result["domain"] == "web"
         assert result["repo_age_years"] == 1.5
+        assert result["repo_age_at_collection_years"] == 6.5
 
 
 class TestWriteFixtureCsvRow:
@@ -699,6 +738,72 @@ class TestPersistRepositoryAndFixtures:
         assert row["num_fixtures"] == 1
         assert row["num_mock_usages"] == 1
         assert row["num_contributors"] == 42
+
+    def test_persist_computes_repo_age_at_commit_for_repo_created_after_reference(
+        self, tmp_path
+    ):
+        """Regression test: repositories.repo_age_years is NULL for a repo
+        created after the dataset's fixed temporal reference (e.g. Dataset
+        A's 2025-01-01) -- true for 41% of Dataset A's fixture-bearing repos.
+        fixtures.repo_age_at_commit_years must still be a well-defined,
+        positive age (repo created_at -> this fixture's own commit_date),
+        since a commit can never precede its own repo's creation."""
+        from collection.db import initialise_db
+
+        db_path = tmp_path / "test.db"
+        initialise_db(db_path)
+
+        # repo_age_years would be None for this repo against a 2025-01-01
+        # reference (created_at postdates it) -- repo_data itself doesn't
+        # carry that pre-computed value here since persist_repository_and_fixtures
+        # doesn't recompute repo_age_years; what matters is that created_at
+        # predates the fixture's own commit_date.
+        repo_data = {
+            "github_id": 999,
+            "full_name": "owner/futurerepo",
+            "language": "python",
+            "stars": 10,
+            "forks": 0,
+            "description": "",
+            "topics": "[]",
+            "created_at": "2026-01-01",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/futurerepo.git",
+            "num_contributors": 1,
+            "domain": None,
+            "repo_age_years": None,
+        }
+        fixtures = [
+            {
+                "commit_sha": "abc123",
+                "commit_date": "2026-04-01",
+                "file_path": "tests/test_foo.py",
+                "name": "my_fixture",
+                "fixture_type": "pytest_decorator",
+                "start_line": 1,
+                "end_line": 3,
+                "loc": 3,
+                "framework": "pytest",
+                "mocks": [],
+            }
+        ]
+
+        persist_repository_and_fixtures(db_path, repo_data, fixtures)
+
+        import sqlite3
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT commit_date, repo_age_at_commit_years FROM fixtures "
+            "WHERE name = 'my_fixture'"
+        ).fetchone()
+        conn.close()
+
+        assert row["commit_date"] == "2026-04-01"
+        # 2026-01-01 -> 2026-04-01 is ~3 months, i.e. a small positive age
+        assert row["repo_age_at_commit_years"] is not None
+        assert 0 < row["repo_age_at_commit_years"] < 1
 
     def test_persist_with_empty_fixtures(self):
         """Verify handling of empty fixture list."""

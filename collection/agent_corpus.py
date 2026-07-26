@@ -464,6 +464,7 @@ class AgentCorpusCollector:
                     metadata = compute_repo_metadata(repo, AGENT_CORPUS_START_DATE)
                     domain = metadata["domain"]
                     repo_age = metadata["repo_age_years"]
+                    repo_age_at_collection = metadata["repo_age_at_collection_years"]
 
                     # Track distributions
                     stats.domain_distribution[domain] = (
@@ -518,6 +519,7 @@ class AgentCorpusCollector:
                         num_contributors=repo.get("num_contributors", 0),
                         domain=domain,
                         repo_age_years=repo_age,
+                        repo_age_at_collection_years=repo_age_at_collection,
                         agent_adoption_intensity=adoption_intensity,
                     )
                     with db_session(self.output_db) as conn:

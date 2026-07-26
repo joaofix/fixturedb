@@ -232,18 +232,19 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
     is_new = existing is None
 
     adoption = repo.get("agent_adoption_intensity")
+    repo_age_at_collection = repo.get("repo_age_at_collection_years")
 
     conn.execute(
         """
         INSERT INTO repositories (
             github_id, full_name, language, stars, forks,
             description, topics, created_at, pushed_at, clone_url,
-            domain, repo_age_years, num_contributors,
+            domain, repo_age_years, repo_age_at_collection_years, num_contributors,
             agent_adoption_intensity
         ) VALUES (
             :github_id, :full_name, :language, :stars, :forks,
             :description, :topics, :created_at, :pushed_at, :clone_url,
-            :domain, :repo_age_years, :num_contributors,
+            :domain, :repo_age_years, :repo_age_at_collection_years, :num_contributors,
             :agent_adoption_intensity
         )
         ON CONFLICT(github_id) DO UPDATE SET
@@ -251,10 +252,15 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
             pushed_at   = excluded.pushed_at,
             domain      = excluded.domain,
             repo_age_years = excluded.repo_age_years,
+            repo_age_at_collection_years = excluded.repo_age_at_collection_years,
             num_contributors = excluded.num_contributors,
             agent_adoption_intensity = excluded.agent_adoption_intensity
     """,
-        {**repo, "agent_adoption_intensity": adoption},
+        {
+            **repo,
+            "agent_adoption_intensity": adoption,
+            "repo_age_at_collection_years": repo_age_at_collection,
+        },
     )
 
     row_id = (
@@ -437,11 +443,13 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
     # Add agent-specific columns if present
     agent_columns = [
         "commit_sha",
+        "commit_date",
         "agent_type",
         "commit_kind",
         "match_scope",
         "is_complete_addition",
         "commit_type",
+        "repo_age_at_commit_years",
     ]
     for col in agent_columns:
         if col in fixture:

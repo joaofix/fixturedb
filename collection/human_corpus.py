@@ -211,6 +211,7 @@ class HumanCorpusCollector:
             metadata = compute_repo_metadata(dict(repo), AGENT_CORPUS_START_DATE)
             domain = metadata["domain"]
             repo_age = metadata["repo_age_years"]
+            repo_age_at_collection = metadata["repo_age_at_collection_years"]
             scan_result = self._scan_and_extract(
                 managed_repo_path, language_name, repo_name, scanner, extractor
             )
@@ -242,6 +243,7 @@ class HumanCorpusCollector:
                     num_contributors=repo.get("num_contributors", 0),
                     domain=domain,
                     repo_age_years=repo_age,
+                    repo_age_at_collection_years=repo_age_at_collection,
                     agent_adoption_intensity=adoption_intensity,
                 ),
                 "test_commit_rows": test_commit_rows,

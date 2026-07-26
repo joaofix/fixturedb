@@ -126,6 +126,84 @@ def test_db_helpers_end_to_end(tmp_path):
         assert "python" in lang_counts and lang_counts["python"] >= 1
 
 
+def test_upsert_repository_round_trips_repo_age_at_collection_years(tmp_path):
+    """repo_age_at_collection_years should be persisted when supplied, and
+    updated on a later upsert with a different value."""
+    db_path = tmp_path / "test.db"
+    initialise_db(db_path)
+
+    repo = {
+        "github_id": 111,
+        "full_name": "owner/agerepo",
+        "language": "python",
+        "stars": 1,
+        "forks": 0,
+        "description": "",
+        "topics": "[]",
+        "created_at": "2019-01-01",
+        "pushed_at": "",
+        "clone_url": "https://github.com/owner/agerepo.git",
+        "num_contributors": 0,
+        "domain": None,
+        "repo_age_years": None,
+        "repo_age_at_collection_years": 5.5,
+    }
+
+    with db_session(db_path) as conn:
+        repo_id, _ = upsert_repository(conn, repo)
+        row = conn.execute(
+            "SELECT repo_age_at_collection_years FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert row["repo_age_at_collection_years"] == 5.5
+
+        # Re-upsert with an updated value (e.g. a later collection run)
+        upsert_repository(conn, {**repo, "repo_age_at_collection_years": 6.1})
+        row = conn.execute(
+            "SELECT repo_age_at_collection_years FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert row["repo_age_at_collection_years"] == 6.1
+
+
+def test_upsert_repository_backward_compatible_without_repo_age_at_collection_years(
+    tmp_path,
+):
+    """Regression test: upsert_repository() is a fixed-column INSERT bound
+    by named params from the caller's dict -- callers that predate
+    repo_age_at_collection_years (e.g. paired_collection.py's own
+    hand-built repo dict, which doesn't set it) must not crash just because
+    the schema grew a new column."""
+    db_path = tmp_path / "test.db"
+    initialise_db(db_path)
+
+    repo = {
+        "github_id": 222,
+        "full_name": "owner/legacycaller",
+        "language": "python",
+        "stars": 1,
+        "forks": 0,
+        "description": "",
+        "topics": "[]",
+        "created_at": "2019-01-01",
+        "pushed_at": "",
+        "clone_url": "https://github.com/owner/legacycaller.git",
+        "num_contributors": 0,
+        "domain": None,
+        "repo_age_years": None,
+        # repo_age_at_collection_years intentionally omitted
+    }
+
+    with db_session(db_path) as conn:
+        repo_id, is_new = upsert_repository(conn, repo)
+        assert is_new is True
+        row = conn.execute(
+            "SELECT repo_age_at_collection_years FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert row["repo_age_at_collection_years"] is None
+
+
 def test_insert_fixture_dedupes_per_commit_not_across_commits(tmp_path):
     """Regression: fixtures' UNIQUE constraint was (file_id, name,
     start_line) with no commit_sha, so two different commits adding a

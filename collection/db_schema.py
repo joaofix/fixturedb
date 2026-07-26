@@ -26,7 +26,12 @@ CREATE TABLE IF NOT EXISTS repositories (
     num_mock_usages INTEGER DEFAULT 0,      -- count of mock usages detected
     num_contributors INTEGER DEFAULT 0,     -- GitHub API: repository contributor count
     domain          TEXT DEFAULT NULL,      -- classified domain (web/systems/ml/etc)
-    repo_age_years  REAL DEFAULT NULL,      -- repository age in years at collection time
+    repo_age_years  REAL DEFAULT NULL,      -- age at each dataset's fixed temporal reference
+                                    -- (2025-01-01 for A/B, 2020-12-31 for C); NULL when the
+                                    -- repo was created after that date -- see repo_age_at_collection_years
+                                    -- for a value that's always defined.
+    repo_age_at_collection_years REAL DEFAULT NULL,  -- age relative to now (whenever collection
+                                    -- ran), via compute_repo_age_years() -- always defined.
     agent_adoption_intensity TEXT DEFAULT NULL,  -- agent commit ratio since adoption: no_commits/experimental/limited/consistent/pervasive
     agent_commits_touching_tests INTEGER DEFAULT 0,  -- Dataset A: agent commits that touched >=1 test file
     agent_commits_rejected_mixed_test_diff INTEGER DEFAULT 0,  -- Dataset A: rejected, a test file had deletions/edits
@@ -74,12 +79,17 @@ CREATE TABLE IF NOT EXISTS fixtures (
     num_mocks               INTEGER DEFAULT 0, -- count of distinct mock usages in this fixture
     -- Agent-specific columns (populated only in fixturedb-agent.db)
     commit_sha              TEXT DEFAULT NULL,      -- exact commit where fixture added (agent-only)
+    commit_date             TEXT DEFAULT NULL,      -- that commit's own date (ISO, date-only)
     agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/other
     commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
     match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     commit_type             TEXT DEFAULT NULL,      -- Conventional Commits type of the originating commit
                                     -- (agent or human: feat/fix/docs/refactor/test/chore/style/other/none)
+    repo_age_at_commit_years REAL DEFAULT NULL,     -- repo age (created_at -> commit_date), always
+                                    -- defined (a commit can't precede its own repo's creation) --
+                                    -- unlike repositories.repo_age_years, which is NULL for repos
+                                    -- created after the dataset's fixed temporal reference.
     UNIQUE(file_id, name, start_line, commit_sha)
 );
 
