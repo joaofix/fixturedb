@@ -1,7 +1,11 @@
-"""Scripts that compute the answer to each research question directly from the
-collected databases (`db/{a,b,c}.db`) and write a findings report.
+"""Scripts that compute paper results directly from the collected data
+(`db/{a,b,c}.db` and/or `datasets/{a,b,c}/`) and write a findings report.
 
-Each `rqN.py` is runnable standalone: `python -m collection.research_questions.rqN`.
-Reports are written to `research_questions/` at the repo root (gitignored,
-regenerated on demand -- not a collection-pipeline artifact).
+`rqN.py` files answer a specific research question (see
+docs/research-questions.md); other scripts here (e.g.
+`language_contamination.py`) are data-quality/validation checks that don't
+map to one specific RQ. Every script is runnable standalone:
+`python -m collection.research_questions.<module>`. Reports are written to
+`research_questions/` at the repo root (gitignored, regenerated on demand --
+not a collection-pipeline artifact).
 """

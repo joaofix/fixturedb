@@ -96,3 +96,20 @@ harder ones (stateful I/O setup, lifecycle wrappers, composite fixtures)?
 | RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_type` (setup vs teardown variants), `has_teardown_pair`, setup-to-teardown ratio | A vs B vs C |
 | RQ3 | How do agent and human fixtures differ in mock usage, framework selection, and interaction depth? | Quantitative | `mock_usages`, `framework`, `num_interactions_configured` | A vs B vs C |
 | RQ4 | What operations do fixtures perform, and do agents cover the full range of human fixture responsibilities? | Mixed | `category` (manual label), `fixture_type`, `scope` | A vs B vs C |
+
+---
+
+## Scripts
+
+[collection/research_questions/](../collection/research_questions/) holds the scripts that
+compute paper results directly from collected data and write a findings report to
+`research_questions/` at the repo root (gitignored, regenerated on demand — a dataset
+not yet collected is skipped rather than erroring). Each is standalone:
+`python -m collection.research_questions.<module>`.
+
+| Script | Answers | Reads | Writes |
+|---|---|---|---|
+| `rq1.py` | RQ1 — per-dataset structural-metric summaries, plus A vs B / A vs C comparisons (Mann-Whitney U / chi-square) | `db/{a,b,c}.db` | `research_questions/rq1.md` |
+| `language_contamination.py` | Data-quality check (not tied to one RQ) — for each per-language fixture CSV, what fraction of rows carry a mismatched `language` value | `datasets/{a,b,c}/fixtures/*.csv` | `research_questions/language_contamination.md` |
+
+RQ2–RQ4 have no script yet — their sections above describe the intended operationalization, not yet implemented.
