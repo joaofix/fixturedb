@@ -74,18 +74,8 @@ Each fixture record includes:
 
 ## Research Objectives
 
-We address the following research questions:
-
-1. **RQ1 — Structural metrics:** How do fixture definitions differ in structural
-   complexity, parameter counts, object instantiations, and external calls?
-2. **RQ2 — Setup/teardown provision:** How do fixtures differ in cleanup completeness
-   (teardown pairs) and scope granularity?
-3. **RQ3 — Mocking practices:** How do fixtures differ in mocking behavior (framework
-   choice, test-double category, usage counts)?
-4. **RQ4 — Operational categories:** How do fixture types/purposes differ in
-   distribution across authorship groups?
-5. **RQ5 — Control variable effects:** How do language, domain, and repository age
-   mediate any differences?
+See [Research Questions](../research-questions.md) for the full RQ1–RQ4 definitions,
+what each covers, and how the three-dataset comparison applies to each.
 
 ---
 

@@ -9,6 +9,7 @@ Start here for the between-group study comparing human and agent-authored test f
 | Overview | [What is FixtureDB?](getting-started/intro.md) |
 | Install and configure | [Setup & Requirements](getting-started/setup.md) |
 | Understand the repository layout | [Repository Structure](getting-started/repository-structure.md) |
+| Read the research questions | [Research Questions](research-questions.md) |
 | Run the collection pipeline | [Using the Pipeline](usage/reproducing.md) |
 | Inspect the database schema | [Database Schema](architecture/database-schema.md) |
 | Understand agent detection | [Agent Detection Methodology](architecture/agent-detection.md) |
@@ -27,6 +28,7 @@ Start here for the between-group study comparing human and agent-authored test f
 - [What is FixtureDB?](getting-started/intro.md) — Between-group study design and data
 - [Setup & Requirements](getting-started/setup.md) — Installation and configuration
 - [Repository Structure](getting-started/repository-structure.md) — Project layout and organization
+- [Research Questions](research-questions.md) — RQ1–RQ4, what each covers, and the three-dataset comparisons
 
 ### Architecture
 
