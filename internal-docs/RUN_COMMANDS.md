@@ -45,27 +45,35 @@ one command to paste.
 ```bash
 # Dataset A (agent-authored fixtures)
 python -m collection discover-repos --dataset a --workers 16 \
+  && curl -d "Dataset A 1/4: discover-repos finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection discover-commits --dataset a --workers 16 \
+  && curl -d "Dataset A 2/4: discover-commits finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection filter-test-commits --dataset a --workers 16 \
+  && curl -d "Dataset A 3/4: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection extract-fixtures --dataset a \
-  && curl -d "Dataset A collection finished" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset A 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
 python -m collection discover-repos --dataset b \
+  && curl -d "Dataset B 1/3: discover-repos finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection filter-test-commits --dataset b --workers 16 \
+  && curl -d "Dataset B 2/3: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection extract-fixtures --dataset b --workers 16 \
-  && curl -d "Dataset B collection finished" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset B 3/3: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
 python -m collection discover-repos --dataset c \
+  && curl -d "Dataset C 1/4: discover-repos (pass 1) finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection.dedupe_dataset_c_repos \
+  && curl -d "Dataset C 2/4: dedupe_dataset_c_repos finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection discover-repos --dataset c \
+  && curl -d "Dataset C 3/4: discover-repos (pass 2, post-dedupe) finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection extract-fixtures --dataset c --workers 16 \
-  && curl -d "Dataset C collection finished" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset C 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
