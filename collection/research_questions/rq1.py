@@ -20,7 +20,6 @@ python -m collection.research_questions.rq1
 
 from __future__ import annotations
 
-import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,6 +36,8 @@ from ._shared import (
     COMPARISONS,
     DATASET_LABELS,
     OUTPUT_DIR,
+    fetch_categorical_column,
+    fetch_continuous_column,
     fmt,
     require_db_or_none,
     summarize_continuous,
@@ -63,21 +64,6 @@ class DatasetMetrics:
     categorical: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
-def _fetch_continuous(conn: sqlite3.Connection, column: str) -> list[float]:
-    rows = conn.execute(
-        f"SELECT {column} FROM fixtures WHERE {column} IS NOT NULL"
-    ).fetchall()
-    return [row[0] for row in rows]
-
-
-def _fetch_categorical(conn: sqlite3.Connection, column: str) -> dict[str, int]:
-    rows = conn.execute(
-        f"SELECT {column}, COUNT(*) FROM fixtures "
-        f"WHERE {column} IS NOT NULL GROUP BY {column}"
-    ).fetchall()
-    return {row[0]: row[1] for row in rows}
-
-
 def load_dataset_metrics(
     dataset: str, *, db_root: Path = paths.DB_ROOT
 ) -> DatasetMetrics | None:
@@ -88,8 +74,8 @@ def load_dataset_metrics(
 
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        continuous_raw = {m: _fetch_continuous(conn, m) for m in CONTINUOUS_METRICS}
-        categorical = {m: _fetch_categorical(conn, m) for m in CATEGORICAL_METRICS}
+        continuous_raw = {m: fetch_continuous_column(conn, "fixtures", m) for m in CONTINUOUS_METRICS}
+        categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
 
     return DatasetMetrics(
         dataset=dataset,

@@ -1,12 +1,13 @@
 """Helpers shared across collection/research_questions/ scripts (rq1.py,
-rq2.py, language_contamination.py) -- kept here once instead of duplicated
-per-script, per this package's convention: leverage already-collected data
-first, import logic from collection/ second, write new logic only as a last
-resort (and then, only once).
+rq2.py, rq3.py, language_contamination.py) -- kept here once instead of
+duplicated per-script, per this package's convention: leverage
+already-collected data first, import logic from collection/ second, write
+new logic only as a last resort (and then, only once).
 """
 
 from __future__ import annotations
 
+import sqlite3
 import statistics
 from pathlib import Path
 
@@ -55,3 +56,19 @@ def summarize_continuous(values: list[float]) -> dict:
 
 def fmt(value: float | None, digits: int = 2) -> str:
     return "--" if value is None else f"{value:.{digits}f}"
+
+
+def fetch_continuous_column(conn: sqlite3.Connection, table: str, column: str) -> list[float]:
+    """All non-null values of `column` in `table` -- e.g. fixtures.loc,
+    mock_usages.num_interactions_configured. `table`/`column` are always
+    developer-supplied constants, never user input."""
+    rows = conn.execute(f"SELECT {column} FROM {table} WHERE {column} IS NOT NULL").fetchall()
+    return [row[0] for row in rows]
+
+
+def fetch_categorical_column(conn: sqlite3.Connection, table: str, column: str) -> dict[str, int]:
+    """Value -> count of `column` in `table`, non-null values only."""
+    rows = conn.execute(
+        f"SELECT {column}, COUNT(*) FROM {table} WHERE {column} IS NOT NULL GROUP BY {column}"
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
