@@ -77,50 +77,36 @@ def detect_agent_in_commit(
     This is the single implementation shared by Tier 1
     (`Tier1RepositoryScanner` in tiered_agent_corpus_scanner.py, the
     corpus's primary detection method) and Tier 2 (`AgentCommitVerifier` in
-    agent_signal_primitives.py, supplementary discovery). Each used to carry
-    its own independently hand-rolled copy of this same priority order --
-    already flagged as a recurring failure mode elsewhere in this codebase
-    (see tiered_agent_corpus_scanner.py's `_is_test_file_path` docstring for
-    a prior, already-fixed instance of the same pattern): a fix applied to
-    one copy (e.g. checking bot status before the trailer, or the
-    AGENT_TRAILER_RE hyphen-tolerance fix) had to be independently
-    rediscovered and reapplied to the other, and the two disagreed on
-    priority between author name and email until this consolidation (one
-    checked them as a single combined string, the other as two separate,
-    ordered fields -- see git history for the fix if the distinction
-    matters for a specific commit).
+    agent_signal_primitives.py, supplementary discovery) -- kept as one copy
+    deliberately, since two independently-maintained copies of this same
+    priority order have previously drifted out of sync with each other (see
+    tiered_agent_corpus_scanner.py's `_is_test_file_path` docstring for the
+    same failure mode elsewhere in this codebase).
 
     Matching is word-boundary-based (not a bare substring check),
     case-insensitive. This prevents a keyword from matching inside an
     unrelated compound word/surname, but cannot distinguish a keyword that
     is *also* a common standalone first name or employer domain (e.g. an
-    author literally named "Claude", or "Devin" before the fix described
-    below) -- see agent_heuristics.yaml's module comment for this known,
-    inherent limitation of name-based matching in general. Checking the
-    trailer before author identity (see order above) avoids this collision
-    whenever a commit has both a colliding author name and a correct,
-    unambiguous trailer. For the specific, individually-verified
-    collisions this project has actually found in its own corpus (as
-    opposed to the general risk any name could theoretically pose),
-    is_known_human_author() additionally skips steps 3/4 outright -- see
-    collection/heuristics/agent-mining/known_human_collisions.csv.
+    author literally named "Claude") -- a known, inherent limitation of
+    name-based matching in general (see docs/architecture/agent-detection.md's
+    Known Limitations). Checking the trailer before author identity (see
+    order above) avoids this collision whenever a commit has both a
+    colliding author name and a correct, unambiguous trailer. For the
+    specific, individually-verified collisions this project has actually
+    found in its own corpus (as opposed to the general risk any name could
+    theoretically pose), is_known_human_author() additionally skips steps
+    3/4 outright -- see collection/heuristics/agent-mining/known_human_collisions.csv.
 
-    "devin"/"cline" were a special case, closed at the root rather than
-    via is_known_human_author(): manual validation review (2026-07-17)
-    found both producing real name/domain collisions (an author literally
-    named "Devin Smith"; a human surnamed "Cline"; actual Cline-company
-    employees committing under an @cline.bot work email). For "devin",
-    the bare "devin"/"devin ai" patterns turned out to be this project's
-    own redundant addition -- the upstream "devin-ai-integration"
-    bot-identity pattern (kept) already catches every real Devin AI
-    commit found in the corpus, so the broader patterns added only
-    false-positive risk with no detection benefit and were removed
-    outright. For "cline", checking Cline's official docs found no
-    auto-commit-under-its-own-identity feature and no
-    Co-authored-by/Assisted-by trailer convention at all -- it satisfies
-    neither half of this detection methodology, so it was removed from
-    the catalog entirely (same evidentiary bar as the CURSOR.md removal
-    in agent_files.csv). See agent_authors.csv's boundary comment.
+    "devin"/"cline" were closed at the root rather than via
+    is_known_human_author(): both collided too often with ordinary names
+    ("Devin Smith", surname "Cline") and, for "cline", real Cline-company
+    employees committing under an @cline.bot work email with no way to tell
+    bot from human. The broad "devin"/"devin ai" patterns were this
+    project's own redundant addition -- the upstream "devin-ai-integration"
+    bot-identity pattern already catches every real Devin AI commit -- so
+    both were removed from agent_authors.csv entirely rather than patched
+    case-by-case. See docs/architecture/agent-detection.md's Known
+    Limitations for the full reasoning.
     """
     if is_bot_author(f"{author_name} {author_email}"):
         return None

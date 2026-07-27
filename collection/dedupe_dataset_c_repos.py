@@ -5,16 +5,15 @@ Dataset C looks at exactly one commit per repo (the last commit at or before
 that date have byte-identical git history up to that point -- a cryptographic
 guarantee, not a heuristic (a commit SHA hashes its full content plus its
 entire parent chain, so two genuinely different histories cannot produce the
-same SHA by chance). Found via manual review of the 2026-07-17 Dataset C
-collection: 16.2% of the whole corpus was duplicate content this way, the
-worst single cluster being 5 OpenJDK-derived repos (`openjdk/jdk`,
-`openjdk/loom`, `openjdk/valhalla`, `jetbrains/jetbrainsruntime`,
-`sap/sapmachine`) all sharing one commit. Not catchable via GitHub's own
-"exclude forks" -- confirmed every repo in every found cluster has
-`isFork=false` in the raw SEART export; these are org transfers and
-independently-created "shadow copies" (a raw `git push` of existing history
-into a brand-new repo object), not repos GitHub's own fork bookkeeping knows
-about.
+same SHA by chance). A real example: `openjdk/jdk`, `openjdk/loom`,
+`openjdk/valhalla`, `jetbrains/jetbrainsruntime`, and `sap/sapmachine` all
+share one commit -- five distinct `repo_name`s that are actually one
+codebase. Not catchable via GitHub's own "exclude forks" -- every repo in
+every found cluster has `isFork=false` in the raw SEART export; these are
+org transfers and independently-created "shadow copies" (a raw `git push` of
+existing history into a brand-new repo object), not repos GitHub's own fork
+bookkeeping knows about. See `internal-docs/methodology-improvements/repo-deduplication.md`
+for the full investigation.
 
 This is a standalone tool, not part of the phase pipeline -- it never runs
 automatically. Invoke it explicitly (`python -m

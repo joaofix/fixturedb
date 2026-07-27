@@ -35,9 +35,7 @@ python:
     # also matched @pytest.mark.usefixtures(...) ("fixture" comes from
     # "usefixtures") and @pytest.mark.parametrize(..., lazy_fixture(...))
     # ("fixture" comes from "lazy_fixture" in the argument list), both real
-    # test-function markers, not fixture definitions. Confirmed as false
-    # positives via manual review of Dataset B's validation sample
-    # (2026-07-16/17) before this pattern was tightened.
+    # test-function markers, not fixture definitions.
     match_pattern: 'pytest\w*\.fixture\b'
     note: >
       Matches @pytest.fixture and @pytest_asyncio.fixture alike ("fixture"

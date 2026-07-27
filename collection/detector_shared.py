@@ -48,9 +48,8 @@ def _get_parser(language: str):
     `extract_fixtures()`'s parser lookup distinguishes them (see
     `_parser_key_for_file()`). Parsing a `.tsx` file's JSX syntax (e.g.
     `<Component />`) with the non-JSX grammar produces a malformed tree --
-    found via manual review of Dataset B's fixture sample (2026-07-16/17),
-    where it caused a `before_each` fixture's raw_source to bleed into
-    unrelated trailing code.
+    e.g. a `before_each` fixture's raw_source bleeding into unrelated
+    trailing code.
     """
     if language in _PARSERS:
         return _PARSERS[language]
