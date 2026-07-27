@@ -21,7 +21,6 @@ python -m collection.research_questions.rq1
 from __future__ import annotations
 
 import sqlite3
-import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,13 +31,18 @@ from ..between_group_comparison import (
     compute_categorical_balance,
     compute_continuous_balance,
 )
-from ..config import ROOT_DIR
 from ..db import db_session
 from ..logging_utils import get_logger
+from ._shared import (
+    COMPARISONS,
+    DATASET_LABELS,
+    OUTPUT_DIR,
+    fmt,
+    require_db_or_none,
+    summarize_continuous,
+)
 
 logger = get_logger(__name__)
-
-OUTPUT_DIR = ROOT_DIR / "research_questions"
 
 CONTINUOUS_METRICS = [
     "loc",
@@ -49,15 +53,6 @@ CONTINUOUS_METRICS = [
     "num_external_calls",
 ]
 CATEGORICAL_METRICS = ["scope", "fixture_type", "commit_type"]
-
-DATASET_LABELS = {
-    "a": "Dataset A (agent-authored)",
-    "b": "Dataset B (human-authored, contemporary)",
-    "c": "Dataset C (human-authored, pre-LLM)",
-}
-
-# (dataset compared against A, comparison label)
-COMPARISONS = [("b", "A vs B"), ("c", "A vs C")]
 
 
 @dataclass
@@ -87,9 +82,8 @@ def load_dataset_metrics(
     dataset: str, *, db_root: Path = paths.DB_ROOT
 ) -> DatasetMetrics | None:
     """Load RQ1 metrics for `dataset`, or None if its db doesn't exist yet."""
-    db_file = paths.db_path(dataset, root=db_root)
-    if not db_file.exists():
-        logger.warning(f"{db_file} not found; skipping dataset {dataset!r}")
+    db_file = require_db_or_none(dataset, db_root)
+    if db_file is None:
         return None
 
     with db_session(db_file) as conn:
@@ -103,19 +97,6 @@ def load_dataset_metrics(
         continuous_raw=continuous_raw,
         categorical=categorical,
     )
-
-
-def _summarize_continuous(values: list[float]) -> dict:
-    if not values:
-        return {"n": 0, "mean": None, "median": None, "min": None, "max": None, "stdev": None}
-    return {
-        "n": len(values),
-        "mean": statistics.fmean(values),
-        "median": statistics.median(values),
-        "min": min(values),
-        "max": max(values),
-        "stdev": statistics.stdev(values) if len(values) > 1 else 0.0,
-    }
 
 
 def compare_datasets(
@@ -141,20 +122,16 @@ def compare_datasets(
     return {"continuous": continuous, "categorical": categorical}
 
 
-def _fmt(value: float | None, digits: int = 2) -> str:
-    return "--" if value is None else f"{value:.{digits}f}"
-
-
 def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     lines = [f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures", ""]
 
     lines += ["**Continuous metrics**", "", "| Metric | n | mean | median | min | max | stdev |",
               "|---|---|---|---|---|---|---|"]
     for metric in CONTINUOUS_METRICS:
-        s = _summarize_continuous(metrics.continuous_raw[metric])
+        s = summarize_continuous(metrics.continuous_raw[metric])
         lines.append(
-            f"| {metric} | {s['n']:,} | {_fmt(s['mean'])} | {_fmt(s['median'])} | "
-            f"{_fmt(s['min'], 0)} | {_fmt(s['max'], 0)} | {_fmt(s['stdev'])} |"
+            f"| {metric} | {s['n']:,} | {fmt(s['mean'])} | {fmt(s['median'])} | "
+            f"{fmt(s['min'], 0)} | {fmt(s['max'], 0)} | {fmt(s['stdev'])} |"
         )
     lines.append("")
 
@@ -191,9 +168,9 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         lines.append(
-            f"| {metric} | {_fmt(d.get('agent_mean'))} | {_fmt(d.get('agent_median'))} | "
-            f"{_fmt(d.get('human_mean'))} | {_fmt(d.get('human_median'))} | "
-            f"{_fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} |"
+            f"| {metric} | {fmt(d.get('agent_mean'))} | {fmt(d.get('agent_median'))} | "
+            f"{fmt(d.get('human_mean'))} | {fmt(d.get('human_median'))} | "
+            f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} |"
         )
     lines.append("")
 
@@ -211,7 +188,7 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         dof = d.get("degrees_of_freedom", "--")
-        lines.append(f"| {metric} | {_fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
+        lines.append(f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
     lines.append("")
 
     return "\n".join(lines)

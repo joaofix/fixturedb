@@ -38,12 +38,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
-from ..config import ROOT_DIR
 from ..logging_utils import get_logger
+from ._shared import DATASET_LABELS, OUTPUT_DIR
 
 logger = get_logger(__name__)
-
-OUTPUT_DIR = ROOT_DIR / "research_questions"
 
 # raw_source can contain embedded newlines inside a quoted CSV field, which
 # trips csv's default field_size_limit -- same bump used elsewhere in this
@@ -96,13 +94,6 @@ def check_dataset(dataset: str, *, datasets_root: Path = paths.DATASETS_ROOT) ->
         logger.warning(f"{fixtures_dir} has no *_fixtures.csv files; skipping dataset {dataset!r}")
         return None
     return [_check_csv(p) for p in csv_paths]
-
-
-DATASET_LABELS = {
-    "a": "Dataset A (agent-authored)",
-    "b": "Dataset B (human-authored, contemporary)",
-    "c": "Dataset C (human-authored, pre-LLM)",
-}
 
 
 def _render_dataset(dataset: str, results: list[FileContamination]) -> str:

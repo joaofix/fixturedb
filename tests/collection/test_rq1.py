@@ -21,7 +21,6 @@ from collection.db import (
 )
 from collection.research_questions.rq1 import (
     DatasetMetrics,
-    _summarize_continuous,
     generate_report,
     load_dataset_metrics,
     write_report,
@@ -78,22 +77,6 @@ def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
             }
             base.update(overrides)
             insert_fixture(conn, base)
-
-
-class TestSummarizeContinuous:
-    def test_known_values(self):
-        s = _summarize_continuous([1.0, 2.0, 3.0, 4.0])
-        assert s == {"n": 4, "mean": 2.5, "median": 2.5, "min": 1.0, "max": 4.0, "stdev": s["stdev"]}
-        assert round(s["stdev"], 4) == round(1.2909944487358056, 4)
-
-    def test_empty_list(self):
-        s = _summarize_continuous([])
-        assert s == {"n": 0, "mean": None, "median": None, "min": None, "max": None, "stdev": None}
-
-    def test_single_value_stdev_is_zero_not_an_error(self):
-        s = _summarize_continuous([7.0])
-        assert s["n"] == 1
-        assert s["stdev"] == 0.0
 
 
 class TestLoadDatasetMetrics:
