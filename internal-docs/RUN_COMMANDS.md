@@ -47,14 +47,16 @@ one command to paste.
 python -m collection discover-repos --dataset a --workers 16 \
   && python -m collection discover-commits --dataset a --workers 16 \
   && python -m collection filter-test-commits --dataset a --workers 16 \
-  && python -m collection extract-fixtures --dataset a
+  && python -m collection extract-fixtures --dataset a \
+  && curl -d "Dataset A collection finished" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
 python -m collection discover-repos --dataset b \
   && python -m collection filter-test-commits --dataset b --workers 16 \
-  && python -m collection extract-fixtures --dataset b --workers 16
+  && python -m collection extract-fixtures --dataset b --workers 16 \
+  && curl -d "Dataset B collection finished" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
@@ -62,7 +64,8 @@ python -m collection discover-repos --dataset b \
 python -m collection discover-repos --dataset c \
   && python -m collection.dedupe_dataset_c_repos \
   && python -m collection discover-repos --dataset c \
-  && python -m collection extract-fixtures --dataset c --workers 16
+  && python -m collection extract-fixtures --dataset c --workers 16 \
+  && curl -d "Dataset C collection finished" ntfy.sh/joaofix_fixturedb
 ```
 
 Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
