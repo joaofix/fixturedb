@@ -3,6 +3,13 @@ drive a classification decision (agent vs. human, fixture vs. not,
 boilerplate repo vs. not), as opposed to plain settings (see
 collection/study_parameters/).
 
+"Heuristic" here describes the package/directory, not necessarily each
+catalog's own matching precision -- fixture_definitions.yaml below is exact-
+match, deterministic lookup (same AST in, same classification out, every
+time; see docs/architecture/detection.md's "On the word 'heuristics'" note),
+while feature_extraction_patterns.yaml is genuinely regex/heuristic. Don't
+infer one from the other just because both live in this directory.
+
 - agent_heuristics.yaml (this package's root): paper_scope, this project's
   own data.
 - agent-mining/agent_files.csv, agent_authors.csv, bots.csv: file_based,
@@ -16,11 +23,14 @@ collection/study_parameters/).
   verified real authors whose identity collides with an agent_authors.csv
   keyword. See agent_patterns.py's is_known_human_author().
 - fixture_definitions.yaml: operational definition of "fixture" per
-  language. Full schema: that file's own header comment.
+  language -- exact-match pattern table (decorator/annotation/hook name),
+  not fuzzy/probabilistic. Full schema: that file's own header comment.
 - exclusion_keywords.yaml: repo name/description keywords that signal a
   boilerplate/toy repo.
 - feature_extraction_patterns.yaml: mock-framework/external-call/
-  object-instantiation regex tables and setup/teardown pairing rules.
+  object-instantiation regex tables and setup/teardown pairing rules --
+  these drive metrics computed on an already-identified fixture, never the
+  identification decision itself.
 
 collection/agent_patterns.py consumes load_agent_heuristics()'s merged
 output; collection/config.py and the per-language detector modules consume

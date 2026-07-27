@@ -21,6 +21,8 @@ This document covers **fixture detection**: identifying test fixture definitions
 
 No general-purpose tool can distinguish a fixture from a helper function without encoding framework semantics, so detection is pattern-based per language/framework rather than a single generic rule.
 
+**On the word "heuristics":** fixture identification itself — whether something is a fixture, and its `fixture_type`/`scope`/`framework` — is fully deterministic exact-match pattern lookup (regex match on decorator text, or dict lookup on annotation/method/hook name); the three per-language detectors contain no scoring, fuzzy matching, or probabilistic fallback. This holds even though the pattern table lives in a directory named `collection/heuristics/` — that folder is a grab-bag of four unrelated catalogs, and only some of them (mock/external-call/object-instantiation detection, teardown pairing — see § Mock Detection and § Post-Processing below) are heuristic in the regex-approximation sense. Those affect *metrics computed on* an already-identified fixture, never the identification decision itself. See [collection/heuristics/\_\_init\_\_.py](../../collection/heuristics/__init__.py)'s module docstring for the per-file breakdown.
+
 The pattern tables are not hardcoded in the per-language detector files — they are loaded from
 [collection/heuristics/fixture_definitions.yaml](../../collection/heuristics/fixture_definitions.yaml),
 the single source of truth for what counts as a fixture per language. Each language section also
