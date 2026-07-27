@@ -3,9 +3,9 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "icsme-nier-2026"
+name = "fixturedb"
 version = "0.1.0"
-description = "A project for ICSME NIER 2026"
+description = "FixtureDB: a multi-language dataset of test fixture definitions from open-source software (ICPC 2027)"
 readme = "README.md"
 requires-python = ">=3.8"
 

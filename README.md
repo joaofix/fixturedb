@@ -1,6 +1,6 @@
 # FixtureDB — Fixture Collection Pipeline
 
-[![Tests & Coverage](https://github.com/joao-almeida/icsme-nier-2026/actions/workflows/coverage.yml/badge.svg)](https://github.com/joao-almeida/icsme-nier-2026/actions/workflows/coverage.yml)
+[![Tests & Coverage](https://github.com/joaofix/fixturedb/actions/workflows/coverage.yml/badge.svg)](https://github.com/joaofix/fixturedb/actions/workflows/coverage.yml)
 ![Coverage](./.github/coverage.svg)
 
 Replication package for the paper:

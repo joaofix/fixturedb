@@ -270,7 +270,7 @@ HAVING mock_count > 0;
 ## Citation
 
 If you use this dataset in your research, please cite:
-- Original corpus: [ICSME NIER 2026]
+- Original corpus: [ICPC 2027]
 - Dataset version: {version}
 - Generation date: [see export timestamp]
 
@@ -570,7 +570,7 @@ ORDER BY avg_complexity DESC;
 ## Citation
 
 If you use this dataset in your research, please cite:
-- Original corpus: [ICSME NIER 2026]
+- Original corpus: [ICPC 2027]
 - Dataset version: {version}
 - Agent detection methodology: [Advisor's paper reference]
 

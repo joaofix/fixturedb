@@ -26,4 +26,4 @@ Usage:
 """
 
 __version__ = "2.0.0"
-__author__ = "ICSME NIER 2026"
+__author__ = "João Almeida, Andre Hora"

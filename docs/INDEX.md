@@ -70,7 +70,7 @@ See [introduction](getting-started/intro.md) for the full methodology.
 
 FixtureDB: A Multi-Language Dataset of Test Fixture Definitions from Open-Source Software
 João Almeida, Andre Hora
-ICSME 2026 — Tool Demonstration and Data Showcase Track
+ICPC 2027 — Research Track
 
 ## License
 

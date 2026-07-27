@@ -37,7 +37,7 @@ from .utils import detect_agent_in_commit
 
 logger = get_logger(__name__)
 
-DEFAULT_CLONES_DIR = Path(platformdirs.user_data_dir("icsme-nier", "clones"))
+DEFAULT_CLONES_DIR = Path(platformdirs.user_data_dir("fixturedb", "clones"))
 
 
 @dataclass

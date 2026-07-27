@@ -111,4 +111,4 @@ If you use FixtureDB or these analyses in your research, please cite:
 
 ## Questions & Feedback
 
-For issues or improvements to these notebooks, open an issue on [GitHub](https://github.com/joao-almeida/icsme-nier-2026).
+For issues or improvements to these notebooks, open an issue on [GitHub](https://github.com/joaofix/fixturedb).

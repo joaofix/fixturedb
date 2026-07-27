@@ -3,7 +3,7 @@ Quantitative EDA Scripts
 ========================
 
 Pure statistical and analytical plots suitable for publication in
-ICSME Data Showcase track.
+ICPC 2027's Research Track.
 
 Includes:
 - Corpus composition (repo and fixture counts)
