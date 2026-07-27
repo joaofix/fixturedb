@@ -697,15 +697,25 @@ TYPE_BASED_TEARDOWN_PAIRS: dict[str, str] = _TEARDOWN_DETECTION["type_based_pair
 SELF_REGISTERED_CLEANUP: dict[str, dict[str, list[str]]] = _TEARDOWN_DETECTION.get(
     "self_registered_cleanup", {}
 )
+ALWAYS_HAS_TEARDOWN_TYPES: set[str] = set(
+    _TEARDOWN_DETECTION.get("always_has_teardown_fixture_types", [])
+)
 
 
 def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
     """
     Post-process fixtures to detect has_teardown_pair: whether a fixture has cleanup logic.
 
-    Four detection mechanisms, all driven by
+    Five detection mechanisms, all driven by
     collection/heuristics/feature_extraction_patterns.yaml's
     teardown_detection table:
+      - always_has_teardown: fixture_types where the mechanism itself
+        guarantees setup+teardown by definition, with no reliable
+        source-level signal to check (junit_rule/junit_class_rule -- the
+        actual before/after logic lives inside the Rule's own class,
+        outside the test file; vitest_around_each/vitest_around_all -- the
+        wrapped callback parameter is developer-named, so no fixed marker
+        like pytest's "yield" exists to look for).
       - yield_based: pytest fixtures -- checks for a 'yield' statement in the
         fixture's own body (no pairing against another fixture needed).
       - name_based: setup and teardown share the same fixture_type and are
@@ -726,7 +736,10 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
     for fixture in fixtures:
         has_teardown = False
 
-        if fixture.fixture_type in YIELD_BASED_TEARDOWN_TYPES:
+        if fixture.fixture_type in ALWAYS_HAS_TEARDOWN_TYPES:
+            has_teardown = True
+
+        elif fixture.fixture_type in YIELD_BASED_TEARDOWN_TYPES:
             has_teardown = "yield" in fixture.raw_source
 
         elif fixture.fixture_type in NAME_BASED_TEARDOWN_PAIRS:

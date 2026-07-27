@@ -404,6 +404,136 @@ afterAll(() => { teardown(); });
             setup = next(f for f in result.fixtures if f.fixture_type == "before_all")
             assert setup.has_teardown_pair == 1
 
+    def test_java_junit5_before_each_after_each_pair(self):
+        """JUnit5 @BeforeEach/@AfterEach should be paired -- this is the
+        single most common Java lifecycle pattern in the corpus, but had no
+        dedicated pairing test (only TestNG's @BeforeMethod/@AfterMethod,
+        which shares the same type_based_pairs mechanism, was covered)."""
+        code = """
+public class ServiceTest {
+    @BeforeEach
+    void setUp() { init(); }
+    @AfterEach
+    void tearDown() { cleanup(); }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(
+                f for f in result.fixtures if f.fixture_type == "junit5_before_each"
+            )
+            assert setup.has_teardown_pair == 1
+
+    def test_javascript_before_each_after_each_pair(self):
+        """beforeEach/afterEach should be paired -- this is the single
+        largest fixture_type in the whole corpus, but had no dedicated
+        pairing test (only the *_all variants and Mocha's bare before/after
+        were covered)."""
+        code = """
+beforeEach(() => { setup(); });
+afterEach(() => { teardown(); });
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            setup = next(f for f in result.fixtures if f.fixture_type == "before_each")
+            assert setup.has_teardown_pair == 1
+
+    def test_java_junit_rule_always_has_teardown_pair(self):
+        """@Rule fields wrap a TestRule whose apply() logic (including any
+        teardown) lives outside the test file entirely -- source inspection
+        can't confirm or deny teardown, so junit_rule is treated as always
+        having it, regardless of raw_source content."""
+        code = """
+import org.junit.Rule;
+
+public class TemporaryFolderTest {
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            rule = next(f for f in result.fixtures if f.fixture_type == "junit_rule")
+            assert rule.has_teardown_pair == 1
+
+    def test_java_junit_class_rule_always_has_teardown_pair(self):
+        """Same as junit_rule, for the class-scoped @ClassRule variant."""
+        code = """
+import org.junit.ClassRule;
+
+public class DatabaseTest {
+    @ClassRule
+    public static ExternalResource database = new ExternalResource();
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            rule = next(
+                f for f in result.fixtures if f.fixture_type == "junit_class_rule"
+            )
+            assert rule.has_teardown_pair == 1
+
+    def test_vitest_around_each_always_has_teardown_pair(self):
+        """aroundEach wraps setup+teardown around a runTest() callback whose
+        parameter is developer-named (not a fixed marker like pytest's
+        "yield"), so it's treated as always having teardown by definition
+        of the hook -- even when the callback is passed onward rather than
+        invoked directly, as here."""
+        code = """
+import { aroundEach, test } from 'vitest'
+
+aroundEach(async (runTest) => {
+    await db.transaction(runTest)
+})
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            hook = next(
+                f for f in result.fixtures if f.fixture_type == "vitest_around_each"
+            )
+            assert hook.has_teardown_pair == 1
+
+    def test_vitest_around_all_always_has_teardown_pair(self):
+        """Same as vitest_around_each, for the suite-scoped aroundAll variant."""
+        code = """
+import { aroundAll, test } from 'vitest'
+
+aroundAll(async (runSuite) => {
+    await tracer.trace('test-suite', runSuite)
+})
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            hook = next(
+                f for f in result.fixtures if f.fixture_type == "vitest_around_all"
+            )
+            assert hook.has_teardown_pair == 1
+
+
 class TestFixtureResultStructure:
     """Test that FixtureResult contains all new fields."""
 

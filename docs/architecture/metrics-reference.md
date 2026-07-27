@@ -107,14 +107,18 @@ two frameworks can't always be told apart from the annotation alone): [fixture-p
 ### has_teardown_pair
 
 Binary indicator that a fixture has a paired cleanup counterpart, computed in a post-processing pass
-over the whole fixture list (`_calculate_teardown_pairs()`) via three mechanisms: a `yield` in the
-fixture's own body (pytest), same fixture_type distinguished by name (`setUp`/`tearDown`), or a
-different fixture_type at matching scope (`@BeforeEach`/`@AfterEach`, `beforeAll`/`afterAll`, etc.).
-Only the setup-side fixture is flagged; the teardown fixture itself is not. Pairing rules:
-`feature_extraction_patterns.yaml`'s `teardown_detection`.
+over the whole fixture list (`_calculate_teardown_pairs()`) via five mechanisms: always-true for
+fixture_types where the mechanism itself guarantees teardown with no checkable source signal
+(`@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`); a `yield` in the fixture's own body (pytest);
+same fixture_type distinguished by name (`setUp`/`tearDown`), including self-registered cleanup calls
+(`addCleanup(`/`enterContext(`); or a different fixture_type at matching scope (`@BeforeEach`/
+`@AfterEach`, `beforeAll`/`afterAll`, etc.). Only the setup-side fixture is flagged; the teardown
+fixture itself is not. Pairing rules: `feature_extraction_patterns.yaml`'s `teardown_detection`.
 
-**Known limitation:** checks that cleanup logic is *present*, not that it's *correct*; implicit cleanup
-(e.g. automatic connection pooling) isn't detected.
+**Known limitations:** checks that cleanup logic is *present*, not that it's *correct*; implicit cleanup
+(e.g. automatic connection pooling) isn't detected. Pairing is intra-file only — a setup fixture's
+teardown counterpart defined in a different file (e.g. inherited from a Java base test class) is not
+detected.
 
 ### fixture_dependencies (Python/pytest only)
 

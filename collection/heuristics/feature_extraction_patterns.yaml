@@ -298,3 +298,24 @@ teardown_detection:
     before_each: after_each
     before_all: after_all
     mocha_before: mocha_after
+
+  # fixture_type values that inherently combine setup+teardown by
+  # definition of the underlying mechanism -- no source-level marker or
+  # pairing needed, and none is reliably checkable anyway:
+  #   - junit_rule / junit_class_rule: a JUnit4 @Rule/@ClassRule field
+  #     wraps a TestRule/MethodRule implementation whose entire contract is
+  #     to run code both before AND after the test (via Statement.evaluate()
+  #     wrapping, inside the Rule's own class -- which lives outside the
+  #     test file and is invisible to source inspection). Classifying a
+  #     fixture as junit_rule/junit_class_rule already implies teardown,
+  #     regardless of what the field declaration's own raw_source contains.
+  #   - vitest_around_each / vitest_around_all: Vitest 4.1+ "around" hooks
+  #     exist specifically to wrap setup+teardown around a single
+  #     runTest()/runSuite() callback -- but unlike pytest's "yield" (a
+  #     language keyword), that callback parameter is developer-named (may
+  #     not literally be called runTest/runSuite, and may be passed onward
+  #     rather than invoked directly, e.g. `db.transaction(runTest)`), so no
+  #     reliable source-level marker exists to check. The hook's purpose is
+  #     definitional, so it's treated the same way as the JUnit Rule case.
+  always_has_teardown_fixture_types:
+    [junit_rule, junit_class_rule, vitest_around_each, vitest_around_all]

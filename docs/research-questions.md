@@ -37,22 +37,29 @@ than erroring).
 
 **What it covers**: This is the cleanest new angle and it is already measurable from
 the existing schema. Setup and teardown are detected as separate `fixture_type` values
-— `junit5_before_each` vs `junit5_after_each`, `before_each` vs `after_each` — and for
-Python the `has_yield` flag distinguishes pure-setup pytest fixtures from
-setup+teardown ones. Per repo, the ratio of setup fixtures to teardown fixtures can be
-computed: a balanced ratio approaching 1:1 suggests disciplined lifecycle management,
-while a heavily setup-skewed ratio (many befores, few afters) suggests teardown is
-being neglected.
+— `junit5_before_each` vs `junit5_after_each`, `before_each` vs `after_each` — and
+`fixtures.has_teardown_pair` flags whether a setup-side fixture has matching cleanup
+logic, computed per language via `_calculate_teardown_pairs()`
+([detector_shared.py](../collection/detector_shared.py)): a yield statement (pytest), a
+same-type setup/teardown name pair (unittest, including `addCleanup`/`enterContext`
+self-registered cleanup), a different-type setup/teardown pair by scope (JUnit/TestNG/
+JS), or an always-true case for mechanisms that guarantee teardown by construction
+(JUnit `@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`). Per repo, the ratio of
+setup fixtures to teardown fixtures can be computed: a balanced ratio approaching 1:1
+suggests disciplined lifecycle management, while a heavily setup-skewed ratio (many
+befores, few afters) suggests teardown is being neglected.
 
-This operationalization requires no new AST work — `fixture_type` and `has_yield`
-already capture it completely.
+This operationalization requires no new AST work — `fixture_type` and
+`has_teardown_pair` already capture it completely. Note: pairing is intra-file only
+(a setup fixture's teardown counterpart in a different file, e.g. inherited from a
+Java base test class, is not detected).
 
 **Three-dataset comparison**: Do agents write fewer teardown fixtures than humans in
 the same repos (A vs B)? Is teardown discipline better or worse today than in the
 pre-LLM era (A vs C, B vs C)?
 
-**Key metrics**: `fixture_type` (setup vs teardown variants), `has_yield` (Python
-teardown signal), setup-to-teardown ratio per repo, per language.
+**Key metrics**: `fixture_type` (setup vs teardown variants), `has_teardown_pair`,
+setup-to-teardown ratio per repo, per language.
 
 ## RQ3 — Mocking (Quantitative)
 
@@ -86,6 +93,6 @@ harder ones (stateful I/O setup, lifecycle wrappers, composite fixtures)?
 | RQ | Question | Type | Key Metrics | Datasets |
 |----|----------|------|--------------|----------|
 | RQ1 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | `loc`, `cyclomatic_complexity`, `nesting_depth`, `num_parameters`, `scope`, `num_external_calls`, `commit_type` | A vs B vs C |
-| RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_type` (setup vs teardown variants), `has_yield`, setup-to-teardown ratio | A vs B vs C |
+| RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_type` (setup vs teardown variants), `has_teardown_pair`, setup-to-teardown ratio | A vs B vs C |
 | RQ3 | How do agent and human fixtures differ in mock usage, framework selection, and interaction depth? | Quantitative | `mock_usages`, `framework`, `num_interactions_configured` | A vs B vs C |
 | RQ4 | What operations do fixtures perform, and do agents cover the full range of human fixture responsibilities? | Mixed | `category` (manual label), `fixture_type`, `scope` | A vs B vs C |

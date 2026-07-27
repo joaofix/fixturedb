@@ -147,7 +147,7 @@ differs by authorship group.
 
 | Metric | Limitation | Mitigation |
 |--------|-----------|-----------|
-| `has_teardown_pair` | Heuristic detection; implicit cleanup (connection pooling, auto-cleanup) not detected. Ambiguous in JavaScript/TypeScript. | Use `raw_source` for manual verification on important fixtures. |
+| `has_teardown_pair` | Heuristic detection; implicit cleanup (connection pooling, auto-cleanup) not detected. Ambiguous in JavaScript/TypeScript. Pairing is intra-file only — a setup fixture's teardown counterpart defined in a different file (e.g. inherited from a Java base test class) is never detected. | Use `raw_source` for manual verification on important fixtures. |
 | `num_contributors` | GitHub API page limit (~30 per page); repos with >100 contributors may be under-counted. | For precise counts, query GitHub API or web interface directly. |
 | `max_nesting_depth` | May over-estimate when counting lambda/closure nesting vs. control flow nesting. | Use `cyclomatic_complexity` for cross-validation of structural complexity. |
 
