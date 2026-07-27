@@ -67,12 +67,23 @@ setup-to-teardown ratio per repo, per language.
 > framework selection, and interaction depth?
 
 **What it covers**: Mock prevalence per fixture and per language, framework
-distribution, `num_interactions_configured`, and `target_identifier` patterns.
+distribution, test-double `category` (dummy/stub/spy/mock/fake), and
+`num_interactions_configured`. Purely quantitative — the old RQ3's qualitative
+`target_identifier`-based target-layer coding (boundary/internal/infrastructure) has
+been dropped rather than reduced to a keyword heuristic.
 
 **Three-dataset comparison**: Do agents mock more or less than humans (A vs B)? Has
 mock prevalence inside fixtures changed since the pre-LLM era (A vs C)? Does framework
 choice differ by author type — do agents default to the dominant framework per
 language or show more diversity?
+
+**Generating the findings**: `python -m collection.research_questions.rq3` computes
+per-dataset mock prevalence (overall and per language), framework distribution,
+category distribution, and interaction-depth statistics, plus A vs B and A vs C
+comparisons (Mann-Whitney U for `num_mocks`/`num_interactions_configured`, chi-square
+for `has_mock`/`framework`/`category`) directly from `db/{a,b,c}.db`, and writes the
+results to `research_questions/rq3.md` (gitignored, regenerated on demand — any
+dataset not yet collected is skipped rather than erroring).
 
 ## RQ4 — Usage Categories (Mixed — Qualitative + Quantitative)
 
@@ -94,7 +105,7 @@ harder ones (stateful I/O setup, lifecycle wrappers, composite fixtures)?
 |----|----------|------|--------------|----------|
 | RQ1 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | `loc`, `cyclomatic_complexity`, `nesting_depth`, `num_parameters`, `scope`, `num_external_calls`, `commit_type` | A vs B vs C |
 | RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_type` (setup vs teardown variants), `has_teardown_pair`, setup-to-teardown ratio | A vs B vs C |
-| RQ3 | How do agent and human fixtures differ in mock usage, framework selection, and interaction depth? | Quantitative | `mock_usages`, `framework`, `num_interactions_configured` | A vs B vs C |
+| RQ3 | How do agent and human fixtures differ in mock usage, framework selection, and interaction depth? | Quantitative | `num_mocks`, `framework`, `category`, `num_interactions_configured` | A vs B vs C |
 | RQ4 | What operations do fixtures perform, and do agents cover the full range of human fixture responsibilities? | Mixed | `category` (manual label), `fixture_type`, `scope` | A vs B vs C |
 
 ---
@@ -111,6 +122,7 @@ not yet collected is skipped rather than erroring). Each is standalone:
 |---|---|---|---|
 | `rq1.py` | RQ1 — per-dataset structural-metric summaries, plus A vs B / A vs C comparisons (Mann-Whitney U / chi-square) | `db/{a,b,c}.db` | `research_questions/rq1.md` |
 | `rq2.py` | RQ2 — per-dataset `fixture_type` kind (setup/teardown/other) distribution, per-repo setup-to-teardown ratio, `has_teardown_pair` rate by fixture_type, plus A vs B / A vs C comparisons | `db/{a,b,c}.db` | `research_questions/rq2.md` |
+| `rq3.py` | RQ3 — per-dataset mock prevalence (overall and per language), framework distribution, category distribution, interaction-depth stats, plus A vs B / A vs C comparisons | `db/{a,b,c}.db` | `research_questions/rq3.md` |
 | `language_contamination.py` | Data-quality check (not tied to one RQ) — for each per-language fixture CSV, what fraction of rows carry a mismatched `language` value | `datasets/{a,b,c}/fixtures/*.csv` | `research_questions/language_contamination.md` |
 
-RQ3–RQ4 have no script yet — their sections above describe the intended operationalization, not yet implemented.
+RQ4 has no script yet — its section above describes the intended operationalization, not yet implemented.
