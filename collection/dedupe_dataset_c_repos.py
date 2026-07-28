@@ -35,12 +35,15 @@ candidate repo) is paid once per re-run, not on every Dataset C build.
 
 Known limitation: GitHub's commits API filters `until=` by *committer* date,
 not author date like `dataset_c.py::find_cutoff_commit()` uses for the real
-extraction cutoff (confirmed via a real test against `callstack/linaria`,
-where the API returned a commit 3 weeks earlier than the author-date-correct
-one). This is safe to accept: a SHA match is still proof of identical content
-regardless of which date field found it, so this can never produce a
-false-positive dedup -- only a false negative if a cluster's shared history
-diverges right around one member's rebase point.
+extraction cutoff. This is safe to accept: a SHA match is still proof of
+identical content regardless of which date field found it, so this can never
+produce a false-positive dedup -- only a false negative if a cluster's
+shared history diverges right around one member's rebase point.
+
+A separate, now-fixed failure mode: a transient lookup failure (rate limit
+exhausted, network error) must never be cached as a definitive "no commit"
+-- see `CommitLookupUnavailable` below. Cached indefinitely, that silently
+and permanently hides a real duplicate from every future run.
 """
 
 from __future__ import annotations
@@ -72,6 +75,19 @@ DEFAULT_OUTPUT_PATH = stage_dir("c", "repos") / "duplicate_repos.csv"
 DEFAULT_CHECKPOINT_PATH = stage_dir("c", "repos") / "dedupe_dataset_c_repos.checkpoint.json"
 
 
+class CommitLookupUnavailable(Exception):
+    """Raised by `fetch_reference_commit_sha` when a lookup could not be
+    completed (rate limit exhausted, network error, unexpected HTTP status)
+    -- as opposed to a definitive `None` (a 404, or a 200 with zero commits
+    before the reference date), which IS safe to treat as final and cache.
+    `find_duplicate_clusters` catches this and skips checkpointing the repo,
+    so it's retried on the next invocation instead of being permanently (and
+    possibly incorrectly) recorded as "no duplicate." Confirmed via a real
+    Dataset C run: two repos (a renamed org, in both cases) got cached as a
+    permanent `None` this way, hiding a real shared-commit duplicate from
+    every subsequent run until the checkpoint was manually purged."""
+
+
 def fetch_reference_commit_sha(
     repo_name: str,
     reference_date: str,
@@ -81,9 +97,12 @@ def fetch_reference_commit_sha(
     max_retries: int = 3,
 ) -> str | None:
     """Return the SHA of `repo_name`'s most recent commit at or before
-    `reference_date` (ISO date, e.g. "2020-12-31"), or None if unavailable
-    (private/deleted repo, no commits before that date, or the request
-    failed after exhausting retries).
+    `reference_date` (ISO date, e.g. "2020-12-31"), or None if there is
+    definitively no such commit (repo not found, or a real 200 response with
+    zero qualifying commits). Raises `CommitLookupUnavailable` if the lookup
+    could not be completed at all (rate limit exhausted, network error,
+    unexpected HTTP status) -- callers must not treat that the same as a
+    definitive None.
 
     One GitHub API call: GET /repos/{repo_name}/commits?until=...&per_page=1.
     Retried/backed off using the same rate-limit handling
@@ -119,16 +138,17 @@ def fetch_reference_commit_sha(
                 continue
             if GitHubAgentFileChecker._is_rate_limited(e.response):
                 logger.warning("[dedupe-c] Rate limited fetching %s; exhausted retries", repo_name)
-            elif e.response is not None and e.response.status_code == 404:
+                raise CommitLookupUnavailable(f"rate limited: {repo_name}") from e
+            if e.response is not None and e.response.status_code == 404:
                 logger.debug("[dedupe-c] Not found: %s", repo_name)
-            else:
-                status = e.response.status_code if e.response is not None else None
-                logger.debug("[dedupe-c] HTTP %s: %s", status, repo_name)
-            return None
+                return None
+            status = e.response.status_code if e.response is not None else None
+            logger.debug("[dedupe-c] HTTP %s: %s", status, repo_name)
+            raise CommitLookupUnavailable(f"HTTP {status}: {repo_name}") from e
         except requests.RequestException as e:
             logger.debug("[dedupe-c] Exception fetching %s: %s", repo_name, e)
-            return None
-    return None
+            raise CommitLookupUnavailable(f"{repo_name}: {e}") from e
+    raise CommitLookupUnavailable(f"exhausted retries: {repo_name}")
 
 
 def _load_sha_checkpoint(checkpoint_path: Path) -> dict[str, str | None]:
@@ -164,8 +184,12 @@ def find_duplicate_clusters(
     `github_id`. `fetch_fn` is injectable for tests (avoid real API calls).
     Resumable: `checkpoint_path` persists `{repo_name: sha_or_null}` as
     results come in, so an interrupted run doesn't re-fetch already-resolved
-    repos. A `None` lookup result (API failure, no qualifying commit) means
+    repos. A `None` lookup result (definitively no qualifying commit) means
     "keep this repo" -- it's never treated as a match, so it's never dropped.
+    A `CommitLookupUnavailable` (rate limit exhausted, network error) is
+    *not* cached -- the repo is treated as "keep" for this run only, and
+    stays un-checkpointed so it's retried on the next invocation instead of
+    being permanently, incorrectly recorded as "no duplicate."
     """
     resolved = _load_sha_checkpoint(checkpoint_path)
     sha_by_repo: dict[str, str | None] = {}
@@ -178,7 +202,14 @@ def find_duplicate_clusters(
         if name in resolved:
             sha_by_repo[name] = resolved[name]
             continue
-        sha = fetch_fn(name, reference_date, github_token)
+        try:
+            sha = fetch_fn(name, reference_date, github_token)
+        except CommitLookupUnavailable:
+            logger.warning(
+                "[dedupe-c] Could not resolve %s this run; will retry next run", name
+            )
+            sha_by_repo[name] = None
+            continue
         sha_by_repo[name] = sha
         resolved[name] = sha
         fetched_since_checkpoint += 1

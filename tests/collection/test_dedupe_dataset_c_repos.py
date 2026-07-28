@@ -3,10 +3,12 @@ from __future__ import annotations
 import csv
 from unittest.mock import Mock
 
+import pytest
 import requests
 
 from collection.dedupe_dataset_c_repos import (
     OUTPUT_FIELDNAMES,
+    CommitLookupUnavailable,
     fetch_reference_commit_sha,
     find_duplicate_clusters,
     write_duplicate_repos_csv,
@@ -80,6 +82,40 @@ class TestFindDuplicateClusters:
             fetch_fn=lambda name, ref, token: None,
         )
         assert rows == []
+
+    def test_lookup_unavailable_never_causes_a_drop_and_is_not_checkpointed(self, tmp_path):
+        """A transient failure (CommitLookupUnavailable) must be treated as
+        'keep this repo' for the current run, same as a definitive None --
+        but, unlike a definitive None, must NOT be written to the
+        checkpoint, so it's retried on the next invocation instead of being
+        permanently miscached as 'no duplicate' (the real bug this covers:
+        two Dataset C repos were cached this way, hiding a genuine
+        shared-commit duplicate from every subsequent run)."""
+        repos = [
+            _repo("owner/a", "python", 10, 1),
+            _repo("owner/b", "python", 20, 2),
+        ]
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        def flaky_fetch(name, ref, token):
+            if name == "owner/a":
+                raise CommitLookupUnavailable("rate limited")
+            return "same-sha"
+
+        rows = find_duplicate_clusters(
+            repos,
+            reference_date="2020-12-31",
+            github_token="fake",
+            checkpoint_path=checkpoint_path,
+            fetch_fn=flaky_fetch,
+        )
+        assert rows == []  # owner/a's failure means it's never clustered with owner/b
+
+        import json
+
+        checkpoint = json.loads(checkpoint_path.read_text())
+        assert "owner/a" not in checkpoint  # not cached -- must be retried next run
+        assert checkpoint["owner/b"] == "same-sha"
 
     def test_checkpoint_resume_does_not_refetch(self, tmp_path):
         repos = [
@@ -202,3 +238,35 @@ class TestFetchReferenceCommitSha:
 
         monkeypatch.setattr(requests, "get", fake_get)
         assert fetch_reference_commit_sha("owner/repo", "2020-12-31", "fake-token") is None
+
+    def test_rate_limit_exhausted_raises_lookup_unavailable_not_none(self, monkeypatch):
+        """A None here (the old behavior) is indistinguishable from a
+        confirmed 404 and gets permanently cached -- must raise instead so
+        the caller knows to retry later, not cache a false negative."""
+        rate_limited_response = Mock()
+        rate_limited_response.status_code = 403
+        rate_limited_response.headers = {"X-RateLimit-Remaining": "0"}
+
+        def fake_get(*args, **kwargs):
+            resp = Mock()
+            resp.raise_for_status = Mock(
+                side_effect=requests.HTTPError(response=rate_limited_response)
+            )
+            resp.status_code = 403
+            resp.headers = {"X-RateLimit-Remaining": "0"}
+            return resp
+
+        monkeypatch.setattr(requests, "get", fake_get)
+        monkeypatch.setattr("time.sleep", lambda _: None)
+
+        with pytest.raises(CommitLookupUnavailable):
+            fetch_reference_commit_sha("owner/repo", "2020-12-31", "fake-token", max_retries=1)
+
+    def test_network_error_raises_lookup_unavailable_not_none(self, monkeypatch):
+        def fake_get(*args, **kwargs):
+            raise requests.ConnectionError("connection reset")
+
+        monkeypatch.setattr(requests, "get", fake_get)
+
+        with pytest.raises(CommitLookupUnavailable):
+            fetch_reference_commit_sha("owner/repo", "2020-12-31", "fake-token")
