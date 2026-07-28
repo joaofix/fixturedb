@@ -70,6 +70,7 @@ from ._shared import (
     fmt,
     require_db_or_none,
     summarize_continuous,
+    write_markdown_report,
 )
 
 logger = get_logger(__name__)
@@ -345,10 +346,8 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
 def write_report(
     output_dir: Path = OUTPUT_DIR, *, db_root: Path = paths.DB_ROOT
 ) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     report = generate_report(db_root=db_root)
-    output_path = output_dir / "rq3.md"
-    output_path.write_text(report)
+    output_path = write_markdown_report(output_dir, "rq3.md", report)
     logger.info(f"RQ3 report written to {output_path}")
     return output_path
 

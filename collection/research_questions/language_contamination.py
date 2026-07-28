@@ -39,7 +39,7 @@ from pathlib import Path
 
 from .. import paths
 from ..logging_utils import get_logger
-from ._shared import DATASET_LABELS, OUTPUT_DIR
+from ._shared import DATASET_LABELS, OUTPUT_DIR, write_markdown_report
 
 logger = get_logger(__name__)
 
@@ -149,10 +149,8 @@ def generate_report(*, datasets_root: Path = paths.DATASETS_ROOT) -> str:
 
 
 def write_report(output_dir: Path = OUTPUT_DIR, *, datasets_root: Path = paths.DATASETS_ROOT) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
     report = generate_report(datasets_root=datasets_root)
-    output_path = output_dir / "language_contamination.md"
-    output_path.write_text(report)
+    output_path = write_markdown_report(output_dir, "language_contamination.md", report)
     logger.info(f"Language contamination report written to {output_path}")
     return output_path
 

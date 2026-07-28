@@ -72,3 +72,17 @@ def fetch_categorical_column(conn: sqlite3.Connection, table: str, column: str) 
         f"SELECT {column}, COUNT(*) FROM {table} WHERE {column} IS NOT NULL GROUP BY {column}"
     ).fetchall()
     return {row[0]: row[1] for row in rows}
+
+
+def write_markdown_report(output_dir: Path, filename: str, report: str) -> Path:
+    """Write `report` to `output_dir/filename`, fully replacing any prior
+    content -- `Path.write_text()` always truncates before writing, so a
+    dataset shrinking between runs (e.g. a retroactive dedup fix) can never
+    leave stale rows from a previous, larger report behind. Every rqN.py /
+    language_contamination.py script's write_report() calls this instead of
+    writing the file itself, so this guarantee lives in exactly one place
+    rather than four separately-trusted copies."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / filename
+    output_path.write_text(report)
+    return output_path

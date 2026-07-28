@@ -18,6 +18,7 @@ from collection.research_questions._shared import (
     fmt,
     require_db_or_none,
     summarize_continuous,
+    write_markdown_report,
 )
 
 
@@ -121,3 +122,20 @@ class TestFetchCategoricalColumn:
         with db_session(db_file) as conn:
             dist = fetch_categorical_column(conn, "fixtures", "scope")
         assert dist == {"per_test": 2, "per_class": 1}
+
+
+class TestWriteMarkdownReport:
+    def test_second_write_fully_replaces_the_first(self, tmp_path):
+        """A dataset shrinking between runs (e.g. a retroactive dedup fix)
+        must never leave stale content from a larger, older report behind."""
+        path = write_markdown_report(tmp_path, "rq1.md", "# old report\n" * 50)
+        assert len(path.read_text()) > len("# new report\n")
+
+        path = write_markdown_report(tmp_path, "rq1.md", "# new report\n")
+        assert path.read_text() == "# new report\n"
+
+    def test_creates_output_dir_if_missing(self, tmp_path):
+        out_dir = tmp_path / "does" / "not" / "exist"
+        path = write_markdown_report(out_dir, "rq1.md", "content")
+        assert path == out_dir / "rq1.md"
+        assert path.read_text() == "content"
