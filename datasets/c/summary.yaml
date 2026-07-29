@@ -1,0 +1,35 @@
+schema_version: 1
+generated_at_utc: '2026-07-28T16:18:02+00:00'
+dataset: c
+root: /home/joao/fixturedb/datasets
+sampling_seed: 42
+repos:
+  total: 8076
+  by_repo_language:
+    java: 1392
+    javascript: 1904
+    python: 2698
+    typescript: 2082
+fixtures:
+  total: 166153
+  by_fixture_language:
+    java: 47452
+    javascript: 30112
+    python: 41251
+    typescript: 47338
+  repos_with_at_least_one_fixture: 3000
+  avg_fixtures_per_repo_with_fixtures:
+    overall: 55.38
+    by_fixture_language:
+      java: 82.1
+      javascript: 54.55
+      python: 36.41
+      typescript: 64.23
+  avg_fixtures_per_repo_overall: 20.57
+  avg_fixtures_per_file:
+    overall: 2.05
+    by_fixture_language:
+      java: 1.62
+      javascript: 2.37
+      python: 2.34
+      typescript: 2.22
