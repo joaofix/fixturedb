@@ -450,10 +450,6 @@ kestra-io/kestra,typescript,c8e7df469308bfe12c15174960afbfcbfc0a3547,ui/tests/un
         setActivePinia(createPinia())
         followExecutionMock.mockReset()
     })",1
-linkedin/datahub,typescript,d8c31d91f0f2faf891542cf717b2afbe5a14aaf0,datahub-web-react/src/app/searchV2/sidebar/__tests__/useSidebarPlatforms.test.tsx,<anonymous>_12,before_each,13,15,3,,0,per_test,1,1,0,0,0,0,https://github.com/linkedin/datahub/blob/d8c31d91f0f2faf891542cf717b2afbe5a14aaf0/datahub-web-react/src/app/searchV2/sidebar/__tests__/useSidebarPlatforms.test.tsx#L13-L15,claude,agent,fix,"beforeEach(() => {
-        vi.clearAllMocks();
-    })",1
-linkedin/datahub,typescript,439e9bd81191e704c4efbc8a1f74fa0d88c15c06,datahub-web-react/src/app/tags/__tests__/TagNameColumn.test.tsx,<anonymous>_32,after_each,33,33,1,,0,per_test,1,1,0,0,0,0,https://github.com/linkedin/datahub/blob/439e9bd81191e704c4efbc8a1f74fa0d88c15c06/datahub-web-react/src/app/tags/__tests__/TagNameColumn.test.tsx#L33-L33,cursor,agent,feat,afterEach(() => vi.clearAllMocks()),1
 microsoft/typespec,typescript,4d6a5fe5cc39d4b019e40388a2f1edba72dcc07d,packages/openapi3/test/tsp-openapi3/union-anyof-with-null.test.ts,<anonymous>_13,before_all,14,71,58,,0,per_class,1,1,0,1,0,0,https://github.com/microsoft/typespec/blob/4d6a5fe5cc39d4b019e40388a2f1edba72dcc07d/packages/openapi3/test/tsp-openapi3/union-anyof-with-null.test.ts#L14-L71,copilot,agent,none,"beforeAll(async () => {
     parser = new OpenAPIParser();
     doc = await parser.bundle({
@@ -4537,8 +4533,6 @@ a5c-ai/babysitter,typescript,0e42f52926abf758d39a7c14ea3aef1b3020787f,packages/a
 a5c-ai/babysitter,typescript,1f20e5cf226e252404a79d0a8a83097983c61bb8,packages/babysitter-sdk/src/runtime/intrinsics/__tests__/breakpointSkip.test.ts,<anonymous>_120,before_each,121,123,3,,0,per_test,1,1,0,0,0,0,https://github.com/a5c-ai/babysitter/blob/1f20e5cf226e252404a79d0a8a83097983c61bb8/packages/babysitter-sdk/src/runtime/intrinsics/__tests__/breakpointSkip.test.ts#L121-L123,claude,agent,fix,"beforeEach(() => {
     vi.clearAllMocks();
   })",1
-bluewave-labs/bluewave-uptime,typescript,97353bc7d263ab22591d61b181e45e3e1321c1be,server/test/unit/providers/notifications/pushoverProvider.test.ts,<anonymous>_24,before_each,25,25,1,,0,per_test,1,1,0,0,0,0,https://github.com/bluewave-labs/bluewave-uptime/blob/97353bc7d263ab22591d61b181e45e3e1321c1be/server/test/unit/providers/notifications/pushoverProvider.test.ts#L25-L25,claude,agent,feat,beforeEach(() => mockGotPost.mockReset().mockResolvedValue({})),1
-bluewave-labs/bluewave-uptime,typescript,9210259511f92d6000b8c8ab414da32ede15e6e4,server/test/unit/providers/notifications/twilioProvider.test.ts,<anonymous>_31,before_each,32,32,1,,0,per_test,1,1,0,0,0,0,https://github.com/bluewave-labs/bluewave-uptime/blob/9210259511f92d6000b8c8ab414da32ede15e6e4/server/test/unit/providers/notifications/twilioProvider.test.ts#L32-L32,claude,agent,feat,beforeEach(() => mockGotPost.mockReset().mockResolvedValue({})),1
 clientio/joint,typescript,4ee90417ebc81490d736c6da97c2606b57c98d7b,packages/joint-cli/src/__tests__/download.test.ts,<anonymous>_27,before_each,28,35,8,,0,per_test,1,1,0,1,0,1,https://github.com/clientio/joint/blob/4ee90417ebc81490d736c6da97c2606b57c98d7b/packages/joint-cli/src/__tests__/download.test.ts#L28-L35,claude,agent,feat,"beforeEach(() => {
         originalFetch = globalThis.fetch;
         exitCode = undefined;
@@ -4575,239 +4569,6 @@ clientio/joint,typescript,4ee90417ebc81490d736c6da97c2606b57c98d7b,packages/join
         globalThis.fetch = originalFetch;
         console.log = originalLog;
     })",1
-cloudflare/wrangler2,typescript,07c8611b69721e8aa1300ba209dc45a75173e1d7,packages/cli/__tests__/validate-macos-version.test.ts,<anonymous>_9,before_each,10,13,4,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/07c8611b69721e8aa1300ba209dc45a75173e1d7/packages/cli/__tests__/validate-macos-version.test.ts#L10-L13,devin,agent,feat,"beforeEach(() => {
-		vi.clearAllMocks();
-		vi.unstubAllEnvs();
-	})",1
-cloudflare/wrangler2,typescript,93c4c26eb5e13bef366add6f96959ccddd64d43b,packages/wrangler/src/__tests__/utils/log-file.test.ts,<anonymous>_9,before_each,10,12,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/93c4c26eb5e13bef366add6f96959ccddd64d43b/packages/wrangler/src/__tests__/utils/log-file.test.ts#L10-L12,devin,agent,fix,"beforeEach(() => {
-		vi.stubEnv(""WRANGLER_LOG_PATH"", ""logs"");
-	})",1
-cloudflare/wrangler2,typescript,d4f2daf71f64eb1a4529d78c27228877d48c22c4,packages/wrangler/src/__tests__/dev.test.ts,<anonymous>_2113,before_each,2114,2120,7,,0,per_test,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/d4f2daf71f64eb1a4529d78c27228877d48c22c4/packages/wrangler/src/__tests__/dev.test.ts#L2114-L2120,devin,agent,none,"beforeEach(() => {
-			// Clear logger.once history between tests to ensure test isolation.
-			// Without this, warnings logged via logger.once.warn() in one test
-			// would be suppressed in subsequent tests since they track logged
-			// messages globally across the test process.
-			logger.clearHistory();
-		})",1
-cloudflare/wrangler2,typescript,69ff9620487a6ae979f369eb1dbac887ce46e246,packages/wrangler/src/__tests__/autoconfig/vite-config.test.ts,<anonymous>_14,before_each,15,17,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/69ff9620487a6ae979f369eb1dbac887ce46e246/packages/wrangler/src/__tests__/autoconfig/vite-config.test.ts#L15-L17,claude,agent,none,"beforeEach(() => {
-		logger.loggerLevel = ""debug"";
-	})",1
-cloudflare/wrangler2,typescript,5d49380ea07a55b242b1337056bb9fca291c7785,tools/github-workflow-helpers/__tests__/validate-action-pinning.test.ts,<anonymous>_16,before_each,17,20,4,,0,per_test,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/5d49380ea07a55b242b1337056bb9fca291c7785/tools/github-workflow-helpers/__tests__/validate-action-pinning.test.ts#L17-L20,devin,agent,none,"beforeEach(() => {
-		tmpDir = realpathSync(mkdtempSync(join(tmpdir(), ""action-pinning-"")));
-		mkdirSync(join(tmpDir, "".github"", ""workflows""), { recursive: true });
-	})",1
-cloudflare/wrangler2,typescript,5d49380ea07a55b242b1337056bb9fca291c7785,tools/github-workflow-helpers/__tests__/validate-action-pinning.test.ts,<anonymous>_21,after_each,22,24,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/5d49380ea07a55b242b1337056bb9fca291c7785/tools/github-workflow-helpers/__tests__/validate-action-pinning.test.ts#L22-L24,devin,agent,none,"afterEach(() => {
-		rmSync(tmpDir, { recursive: true, force: true });
-	})",1
-cloudflare/wrangler2,typescript,ade0aed5246a5d3379961d06e1d504c6ceb0b1a8,fixtures/worker-with-resources/tests/index.test.ts,<anonymous>_159,before_all,160,166,7,,0,per_class,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/ade0aed5246a5d3379961d06e1d504c6ceb0b1a8/fixtures/worker-with-resources/tests/index.test.ts#L160-L166,devin,agent,none,"beforeAll(async () => {
-			({ ip, port, stop } = await runWranglerDev(
-				resolve(__dirname, ""..""),
-				[""--port=0"", ""--inspector-port=0"", flag],
-				{ X_LOCAL_EXPLORER: ""true"" }
-			));
-		})",1
-cloudflare/wrangler2,typescript,ade0aed5246a5d3379961d06e1d504c6ceb0b1a8,fixtures/worker-with-resources/tests/index.test.ts,<anonymous>_167,after_all,168,170,3,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/ade0aed5246a5d3379961d06e1d504c6ceb0b1a8/fixtures/worker-with-resources/tests/index.test.ts#L168-L170,devin,agent,none,"afterAll(async () => {
-			await stop?.();
-		})",1
-cloudflare/wrangler2,typescript,ade0aed5246a5d3379961d06e1d504c6ceb0b1a8,packages/miniflare/test/plugins/local-explorer/index.spec.ts,<anonymous>_289,before_all,290,303,14,,0,per_class,1,1,0,2,0,1,https://github.com/cloudflare/wrangler2/blob/ade0aed5246a5d3379961d06e1d504c6ceb0b1a8/packages/miniflare/test/plugins/local-explorer/index.spec.ts#L290-L303,devin,agent,none,"beforeAll(async () => {
-		mf = new Miniflare({
-			inspectorPort: 0,
-			compatibilityDate: ""2025-01-01"",
-			modules: true,
-			script: `export default { fetch() { return new Response(""user worker""); } }`,
-			unsafeLocalExplorer: true,
-			kvNamespaces: {
-				TEST_KV: ""test-kv-id"",
-			},
-			// Configure a custom route that would trigger header rewriting
-			routes: [""my-custom-site.com/*""],
-		});
-	})",1
-cloudflare/wrangler2,typescript,ade0aed5246a5d3379961d06e1d504c6ceb0b1a8,packages/miniflare/test/plugins/local-explorer/index.spec.ts,<anonymous>_304,after_all,305,307,3,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/ade0aed5246a5d3379961d06e1d504c6ceb0b1a8/packages/miniflare/test/plugins/local-explorer/index.spec.ts#L305-L307,devin,agent,none,"afterAll(async () => {
-		await disposeWithRetry(mf);
-	})",1
-cloudflare/wrangler2,typescript,ade0aed5246a5d3379961d06e1d504c6ceb0b1a8,packages/miniflare/test/plugins/local-explorer/index.spec.ts,<anonymous>_384,before_all,385,397,13,,0,per_class,1,1,0,2,0,1,https://github.com/cloudflare/wrangler2/blob/ade0aed5246a5d3379961d06e1d504c6ceb0b1a8/packages/miniflare/test/plugins/local-explorer/index.spec.ts#L385-L397,devin,agent,none,"beforeAll(async () => {
-		mf = new Miniflare({
-			inspectorPort: 0,
-			compatibilityDate: ""2025-01-01"",
-			modules: true,
-			script: `export default { fetch() { return new Response(""user worker""); } }`,
-			unsafeLocalExplorer: true,
-			kvNamespaces: {
-				TEST_KV: ""test-kv-id"",
-			},
-			routes: [""*.example.com/*""],
-		});
-	})",1
-cloudflare/wrangler2,typescript,ade0aed5246a5d3379961d06e1d504c6ceb0b1a8,packages/miniflare/test/plugins/local-explorer/index.spec.ts,<anonymous>_398,after_all,399,401,3,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/ade0aed5246a5d3379961d06e1d504c6ceb0b1a8/packages/miniflare/test/plugins/local-explorer/index.spec.ts#L399-L401,devin,agent,none,"afterAll(async () => {
-		await disposeWithRetry(mf);
-	})",1
-cloudflare/wrangler2,typescript,3b81fc6a75857d5c158824f17d9316adc55878fc,packages/wrangler/src/__tests__/tunnel/tunnel.test.ts,<anonymous>_113,before_each,114,120,7,,0,per_test,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/3b81fc6a75857d5c158824f17d9316adc55878fc/packages/wrangler/src/__tests__/tunnel/tunnel.test.ts#L114-L120,devin,agent,feat,"beforeEach(() => {
-		// @ts-expect-error we're using a very simple setTimeout mock here
-		vi.spyOn(global, ""setTimeout"").mockImplementation((fn, _period) => {
-			setImmediate(fn);
-		});
-		setIsTTY(true);
-	})",1
-cloudflare/wrangler2,typescript,3b81fc6a75857d5c158824f17d9316adc55878fc,packages/wrangler/src/__tests__/tunnel/tunnel.test.ts,<anonymous>_121,after_each,122,124,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/3b81fc6a75857d5c158824f17d9316adc55878fc/packages/wrangler/src/__tests__/tunnel/tunnel.test.ts#L122-L124,devin,agent,feat,"afterEach(() => {
-		clearDialogs();
-	})",1
-cloudflare/wrangler2,typescript,4dc94fd5209d17663fac32ac99f7f20d17f1f07f,packages/wrangler/src/__tests__/autoconfig/frameworks/utils/vite-plugin.test.ts,<anonymous>_13,before_each,14,18,5,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/4dc94fd5209d17663fac32ac99f7f20d17f1f07f/packages/wrangler/src/__tests__/autoconfig/frameworks/utils/vite-plugin.test.ts#L14-L18,devin,agent,none,"beforeEach(() => {
-		installSpy = vi
-			.spyOn(cliPackages, ""installPackages"")
-			.mockImplementation(async () => {});
-	})",1
-cloudflare/wrangler2,typescript,4dc94fd5209d17663fac32ac99f7f20d17f1f07f,packages/wrangler/src/__tests__/autoconfig/frameworks/utils/vite-plugin.test.ts,<anonymous>_20,before_each,21,23,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/4dc94fd5209d17663fac32ac99f7f20d17f1f07f/packages/wrangler/src/__tests__/autoconfig/frameworks/utils/vite-plugin.test.ts#L21-L23,devin,agent,none,"beforeEach(() => {
-			vi.mocked(getInstalledPackageVersion).mockReturnValue(undefined);
-		})",1
-cloudflare/wrangler2,typescript,4dc94fd5209d17663fac32ac99f7f20d17f1f07f,packages/wrangler/src/__tests__/autoconfig/frameworks/utils/vite-plugin.test.ts,<anonymous>_198,before_each,199,201,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/4dc94fd5209d17663fac32ac99f7f20d17f1f07f/packages/wrangler/src/__tests__/autoconfig/frameworks/utils/vite-plugin.test.ts#L199-L201,devin,agent,none,"beforeEach(() => {
-			vi.mocked(getInstalledPackageVersion).mockReturnValue(undefined);
-		})",1
-cloudflare/wrangler2,typescript,dd3baf3fa718ed82f7b394cb0c12db3ac3e092fa,packages/wrangler/src/__tests__/containers/deploy.test.ts,<anonymous>_2474,before_each,2475,2501,27,,0,per_test,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/dd3baf3fa718ed82f7b394cb0c12db3ac3e092fa/packages/wrangler/src/__tests__/containers/deploy.test.ts#L2475-L2501,devin,agent,none,"beforeEach(() => {
-		msw.use(...mswSuccessDeploymentScriptMetadata);
-		msw.use(...mswListNewDeploymentsLatestFull);
-		mockSubDomainRequest();
-		mockServiceScriptData({
-			script: { id: ""test-name"", migration_tag: ""v1"" },
-			dispatchNamespace: ""test-namespace"",
-		});
-		mockContainersAccount();
-		mockUploadWorkerRequest({
-			expectedBindings: [
-				{
-					class_name: ""ExampleDurableObject"",
-					name: ""EXAMPLE_DO_BINDING"",
-					type: ""durable_object_namespace"",
-				},
-			],
-			useOldUploadApi: true,
-			expectedDispatchNamespace: ""test-namespace"",
-			expectedContainers: [{ class_name: ""ExampleDurableObject"" }],
-		});
-		fs.writeFileSync(
-			""index.js"",
-			`export class ExampleDurableObject {}; export default{};`
-		);
-		vi.stubEnv(""WRANGLER_DOCKER_BIN"", ""/usr/bin/docker"");
-	})",1
-cloudflare/wrangler2,typescript,dd3baf3fa718ed82f7b394cb0c12db3ac3e092fa,packages/wrangler/src/__tests__/containers/deploy.test.ts,<anonymous>_2501,after_each,2502,2504,3,,0,per_test,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/dd3baf3fa718ed82f7b394cb0c12db3ac3e092fa/packages/wrangler/src/__tests__/containers/deploy.test.ts#L2502-L2504,devin,agent,none,"afterEach(() => {
-		vi.unstubAllEnvs();
-	})",1
-cloudflare/wrangler2,typescript,0e055d39c51dda77717515adb1a33610d385a724,packages/miniflare/test/plugins/core/cf-image.spec.ts,<anonymous>_26,before_all,27,59,32,,0,per_class,3,2,1,5,2,1,https://github.com/cloudflare/wrangler2/blob/0e055d39c51dda77717515adb1a33610d385a724/packages/miniflare/test/plugins/core/cf-image.spec.ts#L27-L59,devin,agent,none,"beforeAll(async () => {
-		// A 200x100 red PNG to use as the origin image.
-		sourcePng = await sharp({
-			create: {
-				width: 200,
-				height: 100,
-				channels: 3,
-				background: { r: 255, g: 0, b: 0 },
-			},
-		})
-			.png()
-			.toBuffer();
-
-		mf = new Miniflare({
-			modules: true,
-			script: WORKER_SCRIPT,
-			outboundService(request: MiniflareRequest) {
-				seenVia.push(request.headers.get(""via""));
-				const url = new URL(request.url);
-				if (url.pathname === ""/not-ok"") {
-					return new Response(""upstream error"", { status: 503 });
-				}
-				if (url.pathname === ""/not-an-image"") {
-					return new Response(""this is definitely not an image"", {
-						headers: { ""content-type"": ""image/png"" },
-					});
-				}
-				return new Response(sourcePng, {
-					headers: { ""content-type"": ""image/png"" },
-				});
-			},
-		} satisfies MiniflareOptions);
-	})",1
-cloudflare/wrangler2,typescript,0e055d39c51dda77717515adb1a33610d385a724,packages/miniflare/test/plugins/core/cf-image.spec.ts,<anonymous>_60,after_all,61,61,1,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/0e055d39c51dda77717515adb1a33610d385a724/packages/miniflare/test/plugins/core/cf-image.spec.ts#L61-L61,devin,agent,none,afterAll(() => mf.dispose()),1
-cloudflare/wrangler2,typescript,c79504f90956405f5fab59448ba53dcf44b8d3a2,fixtures/container-app/tests/container.test.ts,<anonymous>_34,before_all,35,37,3,,0,per_class,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/c79504f90956405f5fab59448ba53dcf44b8d3a2/fixtures/container-app/tests/container.test.ts#L35-L37,devin,agent,fix,"beforeAll(async () => {
-		await server.listen();
-	})",1
-cloudflare/wrangler2,typescript,c79504f90956405f5fab59448ba53dcf44b8d3a2,fixtures/container-app/tests/container.test.ts,<anonymous>_38,after_all,39,41,3,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/c79504f90956405f5fab59448ba53dcf44b8d3a2/fixtures/container-app/tests/container.test.ts#L39-L41,devin,agent,fix,"afterAll(async () => {
-		await server.close();
-	})",1
-cloudflare/wrangler2,typescript,a0c8bb118e04eebba870a6fbe9f5041095b04637,packages/wrangler/src/__tests__/dev.test.ts,<anonymous>_192,before_each,193,201,9,,0,per_test,1,1,0,0,0,1,https://github.com/cloudflare/wrangler2/blob/a0c8bb118e04eebba870a6fbe9f5041095b04637/packages/wrangler/src/__tests__/dev.test.ts#L193-L201,devin,agent,feat,"beforeEach(() => {
-			writeWranglerConfig({
-				name: ""test-worker"",
-				main: ""index.js"",
-				compatibility_date: ""2024-01-01"",
-			});
-			fs.writeFileSync(""index.js"", `export default {};`);
-			vi.mocked(detectAgent).mockReturnValue({ isAgent: false, id: null });
-		})",1
-cloudflare/wrangler2,typescript,3203b5d34488b2b14d6066db705acef267d1229a,packages/miniflare/test/plugins/local-explorer/observability.spec.ts,<anonymous>_71,before_all,72,94,23,,0,per_class,1,1,0,1,0,1,https://github.com/cloudflare/wrangler2/blob/3203b5d34488b2b14d6066db705acef267d1229a/packages/miniflare/test/plugins/local-explorer/observability.spec.ts#L72-L94,devin,agent,none,"beforeAll(async () => {
-		mf = new Miniflare({
-			compatibilityDate: ""2026-01-01"",
-			inspectorPort: 0,
-			unsafeLocalExplorer: true,
-			unsafeObservability: true,
-			workers: [
-				{
-					name: ""user"",
-					modules: true,
-					compatibilityDate: ""2026-01-01"",
-					script: SEED_WORKER,
-					durableObjects: {
-						TRACE_STORE: {
-							className: ""TraceStore"",
-							scriptName: OBSERVABILITY_COLLECTOR_SERVICE_NAME,
-						},
-					},
-				},
-			],
-		});
-		await (await mf.dispatchFetch(""http://localhost/seed"")).text();
-	})",1
-cloudflare/wrangler2,typescript,3203b5d34488b2b14d6066db705acef267d1229a,packages/miniflare/test/plugins/local-explorer/observability.spec.ts,<anonymous>_95,after_all,96,98,3,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/3203b5d34488b2b14d6066db705acef267d1229a/packages/miniflare/test/plugins/local-explorer/observability.spec.ts#L96-L98,devin,agent,none,"afterAll(async () => {
-		await disposeWithRetry(mf);
-	})",1
-cloudflare/wrangler2,typescript,3203b5d34488b2b14d6066db705acef267d1229a,packages/miniflare/test/plugins/local-explorer/observability.spec.ts,<anonymous>_220,before_all,221,229,9,,0,per_class,1,1,0,2,0,1,https://github.com/cloudflare/wrangler2/blob/3203b5d34488b2b14d6066db705acef267d1229a/packages/miniflare/test/plugins/local-explorer/observability.spec.ts#L221-L229,devin,agent,none,"beforeAll(() => {
-		mf = new Miniflare({
-			compatibilityDate: ""2026-01-01"",
-			inspectorPort: 0,
-			unsafeLocalExplorer: true,
-			modules: true,
-			script: `export default { fetch() { return new Response(""ok""); } }`,
-		});
-	})",1
-cloudflare/wrangler2,typescript,3203b5d34488b2b14d6066db705acef267d1229a,packages/miniflare/test/plugins/local-explorer/observability.spec.ts,<anonymous>_230,after_all,231,233,3,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/3203b5d34488b2b14d6066db705acef267d1229a/packages/miniflare/test/plugins/local-explorer/observability.spec.ts#L231-L233,devin,agent,none,"afterAll(async () => {
-		await disposeWithRetry(mf);
-	})",1
-cloudflare/wrangler2,typescript,6e0bf6e917bf4a2b9cd3ee741e625174075e38e1,packages/miniflare/test/plugins/shared/remote-bindings-connect.spec.ts,<anonymous>_39,before_all,40,52,13,,0,per_class,1,1,0,0,0,0,https://github.com/cloudflare/wrangler2/blob/6e0bf6e917bf4a2b9cd3ee741e625174075e38e1/packages/miniflare/test/plugins/shared/remote-bindings-connect.spec.ts#L40-L52,claude,agent,none,"beforeAll(async () => {
-	const result = await build({
-		entryPoints: [PROXY_SERVER_WORKER_PATH],
-		bundle: true,
-		format: ""esm"",
-		target: ""esnext"",
-		platform: ""browser"",
-		// Workers runtime built-ins are provided by workerd, not bundled.
-		external: [""cloudflare:*""],
-		write: false,
-	});
-	proxyServerBundle = result.outputFiles[0].text;
-})",1
-datopian/portal.js,typescript,cda774b99296e7e09b4523b2462de0242922cb94,cloud/auth/test/device.test.ts,<anonymous>_96,before_each,97,99,3,,0,per_test,1,1,0,1,0,0,https://github.com/datopian/portal.js/blob/cda774b99296e7e09b4523b2462de0242922cb94/cloud/auth/test/device.test.ts#L97-L99,claude,agent,feat,"beforeEach(() => {
-    d = new FakeD1()
-  })",1
-datopian/portal.js,typescript,885cd0a3d1750f7a941f9ea39439416052fb7085,cloud/auth/test/email.test.ts,<anonymous>_108,before_each,109,111,3,,0,per_test,1,1,0,1,0,0,https://github.com/datopian/portal.js/blob/885cd0a3d1750f7a941f9ea39439416052fb7085/cloud/auth/test/email.test.ts#L109-L111,claude,agent,feat,"beforeEach(() => {
-    db = new FakeD1()
-  })",1
-datopian/portal.js,typescript,885cd0a3d1750f7a941f9ea39439416052fb7085,cloud/auth/test/email.test.ts,<anonymous>_153,before_each,154,156,3,,0,per_test,1,1,0,1,0,0,https://github.com/datopian/portal.js/blob/885cd0a3d1750f7a941f9ea39439416052fb7085/cloud/auth/test/email.test.ts#L154-L156,claude,agent,feat,"beforeEach(() => {
-    db = new FakeD1()
-  })",1
-datopian/portal.js,typescript,97f522ba28db11d8c5f6e174faefcf752bccc030,cloud/auth/test/ratelimit.test.ts,<anonymous>_60,before_each,61,63,3,,0,per_test,1,1,0,1,0,0,https://github.com/datopian/portal.js/blob/97f522ba28db11d8c5f6e174faefcf752bccc030/cloud/auth/test/ratelimit.test.ts#L61-L63,claude,agent,feat,"beforeEach(() => {
-    db = new FakeD1()
-  })",1
-datopian/portal.js,typescript,97f522ba28db11d8c5f6e174faefcf752bccc030,cloud/auth/test/ratelimit.test.ts,<anonymous>_96,before_each,97,99,3,,0,per_test,1,1,0,1,0,0,https://github.com/datopian/portal.js/blob/97f522ba28db11d8c5f6e174faefcf752bccc030/cloud/auth/test/ratelimit.test.ts#L97-L99,claude,agent,feat,"beforeEach(() => {
-    db = new FakeD1()
-  })",1
 eva-engine/eva.js,typescript,d61af5bc644eead1d5352eec2eb0e756941882a3,packages/eva.js/__tests__/observer.spec.ts,<anonymous>_278,before_each,279,283,5,,0,per_test,1,1,0,1,0,1,https://github.com/eva-engine/eva.js/blob/d61af5bc644eead1d5352eec2eb0e756941882a3/packages/eva.js/__tests__/observer.spec.ts#L279-L283,claude,agent,feat,"beforeEach(() => {
     initObserver(BaseHostSystem as any);
     system = new BaseHostSystem();
@@ -5092,41 +4853,6 @@ eyaltoledano/claude-task-master,typescript,c798639d1a6b492de1b7cc82a28a13ddfba23
 		// Clean up temp directory
 		fs.rmSync(tempDir, { recursive: true, force: true });
 	})",1
-fonoster/fonos,typescript,7d9e9e2c0df289973f43b897d9b7ae680b03b50a,mods/autopilot/test/evaluations/evalScenarios.integration.test.ts,<anonymous>_184,mocha_before,185,219,27,,0,per_test,6,2,0,0,0,0,https://github.com/fonoster/fonos/blob/7d9e9e2c0df289973f43b897d9b7ae680b03b50a/mods/autopilot/test/evaluations/evalScenarios.integration.test.ts#L185-L219,cursor,agent,fix,"before(async function () {
-    const raw = loadAutopilotYaml();
-
-    if (!raw?.intelligence?.config?.testCases?.scenarios?.length) {
-      console.log(""[eval] skipping: autopilot.yaml missing or has no scenarios"");
-      this.skip();
-      return;
-    }
-
-    const integrations = loadJsonFile<Integration[]>(INTEGRATIONS_JSON);
-
-    if (!integrations) {
-      console.log(""[eval] skipping: config/integrations.json not found"");
-      this.skip();
-      return;
-    }
-
-    const config = raw.intelligence.config as AssistantRawConfig;
-
-    injectCredentials(config, integrations);
-    normalizeExpectedTextTypes(config.testCases!.scenarios);
-
-    const parsed = assistantSchema.parse(config);
-
-    console.log(
-      ""[eval] running %d scenario(s) with provider=%s model=%s"",
-      parsed.testCases?.scenarios?.length ?? 0,
-      config.languageModel?.provider,
-      (config.languageModel as Record<string, unknown>)?.model
-    );
-
-    reports = await evalTestCases({
-      intelligence: { config: parsed }
-    });
-  })",1
 foundry376/mailspring,typescript,fcce8ac527a8d68e814884165dec70134fa63285,app/spec/linux-dnd-utils-spec.ts,<anonymous>_71,before_each,72,76,5,,0,per_test,1,1,0,0,0,1,https://github.com/foundry376/mailspring/blob/fcce8ac527a8d68e814884165dec70134fa63285/app/spec/linux-dnd-utils-spec.ts#L72-L76,claude,agent,none,"beforeEach(() => {
     clearDoNotDisturbCache();
     mockedExecFile.mockReset();
@@ -6895,64 +6621,6 @@ trueadm/ripple,typescript,8ffac6f73234d8b0366761fde17457baf8b53b7b,packages/ripp
 	resetReducerCalls();
 	resetEffectFired();
 })",1
-zadam/trilium,typescript,ac21b1a53fa77a779a6d8ab8a0d4c3ff5939c6ea,packages/ckeditor5/tests/collapsible_list_items.spec.ts,<anonymous>_17,before_each,18,28,9,,0,per_test,1,1,0,0,0,1,https://github.com/zadam/trilium/blob/ac21b1a53fa77a779a6d8ab8a0d4c3ff5939c6ea/packages/ckeditor5/tests/collapsible_list_items.spec.ts#L18-L28,claude,agent,test,"beforeEach(async () => {
-        editorElement = document.createElement(""div"");
-        document.body.appendChild(editorElement);
-
-        editor = await ClassicEditor.create(editorElement, {
-            plugins: [CollapsibleListItems, List, Paragraph, Typing, Undo],
-            licenseKey: ""GPL""
-        });
-
-        setModelData(editor.model, LIST_FIXTURE);
-    })",1
-zadam/trilium,typescript,ac21b1a53fa77a779a6d8ab8a0d4c3ff5939c6ea,packages/ckeditor5/tests/collapsible_list_items.spec.ts,<anonymous>_29,after_each,30,33,4,,0,per_test,1,1,0,0,0,0,https://github.com/zadam/trilium/blob/ac21b1a53fa77a779a6d8ab8a0d4c3ff5939c6ea/packages/ckeditor5/tests/collapsible_list_items.spec.ts#L30-L33,claude,agent,test,"afterEach(async () => {
-        editorElement.remove();
-        await editor.destroy();
-    })",1
-zadam/trilium,typescript,6059da9bfb15a32e8ca6fab3af7fa20d924a60e7,packages/ckeditor5-math/tests/utils.ts,<anonymous>_9,before_each,10,15,6,,0,per_test,1,1,0,0,0,1,https://github.com/zadam/trilium/blob/6059da9bfb15a32e8ca6fab3af7fa20d924a60e7/packages/ckeditor5-math/tests/utils.ts#L10-L15,claude,agent,fix,"beforeEach( () => {
-		// The lazy loader installs KaTeX on the global; renderEquation reads it from there.
-		globalWithKatex.katex = katex;
-		element = document.createElement( 'div' );
-		document.body.appendChild( element );
-	} )",1
-zadam/trilium,typescript,6059da9bfb15a32e8ca6fab3af7fa20d924a60e7,packages/ckeditor5-math/tests/utils.ts,<anonymous>_16,after_each,17,20,4,,0,per_test,1,1,0,0,0,0,https://github.com/zadam/trilium/blob/6059da9bfb15a32e8ca6fab3af7fa20d924a60e7/packages/ckeditor5-math/tests/utils.ts#L17-L20,claude,agent,fix,"afterEach( () => {
-		element.remove();
-		globalWithKatex.katex = originalKatex;
-	} )",1
-zadam/trilium,typescript,522e363706d7a716b74a4ea169ee76fffffd8335,packages/ckeditor5-keyboard-marker/tests/kbd.ts,<anonymous>_7,before_each,8,16,8,,0,per_test,1,1,0,0,0,1,https://github.com/zadam/trilium/blob/522e363706d7a716b74a4ea169ee76fffffd8335/packages/ckeditor5-keyboard-marker/tests/kbd.ts#L8-L16,claude,agent,fix,"beforeEach( async () => {
-		editorElement = document.createElement( 'div' );
-		document.body.appendChild( editorElement );
-
-		editor = await ClassicEditor.create( editorElement, {
-			plugins: [ Paragraph, Kbd ],
-			licenseKey: 'GPL'
-		} );
-	} )",1
-zadam/trilium,typescript,522e363706d7a716b74a4ea169ee76fffffd8335,packages/ckeditor5-keyboard-marker/tests/kbd.ts,<anonymous>_17,after_each,18,22,4,,0,per_test,1,1,0,0,0,0,https://github.com/zadam/trilium/blob/522e363706d7a716b74a4ea169ee76fffffd8335/packages/ckeditor5-keyboard-marker/tests/kbd.ts#L18-L22,claude,agent,fix,"afterEach( async () => {
-		editorElement.remove();
-
-		await editor.destroy();
-	} )",1
-zadam/trilium,typescript,07d460ffa04382d63d9129466feac9e7e243b632,apps/server/spec/sync/sync-protocol.spec.ts,<anonymous>_32,before_all,33,51,17,,0,per_class,1,1,0,0,0,0,https://github.com/zadam/trilium/blob/07d460ffa04382d63d9129466feac9e7e243b632/apps/server/spec/sync/sync-protocol.spec.ts#L33-L51,claude,agent,fix,"beforeAll(async () => {
-        // The spec config.ini runs with noAuthentication=true; sync auth is only exercised
-        // with real authentication on. refreshAuth() re-reads the flag into auth.ts's cache.
-        config.General.noAuthentication = false;
-        refreshAuth();
-
-        // Configure OAuth as a real OIDC deployment would (config.ini / env vars) and select
-        // it as the sign-in method. The issuer is deliberately unreachable: plain API requests
-        // never trigger provider discovery, mirroring an unattended desktop syncing against an
-        // OIDC-protected server, and the RP-Initiated-Logout probe degrades gracefully.
-        config.MultiFactorAuthentication.oauthBaseUrl = ""http://localhost:4200"";
-        config.MultiFactorAuthentication.oauthClientId = ""spec-client"";
-        config.MultiFactorAuthentication.oauthClientSecret = ""a-very-long-spec-only-oauth-secret-0123456789"";
-        config.MultiFactorAuthentication.oauthIssuerBaseUrl = ""http://127.0.0.1:1"";
-        cls.init(() => options.setOption(""mfaMethod"", ""oauth""));
-
-        const buildApp = (await import(""../../src/app.js"")).default;
-        app = await buildApp();
-    })",1
 Arize-ai/phoenix,typescript,2235b7d206371b4d3833ede623b93edc9f404cf2,js/packages/phoenix-client/test/spans/addSpanNote.test.ts,<anonymous>_21,before_each,22,32,11,,0,per_test,1,1,0,0,0,0,https://github.com/Arize-ai/phoenix/blob/2235b7d206371b4d3833ede623b93edc9f404cf2/js/packages/phoenix-client/test/spans/addSpanNote.test.ts#L22-L32,cursor,agent,feat,"beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
@@ -132572,44 +132240,6 @@ modem-dev/hunk,typescript,e6da548469a2638887a3d6fd7119bc1526f973d7,src/ui/AppHos
     } else {
       process.env.EDITOR = originalEditor;
     }
-  })",1
-module-federation/universe,typescript,0b0c5dae7999e7c836163bf2caa92b0c8870e485,tools/rslib-plugin/src/executors/build/executor.spec.ts,<anonymous>_22,before_all,23,26,4,,2,per_class,1,1,0,0,0,1,https://github.com/module-federation/universe/blob/0b0c5dae7999e7c836163bf2caa92b0c8870e485/tools/rslib-plugin/src/executors/build/executor.spec.ts#L23-L26,cursor,agent,feat,"beforeAll(() => {
-  process.chdir = jest.fn();
-  process.cwd = jest.fn().mockReturnValue('/workspace');
-})",1
-module-federation/universe,typescript,0b0c5dae7999e7c836163bf2caa92b0c8870e485,tools/rslib-plugin/src/executors/build/executor.spec.ts,<anonymous>_27,after_all,28,31,4,,0,per_class,1,1,0,0,0,0,https://github.com/module-federation/universe/blob/0b0c5dae7999e7c836163bf2caa92b0c8870e485/tools/rslib-plugin/src/executors/build/executor.spec.ts#L28-L31,cursor,agent,feat,"afterAll(() => {
-  process.chdir = originalChdir;
-  process.cwd = originalCwd;
-})",1
-module-federation/universe,typescript,0b0c5dae7999e7c836163bf2caa92b0c8870e485,tools/rslib-plugin/src/executors/build/executor.spec.ts,<anonymous>_41,before_each,42,71,27,,0,per_test,1,1,0,0,0,0,https://github.com/module-federation/universe/blob/0b0c5dae7999e7c836163bf2caa92b0c8870e485/tools/rslib-plugin/src/executors/build/executor.spec.ts#L42-L71,cursor,agent,feat,"beforeEach(() => {
-    jest.clearAllMocks();
-
-    // Reset all mocks
-    mockFs.existsSync.mockReset();
-    mockFs.mkdirSync.mockReset();
-    mockFs.copyFileSync.mockReset();
-
-    context = {
-      root: '/workspace',
-      projectName: 'test-project',
-      projectGraph: {
-        nodes: {
-          'test-project': {
-            data: {
-              root: 'libs/test-project',
-            },
-          },
-        },
-      },
-    } as any;
-
-    options = {
-      outputPath: 'dist/libs/test-project',
-      main: 'libs/test-project/src/index.ts',
-      tsConfig: 'libs/test-project/tsconfig.lib.json',
-      format: ['esm', 'cjs'],
-      external: ['@module-federation/*'],
-    };
   })",1
 moeru-ai/airi,typescript,861beacad203051033e1f4e42a7f4aa9381a247b,packages/stage-ui/src/libs/providers/validators/openai-compatible.test.ts,<anonymous>_40,before_each,41,43,3,,0,per_test,1,1,0,0,0,0,https://github.com/moeru-ai/airi/blob/861beacad203051033e1f4e42a7f4aa9381a247b/packages/stage-ui/src/libs/providers/validators/openai-compatible.test.ts#L41-L43,gemini,agent,feat,"beforeEach(() => {
     vi.clearAllMocks()

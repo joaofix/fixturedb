@@ -1,0 +1,60 @@
+schema_version: 1
+generated_at_utc: '2026-07-30T03:34:39+00:00'
+dataset: a
+root: /home/joao/fixturedb/datasets
+repos:
+  total: 23684
+  by_repo_language:
+    java: 3626
+    javascript: 5225
+    python: 8244
+    typescript: 6589
+test_commits:
+  total: 139665
+  by_repo_language:
+    java: 7218
+    javascript: 6533
+    python: 43775
+    typescript: 82139
+purity_gate:
+  acceptance_rate_all_languages_combined: 0.49
+  by_repo_language:
+    java:
+      accepted: 4174
+      rejected: 3441
+      acceptance_rate: 0.55
+    javascript:
+      accepted: 3641
+      rejected: 3127
+      acceptance_rate: 0.54
+    python:
+      accepted: 21644
+      rejected: 21993
+      acceptance_rate: 0.5
+    typescript:
+      accepted: 39136
+      rejected: 42442
+      acceptance_rate: 0.48
+fixtures:
+  total: 50498
+  by_fixture_language:
+    java: 1323
+    javascript: 4009
+    python: 13854
+    typescript: 31312
+  repos_with_at_least_one_fixture: 1390
+  avg_fixtures_per_repo_with_fixtures:
+    overall: 36.33
+    by_fixture_language:
+      java: 12.25
+      javascript: 37.12
+      python: 25.19
+      typescript: 40.56
+  avg_fixtures_per_repo_overall: 2.13
+  avg_fixtures_per_file:
+    overall: 2.12
+    by_fixture_language:
+      java: 1.43
+      javascript: 2.65
+      python: 2.36
+      typescript: 2.02
