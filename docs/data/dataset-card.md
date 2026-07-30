@@ -197,14 +197,20 @@ modification of pre-existing code):
 
 Two different `repo_name`s can share partly or fully identical git history (org
 transfers, mirrors, shadow copies) — invisible to the "non-fork" filter in step 1,
-since GitHub's own fork bookkeeping doesn't track this. Two forward-looking
-mechanisms detect and drop these before selection: Dataset C checks each
-candidate's commit at the fixed cutoff date against every other candidate
-(`collection/dedupe_dataset_c_repos.py`); Dataset A automatically drops repos
-currently sharing a HEAD commit before cloning (Dataset B inherits this
-automatically, since its repo pool is resolved from Dataset A's). A shared commit
-SHA is a cryptographic guarantee of identical content, never a false positive.
-Neither mechanism is retroactive — see
+since GitHub's own fork bookkeeping doesn't track this. A shared commit SHA is a
+cryptographic guarantee of identical content, never a false positive, and every
+mechanism below uses it directly as the dedup key. Two repo-level, forward-looking
+pre-filters run before selection: Dataset C checks each candidate's commit at the
+fixed cutoff date against every other candidate (`collection/dedupe_dataset_c_repos.py`);
+Dataset A automatically drops repos currently sharing a HEAD commit before cloning —
+but only catches repos still byte-identical *today*, not a pair that has since
+diverged. A third, commit-level mechanism (`collection/dedupe_commits_by_sha.py`)
+closes most of that gap by working on already-collected commit data instead of a
+live pre-check — any commit whose exact SHA was collected under more than one
+`repo_name` is removed, keeping one canonical `repo_name`'s copy. Unlike the two
+repo-level pre-filters, this one *can* run retroactively against already-collected
+data, and does for both Dataset A and Dataset B (B independently, since B's own
+live commit scan doesn't reuse Dataset A's classification). See
 [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies)
 and `internal-docs/methodology-improvements/repo-deduplication.md` for the full
 investigation and measured duplication rates.

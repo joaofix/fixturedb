@@ -45,23 +45,27 @@ one command to paste.
 ```bash
 # Dataset A (agent-authored fixtures)
 python -m collection discover-repos --dataset a --workers 16 \
-  && curl -d "Dataset A 1/4: discover-repos finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset A 1/5: discover-repos finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection discover-commits --dataset a --workers 16 \
-  && curl -d "Dataset A 2/4: discover-commits finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset A 2/5: discover-commits finished" ntfy.sh/joaofix_fixturedb \
+  && python -m collection.dedupe_commits_by_sha --dataset a \
+  && curl -d "Dataset A 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection filter-test-commits --dataset a --workers 16 \
-  && curl -d "Dataset A 3/4: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset A 4/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection extract-fixtures --dataset a \
-  && curl -d "Dataset A 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset A 5/5: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
 python -m collection discover-repos --dataset b \
-  && curl -d "Dataset B 1/3: discover-repos finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset B 1/4: discover-repos finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection filter-test-commits --dataset b --workers 16 \
-  && curl -d "Dataset B 2/3: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset B 2/4: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
+  && python -m collection.dedupe_commits_by_sha --dataset b \
+  && curl -d "Dataset B 3/4: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection extract-fixtures --dataset b --workers 16 \
-  && curl -d "Dataset B 3/3: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset B 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
@@ -150,6 +154,20 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   docstring. Standalone/manual by design: only rerun it when
   `github-search-raw/` is refreshed or Dataset C's candidate pool otherwise
   changes, not on every Dataset C build.
+- **`dedupe_commits_by_sha.py` (Datasets A and B) removes commits duplicated
+  across repo_names that share git history** — org transfers/renames whose
+  history has since diverged (e.g. `camunda-cloud/zeebe`/`camunda/zeebe`),
+  which `agent_repository_counter.py`'s own current-HEAD-commit dedup can't
+  catch (see that module and `docs/reference/limitations.md`'s
+  "Repository-Level Duplication"). Unlike Dataset C's dedup, this makes no
+  API calls (everything it needs -- `commit_sha`, `repo_name`, `stars`,
+  `created_at` -- is already sitting in the commit-level and repo-level
+  CSVs from the steps before it), so it's cheap to run every time. Placed
+  right before `filter-test-commits`/`extract-fixtures` so duplicate
+  commits are never used to generate fixtures in the first place; see
+  `collection/dedupe_commits_by_sha.py`'s module docstring for the
+  commit-SHA-as-proof-of-shared-history reasoning and why this is safer
+  than filtering at the repo level.
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
 - **`--tier2`** (Dataset A's `discover-commits` only): if Tier-1 commit-trailer

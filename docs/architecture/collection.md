@@ -53,11 +53,12 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 `github-search-raw/`'s source query excludes GitHub-native forks (`isFork`), but not
 org transfers or independently-created "shadow copies" -- two different `repo_name`s
 that share partly or fully identical git history. A shared commit SHA is a
-cryptographic guarantee of identical content, so it's used directly as the dedup key.
-Two mechanisms, matched to each dataset's shape, share their tie-break/clustering
-logic via `collection/repo_dedup_utils.py` (`pick_cluster_survivor()`: highest stars,
-tie-break lowest `github_id`; `find_duplicate_clusters()`: groups by an injected key
-function):
+cryptographic guarantee of identical content, so it's used directly as the dedup key
+throughout. Three mechanisms, matched to each dataset's shape and to how far along
+the pipeline duplication is detectable, share their tie-break/clustering logic via
+`collection/repo_dedup_utils.py` (`pick_cluster_survivor()`: highest stars, tie-break
+lowest `github_id` by default, or an injected `tie_break_key` for callers without one;
+`find_duplicate_clusters()`: groups by an injected key function):
 
 - **Dataset C** (`collection/dedupe_dataset_c_repos.py`): a single fixed-cutoff
   snapshot per repo, so one GitHub API call per candidate (`commits?until=...`)
@@ -67,15 +68,25 @@ function):
   `github-search-raw/` is refreshed. Output: `datasets/c/repos/duplicate_repos.csv`,
   consulted by `select_dataset_c_repos.py` at build time (pure CSV filter, no API
   calls at runtime).
-- **Dataset A** (`agent_repository_counter.py::_dedupe_by_last_commit_sha()`): no API
-  calls, no separate run -- groups candidates by `lastCommitSHA` (already present in
-  the raw SEART export for free) inline, every time `discover-repos --dataset a` runs,
-  before the has_agent_config clone check. Zero-cost but only a partial fix: it
-  catches repos still byte-identical *today*, not pairs that have since diverged.
-  Also persists the same rows to
+- **Dataset A, repo-level pre-filter** (`agent_repository_counter.py::_dedupe_by_last_commit_sha()`):
+  no API calls, no separate run -- groups candidates by `lastCommitSHA` (already
+  present in the raw SEART export for free) inline, every time `discover-repos
+  --dataset a` runs, before the has_agent_config clone check. Zero-cost but only a
+  partial fix: it catches repos still byte-identical *today*, not pairs that have
+  since diverged. Also persists the same rows to
   `github-search-raw/duplicate_repos_by_current_commit.csv`.
-- **Dataset B**: no code needed -- its repo pool is resolved from Dataset A's own
-  (already-deduped) output.
+- **Datasets A and B, commit-level post-filter** (`collection/dedupe_commits_by_sha.py`):
+  catches what the repo-level pre-filter can't -- a pair that *has* diverged still
+  shares commit history up to the divergence point, so any `commit_sha` collected
+  under more than one `repo_name` is still proof of shared identity, discoverable
+  once commits are actually collected rather than needing a live pre-check. Also
+  zero API calls (everything needed is already in the commit-level and repo-level
+  CSVs); run explicitly, once per dataset, between commit collection and fixture
+  extraction (`--dataset a` on `datasets/a/commits/`, `--dataset b` on
+  `datasets/b/test-commits/` -- B needs its own pass despite inheriting A's repo
+  pool, since B does its own live commit scan rather than reusing A's
+  classification). Writes an audit CSV (`duplicate_commits_removed.csv`) alongside
+  the commit CSVs it rewrites.
 
 Full rationale, empirical checks, and what was deliberately left out of scope:
 `internal-docs/methodology-improvements/repo-deduplication.md`.
