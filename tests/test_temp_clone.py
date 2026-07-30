@@ -94,8 +94,6 @@ class TestCloneToTempdirCredentialSkip:
             mock_result.stderr = ""
             mock_run.return_value = mock_result
 
-            mock_run.side_effect = lambda *args, **kwargs: None
-
             repo_path, temp_root = clone_to_tempdir(
                 "owner/repo",
                 "https://github.com/owner/repo.git",
@@ -103,6 +101,5 @@ class TestCloneToTempdirCredentialSkip:
                 timeout=60,
                 prefix="test-",
             )
-            assert (
-                repo_path is not None or mock_run.call_count > 0
-            )  # Either succeeds or was attempted
+            assert repo_path is not None
+            assert mock_run.call_count == 1  # succeeded on the first attempt, no retry

@@ -1,13 +1,21 @@
+import contextlib
 import csv
 import json
 import subprocess
 from pathlib import Path
 
+from collection.clone_primitives import CloneUnavailable
 from collection.config import COLLECTION_OUTPUT_TAG
 from collection.test_commit_filter import (
     collect_agent_test_commits,
     collect_agent_test_commits_from_repos,
 )
+
+
+@contextlib.contextmanager
+def _raise_clone_unavailable(*args, **kwargs):
+    raise CloneUnavailable("simulated network drop")
+    yield  # pragma: no cover -- unreachable, required to make this a generator
 
 
 def init_minimal_repo_with_agent_commit(path: Path, marker: str = "") -> str:
@@ -183,6 +191,99 @@ def test_collect_agent_test_commits_resumes_completed_repos(tmp_path: Path):
         reader = csv.DictReader(fh)
         rows = list(reader)
     assert {row["commit_sha"] for row in rows} == {sha_one, sha_two}
+
+
+def test_clone_failure_is_not_checkpointed_as_complete(tmp_path: Path, monkeypatch):
+    """Same guarantee as the human-side filter: a CloneUnavailable must not
+    be checkpointed as done, or a transient failure (network drop mid-run)
+    gets permanently miscached as 'scanned, zero results'."""
+    monkeypatch.setattr(
+        "collection.test_commit_filter.temp_clone_commit_history",
+        _raise_clone_unavailable,
+    )
+
+    commit_dir = tmp_path / "agent_commits"
+    commit_dir.mkdir()
+    csv_path = commit_dir / "python_commit.csv"
+    header = ["repo_name", "language", "clone_url", "commit_sha", "agent_type", "commit_date"]
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=header)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/repo",
+                "language": "python",
+                "clone_url": "unused",
+                "commit_sha": "deadbeef",
+                "agent_type": "copilot",
+                "commit_date": "2025-01-01",
+            }
+        )
+
+    out_dir = tmp_path / "out"
+    result = collect_agent_test_commits(commit_dir, out_dir, workers=1)
+
+    assert result["clone_failures"] == 1
+    assert result["repos_processed"] == 0
+
+    checkpoint = json.loads((out_dir / "agent_test_commits.checkpoint.json").read_text())
+    assert "owner/repo" not in checkpoint["completed_repos"]
+
+
+def test_clone_failure_multi_worker_does_not_block_other_repos(tmp_path: Path, monkeypatch):
+    good_repo = tmp_path / "good_repo"
+    sha = init_minimal_repo_with_agent_commit(good_repo)
+
+    real_temp_clone = __import__(
+        "collection.test_commit_filter", fromlist=["temp_clone_commit_history"]
+    ).temp_clone_commit_history
+
+    def flaky_temp_clone(clone_url, repo_full_name, **kwargs):
+        if repo_full_name == "owner/bad-repo":
+            return _raise_clone_unavailable()
+        return real_temp_clone(clone_url, repo_full_name, **kwargs)
+
+    monkeypatch.setattr(
+        "collection.test_commit_filter.temp_clone_commit_history", flaky_temp_clone
+    )
+
+    commit_dir = tmp_path / "agent_commits"
+    commit_dir.mkdir()
+    csv_path = commit_dir / "python_commit.csv"
+    header = ["repo_name", "language", "clone_url", "commit_sha", "agent_type", "commit_date"]
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=header)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/bad-repo",
+                "language": "python",
+                "clone_url": "unused",
+                "commit_sha": "deadbeef",
+                "agent_type": "copilot",
+                "commit_date": "2025-01-01",
+            }
+        )
+        writer.writerow(
+            {
+                "repo_name": "owner/good-repo",
+                "language": "python",
+                "clone_url": str(good_repo),
+                "commit_sha": sha,
+                "agent_type": "copilot",
+                "commit_date": "2025-01-02",
+            }
+        )
+
+    out_dir = tmp_path / "out"
+    result = collect_agent_test_commits(commit_dir, out_dir, workers=2)
+
+    assert result["clone_failures"] == 1
+    assert result["repos_processed"] == 1
+
+    checkpoint = json.loads((out_dir / "agent_test_commits.checkpoint.json").read_text())
+    assert "owner/bad-repo" not in checkpoint["completed_repos"]
+    assert "owner/good-repo" in checkpoint["completed_repos"]
 
 
 def test_default_output_dir_no_versioned_subfolder_when_tag_empty():

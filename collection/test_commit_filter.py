@@ -18,6 +18,7 @@ from tqdm import tqdm
 from collection.logging_utils import get_logger
 
 from . import paths
+from .clone_primitives import CloneUnavailable
 from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, HUMAN_CORPUS_CUTOFF_DATE
 from .ephemeral_clone import temp_clone_commit_history
 from .test_commit_resume_state import (
@@ -156,12 +157,24 @@ def collect_agent_test_commits(
             )
         _save_agent_test_commit_resume_state(output_dir, counts, completed_repos)
 
+    clone_failures = 0
+
     if workers == 1:
         with tqdm(total=total_repos, desc="[test-commits]", unit="repo") as pbar:
             for repo_name, repo_rows in repos_to_process.items():
-                language, repo_test_commits, repo_count, repo_commits_scanned = (
-                    _process_repo_test_commits(repo_name, repo_rows)
-                )
+                try:
+                    language, repo_test_commits, repo_count, repo_commits_scanned = (
+                        _process_repo_test_commits(repo_name, repo_rows)
+                    )
+                except CloneUnavailable:
+                    logger.warning(
+                        "[test-commits] %s could not be cloned this run; leaving "
+                        "it unchecked so it's retried next run (not marked complete)",
+                        repo_name,
+                    )
+                    clone_failures += 1
+                    pbar.update(1)
+                    continue
                 repos_processed += repo_count
                 commits_scanned += repo_commits_scanned
                 new_rows = []
@@ -192,9 +205,20 @@ def collect_agent_test_commits(
                 with tqdm(total=total_repos, desc="[test-commits]", unit="repo") as pbar:
                     for future in as_completed(futures):
                         repo_name = futures[future]
-                        language, repo_test_commits, repo_count, repo_commits_scanned = (
-                            future.result()
-                        )
+                        try:
+                            language, repo_test_commits, repo_count, repo_commits_scanned = (
+                                future.result()
+                            )
+                        except CloneUnavailable:
+                            logger.warning(
+                                "[test-commits] %s could not be cloned this run; "
+                                "leaving it unchecked so it's retried next run "
+                                "(not marked complete)",
+                                repo_name,
+                            )
+                            clone_failures += 1
+                            pbar.update(1)
+                            continue
                         repos_processed += repo_count
                         commits_scanned += repo_commits_scanned
                         new_rows = []
@@ -222,6 +246,14 @@ def collect_agent_test_commits(
                 persist_progress()
                 raise
 
+    # Unconditional final save: the loop only calls persist_progress() after a
+    # repo that actually completes, so a run where every repo hit
+    # CloneUnavailable (or the repo set was empty) would otherwise leave no
+    # checkpoint on disk at all -- harmless (a missing checkpoint just means
+    # "nothing completed yet" on the next run), but this keeps the on-disk
+    # state always in sync with the final in-memory state either way.
+    persist_progress()
+
     output_files: dict[str, str] = {}
     total_test_commits = 0
     for language, language_rows in sorted(test_commit_rows_by_language.items()):
@@ -235,11 +267,19 @@ def collect_agent_test_commits(
             output_path,
         )
 
+    clone_failure_summary = (
+        f", {clone_failures} repo(s) could not be cloned this run and were left "
+        "unchecked -- rerun the same command to retry them"
+        if clone_failures
+        else ""
+    )
     logger.info(
-        "[test-commits] Finished: %d repos processed, %d commits scanned, %d agent test commits found",
+        "[test-commits] Finished: %d repos processed, %d commits scanned, "
+        "%d agent test commits found%s",
         repos_processed,
         commits_scanned,
         total_test_commits,
+        clone_failure_summary,
     )
     return {
         "repos_processed": repos_processed,
@@ -248,6 +288,7 @@ def collect_agent_test_commits(
         "test_commits_found": total_test_commits,
         "output_files": output_files,
         "output_dir": str(output_dir),
+        "clone_failures": clone_failures,
     }
 
 

@@ -1,9 +1,12 @@
+import contextlib
 import csv
 import gzip
+import json
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
 
+from collection.clone_primitives import CloneUnavailable
 from collection.human_test_commit_filter import (
     collect_human_test_commits,
     collect_human_test_commits_from_raw_search,
@@ -146,6 +149,104 @@ def test_collect_human_test_commits(tmp_path: Path, monkeypatch):
         reader = csv.DictReader(fh)
         rows = list(reader)
     assert any(r["commit_sha"] == "deadbeef" for r in rows)
+
+
+@contextlib.contextmanager
+def _raise_clone_unavailable(*args, **kwargs):
+    raise CloneUnavailable("simulated network drop")
+    yield  # pragma: no cover -- unreachable, required to make this a generator
+
+
+def test_clone_failure_is_not_checkpointed_as_complete(tmp_path: Path, monkeypatch):
+    """A CloneUnavailable (transient clone failure, e.g. the network dropping
+    mid-run) must not be checkpointed as done -- rerunning must retry the
+    repo, not silently and permanently treat it as 'scanned, zero results'.
+    This is the real bug behind a genuine Dataset B collection that hit
+    100% completion (falsely) after the network dropped at 96%."""
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner", FakeScanner
+    )
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.temp_clone_commit_history",
+        _raise_clone_unavailable,
+    )
+
+    repo_qc_dir = tmp_path / "repo_qc"
+    write_repo_qc_csv(repo_qc_dir, "owner/repo", tmp_path / "unused")
+
+    out_dir = tmp_path / "out"
+    result = collect_human_test_commits(repo_qc_dir, out_dir, workers=1)
+
+    assert result["clone_failures"] == 1
+    assert result["repos_processed"] == 0
+    assert result["test_commits_found"] == 0
+
+    checkpoint = json.loads((out_dir / "human_test_commits.checkpoint.json").read_text())
+    assert "owner/repo" not in checkpoint["completed_repos"]
+
+
+def test_clone_failure_multi_worker_does_not_block_other_repos(tmp_path: Path, monkeypatch):
+    """Same guarantee as the single-worker case, but under the
+    ThreadPoolExecutor path: one repo's clone failure must not prevent a
+    sibling repo from being processed and correctly checkpointed."""
+    good_repo_dir = tmp_path / "good_repo"
+    init_minimal_repo(good_repo_dir)
+
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner", FakeScanner
+    )
+
+    real_temp_clone = __import__(
+        "collection.human_test_commit_filter", fromlist=["temp_clone_commit_history"]
+    ).temp_clone_commit_history
+
+    def flaky_temp_clone(clone_url, repo_full_name, **kwargs):
+        if repo_full_name == "owner/bad-repo":
+            return _raise_clone_unavailable()
+        return real_temp_clone(clone_url, repo_full_name, **kwargs)
+
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.temp_clone_commit_history", flaky_temp_clone
+    )
+
+    repo_qc_dir = tmp_path / "repo_qc"
+    repo_qc_dir.mkdir()
+    csv_path = repo_qc_dir / "python_agent_repo.csv"
+    header = ["repo_name", "language", "clone_url", "has_agent_config", "stars", "num_contributors"]
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=header)
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/bad-repo",
+                "language": "python",
+                "clone_url": "unused",
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+        writer.writerow(
+            {
+                "repo_name": "owner/good-repo",
+                "language": "python",
+                "clone_url": str(good_repo_dir),
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+
+    out_dir = tmp_path / "out"
+    result = collect_human_test_commits(repo_qc_dir, out_dir, workers=2)
+
+    assert result["clone_failures"] == 1
+    assert result["repos_processed"] == 1
+    assert result["test_commits_found"] >= 1
+
+    checkpoint = json.loads((out_dir / "human_test_commits.checkpoint.json").read_text())
+    assert "owner/bad-repo" not in checkpoint["completed_repos"]
+    assert "owner/good-repo" in checkpoint["completed_repos"]
 
 
 def test_collect_human_test_commits_scanned_totals_are_split_by_language(

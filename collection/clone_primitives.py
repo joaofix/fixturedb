@@ -13,7 +13,24 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
+
+
+class CloneUnavailable(Exception):
+    """Raised by `clone_to_tempdir` when a repo could not be cloned after
+    retrying, for a reason that is NOT a confirmed permanent condition
+    (private/deleted repo, detected via `_output_requests_credentials` --
+    that case still returns `(None, None)`, unchanged). A network blip, DNS
+    failure, or a sustained outage all raise this instead of returning
+    `(None, None)`, so a caller can tell "we don't actually know if this
+    repo is cloneable" apart from "confirmed: it isn't" -- callers must
+    not treat the two the same way (e.g. checkpointing a repo as
+    permanently done because of a transient failure silently hides it from
+    every future run; see human_test_commit_filter.py/test_commit_filter.py
+    for where this bit a real Dataset B collection when the network dropped
+    mid-run)."""
+
 
 CREDENTIAL_PROMPT_PATTERNS = [
     re.compile(r"Username.*:", re.IGNORECASE),
@@ -43,33 +60,55 @@ def clone_to_tempdir(
     *,
     timeout: int,
     prefix: str,
+    retries: int = 2,
+    backoff_base: float = 3.0,
 ) -> tuple[Path | None, Path | None]:
     """Clone a repo into a temporary directory and return (repo_path, temp_root).
 
     The caller is responsible for removing `temp_root` with `cleanup_tempdir()`.
+
+    A credential prompt (private/deleted repo -- see
+    `_output_requests_credentials`) is a confirmed, permanent condition and
+    returns `(None, None)` immediately, no retry. Any other failure (network
+    error, timeout, transient GitHub 5xx) is retried up to `retries` times
+    with exponential backoff; if every attempt fails, raises
+    `CloneUnavailable` instead of returning `(None, None)` -- a generic
+    "confirmed None" here would be indistinguishable from a repo genuinely
+    having nothing to clone, and a caller that checkpoints on that basis
+    would silently and permanently miscategorize a repo that was never
+    actually reached (see `CloneUnavailable`'s docstring). `retries` only
+    defends against a brief blip within one call -- it will not survive a
+    sustained outage; recovering from that is the checkpoint layer's job.
     """
     owner, name = repo_full_name.split("/")
-    temp_root = Path(tempfile.mkdtemp(prefix=prefix))
-    repo_path = temp_root / f"{owner}__{name}"
 
-    try:
-        result = subprocess.run(
-            ["git", "clone", *clone_args, clone_url, str(repo_path)],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-        )
-        if result.returncode == 0:
-            return repo_path, temp_root
-        if _output_requests_credentials(result.stderr):
-            return None, None
-    except KeyboardInterrupt:
-        raise
-    except Exception:
-        pass
+    for attempt in range(retries + 1):
+        temp_root = Path(tempfile.mkdtemp(prefix=prefix))
+        repo_path = temp_root / f"{owner}__{name}"
 
-    cleanup_tempdir(temp_root)
-    return None, None
+        try:
+            result = subprocess.run(
+                ["git", "clone", *clone_args, clone_url, str(repo_path)],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            if result.returncode == 0:
+                return repo_path, temp_root
+            if _output_requests_credentials(result.stderr):
+                cleanup_tempdir(temp_root)
+                return None, None
+        except KeyboardInterrupt:
+            cleanup_tempdir(temp_root)
+            raise
+        except Exception:
+            pass
+
+        cleanup_tempdir(temp_root)
+        if attempt < retries:
+            time.sleep(backoff_base * (2**attempt))
+
+    raise CloneUnavailable(f"clone failed after {retries + 1} attempt(s): {repo_full_name}")
 
 
 def cleanup_tempdir(temp_root: Path | None) -> None:

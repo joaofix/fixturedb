@@ -20,6 +20,7 @@ from pathlib import Path
 from tqdm import tqdm
 
 from . import paths
+from .clone_primitives import CloneUnavailable
 from .config import (
     AGENT_CORPUS_START_DATE,
     CLONES_DIR,
@@ -330,16 +331,29 @@ def _collect_human_test_commits_from_repo_rows(
             output_dir, counts, completed_repos, role="human"
         )
 
+    clone_failures = 0
+
     if workers == 1:
         with tqdm(total=total_repos, desc="[human-test-commits]", unit="repo") as pbar:
             for repo_name, repo_rows_for_name in repos_to_process.items():
-                (
-                    language,
-                    repo_test_commits,
-                    repo_count,
-                    repo_commits_scanned,
-                    repo_disagreements,
-                ) = process_fn(repo_rows_for_name[0])
+                try:
+                    (
+                        language,
+                        repo_test_commits,
+                        repo_count,
+                        repo_commits_scanned,
+                        repo_disagreements,
+                    ) = process_fn(repo_rows_for_name[0])
+                except CloneUnavailable:
+                    logger.warning(
+                        "[human-test-commits] %s could not be cloned this run; "
+                        "leaving it unchecked so it's retried next run (not "
+                        "marked complete)",
+                        repo_name,
+                    )
+                    clone_failures += 1
+                    pbar.update(1)
+                    continue
                 repos_processed += repo_count
                 commits_scanned += repo_commits_scanned
                 commits_scanned_by_lang[language] += repo_commits_scanned
@@ -369,13 +383,25 @@ def _collect_human_test_commits_from_repo_rows(
             try:
                 with tqdm(total=total_repos, desc="[human-test-commits]", unit="repo") as pbar:
                     for future in as_completed(futures):
-                        (
-                            language,
-                            repo_test_commits,
-                            repo_count,
-                            repo_commits_scanned,
-                            repo_disagreements,
-                        ) = future.result()
+                        repo_name = futures.get(future, None)
+                        try:
+                            (
+                                language,
+                                repo_test_commits,
+                                repo_count,
+                                repo_commits_scanned,
+                                repo_disagreements,
+                            ) = future.result()
+                        except CloneUnavailable:
+                            logger.warning(
+                                "[human-test-commits] %s could not be cloned this "
+                                "run; leaving it unchecked so it's retried next "
+                                "run (not marked complete)",
+                                repo_name,
+                            )
+                            clone_failures += 1
+                            pbar.update(1)
+                            continue
                         repos_processed += repo_count
                         commits_scanned += repo_commits_scanned
                         commits_scanned_by_lang[language] += repo_commits_scanned
@@ -390,7 +416,6 @@ def _collect_human_test_commits_from_repo_rows(
                         if new_rows:
                             repos_with_test_commits += 1
                             test_commit_rows_by_language[language].extend(new_rows)
-                        repo_name = futures.get(future, None)
                         if repo_name:
                             completed_repos.add(repo_name)
                         persist_progress()
@@ -428,13 +453,20 @@ def _collect_human_test_commits_from_repo_rows(
         if disagreements
         else ""
     )
+    clone_failure_summary = (
+        f", {clone_failures} repo(s) could not be cloned this run and were left "
+        "unchecked -- rerun the same command to retry them"
+        if clone_failures
+        else ""
+    )
     logger.info(
         "[human-test-commits] Finished: %d repos processed, %d commits scanned, "
-        "%d human test commits found%s",
+        "%d human test commits found%s%s",
         repos_processed,
         commits_scanned,
         total_test_commits,
         disagreement_summary,
+        clone_failure_summary,
     )
     counts.update(
         {
@@ -456,6 +488,7 @@ def _collect_human_test_commits_from_repo_rows(
         "output_dir": str(output_dir),
         "disagreements_found": len(disagreements),
         "disagreements_file": disagreements_path,
+        "clone_failures": clone_failures,
     }
 
 
