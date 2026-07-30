@@ -57,6 +57,39 @@ class TestPickClusterSurvivor:
         with pytest.raises(ValueError):
             pick_cluster_survivor([])
 
+    def test_custom_tie_break_key_overrides_github_id(self):
+        """dedupe_commits_by_sha.py's rows never carry github_id -- must be
+        able to supply a different, directly-comparable tie-break value
+        (e.g. created_at) without this function trying to int-coerce it."""
+        repos = [
+            {"repo_name": "a/newer", "stars": 100, "created_at": "2020-01-01"},
+            {"repo_name": "b/older", "stars": 100, "created_at": "2016-03-20"},
+        ]
+        survivor = pick_cluster_survivor(
+            repos, tie_break_key=lambda r: r.get("created_at") or "9999"
+        )
+        assert survivor["repo_name"] == "b/older"
+
+    def test_custom_tie_break_key_missing_value_sorts_last(self):
+        repos = [
+            {"repo_name": "a/no-date", "stars": 100},
+            {"repo_name": "b/real-date", "stars": 100, "created_at": "2020-01-01"},
+        ]
+        survivor = pick_cluster_survivor(
+            repos, tie_break_key=lambda r: r.get("created_at") or "9999"
+        )
+        assert survivor["repo_name"] == "b/real-date"
+
+    def test_default_tie_break_still_uses_github_id_when_unspecified(self):
+        """Backward compatibility: existing callers (dedupe_dataset_c_repos.py,
+        agent_repository_counter.py) never pass tie_break_key -- behavior
+        must be byte-identical to before this parameter existed."""
+        repos = [
+            {"repo_name": "a/newer", "stars": 100, "github_id": 999},
+            {"repo_name": "b/older", "stars": 100, "github_id": 1},
+        ]
+        assert pick_cluster_survivor(repos)["repo_name"] == "b/older"
+
 
 def _repo(name, language, stars, github_id, key):
     return {

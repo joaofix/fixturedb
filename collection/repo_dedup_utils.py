@@ -27,14 +27,33 @@ OUTPUT_FIELDNAMES = [
 ]
 
 
-def pick_cluster_survivor(repos: list[dict[str, Any]]) -> dict[str, Any]:
+def pick_cluster_survivor(
+    repos: list[dict[str, Any]],
+    *,
+    tie_break_key: Callable[[dict[str, Any]], Any] | None = None,
+) -> dict[str, Any]:
     """Return the repo to keep from a cluster of duplicates.
 
-    Highest `stars` wins; ties broken by lowest `github_id` (the
-    earlier-created GitHub repo object). Both fields are expected to be
-    present and coercible to int; missing/unparseable values sort last on
-    stars and last on github_id (i.e. never preferred over a repo with a
-    real value).
+    Highest `stars` wins; ties broken by `tie_break_key(repo)` ascending
+    (lower/earlier wins). Default `tie_break_key` is `github_id` (the
+    earlier-created GitHub repo object) coerced to int, missing/unparseable
+    values sorting last -- unchanged from this function's original
+    behavior, so both existing callers (`dedupe_dataset_c_repos.py`,
+    `agent_repository_counter.py`) are unaffected.
+
+    Pass a different `tie_break_key` for data that doesn't carry
+    `github_id` -- e.g. `dedupe_commits_by_sha.py` clusters commit-level
+    rows (never joined against a repo's numeric GitHub ID) and instead
+    passes `lambda r: r.get("created_at") or "9999"` to prefer the
+    earlier-created repo by its own `created_at` timestamp string, which
+    sorts correctly ascending as long as it's ISO-8601 (lexicographic order
+    matches chronological order for that format). The caller owns
+    supplying directly-comparable values -- this function no longer tries
+    to guess a field's type.
+
+    `stars` is expected to be present and coercible to int; missing/
+    unparseable values sort last (never preferred over a repo with a real
+    value).
 
     A single-repo "cluster" just returns that repo -- callers don't need to
     special-case cluster size 1.
@@ -48,14 +67,15 @@ def pick_cluster_survivor(repos: list[dict[str, Any]]) -> dict[str, Any]:
         except (TypeError, ValueError):
             return 0
 
-    def _github_id(repo: dict[str, Any]) -> int:
+    def _default_github_id(repo: dict[str, Any]) -> int:
         try:
             value = repo.get("github_id")
             return int(value) if value not in (None, "") else 2**63
         except (TypeError, ValueError):
             return 2**63
 
-    return min(repos, key=lambda r: (-_stars(r), _github_id(r)))
+    key_fn = tie_break_key or _default_github_id
+    return min(repos, key=lambda r: (-_stars(r), key_fn(r)))
 
 
 def _repo_name(repo: dict[str, Any]) -> str | None:
