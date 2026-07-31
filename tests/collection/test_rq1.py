@@ -21,10 +21,62 @@ from collection.db import (
 )
 from collection.research_questions.rq1 import (
     DatasetMetrics,
+    compare_datasets_repo_level,
     generate_report,
     load_dataset_metrics,
     write_report,
 )
+
+
+def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
+    """Create db/{dataset}.db with one repo per entry in `repos`, each
+    entry a list of `loc` values for that repo's fixtures."""
+    db_file = paths.db_path(dataset, root=root)
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        for repo_idx, loc_values in enumerate(repos):
+            repo_id, _ = upsert_repository(
+                conn,
+                {
+                    "github_id": repo_idx + 1,
+                    "full_name": f"owner/repo{repo_idx}",
+                    "language": "python",
+                    "stars": 1,
+                    "forks": 0,
+                    "description": "",
+                    "topics": "[]",
+                    "created_at": "2019-01-01T00:00:00Z",
+                    "pushed_at": "2020-01-01T00:00:00Z",
+                    "clone_url": f"https://github.com/owner/repo{repo_idx}.git",
+                    "num_contributors": 1,
+                    "domain": None,
+                    "repo_age_years": None,
+                },
+            )
+            file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
+            for i, loc in enumerate(loc_values):
+                insert_fixture(
+                    conn,
+                    {
+                        "file_id": file_id,
+                        "repo_id": repo_id,
+                        "name": f"fixture_{repo_idx}_{i}",
+                        "fixture_type": "pytest_decorator",
+                        "scope": "per_test",
+                        "start_line": i,
+                        "end_line": i + 1,
+                        "loc": loc,
+                        "cyclomatic_complexity": 1,
+                        "max_nesting_depth": 1,
+                        "num_objects_instantiated": 0,
+                        "num_external_calls": 0,
+                        "num_parameters": 0,
+                        "has_teardown_pair": 0,
+                        "raw_source": "",
+                        "framework": "pytest",
+                        "num_mocks": 0,
+                    },
+                )
 
 
 def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
@@ -100,6 +152,19 @@ class TestLoadDatasetMetrics:
         assert metrics.categorical["scope"] == {"per_test": 2, "per_class": 1}
         assert metrics.categorical["fixture_type"] == {"before_each": 2, "after_each": 1}
 
+    def test_loads_agent_type_distribution(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"loc": 1, "agent_type": "claude"},
+                {"loc": 1, "agent_type": "claude"},
+                {"loc": 1, "agent_type": "copilot"},
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.agent_type_distribution == {"claude": 2, "copilot": 1}
+
     def test_null_commit_type_excluded_from_categorical_distribution(self, tmp_path):
         """Dataset C fixtures never set commit_type -- must come back as an
         empty dict, not a fake {'None': n} bucket."""
@@ -120,8 +185,9 @@ class TestGenerateReport:
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
         assert "## A vs B: Dataset A (agent-authored) vs Dataset B (human-authored, contemporary)" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # B summary, C summary, A-vs-B comparison, A-vs-C comparison: 4 total.
-        assert report.count("Not available -- db not collected yet.") == 4
+        # B summary, C summary, A-vs-B comparison, A-vs-C comparison,
+        # A-vs-B repo-level, A-vs-C repo-level: 6 total.
+        assert report.count("Not available -- db not collected yet.") == 6
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         """_make_db's repo and its one test_file both use "python", so this
@@ -133,6 +199,15 @@ class TestGenerateReport:
         assert "Cross-language fixture leakage" in report
         assert "0/1 fixtures (0.00%) leaked." in report
 
+    def test_dataset_summary_includes_agent_type_distribution(self, tmp_path):
+        _make_db(
+            tmp_path, "a", [{"loc": 1, "agent_type": "claude"}, {"loc": 1, "agent_type": "copilot"}]
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "**agent_type distribution**" in report
+        assert "| claude | 1 | 50.0% |" in report
+        assert "| copilot | 1 | 50.0% |" in report
+
     def test_a_vs_b_comparison_renders_significant_difference(self, tmp_path):
         # Sharply different LOC distributions -> Mann-Whitney should flag significance.
         _make_db(tmp_path, "a", [{"loc": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
@@ -142,7 +217,13 @@ class TestGenerateReport:
         loc_line = next(
             line for line in comparison_section.splitlines() if line.startswith("| loc |")
         )
-        assert loc_line.strip().endswith("| yes |")
+        # Fully separated groups (every B value exceeds every A value) --
+        # both statistically significant and a large practical effect.
+        assert "| yes | 1.000 (large) |" in loc_line
+        # Only one continuous metric varies here (loc) -- with a family of
+        # 6 (some insufficient_data, since only "loc" was set), BH-FDR
+        # still marks this one significant given how strong the raw signal is.
+        assert loc_line.strip().endswith("(yes) |")
 
     def test_categorical_insufficient_data_when_column_all_null(self, tmp_path):
         # commit_type is never set here -> both sides empty -> insufficient data.
@@ -153,6 +234,51 @@ class TestGenerateReport:
             line for line in report.splitlines() if line.startswith("| commit_type |")
         )
         assert "_insufficient data_" in commit_type_line
+
+    def test_categorical_comparison_renders_effect_size(self, tmp_path):
+        # A is all per_test scope, B is all per_class -> maximal association.
+        _make_db(tmp_path, "a", [{"loc": 1, "scope": "per_test"}] * 10)
+        _make_db(tmp_path, "b", [{"loc": 1, "scope": "per_class"}] * 10)
+        report = generate_report(db_root=tmp_path)
+        scope_line = next(
+            line
+            for line in report.split("**Categorical metrics (chi-square)")[1].splitlines()
+            if line.startswith("| scope |")
+        )
+        assert "(large)" in scope_line
+
+    def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
+        """The core value proposition: a single repo contributing many
+        fixtures must not be allowed to dominate the comparison. Dataset A
+        here is one repo with 100 fixtures at loc=100 plus one repo with a
+        single loc=1 fixture -- fixture-level, the mean is ~99 (dominated
+        by the prolific repo). Dataset B is two repos each with one
+        loc=50 fixture. Repo-level, A's per-repo means are [100.0, 1.0]
+        (mean 50.5) -- much closer to B's 50 than the fixture-level view
+        would suggest, and NOT a significant Mann-Whitney difference,
+        unlike the fixture-level comparison over the same data."""
+        _make_multi_repo_db(tmp_path, "a", [[100.0] * 100, [1.0]])
+        _make_multi_repo_db(tmp_path, "b", [[50.0], [50.0]])
+
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        b_metrics = load_dataset_metrics("b", db_root=tmp_path)
+
+        assert sorted(a_metrics.repo_level_continuous["loc"]) == [1.0, 100.0]
+
+        fixture_level = a_metrics.continuous_raw["loc"]
+        assert sum(fixture_level) / len(fixture_level) > 95  # dominated by the prolific repo
+
+        repo_level_result = compare_datasets_repo_level(a_metrics, b_metrics)
+        t = repo_level_result["loc"]
+        assert t.is_balanced  # not significant once each repo counts once
+
+        report = generate_report(db_root=tmp_path)
+        assert "## Repo-level aggregates" in report
+        repo_section = report.split("## Repo-level aggregates")[1]
+        loc_line = next(
+            line for line in repo_section.splitlines() if line.startswith("| loc |")
+        )
+        assert "| no |" in loc_line  # not significant, repo-level
 
 
 class TestWriteReport:

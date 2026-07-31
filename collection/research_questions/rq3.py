@@ -66,13 +66,19 @@ from ._shared import (
     DATASET_LABELS,
     OUTPUT_DIR,
     LanguageLeakage,
+    apply_fdr_correction,
+    categorical_effect_size_cell,
     compute_language_leakage,
     compute_stratified_categorical_balance,
+    continuous_effect_size_cell,
+    fdr_cell,
     fetch_categorical_column,
     fetch_continuous_column,
+    fetch_continuous_column_by_repo,
     fmt,
     render_language_leakage_table,
     render_stratified_categorical_table,
+    repo_level_means,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -98,6 +104,7 @@ class DatasetMetrics:
     framework_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
 
 
 def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
@@ -105,6 +112,16 @@ def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
         "num_mocks": metrics.num_mocks_raw,
         "num_interactions_configured": metrics.num_interactions_raw,
     }[metric]
+
+
+# Which table each continuous metric's repo_id column lives on -- num_mocks
+# is a fixtures column, num_interactions_configured a mock_usages one
+# (several mocks per fixture, several fixtures per repo); both tables carry
+# their own repo_id, so fetch_continuous_column_by_repo() works for either.
+_CONTINUOUS_METRIC_TABLES = {
+    "num_mocks": "fixtures",
+    "num_interactions_configured": "mock_usages",
+}
 
 
 def _categorical_values(metrics: DatasetMetrics, metric: str) -> dict[str, int]:
@@ -165,6 +182,10 @@ def load_dataset_metrics(
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
         framework_by_language = _fetch_framework_by_language(conn)
         language_leakage = compute_language_leakage(conn)
+        repo_level_continuous = {
+            m: repo_level_means(fetch_continuous_column_by_repo(conn, table, m))
+            for m, table in _CONTINUOUS_METRIC_TABLES.items()
+        }
 
     has_mock_dist = {
         "has_mock": sum(1 for n in num_mocks_raw if n > 0),
@@ -196,6 +217,7 @@ def load_dataset_metrics(
         mock_rate_by_language=mock_rate_by_language,
         framework_by_language=framework_by_language,
         language_leakage=language_leakage,
+        repo_level_continuous=repo_level_continuous,
     )
 
 
@@ -220,6 +242,22 @@ def compare_datasets(
         for metric in CATEGORICAL_METRICS
     }
     return {"continuous": continuous, "categorical": categorical}
+
+
+def compare_datasets_repo_level(
+    a: DatasetMetrics, other: DatasetMetrics
+) -> dict[str, BalanceTest]:
+    """A vs `other`, one mean value per repo instead of one value per
+    fixture/mock -- see repo_level_means()'s docstring for why this
+    complements, rather than replaces, compare_datasets() above."""
+    return {
+        metric: compute_continuous_balance(
+            human_values=other.repo_level_continuous[metric],
+            agent_values=a.repo_level_continuous[metric],
+            variable=metric,
+        )
+        for metric in CONTINUOUS_METRICS
+    }
 
 
 def _render_dataset_summary(metrics: DatasetMetrics) -> str:
@@ -279,44 +317,62 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
 
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
     result = compare_datasets(a, other)
+    # BH-FDR correction, one family per table -- see
+    # apply_fdr_correction()'s docstring.
+    continuous_corrected = apply_fdr_correction(result["continuous"])
+    categorical_corrected = apply_fdr_correction(result["categorical"])
     lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
 
     lines += [
-        "**Continuous metrics (Mann-Whitney U, two-sided)**",
+        "**Continuous metrics (Mann-Whitney U, two-sided)** -- p-values shrink with "
+        "sample size alone; Cliff's delta is what says how big the difference "
+        "actually is (thresholds: negligible <0.147, small <0.33, medium <0.474, "
+        "else large; positive means A tends to have larger values). BH-FDR corrects "
+        "for running both of these tests together.",
         "",
         "| Metric | A mean | A median | "
-        + f"{other.dataset.upper()} mean | {other.dataset.upper()} median | U | p-value | significant (p<0.05) |",
-        "|---|---|---|---|---|---|---|---|",
+        + f"{other.dataset.upper()} mean | {other.dataset.upper()} median | U | p-value | "
+        "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for metric in CONTINUOUS_METRICS:
-        t = result["continuous"][metric]
+        t = continuous_corrected[metric]
         d = t.details
         if d.get("reason") == "insufficient_data":
-            lines.append(f"| {metric} | -- | -- | -- | -- | -- | -- | _insufficient data_ |")
+            lines.append(
+                f"| {metric} | -- | -- | -- | -- | -- | -- | _insufficient data_ | -- | -- |"
+            )
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         lines.append(
             f"| {metric} | {fmt(d.get('agent_mean'))} | {fmt(d.get('agent_median'))} | "
             f"{fmt(d.get('human_mean'))} | {fmt(d.get('human_median'))} | "
-            f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} |"
+            f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | {continuous_effect_size_cell(t)} | "
+            f"{fdr_cell(t)} |"
         )
     lines.append("")
 
     lines += [
-        "**Categorical metrics (chi-square)**",
+        "**Categorical metrics (chi-square)** -- Cramer's V thresholds: "
+        "negligible <0.1, small <0.3, medium <0.5, else large. BH-FDR corrects for "
+        "running all 3 of these tests together.",
         "",
-        "| Metric | chi2 | dof | p-value | significant (p<0.05) |",
-        "|---|---|---|---|---|",
+        "| Metric | chi2 | dof | p-value | significant (p<0.05) | Cramer's V (effect size) | "
+        "BH-FDR adjusted p (sig?) |",
+        "|---|---|---|---|---|---|---|",
     ]
     for metric in CATEGORICAL_METRICS:
-        t = result["categorical"][metric]
+        t = categorical_corrected[metric]
         d = t.details
         if d.get("reason") == "insufficient_data":
-            lines.append(f"| {metric} | -- | -- | -- | _insufficient data_ |")
+            lines.append(f"| {metric} | -- | -- | -- | _insufficient data_ | -- | -- |")
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         dof = d.get("degrees_of_freedom", "--")
-        lines.append(f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
+        lines.append(
+            f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} | "
+            f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
+        )
     lines.append("")
 
     lines += [
@@ -332,6 +388,38 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     )
     lines.append(render_stratified_categorical_table(stratified))
 
+    return "\n".join(lines)
+
+
+def _render_repo_level_comparison(
+    label: str, a: DatasetMetrics, other: DatasetMetrics
+) -> str:
+    result = compare_datasets_repo_level(a, other)
+    corrected = apply_fdr_correction(result)
+    lines = [
+        f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
+        "",
+        "| Metric | A mean | A median | "
+        + f"{other.dataset.upper()} mean | {other.dataset.upper()} median | U | p-value | "
+        "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for metric in CONTINUOUS_METRICS:
+        t = corrected[metric]
+        d = t.details
+        if d.get("reason") == "insufficient_data":
+            lines.append(
+                f"| {metric} | -- | -- | -- | -- | -- | -- | _insufficient data_ | -- | -- |"
+            )
+            continue
+        sig = "yes" if t.p_value < 0.05 else "no"
+        lines.append(
+            f"| {metric} | {fmt(d.get('agent_mean'))} | {fmt(d.get('agent_median'))} | "
+            f"{fmt(d.get('human_mean'))} | {fmt(d.get('human_median'))} | "
+            f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | {continuous_effect_size_cell(t)} | "
+            f"{fdr_cell(t)} |"
+        )
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -376,6 +464,33 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
+
+    lines += [
+        "## Repo-level aggregates",
+        "",
+        "The comparisons above treat every fixture/mock as an independent "
+        "observation, but they cluster within repos (shared authorship "
+        "conventions, framework choices, project style) -- a handful of "
+        "unusually prolific repos can dominate a fixture-level result. This "
+        "section re-runs the continuous metrics with one *mean-per-repo* "
+        "value per repo instead, so each repo counts once regardless of how "
+        "many fixtures/mocks it contributed.",
+        "",
+    ]
+    if a_metrics is None:
+        lines.append("_Dataset A not available -- no repo-level comparisons computed._")
+    else:
+        for other_ds, label in COMPARISONS:
+            other_metrics = loaded[other_ds]
+            if other_metrics is None:
+                lines += [
+                    f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other_ds]}",
+                    "",
+                    "_Not available -- db not collected yet._",
+                    "",
+                ]
+            else:
+                lines.append(_render_repo_level_comparison(label, a_metrics, other_metrics))
 
     return "\n".join(lines)
 

@@ -20,10 +20,62 @@ from collection.db import (
 )
 from collection.research_questions.rq3 import (
     DatasetMetrics,
+    compare_datasets_repo_level,
     generate_report,
     load_dataset_metrics,
     write_report,
 )
+
+
+def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
+    """Create db/{dataset}.db with one repo per entry in `repos`, each
+    entry a list of `num_mocks` values for that repo's fixtures."""
+    db_file = paths.db_path(dataset, root=root)
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        for repo_idx, num_mocks_values in enumerate(repos):
+            repo_id, _ = upsert_repository(
+                conn,
+                {
+                    "github_id": repo_idx + 1,
+                    "full_name": f"owner/repo{repo_idx}",
+                    "language": "python",
+                    "stars": 1,
+                    "forks": 0,
+                    "description": "",
+                    "topics": "[]",
+                    "created_at": "2019-01-01T00:00:00Z",
+                    "pushed_at": "2020-01-01T00:00:00Z",
+                    "clone_url": f"https://github.com/owner/repo{repo_idx}.git",
+                    "num_contributors": 1,
+                    "domain": None,
+                    "repo_age_years": None,
+                },
+            )
+            file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
+            for i, num_mocks in enumerate(num_mocks_values):
+                insert_fixture(
+                    conn,
+                    {
+                        "file_id": file_id,
+                        "repo_id": repo_id,
+                        "name": f"fixture_{repo_idx}_{i}",
+                        "fixture_type": "pytest_decorator",
+                        "scope": "per_test",
+                        "start_line": i,
+                        "end_line": i + 1,
+                        "loc": 3,
+                        "cyclomatic_complexity": 1,
+                        "max_nesting_depth": 1,
+                        "num_objects_instantiated": 0,
+                        "num_external_calls": 0,
+                        "num_parameters": 0,
+                        "has_teardown_pair": 0,
+                        "raw_source": "",
+                        "framework": "pytest",
+                        "num_mocks": num_mocks,
+                    },
+                )
 
 
 def _make_db(root, dataset: str, files: list[dict]) -> None:
@@ -248,8 +300,9 @@ class TestGenerateReport:
         assert "Dataset A (agent-authored) -- 1 fixtures, 1 mock usages" in report
         assert "## A vs B: Dataset A (agent-authored) vs Dataset B (human-authored, contemporary)" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # B summary, C summary, A-vs-B comparison, A-vs-C comparison: 4 total.
-        assert report.count("Not available -- db not collected yet.") == 4
+        # B summary, C summary, A-vs-B comparison, A-vs-C comparison,
+        # A-vs-B repo-level, A-vs-C repo-level: 6 total.
+        assert report.count("Not available -- db not collected yet.") == 6
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         _make_db(
@@ -292,7 +345,10 @@ class TestGenerateReport:
         num_mocks_line = next(
             line for line in comparison_section.splitlines() if line.startswith("| num_mocks |")
         )
-        assert num_mocks_line.strip().endswith("| yes |")
+        # Fully separated groups (every A value exceeds every B value) --
+        # both statistically significant and a large practical effect.
+        assert "| yes | -1.000 (large) |" in num_mocks_line
+        assert num_mocks_line.strip().endswith("(yes) |")
 
     def test_a_vs_b_comparison_includes_stratified_mock_prevalence(self, tmp_path):
         _make_db(
@@ -327,6 +383,38 @@ class TestGenerateReport:
             line for line in report.splitlines() if line.startswith("| framework |")
         )
         assert "_insufficient data_" in framework_line
+
+
+    def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
+        """One repo contributing many high-num_mocks fixtures must not
+        dominate the comparison -- see the analogous rq1.py test for the
+        full reasoning. A: one repo with 100 fixtures at num_mocks=10 plus
+        one repo with a single num_mocks=0 fixture (fixture-level mean
+        dominated by the prolific repo). B: two repos each with one
+        num_mocks=5 fixture. Repo-level, A's per-repo means are
+        [10.0, 0.0] (mean 5.0) -- much closer to B's 5.0 than the
+        fixture-level view suggests, and not a significant difference."""
+        _make_multi_repo_db(tmp_path, "a", [[10.0] * 100, [0.0]])
+        _make_multi_repo_db(tmp_path, "b", [[5.0], [5.0]])
+
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        b_metrics = load_dataset_metrics("b", db_root=tmp_path)
+
+        assert sorted(a_metrics.repo_level_continuous["num_mocks"]) == [0.0, 10.0]
+
+        fixture_level = a_metrics.num_mocks_raw
+        assert sum(fixture_level) / len(fixture_level) > 9  # dominated by the prolific repo
+
+        t = compare_datasets_repo_level(a_metrics, b_metrics)["num_mocks"]
+        assert t.is_balanced  # not significant once each repo counts once
+
+        report = generate_report(db_root=tmp_path)
+        assert "## Repo-level aggregates" in report
+        repo_section = report.split("## Repo-level aggregates")[1]
+        num_mocks_line = next(
+            line for line in repo_section.splitlines() if line.startswith("| num_mocks |")
+        )
+        assert "| no |" in num_mocks_line
 
 
 class TestWriteReport:
