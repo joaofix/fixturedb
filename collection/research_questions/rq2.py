@@ -310,7 +310,8 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     lines += [
         "**Per-repo setup-to-teardown ratio (Mann-Whitney U, two-sided)** -- Cliff's "
         "delta thresholds: negligible <0.147, small <0.33, medium <0.474, else large; "
-        "positive means A tends to have a larger ratio.",
+        "positive means the comparison dataset tends to have a larger ratio than A, "
+        "negative means A tends to have a larger ratio.",
         "",
     ]
     if d.get("reason") == "insufficient_data":

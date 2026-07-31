@@ -216,7 +216,8 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "**Continuous metrics (Mann-Whitney U, two-sided)** -- p-values shrink with "
         "sample size alone; Cliff's delta is what says how big the difference "
         "actually is (thresholds: negligible <0.147, small <0.33, medium <0.474, "
-        "else large; positive means A tends to have larger values). BH-FDR corrects "
+        "else large; positive means the comparison dataset tends to have larger "
+        "values than A, negative means A tends to have larger values). BH-FDR corrects "
         "for running all 6 of these tests together (see apply_fdr_correction()'s "
         "docstring).",
         "",
