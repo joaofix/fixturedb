@@ -228,15 +228,20 @@ investigation and measured duplication rates.
 
 ### Balance Tests (Pre-comparison)
 
-Before comparing fixture distributions between any two datasets:
+Before comparing fixture distributions between any two datasets, are the underlying repo
+samples themselves comparable on control variables — repo-level (each fixture-yielding
+repo counted once), not fixture-weighted:
 
 1. **Language distribution:** chi-square.
 2. **Domain distribution:** chi-square.
 3. **Repository age:** Mann-Whitney U (skewed distributions).
 
 Goal: confirm the two corpora being compared are comparable on control variables before
-attributing a metric difference to authorship; see
-[Limitations § Control Variable Balance](../reference/limitations.md#control-variable-balance).
+attributing a metric difference to authorship. Implemented in
+`collection/research_questions/balance.py` (`python -m collection.research_questions.balance`,
+output `research_questions/balance.md`); see
+[Limitations § Control Variable Balance](../reference/limitations.md#control-variable-balance)
+for the current result and why this wasn't actually wired up until 2026-07-31.
 
 ### Group Comparison Tests
 
@@ -247,6 +252,15 @@ tests throughout:
 |----------|--------------|
 | Continuous (`loc`, `cyclomatic_complexity`, `max_nesting_depth`, `num_parameters`, `num_objects_instantiated`, `num_external_calls`) | Mann-Whitney U |
 | Categorical (`framework`, `scope`, `has_teardown_pair`, `fixture_type`, mock `category`) | Chi-square |
+
+Every test also reports an effect size alongside its p-value — Cliff's delta (Mann-Whitney)
+or Cramér's V (chi-square) — since p-values alone conflate statistical significance with
+sample size; at this corpus's scale (tens of thousands of fixtures), p-values are near-zero
+for almost any nonzero difference regardless of whether it's practically meaningful.
+Continuous metrics are additionally re-tested at repo level (one mean-per-repo value
+instead of one value per fixture, see RQ1/RQ3's "Repo-level aggregates" section) to guard
+against pseudo-replication — fixtures cluster within repos, so testing raw fixture values
+as independent observations can inflate apparent significance.
 
 See [Analyzing the Datasets](../usage/usage.md) for the concrete query/test pattern
 (load each dataset separately, tag with a `dataset` column, concatenate).
