@@ -224,6 +224,16 @@ class TestGenerateReport:
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
         assert report.count("Not available -- db not collected yet.") == 4
 
+    def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
+        """_make_db's repo and its one test_file both use "python", so this
+        is a no-leakage wiring check -- compute_language_leakage() itself is
+        covered against real leaked data in
+        test_research_questions_shared.py."""
+        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
+        report = generate_report(db_root=tmp_path)
+        assert "Cross-language fixture leakage" in report
+        assert "0/1 fixtures (0.00%) leaked." in report
+
     def test_zero_teardown_repos_reported(self, tmp_path):
         _make_db(
             tmp_path,
@@ -253,6 +263,10 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "**Per-repo setup-to-teardown ratio (Mann-Whitney U, two-sided)**" in report
         assert "fixture_type_kind" in report
+        # Both _make_db calls use "python" test_files -- stratified table
+        # should show a real python row, not "no language shared".
+        assert "stratified by language" in report
+        assert "| python |" in report
         assert "repo_zero_teardown_rate" in report
 
 

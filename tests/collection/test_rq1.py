@@ -123,6 +123,16 @@ class TestGenerateReport:
         # B summary, C summary, A-vs-B comparison, A-vs-C comparison: 4 total.
         assert report.count("Not available -- db not collected yet.") == 4
 
+    def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
+        """_make_db's repo and its one test_file both use "python", so this
+        is a no-leakage wiring check -- compute_language_leakage() itself is
+        covered against real leaked data in
+        test_research_questions_shared.py."""
+        _make_db(tmp_path, "a", [{"loc": 3}])
+        report = generate_report(db_root=tmp_path)
+        assert "Cross-language fixture leakage" in report
+        assert "0/1 fixtures (0.00%) leaked." in report
+
     def test_a_vs_b_comparison_renders_significant_difference(self, tmp_path):
         # Sharply different LOC distributions -> Mann-Whitney should flag significance.
         _make_db(tmp_path, "a", [{"loc": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])

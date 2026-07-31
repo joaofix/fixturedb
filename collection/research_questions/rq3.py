@@ -65,9 +65,14 @@ from ._shared import (
     COMPARISONS,
     DATASET_LABELS,
     OUTPUT_DIR,
+    LanguageLeakage,
+    compute_language_leakage,
+    compute_stratified_categorical_balance,
     fetch_categorical_column,
     fetch_continuous_column,
     fmt,
+    render_language_leakage_table,
+    render_stratified_categorical_table,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -91,6 +96,8 @@ class DatasetMetrics:
     category_dist: dict[str, int] = field(default_factory=dict)
     mock_rate_by_language: dict[str, dict] = field(default_factory=dict)
     framework_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    language_leakage: list[LanguageLeakage] = field(default_factory=list)
+    has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
@@ -157,10 +164,23 @@ def load_dataset_metrics(
         category_dist = fetch_categorical_column(conn, "mock_usages", "category")
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
         framework_by_language = _fetch_framework_by_language(conn)
+        language_leakage = compute_language_leakage(conn)
 
     has_mock_dist = {
         "has_mock": sum(1 for n in num_mocks_raw if n > 0),
         "no_mock": sum(1 for n in num_mocks_raw if n == 0),
+    }
+    # Derived from mock_rate_by_language (total/with_mocks per language),
+    # no separate query needed -- this is what
+    # compute_stratified_categorical_balance() needs to check whether an
+    # A-vs-B/C mock-prevalence difference holds within a language, not just
+    # in the aggregate across each dataset's different language mix.
+    has_mock_dist_by_language = {
+        language: {
+            "has_mock": entry["with_mocks"],
+            "no_mock": entry["total"] - entry["with_mocks"],
+        }
+        for language, entry in mock_rate_by_language.items()
     }
 
     return DatasetMetrics(
@@ -170,10 +190,12 @@ def load_dataset_metrics(
         num_mocks_raw=num_mocks_raw,
         num_interactions_raw=num_interactions_raw,
         has_mock_dist=has_mock_dist,
+        has_mock_dist_by_language=has_mock_dist_by_language,
         framework_dist=framework_dist,
         category_dist=category_dist,
         mock_rate_by_language=mock_rate_by_language,
         framework_by_language=framework_by_language,
+        language_leakage=language_leakage,
     )
 
 
@@ -250,6 +272,8 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
             lines.append(f"| {language} | {framework} | {count:,} |")
     lines.append("")
 
+    lines.append(render_language_leakage_table(metrics.language_leakage))
+
     return "\n".join(lines)
 
 
@@ -294,6 +318,19 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         dof = d.get("degrees_of_freedom", "--")
         lines.append(f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
     lines.append("")
+
+    lines += [
+        "**has_mock, stratified by language (chi-square per language)** -- "
+        "the aggregate comparison above can look significant purely because "
+        f"{DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have different "
+        "language mixes; this checks whether the difference holds within each "
+        "shared language.",
+        "",
+    ]
+    stratified = compute_stratified_categorical_balance(
+        a.has_mock_dist_by_language, other.has_mock_dist_by_language, "has_mock"
+    )
+    lines.append(render_stratified_categorical_table(stratified))
 
     return "\n".join(lines)
 

@@ -70,7 +70,12 @@ from ._shared import (
     COMPARISONS,
     DATASET_LABELS,
     OUTPUT_DIR,
+    LanguageLeakage,
+    compute_language_leakage,
+    compute_stratified_categorical_balance,
     fmt,
+    render_language_leakage_table,
+    render_stratified_categorical_table,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -113,6 +118,8 @@ class DatasetMetrics:
     n_repos_with_setup: int = 0
     n_repos_zero_teardown: int = 0
     teardown_rate_by_type: dict[str, dict] = field(default_factory=dict)
+    language_leakage: list[LanguageLeakage] = field(default_factory=list)
+    kind_distribution_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 def load_dataset_metrics(
@@ -125,8 +132,11 @@ def load_dataset_metrics(
 
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        kind_distribution, per_repo_counts = _fetch_kinds_and_repo_counts(conn)
+        kind_distribution, per_repo_counts, kind_distribution_by_language = (
+            _fetch_kinds_and_repo_counts(conn)
+        )
         teardown_rate_by_type = _fetch_teardown_rate_by_type(conn)
+        language_leakage = compute_language_leakage(conn)
 
     per_repo_ratios: list[float] = []
     n_with_setup = 0
@@ -148,24 +158,32 @@ def load_dataset_metrics(
         n_repos_with_setup=n_with_setup,
         n_repos_zero_teardown=n_zero_teardown,
         teardown_rate_by_type=teardown_rate_by_type,
+        language_leakage=language_leakage,
+        kind_distribution_by_language=kind_distribution_by_language,
     )
 
 
 def _fetch_kinds_and_repo_counts(
     conn: sqlite3.Connection,
-) -> tuple[dict[str, int], dict[int, tuple[int, int]]]:
+) -> tuple[dict[str, int], dict[int, tuple[int, int]], dict[str, dict[str, int]]]:
     """Single pass over every fixture: dataset-level kind distribution, plus
-    per-repo (setup_count, teardown_count) -- classified once via `_kind()`
-    so the dataset-level and per-repo views can never disagree with each
-    other (a second, SQL-side classification would just be `_kind()`
-    duplicated in a different language)."""
+    per-repo (setup_count, teardown_count), plus per-language kind
+    distribution -- classified once via `_kind()` so none of the three
+    views can ever disagree with each other (a second, SQL-side
+    classification would just be `_kind()` duplicated in a different
+    language). The per-language breakdown is what
+    compute_stratified_categorical_balance() needs to check whether an
+    A-vs-B/C difference holds within a language, not just in aggregate
+    across each dataset's different language mix."""
     kind_distribution = {"setup": 0, "teardown": 0, "other": 0}
     per_repo: dict[int, list[int]] = {}
+    kind_by_language: dict[str, dict[str, int]] = {}
 
     rows = conn.execute(
-        "SELECT repo_id, fixture_type, name FROM fixtures WHERE fixture_type IS NOT NULL"
+        "SELECT f.repo_id, f.fixture_type, f.name, tf.language FROM fixtures f "
+        "JOIN test_files tf ON f.file_id = tf.id WHERE f.fixture_type IS NOT NULL"
     ).fetchall()
-    for repo_id, fixture_type, name in rows:
+    for repo_id, fixture_type, name, language in rows:
         kind = _kind(fixture_type, name)
         kind_distribution[kind] += 1
         counts = per_repo.setdefault(repo_id, [0, 0])
@@ -174,8 +192,13 @@ def _fetch_kinds_and_repo_counts(
         elif kind == "teardown":
             counts[1] += 1
 
+        lang_dist = kind_by_language.setdefault(
+            language, {"setup": 0, "teardown": 0, "other": 0}
+        )
+        lang_dist[kind] += 1
+
     per_repo_counts = {repo_id: (c[0], c[1]) for repo_id, c in per_repo.items()}
-    return kind_distribution, per_repo_counts
+    return kind_distribution, per_repo_counts, kind_by_language
 
 
 def _fetch_teardown_rate_by_type(conn: sqlite3.Connection) -> dict[str, dict]:
@@ -264,6 +287,8 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
         lines.append(f"| {fixture_type} | {entry['n']:,} | {entry['n_with_pair']:,} | {rate:.1f}% |")
     lines.append("")
 
+    lines.append(render_language_leakage_table(metrics.language_leakage))
+
     return "\n".join(lines)
 
 
@@ -302,6 +327,21 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         dof = d.get("degrees_of_freedom", "--")
         lines.append(f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
     lines.append("")
+
+    lines += [
+        "**fixture_type_kind, stratified by language (chi-square per language)** "
+        "-- the aggregate comparison above can look significant purely because "
+        f"{DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have different "
+        "language mixes; this checks whether the difference holds within each "
+        "shared language.",
+        "",
+    ]
+    stratified = compute_stratified_categorical_balance(
+        a.kind_distribution_by_language,
+        other.kind_distribution_by_language,
+        "fixture_type_kind",
+    )
+    lines.append(render_stratified_categorical_table(stratified))
 
     return "\n".join(lines)
 

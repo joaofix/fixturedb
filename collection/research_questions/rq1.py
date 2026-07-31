@@ -36,9 +36,12 @@ from ._shared import (
     COMPARISONS,
     DATASET_LABELS,
     OUTPUT_DIR,
+    LanguageLeakage,
+    compute_language_leakage,
     fetch_categorical_column,
     fetch_continuous_column,
     fmt,
+    render_language_leakage_table,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -63,6 +66,7 @@ class DatasetMetrics:
     n_fixtures: int
     continuous_raw: dict[str, list[float]] = field(default_factory=dict)
     categorical: dict[str, dict[str, int]] = field(default_factory=dict)
+    language_leakage: list[LanguageLeakage] = field(default_factory=list)
 
 
 def load_dataset_metrics(
@@ -77,12 +81,14 @@ def load_dataset_metrics(
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
         continuous_raw = {m: fetch_continuous_column(conn, "fixtures", m) for m in CONTINUOUS_METRICS}
         categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
+        language_leakage = compute_language_leakage(conn)
 
     return DatasetMetrics(
         dataset=dataset,
         n_fixtures=n_fixtures,
         continuous_raw=continuous_raw,
         categorical=categorical,
+        language_leakage=language_leakage,
     )
 
 
@@ -132,6 +138,8 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
             for value, count in sorted(dist.items(), key=lambda kv: -kv[1]):
                 lines.append(f"| {value} | {count:,} | {100 * count / total:.1f}% |")
         lines.append("")
+
+    lines.append(render_language_leakage_table(metrics.language_leakage))
 
     return "\n".join(lines)
 

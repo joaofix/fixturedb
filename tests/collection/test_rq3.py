@@ -144,6 +144,26 @@ class TestLoadDatasetMetrics:
             "java": {"total": 1, "with_mocks": 0, "rate": 0.0},
         }
 
+    def test_language_leakage(self, tmp_path):
+        """_make_db's repo is always tagged "python" -- the "java" file
+        entry here is a leaked fixture by construction, same as
+        test_mock_rate_by_language above."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"language": "python", "fixtures": [{}, {}]},
+                {"language": "java", "fixtures": [{}]},
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert len(metrics.language_leakage) == 1
+        row = metrics.language_leakage[0]
+        assert row.repo_language == "python"
+        assert row.total == 3
+        assert row.leaked == 1
+        assert row.leaked_by_language == {"java": 1}
+
     def test_framework_and_category_distribution(self, tmp_path):
         _make_db(
             tmp_path,
@@ -231,6 +251,20 @@ class TestGenerateReport:
         # B summary, C summary, A-vs-B comparison, A-vs-C comparison: 4 total.
         assert report.count("Not available -- db not collected yet.") == 4
 
+    def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"language": "python", "fixtures": [{}]},
+                {"language": "java", "fixtures": [{}]},
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "Cross-language fixture leakage" in report
+        assert "1/2 fixtures (50.00%) leaked." in report
+        assert "| python | 2 | 1 | 50.00% | java=1 |" in report
+
     def test_a_vs_b_comparison_renders_significant_difference(self, tmp_path):
         # Sharply different num_mocks distributions -> Mann-Whitney should flag significance.
         _make_db(
@@ -259,6 +293,30 @@ class TestGenerateReport:
             line for line in comparison_section.splitlines() if line.startswith("| num_mocks |")
         )
         assert num_mocks_line.strip().endswith("| yes |")
+
+    def test_a_vs_b_comparison_includes_stratified_mock_prevalence(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"language": "python", "fixtures": [{"overrides": {"num_mocks": 1}}] * 9 + [{"overrides": {"num_mocks": 0}}]},
+                {"language": "java", "fixtures": [{"overrides": {"num_mocks": 0}}]},
+            ],
+        )
+        _make_db(
+            tmp_path,
+            "b",
+            [
+                {"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}] * 9 + [{"overrides": {"num_mocks": 1}}]},
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "**has_mock, stratified by language" in report
+        stratified_section = report.split("**has_mock, stratified by language")[1]
+        # python is shared by both A and B -> a real row; java only exists
+        # in A, so it must not appear at all (no data to compare against).
+        assert "| python |" in stratified_section.split("##")[0]
+        assert "| java |" not in stratified_section.split("##")[0]
 
     def test_categorical_insufficient_data_when_no_mock_usages(self, tmp_path):
         # No mock_usages rows at all in either dataset -> framework/category insufficient data.
