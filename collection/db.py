@@ -168,31 +168,49 @@ def insert_test_commit(conn: sqlite3.Connection, test_commit: dict) -> int:
     return row["id"]
 
 
+# Columns added to the schema after CREATE TABLE IF NOT EXISTS statements
+# already existed in real, previously-collected DB files. That guard is a
+# no-op on a table that already exists, so a schema addition never reaches
+# a DB created before it landed unless something else adds the column --
+# confirmed via db/a.db, whose last collection run predated two separate
+# schema additions and was silently missing 3 columns (repositories.
+# repo_age_at_collection_years, fixtures.commit_date,
+# fixtures.repo_age_at_commit_years) until this list started being applied
+# automatically. Add a new (table, column, ddl) entry here whenever a
+# schema change adds a column to a table that might already exist on disk.
+_COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
+    ("repositories", "agent_adoption_intensity", "TEXT DEFAULT NULL"),
+    ("repositories", "repo_age_at_collection_years", "REAL DEFAULT NULL"),
+    ("fixtures", "commit_date", "TEXT DEFAULT NULL"),
+    ("fixtures", "repo_age_at_commit_years", "REAL DEFAULT NULL"),
+]
+
+
+def _apply_column_migrations(conn: sqlite3.Connection) -> None:
+    """Idempotently ALTER TABLE ADD COLUMN every entry in _COLUMN_MIGRATIONS
+    not already present. Called from initialise_db() so every collection
+    entry point self-heals a stale schema automatically, instead of relying
+    on a one-off manual migration call that's easy to forget to wire up (the
+    previous migrate_add_adoption_intensity() was never actually called from
+    anywhere -- this replaces it)."""
+    for table, column, ddl in _COLUMN_MIGRATIONS:
+        try:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
+            logger.info(f"Migrated {table}: added {column} column")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+
+
 def initialise_db(db_path: Path = DB_PATH) -> None:
     """
-    Create all tables and indexes if they do not already exist.
-    Safe to call multiple times — never drops or truncates existing data.
+    Create all tables and indexes if they do not already exist, then apply
+    any pending column migrations (see _COLUMN_MIGRATIONS). Safe to call
+    multiple times — never drops or truncates existing data.
     """
     with db_session(db_path) as conn:
         conn.executescript(SCHEMA)
+        _apply_column_migrations(conn)
     print(f"[db] Initialised database at {db_path}")
-
-
-def migrate_add_adoption_intensity(db_path: Path = DB_PATH) -> None:
-    """Add agent_adoption_intensity column to existing databases (idempotent)."""
-    try:
-        conn = get_connection(db_path)
-        conn.execute(
-            "ALTER TABLE repositories ADD COLUMN agent_adoption_intensity TEXT DEFAULT NULL"
-        )
-        conn.commit()
-        conn.close()
-        logger.info("Migrated repositories table: added agent_adoption_intensity column")
-    except sqlite3.OperationalError:
-        # Column already exists — safe to ignore
-        pass
-    except Exception:
-        logger.debug("Migration skipped (database may not exist yet)")
 
 
 def db_is_initialised(db_path: Path = DB_PATH) -> bool:

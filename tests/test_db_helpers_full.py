@@ -204,6 +204,89 @@ def test_upsert_repository_backward_compatible_without_repo_age_at_collection_ye
         assert row["repo_age_at_collection_years"] is None
 
 
+def test_initialise_db_self_heals_a_schema_predating_column_migrations(tmp_path):
+    """Regression test for a real incident: db/a.db's last collection run
+    predated two schema additions (repo_age_at_collection_years,
+    commit_date, repo_age_at_commit_years) and CREATE TABLE IF NOT EXISTS is
+    a no-op on an already-existing table, so those columns were silently
+    missing -- the next upsert_repository()/insert_fixture() call against
+    that file would have crashed with "no such column". Simulates that
+    exact stale state (a DB built from an old schema without these 3
+    columns, with a real row already in it) and confirms a later
+    initialise_db() call -- exactly what every collector already does at
+    the start of run() -- adds the missing columns without touching
+    existing data."""
+    import sqlite3
+
+    db_path = tmp_path / "stale.db"
+    old_schema_conn = sqlite3.connect(db_path)
+    old_schema_conn.executescript(
+        """
+        CREATE TABLE repositories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            github_id INTEGER UNIQUE NOT NULL,
+            full_name TEXT NOT NULL,
+            language TEXT NOT NULL,
+            repo_age_years REAL DEFAULT NULL
+        );
+        CREATE TABLE fixtures (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_id INTEGER NOT NULL,
+            repo_id INTEGER NOT NULL,
+            name TEXT,
+            fixture_type TEXT,
+            scope TEXT,
+            start_line INTEGER,
+            end_line INTEGER,
+            loc INTEGER,
+            cyclomatic_complexity INTEGER,
+            max_nesting_depth INTEGER DEFAULT 0,
+            num_objects_instantiated INTEGER DEFAULT 0,
+            num_external_calls INTEGER DEFAULT 0,
+            num_parameters INTEGER DEFAULT 0,
+            has_teardown_pair INTEGER DEFAULT 0,
+            raw_source TEXT,
+            framework TEXT,
+            num_mocks INTEGER DEFAULT 0,
+            commit_sha TEXT DEFAULT NULL,
+            agent_type TEXT DEFAULT NULL,
+            commit_kind TEXT DEFAULT NULL,
+            match_scope TEXT DEFAULT NULL,
+            is_complete_addition INTEGER DEFAULT NULL,
+            commit_type TEXT DEFAULT NULL,
+            UNIQUE(file_id, name, start_line, commit_sha)
+        );
+        """
+    )
+    old_schema_conn.execute(
+        "INSERT INTO repositories (github_id, full_name, language) "
+        "VALUES (1, 'owner/prehistoric', 'python')"
+    )
+    old_schema_conn.commit()
+    old_schema_conn.close()
+
+    initialise_db(db_path)
+
+    with db_session(db_path) as conn:
+        repo_cols = {row[1] for row in conn.execute("PRAGMA table_info(repositories)")}
+        fixture_cols = {row[1] for row in conn.execute("PRAGMA table_info(fixtures)")}
+        assert "repo_age_at_collection_years" in repo_cols
+        assert "agent_adoption_intensity" in repo_cols
+        assert {"commit_date", "repo_age_at_commit_years"} <= fixture_cols
+
+        # Pre-existing row survives the migration untouched.
+        row = conn.execute(
+            "SELECT full_name, repo_age_at_collection_years FROM repositories "
+            "WHERE github_id = 1"
+        ).fetchone()
+        assert row["full_name"] == "owner/prehistoric"
+        assert row["repo_age_at_collection_years"] is None
+
+    # Calling it again (e.g. a second collection run) must not error just
+    # because the columns are already there.
+    initialise_db(db_path)
+
+
 def test_insert_fixture_dedupes_per_commit_not_across_commits(tmp_path):
     """Regression: fixtures' UNIQUE constraint was (file_id, name,
     start_line) with no commit_sha, so two different commits adding a
