@@ -15,6 +15,10 @@ from pathlib import Path
 from collection.between_group_comparison import (
     BalanceTest,
     BetweenGroupComparison,
+    _cliffs_delta,
+    _cliffs_delta_magnitude,
+    _cramers_v,
+    _cramers_v_magnitude,
     compute_categorical_balance,
     compute_continuous_balance,
     get_agent_fixtures_by_variable,
@@ -187,6 +191,55 @@ class TestBalanceTest:
         assert imbalanced_test.is_balanced is False
 
 
+class TestCramersV:
+    def test_no_association_is_negligible(self):
+        # chi2=0 (no association at all) -> V=0.
+        assert _cramers_v(0.0, 100) == 0.0
+        assert _cramers_v_magnitude(0.0) == "negligible"
+
+    def test_zero_n_returns_none(self):
+        assert _cramers_v(5.0, 0) is None
+        assert _cramers_v_magnitude(None) is None
+
+    def test_thresholds(self):
+        # V = sqrt(chi2/n); pick chi2/n combos that land exactly on each bucket.
+        assert _cramers_v_magnitude(0.05) == "negligible"
+        assert _cramers_v_magnitude(0.2) == "small"
+        assert _cramers_v_magnitude(0.4) == "medium"
+        assert _cramers_v_magnitude(0.9) == "large"
+
+    def test_known_value(self):
+        # V = sqrt(36/400) = 0.3
+        assert round(_cramers_v(36.0, 400), 6) == 0.3
+
+
+class TestCliffsDelta:
+    def test_equal_groups_is_zero(self):
+        # U = n1*n2/2 when the two groups are stochastically identical.
+        assert _cliffs_delta(50.0, 10, 10) == 0.0
+        assert _cliffs_delta_magnitude(0.0) == "negligible"
+
+    def test_zero_n_returns_none(self):
+        assert _cliffs_delta(5.0, 0, 10) is None
+        assert _cliffs_delta_magnitude(None) is None
+
+    def test_full_separation_is_plus_one(self):
+        # Every human value ranks above every agent value -> U1 = n1*n2.
+        assert _cliffs_delta(100.0, 10, 10) == 1.0
+        assert _cliffs_delta_magnitude(1.0) == "large"
+
+    def test_full_separation_other_direction_is_minus_one(self):
+        # Every human value ranks below every agent value -> U1 = 0.
+        assert _cliffs_delta(0.0, 10, 10) == -1.0
+        assert _cliffs_delta_magnitude(-1.0) == "large"
+
+    def test_thresholds(self):
+        assert _cliffs_delta_magnitude(0.1) == "negligible"
+        assert _cliffs_delta_magnitude(0.2) == "small"
+        assert _cliffs_delta_magnitude(0.4) == "medium"
+        assert _cliffs_delta_magnitude(0.6) == "large"
+
+
 class TestCategoricalBalance:
     """Test chi-square balance testing for categorical variables."""
 
@@ -212,6 +265,10 @@ class TestCategoricalBalance:
         assert result.variable == "language"
         assert result.p_value < 0.05  # Should be imbalanced
         assert bool(result.is_balanced) is False
+        # A statistically significant AND practically large difference --
+        # Cramer's V should reflect that, not just the p-value.
+        assert result.details["cramers_v"] > 0.5
+        assert result.details["cramers_v_magnitude"] == "large"
 
     def test_chi_square_with_real_data(self):
         """Chi-square should handle realistic distribution differences."""
@@ -242,6 +299,36 @@ class TestCategoricalBalance:
 
         assert result.p_value == 1.0  # Insufficient data
         assert result.is_balanced is True  # Can't reject balance
+
+    def test_all_zero_column_is_dropped_not_a_failure(self):
+        """A category present (as a key) in both distributions but with
+        zero count on both sides -- e.g. a fixed-shape {"setup": 0,
+        "teardown": 0, "other": 0} distribution some callers always
+        initialize -- used to crash chi2_contingency (division by zero for
+        that column's expected frequency), silently caught and papered
+        over as a fake "balanced, p=1.0" result. Dropping the empty column
+        lets the test actually run on the real variation that remains,
+        instead of reporting a result that never really ran."""
+        human_dist = {"setup": 1, "teardown": 0, "other": 4}
+        agent_dist = {"setup": 3, "teardown": 0, "other": 2}
+
+        result = compute_categorical_balance(human_dist, agent_dist, "kind")
+
+        assert "error" not in result.details
+        assert "reason" not in result.details
+        assert set(result.details["categories"]) == {"setup", "other"}
+
+    def test_every_category_zero_on_one_side_is_still_insufficient_data(self):
+        """Distinct from the case above: here EVERY category is zero on one
+        whole side (not just one column) -- genuinely no data to compare,
+        correctly still insufficient_data rather than a test run on zero
+        categories."""
+        human_dist = {"setup": 0, "teardown": 0}
+        agent_dist = {"setup": 3, "teardown": 2}
+
+        result = compute_categorical_balance(human_dist, agent_dist, "kind")
+
+        assert result.details.get("reason") == "insufficient_data"
 
 
 class TestContinuousBalance:
@@ -283,6 +370,11 @@ class TestContinuousBalance:
 
         assert result.p_value < 0.05  # Should be imbalanced
         assert not result.is_balanced
+        # Fully separated groups (every agent value exceeds every human
+        # value) -- Cliff's delta should be a large, negative effect (human
+        # values rank below agent values), not just a small p-value.
+        assert result.details["cliffs_delta"] == -1.0
+        assert result.details["cliffs_delta_magnitude"] == "large"
 
     def test_mann_whitney_with_empty_data(self):
         """Mann-Whitney U should handle empty data gracefully."""

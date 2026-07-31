@@ -13,6 +13,7 @@ python -m collection.test_commit_filter agent \
 """
 
 import json
+import math
 import statistics
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -130,6 +131,64 @@ def get_agent_fixtures_by_variable(db_path: Path, variable: str) -> Dict[str, in
         return {row[0]: row[1] for row in rows if row[0]}
 
 
+def _cramers_v(chi2: float, n: int) -> Optional[float]:
+    """Cramér's V effect size from a chi2 statistic, for the 2xK contingency
+    tables every caller here builds (two groups being compared, K
+    categories). V's normalization divides by min(rows-1, cols-1) =
+    min(1, K-1), which is always 1 whenever K>=2 (the only case this gets
+    called -- K<2 has no variation to test at all), so V simplifies to
+    sqrt(chi2/n). Standard categorical effect size in SE empirical
+    research; unlike the p-value, it doesn't grow with sample size, so it's
+    what actually answers "how big is this difference," not just "is it
+    non-zero." See _cramers_v_magnitude() for the conventional thresholds.
+    """
+    if n == 0:
+        return None
+    return math.sqrt(chi2 / n)
+
+
+def _cramers_v_magnitude(v: Optional[float]) -> Optional[str]:
+    if v is None:
+        return None
+    if v < 0.1:
+        return "negligible"
+    if v < 0.3:
+        return "small"
+    if v < 0.5:
+        return "medium"
+    return "large"
+
+
+def _cliffs_delta(u_statistic: float, n1: int, n2: int) -> Optional[float]:
+    """Cliff's delta effect size, derived directly from the U statistic
+    mannwhitneyu() already computes (delta = 2*U/(n1*n2) - 1) -- no second,
+    more expensive pairwise computation needed. Standard non-parametric
+    effect size for Mann-Whitney U in SE empirical research (Vargha &
+    Delaney, 2000), used instead of Cohen's d since it doesn't assume
+    normality, matching why Mann-Whitney was chosen over a t-test in the
+    first place. Positive means the *first* array passed to
+    mannwhitneyu() -- human_vals in compute_continuous_balance() below --
+    tends to have larger values than the second (agent_vals). See
+    _cliffs_delta_magnitude() for the conventional thresholds.
+    """
+    if n1 == 0 or n2 == 0:
+        return None
+    return (2 * u_statistic) / (n1 * n2) - 1
+
+
+def _cliffs_delta_magnitude(delta: Optional[float]) -> Optional[str]:
+    if delta is None:
+        return None
+    d = abs(delta)
+    if d < 0.147:
+        return "negligible"
+    if d < 0.33:
+        return "small"
+    if d < 0.474:
+        return "medium"
+    return "large"
+
+
 def compute_categorical_balance(
     human_dist: Dict[str, int],
     agent_dist: Dict[str, int],
@@ -163,8 +222,36 @@ def compute_categorical_balance(
             details={"reason": "insufficient_data"},
         )
 
+    # A category can be a real key in both dicts (e.g. a fixed-shape
+    # {"setup": 0, "teardown": 0, "other": 0} distribution some callers
+    # always initialize) yet have zero count on *both* sides -- an
+    # all-zero column chi2_contingency can't compute an expected frequency
+    # for (division by zero internally), regardless of how large the
+    # other columns' samples are. That's not a small-sample problem to
+    # work around, it's a genuinely empty category with no variation to
+    # test -- drop it, the same way an all-zero *row* is already handled
+    # above via the insufficient_data check.
+    kept = [
+        i for i in range(len(all_categories))
+        if human_counts[i] > 0 or agent_counts[i] > 0
+    ]
+    if len(kept) < 2:
+        return BalanceTest(
+            variable=variable,
+            test_type="chi-square",
+            p_value=1.0,
+            is_balanced=True,
+            details={"reason": "insufficient_data"},
+        )
+    if len(kept) < len(all_categories):
+        all_categories = [all_categories[i] for i in kept]
+        human_counts = [human_counts[i] for i in kept]
+        agent_counts = [agent_counts[i] for i in kept]
+
     try:
         chi2, p_value, dof, expected = chi2_contingency([human_counts, agent_counts])
+        n_total = sum(human_counts) + sum(agent_counts)
+        cramers_v = _cramers_v(chi2, n_total)
 
         return BalanceTest(
             variable=variable,
@@ -178,6 +265,8 @@ def compute_categorical_balance(
                 "agent_distribution": dict(zip(all_categories, agent_counts)),
                 "chi2_statistic": float(chi2),
                 "degrees_of_freedom": int(dof),
+                "cramers_v": cramers_v,
+                "cramers_v_magnitude": _cramers_v_magnitude(cramers_v),
             },
         )
     except Exception as e:
@@ -237,6 +326,8 @@ def compute_continuous_balance(
                     "human_median": float(human_vals[0]),
                     "agent_median": float(agent_vals[0]),
                     "u_statistic": 0.0,
+                    "cliffs_delta": 0.0,
+                    "cliffs_delta_magnitude": "negligible",
                     "reason": "identical_distributions",
                 },
             )
@@ -244,6 +335,7 @@ def compute_continuous_balance(
         statistic, p_value = mannwhitneyu(
             human_vals, agent_vals, alternative="two-sided"
         )
+        cliffs_delta = _cliffs_delta(statistic, len(human_vals), len(agent_vals))
 
         return BalanceTest(
             variable=variable,
@@ -267,6 +359,8 @@ def compute_continuous_balance(
                     float(statistics.median(agent_vals)) if agent_vals else None
                 ),
                 "u_statistic": float(statistic),
+                "cliffs_delta": cliffs_delta,
+                "cliffs_delta_magnitude": _cliffs_delta_magnitude(cliffs_delta),
             },
         )
     except Exception as e:
