@@ -268,6 +268,9 @@ class TestGenerateReport:
         assert "stratified by language" in report
         assert "| python |" in report
         assert "repo_zero_teardown_rate" in report
+        # Effect sizes must actually be present, not just the column headers.
+        assert "Cliff's delta (effect size):" in report
+        assert "Cramer's V (effect size)" in report
 
 
 class TestWriteReport:

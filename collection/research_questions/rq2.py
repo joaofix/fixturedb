@@ -30,7 +30,12 @@ Three metrics, computed per dataset (A/B/C):
    the RQ's literal "ratio of setup fixtures to teardown fixtures". A repo
    with setup fixtures but zero teardown ones has an undefined ratio (not
    0, not infinity) -- reported separately as a repo count/percentage, not
-   silently dropped from or forced into the ratio distribution.
+   silently dropped from or forced into the ratio distribution. Already
+   one value per repo by construction, unlike (1)'s fixture-level kind
+   distribution -- no separate repo-level declustered version needed here
+   (see rq1.py/rq3.py's "Repo-level aggregates" section and
+   research_questions/_shared.py::repo_level_means() for why that exists
+   for their fixture-level continuous metrics).
 
 3. **has_teardown_pair rate, per fixture_type** -- reported per type, not
    lumped into (1)'s "other" bucket, since lumping would mix real
@@ -71,8 +76,12 @@ from ._shared import (
     DATASET_LABELS,
     OUTPUT_DIR,
     LanguageLeakage,
+    apply_fdr_correction,
+    categorical_effect_size_cell,
     compute_language_leakage,
     compute_stratified_categorical_balance,
+    continuous_effect_size_cell,
+    fdr_cell,
     fmt,
     render_language_leakage_table,
     render_stratified_categorical_table,
@@ -298,7 +307,12 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
 
     t = result["setup_to_teardown_ratio"]
     d = t.details
-    lines += ["**Per-repo setup-to-teardown ratio (Mann-Whitney U, two-sided)**", ""]
+    lines += [
+        "**Per-repo setup-to-teardown ratio (Mann-Whitney U, two-sided)** -- Cliff's "
+        "delta thresholds: negligible <0.147, small <0.33, medium <0.474, else large; "
+        "positive means A tends to have a larger ratio.",
+        "",
+    ]
     if d.get("reason") == "insufficient_data":
         lines.append("_insufficient data_")
     else:
@@ -307,25 +321,35 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
             f"A mean={fmt(d.get('agent_mean'))}, median={fmt(d.get('agent_median'))} | "
             f"{other.dataset.upper()} mean={fmt(d.get('human_mean'))}, "
             f"median={fmt(d.get('human_median'))} | U={fmt(t.statistic, 1)} | "
-            f"p={t.p_value:.4g} | significant (p<0.05): {sig}"
+            f"p={t.p_value:.4g} | significant (p<0.05): {sig} | "
+            f"Cliff's delta (effect size): {continuous_effect_size_cell(t)}"
         )
     lines.append("")
 
     lines += [
-        "**Categorical comparisons (chi-square)**",
+        "**Categorical comparisons (chi-square)** -- Cramer's V thresholds: "
+        "negligible <0.1, small <0.3, medium <0.5, else large. BH-FDR corrects for "
+        "running both of these tests together.",
         "",
-        "| Metric | chi2 | dof | p-value | significant (p<0.05) |",
-        "|---|---|---|---|---|",
+        "| Metric | chi2 | dof | p-value | significant (p<0.05) | Cramer's V (effect size) | "
+        "BH-FDR adjusted p (sig?) |",
+        "|---|---|---|---|---|---|---|",
     ]
+    categorical_corrected = apply_fdr_correction(
+        {m: result[m] for m in ("fixture_type_kind", "repo_zero_teardown_rate")}
+    )
     for metric in ("fixture_type_kind", "repo_zero_teardown_rate"):
-        t = result[metric]
+        t = categorical_corrected[metric]
         d = t.details
         if d.get("reason") == "insufficient_data":
-            lines.append(f"| {metric} | -- | -- | -- | _insufficient data_ |")
+            lines.append(f"| {metric} | -- | -- | -- | _insufficient data_ | -- | -- |")
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         dof = d.get("degrees_of_freedom", "--")
-        lines.append(f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
+        lines.append(
+            f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} | "
+            f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
+        )
     lines.append("")
 
     lines += [
