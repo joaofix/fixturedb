@@ -415,6 +415,28 @@ def persist_repository_and_fixtures(
                             logger.debug(
                                 f"Failed to insert mock for fixture {fixture_id} in {repo_name}: {e}"
                             )
+        # Re-sync each touched file's fixture-count/LOC aggregate to its
+        # true, current total -- same self-healing reasoning as the
+        # repositories-table resync just below, scoped to file_id instead
+        # of repo_id. Deliberately narrow (2 columns, not
+        # update_test_file_counts()'s full 4: num_test_funcs/file_loc
+        # aren't computed here and nothing in the pipeline currently sets
+        # them, so clobbering them to 0 unconditionally would be wrong if
+        # that ever changes). Previously never called at all here, which
+        # left num_fixtures/total_fixture_loc at their schema default (0)
+        # for every test_files row except the small subset
+        # dedupe_fixtures_by_sha.py's cascade happened to touch.
+        for file_id in set(test_files_cache.values()):
+            file_counts = conn.execute(
+                "SELECT COUNT(*) AS n, COALESCE(SUM(loc), 0) AS total_loc "
+                "FROM fixtures WHERE file_id = ?",
+                (file_id,),
+            ).fetchone()
+            conn.execute(
+                "UPDATE test_files SET num_fixtures = ?, total_fixture_loc = ? WHERE id = ?",
+                (file_counts["n"], file_counts["total_loc"], file_id),
+            )
+
         # Re-sync the repositories-table summary counts to their true,
         # current totals -- this function is called once per fixture
         # language-group, potentially several times per repo, so these are

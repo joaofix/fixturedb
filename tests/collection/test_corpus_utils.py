@@ -739,6 +739,100 @@ class TestPersistRepositoryAndFixtures:
         assert row["num_mock_usages"] == 1
         assert row["num_contributors"] == 42
 
+    def test_persist_syncs_test_file_fixture_counts(self, tmp_path):
+        """Regression test: test_files.num_fixtures/total_fixture_loc stayed
+        at their schema default (0) forever -- update_test_file_counts()
+        existed in db.py but no collector ever called it, unlike the
+        equivalent repositories-table resync above. Real numbers: 79% of
+        Dataset B's test_files rows and 99.6% of Dataset A's were stale
+        this way. Two fixtures in one file must sum correctly, and a
+        second, later call touching the same file must re-sync to the new
+        true total rather than leaving the first call's numbers stale."""
+        from collection.db import initialise_db
+
+        db_path = tmp_path / "test.db"
+        initialise_db(db_path)
+
+        repo_data = {
+            "github_id": 111,
+            "full_name": "owner/synctest",
+            "language": "python",
+            "stars": 10,
+            "forks": 0,
+            "description": "",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://github.com/owner/synctest.git",
+            "num_contributors": 1,
+            "domain": None,
+            "repo_age_years": None,
+        }
+        first_fixtures = [
+            {
+                "commit_sha": "sha1",
+                "file_path": "tests/test_foo.py",
+                "name": "fixture_one",
+                "fixture_type": "pytest_decorator",
+                "start_line": 1,
+                "end_line": 3,
+                "loc": 3,
+                "framework": "pytest",
+                "mocks": [],
+            },
+            {
+                "commit_sha": "sha1",
+                "file_path": "tests/test_foo.py",
+                "name": "fixture_two",
+                "fixture_type": "pytest_decorator",
+                "start_line": 10,
+                "end_line": 15,
+                "loc": 6,
+                "framework": "pytest",
+                "mocks": [],
+            },
+        ]
+        persist_repository_and_fixtures(db_path, repo_data, first_fixtures)
+
+        import sqlite3
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT num_fixtures, total_fixture_loc FROM test_files "
+            "WHERE relative_path = 'tests/test_foo.py'"
+        ).fetchone()
+        conn.close()
+        assert row["num_fixtures"] == 2
+        assert row["total_fixture_loc"] == 9  # 3 + 6
+
+        # A later call (e.g. a different commit touching the same file)
+        # must re-sync to the new true total, not just add to stale numbers.
+        second_fixtures = [
+            {
+                "commit_sha": "sha2",
+                "file_path": "tests/test_foo.py",
+                "name": "fixture_three",
+                "fixture_type": "pytest_decorator",
+                "start_line": 20,
+                "end_line": 22,
+                "loc": 2,
+                "framework": "pytest",
+                "mocks": [],
+            }
+        ]
+        persist_repository_and_fixtures(db_path, repo_data, second_fixtures)
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT num_fixtures, total_fixture_loc FROM test_files "
+            "WHERE relative_path = 'tests/test_foo.py'"
+        ).fetchone()
+        conn.close()
+        assert row["num_fixtures"] == 3
+        assert row["total_fixture_loc"] == 11  # 3 + 6 + 2
+
     def test_persist_computes_repo_age_at_commit_for_repo_created_after_reference(
         self, tmp_path
     ):
