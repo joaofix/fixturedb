@@ -458,6 +458,89 @@ def test_collect_human_test_commits_resume_preserves_prior_per_language_totals(
     summary_text = (out_dir / "summary.md").read_text()
     assert "| python | 2 |" in summary_text
 
+    # The actual rows matter as much as the scalar totals: a prior bug loaded
+    # repo-a's already-written CSV rows into a variable that was never merged
+    # back into the write buffer, so the second call's write_dicts() (which
+    # overwrites the file) silently dropped repo-a's row from disk even
+    # though the scalar counters above looked correct.
+    with (out_dir / "python_human_test_commit.csv").open(
+        "r", encoding="utf-8", newline=""
+    ) as fh:
+        shas = {row["commit_sha"] for row in csv.DictReader(fh)}
+    assert shas == {"sha-a", "sha-b"}
+
+
+def test_collect_human_test_commits_resume_preserves_prior_disagreements(
+    tmp_path: Path, monkeypatch
+):
+    """Same failure mode as the row-preservation test above, but for the
+    Dataset A cross-check disagreements list: it was never reloaded from the
+    existing commit_role_disagreements.csv on resume, so a second call would
+    overwrite the file with only the second call's own disagreements."""
+    repo_a_dir = tmp_path / "repo_a"
+    init_minimal_repo(repo_a_dir)
+    repo_qc_dir = tmp_path / "repo_qc"
+    write_repo_qc_csv(repo_qc_dir, "owner/repo-a", repo_a_dir)
+    dataset_a_dir = tmp_path / "dataset_a_commits"
+    write_dataset_a_commits_csv(
+        dataset_a_dir, "owner/repo-a", [{"commit_sha": "deadbeef", "agent_type": "claude"}]
+    )
+
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner",
+        make_fake_scanner(commit_role="human", agent_type=None, commit_sha="deadbeef"),
+    )
+    out_dir = tmp_path / "out"
+    first_result = collect_human_test_commits(
+        repo_qc_dir, out_dir, workers=1, dataset_a_commits_dir=dataset_a_dir
+    )
+    assert first_result["disagreements_found"] == 1
+
+    repo_b_dir = tmp_path / "repo_b"
+    init_minimal_repo(repo_b_dir)
+    repo_qc_csv = repo_qc_dir / "python_agent_repo.csv"
+    with repo_qc_csv.open("a", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "language",
+                "clone_url",
+                "has_agent_config",
+                "stars",
+                "num_contributors",
+            ],
+        )
+        writer.writerow(
+            {
+                "repo_name": "owner/repo-b",
+                "language": "python",
+                "clone_url": str(repo_b_dir),
+                "has_agent_config": "1",
+                "stars": "0",
+                "num_contributors": "1",
+            }
+        )
+    write_dataset_a_commits_csv(
+        dataset_a_dir, "owner/repo-b", [{"commit_sha": "cafebabe", "agent_type": "codex"}]
+    )
+    monkeypatch.setattr(
+        "collection.human_test_commit_filter.Tier1RepositoryScanner",
+        make_fake_scanner(commit_role="human", agent_type=None, commit_sha="cafebabe"),
+    )
+
+    second_result = collect_human_test_commits(
+        repo_qc_dir, out_dir, workers=1, dataset_a_commits_dir=dataset_a_dir
+    )
+    # The bug this test guards against: without the fix, this would be 1
+    # (only repo-b's disagreement, repo-a's prior disagreement lost).
+    assert second_result["disagreements_found"] == 2
+    with Path(second_result["disagreements_file"]).open(
+        "r", encoding="utf-8", newline=""
+    ) as fh:
+        repo_names = {row["repo_name"] for row in csv.DictReader(fh)}
+    assert repo_names == {"owner/repo-a", "owner/repo-b"}
+
 
 def test_collect_human_test_commits_from_raw_search(tmp_path: Path, monkeypatch):
     repo_dir = tmp_path / "repo"

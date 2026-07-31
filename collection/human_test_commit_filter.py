@@ -135,6 +135,27 @@ def _check_against_dataset_a(
     return None
 
 
+def _load_existing_disagreements(output_path: Path) -> list[dict]:
+    """Reload previously-written disagreement rows so a checkpoint resume appends to
+    them instead of silently dropping every disagreement found before the resume --
+    same reasoning as seeding `test_commit_rows_by_language` from disk, see
+    `_collect_human_test_commits_from_repo_rows`.
+    """
+    if not output_path.exists():
+        return []
+    try:
+        with output_path.open("r", encoding="utf-8", newline="") as fh:
+            return [dict(row) for row in csv.DictReader(fh)]
+    except Exception as exc:
+        logger.warning(
+            "[human-test-commits] Failed to read existing disagreements CSV %s: %s "
+            "(resuming with an empty disagreements list for this run)",
+            output_path,
+            exc,
+        )
+        return []
+
+
 def _write_disagreements_csv(disagreements: list[dict], output_path: Path) -> None:
     adapter = get_adapter()
     adapter.write_dicts(output_path, disagreements, _DISAGREEMENT_FIELDNAMES)
@@ -246,14 +267,15 @@ def _collect_human_test_commits_from_repo_rows(
         repo_name = (row.get("repo_name") or row.get("full_name") or "").strip()
         if repo_name:
             grouped[repo_name].append(row)
-    test_commit_rows_by_language: dict[str, list[dict]] = defaultdict(list)
-    disagreements: list[dict] = []
     (
-        existing_rows_by_lang,
+        test_commit_rows_by_language,
         seen_commit_shas_by_language,
         completed_repos,
         counts,
     ) = _load_test_commit_resume_state(Path(output_dir), role="human")
+    disagreements: list[dict] = _load_existing_disagreements(
+        Path(output_dir) / "commit_role_disagreements.csv"
+    )
 
     repos_processed = counts.get("repos_processed", 0)
     commits_scanned = counts.get("commits_scanned", 0)
