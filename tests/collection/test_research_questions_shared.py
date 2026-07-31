@@ -5,6 +5,7 @@ redefining their own copy.
 
 from __future__ import annotations
 
+from collection.between_group_comparison import BalanceTest
 from collection.db import (
     db_session,
     initialise_db,
@@ -14,13 +15,17 @@ from collection.db import (
 )
 from collection.research_questions._shared import (
     LanguageLeakage,
+    apply_fdr_correction,
     compute_language_leakage,
     compute_stratified_categorical_balance,
+    fdr_cell,
     fetch_categorical_column,
     fetch_continuous_column,
+    fetch_continuous_column_by_repo,
     fmt,
     render_language_leakage_table,
     render_stratified_categorical_table,
+    repo_level_means,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -127,6 +132,34 @@ class TestFetchCategoricalColumn:
         with db_session(db_file) as conn:
             dist = fetch_categorical_column(conn, "fixtures", "scope")
         assert dist == {"per_test": 2, "per_class": 1}
+
+
+class TestFetchContinuousColumnByRepo:
+    def test_groups_values_by_repo_id(self, tmp_path):
+        _make_fixtures_db(tmp_path, [{"loc": 3}, {"loc": 7}, {"loc": None}])
+        db_file = tmp_path / "a.db"
+        with db_session(db_file) as conn:
+            by_repo = fetch_continuous_column_by_repo(conn, "fixtures", "loc")
+        # _make_fixtures_db puts every fixture under the same one repo.
+        assert len(by_repo) == 1
+        assert sorted(next(iter(by_repo.values()))) == [3, 7]
+
+
+class TestRepoLevelMeans:
+    def test_one_mean_per_repo(self):
+        by_repo = {1: [10.0, 20.0], 2: [5.0], 3: [1.0, 2.0, 3.0]}
+        assert sorted(repo_level_means(by_repo)) == [2.0, 5.0, 15.0]
+
+    def test_empty_input_returns_empty_list(self):
+        assert repo_level_means({}) == []
+
+    def test_a_repo_with_many_fixtures_still_contributes_one_value(self):
+        """The whole point: a repo with 1000 fixtures must count once in
+        the output, not 1000 times -- that's what distinguishes this from
+        the raw fixture-level list fetch_continuous_column() returns."""
+        by_repo = {1: [5.0] * 1000, 2: [10.0]}
+        result = repo_level_means(by_repo)
+        assert len(result) == 2
 
 
 def _make_leakage_db(tmp_path, *, repo_language: str, file_fixtures: list[tuple[str, str]]) -> None:
@@ -239,6 +272,75 @@ class TestRenderLanguageLeakageTable:
         assert "_(no data)_" in rendered
 
 
+class TestApplyFdrCorrection:
+    def test_borderline_significant_results_can_fail_to_survive_correction(self):
+        """Five tests: one clearly significant (p=0.001), two borderline
+        (p=0.04, 0.045 -- both "significant" at uncorrected alpha=0.05),
+        two clearly not (p=0.5, 0.6). Uncorrected, 3/5 look significant.
+        BH-FDR ranks the borderline pair among all 5 p-values, where they
+        pick up a stricter critical threshold and no longer clear it --
+        this is the actual point of the correction, not just relabeling
+        everything the same way uncorrected testing already would."""
+        tests = {
+            f"metric_{i}": BalanceTest(
+                variable=f"metric_{i}", test_type="chi-square",
+                p_value=p, is_balanced=p >= 0.05,
+            )
+            for i, p in enumerate([0.001, 0.04, 0.045, 0.5, 0.6])
+        }
+        result = apply_fdr_correction(tests)
+        assert all("adjusted_p_value" in t.details for t in result.values())
+        assert result["metric_0"].details["significant_after_correction"] is True
+        assert result["metric_1"].details["significant_after_correction"] is False
+        assert result["metric_2"].details["significant_after_correction"] is False
+
+    def test_insufficient_data_tests_pass_through_unchanged(self):
+        tests = {
+            "real": BalanceTest(variable="real", test_type="chi-square", p_value=0.01, is_balanced=False),
+            "skip": BalanceTest(
+                variable="skip", test_type="chi-square", p_value=1.0, is_balanced=True,
+                details={"reason": "insufficient_data"},
+            ),
+        }
+        result = apply_fdr_correction(tests)
+        assert "adjusted_p_value" not in result["skip"].details
+        assert "adjusted_p_value" in result["real"].details
+
+    def test_empty_input_returns_empty_dict(self):
+        assert apply_fdr_correction({}) == {}
+
+    def test_no_testable_entries_returns_originals_unchanged(self):
+        tests = {
+            "skip": BalanceTest(
+                variable="skip", test_type="chi-square", p_value=1.0, is_balanced=True,
+                details={"reason": "insufficient_data"},
+            ),
+        }
+        result = apply_fdr_correction(tests)
+        assert result == tests
+
+    def test_original_p_value_and_is_balanced_untouched(self):
+        tests = {
+            "m": BalanceTest(variable="m", test_type="chi-square", p_value=0.03, is_balanced=False),
+        }
+        result = apply_fdr_correction(tests)
+        assert result["m"].p_value == 0.03
+        assert result["m"].is_balanced is False
+
+
+class TestFdrCell:
+    def test_no_correction_applied_renders_dashes(self):
+        t = BalanceTest(variable="m", test_type="chi-square", p_value=0.03, is_balanced=False)
+        assert fdr_cell(t) == "--"
+
+    def test_renders_adjusted_p_and_verdict(self):
+        t = BalanceTest(
+            variable="m", test_type="chi-square", p_value=0.03, is_balanced=False,
+            details={"adjusted_p_value": 0.045, "significant_after_correction": True},
+        )
+        assert fdr_cell(t) == "0.045 (yes)"
+
+
 class TestComputeStratifiedCategoricalBalance:
     def test_only_shared_languages_are_compared(self):
         a_dist = {"python": {"has_mock": 5, "no_mock": 5}, "java": {"has_mock": 1, "no_mock": 1}}
@@ -278,22 +380,38 @@ class TestRenderStratifiedCategoricalTable:
         rendered = render_stratified_categorical_table(results)
         assert "_insufficient data_" in rendered
 
-    def test_chi2_failure_marked_as_test_failed_not_not_significant(self):
-        """Regression: a real scipy failure (a whole category at 0 on both
-        sides for one language -- e.g. neither dataset has any "teardown"
-        fixtures in javascript) gets caught by compute_categorical_balance()
-        and returned as p_value=1.0/is_balanced=True so callers don't
-        crash. Rendered plainly, that reads as a genuine "not significant"
-        result, which is wrong -- the test never ran. Reproduced directly
-        via the same 3-category shape (setup/teardown/other) that triggers
-        it for real in rq2.py's fixture_type_kind, not a synthetic error."""
+    def test_all_zero_category_no_longer_fails_the_test(self):
+        """This exact shape (a whole category, e.g. "teardown", at 0 on
+        both sides for one language) used to crash chi2_contingency inside
+        compute_categorical_balance() -- fixed there by dropping empty
+        columns before testing (see test_between_group_comparison.py's
+        test_all_zero_column_is_dropped_not_a_failure). Confirms the fix
+        holds through compute_stratified_categorical_balance() and renders
+        as a real result, not a "test failed" placeholder."""
         a_dist = {"javascript": {"setup": 3, "teardown": 0, "other": 2}}
         other_dist = {"javascript": {"setup": 1, "teardown": 0, "other": 4}}
         results = compute_stratified_categorical_balance(a_dist, other_dist, "fixture_type_kind")
-        assert "error" in results["javascript"].details
+        assert "error" not in results["javascript"].details
         rendered = render_stratified_categorical_table(results)
-        assert "_test failed" in rendered
-        assert "| javascript | -- | -- | -- |" in rendered
+        assert "_test failed" not in rendered
+        assert "| javascript |" in rendered
+
+    def test_genuine_test_failure_still_renders_as_test_failed(self):
+        """The "test failed" rendering path itself must still work for a
+        real, otherwise-unhandled compute_categorical_balance() exception
+        -- constructed directly via BalanceTest rather than relying on
+        finding a live scipy failure mode (the main one is now fixed)."""
+        results = {
+            "javascript": BalanceTest(
+                variable="fixture_type_kind_javascript",
+                test_type="chi-square",
+                p_value=1.0,
+                is_balanced=True,
+                details={"error": "some other unrecoverable scipy failure"},
+            )
+        }
+        rendered = render_stratified_categorical_table(results)
+        assert "_test failed (some other unrecoverable scipy failure)_" in rendered
 
 
 class TestWriteMarkdownReport:

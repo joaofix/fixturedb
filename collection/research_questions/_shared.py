@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import sqlite3
 import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
+
+from scipy.stats import false_discovery_control
 
 from ..between_group_comparison import BalanceTest, compute_categorical_balance
 from ..config import ROOT_DIR
@@ -60,6 +62,63 @@ def fmt(value: float | None, digits: int = 2) -> str:
     return "--" if value is None else f"{value:.{digits}f}"
 
 
+def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest]:
+    """Benjamini-Hochberg FDR correction across `tests` -- one "family" of
+    related hypotheses tested together (e.g. every RQ1 metric in one A-vs-B
+    comparison, or every language in one stratified breakdown).
+
+    Why this exists: each RQ script runs many hypothesis tests (RQ1 alone
+    is 9 per comparison -- 6 continuous + 3 categorical -- times 2
+    comparisons, before today's per-language stratification multiplied
+    that further). At uncorrected alpha=0.05, some fraction of "significant"
+    results are expected by chance alone as the test count grows. BH-FDR
+    (via scipy's false_discovery_control, the standard choice here --
+    Bonferroni is needlessly conservative for this many related,
+    non-independent tests) controls the expected proportion of false
+    positives among the tests flagged significant, without scipy's
+    documented, harsher family-wise-error alternatives.
+
+    Tests with no real p-value (insufficient_data/error) pass through
+    unchanged -- they were never really "tested" and have nothing to
+    correct. Returns NEW BalanceTest objects (dataclasses.replace) with
+    `adjusted_p_value`/`significant_after_correction` added to `details`;
+    the original `p_value`/`is_balanced` fields are left untouched, so
+    both the raw and corrected verdicts stay visible.
+    """
+    testable_keys = [
+        k for k, t in tests.items() if "reason" not in t.details and "error" not in t.details
+    ]
+    result = dict(tests)
+    if not testable_keys:
+        return result
+
+    p_values = [tests[k].p_value for k in testable_keys]
+    adjusted = false_discovery_control(p_values, method="bh")
+
+    for key, adj_p in zip(testable_keys, adjusted):
+        t = tests[key]
+        result[key] = replace(
+            t,
+            details={
+                **t.details,
+                "adjusted_p_value": float(adj_p),
+                "significant_after_correction": bool(adj_p < 0.05),
+            },
+        )
+    return result
+
+
+def fdr_cell(t: BalanceTest) -> str:
+    """BH-FDR-adjusted p-value + verdict, formatted for one table cell --
+    '--' if apply_fdr_correction() wasn't run on this test (or it was
+    insufficient_data/error to begin with)."""
+    adj_p = t.details.get("adjusted_p_value")
+    if adj_p is None:
+        return "--"
+    sig = "yes" if t.details.get("significant_after_correction") else "no"
+    return f"{adj_p:.4g} ({sig})"
+
+
 def compute_stratified_categorical_balance(
     a_dist_by_language: dict[str, dict[str, int]],
     other_dist_by_language: dict[str, dict[str, int]],
@@ -89,19 +148,43 @@ def compute_stratified_categorical_balance(
     return results
 
 
+def categorical_effect_size_cell(t: BalanceTest) -> str:
+    """Cramér's V + magnitude, formatted for one table cell -- '--' if the
+    test didn't run (insufficient_data/error). p-values shrink with sample
+    size alone; this is what actually says how big the difference is."""
+    v = t.details.get("cramers_v")
+    if v is None:
+        return "--"
+    return f"{v:.3f} ({t.details.get('cramers_v_magnitude', '?')})"
+
+
+def continuous_effect_size_cell(t: BalanceTest) -> str:
+    """Cliff's delta + magnitude, formatted for one table cell -- '--' if
+    the test didn't run (insufficient_data/error)."""
+    delta = t.details.get("cliffs_delta")
+    if delta is None:
+        return "--"
+    return f"{delta:.3f} ({t.details.get('cliffs_delta_magnitude', '?')})"
+
+
 def render_stratified_categorical_table(results: dict[str, BalanceTest]) -> str:
-    """Markdown table for compute_stratified_categorical_balance()'s output."""
+    """Markdown table for compute_stratified_categorical_balance()'s output.
+    Applies BH-FDR correction across the languages shown (one "family" --
+    see apply_fdr_correction()'s docstring) before rendering, so callers
+    don't need to remember to do it separately."""
+    corrected = apply_fdr_correction(results)
     lines = [
-        "| Language | chi2 | dof | p-value | significant (p<0.05) |",
-        "|---|---|---|---|---|",
+        "| Language | chi2 | dof | p-value | significant (p<0.05) | Cramer's V (effect size) | "
+        "BH-FDR adjusted p (sig?) |",
+        "|---|---|---|---|---|---|---|",
     ]
-    if not results:
-        lines.append("| _(no language shared by both datasets)_ | -- | -- | -- | -- |")
+    if not corrected:
+        lines.append("| _(no language shared by both datasets)_ | -- | -- | -- | -- | -- | -- |")
     else:
-        for language, t in results.items():
+        for language, t in corrected.items():
             d = t.details
             if d.get("reason") == "insufficient_data":
-                lines.append(f"| {language} | -- | -- | -- | _insufficient data_ |")
+                lines.append(f"| {language} | -- | -- | -- | _insufficient data_ | -- | -- |")
                 continue
             if "error" in d:
                 # compute_categorical_balance() catches chi2_contingency
@@ -112,11 +195,14 @@ def render_stratified_categorical_table(results: dict[str, BalanceTest]) -> str:
                 # "not significant" result if rendered plainly here, which
                 # is actively misleading -- it means the test couldn't run
                 # at all, not that no difference was found.
-                lines.append(f"| {language} | -- | -- | -- | _test failed ({d['error']})_ |")
+                lines.append(f"| {language} | -- | -- | -- | _test failed ({d['error']})_ | -- | -- |")
                 continue
             sig = "yes" if t.p_value < 0.05 else "no"
             dof = d.get("degrees_of_freedom", "--")
-            lines.append(f"| {language} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} |")
+            lines.append(
+                f"| {language} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} | "
+                f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
+            )
     lines.append("")
     return "\n".join(lines)
 
@@ -135,6 +221,40 @@ def fetch_categorical_column(conn: sqlite3.Connection, table: str, column: str) 
         f"SELECT {column}, COUNT(*) FROM {table} WHERE {column} IS NOT NULL GROUP BY {column}"
     ).fetchall()
     return {row[0]: row[1] for row in rows}
+
+
+def fetch_continuous_column_by_repo(
+    conn: sqlite3.Connection, table: str, column: str
+) -> dict[int, list[float]]:
+    """{repo_id: [values]} for `column` in `table`, non-null values only --
+    the per-repo grouping repo_level_means() needs."""
+    rows = conn.execute(
+        f"SELECT repo_id, {column} FROM {table} WHERE {column} IS NOT NULL"
+    ).fetchall()
+    by_repo: dict[int, list[float]] = {}
+    for repo_id, value in rows:
+        by_repo.setdefault(repo_id, []).append(value)
+    return by_repo
+
+
+def repo_level_means(by_repo: dict[int, list[float]]) -> list[float]:
+    """One mean value per repo, from fetch_continuous_column_by_repo()'s
+    output -- declusters a fixture-level metric so a Mann-Whitney U test on
+    this instead of the raw per-fixture values treats each *repo* as one
+    observation, not each fixture.
+
+    Why this matters: fixtures cluster within repos -- they share authorship
+    conventions, framework choices, project style. Treating every fixture
+    as independent (as the plain fixture-level tests elsewhere in this
+    package do) understates true variance and inflates apparent
+    significance, a classic pseudo-replication problem. This doesn't
+    replace the fixture-level tests (they answer a real, different
+    question -- "is the typical fixture different" -- at a finer grain
+    this can't see), it's a complementary, more conservative view: "is the
+    typical *repo* different," immune to a handful of unusually prolific
+    repos dominating the fixture-level result.
+    """
+    return [sum(vals) / len(vals) for vals in by_repo.values() if vals]
 
 
 @dataclass
