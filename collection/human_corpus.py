@@ -452,6 +452,35 @@ class HumanCorpusCollector:
             lang = repo.get("language", "unknown").lower()
             repos_by_language[lang].append(repo)
 
+        # The full set of languages this dataset actually has selectable
+        # repos for -- distinct from repos_by_language above, which a
+        # --language filter narrows to a single one. within_all_step must
+        # only ever be marked once every one of these is done, never just
+        # "every language this specific invocation happened to touch": a
+        # --language python run marking the whole dataset "complete" after
+        # only python finished would make every subsequent call, for any
+        # language, silently skip via the
+        # is_global_checkpoint_completed(within_all_step) check below -- a
+        # real incident, see internal-docs/RUN_COMMANDS.md's Notes. When no
+        # --language filter is active, repos_by_language already reflects
+        # every available language, so no extra lookup is needed; when one
+        # is active, a second, unfiltered selection discovers the true set
+        # (not assumed from a hardcoded language list, since a dataset can
+        # legitimately have fewer selectable languages than
+        # LANGUAGE_CONFIGS, e.g. in a small/toy repo_qc_dir).
+        if language:
+            all_dataset_languages = {
+                (repo.get("language") or "unknown").strip().lower()
+                for repo in select_human_corpus_repositories(
+                    self.repo_qc_dir,
+                    repos_per_language,
+                    None,
+                    require_fixture_repo_list=True,
+                )
+            }
+        else:
+            all_dataset_languages = set(repos_by_language.keys())
+
         completed_languages: set[str] = set()
         if not force:
             with db_session(self.output_db) as conn:
@@ -461,7 +490,7 @@ class HumanCorpusCollector:
                     )
                     return stats, self.output_db
 
-                for lang in repos_by_language:
+                for lang in all_dataset_languages:
                     if is_global_checkpoint_completed(conn, within_step(lang)):
                         completed_languages.add(lang)
 
@@ -477,11 +506,19 @@ class HumanCorpusCollector:
                 if lang not in completed_languages
             }
 
-            if not repos_by_language:
+            if all_dataset_languages <= completed_languages:
                 with db_session(self.output_db) as conn:
                     mark_global_checkpoint(conn, within_all_step)
                 logger.info(
-                    "[Human Corpus] All selected languages already completed; skipping within collection"
+                    "[Human Corpus] All languages already completed; skipping within collection"
+                )
+                return stats, self.output_db
+
+            if not repos_by_language:
+                logger.info(
+                    "[Human Corpus] Nothing left to process for the requested "
+                    "language(s) (already completed) -- other dataset "
+                    "languages may still be pending"
                 )
                 return stats, self.output_db
         else:
@@ -581,7 +618,7 @@ class HumanCorpusCollector:
         with db_session(self.output_db) as conn:
             if all(
                 is_global_checkpoint_completed(conn, within_step(lang))
-                for lang in repos_by_language
+                for lang in all_dataset_languages
             ):
                 mark_global_checkpoint(conn, within_all_step)
 
@@ -650,11 +687,21 @@ class HumanCorpusCollector:
         lang_commits_accepted = 0
         lang_commits_rejected = 0
 
+        # Count each repo as "scanned" the moment its clone+scan+extract work
+        # finishes here, not later when the sequential DB-persist loop below
+        # reaches it -- that's the actual bottleneck (anonymous git clone +
+        # full commit scan per repo), and the periodic progress heartbeat
+        # (log_progress(), reading stats.repos_scanned) previously stayed at
+        # 0 for the entire duration of this phase, making hours of real work
+        # look like nothing was happening.
         if workers <= 1:
             for repo in tqdm(
                 lang_repos, desc=f"[Human Corpus] {current_lang}", unit="repo"
             ):
                 lang_results.append(self._process_human_repository(repo))
+                with progress_lock:
+                    stats.repos_scanned += 1
+                    language_progress[current_lang]["completed"] += 1
         else:
             with ThreadPoolExecutor(max_workers=workers) as executor:
                 futures = {
@@ -668,12 +715,11 @@ class HumanCorpusCollector:
                     unit="repo",
                 ):
                     lang_results.append(future.result())
+                    with progress_lock:
+                        stats.repos_scanned += 1
+                        language_progress[current_lang]["completed"] += 1
 
         for result in lang_results:
-            with progress_lock:
-                stats.repos_scanned += 1
-                language_progress[current_lang]["completed"] += 1
-
             repo_name = result["repo_name"]
 
             if result["status"] != "ok":

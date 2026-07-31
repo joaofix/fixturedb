@@ -566,3 +566,67 @@ def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
 
     stats, _ = collector.run(force=True)
     assert processed_languages == ["python"]
+
+
+def test_single_language_run_does_not_mark_whole_dataset_complete(tmp_path, monkeypatch):
+    """Regression: a real incident. `extract-fixtures --dataset b --language
+    python` finishing used to mark `human_within_complete:all` -- meant to
+    mean "every language in this dataset is done" -- just because python was
+    the only language *this specific invocation* touched. Every subsequent
+    call, for any language, then hit the `is_global_checkpoint_completed
+    (within_all_step)` early-exit and silently processed 0 repos, without
+    --force, without any error. `all_dataset_languages` (all of
+    LANGUAGE_CONFIGS, not repos_by_language which --language narrows) is now
+    the source of truth for whether the whole dataset is actually done."""
+    from collection.db import (
+        db_session,
+        initialise_db,
+        is_global_checkpoint_completed,
+        mark_global_checkpoint,
+    )
+
+    output_db = tmp_path / "b.db"
+    initialise_db(output_db)
+
+    repos_by_lang = {
+        "python": [{"full_name": "org/py-repo", "language": "python"}],
+        "java": [{"full_name": "org/java-repo", "language": "java"}],
+    }
+
+    def fake_select(repo_qc_dir, repos_per_language, language, **kw):
+        if language:
+            return list(repos_by_lang.get(language.lower(), []))
+        return [r for repos in repos_by_lang.values() for r in repos]
+
+    monkeypatch.setattr(
+        "collection.human_corpus.select_human_corpus_repositories", fake_select
+    )
+
+    processed_languages = []
+
+    def fake_process(self, **kw):
+        current_lang = kw["current_lang"]
+        processed_languages.append(current_lang)
+        # Mirrors the real _process_human_within_language's own side effect
+        # (human_corpus.py's mark_global_checkpoint(conn, f"...:{lang}")
+        # call at the end of processing that language).
+        with db_session(self.output_db) as conn:
+            mark_global_checkpoint(conn, f"human_within_complete:{current_lang}")
+
+    monkeypatch.setattr(
+        HumanCorpusCollector, "_process_human_within_language", fake_process
+    )
+
+    collector = HumanCorpusCollector(output_db=output_db, repo_qc_dir=tmp_path)
+
+    collector.run(language="python")
+    assert processed_languages == ["python"]
+    with db_session(output_db) as conn:
+        assert is_global_checkpoint_completed(conn, "human_within_complete:python")
+        # The bug: this used to be True here, after only python finished.
+        assert not is_global_checkpoint_completed(conn, "human_within_complete:all")
+
+    # A later call for a different language must not be silently skipped by
+    # a falsely-set "all" checkpoint.
+    collector.run(language="java")
+    assert processed_languages == ["python", "java"]

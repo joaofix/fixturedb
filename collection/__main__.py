@@ -266,16 +266,22 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
 
     if args.dataset == "b":
         from .human_corpus import HumanCorpusCollector
-        from .resume_utils import database_has_rows
 
         output_db = args.output_db or paths.db_path("b")
-        if database_has_rows(output_db, "fixtures") and not args.force:
-            logger.info(
-                f"{output_db} already has fixture rows; skipping "
-                "(pass --force to re-extract)"
-            )
-            return 0
-
+        # No dataset-wide database_has_rows() gate here, unlike a/c below --
+        # HumanCorpusCollector.run() already gates per-language via its own
+        # DB checkpoints (human_within_complete:{lang}/:all), which a
+        # dataset-wide "does *any* row exist" check would short-circuit
+        # incorrectly: a language processed by an earlier
+        # `--language X` call can incidentally produce a handful of
+        # cross-language fixture rows (a multi-language repo's test files
+        # in a different language than the repo's own tag -- see
+        # docs/architecture/collection.md's "Repository deduplication"),
+        # which would otherwise make every subsequent `--language Y` call
+        # for this dataset see the DB as "already has fixture rows" and
+        # skip entirely, even though language Y was never actually
+        # processed. See internal-docs/RUN_COMMANDS.md's per-language
+        # Dataset B chain.
         collector = HumanCorpusCollector(
             output_db=output_db,
             repo_qc_dir=args.repo_dir or paths.stage_dir("b", "repos"),

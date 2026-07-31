@@ -361,6 +361,36 @@ class TestExtractFixtures:
             force=False,
         )
 
+    def test_dataset_b_does_not_skip_when_db_already_has_fixtures_from_another_language(self):
+        """Regression: unlike a/c, dataset b must NOT gate on a dataset-wide
+        database_has_rows() check. A prior `--language python` call can
+        incidentally insert a handful of cross-language fixture rows (see
+        collection/__main__.py's comment in the dataset=="b" branch), which
+        made every subsequent `--language X` call see the DB as
+        "already has fixture rows" and skip entirely -- even without
+        --force, even though language X was never processed. The real gate
+        is HumanCorpusCollector.run()'s own per-language DB checkpoints."""
+        stats = MagicMock(fixtures_collected=5)
+        with patch("collection.resume_utils.database_has_rows", return_value=True):
+            with patch(
+                "collection.human_corpus.HumanCorpusCollector"
+            ) as MockCollector:
+                MockCollector.return_value.run.return_value = (
+                    stats,
+                    paths.db_path("b"),
+                )
+                rc = main(
+                    ["extract-fixtures", "--dataset", "b", "--language", "java"]
+                )
+
+        assert rc == 0
+        MockCollector.return_value.run.assert_called_once_with(
+            repos_per_language=None,
+            language="java",
+            workers=8,
+            force=False,
+        )
+
     def test_dataset_c_resolves_defaults(self):
         fake_repos = [{"full_name": "o/r", "language": "python"}]
         with patch("collection.resume_utils.database_has_rows", return_value=False):
