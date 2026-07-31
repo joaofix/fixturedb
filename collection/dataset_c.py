@@ -42,6 +42,7 @@ from collection.corpus_utils import (
 from collection.db import db_session, initialise_db
 from collection.ephemeral_clone import clone_with_function
 from collection.fixture_extractor import AgentFixtureExtractor
+from collection.language_utils import get_language_static
 from collection.logging_utils import get_logger
 from collection.sampling import stratified_sample_by_language
 from collection.tiered_agent_corpus_scanner import _is_test_file_path
@@ -169,7 +170,12 @@ def count_commits_up_to(repo_path: Path, commit_sha: str) -> int:
 def find_test_files_at_commit(
     repo_path: Path, language: Optional[str] = None
 ) -> List[str]:
-    """Find all test files in the repo at the current checkout."""
+    """Find all test files in the repo at the current checkout, matching
+    only `language`'s test-file patterns (language=None matches nothing --
+    see `_is_test_file_path`'s own contract). Single-language legacy
+    helper; `_process_repo` uses `find_test_files_with_language()` below
+    instead, so a multi-language repo's non-primary-language test files
+    aren't invisible to Dataset C the way they used to be."""
     test_files: List[str] = []
     for file_path in sorted(repo_path.rglob("*")):
         if not file_path.is_file():
@@ -179,6 +185,39 @@ def find_test_files_at_commit(
             continue
         test_files.append(rel_path)
     return test_files
+
+
+def find_test_files_with_language(repo_path: Path) -> List[Tuple[str, str]]:
+    """Find every test file in the repo at the current checkout, in any of
+    the four supported languages -- each file's own language is detected
+    from its extension (`get_language_static()`), independent of any
+    single "the repo's language" assumption.
+
+    This is what makes a multi-language repo's non-primary-language test
+    files (e.g. a JS config-test file inside an otherwise-Python repo)
+    discoverable at all for Dataset C: `find_test_files_at_commit()`
+    above, called with the repo's own tagged language, never even looks at
+    a file that doesn't match that one language's suffixes. Datasets A/B
+    don't have this gap -- they discover test files from a commit's full
+    diff via this exact same per-file `get_language_static()` pattern
+    (see `agent_fixture_extractor.py::_find_added_test_files()`).
+
+    Returns (relative_path, detected_language) pairs, one per discovered
+    test file. A file whose extension doesn't map to a known language, or
+    that isn't a test file in *its own* detected language, is skipped.
+    """
+    found: List[Tuple[str, str]] = []
+    for file_path in sorted(repo_path.rglob("*")):
+        if not file_path.is_file():
+            continue
+        detected_language = get_language_static(file_path)
+        if detected_language == "unknown":
+            continue
+        rel_path = str(file_path.relative_to(repo_path))
+        if not _is_test_file_path(rel_path, language=detected_language):
+            continue
+        found.append((rel_path, detected_language))
+    return found
 
 
 def _load_dataset_c_checkpoint(
@@ -306,9 +345,7 @@ def _process_repo(
             )
             return False, []
 
-        test_files = find_test_files_at_commit(
-            actual_repo_path, language if language != "unknown" else None
-        )
+        test_files = find_test_files_with_language(actual_repo_path)
         if len(test_files) < MIN_TEST_FILES:
             logger.debug(
                 "[Dataset C] Only %d test files (need %d) in %s at cutoff %s",
@@ -327,12 +364,12 @@ def _process_repo(
         )
 
         repo_fixtures: List[Dict[str, Any]] = []
-        for test_file in test_files:
+        for test_file, file_language in test_files:
             try:
                 file_fixtures = extractor._extract_from_snapshot_file(
                     repo_path=actual_repo_path,
                     file_path=test_file,
-                    language=language,
+                    language=file_language,
                     cutoff_commit_sha=cutoff_sha,
                     cutoff_commit_date=cutoff_date_val,
                 )
@@ -357,7 +394,20 @@ def _process_repo(
                     {
                         **fixture,
                         "repo_full_name": repo_name,
-                        "language": language,
+                        # No "language" override here -- each fixture
+                        # already carries its own detected language (set
+                        # by _extract_from_snapshot_file above from
+                        # file_language, not the repo's tagged language),
+                        # which is what makes cross-language fixtures
+                        # (leakage) measurable for Dataset C at all. See
+                        # find_test_files_with_language()'s docstring. The
+                        # repo's own tagged language rides along separately
+                        # as repo_language, for the repositories-table row
+                        # (collect_dataset_c_fixtures() used to read the
+                        # first fixture's "language" for this, safe only
+                        # because every fixture's language was always the
+                        # repo's own before this change).
+                        "repo_language": language,
                         "github_id": repo.get("github_id", 0),
                         # Threaded through the same way as github_id --
                         # `repo` itself is discarded downstream
@@ -579,7 +629,14 @@ def collect_dataset_c_fixtures(
             repo_groups[repo_full_name].append(fixture)
 
     for repo_full, fixtures_list in repo_groups.items():
-        language_val = fixtures_list[0].get("language") if fixtures_list else "unknown"
+        # The repo's own tagged language, not fixtures_list[0]'s -- a
+        # fixture's own "language" can now legitimately differ from its
+        # repo's (cross-language leakage, see find_test_files_with_language()
+        # above), so the first fixture in the group is no longer a safe
+        # stand-in for the repo's real language the way it used to be.
+        language_val = (
+            fixtures_list[0].get("repo_language") if fixtures_list else "unknown"
+        )
         if language_val is None:
             language_val = "unknown"
         # github_id is required: construct_repo_dict() defaults it to 0 when

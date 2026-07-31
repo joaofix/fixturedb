@@ -12,6 +12,7 @@ from collection.dataset_c import (
     collect_dataset_c_fixtures,
     count_commits_up_to,
     find_test_files_at_commit,
+    find_test_files_with_language,
     load_repo_cutoffs,
 )
 from collection.db import initialise_db
@@ -108,6 +109,31 @@ def test_find_test_files_at_commit_filters_by_language(tmp_path):
     files = find_test_files_at_commit(repo, language="python")
     assert any("test_foo.py" in f for f in files)
     assert not any("main.py" in f for f in files)
+
+
+def test_find_test_files_with_language_detects_each_files_own_language(tmp_path):
+    """Regression: this is what makes Dataset C leakage measurable at all --
+    a multi-language repo's non-primary-language test files must be found
+    and correctly labeled, not silently invisible the way
+    find_test_files_at_commit()'s single-language filter leaves them."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_foo.py").write_text("def test_foo(): pass")
+    (repo / "tests" / "foo.test.js").write_text("test('x', () => {});")
+    (repo / "src").mkdir()
+    (repo / "src" / "main.py").write_text("print('hello')")
+
+    found = find_test_files_with_language(repo)
+    by_path = dict(found)
+    assert any("test_foo.py" in p for p in by_path)
+    assert any("foo.test.js" in p for p in by_path)
+    assert not any("main.py" in p for p in by_path)
+
+    python_path = next(p for p in by_path if "test_foo.py" in p)
+    js_path = next(p for p in by_path if "foo.test.js" in p)
+    assert by_path[python_path] == "python"
+    assert by_path[js_path] == "javascript"
 
 
 def test_dataset_c_snapshot_extraction_tags_human_pre2022(tmp_path):
@@ -265,6 +291,75 @@ def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
 
     assert stats["fixtures_persisted"] == 3
     mock_persist.assert_called_once()
+
+
+def test_collect_dataset_c_repositories_row_uses_repo_language_not_first_fixture(
+    tmp_path,
+):
+    """Regression: the repositories-table row used to be built from
+    fixtures_list[0]'s "language" -- safe only because every fixture's
+    language always equaled its repo's tag before cross-language leakage
+    was enabled. Put the leaked (javascript) fixture first in the list to
+    prove the repo row still gets "python" (repo_language), not
+    "javascript", regardless of dict ordering."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, [
+            (
+                repo,
+                {
+                    "name": "leaked_js_fixture",
+                    "file_path": "conftest.test.js",
+                    "start_line": 1,
+                    "end_line": 3,
+                    "framework": "jest",
+                    "repo_full_name": repo["full_name"],
+                    "language": "javascript",
+                    "repo_language": repo.get("language", "unknown"),
+                },
+            ),
+            (
+                repo,
+                {
+                    "name": "py_fixture",
+                    "file_path": "test_foo.py",
+                    "start_line": 1,
+                    "end_line": 3,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": "python",
+                    "repo_language": repo.get("language", "unknown"),
+                },
+            ),
+        ]
+
+    repos = [
+        {
+            "full_name": "owner/repo",
+            "language": "python",
+            "clone_url": "https://github.com/owner/repo.git",
+        }
+    ]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ), patch("collection.dataset_c.persist_repository_and_fixtures") as mock_persist:
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="python",
+            fixtures_output_dir=tmp_path,
+        )
+
+    assert mock_persist.call_count == 2  # one per fixture-language bucket
+    for call in mock_persist.call_args_list:
+        repo_data = call.args[1]
+        assert repo_data["language"] == "python"
 
 
 def test_dataset_c_checkpoint_is_language_specific(tmp_path):
@@ -644,6 +739,63 @@ def test_process_repo_extracts_fixtures_when_both_floors_pass(tmp_path):
     assert len(results) == 1
     _, fixture = results[0]
     assert fixture["name"] == "my_fixture"
+
+
+def test_process_repo_extracts_cross_language_leakage_fixtures(tmp_path):
+    """Regression: a repo tagged "python" containing a JS test file used to
+    have that file invisible to Dataset C entirely (find_test_files_at_commit
+    only looked for python-suffix files), and even if found, its fixture
+    would have been mislabeled "python" (the old unconditional "language":
+    language override in _process_repo). Both must now be fixed: the JS
+    fixture is found, keeps its own "javascript" language, and still
+    carries "repo_language": "python" (the repo's own tag, used for the
+    repositories-table row -- distinct from the per-fixture language)."""
+    repo_path = _make_git_repo(tmp_path)
+    for i in range(4):
+        _commit(repo_path, f"f{i}.txt", str(i), f"2018-01-0{i + 1}T00:00:00")
+
+    (repo_path / "test_foo.py").write_text(
+        "import pytest\n\n"
+        "@pytest.fixture\n"
+        "def py_fixture():\n"
+        "    return 1\n"
+    )
+    (repo_path / "foo.test.js").write_text(
+        "beforeEach(() => { setup(); });\n"
+        "test('x', () => { expect(1).toBe(1); });\n"
+    )
+    _git(repo_path, "add", "test_foo.py", "foo.test.js")
+    import os
+
+    env = dict(os.environ)
+    env["GIT_AUTHOR_DATE"] = "2018-06-01T00:00:00"
+    env["GIT_COMMITTER_DATE"] = "2018-06-01T00:00:00"
+    _git(repo_path, "commit", "-m", "add test files", env=env)
+
+    extractor = AgentFixtureExtractor(
+        clones_dir=tmp_path, source_db=None, start_date="1970-01-01"
+    )
+    repo = {
+        "full_name": "owner/repo",
+        "language": "python",
+        "clone_url": "https://example.com/owner/repo.git",
+    }
+
+    with patch("collection.dataset_c.MIN_COMMITS", 3), patch(
+        "collection.dataset_c.MIN_TEST_FILES", 1
+    ), patch(
+        "collection.dataset_c.clone_with_function",
+        side_effect=lambda fn, url, path: _fake_clone_at(repo_path),
+    ):
+        success, results = _process_repo(repo, {}, extractor, tmp_path)
+
+    assert success is True
+    fixtures_by_lang = {fixture["language"]: fixture for _, fixture in results}
+    assert "python" in fixtures_by_lang
+    assert "javascript" in fixtures_by_lang
+    assert fixtures_by_lang["python"]["name"] == "py_fixture"
+    # Every fixture -- leaked or not -- keeps the repo's own tag separately.
+    assert all(fixture["repo_language"] == "python" for _, fixture in results)
 
 
 def test_process_repo_embeds_github_id_in_fixture_dicts(tmp_path):
