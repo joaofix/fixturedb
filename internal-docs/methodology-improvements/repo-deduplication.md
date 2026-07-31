@@ -84,4 +84,35 @@ Neither the camunda nor off-grid-ai clusters that motivated this investigation w
 
 ### 8.3 Status
 
-Closed for the commit-level mechanism described here. `collection/repo_dedup_utils.py::pick_cluster_survivor()` gained an optional `tie_break_key` parameter (default unchanged, so §3's two existing callers are unaffected). Tests added; full suite and ruff green. `internal-docs/RUN_COMMANDS.md` updated to run `dedupe_commits_by_sha.py` between commit collection and fixture extraction for both datasets going forward.
+Closed for the commit-level mechanism described here for Dataset A. **For Dataset B, superseded by §9** — §8.2's "no cascade needed" was true only because `extract-fixtures --dataset b` hadn't run yet at the time; once it did, a second, distinct gap surfaced. `collection/repo_dedup_utils.py::pick_cluster_survivor()` gained an optional `tie_break_key` parameter (default unchanged, so §3's two existing callers are unaffected). Tests added; full suite and ruff green. `internal-docs/RUN_COMMANDS.md` updated to run `dedupe_commits_by_sha.py` between commit collection and fixture extraction for both datasets going forward.
+
+## 9. Follow-up: `dedupe_commits_by_sha.py` doesn't protect Dataset B's fixtures at all
+
+Found while investigating Dataset B's first real python `extract-fixtures` run (2026-07-30). §8 assumed that deduping `datasets/b/test-commits/*_human_test_commit.csv` before extraction would keep duplicate commits out of Dataset B's fixtures, the same way it does for Dataset A. That assumption is false, and turned out to have never been true.
+
+**Root cause**: `extract-fixtures --dataset a` (`AgentCorpusCollector`) genuinely reads its commit list from `datasets/a/commits/*.csv` — dedupe that file, and the extractor simply never sees the removed rows again. `extract-fixtures --dataset b` (`HumanCorpusCollector`) does not work this way: it resolves its repo list from `datasets/b/repos/*.csv` and, for every repo, independently re-clones and re-scans that repo's entire commit history from scratch (`_process_human_repository` -> `_scan_and_extract`, its own `Tier1RepositoryScanner.scan_repo_commit_roles()` call — the *exact* same call `filter-test-commits` makes, duplicated work). It never opens `datasets/b/test-commits/*.csv` as an input, only writes to it as an audit trail. So no matter how clean that file is, extraction re-derives the same duplicate commits from raw git history under every repo_name variant, every time.
+
+**Confirmed empirically**, not just by code reading, on the real first Dataset B python run: 20,989 of 57,272 extracted fixtures (36.6%) shared a `commit_sha` with a fixture under a different `repo_id`. Real example beyond camunda/off-grid-ai (§8): `phidatahq/phidata` and `agno-agi/agno` — identical `created_at` to the second (`2022-05-04T03:23:02`), confirmed same repo, both still independently cloned and scanned. Also found: `instructor-ai/instructor` / `567-labs/instructor` / `jxnl/instructor` (3-way rename chain), `ArcadeAI/arcade-ai` / `ArcadeAI/arcade-mcp`, `agentscope-ai/agentscope` / `modelscope/agentscope`.
+
+### 9.1 Why not fixed the same way as §8
+
+Restructuring `HumanCorpusCollector` to consume the deduped commit CSV directly (making this a one-time fix like Dataset A's, instead of a recurring cleanup) is possible in principle — `filter-test-commits`'s scan computes the exact same `commit_roles` data extraction redundantly recomputes, so extraction could skip straight to `AgentFixtureExtractor._extract_from_agent_commits()` with a pre-filtered commit list. Deliberately deferred, for two concrete reasons:
+
+1. `agent_adoption_intensity` (per-repo agent-vs-human commit ratio) is currently a side effect of the full rescan (`compute_adoption_intensity()` needs `agent_commit_count`/`total_commit_count`, both derived from `commit_roles`). `filter-test-commits` sees this same data but currently only keeps an aggregate `commits_scanned` counter, not a per-repo breakdown — would need its output extended first.
+2. It introduces a staleness window: extraction would reflect the repo's state as of when `filter-test-commits` ran, not extraction time, so a human test commit pushed to a repo in the gap between the two steps (realistically hours to days, since `filter-test-commits` alone took ~22h on the full run) would be silently missed until `filter-test-commits` is rerun.
+
+Both are solvable, just not solved yet — tracked as a real follow-up, not abandoned.
+
+### 9.2 What was built instead: a recurring post-extraction cascade
+
+`collection/dedupe_fixtures_by_sha.py` — same duplicate-detection core as `dedupe_commits_by_sha.py` (`find_duplicate_commit_rows`/`pick_cluster_survivor`, reused unchanged; `dedupe_commit_csvs()` itself is reused directly, since it already filters by `(commit_sha, repo_name)` pairs regardless of how many rows in a file share one commit_sha — exactly the fixtures-CSV shape, multiple fixture rows per commit), but aimed at `datasets/b/fixtures/*.csv` and run *after* `extract-fixtures --dataset b` instead of before. Additionally cascades into `db/b.db`'s `fixtures`/`mock_usages` tables (fixtures already exist there by this point, unlike §8.2's timing) and re-syncs the denormalized aggregate columns `set_repo_analysed()`/`update_test_file_counts()` write once at persist time and don't keep live (`test_files.num_fixtures`/`total_fixture_loc`, `repositories.num_fixtures`/`num_mock_usages`) for every repo touched, so they don't go stale after the delete.
+
+Unlike §8's mechanism, this is explicitly **not** a one-time fix — it must run after every `extract-fixtures --dataset b` invocation, including per-language re-runs, until (and unless) §9.1's restructuring happens. Idempotent: a clean state finds nothing to remove and leaves every file/table untouched, so re-running it costs nothing.
+
+    python -m collection.dedupe_fixtures_by_sha --dataset b
+
+`internal-docs/RUN_COMMANDS.md` updated: Dataset B's chain gained a 5th step running this after `extract-fixtures`, and its Notes section now explicitly states which of the two dedupe tools is one-time (A) versus recurring (B), so this doesn't get silently assumed-fixed again.
+
+### 9.3 Status
+
+Open by design — this is a standing recurring step, not a closed investigation, until §9.1's restructuring is done (not currently planned). Tests added (`tests/collection/test_dedupe_fixtures_by_sha.py`): cross-repo duplicate removed from both CSV and DB with aggregate-column re-sync verified, clean-state no-op case. Full suite and ruff green.

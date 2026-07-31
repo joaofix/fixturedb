@@ -46,7 +46,7 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 
 ## Sampling modes
 - Dataset B (within-repo, paired): sample human fixtures from the same repositories and same 2025+ temporal window as Dataset A, stratified by language.
-- Dataset C (cross-repo, unpaired): repos are selected (not sampled) by `discover-repos --dataset c` (wraps `select_dataset_c_repos.py`) -- every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no stratification or cap. `dataset_c.py` then checks out each one at its own pinned pre-2021 cutoff commit and extracts every fixture from every test file at that snapshot (no diff/purity gating).
+- Dataset C (cross-repo, unpaired): repos are selected (not sampled) by `discover-repos --dataset c` (wraps `select_dataset_c_repos.py`) -- every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no stratification or cap. `dataset_c.py` then checks out each one at its own pinned pre-2021 cutoff commit and extracts every fixture from every test file at that snapshot (no diff/purity gating). Test-file discovery (`find_test_files_with_language()`) checks every file's own language against its own extension, not the repo's tagged language -- a multi-language repo's non-primary-language test files are found and correctly labeled, the same as Datasets A/B's commit-diff-based discovery (see "Cross-language fixture leakage" in `docs/reference/limitations.md`).
 
 ## Repository deduplication
 
@@ -54,7 +54,7 @@ Operational note: choose conservative `min_free_bytes` values for shared CI runn
 org transfers or independently-created "shadow copies" -- two different `repo_name`s
 that share partly or fully identical git history. A shared commit SHA is a
 cryptographic guarantee of identical content, so it's used directly as the dedup key
-throughout. Three mechanisms, matched to each dataset's shape and to how far along
+throughout. Four mechanisms, matched to each dataset's shape and to how far along
 the pipeline duplication is detectable, share their tie-break/clustering logic via
 `collection/repo_dedup_utils.py` (`pick_cluster_survivor()`: highest stars, tie-break
 lowest `github_id` by default, or an injected `tie_break_key` for callers without one;
@@ -86,7 +86,29 @@ lowest `github_id` by default, or an injected `tie_break_key` for callers withou
   `datasets/b/test-commits/` -- B needs its own pass despite inheriting A's repo
   pool, since B does its own live commit scan rather than reusing A's
   classification). Writes an audit CSV (`duplicate_commits_removed.csv`) alongside
-  the commit CSVs it rewrites.
+  the commit CSVs it rewrites. **Fully preventive for Dataset A only** --
+  `extract-fixtures --dataset a` reads its commit list from the exact file this
+  step cleans. **Has no effect on Dataset B's fixtures**: `extract-fixtures
+  --dataset b` never reads `datasets/b/test-commits/*.csv` at all -- it
+  independently re-clones and re-scans every repo's full history itself, so it
+  silently rediscovers the same duplicate commits regardless of how clean that
+  file is. See the next bullet for what actually protects Dataset B.
+- **Dataset B, post-extraction fixture-level cascade** (`collection/dedupe_fixtures_by_sha.py`):
+  same duplicate-detection core as the bullet above, reused directly, but aimed at
+  `datasets/b/fixtures/*.csv` and run *after* `extract-fixtures --dataset b`
+  instead of before, since that's the earliest point where duplicates are both
+  visible and match what extraction actually produced. Also cascades the removal
+  into `db/b.db`'s `fixtures`/`mock_usages` tables and re-syncs the denormalized
+  aggregate columns (`test_files.num_fixtures`/`total_fixture_loc`,
+  `repositories.num_fixtures`/`num_mock_usages`) those deletes leave stale.
+  Unlike every other mechanism here, this is a **recurring cleanup, not a
+  one-time fix** -- run it after every `extract-fixtures --dataset b`
+  invocation, including per-language re-runs. Confirmed at scale on a real run:
+  36.6% of Dataset B's extracted python fixtures shared a `commit_sha` with a
+  different `repo_name` before this step ran. See
+  `internal-docs/methodology-improvements/repo-deduplication.md` section 9 for
+  why extraction can't yet consume the deduped commit CSV directly (which would
+  make this one-time too).
 
 Full rationale, empirical checks, and what was deliberately left out of scope:
 `internal-docs/methodology-improvements/repo-deduplication.md`.

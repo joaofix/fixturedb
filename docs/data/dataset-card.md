@@ -207,10 +207,17 @@ but only catches repos still byte-identical *today*, not a pair that has since
 diverged. A third, commit-level mechanism (`collection/dedupe_commits_by_sha.py`)
 closes most of that gap by working on already-collected commit data instead of a
 live pre-check — any commit whose exact SHA was collected under more than one
-`repo_name` is removed, keeping one canonical `repo_name`'s copy. Unlike the two
-repo-level pre-filters, this one *can* run retroactively against already-collected
-data, and does for both Dataset A and Dataset B (B independently, since B's own
-live commit scan doesn't reuse Dataset A's classification). See
+`repo_name` is removed, keeping one canonical `repo_name`'s copy. This is fully
+preventive for Dataset A (`extract-fixtures --dataset a` reads its commits from
+the exact file this step cleans), but has **no effect on Dataset B's fixtures**:
+`extract-fixtures --dataset b` never reads the deduped file — it independently
+re-clones and re-scans every repo's history itself, so it silently rediscovers
+the same duplicate commits regardless. A fourth mechanism,
+`collection/dedupe_fixtures_by_sha.py`, closes that gap for B specifically by
+running the same detection logic against the already-extracted fixture CSVs
+and DB directly, after `extract-fixtures --dataset b` instead of before —
+but unlike the other three, it's a recurring cleanup that must be re-run after
+every extraction, not a one-time fix. See
 [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies)
 and `internal-docs/methodology-improvements/repo-deduplication.md` for the full
 investigation and measured duplication rates.
@@ -331,6 +338,12 @@ current, authoritative treatment. Summary:
    filter (org transfers, shadow copies). Forward-looking detection is now in
    place for future collections but has not been applied retroactively — see
    [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies).
+8. **Cross-language fixture leakage**: a repo's single language tag doesn't mean
+   every extracted fixture is that language — multi-language repos contribute a
+   measurable minority of fixtures in other languages (Dataset B 12.15%, Dataset A
+   8.04% as of 2026-07-31; Dataset C's rate requires a fresh extraction run to
+   measure, see next section). Not an error to fix, a corpus property to report —
+   see [Limitations § Cross-Language Fixture Leakage](../reference/limitations.md#cross-language-fixture-leakage).
 
 ---
 

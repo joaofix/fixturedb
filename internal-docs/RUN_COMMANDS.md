@@ -59,13 +59,15 @@ python -m collection discover-repos --dataset a --workers 16 \
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
 python -m collection discover-repos --dataset b \
-  && curl -d "Dataset B 1/4: discover-repos finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset B 1/5: discover-repos finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection filter-test-commits --dataset b --workers 16 \
-  && curl -d "Dataset B 2/4: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset B 2/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection.dedupe_commits_by_sha --dataset b \
-  && curl -d "Dataset B 3/4: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset B 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection extract-fixtures --dataset b --workers 16 \
-  && curl -d "Dataset B 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset B 4/5: extract-fixtures finished" ntfy.sh/joaofix_fixturedb \
+  && python -m collection.dedupe_fixtures_by_sha --dataset b \
+  && curl -d "Dataset B 5/5: dedupe_fixtures_by_sha finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
@@ -129,6 +131,22 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     at all. Caught via `tests/collection/test_main_cli.py`'s
     `test_dataset_b_run_call_matches_real_signature` (uses `autospec=True` so the
     mock enforces the real method signature instead of silently accepting anything).
+  - If you split `extract-fixtures --dataset b` into separate per-language calls
+    (rather than the single all-languages call above), no `--force` is needed
+    between them, and none should be added — each call correctly gates on its
+    own `human_within_complete:{lang}` DB checkpoint regardless of what other
+    languages already ran. This didn't always hold: a dataset-wide
+    `database_has_rows(output_db, "fixtures")` check used to run before that,
+    so a repo tagged one language but containing test files in another (a
+    genuine, expected outcome, not a bug -- see
+    `docs/architecture/collection.md`'s "Repository deduplication") could make
+    an earlier language's run insert a handful of rows that then caused every
+    subsequent `--language X` call to see the DB as "already has fixture
+    rows" and skip X entirely, silently, even without `--force`. Removed in
+    `collection/__main__.py`; regression test:
+    `test_dataset_b_does_not_skip_when_db_already_has_fixtures_from_another_language`.
+    Datasets A and C still have this dataset-wide gate -- untouched, since
+    neither is ever run split per-language today.
 - **Dataset C's `discover-repos` runs twice, with `dedupe_dataset_c_repos.py` in
   between.** `dedupe_dataset_c_repos.py` needs Dataset C's already-selected
   candidate pool to check for repos sharing an identical commit at
@@ -163,11 +181,41 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   API calls (everything it needs -- `commit_sha`, `repo_name`, `stars`,
   `created_at` -- is already sitting in the commit-level and repo-level
   CSVs from the steps before it), so it's cheap to run every time. Placed
-  right before `filter-test-commits`/`extract-fixtures` so duplicate
-  commits are never used to generate fixtures in the first place; see
+  right before `filter-test-commits`/`extract-fixtures`; see
   `collection/dedupe_commits_by_sha.py`'s module docstring for the
   commit-SHA-as-proof-of-shared-history reasoning and why this is safer
-  than filtering at the repo level.
+  than filtering at the repo level. **This is a one-time, permanent fix for
+  Dataset A only** — `extract-fixtures --dataset a` reads its commits
+  straight from the file this step just cleaned, so a duplicate removed
+  here never gets extracted, on this run or any future one. **It has no
+  effect on Dataset B's fixtures** — `extract-fixtures --dataset b`
+  (`HumanCorpusCollector`) never reads `datasets/b/test-commits/*.csv` at
+  all; it independently re-clones and re-scans every repo's full history
+  itself, silently rediscovering the exact same duplicate commits under
+  every repo_name variant regardless of how clean that CSV is. Confirmed on
+  a real run: 36.6% of Dataset B's extracted python fixtures shared a
+  `commit_sha` with a different `repo_name`. That's what the next step
+  below actually fixes for B.
+- **`dedupe_fixtures_by_sha.py` (Dataset B only) removes the same
+  cross-repo-name duplicate commits, but from the already-extracted
+  fixture CSVs and `db/b.db` directly** — a recurring cleanup, not a
+  one-time fix like the step above. Run it after *every*
+  `extract-fixtures --dataset b` invocation, including per-language
+  re-runs, not just once; a clean state finds nothing to remove and
+  leaves everything untouched, so it's always safe to run again. Reuses
+  the exact same duplicate-detection logic as `dedupe_commits_by_sha.py`
+  (same `find_duplicate_commit_rows`/`pick_cluster_survivor`), just aimed
+  at `datasets/b/fixtures/*.csv` instead, and additionally cascades the
+  removal into `db/b.db`'s `fixtures`/`mock_usages` tables and re-syncs
+  the denormalized aggregate columns
+  (`test_files.num_fixtures`/`total_fixture_loc`,
+  `repositories.num_fixtures`/`num_mock_usages`) for every repo touched,
+  since those are snapshot columns written once at persist time, not kept
+  live. Restructuring `extract-fixtures --dataset b` to consume the
+  deduped commit CSV directly (making this a one-time fix like Dataset
+  A's) is a real architecture change, deliberately deferred — see
+  `collection/dedupe_fixtures_by_sha.py`'s module docstring and
+  `internal-docs/methodology-improvements/repo-deduplication.md` section 9.
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
 - **`--tier2`** (Dataset A's `discover-commits` only): if Tier-1 commit-trailer
