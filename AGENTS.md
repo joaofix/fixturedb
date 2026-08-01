@@ -71,13 +71,16 @@ collection/          # Main pipeline code (the "library")
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a
   repo_resolve.py    # discover-repos --dataset b (resolves Dataset B's repo list from Dataset A's)
   select_dataset_c_repos.py  # discover-repos --dataset c
+  dedupe_dataset_c_repos.py  # repo-level dedup, between discover-repos --dataset c's two passes
   test_commit_filter.py       # filter-test-commits --dataset a
   human_test_commit_filter.py # filter-test-commits --dataset b (+ pre-2021 helper used by Dataset C tooling)
   test_commit_resume_state.py # checkpoint/resume state shared by both filters above
+  dedupe_commits_by_sha.py  # cross-repo-name commit dedup, a/b, after filter-test-commits
   agent_corpus.py    # Dataset A: extract agent fixtures (extract-fixtures --dataset a)
   human_corpus.py    # Dataset B: extract human fixtures, within-repo (extract-fixtures --dataset b)
   human_corpus_repo_selection.py  # Dataset B's repo selection, split out of human_corpus.py
   dataset_c.py        # Dataset C: extract human fixtures, cross-repo baseline (extract-fixtures --dataset c)
+  dedupe_fixtures_by_sha.py  # Dataset B only -- fixture-level dedup, run after every extract-fixtures --dataset b
   dataset_pipeline.py # analyze-distribution / sample / export cross-cutting stages
   dataset_validator.py # validate stage
   dataset_summary.py  # summarize stage -- writes {dataset}/summary.yaml (repo/commit/fixture counts, purity-gate rate for a/b); also run automatically at the end of `toy`
@@ -85,12 +88,19 @@ collection/          # Main pipeline code (the "library")
   fixture_extractor.py     # Tree-sitter AST fixture extraction
   detector.py        # Fixture pattern detection
   corpus_utils.py    # Shared repo/fixture persistence helpers
-  between_group_comparison.py  # Statistical balance tests
+  between_group_comparison.py  # Statistical-test primitives (effect sizes etc.) used by research_questions/ below.
+                     # BetweenGroupComparator in here is dead/orphaned -- don't use it
+  research_questions/  # Answers the paper's RQs from db/{a,b,c}.db, writes research_questions/*.md (gitignored):
+                     # rq1/rq2/rq3.py (structural/teardown/mocking), balance.py (control-variable check),
+                     # dataset_findings.py (non-RQ descriptive findings), language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
 tests/               # pytest suite
 eda/                 # Exploratory data analysis notebooks
 docs/                # Full documentation
-internal-docs/       # Internal notes, methodology improvements
+internal-docs/       # Internal notes, RUN_COMMANDS.md (authoritative per-dataset command recipes)
+paper-draft/         # The paper, one markdown file per section, LaTeX tables in ```latex fences. Gitignored.
+                     # Pull numbers fresh from research_questions/*.md and datasets/*/summary.md -- don't
+                     # trust a previous fill-in without checking current collection state
 ```
 
 ## Command-line interface
@@ -118,6 +128,10 @@ functions rooted under `toy-dataset/` instead of `datasets/`+`db/`.
 
 `python -m collection paired` bootstraps `db/corpus.db`, only needed for `--tier2`.
 
+The `dedupe_*.py` scripts sit outside this verb interface -- invoke as
+`python -m collection.dedupe_fixtures_by_sha --dataset b`, etc. For the full ordered
+command chain per dataset, see `internal-docs/RUN_COMMANDS.md`.
+
 ## Database
 
 SQLite via `collection/db.py`. One output database per dataset: `db/a.db`, `db/b.db`,
@@ -136,7 +150,7 @@ mode, retries, and connection pooling. The database is secondary: the CSV files 
 ## Testing
 
 ```bash
-python3 -m pytest tests/ -v     # Full suite (~33s)
+python3 -m pytest tests/ -v     # Full suite (~65s)
 python3 -m pytest tests/test_adoption_intensity.py -v  # Single module
 ```
 
@@ -158,3 +172,5 @@ Tests use `tmp_path` fixtures for temporary git repos and SQLite databases. Neve
 - We use a python virtualenv called venv to run tests, using the command "pytest tests/"
 - A prompt that changed code is only considered finished if all tests are passing
 - If we change collection/, we evaluate the need to update the docs/ folder as well. collection/ represents the methodology of this work as code. We want to keep documentation up to date with the methodology.
+- Long-running collection commands: chain with `&&` and a `curl -d "<step> finished" ntfy.sh/joaofix_fixturedb` after each step.
+- Verify paper-draft/ numbers against current collected data before citing -- don't trust a previous fill-in.
