@@ -132,7 +132,7 @@ def test_human_collection_run_mocked(tmp_path, monkeypatch, make_csv):
     )
 
     # Monkeypatch cloning to create repo directory
-    def fake_clone(url, path):
+    def fake_clone(url, path, shallow_since=None):
         path.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             ["git", "init", "-b", "main", str(path)], check=True, capture_output=True

@@ -12,6 +12,7 @@ querying with no fixture-extraction logic of its own.
 """
 
 import csv
+import functools
 import json
 import shutil
 import threading
@@ -31,6 +32,7 @@ from .config import (
     CLONES_DIR,
     COLLECTION_OUTPUT_TAG,
     EXTRACT_WORKERS,
+    shallow_clone_since,
 )
 from .corpus_utils import (
     BaseCorpusStats,
@@ -162,15 +164,26 @@ class HumanCorpusCollector:
 
         logger.debug(f"[Human Corpus] Processing {repo_name}")
 
+        # Discard a stale/incomplete clone left over from an interrupted
+        # previous run before recloning.
         if repo_path.exists() and (repo_path / ".git" / "shallow").exists():
             shutil.rmtree(repo_path, ignore_errors=True)
 
-        # Clone inside a managed context to guarantee cleanup and respect disk guards.
+        # Clone inside a managed context to guarantee cleanup and respect disk
+        # guards. Bounds history to AGENT_CORPUS_START_DATE via
+        # --shallow-since (see clone_primitives.clone_repo_for_commit_scan)
+        # -- faster/smaller when safe, transparently falls back to a full
+        # clone otherwise.
         logger.debug(
-            f"[Human Corpus] Cloning {repo_name} with full history for commit scan..."
+            f"[Human Corpus] Cloning {repo_name} with history for commit scan..."
         )
         with clone_with_function(
-            clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path
+            functools.partial(
+                clone_repo_for_commit_scan,
+                shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
+            ),
+            repo.get("clone_url", ""),
+            repo_path,
         ) as managed_repo_path:
             if managed_repo_path is None:
                 return {

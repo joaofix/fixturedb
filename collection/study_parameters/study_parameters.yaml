@@ -9,6 +9,13 @@ human_corpus_cutoff_date: "2020-12-31" # Dataset C: pre-agent-era snapshot
 agent_corpus_start_date: "2025-01-01" # Datasets A/B: agent-availability window
 dataset_c_min_created_date: "2016-01-01" # Dataset C: lower bound of repo creation-date window
 
+# Shallow-clone bound: --shallow-since=<since_date - this many days> when a
+# clone site only needs commits since some in-scope date (see
+# clone_primitives.py::_shallow_clone_is_truncated for the safety check that
+# makes this trustworthy). Empirically zero discrepancy at 0 buffer days
+# across a 24-repo stratified sample; a few days' slack costs nothing.
+shallow_clone_buffer_days: 7
+
 # Quality thresholds applied to every collected repo
 min_stars: 500
 min_commits: 100

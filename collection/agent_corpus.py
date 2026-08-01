@@ -30,6 +30,7 @@ from .config import (
     COLLECTION_OUTPUT_TAG,
     EXTRACT_WORKERS,
     MIN_COMMITS,
+    shallow_clone_since,
 )
 from .corpus_utils import (
     BaseCorpusStats,
@@ -504,21 +505,30 @@ class AgentCorpusCollector:
 
         logger.debug(f"[Agent Corpus] Processing {repo_name}")
 
-        # Replace shallow clones with full-history by removing shallow state.
+        # Discard a stale/incomplete clone left over from an interrupted
+        # previous run before recloning.
         if repo_path.exists():
             shallow_flag = repo_path / ".git" / "shallow"
             if shallow_flag.exists():
                 logger.debug(
-                    f"[Agent Corpus] Replacing shallow clone for {repo_name} with full-history clone..."
+                    f"[Agent Corpus] Discarding stale clone for {repo_name} before recloning..."
                 )
                 shutil.rmtree(repo_path, ignore_errors=True)
 
-        # Use managed clone context to ensure cleanup and disk guards.
+        # Use managed clone context to ensure cleanup and disk guards. Bounds
+        # history to AGENT_CORPUS_START_DATE via --shallow-since (see
+        # clone_primitives.clone_repo_for_commit_scan) -- faster/smaller when
+        # safe, transparently falls back to a full clone otherwise.
         logger.debug(
             f"[Agent Corpus] Cloning {repo_name} with history for commit scan..."
         )
         with clone_with_function(
-            clone_repo_for_commit_scan, repo.get("clone_url", ""), repo_path
+            functools.partial(
+                clone_repo_for_commit_scan,
+                shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
+            ),
+            repo.get("clone_url", ""),
+            repo_path,
         ) as managed_repo_path:
             if managed_repo_path is None:
                 return {

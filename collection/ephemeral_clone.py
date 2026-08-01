@@ -20,7 +20,11 @@ from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
-from .clone_primitives import cleanup_tempdir, clone_to_tempdir
+from .clone_primitives import (
+    _shallow_clone_is_truncated,
+    cleanup_tempdir,
+    clone_to_tempdir,
+)
 
 # Configurable concurrency limit for git clone operations
 DEFAULT_MAX_CONCURRENT_CLONES = int(os.getenv("MAX_CONCURRENT_CLONES", "4"))
@@ -178,20 +182,39 @@ def temp_clone_commit_history(
     *,
     prefix: str = "collection-",
     timeout: int = 300,
+    shallow_since: Optional[str] = None,
 ):
     """Clone history into a temporary directory and cleanup on exit.
 
     Uses `clone_to_tempdir` helper; yields the repo path (or None on failure).
+
+    When `shallow_since` is given, bounds the fetched history to
+    `--shallow-since=<shallow_since>` (faster, smaller clone), then verifies
+    locally that the shallow boundary didn't truncate in-window history (see
+    `clone_primitives._shallow_clone_is_truncated`). If it did, the clone is
+    discarded and retried once with full history (`shallow_since=None`).
     """
+    clone_args = ["--filter=blob:limit=10m", "--single-branch", "--no-tags"]
+    if shallow_since is not None:
+        clone_args.append(f"--shallow-since={shallow_since}")
+
     repo_path, temp_root = clone_to_tempdir(
         repo_full_name,
         clone_url,
-        ["--filter=blob:limit=10m", "--single-branch", "--no-tags"],
+        clone_args,
         timeout=timeout,
         prefix=prefix,
     )
     if repo_path is None:
         yield None
+        return
+
+    if shallow_since is not None and _shallow_clone_is_truncated(repo_path, shallow_since):
+        cleanup_tempdir(temp_root)
+        with temp_clone_commit_history(
+            clone_url, repo_full_name, prefix=prefix, timeout=timeout, shallow_since=None
+        ) as fallback_path:
+            yield fallback_path
         return
 
     try:

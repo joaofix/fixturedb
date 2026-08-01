@@ -16,6 +16,7 @@ Edit the YAML to update a catalog; no Python change needed.
 
 import os
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -63,6 +64,16 @@ LOGS_DIR = ROOT_DIR / "logs"
 HUMAN_CORPUS_CUTOFF_DATE = _STUDY_PARAMS["human_corpus_cutoff_date"]
 AGENT_CORPUS_START_DATE = _STUDY_PARAMS["agent_corpus_start_date"]
 DATASET_C_MIN_CREATED_DATE = _STUDY_PARAMS["dataset_c_min_created_date"]
+SHALLOW_CLONE_BUFFER_DAYS = _STUDY_PARAMS["shallow_clone_buffer_days"]
+
+
+def shallow_clone_since(since_date: str) -> str:
+    """ISO date to pass as --shallow-since for a clone that only needs
+    history from since_date onward: since_date minus a defensive buffer
+    (see _shallow_clone_is_truncated for why any residual risk is caught
+    regardless of buffer size -- this is just cheap extra slack)."""
+    buffered = date.fromisoformat(since_date) - timedelta(days=SHALLOW_CLONE_BUFFER_DAYS)
+    return buffered.isoformat()
 
 MIN_STARS = _STUDY_PARAMS["min_stars"]
 MIN_COMMITS = _STUDY_PARAMS["min_commits"]

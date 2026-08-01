@@ -26,6 +26,7 @@ from .config import (
     CLONES_DIR,
     HUMAN_CORPUS_CUTOFF_DATE,
     LANGUAGE_CONFIGS,
+    shallow_clone_since,
 )
 from .csv_adapter import get_adapter
 from .ephemeral_clone import temp_clone_commit_history
@@ -607,7 +608,11 @@ def _process_repo_human_test_commits_2025(
 
     logger.debug("[human-test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
-        clone_url, repo_name, prefix="human-test-commits-", timeout=300
+        clone_url,
+        repo_name,
+        prefix="human-test-commits-",
+        timeout=300,
+        shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
     ) as repo_path:
         if repo_path is None:
             logger.warning(

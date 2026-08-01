@@ -14,6 +14,25 @@ The collection subsystem has three layered cloning modules — pick the one matc
 - `collection/ephemeral_clone.py`: context managers wrapping `clone_primitives.py` with throttling (a global semaphore + retry/backoff), disk-safety checks (`ensure_free_space()`), and guaranteed cleanup on exit. Exposes `temp_clone_commit_history()` and `clone_with_function()`. Use this for transient inspection (commit-history scans, QC counters).
 - `collection/persistent_clone.py`: an independent, DB-tracked workflow that clones into the durable `CLONES_DIR` (not a tempdir), runs pre-clone quality checks, and records status in SQLite via `db.py`. Use this for the main repository corpus, not for one-off inspection.
 
+`clone_repo_for_commit_scan()` and `temp_clone_commit_history()` both accept an
+optional `shallow_since` date. When set, the clone is bounded via
+`--shallow-since=<date>` instead of fetching full history — Datasets A and B
+only ever examine commits since `AGENT_CORPUS_START_DATE`, so most of their
+clones don't need anything older. Because git's shallow-boundary negotiation
+can, at a merge commit, silently cut off in-window history that a naive
+`--shallow-since` clone would need, the result is verified locally
+(`clone_primitives._shallow_clone_is_truncated`) before being trusted: a
+flagged clone is discarded and re-fetched with full history, so callers
+always get a correct clone, just faster when it's safe to be. Callers pass
+`shallow_since=config.shallow_clone_since(since_date)` explicitly — the
+primitives themselves stay config-free. Dataset C's clone site (`dataset_c.py`)
+and the discover-repos agent-config check
+(`agent_repository_counter.py`) intentionally leave `shallow_since` unset:
+Dataset C's temporal logic finds the last commit *before* a fixed cutoff,
+which a forward-bounded `--shallow-since` doesn't fit, and the agent-config
+check only needs the working tree at HEAD (a separate, unexplored
+optimization opportunity, not "bound to the analysis window").
+
 Other key components:
 - `collection/db.py`: database schema and helpers.
 - `collection/csv_adapter.py`: pluggable CSV adapter; production code uses file-backed adapter but tests can swap implementations.

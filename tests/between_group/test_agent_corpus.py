@@ -429,7 +429,7 @@ class TestQualityControlledInputs:
                 }
             )
 
-        def fake_clone(clone_url, target_dir):
+        def fake_clone(clone_url, target_dir, shallow_since=None):
             target_dir.mkdir(parents=True, exist_ok=True)
             (target_dir / ".git").mkdir(parents=True, exist_ok=True)
             return True
@@ -583,7 +583,7 @@ class TestQualityControlledInputs:
                 }
             )
 
-        def fake_clone(clone_url, target_dir):
+        def fake_clone(clone_url, target_dir, shallow_since=None):
             target_dir.mkdir(parents=True, exist_ok=True)
             (target_dir / ".git").mkdir(parents=True, exist_ok=True)
             return True
@@ -823,7 +823,9 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
         )
         # owner/empty-repo intentionally has no commit rows at all.
 
-    def fake_clone_repo_for_commit_scan(clone_url: str, target_dir: Path) -> bool:
+    def fake_clone_repo_for_commit_scan(
+        clone_url: str, target_dir: Path, shallow_since: str | None = None
+    ) -> bool:
         subprocess.run(
             ["git", "clone", clone_url, str(target_dir)],
             check=True,
@@ -1235,7 +1237,7 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
             }
         )
 
-    def fake_clone(clone_url, target_dir):
+    def fake_clone(clone_url, target_dir, shallow_since=None):
         target_dir.mkdir(parents=True, exist_ok=True)
         (target_dir / ".git").mkdir(parents=True, exist_ok=True)
         return True

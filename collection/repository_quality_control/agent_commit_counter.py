@@ -43,6 +43,7 @@ from collection import paths
 from collection.agent_corpus import get_agent_commits
 from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
+from collection.config import shallow_clone_since
 from collection.csv_adapter import get_adapter
 from collection.ephemeral_clone import temp_clone_commit_history
 
@@ -172,7 +173,11 @@ def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
     logger.debug("Cloning %s (lang=%s) args=%s", full_name, lang, clone_args)
     out_rows = []
     with temp_clone_commit_history(
-        clone_url, full_name, prefix="agent-commits-", timeout=300
+        clone_url,
+        full_name,
+        prefix="agent-commits-",
+        timeout=300,
+        shallow_since=shallow_clone_since(since),
     ) as repo_path:
         if repo_path is None:
             logger.warning("Clone failed for %s (clone_url=%s)", full_name, clone_url)

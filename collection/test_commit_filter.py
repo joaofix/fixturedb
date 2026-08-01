@@ -19,7 +19,12 @@ from collection.logging_utils import get_logger
 
 from . import paths
 from .clone_primitives import CloneUnavailable
-from .config import AGENT_CORPUS_START_DATE, CLONES_DIR, HUMAN_CORPUS_CUTOFF_DATE
+from .config import (
+    AGENT_CORPUS_START_DATE,
+    CLONES_DIR,
+    HUMAN_CORPUS_CUTOFF_DATE,
+    shallow_clone_since,
+)
 from .ephemeral_clone import temp_clone_commit_history
 from .test_commit_resume_state import (
     _load_agent_test_commit_resume_state,
@@ -51,7 +56,11 @@ def _process_repo_test_commits(
 
     logger.debug("[test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
-        clone_url, repo_name, prefix="agent-test-commits-", timeout=300
+        clone_url,
+        repo_name,
+        prefix="agent-test-commits-",
+        timeout=300,
+        shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
     ) as repo_path:
         if repo_path is None:
             logger.warning("Failed to clone %s while filtering test commits", repo_name)
@@ -303,7 +312,11 @@ def _process_repo_agent_test_commits(
 
     logger.debug("[agent-test-commits] Cloning %s (%s)", repo_name, language)
     with temp_clone_commit_history(
-        clone_url, repo_name, prefix="agent-test-commits-", timeout=300
+        clone_url,
+        repo_name,
+        prefix="agent-test-commits-",
+        timeout=300,
+        shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
     ) as repo_path:
         if repo_path is None:
             logger.warning(
