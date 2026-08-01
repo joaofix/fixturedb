@@ -451,15 +451,26 @@ def run(
     language: Optional[str] = None,
     source_dir: Path = GITHUB_SEARCH_RAW_DIR,
     output_dir: Path = OUTPUT_DIR,
+    artifact_path: Optional[Path] = None,
 ) -> int:
-    """Detect agent config files across candidate repos and write per-language CSVs."""
+    """Detect agent config files across candidate repos and write per-language CSVs.
+
+    The duplicate-repos artifact defaults to living next to `source_dir` (see
+    `DUPLICATE_REPOS_ARTIFACT_PATH`'s docstring), which is right for real
+    production use but wrong for a caller that must read from the real,
+    shared `source_dir` while keeping its own output sandboxed elsewhere
+    (e.g. `toy.py`, which reads real github-search-raw/ candidates but
+    writes under `toy-dataset/`) -- pass `artifact_path` explicitly to
+    redirect where this run's dedup findings get written instead.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     repos = read_repo_list(languages=languages, language=language, raw_dir=source_dir)
     if not repos:
         print(f"No repos found in {source_dir}.")
         return 0
     write_last_commit_sha_duplicates_csv(
-        repos, source_dir / "duplicate_repos_by_current_commit.csv"
+        repos,
+        artifact_path if artifact_path is not None else source_dir / "duplicate_repos_by_current_commit.csv",
     )
     repos = _dedupe_by_last_commit_sha(repos)
     limit = int(limit or 0)

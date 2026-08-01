@@ -220,6 +220,58 @@ def test_run_writes_duplicate_repos_artifact_next_to_raw_source(monkeypatch, tmp
     assert rows[0]["repo_to_remove"] == "owner/low-stars"
 
 
+def test_run_honors_an_explicit_artifact_path_override(monkeypatch, tmp_path):
+    """Regression: a caller that must read from a real, shared `source_dir`
+    (e.g. toy.py, reading real github-search-raw/ candidates while writing
+    everything else under toy-dataset/) needs its dedup findings redirected
+    away from source_dir too -- otherwise a scoped/partial run silently
+    overwrites the real duplicate_repos_by_current_commit.csv there. Caught
+    for real: a toy-dataset regen run clobbered the tracked file with a
+    python-only result before this override existed."""
+    raw_dir = tmp_path / "github-search-raw"
+    raw_dir.mkdir()
+    _write_raw_csv(
+        raw_dir / "python.csv.gz",
+        [
+            {
+                "id": "1",
+                "name": "owner/low-stars",
+                "mainLanguage": "python",
+                "stargazers": "10",
+                "contributors": "1",
+                "lastCommitSHA": "shared-sha",
+            },
+            {
+                "id": "2",
+                "name": "owner/high-stars",
+                "mainLanguage": "python",
+                "stargazers": "100",
+                "contributors": "1",
+                "lastCommitSHA": "shared-sha",
+            },
+        ],
+    )
+
+    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+
+    sandboxed_artifact_path = tmp_path / "sandbox" / "duplicate_repos_by_current_commit.csv"
+    qc.run(
+        workers=1,
+        source_dir=raw_dir,
+        output_dir=tmp_path / "out",
+        languages=["python"],
+        artifact_path=sandboxed_artifact_path,
+    )
+
+    assert sandboxed_artifact_path.exists()
+    assert not (raw_dir / "duplicate_repos_by_current_commit.csv").exists()
+    with sandboxed_artifact_path.open(newline="", encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    assert len(rows) == 1
+    assert rows[0]["repo_to_remove"] == "owner/low-stars"
+
+
 def test_run_never_clones_a_dropped_duplicate(monkeypatch, tmp_path):
     """The real point of dedupe-before-clone: a repo dropped as a duplicate
     must never reach temp_clone_commit_history (has_agent_config check)."""

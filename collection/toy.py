@@ -168,6 +168,14 @@ def run_toy(
                 source_dir=paths.RAW_SEARCH_DIR,
                 output_dir=paths.stage_dir("a", "repos", root=root),
                 workers=workers if workers is not None else 8,
+                # source_dir has to be the real github-search-raw/ (that's
+                # where the real candidate pool lives), but run()'s dedup
+                # artifact defaults to writing next to source_dir -- without
+                # this override a toy run would overwrite the real, shared
+                # duplicate_repos_by_current_commit.csv with a toy-scoped
+                # partial result.
+                artifact_path=paths.stage_dir("a", "repos", root=root)
+                / "duplicate_repos_by_current_commit.csv",
             )
         logger.info("[toy a] scanning commit history for agent commits (stage 2/4)")
         agent_commit_counter.run(
