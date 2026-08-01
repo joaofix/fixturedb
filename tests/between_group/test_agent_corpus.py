@@ -18,6 +18,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 import collection.agent_corpus as agent_corpus
 from collection import paths
 from collection.agent_corpus import (
@@ -1343,3 +1345,188 @@ def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
     stats, _ = collector.run(force=True)
     assert stats.repos_scanned == 1
     assert stats.qc_skip_reasons.get("clone_failed") == 1
+
+
+def test_crash_mid_language_leaves_already_processed_repos_persisted(tmp_path, monkeypatch):
+    """Regression test for the crash-safety property _process_agent_repository()/
+    _persist_agent_repo_result() must provide, mirroring
+    tests/test_human_collection_integration.py's equivalent test for Dataset B:
+    a crash partway through a language's repo list must not lose repos already
+    persisted before it -- each repo's DB row is written immediately as its
+    result completes, not batched until the whole language finishes. Simulates
+    a crash by monkeypatching _process_agent_repository (instance-level, so
+    the fake takes no `self` -- matches how B's own crash test patches
+    collector._process_human_repository) to raise on the 3rd of 5 fake repos,
+    and asserts the first 2 repos' `repositories` rows survive it."""
+    from collection.corpus_utils import construct_repo_dict
+
+    output_db = tmp_path / "a.db"
+    fake_repos = [
+        {"full_name": f"owner/repo{i}", "language": "python", "clone_url": ""}
+        for i in range(5)
+    ]
+    monkeypatch.setattr(agent_corpus, "_load_qc_repo_rows", lambda *a, **kw: fake_repos)
+    monkeypatch.setattr(agent_corpus, "_load_qc_agent_commits", lambda *a, **kw: {})
+
+    def fake_result(repo: dict) -> dict:
+        repo_name = repo["full_name"]
+        return {
+            "status": "ok",
+            "skip_reason": "no_agent_commits",
+            "repo": repo,
+            "repo_name": repo_name,
+            "language_name": "python",
+            "domain": "web",
+            "repo_age": 1.0,
+            "num_contributors": 1,
+            "repo_data": construct_repo_dict(
+                full_name=repo_name,
+                language="python",
+                stars=0,
+                forks=0,
+                description="",
+                topics="[]",
+                created_at="2019-01-01T00:00:00Z",
+                pushed_at="2020-01-01T00:00:00Z",
+                clone_url="",
+                github_id=abs(hash(repo_name)) % 1_000_000,
+                num_contributors=1,
+                domain="web",
+                repo_age_years=1.0,
+            ),
+            "repo_commit_stats": {
+                "agent_commits_touching_tests": 0,
+                "rejected_mixed_test_diff": 0,
+                "accepted": 0,
+            },
+            "repo_fixture_count": 0,
+            "repo_fixture_commit_shas": [],
+            "all_repo_fixtures": [],
+            "test_commits": [],
+            "agent_commits_found": 0,
+        }
+
+    call_count = {"n": 0}
+
+    def fake_process(repo, commits_by_repo):
+        call_count["n"] += 1
+        if call_count["n"] == 3:
+            raise RuntimeError("simulated crash (e.g. process killed mid-scan)")
+        return fake_result(repo)
+
+    collector = AgentCorpusCollector(
+        output_db=output_db,
+        repo_qc_dir=tmp_path,
+        commit_qc_dir=tmp_path,
+        fixtures_output_dir=tmp_path / "fixtures-out",
+    )
+    monkeypatch.setattr(collector, "_process_agent_repository", fake_process)
+
+    with pytest.raises(RuntimeError, match="simulated crash"):
+        collector.run(workers=1)
+
+    with db_session(output_db) as conn:
+        names = {
+            row[0] for row in conn.execute("SELECT full_name FROM repositories").fetchall()
+        }
+    assert names == {"owner/repo0", "owner/repo1"}
+
+
+def test_workers_1_and_workers_4_produce_identical_persisted_state(tmp_path, monkeypatch):
+    """Threading must not change outcomes, only how fast they're reached:
+    running the same multi-repo input through workers=1 (sequential) and
+    workers=4 (thread pool) must persist identical DB state either way."""
+    fake_repos = [
+        {
+            "github_id": i,
+            "full_name": f"owner/repo{i}",
+            "language": "python",
+            "stars": 1,
+            "forks": 0,
+            "description": "",
+            "topics": "[]",
+            "created_at": "",
+            "pushed_at": "",
+            "clone_url": "https://example.com/repo.git",
+            "num_contributors": 1,
+        }
+        for i in range(6)
+    ]
+    monkeypatch.setattr(agent_corpus, "_load_qc_repo_rows", lambda *a, **kw: fake_repos)
+    monkeypatch.setattr(
+        agent_corpus,
+        "_load_qc_agent_commits",
+        lambda *a, **kw: {
+            repo["full_name"]: [
+                {
+                    "commit_sha": f"{repo['full_name']}-sha",
+                    "agent_type": "claude",
+                    "commit_date": "2025-01-01",
+                }
+            ]
+            for repo in fake_repos
+        },
+    )
+    monkeypatch.setattr(agent_corpus, "clone_with_function", _fake_clone_with_function)
+    monkeypatch.setattr(
+        agent_corpus,
+        "collect_test_files_for_commit",
+        lambda repo_path, commit_sha, language: ["tests/test_sample.py"],
+    )
+    monkeypatch.setattr(
+        agent_corpus.AgentFixtureExtractor,
+        "_extract_from_agent_commits",
+        lambda self, repo_name, commits, **kwargs: [
+            {
+                "name": "fixture_a",
+                "fixture_type": "pytest_decorator",
+                "scope": "per_test",
+                "start_line": 1,
+                "end_line": 2,
+                "loc": 1,
+                "cyclomatic_complexity": 1,
+                "max_nesting_depth": 1,
+                "num_objects_instantiated": 0,
+                "num_external_calls": 0,
+                "num_parameters": 0,
+                "has_teardown_pair": 0,
+                "raw_source": "",
+                "framework": "pytest",
+                "num_mocks": 0,
+                "is_complete_addition": True,
+                "language": "python",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        agent_corpus.AgentCorpusCollector, "_generate_summary", lambda self, stats: None
+    )
+
+    def run_once(db_name: str, workers: int):
+        collector = AgentCorpusCollector(
+            output_db=tmp_path / db_name,
+            repo_qc_dir=tmp_path,
+            commit_qc_dir=tmp_path,
+            fixtures_output_dir=tmp_path / f"fixtures-out-{db_name}",
+        )
+        return collector.run(language="python", workers=workers)
+
+    stats_seq, db_seq = run_once("sequential.db", workers=1)
+    stats_par, db_par = run_once("parallel.db", workers=4)
+
+    assert stats_seq.fixtures_collected == stats_par.fixtures_collected == 6
+    assert stats_seq.repos_passed_qc == stats_par.repos_passed_qc == 6
+
+    with db_session(db_seq) as conn:
+        seq_repos = {
+            row[0] for row in conn.execute("SELECT full_name FROM repositories").fetchall()
+        }
+        seq_fixture_count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+    with db_session(db_par) as conn:
+        par_repos = {
+            row[0] for row in conn.execute("SELECT full_name FROM repositories").fetchall()
+        }
+        par_fixture_count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+
+    assert seq_repos == par_repos == {r["full_name"] for r in fake_repos}
+    assert seq_fixture_count == par_fixture_count == 6

@@ -114,14 +114,12 @@ def run_toy(
     of a quick smoke test. See internal-docs/methodology-improvements/ for
     the sample-size derivation.
 
-    `workers` overrides each stage's own default worker-thread count where
-    it's safe to (every stage except Dataset A's fixture-extraction, which
-    interleaves DB writes into its per-repo loop and stays single-threaded).
-    Every other stage already confines DB/CSV writes to the main thread --
-    worker threads only clone/scan -- so raising this is safe with respect
-    to data correctness; it's still bounded by GitHub rate limits and
-    SQLite's single writer at high values. None keeps each stage's own
-    tuned default.
+    `workers` overrides each stage's own default worker-thread count.
+    Every stage confines DB/CSV writes to the main thread -- worker threads
+    only clone/scan -- so raising this is safe with respect to data
+    correctness; it's still bounded by GitHub rate limits and SQLite's
+    single writer at high values. None keeps each stage's own tuned
+    default.
     """
     root = paths.TOY_ROOT
     db_root = _toy_db_root()
@@ -183,10 +181,7 @@ def run_toy(
             paths.stage_dir("a", "test-commits", root=root),
             workers=workers if workers is not None else 12,
         )
-        logger.info(
-            "[toy a] extracting fixtures (stage 4/4, single-threaded -- see "
-            "run_toy docstring)"
-        )
+        logger.info("[toy a] extracting fixtures (stage 4/4)")
         collector = AgentCorpusCollector(
             output_db=paths.db_path("a", root=db_root),
             repo_qc_dir=paths.stage_dir("a", "repos", root=root),
@@ -194,7 +189,9 @@ def run_toy(
             fixtures_output_dir=paths.stage_dir("a", "fixtures", root=root),
         )
         stats, db_path = collector.run(
-            repos_per_language=None if stratified else repos, language=language
+            repos_per_language=None if stratified else repos,
+            language=language,
+            workers=workers,
         )
         logger.info(f"[toy a] done: {stats.fixtures_collected} fixtures in {db_path}")
         summary_path = write_summary("a", root=root)

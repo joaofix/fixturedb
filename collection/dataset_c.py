@@ -559,6 +559,11 @@ def collect_dataset_c_fixtures(
 
     successful_repos: Set[str] = set()
 
+    # Not using collection/parallel_utils.py::run_parallel_per_repo() here --
+    # unlike agent_corpus.py/human_corpus.py, persistence below can't happen
+    # per-repo as each one completes: the stratified sample (targets, below)
+    # needs every candidate gathered first. Adopting the shared harness would
+    # need that sampling step decoupled from persistence first.
     if workers <= 1:
         for repo in tqdm(pending_repos, desc="[Dataset C]", unit="repo"):
             success, results = _process_repo(repo, cutoffs, extractor, clones_dir)

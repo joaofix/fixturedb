@@ -52,7 +52,7 @@ python -m collection discover-repos --dataset a --workers 16 \
   && curl -d "Dataset A 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
   && python -m collection filter-test-commits --dataset a --workers 16 \
   && curl -d "Dataset A 4/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection extract-fixtures --dataset a \
+  && python -m collection extract-fixtures --dataset a --workers 16 \
   && curl -d "Dataset A 5/5: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
@@ -118,11 +118,14 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     (`resolve_dataset_b_repos()`, `select_repos()`), so `--workers` there would be
     a silent no-op; omitted above rather than left in as a no-op that looks like
     it's doing something.
-  - `extract-fixtures --dataset a` **ignores `--workers` entirely** — its collector
-    interleaves DB writes into a per-repo loop and stays single-threaded by design
-    (confirmed: no `ThreadPoolExecutor` anywhere in `agent_corpus.py`). Passing the
-    flag wouldn't error, just silently do nothing, so it's omitted above rather than
-    left in as a no-op that looks like it's doing something.
+  - `extract-fixtures --dataset a` honors `--workers` (added later than the rest of
+    this table -- it used to ignore the flag entirely, single-threaded by design,
+    with no `ThreadPoolExecutor` anywhere in `agent_corpus.py`). Now shares the same
+    thread-pool harness as `--dataset b` (`collection/parallel_utils.py
+    ::run_parallel_per_repo()` -- each repo's result is persisted immediately as it
+    completes, so a crash mid-batch only loses whatever repo was still in flight).
+    `--dataset c` still has its own separate `ThreadPoolExecutor`, not this harness
+    -- see that collector's own comment for why.
   - `extract-fixtures --dataset b` *did* silently drop `--workers` the same way
     until `collection/__main__.py` was fixed to actually pass it through to
     `HumanCorpusCollector.run()` — that same fix also removed a `languages=...` kwarg

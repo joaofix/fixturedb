@@ -258,6 +258,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
             languages=args.languages,
             language=args.language,
             force=args.force,
+            workers=args.workers,
         )
         logger.info(
             f"Dataset A extraction complete: {stats.fixtures_collected} fixtures in {db_path}"
@@ -576,12 +577,9 @@ def build_parser() -> argparse.ArgumentParser:
             "each stage's own tuned default, currently 8). Workers only "
             "parallelize network/CPU-bound cloning and scanning -- DB and CSV "
             "writes always happen back on the main thread, so this is safe to "
-            "raise. Dataset A's fixture-extraction stage is the one exception: "
-            "it interleaves DB writes into its per-repo loop and stays "
-            "single-threaded regardless of this flag. A very high value here "
-            "won't corrupt anything but can still bottleneck on GitHub rate "
-            "limits or the single SQLite writer; keep it in the 4-16 range "
-            "unless you've tested higher."
+            "raise. A very high value here won't corrupt anything but can "
+            "still bottleneck on GitHub rate limits or the single SQLite "
+            "writer; keep it in the 4-16 range unless you've tested higher."
         ),
     )
     toy_parser.add_argument(

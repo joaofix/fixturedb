@@ -315,6 +315,33 @@ class TestExtractFixtures:
             commit_qc_dir=paths.stage_dir("a", "test-commits"),
         )
 
+    def test_dataset_a_run_call_matches_real_signature(self):
+        """Regression, mirrors test_dataset_b_run_call_matches_real_signature
+        below: `--workers` used to be silently dropped for dataset a (never
+        passed to `collector.run(...)` at all, and AgentCorpusCollector.run()
+        didn't even accept it). A plain MagicMock would swallow that
+        silently; autospec=True makes the mock enforce the real method
+        signature instead."""
+        stats = MagicMock(fixtures_collected=5)
+        with patch("collection.resume_utils.database_has_rows", return_value=False):
+            with patch(
+                "collection.agent_corpus.AgentCorpusCollector", autospec=True
+            ) as MockCollector:
+                MockCollector.return_value.run.return_value = (
+                    stats,
+                    paths.db_path("a"),
+                )
+                rc = main(["extract-fixtures", "--dataset", "a", "--workers", "16"])
+
+        assert rc == 0
+        MockCollector.return_value.run.assert_called_once_with(
+            repos_per_language=None,
+            languages=None,
+            language=None,
+            force=False,
+            workers=16,
+        )
+
     def test_dataset_b_resolves_defaults(self):
         stats = MagicMock(fixtures_collected=5)
         with patch("collection.resume_utils.database_has_rows", return_value=False):
