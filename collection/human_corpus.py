@@ -17,14 +17,12 @@ import shutil
 import threading
 import time
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from pydriller import Repository
-from tqdm import tqdm
 
 from . import paths
 from .clone_primitives import clone_repo_for_commit_scan
@@ -52,6 +50,7 @@ from .ephemeral_clone import clone_with_function
 from .fixture_extractor import AgentFixtureExtractor
 from .human_corpus_repo_selection import select_human_corpus_repositories
 from .logging_utils import get_logger
+from .parallel_utils import run_parallel_per_repo
 from .test_commit_utils import write_test_commits_csv
 from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
@@ -711,119 +710,104 @@ class HumanCorpusCollector:
                 logger.debug(
                     f"[Human Corpus] Skip {repo_name}: {result.get('skip_reason')}"
                 )
-                return
-
-            stats.repos_passed_qc += 1
-
-            domain = result["domain"]
-            repo_age = result["repo_age"]
-            if repo_age is not None:
-                repo_ages.append(repo_age)
-            if result.get("num_contributors"):
-                repo_contributors.append(result["num_contributors"])
-
-            stats.domain_distribution[domain] = (
-                stats.domain_distribution.get(domain, 0) + 1
-            )
-
-            repo_data = result["repo_data"]
-            test_commit_rows = result["test_commit_rows"]
-            fixtures = result["fixtures"]
-
-            with db_session(self.output_db) as conn:
-                repo_row, _ = upsert_repository(conn, repo_data)
-                for test_commit in test_commit_rows:
-                    test_commit["repo_id"] = repo_row
-                    insert_test_commit(conn, test_commit)
-
-            lang_test_commit_rows.extend(test_commit_rows)
-            test_commit_rows_by_language[current_lang].extend(test_commit_rows)
-            all_test_commit_rows.extend(test_commit_rows)
-            stats.test_commits_found += len(test_commit_rows)
-            lang_commits_accepted += result.get("commits_accepted", 0)
-            lang_commits_rejected += result.get("commits_rejected", 0)
-
-            stats.repos_by_language[current_lang] = (
-                stats.repos_by_language.get(current_lang, 0) + 1
-            )
-
-            if fixtures:
-                # Bucket by each fixture's OWN detected language, not the
-                # repo's aggregate current_lang -- a repo's SEART-assigned
-                # language is a single tag for the whole repo, but a
-                # multi-language repo (e.g. a Java backend with a JS
-                # frontend) can have human commits touching test files in
-                # more than one language. Same fix as agent_corpus.py's
-                # _persist_repo_agent_commit_stats().
-                fixtures_by_language: dict[str, list[dict]] = {}
-                for fx in fixtures:
-                    fx_lang = (fx.get("language") or current_lang).strip().lower()
-                    fixtures_by_language.setdefault(fx_lang, []).append(fx)
-
-                fixture_count = 0
-                for fx_lang, fx_group in fixtures_by_language.items():
-                    fixtures_out_path = _human_fixture_csv_path(
-                        fx_lang, "b", self.fixtures_output_dir
-                    )
-                    fixture_count += persist_repository_and_fixtures(
-                        self.output_db,
-                        repo_data,
-                        fx_group,
-                        out_path=fixtures_out_path,
-                        handle_mocks=True,
-                    )
-                with progress_lock:
-                    stats.fixtures_collected += fixture_count
-                    lang_fixtures_collected += fixture_count
-                    if stats.repos_by_language[current_lang] > 0:
-                        language_progress[current_lang]["avg_fixtures_per_repo"] = (
-                            lang_fixtures_collected
-                            / stats.repos_by_language[current_lang]
-                        )
             else:
-                logger.debug(
-                    f"[Human Corpus] No complete human fixtures found in {repo_name}"
+                stats.repos_passed_qc += 1
+
+                domain = result["domain"]
+                repo_age = result["repo_age"]
+                if repo_age is not None:
+                    repo_ages.append(repo_age)
+                if result.get("num_contributors"):
+                    repo_contributors.append(result["num_contributors"])
+
+                stats.domain_distribution[domain] = (
+                    stats.domain_distribution.get(domain, 0) + 1
                 )
 
-            repo_path = self.clones_dir / repo_name.replace("/", "__")
-            if repo_path.exists():
-                shutil.rmtree(repo_path, ignore_errors=True)
-                logger.debug(f"[Human Corpus] Cleaned up clone: {repo_name}")
+                repo_data = result["repo_data"]
+                test_commit_rows = result["test_commit_rows"]
+                fixtures = result["fixtures"]
+
+                with db_session(self.output_db) as conn:
+                    repo_row, _ = upsert_repository(conn, repo_data)
+                    for test_commit in test_commit_rows:
+                        test_commit["repo_id"] = repo_row
+                        insert_test_commit(conn, test_commit)
+
+                lang_test_commit_rows.extend(test_commit_rows)
+                test_commit_rows_by_language[current_lang].extend(test_commit_rows)
+                all_test_commit_rows.extend(test_commit_rows)
+                stats.test_commits_found += len(test_commit_rows)
+                lang_commits_accepted += result.get("commits_accepted", 0)
+                lang_commits_rejected += result.get("commits_rejected", 0)
+
+                stats.repos_by_language[current_lang] = (
+                    stats.repos_by_language.get(current_lang, 0) + 1
+                )
+
+                if fixtures:
+                    # Bucket by each fixture's OWN detected language, not the
+                    # repo's aggregate current_lang -- a repo's SEART-assigned
+                    # language is a single tag for the whole repo, but a
+                    # multi-language repo (e.g. a Java backend with a JS
+                    # frontend) can have human commits touching test files in
+                    # more than one language. Same fix as agent_corpus.py's
+                    # _persist_repo_agent_commit_stats().
+                    fixtures_by_language: dict[str, list[dict]] = {}
+                    for fx in fixtures:
+                        fx_lang = (fx.get("language") or current_lang).strip().lower()
+                        fixtures_by_language.setdefault(fx_lang, []).append(fx)
+
+                    fixture_count = 0
+                    for fx_lang, fx_group in fixtures_by_language.items():
+                        fixtures_out_path = _human_fixture_csv_path(
+                            fx_lang, "b", self.fixtures_output_dir
+                        )
+                        fixture_count += persist_repository_and_fixtures(
+                            self.output_db,
+                            repo_data,
+                            fx_group,
+                            out_path=fixtures_out_path,
+                            handle_mocks=True,
+                        )
+                    with progress_lock:
+                        stats.fixtures_collected += fixture_count
+                        lang_fixtures_collected += fixture_count
+                        if stats.repos_by_language[current_lang] > 0:
+                            language_progress[current_lang]["avg_fixtures_per_repo"] = (
+                                lang_fixtures_collected
+                                / stats.repos_by_language[current_lang]
+                            )
+                else:
+                    logger.debug(
+                        f"[Human Corpus] No complete human fixtures found in {repo_name}"
+                    )
+
+                repo_path = self.clones_dir / repo_name.replace("/", "__")
+                if repo_path.exists():
+                    shutil.rmtree(repo_path, ignore_errors=True)
+                    logger.debug(f"[Human Corpus] Cleaned up clone: {repo_name}")
+
+            with progress_lock:
+                stats.repos_scanned += 1
+                language_progress[current_lang]["completed"] += 1
 
         # Count each repo as "scanned" the moment its clone+scan+extract work
         # finishes here, not later -- that's the actual bottleneck (anonymous
         # git clone + full commit scan per repo), and the periodic progress
         # heartbeat (log_progress(), reading stats.repos_scanned) previously
         # stayed at 0 for the entire duration of this phase, making hours of
-        # real work look like nothing was happening.
-        if workers <= 1:
-            for repo in tqdm(
-                lang_repos, desc=f"[Human Corpus] {current_lang}", unit="repo"
-            ):
-                persist_result(self._process_human_repository(repo))
-                with progress_lock:
-                    stats.repos_scanned += 1
-                    language_progress[current_lang]["completed"] += 1
-        else:
-            with ThreadPoolExecutor(max_workers=workers) as executor:
-                futures = {
-                    executor.submit(self._process_human_repository, repo): repo
-                    for repo in lang_repos
-                }
-                for future in tqdm(
-                    as_completed(futures),
-                    total=len(futures),
-                    desc=f"[Human Corpus] {current_lang}",
-                    unit="repo",
-                ):
-                    # Persisted here, in the main thread that drives
-                    # as_completed() -- never inside the worker threads
-                    # above, which only run _process_human_repository()
-                    # (no DB access) by design.
-                    persist_result(future.result())
-                    with progress_lock:
-                        stats.repos_scanned += 1
-                        language_progress[current_lang]["completed"] += 1
+        # real work look like nothing was happening. persist_result() itself
+        # updates stats.repos_scanned/language_progress unconditionally (both
+        # branches) so run_parallel_per_repo() only needs to know compute vs
+        # persist, not this collector's own progress bookkeeping.
+        run_parallel_per_repo(
+            lang_repos,
+            self._process_human_repository,
+            persist_result,
+            workers,
+            desc=f"[Human Corpus] {current_lang}",
+        )
 
         if lang_fixtures_collected:
             logger.info(
