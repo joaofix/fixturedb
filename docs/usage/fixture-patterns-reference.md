@@ -2,27 +2,13 @@
 
 Comprehensive catalog of 25+ fixture types detected across Python, Java, JavaScript, and TypeScript.
 
-**Scope policy:** only the dominant, actively-maintained testing frameworks
-per language are covered (pytest/unittest for Python, JUnit/TestNG for
-Java) — never frameworks layered on top of them (e.g. Spring, Cucumber) or
-niche/legacy testing frameworks (e.g. nose, Behave). Once one such
-framework's own conventions are in scope, there's no principled place to
-stop, since every other framework a project might use has an equally valid
-claim to inclusion. See "Known Exclusions & Boundary Cases" below for the
-full list and reasoning.
+Scope policy: only the dominant, actively-maintained testing frameworks per language are covered — pytest/unittest for Python, JUnit/TestNG for Java — never frameworks layered on top of them (e.g. Spring, Cucumber) or niche/legacy testing frameworks (e.g. nose, Behave). Once one such framework's own conventions are in scope, there's no principled place to stop, since every other framework a project might use has an equally valid claim to inclusion. See "Known Exclusions & Boundary Cases" below for the full list and reasoning.
 
-**Source of truth:** the tables below are prose explanations of what's
-actually in `collection/heuristics/fixture_definitions.yaml`, which the
-detector modules (`detector_python.py`/`detector_java.py`/`detector_javascript.py`)
-load at import time — that YAML file is the executable definition, and also
-documents, per language, which boundary cases are deliberately **not**
-detected and why (see "Known Exclusions & Boundary Cases" below).
+Source of truth: the tables below are prose explanations of what's actually in `collection/heuristics/fixture_definitions.yaml`, which the detector modules (`detector_python.py`/`detector_java.py`/`detector_javascript.py`) load at import time. That YAML file is the executable definition, and also documents, per language, which boundary cases are deliberately not detected and why (see "Known Exclusions & Boundary Cases" below).
 
 ## Fixture Taxonomy Overview
 
-Fixture definitions are organized by **language** and **pattern type**. Each language has distinct mechanisms for declaring fixtures—some use decorators, others use method names or attributes. Detailed taxonomy diagrams for each language are shown in their respective sections below.
-
-**Fixture Scope:** Most frameworks support multiple scopes (per-test, per-class, per-module, global). See each language section for scope details.
+Fixture definitions are organized by language and pattern type. Each language has distinct mechanisms for declaring fixtures — some use decorators, others use method names or attributes. Detailed taxonomy diagrams for each language are in their respective sections below. Most frameworks support multiple scopes (per-test, per-class, per-module, global); see each language section for scope details.
 
 ## Quick Lookup
 
@@ -344,12 +330,7 @@ by `TestAsyncPythonFixtures`, `TestAsyncJavaScriptFixtures`, and
 
 ## Known Exclusions & Boundary Cases
 
-Every pattern above is what the detector matches; just as important is what
-it deliberately does **not** match, and why. This makes the recall boundary
-explicit for reviewers instead of leaving it implicit in the source code.
-The authoritative version of this list lives in the `excluded` section of
-each language block in `collection/heuristics/fixture_definitions.yaml` —
-reproduced here for readability.
+Every pattern above is what the detector matches; just as important is what it deliberately does not match, and why. This makes the recall boundary explicit for reviewers instead of leaving it implicit in the source code. The authoritative version of this list lives in the `excluded` section of each language block in `collection/heuristics/fixture_definitions.yaml`, reproduced here for readability.
 
 ### Python
 

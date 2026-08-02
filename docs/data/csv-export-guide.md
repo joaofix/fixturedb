@@ -1,11 +1,6 @@
 # CSV Export Guide
 
-`python -m collection export --dataset {a,b,c}` writes `export/{dataset}.zip`, a
-self-contained bundle for one dataset at a time (Dataset A: agent fixtures, Dataset B:
-human within-repo control, Dataset C: human cross-repo baseline — see
-[Repository Structure](../getting-started/repository-structure.md)). There is no
-combined cross-dataset export; each ZIP stands alone and is usable without the
-source database or the other two datasets.
+`python -m collection export --dataset {a,b,c}` writes `export/{dataset}.zip`, a self-contained bundle for one dataset at a time — Dataset A (agent fixtures), Dataset B (human within-repo control), or Dataset C (human cross-repo baseline); see [Repository Structure](../getting-started/repository-structure.md). There is no combined cross-dataset export; each ZIP stands alone and is usable without the source database or the other two datasets.
 
 ## Export contents
 

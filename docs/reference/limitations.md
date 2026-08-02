@@ -5,18 +5,12 @@
 The between-group methodology collects human and agent corpora at different time periods to avoid temporal confounding. However, this design introduces its own limitations:
 
 ### Temporal Separation Confounding
-- **Human corpus:** Pre-2021 repositories (fixture collection snapshot at 2020-12-31)
-- **Agent corpus:** 2025+ repositories with agent commits (fixture collection snapshot at 2025-01-01)
-- **Confound:** Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement
-
-**Mitigation:** Control variables (language, domain, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U) — see `collection/between_group_comparison.py` and [Analyzing the Datasets § Comparing two datasets](../usage/usage.md#comparing-two-datasets). Balance report confirms no significant differences (p ≥ 0.05).
+- **Problem:** The human corpus is drawn from pre-2021 repositories (fixture collection snapshot at 2020-12-31), while the agent corpus is drawn from 2025+ repositories with agent commits (snapshot at 2025-01-01). Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement.
+- **Mitigation:** Control variables (language, domain, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U) — see `collection/between_group_comparison.py` and [Analyzing the Datasets § Comparing two datasets](../usage/usage.md#comparing-two-datasets). The balance report confirms no significant differences (p ≥ 0.05).
 
 ### Agent Detection Conservatism
-- **Tier 1 detection only:** Agents identified via `co-authored-by` commit trailers only
-- **False negatives:** Agents without proper trailers are classified as human
-- **Impact:** True agent detection rate may be higher than reported
-
-**Mitigation:** Use conservative Tier 1 estimates. Tier 2/3 (heuristic-based) detection documented in [Agent Detection Methodology](../architecture/agent-detection.md).
+- **Problem:** Agents are identified via Tier 1 detection only — `co-authored-by` commit trailers and author identity. Agents without proper trailers are classified as human, so the true agent detection rate may be higher than reported.
+- **Mitigation:** Use conservative Tier 1 estimates. Tier 2 (heuristic-based) detection is documented in [Agent Detection Methodology](../architecture/agent-detection.md).
 
 ### Differential False-Negative Risk: Dataset B vs. Dataset C
 - **Dataset B** draws its repo pool from the *same* agent-adopting repositories as Dataset A (every B repo is a subset of A's agent-config-having pool). This is a real strength for controlling repo-level confounds (domain, maturity) — but it also means B's "human"-labeled commits sit in repos where agent use is actively encouraged, so an untrailed, informally-agent-assisted commit (see "Agent Detection Conservatism" above) is more likely to occur in B than it would in a naive agent-free control.
@@ -26,11 +20,8 @@ The between-group methodology collects human and agent corpora at different time
 **Mitigation:** None currently measured or applied — this is a structural property of each dataset's repo-selection strategy, not a detection bug to fix. Treat A-vs-B and A-vs-C findings as testing related but distinct questions rather than pooling them into one undifferentiated "agent vs. human" conclusion.
 
 ### Repository Availability
-- **Human corpus:** Assumes pre-2021 repositories are still publicly available
-- **Agent corpus:** Depends on GitHub API availability and rate limits
-- **Impact:** Extinct or private repositories cannot be collected
-
-**Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling; `--tier2` agent discovery additionally falls back to the pre-curated `db/corpus.db`.
+- **Problem:** The human corpus assumes pre-2021 repositories are still publicly available; the agent corpus depends on GitHub API availability and rate limits. Extinct or private repositories can't be collected.
+- **Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling; `--tier2` agent discovery additionally falls back to the pre-curated `db/corpus.db`.
 
 ### Repository-Level Duplication (Forks, Org Transfers, Shadow Copies)
 - **Problem:** Two different `repo_name`s in `github-search-raw/` can share partly or fully identical git history — GitHub org transfers, community mirrors, and independently-created "shadow copies" (a raw `git push` of one repo's history into a brand-new repo object). Each is counted as an independent repository, silently inflating sample size and duplicating fixtures. Not caught by the "exclude forks" query filter applied at source — `isFork=true` appears zero times across the entire raw candidate pool, since GitHub's own fork bookkeeping only covers repos created via its "Fork" button/API.
@@ -79,7 +70,7 @@ Other languages such as Ruby (RSpec), Kotlin, Scala, Rust, and C# are not includ
 
 ## Parametrized Tests
 
-Parametrized test functions are counted as **single test functions**, not multiplied by parameter set count. Test-to-fixture ratio may under-represent reuse in projects with heavy parametrization.
+Parametrized test functions are counted as single test functions, not multiplied by parameter set count. Test-to-fixture ratio may under-represent reuse in projects with heavy parametrization.
 
 To assess: Query `test_files` for parametrized patterns (regex: `parametrize|ParameterizedTest|test.each`).
 
@@ -189,7 +180,7 @@ differs by authorship group.
 
 30 regex patterns across 11 mock frameworks detected (`unittest.mock`, `pytest-mock`, pytest's built-in `monkeypatch`, Mockito, EasyMock, MockK, Jest, Sinon, Vitest, gomock, testify — see the full, exact list in [collection/heuristics/feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml)'s `mock_patterns`). Coverage excludes niche frameworks (e.g. PowerMock) and non-standard APIs; the exact documented exclusions are in that same file's `mock_patterns_excluded`. Detects mocks within the fixture's own body only — not test bodies, and not module-level setup outside any fixture (e.g. Jest's conventional top-level `jest.mock('./module')` is invisible to this detector even though the pattern exists, since it's structurally outside any fixture's AST node). Treat `num_mocks=0` as reliable only within that scope; use `num_mocks>0` as a presence indicator, not an exact count.
 
-Each fixture is also classified into the classic test-double taxonomy (Meszaros) — `dummy`/`stub`/`spy`/`mock`/`fake` — as `mock_usages.category`. Classification scans the fixture's own full body text, case-insensitively, for one of the five category terms in priority order (dummy > stub > spy > fake > mock), falling back to `mock` when none is found — an identifier-keyword method, not a lookup keyed on which framework matched. **One category is computed per fixture and applied to every mock recorded in it** — a fixture that legitimately creates two differently-named mocks (e.g. both a `dummy_x` and a `real_service_mock`) gets the same category for both, since classification isn't re-run per individual mock call. Treat `category` as a per-fixture classification, not a claim about how each individual mock instance was specifically used.
+Each fixture is also classified into the classic test-double taxonomy (Meszaros) — `dummy`/`stub`/`spy`/`mock`/`fake` — as `mock_usages.category`. Classification scans the fixture's own full body text, case-insensitively, for one of the five category terms in priority order (dummy > stub > spy > fake > mock), falling back to `mock` when none is found — an identifier-keyword method, not a lookup keyed on which framework matched. One category is computed per fixture and applied to every mock recorded in it, so a fixture that legitimately creates two differently-named mocks (e.g. both a `dummy_x` and a `real_service_mock`) gets the same category for both, since classification isn't re-run per individual mock call. Treat `category` as a per-fixture classification, not a claim about how each individual mock instance was specifically used.
 
 ---
 

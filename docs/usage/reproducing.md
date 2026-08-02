@@ -17,10 +17,7 @@ The pipeline builds three datasets from agent-enabled repositories:
 | B | Human-authored fixtures, within-repo matched control (same repos and 2025+ window as Dataset A) | `human_corpus.HumanCorpusCollector.run()` |
 | C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo set) | `dataset_c.collect_dataset_c_fixtures()` |
 
-**Key design principles:**
-- Datasets A and B come from the same agent-enabled repos, scanned in the same temporal window (post-2025), giving paired within-repo observations.
-- Dataset C comes from an independent set of repos created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`, 2016–2020), each checked out at its own pinned pre-2021 commit — no domain sampling, no per-language cap. Bounds repo age at snapshot time instead of relying on a live popularity filter; see [internal-docs/methodology-improvements/dataset-c-repo-selection.md](../../internal-docs/methodology-improvements/dataset-c-repo-selection.md).
-- Tier 1 agent detection only (co-authored-by trailers, author signatures).
+Datasets A and B come from the same agent-enabled repos, scanned in the same temporal window (post-2025), giving paired within-repo observations. Dataset C comes from an independent set of repos created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`, 2016–2020), each checked out at its own pinned pre-2021 commit — no domain sampling, no per-language cap. This bounds repo age at snapshot time instead of relying on a live popularity filter; see [internal-docs/methodology-improvements/dataset-c-repo-selection.md](../../internal-docs/methodology-improvements/dataset-c-repo-selection.md). Agent detection is Tier 1 only (co-authored-by trailers, author signatures).
 
 ## Collection Pipeline
 
@@ -96,13 +93,7 @@ ls clones/ | wc -l
 sqlite3 db/corpus.db "PRAGMA integrity_check;"
 ```
 
-The pipeline is deterministic given:
-1. **Fixed `github-search-raw/` snapshot** and the CSV outputs each stage produces from it
-2. **Fixed clone directory** with repository snapshots (Dataset C additionally pins a cutoff commit SHA per repo)
-3. **Deterministic fixture extraction** from tree-sitter AST analysis
-4. **Conservative agent detection** (Tier 1 only: co-authored-by trailers)
-5. **Fixed temporal boundaries** (`AGENT_CORPUS_START_DATE` for Datasets A/B, `HUMAN_CORPUS_CUTOFF_DATE` for Dataset C — see `collection/config.py`)
-6. **Fixed `corpus.db`**, only if a run used `--tier2`
+See Determinism & Reproducibility Guarantees below for exactly what has to stay fixed for a reproduction to match.
 
 ## Verification & Validation
 
@@ -160,21 +151,15 @@ sqlite3 db/a.db "PRAGMA integrity_check;"
 
 ## Determinism & Reproducibility Guarantees
 
-### Fully Deterministic Components
+### Fully deterministic components
 
-- **Agent detection**: Co-authored-by trailer parsing (Tier 1)
-- **Fixture extraction**: Tree-sitter-based extraction (deterministic code analysis)
-- **Control variable computation**: Snapshot-based calculation (deterministic)
-- **Statistical tests**: Chi-square and Mann-Whitney U (deterministic aggregation)
+Agent detection (co-authored-by trailer parsing, Tier 1), fixture extraction (tree-sitter-based, deterministic code analysis), control variable computation (snapshot-based calculation), and statistical tests (chi-square and Mann-Whitney U, deterministic aggregation).
 
-### Conditional Determinism
+### Conditional determinism
 
-- **Repository selection**: Depends on the `github-search-raw/` snapshot and each stage's own QC CSV outputs (plus `corpus.db`, only for a `--tier2` run)
-- **Temporal boundaries**: Fixed via `AGENT_CORPUS_START_DATE` / `HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`
-- **Clone freshness**: Depends on git history at time of collection; Dataset C pins an explicit cutoff commit SHA to avoid this issue
-- **Live GitHub state**: repos can go private/be deleted between runs — see [Limitations § Repository Availability](../reference/limitations.md#repository-availability)
+Repository selection depends on the `github-search-raw/` snapshot and each stage's own QC CSV outputs (plus `corpus.db`, only for a `--tier2` run). Temporal boundaries are fixed via `AGENT_CORPUS_START_DATE`/`HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`. Clone freshness depends on git history at time of collection — Dataset C pins an explicit cutoff commit SHA to avoid this issue. Live GitHub state can change between runs (repos going private or being deleted) — see [Limitations § Repository Availability](../reference/limitations.md#repository-availability).
 
-**Guarantee**: If the `github-search-raw/` snapshot, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
+Guarantee: if the `github-search-raw/` snapshot, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
 
 ## See Also
 

@@ -227,9 +227,7 @@ print(mock_categories)
 
 ## Data quality guarantees
 
-- The schema is append-safe and re-runnable; existing records are not duplicated during collection.
-- Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C).
-- Quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
+The schema is append-safe and re-runnable — existing records are not duplicated during collection. Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C), and quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
 
 ## Accessing the database
 
@@ -271,7 +269,5 @@ dbGetQuery(con, "
 
 ## Notes
 
-- Control variables (language, domain, repo_age_years) are computed at each dataset's temporal boundary for reproducibility and validity assessment.
-- The schema supports unpaired statistical tests appropriate for independent samples (Mann-Whitney U for continuous variables, chi-square for categorical) — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design).
-- `python -m collection summarize --dataset {a,b,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
+The schema supports unpaired statistical tests appropriate for independent samples — Mann-Whitney U for continuous variables, chi-square for categorical — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design). `python -m collection summarize --dataset {a,b,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
 

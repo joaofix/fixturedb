@@ -9,9 +9,7 @@ Cochran's formula rather than an arbitrary fixed count, and normalizes every
 sample to one fixed reviewer-facing CSV schema regardless of which pipeline
 step produced it.
 
-**This tool is not part of the automatic phase pipeline.** It never runs on
-its own — invoke it by hand, whenever a manual-validation sample is actually
-needed, against whatever CSV(s) that pipeline step already produced.
+This tool is not part of the automatic phase pipeline. It never runs on its own — invoke it by hand, whenever a manual-validation sample is actually needed, against whatever CSV(s) that pipeline step already produced.
 
 ## Methodology
 
@@ -36,15 +34,9 @@ error, seed 42**. All three are CLI flags, not hardcoded, in case a future
 validation step needs different rigor — but the seed default should stay
 fixed across runs so the paper's reported sample is reproducible.
 
-**Sampling is deterministic by content, not just by seed.** Rows are sorted
-by a hash of their full content before the seeded random sample is drawn, so
-the exact same rows are selected for a given seed regardless of the order
-rows happen to appear in the source CSV (which can vary run-to-run under
-threaded export). This matters because the sampled rows are a citable
-research artifact — re-running the tool against the same underlying data
-must reproduce the same reviewed sample.
+Sampling is deterministic by content, not just by seed: rows are sorted by a hash of their full content before the seeded random sample is drawn, so the exact same rows are selected for a given seed regardless of the order rows happen to appear in the source CSV (which can vary run-to-run under threaded export). This matters because the sampled rows are a citable research artifact — re-running the tool against the same underlying data must reproduce the same reviewed sample.
 
-**Repo and commit steps are stratified**, not pooled-and-drawn-uniformly:
+Repo and commit steps are stratified, not pooled-and-drawn-uniformly:
 `agent-repos` stratifies by `language`; `agent-commits-dataset-a` stratifies
 by `(language, agent_type)`; `human-commits-dataset-b` and
 `human-test-commits-dataset-b` stratify by `language` (there's no
@@ -87,8 +79,7 @@ readable straight from the output directory without needing this doc.
 | `detection_signal` | The matched agent-config filename (e.g. `CLAUDE.md`), or `agent_config_present` for CSVs collected before this column existed | `agent_type` (e.g. `claude`, `copilot`) | `fixture_type` (e.g. `pytest_decorator`) | constant `classified_as_human` — what's being checked is the classification itself, not a per-row varying signal | `test_file_count` |
 | `evidence` | Same as `detection_signal` — no full config-file content is captured today, so the filename is the best available evidence | `agent_type` + `commit_date` + author — **not** the commit message or diff text (see "Known gap" below) | `raw_source` — the full fixture source text | `commit_role` + `commit_date` + `test_file_count` — **not** the commit message, diff, or author identity (same known gap as `commit`, see below) | `test_file_paths` — the JSON list of paths the commit was flagged for |
 
-**Known gap — commit evidence is best-effort.** The original spec for this
-tool assumed commit message + diff lines were "stored in DB"; they aren't.
+Known gap: commit evidence is best-effort. The original spec for this tool assumed commit message + diff lines were "stored in DB"; they aren't.
 `agent_commit_counter.py` doesn't yet know which files in a commit are test
 files (that's determined later, in `test_commit_filter.py`), and no diff
 content is captured at all. Building real message/diff evidence would mean
@@ -102,7 +93,7 @@ a `human-commits-dataset-b` reviewer must open `item_url` to check the
 commit's actual author and any `Co-authored-by` trailer — that live check is
 the entire point of this step (see "Reduced validation set" below).
 
-**Repo/fixture evidence requires the current collector code.** The
+Repo/fixture evidence requires the current collector code: the
 `matched_config_file` and `raw_source` columns are populated by
 `agent_repository_counter.py` and `agent_corpus.py`'s fixture CSV export,
 respectively (as of the change that introduced the fixed schema above). CSVs

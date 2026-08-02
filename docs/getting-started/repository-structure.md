@@ -123,50 +123,20 @@ fixturedb/
 
 ## Key Directories Explained
 
-### Main CLI (Root)
-- **`python -m collection <verb> --dataset {a,b,c}`** is the one, authoritative CLI
-  surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only),
-  `filter-test-commits` (A/B only), `extract-fixtures`, `analyze-distribution`,
-  `sample`, `export`, `validate`, `toy`, `paired`, `status`.
-- There is no longer a separate root-level `pipeline.py` convenience CLI — it was
-  retired once every verb it exposed had an equivalent under `python -m collection`.
+### Main CLI (root)
 
-### collection/ Module
-Core implementation with one collector module per dataset:
+`python -m collection <verb> --dataset {a,b,c}` is the one, authoritative CLI surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only), `filter-test-commits` (A/B only), `extract-fixtures`, `analyze-distribution`, `sample`, `export`, `validate`, `toy`, `paired`, `status`. There is no separate root-level `pipeline.py` convenience CLI — it was retired once every verb it exposed had an equivalent under `python -m collection`.
 
-**1. human_corpus.py — Dataset B (within-repo human control)**
-- Extracts human fixtures from the same agent-enabled repos and 2025+ window as Dataset A
-- Computes control variables at the `AGENT_CORPUS_START_DATE` snapshot
-- Quality filters and statistics tracking
-- Entry point: `python -m collection extract-fixtures --dataset b`
+### collection/ module
 
-**2. dataset_c.py — Dataset C (cross-repo pre-2021 baseline)**
-- Repos come from `select_dataset_c_repos.py` (`discover-repos --dataset c`): every
-  repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to
-  `HUMAN_CORPUS_CUTOFF_DATE`), no sampling
-- Checks out each one at its pinned pre-2021 cutoff commit and extracts
-  every fixture from every test file at that snapshot
-- Commit-count/test-file-count quality floor measured from real git history at
-  the cutoff commit, not GitHub's live metadata (`count_commits_up_to()`)
-- Entry point: `python -m collection extract-fixtures --dataset c`
+One collector module per dataset:
 
-**3. agent_corpus.py — Dataset A (agent-authored)**
-- Uses the QC'd repo/commit CSVs to find agent-authored commits
-- Tier 1 detection: author metadata + co-authored-by trailers
-- Agent type classification (claude, copilot, cursor, etc.)
-- Entry point: `python -m collection extract-fixtures --dataset a`
+- **`human_corpus.py` — Dataset B (within-repo human control).** Extracts human fixtures from the same agent-enabled repos and 2025+ window as Dataset A, computing control variables at the `AGENT_CORPUS_START_DATE` snapshot. Entry point: `extract-fixtures --dataset b`.
+- **`dataset_c.py` — Dataset C (cross-repo pre-2021 baseline).** Repos come from `select_dataset_c_repos.py` (`discover-repos --dataset c`): every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no sampling. Each is checked out at its pinned pre-2021 cutoff commit, and every fixture is extracted from every test file at that snapshot. The commit-count/test-file-count quality floor is measured from real git history at the cutoff commit (`count_commits_up_to()`), not GitHub's live metadata. Entry point: `extract-fixtures --dataset c`.
+- **`agent_corpus.py` — Dataset A (agent-authored).** Uses the QC'd repo/commit CSVs to find agent-authored commits via Tier 1 detection (author metadata plus co-authored-by trailers) and classify agent type (claude, copilot, cursor, etc.). Entry point: `extract-fixtures --dataset a`.
+- **`between_group_comparison.py`.** Chi-square tests for categorical controls (language, domain), Mann-Whitney U for continuous controls (repo_age_years), and balance report generation.
 
-**4. between_group_comparison.py**
-- Chi-square tests for categorical controls (language, domain)
-- Mann-Whitney U tests for continuous controls (repo_age_years)
-- Balance report generation
-
-Supporting modules:
-- **agent_signal_primitives.py** — Agent detection utilities (formerly agent_detector.py)
-- **fixture_extractor.py** — Fixture extraction at commit level
-- **db.py** — Database schema, helpers, and control variable functions
-- **config.py** — Configuration constants (temporal boundaries, thresholds); re-exports reference-data catalogs loaded from **study_parameters/** and **heuristics/** (see [Configuration Reference](../architecture/configuration.md))
-- **paths.py** — Central path registry for every dataset's `repos`/`commits`/`test-commits`/`fixtures` stage directories, `db/*.db`, `export/*.zip`
+Supporting modules: `agent_signal_primitives.py` (agent detection utilities, formerly `agent_detector.py`), `fixture_extractor.py` (fixture extraction at commit level), `db.py` (schema, helpers, control-variable functions), `config.py` (configuration constants, re-exporting the reference-data catalogs in `study_parameters/` and `heuristics/` — see [Configuration Reference](../architecture/configuration.md)), and `paths.py` (the central path registry for every dataset's stage directories, `db/*.db`, and `export/*.zip`).
 
 ### Data Flow
 
@@ -194,31 +164,7 @@ validate --dataset {a,b,c}                     (each dataset is independently us
 Final: db/a.db, db/b.db, db/c.db, plus export/a.zip, export/b.zip, export/c.zip
 ```
 
-### docs/ Organization
-
-**getting-started/** — For newcomers
-- **intro.md** — Between-group study design and methodology
-- **setup.md** — Installation and running the pipeline
-- **repository-structure.md** — This file
-
-**architecture/** — Technical deep dives
-- **database-schema.md** — Between-group schema with control variables
-- **agent-detection.md** — How agents are identified in commits
-- **detection.md** — Fixture detection methodology (tree-sitter)
-- **metrics-reference.md** — How each metric is calculated
-
-**usage/** — How to analyze results
-- **reproducing.md** — Three-stage pipeline with parameters
-- **usage.md** — SQL queries for analysis, statistical tests
-- **fixture-patterns-reference.md** — Catalog of 25+ fixture types
-
-**data/** — Data format documentation
-- **csv-user-guide.md** — How to use CSV exports
-- **storage.md** — Database sizes, temporary storage during processing
-
-**reference/** — Citations and limitations
-- **limitations.md** — Study limitations and threats to validity
-- **references.md** — Academic citations and how to cite
+See [docs/INDEX.md](../INDEX.md) for the full documentation map — the tree above already shows where each page lives.
 
 ### tests/ Organization
 - One test file per core module (plus `tests/collection/` for phase-script tests)
@@ -273,12 +219,5 @@ output/
 └── ... (internal bookkeeping, summaries)
 ```
 
-## Documentation Navigation
-
-- **New to the project?** Start with [Introduction](../getting-started/intro.md)
-- **Want to run the pipeline?** Go to [Setup](../getting-started/setup.md)
-- **Need to understand the design?** Read [Between-Group Study](../getting-started/intro.md)
-- **Ready to collect data?** See [Reproducing Results](../usage/reproducing.md)
-- **Want to analyze data?** Check [Usage Guide](../usage/usage.md)
-- **Looking for database schema?** See [Database Schema](../architecture/database-schema.md)
+See [docs/INDEX.md](../INDEX.md) for where to go next.
 

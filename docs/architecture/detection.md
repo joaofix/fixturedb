@@ -1,15 +1,12 @@
 # Fixture Detection Logic
 
-FixtureDB detects test fixture definitions across Python, Java, JavaScript, and TypeScript in two phases:
+FixtureDB detects test fixture definitions across Python, Java, JavaScript, and TypeScript in two phases. First, detection: Tree-sitter parses each file into an AST, and language-specific pattern tables identify which nodes are fixture definitions (decorators, annotations, method names) and classify their scope/framework. Second, metrics and post-processing: each detected fixture gets a fixed set of quantitative metrics (§ Fixture Metrics), then a second pass over the whole fixture list detects cross-fixture relationships — teardown pairing, pytest fixture dependencies, scope propagation.
 
-1. **Detection** — Tree-sitter parses each file into an AST; language-specific pattern tables identify which nodes are fixture definitions (decorators, annotations, method names) and classify their scope/framework.
-2. **Metrics & post-processing** — Each detected fixture gets a fixed set of quantitative metrics (§ Fixture Metrics), then a second pass over the whole fixture list detects cross-fixture relationships (teardown pairing, pytest fixture dependencies, scope propagation).
-
-See [Appendix](#appendix-mermaid-diagram-source) for a diagram of the pipeline.
+See the [Appendix](#appendix-mermaid-diagram-source) for a diagram of the pipeline.
 
 ## Fixture Detection vs. Agent Detection
 
-This document covers **fixture detection**: identifying test fixture definitions in source code (AST parsing). It is unrelated to **agent detection**: identifying which commits were authored by an AI assistant (git trailer parsing) — see [Agent Detection Methodology](./agent-detection.md).
+This document covers fixture detection: identifying test fixture definitions in source code via AST parsing. It's unrelated to agent detection — identifying which commits were authored by an AI assistant via git trailer parsing — see [Agent Detection Methodology](./agent-detection.md).
 
 ## How Fixtures Are Detected
 
@@ -21,16 +18,11 @@ This document covers **fixture detection**: identifying test fixture definitions
 
 No general-purpose tool can distinguish a fixture from a helper function without encoding framework semantics, so detection is pattern-based per language/framework rather than a single generic rule.
 
-**On the word "heuristics":** fixture identification itself — whether something is a fixture, and its `fixture_type`/`scope`/`framework` — is fully deterministic exact-match pattern lookup (regex match on decorator text, or dict lookup on annotation/method/hook name); the three per-language detectors contain no scoring, fuzzy matching, or probabilistic fallback. This holds even though the pattern table lives in a directory named `collection/heuristics/` — that folder is a grab-bag of four unrelated catalogs, and only some of them (mock/external-call/object-instantiation detection, teardown pairing — see § Mock Detection and § Post-Processing below) are heuristic in the regex-approximation sense. Those affect *metrics computed on* an already-identified fixture, never the identification decision itself. See [collection/heuristics/\_\_init\_\_.py](../../collection/heuristics/__init__.py)'s module docstring for the per-file breakdown.
+**On the word "heuristics."** Fixture identification itself — whether something is a fixture, and its `fixture_type`/`scope`/`framework` — is fully deterministic exact-match pattern lookup: a regex match on decorator text, or a dict lookup on annotation/method/hook name. The three per-language detectors contain no scoring, fuzzy matching, or probabilistic fallback. This holds even though the pattern table lives in a directory named `collection/heuristics/` — that folder is a grab-bag of four unrelated catalogs, and only some of them (mock/external-call/object-instantiation detection, teardown pairing — see § Mock Detection and § Post-Processing below) are heuristic in the regex-approximation sense. Those affect metrics computed *on* an already-identified fixture, never the identification decision itself. See [collection/heuristics/\_\_init\_\_.py](../../collection/heuristics/__init__.py)'s module docstring for the per-file breakdown.
 
-The pattern tables are not hardcoded in the per-language detector files — they are loaded from
-[collection/heuristics/fixture_definitions.yaml](../../collection/heuristics/fixture_definitions.yaml),
-the single source of truth for what counts as a fixture per language. Each language section also
-carries an `excluded` list documenting known boundary cases the detector deliberately does not catch
-(see [configuration.md](configuration.md#reference-data-catalogs) and
-[fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases)).
+The pattern tables aren't hardcoded in the per-language detector files — they're loaded from [collection/heuristics/fixture_definitions.yaml](../../collection/heuristics/fixture_definitions.yaml), the single source of truth for what counts as a fixture per language. Each language section also carries an `excluded` list documenting known boundary cases the detector deliberately doesn't catch (see [configuration.md](configuration.md#reference-data-catalogs) and [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases)).
 
-**Test coverage:** `tests/collection/test_fixture_definitions_catalog_coverage.py` is parametrized directly over every entry in `fixture_definitions.yaml` (not a hand-picked subset), driving each one through the real `extract_fixtures()` pipeline. Java's JUnit3 fallback (`setUp()`/`tearDown()` detection for un-annotated methods) checks that the enclosing class extends `TestCase` and guards against double-detecting an already-annotated method; the `@Rule`/`@ClassRule` field-declaration branch computes complexity metrics in the correct language mode and reports the real field name. Regression-tested in `test_java_fixtures.py::TestJUnit3Fallback` and `test_framework_detection.py`'s `@Rule` tests.
+Test coverage: `tests/collection/test_fixture_definitions_catalog_coverage.py` is parametrized directly over every entry in `fixture_definitions.yaml` (not a hand-picked subset), driving each one through the real `extract_fixtures()` pipeline. Java's JUnit3 fallback (`setUp()`/`tearDown()` detection for un-annotated methods) checks that the enclosing class extends `TestCase` and guards against double-detecting an already-annotated method; the `@Rule`/`@ClassRule` field-declaration branch computes complexity metrics in the correct language mode and reports the real field name. Regression-tested in `test_java_fixtures.py::TestJUnit3Fallback` and `test_framework_detection.py`'s `@Rule` tests.
 
 ### Async Fixtures
 
@@ -38,14 +30,9 @@ Async qualifiers do not change detection: the decorator/annotation/method name i
 
 ### Scope Classification
 
-Every fixture is classified into one of four scopes, derived deterministically from explicit framework syntax (never inferred/heuristic):
+Every fixture is classified into one of four scopes, derived deterministically from explicit framework syntax, never inferred: `per_test` (before/after each test, the most common), `per_class` (before/after each test class/suite), `per_module` (before/after the whole test file, Python-specific), and `global` (once per test session).
 
-- **per_test** — before/after each test (most common)
-- **per_class** — before/after each test class/suite
-- **per_module** — before/after the whole test file (Python-specific)
-- **global** — once per test session
-
-Mapping is per-language (e.g. Java `@Before`→per_test, `@BeforeClass`→per_class; JS `beforeEach`→per_test, `beforeAll`→per_class; pytest's explicit `scope=` keyword is read directly). Full per-framework mapping tables: [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md).
+The mapping is per-language — e.g. Java `@Before`→per_test, `@BeforeClass`→per_class; JS `beforeEach`→per_test, `beforeAll`→per_class; pytest's explicit `scope=` keyword is read directly. Full per-framework mapping tables: [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md).
 
 ---
 
@@ -90,9 +77,9 @@ Pattern/framework tables live in [feature_extraction_patterns.yaml](../../collec
 
 Run once per file, after every fixture in it has been detected:
 
-- **Teardown pairing** (`_calculate_teardown_pairs`) — flags the setup-side fixture (`has_teardown_pair=1`) via five mechanisms: always-true for fixture_types where the mechanism itself guarantees teardown with no checkable source signal (`@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`); a `yield` in the fixture's own body (pytest); same fixture_type distinguished by name (`setUp`/`tearDown`), including self-registered cleanup calls (`addCleanup(`/`enterContext(`); or a different fixture_type at matching scope (`@BeforeEach`/`@AfterEach`, `beforeAll`/`afterAll`, etc.). Pairing is intra-file only — a setup fixture's teardown counterpart defined in a different file (e.g. inherited from a Java base test class) is not detected. Pairing rules: `feature_extraction_patterns.yaml`'s `teardown_detection`.
-- **Fixture dependencies** (`_detect_fixture_dependencies`, pytest-only) — a fixture's own parameters are cross-referenced against other fixture names in the same file to build a dependency list.
-- **Scope propagation** (`_propagate_fixture_scopes`, pytest-only) — if fixture A depends on fixture B and B's scope is narrower than A's declared scope, A is downgraded (an impossible configuration otherwise, e.g. a module-scoped fixture depending on a test-scoped one).
+- **Teardown pairing** (`_calculate_teardown_pairs`) flags the setup-side fixture (`has_teardown_pair=1`) via five mechanisms: always-true for fixture types where the mechanism itself guarantees teardown with no checkable source signal (`@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`); a `yield` in the fixture's own body (pytest); the same fixture type distinguished by name (`setUp`/`tearDown`), including self-registered cleanup calls (`addCleanup(`/`enterContext(`); or a different fixture type at matching scope (`@BeforeEach`/`@AfterEach`, `beforeAll`/`afterAll`, etc.). Pairing is intra-file only — a setup fixture's teardown counterpart defined in a different file (e.g. inherited from a Java base test class) isn't detected. Pairing rules: `feature_extraction_patterns.yaml`'s `teardown_detection`.
+- **Fixture dependencies** (`_detect_fixture_dependencies`, pytest-only) cross-references a fixture's own parameters against other fixture names in the same file to build a dependency list.
+- **Scope propagation** (`_propagate_fixture_scopes`, pytest-only) downgrades fixture A if it depends on fixture B whose scope is narrower than A's declared scope — otherwise an impossible configuration, e.g. a module-scoped fixture depending on a test-scoped one.
 
 `reuse_count` (test functions using a fixture) was removed entirely rather than fixed — see [metrics-reference.md § reuse_count — removed](metrics-reference.md#reuse_count-removed) for why.
 

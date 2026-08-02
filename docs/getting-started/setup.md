@@ -4,44 +4,29 @@ Instructions for setting up the FixtureDB between-group study collection environ
 
 ## Prerequisites
 
-### Required
-- **Python 3.10+** (tested with 3.12.3)
-- **Git** (must be on PATH, required for repository cloning and agent detection)
+Required: Python 3.10+ (tested with 3.12.3), and Git on PATH (needed for repository cloning and agent detection).
 
-### Optional
-- **clones/ directory** (for repository cloning during collection)
-  - Will be auto-populated during collection if not present
-  - Only needed once `discover-commits`/`extract-fixtures` actually clones repos
-- **GitHub API token** (for higher rate limits when discovering agent repositories)
-  - Can be set via `--github-token` flag or `GITHUB_TOKEN` environment variable
-- **corpus.db** (paired-study bootstrap database) — only read by `discover-commits --tier2`;
-  the default Tier 1 collection path for all three datasets doesn't touch it at all
+Optional:
+- A `clones/` directory for repository cloning during collection — auto-populated if not present, and only needed once `discover-commits`/`extract-fixtures` actually clones repos.
+- A GitHub API token, for higher rate limits when discovering agent repositories. Set it via `--github-token` or the `GITHUB_TOKEN` environment variable.
+- `corpus.db`, a paired-study bootstrap database read only by `discover-commits --tier2` — the default Tier 1 collection path for all three datasets doesn't touch it.
 
 ## Installation
 
-### 1. Clone Repository
 ```bash
 git clone <repo-url>
 cd fixturedb
-```
 
-### 2. Create Virtual Environment
-```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-### 3. Install Dependencies
-```bash
 pip install -r requirements.txt
 ```
 
-### 4. Verify Installation
-```bash
-# Check the collection package is importable
-python3 -c "import collection; print('✓ Collection package ready')"
+Verify the install:
 
-# Test CLI
+```bash
+python3 -c "import collection; print('✓ Collection package ready')"
 python3 -m collection status
 ```
 
@@ -52,22 +37,11 @@ directory layout — not duplicated here to avoid the two pages drifting apart.
 
 ## Dependencies
 
-### Core
-- **sqlite3** — Database operations (built-in)
-- **subprocess** — Git operations
-- **pathlib, os** — File system operations
-- **json, csv** — Data formats
-- **requests** (optional) — GitHub API calls
-- **tree-sitter** — Fixture detection
+Core: `sqlite3` and `subprocess` (both built-in), `pathlib`/`os` for the filesystem, `json`/`csv` for data formats, `tree-sitter` for fixture detection, and `requests` (optional) for GitHub API calls.
 
-### Analysis (Optional)
-- **pandas** — Data analysis
-- **scipy** — Statistical tests (Mann-Whitney U, chi-square)
-- **numpy** — Numerical operations
+Analysis (optional): `pandas`, `scipy` (Mann-Whitney U, chi-square), `numpy`.
 
-### Testing
-- **pytest** — Test framework
-- **pytest-cov** — Coverage reporting
+Testing: `pytest`, `pytest-cov`.
 
 ## Running the Between-Group Study
 
@@ -207,6 +181,6 @@ python -m collection discover-repos --dataset a
 
 ## Next Steps
 
-1. **Read the overview:** [What is FixtureDB?](intro.md)
-2. **Run the pipeline:** [Reproducing Results](../usage/reproducing.md)
-3. **Analyze the dataset:** [Analysis Guide](../usage/usage.md)
+1. Read the overview: [What is FixtureDB?](intro.md)
+2. Run the pipeline: [Reproducing Results](../usage/reproducing.md)
+3. Analyze the dataset: [Analysis Guide](../usage/usage.md)

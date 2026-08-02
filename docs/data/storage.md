@@ -1,17 +1,10 @@
 # Storage and Scale
 
-Storage layout and disk-usage drivers for the three-dataset collection pipeline
-(Dataset A: agent fixtures, Dataset B: human within-repo control, Dataset C: human
-cross-repo baseline — see
-[Repository Structure](../getting-started/repository-structure.md)).
+Storage layout and disk-usage drivers for the three-dataset collection pipeline — Dataset A (agent fixtures), Dataset B (human within-repo control), Dataset C (human cross-repo baseline). See [Repository Structure](../getting-started/repository-structure.md).
 
 ## Database layout
 
-Each dataset writes to its own SQLite file under `db/`, not a single shared
-database — see [Database Schema § Database overview](../architecture/database-schema.md#database-overview)
-for what each file contains and why they're kept separate (Dataset C in particular
-has no commit-level agent/human distinction to make, so folding it into a shared
-`commit_kind` column the way A/B once were would misrepresent it).
+Each dataset writes to its own SQLite file under `db/`, not a single shared database. See [Database Schema § Database overview](../architecture/database-schema.md#database-overview) for what each file contains and why they're kept separate — Dataset C in particular has no commit-level agent/human distinction to make, so folding it into a shared `commit_kind` column the way A/B once were would misrepresent it.
 
 ```
 db/

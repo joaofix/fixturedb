@@ -1,24 +1,16 @@
 # Testing Strategy and Execution
 
-This document describes the comprehensive test suite for FixtureDB, including test organization, how to run tests, and guidelines for creating new tests.
+This document describes the test suite for FixtureDB: test organization, how to run tests, and guidelines for adding new ones.
 
 ## Test Overview
 
-The test suite validates the **fixture extraction module** (`collection/detector.py`), which uses Tree-sitter ASTs to detect test fixtures, plus the rest of the collection pipeline (agent detection, dataset collectors, sampling, dedup). 431 test files across `tests/` as of this writing.
+The test suite validates the fixture extraction module (`collection/detector.py`, which uses Tree-sitter ASTs to detect test fixtures) plus the rest of the collection pipeline — agent detection, dataset collectors, sampling, dedup. 431 test files across `tests/` as of this writing.
 
-**Coverage:**
-- **Languages covered**: Python, Java, JavaScript, TypeScript (Go patterns exist for structural parity but are dead code — out of this study's scope; see "Mock Detection" below)
-- **Test framework**: pytest with custom assertion helpers (`tests/conftest.py`)
+Languages covered: Python, Java, JavaScript, TypeScript. Go patterns exist for structural parity but are dead code, out of this study's scope (see Mock Detection below). Test framework: pytest, with custom assertion helpers in `tests/conftest.py`.
 
 ## Test Organization
 
-### Directory Structure
-
-The fixture-detector test categories described below live under `tests/collection/`,
-alongside per-module unit tests for the rest of the `collection/` package
-(agent detection, dataset collectors, sampling, dedup, etc.). Top-level `tests/`
-also has `between_group/` (agent/human corpus + comparison tests), `paired/`
-(legacy paired-collection tests), and `eda/` (exploratory-analysis scripts).
+The fixture-detector test categories described below live under `tests/collection/`, alongside per-module unit tests for the rest of the `collection/` package (agent detection, dataset collectors, sampling, dedup, etc.). Top-level `tests/` also has `between_group/` (agent/human corpus and comparison tests), `paired/` (legacy paired-collection tests), and `eda/` (exploratory-analysis scripts).
 
 ```
 tests/
@@ -65,164 +57,33 @@ tests/
 
 ## Test Categories
 
-**1. Unit Tests** — Small code snippets (1-10 lines). Validate fixture detection and scope classification across all languages.
-
-**2. Metadata Tests** — Line numbers, LOC, fixture type, scope, complexity metrics (cyclomatic, cognitive), code metrics (parameters, objects instantiated, I/O calls), fixture dependency detection and scope propagation (pytest only — see [Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)).
-
-**3. Edge Cases** — Large fixtures (100+ lines), deep nesting, false positive prevention, unicode, special characters, indentation variations, empty fixtures, malformed code.
-
-**4. Mock Detection**
-
-**Scope:** Mock framework identification and test-double category
-classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across
-languages. See
-[Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection)
-for the full methodology and
-[collection/heuristics/feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml)
-for the exact pattern/framework/category catalog (30 patterns, 11
-frameworks).
-
-**What they test:**
-- **Python**: `unittest.mock` (`patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`), `pytest-mock` (`mocker.patch`/`mocker.patch.object`), pytest's built-in `monkeypatch`
-- **Java**: Mockito, EasyMock, MockK — **not** PowerMock (a documented exclusion, not detected)
-- **JavaScript**: Jest (`fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`), Sinon (`stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`)
-- **TypeScript**: Same Jest/Sinon patterns, plus Vitest (`vi.fn`/`vi.mock`)
-- **Go**: patterns exist for parity (`gomock`, `testify`) but are unreachable — Go detection is dead code, not in this study's scope; `test_go_mock_patterns.py` is skipped accordingly
-
-Every test in this category asserts on `fixture.mocks` directly (framework,
-category, target_identifier) rather than just that the surrounding fixture
-was extracted — a fixture can be detected correctly while its mock usage
-inside is silently missed, which is how several real gaps were originally
-found (see `mock_patterns_excluded` in the YAML catalog for what's still
-knowingly unhandled).
-
-### 5. Integration Tests
-
-**Scope:** Realistic, multi-language test code
-
-**What they test:**
-- Django TestCase hierarchy (Python)
-- JUnit 5 with nested classes (Java)
-- Jest with beforeAll/afterAll (JavaScript)
-- Type-annotated Jest (TypeScript)
-- Implicit vs. explicit setup patterns
-- Complex fixture dependencies
-- Large test modules with many fixtures
+1. **Unit tests** — small code snippets (1–10 lines), validating fixture detection and scope classification across all languages.
+2. **Metadata tests** — line numbers, LOC, fixture type, scope, complexity metrics (cyclomatic, cognitive), code metrics (parameters, objects instantiated, I/O calls), fixture dependency detection, and scope propagation (pytest only — see [Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)).
+3. **Edge cases** — large fixtures (100+ lines), deep nesting, false positive prevention, unicode, special characters, indentation variations, empty fixtures, malformed code.
+4. **Mock detection** — mock framework identification and test-double category classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across languages. See [Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection) for the full methodology and [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml) for the exact pattern/framework/category catalog (30 patterns, 11 frameworks). Coverage: Python (`unittest.mock`'s `patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`; `pytest-mock`'s `mocker.patch`/`mocker.patch.object`; pytest's built-in `monkeypatch`), Java (Mockito, EasyMock, MockK — not PowerMock, a documented exclusion), JavaScript (Jest's `fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`, Sinon's `stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`), TypeScript (same Jest/Sinon patterns, plus Vitest's `vi.fn`/`vi.mock`), and Go (patterns exist for parity — `gomock`, `testify` — but are unreachable, since Go detection is dead code; `test_go_mock_patterns.py` is skipped accordingly). Every test in this category asserts on `fixture.mocks` directly (framework, category, target_identifier) rather than just that the surrounding fixture was extracted — a fixture can be detected correctly while its mock usage inside is silently missed, which is how several real gaps were originally found (see `mock_patterns_excluded` in the YAML catalog for what's still knowingly unhandled).
+5. **Integration tests** — realistic, multi-language test code: Django TestCase hierarchy (Python), JUnit 5 with nested classes (Java), Jest with beforeAll/afterAll (JavaScript), type-annotated Jest (TypeScript), implicit vs. explicit setup patterns, complex fixture dependencies, large test modules with many fixtures.
 
 ## Running Tests
 
-### Prerequisites
-
-Ensure pytest is installed:
-
 ```bash
-pip install pytest pytest-cov
+pytest tests/ -v                                                    # run everything
+pytest tests/test_extractor_unit/test_python_fixtures.py -v         # one file
+pytest tests/collection/test_mock_detection/ -v                     # one category
+pytest tests/ -v -k "python"                                        # by name pattern
+pytest tests/ --cov=collection.detector --cov-report=html           # coverage report
 ```
 
-Or install from updated requirements:
-
-```bash
-pip install -r requirements.txt
-```
-
-### Quick Start
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run a specific test file
-pytest tests/test_extractor_unit/test_python_fixtures.py -v
-
-# Run a specific test class
-pytest tests/test_extractor_unit/test_python_fixtures.py::TestPythonUnittestFixtures -v
-
-# Run a specific test method
-pytest tests/test_extractor_unit/test_python_fixtures.py::TestPythonUnittestFixtures::test_setUp_method_detected -v
-```
-
-### Running by Category
-
-```bash
-# Unit tests for all languages
-pytest tests/test_extractor_unit/ -v
-
-# Unit tests for specific language
-pytest tests/test_extractor_unit/test_python_fixtures.py -v
-pytest tests/test_extractor_unit/test_java_fixtures.py -v
-
-# Metadata tests
-pytest tests/test_extractor_metadata/ -v
-
-# Edge case tests
-pytest tests/test_extractor_edge_cases/ -v
-
-# Mock detection tests
-pytest tests/collection/test_mock_detection/ -v
-
-# Integration tests
-pytest tests/test_integration/ -v
-```
-
-### Running with Coverage
-
-```bash
-# Generate coverage report
-pytest tests/ --cov=collection.detector --cov-report=html
-
-# View coverage report
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
-```
-
-This generates an HTML report showing coverage of `collection/detector.py`.
-
-### Running with Different Options
-
-```bash
-# Run tests with detailed output
-pytest tests/ -vv
-
-# Run tests with print statements visible
-pytest tests/ -v -s
-
-# Run tests and stop on first failure
-pytest tests/ -v -x
-
-# Run tests and show slowest 10
-pytest tests/ -v --durations=10
-
-# Run tests matching a pattern
-pytest tests/ -v -k "python"  # All tests with "python" in name
-pytest tests/ -v -k "setUp"   # All tests related to setUp
-
-# Run with parallel execution (if pytest-xdist installed)
-pytest tests/ -v -n auto
-```
-
-### Collecting Tests (without running)
-
-```bash
-# List all available tests
-pytest tests/ --collect-only -q
-
-# Count total number of tests
-pytest tests/ --collect-only -q | wc -l
-```
+See `pytest --help` for the rest of pytest's own flags (`-x` to stop on first failure, `-s` for print output, `--durations=10` for slowest tests, `-n auto` for parallel execution with pytest-xdist, etc.) — nothing about this project changes their behavior.
 
 ## Test Helpers (conftest.py)
 
-The `tests/conftest.py` file provides reusable pytest fixtures and assertion helpers:
+`tests/conftest.py` provides reusable pytest fixtures and assertion helpers:
 
 ```python
-# Create a temporary test file
 create_test_file(language, code)
-
-# Extract fixtures and find specific fixture
 extract_and_find_fixtures(code, language)
 fixture = extract_and_find_fixtures(code, language, fixture_name='setUp')
 
-# Assertion helpers
 assert_fixture_detected(code, language, name)
 assert_fixture_not_detected(code, language, name)
 assert_fixture_count(code, language, expected_count)
@@ -231,7 +92,7 @@ assert_loc(fixture, expected_loc)
 assert_fixture_metrics(fixture, **kwargs)
 ```
 
-Example usage:
+Example:
 
 ```python
 def test_setUp_detected(self):
@@ -247,30 +108,22 @@ class Test(unittest.TestCase):
 
 ## Agent Detection Tests
 
-Agent detection (file scanning, commit-trailer/author-identity matching, fixture
-completeness marking — see [Agent Detection Methodology](../architecture/agent-detection.md))
-is covered across several files under `tests/collection/`, not one single
-end-to-end module:
+Agent detection — file scanning, commit-trailer/author-identity matching, fixture completeness marking (see [Agent Detection Methodology](../architecture/agent-detection.md)) — is covered across several files under `tests/collection/`, not one single end-to-end module:
 
-- `test_agent_detection_logic.py` — agent config file scanning, GitHub API
-  file-listing helper (retry/rate-limit handling)
-- `test_agent_patterns_thorough.py`, `test_agent_patterns_extra.py` — agent
-  signature catalog matching (author identity, trailers)
+- `test_agent_detection_logic.py` — agent config file scanning, GitHub API file-listing helper (retry/rate-limit handling)
+- `test_agent_patterns_thorough.py`, `test_agent_patterns_extra.py` — agent signature catalog matching (author identity, trailers)
 - `test_conventional_commits.py` — commit-trailer parsing
-- `test_end_to_end_collection.py` — collector initialization, DB persistence,
-  concurrency, error handling for both Dataset A and B collectors
-- `tests/between_group/test_agent_corpus.py` — Dataset A's collector, using
-  real git repositories in `tmp_path` with `Co-authored-by` trailers
+- `test_end_to_end_collection.py` — collector initialization, DB persistence, concurrency, error handling for both Dataset A and B collectors
+- `tests/between_group/test_agent_corpus.py` — Dataset A's collector, using real git repositories in `tmp_path` with `Co-authored-by` trailers
 
 ```bash
 pytest tests/collection/test_agent_detection_logic.py -v
 pytest tests/collection/ -v -k agent
-pytest tests/collection/test_agent_detection_logic.py --cov=collection.agent_patterns --cov=collection.agent_signal_primitives --cov-report=term-missing -v
 ```
 
 ## pytest Configuration
 
-The project uses `pyproject.toml` to configure test discovery and execution:
+The project configures test discovery and execution via `pyproject.toml`:
 
 ```toml
 [tool.pytest.ini_options]
@@ -279,107 +132,27 @@ norecursedirs = ["clones", ".git", "venv", "dist", "build"]
 addopts = "-q"
 ```
 
-### Why the Pytest Configuration is Important
-
-- **Prevents importing external test code**: The `clones/` directory contains hundreds of external repositories with their own tests. Without the pytest configuration in `pyproject.toml`, pytest would try to import and run them, causing dependency and timeout issues.
-- **Ensures consistency**: CI/CD and local runs use the same configuration, preventing environment-specific failures.
-- **Performance**: Running only project tests instead of external dependencies is ~100x faster.
-
-### Verifying the Pytest Configuration
-
-CI workflows use the shared pytest configuration:
-
-```bash
-pytest -q                     # Uses pyproject.toml configuration
-pytest --override-ini testpaths=tests  # Alternative: override at runtime
-```
+`norecursedirs` matters in particular: `clones/` holds hundreds of externally-cloned repositories with their own tests, and without excluding it, pytest would try to import and run them — causing dependency and timeout issues, and making a full run roughly 100x slower.
 
 ## Adding New Tests
 
-### 1. Identify the Category
-
-- **Unit tests**: Single fixture patterns (use `tests/collection/test_extractor_unit/test_<language>_fixtures.py`)
-- **Metadata tests**: Fixture metadata accuracy (use `tests/collection/test_extractor_metadata/`)
-- **Edge cases**: Unusual patterns (use `tests/collection/test_extractor_edge_cases/`)
-- **Mock detection**: Mock framework patterns (use `tests/collection/test_mock_detection/test_<language>_mock_patterns.py`)
-- **Integration tests**: Real-world code (use `tests/collection/test_integration/test_<language>_realistic_fixtures.py`)
-- **Agent detection**: Agent commit and file detection (use `tests/collection/test_agent_detection_logic.py` or a new file under `tests/collection/`)
-
-### 2. Use Existing Helpers
-
-Import from conftest and use assertion helpers:
+Put the test under the matching category directory (`test_extractor_unit/`, `test_extractor_metadata/`, `test_extractor_edge_cases/`, `test_mock_detection/`, `test_integration/`, or `test_agent_detection_logic.py` for agent detection), reuse the `conftest` helpers, and follow the existing naming conventions (`Test<FeatureOrLanguage><Pattern>` for classes, `test_<what_is_tested>` for methods, `test_<language>_<category>.py` for files):
 
 ```python
-from ..conftest import (
-    extract_and_find_fixtures,
-    assert_fixture_detected,
-    assert_fixture_not_detected,
-    assert_fixture_count,
-)
+from ..conftest import assert_fixture_detected
 
-class TestNewFeature:
-    def test_example(self):
-        code = "..."
-        fixture = assert_fixture_detected(code, 'python', 'setUp')
-        assert fixture.fixture_type == 'setUp'
-```
-
-### 3. Follow Naming Conventions
-
-- **Test class**: `Test<FeatureOrLanguage><Pattern>`
-- **Test method**: `test_<what_is_tested>`
-- **File name**: `test_<language>_<category>.py`
-
-Example:
-
-```python
 class TestPythonAsyncFixtures:
     def test_async_setUp_with_await(self):
-        ...
+        code = "..."
+        fixture = assert_fixture_detected(code, 'python', 'setUp')
+        assert fixture.fixture_type == 'unittest_setup'  # not the method name itself
 ```
 
-### 4. Add Docstrings
-
-```python
-def test_setUp_with_parameters(self):
-    """setUp method with multiple initialization parameters"""
-    code = """..."""
-    fixture = assert_fixture_detected(code, 'python', 'setUp')
-    assert fixture.fixture_type == 'unittest_setup'  # not the method name itself
-    assert fixture.num_parameters >= 2
-```
-
-## Common Issues
-
-### ImportError: No module named 'conftest'
-
-Use relative imports:
-
-```python
-from ..conftest import assert_fixture_detected  # Correct
-from conftest import assert_fixture_detected    # Wrong
-```
-
-### Tests not being discovered
-
-Ensure:
-- File name starts with `test_`
-- Test classes start with `Test`
-- Test methods start with `test_`
-- `__init__.py` exists in all test subdirectories
-
-### Tests failing because detector not imported
-
-The conftest automatically imports from `collection.detector`. Ensure the module is installed:
-
-```bash
-cd /path/to/project
-pip install -e .
-```
+If `ImportError: No module named 'conftest'` shows up, use the relative import (`from ..conftest import ...`), not a bare `from conftest import ...`.
 
 ## References
 
-- **Test Plan**: [tests/TEST_PLAN.md](../../tests/TEST_PLAN.md)
-- **Detector Implementation**: [collection/detector.py](../../collection/detector.py)
-- **FixtureResult Dataclass**: [collection/detector_shared.py](../../collection/detector_shared.py)
-- **Pytest Documentation**: https://docs.pytest.org/
+- [tests/TEST_PLAN.md](../../tests/TEST_PLAN.md) — test strategy document
+- [collection/detector.py](../../collection/detector.py) — detector implementation
+- [collection/detector_shared.py](../../collection/detector_shared.py) — `FixtureResult` dataclass
+- [pytest documentation](https://docs.pytest.org/)

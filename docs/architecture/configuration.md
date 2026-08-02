@@ -5,15 +5,7 @@ CLI. See [Collection Architecture](./collection.md) for the Dataset A/B/C
 build map, and [Reproducing Results](../usage/reproducing.md) for the full
 verb sequence.
 
-Per-run parameters (which repos, which language, output paths) are all via
-command-line arguments — every verb supports `--help` for its full argument
-list, and every default input/output directory is resolved through
-`collection/paths.py`. Fixed reference data (file-type filters, the
-testing-framework registry, per-language search settings, study-design
-constants, and the agent/fixture-detection catalogs) is instead kept as
-YAML under `collection/study_parameters/` (settings) and
-`collection/heuristics/` (detection-heuristic pattern catalogs) — see
-"Reference-Data Catalogs" below.
+Per-run parameters (which repos, which language, output paths) are all set via command-line arguments — every verb supports `--help` for its full argument list, and every default input/output directory is resolved through `collection/paths.py`. Fixed reference data (file-type filters, the testing-framework registry, per-language search settings, study-design constants, and the agent/fixture-detection catalogs) is instead kept as YAML, under `collection/study_parameters/` for settings and `collection/heuristics/` for detection-heuristic pattern catalogs — see Reference-Data Catalogs below.
 
 ## Dataset B: `extract-fixtures --dataset b`
 
@@ -210,14 +202,7 @@ output/
 
 ## Reference-Data Catalogs
 
-Fixed, non-per-run configuration lives as YAML data files, not hardcoded
-Python — editing a catalog is a data change, not a code change, and
-reviewers can scan the exact list without reading Python. `collection/config.py`
-loads all of these at import time and derives the module-level constants
-(`NON_CODE_EXTENSIONS`, `EXCLUSION_KEYWORDS`, `FRAMEWORK_REGISTRY`,
-`LANGUAGE_CONFIGS`, and every temporal/threshold/sampling constant listed
-below) that the rest of the codebase already imports — no production call
-site reads the YAML directly.
+Fixed, non-per-run configuration lives as YAML data files, not hardcoded Python — editing a catalog is a data change, not a code change, and reviewers can scan the exact list without reading Python. `collection/config.py` loads all of these at import time and derives the module-level constants that the rest of the codebase imports (`NON_CODE_EXTENSIONS`, `EXCLUSION_KEYWORDS`, `FRAMEWORK_REGISTRY`, `LANGUAGE_CONFIGS`, and every temporal/threshold/sampling constant listed below); no production call site reads the YAML directly.
 
 | Catalog | File | Loaded by |
 |---|---|---|
@@ -233,66 +218,17 @@ site reads the YAML directly.
 | Operational definition of "fixture" per language (patterns + documented exclusions) | `collection/heuristics/fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` pattern tables |
 | Mock-framework, external-call, object-instantiation regex tables + setup/teardown pairing rules | `collection/heuristics/feature_extraction_patterns.yaml` | `detector_shared.py` (`MOCK_PATTERNS`, `EXTERNAL_CALL_PATTERNS`, teardown pairing) / `complexity_provider.py` (`_count_object_instantiations`) |
 
-The fixture-definitions catalog is also a reviewer-facing audit artifact, not
-just data: each language section has an `excluded` list documenting known
-boundary cases the detector deliberately does not (or cannot) catch, so a
-missing pattern is a documented decision rather than an oversight — see
-[Fixture Detection Logic](detection.md),
-[Fixture Patterns Reference](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases),
-and [Limitations](../reference/limitations.md#fixture-detection-recall) for
-how this feeds into the paper's recall discussion.
+The fixture-definitions catalog is also a reviewer-facing audit artifact, not just data: each language section has an `excluded` list documenting known boundary cases the detector deliberately does not (or cannot) catch, so a missing pattern is a documented decision rather than an oversight. See [Fixture Detection Logic](detection.md), [Fixture Patterns Reference](../usage/fixture-patterns-reference.md#known-exclusions--boundary-cases), and [Limitations](../reference/limitations.md#fixture-detection-recall) for how this feeds into the paper's recall discussion. `tests/collection/test_fixture_definitions_catalog_coverage.py` is parametrized directly over every entry in `fixture_definitions.yaml` (not a hand-picked subset), exercising the real `extract_fixtures()` pipeline for each one.
 
-`tests/collection/test_fixture_definitions_catalog_coverage.py` is
-parametrized directly over every entry in `fixture_definitions.yaml` (not a
-hand-picked subset), exercising the real `extract_fixtures()` pipeline for
-each one — see [Fixture Detection Logic](detection.md) for what this
-verifies in `detector_java.py`'s JUnit3 fallback (class-inheritance check,
-already-annotated guard).
+The feature-extraction-patterns catalog covers the metrics computed *after* a fixture is already detected — `num_mocks`, `num_external_calls`, `num_objects_instantiated`, `has_teardown_pair` — namely what regex signals a mock/I-O-call/constructor, and which setup fixture types pair with which teardown fixture types. The teardown-pairing table only lists fixture types this codebase's detectors actually produce (TestNG, Mocha, AVA, `before_all`/`after_all`, JUnit3, JUnit4/pytest, ...); .NET-only types like `nunit_setup`/`xunit_fact`/`xunit_theory` are out of scope and not included.
 
-The feature-extraction-patterns catalog covers the metrics computed *after*
-a fixture is already detected (`num_mocks`, `num_external_calls`,
-`num_objects_instantiated`, `has_teardown_pair`): what regex signals a
-mock/I-O-call/constructor, and which setup fixture_types pair with which
-teardown fixture_types. The teardown-pairing table only lists fixture types
-this codebase's detectors actually produce (TestNG, Mocha, AVA,
-`before_all`/`after_all`, JUnit3, JUnit4/pytest, ...) — .NET-only types like
-`nunit_setup`/`xunit_fact`/`xunit_theory` are out of scope and not
-included.
+`mock_patterns` covers `mock.patch.object(...)`/`mocker.patch.object(...)` (distinct from `.patch('dotted.path')`), bare `patch(...)`/`patch.object(...)` (the `from unittest.mock import patch` form, used without a `mock.`/`mocker.` prefix), pytest's built-in `monkeypatch` fixture (as `pytest_monkeypatch`), and Sinon/Jest entry points including `sinon.fake/replace/createStubInstance` and `jest.mocked/createMockFromModule`. `mock_patterns_excluded` documents what's still deliberately out of scope: PowerMock, assertion-only Chai/sinon-chai usage, and the structural fact that anything mocked outside a fixture's own body — most notably Jest's conventional top-level `jest.mock(...)` — is invisible to this detector.
 
-`mock_patterns` covers `mock.patch.object(...)`/`mocker.patch.object(...)`
-(distinct from `.patch('dotted.path')`), bare `patch(...)`/`patch.object(...)`
-(the `from unittest.mock import patch` form, used without a `mock.`/
-`mocker.` prefix), pytest's built-in `monkeypatch` fixture (as
-`pytest_monkeypatch`), and Sinon/Jest entry points including
-`sinon.fake/replace/createStubInstance` and
-`jest.mocked/createMockFromModule`. `mock_patterns_excluded` documents
-what's still deliberately out of scope (PowerMock, assertion-only
-Chai/sinon-chai usage, and the structural fact that anything mocked outside
-a fixture's own body — most notably Jest's conventional top-level
-`jest.mock(...)` — is invisible to this detector).
+Each detected fixture is also classified into the classic test-double taxonomy (dummy/stub/spy/mock/fake, per Meszaros), stored in the `mock_usages.category` column. Classification is a case-insensitive keyword scan of the fixture's own full body text, in priority order, falling back to `mock` when no keyword is found — see [Fixture Detection Logic](detection.md) for the full methodology. `mock_category_keywords` holds this keyword table, as a section separate from `mock_patterns`, which only detects that a mock construct exists.
 
-Each detected fixture is also classified into the classic test-double
-taxonomy (dummy/stub/spy/mock/fake, per Meszaros), stored in the
-`mock_usages.category` column — see [Fixture Detection Logic](detection.md)
-for the classification methodology: a case-insensitive keyword scan of the
-fixture's own full body text, in priority order, falling back to `mock`
-when no keyword is found. `mock_category_keywords` (a separate top-level
-section from `mock_patterns`, which only detects that a mock construct
-exists) holds this keyword table.
+`tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py` parametrizes over all 30 `mock_patterns` entries and asserts no other pattern in the catalog also matches the same sample: the bare `Mock()`/`MagicMock()`/`AsyncMock()` pattern is word-boundary-scoped, so it doesn't match inside `EasyMock.createMock(...)`, and MockK's `mock(X.class)` pattern excludes `Mockito.mock(X.class)` via a negative lookbehind. `Mockito.spy(...)` is its own pattern, giving Java `spy`-category coverage distinct from `mock()`.
 
-`tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py`
-parametrizes over all 30 `mock_patterns` entries and asserts no other
-pattern in the catalog also matches the same sample: the bare
-`Mock()`/`MagicMock()`/`AsyncMock()` pattern is word-boundary-scoped (it
-does not match inside `EasyMock.createMock(...)`), and MockK's
-`mock(X.class)` pattern excludes `Mockito.mock(X.class)` via a negative
-lookbehind. `Mockito.spy(...)` is its own pattern, giving Java
-`spy`-category coverage distinct from `mock()`.
-
-Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`)
-and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain
-plain constants directly in `collection/config.py` — they're single values
-tuned for this study's design, not open-ended catalogs expected to grow.
+Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`) and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain plain constants directly in `collection/config.py` — they're single values tuned for this study's design, not open-ended catalogs expected to grow.
 
 ## Environment Variables
 

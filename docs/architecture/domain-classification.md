@@ -89,7 +89,7 @@ Output columns: `name`, `mainLanguage`, `domain`, `confidence`, `reasoning`
 
 ### Relationship to Heuristic Classifier
 
-The LLM classifier and the heuristic classifier use **different domain taxonomies**. The heuristic classifier (used in the collection pipeline) produces domains: `web`, `systems`, `ml`, `security`, `database`, `devops`, `other`. The LLM classifier produces: `web`, `library`, `data`, `infra`, `cli`, `other`.
+The LLM classifier and the heuristic classifier use different domain taxonomies. The heuristic classifier, used in the collection pipeline, produces `web`, `systems`, `ml`, `security`, `database`, `devops`, `other`. The LLM classifier produces `web`, `library`, `data`, `infra`, `cli`, `other`.
 
 Currently, the collection pipeline uses the heuristic classifier. The LLM classifier output is stored in `github-search-labeled/` for inspection and potential future integration.
 

@@ -59,12 +59,4 @@ Hora, A. (2026). *GitEvo: Code Evolution Analysis for Git Repositories.* MSR 202
 }
 ```
 
----
-
-## Methodology Grounding
-
-Our design decisions are rooted in empirical practices:
-- **Star thresholds** (500/100): From Hamster study of mature projects with established test culture
-- **Quality filters** (MIN_TEST_FILES=5): Based on empirical observations of test project characteristics
-- **Metrics selection:** Grounded in academic complexity metrics and large-scale characterization studies
 

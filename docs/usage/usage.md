@@ -11,17 +11,11 @@ query one dataset and how to compare across two.
 
 ## Study Design Overview
 
-- **Dataset A vs Dataset B ("within-repo"):** same agent-enabled repositories,
-  agent-authored vs human-authored fixtures, same 2025+ temporal window.
-- **Dataset A vs Dataset C ("cross-repo"):** Dataset C is an independent, non-agent
-  repo pool from a pre-2021 window — a different baseline with different residual
-  risk (see [Limitations § Differential False-Negative Risk](../reference/limitations.md#differential-false-negative-risk-dataset-b-vs-dataset-c)).
-- **Agent identification:** Tier 1 only (co-authored-by trailers, author signatures).
-- **Control variables:** language, domain, repository age — computed at
-  each dataset's own temporal snapshot.
-- **Statistical approach:** unpaired tests (Mann-Whitney U for continuous variables,
-  chi-square for categorical), since A/B/C are separate databases rather than paired
-  observations within one table.
+- **Dataset A vs Dataset B ("within-repo")** — same agent-enabled repositories, agent-authored vs human-authored fixtures, same 2025+ temporal window.
+- **Dataset A vs Dataset C ("cross-repo")** — Dataset C is an independent, non-agent repo pool from a pre-2021 window, a different baseline with different residual risk (see [Limitations § Differential False-Negative Risk](../reference/limitations.md#differential-false-negative-risk-dataset-b-vs-dataset-c)).
+- **Agent identification** — Tier 1 only: co-authored-by trailers, author signatures.
+- **Control variables** — language, domain, repository age, computed at each dataset's own temporal snapshot.
+- **Statistical approach** — unpaired tests (Mann-Whitney U for continuous variables, chi-square for categorical), since A/B/C are separate databases rather than paired observations within one table.
 
 Treat A-vs-B and A-vs-C as testing related but distinct questions — don't pool all
 three into one undifferentiated "agent vs. human" number.
@@ -231,17 +225,11 @@ database that contains all three.
 
 When writing papers using this dataset:
 
-1. **State which comparison you ran**: A-vs-B (within-repo) and A-vs-C (cross-repo)
-   test related but distinct questions — say which one, don't conflate them.
-2. **Document control variable balance**: report the balance-test results (chi-square
-   for categorical, Mann-Whitney U for continuous) for the specific pair compared.
-3. **Note agent detection method**: Tier 1 (co-authored-by trailers, author
-   signatures) only — see [Agent Detection](../architecture/agent-detection.md).
-4. **Report per-dataset fixture counts**: from `datasets/{dataset}/summary.yaml`
-   (`python -m collection summarize --dataset {a,b,c}`), not estimated.
-5. **Acknowledge temporal confounding for A-vs-C**: Dataset C's window
-   (pre-2021) predates Dataset A/B's (2025+); framework/practice changes across that
-   gap are a threat to validity — see [Limitations](../reference/limitations.md).
+1. State which comparison you ran. A-vs-B (within-repo) and A-vs-C (cross-repo) test related but distinct questions — say which one, don't conflate them.
+2. Document control variable balance: report the balance-test results (chi-square for categorical, Mann-Whitney U for continuous) for the specific pair compared.
+3. Note the agent detection method: Tier 1 (co-authored-by trailers, author signatures) only — see [Agent Detection](../architecture/agent-detection.md).
+4. Report per-dataset fixture counts from `datasets/{dataset}/summary.yaml` (`python -m collection summarize --dataset {a,b,c}`), not estimated.
+5. Acknowledge temporal confounding for A-vs-C: Dataset C's window (pre-2021) predates Dataset A/B's (2025+), and framework/practice changes across that gap are a threat to validity — see [Limitations](../reference/limitations.md).
 
 ---
 
