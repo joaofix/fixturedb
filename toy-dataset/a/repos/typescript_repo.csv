@@ -1,317 +1,324 @@
-repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,processed_at
-eclipse/che,1,typescript,6909,https://github.com/eclipse/che.git,137,,2026-05-26T05:25:16.275915+00:00
-sonarsource/sonarjs,1,typescript,1235,https://github.com/sonarsource/sonarjs.git,94,,2026-05-26T05:25:21.256376+00:00
-software-mansion/react-native-screens,1,typescript,3664,https://github.com/software-mansion/react-native-screens.git,164,,2026-05-26T05:25:24.250026+00:00
-justjake/quickjs-emscripten,1,typescript,1615,https://github.com/justjake/quickjs-emscripten.git,14,,2026-05-26T05:25:24.767348+00:00
-software-mansion/react-native-gesture-handler,1,typescript,6726,https://github.com/software-mansion/react-native-gesture-handler.git,259,,2026-05-26T05:25:27.886612+00:00
-blakeblackshear/frigate,1,typescript,32057,https://github.com/blakeblackshear/frigate.git,381,,2026-05-26T05:25:45.739899+00:00
-nomcopter/react-mosaic,1,typescript,4745,https://github.com/nomcopter/react-mosaic.git,17,,2026-05-26T05:27:08.250497+00:00
-bdash-app/bdash,1,typescript,1517,https://github.com/bdash-app/bdash.git,23,,2026-05-26T05:27:17.565120+00:00
-react-cosmos/react-cosmos,1,typescript,8671,https://github.com/react-cosmos/react-cosmos.git,108,,2026-05-26T05:27:24.577934+00:00
-angular-schule/angular-cli-ghpages,1,typescript,982,https://github.com/angular-schule/angular-cli-ghpages.git,23,,2026-05-26T05:27:28.295584+00:00
-sanity-io/next-sanity,1,typescript,946,https://github.com/sanity-io/next-sanity.git,47,,2026-05-26T05:27:36.628244+00:00
-nuclearpasta/react-native-drax,1,typescript,681,https://github.com/nuclearpasta/react-native-drax.git,10,,2026-05-26T05:27:36.650299+00:00
-apptension/aws-boilerplate,1,typescript,697,https://github.com/apptension/aws-boilerplate.git,9,,2026-05-26T05:27:36.746908+00:00
-traduora/traduora,1,typescript,1460,https://github.com/traduora/traduora.git,12,,2026-05-26T05:27:44.458048+00:00
-harttle/liquidjs,1,typescript,1821,https://github.com/harttle/liquidjs.git,87,,2026-05-26T05:27:57.837901+00:00
-ekalinin/sitemap.js,1,typescript,1705,https://github.com/ekalinin/sitemap.js.git,49,,2026-05-26T05:28:00.669622+00:00
-ryohey/signal,1,typescript,2306,https://github.com/ryohey/signal.git,19,,2026-05-26T05:28:02.532932+00:00
-testing-library/eslint-plugin-testing-library,1,typescript,1057,https://github.com/testing-library/eslint-plugin-testing-library.git,76,,2026-05-26T05:28:17.480969+00:00
-lizhiyao/sentry-miniapp,1,typescript,660,https://github.com/lizhiyao/sentry-miniapp.git,5,,2026-05-26T05:28:18.982186+00:00
-chichou/vscode-frida,1,typescript,593,https://github.com/chichou/vscode-frida.git,3,,2026-05-26T05:28:20.389466+00:00
-reaviz/reaviz,1,typescript,1228,https://github.com/reaviz/reaviz.git,28,,2026-05-26T05:28:22.284197+00:00
-surgioproject/surgio,1,typescript,1798,https://github.com/surgioproject/surgio.git,35,,2026-05-26T05:28:33.760737+00:00
-martpie/museeks,1,typescript,2109,https://github.com/martpie/museeks.git,22,,2026-05-26T05:28:35.005365+00:00
-sindresorhus/type-fest,1,typescript,17140,https://github.com/sindresorhus/type-fest.git,203,,2026-05-26T05:28:40.222734+00:00
-didi/logicflow,1,typescript,11349,https://github.com/didi/logicflow.git,82,,2026-05-26T05:28:46.281566+00:00
-honkit/honkit,1,typescript,3449,https://github.com/honkit/honkit.git,132,,2026-05-26T05:28:50.459366+00:00
-crowi/crowi,1,typescript,1099,https://github.com/crowi/crowi.git,36,,2026-05-26T05:28:59.983545+00:00
-jcmais/node-libcurl,1,typescript,713,https://github.com/jcmais/node-libcurl.git,28,,2026-05-26T05:29:03.368856+00:00
-bearer/pizzly,1,typescript,1122,https://github.com/bearer/pizzly.git,38,,2026-05-26T05:29:08.675137+00:00
-microsoft/lage,1,typescript,812,https://github.com/microsoft/lage.git,66,,2026-05-26T05:29:11.708151+00:00
-ngx-translate/core,1,typescript,4663,https://github.com/ngx-translate/core.git,97,,2026-05-26T05:29:12.425536+00:00
-remeda/remeda,1,typescript,5368,https://github.com/remeda/remeda.git,102,,2026-05-26T05:29:26.647314+00:00
-openplayerjs/openplayerjs,1,typescript,643,https://github.com/openplayerjs/openplayerjs.git,12,,2026-05-26T05:29:31.366403+00:00
-handsontable/hyperformula,1,typescript,2677,https://github.com/handsontable/hyperformula.git,26,,2026-05-26T05:29:32.173284+00:00
-acro5piano/react-native-big-calendar,1,typescript,575,https://github.com/acro5piano/react-native-big-calendar.git,45,,2026-05-26T05:29:33.602868+00:00
-microsoft/clarity,1,typescript,2659,https://github.com/microsoft/clarity.git,40,,2026-05-26T05:29:34.267559+00:00
-oakserver/oak,1,typescript,5400,https://github.com/oakserver/oak.git,81,,2026-05-26T05:29:36.675899+00:00
-felixrieseberg/windows95,1,typescript,24131,https://github.com/felixrieseberg/windows95.git,17,,2026-05-26T05:29:36.749377+00:00
-bestofjs/bestofjs-webui,1,typescript,2213,https://github.com/bestofjs/bestofjs-webui.git,16,,2026-05-26T05:29:37.265484+00:00
-thomasnordquist/mqtt-explorer,1,typescript,3914,https://github.com/thomasnordquist/mqtt-explorer.git,13,,2026-05-26T05:29:38.780537+00:00
-photostructure/exiftool-vendored.js,1,typescript,547,https://github.com/photostructure/exiftool-vendored.js.git,14,,2026-05-26T05:29:41.380833+00:00
-xaviergonz/mobx-keystone,1,typescript,606,https://github.com/xaviergonz/mobx-keystone.git,14,,2026-05-26T05:29:41.412759+00:00
-neet/masto.js,1,typescript,777,https://github.com/neet/masto.js.git,35,,2026-05-26T05:29:42.718651+00:00
-markuplint/markuplint,1,typescript,603,https://github.com/markuplint/markuplint.git,43,,2026-05-26T05:29:42.992197+00:00
-microsoft/maker.js,1,typescript,1981,https://github.com/microsoft/maker.js.git,18,,2026-05-26T05:30:03.831380+00:00
-rocketchat/rocket.chat.electron,1,typescript,1688,https://github.com/rocketchat/rocket.chat.electron.git,164,,2026-05-26T05:30:04.809709+00:00
-ripple/ripple-lib,1,typescript,958,https://github.com/ripple/ripple-lib.git,100,,2026-05-26T05:30:05.604468+00:00
-swimlane/ngx-graph,1,typescript,993,https://github.com/swimlane/ngx-graph.git,38,,2026-05-26T05:30:07.692382+00:00
-online-go/online-go.com,1,typescript,1511,https://github.com/online-go/online-go.com.git,152,,2026-05-26T05:30:08.569145+00:00
-johnpapa/vscode-peacock,1,typescript,1141,https://github.com/johnpapa/vscode-peacock.git,36,,2026-05-26T05:30:13.637121+00:00
-artalar/reatom,1,typescript,1158,https://github.com/artalar/reatom.git,82,,2026-05-26T05:30:14.376668+00:00
-paljs/prisma-tools,1,typescript,694,https://github.com/paljs/prisma-tools.git,21,,2026-05-26T05:30:24.493567+00:00
-kristiandupont/kanel,1,typescript,1125,https://github.com/kristiandupont/kanel.git,51,,2026-05-26T05:30:24.543322+00:00
-nicoespeon/abracadabra,1,typescript,883,https://github.com/nicoespeon/abracadabra.git,30,,2026-05-26T05:30:25.397984+00:00
-jamiebrynes7/obsidian-todoist-plugin,1,typescript,1138,https://github.com/jamiebrynes7/obsidian-todoist-plugin.git,6,,2026-05-26T05:30:25.939167+00:00
-ericblade/quagga2,1,typescript,898,https://github.com/ericblade/quagga2.git,45,,2026-05-26T05:30:25.949338+00:00
-six7/figma-tokens,1,typescript,778,https://github.com/six7/figma-tokens.git,24,,2026-05-26T05:30:26.361146+00:00
-shinyoshiaki/werift-webrtc,1,typescript,608,https://github.com/shinyoshiaki/werift-webrtc.git,15,,2026-05-26T05:30:29.894836+00:00
-voxelum/x-minecraft-launcher,1,typescript,1430,https://github.com/voxelum/x-minecraft-launcher.git,43,,2026-05-26T05:30:31.614378+00:00
-amannn/next-intl,1,typescript,4267,https://github.com/amannn/next-intl.git,86,,2026-05-26T05:30:40.160271+00:00
-dolanmiu/docx,1,typescript,5587,https://github.com/dolanmiu/docx.git,129,,2026-05-26T05:30:45.641595+00:00
-ngneat/transloco,1,typescript,1883,https://github.com/ngneat/transloco.git,79,,2026-05-26T05:30:47.840113+00:00
-typedproject/tsed,1,typescript,1647,https://github.com/typedproject/tsed.git,77,,2026-05-26T05:30:51.274186+00:00
-xbrowsersync/app,1,typescript,1691,https://github.com/xbrowsersync/app.git,4,,2026-05-26T05:31:11.542205+00:00
-microsoft/roosterjs,1,typescript,1310,https://github.com/microsoft/roosterjs.git,69,,2026-05-26T05:31:12.953782+00:00
-airtasker/spot,1,typescript,568,https://github.com/airtasker/spot.git,29,,2026-05-26T05:31:20.333705+00:00
-maygo/tockler,1,typescript,1063,https://github.com/maygo/tockler.git,7,,2026-05-26T05:31:22.837055+00:00
-ant-design/ant-design-pro,1,typescript,38263,https://github.com/ant-design/ant-design-pro.git,330,,2026-05-26T05:31:27.595730+00:00
-vscode-icons/vscode-icons,1,typescript,5067,https://github.com/vscode-icons/vscode-icons.git,351,,2026-05-26T05:31:48.147286+00:00
-pmndrs/react-spring,1,typescript,29089,https://github.com/pmndrs/react-spring.git,180,,2026-05-26T05:31:48.641313+00:00
-probablyup/markdown-to-jsx,1,typescript,1698,https://github.com/probablyup/markdown-to-jsx.git,44,,2026-05-26T05:32:05.710642+00:00
-talentlessguy/tinyhttp,1,typescript,1625,https://github.com/talentlessguy/tinyhttp.git,34,,2026-05-26T05:32:06.310512+00:00
-glimmerjs/glimmer-vm,1,typescript,1149,https://github.com/glimmerjs/glimmer-vm.git,122,,2026-05-26T05:32:06.729630+00:00
-aeagle/react-spaces,1,typescript,1314,https://github.com/aeagle/react-spaces.git,5,,2026-05-26T05:32:08.294978+00:00
-antvis/l7,1,typescript,4004,https://github.com/antvis/l7.git,61,,2026-05-26T05:32:09.447553+00:00
-pkief/vscode-material-icon-theme,1,typescript,1923,https://github.com/pkief/vscode-material-icon-theme.git,306,,2026-05-26T05:32:13.263114+00:00
-brianlovin/brian-lovin-next,1,typescript,642,https://github.com/brianlovin/brian-lovin-next.git,16,,2026-05-26T05:32:25.718078+00:00
-golevelup/nestjs,1,typescript,2719,https://github.com/golevelup/nestjs.git,120,,2026-05-26T05:32:27.080481+00:00
-lume/lume,1,typescript,1499,https://github.com/lume/lume.git,7,,2026-05-26T05:32:37.019505+00:00
-bennycode/trading-signals,1,typescript,919,https://github.com/bennycode/trading-signals.git,12,,2026-05-26T05:32:45.661237+00:00
-getstream/stream-chat-react-native,1,typescript,1161,https://github.com/getstream/stream-chat-react-native.git,74,,2026-05-26T05:32:45.687665+00:00
-abagames/crisp-game-lib,1,typescript,636,https://github.com/abagames/crisp-game-lib.git,5,,2026-05-26T05:32:50.060948+00:00
-homebridge/homebridge,1,typescript,25351,https://github.com/homebridge/homebridge.git,109,,2026-05-26T05:32:53.014134+00:00
-colinhacks/zod,1,typescript,42742,https://github.com/colinhacks/zod.git,462,,2026-05-26T05:33:08.276586+00:00
-getsentry/sentry-react-native,1,typescript,1796,https://github.com/getsentry/sentry-react-native.git,144,,2026-05-26T05:33:18.385696+00:00
-iorate/ublacklist,1,typescript,6527,https://github.com/iorate/ublacklist.git,62,,2026-05-26T05:33:23.798057+00:00
-microsoft/vscode-cmake-tools,1,typescript,1670,https://github.com/microsoft/vscode-cmake-tools.git,218,,2026-05-26T05:33:34.141315+00:00
-nrwl/nx-console,1,typescript,1406,https://github.com/nrwl/nx-console.git,80,,2026-05-26T05:33:34.366837+00:00
-streetsidesoftware/vscode-spell-checker,1,typescript,1656,https://github.com/streetsidesoftware/vscode-spell-checker.git,63,,2026-05-26T05:33:40.142630+00:00
-walletconnect/walletconnect-monorepo,1,typescript,1661,https://github.com/walletconnect/walletconnect-monorepo.git,149,,2026-05-26T05:33:49.105479+00:00
-microsoft/beachball,1,typescript,813,https://github.com/microsoft/beachball.git,57,,2026-05-26T05:33:49.223877+00:00
-microsoft/fluentui-react-native,1,typescript,1435,https://github.com/microsoft/fluentui-react-native.git,66,,2026-05-26T05:33:51.533411+00:00
-moodlehq/moodleapp,1,typescript,967,https://github.com/moodlehq/moodleapp.git,26,,2026-05-26T05:33:52.721122+00:00
-sindresorhus/refined-github,1,typescript,15405,https://github.com/sindresorhus/refined-github.git,245,,2026-05-26T05:33:54.619152+00:00
-paraswap/paraswap-sdk,1,typescript,735,https://github.com/paraswap/paraswap-sdk.git,22,,2026-05-26T05:33:59.613481+00:00
-alibaba/hooks,1,typescript,14957,https://github.com/alibaba/hooks.git,263,,2026-05-26T05:33:59.657341+00:00
-javascript-obfuscator/javascript-obfuscator,1,typescript,16059,https://github.com/javascript-obfuscator/javascript-obfuscator.git,43,,2026-05-26T05:33:59.978115+00:00
-yang991178/fluent-reader,1,typescript,9377,https://github.com/yang991178/fluent-reader.git,26,,2026-05-26T05:34:17.873286+00:00
-ng-alain/delon,1,typescript,682,https://github.com/ng-alain/delon.git,65,,2026-05-26T05:34:23.124195+00:00
-acacode/swagger-typescript-api,1,typescript,4092,https://github.com/acacode/swagger-typescript-api.git,56,,2026-05-26T05:34:30.074342+00:00
-whitphx/vscode-emacs-mcx,1,typescript,524,https://github.com/whitphx/vscode-emacs-mcx.git,28,,2026-05-26T05:34:32.624488+00:00
-zenn-dev/zenn-editor,1,typescript,737,https://github.com/zenn-dev/zenn-editor.git,38,,2026-05-26T05:34:32.654598+00:00
-payloadcms/payload,1,typescript,42550,https://github.com/payloadcms/payload.git,435,,2026-05-26T05:34:37.115073+00:00
-faridsafi/react-native-gifted-chat,1,typescript,14401,https://github.com/faridsafi/react-native-gifted-chat.git,201,,2026-05-26T05:34:43.756902+00:00
-antvis/g6,1,typescript,12107,https://github.com/antvis/g6.git,179,,2026-05-26T05:34:44.866997+00:00
-mikro-orm/mikro-orm,1,typescript,9052,https://github.com/mikro-orm/mikro-orm.git,312,,2026-05-26T05:34:58.430697+00:00
-rolling-scopes/rsschool-app,1,typescript,10393,https://github.com/rolling-scopes/rsschool-app.git,79,,2026-05-26T05:34:59.939119+00:00
-oznu/homebridge-config-ui-x,1,typescript,2353,https://github.com/oznu/homebridge-config-ui-x.git,88,,2026-05-26T05:35:08.858447+00:00
-petyosi/react-virtuoso,1,typescript,6314,https://github.com/petyosi/react-virtuoso.git,75,,2026-05-26T05:35:13.754378+00:00
-microsoft/vscode-mssql,1,typescript,1874,https://github.com/microsoft/vscode-mssql.git,93,,2026-05-26T05:35:18.593649+00:00
-open-wa/wa-automate-nodejs,1,typescript,3560,https://github.com/open-wa/wa-automate-nodejs.git,29,,2026-05-26T05:35:20.245719+00:00
-owid/owid-grapher,1,typescript,1540,https://github.com/owid/owid-grapher.git,50,,2026-05-26T05:35:33.830584+00:00
-nomiclabs/hardhat,1,typescript,2151,https://github.com/nomiclabs/hardhat.git,132,,2026-05-26T05:35:35.005969+00:00
-eclipsesource/jsonforms,1,typescript,2686,https://github.com/eclipsesource/jsonforms.git,95,,2026-05-26T05:35:36.505050+00:00
-betterthantomorrow/calva,1,typescript,2061,https://github.com/betterthantomorrow/calva.git,155,,2026-05-26T05:35:39.371492+00:00
-destinyitemmanager/dim,1,typescript,2115,https://github.com/destinyitemmanager/dim.git,194,,2026-05-26T05:35:42.649036+00:00
-po-ui/po-angular,1,typescript,1002,https://github.com/po-ui/po-angular.git,73,,2026-05-26T05:35:45.239788+00:00
-koenkk/zigbee-herdsman,1,typescript,560,https://github.com/koenkk/zigbee-herdsman.git,183,,2026-05-26T05:36:06.803346+00:00
-wowanalyzer/wowanalyzer,1,typescript,590,https://github.com/wowanalyzer/wowanalyzer.git,282,,2026-05-26T05:36:13.669736+00:00
-electron-userland/electron-builder,1,typescript,14557,https://github.com/electron-userland/electron-builder.git,440,,2026-05-26T05:36:20.269906+00:00
-ng-select/ng-select,1,typescript,3379,https://github.com/ng-select/ng-select.git,135,,2026-05-26T05:36:28.720028+00:00
-stoplightio/prism,1,typescript,4943,https://github.com/stoplightio/prism.git,87,,2026-05-26T05:36:30.079798+00:00
-angular-eslint/angular-eslint,1,typescript,1784,https://github.com/angular-eslint/angular-eslint.git,124,,2026-05-26T05:36:44.809154+00:00
-swimlane/ngx-ui,1,typescript,733,https://github.com/swimlane/ngx-ui.git,50,,2026-05-26T05:36:47.418544+00:00
-eamodio/vscode-gitlens,1,typescript,6247,https://github.com/eamodio/vscode-gitlens.git,64,,2026-05-26T05:36:48.195161+00:00
-projen/projen,1,typescript,2926,https://github.com/projen/projen.git,240,,2026-05-26T05:36:49.765036+00:00
-espressif/vscode-esp-idf-extension,1,typescript,1428,https://github.com/espressif/vscode-esp-idf-extension.git,50,,2026-05-26T05:37:05.155866+00:00
-omnisharp/omnisharp-vscode,1,typescript,2566,https://github.com/omnisharp/omnisharp-vscode.git,150,,2026-05-26T05:37:09.269527+00:00
-benkeen/generatedata,1,typescript,2278,https://github.com/benkeen/generatedata.git,42,,2026-05-26T05:37:09.335395+00:00
-garden-io/garden,1,typescript,3587,https://github.com/garden-io/garden.git,101,,2026-05-26T05:37:12.034270+00:00
-jamaljsr/polar,1,typescript,855,https://github.com/jamaljsr/polar.git,41,,2026-05-26T05:37:27.074993+00:00
-kufu/smarthr-ui,1,typescript,955,https://github.com/kufu/smarthr-ui.git,106,,2026-05-26T05:37:30.009301+00:00
-bitwarden/browser,1,typescript,3744,https://github.com/bitwarden/browser.git,108,,2026-05-26T05:37:38.712547+00:00
-erxes/erxes,1,typescript,3981,https://github.com/erxes/erxes.git,191,,2026-05-26T05:37:38.776837+00:00
-expo/eas-cli,1,typescript,1296,https://github.com/expo/eas-cli.git,90,,2026-05-26T05:37:46.185441+00:00
-apollographql/apollo-client,1,typescript,19715,https://github.com/apollographql/apollo-client.git,400,,2026-05-26T05:37:46.612400+00:00
-facebook/jest,1,typescript,39578,https://github.com/facebook/jest.git,438,,2026-05-26T05:37:46.663248+00:00
-formatjs/formatjs,1,typescript,14710,https://github.com/formatjs/formatjs.git,322,,2026-05-26T05:37:51.509360+00:00
-desktop/desktop,1,typescript,21491,https://github.com/desktop/desktop.git,360,,2026-05-26T05:37:51.539339+00:00
-botpress/botpress,1,typescript,14702,https://github.com/botpress/botpress.git,67,,2026-05-26T05:37:56.121204+00:00
-ng-zorro/ng-zorro-antd,1,typescript,9144,https://github.com/ng-zorro/ng-zorro-antd.git,291,,2026-05-26T05:38:02.694421+00:00
-marmelab/react-admin,1,typescript,26733,https://github.com/marmelab/react-admin.git,351,,2026-05-26T05:38:10.048471+00:00
-polymer/lit-html,1,typescript,7127,https://github.com/polymer/lit-html.git,101,,2026-05-26T05:38:10.182414+00:00
-naver/billboard.js,1,typescript,5977,https://github.com/naver/billboard.js.git,144,,2026-05-26T05:38:19.476597+00:00
-prisma/prisma,1,typescript,45995,https://github.com/prisma/prisma.git,341,,2026-05-26T05:38:20.800309+00:00
-getsentry/sentry-javascript,1,typescript,8655,https://github.com/getsentry/sentry-javascript.git,407,,2026-05-26T05:38:23.476412+00:00
-slackapi/node-slack-sdk,1,typescript,3375,https://github.com/slackapi/node-slack-sdk.git,175,,2026-05-26T05:38:28.892190+00:00
-vercel/vercel,1,typescript,15523,https://github.com/vercel/vercel.git,396,,2026-05-26T05:38:29.259312+00:00
-browserless/chrome,1,typescript,6401,https://github.com/browserless/chrome.git,54,,2026-05-26T05:38:33.425862+00:00
-surveyjs/survey-library,1,typescript,4750,https://github.com/surveyjs/survey-library.git,143,,2026-05-26T05:38:34.579799+00:00
-algolia/instantsearch.js,1,typescript,2935,https://github.com/algolia/instantsearch.js.git,89,,2026-05-26T05:38:34.595961+00:00
-microsoft/rushstack,1,typescript,6461,https://github.com/microsoft/rushstack.git,301,,2026-05-26T05:38:38.106959+00:00
-sanity-io/sanity,1,typescript,6134,https://github.com/sanity-io/sanity.git,173,,2026-05-26T05:38:39.117861+00:00
-tagspaces/tagspaces,1,typescript,5143,https://github.com/tagspaces/tagspaces.git,22,,2026-05-26T05:38:41.468114+00:00
-slackapi/bolt-js,1,typescript,2913,https://github.com/slackapi/bolt-js.git,150,,2026-05-26T05:38:43.202967+00:00
-artsy/eigen,1,typescript,3771,https://github.com/artsy/eigen.git,133,,2026-05-26T05:38:53.974093+00:00
-azuread/microsoft-authentication-library-for-js,1,typescript,4069,https://github.com/azuread/microsoft-authentication-library-for-js.git,215,,2026-05-26T05:39:09.998017+00:00
-wireapp/wire-desktop,1,typescript,1123,https://github.com/wireapp/wire-desktop.git,55,,2026-05-26T05:39:10.408499+00:00
-parabolinc/parabol,1,typescript,2002,https://github.com/parabolinc/parabol.git,78,,2026-05-26T05:39:11.221355+00:00
-microsoft/vscode-pull-request-github,1,typescript,2590,https://github.com/microsoft/vscode-pull-request-github.git,149,,2026-05-26T05:39:13.178771+00:00
-igniteui/igniteui-angular,1,typescript,597,https://github.com/igniteui/igniteui-angular.git,114,,2026-05-26T05:39:46.813250+00:00
-sagemathinc/cocalc,1,typescript,1279,https://github.com/sagemathinc/cocalc.git,50,,2026-05-26T05:39:48.635821+00:00
-kinvolk/headlamp,1,typescript,824,https://github.com/kinvolk/headlamp.git,17,,2026-05-26T05:39:48.685733+00:00
-pnp/cli-microsoft365,1,typescript,1348,https://github.com/pnp/cli-microsoft365.git,144,,2026-05-26T05:39:55.961300+00:00
-nexus-mods/vortex,1,typescript,1349,https://github.com/nexus-mods/vortex.git,36,,2026-05-26T05:40:00.034295+00:00
-vivliostyle/vivliostyle.js,1,typescript,754,https://github.com/vivliostyle/vivliostyle.js.git,34,,2026-05-26T05:40:00.842535+00:00
-forcedotcom/salesforcedx-vscode,1,typescript,1011,https://github.com/forcedotcom/salesforcedx-vscode.git,125,,2026-05-26T05:40:00.845737+00:00
-sap/ui5-webcomponents-react,1,typescript,508,https://github.com/sap/ui5-webcomponents-react.git,47,,2026-05-26T05:40:01.675670+00:00
-pagopa/io-app,1,typescript,695,https://github.com/pagopa/io-app.git,98,,2026-05-26T05:40:02.040644+00:00
-ethereum/sourcify,1,typescript,863,https://github.com/ethereum/sourcify.git,149,,2026-05-26T05:40:02.859994+00:00
-github/codeql-action,1,typescript,1545,https://github.com/github/codeql-action.git,87,,2026-05-26T05:40:03.063037+00:00
-hubtype/botonic,1,typescript,615,https://github.com/hubtype/botonic.git,35,,2026-05-26T05:40:03.573061+00:00
-lucide-icons/lucide,1,typescript,22689,https://github.com/lucide-icons/lucide.git,313,,2026-05-26T05:40:11.099083+00:00
-chainsafe/lodestar,1,typescript,1411,https://github.com/chainsafe/lodestar.git,137,,2026-05-26T05:40:13.272967+00:00
-microsoft/vscode-jupyter,1,typescript,1503,https://github.com/microsoft/vscode-jupyter.git,255,,2026-05-26T05:40:13.300086+00:00
-adobe/spectrum-web-components,1,typescript,1513,https://github.com/adobe/spectrum-web-components.git,111,,2026-05-26T05:40:13.401660+00:00
-tinymce/tinymce,1,typescript,16205,https://github.com/tinymce/tinymce.git,224,,2026-05-26T05:40:18.680974+00:00
-umijs/umi,1,typescript,16026,https://github.com/umijs/umi.git,417,,2026-05-26T05:40:23.998649+00:00
-gitpod-io/gitpod,1,typescript,13685,https://github.com/gitpod-io/gitpod.git,128,,2026-05-26T05:40:26.939528+00:00
-foambubble/foam,1,typescript,17148,https://github.com/foambubble/foam.git,145,,2026-05-26T05:40:45.398841+00:00
-powershell/vscode-powershell,1,typescript,1881,https://github.com/powershell/vscode-powershell.git,120,,2026-05-26T05:40:47.825108+00:00
-trezor/trezor-suite,1,typescript,1006,https://github.com/trezor/trezor-suite.git,151,,2026-05-26T05:40:48.798886+00:00
-vuejs/vue-router-next,1,typescript,1656,https://github.com/vuejs/vue-router-next.git,112,,2026-05-26T05:40:51.514292+00:00
-prabhuignoto/react-chrono,1,typescript,4153,https://github.com/prabhuignoto/react-chrono.git,14,,2026-05-26T05:41:03.361395+00:00
-imbhargav5/rooks,1,typescript,3443,https://github.com/imbhargav5/rooks.git,76,,2026-05-26T05:41:11.992512+00:00
-syuilo/misskey,1,typescript,1677,https://github.com/syuilo/misskey.git,77,,2026-05-26T05:41:16.966821+00:00
-artsy/force,1,typescript,637,https://github.com/artsy/force.git,122,,2026-05-26T05:41:30.056528+00:00
-tinkoffcreditsystems/taiga-ui,1,typescript,1854,https://github.com/tinkoffcreditsystems/taiga-ui.git,67,,2026-05-26T05:41:30.538025+00:00
-celo-org/celo-monorepo,1,typescript,674,https://github.com/celo-org/celo-monorepo.git,179,,2026-05-26T05:41:35.681511+00:00
-wireapp/wire-webapp,1,typescript,1188,https://github.com/wireapp/wire-webapp.git,93,,2026-05-26T05:41:36.776415+00:00
-sap/spartacus,1,typescript,779,https://github.com/sap/spartacus.git,161,,2026-05-26T05:41:37.016080+00:00
-vuetifyjs/vuetify,1,typescript,41003,https://github.com/vuetifyjs/vuetify.git,431,,2026-05-26T05:41:45.399812+00:00
-typeorm/typeorm,1,typescript,36505,https://github.com/typeorm/typeorm.git,423,,2026-05-26T05:41:49.770986+00:00
-swaponline/multicurrencywallet,1,typescript,540,https://github.com/swaponline/multicurrencywallet.git,60,,2026-05-26T05:41:55.098620+00:00
-eclipse-theia/theia,1,typescript,21525,https://github.com/eclipse-theia/theia.git,349,,2026-05-26T05:42:09.278823+00:00
-antvis/g2,1,typescript,12551,https://github.com/antvis/g2.git,217,,2026-05-26T05:42:10.182523+00:00
-jigsaw-code/outline-client,1,typescript,8041,https://github.com/jigsaw-code/outline-client.git,38,,2026-05-26T05:42:43.082134+00:00
-tinacms/tinacms,1,typescript,13354,https://github.com/tinacms/tinacms.git,143,,2026-05-26T05:42:46.958881+00:00
-johannesjo/super-productivity,1,typescript,16613,https://github.com/johannesjo/super-productivity.git,300,,2026-05-26T05:42:59.829093+00:00
-cloudhut/kowl,1,typescript,2188,https://github.com/cloudhut/kowl.git,19,,2026-05-26T05:43:16.863555+00:00
-midwayjs/midway,1,typescript,7711,https://github.com/midwayjs/midway.git,165,,2026-05-26T05:43:17.304642+00:00
-vendure-ecommerce/vendure,1,typescript,7714,https://github.com/vendure-ecommerce/vendure.git,244,,2026-05-26T05:43:23.912508+00:00
-nrwl/nx,1,typescript,28745,https://github.com/nrwl/nx.git,399,,2026-05-26T05:43:25.090851+00:00
-microsoft/fluidframework,1,typescript,4927,https://github.com/microsoft/fluidframework.git,253,,2026-05-26T05:43:33.980505+00:00
-appsmithorg/appsmith,1,typescript,39884,https://github.com/appsmithorg/appsmith.git,326,,2026-05-26T05:43:38.954867+00:00
-thymikee/jest-preset-angular,1,typescript,916,https://github.com/thymikee/jest-preset-angular.git,88,,2026-05-26T05:43:42.554240+00:00
-notionx/react-notion-x,1,typescript,5402,https://github.com/notionx/react-notion-x.git,88,,2026-05-26T05:43:49.002643+00:00
-jesec/flood,1,typescript,2767,https://github.com/jesec/flood.git,105,,2026-05-26T05:43:54.575585+00:00
-lichess-org/api,1,typescript,561,https://github.com/lichess-org/api.git,74,,2026-05-26T05:43:56.108432+00:00
-firecow/gitlab-ci-local,1,typescript,3902,https://github.com/firecow/gitlab-ci-local.git,86,,2026-05-26T05:43:59.981401+00:00
-davidkpiano/xstate,1,typescript,16523,https://github.com/davidkpiano/xstate.git,215,,2026-05-26T05:44:01.606909+00:00
-streetsidesoftware/cspell,1,typescript,1634,https://github.com/streetsidesoftware/cspell.git,80,,2026-05-26T05:44:01.696493+00:00
-azure/azure-sdk-for-js,1,typescript,2293,https://github.com/azure/azure-sdk-for-js.git,399,,2026-05-26T05:44:02.177544+00:00
-pubkey/rxdb,1,typescript,23209,https://github.com/pubkey/rxdb.git,253,,2026-05-26T05:44:06.139871+00:00
-excalidraw/excalidraw,1,typescript,123825,https://github.com/excalidraw/excalidraw.git,345,,2026-05-26T05:44:09.904160+00:00
-microsoft/fast,1,typescript,9651,https://github.com/microsoft/fast.git,149,,2026-05-26T05:44:11.465263+00:00
-teambit/bit,1,typescript,18392,https://github.com/teambit/bit.git,74,,2026-05-26T05:44:12.072792+00:00
-mui-org/material-ui-x,1,typescript,978,https://github.com/mui-org/material-ui-x.git,82,,2026-05-26T05:44:12.212902+00:00
-signoz/signoz,1,typescript,26998,https://github.com/signoz/signoz.git,199,,2026-05-26T05:44:12.414427+00:00
-pnpm/pnpm,1,typescript,35191,https://github.com/pnpm/pnpm.git,429,,2026-05-26T05:44:12.429372+00:00
-webiny/webiny-js,1,typescript,7979,https://github.com/webiny/webiny-js.git,76,,2026-05-26T05:44:13.423356+00:00
-strongloop/loopback-next,1,typescript,3724,https://github.com/strongloop/loopback-next.git,177,,2026-05-26T05:44:16.547859+00:00
-home-assistant/frontend,1,typescript,5477,https://github.com/home-assistant/frontend.git,439,,2026-05-26T05:44:21.282007+00:00
-coinbase/rest-hooks,1,typescript,1652,https://github.com/coinbase/rest-hooks.git,34,,2026-05-26T05:44:31.502748+00:00
-thecodingmachine/workadventure,1,typescript,3192,https://github.com/thecodingmachine/workadventure.git,77,,2026-05-26T05:44:51.961541+00:00
-microsoft/playwright,1,typescript,89196,https://github.com/microsoft/playwright.git,471,,2026-05-26T05:44:52.301290+00:00
-effector/effector,1,typescript,4839,https://github.com/effector/effector.git,143,,2026-05-26T05:44:58.584811+00:00
-dubzzz/fast-check,1,typescript,4950,https://github.com/dubzzz/fast-check.git,74,,2026-05-26T05:45:02.303733+00:00
-microsoft/fluentui,1,typescript,20016,https://github.com/microsoft/fluentui.git,385,,2026-05-26T05:45:19.173201+00:00
-chakra-ui/chakra-ui,1,typescript,40433,https://github.com/chakra-ui/chakra-ui.git,410,,2026-05-26T05:45:21.344738+00:00
-flavioislima/heroicgameslauncher,1,typescript,551,https://github.com/flavioislima/heroicgameslauncher.git,19,,2026-05-26T05:45:24.255084+00:00
-ant-design/pro-components,1,typescript,4752,https://github.com/ant-design/pro-components.git,410,,2026-05-26T05:45:26.146553+00:00
-ant-design/ant-design,1,typescript,98114,https://github.com/ant-design/ant-design.git,375,,2026-05-26T05:45:26.497441+00:00
-aws/aws-cdk,1,typescript,12771,https://github.com/aws/aws-cdk.git,391,,2026-05-26T05:45:26.640143+00:00
-microsoft/typescript,1,typescript,108921,https://github.com/microsoft/typescript.git,343,,2026-05-26T05:45:27.645211+00:00
-trpc/trpc,1,typescript,40238,https://github.com/trpc/trpc.git,462,,2026-05-26T05:45:31.152173+00:00
-sidequestjs/sidequest,1,typescript,983,https://github.com/sidequestjs/sidequest.git,7,,2026-05-26T05:45:34.061939+00:00
-ifandelse/machina.js,1,typescript,1956,https://github.com/ifandelse/machina.js.git,21,,2026-05-26T05:45:36.312596+00:00
-zwave-js/node-zwave-js,1,typescript,803,https://github.com/zwave-js/node-zwave-js.git,411,,2026-05-26T05:45:36.481762+00:00
-rejetto/hfs,1,typescript,3715,https://github.com/rejetto/hfs.git,21,,2026-05-26T05:45:40.558066+00:00
-renovatebot/renovate,1,typescript,21468,https://github.com/renovatebot/renovate.git,432,,2026-05-26T05:45:40.898285+00:00
-vitejs/vite,1,typescript,80768,https://github.com/vitejs/vite.git,439,,2026-05-26T05:45:41.257388+00:00
-postaljs/postal.js,1,typescript,2837,https://github.com/postaljs/postal.js.git,20,,2026-05-26T05:45:42.359430+00:00
-khan/perseus,1,typescript,1567,https://github.com/khan/perseus.git,43,,2026-05-26T05:45:47.162120+00:00
-raawaa/jav-scrapy,1,typescript,1184,https://github.com/raawaa/jav-scrapy.git,9,,2026-05-26T05:45:52.317539+00:00
-olistic/warriorjs,1,typescript,9507,https://github.com/olistic/warriorjs.git,13,,2026-05-26T05:45:52.467155+00:00
-gitbookio/gitbook,1,typescript,28858,https://github.com/gitbookio/gitbook.git,34,,2026-05-26T05:45:52.684807+00:00
-naomiaro/waveform-playlist,1,typescript,1638,https://github.com/naomiaro/waveform-playlist.git,16,,2026-05-26T05:45:54.969319+00:00
-n8n-io/n8n,1,typescript,187599,https://github.com/n8n-io/n8n.git,428,,2026-05-26T05:45:55.072702+00:00
-kriasoft/react-starter-kit,1,typescript,23514,https://github.com/kriasoft/react-starter-kit.git,13,,2026-05-26T05:45:57.178099+00:00
-wechatsync/wechatsync,1,typescript,5307,https://github.com/wechatsync/wechatsync.git,9,,2026-05-26T05:46:02.255959+00:00
-zuiidea/antd-admin,1,typescript,9755,https://github.com/zuiidea/antd-admin.git,52,,2026-05-26T05:46:02.883876+00:00
-caldis/react-zmage,1,typescript,937,https://github.com/caldis/react-zmage.git,6,,2026-05-26T05:46:05.774096+00:00
-grafana/grafana,1,typescript,73823,https://github.com/grafana/grafana.git,372,,2026-05-26T05:46:07.896923+00:00
-audreyt/ethercalc,1,typescript,3029,https://github.com/audreyt/ethercalc.git,50,,2026-05-26T05:46:08.000797+00:00
-gre/gl-react,1,typescript,2989,https://github.com/gre/gl-react.git,14,,2026-05-26T05:46:08.773400+00:00
-theoephraim/node-google-spreadsheet,1,typescript,2482,https://github.com/theoephraim/node-google-spreadsheet.git,51,,2026-05-26T05:46:09.082229+00:00
-johnkorzhuk/grabient,1,typescript,2006,https://github.com/johnkorzhuk/grabient.git,3,,2026-05-26T05:46:09.585862+00:00
-definitelytyped/definitelytyped,1,typescript,51243,https://github.com/definitelytyped/definitelytyped.git,386,,2026-05-26T05:46:10.053145+00:00
-marktext/muya,1,typescript,714,https://github.com/marktext/muya.git,11,,2026-05-26T05:46:11.259574+00:00
-tabwrangler/tabwrangler,1,typescript,609,https://github.com/tabwrangler/tabwrangler.git,23,,2026-05-26T05:46:12.813527+00:00
-nteract/semiotic,1,typescript,2664,https://github.com/nteract/semiotic.git,30,,2026-05-26T05:46:15.513206+00:00
-yoannmoinet/nipplejs,1,typescript,1923,https://github.com/yoannmoinet/nipplejs.git,24,,2026-05-26T05:46:16.541361+00:00
-node-modules/urllib,1,typescript,742,https://github.com/node-modules/urllib.git,53,,2026-05-26T05:46:17.613651+00:00
-jsforce/jsforce,1,typescript,1459,https://github.com/jsforce/jsforce.git,72,,2026-05-26T05:46:19.213157+00:00
-nodecg/nodecg,1,typescript,1124,https://github.com/nodecg/nodecg.git,46,,2026-05-26T05:46:19.805771+00:00
-coreui/coreui-react,1,typescript,693,https://github.com/coreui/coreui-react.git,8,,2026-05-26T05:46:19.819034+00:00
-styled-components/styled-components-website,1,typescript,622,https://github.com/styled-components/styled-components-website.git,247,,2026-05-26T05:46:21.530561+00:00
-storybookjs/react-native,1,typescript,1288,https://github.com/storybookjs/react-native.git,341,,2026-05-26T05:46:21.562342+00:00
-silenceleo/snowb-bmf,1,typescript,555,https://github.com/silenceleo/snowb-bmf.git,7,,2026-05-26T05:46:22.266144+00:00
-tencent/vconsole,1,typescript,17464,https://github.com/tencent/vconsole.git,61,,2026-05-26T05:46:22.762726+00:00
-easysoft/zui,1,typescript,2771,https://github.com/easysoft/zui.git,19,,2026-05-26T05:46:26.378221+00:00
-gilbarbara/react-joyride,1,typescript,7721,https://github.com/gilbarbara/react-joyride.git,44,,2026-05-26T05:46:27.852610+00:00
-whiteminds/liveautorecord,1,typescript,946,https://github.com/whiteminds/liveautorecord.git,4,,2026-05-26T05:46:29.374584+00:00
-haehnchen/crypto-trading-bot,1,typescript,3438,https://github.com/haehnchen/crypto-trading-bot.git,16,,2026-05-26T05:46:29.843532+00:00
-argos-ci/argos,1,typescript,584,https://github.com/argos-ci/argos.git,13,,2026-05-26T05:46:37.051830+00:00
-eggjs/egg,1,typescript,18996,https://github.com/eggjs/egg.git,217,,2026-05-26T05:46:37.556778+00:00
-amondnet/vercel-action,1,typescript,755,https://github.com/amondnet/vercel-action.git,35,,2026-05-26T05:46:41.100861+00:00
-sboudrias/inquirer.js,1,typescript,21559,https://github.com/sboudrias/inquirer.js.git,220,,2026-05-26T05:46:42.337286+00:00
-xiaomi/hiui,1,typescript,856,https://github.com/xiaomi/hiui.git,35,,2026-05-26T05:46:52.782115+00:00
-mxstbr/mxstbr.com,1,typescript,503,https://github.com/mxstbr/mxstbr.com.git,11,,2026-05-26T05:46:52.921671+00:00
-openshiporg/openship,1,typescript,1148,https://github.com/openshiporg/openship.git,3,,2026-05-26T05:46:53.700898+00:00
-auth0/node-auth0,1,typescript,679,https://github.com/auth0/node-auth0.git,149,,2026-05-26T05:46:56.602202+00:00
-dinerojs/dinero.js,1,typescript,6743,https://github.com/dinerojs/dinero.js.git,18,,2026-05-26T05:46:57.027266+00:00
-ueberdosis/tiptap,1,typescript,36883,https://github.com/ueberdosis/tiptap.git,431,,2026-05-26T05:46:57.368162+00:00
-callstack/react-native-testing-library,1,typescript,3368,https://github.com/callstack/react-native-testing-library.git,127,,2026-05-26T05:47:01.448714+00:00
-styled-components/styled-components,1,typescript,41024,https://github.com/styled-components/styled-components.git,342,,2026-05-26T05:47:06.000816+00:00
-supabase/supabase-js,1,typescript,4453,https://github.com/supabase/supabase-js.git,223,,2026-05-26T05:47:11.294914+00:00
-algolia/docsearch,1,typescript,4358,https://github.com/algolia/docsearch.git,124,,2026-05-26T05:47:20.381720+00:00
-revenuecat/react-native-purchases,1,typescript,1168,https://github.com/revenuecat/react-native-purchases.git,43,,2026-05-26T05:47:21.681316+00:00
-kern/filepizza,1,typescript,10051,https://github.com/kern/filepizza.git,25,,2026-05-26T05:47:26.861068+00:00
-typestrong/ts-loader,1,typescript,3478,https://github.com/typestrong/ts-loader.git,135,,2026-05-26T05:47:31.107801+00:00
-instawork/hyperview,1,typescript,1677,https://github.com/instawork/hyperview.git,46,,2026-05-26T05:47:36.617254+00:00
-heroku/cli,1,typescript,887,https://github.com/heroku/cli.git,144,,2026-05-26T05:47:36.643248+00:00
-microsoft/applicationinsights-js,1,typescript,683,https://github.com/microsoft/applicationinsights-js.git,96,,2026-05-26T05:47:38.205048+00:00
-gre/react-native-view-shot,1,typescript,2914,https://github.com/gre/react-native-view-shot.git,72,,2026-05-26T05:47:42.101264+00:00
-posthog/posthog-js,1,typescript,545,https://github.com/posthog/posthog-js.git,140,,2026-05-26T05:47:42.159671+00:00
-razorpay/blade,1,typescript,622,https://github.com/razorpay/blade.git,106,,2026-05-26T05:47:42.265651+00:00
-siriwatknp/mui-treasury,1,typescript,2443,https://github.com/siriwatknp/mui-treasury.git,17,,2026-05-26T05:47:43.011901+00:00
-apidevtools/json-schema-ref-parser,1,typescript,1103,https://github.com/apidevtools/json-schema-ref-parser.git,52,,2026-05-26T05:47:43.336096+00:00
-custom-cards/button-card,1,typescript,2439,https://github.com/custom-cards/button-card.git,30,,2026-05-26T05:47:44.820748+00:00
-logchimp/logchimp,1,typescript,1089,https://github.com/logchimp/logchimp.git,18,,2026-05-26T05:47:45.467223+00:00
-specklesystems/speckle-server,1,typescript,813,https://github.com/specklesystems/speckle-server.git,46,,2026-05-26T05:47:45.563387+00:00
-jackocnr/intl-tel-input,1,typescript,8201,https://github.com/jackocnr/intl-tel-input.git,135,,2026-05-26T05:47:46.337124+00:00
-hacker0x01/react-datepicker,1,typescript,8363,https://github.com/hacker0x01/react-datepicker.git,415,,2026-05-26T05:47:47.673210+00:00
-higurashi-kagome/wereader,1,typescript,754,https://github.com/higurashi-kagome/wereader.git,2,,2026-05-26T05:47:54.258046+00:00
-lerna/lerna,1,typescript,36071,https://github.com/lerna/lerna.git,335,,2026-05-26T05:47:55.468928+00:00
-steedos/steedos-platform,1,typescript,1554,https://github.com/steedos/steedos-platform.git,35,,2026-05-26T05:47:55.614066+00:00
-lane711/sonicjs,1,typescript,1369,https://github.com/lane711/sonicjs.git,26,,2026-05-26T05:48:02.170187+00:00
-tabarra/txadmin,1,typescript,865,https://github.com/tabarra/txadmin.git,154,,2026-05-26T05:48:03.717373+00:00
-mongodb/node-mongodb-native,1,typescript,10179,https://github.com/mongodb/node-mongodb-native.git,365,,2026-05-26T05:48:17.906856+00:00
-vuepress-theme-hope/vuepress-theme-hope,1,typescript,2515,https://github.com/vuepress-theme-hope/vuepress-theme-hope.git,120,,2026-05-26T05:48:22.725798+00:00
-oxygem/kanmail,1,typescript,1354,https://github.com/oxygem/kanmail.git,8,,2026-05-26T05:48:22.989224+00:00
-diegomura/react-pdf,1,typescript,16589,https://github.com/diegomura/react-pdf.git,152,,2026-05-26T05:48:23.047784+00:00
-sidorares/node-mysql2,1,typescript,4363,https://github.com/sidorares/node-mysql2.git,236,,2026-05-26T05:48:28.816921+00:00
-amruthpillai/reactive-resume,1,typescript,37828,https://github.com/amruthpillai/reactive-resume.git,196,,2026-05-26T05:48:31.065310+00:00
+repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,matched_config_file,processed_at,created_at,topics,discovery_tier
+eclipse/che,1,typescript,6909,https://github.com/eclipse/che.git,137,,CLAUDE.md,2026-07-25T03:07:22.127085+00:00,2015-03-26T03:31:01,"[""cloud"", ""cloud-ide"", ""containers"", ""devtools"", ""eclipse"", ""ide"", ""kubernetes""]",1
+software-mansion/react-native-screens,1,typescript,3695,https://github.com/software-mansion/react-native-screens.git,169,,CLAUDE.md,2026-07-25T03:07:22.942659+00:00,2018-08-03T11:36:32,"[""react-native"", ""react-navigation"", ""typescript""]",1
+sonarsource/sonarjs,1,typescript,1247,https://github.com/sonarsource/sonarjs.git,99,,CLAUDE.md,2026-07-25T03:07:23.015706+00:00,2012-05-15T12:35:38,"[""code-quality"", ""javascript"", ""language-team"", ""sonarcloud"", ""sonarqube"", ""static-analysis"", ""static-analyzer"", ""static-code-analysis"", ""typescript""]",1
+mil-tokyo/webdnn,1,typescript,1998,https://github.com/mil-tokyo/webdnn.git,12,,CLAUDE.md,2026-07-25T03:07:27.306608+00:00,2017-04-06T08:11:46,"[""accelerate"", ""deep-neural-networks"", ""javascript"", ""optimization"", ""webgpu""]",1
+justjake/quickjs-emscripten,1,typescript,1615,https://github.com/justjake/quickjs-emscripten.git,14,,CLAUDE.md,2026-07-25T03:07:27.861127+00:00,2020-01-05T04:09:48,"[""eval"", ""javascript"", ""plugins"", ""quickjs"", ""wasm""]",1
+software-mansion/react-native-gesture-handler,1,typescript,6759,https://github.com/software-mansion/react-native-gesture-handler.git,265,,CLAUDE.md,2026-07-25T03:07:30.000520+00:00,2016-10-27T08:31:38,"[""gesture"", ""javascript"", ""react-native""]",1
+wowup/wowup,1,typescript,948,https://github.com/wowup/wowup.git,45,,CLAUDE.md,2026-07-25T03:07:39.735135+00:00,2020-06-28T04:01:59,"[""world-of-warcraft"", ""world-of-warcraft-addon""]",1
+blakeblackshear/frigate,1,typescript,34199,https://github.com/blakeblackshear/frigate.git,387,,copilot-instructions.md,2026-07-25T03:07:39.756206+00:00,2019-01-26T01:52:38,"[""ai"", ""camera"", ""google-coral"", ""home-assistant"", ""home-automation"", ""homeautomation"", ""mqtt"", ""nvr"", ""object-detection"", ""realtime"", ""rtsp"", ""tensorflow""]",1
+nomcopter/react-mosaic,1,typescript,4745,https://github.com/nomcopter/react-mosaic.git,17,,.cursor/,2026-07-25T03:08:32.571573+00:00,2017-03-23T03:51:26,"[""react"", ""tiling-window-manager"", ""typescript"", ""window-manager""]",1
+bdash-app/bdash,1,typescript,1517,https://github.com/bdash-app/bdash.git,23,,CLAUDE.md,2026-07-25T03:08:40.725711+00:00,2016-08-23T12:20:03,"[""electron"", ""javascript"", ""sql"", ""visualization""]",1
+angular-schule/angular-cli-ghpages,1,typescript,982,https://github.com/angular-schule/angular-cli-ghpages.git,23,,CLAUDE.md,2026-07-25T03:08:50.272770+00:00,2016-04-07T07:42:30,"[""angular"", ""angular-cli"", ""angular-cli-ghpages"", ""circle-ci"", ""cloudflare-pages"", ""gh-pages"", ""github-actions"", ""github-pages"", ""ng-deploy"", ""travis-ci""]",1
+react-cosmos/react-cosmos,1,typescript,8671,https://github.com/react-cosmos/react-cosmos.git,108,,CLAUDE.md,2026-07-25T03:08:50.763657+00:00,2014-02-05T06:48:27,"[""components"", ""devtools"", ""react"", ""sandbox"", ""testing"", ""ui""]",1
+nuclearpasta/react-native-drax,1,typescript,697,https://github.com/nuclearpasta/react-native-drax.git,10,,CLAUDE.md,2026-07-25T03:08:57.037228+00:00,2019-12-20T06:44:59,[],1
+sanity-io/next-sanity,1,typescript,949,https://github.com/sanity-io/next-sanity.git,47,,CLAUDE.md,2026-07-25T03:09:00.357474+00:00,2020-10-22T02:46:51,"[""hook"", ""nextjs"", ""preview"", ""real-time"", ""sanity"", ""team-ecosystem"", ""toolkit""]",1
+traduora/traduora,1,typescript,1460,https://github.com/traduora/traduora.git,12,,.cursor/,2026-07-25T03:09:02.660381+00:00,2019-03-05T07:46:09,[],1
+apptension/aws-boilerplate,1,typescript,697,https://github.com/apptension/aws-boilerplate.git,9,,.cursor/,2026-07-25T03:09:04.052041+00:00,2020-04-14T09:31:26,[],1
+teradata/covalent,1,typescript,2224,https://github.com/teradata/covalent.git,98,,.github/instructions/,2026-07-25T03:09:04.078176+00:00,2016-07-11T11:30:52,"[""angular"", ""angular-material"", ""angular2"", ""material"", ""material-design"", ""teradata"", ""typescript""]",1
+ekalinin/sitemap.js,1,typescript,1709,https://github.com/ekalinin/sitemap.js.git,49,,CLAUDE.md,2026-07-25T03:09:07.002744+00:00,2011-06-29T03:09:12,"[""nodejs"", ""sitemap"", ""sitemap-generator"", ""sitemap-xml""]",1
+ryohey/signal,1,typescript,2306,https://github.com/ryohey/signal.git,19,,CLAUDE.md,2026-07-25T03:09:09.990663+00:00,2016-03-06T03:19:53,"[""audio"", ""editor"", ""midi"", ""music"", ""react"", ""typescript"", ""webaudio""]",1
+testing-library/eslint-plugin-testing-library,1,typescript,1060,https://github.com/testing-library/eslint-plugin-testing-library.git,78,,copilot-instructions.md,2026-07-25T03:09:18.148012+00:00,2019-09-01T06:12:58,"[""angular"", ""best-practices"", ""development"", ""dom"", ""eslint"", ""eslint-plugin"", ""javascript"", ""markojs"", ""react"", ""reactjs"", ""testing-library"", ""vue""]",1
+picgo/picgo-core,1,typescript,955,https://github.com/picgo/picgo-core.git,19,,CLAUDE.md,2026-07-25T03:09:19.273626+00:00,2018-09-17T07:26:44,"[""picgo"", ""picture-upload"", ""upload-pictures""]",1
+chichou/vscode-frida,1,typescript,594,https://github.com/chichou/vscode-frida.git,3,,CLAUDE.md,2026-07-25T03:09:19.862236+00:00,2020-01-14T11:58:22,"[""android"", ""ios"", ""mobile-security"", ""reverse-engineering"", ""vscode""]",1
+lizhiyao/sentry-miniapp,1,typescript,668,https://github.com/lizhiyao/sentry-miniapp.git,5,,CLAUDE.md,2026-07-25T03:09:20.627385+00:00,2019-08-07T02:16:04,"[""alipay-miniprogram"", ""apm"", ""breadcrumbs"", ""bytedance-miniprogram"", ""crash-reporting"", ""distributed-tracing"", ""error-monitoring"", ""error-tracking"", ""mini-program"", ""monitoring"", ""performance-monitoring"", ""qq-miniprogram"", ""sentry"", ""session-tracking"", ""sourcemap"", ""taro"", ""uniapp"", ""weapp"", ""wechat"", ""wechat-miniprogram""]",1
+reaviz/reaviz,1,typescript,1236,https://github.com/reaviz/reaviz.git,28,,CLAUDE.md,2026-07-25T03:09:21.807860+00:00,2020-04-17T09:17:18,"[""area-charts"", ""bar-charts"", ""bubble-chart"", ""charting-library"", ""charts"", ""d3"", ""d3js"", ""data-visualization"", ""data-viz"", ""funnel-chart"", ""heatmap"", ""line-charts"", ""react"", ""reactjs"", ""sankey-chart"", ""scatter-plot"", ""sparkline"", ""sunburst-chart"", ""treemap"", ""venn-diagram""]",1
+zeusln/zeus,1,typescript,1390,https://github.com/zeusln/zeus.git,62,,.claude/,2026-07-25T03:09:26.591508+00:00,2019-02-16T08:58:09,"[""android"", ""bitcoin"", ""cashu"", ""core-lightning"", ""cryptocurrency"", ""ecash"", ""ios"", ""ldk"", ""lightning"", ""lightning-network"", ""lnd"", ""lndhub"", ""micropayments"", ""nostr"", ""payments"", ""react-native"", ""self-custody"", ""typescript""]",1
+surgioproject/surgio,1,typescript,1810,https://github.com/surgioproject/surgio.git,37,,CLAUDE.md,2026-07-25T03:09:30.264810+00:00,2019-08-20T04:10:41,"[""clash"", ""hysteria"", ""loon"", ""quantumult"", ""shadowsocks"", ""sing-box"", ""snell"", ""stash"", ""surge"", ""trojan"", ""v2ray"", ""vless"", ""vmess""]",1
+martpie/museeks,1,typescript,2123,https://github.com/martpie/museeks.git,22,,CLAUDE.md,2026-07-25T03:09:30.601490+00:00,2015-03-03T01:01:31,"[""cross-platform"", ""electron"", ""museeks"", ""music"", ""music-player"", ""react""]",1
+honkit/honkit,1,typescript,3471,https://github.com/honkit/honkit.git,133,,.copilot-*.md,2026-07-25T03:09:32.698526+00:00,2020-06-13T12:16:48,"[""asciidoc"", ""book"", ""ebook"", ""gitbook"", ""honkit"", ""javascript"", ""markdown"", ""plugin""]",1
+sindresorhus/type-fest,1,typescript,17286,https://github.com/sindresorhus/type-fest.git,207,,CLAUDE.md,2026-07-25T03:09:34.337299+00:00,2019-03-13T10:30:19,"[""npm-package"", ""types"", ""typescript"", ""typescript-definitions"", ""utilities""]",1
+didi/logicflow,1,typescript,11480,https://github.com/didi/logicflow.git,82,,.cursor/,2026-07-25T03:09:35.644665+00:00,2020-12-24T07:55:38,"[""bpmn"", ""diagram"", ""diagramming"", ""didi"", ""flow"", ""flowchart"", ""graph"", ""javascript"", ""javascript-diagramming-library"", ""mvvm"", ""svg"", ""typescript"", ""visualization""]",1
+crowi/crowi,1,typescript,1099,https://github.com/crowi/crowi.git,37,,CLAUDE.md,2026-07-25T03:09:41.279700+00:00,2014-08-18T05:32:58,"[""crowi"", ""knowledge"", ""markdown-wiki"", ""typescript"", ""wiki""]",1
+jcmais/node-libcurl,1,typescript,715,https://github.com/jcmais/node-libcurl.git,28,,CLAUDE.md,2026-07-25T03:09:50.694160+00:00,2014-04-16T11:32:43,"[""c-plus-plus"", ""curl"", ""ftp"", ""hacktoberfest"", ""http-client"", ""http2"", ""http3"", ""javascript"", ""libcurl"", ""libcurl-binding"", ""node-addon"", ""node-gyp"", ""node-module"", ""nodejs"", ""prebuilt-binaries"", ""quic""]",1
+persian-tools/persian-tools,1,typescript,1188,https://github.com/persian-tools/persian-tools.git,41,,.github/instructions/,2026-07-25T03:09:53.001663+00:00,2018-06-18T10:00:57,"[""card-number"", ""code-melli"", ""code-melli-validator"", ""convert-numbers"", ""convert-persian-number"", ""english-number-to-persian"", ""fuzzy-matching"", ""iban"", ""iranian-national-id"", ""number-to-words"", ""persian-characters"", ""persian-language"", ""persian-words-to-number"", ""remove-commas"", ""sheba"", ""sheba-validator"", ""verify-bank-nunber"", ""verify-national-id"", ""words-to-numbers""]",1
+ngx-translate/core,1,typescript,4665,https://github.com/ngx-translate/core.git,98,,copilot-instructions.md,2026-07-25T03:09:57.777134+00:00,2015-10-11T08:44:15,"[""angular"", ""i18n"", ""ngx"", ""ngx-translate"", ""npm-package"", ""translation""]",1
+remeda/remeda,1,typescript,5388,https://github.com/remeda/remeda.git,102,,CLAUDE.md,2026-07-25T03:10:10.019526+00:00,2018-05-07T08:56:53,"[""functional"", ""programming"", ""typescript"", ""utility""]",1
+elixir-lsp/vscode-elixir-ls,1,typescript,597,https://github.com/elixir-lsp/vscode-elixir-ls.git,57,,CLAUDE.md,2026-07-25T03:10:13.688446+00:00,2019-01-16T10:10:46,"[""elixir"", ""language-server""]",1
+openplayerjs/openplayerjs,1,typescript,646,https://github.com/openplayerjs/openplayerjs.git,12,,CLAUDE.md,2026-07-25T03:10:13.696836+00:00,2018-09-03T05:41:25,"[""ads"", ""audio"", ""hls"", ""html5"", ""html5-audio"", ""html5-video"", ""html5-video-player"", ""javascript"", ""non-linear"", ""omid"", ""openplayerjs"", ""player"", ""simid"", ""typescript"", ""typescript-library"", ""vast"", ""video"", ""vmap""]",1
+handsontable/hyperformula,1,typescript,2727,https://github.com/handsontable/hyperformula.git,26,,CLAUDE.md,2026-07-25T03:10:14.198869+00:00,2019-09-10T08:02:18,"[""calculation-engine"", ""evaluator"", ""excel"", ""forms"", ""formula"", ""headless-spreadsheet"", ""sheets"", ""spreadsheet"", ""typescript"", ""xls"", ""xlsx""]",1
+bearer/pizzly,1,typescript,1122,https://github.com/bearer/pizzly.git,38,,.cursor/,2026-07-25T03:10:14.292681+00:00,2020-04-09T09:31:24,[],1
+microsoft/clarity,1,typescript,2685,https://github.com/microsoft/clarity.git,41,,copilot-instructions.md,2026-07-25T03:10:15.074983+00:00,2020-04-30T12:42:51,"[""clarity"", ""heatmap"", ""session-replay""]",1
+oakserver/oak,1,typescript,5400,https://github.com/oakserver/oak.git,81,,copilot-instructions.md,2026-07-25T03:10:15.513889+00:00,2018-12-12T10:20:46,"[""deno"", ""http-server"", ""middleware-framework"", ""middleware-frameworks"", ""oak"", ""router-middleware""]",1
+felixrieseberg/windows95,1,typescript,24160,https://github.com/felixrieseberg/windows95.git,16,,.claude/,2026-07-25T03:10:16.030584+00:00,2018-08-23T05:04:38,[],1
+thomasnordquist/mqtt-explorer,1,typescript,3914,https://github.com/thomasnordquist/mqtt-explorer.git,13,,copilot-instructions.md,2026-07-25T03:10:19.625847+00:00,2019-01-02T03:38:09,"[""homeautomation"", ""mqtt"", ""mqtt-client"", ""mqtt-explorer"", ""mqtt-smarthome"", ""mqtt-tool""]",1
+bestofjs/bestofjs-webui,1,typescript,2213,https://github.com/bestofjs/bestofjs-webui.git,16,,.cursor/,2026-07-25T03:10:20.079228+00:00,2015-06-19T11:27:39,"[""github-stars"", ""hall-of-fame"", ""trends""]",1
+chinachu/mirakurun,1,typescript,726,https://github.com/chinachu/mirakurun.git,30,,.github/instructions/,2026-07-25T03:10:22.046178+00:00,2015-04-04T07:58:21,"[""chinachu"", ""client"", ""dtv"", ""dvb"", ""dvr"", ""epg"", ""isdb"", ""javascript"", ""linux"", ""middleware"", ""mirakurun"", ""openapi"", ""server"", ""typescript""]",1
+xaviergonz/mobx-keystone,1,typescript,612,https://github.com/xaviergonz/mobx-keystone.git,14,,CLAUDE.md,2026-07-25T03:10:23.914885+00:00,2019-05-15T07:09:44,"[""data-trees"", ""frp"", ""functional-reactive-programming"", ""immutability"", ""mobx"", ""mobx-keystone"", ""mobx-state-tree"", ""mutability"", ""reactive"", ""snapshots"", ""state-management"", ""state-tree""]",1
+neet/masto.js,1,typescript,784,https://github.com/neet/masto.js.git,35,,CLAUDE.md,2026-07-25T03:10:24.211309+00:00,2018-04-13T07:27:40,"[""fediverse"", ""mastodon"", ""mastodon-api""]",1
+photostructure/exiftool-vendored.js,1,typescript,553,https://github.com/photostructure/exiftool-vendored.js.git,14,,CLAUDE.md,2026-07-25T03:10:24.212325+00:00,2016-10-13T03:56:38,"[""cross-platform"", ""exif"", ""exiftool"", ""gps"", ""image"", ""images"", ""metadata"", ""metadata-extraction"", ""movies"", ""nodejs"", ""photo"", ""photographs"", ""photography"", ""photos"", ""video"", ""videos""]",1
+markuplint/markuplint,1,typescript,605,https://github.com/markuplint/markuplint.git,43,,CLAUDE.md,2026-07-25T03:10:32.352604+00:00,2017-09-26T04:25:35,"[""alpinejs"", ""custom-elements"", ""html"", ""htmx"", ""jsx-templates"", ""linter"", ""liquid"", ""mustache-templates"", ""nunjucks"", ""php"", ""pug"", ""react"", ""svelte"", ""vue""]",1
+microsoft/maker.js,1,typescript,2009,https://github.com/microsoft/maker.js.git,18,,copilot-instructions.md,2026-07-25T03:10:39.638115+00:00,2015-05-08T07:39:23,"[""arc"", ""bezier"", ""cad"", ""circle"", ""cnc"", ""draw"", ""drawing"", ""dxf"", ""fonts"", ""geometry"", ""laser"", ""line"", ""maker"", ""openjscad"", ""pdf"", ""rectangle"", ""svg"", ""vector""]",1
+swimlane/ngx-graph,1,typescript,995,https://github.com/swimlane/ngx-graph.git,38,,.cursor/,2026-07-25T03:10:44.497901+00:00,2017-02-23T05:18:33,"[""angular"", ""angular2"", ""chart"", ""dag"", ""data-viz"", ""directed-graph"", ""svg"", ""workflow""]",1
+johnpapa/vscode-peacock,1,typescript,1151,https://github.com/johnpapa/vscode-peacock.git,35,,copilot-instructions.md,2026-07-25T03:10:48.238869+00:00,2019-02-22T05:50:25,"[""ai-ready"", ""typescript"", ""visual-studio-code"", ""vscode"", ""vscode-extension"", ""vscode-plugin"", ""vsls""]",1
+rocketchat/rocket.chat.electron,1,typescript,1691,https://github.com/rocketchat/rocket.chat.electron.git,167,,.cursor/,2026-07-25T03:10:49.184307+00:00,2015-07-08T04:56:41,"[""chat"", ""collaboration"", ""desktop"", ""electron"", ""foss"", ""hacktoberfest"", ""linux"", ""macos"", ""mit"", ""opensource"", ""rocketchat"", ""windows""]",1
+ripple/ripple-lib,1,typescript,958,https://github.com/ripple/ripple-lib.git,100,,.claude/,2026-07-25T03:10:49.214584+00:00,2013-04-25T09:17:19,[],1
+online-go/online-go.com,1,typescript,1532,https://github.com/online-go/online-go.com.git,155,,.cursor/,2026-07-25T03:10:53.476812+00:00,2017-02-24T03:21:23,"[""baduk"", ""hacktoberfest"", ""igo""]",1
+artalar/reatom,1,typescript,1158,https://github.com/artalar/reatom.git,82,,.cursor/,2026-07-25T03:10:58.812895+00:00,2019-05-04T06:27:50,"[""flux"", ""react"", ""reactive"", ""reactive-programming"", ""reactivity"", ""reatom"", ""state"", ""state-management"", ""state-manager"", ""store""]",1
+kristiandupont/kanel,1,typescript,1160,https://github.com/kristiandupont/kanel.git,51,,.claude/,2026-07-25T03:11:04.178489+00:00,2020-02-18T07:08:09,[],1
+jamiebrynes7/obsidian-todoist-plugin,1,typescript,1138,https://github.com/jamiebrynes7/obsidian-todoist-plugin.git,6,,CLAUDE.md,2026-07-25T03:11:05.985699+00:00,2020-08-29T02:13:28,"[""obsidian"", ""obsidian-md"", ""obsidian-plugin"", ""todoist""]",1
+paljs/prisma-tools,1,typescript,694,https://github.com/paljs/prisma-tools.git,21,,CLAUDE.md,2026-07-25T03:11:06.002581+00:00,2020-04-12T12:18:36,"[""apollo"", ""crud"", ""graphql-modules"", ""graphql-schema"", ""graphql-server"", ""nexus-framework"", ""prisma"", ""prisma-admin"", ""prisma-client"", ""prisma-framework"", ""sdl"", ""typescript""]",1
+nicoespeon/abracadabra,1,typescript,885,https://github.com/nicoespeon/abracadabra.git,30,,CLAUDE.md,2026-07-25T03:11:06.004048+00:00,2019-05-24T01:45:09,"[""javascript"", ""legacy-code"", ""magic"", ""refactoring"", ""typescript"", ""vscode-extension""]",1
+six7/figma-tokens,1,typescript,778,https://github.com/six7/figma-tokens.git,24,,copilot-instructions.md,2026-07-25T03:11:06.020790+00:00,2020-05-18T04:43:45,[],1
+shinyoshiaki/werift-webrtc,1,typescript,612,https://github.com/shinyoshiaki/werift-webrtc.git,15,,CLAUDE.md,2026-07-25T03:11:07.208732+00:00,2020-02-16T07:37:24,"[""dtls"", ""ice"", ""nodejs"", ""rtp"", ""sctp"", ""srtp"", ""typescript"", ""webm"", ""webrtc""]",1
+voxelum/x-minecraft-launcher,1,typescript,1493,https://github.com/voxelum/x-minecraft-launcher.git,48,,copilot-instructions.md,2026-07-25T03:11:08.774178+00:00,2017-06-28T11:09:01,"[""curseforge"", ""custom-minecraft-launcher"", ""electron"", ""electron-vue"", ""fabricmc"", ""minecraft"", ""minecraft-launcher"", ""minecraftforge"", ""modrinth"", ""nodejs"", ""quiltmc"", ""typescript"", ""vite""]",1
+umijs/qiankun,1,typescript,16628,https://github.com/umijs/qiankun.git,66,,CLAUDE.md,2026-07-25T03:11:09.132823+00:00,2019-05-15T05:27:23,"[""framework"", ""javascript"", ""micro-frontend"", ""micro-frontends"", ""microfrontend"", ""microfrontends"", ""microservices""]",1
+luin/ioredis,1,typescript,11962,https://github.com/luin/ioredis.git,145,,CLAUDE.md,2026-07-25T03:11:09.134936+00:00,2015-04-02T06:42:46,"[""nodejs"", ""redis"", ""redis-client"", ""redis-cluster"", ""redis-module"", ""redis-sentinel"", ""typescript""]",1
+ericblade/quagga2,1,typescript,900,https://github.com/ericblade/quagga2.git,45,,copilot-instructions.md,2026-07-25T03:11:11.177486+00:00,2015-09-12T05:14:20,"[""barcode"", ""barcode-detection"", ""barcode-reader"", ""barcode-recognizer"", ""barcode-scanner"", ""barcodes"", ""camera"", ""ean"", ""hacktoberfest"", ""javascript"", ""node"", ""nodejs"", ""quagga""]",1
+microsoft/just,1,typescript,2026,https://github.com/microsoft/just.git,46,,CLAUDE.md,2026-07-25T03:11:17.481244+00:00,2019-01-17T06:07:00,"[""build"", ""javascript"", ""typescript""]",1
+dolanmiu/docx,1,typescript,5794,https://github.com/dolanmiu/docx.git,131,,copilot-instructions.md,2026-07-25T03:11:19.185219+00:00,2016-03-26T11:43:56,"[""angular"", ""angular2"", ""browser"", ""create"", ""docs"", ""document"", ""docx"", ""docx-generator"", ""express"", ""expressjs"", ""generate"", ""javascript"", ""microsoft"", ""nodejs"", ""office"", ""react"", ""typescript"", ""vuejs"", ""word""]",1
+amannn/next-intl,1,typescript,4311,https://github.com/amannn/next-intl.git,87,,CLAUDE.md,2026-07-25T03:11:22.480529+00:00,2020-11-20T11:24:11,"[""date-formatting"", ""i18n"", ""next"", ""react""]",1
+ngneat/transloco,1,typescript,1883,https://github.com/ngneat/transloco.git,79,,.cursor/,2026-07-25T03:11:26.190834+00:00,2019-08-09T11:52:35,"[""angular"", ""i18n"", ""internationalization"", ""languages"", ""translation""]",1
+typedproject/tsed,1,typescript,1647,https://github.com/typedproject/tsed.git,77,,.claude/,2026-07-25T03:11:29.542265+00:00,2016-02-21T06:38:47,[],1
+xbrowsersync/app,1,typescript,1691,https://github.com/xbrowsersync/app.git,4,,CLAUDE.md,2026-07-25T03:11:37.925249+00:00,2016-05-05T08:59:25,[],1
+auth0/auth0-spa-js,1,typescript,998,https://github.com/auth0/auth0-spa-js.git,87,,CLAUDE.md,2026-07-25T03:11:38.590745+00:00,2019-04-03T04:22:45,"[""auth0"", ""auth0-js"", ""dx-sdk"", ""javascript"", ""oauth2"", ""openid-connect"", ""pkce"", ""spa""]",1
+microsoft/roosterjs,1,typescript,1311,https://github.com/microsoft/roosterjs.git,71,,CLAUDE.md,2026-07-25T03:11:41.728520+00:00,2017-07-13T04:39:51,[],1
+airtasker/spot,1,typescript,568,https://github.com/airtasker/spot.git,29,,CLAUDE.md,2026-07-25T03:11:44.077070+00:00,2018-10-11T09:55:46,"[""api-blueprint"", ""dsl"", ""json-schema"", ""openapi"", ""openapi3"", ""swagger"", ""typescript""]",1
+maygo/tockler,1,typescript,1063,https://github.com/maygo/tockler.git,7,,.cursor/,2026-07-25T03:11:48.142566+00:00,2016-02-28T08:32:04,"[""electron"", ""electron-app"", ""osx"", ""productivity"", ""timeline"", ""timetracker"", ""windows""]",1
+ant-design/ant-design-pro,1,typescript,38507,https://github.com/ant-design/ant-design-pro.git,331,,CLAUDE.md,2026-07-25T03:11:49.468880+00:00,2017-08-25T10:40:44,"[""admin"", ""ant-design"", ""antd"", ""antv"", ""boilerplate"", ""dashboard"", ""enterprise"", ""react"", ""umi""]",1
+vscode-icons/vscode-icons,1,typescript,5090,https://github.com/vscode-icons/vscode-icons.git,357,,CLAUDE.md,2026-07-25T03:12:12.043974+00:00,2016-05-30T11:24:37,"[""icon-theme"", ""icons-provider"", ""vscode"", ""vscode-extension"", ""vscode-icons""]",1
+pmndrs/react-spring,1,typescript,29118,https://github.com/pmndrs/react-spring.git,185,,CLAUDE.md,2026-07-25T03:12:14.694756+00:00,2018-03-07T03:39:32,"[""animation-library"", ""react"", ""react-spring"", ""spring-physics"", ""springs""]",1
+talentlessguy/tinyhttp,1,typescript,1625,https://github.com/talentlessguy/tinyhttp.git,34,,CLAUDE.md,2026-07-25T03:12:18.813962+00:00,2020-06-13T01:19:08,[],1
+glimmerjs/glimmer-vm,1,typescript,1149,https://github.com/glimmerjs/glimmer-vm.git,122,,CLAUDE.md,2026-07-25T03:12:18.828325+00:00,2015-09-14T05:59:26,"[""emberjs"", ""glimmerjs"", ""hacktoberfest"", ""typescript""]",1
+aeagle/react-spaces,1,typescript,1314,https://github.com/aeagle/react-spaces.git,5,,.claude/,2026-07-25T03:12:22.431747+00:00,2019-07-21T03:58:06,"[""component-library"", ""components"", ""javascript-library"", ""react"", ""reactjs"", ""reactjs-components"", ""web"", ""web-ui"", ""web-ui-framework""]",1
+probablyup/markdown-to-jsx,1,typescript,1698,https://github.com/probablyup/markdown-to-jsx.git,44,,.cursor/,2026-07-25T03:12:23.436992+00:00,2015-12-06T06:42:02,"[""gfm"", ""jsx"", ""markdown"", ""react"", ""remark""]",1
+pkief/vscode-material-icon-theme,1,typescript,1923,https://github.com/pkief/vscode-material-icon-theme.git,306,,copilot-instructions.md,2026-07-25T03:12:33.999845+00:00,2016-09-09T08:41:42,"[""material-icon-theme"", ""material-icons"", ""vscode"", ""vscode-extension"", ""vscode-icons"", ""vscode-theme""]",1
+antvis/l7,1,typescript,4031,https://github.com/antvis/l7.git,61,,.claude/,2026-07-25T03:12:36.338982+00:00,2018-11-21T04:19:07,"[""3d"", ""amap"", ""antv"", ""data-visualization"", ""geojson"", ""geospatial"", ""gis"", ""javascript"", ""map"", ""mapbox"", ""maps"", ""point"", ""polygon"", ""webgl""]",1
+golevelup/nestjs,1,typescript,2729,https://github.com/golevelup/nestjs.git,121,,copilot-instructions.md,2026-07-25T03:12:43.532069+00:00,2019-01-26T06:26:08,"[""event-management"", ""express"", ""graphql"", ""hacktoberfest"", ""hasura"", ""javascript"", ""microservices"", ""nestjs"", ""nodejs"", ""plugins"", ""rabbitmq"", ""typescript"", ""webhooks""]",1
+fullcalendar/fullcalendar-scheduler,1,typescript,682,https://github.com/fullcalendar/fullcalendar-scheduler.git,5,,CLAUDE.md,2026-07-25T03:12:43.566071+00:00,2015-08-17T01:26:03,[],1
+lume/lume,1,typescript,1499,https://github.com/lume/lume.git,7,,copilot-instructions.md,2026-07-25T03:12:43.573114+00:00,2014-12-30T06:40:12,"[""3d"", ""3d-engine"", ""3d-graphics"", ""3d-models"", ""css3d"", ""custom-elements"", ""dom-elements"", ""graphics"", ""graphics-engine"", ""graphics-programming"", ""html"", ""javascript"", ""lume"", ""scene"", ""three-d"", ""three-dimensions"", ""threejs"", ""ui"", ""web-components"", ""webgl""]",1
+brianlovin/brian-lovin-next,1,typescript,642,https://github.com/brianlovin/brian-lovin-next.git,16,,CLAUDE.md,2026-07-25T03:12:43.589351+00:00,2018-09-08T10:01:16,[],1
+ultimatehackingkeyboard/agent,1,typescript,769,https://github.com/ultimatehackingkeyboard/agent.git,35,,.cursor/,2026-07-25T03:12:43.598926+00:00,2016-01-12T12:41:16,[],1
+bennycode/trading-signals,1,typescript,964,https://github.com/bennycode/trading-signals.git,12,,CLAUDE.md,2026-07-25T03:12:51.583350+00:00,2020-05-28T10:44:05,"[""analysis"", ""cryptotrading"", ""dema"", ""dma"", ""ema"", ""financial"", ""financial-analysis"", ""hacktoberfest"", ""indicator"", ""macd"", ""roc"", ""rsi"", ""signals"", ""sma"", ""smma"", ""technical-analysis"", ""technical-indicators"", ""trading"", ""trading-signals"", ""typescript""]",1
+homebridge/homebridge,1,typescript,25374,https://github.com/homebridge/homebridge.git,110,,copilot-instructions.md,2026-07-25T03:12:56.316370+00:00,2014-12-01T04:37:39,"[""hap"", ""homebridge"", ""homekit"", ""homekit-accessory-protocol"", ""homekit-api"", ""homekit-bridge"", ""siri""]",1
+abagames/crisp-game-lib,1,typescript,641,https://github.com/abagames/crisp-game-lib.git,5,,CLAUDE.md,2026-07-25T03:13:05.043206+00:00,2019-12-08T06:51:14,"[""game-development""]",1
+getstream/stream-chat-react-native,1,typescript,1169,https://github.com/getstream/stream-chat-react-native.git,76,,CLAUDE.md,2026-07-25T03:13:09.667898+00:00,2019-03-28T08:50:26,"[""chat"", ""chat-api"", ""chat-app"", ""chat-application"", ""chat-sdk"", ""messaging-app"", ""react-native"", ""react-native-app"", ""react-native-chat"", ""react-native-component""]",1
+4gray/iptvnator,1,typescript,6502,https://github.com/4gray/iptvnator.git,41,,CLAUDE.md,2026-07-25T03:13:09.681794+00:00,2019-10-06T03:37:40,"[""chromeos"", ""electron"", ""epg"", ""fair-source"", ""iptv"", ""iptv-m3u"", ""iptv-player"", ""iptv-player-application"", ""linux"", ""m3u"", ""m3u8"", ""macos"", ""player"", ""player-video"", ""playlist"", ""pwa"", ""snap"", ""tv"", ""video"", ""xtream-codes""]",1
+colinhacks/zod,1,typescript,43201,https://github.com/colinhacks/zod.git,462,,.cursorrules,2026-07-25T03:13:10.019443+00:00,2020-03-07T08:59:08,"[""runtime-validation"", ""schema-validation"", ""static-types"", ""type-inference"", ""typescript""]",1
+ant-design/ant-design-mobile-rn,1,typescript,3322,https://github.com/ant-design/ant-design-mobile-rn.git,65,,CLAUDE.md,2026-07-25T03:13:13.422733+00:00,2018-05-02T08:38:52,"[""android"", ""antd-mobile"", ""ios"", ""javascript"", ""react"", ""react-native"", ""typescript""]",1
+iorate/ublacklist,1,typescript,6586,https://github.com/iorate/ublacklist.git,61,,CLAUDE.md,2026-07-25T03:13:27.031972+00:00,2018-06-25T03:41:25,"[""blocker"", ""chrome-extension"", ""firefox-extension"", ""google-search""]",1
+getsentry/sentry-react-native,1,typescript,1808,https://github.com/getsentry/sentry-react-native.git,147,,.cursor/,2026-07-25T03:13:27.474500+00:00,2016-11-30T02:45:57,"[""android"", ""crash-reporting"", ""ios"", ""javascript"", ""react-native"", ""sdk"", ""sentry"", ""tag-production"", ""team-mobile"", ""typescript""]",1
+microsoft/vscode-cmake-tools,1,typescript,1681,https://github.com/microsoft/vscode-cmake-tools.git,219,,copilot-instructions.md,2026-07-25T03:13:37.292312+00:00,2016-04-16T09:00:29,"[""c"", ""cmake"", ""cpp"", ""ctest"", ""debugging"", ""intellisense"", ""microsoft"", ""tasks"", ""visual-studio-code""]",1
+nrwl/nx-console,1,typescript,1409,https://github.com/nrwl/nx-console.git,82,,.cursor/,2026-07-25T03:13:37.342933+00:00,2018-06-18T10:02:01,[],1
+streetsidesoftware/vscode-spell-checker,1,typescript,1667,https://github.com/streetsidesoftware/vscode-spell-checker.git,62,,copilot-instructions.md,2026-07-25T03:13:40.087327+00:00,2016-05-16T10:42:22,[],1
+sindresorhus/refined-github,1,typescript,15405,https://github.com/sindresorhus/refined-github.git,245,,copilot-instructions.md,2026-07-25T03:13:58.353860+00:00,2016-02-15T04:45:02,[],1
+walletconnect/walletconnect-monorepo,1,typescript,1674,https://github.com/walletconnect/walletconnect-monorepo.git,149,,CLAUDE.md,2026-07-25T03:13:58.779066+00:00,2018-08-26T02:02:36,"[""devtools"", ""ethereum"", ""library"", ""mobile"", ""prod"", ""react-native"", ""team-walletkit"", ""typescript"", ""wallet"", ""walletconnect"", ""web3""]",1
+microsoft/fluentui-react-native,1,typescript,1438,https://github.com/microsoft/fluentui-react-native.git,66,,copilot-instructions.md,2026-07-25T03:13:59.344924+00:00,2019-07-10T08:27:19,[],1
+paraswap/paraswap-sdk,1,typescript,735,https://github.com/paraswap/paraswap-sdk.git,22,,CLAUDE.md,2026-07-25T03:13:59.346245+00:00,2019-10-08T01:28:44,"[""blockchain"", ""cryptocurrency"", ""ethereum"", ""exchange"", ""paraswap"", ""solidity"", ""web3""]",1
+javascript-obfuscator/javascript-obfuscator,1,typescript,16099,https://github.com/javascript-obfuscator/javascript-obfuscator.git,43,,CLAUDE.md,2026-07-25T03:13:59.348632+00:00,2016-05-09T08:16:53,"[""browser"", ""control-flow"", ""cryptography"", ""encoding"", ""flattening"", ""flow"", ""javascript"", ""javascript-obfuscator"", ""js-obfuscator"", ""literal"", ""mangle"", ""nodejs"", ""obfuscate"", ""obfuscation"", ""obfuscator"", ""protection"", ""security"", ""string"", ""typescript"", ""uglify""]",1
+moodlehq/moodleapp,1,typescript,981,https://github.com/moodlehq/moodleapp.git,26,,copilot-instructions.md,2026-07-25T03:13:59.378567+00:00,2015-03-03T09:18:17,"[""ionic"", ""moodleapp""]",1
+alibaba/hooks,1,typescript,14957,https://github.com/alibaba/hooks.git,263,,.cursor/,2026-07-25T03:13:59.601676+00:00,2019-06-27T05:20:06,"[""ahooks"", ""hooks-library"", ""react"", ""react-hooks"", ""umi-hooks""]",1
+yang991178/fluent-reader,1,typescript,9377,https://github.com/yang991178/fluent-reader.git,26,,copilot-instructions.md,2026-07-25T03:14:17.792525+00:00,2020-05-31T08:15:55,"[""electron"", ""linux"", ""macos"", ""react"", ""rss"", ""rss-reader"", ""typescript"", ""windows""]",1
+imolorhe/altair,1,typescript,3450,https://github.com/imolorhe/altair.git,50,,.github/instructions/,2026-07-25T03:14:20.592281+00:00,2017-03-25T09:08:30,[],1
+aurelia/aurelia,1,typescript,1534,https://github.com/aurelia/aurelia.git,74,,CLAUDE.md,2026-07-25T03:14:21.680709+00:00,2018-02-15T05:22:58,"[""aurelia"", ""cordova"", ""cross-platform"", ""electron"", ""framework"", ""frontend"", ""html"", ""javascript"", ""javascript-framework"", ""mobile"", ""pwa"", ""single-page-applications"", ""spa"", ""typescript"", ""web"", ""web-framework"", ""web-performance""]",1
+acacode/swagger-typescript-api,1,typescript,4096,https://github.com/acacode/swagger-typescript-api.git,58,,CLAUDE.md,2026-07-25T03:14:30.010338+00:00,2020-01-12T11:46:19,[],1
+zenn-dev/zenn-editor,1,typescript,741,https://github.com/zenn-dev/zenn-editor.git,38,,.claude/,2026-07-25T03:14:30.294866+00:00,2020-05-27T07:09:14,[],1
+whitphx/vscode-emacs-mcx,1,typescript,532,https://github.com/whitphx/vscode-emacs-mcx.git,28,,CLAUDE.md,2026-07-25T03:14:30.296120+00:00,2019-01-06T03:30:42,"[""emacs"", ""hacktoberfest"", ""vscode"", ""vscode-extension""]",1
+ng-alain/delon,1,typescript,681,https://github.com/ng-alain/delon.git,65,,CLAUDE.md,2026-07-25T03:14:33.191012+00:00,2017-11-25T10:37:28,"[""angular"", ""angular-components"", ""angular-scaffolding"", ""g2"", ""ng-admin"", ""ng-alain"", ""ng-zorro"", ""scaffold"", ""scaffold-framework"", ""scaffold-template"", ""scaffolding""]",1
+faridsafi/react-native-gifted-chat,1,typescript,14424,https://github.com/faridsafi/react-native-gifted-chat.git,201,,copilot-instructions.md,2026-07-25T03:14:38.207477+00:00,2015-11-14T03:45:34,"[""chat"", ""component"", ""react-native""]",1
+quicktype/quicktype,1,typescript,10496,https://github.com/quicktype/quicktype.git,140,,CLAUDE.md,2026-07-25T03:14:40.920888+00:00,2017-07-13T12:22:50,"[""cplusplus"", ""csharp"", ""elm"", ""golang"", ""graphql"", ""java"", ""json"", ""json-schema"", ""kotlin"", ""objective-c"", ""rust"", ""swift"", ""typescript""]",1
+antvis/g6,1,typescript,12150,https://github.com/antvis/g6.git,180,,.cursor/,2026-07-25T03:14:44.324294+00:00,2017-02-13T10:00:43,"[""data-visualization"", ""graph"", ""graph-analytics"", ""graph-drawing"", ""graph-visualization"", ""hacktoberfest"", ""network"", ""tree"", ""visual-analytics"", ""visualization""]",1
+rolling-scopes/rsschool-app,1,typescript,10377,https://github.com/rolling-scopes/rsschool-app.git,79,,copilot-instructions.md,2026-07-25T03:14:49.493703+00:00,2018-05-22T01:18:23,"[""hacktoberfest""]",1
+oznu/homebridge-config-ui-x,1,typescript,2353,https://github.com/oznu/homebridge-config-ui-x.git,88,,copilot-instructions.md,2026-07-25T03:14:57.143948+00:00,2017-12-21T04:20:54,[],1
+callstack/react-native-paper,1,typescript,14411,https://github.com/callstack/react-native-paper.git,335,,copilot-instructions.md,2026-07-25T03:14:57.158264+00:00,2016-10-19T05:56:53,"[""hacktoberfest"", ""material-design"", ""react-native"", ""ui-kit""]",1
+mikro-orm/mikro-orm,1,typescript,9111,https://github.com/mikro-orm/mikro-orm.git,311,,copilot-instructions.md,2026-07-25T03:14:57.189049+00:00,2018-03-15T09:21:10,"[""database"", ""datamapper"", ""entities"", ""entity"", ""identity-map"", ""javascript"", ""libsql"", ""mongodb"", ""mysql"", ""nodejs"", ""orm"", ""postgre"", ""postgresql"", ""sql"", ""sql-server"", ""sqlite"", ""sqlite3"", ""typescript"", ""typescript-orm"", ""unit-of-work""]",1
+payloadcms/payload,1,typescript,43447,https://github.com/payloadcms/payload.git,436,,.cursor/,2026-07-25T03:14:57.275343+00:00,2021-01-05T06:49:45,"[""cms"", ""content-management"", ""content-management-system"", ""express"", ""graphql"", ""headless"", ""headless-cms"", ""jamstack"", ""javascript"", ""mit-license"", ""mongodb"", ""nextjs"", ""nodejs"", ""open-source"", ""payload"", ""payloadcms"", ""postgres"", ""react"", ""typescript""]",1
+petyosi/react-virtuoso,1,typescript,6360,https://github.com/petyosi/react-virtuoso.git,76,,CLAUDE.md,2026-07-25T03:15:00.319234+00:00,2019-05-03T05:39:04,"[""chat"", ""component-library"", ""feed"", ""hacktoberfest"", ""react"", ""virtual"", ""virtualizedlist""]",1
+ethereumjs/ethereumjs-monorepo,1,typescript,2754,https://github.com/ethereumjs/ethereumjs-monorepo.git,210,,.cursorignore,2026-07-25T03:15:11.824390+00:00,2015-07-10T02:54:03,"[""bytecode"", ""client"", ""ethereum"", ""ethereumjs"", ""evm"", ""javascript"", ""monorepo"", ""mpt"", ""typescript"", ""virtual-machine"", ""vm""]",1
+eclipsesource/jsonforms,1,typescript,2707,https://github.com/eclipsesource/jsonforms.git,96,,CLAUDE.md,2026-07-25T03:15:14.645557+00:00,2015-02-13T10:24:06,"[""angular"", ""customizable"", ""forms"", ""js"", ""json"", ""json-schema"", ""material"", ""react"", ""redux"", ""typescript"", ""vue"", ""vue3""]",1
+betterthantomorrow/calva,1,typescript,2073,https://github.com/betterthantomorrow/calva.git,157,,copilot-instructions.md,2026-07-25T03:15:20.156804+00:00,2018-03-15T10:04:33,[],1
+owid/owid-grapher,1,typescript,1549,https://github.com/owid/owid-grapher.git,52,,copilot-instructions.md,2026-07-25T03:15:20.191667+00:00,2015-05-04T11:06:48,"[""data-visualization"", ""react"", ""typescript""]",1
+po-ui/po-angular,1,typescript,1008,https://github.com/po-ui/po-angular.git,75,,copilot-instructions.md,2026-07-25T03:15:24.709935+00:00,2019-06-25T04:50:39,"[""angular"", ""angular-components"", ""enterprise"", ""frontend"", ""hacktoberfest"", ""po"", ""po-ui"", ""ui-components""]",1
+nomiclabs/hardhat,1,typescript,2151,https://github.com/nomiclabs/hardhat.git,132,,copilot-instructions.md,2026-07-25T03:15:24.714575+00:00,2018-04-14T10:20:59,[],1
+microsoft/vscode-mssql,1,typescript,1888,https://github.com/microsoft/vscode-mssql.git,94,,copilot-instructions.md,2026-07-25T03:15:25.858838+00:00,2016-06-26T04:38:04,[],1
+destinyitemmanager/dim,1,typescript,2144,https://github.com/destinyitemmanager/dim.git,195,,copilot-instructions.md,2026-07-25T03:15:28.213625+00:00,2015-03-04T09:46:50,"[""bungie"", ""destiny"", ""react"", ""typescript""]",1
+fullstack-build/tslog,1,typescript,1628,https://github.com/fullstack-build/tslog.git,28,,CLAUDE.md,2026-07-25T03:15:32.962245+00:00,2020-04-23T09:08:24,"[""error-handling"", ""exceptions"", ""json"", ""json-api"", ""logger"", ""logging"", ""logging-library"", ""pretty-print"", ""stack"", ""stacktrace"", ""typescript-library""]",1
+meilisearch/meilisearch-js,1,typescript,866,https://github.com/meilisearch/meilisearch-js.git,83,,.cursor/,2026-07-25T03:15:36.976304+00:00,2019-10-02T03:37:57,"[""javascript"", ""meilisearch"", ""nodejs"", ""sdk"", ""typescript""]",1
+koenkk/zigbee-herdsman,1,typescript,561,https://github.com/koenkk/zigbee-herdsman.git,187,,copilot-instructions.md,2026-07-25T03:15:43.391689+00:00,2019-06-15T07:42:31,"[""hacktoberfest""]",1
+open-wa/wa-automate-nodejs,1,typescript,3627,https://github.com/open-wa/wa-automate-nodejs.git,29,,copilot-instructions.md,2026-07-25T03:15:49.640933+00:00,2019-08-15T12:25:26,"[""api"", ""chatbots"", ""framework"", ""nodejs"", ""typescript""]",1
+electron-userland/electron-builder,1,typescript,14607,https://github.com/electron-userland/electron-builder.git,441,,CLAUDE.md,2026-07-25T03:15:55.321575+00:00,2015-05-21T07:45:02,"[""appx"", ""auto-update"", ""builder"", ""contributions-welcome"", ""deb"", ""distribution-electron"", ""dmg"", ""electron"", ""electron-builder"", ""electron-updater"", ""help-wanted"", ""linux"", ""macos"", ""msi"", ""muon"", ""nsis"", ""pkg"", ""rpm"", ""snap"", ""squirrel""]",1
+ng-select/ng-select,1,typescript,3378,https://github.com/ng-select/ng-select.git,135,,copilot-instructions.md,2026-07-25T03:16:02.796244+00:00,2017-07-02T04:43:27,"[""angular"", ""angular-components"", ""angular2"", ""angular4"", ""angular5"", ""angular6"", ""angular7"", ""angular8"", ""autocomplete"", ""dropdown"", ""hacktoberfest"", ""multiselect"", ""select"", ""typeahead"", ""ui-select""]",1
+stoplightio/prism,1,typescript,4982,https://github.com/stoplightio/prism.git,86,,CLAUDE.md,2026-07-25T03:16:04.892906+00:00,2016-03-18T03:52:09,"[""api-testing"", ""cli"", ""hacktoberfest"", ""http-proxy"", ""mock-server"", ""mocking"", ""oas"", ""openapi"", ""openapi3"", ""postman-collection"", ""prism"", ""stoplight-oss"", ""stoplight-prism"", ""swagger"", ""swagger-oss""]",1
+maximeheckel/blog.maximeheckel.com,1,typescript,726,https://github.com/maximeheckel/blog.maximeheckel.com.git,7,,.cursor/,2026-07-25T03:16:04.903955+00:00,2019-08-10T05:04:46,[],1
+eamodio/vscode-gitlens,1,typescript,6247,https://github.com/eamodio/vscode-gitlens.git,64,,CLAUDE.md,2026-07-25T03:16:07.864757+00:00,2016-08-08T02:50:30,[],1
+matteobruni/tsparticles,1,typescript,5724,https://github.com/matteobruni/tsparticles.git,78,,.cursor/,2026-07-25T03:16:07.996347+00:00,2020-02-05T06:00:01,"[""2d"", ""angular"", ""animations"", ""bg"", ""canvas"", ""confetti"", ""fireworks"", ""hacktoberfest"", ""html"", ""javascript"", ""js"", ""npm"", ""particles"", ""react"", ""svelte"", ""ts"", ""tsparticles"", ""typescript"", ""vue"", ""web""]",1
+wowanalyzer/wowanalyzer,1,typescript,590,https://github.com/wowanalyzer/wowanalyzer.git,284,,copilot-instructions.md,2026-07-25T03:16:08.507298+00:00,2017-01-30T11:02:17,"[""analyzer"", ""hacktoberfest"", ""javascript"", ""log"", ""react"", ""typescript"", ""warcraft"", ""warcraftlogs"", ""world-of-warcraft"", ""wow"", ""wowanalyzer""]",1
+angular-eslint/angular-eslint,1,typescript,1781,https://github.com/angular-eslint/angular-eslint.git,125,,CLAUDE.md,2026-07-25T03:16:12.211781+00:00,2019-07-28T10:51:06,"[""angular"", ""eslint"", ""typescript""]",1
+projen/projen,1,typescript,2937,https://github.com/projen/projen.git,241,,CLAUDE.md,2026-07-25T03:16:22.979566+00:00,2020-05-11T05:07:24,"[""aws-cdk"", ""cdk"", ""constructs"", ""generator"", ""hacktoberfest"", ""jsii"", ""repository-management"", ""repository-tools"", ""scaffolding"", ""templates"", ""typescript""]",1
+just-jeb/angular-builders,1,typescript,1163,https://github.com/just-jeb/angular-builders.git,55,,CLAUDE.md,2026-07-25T03:16:22.989158+00:00,2018-07-03T02:15:02,"[""angular"", ""angular-cli"", ""angular15"", ""angular16"", ""angular17"", ""angular18"", ""build"", ""builder"", ""builders"", ""custom"", ""customization"", ""customized-builds"", ""dev-server"", ""extend"", ""ivy"", ""jest"", ""jest-test"", ""unit-test"", ""webpack"", ""webpack-dev-server""]",1
+naver/egjs-flicking,1,typescript,2922,https://github.com/naver/egjs-flicking.git,27,,CLAUDE.md,2026-07-25T03:16:24.156457+00:00,2017-04-28T02:32:33,"[""angular"", ""carousel"", ""desktop"", ""egjs"", ""iscroll"", ""javascript"", ""mobile"", ""react"", ""reactjs"", ""slider"", ""tablet"", ""typescript"", ""vue""]",1
+swimlane/ngx-ui,1,typescript,733,https://github.com/swimlane/ngx-ui.git,51,,.cursor/,2026-07-25T03:16:26.921820+00:00,2016-08-17T12:16:19,"[""angular"", ""component"", ""css"", ""dialog"", ""directive"", ""drawer"", ""hacktoberfest"", ""icons"", ""library"", ""select"", ""split"", ""styles"", ""tabs"", ""tree""]",1
+espressif/vscode-esp-idf-extension,1,typescript,1449,https://github.com/espressif/vscode-esp-idf-extension.git,52,,.cursor/,2026-07-25T03:16:26.928724+00:00,2018-11-21T03:27:08,[],1
+omnisharp/omnisharp-vscode,1,typescript,2566,https://github.com/omnisharp/omnisharp-vscode.git,150,,copilot-instructions.md,2026-07-25T03:16:35.035291+00:00,2015-12-03T03:45:21,"[""c-sharp"", ""csharp"", ""omnisharp"", ""vscode""]",1
+benkeen/generatedata,1,typescript,2278,https://github.com/benkeen/generatedata.git,42,,copilot-instructions.md,2026-07-25T03:16:40.918568+00:00,2012-01-26T09:06:00,"[""data"", ""data-generation"", ""data-generator"", ""data-generators"", ""human-data"", ""json"", ""random"", ""random-generation"", ""randomization"", ""rest-api"", ""test-data"", ""test-data-generator"", ""testing""]",1
+kufu/smarthr-ui,1,typescript,966,https://github.com/kufu/smarthr-ui.git,108,,CLAUDE.md,2026-07-25T03:16:46.932874+00:00,2018-05-10T07:32:43,"[""hacktoberfest""]",1
+jamaljsr/polar,1,typescript,857,https://github.com/jamaljsr/polar.git,42,,copilot-instructions.md,2026-07-25T03:16:50.619554+00:00,2019-08-09T05:40:08,"[""bitcoin"", ""bitcoind"", ""c-lightning"", ""docker"", ""electron"", ""lightning"", ""lightning-network"", ""lnd"", ""polar"", ""react""]",1
+garden-io/garden,1,typescript,3590,https://github.com/garden-io/garden.git,102,,CLAUDE.md,2026-07-25T03:16:57.316869+00:00,2017-12-03T02:10:59,"[""containers"", ""developer-tools"", ""kubernetes"", ""testing"", ""testing-tools""]",1
+expo/eas-cli,1,typescript,1313,https://github.com/expo/eas-cli.git,93,,CLAUDE.md,2026-07-25T03:16:57.349811+00:00,2020-08-12T05:05:04,"[""android"", ""apps"", ""automation"", ""ci"", ""cicd"", ""cli"", ""cloud"", ""deployment"", ""expo"", ""hosting"", ""ios"", ""mobile"", ""react-native""]",1
+apollographql/apollo-client,1,typescript,19790,https://github.com/apollographql/apollo-client.git,399,,.github/instructions/,2026-07-25T03:17:12.227902+00:00,2016-02-26T08:25:00,"[""apollo-client"", ""apollographql"", ""graphql"", ""graphql-client"", ""typescript""]",1
+facebook/jest,1,typescript,39578,https://github.com/facebook/jest.git,438,,copilot-instructions.md,2026-07-25T03:17:13.298554+00:00,2013-12-10T12:18:04,[],1
+elastic/eui,1,typescript,6339,https://github.com/elastic/eui.git,284,,CLAUDE.md,2026-07-25T03:17:13.301129+00:00,2017-10-18T02:49:20,"[""css-in-js"", ""design-system"", ""elasticsearch"", ""eui"", ""kibana"", ""react""]",1
+erxes/erxes,1,typescript,4021,https://github.com/erxes/erxes.git,197,,.cursorrules,2026-07-25T03:17:13.488752+00:00,2016-11-11T06:54:50,"[""customer-experience"", ""employee-experience"", ""experience-operating-system"", ""front-alternative"", ""hacktoberfest"", ""hacktoberfest2025"", ""hubspot-alternative"", ""intercom-alternative"", ""linear-alternative"", ""medallia-alternative"", ""qualtrics-alternative"", ""wix-alternative"", ""zendesk-alternative""]",1
+snyk/snyk,1,typescript,3675,https://github.com/snyk/snyk.git,154,,CLAUDE.md,2026-07-25T03:17:13.590135+00:00,2015-10-30T11:36:00,[],1
+formatjs/formatjs,1,typescript,14730,https://github.com/formatjs/formatjs.git,324,,CLAUDE.md,2026-07-25T03:17:16.925474+00:00,2014-04-24T05:28:36,"[""formatjs"", ""globalization"", ""i18n"", ""internationalization"", ""intl"", ""javascript"", ""localization"", ""react"", ""translation"", ""ui"", ""web""]",1
+desktop/desktop,1,typescript,21665,https://github.com/desktop/desktop.git,362,,copilot-instructions.md,2026-07-25T03:17:19.849020+00:00,2016-05-11T03:59:00,"[""electron"", ""git"", ""github"", ""github-desktop"", ""typescript""]",1
+polymer/lit-html,1,typescript,7127,https://github.com/polymer/lit-html.git,101,,copilot-instructions.md,2026-07-25T03:17:24.969354+00:00,2017-06-29T04:27:16,[],1
+ng-zorro/ng-zorro-antd,1,typescript,9161,https://github.com/ng-zorro/ng-zorro-antd.git,293,,copilot-instructions.md,2026-07-25T03:17:24.976787+00:00,2017-08-08T02:59:33,"[""angular"", ""angular-components"", ""angular-directives"", ""angular-ui-components"", ""ant"", ""ant-design"", ""antd"", ""enterprise"", ""frontend"", ""ivy"", ""ng-zorro"", ""ngx"", ""typescript"", ""ui-components""]",1
+botpress/botpress,1,typescript,14772,https://github.com/botpress/botpress.git,74,,CLAUDE.md,2026-07-25T03:17:25.027320+00:00,2016-11-16T09:57:59,"[""agent"", ""ai"", ""botpress"", ""chatbot"", ""chatgpt"", ""gpt"", ""gpt-4"", ""langchain"", ""llm"", ""nlp"", ""openai"", ""prompt""]",1
+naver/billboard.js,1,typescript,5994,https://github.com/naver/billboard.js.git,147,,copilot-instructions.md,2026-07-25T03:17:32.897824+00:00,2017-06-08T02:54:44,"[""canvas"", ""charting-library"", ""d3"", ""data-visualizations"", ""graph"", ""svg""]",1
+prisma/prisma,1,typescript,46359,https://github.com/prisma/prisma.git,344,,CLAUDE.md,2026-07-25T03:17:33.916587+00:00,2019-06-20T01:33:47,"[""cockroachdb"", ""database"", ""javascript"", ""mariadb"", ""mongo"", ""mongodb"", ""mongodb-orm"", ""mssql"", ""mysql"", ""nodejs"", ""orm"", ""postgres"", ""postgresql"", ""prisma"", ""prisma-client"", ""query-builder"", ""sql-server"", ""sqlite"", ""sqlserver"", ""typescript""]",1
+browserless/chrome,1,typescript,6401,https://github.com/browserless/chrome.git,54,,CLAUDE.md,2026-07-25T03:17:41.205825+00:00,2017-11-17T04:35:31,"[""browserless"", ""chrome"", ""devtools"", ""docker"", ""headless"", ""headless-chrome"", ""puppeteer""]",1
+slackapi/node-slack-sdk,1,typescript,3378,https://github.com/slackapi/node-slack-sdk.git,178,,CLAUDE.md,2026-07-25T03:17:44.803835+00:00,2014-03-25T09:56:50,"[""slack"", ""slackapi"", ""socket-mode"", ""typescript"", ""websocket"", ""websocket-client"", ""websockets""]",1
+marmelab/react-admin,1,typescript,26823,https://github.com/marmelab/react-admin.git,352,,CLAUDE.md,2026-07-25T03:17:50.875678+00:00,2016-07-13T07:58:54,"[""admin"", ""admin-dashboard"", ""admin-on-rest"", ""admin-ui"", ""frontend-framework"", ""graphql"", ""material-ui"", ""react"", ""react-admin"", ""reactjs"", ""rest"", ""single-page-app""]",1
+surveyjs/survey-library,1,typescript,4796,https://github.com/surveyjs/survey-library.git,144,,copilot-instructions.md,2026-07-25T03:17:52.619550+00:00,2015-08-14T08:53:22,"[""angular"", ""dynamic-form-builder"", ""form"", ""form-builder"", ""form-library"", ""forms"", ""javascript"", ""jquery"", ""json"", ""questionnaire"", ""quiz"", ""react"", ""reactjs"", ""survey"", ""surveyjs"", ""surveys"", ""typescript"", ""vue"", ""vue3"", ""web-forms""]",1
+tagspaces/tagspaces,1,typescript,5202,https://github.com/tagspaces/tagspaces.git,22,,CLAUDE.md,2026-07-25T03:18:12.935682+00:00,2012-11-23T05:25:20,"[""electron"", ""javascript"", ""note-taking"", ""offline-first"", ""open-source"", ""self-hosting"", ""tagspaces""]",1
+algolia/instantsearch.js,1,typescript,2935,https://github.com/algolia/instantsearch.js.git,89,,CLAUDE.md,2026-07-25T03:18:12.990767+00:00,2015-07-21T12:10:27,[],1
+slackapi/bolt-js,1,typescript,2919,https://github.com/slackapi/bolt-js.git,151,,CLAUDE.md,2026-07-25T03:18:13.177180+00:00,2016-07-19T02:46:33,"[""framework"", ""javascript"", ""slack"", ""slack-apps"", ""socket-mode"", ""typescript"", ""websocket"", ""websocket-client"", ""websockets""]",1
+framer/motion,1,typescript,23857,https://github.com/framer/motion.git,94,,.cursorrules,2026-07-25T03:18:13.683006+00:00,2018-11-16T09:48:38,[],1
+sanity-io/sanity,1,typescript,6207,https://github.com/sanity-io/sanity.git,174,,.cursor/,2026-07-25T03:18:17.510624+00:00,2017-01-18T07:19:02,"[""cms"", ""headless"", ""react"", ""reactjs"", ""real-time"", ""realtime""]",1
+getsentry/sentry-javascript,1,typescript,8699,https://github.com/getsentry/sentry-javascript.git,406,,.cursor/,2026-07-25T03:18:17.819340+00:00,2012-02-01T08:16:25,"[""angular"", ""crash-reporting"", ""ember"", ""error-monitoring"", ""hacktoberfest"", ""javascript"", ""javascript-client"", ""nextjs"", ""node"", ""raven"", ""react"", ""sdk"", ""sentry"", ""sentry-client"", ""tag-production"", ""team-sdk-javascript"", ""team-web-frontend"", ""typescript"", ""vue""]",1
+microsoft/rushstack,1,typescript,6480,https://github.com/microsoft/rushstack.git,302,,copilot-instructions.md,2026-07-25T03:18:17.822646+00:00,2016-09-30T12:28:20,"[""api"", ""api-extractor"", ""build"", ""bulk-suppressions"", ""eslint"", ""hacktoberfest"", ""heft"", ""lockfile-explorer"", ""monorepo"", ""nodejs"", ""orchestrator"", ""rush"", ""rushstack"", ""toolchain"", ""tsdoc"", ""typescript""]",1
+vercel/vercel,1,typescript,15837,https://github.com/vercel/vercel.git,413,,CLAUDE.md,2026-07-25T03:18:18.007297+00:00,2016-09-09T01:12:08,"[""cli"", ""cloud"", ""command"", ""hosting"", ""jamstack"", ""ship"", ""vercel""]",1
+microsoft/azure-pipelines-tasks,1,typescript,3642,https://github.com/microsoft/azure-pipelines-tasks.git,308,,copilot-instructions.md,2026-07-25T03:18:18.034866+00:00,2014-12-06T11:11:46,[],1
+microsoft/vscode-pull-request-github,1,typescript,2599,https://github.com/microsoft/vscode-pull-request-github.git,150,,copilot-instructions.md,2026-07-25T03:18:24.797648+00:00,2018-05-24T11:05:02,"[""code-review"", ""github"", ""pull-requests"", ""vscode""]",1
+wireapp/wire-desktop,1,typescript,1125,https://github.com/wireapp/wire-desktop.git,58,,copilot-instructions.md,2026-07-25T03:18:28.365692+00:00,2016-07-26T01:55:48,"[""desktop"", ""electron"", ""hacktoberfest"", ""wire""]",1
+azuread/microsoft-authentication-library-for-js,1,typescript,4095,https://github.com/azuread/microsoft-authentication-library-for-js.git,214,,copilot-instructions.md,2026-07-25T03:18:28.546107+00:00,2017-02-24T09:49:17,[],1
+parabolinc/parabol,1,typescript,2004,https://github.com/parabolinc/parabol.git,78,,CLAUDE.md,2026-07-25T03:18:48.298529+00:00,2015-12-21T05:16:49,"[""agile"", ""graphql"", ""kanban"", ""nodejs"", ""react"", ""realtime"", ""redis"", ""retrospective"", ""saas"", ""stripe""]",1
+kinvolk/headlamp,1,typescript,824,https://github.com/kinvolk/headlamp.git,17,,copilot-instructions.md,2026-07-25T03:18:51.665638+00:00,2019-11-08T09:00:03,[],1
+vivliostyle/vivliostyle.js,1,typescript,764,https://github.com/vivliostyle/vivliostyle.js.git,34,,copilot-instructions.md,2026-07-25T03:18:58.951029+00:00,2015-03-30T02:32:08,"[""css"", ""epub"", ""typesetting"", ""vivliostyle""]",1
+artsy/eigen,1,typescript,3770,https://github.com/artsy/eigen.git,133,,CLAUDE.md,2026-07-25T03:18:58.951143+00:00,2015-01-22T09:52:39,"[""android"", ""app"", ""app-store"", ""art"", ""ios"", ""objective-c"", ""react-native"", ""swift""]",1
+chainsafe/lodestar,1,typescript,1412,https://github.com/chainsafe/lodestar.git,139,,CLAUDE.md,2026-07-25T03:19:13.225182+00:00,2018-06-22T02:41:47,"[""beacon-chain"", ""blockchain"", ""eth2"", ""ethereum"", ""proof-of-stake"", ""serenity"", ""typescript""]",1
+nexus-mods/vortex,1,typescript,1415,https://github.com/nexus-mods/vortex.git,38,,CLAUDE.md,2026-07-25T03:19:13.626319+00:00,2016-09-05T03:53:53,[],1
+forcedotcom/salesforcedx-vscode,1,typescript,1026,https://github.com/forcedotcom/salesforcedx-vscode.git,126,,.cursor/,2026-07-25T03:19:15.363828+00:00,2017-06-21T03:53:45,"[""apex"", ""lightning"", ""salesforce"", ""salesforcedx"", ""typescript"", ""vscode-debugger"", ""vscode-extension"", ""vscode-language""]",1
+igniteui/igniteui-angular,1,typescript,600,https://github.com/igniteui/igniteui-angular.git,114,,copilot-instructions.md,2026-07-25T03:19:16.329461+00:00,2016-02-11T01:28:16,"[""angular"", ""angular-charts"", ""angular-components"", ""angular-datatable"", ""angular-grid"", ""angular-table"", ""igniteui"", ""infragistics"", ""progressive-web-apps"", ""typescript"", ""ui-components""]",1
+sagemathinc/cocalc,1,typescript,1283,https://github.com/sagemathinc/cocalc.git,50,,CLAUDE.md,2026-07-25T03:19:17.195836+00:00,2015-03-19T04:16:53,"[""cloud"", ""coffeescript"", ""gap"", ""julia"", ""jupyter"", ""jupyter-notebook"", ""latex"", ""markdown"", ""mathematics"", ""mathjax"", ""nodejs"", ""octave"", ""pari"", ""postgresql"", ""python"", ""r"", ""sagemath"", ""terminal""]",1
+ethereum/sourcify,1,typescript,863,https://github.com/ethereum/sourcify.git,149,,CLAUDE.md,2026-07-25T03:19:17.212041+00:00,2019-04-24T08:23:22,"[""ethereum"", ""smart-contracts"", ""solidity"", ""source-code-verification"", ""verification"", ""vyper""]",1
+adobe/spectrum-web-components,1,typescript,1523,https://github.com/adobe/spectrum-web-components.git,111,,.cursor/,2026-07-25T03:19:17.283638+00:00,2018-11-19T10:15:50,"[""adobe"", ""spectrum"", ""webcomponents""]",1
+lucide-icons/lucide,1,typescript,23339,https://github.com/lucide-icons/lucide.git,332,,copilot-instructions.md,2026-07-25T03:19:17.348268+00:00,2020-06-08T03:36:21,"[""feather-icons"", ""figma"", ""icons"", ""react"", ""svg"", ""svg-icons"", ""svgs"", ""ui-components"", ""ui-design"", ""vue""]",1
+pagopa/io-app,1,typescript,697,https://github.com/pagopa/io-app.git,98,,CLAUDE.md,2026-07-25T03:19:17.389798+00:00,2017-04-11T09:34:46,"[""android"", ""cie"", ""io-app"", ""ios"", ""react-native"", ""spid""]",1
+hubtype/botonic,1,typescript,618,https://github.com/hubtype/botonic.git,37,,.cursor/,2026-07-25T03:19:17.767704+00:00,2018-03-25T09:19:51,"[""bot-framework"", ""bots"", ""chatbots"", ""cms"", ""contentful"", ""conversational-apps"", ""conversational-interfaces"", ""conversational-ui"", ""dialogflow"", ""javascript"", ""nlp"", ""nlu"", ""react"", ""watson""]",1
+pnp/cli-microsoft365,1,typescript,1388,https://github.com/pnp/cli-microsoft365.git,146,,copilot-instructions.md,2026-07-25T03:19:17.807306+00:00,2017-10-12T05:18:21,"[""azure"", ""azure-active-directory"", ""cli"", ""entra-id"", ""hacktoberfest"", ""microsoft"", ""microsoft-365"", ""microsoft-graph"", ""microsoft-planner"", ""microsoft-power-apps"", ""microsoft-power-automate"", ""microsoft-teams"", ""microsoft-viva"", ""microsoft365"", ""office-365"", ""office365"", ""sharepoint"", ""sharepoint-framework"", ""sharepoint-online"", ""spfx""]",1
+sap/ui5-webcomponents-react,1,typescript,508,https://github.com/sap/ui5-webcomponents-react.git,47,,CLAUDE.md,2026-07-25T03:19:20.261345+00:00,2019-04-18T12:38:30,"[""open-source"", ""react"", ""typescript"", ""ui-components"", ""web-components""]",1
+foambubble/foam,1,typescript,17260,https://github.com/foambubble/foam.git,145,,CLAUDE.md,2026-07-25T03:19:32.995700+00:00,2020-06-19T05:04:10,"[""graph-visualisation"", ""markdown"", ""markdown-editor"", ""note-taking"", ""notes-app"", ""personal-knowledge-base"", ""pkm"", ""vscode"", ""zettelkasten""]",1
+microsoft/vscode-jupyter,1,typescript,1515,https://github.com/microsoft/vscode-jupyter.git,255,,copilot-instructions.md,2026-07-25T03:19:48.791007+00:00,2020-09-10T11:39:14,"[""datascience"", ""jupyter"", ""machine-learning"", ""vscode"", ""vscode-extension""]",1
+microsoft/pxt-arcade,1,typescript,542,https://github.com/microsoft/pxt-arcade.git,63,,copilot-instructions.md,2026-07-25T03:19:56.340507+00:00,2018-01-17T01:43:03,"[""makecode""]",1
+tinymce/tinymce,1,typescript,16237,https://github.com/tinymce/tinymce.git,224,,CLAUDE.md,2026-07-25T03:19:56.702651+00:00,2010-01-11T02:46:42,"[""contenteditable"", ""editor"", ""javascript"", ""rich-text-editor"", ""tinymce"", ""wysiwyg"", ""wysiwyg-editor"", ""wysiwyg-html-editor""]",1
+umijs/umi,1,typescript,16035,https://github.com/umijs/umi.git,418,,.cursorrules,2026-07-25T03:19:56.718697+00:00,2017-11-22T10:09:36,"[""react"", ""react-framework"", ""umi"", ""umijs""]",1
+gitpod-io/gitpod,1,typescript,13740,https://github.com/gitpod-io/gitpod.git,128,,CLAUDE.md,2026-07-25T03:19:56.757970+00:00,2018-04-24T03:56:54,"[""cde"", ""cloud"", ""cloud-development"", ""cloud-development-environments"", ""cloud-ide"", ""code-review"", ""dev-environment"", ""developer-environment"", ""developer-experience"", ""disposable"", ""editor"", ""ephemeral"", ""gitpod"", ""ide"", ""jetbrains"", ""prebuilds"", ""remote-development"", ""remote-devtools"", ""vscode""]",1
+adobe/react-spectrum,1,typescript,15639,https://github.com/adobe/react-spectrum.git,403,,.claude/,2026-07-25T03:19:56.806838+00:00,2019-09-13T11:32:51,"[""accessibility"", ""design-systems"", ""react"", ""react-components"", ""ui-components"", ""wai-aria""]",1
+powershell/vscode-powershell,1,typescript,1888,https://github.com/powershell/vscode-powershell.git,120,,copilot-instructions.md,2026-07-25T03:19:59.718190+00:00,2015-09-08T06:29:04,"[""extensions"", ""hacktoberfest"", ""powershell"", ""visual-studio-code""]",1
+vuejs/vue-router-next,1,typescript,1656,https://github.com/vuejs/vue-router-next.git,112,,CLAUDE.md,2026-07-25T03:20:02.197940+00:00,2019-02-07T06:09:43,[],1
+stream-labs/streamlabs-obs,1,typescript,3491,https://github.com/stream-labs/streamlabs-obs.git,51,,CLAUDE.md,2026-07-25T03:20:05.205547+00:00,2017-10-26T09:50:19,[],1
+imbhargav5/rooks,1,typescript,3442,https://github.com/imbhargav5/rooks.git,76,,.cursor/,2026-07-25T03:20:08.651918+00:00,2018-11-08T04:14:39,"[""hook"", ""hooks"", ""react"", ""react-hook"", ""react-hooks"", ""reactjs"", ""rooks"", ""typescript""]",1
+prabhuignoto/react-chrono,1,typescript,4153,https://github.com/prabhuignoto/react-chrono.git,14,,CLAUDE.md,2026-07-25T03:20:20.321596+00:00,2020-08-18T07:02:24,"[""horizontal-timeline"", ""javascript-timeline"", ""react"", ""react-timeline"", ""reactjs"", ""slideshow"", ""timeline"", ""timeline-component"", ""typescript"", ""vertical-timeline"", ""vertical-timeline-react""]",1
+syuilo/misskey,1,typescript,1677,https://github.com/syuilo/misskey.git,77,,copilot-instructions.md,2026-07-25T03:20:26.673968+00:00,2016-12-25T01:16:07,[],1
+celo-org/celo-monorepo,1,typescript,674,https://github.com/celo-org/celo-monorepo.git,179,,CLAUDE.md,2026-07-25T03:20:45.303424+00:00,2019-07-18T07:05:59,"[""blockchain"", ""celo"", ""crypto"", ""cryptocurrency"", ""dapp"", ""ethereum"", ""financial-inclusion"", ""smart-contracts"", ""stablecoin""]",1
+uniswap/uniswap-interface,1,typescript,2326,https://github.com/uniswap/uniswap-interface.git,83,,.cursorignore,2026-07-25T03:21:05.240822+00:00,2017-10-29T05:09:58,[],1
+microsoft/pxt,1,typescript,2291,https://github.com/microsoft/pxt.git,107,,copilot-instructions.md,2026-07-25T03:21:05.274078+00:00,2016-01-24T07:35:52,"[""adafruit"", ""blockly"", ""editor"", ""javascript"", ""makecode"", ""microbit"", ""microsoft-makecode"", ""minecraft"", ""pxt"", ""typescript""]",1
+swaponline/multicurrencywallet,1,typescript,540,https://github.com/swaponline/multicurrencywallet.git,60,,CLAUDE.md,2026-07-25T03:21:05.284367+00:00,2018-04-23T09:48:44,"[""atomic"", ""bitcoin"", ""browser"", ""btc"", ""crypto"", ""cryptocurrency"", ""erc"", ""erc20"", ""ethereum"", ""exchange"", ""litecoin"", ""noxoncf"", ""swap"", ""wallet""]",1
+tinkoffcreditsystems/taiga-ui,1,typescript,1854,https://github.com/tinkoffcreditsystems/taiga-ui.git,67,,copilot-instructions.md,2026-07-25T03:21:05.355835+00:00,2020-09-25T04:09:18,[],1
+artsy/force,1,typescript,636,https://github.com/artsy/force.git,122,,CLAUDE.md,2026-07-25T03:21:05.466621+00:00,2014-08-12T06:14:34,"[""artsy"", ""express-js"", ""graphql"", ""javascript"", ""react"", ""typescript""]",1
+wireapp/wire-webapp,1,typescript,1189,https://github.com/wireapp/wire-webapp.git,97,,copilot-instructions.md,2026-07-25T03:21:05.504081+00:00,2016-07-21T03:34:05,"[""end-to-end-encryption"", ""hacktober"", ""hacktoberfest"", ""javascript"", ""knockout"", ""libsodium"", ""messenger"", ""reactjs"", ""typescript"", ""webapp"", ""wire""]",1
+sap/spartacus,1,typescript,780,https://github.com/sap/spartacus.git,163,,CLAUDE.md,2026-07-25T03:21:05.726743+00:00,2018-09-18T08:56:49,"[""commerce-cloud"", ""open-source""]",1
+typeorm/typeorm,1,typescript,36583,https://github.com/typeorm/typeorm.git,424,,copilot-instructions.md,2026-07-25T03:21:10.194945+00:00,2016-02-29T07:41:14,"[""active-record"", ""cockroachdb"", ""data-mapper"", ""database"", ""hacktoberfest"", ""javascript"", ""mariadb"", ""mysql"", ""orm"", ""postgresql"", ""sqlite"", ""sqlserver"", ""typeorm"", ""typescript""]",1
+azure/azure-sdk-for-js,1,typescript,2294,https://github.com/azure/azure-sdk-for-js.git,400,,copilot-instructions.md,2026-07-25T03:21:10.819283+00:00,2017-10-25T06:44:09,"[""azure"", ""azure-sdk"", ""browser"", ""hacktoberfest"", ""javascript"", ""nodejs"", ""typescript""]",1
+eclipse-theia/theia,1,typescript,21584,https://github.com/eclipse-theia/theia.git,354,,CLAUDE.md,2026-07-25T03:21:18.056653+00:00,2017-02-24T02:42:05,"[""cloud-ide"", ""editor"", ""electron"", ""ide"", ""language-server-protocol"", ""typescript""]",1
+captbaritone/webamp,1,typescript,11142,https://github.com/captbaritone/webamp.git,43,,.claude/,2026-07-25T03:21:24.067122+00:00,2014-11-04T02:50:52,"[""html5"", ""javascript"", ""port"", ""reimplementation"", ""webaudio-api"", ""winamp""]",1
+automattic/simplenote-electron,1,typescript,5248,https://github.com/automattic/simplenote-electron.git,81,,CLAUDE.md,2026-07-25T03:21:28.017633+00:00,2015-08-22T09:06:44,[],1
+midwayjs/midway,1,typescript,7727,https://github.com/midwayjs/midway.git,165,,.cursor/,2026-07-25T03:21:28.097292+00:00,2018-07-12T06:16:16,"[""aliyun"", ""aws"", ""azure"", ""cloud"", ""dependency-injection-container"", ""enterprise"", ""framework"", ""ioc"", ""midway"", ""mircoservices"", ""react"", ""serverless"", ""serverless-framework"", ""typescript"", ""vue"", ""web""]",1
+jigsaw-code/outline-client,1,typescript,8041,https://github.com/jigsaw-code/outline-client.git,38,,CLAUDE.md,2026-07-25T03:21:41.784930+00:00,2018-03-13T09:42:30,"[""android"", ""chromeos"", ""cordova"", ""electron"", ""ios"", ""linux"", ""macos"", ""shadowsocks"", ""windows""]",1
+cloudhut/kowl,1,typescript,2188,https://github.com/cloudhut/kowl.git,19,,CLAUDE.md,2026-07-25T03:21:56.498943+00:00,2019-09-29T10:15:35,[],1
+antvis/g2,1,typescript,12561,https://github.com/antvis/g2.git,217,,.cursor/,2026-07-25T03:21:58.998823+00:00,2016-05-26T09:21:04,"[""animation"", ""canvas"", ""chart"", ""grammar"", ""graphics"", ""hacktoberfest"", ""interaction"", ""svg"", ""visualization"", ""webgl""]",1
+johannesjo/super-productivity,1,typescript,16613,https://github.com/johannesjo/super-productivity.git,300,,CLAUDE.md,2026-07-25T03:22:00.917730+00:00,2017-01-06T10:30:58,"[""electron-app"", ""hacktoberfest"", ""hacktoberfest2022"", ""jira"", ""linux"", ""macos"", ""productivity"", ""task-manager"", ""time-tracker"", ""timetracking"", ""to-do-list"", ""todo""]",1
+vendure-ecommerce/vendure,1,typescript,7714,https://github.com/vendure-ecommerce/vendure.git,244,,.cursor/,2026-07-25T03:22:00.920285+00:00,2018-06-11T02:29:20,"[""ecommerce"", ""ecommerce-api"", ""ecommerce-framework"", ""ecommerce-platform"", ""graphql"", ""graphql-commerce"", ""headless"", ""headless-commerce"", ""nestjs"", ""nodejs"", ""nodejs-ecommerce"", ""shopping-cart""]",1
+thymikee/jest-preset-angular,1,typescript,917,https://github.com/thymikee/jest-preset-angular.git,88,,copilot-instructions.md,2026-07-25T03:22:22.214956+00:00,2017-03-30T08:35:39,"[""angular"", ""jest"", ""testing""]",1
+notionx/react-notion-x,1,typescript,5411,https://github.com/notionx/react-notion-x.git,88,,.claude/,2026-07-25T03:22:22.747633+00:00,2020-08-15T12:29:59,"[""nextjs"", ""notion"", ""notion-api"", ""react"", ""react-notion"", ""typescript""]",1
+vkcom/vkui,1,typescript,1143,https://github.com/vkcom/vkui.git,92,,.claude/,2026-07-25T03:22:25.600847+00:00,2017-01-16T12:09:28,"[""javascript"", ""mobile-web"", ""opensource"", ""postcss"", ""reactjs"", ""typescript"", ""ui"", ""uikit"", ""vkontakte"", ""vkui""]",1
+tinacms/tinacms,1,typescript,13628,https://github.com/tinacms/tinacms.git,146,,CLAUDE.md,2026-07-25T03:22:25.608533+00:00,2019-07-23T06:37:47,"[""cms"", ""content-management-system"", ""forestry"", ""markdown"", ""nextjs"", ""react"", ""tina"", ""tinacms"", ""typescript""]",1
+surveyjs/survey-creator,1,typescript,1263,https://github.com/surveyjs/survey-creator.git,85,,CLAUDE.md,2026-07-25T03:22:26.069820+00:00,2015-12-22T07:21:28,"[""angular-form-builder"", ""angular-forms"", ""drag-and-drop-form-builder"", ""dynamic-form-builder"", ""dynamic-forms"", ""form-builder"", ""form-generator"", ""form-schema"", ""forms"", ""json-form-builder"", ""json-forms"", ""react-form-builder"", ""react-forms"", ""schema-form"", ""survey-application"", ""survey-builder"", ""survey-creator"", ""surveyjs"", ""vue-form-builder"", ""vue-forms""]",1
+lichess-org/api,1,typescript,574,https://github.com/lichess-org/api.git,75,,copilot-instructions.md,2026-07-25T03:22:31.625877+00:00,2018-04-01T09:24:19,"[""lichess""]",1
+firecow/gitlab-ci-local,1,typescript,3979,https://github.com/firecow/gitlab-ci-local.git,89,,CLAUDE.md,2026-07-25T03:22:36.912186+00:00,2020-01-04T06:03:14,"[""cd"", ""ci"", ""git"", ""gitlab"", ""gitlab-ci"", ""local"", ""pipeline"", ""push"", ""uncomitted"", ""untracked""]",1
+hydro-dev/hydro,1,typescript,6692,https://github.com/hydro-dev/hydro.git,49,,.cursorignore,2026-07-25T03:22:36.949078+00:00,2020-04-01T10:14:19,"[""acm-icpc"", ""cpp"", ""hydro"", ""java"", ""mixed-judge"", ""mongodb"", ""node"", ""noip"", ""oi"", ""oj"", ""online-judge"", ""onlinejudge"", ""python"", ""vijos"", ""vj5""]",1
+jesec/flood,1,typescript,2800,https://github.com/jesec/flood.git,110,,.cursorrules,2026-07-25T03:22:36.958487+00:00,2020-08-03T01:48:43,"[""collaborate"", ""nodejs"", ""qbittorrent"", ""react"", ""rtorrent"", ""transmission"", ""webui""]",1
+davidkpiano/xstate,1,typescript,16523,https://github.com/davidkpiano/xstate.git,215,,CLAUDE.md,2026-07-25T03:22:49.016237+00:00,2015-09-14T03:04:15,[],1
+excalidraw/excalidraw,1,typescript,126985,https://github.com/excalidraw/excalidraw.git,350,,copilot-instructions.md,2026-07-25T03:22:49.091854+00:00,2020-01-02T01:04:43,"[""canvas"", ""collaboration"", ""diagrams"", ""drawing"", ""hacktoberfest"", ""productivity"", ""whiteboard""]",1
+microsoft/fluidframework,1,typescript,4933,https://github.com/microsoft/fluidframework.git,253,,copilot-instructions.md,2026-07-25T03:22:49.347669+00:00,2019-08-22T05:37:57,"[""collaboration"", ""crdt"", ""datastructure"", ""distributed"", ""fluid"", ""fluid-framework"", ""microsoft"", ""realtime""]",1
+streetsidesoftware/cspell,1,typescript,1653,https://github.com/streetsidesoftware/cspell.git,83,,copilot-instructions.md,2026-07-25T03:22:49.349047+00:00,2017-01-15T01:11:46,"[""spell"", ""spell-checker""]",1
+signoz/signoz,1,typescript,27592,https://github.com/signoz/signoz.git,205,,.cursor/,2026-07-25T03:22:49.551147+00:00,2021-01-03T12:44:36,"[""apm"", ""application-monitoring"", ""distributed-tracing"", ""go"", ""good-first-issue"", ""jaeger"", ""log"", ""logs"", ""metrics"", ""monitoring"", ""nextjs"", ""observability"", ""open-source"", ""opentelemetry"", ""prometheus"", ""react"", ""reactjs"", ""self-hosted"", ""tracing"", ""typescript""]",1
+mui-org/material-ui-x,1,typescript,978,https://github.com/mui-org/material-ui-x.git,82,,CLAUDE.md,2026-07-25T03:22:49.603106+00:00,2020-04-30T02:52:39,[],1
+nrwl/nx,1,typescript,29060,https://github.com/nrwl/nx.git,400,,.cursor/,2026-07-25T03:22:49.605066+00:00,2017-08-11T06:50:23,"[""angular"", ""build"", ""build-system"", ""build-tool"", ""building-tool"", ""cli"", ""cypress"", ""hacktoberfest"", ""javascript"", ""monorepo"", ""nextjs"", ""nodejs"", ""nx"", ""nx-workspaces"", ""react"", ""storybook"", ""typescript""]",1
+appsmithorg/appsmith,1,typescript,40285,https://github.com/appsmithorg/appsmith.git,327,,.cursor/,2026-07-25T03:22:49.635642+00:00,2020-06-30T04:07:36,"[""admin-dashboard"", ""admin-panels"", ""app-builder"", ""automation"", ""crud"", ""custom-internal"", ""developer-tools"", ""gui"", ""gui-application"", ""hacktoberfest"", ""internal-tools"", ""java"", ""javascript"", ""low-code"", ""low-code-framework"", ""react"", ""self-hosted"", ""typescript"", ""webdevelopment"", ""workflows""]",1
+teambit/bit,1,typescript,18421,https://github.com/teambit/bit.git,74,,.github/instructions/,2026-07-25T03:22:58.129716+00:00,2017-01-22T02:51:43,"[""ai"", ""collaboration"", ""component-driven"", ""composable"", ""composable-architecture"", ""distributed"", ""front-end"", ""javascript"", ""micro-frontend"", ""micro-services"", ""monorepo"", ""multirepo"", ""multirepo-maintenance"", ""node-js"", ""polyrepo"", ""react"", ""service-oriented-architecture"", ""typescript"", ""vue""]",1
+microsoft/fast,1,typescript,9665,https://github.com/microsoft/fast.git,149,,copilot-instructions.md,2026-07-25T03:23:04.579978+00:00,2018-03-02T08:10:30,"[""adaptive-ui"", ""animation-library"", ""color-library"", ""component-architecture"", ""component-library"", ""components"", ""design-architecture"", ""design-systems"", ""development-tools"", ""front-end-framework"", ""react"", ""typescript"", ""web-accessibility"", ""web-components"", ""web-components-schemas"", ""web-standards""]",1
+coinbase/rest-hooks,1,typescript,1652,https://github.com/coinbase/rest-hooks.git,34,,.cursor/,2026-07-25T03:23:12.657637+00:00,2019-02-15T03:37:05,[],1
+home-assistant/frontend,1,typescript,5542,https://github.com/home-assistant/frontend.git,438,,copilot-instructions.md,2026-07-25T03:23:22.788887+00:00,2015-07-12T11:58:06,"[""frontend"", ""hacktoberfest"", ""home-assistant"", ""home-automation"", ""lit-element"", ""polymer"", ""webcomponents""]",1
+thecodingmachine/workadventure,1,typescript,3192,https://github.com/thecodingmachine/workadventure.git,77,,copilot-instructions.md,2026-07-25T03:23:25.479186+00:00,2020-04-03T12:24:15,[],1
+dubzzz/fast-check,1,typescript,5056,https://github.com/dubzzz/fast-check.git,75,,copilot-instructions.md,2026-07-25T03:23:42.664502+00:00,2017-10-30T11:41:11,"[""faker"", ""fuzzing"", ""generative-testing"", ""property-based-testing"", ""quickcheck"", ""tdd"", ""testing"", ""typescript"", ""unit-testing""]",1
+microsoft/playwright,1,typescript,92120,https://github.com/microsoft/playwright.git,471,,copilot-instructions.md,2026-07-25T03:23:45.274272+00:00,2019-11-15T06:32:42,"[""automation"", ""chrome"", ""chromium"", ""e2e-testing"", ""electron"", ""end-to-end-testing"", ""firefox"", ""javascript"", ""playwright"", ""test"", ""test-automation"", ""testing"", ""testing-tools"", ""web"", ""webkit""]",1
+effector/effector,1,typescript,4839,https://github.com/effector/effector.git,143,,.cursor/,2026-07-25T03:23:46.674287+00:00,2018-02-27T10:38:40,"[""business-logic"", ""effector"", ""event-driven"", ""reactive"", ""state"", ""state-management"", ""state-manager""]",1
+ant-design/pro-components,1,typescript,4786,https://github.com/ant-design/pro-components.git,410,,.cursor/,2026-07-25T03:24:04.518880+00:00,2019-04-28T10:45:11,"[""ant"", ""ant-design"", ""ant-design-pro"", ""dumi"", ""hooks"", ""react"", ""ui"", ""ui-components""]",1
+trpc/trpc,1,typescript,40353,https://github.com/trpc/trpc.git,462,,.cursor/,2026-07-25T03:24:04.625016+00:00,2020-07-18T01:17:11,"[""api"", ""next"", ""nextjs"", ""prisma"", ""react"", ""typescript""]",1
+chakra-ui/chakra-ui,1,typescript,40485,https://github.com/chakra-ui/chakra-ui.git,413,,CLAUDE.md,2026-07-25T03:24:04.698141+00:00,2019-08-17T02:27:54,"[""a11y"", ""accessible"", ""ark-ui"", ""chakra-ui"", ""component"", ""css-in-js"", ""dark-mode"", ""design-system"", ""react"", ""react-components"", ""reactjs"", ""styled"", ""ui-components"", ""ui-library"", ""uikit"", ""wai-aria""]",1
+vitejs/vite,1,typescript,81844,https://github.com/vitejs/vite.git,438,,copilot-instructions.md,2026-07-25T03:24:04.703973+00:00,2020-04-21T05:03:57,"[""build-tool"", ""dev-server"", ""frontend"", ""hmr"", ""vite""]",1
+sidequestjs/sidequest,1,typescript,1001,https://github.com/sidequestjs/sidequest.git,8,,CLAUDE.md,2026-07-25T03:24:08.369438+00:00,2025-07-23T10:51:48,"[""background-jobs"", ""bullmq-alternative"", ""concurrency"", ""cron"", ""dashboard"", ""distributed"", ""job-queue"", ""mongodb"", ""mysql"", ""no-redis"", ""nodejs"", ""pg-boss-alternative"", ""postgresql"", ""queue"", ""redis-free"", ""scheduler"", ""sqlite"", ""typescript"", ""worker-threads""]",1
+ifandelse/machina.js,1,typescript,1956,https://github.com/ifandelse/machina.js.git,21,,CLAUDE.md,2026-07-25T03:24:09.738822+00:00,2012-02-28T05:16:42,"[""fsm"", ""state-machine""]",1
+zwave-js/node-zwave-js,1,typescript,803,https://github.com/zwave-js/node-zwave-js.git,411,,copilot-instructions.md,2026-07-25T03:24:09.843012+00:00,2018-03-25T09:25:32,"[""hacktoberfest"", ""iot"", ""razberry"", ""smart-home"", ""wireless"", ""z-wave"", ""zwave""]",1
+rejetto/hfs,1,typescript,3786,https://github.com/rejetto/hfs.git,21,,copilot-instructions.md,2026-07-25T03:24:11.608169+00:00,2021-12-19T09:34:54,"[""file-server"", ""file-sharing"", ""http-server"", ""nodejs"", ""typescript"", ""web""]",1
+postaljs/postal.js,1,typescript,2838,https://github.com/postaljs/postal.js.git,20,,CLAUDE.md,2026-07-25T03:24:17.475460+00:00,2011-10-27T04:40:05,[],1
+aadsm/jschardet,1,typescript,741,https://github.com/aadsm/jschardet.git,15,,CLAUDE.md,2026-07-25T03:24:23.187383+00:00,2010-04-17T08:23:09,"[""character-encoding"", ""charset""]",1
+tantaman/strut,1,typescript,1887,https://github.com/tantaman/strut.git,21,,CLAUDE.md,2026-07-25T03:24:32.128090+00:00,2012-05-06T10:05:30,[],1
+renovatebot/renovate,1,typescript,21960,https://github.com/renovatebot/renovate.git,431,,CLAUDE.md,2026-07-25T03:24:32.373277+00:00,2016-12-17T04:21:21,"[""azure-devops"", ""bitbucket"", ""dependencies"", ""dependencies-checking"", ""dependency-manager"", ""github"", ""gitlab"", ""npm"", ""package-management""]",1
+ant-design/ant-design,1,typescript,98607,https://github.com/ant-design/ant-design.git,376,,copilot-instructions.md,2026-07-25T03:24:32.603150+00:00,2015-04-24T03:37:24,"[""ant-design"", ""antd"", ""design-systems"", ""react"", ""typescript"", ""ui-kit"", ""ui-library""]",1
+gitbookio/gitbook,1,typescript,28942,https://github.com/gitbookio/gitbook.git,36,,CLAUDE.md,2026-07-25T03:24:33.156000+00:00,2014-03-31T03:01:56,"[""documentation"", ""git"", ""gitbook"", ""markdown""]",1
+khan/perseus,1,typescript,1576,https://github.com/khan/perseus.git,45,,.cursor/,2026-07-25T03:24:33.219118+00:00,2013-01-25T07:54:46,[],1
+olistic/warriorjs,1,typescript,9507,https://github.com/olistic/warriorjs.git,13,,CLAUDE.md,2026-07-25T03:24:33.640526+00:00,2015-04-29T02:25:02,"[""ai"", ""artificial-intelligence"", ""battle"", ""epic"", ""game"", ""javascript"", ""js"", ""learn"", ""nodejs"", ""sharpen"", ""skills"", ""test"", ""warrior"", ""warriorjs""]",1
+yorkxin/copy-as-markdown,1,typescript,736,https://github.com/yorkxin/copy-as-markdown.git,10,,CLAUDE.md,2026-07-25T03:24:36.700188+00:00,2012-03-01T05:21:06,"[""browser"", ""chrome"", ""firefox"", ""webextensions""]",1
+kriasoft/react-starter-kit,1,typescript,23514,https://github.com/kriasoft/react-starter-kit.git,13,,copilot-instructions.md,2026-07-25T03:24:38.684031+00:00,2014-04-16T01:08:18,"[""better-auth"", ""boilerplate"", ""bun"", ""cloudflare"", ""cloudflare-workers"", ""drizzle-orm"", ""gcp"", ""hono"", ""neon"", ""nodejs"", ""react"", ""saas"", ""shadcn-ui"", ""starter-kit"", ""tailwindcss"", ""tanstack-router"", ""template"", ""trpc"", ""typescript"", ""vite""]",1
+caldis/react-zmage,1,typescript,937,https://github.com/caldis/react-zmage.git,6,,copilot-instructions.md,2026-07-25T03:24:40.548592+00:00,2017-10-26T08:29:35,"[""animation"", ""es6"", ""image"", ""img"", ""javascript"", ""js"", ""react"", ""react-zmage"", ""slide"", ""slider"", ""slidershow"", ""website"", ""zmage"", ""zoom"", ""zoomer""]",1
+zuiidea/antd-admin,1,typescript,9759,https://github.com/zuiidea/antd-admin.git,52,,.github/instructions/,2026-07-25T03:24:41.181125+00:00,2016-01-25T07:46:15,"[""admin"", ""antd"", ""dashboard"", ""mock"", ""react""]",1
+tus/tus-node-server,1,typescript,1086,https://github.com/tus/tus-node-server.git,63,,CLAUDE.md,2026-07-25T03:24:42.040773+00:00,2015-10-08T04:23:03,"[""aws-s3"", ""azure"", ""file-storage"", ""google-cloud-storage"", ""nodejs"", ""resumable-upload"", ""tus"", ""upload"", ""upload-server""]",1
+wechatsync/wechatsync,1,typescript,5585,https://github.com/wechatsync/wechatsync.git,9,,.claude/,2026-07-25T03:24:42.804327+00:00,2020-09-01T08:58:36,"[""blog"", ""chrome"", ""chrome-extension"", ""markdown"", ""multiplatform"", ""spider"", ""vue"", ""wechat-official-account"", ""writer""]",1
+naomiaro/waveform-playlist,1,typescript,1655,https://github.com/naomiaro/waveform-playlist.git,16,,CLAUDE.md,2026-07-25T03:24:42.820841+00:00,2013-02-12T12:37:03,"[""annotations"", ""audio"", ""audio-player"", ""audio-visualizer"", ""audiorecorder"", ""audioworklet"", ""daw"", ""harmony"", ""music"", ""playback"", ""playlist"", ""tonejs"", ""waveform"", ""webaudio""]",1
+theoephraim/node-google-spreadsheet,1,typescript,2486,https://github.com/theoephraim/node-google-spreadsheet.git,51,,CLAUDE.md,2026-07-25T03:24:45.208175+00:00,2013-03-04T09:53:48,"[""google"", ""google-sheets"", ""google-sheets-api-v4"", ""google-spreadsheets"", ""nodejs"", ""typescript""]",1
+johnkorzhuk/grabient,1,typescript,2006,https://github.com/johnkorzhuk/grabient.git,3,,CLAUDE.md,2026-07-25T03:24:45.436858+00:00,2017-05-06T11:41:30,[],1
+flavioislima/heroicgameslauncher,1,typescript,551,https://github.com/flavioislima/heroicgameslauncher.git,19,,copilot-instructions.md,2026-07-25T03:24:45.535560+00:00,2020-12-30T12:51:57,[],1
+gre/gl-react,1,typescript,3003,https://github.com/gre/gl-react.git,14,,CLAUDE.md,2026-07-25T03:24:54.475670+00:00,2015-08-17T03:49:51,"[""glsl"", ""react"", ""react-native"", ""universal"", ""webgl""]",1
+marktext/muya,1,typescript,717,https://github.com/marktext/muya.git,11,,CLAUDE.md,2026-07-25T03:24:54.788027+00:00,2018-06-29T02:30:54,"[""markdown"", ""markdown-editor""]",1
+yoannmoinet/nipplejs,1,typescript,1923,https://github.com/yoannmoinet/nipplejs.git,24,,CLAUDE.md,2026-07-25T03:24:54.811427+00:00,2015-09-05T09:55:09,"[""dependency-free"", ""dom"", ""frontend"", ""gamedev"", ""joystick"", ""vanilla-javascript""]",1
+nteract/semiotic,1,typescript,2685,https://github.com/nteract/semiotic.git,30,,copilot-instructions.md,2026-07-25T03:24:54.849527+00:00,2017-03-16T05:46:24,"[""ai"", ""d3"", ""data-visualization"", ""nteract"", ""react"", ""streaming"", ""visualization""]",1
+annexare/countries,1,typescript,1317,https://github.com/annexare/countries.git,15,,CLAUDE.md,2026-07-25T03:24:56.075355+00:00,2014-07-06T04:44:51,"[""calling-codes"", ""capital"", ""cjs"", ""continent"", ""countries"", ""country-codes"", ""csv"", ""currencies"", ""emoji"", ""esm"", ""iso3166"", ""iso3166-1"", ""iso639"", ""iso639-1"", ""json"", ""language-codes"", ""locales"", ""sql"", ""typescript"", ""typings""]",1
+tabwrangler/tabwrangler,1,typescript,628,https://github.com/tabwrangler/tabwrangler.git,24,,CLAUDE.md,2026-07-25T03:24:57.261182+00:00,2012-04-23T04:14:26,"[""chrome-extension"", ""firefox-extension""]",1
+node-modules/urllib,1,typescript,743,https://github.com/node-modules/urllib.git,53,,CLAUDE.md,2026-07-25T03:25:01.982191+00:00,2011-05-16T02:04:01,"[""curl"", ""curl-library"", ""http-client"", ""httpclient"", ""request"", ""undici"", ""urllib"", ""urllib2""]",1
+styled-components/styled-components-website,1,typescript,621,https://github.com/styled-components/styled-components-website.git,247,,.cursor/,2026-07-25T03:25:02.576345+00:00,2017-04-10T03:11:30,"[""documentation"", ""nextjs"", ""preact"", ""react"", ""styled-components""]",1
+maildev/maildev,1,typescript,5944,https://github.com/maildev/maildev.git,78,,CLAUDE.md,2026-07-25T03:25:09.195296+00:00,2013-03-31T07:37:09,"[""developer-tools"", ""development"", ""docker"", ""mailcatcher"", ""maildev"", ""nodejs"", ""nodemailer"", ""smtp"", ""smtp-server"", ""testing""]",1
+jsforce/jsforce,1,typescript,1466,https://github.com/jsforce/jsforce.git,72,,copilot-instructions.md,2026-07-25T03:25:10.245598+00:00,2014-01-30T08:56:14,"[""jsforce"", ""salesforce""]",1
+silenceleo/snowb-bmf,1,typescript,561,https://github.com/silenceleo/snowb-bmf.git,7,,CLAUDE.md,2026-07-25T03:25:10.246127+00:00,2020-07-31T05:55:32,"[""bitmap"", ""bitmap-font"", ""bitmap-font-generator"", ""bitmap-fonts"", ""bitmapfont"", ""bitmapfonts"", ""bitmaps"", ""bmfont""]",1
+coreui/coreui-react,1,typescript,714,https://github.com/coreui/coreui-react.git,9,,CLAUDE.md,2026-07-25T03:25:10.978094+00:00,2018-02-26T06:14:32,"[""bootstrap"", ""bootstrap-react"", ""components-library"", ""coreui"", ""coreui-library"", ""coreui-react"", ""css-library"", ""react"", ""react-bootstrap"", ""react-components"", ""reactjs"", ""reactstrap"", ""ui-components""]",1
+gilbarbara/react-joyride,1,typescript,7721,https://github.com/gilbarbara/react-joyride.git,44,,CLAUDE.md,2026-07-25T03:25:10.985616+00:00,2015-08-28T02:56:09,"[""joyride"", ""react"", ""react-component"", ""tooltip"", ""tour""]",1
+yagop/node-telegram-bot-api,1,typescript,9181,https://github.com/yagop/node-telegram-bot-api.git,88,,CLAUDE.md,2026-07-25T03:25:11.471907+00:00,2015-06-28T10:35:33,"[""api"", ""bot"", ""bot-framework"", ""chatbot"", ""nodejs"", ""telegram""]",1
+tencent/vconsole,1,typescript,17464,https://github.com/tencent/vconsole.git,61,,CLAUDE.md,2026-07-25T03:25:11.474002+00:00,2016-04-27T03:33:45,"[""console"", ""mobile"", ""wechat""]",1
+haehnchen/crypto-trading-bot,1,typescript,3438,https://github.com/haehnchen/crypto-trading-bot.git,16,,CLAUDE.md,2026-07-25T03:25:13.374688+00:00,2018-09-25T03:48:11,"[""binance"", ""bitfinex"", ""bitmex"", ""bot"", ""bybit"", ""ccxt"", ""coinbase"", ""crypto"", ""cryptocurrency"", ""docker"", ""exchange"", ""javascript"", ""margin"", ""nodejs"", ""trading"", ""trading-bot"", ""trading-strategies"", ""tradingview"", ""websocket""]",1
+whiteminds/liveautorecord,1,typescript,946,https://github.com/whiteminds/liveautorecord.git,4,,CLAUDE.md,2026-07-25T03:25:15.045996+00:00,2018-04-25T08:59:23,"[""bilibili"", ""douyin"", ""douyu"", ""electron"", ""ffmpeg"", ""huya"", ""typescript"", ""vue""]",1
+eggjs/egg,1,typescript,18994,https://github.com/eggjs/egg.git,216,,copilot-instructions.md,2026-07-25T03:25:17.310407+00:00,2016-06-18T06:53:23,"[""egg"", ""eggjs"", ""enterprise"", ""framework"", ""koa"", ""koa-middleware"", ""koa2"", ""node-framework"", ""nodejs""]",1
+argos-ci/argos,1,typescript,597,https://github.com/argos-ci/argos.git,14,,.claude/,2026-07-25T03:25:19.228850+00:00,2016-12-15T08:23:42,"[""testing"", ""testing-tools"", ""visual-testing""]",1
+amondnet/vercel-action,1,typescript,758,https://github.com/amondnet/vercel-action.git,35,,CLAUDE.md,2026-07-25T03:25:22.838222+00:00,2020-05-16T12:39:37,"[""github-actions"", ""vercel"", ""zeit-now""]",1
+auth0/react-native-auth0,1,typescript,548,https://github.com/auth0/react-native-auth0.git,67,,CLAUDE.md,2026-07-25T03:25:22.844583+00:00,2016-06-14T11:10:12,"[""dx-sdk"", ""react-native""]",1
+noderedis/node-redis,1,typescript,14242,https://github.com/noderedis/node-redis.git,138,,CLAUDE.md,2026-07-25T03:25:25.485755+00:00,2010-09-14T02:05:09,[],1
+openshiporg/openship,1,typescript,1148,https://github.com/openshiporg/openship.git,3,,CLAUDE.md,2026-07-25T03:25:33.923357+00:00,2022-08-10T05:43:01,"[""3pl"", ""e-commerce"", ""fulfillment"", ""marketplace-api"", ""netlify"", ""nextjs"", ""oms"", ""order-management"", ""order-management-system"", ""shopify"", ""vercel"", ""warehouse"", ""warehouse-management-system""]",1
+mxstbr/mxstbr.com,1,typescript,501,https://github.com/mxstbr/mxstbr.com.git,11,,.cursorrules,2026-07-25T03:25:35.528639+00:00,2018-10-15T10:12:46,"[""nextjs"", ""prettier"", ""react""]",1
+marktext/marktext,1,typescript,58318,https://github.com/marktext/marktext.git,159,,CLAUDE.md,2026-07-25T03:25:44.540862+00:00,2017-11-12T04:05:25,"[""dark-mode"", ""editor"", ""electron"", ""focus-mode"", ""latex"", ""linux"", ""mac"", ""macos"", ""markdown"", ""marktext"", ""source-code"", ""typewriter-mode"", ""vue"", ""windows""]",1
+dinerojs/dinero.js,1,typescript,6772,https://github.com/dinerojs/dinero.js.git,18,,CLAUDE.md,2026-07-25T03:25:45.120946+00:00,2018-03-10T11:56:04,"[""amount"", ""currency"", ""immutable"", ""javascript"", ""monetary"", ""money"", ""typescript""]",1
+storybookjs/react-native,1,typescript,1300,https://github.com/storybookjs/react-native.git,341,,CLAUDE.md,2026-07-25T03:25:45.215232+00:00,2020-01-22T03:17:28,"[""expo"", ""react"", ""react-native"", ""storybook""]",1
+xiaomi/hiui,1,typescript,859,https://github.com/xiaomi/hiui.git,37,,.cursor/,2026-07-25T03:25:45.243682+00:00,2018-10-08T10:10:20,"[""component-library"", ""design-system"", ""design-systems"", ""javascript"", ""react"", ""react-components"", ""typescript"", ""ui-kit"", ""ui-library""]",1
+auth0/node-auth0,1,typescript,680,https://github.com/auth0/node-auth0.git,150,,copilot-instructions.md,2026-07-25T03:25:45.249862+00:00,2012-12-03T09:19:57,"[""dx-sdk""]",1
+styled-components/styled-components,1,typescript,41040,https://github.com/styled-components/styled-components.git,343,,CLAUDE.md,2026-07-25T03:25:49.398535+00:00,2016-08-16T06:41:32,"[""css"", ""css-in-js"", ""react"", ""reactnative"", ""rsc"", ""styled-components""]",1
+ueberdosis/tiptap,1,typescript,37545,https://github.com/ueberdosis/tiptap.git,429,,.github/instructions/,2026-07-25T03:25:49.440273+00:00,2018-08-20T07:58:58,"[""editor"", ""javascript"", ""js"", ""prosemirror"", ""react"", ""renderless-components"", ""rich-text"", ""tiptap"", ""vue"", ""wysiwyg"", ""wysiwyg-editor""]",1
+dyc3/opentogethertube,1,typescript,513,https://github.com/dyc3/opentogethertube.git,37,,CLAUDE.md,2026-07-25T03:25:52.672317+00:00,2019-07-21T02:17:16,"[""entertainment"", ""hacktoberfest"", ""nodejs"", ""social"", ""video"", ""video-streaming"", ""video-synchronization"", ""vuejs""]",1
+callstack/react-native-testing-library,1,typescript,3390,https://github.com/callstack/react-native-testing-library.git,128,,CLAUDE.md,2026-07-25T03:25:52.681587+00:00,2018-10-01T02:32:13,"[""jest"", ""react"", ""react-native"", ""testing""]",1
+supabase/supabase-js,1,typescript,4498,https://github.com/supabase/supabase-js.git,229,,.cursor/,2026-07-25T03:25:55.251828+00:00,2020-05-15T12:52:16,"[""client-library"", ""database"", ""isomorphic"", ""javascript"", ""js"", ""mit-license"", ""node-js"", ""nuxt"", ""orm"", ""postgres"", ""postgresql"", ""postgrest"", ""supabase"", ""svelte"", ""ts"", ""typescript""]",1
+typestrong/ts-loader,1,typescript,3479,https://github.com/typestrong/ts-loader.git,137,,CLAUDE.md,2026-07-25T03:25:59.070441+00:00,2015-01-21T12:00:16,"[""loader"", ""typescript"", ""webpack"", ""webpack-loader""]",1
+revenuecat/react-native-purchases,1,typescript,1192,https://github.com/revenuecat/react-native-purchases.git,45,,CLAUDE.md,2026-07-25T03:26:02.607273+00:00,2018-06-21T09:15:55,"[""android"", ""iap"", ""ios"", ""react-native"", ""stripe"", ""web""]",1
+algolia/docsearch,1,typescript,4368,https://github.com/algolia/docsearch.git,126,,CLAUDE.md,2026-07-25T03:26:03.877540+00:00,2015-11-20T10:55:10,"[""algolia"", ""docsearch"", ""documentation"", ""javascript"", ""react"", ""search"", ""typescript""]",1
+fonoster/routr,1,typescript,1696,https://github.com/fonoster/routr.git,11,,.claude/,2026-07-25T03:26:03.883788+00:00,2017-01-18T04:34:29,"[""asterisk"", ""docker"", ""fonoster"", ""freepbx"", ""freeswitch"", ""fusionpbx"", ""ims"", ""instant-messaging"", ""intercom"", ""kamailio"", ""kubernetes"", ""opensips"", ""scaip"", ""server"", ""sip"", ""twilio"", ""voip"", ""webrtc""]",1
+kern/filepizza,1,typescript,10120,https://github.com/kern/filepizza.git,25,,.cursorrules,2026-07-25T03:26:08.457552+00:00,2015-02-25T11:29:26,"[""react"", ""webrtc""]",1
+instawork/hyperview,1,typescript,1691,https://github.com/instawork/hyperview.git,47,,.cursor/,2026-07-25T03:26:12.856462+00:00,2018-07-25T06:02:29,[],1

@@ -1,283 +1,295 @@
-repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,processed_at
-chipsec/chipsec,1,python,3250,https://github.com/chipsec/chipsec.git,90,,2026-05-26T03:35:33.838427+00:00
-feast-dev/feast,1,python,7050,https://github.com/feast-dev/feast.git,347,,2026-05-26T03:36:03.896849+00:00
-airbytehq/airbyte,1,python,21303,https://github.com/airbytehq/airbyte.git,378,,2026-05-26T03:37:20.178517+00:00
-mindwerks/worldengine,1,python,1027,https://github.com/mindwerks/worldengine.git,17,,2026-05-26T03:37:35.027671+00:00
-martin-majlis/wikipedia-api,1,python,740,https://github.com/martin-majlis/wikipedia-api.git,11,,2026-05-26T03:38:03.605630+00:00
-crossbario/autobahn-testsuite,1,python,1580,https://github.com/crossbario/autobahn-testsuite.git,20,,2026-05-26T03:39:13.737228+00:00
-kengz/slm-lab,1,python,1341,https://github.com/kengz/slm-lab.git,17,,2026-05-26T03:39:22.960403+00:00
-trustedsec/hate_crack,1,python,1826,https://github.com/trustedsec/hate_crack.git,8,,2026-05-26T03:39:53.385524+00:00
-datafolklabs/cement,1,python,1342,https://github.com/datafolklabs/cement.git,39,,2026-05-26T03:39:54.544779+00:00
-django-parler/django-parler,1,python,727,https://github.com/django-parler/django-parler.git,59,,2026-05-26T03:40:19.490726+00:00
-trigger/trigger,1,python,557,https://github.com/trigger/trigger.git,21,,2026-05-26T03:40:26.684862+00:00
-ezyang/ghstack,1,python,983,https://github.com/ezyang/ghstack.git,43,,2026-05-26T03:40:33.065344+00:00
-caesar0301/treelib,1,python,835,https://github.com/caesar0301/treelib.git,38,,2026-05-26T03:40:34.825910+00:00
-zachowj/hass-node-red,1,python,567,https://github.com/zachowj/hass-node-red.git,27,,2026-05-26T03:40:45.679319+00:00
-sharebook-kr/pykrx,1,python,988,https://github.com/sharebook-kr/pykrx.git,19,,2026-05-26T03:40:57.740275+00:00
-pybuilder/pybuilder,1,python,1974,https://github.com/pybuilder/pybuilder.git,32,,2026-05-26T03:41:01.849860+00:00
-nat-n/poethepoet,1,python,2036,https://github.com/nat-n/poethepoet.git,44,,2026-05-26T03:41:11.398711+00:00
-toshas/torch-fidelity,1,python,1180,https://github.com/toshas/torch-fidelity.git,12,,2026-05-26T03:42:31.281736+00:00
-nvidia/megatron-lm,1,python,16411,https://github.com/nvidia/megatron-lm.git,289,,2026-05-26T03:42:39.562321+00:00
-benadida/helios-server,1,python,893,https://github.com/benadida/helios-server.git,35,,2026-05-26T03:43:16.444698+00:00
-se2p/pynguin,1,python,1379,https://github.com/se2p/pynguin.git,20,,2026-05-26T03:43:23.023715+00:00
-ghostmanager/ghostwriter,1,python,1820,https://github.com/ghostmanager/ghostwriter.git,26,,2026-05-26T03:43:27.143883+00:00
-enarjord/passivbot,1,python,1999,https://github.com/enarjord/passivbot.git,49,,2026-05-26T03:43:41.541482+00:00
-unrealcv/unrealcv,1,python,2166,https://github.com/unrealcv/unrealcv.git,19,,2026-05-26T03:43:50.590892+00:00
-hozn/stravalib,1,python,629,https://github.com/hozn/stravalib.git,46,,2026-05-26T03:43:59.759084+00:00
-ulauncher/ulauncher,1,python,4455,https://github.com/ulauncher/ulauncher.git,62,,2026-05-26T03:44:02.851266+00:00
-jjjake/internetarchive,1,python,1866,https://github.com/jjjake/internetarchive.git,61,,2026-05-26T03:44:03.208767+00:00
-terryyin/lizard,1,python,2348,https://github.com/terryyin/lizard.git,57,,2026-05-26T03:44:03.263257+00:00
-tmux-python/libtmux,1,python,1172,https://github.com/tmux-python/libtmux.git,42,,2026-05-26T03:44:38.126765+00:00
-trailofbits/graphtage,1,python,2469,https://github.com/trailofbits/graphtage.git,11,,2026-05-26T03:44:39.311384+00:00
-michaelchu/optopsy,1,python,1260,https://github.com/michaelchu/optopsy.git,4,,2026-05-26T03:44:42.075758+00:00
-splunk/splunk-sdk-python,1,python,737,https://github.com/splunk/splunk-sdk-python.git,79,,2026-05-26T03:45:05.017225+00:00
-andialbrecht/sqlparse,1,python,4002,https://github.com/andialbrecht/sqlparse.git,92,,2026-05-26T03:45:14.132449+00:00
-sirver/ultisnips,1,python,7686,https://github.com/sirver/ultisnips.git,154,,2026-05-26T03:45:29.796286+00:00
-silviogutierrez/reactivated,1,python,744,https://github.com/silviogutierrez/reactivated.git,10,,2026-05-26T03:46:00.752147+00:00
-chardet/chardet,1,python,2621,https://github.com/chardet/chardet.git,53,,2026-05-26T03:46:04.936471+00:00
-alberanid/imdbpy,1,python,923,https://github.com/alberanid/imdbpy.git,54,,2026-05-26T03:46:39.611785+00:00
-digitalbazaar/pyld,1,python,664,https://github.com/digitalbazaar/pyld.git,32,,2026-05-26T03:46:40.749993+00:00
-fgmacedo/python-statemachine,1,python,1241,https://github.com/fgmacedo/python-statemachine.git,18,,2026-05-26T03:46:45.523455+00:00
-andymccurdy/redis-py,1,python,9674,https://github.com/andymccurdy/redis-py.git,211,,2026-05-26T03:46:54.006319+00:00
-evhub/coconut,1,python,4305,https://github.com/evhub/coconut.git,30,,2026-05-26T03:47:20.901190+00:00
-openatx/uiautomator2,1,python,7895,https://github.com/openatx/uiautomator2.git,45,,2026-05-26T03:47:21.062643+00:00
-nats-io/nats.py,1,python,1219,https://github.com/nats-io/nats.py.git,79,,2026-05-26T03:47:25.439994+00:00
-ricequant/rqalpha,1,python,6402,https://github.com/ricequant/rqalpha.git,37,,2026-05-26T03:47:33.257437+00:00
-macbre/sql-metadata,1,python,881,https://github.com/macbre/sql-metadata.git,21,,2026-05-26T03:47:56.091038+00:00
-mlco2/codecarbon,1,python,1837,https://github.com/mlco2/codecarbon.git,106,,2026-05-26T03:47:58.903635+00:00
-smileychris/django-countries,1,python,1514,https://github.com/smileychris/django-countries.git,53,,2026-05-26T03:48:07.643184+00:00
-psd-tools/psd-tools,1,python,1395,https://github.com/psd-tools/psd-tools.git,31,,2026-05-26T03:48:13.146532+00:00
-zengbin93/czsc,1,python,662,https://github.com/zengbin93/czsc.git,3,,2026-05-26T03:48:24.127581+00:00
-domainaware/parsedmarc,1,python,1241,https://github.com/domainaware/parsedmarc.git,107,,2026-05-26T03:48:54.870591+00:00
-evennia/evennia,1,python,2042,https://github.com/evennia/evennia.git,194,,2026-05-26T03:49:17.328512+00:00
-idank/explainshell,1,python,14042,https://github.com/idank/explainshell.git,27,,2026-05-26T03:49:20.855710+00:00
-microsoft/olive,1,python,2315,https://github.com/microsoft/olive.git,77,,2026-05-26T03:49:23.012266+00:00
-vyperlang/vyper,1,python,5182,https://github.com/vyperlang/vyper.git,224,,2026-05-26T03:49:24.750238+00:00
-etal/cnvkit,1,python,610,https://github.com/etal/cnvkit.git,34,,2026-05-26T03:49:52.396026+00:00
-mampfes/hacs_waste_collection_schedule,1,python,2054,https://github.com/mampfes/hacs_waste_collection_schedule.git,427,,2026-05-26T03:49:56.173272+00:00
-agronholm/anyio,1,python,2472,https://github.com/agronholm/anyio.git,78,,2026-05-26T03:50:47.388071+00:00
-brainix/pottery,1,python,1242,https://github.com/brainix/pottery.git,4,,2026-05-26T03:51:01.967019+00:00
-trailofbits/algo,1,python,30236,https://github.com/trailofbits/algo.git,186,,2026-05-26T03:51:13.447725+00:00
-emilstenstrom/django-components,1,python,1244,https://github.com/emilstenstrom/django-components.git,43,,2026-05-26T03:51:13.524118+00:00
-pwndbg/pwndbg,1,python,10448,https://github.com/pwndbg/pwndbg.git,294,,2026-05-26T03:51:36.777842+00:00
-contextlab/hypertools,1,python,1879,https://github.com/contextlab/hypertools.git,18,,2026-05-26T03:51:58.297115+00:00
-kdeldycke/meta-package-manager,1,python,591,https://github.com/kdeldycke/meta-package-manager.git,22,,2026-05-26T03:52:11.006234+00:00
-kennbroorg/iky,1,python,943,https://github.com/kennbroorg/iky.git,5,,2026-05-26T03:52:24.449853+00:00
-aio-libs/yarl,1,python,1482,https://github.com/aio-libs/yarl.git,101,,2026-05-26T03:52:52.746621+00:00
-jkwill87/mnamer,1,python,1105,https://github.com/jkwill87/mnamer.git,9,,2026-05-26T03:53:02.963369+00:00
-huggingface/huggingface_hub,1,python,3629,https://github.com/huggingface/huggingface_hub.git,318,,2026-05-26T03:53:14.339568+00:00
-crossbario/autobahn-python,1,python,2537,https://github.com/crossbario/autobahn-python.git,115,,2026-05-26T03:53:23.490999+00:00
-quantecon/quantecon.py,1,python,2318,https://github.com/quantecon/quantecon.py.git,46,,2026-05-26T03:53:24.100672+00:00
-pycqa/pylint,1,python,3741,https://github.com/pycqa/pylint.git,375,,2026-05-26T03:53:24.225103+00:00
-conda/conda,1,python,7408,https://github.com/conda/conda.git,447,,2026-05-26T03:53:24.247657+00:00
-imageio/imageio,1,python,1697,https://github.com/imageio/imageio.git,112,,2026-05-26T03:53:28.505994+00:00
-freeopcua/opcua-client-gui,1,python,644,https://github.com/freeopcua/opcua-client-gui.git,10,,2026-05-26T03:53:43.824336+00:00
-reactivex/rxpy,1,python,5010,https://github.com/reactivex/rxpy.git,86,,2026-05-26T03:53:52.743694+00:00
-acl-org/acl-anthology,1,python,723,https://github.com/acl-org/acl-anthology.git,266,,2026-05-26T03:54:04.466689+00:00
-ranaroussi/quantstats,1,python,6588,https://github.com/ranaroussi/quantstats.git,30,,2026-05-26T03:54:14.440216+00:00
-s3ql/s3ql,1,python,1243,https://github.com/s3ql/s3ql.git,42,,2026-05-26T03:54:14.498316+00:00
-custom-components/alexa_media_player,1,python,1148,https://github.com/custom-components/alexa_media_player.git,42,,2026-05-26T03:54:51.465130+00:00
-nolar/kopf,1,python,2597,https://github.com/nolar/kopf.git,63,,2026-05-26T03:54:53.285493+00:00
-amphibian-dev/toad,1,python,525,https://github.com/amphibian-dev/toad.git,8,,2026-05-26T03:55:02.374609+00:00
-xesscorp/skidl,1,python,676,https://github.com/xesscorp/skidl.git,18,,2026-05-26T03:55:02.536387+00:00
-nicolargo/glances,1,python,32640,https://github.com/nicolargo/glances.git,208,,2026-05-26T03:55:11.651651+00:00
-music-assistant/server,1,python,1578,https://github.com/music-assistant/server.git,173,,2026-05-26T03:55:12.605376+00:00
-mozilla/openwpm,1,python,1159,https://github.com/mozilla/openwpm.git,46,,2026-05-26T03:55:23.214337+00:00
-profusion/sgqlc,1,python,551,https://github.com/profusion/sgqlc.git,30,,2026-05-26T03:55:37.807067+00:00
-netflix/metaflow,1,python,10108,https://github.com/netflix/metaflow.git,133,,2026-05-26T03:55:51.567906+00:00
-mirumee/ariadne,1,python,2342,https://github.com/mirumee/ariadne.git,77,,2026-05-26T03:56:00.548994+00:00
-aio-libs/aiobotocore,1,python,1411,https://github.com/aio-libs/aiobotocore.git,70,,2026-05-26T03:56:02.861847+00:00
-reactionmechanismgenerator/rmg-py,1,python,517,https://github.com/reactionmechanismgenerator/rmg-py.git,81,,2026-05-26T03:56:21.732379+00:00
-tmux-python/tmuxp,1,python,4502,https://github.com/tmux-python/tmuxp.git,68,,2026-05-26T03:56:33.986067+00:00
-slackapi/python-slack-sdk,1,python,4003,https://github.com/slackapi/python-slack-sdk.git,159,,2026-05-26T03:56:35.592798+00:00
-django-import-export/django-import-export,1,python,3323,https://github.com/django-import-export/django-import-export.git,217,,2026-05-26T03:56:38.352832+00:00
-exa-networks/exabgp,1,python,2269,https://github.com/exa-networks/exabgp.git,115,,2026-05-26T03:56:50.307753+00:00
-coin-or/pulp,1,python,2443,https://github.com/coin-or/pulp.git,101,,2026-05-26T03:56:53.367375+00:00
-pyca/cryptography,1,python,7599,https://github.com/pyca/cryptography.git,344,,2026-05-26T03:56:54.645609+00:00
-stripe/stripe-python,1,python,2006,https://github.com/stripe/stripe-python.git,136,,2026-05-26T03:56:54.728287+00:00
-lyft/cartography,1,python,2982,https://github.com/lyft/cartography.git,86,,2026-05-26T03:56:54.881202+00:00
-slackapi/bolt-python,1,python,1305,https://github.com/slackapi/bolt-python.git,58,,2026-05-26T03:57:17.255943+00:00
-catalyst-cooperative/pudl,1,python,587,https://github.com/catalyst-cooperative/pudl.git,51,,2026-05-26T03:57:18.291314+00:00
-archivebox/archivebox,1,python,27499,https://github.com/archivebox/archivebox.git,129,,2026-05-26T03:57:23.060895+00:00
-open-telemetry/opentelemetry-python-contrib,1,python,1050,https://github.com/open-telemetry/opentelemetry-python-contrib.git,434,,2026-05-26T03:57:24.139624+00:00
-ludwig-ai/ludwig,1,python,11703,https://github.com/ludwig-ai/ludwig.git,148,,2026-05-26T03:57:24.411478+00:00
-wkentaro/labelme,1,python,15906,https://github.com/wkentaro/labelme.git,63,,2026-05-26T03:57:26.083522+00:00
-xonsh/xonsh,1,python,9457,https://github.com/xonsh/xonsh.git,340,,2026-05-26T03:57:26.465100+00:00
-eirannejad/pyrevit,1,python,1198,https://github.com/eirannejad/pyrevit.git,51,,2026-05-26T03:57:27.538548+00:00
-netbox-community/netbox,1,python,20559,https://github.com/netbox-community/netbox.git,350,,2026-05-26T03:57:35.771333+00:00
-kayak/pypika,1,python,2882,https://github.com/kayak/pypika.git,98,,2026-05-26T03:57:49.999761+00:00
-gijzelaerr/python-snap7,1,python,797,https://github.com/gijzelaerr/python-snap7.git,48,,2026-05-26T03:58:07.004463+00:00
-man-group/notebooker,1,python,919,https://github.com/man-group/notebooker.git,15,,2026-05-26T03:58:09.409008+00:00
-aiidateam/aiida-core,1,python,565,https://github.com/aiidateam/aiida-core.git,102,,2026-05-26T03:58:20.736322+00:00
-open-catalyst-project/ocp,1,python,628,https://github.com/open-catalyst-project/ocp.git,33,,2026-05-26T03:58:21.743323+00:00
-pythainlp/pythainlp,1,python,1133,https://github.com/pythainlp/pythainlp.git,60,,2026-05-26T03:59:18.641385+00:00
-drakkar-software/octobot,1,python,5980,https://github.com/drakkar-software/octobot.git,18,,2026-05-26T03:59:19.061276+00:00
-dipu-bd/lightnovel-crawler,1,python,1973,https://github.com/dipu-bd/lightnovel-crawler.git,89,,2026-05-26T03:59:26.177286+00:00
-microsoft/msticpy,1,python,1968,https://github.com/microsoft/msticpy.git,62,,2026-05-26T03:59:42.429244+00:00
-efroemling/ballistica,1,python,664,https://github.com/efroemling/ballistica.git,30,,2026-05-26T04:00:03.003300+00:00
-opencti-platform/connectors,1,python,543,https://github.com/opencti-platform/connectors.git,294,,2026-05-26T04:00:03.046856+00:00
-ethereum/eth2.0-specs,1,python,2027,https://github.com/ethereum/eth2.0-specs.git,98,,2026-05-26T04:00:11.923780+00:00
-deepset-ai/haystack,1,python,23159,https://github.com/deepset-ai/haystack.git,293,,2026-05-26T04:00:13.736511+00:00
-ewels/multiqc,1,python,1048,https://github.com/ewels/multiqc.git,193,,2026-05-26T04:00:21.659527+00:00
-quark-engine/quark-engine,1,python,1550,https://github.com/quark-engine/quark-engine.git,28,,2026-05-26T04:00:22.751456+00:00
-zentralopensource/zentral,1,python,862,https://github.com/zentralopensource/zentral.git,24,,2026-05-26T04:00:23.444270+00:00
-cuthbertlab/music21,1,python,2485,https://github.com/cuthbertlab/music21.git,107,,2026-05-26T04:00:23.591729+00:00
-capitalone/datacompy,1,python,645,https://github.com/capitalone/datacompy.git,33,,2026-05-26T04:00:28.043981+00:00
-beetbox/beets,1,python,15166,https://github.com/beetbox/beets.git,346,,2026-05-26T04:00:33.432583+00:00
-readthedocs/readthedocs.org,1,python,8356,https://github.com/readthedocs/readthedocs.org.git,413,,2026-05-26T04:00:43.879989+00:00
-crossbario/crossbar,1,python,2061,https://github.com/crossbario/crossbar.git,59,,2026-05-26T04:00:48.572887+00:00
-databiosphere/toil,1,python,931,https://github.com/databiosphere/toil.git,118,,2026-05-26T04:00:59.208193+00:00
-crytic/slither,1,python,6256,https://github.com/crytic/slither.git,153,,2026-05-26T04:01:02.444643+00:00
-albumentations-team/albumentations,1,python,15016,https://github.com/albumentations-team/albumentations.git,167,,2026-05-26T04:01:56.810013+00:00
-hypothesisworks/hypothesis,1,python,8645,https://github.com/hypothesisworks/hypothesis.git,314,,2026-05-26T04:02:02.896410+00:00
-espressif/esptool,1,python,6333,https://github.com/espressif/esptool.git,127,,2026-05-26T04:02:03.947688+00:00
-librephotos/librephotos,1,python,7991,https://github.com/librephotos/librephotos.git,193,,2026-05-26T04:02:12.792744+00:00
-online-ml/river,1,python,5823,https://github.com/online-ml/river.git,129,,2026-05-26T04:02:16.328836+00:00
-quay/quay,1,python,2773,https://github.com/quay/quay.git,126,,2026-05-26T04:02:17.523883+00:00
-aiogram/aiogram,1,python,5709,https://github.com/aiogram/aiogram.git,126,,2026-05-26T04:02:17.666812+00:00
-seperman/deepdiff,1,python,2400,https://github.com/seperman/deepdiff.git,76,,2026-05-26T04:02:29.426909+00:00
-getsentry/sentry-python,1,python,2187,https://github.com/getsentry/sentry-python.git,302,,2026-05-26T04:02:38.262348+00:00
-nilearn/nilearn,1,python,1399,https://github.com/nilearn/nilearn.git,224,,2026-05-26T04:03:26.547227+00:00
-tencent/bk-sops,1,python,910,https://github.com/tencent/bk-sops.git,38,,2026-05-26T04:03:37.992314+00:00
-frostming/pdm,1,python,502,https://github.com/frostming/pdm.git,12,,2026-05-26T04:03:43.629860+00:00
-robocorp/rpaframework,1,python,1502,https://github.com/robocorp/rpaframework.git,36,,2026-05-26T04:03:49.502350+00:00
-saulpw/visidata,1,python,9096,https://github.com/saulpw/visidata.git,111,,2026-05-26T04:04:21.265230+00:00
-qdata/textattack,1,python,3402,https://github.com/qdata/textattack.git,60,,2026-05-26T04:04:57.459057+00:00
-mozilla/kitsune,1,python,1611,https://github.com/mozilla/kitsune.git,124,,2026-05-26T04:05:30.122213+00:00
-enms-automation/enms,1,python,835,https://github.com/enms-automation/enms.git,20,,2026-05-26T04:05:33.186445+00:00
-open-telemetry/opentelemetry-python,1,python,2458,https://github.com/open-telemetry/opentelemetry-python.git,348,,2026-05-26T04:06:09.158545+00:00
-datadog/integrations-core,1,python,1116,https://github.com/datadog/integrations-core.git,383,,2026-05-26T04:06:16.919379+00:00
-microsoft/debugpy,1,python,2410,https://github.com/microsoft/debugpy.git,77,,2026-05-26T04:06:33.976584+00:00
-cdgriffith/fastflix,1,python,1526,https://github.com/cdgriffith/fastflix.git,1,,2026-05-26T04:06:48.680817+00:00
-pulp/pulpcore,1,python,550,https://github.com/pulp/pulpcore.git,139,,2026-05-26T04:06:51.291608+00:00
-datadog/dd-trace-py,1,python,638,https://github.com/datadog/dd-trace-py.git,363,,2026-05-26T04:07:11.173420+00:00
-mirumee/saleor,1,python,14012,https://github.com/mirumee/saleor.git,179,,2026-05-26T04:07:23.997938+00:00
-yelp/paasta,1,python,1725,https://github.com/yelp/paasta.git,191,,2026-05-26T04:07:26.636390+00:00
-graphistry/pygraphistry,1,python,2485,https://github.com/graphistry/pygraphistry.git,39,,2026-05-26T04:07:41.120108+00:00
-emeryberger/csrankings,1,python,3133,https://github.com/emeryberger/csrankings.git,416,,2026-05-26T04:07:42.752806+00:00
-openstates/openstates-scrapers,1,python,899,https://github.com/openstates/openstates-scrapers.git,162,,2026-05-26T04:08:01.180967+00:00
-systemd/mkosi,1,python,1898,https://github.com/systemd/mkosi.git,192,,2026-05-26T04:08:06.979866+00:00
-3b1b/videos,1,python,10633,https://github.com/3b1b/videos.git,13,,2026-05-26T04:08:42.482607+00:00
-quic/aimet,1,python,2617,https://github.com/quic/aimet.git,79,,2026-05-26T04:08:44.409224+00:00
-openmc-dev/openmc,1,python,1022,https://github.com/openmc-dev/openmc.git,166,,2026-05-26T04:09:07.562682+00:00
-openmdao/openmdao,1,python,724,https://github.com/openmdao/openmdao.git,61,,2026-05-26T04:09:07.646356+00:00
-makepath/xarray-spatial,1,python,900,https://github.com/makepath/xarray-spatial.git,29,,2026-05-26T04:09:07.872826+00:00
-mlrun/mlrun,1,python,1668,https://github.com/mlrun/mlrun.git,89,,2026-05-26T04:09:10.995472+00:00
-dimagi/commcare-hq,1,python,521,https://github.com/dimagi/commcare-hq.git,155,,2026-05-26T04:09:15.026296+00:00
-prefecthq/prefect,1,python,22436,https://github.com/prefecthq/prefect.git,421,,2026-05-26T04:09:40.557838+00:00
-mongodb/mongo-python-driver,1,python,4345,https://github.com/mongodb/mongo-python-driver.git,193,,2026-05-26T04:09:50.265806+00:00
-microsoft/deepspeed,1,python,36490,https://github.com/microsoft/deepspeed.git,361,,2026-05-26T04:10:21.302735+00:00
-ets-labs/python-dependency-injector,1,python,4856,https://github.com/ets-labs/python-dependency-injector.git,42,,2026-05-26T04:10:25.103058+00:00
-dagster-io/dagster,1,python,15547,https://github.com/dagster-io/dagster.git,410,,2026-05-26T04:10:34.849641+00:00
-elyra-ai/elyra,1,python,1993,https://github.com/elyra-ai/elyra.git,69,,2026-05-26T04:10:39.999099+00:00
-home-assistant/supervisor,1,python,2167,https://github.com/home-assistant/supervisor.git,101,,2026-05-26T04:10:49.268705+00:00
-datalad/datalad,1,python,637,https://github.com/datalad/datalad.git,53,,2026-05-26T04:11:55.653274+00:00
-freelawproject/courtlistener,1,python,928,https://github.com/freelawproject/courtlistener.git,100,,2026-05-26T04:11:58.305290+00:00
-azure/azure-sdk-for-python,1,python,5540,https://github.com/azure/azure-sdk-for-python.git,403,,2026-05-26T04:12:00.621931+00:00
-idom-team/idom,1,python,716,https://github.com/idom-team/idom.git,9,,2026-05-26T04:12:04.356851+00:00
-binref/refinery,1,python,843,https://github.com/binref/refinery.git,19,,2026-05-26T04:12:04.410799+00:00
-plotly/dash,1,python,24212,https://github.com/plotly/dash.git,182,,2026-05-26T04:12:10.671889+00:00
-huggingface/transformers,1,python,160813,https://github.com/huggingface/transformers.git,438,,2026-05-26T04:12:10.831784+00:00
-rwightman/pytorch-image-models,1,python,21022,https://github.com/rwightman/pytorch-image-models.git,65,,2026-05-26T04:12:13.825138+00:00
-microsoft/playwright-python,1,python,14649,https://github.com/microsoft/playwright-python.git,52,,2026-05-26T04:12:30.979890+00:00
-getsentry/sentry,1,python,43878,https://github.com/getsentry/sentry.git,352,,2026-05-26T04:12:36.461230+00:00
-freenas/freenas,1,python,1756,https://github.com/freenas/freenas.git,116,,2026-05-26T04:13:22.230834+00:00
-fizzadar/pyinfra,1,python,2390,https://github.com/fizzadar/pyinfra.git,93,,2026-05-26T04:13:35.155502+00:00
-posthog/posthog,1,python,34515,https://github.com/posthog/posthog.git,400,,2026-05-26T04:13:44.593744+00:00
-galaxyproject/galaxy,1,python,1779,https://github.com/galaxyproject/galaxy.git,268,,2026-05-26T04:13:46.877438+00:00
-plasmapy/plasmapy,1,python,681,https://github.com/plasmapy/plasmapy.git,143,,2026-05-26T04:13:50.978455+00:00
-zigpy/zha-device-handlers,1,python,1087,https://github.com/zigpy/zha-device-handlers.git,470,,2026-05-26T04:13:58.362818+00:00
-brndnmtthws/thetagang,1,python,2608,https://github.com/brndnmtthws/thetagang.git,10,,2026-05-26T04:13:59.360464+00:00
-couchers-org/couchers,1,python,533,https://github.com/couchers-org/couchers.git,156,,2026-05-26T04:14:12.030614+00:00
-aio-libs/aiohttp,1,python,16442,https://github.com/aio-libs/aiohttp.git,410,,2026-05-26T04:14:12.436533+00:00
-kovidgoyal/kitty,1,python,33019,https://github.com/kovidgoyal/kitty.git,409,,2026-05-26T04:14:20.320946+00:00
-saltstack/salt,1,python,15435,https://github.com/saltstack/salt.git,285,,2026-05-26T04:14:25.371893+00:00
-maiot-io/zenml,1,python,1219,https://github.com/maiot-io/zenml.git,12,,2026-05-26T04:14:28.301309+00:00
-apache/tvm,1,python,13372,https://github.com/apache/tvm.git,366,,2026-05-26T04:14:45.245801+00:00
-kornia/kornia,1,python,11212,https://github.com/kornia/kornia.git,338,,2026-05-26T04:14:48.610090+00:00
-nuitka/nuitka,1,python,14841,https://github.com/nuitka/nuitka.git,195,,2026-05-26T04:14:48.697993+00:00
-streamlit/streamlit,1,python,44653,https://github.com/streamlit/streamlit.git,309,,2026-05-26T04:15:18.448971+00:00
-kubeflow/pipelines,1,python,4147,https://github.com/kubeflow/pipelines.git,409,,2026-05-26T04:15:31.928354+00:00
-mlflow/mlflow,1,python,26034,https://github.com/mlflow/mlflow.git,447,,2026-05-26T04:15:43.062245+00:00
-aragonsnow/qiandao,1,python,689,https://github.com/aragonsnow/qiandao.git,7,,2026-05-26T04:15:59.866705+00:00
-kevoreilly/capev2,1,python,3205,https://github.com/kevoreilly/capev2.git,166,,2026-05-26T04:16:00.156291+00:00
-chia-network/chia-blockchain,1,python,10843,https://github.com/chia-network/chia-blockchain.git,180,,2026-05-26T04:16:09.980844+00:00
-openvinotoolkit/nncf,1,python,1165,https://github.com/openvinotoolkit/nncf.git,79,,2026-05-26T04:16:10.486127+00:00
-celery/celery,1,python,28509,https://github.com/celery/celery.git,397,,2026-05-26T04:16:36.919857+00:00
-python-telegram-bot/python-telegram-bot,1,python,29165,https://github.com/python-telegram-bot/python-telegram-bot.git,191,,2026-05-26T04:16:51.575245+00:00
-rotki/rotki,1,python,3864,https://github.com/rotki/rotki.git,203,,2026-05-26T04:16:56.926021+00:00
-ansible/ansible,1,python,68688,https://github.com/ansible/ansible.git,373,,2026-05-26T04:17:31.381863+00:00
-internetarchive/openlibrary,1,python,6441,https://github.com/internetarchive/openlibrary.git,322,,2026-05-26T04:17:32.501989+00:00
-pydata/xarray,1,python,4149,https://github.com/pydata/xarray.git,416,,2026-05-26T04:17:32.889029+00:00
-django/django,1,python,87513,https://github.com/django/django.git,393,,2026-05-26T04:17:46.490069+00:00
-borgbase/vorta,1,python,2450,https://github.com/borgbase/vorta.git,93,,2026-05-26T04:17:49.456475+00:00
-samuelclay/newsblur,1,python,7468,https://github.com/samuelclay/newsblur.git,91,,2026-05-26T04:17:53.893863+00:00
-iodide-project/pyodide,1,python,4926,https://github.com/iodide-project/pyodide.git,66,,2026-05-26T04:18:22.421569+00:00
-googlecloudplatform/professional-services,1,python,3023,https://github.com/googlecloudplatform/professional-services.git,296,,2026-05-26T04:18:42.130968+00:00
-tribe29/checkmk,1,python,761,https://github.com/tribe29/checkmk.git,166,,2026-05-26T04:18:47.378393+00:00
-zulip/zulip,1,python,25245,https://github.com/zulip/zulip.git,402,,2026-05-26T04:18:51.903793+00:00
-al-one/hass-xiaomi-miot,1,python,5839,https://github.com/al-one/hass-xiaomi-miot.git,129,,2026-05-26T04:18:52.857617+00:00
-ledfx/ledfx,1,python,1948,https://github.com/ledfx/ledfx.git,71,,2026-05-26T04:19:13.586628+00:00
-microsoft/pyright,1,python,15454,https://github.com/microsoft/pyright.git,138,,2026-05-26T04:19:35.875654+00:00
-whitphx/streamlit-webrtc,1,python,1701,https://github.com/whitphx/streamlit-webrtc.git,9,,2026-05-26T04:19:36.745240+00:00
-ray-project/ray,1,python,42614,https://github.com/ray-project/ray.git,407,,2026-05-26T04:19:37.192092+00:00
-imerica/dj-rest-auth,1,python,1856,https://github.com/imerica/dj-rest-auth.git,177,,2026-05-26T04:19:42.088862+00:00
-truenas/freenas,1,python,1761,https://github.com/truenas/freenas.git,116,,2026-05-26T04:19:42.793028+00:00
-google/osv,1,python,550,https://github.com/google/osv.git,11,,2026-05-26T04:19:49.303413+00:00
-jannikmi/timezonefinder,1,python,531,https://github.com/jannikmi/timezonefinder.git,29,,2026-05-26T04:19:53.423883+00:00
-hay-kot/mealie,1,python,3399,https://github.com/hay-kot/mealie.git,63,,2026-05-26T04:20:03.446552+00:00
-lumiwealth/lumibot,1,python,1585,https://github.com/lumiwealth/lumibot.git,38,,2026-05-26T04:20:15.655506+00:00
-truenas/middleware,1,python,2554,https://github.com/truenas/middleware.git,160,,2026-05-26T04:20:15.885539+00:00
-mozilla/fx-private-relay,1,python,1729,https://github.com/mozilla/fx-private-relay.git,43,,2026-05-26T04:20:26.966840+00:00
-mandarons/icloud-drive-docker,1,python,1016,https://github.com/mandarons/icloud-drive-docker.git,12,,2026-05-26T04:20:28.461343+00:00
-xpra-org/xpra,1,python,2816,https://github.com/xpra-org/xpra.git,74,,2026-05-26T04:20:53.292808+00:00
-pytorch/pytorch,1,python,96633,https://github.com/pytorch/pytorch.git,319,,2026-05-26T04:21:11.081772+00:00
-plasma-umass/scalene,1,python,13419,https://github.com/plasma-umass/scalene.git,54,,2026-05-26T04:21:11.557242+00:00
-thomaspinder/gpjax,1,python,620,https://github.com/thomaspinder/gpjax.git,33,,2026-05-26T04:21:13.271868+00:00
-ccxt/ccxt,1,python,42529,https://github.com/ccxt/ccxt.git,348,,2026-05-26T04:21:22.596492+00:00
-lihuacai168/anotherfasterrunner,1,python,719,https://github.com/lihuacai168/anotherfasterrunner.git,7,,2026-05-26T04:21:31.951005+00:00
-microsoft/presidio,1,python,8299,https://github.com/microsoft/presidio.git,173,,2026-05-26T04:21:32.805930+00:00
-trailofbits/fickling,1,python,629,https://github.com/trailofbits/fickling.git,19,,2026-05-26T04:21:33.211323+00:00
-pdm-project/pdm,1,python,8636,https://github.com/pdm-project/pdm.git,241,,2026-05-26T04:21:39.921585+00:00
-tobymao/sqlglot,1,python,9255,https://github.com/tobymao/sqlglot.git,322,,2026-05-26T04:21:39.942143+00:00
-pyodide/pyodide,1,python,14610,https://github.com/pyodide/pyodide.git,299,,2026-05-26T04:21:47.923598+00:00
-netbox-community/pynetbox,1,python,674,https://github.com/netbox-community/pynetbox.git,50,,2026-05-26T04:21:55.901334+00:00
-jellyfin/jellyfin-mpv-shim,1,python,2201,https://github.com/jellyfin/jellyfin-mpv-shim.git,408,,2026-05-26T04:21:59.251803+00:00
-koordinates/kart,1,python,667,https://github.com/koordinates/kart.git,17,,2026-05-26T04:22:05.071096+00:00
-hail-is/hail,1,python,1061,https://github.com/hail-is/hail.git,85,,2026-05-26T04:22:18.978790+00:00
-linkml/linkml,1,python,523,https://github.com/linkml/linkml.git,111,,2026-05-26T04:22:22.679304+00:00
-onnx/onnx,1,python,20883,https://github.com/onnx/onnx.git,354,,2026-05-26T04:22:24.724036+00:00
-kennethreitz/pytheory,1,python,1583,https://github.com/kennethreitz/pytheory.git,6,,2026-05-26T04:22:45.872528+00:00
-webdataset/webdataset,1,python,2984,https://github.com/webdataset/webdataset.git,44,,2026-05-26T04:22:53.822257+00:00
-gradio-app/gradio,1,python,42679,https://github.com/gradio-app/gradio.git,468,,2026-05-26T04:23:39.319189+00:00
-goauthentik/authentik,1,python,21482,https://github.com/goauthentik/authentik.git,457,,2026-05-26T04:23:39.534436+00:00
-flagsmith/flagsmith,1,python,6373,https://github.com/flagsmith/flagsmith.git,115,,2026-05-26T04:23:40.335736+00:00
-meltano/meltano,1,python,2512,https://github.com/meltano/meltano.git,136,,2026-05-26T04:23:52.721862+00:00
-bunkerity/bunkerized-nginx,1,python,2456,https://github.com/bunkerity/bunkerized-nginx.git,13,,2026-05-26T04:24:42.594202+00:00
-qiandao-today/qiandao,1,python,2433,https://github.com/qiandao-today/qiandao.git,17,,2026-05-26T04:25:09.526452+00:00
-ethereum/execution-specs,1,python,1155,https://github.com/ethereum/execution-specs.git,197,,2026-05-26T04:25:15.325545+00:00
-ethereum/consensus-specs,1,python,3935,https://github.com/ethereum/consensus-specs.git,216,,2026-05-26T04:25:18.157647+00:00
-bouni/kicad-jlcpcb-tools,1,python,1896,https://github.com/bouni/kicad-jlcpcb-tools.git,56,,2026-05-26T04:25:49.809578+00:00
-sigmahq/pysigma,1,python,546,https://github.com/sigmahq/pysigma.git,58,,2026-05-26T04:25:56.802094+00:00
-stuffanthings/qbit_manage,1,python,1533,https://github.com/stuffanthings/qbit_manage.git,20,,2026-05-26T04:26:11.518545+00:00
-freekmurze/dotfiles,1,python,938,https://github.com/freekmurze/dotfiles.git,28,,2026-05-26T04:26:13.644937+00:00
-intel/neural-compressor,1,python,2644,https://github.com/intel/neural-compressor.git,135,,2026-05-26T04:26:15.508262+00:00
-tsukumijima/konomitv,1,python,969,https://github.com/tsukumijima/konomitv.git,22,,2026-05-26T04:26:26.168945+00:00
-saleor/saleor,1,python,22916,https://github.com/saleor/saleor.git,260,,2026-05-26T04:26:32.066336+00:00
-zauberzeug/nicegui,1,python,15837,https://github.com/zauberzeug/nicegui.git,207,,2026-05-26T04:26:41.918564+00:00
-martinet101/wingetui,1,python,534,https://github.com/martinet101/wingetui.git,5,,2026-05-26T04:26:55.834307+00:00
-z3z1ma/dbt-osmosis,1,python,628,https://github.com/z3z1ma/dbt-osmosis.git,42,,2026-05-26T04:27:00.573649+00:00
-redis/redis-py,1,python,13540,https://github.com/redis/redis-py.git,419,,2026-05-26T04:27:07.632550+00:00
-devbisme/skidl,1,python,1497,https://github.com/devbisme/skidl.git,33,,2026-05-26T04:27:12.654892+00:00
-kubeflow/training-operator,1,python,1676,https://github.com/kubeflow/training-operator.git,188,,2026-05-26T04:27:24.137522+00:00
-megalinter/megalinter,1,python,686,https://github.com/megalinter/megalinter.git,48,,2026-05-26T04:27:29.487245+00:00
-openwpm/openwpm,1,python,1411,https://github.com/openwpm/openwpm.git,48,,2026-05-26T04:28:17.044527+00:00
-nvidia/nvflare,1,python,934,https://github.com/nvidia/nvflare.git,61,,2026-05-26T04:28:22.544321+00:00
-ydf0509/funboost,1,python,880,https://github.com/ydf0509/funboost.git,3,,2026-05-26T04:28:30.861069+00:00
-openvinotoolkit/anomalib,1,python,4155,https://github.com/openvinotoolkit/anomalib.git,82,,2026-05-26T04:28:39.294329+00:00
-robusta-dev/robusta,1,python,3022,https://github.com/robusta-dev/robusta.git,103,,2026-05-26T04:29:20.980585+00:00
-cinemagoer/cinemagoer,1,python,1305,https://github.com/cinemagoer/cinemagoer.git,73,,2026-05-26T04:29:43.526478+00:00
-runtimeverification/k,1,python,568,https://github.com/runtimeverification/k.git,108,,2026-05-26T04:29:57.115547+00:00
-yutto-dev/yutto,1,python,1855,https://github.com/yutto-dev/yutto.git,26,,2026-05-26T04:30:10.241910+00:00
-ceccopierangiolieugenio/pytermtk,1,python,892,https://github.com/ceccopierangiolieugenio/pytermtk.git,10,,2026-05-26T04:30:22.092301+00:00
-giskard-ai/giskard,1,python,4810,https://github.com/giskard-ai/giskard.git,51,,2026-05-26T04:30:22.679754+00:00
+repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,matched_config_file,processed_at,created_at,topics,discovery_tier
+feast-dev/feast,1,python,7127,https://github.com/feast-dev/feast.git,356,,.cursor/,2026-07-25T01:54:08.083408+00:00,2018-12-10T07:20:15,"[""big-data"", ""data-engineering"", ""data-quality"", ""data-science"", ""feature-store"", ""features"", ""machine-learning"", ""ml"", ""mlops"", ""python""]",1
+chipsec/chipsec,1,python,3272,https://github.com/chipsec/chipsec.git,93,,copilot-instructions.md,2026-07-25T01:54:16.534537+00:00,2014-03-06T09:57:10,"[""firmware"", ""firmware-security"", ""firmware-tools"", ""security"", ""security-tools""]",1
+mindwerks/worldengine,1,python,1027,https://github.com/mindwerks/worldengine.git,17,,copilot-instructions.md,2026-07-25T01:55:49.328332+00:00,2013-11-24T05:49:35,[],1
+airbytehq/airbyte,1,python,21605,https://github.com/airbytehq/airbyte.git,378,,CLAUDE.md,2026-07-25T01:55:50.324767+00:00,2020-07-27T11:55:54,"[""bigquery"", ""change-data-capture"", ""data"", ""data-analysis"", ""data-collection"", ""data-engineering"", ""data-integration"", ""data-pipeline"", ""elt"", ""etl"", ""java"", ""mssql"", ""mysql"", ""pipeline"", ""postgresql"", ""python"", ""redshift"", ""s3"", ""self-hosted"", ""snowflake""]",1
+martin-majlis/wikipedia-api,1,python,744,https://github.com/martin-majlis/wikipedia-api.git,11,,CLAUDE.md,2026-07-25T01:55:53.493455+00:00,2017-12-11T09:54:02,"[""python3"", ""wikipedia"", ""wikipedia-api"", ""wikipedia-scraper"", ""wikipedia-web-crawler""]",1
+crossbario/autobahn-testsuite,1,python,1671,https://github.com/crossbario/autobahn-testsuite.git,20,,CLAUDE.md,2026-07-25T01:56:37.580980+00:00,2012-03-19T09:59:18,"[""autobahn"", ""autobahn-testsuite"", ""test-coverage"", ""testsuite"", ""websocket"", ""websocket-client"", ""websocket-server""]",1
+kvesteri/sqlalchemy-continuum,1,python,616,https://github.com/kvesteri/sqlalchemy-continuum.git,41,,CLAUDE.md,2026-07-25T01:56:51.037490+00:00,2013-05-27T10:30:55,[],1
+kengz/slm-lab,1,python,1354,https://github.com/kengz/slm-lab.git,18,,CLAUDE.md,2026-07-25T01:56:51.916604+00:00,2017-10-02T10:20:22,"[""a2c"", ""a3c"", ""benchmark"", ""deep-reinforcement-learning"", ""dqn"", ""policy-gradient"", ""ppo"", ""pytorch"", ""reinforcement-learning"", ""sac""]",1
+nerevu/riko,1,python,1574,https://github.com/nerevu/riko.git,13,,CLAUDE.md,2026-07-25T01:56:54.158825+00:00,2016-06-02T12:22:51,[],1
+trustedsec/hate_crack,1,python,1841,https://github.com/trustedsec/hate_crack.git,8,,CLAUDE.md,2026-07-25T01:57:00.012018+00:00,2018-01-26T04:49:13,[],1
+datafolklabs/cement,1,python,1346,https://github.com/datafolklabs/cement.git,39,,CLAUDE.md,2026-07-25T01:57:08.290722+00:00,2009-12-05T04:04:12,[],1
+django-parler/django-parler,1,python,727,https://github.com/django-parler/django-parler.git,59,,CLAUDE.md,2026-07-25T01:57:21.153150+00:00,2013-09-09T07:05:32,"[""django"", ""django-models"", ""internationalization"", ""python"", ""translations""]",1
+trigger/trigger,1,python,557,https://github.com/trigger/trigger.git,22,,CLAUDE.md,2026-07-25T01:57:29.483843+00:00,2012-02-28T09:57:00,"[""acls"", ""network-automation"", ""network-engineers"", ""networking"", ""networking-programmability"", ""python"", ""systems""]",1
+rgerum/pylustrator,1,python,894,https://github.com/rgerum/pylustrator.git,7,,CLAUDE.md,2026-07-25T01:57:32.166991+00:00,2018-06-21T07:03:41,"[""code-generation"", ""gui"", ""interactive"", ""matplotlib"", ""visualisation""]",1
+ezyang/ghstack,1,python,985,https://github.com/ezyang/ghstack.git,44,,CLAUDE.md,2026-07-25T01:57:32.297931+00:00,2018-10-15T03:09:53,[],1
+caesar0301/treelib,1,python,835,https://github.com/caesar0301/treelib.git,38,,.cursor/,2026-07-25T01:57:33.467625+00:00,2012-07-07T09:42:25,"[""algorithm"", ""datastructures"", ""python"", ""tree"", ""treelib""]",1
+zachowj/hass-node-red,1,python,567,https://github.com/zachowj/hass-node-red.git,27,,copilot-instructions.md,2026-07-25T01:57:36.262548+00:00,2019-08-18T10:13:48,"[""home-assistant"", ""node-red""]",1
+sharebook-kr/pykrx,1,python,988,https://github.com/sharebook-kr/pykrx.git,19,,copilot-instructions.md,2026-07-25T01:57:41.295306+00:00,2018-12-12T05:09:14,[],1
+pybuilder/pybuilder,1,python,1974,https://github.com/pybuilder/pybuilder.git,32,,CLAUDE.md,2026-07-25T01:57:46.323088+00:00,2012-07-23T11:38:06,"[""automation"", ""build"", ""build-automation"", ""build-tool"", ""build-tools"", ""pybuilder"", ""python"", ""testing""]",1
+nat-n/poethepoet,1,python,2044,https://github.com/nat-n/poethepoet.git,44,,CLAUDE.md,2026-07-25T01:58:01.330404+00:00,2020-05-28T09:56:22,"[""developer-experience"", ""developer-tools"", ""development-workflow"", ""dx"", ""poetry"", ""poetry-plugin"", ""python"", ""task-runner"", ""uv""]",1
+toshas/torch-fidelity,1,python,1180,https://github.com/toshas/torch-fidelity.git,12,,CLAUDE.md,2026-07-25T01:58:37.290895+00:00,2020-04-23T10:44:20,"[""evaluation"", ""frechet-inception-distance"", ""gan"", ""generative-model"", ""inception-score"", ""kernel-inception-distance"", ""metrics"", ""perceptual-path-length"", ""precision"", ""pytorch"", ""reproducibility"", ""reproducible-research""]",1
+georgedouzas/sports-betting,1,python,737,https://github.com/georgedouzas/sports-betting.git,3,,.claude/,2026-07-25T01:58:39.395592+00:00,2019-01-08T12:52:28,"[""machine-learning"", ""python"", ""scikit-learn"", ""sports-analytics"", ""sports-betting""]",1
+nvidia/megatron-lm,1,python,17019,https://github.com/nvidia/megatron-lm.git,313,,.cursorrules,2026-07-25T01:58:55.265471+00:00,2019-03-21T04:15:52,"[""large-language-models"", ""model-para"", ""transformers""]",1
+benadida/helios-server,1,python,893,https://github.com/benadida/helios-server.git,35,,CLAUDE.md,2026-07-25T01:59:05.909301+00:00,2009-07-26T12:25:38,"[""javascript"", ""python"", ""voting""]",1
+se2p/pynguin,1,python,1386,https://github.com/se2p/pynguin.git,20,,copilot-instructions.md,2026-07-25T01:59:13.644495+00:00,2020-07-27T03:50:19,"[""python"", ""search-based-software-testing"", ""test-generation"", ""test-generator"", ""testing-tools""]",1
+hopetree/izone,1,python,1227,https://github.com/hopetree/izone.git,3,,CLAUDE.md,2026-07-25T01:59:18.357786+00:00,2017-12-24T01:39:43,"[""blog"", ""bootstrap"", ""django"", ""docker"", ""python""]",1
+enarjord/passivbot,1,python,2015,https://github.com/enarjord/passivbot.git,50,,CLAUDE.md,2026-07-25T01:59:24.182890+00:00,2020-12-11T12:21:48,"[""algorithmic-trading"", ""binance"", ""bitget"", ""bybit"", ""futures"", ""gateio"", ""hyperliquid"", ""okx"", ""perpetual-futures"", ""trading""]",1
+unrealcv/unrealcv,1,python,2166,https://github.com/unrealcv/unrealcv.git,19,,.claude/,2026-07-25T01:59:27.682120+00:00,2016-09-08T06:03:51,"[""computer-vision"", ""embodied-ai"", ""machine-learning"", ""simulation"", ""synthetic-data"", ""ue4"", ""ue5"", ""virtual-worlds""]",1
+hozn/stravalib,1,python,629,https://github.com/hozn/stravalib.git,46,,CLAUDE.md,2026-07-25T01:59:34.209163+00:00,2013-03-17T02:48:54,[],1
+ulauncher/ulauncher,1,python,4478,https://github.com/ulauncher/ulauncher.git,63,,CLAUDE.md,2026-07-25T01:59:37.246647+00:00,2015-05-10T08:44:08,"[""gtk"", ""launcher"", ""linux"", ""python""]",1
+terryyin/lizard,1,python,2395,https://github.com/terryyin/lizard.git,60,,.cursor/,2026-07-25T01:59:37.350059+00:00,2012-06-21T11:31:46,[],1
+jjjake/internetarchive,1,python,1882,https://github.com/jjjake/internetarchive.git,61,,CLAUDE.md,2026-07-25T01:59:37.958392+00:00,2012-08-15T07:18:30,[],1
+ghostmanager/ghostwriter,1,python,1855,https://github.com/ghostmanager/ghostwriter.git,27,,copilot-instructions.md,2026-07-25T01:59:46.002480+00:00,2019-07-16T09:19:43,"[""informationsecurity"", ""penetration-testing"", ""red-team"", ""reporting""]",1
+pyexcel/pyexcel,1,python,1288,https://github.com/pyexcel/pyexcel.git,23,,copilot-instructions.md,2026-07-25T01:59:55.848766+00:00,2014-08-22T12:52:20,"[""csv"", ""excel"", ""fods"", ""ods"", ""python"", ""xls"", ""xlsm"", ""xlsx""]",1
+trailofbits/graphtage,1,python,2474,https://github.com/trailofbits/graphtage.git,11,,CLAUDE.md,2026-07-25T01:59:58.077695+00:00,2020-04-21T04:47:22,"[""command-line-tool"", ""diff"", ""graph-algorithms"", ""hacktoberfest"", ""hacktoberfest2021"", ""library"", ""python"", ""utility""]",1
+tmux-python/libtmux,1,python,1192,https://github.com/tmux-python/libtmux.git,42,,CLAUDE.md,2026-07-25T01:59:58.442454+00:00,2016-05-22T11:46:12,"[""api"", ""cli"", ""library"", ""python"", ""python-3"", ""terminal"", ""tmux""]",1
+michaelchu/optopsy,1,python,1260,https://github.com/michaelchu/optopsy.git,4,,.github/instructions/,2026-07-25T02:00:00.118133+00:00,2017-09-17T01:49:54,"[""algorithmic"", ""algorithmic-trading"", ""algorithmic-trading-engine"", ""algorithmic-trading-library"", ""backtest"", ""backtesting"", ""backtesting-frameworks"", ""backtesting-trading-strategies"", ""dataframe"", ""option-chain"", ""option-pricing"", ""option-strategies"", ""options"", ""options-framework"", ""options-spreads"", ""options-strategies"", ""options-trading"", ""trade-options"", ""trading""]",1
+splunk/splunk-sdk-python,1,python,738,https://github.com/splunk/splunk-sdk-python.git,79,,CLAUDE.md,2026-07-25T02:00:14.570638+00:00,2011-03-20T11:20:06,"[""splunk"", ""splunk-sdk"", ""splunklib""]",1
+andialbrecht/sqlparse,1,python,4003,https://github.com/andialbrecht/sqlparse.git,92,,CLAUDE.md,2026-07-25T02:00:17.345767+00:00,2012-04-18T07:33:21,[],1
+sirver/ultisnips,1,python,7690,https://github.com/sirver/ultisnips.git,154,,CLAUDE.md,2026-07-25T02:00:23.754334+00:00,2011-12-30T07:07:24,"[""plugin"", ""snippets"", ""ultisnips"", ""vim""]",1
+silviogutierrez/reactivated,1,python,743,https://github.com/silviogutierrez/reactivated.git,10,,CLAUDE.md,2026-07-25T02:00:42.231243+00:00,2018-07-08T06:14:47,[],1
+chardet/chardet,1,python,2621,https://github.com/chardet/chardet.git,53,,CLAUDE.md,2026-07-25T02:00:44.048299+00:00,2012-07-26T08:30:54,[],1
+alberanid/imdbpy,1,python,923,https://github.com/alberanid/imdbpy.git,54,,copilot-instructions.md,2026-07-25T02:01:06.778924+00:00,2010-08-01T05:34:24,[],1
+digitalbazaar/pyld,1,python,672,https://github.com/digitalbazaar/pyld.git,32,,CLAUDE.md,2026-07-25T02:01:06.825078+00:00,2011-07-11T03:45:47,"[""json-ld"", ""linked-data"", ""python"", ""rdf"", ""semantic-web""]",1
+fgmacedo/python-statemachine,1,python,1253,https://github.com/fgmacedo/python-statemachine.git,22,,CLAUDE.md,2026-07-25T02:01:11.564082+00:00,2017-03-22T03:24:42,"[""automata"", ""finite-state-machine"", ""fsm"", ""fsm-library"", ""harel-statechart"", ""hierarchical-state-machine"", ""hsm"", ""python"", ""scxml"", ""state"", ""state-machine"", ""state-machine-diagram"", ""state-machine-dsl"", ""state-management"", ""statechart"", ""statecharts"", ""statemachine""]",1
+andymccurdy/redis-py,1,python,9674,https://github.com/andymccurdy/redis-py.git,211,,CLAUDE.md,2026-07-25T02:01:13.953544+00:00,2009-11-06T10:22:26,[],1
+openatx/uiautomator2,1,python,8177,https://github.com/openatx/uiautomator2.git,47,,copilot-instructions.md,2026-07-25T02:01:30.069704+00:00,2017-09-17T12:20:42,"[""python"", ""test"", ""uiautomator""]",1
+evhub/coconut,1,python,4305,https://github.com/evhub/coconut.git,30,,CLAUDE.md,2026-07-25T02:01:30.347534+00:00,2014-10-04T11:43:11,"[""coconut"", ""compiler"", ""functional"", ""functional-language"", ""functional-programming"", ""language"", ""programming-language"", ""python"", ""xonsh"", ""xontrib""]",1
+nats-io/nats.py,1,python,1233,https://github.com/nats-io/nats.py.git,82,,CLAUDE.md,2026-07-25T02:01:35.010427+00:00,2015-12-28T09:08:03,"[""aio"", ""aio-nats"", ""asyncio"", ""cloud-native"", ""nats"", ""python3""]",1
+ricequant/rqalpha,1,python,6566,https://github.com/ricequant/rqalpha.git,37,,CLAUDE.md,2026-07-25T02:01:40.919513+00:00,2016-07-20T10:38:57,"[""backtest"", ""finance"", ""futures"", ""python"", ""quant"", ""ricequant"", ""rqalpha"", ""stock"", ""ta-lib"", ""trading""]",1
+pika/pika,1,python,3870,https://github.com/pika/pika.git,180,,CLAUDE.md,2026-07-25T02:01:44.267400+00:00,2009-10-19T11:22:02,"[""amqp0-9-1"", ""client"", ""python"", ""rabbitmq""]",1
+macbre/sql-metadata,1,python,879,https://github.com/macbre/sql-metadata.git,21,,CLAUDE.md,2026-07-25T02:01:59.157002+00:00,2017-06-06T03:59:09,"[""database"", ""hive"", ""hiveql"", ""metadata"", ""mysql-query"", ""parser"", ""python-package"", ""python3-library"", ""sql"", ""sql-parser"", ""sqlparse""]",1
+mlco2/codecarbon,1,python,1871,https://github.com/mlco2/codecarbon.git,109,,copilot-instructions.md,2026-07-25T02:02:06.943536+00:00,2020-05-12T02:44:03,"[""ai-ethics"", ""carbon-emissions"", ""carbon-footprint"", ""co2-emissions"", ""energy-consumption"", ""energy-efficiency"", ""fairness"", ""sustainability""]",1
+smileychris/django-countries,1,python,1526,https://github.com/smileychris/django-countries.git,53,,CLAUDE.md,2026-07-25T02:02:07.189467+00:00,2013-06-21T08:02:58,"[""country-codes"", ""django"", ""python""]",1
+psd-tools/psd-tools,1,python,1423,https://github.com/psd-tools/psd-tools.git,32,,CLAUDE.md,2026-07-25T02:02:10.421126+00:00,2012-10-14T04:26:41,"[""photoshop"", ""psd"", ""python""]",1
+zengbin93/czsc,1,python,662,https://github.com/zengbin93/czsc.git,3,,CLAUDE.md,2026-07-25T02:02:15.648574+00:00,2019-06-11T07:38:57,[],1
+domainaware/parsedmarc,1,python,1261,https://github.com/domainaware/parsedmarc.git,110,,CLAUDE.md,2026-07-25T02:02:31.605627+00:00,2018-02-05T11:08:59,[],1
+grahamdumpleton/wrapt,1,python,2289,https://github.com/grahamdumpleton/wrapt.git,36,,CLAUDE.md,2026-07-25T02:02:36.124647+00:00,2013-05-29T10:22:45,[],1
+microsoft/olive,1,python,2350,https://github.com/microsoft/olive.git,79,,copilot-instructions.md,2026-07-25T02:02:43.391363+00:00,2019-08-12T07:00:23,[],1
+idank/explainshell,1,python,14086,https://github.com/idank/explainshell.git,27,,CLAUDE.md,2026-07-25T02:02:44.163893+00:00,2013-08-30T11:20:11,[],1
+evennia/evennia,1,python,2075,https://github.com/evennia/evennia.git,197,,CLAUDE.md,2026-07-25T02:02:46.246069+00:00,2014-01-21T10:22:28,"[""based"", ""django"", ""engine"", ""game-development"", ""game-engine"", ""gamedev"", ""hacktoberfest"", ""moo"", ""mud"", ""multiplayer"", ""mush"", ""mux"", ""python"", ""text"", ""text-based"", ""text-based-adventure"", ""twisted"", ""webclient"", ""webserver""]",1
+vyperlang/vyper,1,python,5176,https://github.com/vyperlang/vyper.git,229,,CLAUDE.md,2026-07-25T02:02:46.983231+00:00,2016-11-11T08:56:41,"[""ethereum"", ""ethereum-dapp"", ""language"", ""python"", ""vyper""]",1
+d6t/d6tflow,1,python,947,https://github.com/d6t/d6tflow.git,10,,CLAUDE.md,2026-07-25T02:02:54.801319+00:00,2019-02-03T01:51:22,[],1
+etal/cnvkit,1,python,613,https://github.com/etal/cnvkit.git,34,,CLAUDE.md,2026-07-25T02:03:14.892044+00:00,2014-07-07T08:12:27,[],1
+darknessomi/musicbox,1,python,9817,https://github.com/darknessomi/musicbox.git,52,,.cursor/,2026-07-25T02:03:22.876317+00:00,2014-08-05T03:28:24,"[""cli-tool"", ""linux"", ""music"", ""netease-musicbox"", ""python""]",1
+mampfes/hacs_waste_collection_schedule,1,python,2115,https://github.com/mampfes/hacs_waste_collection_schedule.git,423,,copilot-instructions.md,2026-07-25T02:03:23.057752+00:00,2020-04-09T11:02:16,"[""abfall"", ""abfallnavi"", ""abfallplus"", ""garbage"", ""garbage-collection"", ""hacktoberfest"", ""home-assistant"", ""homeassistant"", ""homeassistant-integration"", ""jumomind"", ""muell"", ""muellabfuhr"", ""muellsammlung"", ""mymuell"", ""regioit"", ""waste"", ""waste-collection""]",1
+agronholm/anyio,1,python,2499,https://github.com/agronholm/anyio.git,85,,CLAUDE.md,2026-07-25T02:03:32.231206+00:00,2018-08-19T09:07:18,"[""async-await"", ""asyncio"", ""trio""]",1
+brainix/pottery,1,python,1244,https://github.com/brainix/pottery.git,4,,copilot-instructions.md,2026-07-25T02:03:40.632687+00:00,2015-06-10T07:30:43,"[""asyncio"", ""bloom-filter"", ""cache"", ""dict"", ""distributed"", ""distributed-lock"", ""distributed-locks"", ""forhumans"", ""library"", ""lock"", ""no-sql"", ""python"", ""redis"", ""redis-cache"", ""redis-client"", ""resillience""]",1
+hyperledger/cello,1,python,899,https://github.com/hyperledger/cello.git,53,,.claude/,2026-07-25T02:03:41.286199+00:00,2017-01-11T06:47:08,"[""blockchain"", ""distributed-ledger"", ""hyperledger"", ""operating-system""]",1
+trailofbits/algo,1,python,30310,https://github.com/trailofbits/algo.git,186,,CLAUDE.md,2026-07-25T02:03:42.325914+00:00,2016-05-15T03:42:48,"[""ansible"", ""encryption"", ""ikev2"", ""ipsec"", ""security"", ""ssh-tunnel"", ""strongswan"", ""vpn"", ""vpn-client"", ""vpn-server"", ""wireguard""]",1
+emilstenstrom/django-components,1,python,1244,https://github.com/emilstenstrom/django-components.git,43,,copilot-instructions.md,2026-07-25T02:03:43.107142+00:00,2015-06-11T05:23:48,"[""components"", ""django"", ""django-templates"", ""pypi-package"", ""reusable-components""]",1
+pwndbg/pwndbg,1,python,10629,https://github.com/pwndbg/pwndbg.git,300,,CLAUDE.md,2026-07-25T02:04:02.192129+00:00,2015-02-22T09:35:19,"[""binary-ninja"", ""capture-the-flag"", ""ctf"", ""debugging"", ""disassembler"", ""exploit-development"", ""gdb"", ""gef"", ""hacking-tool"", ""ida-pro"", ""linux"", ""lldb"", ""low-level"", ""malware-analysis"", ""pwnable"", ""pwndbg"", ""python"", ""reverse-engineering""]",1
+kdeldycke/meta-package-manager,1,python,603,https://github.com/kdeldycke/meta-package-manager.git,22,,CLAUDE.md,2026-07-25T02:04:28.136291+00:00,2016-08-17T04:14:34,"[""apt"", ""cli-tools"", ""cyclonedx"", ""flatpak"", ""mac-app-store"", ""meta-package-manager"", ""package-manager"", ""package-manager-cli"", ""package-url"", ""php-composer"", ""pip"", ""pipx"", ""ruby-gem"", ""sbom"", ""spdx"", ""swiftbar"", ""swiftbar-plugin"", ""winget"", ""xbar"", ""xbar-plugin""]",1
+scitools/iris,1,python,720,https://github.com/scitools/iris.git,104,,CLAUDE.md,2026-07-25T02:04:37.901923+00:00,2012-08-06T10:09:14,"[""data-analysis"", ""earth-science"", ""grib"", ""iris"", ""meteorology"", ""netcdf"", ""oceanography"", ""python"", ""spaceweather"", ""visualisation""]",1
+contextlab/hypertools,1,python,1885,https://github.com/contextlab/hypertools.git,18,,CLAUDE.md,2026-07-25T02:04:37.923880+00:00,2016-09-27T09:31:25,"[""data-visualization"", ""data-wrangling"", ""high-dimensional-data"", ""python"", ""text-vectorization"", ""time-series"", ""topic-modeling"", ""visualization""]",1
+aio-libs/yarl,1,python,1489,https://github.com/aio-libs/yarl.git,102,,CLAUDE.md,2026-07-25T02:04:53.517334+00:00,2016-08-02T12:56:42,"[""aiohttp"", ""hacktoberfest"", ""url-parsing"", ""urls""]",1
+graal-research/poutyne,1,python,573,https://github.com/graal-research/poutyne.git,20,,CLAUDE.md,2026-07-25T02:04:54.946015+00:00,2017-12-07T06:30:17,"[""data-science"", ""deep-learning"", ""keras"", ""machine-learning"", ""neural-network"", ""python"", ""pytorch""]",1
+jkwill87/mnamer,1,python,1122,https://github.com/jkwill87/mnamer.git,11,,CLAUDE.md,2026-07-25T02:04:56.432942+00:00,2017-10-16T08:23:27,"[""batch"", ""cli"", ""media"", ""metadata"", ""movie"", ""organizer"", ""python"", ""television""]",1
+huggingface/huggingface_hub,1,python,3741,https://github.com/huggingface/huggingface_hub.git,338,,CLAUDE.md,2026-07-25T02:05:04.230388+00:00,2020-12-22T10:20:28,"[""deep-learning"", ""hacktoberfest"", ""machine-learning"", ""model-hub"", ""models"", ""natural-language-processing"", ""pretrained-models"", ""pytorch""]",1
+fossasia/visdom,1,python,10264,https://github.com/fossasia/visdom.git,113,,copilot-instructions.md,2026-07-25T02:05:07.525638+00:00,2017-01-25T05:59:45,[],1
+crossbario/autobahn-python,1,python,2538,https://github.com/crossbario/autobahn-python.git,116,,CLAUDE.md,2026-07-25T02:05:11.641381+00:00,2011-07-27T03:22:13,"[""autobahn"", ""pubsub"", ""python"", ""real-time"", ""rpc"", ""wamp"", ""websocket""]",1
+alltheplaces/alltheplaces,1,python,791,https://github.com/alltheplaces/alltheplaces.git,176,,.claude/,2026-07-25T02:05:11.690911+00:00,2016-06-15T01:09:18,"[""geojson"", ""hacktoberfest"", ""python"", ""scrapers"", ""scrapy"", ""spider""]",1
+pycqa/pylint,1,python,3741,https://github.com/pycqa/pylint.git,375,,copilot-instructions.md,2026-07-25T02:05:12.997130+00:00,2015-12-09T05:40:02,[],1
+quantecon/quantecon.py,1,python,2368,https://github.com/quantecon/quantecon.py.git,48,,copilot-instructions.md,2026-07-25T02:05:13.313454+00:00,2013-03-22T12:27:36,"[""computational-economics"", ""economics"", ""python""]",1
+conda/conda,1,python,7464,https://github.com/conda/conda.git,448,,copilot-instructions.md,2026-07-25T02:05:13.722772+00:00,2012-10-15T10:08:03,"[""conda"", ""package-management"", ""python""]",1
+imageio/imageio,1,python,1711,https://github.com/imageio/imageio.git,111,,.cursor/,2026-07-25T02:05:14.932228+00:00,2013-05-04T10:56:45,"[""animated-gif"", ""dicom"", ""imageio"", ""python"", ""scientific-formats"", ""video"", ""webcam-capture""]",1
+freeopcua/opcua-client-gui,1,python,655,https://github.com/freeopcua/opcua-client-gui.git,12,,CLAUDE.md,2026-07-25T02:05:24.411541+00:00,2015-09-26T07:22:37,[],1
+reactivex/rxpy,1,python,5016,https://github.com/reactivex/rxpy.git,87,,CLAUDE.md,2026-07-25T02:05:29.090535+00:00,2013-03-22T06:16:54,"[""python"", ""reactive"", ""reactive-extensions"", ""reactivex"", ""rxpy""]",1
+hhyo/archery,1,python,6925,https://github.com/hhyo/archery.git,112,,copilot-instructions.md,2026-07-25T02:05:31.841674+00:00,2018-09-28T02:59:33,"[""archery"", ""binlog2sql"", ""clickhouse"", ""data-masking"", ""database-schema"", ""ddl"", ""dml"", ""gh-ost"", ""inception"", ""mysql"", ""oracle"", ""sql-audit"", ""sql-query""]",1
+ilius/pyglossary,1,python,2638,https://github.com/ilius/pyglossary.git,43,,.cursor/,2026-07-25T02:05:41.806465+00:00,2011-01-23T10:24:30,"[""dictionary"", ""dictionary-conversion"", ""dictionary-tools"", ""glossaries"", ""gtk"", ""linux"", ""pygi"", ""python"", ""stardict"", ""tkinter""]",1
+s3ql/s3ql,1,python,1261,https://github.com/s3ql/s3ql.git,42,,CLAUDE.md,2026-07-25T02:05:44.415496+00:00,2015-07-12T08:33:18,[],1
+ranaroussi/quantstats,1,python,7316,https://github.com/ranaroussi/quantstats.git,30,,.claude/,2026-07-25T02:05:45.259281+00:00,2019-05-01T01:29:29,"[""algo-trading"", ""algorithmic-trading"", ""algotrading"", ""finance"", ""plotting"", ""python"", ""quant"", ""quantitative-analysis"", ""quantitative-finance"", ""quantitative-trading"", ""visualization""]",1
+jrnl-org/jrnl,1,python,7268,https://github.com/jrnl-org/jrnl.git,96,,CLAUDE.md,2026-07-25T02:05:59.729968+00:00,2012-03-29T05:23:58,"[""cli"", ""command-line"", ""encrypted"", ""journal"", ""journal-application"", ""jrnl"", ""note-taking"", ""notes"", ""productivity"", ""python"", ""shell""]",1
+yourlabs/django-autocomplete-light,1,python,1871,https://github.com/yourlabs/django-autocomplete-light.git,177,,CLAUDE.md,2026-07-25T02:06:04.025332+00:00,2012-05-03T11:49:37,"[""autocomplete"", ""django"", ""python""]",1
+custom-components/alexa_media_player,1,python,1148,https://github.com/custom-components/alexa_media_player.git,42,,copilot-instructions.md,2026-07-25T02:06:15.145681+00:00,2018-07-04T03:33:57,"[""alexa"", ""hacktoberfest"", ""home-assistant"", ""homeassistant""]",1
+iipeace/guider,1,python,674,https://github.com/iipeace/guider.git,24,,CLAUDE.md,2026-07-25T02:06:15.176188+00:00,2015-11-16T12:14:49,"[""analyzer"", ""android"", ""framework"", ""guider"", ""hacktoberfest"", ""linux"", ""monitoring"", ""performance"", ""profiling"", ""tracing""]",1
+nolar/kopf,1,python,2603,https://github.com/nolar/kopf.git,63,,.claude/,2026-07-25T02:06:17.090658+00:00,2020-08-17T04:45:35,"[""admission-controller"", ""admission-controllers"", ""admission-webhook"", ""asyncio"", ""framework"", ""kopf"", ""kubernetes"", ""kubernetes-concepts"", ""kubernetes-operator"", ""kubernetes-operators"", ""operator"", ""operator-framework"", ""operators"", ""python"", ""python-framework"", ""python3""]",1
+amphibian-dev/toad,1,python,526,https://github.com/amphibian-dev/toad.git,8,,CLAUDE.md,2026-07-25T02:06:20.763117+00:00,2018-08-31T06:01:28,"[""credit-risk"", ""credit-scoring"", ""data-analysis"", ""financial-analysis"", ""python3"", ""scorecard"", ""toad""]",1
+xesscorp/skidl,1,python,676,https://github.com/xesscorp/skidl.git,18,,CLAUDE.md,2026-07-25T02:06:20.817514+00:00,2016-08-16T07:21:55,[],1
+nicolargo/glances,1,python,33074,https://github.com/nicolargo/glances.git,210,,CLAUDE.md,2026-07-25T02:06:29.737251+00:00,2011-12-04T08:49:15,"[""monitoring"", ""multi-platform"", ""python"", ""restful"", ""restful-api"", ""system"", ""terminal"", ""web""]",1
+fireeye/flare-floss,1,python,1933,https://github.com/fireeye/flare-floss.git,15,,CLAUDE.md,2026-07-25T02:06:33.136228+00:00,2016-03-02T08:16:10,[],1
+mozilla/openwpm,1,python,1159,https://github.com/mozilla/openwpm.git,46,,CLAUDE.md,2026-07-25T02:06:39.786387+00:00,2014-06-10T04:59:27,[],1
+omry/omegaconf,1,python,2407,https://github.com/omry/omegaconf.git,44,,copilot-instructions.md,2026-07-25T02:06:50.769702+00:00,2018-09-03T02:59:01,"[""configuration-files"", ""configuration-loader"", ""python"", ""python-types"", ""schema-validator"", ""yaml"", ""yaml-configuration""]",1
+emukit/emukit,1,python,659,https://github.com/emukit/emukit.git,32,,CLAUDE.md,2026-07-25T02:06:55.806517+00:00,2018-09-04T05:01:34,"[""bayesian-optimization"", ""bayesian-quadrature"", ""decision-making"", ""emulation"", ""experimental-design"", ""machine-learning"", ""multi-fidelity"", ""python"", ""sensitivity-analysis"", ""uncertainty-quantification""]",1
+profusion/sgqlc,1,python,551,https://github.com/profusion/sgqlc.git,30,,copilot-instructions.md,2026-07-25T02:06:56.948746+00:00,2018-01-17T05:49:18,"[""graphql"", ""graphql-client"", ""python"", ""python36""]",1
+netflix/metaflow,1,python,10156,https://github.com/netflix/metaflow.git,140,,CLAUDE.md,2026-07-25T02:07:09.310237+00:00,2019-09-17T05:48:25,"[""agents"", ""ai"", ""aws"", ""azure"", ""cost-optimization"", ""datascience"", ""distributed-training"", ""gcp"", ""generative-ai"", ""high-performance-computing"", ""kubernetes"", ""llm"", ""llmops"", ""machine-learning"", ""ml"", ""ml-infrastructure"", ""ml-platform"", ""mlops"", ""model-management"", ""python""]",1
+mirumee/ariadne,1,python,2343,https://github.com/mirumee/ariadne.git,77,,CLAUDE.md,2026-07-25T02:07:10.928197+00:00,2018-07-09T09:46:17,"[""api"", ""apollo-graphql"", ""apollo-python"", ""ariadne"", ""asgi"", ""django"", ""django-graphql"", ""graphql"", ""graphql-python"", ""graphql-server"", ""python""]",1
+aio-libs/aiobotocore,1,python,1419,https://github.com/aio-libs/aiobotocore.git,71,,CLAUDE.md,2026-07-25T02:07:12.095170+00:00,2015-05-31T07:28:54,"[""aiohttp"", ""asyncio"", ""aws"", ""aws-sdk"", ""botocore"", ""cloud"", ""cloud-management""]",1
+music-assistant/server,1,python,2859,https://github.com/music-assistant/server.git,202,,copilot-instructions.md,2026-07-25T02:07:16.215436+00:00,2019-05-09T06:17:02,[],1
+falconry/falcon,1,python,9793,https://github.com/falconry/falcon.git,201,,CLAUDE.md,2026-07-25T02:07:34.400735+00:00,2012-12-06T06:17:51,"[""api"", ""api-rest"", ""asgi"", ""http"", ""microservices"", ""python"", ""rest"", ""web"", ""wsgi""]",1
+reactionmechanismgenerator/rmg-py,1,python,526,https://github.com/reactionmechanismgenerator/rmg-py.git,82,,copilot-instructions.md,2026-07-25T02:07:35.012854+00:00,2009-10-09T09:16:17,"[""chemistry"", ""chemistry-discovery"", ""kinetics"", ""python"", ""reactions"", ""thermodynamics""]",1
+slackapi/python-slack-sdk,1,python,4009,https://github.com/slackapi/python-slack-sdk.git,161,,CLAUDE.md,2026-07-25T02:07:37.996714+00:00,2014-11-10T09:32:02,"[""aiohttp"", ""aiohttp-client"", ""asyncio"", ""python"", ""slack"", ""slackapi"", ""socket-mode"", ""websocket"", ""websocket-client"", ""websockets""]",1
+tmux-python/tmuxp,1,python,4538,https://github.com/tmux-python/tmuxp.git,68,,.cursor/,2026-07-25T02:07:38.677542+00:00,2013-08-27T05:51:11,"[""cli"", ""cli-utilities"", ""json"", ""python"", ""session-manager"", ""teamocil"", ""terminal"", ""tmux"", ""tmuxinator"", ""yaml""]",1
+django-import-export/django-import-export,1,python,3327,https://github.com/django-import-export/django-import-export.git,218,,CLAUDE.md,2026-07-25T02:07:41.259055+00:00,2012-11-15T01:12:22,"[""csv"", ""django"", ""import-export"", ""json"", ""python"", ""xls""]",1
+exa-networks/exabgp,1,python,2284,https://github.com/exa-networks/exabgp.git,118,,CLAUDE.md,2026-07-25T02:07:45.900285+00:00,2013-08-27T01:56:08,"[""bgp"", ""bgp-ls"", ""ddos-protection"", ""exabgp"", ""flow"", ""flowspec"", ""health-check"", ""ipv4"", ""ipv6"", ""mpls"", ""protection"", ""pypi"", ""python"", ""visualisation"", ""vpls""]",1
+lyft/cartography,1,python,2982,https://github.com/lyft/cartography.git,86,,CLAUDE.md,2026-07-25T02:07:48.995179+00:00,2019-02-27T12:16:29,"[""lyft""]",1
+pyca/cryptography,1,python,7661,https://github.com/pyca/cryptography.git,352,,CLAUDE.md,2026-07-25T02:07:49.019175+00:00,2013-08-07T02:23:38,"[""cryptography"", ""python""]",1
+coin-or/pulp,1,python,2456,https://github.com/coin-or/pulp.git,102,,.cursor/,2026-07-25T02:07:50.900782+00:00,2015-03-15T03:21:16,"[""constraints"", ""mip"", ""pulp"", ""python"", ""solver""]",1
+stripe/stripe-python,1,python,2022,https://github.com/stripe/stripe-python.git,136,,CLAUDE.md,2026-07-25T02:07:58.182424+00:00,2011-06-25T07:53:04,"[""stripe"", ""stripe-sdk""]",1
+slackapi/bolt-python,1,python,1317,https://github.com/slackapi/bolt-python.git,60,,CLAUDE.md,2026-07-25T02:08:13.248675+00:00,2020-06-02T12:32:17,"[""aiohttp"", ""aiohttp-client"", ""asyncio"", ""bolt"", ""chatbot"", ""chatops"", ""django"", ""docker"", ""fastapi"", ""flask"", ""pypi-url"", ""python"", ""slack"", ""slack-api"", ""socket-mode"", ""web-api"", ""websocket"", ""websocket-client"", ""websockets""]",1
+open-telemetry/opentelemetry-python-contrib,1,python,1072,https://github.com/open-telemetry/opentelemetry-python-contrib.git,435,,.github/instructions/,2026-07-25T02:08:19.173125+00:00,2019-11-08T06:23:43,[],1
+wkentaro/labelme,1,python,16035,https://github.com/wkentaro/labelme.git,64,,CLAUDE.md,2026-07-25T02:08:26.112607+00:00,2016-05-09T12:30:26,"[""annotations"", ""classification"", ""computer-vision"", ""deep-learning"", ""image-annotation"", ""instance-segmentation"", ""python"", ""semantic-segmentation"", ""video-annotation""]",1
+xonsh/xonsh,1,python,9549,https://github.com/xonsh/xonsh.git,341,,CLAUDE.md,2026-07-25T02:08:26.379686+00:00,2015-01-21T10:05:27,"[""anthropic"", ""claude"", ""claude-code"", ""cmux"", ""data-engineering"", ""data-scientists"", ""devops"", ""devsecops"", ""hyper"", ""iterm2"", ""kitty"", ""nix"", ""nixos"", ""python-automation"", ""raspberry-pi"", ""security-automation"", ""vscode-extension"", ""wezterm"", ""xonsh""]",1
+pygithub/pygithub,1,python,7724,https://github.com/pygithub/pygithub.git,385,,.claude/,2026-07-25T02:08:27.448915+00:00,2012-02-25T12:53:47,"[""github"", ""github-api"", ""pygithub"", ""python""]",1
+ludwig-ai/ludwig,1,python,11731,https://github.com/ludwig-ai/ludwig.git,148,,.claude/,2026-07-25T02:08:27.476527+00:00,2018-12-27T11:58:12,"[""computer-vision"", ""data-centric"", ""data-science"", ""deep"", ""deep-learning"", ""deeplearning"", ""fine-tuning"", ""learning"", ""llama"", ""llama2"", ""llm"", ""llm-training"", ""machine-learning"", ""machinelearning"", ""mistral"", ""ml"", ""natural-language"", ""natural-language-processing"", ""neural-network"", ""pytorch""]",1
+kayak/pypika,1,python,2882,https://github.com/kayak/pypika.git,98,,CLAUDE.md,2026-07-25T02:08:51.594720+00:00,2016-07-06T02:08:50,"[""builder"", ""data"", ""functional"", ""python"", ""python3"", ""pythonic"", ""query"", ""sql""]",1
+netbox-community/netbox,1,python,21064,https://github.com/netbox-community/netbox.git,348,,CLAUDE.md,2026-07-25T02:08:52.116058+00:00,2016-02-29T02:15:46,"[""cabling"", ""dcim"", ""django"", ""infrastructure-management"", ""ipam"", ""netbox"", ""network"", ""network-automation"", ""python"", ""sot"", ""sysadmin""]",1
+blazemeter/taurus,1,python,2107,https://github.com/blazemeter/taurus.git,83,,CLAUDE.md,2026-07-25T02:08:52.469420+00:00,2015-02-17T10:05:08,"[""gatling"", ""jenkins"", ""jmeter"", ""load-testing"", ""performance"", ""python"", ""selenium"", ""titans""]",1
+catalyst-cooperative/pudl,1,python,596,https://github.com/catalyst-cooperative/pudl.git,54,,CLAUDE.md,2026-07-25T02:08:52.989918+00:00,2017-02-01T05:45:40,"[""cems"", ""climate"", ""coal"", ""ddj"", ""eia"", ""eia860"", ""eia923"", ""electricity"", ""emissions"", ""energy"", ""epa"", ""etl"", ""ferc"", ""ghg"", ""natural-gas"", ""open-data"", ""pudl"", ""python"", ""sqlite"", ""utility""]",1
+guessit-io/guessit,1,python,918,https://github.com/guessit-io/guessit.git,17,,CLAUDE.md,2026-07-25T02:08:54.863480+00:00,2012-02-28T06:13:09,"[""filename"", ""media"", ""parser"", ""python"", ""release"", ""scene""]",1
+lightly-ai/lightly,1,python,3775,https://github.com/lightly-ai/lightly.git,81,,CLAUDE.md,2026-07-25T02:08:58.906346+00:00,2020-10-13T01:02:56,"[""computer-vision"", ""contrastive-learning"", ""contributions-welcome"", ""deep-learning"", ""embeddings"", ""hacktoberfest"", ""machine-learning"", ""pytorch"", ""self-supervised-learning""]",1
+gijzelaerr/python-snap7,1,python,816,https://github.com/gijzelaerr/python-snap7.git,51,,CLAUDE.md,2026-07-25T02:09:00.544760+00:00,2013-10-09T01:06:13,"[""ctypes"", ""plc"", ""python"", ""s7"", ""siemens"", ""snap7"", ""wrapper""]",1
+man-group/notebooker,1,python,929,https://github.com/man-group/notebooker.git,15,,CLAUDE.md,2026-07-25T02:09:01.760338+00:00,2020-02-28T11:11:17,"[""jupyter"", ""jupyter-notebook"", ""jupyter-notebooks"", ""notebooks"", ""productionise"", ""publishing""]",1
+jurajnyiri/homeassistant-tapo-control,1,python,1930,https://github.com/jurajnyiri/homeassistant-tapo-control.git,39,,copilot-instructions.md,2026-07-25T02:09:05.124413+00:00,2020-10-01T05:08:12,"[""camera"", ""cameras"", ""home-assistant"", ""home-automation"", ""homeassistant"", ""homeassistant-custom-component"", ""ptz"", ""tapo""]",1
+open-catalyst-project/ocp,1,python,628,https://github.com/open-catalyst-project/ocp.git,33,,CLAUDE.md,2026-07-25T02:09:11.855891+00:00,2019-09-26T04:47:27,[],1
+aiidateam/aiida-core,1,python,574,https://github.com/aiidateam/aiida-core.git,103,,CLAUDE.md,2026-07-25T02:09:14.519915+00:00,2016-12-23T03:38:21,"[""aiida"", ""computational-science"", ""data-provenance"", ""database"", ""provenance"", ""scheduler"", ""ssh"", ""workflow"", ""workflow-engine"", ""workflows""]",1
+ultralytics/yolov3,1,python,10578,https://github.com/ultralytics/yolov3.git,49,,CLAUDE.md,2026-07-25T02:09:18.208287+00:00,2018-08-26T08:57:20,"[""deep-learning"", ""machine-learning"", ""object-detection"", ""ultralytics"", ""yolo"", ""yolov3"", ""yolov5""]",1
+bram2w/baserow,1,python,2909,https://github.com/bram2w/baserow.git,47,,CLAUDE.md,2026-07-25T02:09:39.900216+00:00,2020-07-20T09:32:04,"[""airtable"", ""airtable-alternative"", ""airtable-replacement"", ""database"", ""low-code"", ""no-code"", ""no-code-database"", ""online-database"", ""postgresql"", ""restful-api"", ""self-hosted"", ""spreadsheet""]",1
+pythainlp/pythainlp,1,python,1142,https://github.com/pythainlp/pythainlp.git,59,,copilot-instructions.md,2026-07-25T02:10:01.064111+00:00,2016-06-23T02:57:26,"[""computational-linguistics"", ""hacktoberfest"", ""hacktoberfest-accepted"", ""natural-language-processing"", ""nlp-library"", ""python"", ""soundex"", ""text-processing"", ""thai"", ""thai-language"", ""thai-nlp"", ""thai-nlp-library"", ""thai-soundex"", ""word-segmentation""]",1
+microsoft/msticpy,1,python,1970,https://github.com/microsoft/msticpy.git,62,,copilot-instructions.md,2026-07-25T02:10:01.097337+00:00,2019-02-21T05:30:03,[],1
+drakkar-software/octobot,1,python,6214,https://github.com/drakkar-software/octobot.git,18,,CLAUDE.md,2026-07-25T02:10:01.131782+00:00,2018-02-23T11:13:05,"[""ai-trading"", ""backtest"", ""binance-api"", ""bitcoin"", ""coinbase-bot"", ""cryptocurrencies"", ""free"", ""hyperliquid-trading-bot"", ""paper-trading"", ""python"", ""solana"", ""telegrambot"", ""trading-bot"", ""tradingview-pinescript-signal-alert-bot""]",1
+borgbackup/borg,1,python,13497,https://github.com/borgbackup/borg.git,325,,CLAUDE.md,2026-07-25T02:10:22.050196+00:00,2015-05-12T11:10:47,"[""backup"", ""borgbackup"", ""compression"", ""deduplication"", ""encryption"", ""python"", ""ssh""]",1
+dipu-bd/lightnovel-crawler,1,python,1973,https://github.com/dipu-bd/lightnovel-crawler.git,89,,CLAUDE.md,2026-07-25T02:10:23.512182+00:00,2018-01-17T11:23:35,"[""console-app"", ""discord"", ""kindle-books"", ""lightnovel"", ""lightnovel-crawler"", ""python"", ""telegram"", ""termux"", ""web-scraper""]",1
+efroemling/ballistica,1,python,680,https://github.com/efroemling/ballistica.git,31,,CLAUDE.md,2026-07-25T02:10:35.257712+00:00,2019-08-22T10:33:57,"[""bombsquad"", ""game"", ""game-engine"", ""game-engine-3d"", ""modders"", ""python"", ""python3""]",1
+mlcommons/inference,1,python,1594,https://github.com/mlcommons/inference.git,129,,CLAUDE.md,2026-07-25T02:10:37.011729+00:00,2018-09-13T01:53:57,"[""benchmark"", ""machine-learning""]",1
+ethereum/eth2.0-specs,1,python,2027,https://github.com/ethereum/eth2.0-specs.git,98,,.claude/,2026-07-25T02:10:37.766848+00:00,2018-09-20T05:12:54,[],1
+opencti-platform/connectors,1,python,562,https://github.com/opencti-platform/connectors.git,319,,copilot-instructions.md,2026-07-25T02:10:37.994726+00:00,2019-06-18T09:22:05,"[""cti"", ""cybersecurity"", ""misp"", ""mitre-attack"", ""threat-intelligence""]",1
+ewels/multiqc,1,python,1048,https://github.com/ewels/multiqc.git,193,,.cursorrules,2026-07-25T02:10:43.049531+00:00,2015-08-04T01:47:05,"[""analysis"", ""bioconda"", ""bioinformatics"", ""multiqc"", ""pypi"", ""python""]",1
+quark-engine/quark-engine,1,python,1550,https://github.com/quark-engine/quark-engine.git,28,,CLAUDE.md,2026-07-25T02:10:44.382426+00:00,2019-10-22T01:19:27,"[""ai"", ""android"", ""artificial-intelligence"", ""blackbox"", ""blackbox-testing"", ""blackhat"", ""defcon"", ""llm-agent"", ""security-vulnerability-assessment"", ""vulnerability""]",1
+zentralopensource/zentral,1,python,870,https://github.com/zentralopensource/zentral.git,24,,CLAUDE.md,2026-07-25T02:10:46.978843+00:00,2015-10-20T02:03:03,"[""apple-mdm"", ""elasticsearch"", ""endpoint-management"", ""endpoint-security"", ""events"", ""gitops"", ""inventory"", ""jamf"", ""macos"", ""mdm"", ""munki"", ""osquery"", ""santa"", ""splunk"", ""sumologic"", ""terraform"", ""unified-view""]",1
+capitalone/datacompy,1,python,650,https://github.com/capitalone/datacompy.git,34,,copilot-instructions.md,2026-07-25T02:10:50.001475+00:00,2018-03-23T01:16:03,"[""compare"", ""dask"", ""data"", ""data-science"", ""dataframes"", ""fugue"", ""numpy"", ""pandas"", ""polars"", ""pyspark"", ""python"", ""snowflake"", ""snowpark"", ""spark""]",1
+deepset-ai/haystack,1,python,23159,https://github.com/deepset-ai/haystack.git,293,,CLAUDE.md,2026-07-25T02:10:50.800202+00:00,2019-11-14T09:05:28,"[""agent"", ""agents"", ""ai"", ""gemini"", ""generative-ai"", ""gpt-4"", ""information-retrieval"", ""large-language-models"", ""llm"", ""machine-learning"", ""nlp"", ""orchestration"", ""python"", ""pytorch"", ""question-answering"", ""rag"", ""retrieval-augmented-generation"", ""semantic-search"", ""summarization"", ""transformers""]",1
+beetbox/beets,1,python,15372,https://github.com/beetbox/beets.git,348,,copilot-instructions.md,2026-07-25T02:11:01.924762+00:00,2010-08-09T11:17:20,"[""cli"", ""hacktoberfest"", ""music"", ""music-library"", ""musicbrainz"", ""python""]",1
+readthedocs/readthedocs.org,1,python,8369,https://github.com/readthedocs/readthedocs.org.git,413,,CLAUDE.md,2026-07-25T02:11:13.529263+00:00,2010-08-16T07:18:06,"[""docs"", ""mkdocs"", ""python"", ""sphinx"", ""sphinx-doc""]",1
+crossbario/crossbar,1,python,2066,https://github.com/crossbario/crossbar.git,59,,CLAUDE.md,2026-07-25T02:11:13.580457+00:00,2013-10-14T11:10:50,"[""broker"", ""messaging"", ""mqtt"", ""networking"", ""networking-stack"", ""rest"", ""server"", ""wamp"", ""websocket""]",1
+fishtown-analytics/dbt,1,python,3113,https://github.com/fishtown-analytics/dbt.git,143,,CLAUDE.md,2026-07-25T02:11:13.648223+00:00,2016-03-10T02:38:00,[],1
+elastic/rally,1,python,2027,https://github.com/elastic/rally.git,90,,CLAUDE.md,2026-07-25T02:11:13.805569+00:00,2015-11-30T07:11:43,"[""elasticsearch""]",1
+databiosphere/toil,1,python,936,https://github.com/databiosphere/toil.git,119,,CLAUDE.md,2026-07-25T02:11:20.911893+00:00,2015-03-30T09:08:58,"[""aws"", ""common-workflow-language"", ""cwl"", ""gridengine"", ""kubernetes"", ""mesos"", ""pipeline"", ""python"", ""slurm"", ""wdl"", ""workflow"", ""workflow-description-language""]",1
+cuthbertlab/music21,1,python,2527,https://github.com/cuthbertlab/music21.git,108,,CLAUDE.md,2026-07-25T02:11:35.647754+00:00,2013-11-04T07:31:59,[],1
+crytic/slither,1,python,6291,https://github.com/crytic/slither.git,153,,CLAUDE.md,2026-07-25T02:11:35.826702+00:00,2018-09-05T09:56:35,"[""ethereum"", ""solidity"", ""static-analysis"", ""vyper""]",1
+albumentations-team/albumentations,1,python,15016,https://github.com/albumentations-team/albumentations.git,167,,.cursor/,2026-07-25T02:11:51.971407+00:00,2018-06-06T03:10:50,"[""augmentation"", ""deep-learning"", ""detection"", ""fast-augmentations"", ""image-augmentation"", ""image-classification"", ""image-processing"", ""image-segmentation"", ""machine-learning"", ""object-detection"", ""python"", ""segmentation""]",1
+espressif/esptool,1,python,6405,https://github.com/espressif/esptool.git,128,,copilot-instructions.md,2026-07-25T02:11:54.517586+00:00,2014-09-06T02:50:29,[],1
+hypothesisworks/hypothesis,1,python,8771,https://github.com/hypothesisworks/hypothesis.git,317,,CLAUDE.md,2026-07-25T02:11:58.984292+00:00,2013-03-10T01:51:19,"[""fuzzing"", ""property-based-testing"", ""python"", ""testing""]",1
+pybamm-team/pybamm,1,python,1608,https://github.com/pybamm-team/pybamm.git,126,,copilot-instructions.md,2026-07-25T02:11:59.975455+00:00,2018-10-31T10:26:29,"[""batteries"", ""battery-models"", ""hacktoberfest"", ""pybamm"", ""python"", ""simulation"", ""solvers""]",1
+online-ml/river,1,python,5875,https://github.com/online-ml/river.git,138,,CLAUDE.md,2026-07-25T02:12:08.436381+00:00,2019-01-24T03:18:26,"[""concept-drift"", ""data-science"", ""incremental-learning"", ""machine-learning"", ""online-learning"", ""online-machine-learning"", ""online-statistics"", ""python"", ""real-time-processing"", ""stream-processing"", ""streaming"", ""streaming-data""]",1
+librephotos/librephotos,1,python,7998,https://github.com/librephotos/librephotos.git,195,,CLAUDE.md,2026-07-25T02:12:09.789101+00:00,2020-11-11T11:08:19,"[""django"", ""exif"", ""hacktoberfest"", ""machine-learning"", ""photo"", ""python"", ""selfhosted""]",1
+aiogram/aiogram,1,python,5775,https://github.com/aiogram/aiogram.git,124,,CLAUDE.md,2026-07-25T02:12:10.644323+00:00,2017-11-18T02:11:13,"[""aiogram"", ""asyncio"", ""bot"", ""bot-framework"", ""python"", ""telegram-bot"", ""telegram-bot-api""]",1
+quay/quay,1,python,2796,https://github.com/quay/quay.git,133,,CLAUDE.md,2026-07-25T02:12:11.554198+00:00,2019-11-08T05:37:05,"[""containers"", ""docker"", ""oci-distribution"", ""quay""]",1
+seperman/deepdiff,1,python,2400,https://github.com/seperman/deepdiff.git,76,,CLAUDE.md,2026-07-25T02:12:15.166384+00:00,2014-09-26T03:21:47,"[""comparison"", ""deep-search"", ""deepdiff"", ""deephash"", ""delta"", ""diff"", ""difference"", ""distance"", ""distance-calculation"", ""hash"", ""hashing"", ""nested"", ""python"", ""reconstruction"", ""recursive"", ""repetition"", ""report-repetition"", ""tree""]",1
+getsentry/sentry-python,1,python,2195,https://github.com/getsentry/sentry-python.git,310,,CLAUDE.md,2026-07-25T02:12:31.074030+00:00,2018-06-18T10:51:10,"[""crash-reporting"", ""hacktoberfest"", ""python"", ""sdk"", ""sentry"", ""sentry-python"", ""tag-production"", ""team-web-backend""]",1
+nilearn/nilearn,1,python,1413,https://github.com/nilearn/nilearn.git,236,,CLAUDE.md,2026-07-25T02:12:37.805196+00:00,2011-01-09T07:02:23,"[""brain-connectivity"", ""brain-imaging"", ""brain-mri"", ""decoding"", ""fmri"", ""machine-learning"", ""mvpa"", ""neuroimaging"", ""python""]",1
+tencent/bk-sops,1,python,910,https://github.com/tencent/bk-sops.git,38,,.cursor/,2026-07-25T02:13:00.486463+00:00,2018-10-15T10:19:12,[],1
+frostming/pdm,1,python,502,https://github.com/frostming/pdm.git,12,,CLAUDE.md,2026-07-25T02:13:03.917930+00:00,2019-12-27T03:50:57,[],1
+yoshitomo-matsubara/torchdistill,1,python,1621,https://github.com/yoshitomo-matsubara/torchdistill.git,5,,.github/instructions/,2026-07-25T02:13:07.278142+00:00,2019-12-18T05:40:32,"[""amazon-sagemaker-lab"", ""cifar10"", ""cifar100"", ""coco"", ""colab-notebook"", ""glue"", ""google-colab"", ""image-classification"", ""imagenet"", ""knowledge-distillation"", ""natural-language-processing"", ""nlp"", ""object-detection"", ""pascal-voc"", ""pytorch"", ""pytorch-ecosystem"", ""semantic-segmentation"", ""text-classification"", ""transformer""]",1
+robocorp/rpaframework,1,python,1524,https://github.com/robocorp/rpaframework.git,36,,CLAUDE.md,2026-07-25T02:13:09.192576+00:00,2020-01-02T12:11:15,"[""ai"", ""automation"", ""documentai"", ""nlp"", ""ocr"", ""opencv"", ""python"", ""robocorp"", ""robot"", ""robotframework"", ""rpa"", ""rpa-robots""]",1
+saulpw/visidata,1,python,9165,https://github.com/saulpw/visidata.git,113,,CLAUDE.md,2026-07-25T02:13:22.648996+00:00,2016-10-27T04:21:00,"[""cli"", ""csv"", ""datajournalism"", ""datawrangling"", ""devops-tools"", ""eda"", ""hdf5"", ""json"", ""opendata"", ""pandas"", ""python"", ""reconciliation"", ""spreadsheet"", ""sqlite"", ""tabular-data"", ""tsv"", ""tui"", ""unix-toolkit""]",1
+elastic/detection-rules,1,python,2650,https://github.com/elastic/detection-rules.git,98,,.github/instructions/,2026-07-25T02:13:41.106090+00:00,2020-06-17T09:48:18,"[""threat-detection"", ""threat-hunting""]",1
+qdata/textattack,1,python,3402,https://github.com/qdata/textattack.git,60,,CLAUDE.md,2026-07-25T02:13:57.046474+00:00,2019-10-15T12:51:44,"[""adversarial-attacks"", ""adversarial-examples"", ""adversarial-machine-learning"", ""data-augmentation"", ""machine-learning"", ""natural-language-processing"", ""nlp"", ""security""]",1
+snapcore/snapcraft,1,python,1125,https://github.com/snapcore/snapcraft.git,184,,.github/instructions/,2026-07-25T02:14:09.932709+00:00,2015-10-29T05:23:15,"[""snaps""]",1
+mozilla/kitsune,1,python,1631,https://github.com/mozilla/kitsune.git,128,,CLAUDE.md,2026-07-25T02:14:15.805905+00:00,2010-01-26T06:53:57,[],1
+open-telemetry/opentelemetry-python,1,python,2531,https://github.com/open-telemetry/opentelemetry-python.git,355,,CLAUDE.md,2026-07-25T02:14:32.505505+00:00,2019-05-07T09:13:30,"[""correlationcontext"", ""distributed-tracing"", ""logging"", ""metrics"", ""opentelemetry"", ""python"", ""sdk"", ""tracecontext""]",1
+enms-automation/enms,1,python,835,https://github.com/enms-automation/enms.git,20,,.claude/,2026-07-25T02:14:39.724060+00:00,2017-10-08T08:56:39,"[""configuration-management"", ""infrastructure-as-code"", ""infrastructure-automation"", ""napalm"", ""netmiko"", ""network-automation"", ""network-inventory"", ""network-visualization""]",1
+pypa/bandersnatch,1,python,547,https://github.com/pypa/bandersnatch.git,97,,CLAUDE.md,2026-07-25T02:14:49.654806+00:00,2018-05-14T02:52:22,"[""bandersnatch"", ""mirror"", ""mirroring"", ""pep381"", ""pypi"", ""pypi-mirror-client""]",1
+microsoft/debugpy,1,python,2428,https://github.com/microsoft/debugpy.git,77,,.github/instructions/,2026-07-25T02:15:04.340217+00:00,2020-01-15T10:38:20,[],1
+cdgriffith/fastflix,1,python,1526,https://github.com/cdgriffith/fastflix.git,1,,CLAUDE.md,2026-07-25T02:15:07.489617+00:00,2019-02-19T02:41:07,"[""av1"", ""avif"", ""encoders"", ""fastflix"", ""ffmpeg"", ""hdr"", ""hdr10"", ""hevc"", ""hevc-encoder"", ""libaom-av1"", ""mkv"", ""mp4"", ""rav1e"", ""svt-av1"", ""vp9"", ""webp"", ""x264"", ""x265""]",1
+pulp/pulpcore,1,python,566,https://github.com/pulp/pulpcore.git,139,,CLAUDE.md,2026-07-25T02:15:16.199870+00:00,2019-02-28T04:18:16,[],1
+alicevision/meshroom,1,python,12831,https://github.com/alicevision/meshroom.git,62,,CLAUDE.md,2026-07-25T02:15:19.872267+00:00,2015-04-22T05:33:16,"[""3d-reconstruction"", ""alicevision"", ""camera-tracking"", ""computer-vision"", ""hdr-imaging"", ""image-stitching"", ""meshroom"", ""multi-view-stereo"", ""nocode"", ""nodal-interface"", ""photogrammetry"", ""structure-from-motion"", ""texturing"", ""workflow-automation""]",1
+datadog/dd-trace-py,1,python,643,https://github.com/datadog/dd-trace-py.git,370,,.cursor/,2026-07-25T02:15:26.766914+00:00,2016-06-20T06:52:23,"[""apm"", ""ci"", ""datadog"", ""debugging"", ""error-monitoring"", ""observability"", ""profiling"", ""python"", ""security"", ""tracing""]",1
+mirumee/saleor,1,python,14012,https://github.com/mirumee/saleor.git,179,,CLAUDE.md,2026-07-25T02:15:41.837057+00:00,2013-02-12T04:46:39,[],1
+datadog/integrations-core,1,python,1125,https://github.com/datadog/integrations-core.git,383,,CLAUDE.md,2026-07-25T02:15:42.089658+00:00,2015-12-01T04:41:45,"[""datadog"", ""datadog-agent"", ""dd"", ""integrations""]",1
+dask/distributed,1,python,1676,https://github.com/dask/distributed.git,322,,CLAUDE.md,2026-07-25T02:15:47.715965+00:00,2015-09-13T06:42:29,"[""dask"", ""distributed-computing"", ""pydata"", ""python""]",1
+graphistry/pygraphistry,1,python,2532,https://github.com/graphistry/pygraphistry.git,39,,CLAUDE.md,2026-07-25T02:15:50.145080+00:00,2015-06-02T08:28:42,"[""csv"", ""cudf"", ""cugraph"", ""gpu"", ""graph"", ""graph-visualization"", ""graphistry"", ""igraph"", ""jupyter"", ""neo4j"", ""network-analysis"", ""network-visualization"", ""networkx"", ""pandas"", ""python"", ""rapids"", ""splunk"", ""tigergraph"", ""visualization"", ""webgl""]",1
+yelp/paasta,1,python,1726,https://github.com/yelp/paasta.git,192,,CLAUDE.md,2026-07-25T02:15:51.344421+00:00,2015-10-26T09:35:53,"[""docker"", ""infrastructure"", ""k8s"", ""kubernetes"", ""paas"", ""paasta"", ""yelp""]",1
+openstates/openstates-scrapers,1,python,907,https://github.com/openstates/openstates-scrapers.git,164,,.claude/,2026-07-25T02:16:04.565120+00:00,2009-02-26T10:49:19,"[""government"", ""hacktoberfest"", ""python"", ""scrapers"", ""states"", ""united-states""]",1
+openvinotoolkit/training_extensions,1,python,1162,https://github.com/openvinotoolkit/training_extensions.git,21,,copilot-instructions.md,2026-07-25T02:16:05.479152+00:00,2018-10-26T02:02:29,"[""action-recognition"", ""anomaly-detection"", ""automl"", ""computer-vision"", ""datumaro"", ""deep-learning"", ""hyper-parameter-optimization"", ""image-classification"", ""image-segmentation"", ""incremental-learning"", ""machine-learning"", ""neural-networks-compression"", ""object-detection"", ""openvino"", ""pytorch"", ""quantization"", ""self-supervised-learning"", ""semi-supervised-learning"", ""transfer-learning""]",1
+systemd/mkosi,1,python,1942,https://github.com/systemd/mkosi.git,196,,CLAUDE.md,2026-07-25T02:16:06.750524+00:00,2016-07-13T10:31:19,"[""boot"", ""btrfs"", ""btrfs-subvolume"", ""debian"", ""disk-image"", ""distro"", ""efi"", ""fedora"", ""gpt"", ""initramfs"", ""initramfs-generator"", ""initramfs-image"", ""luks"", ""mkosi"", ""opensuse"", ""partition"", ""squashfs"", ""ubuntu"", ""verity""]",1
+emeryberger/csrankings,1,python,3155,https://github.com/emeryberger/csrankings.git,416,,CLAUDE.md,2026-07-25T02:16:26.766164+00:00,2016-05-03T12:13:00,"[""computer-science"", ""computer-science-rankings"", ""conference"", ""dblp"", ""faculty"", ""metrics"", ""ranking""]",1
+3b1b/videos,1,python,10935,https://github.com/3b1b/videos.git,13,,CLAUDE.md,2026-07-25T02:16:35.892675+00:00,2020-12-31T09:07:33,[],1
+quic/aimet,1,python,2617,https://github.com/quic/aimet.git,79,,CLAUDE.md,2026-07-25T02:16:43.308845+00:00,2020-04-21T06:57:10,"[""auto-ml"", ""compression"", ""deep-learning"", ""deep-neural-networks"", ""machine-learning"", ""network-compression"", ""network-quantization"", ""open-source"", ""opensource"", ""pruning"", ""quantization""]",1
+openmdao/openmdao,1,python,750,https://github.com/openmdao/openmdao.git,61,,CLAUDE.md,2026-07-25T02:16:56.546566+00:00,2016-08-25T03:53:25,"[""framework"", ""nasa"", ""open-source"", ""openmdao"", ""optimization""]",1
+makepath/xarray-spatial,1,python,900,https://github.com/makepath/xarray-spatial.git,29,,CLAUDE.md,2026-07-25T02:16:57.010918+00:00,2020-02-08T07:02:33,"[""datashader"", ""numba"", ""python"", ""raster-analysis"", ""spatial-analysis"", ""xarray""]",1
+openmc-dev/openmc,1,python,1046,https://github.com/openmc-dev/openmc.git,172,,copilot-instructions.md,2026-07-25T02:16:57.030461+00:00,2011-07-21T12:33:27,"[""computational-physics"", ""high-performance-computing"", ""monte-carlo-simulation"", ""neutron-transport"", ""neutronics"", ""nuclear-data"", ""nuclear-energy"", ""nuclear-engineering"", ""nuclear-fusion"", ""openmc"", ""particle-transport"", ""photon-transport"", ""radiation-transport""]",1
+mlrun/mlrun,1,python,1683,https://github.com/mlrun/mlrun.git,91,,CLAUDE.md,2026-07-25T02:16:57.080614+00:00,2019-09-01T04:59:19,"[""data-engineering"", ""data-science"", ""experiment-tracking"", ""kubernetes"", ""machine-learning"", ""mlops"", ""mlops-workflow"", ""model-serving"", ""python"", ""workflow""]",1
+mongodb/mongo-python-driver,1,python,4349,https://github.com/mongodb/mongo-python-driver.git,195,,copilot-instructions.md,2026-07-25T02:17:21.045933+00:00,2009-01-15T03:18:06,"[""mongodb"", ""mongodb-driver"", ""pymongo"", ""python"", ""python-library""]",1
+prefecthq/prefect,1,python,22916,https://github.com/prefecthq/prefect.git,424,,.claude/,2026-07-25T02:17:27.096758+00:00,2018-06-29T09:59:26,"[""automation"", ""data"", ""data-engineering"", ""data-ops"", ""data-science"", ""infrastructure"", ""ml-ops"", ""observability"", ""orchestration"", ""pipeline"", ""prefect"", ""python"", ""workflow"", ""workflow-engine""]",1
+microsoft/deepspeed,1,python,36490,https://github.com/microsoft/deepspeed.git,361,,CLAUDE.md,2026-07-25T02:17:27.103974+00:00,2020-01-23T06:35:18,"[""billion-parameters"", ""compression"", ""data-parallelism"", ""deep-learning"", ""gpu"", ""inference"", ""machine-learning"", ""mixture-of-experts"", ""model-parallelism"", ""pipeline-parallelism"", ""pytorch"", ""trillion-parameters"", ""zero""]",1
+cobbler/cobbler,1,python,2763,https://github.com/cobbler/cobbler.git,258,,CLAUDE.md,2026-07-25T02:17:34.885068+00:00,2011-11-08T03:01:00,"[""cobbler"", ""deployment"", ""dhcp"", ""hacktoberfest"", ""pxe"", ""python"", ""tftp""]",1
+ets-labs/python-dependency-injector,1,python,4882,https://github.com/ets-labs/python-dependency-injector.git,45,,.cursor/,2026-07-25T02:17:45.500943+00:00,2015-01-04T01:23:05,"[""aiohttp"", ""asyncio"", ""dependency-injection"", ""dependency-injection-container"", ""dependency-injection-framework"", ""design-patterns"", ""factory"", ""flask"", ""flask-application"", ""flask-restful"", ""ioc"", ""ioc-container"", ""python"", ""python-2"", ""python-3"", ""python3"", ""singleton"", ""threadlocal""]",1
+elyra-ai/elyra,1,python,1993,https://github.com/elyra-ai/elyra.git,69,,CLAUDE.md,2026-07-25T02:17:58.128382+00:00,2019-10-22T09:37:58,"[""ai"", ""airflow"", ""anaconda"", ""apache-airflow"", ""binder"", ""docker"", ""elyra"", ""hacktoberfest"", ""jupyterlab"", ""jupyterlab-extension"", ""jupyterlab-extensions"", ""jupyterlab-notebooks"", ""kubeflow"", ""kubeflow-pipelines"", ""machine-learning"", ""notebook-jupyter"", ""notebooks"", ""pipelines"", ""pypi"", ""python""]",1
+pantsbuild/pants,1,python,3798,https://github.com/pantsbuild/pants.git,368,,CLAUDE.md,2026-07-25T02:17:58.157132+00:00,2012-12-17T05:39:04,"[""aws-lambda"", ""build"", ""build-system"", ""build-tool"", ""build-tools"", ""docker"", ""golang"", ""java"", ""javascript"", ""kotlin"", ""monorepo"", ""monorepos"", ""pants"", ""pantsbuild"", ""pex"", ""protobuf"", ""python"", ""rust"", ""scala"", ""shell""]",1
+mne-tools/mne-python,1,python,3459,https://github.com/mne-tools/mne-python.git,422,,CLAUDE.md,2026-07-25T02:17:58.188944+00:00,2011-01-28T03:31:13,"[""ecog"", ""eeg"", ""electrocorticography"", ""electroencephalography"", ""machine-learning"", ""magnetoencephalography"", ""meg"", ""neuroimaging"", ""neuroscience"", ""python"", ""statistics"", ""visualization""]",1
+damianmoore/photonix,1,python,644,https://github.com/damianmoore/photonix.git,14,,CLAUDE.md,2026-07-25T02:17:59.530952+00:00,2017-03-07T10:30:32,[],1
+home-assistant/supervisor,1,python,2185,https://github.com/home-assistant/supervisor.git,103,,copilot-instructions.md,2026-07-25T02:18:24.158537+00:00,2017-03-14T08:54:15,"[""docker"", ""hacktoberfest"", ""home-assistant"", ""home-automation"", ""orchestrator"", ""python""]",1
+hyperspy/hyperspy,1,python,576,https://github.com/hyperspy/hyperspy.git,70,,copilot-instructions.md,2026-07-25T02:18:26.756205+00:00,2011-08-19T01:14:36,"[""data-analysis"", ""data-visualization"", ""life-sciences"", ""materials-science"", ""multi-dimensional"", ""physical-sciences"", ""python""]",1
+idom-team/idom,1,python,716,https://github.com/idom-team/idom.git,9,,copilot-instructions.md,2026-07-25T02:18:32.238660+00:00,2019-02-19T05:25:54,[],1
+datalad/datalad,1,python,649,https://github.com/datalad/datalad.git,54,,CLAUDE.md,2026-07-25T02:18:37.668159+00:00,2013-11-01T07:40:08,"[""closember"", ""data-storage"", ""dataset"", ""git-annex"", ""python"", ""usable""]",1
+binref/refinery,1,python,859,https://github.com/binref/refinery.git,18,,CLAUDE.md,2026-07-25T02:18:39.306324+00:00,2019-12-14T12:32:06,"[""commandline"", ""compression"", ""cryptography"", ""malware-analysis"", ""triage""]",1
+freelawproject/courtlistener,1,python,969,https://github.com/freelawproject/courtlistener.git,101,,CLAUDE.md,2026-07-25T02:18:39.347283+00:00,2014-07-25T01:22:00,"[""courts"", ""government"", ""government-data"", ""legaltech""]",1
+rwightman/pytorch-image-models,1,python,21022,https://github.com/rwightman/pytorch-image-models.git,65,,CLAUDE.md,2026-07-25T02:18:55.557480+00:00,2019-02-02T05:51:12,[],1
+dask/dask,1,python,13855,https://github.com/dask/dask.git,417,,CLAUDE.md,2026-07-25T02:18:55.768377+00:00,2015-01-04T06:50:00,"[""dask"", ""numpy"", ""pandas"", ""pydata"", ""python"", ""scikit-learn"", ""scipy""]",1
+plotly/dash,1,python,24310,https://github.com/plotly/dash.git,185,,copilot-instructions.md,2026-07-25T02:18:58.411542+00:00,2015-04-10T01:53:08,"[""ai"", ""bioinformatics"", ""charting"", ""dash"", ""dashboards"", ""data-science"", ""data-visualization"", ""finance"", ""flask"", ""gui-framework"", ""jupyter"", ""plotly"", ""plotly-dash"", ""productivity"", ""python"", ""react"", ""technical-computing"", ""web-app""]",1
+microsoft/playwright-python,1,python,14796,https://github.com/microsoft/playwright-python.git,53,,CLAUDE.md,2026-07-25T02:19:00.864832+00:00,2020-07-01T03:28:13,"[""chromium"", ""firefox"", ""playwright"", ""webkit""]",1
+mindsdb/mindsdb,1,python,39145,https://github.com/mindsdb/mindsdb.git,381,,CLAUDE.md,2026-07-25T02:19:29.806253+00:00,2018-08-02T05:56:45,"[""agents"", ""ai"", ""analytics"", ""artificial-inteligence"", ""bigquery"", ""business-intelligence"", ""databases"", ""hacktoberfest"", ""llms"", ""mcp"", ""mssql"", ""mysql"", ""postgresql"", ""rag""]",1
+fizzadar/pyinfra,1,python,2390,https://github.com/fizzadar/pyinfra.git,93,,CLAUDE.md,2026-07-25T02:19:51.686598+00:00,2014-10-19T07:37:45,"[""cloud-management"", ""configuration-management"", ""high-performance"", ""infrastructure"", ""pyinfra"", ""python"", ""remote-execution""]",1
+strawberry-graphql/strawberry,1,python,4687,https://github.com/strawberry-graphql/strawberry.git,308,,CLAUDE.md,2026-07-25T02:19:55.748605+00:00,2018-12-21T08:56:55,"[""asgi"", ""asyncio"", ""django"", ""fastapi"", ""graphql"", ""graphql-library"", ""graphql-schema"", ""graphql-server"", ""hacktoberfest"", ""mypy"", ""python"", ""starlette"", ""strawberry""]",1
+huggingface/transformers,1,python,162457,https://github.com/huggingface/transformers.git,437,,copilot-instructions.md,2026-07-25T02:19:56.033884+00:00,2018-10-29T01:56:00,"[""audio"", ""deep-learning"", ""deepseek"", ""gemma"", ""glm"", ""hacktoberfest"", ""llm"", ""machine-learning"", ""model-hub"", ""natural-language-processing"", ""nlp"", ""pretrained-models"", ""python"", ""pytorch"", ""pytorch-transformers"", ""qwen"", ""speech-recognition"", ""transformer"", ""vlm""]",1
+freenas/freenas,1,python,1756,https://github.com/freenas/freenas.git,116,,CLAUDE.md,2026-07-25T02:19:56.195954+00:00,2013-03-07T01:23:20,[],1
+getsentry/sentry,1,python,44264,https://github.com/getsentry/sentry.git,350,,.cursor/,2026-07-25T02:19:56.373055+00:00,2010-08-30T10:06:41,"[""apm"", ""crash-reporting"", ""crash-reports"", ""csp-report"", ""devops"", ""django"", ""error-logging"", ""error-monitoring"", ""fair-source"", ""hacktoberfest"", ""monitor"", ""monitoring"", ""python"", ""sentry"", ""tag-production""]",1
+brndnmtthws/thetagang,1,python,2660,https://github.com/brndnmtthws/thetagang.git,11,,copilot-instructions.md,2026-07-25T02:19:56.840864+00:00,2020-12-03T08:17:09,"[""bot"", ""buying-shares"", ""get-rich-slowly"", ""ibkr"", ""money"", ""strategy"", ""thetagang"", ""trading-bot""]",1
+plasmapy/plasmapy,1,python,701,https://github.com/plasmapy/plasmapy.git,146,,copilot-instructions.md,2026-07-25T02:19:59.996868+00:00,2015-11-24T06:36:24,"[""astronomy"", ""astrophysics"", ""atomic-physics"", ""fusion"", ""hedp"", ""heliophysics"", ""high-energy-density-physics"", ""particles"", ""plasma-physics"", ""plasma-science"", ""python"", ""science"", ""solar"", ""space-physics"", ""space-plasma-physics""]",1
+zigpy/zha-device-handlers,1,python,1104,https://github.com/zigpy/zha-device-handlers.git,470,,copilot-instructions.md,2026-07-25T02:20:01.943040+00:00,2018-11-18T02:48:54,"[""hacktoberfest"", ""home-assistant"", ""home-automation""]",1
+aio-libs/aiohttp,1,python,16491,https://github.com/aio-libs/aiohttp.git,413,,CLAUDE.md,2026-07-25T02:20:21.506555+00:00,2013-10-01T11:04:01,"[""aiohttp"", ""async"", ""asyncio"", ""hacktoberfest"", ""http"", ""http-client"", ""http-server"", ""python""]",1
+couchers-org/couchers,1,python,553,https://github.com/couchers-org/couchers.git,160,,CLAUDE.md,2026-07-25T02:20:21.532282+00:00,2020-05-20T01:08:31,[],1
+kovidgoyal/kitty,1,python,33825,https://github.com/kovidgoyal/kitty.git,424,,copilot-instructions.md,2026-07-25T02:20:34.254263+00:00,2016-10-16T02:48:28,"[""c"", ""go"", ""golang"", ""golang-application"", ""kitty"", ""kitty-terminal"", ""opengl"", ""python"", ""terminal"", ""terminal-emulators"", ""terminfo"", ""vt100""]",1
+maiot-io/zenml,1,python,1219,https://github.com/maiot-io/zenml.git,12,,.cursor/,2026-07-25T02:20:40.149183+00:00,2020-11-19T09:25:46,[],1
+kornia/kornia,1,python,11272,https://github.com/kornia/kornia.git,341,,copilot-instructions.md,2026-07-25T02:20:49.403652+00:00,2018-08-22T10:31:37,"[""artificial-intelligence"", ""computer-vision"", ""deep-learning"", ""hacktoberfest"", ""image-processing"", ""machine-learning"", ""neural-network"", ""python"", ""pytorch"", ""robotics"", ""spatial-ai""]",1
+nuitka/nuitka,1,python,14975,https://github.com/nuitka/nuitka.git,196,,.cursorrules,2026-07-25T02:20:52.283394+00:00,2013-04-23T03:40:33,"[""compiler"", ""nuitka"", ""packaging-tool"", ""performance"", ""programming"", ""python"", ""python-compiler""]",1
+openmined/pysyft,1,python,9919,https://github.com/openmined/pysyft.git,305,,.claude/,2026-07-25T02:21:01.590025+00:00,2017-07-18T08:41:16,"[""cryptography"", ""deep-learning"", ""federated-learning"", ""hacktoberfest"", ""privacy"", ""python"", ""pytorch"", ""secure-computation"", ""syft""]",1
+kubeflow/pipelines,1,python,4169,https://github.com/kubeflow/pipelines.git,408,,copilot-instructions.md,2026-07-25T02:21:24.202750+00:00,2018-05-12T12:31:47,"[""data-science"", ""kubeflow"", ""kubeflow-pipelines"", ""kubernetes"", ""machine-learning"", ""mlops"", ""pipeline""]",1
+frappe/frappe,1,python,10397,https://github.com/frappe/frappe.git,299,,CLAUDE.md,2026-07-25T02:21:48.357840+00:00,2011-06-08T08:14:16,"[""cms"", ""email"", ""erpnext"", ""frappe"", ""full-stack"", ""javascript"", ""low-code"", ""mariadb"", ""multitenant"", ""postgres"", ""python"", ""rest-api"", ""security"", ""socket-io"", ""web-framework"", ""webhooks""]",1
+aragonsnow/qiandao,1,python,689,https://github.com/aragonsnow/qiandao.git,7,,copilot-instructions.md,2026-07-25T02:21:50.356037+00:00,2020-05-11T07:51:12,[],1
+chia-network/chia-blockchain,1,python,10811,https://github.com/chia-network/chia-blockchain.git,180,,.cursor/,2026-07-25T02:22:07.238705+00:00,2019-07-16T08:32:40,"[""blockchain"", ""blockchain-network"", ""chia"", ""chia-blockchain"", ""farmer"", ""full-node"", ""harvesters"", ""peer"", ""proof-of-space"", ""proof-of-time"", ""timelord"", ""vdf"", ""wallets""]",1
+asahilinux/m1n1,1,python,4133,https://github.com/asahilinux/m1n1.git,67,,CLAUDE.md,2026-07-25T02:22:13.518918+00:00,2021-01-14T06:59:03,[],1
+openvinotoolkit/nncf,1,python,1179,https://github.com/openvinotoolkit/nncf.git,79,,copilot-instructions.md,2026-07-25T02:22:15.823760+00:00,2020-05-13T04:41:05,"[""bert"", ""classification"", ""compression"", ""deep-learning"", ""genai"", ""llm"", ""mixed-precision-training"", ""nlp"", ""object-detection"", ""onnx"", ""openvino"", ""pruning"", ""pytorch"", ""quantization"", ""quantization-aware-training"", ""semantic-segmentation"", ""sparsity"", ""tensorflow"", ""transformers""]",1
+kevoreilly/capev2,1,python,3339,https://github.com/kevoreilly/capev2.git,172,,copilot-instructions.md,2026-07-25T02:22:15.827124+00:00,2019-10-15T06:16:09,"[""cape"", ""configs"", ""debugging-tools"", ""malware"", ""malware-analysis"", ""malware-research"", ""reverse-engineering"", ""sandbox"", ""unpacking""]",1
+rotki/rotki,1,python,3945,https://github.com/rotki/rotki.git,205,,CLAUDE.md,2026-07-25T02:22:15.987294+00:00,2018-03-05T11:26:09,"[""accounting"", ""analytics"", ""bitcoin"", ""blockchain"", ""cryptocurrencies"", ""cryptocurrency-exchanges"", ""cryptocurrency-portfolio"", ""cryptocurrency-portfolio-tracking"", ""ethereum"", ""hacktoberfest"", ""management"", ""management-system"", ""portfolio-tracker"", ""tracking""]",1
+ultralytics/yolov5,1,python,57661,https://github.com/ultralytics/yolov5.git,336,,CLAUDE.md,2026-07-25T02:22:21.035583+00:00,2020-05-18T03:45:11,"[""coreml"", ""deep-learning"", ""ios"", ""machine-learning"", ""ml"", ""object-detection"", ""onnx"", ""pytorch"", ""tflite"", ""ultralytics"", ""yolo"", ""yolov3"", ""yolov5""]",1
+python-telegram-bot/python-telegram-bot,1,python,29289,https://github.com/python-telegram-bot/python-telegram-bot.git,192,,copilot-instructions.md,2026-07-25T02:22:21.045045+00:00,2015-07-07T03:30:39,"[""bot"", ""chatbot"", ""framework"", ""python"", ""telegram""]",1
+ansible/ansible,1,python,69473,https://github.com/ansible/ansible.git,373,,CLAUDE.md,2026-07-25T02:22:35.982705+00:00,2012-03-06T02:58:02,"[""ansible"", ""python""]",1
+django/django,1,python,88147,https://github.com/django/django.git,392,,copilot-instructions.md,2026-07-25T02:22:36.028163+00:00,2012-04-28T02:47:18,"[""apps"", ""django"", ""framework"", ""models"", ""orm"", ""python"", ""templates"", ""views"", ""web""]",1
+celery/celery,1,python,28669,https://github.com/celery/celery.git,397,,copilot-instructions.md,2026-07-25T02:22:38.983848+00:00,2009-04-24T11:31:24,"[""amqp"", ""python"", ""python-library"", ""python3"", ""queue-tasks"", ""queue-workers"", ""queued-jobs"", ""redis"", ""redis-queue"", ""sqs"", ""sqs-queue"", ""task-manager"", ""task-runner"", ""task-scheduler""]",1
+internetarchive/openlibrary,1,python,6546,https://github.com/internetarchive/openlibrary.git,322,,copilot-instructions.md,2026-07-25T02:22:56.503043+00:00,2008-10-30T05:20:14,"[""books"", ""hacktoberfest"", ""internet-archive"", ""library-catalogue"", ""open-source""]",1
+borgbase/vorta,1,python,2478,https://github.com/borgbase/vorta.git,94,,CLAUDE.md,2026-07-25T02:23:03.166893+00:00,2018-10-27T11:19:36,"[""backup-client"", ""borg"", ""borgbackup"", ""gui"", ""linux-desktop"", ""macos""]",1
+cloud-cv/evalai,1,python,2029,https://github.com/cloud-cv/evalai.git,149,,.cursor/,2026-07-25T02:23:04.957511+00:00,2016-10-21T12:51:45,"[""ai"", ""ai-challenges"", ""angularjs"", ""artificial-intelligence"", ""challenge"", ""codecov"", ""coveralls"", ""django"", ""docker"", ""evalai"", ""evaluation"", ""evaluation-framework"", ""github-actions"", ""leaderboard"", ""machine-learning"", ""python"", ""reproducibility"", ""reproducible-research""]",1
+pydata/xarray,1,python,4171,https://github.com/pydata/xarray.git,416,,CLAUDE.md,2026-07-25T02:23:05.281835+00:00,2013-09-30T05:21:10,"[""dask"", ""netcdf"", ""numpy"", ""pandas"", ""python"", ""xarray""]",1
+pschanely/crosshair,1,python,1301,https://github.com/pschanely/crosshair.git,30,,CLAUDE.md,2026-07-25T02:23:07.662357+00:00,2017-08-29T01:11:40,"[""concolic-execution"", ""contracts"", ""dynamic-analysis"", ""fuzzing"", ""hacktoberfest"", ""python"", ""static-analysis"", ""symbolic-execution"", ""testing"", ""testing-framework"", ""type-systems"", ""z3""]",1
+aistream-peelout/flow-forecast,1,python,2285,https://github.com/aistream-peelout/flow-forecast.git,11,,CLAUDE.md,2026-07-25T02:23:11.492054+00:00,2019-08-15T05:02:09,"[""anomaly-detection"", ""deep-learning"", ""deep-neural-networks"", ""forecasting"", ""hacktoberfest"", ""lstm"", ""pytorch"", ""state-of-the-art-models"", ""time-series"", ""time-series-analysis"", ""time-series-forecasting"", ""time-series-regression"", ""transfer-learning"", ""transformer""]",1
+facebookresearch/hydra,1,python,10503,https://github.com/facebookresearch/hydra.git,126,,copilot-instructions.md,2026-07-25T02:23:30.543017+00:00,2019-06-12T07:33:15,[],1
+iodide-project/pyodide,1,python,4926,https://github.com/iodide-project/pyodide.git,66,,.cursorrules,2026-07-25T02:23:34.012852+00:00,2018-02-23T07:21:29,[],1
+ledfx/ledfx,1,python,1986,https://github.com/ledfx/ledfx.git,73,,copilot-instructions.md,2026-07-25T02:24:04.820432+00:00,2020-12-18T12:49:47,"[""audio-processing"", ""e131"", ""led-strips"", ""microphone"", ""music-visualizer"", ""python"", ""qlc"", ""raspberry-pi"", ""react"", ""webinterface"", ""wled""]",1
+al-one/hass-xiaomi-miot,1,python,5986,https://github.com/al-one/hass-xiaomi-miot.git,137,,.claude/,2026-07-25T02:24:04.946418+00:00,2020-12-03T12:13:13,"[""custom-component"", ""hass"", ""home-assistant"", ""home-assistant-integration"", ""homeassistant"", ""iot"", ""miio"", ""miot"", ""miot-spec"", ""smart-home"", ""xiaoai"", ""xiaomi"", ""xiaomi-miot""]",1
+microsoft/pyright,1,python,15509,https://github.com/microsoft/pyright.git,143,,copilot-instructions.md,2026-07-25T02:24:27.121826+00:00,2019-03-12T03:38:46,[],1
+whitphx/streamlit-webrtc,1,python,1708,https://github.com/whitphx/streamlit-webrtc.git,9,,CLAUDE.md,2026-07-25T02:24:30.931478+00:00,2021-01-04T02:13:24,"[""computer-vision"", ""hacktoberfest"", ""pypi"", ""python"", ""streamlit"", ""streamlit-webrtc"", ""video-processing"", ""video-streaming"", ""webrtc""]",1
+imerica/dj-rest-auth,1,python,1856,https://github.com/imerica/dj-rest-auth.git,177,,CLAUDE.md,2026-07-25T02:24:37.716454+00:00,2020-02-28T07:35:48,"[""authentication"", ""django"", ""django-rest-framework"", ""jwt"", ""python"", ""rest-api""]",1
+jannikmi/timezonefinder,1,python,532,https://github.com/jannikmi/timezonefinder.git,29,,.cursorrules,2026-07-25T02:24:42.023623+00:00,2016-02-25T12:50:33,"[""coordinates"", ""geolocation"", ""latitude"", ""location"", ""longitude"", ""python"", ""timezone"", ""timezone-library"", ""timezone-picker"", ""timezones""]",1
+google/osv,1,python,550,https://github.com/google/osv.git,11,,CLAUDE.md,2026-07-25T02:24:42.925599+00:00,2021-01-08T02:14:10,[],1
+cmu-db/dbdb.io,1,python,564,https://github.com/cmu-db/dbdb.io.git,6,,copilot-instructions.md,2026-07-25T02:24:45.108522+00:00,2014-05-16T04:59:01,"[""database""]",1
+lumiwealth/lumibot,1,python,1804,https://github.com/lumiwealth/lumibot.git,38,,copilot-instructions.md,2026-07-25T02:24:58.401364+00:00,2020-09-10T10:00:16,"[""ai-agents"", ""algorithmic-trading"", ""alpaca"", ""backtesting"", ""broker"", ""crypto-trading"", ""finance"", ""forex"", ""fred"", ""futures-trading"", ""interactive-brokers"", ""llm-agents"", ""multi-agent"", ""options-trading"", ""python"", ""quantitative-finance"", ""sec-filings"", ""stocks"", ""technical-analysis"", ""trading-bot""]",1
+meisnate12/plex-meta-manager,1,python,2196,https://github.com/meisnate12/plex-meta-manager.git,59,,CLAUDE.md,2026-07-25T02:24:58.498870+00:00,2020-11-30T05:24:30,[],1
+hay-kot/mealie,1,python,3399,https://github.com/hay-kot/mealie.git,63,,copilot-instructions.md,2026-07-25T02:25:01.664979+00:00,2020-12-07T01:04:17,"[""hacktoberfest"", ""hacktoberfest2022"", ""meal-plans"", ""recipe-manager"", ""self-hosted""]",1
+mandarons/icloud-drive-docker,1,python,1016,https://github.com/mandarons/icloud-drive-docker.git,12,,copilot-instructions.md,2026-07-25T02:25:05.496584+00:00,2021-02-16T10:49:24,"[""docker"", ""icloud"", ""icloud-document-storage"", ""icloud-drive"", ""icloud-photos"", ""icloud-sync"", ""sync""]",1
+mozilla/fx-private-relay,1,python,1757,https://github.com/mozilla/fx-private-relay.git,44,,CLAUDE.md,2026-07-25T02:25:15.452321+00:00,2019-06-06T09:36:28,[],1
+truenas/freenas,1,python,1761,https://github.com/truenas/freenas.git,116,,CLAUDE.md,2026-07-25T02:25:18.385885+00:00,2013-03-07T01:23:20,[],1
+xpra-org/xpra,1,python,2883,https://github.com/xpra-org/xpra.git,75,,CLAUDE.md,2026-07-25T02:25:25.398358+00:00,2021-01-22T12:36:06,"[""network-access"", ""remote-app"", ""remote-desktop""]",1
+truenas/middleware,1,python,2573,https://github.com/truenas/middleware.git,160,,CLAUDE.md,2026-07-25T02:25:41.357842+00:00,2013-03-07T01:23:20,"[""freenas"", ""iscsi"", ""nfs"", ""s3-storage"", ""scale"", ""smb"", ""storage"", ""truenas"", ""zfs""]",1
+inventree/inventree,1,python,7238,https://github.com/inventree/inventree.git,154,,CLAUDE.md,2026-07-25T02:25:41.362937+00:00,2017-03-23T01:44:10,"[""django"", ""hacktoberfest"", ""python""]",1
+doubleml/doubleml-for-py,1,python,750,https://github.com/doubleml/doubleml-for-py.git,13,,copilot-instructions.md,2026-07-25T02:25:43.863859+00:00,2020-09-09T01:27:25,"[""causal-inference"", ""data-science"", ""double-machine-learning"", ""econometrics"", ""machine-learning"", ""python"", ""scikit-learn"", ""statistics""]",1
+thomaspinder/gpjax,1,python,638,https://github.com/thomaspinder/gpjax.git,36,,CLAUDE.md,2026-07-25T02:25:45.974014+00:00,2020-09-27T08:40:59,"[""bayesian-inference"", ""gaussian-processes"", ""jax"", ""machine-learning"", ""probabilistic-programming""]",1
+plasma-umass/scalene,1,python,13466,https://github.com/plasma-umass/scalene.git,54,,CLAUDE.md,2026-07-25T02:25:46.663639+00:00,2019-12-17T08:56:28,"[""cpu"", ""cpu-profiling"", ""gpu"", ""gpu-programming"", ""memory-allocation"", ""memory-consumption"", ""performance-analysis"", ""performance-cpu"", ""profiler"", ""profiles-memory"", ""profiling"", ""python"", ""python-profilers"", ""scalene""]",1
+microsoft/presidio,1,python,9585,https://github.com/microsoft/presidio.git,183,,copilot-instructions.md,2026-07-25T02:25:49.316964+00:00,2018-05-04T11:08:58,"[""anonymization"", ""data-anonymization"", ""data-masking"", ""data-obfuscation"", ""data-privacy"", ""data-redaction"", ""de-identification"", ""guardrails"", ""image-redactor"", ""named-entity-recognition"", ""nlp"", ""personally-identifiable-information"", ""phi"", ""pii"", ""pii-detection"", ""privacy"", ""python"", ""sensitive-data"", ""spacy"", ""transformers""]",1
+trailofbits/fickling,1,python,643,https://github.com/trailofbits/fickling.git,19,,CLAUDE.md,2026-07-25T02:25:53.110845+00:00,2021-01-21T05:44:51,"[""machine-learning"", ""python"", ""security""]",1
+lihuacai168/anotherfasterrunner,1,python,719,https://github.com/lihuacai168/anotherfasterrunner.git,7,,CLAUDE.md,2026-07-25T02:25:54.636970+00:00,2020-12-12T07:16:45,"[""auto"", ""auto-test"", ""automation"", ""autotest"", ""autotesting"", ""django"", ""fasterrunner"", ""httprunner"", ""pytho"", ""python"", ""python-test"", ""test-automation""]",1
+pdm-project/pdm,1,python,8661,https://github.com/pdm-project/pdm.git,244,,CLAUDE.md,2026-07-25T02:25:58.106640+00:00,2019-12-27T03:50:57,"[""hacktoberfest"", ""package-manager"", ""packaging"", ""pep582"", ""pep621"", ""python"", ""workflow""]",1
+tobymao/sqlglot,1,python,9409,https://github.com/tobymao/sqlglot.git,347,,CLAUDE.md,2026-07-25T02:26:00.533288+00:00,2021-03-13T05:01:56,"[""bigquery"", ""clickhouse"", ""databricks"", ""duckdb"", ""hive"", ""mysql"", ""optimizer"", ""parser"", ""postgres"", ""presto"", ""python"", ""redshift"", ""snowflake"", ""spark"", ""sql"", ""sqlite"", ""sqlparser"", ""transpiler"", ""trino"", ""tsql""]",1
+nvidia/cudnn-frontend,1,python,865,https://github.com/nvidia/cudnn-frontend.git,39,,CLAUDE.md,2026-07-25T02:26:00.544635+00:00,2021-01-22T04:16:29,"[""attention"", ""blackwell"", ""cuda"", ""cuda-kernels"", ""cuda-toolkit"", ""deep-learning"", ""flash-attention"", ""fp8"", ""gemm"", ""gpu"", ""grouped-gemm"", ""hopper"", ""mixture-of-experts"", ""moe"", ""mxfp8"", ""normalization"", ""nvfp4"", ""nvidia"", ""sdpa"", ""transformer""]",1
+intel/scikit-learn-intelex,1,python,1230,https://github.com/intel/scikit-learn-intelex.git,75,,.github/instructions/,2026-07-25T02:26:01.508133+00:00,2018-08-07T06:45:41,"[""ai-inference"", ""ai-machine-learning"", ""ai-training"", ""analytics"", ""big-data"", ""data-analysis"", ""gpu"", ""intel"", ""machine-learning"", ""machine-learning-algorithms"", ""oneapi"", ""python"", ""scikit-learn"", ""swrepo""]",1
+pyodide/pyodide,1,python,14732,https://github.com/pyodide/pyodide.git,300,,.cursorrules,2026-07-25T02:26:08.443977+00:00,2018-02-23T07:21:29,"[""emscripten"", ""pyodide"", ""python"", ""wasm"", ""webassembly""]",1
+netbox-community/pynetbox,1,python,678,https://github.com/netbox-community/pynetbox.git,50,,CLAUDE.md,2026-07-25T02:26:12.547516+00:00,2017-05-12T09:35:02,"[""netbox"", ""netbox-api""]",1
+jellyfin/jellyfin-mpv-shim,1,python,2245,https://github.com/jellyfin/jellyfin-mpv-shim.git,408,,CLAUDE.md,2026-07-25T02:26:16.493946+00:00,2020-01-11T06:44:41,"[""jellyfin"", ""jellyfin-client"", ""mpv""]",1
+israel-dryer/ttkbootstrap,1,python,2627,https://github.com/israel-dryer/ttkbootstrap.git,36,,CLAUDE.md,2026-07-25T02:26:24.394203+00:00,2021-03-19T09:28:48,"[""bootstrap"", ""cross-platform"", ""gui"", ""modern-ui"", ""python"", ""python-gui"", ""themes"", ""theming"", ""tkinter"", ""tkinter-theme"", ""tkinter-widgets"", ""ttk"", ""ttkbootstrap"", ""ttkbootstrap-python"", ""widgets""]",1
+linkml/linkml,1,python,558,https://github.com/linkml/linkml.git,115,,CLAUDE.md,2026-07-25T02:26:28.059288+00:00,2021-03-16T04:34:43,"[""data-dictionaries"", ""data-modeling"", ""hacktoberfest"", ""json-ld-context"", ""json-schema"", ""linked-data"", ""linkml"", ""linkml-schema"", ""modeling"", ""owl"", ""rdf"", ""schema"", ""semantic-web"", ""shacl"", ""shex"", ""standards""]",1
+koordinates/kart,1,python,675,https://github.com/koordinates/kart.git,18,,CLAUDE.md,2026-07-25T02:26:28.686983+00:00,2018-07-23T09:54:52,"[""data"", ""data-versioning"", ""geospatial"", ""geospatial-data"", ""gis"", ""version-control""]",1
+photonixapp/photonix,1,python,1952,https://github.com/photonixapp/photonix.git,19,,CLAUDE.md,2026-07-25T02:26:29.654793+00:00,2017-03-07T10:30:32,"[""ai"", ""django"", ""docker"", ""docker-image"", ""face-recognition"", ""gallery"", ""google-photos"", ""image-recognition"", ""javascript"", ""management"", ""ml"", ""object-detection"", ""photo"", ""photo-manager"", ""photography"", ""python"", ""react"", ""storage"", ""tensorflow"", ""web""]",1
+onnx/onnx,1,python,21131,https://github.com/onnx/onnx.git,359,,copilot-instructions.md,2026-07-25T02:26:33.291926+00:00,2017-09-07T04:53:45,"[""ai"", ""artificial-intelligence"", ""deep-learning"", ""deep-neural-networks"", ""dnn"", ""keras"", ""machine-learning"", ""ml"", ""neural-network"", ""onnx"", ""pytorch"", ""scikit-learn"", ""tensorflow""]",1

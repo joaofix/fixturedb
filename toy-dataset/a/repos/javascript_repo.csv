@@ -1,175 +1,190 @@
-repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,processed_at
-theotherp/nzbhydra2,1,javascript,1639,https://github.com/theotherp/nzbhydra2.git,27,,2026-05-26T00:28:11.180300+00:00
-bigbluebutton/bigbluebutton,1,javascript,9126,https://github.com/bigbluebutton/bigbluebutton.git,228,,2026-05-26T00:28:13.463769+00:00
-newlifex/newlife.cube,1,javascript,628,https://github.com/newlifex/newlife.cube.git,41,,2026-05-26T00:29:17.415714+00:00
-weizhiqiang1995/skyeye,1,javascript,824,https://github.com/weizhiqiang1995/skyeye.git,9,,2026-05-26T00:29:47.098443+00:00
-scality/zenko,1,javascript,534,https://github.com/scality/zenko.git,48,,2026-05-26T00:30:01.862693+00:00
-basnijholt/home-assistant-config,1,javascript,1932,https://github.com/basnijholt/home-assistant-config.git,3,,2026-05-26T00:30:05.837520+00:00
-mozilla/rhino,1,javascript,4578,https://github.com/mozilla/rhino.git,110,,2026-05-26T00:30:07.629332+00:00
-facebook/hermes,1,javascript,11079,https://github.com/facebook/hermes.git,178,,2026-05-26T00:30:23.189984+00:00
-cloudera/hue,1,javascript,1402,https://github.com/cloudera/hue.git,231,,2026-05-26T00:30:33.947320+00:00
-foundry376/mailspring,1,javascript,17517,https://github.com/foundry376/mailspring.git,230,,2026-05-26T00:30:59.627860+00:00
-thedjpetersen/subway,1,javascript,1466,https://github.com/thedjpetersen/subway.git,42,,2026-05-26T00:31:24.016879+00:00
-humblesoftware/flotr2,1,javascript,2439,https://github.com/humblesoftware/flotr2.git,19,,2026-05-26T00:33:01.994336+00:00
-dcloudio/casecode,1,javascript,1448,https://github.com/dcloudio/casecode.git,6,,2026-05-26T00:34:39.019684+00:00
-jimmywarting/native-file-system-adapter,1,javascript,588,https://github.com/jimmywarting/native-file-system-adapter.git,9,,2026-05-26T00:40:01.526676+00:00
-highcharts/highcharts-react,1,javascript,1174,https://github.com/highcharts/highcharts-react.git,23,,2026-05-26T00:40:57.043556+00:00
-shopperlabs/framework,1,javascript,667,https://github.com/shopperlabs/framework.git,12,,2026-05-26T00:41:31.452834+00:00
-jpush/jpush-phonegap-plugin,1,javascript,923,https://github.com/jpush/jpush-phonegap-plugin.git,19,,2026-05-26T00:42:51.421190+00:00
-a9t9/rpa,1,javascript,1908,https://github.com/a9t9/rpa.git,3,,2026-05-26T00:43:04.607193+00:00
-adobe/leonardo,1,javascript,2108,https://github.com/adobe/leonardo.git,15,,2026-05-26T00:44:59.697576+00:00
-crossbario/autobahn-js,1,javascript,1448,https://github.com/crossbario/autobahn-js.git,57,,2026-05-26T00:45:36.694974+00:00
-cncjs/cncjs,1,javascript,2598,https://github.com/cncjs/cncjs.git,45,,2026-05-26T00:46:03.568534+00:00
-protofire/solhint,1,javascript,1119,https://github.com/protofire/solhint.git,72,,2026-05-26T00:46:11.744625+00:00
-antvis/f2,1,javascript,7988,https://github.com/antvis/f2.git,46,,2026-05-26T00:46:12.886571+00:00
-draggable/formeo,1,javascript,600,https://github.com/draggable/formeo.git,14,,2026-05-26T00:46:24.535807+00:00
-pyramation/latex2js,1,javascript,603,https://github.com/pyramation/latex2js.git,2,,2026-05-26T00:46:41.365017+00:00
-uhop/stream-json,1,javascript,1183,https://github.com/uhop/stream-json.git,8,,2026-05-26T00:46:47.803469+00:00
-nicroto/viktor,1,javascript,526,https://github.com/nicroto/viktor.git,1,,2026-05-26T00:46:51.511676+00:00
-liriliri/licia,1,javascript,2375,https://github.com/liriliri/licia.git,4,,2026-05-26T00:47:06.888804+00:00
-freegroup/draw2d,1,javascript,782,https://github.com/freegroup/draw2d.git,9,,2026-05-26T00:47:20.566038+00:00
-retroreversing/retroreversing,1,javascript,646,https://github.com/retroreversing/retroreversing.git,48,,2026-05-26T00:47:20.973522+00:00
-doramart/doracms,1,javascript,3527,https://github.com/doramart/doracms.git,1,,2026-05-26T00:47:23.406765+00:00
-andris9/imapapi,1,javascript,886,https://github.com/andris9/imapapi.git,6,,2026-05-26T00:47:33.139494+00:00
-zhw2590582/artplayer,1,javascript,3749,https://github.com/zhw2590582/artplayer.git,28,,2026-05-26T00:47:35.283751+00:00
-squaremo/amqp.node,1,javascript,3062,https://github.com/squaremo/amqp.node.git,41,,2026-05-26T00:48:03.960106+00:00
-webpack/enhanced-resolve,1,javascript,984,https://github.com/webpack/enhanced-resolve.git,71,,2026-05-26T00:48:15.858980+00:00
-totallyinformation/node-red-contrib-uibuilder,1,javascript,518,https://github.com/totallyinformation/node-red-contrib-uibuilder.git,12,,2026-05-26T00:49:28.292426+00:00
-ctrlplusb/easy-peasy,1,javascript,5042,https://github.com/ctrlplusb/easy-peasy.git,68,,2026-05-26T00:49:35.065621+00:00
-bytedance/xgplayer,1,javascript,9193,https://github.com/bytedance/xgplayer.git,61,,2026-05-26T00:49:37.159072+00:00
-leonardomso/33-js-concepts,1,javascript,66410,https://github.com/leonardomso/33-js-concepts.git,198,,2026-05-26T00:50:12.664396+00:00
-maildev/maildev,1,javascript,3184,https://github.com/maildev/maildev.git,54,,2026-05-26T00:50:37.542912+00:00
-orangecoding/fredy,1,javascript,635,https://github.com/orangecoding/fredy.git,39,,2026-05-26T00:51:07.392334+00:00
-tediousjs/node-mssql,1,javascript,2276,https://github.com/tediousjs/node-mssql.git,92,,2026-05-26T00:51:10.412830+00:00
-hackjutsu/lepton,1,javascript,10287,https://github.com/hackjutsu/lepton.git,31,,2026-05-26T00:51:39.621819+00:00
-bpmn-io/bpmn-js,1,javascript,9541,https://github.com/bpmn-io/bpmn-js.git,55,,2026-05-26T00:51:39.729359+00:00
-sentsin/layui,1,javascript,25888,https://github.com/sentsin/layui.git,16,,2026-05-26T00:52:03.089513+00:00
-mixpanel/mixpanel-js,1,javascript,939,https://github.com/mixpanel/mixpanel-js.git,52,,2026-05-26T00:52:19.880363+00:00
-devbridge/jquery-autocomplete,1,javascript,3542,https://github.com/devbridge/jquery-autocomplete.git,40,,2026-05-26T00:52:21.965587+00:00
-retirejs/retire.js,1,javascript,4131,https://github.com/retirejs/retire.js.git,98,,2026-05-26T00:52:42.188829+00:00
-algolia/shipjs,1,javascript,774,https://github.com/algolia/shipjs.git,27,,2026-05-26T00:52:50.889398+00:00
-mattiasw/exifreader,1,javascript,978,https://github.com/mattiasw/exifreader.git,26,,2026-05-26T00:52:54.545016+00:00
-docmirror/dev-sidecar,1,javascript,22279,https://github.com/docmirror/dev-sidecar.git,17,,2026-05-26T00:53:31.399680+00:00
-bottelet/daybydaycrm,1,javascript,2315,https://github.com/bottelet/daybydaycrm.git,26,,2026-05-26T00:53:35.875355+00:00
-haraka/haraka,1,javascript,5566,https://github.com/haraka/haraka.git,181,,2026-05-26T00:54:05.004695+00:00
-harvard-lil/perma,1,javascript,509,https://github.com/harvard-lil/perma.git,38,,2026-05-26T00:54:08.618455+00:00
-bpmn-io/diagram-js,1,javascript,1901,https://github.com/bpmn-io/diagram-js.git,56,,2026-05-26T00:54:08.749903+00:00
-actions/javascript-action,1,javascript,1172,https://github.com/actions/javascript-action.git,28,,2026-05-26T00:54:11.515343+00:00
-marktext/marktext,1,javascript,56203,https://github.com/marktext/marktext.git,152,,2026-05-26T00:54:26.901398+00:00
-patriksimek/vm2,1,javascript,4061,https://github.com/patriksimek/vm2.git,35,,2026-05-26T00:54:50.540156+00:00
-adlered/csdngreener,1,javascript,4171,https://github.com/adlered/csdngreener.git,8,,2026-05-26T00:54:58.912803+00:00
-mulesoft/api-console,1,javascript,908,https://github.com/mulesoft/api-console.git,45,,2026-05-26T00:55:02.141455+00:00
-krausest/js-framework-benchmark,1,javascript,7411,https://github.com/krausest/js-framework-benchmark.git,312,,2026-05-26T00:55:02.270644+00:00
-zotero/translators,1,javascript,1615,https://github.com/zotero/translators.git,260,,2026-05-26T00:55:09.989116+00:00
-damian-pastorini/reldens,1,javascript,558,https://github.com/damian-pastorini/reldens.git,6,,2026-05-26T00:55:15.793336+00:00
-zxlie/fehelper,1,javascript,5599,https://github.com/zxlie/fehelper.git,21,,2026-05-26T00:55:27.455983+00:00
-qdleader/qdleader,1,javascript,1472,https://github.com/qdleader/qdleader.git,2,,2026-05-26T00:55:42.890686+00:00
-inavflight/inav-configurator,1,javascript,764,https://github.com/inavflight/inav-configurator.git,131,,2026-05-26T00:55:54.398979+00:00
-moleculerjs/moleculer,1,javascript,6365,https://github.com/moleculerjs/moleculer.git,126,,2026-05-26T00:56:00.148739+00:00
-jeremydaly/lambda-api,1,javascript,1468,https://github.com/jeremydaly/lambda-api.git,31,,2026-05-26T00:56:04.176499+00:00
-didi/mpx,1,javascript,3892,https://github.com/didi/mpx.git,70,,2026-05-26T00:56:48.463635+00:00
-rstudio/shiny-server,1,javascript,756,https://github.com/rstudio/shiny-server.git,26,,2026-05-26T00:56:51.477833+00:00
-abalabahaha/eris,1,javascript,1507,https://github.com/abalabahaha/eris.git,135,,2026-05-26T00:56:51.489411+00:00
-nodemailer/wildduck,1,javascript,1955,https://github.com/nodemailer/wildduck.git,41,,2026-05-26T00:56:51.862900+00:00
-imaegoo/twikoo,1,javascript,1007,https://github.com/imaegoo/twikoo.git,30,,2026-05-26T00:57:00.281022+00:00
-alpinejs/alpine,1,javascript,16405,https://github.com/alpinejs/alpine.git,115,,2026-05-26T00:57:24.527936+00:00
-pcottle/learngitbranching,1,javascript,33473,https://github.com/pcottle/learngitbranching.git,314,,2026-05-26T00:57:25.288866+00:00
-lacymorrow/crossover,1,javascript,1168,https://github.com/lacymorrow/crossover.git,13,,2026-05-26T00:58:19.305060+00:00
-nodemailer/nodemailer,1,javascript,17565,https://github.com/nodemailer/nodemailer.git,129,,2026-05-26T00:58:23.583965+00:00
-skyvers/skyve,1,javascript,501,https://github.com/skyvers/skyve.git,19,,2026-05-26T00:58:41.080526+00:00
-scality/cloudserver,1,javascript,1920,https://github.com/scality/cloudserver.git,60,,2026-05-26T00:59:52.268212+00:00
-dawidd6/action-send-mail,1,javascript,584,https://github.com/dawidd6/action-send-mail.git,30,,2026-05-26T01:00:22.078482+00:00
-vendia/serverless-express,1,javascript,4843,https://github.com/vendia/serverless-express.git,47,,2026-05-26T01:00:39.539742+00:00
-increpare/puzzlescript,1,javascript,1055,https://github.com/increpare/puzzlescript.git,26,,2026-05-26T01:00:44.278896+00:00
-marko-js/marko,1,javascript,14373,https://github.com/marko-js/marko.git,128,,2026-05-26T01:00:45.148280+00:00
-clientio/joint,1,javascript,5260,https://github.com/clientio/joint.git,82,,2026-05-26T01:01:24.142534+00:00
-wps/domain-story-modeler,1,javascript,634,https://github.com/wps/domain-story-modeler.git,12,,2026-05-26T01:01:49.409097+00:00
-bfirsh/jsnes,1,javascript,6388,https://github.com/bfirsh/jsnes.git,39,,2026-05-26T01:02:12.695766+00:00
-agershun/alasql,1,javascript,5810,https://github.com/agershun/alasql.git,66,,2026-05-26T01:02:12.898399+00:00
-brasilapi/brasilapi,1,javascript,10477,https://github.com/brasilapi/brasilapi.git,98,,2026-05-26T01:02:15.473123+00:00
-nuknightlab/timelinejs3,1,javascript,3183,https://github.com/nuknightlab/timelinejs3.git,44,,2026-05-26T01:02:19.136408+00:00
-zotero/zotero,1,javascript,14266,https://github.com/zotero/zotero.git,84,,2026-05-26T01:02:19.472749+00:00
-hovancik/stretchly,1,javascript,6250,https://github.com/hovancik/stretchly.git,251,,2026-05-26T01:02:26.947716+00:00
-zapier/zapier-platform,1,javascript,505,https://github.com/zapier/zapier-platform.git,75,,2026-05-26T01:02:38.630722+00:00
-jonobr1/two.js,1,javascript,8622,https://github.com/jonobr1/two.js.git,55,,2026-05-26T01:02:47.254538+00:00
-toorshia/justgage,1,javascript,1889,https://github.com/toorshia/justgage.git,28,,2026-05-26T01:02:54.287471+00:00
-dynamoose/dynamoose,1,javascript,2250,https://github.com/dynamoose/dynamoose.git,131,,2026-05-26T01:02:54.875472+00:00
-chinchang/web-maker,1,javascript,2689,https://github.com/chinchang/web-maker.git,23,,2026-05-26T01:02:58.952495+00:00
-prismarinejs/flying-squid,1,javascript,596,https://github.com/prismarinejs/flying-squid.git,52,,2026-05-26T01:03:11.884587+00:00
-keyboardio/chrysalis,1,javascript,509,https://github.com/keyboardio/chrysalis.git,47,,2026-05-26T01:03:13.932656+00:00
-glin/reactable,1,javascript,672,https://github.com/glin/reactable.git,9,,2026-05-26T01:03:44.156820+00:00
-sverweij/dependency-cruiser,1,javascript,6684,https://github.com/sverweij/dependency-cruiser.git,49,,2026-05-26T01:04:01.308882+00:00
-yaireo/tagify,1,javascript,2578,https://github.com/yaireo/tagify.git,49,,2026-05-26T01:04:03.278652+00:00
-zalo/cascadestudio,1,javascript,1356,https://github.com/zalo/cascadestudio.git,12,,2026-05-26T01:04:53.545824+00:00
-rollbar/rollbar.js,1,javascript,589,https://github.com/rollbar/rollbar.js.git,101,,2026-05-26T01:04:54.957114+00:00
-datadog/dd-trace-js,1,javascript,810,https://github.com/datadog/dd-trace-js.git,239,,2026-05-26T01:05:24.454632+00:00
-alshedivat/al-folio,1,javascript,3435,https://github.com/alshedivat/al-folio.git,64,,2026-05-26T01:05:43.067436+00:00
-processing/p5.js,1,javascript,23699,https://github.com/processing/p5.js.git,353,,2026-05-26T01:06:12.045306+00:00
-30-seconds/30-seconds-of-code,1,javascript,115518,https://github.com/30-seconds/30-seconds-of-code.git,390,,2026-05-26T01:06:28.600976+00:00
-axios/axios,1,javascript,109073,https://github.com/axios/axios.git,444,,2026-05-26T01:06:32.408809+00:00
-azgaar/fantasy-map-generator,1,javascript,5670,https://github.com/azgaar/fantasy-map-generator.git,66,,2026-05-26T01:06:54.656860+00:00
-telerik/kendo-ui-core,1,javascript,2578,https://github.com/telerik/kendo-ui-core.git,283,,2026-05-26T01:07:13.018010+00:00
-chartbrew/chartbrew,1,javascript,3935,https://github.com/chartbrew/chartbrew.git,22,,2026-05-26T01:07:22.682605+00:00
-cboard-org/cboard,1,javascript,736,https://github.com/cboard-org/cboard.git,83,,2026-05-26T01:07:22.825498+00:00
-rexrainbow/phaser3-rex-notes,1,javascript,1325,https://github.com/rexrainbow/phaser3-rex-notes.git,44,,2026-05-26T01:07:23.285978+00:00
-sweetalert2/sweetalert2,1,javascript,18078,https://github.com/sweetalert2/sweetalert2.git,118,,2026-05-26T01:07:24.169041+00:00
-swagger-api/swagger-ui,1,javascript,28800,https://github.com/swagger-api/swagger-ui.git,390,,2026-05-26T01:07:24.200605+00:00
-swagger-api/swagger-editor,1,javascript,9433,https://github.com/swagger-api/swagger-editor.git,16,,2026-05-26T01:07:25.735299+00:00
-codeceptjs/codeceptjs,1,javascript,4223,https://github.com/codeceptjs/codeceptjs.git,382,,2026-05-26T01:07:25.765928+00:00
-swagger-api/swagger-js,1,javascript,2693,https://github.com/swagger-api/swagger-js.git,202,,2026-05-26T01:07:35.575749+00:00
-char0n/ramda-adjunct,1,javascript,686,https://github.com/char0n/ramda-adjunct.git,68,,2026-05-26T01:07:45.298581+00:00
-jihong88/suneditor,1,javascript,1985,https://github.com/jihong88/suneditor.git,61,,2026-05-26T01:07:47.529455+00:00
-asciidoctor/asciidoctor.js,1,javascript,793,https://github.com/asciidoctor/asciidoctor.js.git,32,,2026-05-26T01:07:47.620732+00:00
-dequelabs/axe-core,1,javascript,7180,https://github.com/dequelabs/axe-core.git,225,,2026-05-26T01:08:11.644235+00:00
-camunda/camunda-modeler,1,javascript,1676,https://github.com/camunda/camunda-modeler.git,64,,2026-05-26T01:08:31.612869+00:00
-prebid/prebid.js,1,javascript,1574,https://github.com/prebid/prebid.js.git,428,,2026-05-26T01:08:31.733104+00:00
-troyeguo/koodo-reader,1,javascript,11908,https://github.com/troyeguo/koodo-reader.git,10,,2026-05-26T01:08:43.447176+00:00
-handsontable/handsontable,1,javascript,21906,https://github.com/handsontable/handsontable.git,136,,2026-05-26T01:08:44.814563+00:00
-mochajs/mocha,1,javascript,22886,https://github.com/mochajs/mocha.git,422,,2026-05-26T01:08:54.725100+00:00
-medic/cht-core,1,javascript,541,https://github.com/medic/cht-core.git,117,,2026-05-26T01:08:55.531444+00:00
-meteor/meteor,1,javascript,44785,https://github.com/meteor/meteor.git,357,,2026-05-26T01:08:59.150011+00:00
-tryghost/ghost,1,javascript,53648,https://github.com/tryghost/ghost.git,372,,2026-05-26T01:08:59.731824+00:00
-sap/openui5,1,javascript,3182,https://github.com/sap/openui5.git,253,,2026-05-26T01:09:02.924752+00:00
-aframevr/aframe,1,javascript,17535,https://github.com/aframevr/aframe.git,410,,2026-05-26T01:09:06.989219+00:00
-dyatko/arkit,1,javascript,968,https://github.com/dyatko/arkit.git,6,,2026-05-26T01:10:10.033597+00:00
-circleci/circleci-docs,1,javascript,814,https://github.com/circleci/circleci-docs.git,335,,2026-05-26T01:10:21.232178+00:00
-neomjs/neo,1,javascript,3185,https://github.com/neomjs/neo.git,60,,2026-05-26T01:10:24.189058+00:00
-pipedreamhq/pipedream,1,javascript,11388,https://github.com/pipedreamhq/pipedream.git,271,,2026-05-26T01:10:31.493449+00:00
-salesforce/lwc,1,javascript,1765,https://github.com/salesforce/lwc.git,83,,2026-05-26T01:10:33.421859+00:00
-pwndoc/pwndoc,1,javascript,2819,https://github.com/pwndoc/pwndoc.git,29,,2026-05-26T01:10:36.557009+00:00
-asyncapi/generator,1,javascript,1053,https://github.com/asyncapi/generator.git,121,,2026-05-26T01:10:39.031438+00:00
-countly/countly-server,1,javascript,5866,https://github.com/countly/countly-server.git,88,,2026-05-26T01:11:12.809704+00:00
-jsdom/jsdom,1,javascript,21578,https://github.com/jsdom/jsdom.git,301,,2026-05-26T01:11:34.710626+00:00
-eslint/eslint,1,javascript,27279,https://github.com/eslint/eslint.git,416,,2026-05-26T01:11:34.925231+00:00
-vercel/next.js,1,javascript,139570,https://github.com/vercel/next.js.git,428,,2026-05-26T01:11:36.025002+00:00
-mozilla/pdf.js,1,javascript,53365,https://github.com/mozilla/pdf.js.git,383,,2026-05-26T01:11:52.221911+00:00
-fonoster/fonos,1,javascript,2305,https://github.com/fonoster/fonos.git,8,,2026-05-26T01:11:59.610358+00:00
-wordpress/gutenberg,1,javascript,11669,https://github.com/wordpress/gutenberg.git,437,,2026-05-26T01:12:02.033401+00:00
-jens-maus/raspberrymatic,1,javascript,1663,https://github.com/jens-maus/raspberrymatic.git,43,,2026-05-26T01:12:20.146810+00:00
-facebook/react,1,javascript,245225,https://github.com/facebook/react.git,410,,2026-05-26T01:12:32.074703+00:00
-irosthebeggar/mstream,1,javascript,2341,https://github.com/irosthebeggar/mstream.git,24,,2026-05-26T01:12:41.063677+00:00
-quarto-dev/quarto-cli,1,javascript,5665,https://github.com/quarto-dev/quarto-cli.git,148,,2026-05-26T01:13:03.938556+00:00
-blackmatrix7/ios_rule_script,1,javascript,26229,https://github.com/blackmatrix7/ios_rule_script.git,12,,2026-05-26T01:13:04.352131+00:00
-zadam/trilium,1,javascript,26506,https://github.com/zadam/trilium.git,98,,2026-05-26T01:13:12.604239+00:00
-popcorn-official/popcorn-desktop,1,javascript,9864,https://github.com/popcorn-official/popcorn-desktop.git,107,,2026-05-26T01:13:36.715315+00:00
-sindresorhus/eslint-plugin-unicorn,1,javascript,5015,https://github.com/sindresorhus/eslint-plugin-unicorn.git,178,,2026-05-26T01:13:38.749246+00:00
-webpack/webpack,1,javascript,65772,https://github.com/webpack/webpack.git,393,,2026-05-26T01:13:42.909435+00:00
-lowdefy/lowdefy,1,javascript,2968,https://github.com/lowdefy/lowdefy.git,28,,2026-05-26T01:14:18.688439+00:00
-thatguysam/doesitarm,1,javascript,3796,https://github.com/thatguysam/doesitarm.git,108,,2026-05-26T01:14:24.494273+00:00
-sveltejs/kit,1,javascript,20528,https://github.com/sveltejs/kit.git,452,,2026-05-26T01:15:06.568364+00:00
-wprig/wprig,1,javascript,1318,https://github.com/wprig/wprig.git,31,,2026-05-26T01:15:07.889974+00:00
-bpmn-io/form-js,1,javascript,539,https://github.com/bpmn-io/form-js.git,25,,2026-05-26T01:15:30.214139+00:00
-gokrazy/gokrazy,1,javascript,3464,https://github.com/gokrazy/gokrazy.git,37,,2026-05-26T01:15:30.284474+00:00
-cweijan/vscode-office,1,javascript,1376,https://github.com/cweijan/vscode-office.git,12,,2026-05-26T01:15:37.412094+00:00
-ever-co/ever-traduora,1,javascript,2114,https://github.com/ever-co/ever-traduora.git,34,,2026-05-26T01:15:45.512896+00:00
-vaadin/web-components,1,javascript,564,https://github.com/vaadin/web-components.git,116,,2026-05-26T01:15:52.542392+00:00
-rstudio/bookdown,1,javascript,4038,https://github.com/rstudio/bookdown.git,107,,2026-05-26T01:15:53.864854+00:00
-yoast/wordpress-seo,1,javascript,1954,https://github.com/yoast/wordpress-seo.git,279,,2026-05-26T01:16:10.326014+00:00
-nextcloud/mail,1,javascript,979,https://github.com/nextcloud/mail.git,167,,2026-05-26T01:16:13.336396+00:00
-talebook/talebook,1,javascript,5459,https://github.com/talebook/talebook.git,17,,2026-05-26T01:16:32.577414+00:00
-marcocesarato/react-native-big-list,1,javascript,538,https://github.com/marcocesarato/react-native-big-list.git,16,,2026-05-26T01:17:20.393283+00:00
-stackernews/stacker.news,1,javascript,522,https://github.com/stackernews/stacker.news.git,55,,2026-05-26T01:17:30.247455+00:00
-ttop32/mousetooltiptranslator,1,javascript,1208,https://github.com/ttop32/mousetooltiptranslator.git,16,,2026-05-26T01:17:46.368953+00:00
-louislam/uptime-kuma,1,javascript,87127,https://github.com/louislam/uptime-kuma.git,401,,2026-05-26T01:17:50.528241+00:00
-postalsys/imapapi,1,javascript,925,https://github.com/postalsys/imapapi.git,6,,2026-05-26T01:17:51.906446+00:00
-postalsys/imapflow,1,javascript,532,https://github.com/postalsys/imapflow.git,22,,2026-05-26T01:18:04.491970+00:00
+repo_name,has_agent_config,language,stars,clone_url,num_contributors,qc_reason,matched_config_file,processed_at,created_at,topics,discovery_tier
+theotherp/nzbhydra2,1,javascript,1667,https://github.com/theotherp/nzbhydra2.git,28,,.claude/,2026-07-25T01:06:07.503068+00:00,2017-09-15T05:08:08,"[""metasearch"", ""nzb"", ""usenet""]",1
+bigbluebutton/bigbluebutton,1,javascript,9172,https://github.com/bigbluebutton/bigbluebutton.git,231,,CLAUDE.md,2026-07-25T01:06:41.344499+00:00,2010-05-25T01:42:41,"[""bigbluebutton"", ""collaboration"", ""conferencing"", ""video"", ""video-conferencing"", ""webrtc""]",1
+newlifex/newlife.cube,1,javascript,627,https://github.com/newlifex/newlife.cube.git,41,,copilot-instructions.md,2026-07-25T01:06:42.975182+00:00,2018-05-19T05:02:16,"[""admin"", ""asp-net-core"", ""csharp"", ""cube"", ""net-mvc"", ""newlife""]",1
+scality/zenko,1,javascript,534,https://github.com/scality/zenko.git,48,,copilot-instructions.md,2026-07-25T01:07:10.526555+00:00,2017-06-07T12:53:14,"[""artesca"", ""aws-s3"", ""azure-storage"", ""cloud-native"", ""docker-swarm"", ""google-cloud"", ""grafana"", ""helm"", ""hybrid-cloud"", ""kafka"", ""kubernetes"", ""mongodb"", ""multi-cloud"", ""object-storage"", ""prometheus"", ""redis"", ""scality"", ""zenko"", ""zookeeper""]",1
+basnijholt/home-assistant-config,1,javascript,1932,https://github.com/basnijholt/home-assistant-config.git,3,,CLAUDE.md,2026-07-25T01:07:16.714956+00:00,2019-11-12T07:30:43,"[""appdaemon"", ""automation"", ""config"", ""home-assistant"", ""home-assistant-config"", ""home-automation"", ""internet-of-things"", ""iot"", ""lovelace"", ""lovelace-ui"", ""philips-hue"", ""yaml""]",1
+mozilla/rhino,1,javascript,4596,https://github.com/mozilla/rhino.git,111,,CLAUDE.md,2026-07-25T01:07:17.765952+00:00,2011-05-12T06:47:26,[],1
+weizhiqiang1995/skyeye,1,javascript,824,https://github.com/weizhiqiang1995/skyeye.git,9,,.cursor/,2026-07-25T01:07:17.812236+00:00,2019-05-19T07:08:40,"[""approval-process"", ""cms"", ""crm"", ""ehr"", ""erp"", ""hr"", ""layui"", ""mysql"", ""oa"", ""privileges"", ""redis"", ""skyeye"", ""springboot"", ""springboot2"", ""springcloud-vue"", ""websocket""]",1
+jesse-ai/jesse,1,javascript,8142,https://github.com/jesse-ai/jesse.git,52,,.claude/,2026-07-25T01:07:21.710816+00:00,2018-11-09T10:38:44,"[""algo-trading"", ""algorithmic-trading"", ""bitcoin"", ""bot"", ""crypto"", ""crypto-bot"", ""crypto-bot-trading"", ""cryptocurrency"", ""framework"", ""jesse"", ""python"", ""quantitative-finance"", ""quantitative-trading"", ""trade"", ""trading"", ""trading-algorithms"", ""trading-bot"", ""trading-strategies""]",1
+facebook/hermes,1,javascript,11184,https://github.com/facebook/hermes.git,181,,CLAUDE.md,2026-07-25T01:07:21.870675+00:00,2018-10-22T07:13:00,[],1
+datopian/portal.js,1,javascript,2025,https://github.com/datopian/portal.js.git,68,,CLAUDE.md,2026-07-25T01:07:43.224362+00:00,2011-10-14T09:44:30,[],1
+mobsf/mobile-security-framework-mobsf,1,javascript,21352,https://github.com/mobsf/mobile-security-framework-mobsf.git,91,,CLAUDE.md,2026-07-25T01:07:50.922765+00:00,2015-01-31T04:36:01,"[""android-security"", ""api-testing"", ""apk"", ""cwe"", ""devsecops"", ""dynamic-analysis"", ""ios-security"", ""malware-analysis"", ""mastg"", ""masvs"", ""mobile-security"", ""mobsf"", ""mstg"", ""owasp"", ""rest"", ""runtime-security"", ""static-analysis"", ""web-security"", ""windows-mobile-security""]",1
+foundry376/mailspring,1,javascript,17673,https://github.com/foundry376/mailspring.git,233,,CLAUDE.md,2026-07-25T01:07:51.058074+00:00,2016-10-13T06:45:50,"[""electron"", ""electron-app"", ""email"", ""imap"", ""linux"", ""mail"", ""osx"", ""windows""]",1
+cloudera/hue,1,javascript,1414,https://github.com/cloudera/hue.git,231,,.cursor/,2026-07-25T01:07:54.722422+00:00,2010-06-21T07:46:51,"[""autocomplete"", ""compose"", ""data-warehouse"", ""databases"", ""query-editor"", ""sql"", ""sql-assistant"", ""sql-editor""]",1
+thedjpetersen/subway,1,javascript,1466,https://github.com/thedjpetersen/subway.git,42,,CLAUDE.md,2026-07-25T01:08:05.646722+00:00,2011-12-20T06:15:14,[],1
+humblesoftware/flotr2,1,javascript,2439,https://github.com/humblesoftware/flotr2.git,19,,CLAUDE.md,2026-07-25T01:09:04.605575+00:00,2011-08-02T05:40:17,[],1
+dcloudio/casecode,1,javascript,1447,https://github.com/dcloudio/casecode.git,6,,.cursor/,2026-07-25T01:10:42.342681+00:00,2015-05-20T12:44:42,[],1
+jimmywarting/native-file-system-adapter,1,javascript,588,https://github.com/jimmywarting/native-file-system-adapter.git,9,,copilot-instructions.md,2026-07-25T01:13:47.938636+00:00,2020-03-05T05:08:46,[],1
+highcharts/highcharts-react,1,javascript,1172,https://github.com/highcharts/highcharts-react.git,23,,.claude/,2026-07-25T01:14:32.172762+00:00,2017-09-26T04:13:41,[],1
+datopian/recline,1,javascript,1970,https://github.com/datopian/recline.git,56,,CLAUDE.md,2026-07-25T01:14:42.216142+00:00,2011-10-14T09:44:30,[],1
+shopperlabs/framework,1,javascript,667,https://github.com/shopperlabs/framework.git,12,,CLAUDE.md,2026-07-25T01:15:03.378487+00:00,2020-09-05T07:04:14,"[""admin-dashboard"", ""e-commerce"", ""laravel"", ""laravel-ecommerce"", ""laravel-shopper"", ""livewire"", ""tailwindcss""]",1
+jpush/jpush-phonegap-plugin,1,javascript,923,https://github.com/jpush/jpush-phonegap-plugin.git,19,,.cursor/,2026-07-25T01:15:27.432469+00:00,2013-10-17T06:22:12,"[""android"", ""cordova-plugin"", ""ios"", ""jpush"", ""phonegap-plugin""]",1
+haroldtreen/epub-press-clients,1,javascript,615,https://github.com/haroldtreen/epub-press-clients.git,3,,CLAUDE.md,2026-07-25T01:16:45.662071+00:00,2015-05-10T08:56:04,"[""article"", ""chrome"", ""ebook"", ""epub"", ""extension"", ""firefox"", ""javascript"", ""kindle"", ""npm""]",1
+adobe/leonardo,1,javascript,2108,https://github.com/adobe/leonardo.git,15,,.cursor/,2026-07-25T01:17:18.043115+00:00,2019-10-21T02:56:25,"[""a11y"", ""color"", ""color-generator"", ""color-palette"", ""color-palette-generator"", ""color-picker"", ""color-theme"", ""color-theme-switcher"", ""color-themes"", ""colors"", ""colorscheme"", ""colorscheme-generator"", ""contrast"", ""contrast-ratio"", ""dark""]",1
+crossbario/autobahn-js,1,javascript,1448,https://github.com/crossbario/autobahn-js.git,57,,CLAUDE.md,2026-07-25T01:17:37.395666+00:00,2012-03-09T01:13:13,"[""autobahn"", ""html5"", ""javascript"", ""nodejs"", ""pubsub"", ""real-time"", ""rpc"", ""wamp"", ""websocket""]",1
+cncjs/cncjs,1,javascript,2619,https://github.com/cncjs/cncjs.git,45,,CLAUDE.md,2026-07-25T01:17:54.649049+00:00,2015-08-21T09:39:18,"[""cnc"", ""cnc-milling-controller"", ""cncjs"", ""g2core"", ""gcode"", ""grbl"", ""linux"", ""marlin"", ""pendant"", ""raspberry-pi"", ""serial"", ""smoothie"", ""smoothieware"", ""tinyg""]",1
+protofire/solhint,1,javascript,1126,https://github.com/protofire/solhint.git,72,,.claude/,2026-07-25T01:17:59.257902+00:00,2017-10-16T11:48:44,"[""ast"", ""code-quality"", ""dapp"", ""developer-tools"", ""ethereum"", ""linter"", ""security-scanner"", ""smart-contracts"", ""solhint"", ""solidity""]",1
+antvis/f2,1,javascript,7988,https://github.com/antvis/f2.git,46,,.cursor/,2026-07-25T01:18:05.611927+00:00,2016-08-29T06:26:23,"[""antv"", ""charts"", ""data-visualisation"", ""data-visualization"", ""f2"", ""grammar"", ""html5-canvas"", ""mobile"", ""visualization""]",1
+lirantal/npq,1,javascript,1754,https://github.com/lirantal/npq.git,25,,.github/instructions/,2026-07-25T01:18:11.621927+00:00,2017-12-14T09:37:48,"[""appsec"", ""best-practices"", ""command-line-tool"", ""nodejs"", ""npm"", ""package-manager"", ""security"", ""security-audit"", ""security-tools"", ""supply-chain-security"", ""vulnerabilities"", ""vulnerability-scanners""]",1
+albinotonnina/albinotonnina.com,1,javascript,2751,https://github.com/albinotonnina/albinotonnina.com.git,3,,.github/instructions/,2026-07-25T01:18:11.698836+00:00,2014-03-16T12:55:15,"[""albinotonnina"", ""animatecss"", ""css"", ""javascript"", ""portfolio-website"", ""scrolling"", ""vanilla-javascript"", ""webpack""]",1
+draggable/formeo,1,javascript,602,https://github.com/draggable/formeo.git,14,,CLAUDE.md,2026-07-25T01:18:18.771191+00:00,2015-12-05T06:32:27,[],1
+gre/gl-transition-libs,1,javascript,780,https://github.com/gre/gl-transition-libs.git,4,,CLAUDE.md,2026-07-25T01:18:19.430279+00:00,2013-12-22T04:15:19,[],1
+pyramation/latex2js,1,javascript,603,https://github.com/pyramation/latex2js.git,2,,.claude/,2026-07-25T01:18:21.578315+00:00,2013-08-20T05:44:28,[],1
+uhop/stream-json,1,javascript,1194,https://github.com/uhop/stream-json.git,8,,copilot-instructions.md,2026-07-25T01:18:26.382467+00:00,2013-08-11T02:17:41,"[""filter"", ""json"", ""json-parser"", ""jsonc"", ""large-files"", ""memory-efficient"", ""nodejs"", ""parser"", ""pipeline"", ""sax"", ""stream"", ""streaming"", ""streaming-json"", ""tokenizer"", ""web-streams""]",1
+nicroto/viktor,1,javascript,526,https://github.com/nicroto/viktor.git,1,,.cursor/,2026-07-25T01:18:28.250117+00:00,2015-04-06T02:06:24,[],1
+liriliri/licia,1,javascript,2375,https://github.com/liriliri/licia.git,4,,CLAUDE.md,2026-07-25T01:18:39.887168+00:00,2016-03-23T11:25:29,"[""eustia"", ""utility""]",1
+freegroup/draw2d,1,javascript,782,https://github.com/freegroup/draw2d.git,9,,.claude/,2026-07-25T01:18:50.168539+00:00,2018-06-29T01:36:45,[],1
+retroreversing/retroreversing,1,javascript,664,https://github.com/retroreversing/retroreversing.git,48,,CLAUDE.md,2026-07-25T01:18:50.218662+00:00,2016-08-14T06:35:07,[],1
+doramart/doracms,1,javascript,3527,https://github.com/doramart/doracms.git,1,,.cursor/,2026-07-25T01:18:55.083230+00:00,2015-10-19T12:23:38,"[""cms"", ""doracms"", ""eggjs"", ""element-ui"", ""mit-license"", ""mongodb"", ""nodejs"", ""nodejscms"", ""pnpm"", ""qiankun"", ""typescript"", ""vue"", ""vuejs""]",1
+andris9/imapapi,1,javascript,886,https://github.com/andris9/imapapi.git,6,,CLAUDE.md,2026-07-25T01:18:55.309607+00:00,2020-02-28T05:17:44,[],1
+squaremo/amqp.node,1,javascript,3062,https://github.com/squaremo/amqp.node.git,41,,CLAUDE.md,2026-07-25T01:19:13.294142+00:00,2013-06-12T02:29:36,[],1
+webpack/enhanced-resolve,1,javascript,984,https://github.com/webpack/enhanced-resolve.git,72,,CLAUDE.md,2026-07-25T01:19:19.648791+00:00,2012-08-13T02:45:48,"[""commonjs"", ""esm"", ""javascript"", ""resolve"", ""resolver""]",1
+zhw2590582/artplayer,1,javascript,3818,https://github.com/zhw2590582/artplayer.git,29,,CLAUDE.md,2026-07-25T01:19:19.671671+00:00,2018-10-08T02:37:50,"[""contextmenu"", ""danmu"", ""highlight"", ""html5"", ""layers"", ""player"", ""quality"", ""screenshot"", ""subtitle"", ""thumbnails"", ""video""]",1
+creativelifeform/three-nebula,1,javascript,710,https://github.com/creativelifeform/three-nebula.git,5,,.claude/,2026-07-25T01:19:29.253377+00:00,2018-11-16T11:27:56,[],1
+sahat/hackathon-starter,1,javascript,35236,https://github.com/sahat/hackathon-starter.git,201,,CLAUDE.md,2026-07-25T01:19:40.391577+00:00,2013-11-13T05:24:12,"[""boilerplate"", ""hackathon"", ""hacktoberfest"", ""nodejs"", ""oauth2"", ""starter-kit""]",1
+totallyinformation/node-red-contrib-uibuilder,1,javascript,519,https://github.com/totallyinformation/node-red-contrib-uibuilder.git,12,,copilot-instructions.md,2026-07-25T01:19:51.616423+00:00,2017-04-18T03:54:31,"[""css"", ""dashboard"", ""data-driven"", ""flow-based-programming"", ""html"", ""javascript"", ""low-code"", ""no-code"", ""node-red"", ""ui"", ""web-app"", ""web-application"", ""web-components"", ""webapp"", ""website"", ""websockets"", ""zero-code""]",1
+ctrlplusb/easy-peasy,1,javascript,5043,https://github.com/ctrlplusb/easy-peasy.git,67,,CLAUDE.md,2026-07-25T01:19:53.876063+00:00,2018-10-21T08:52:18,"[""hooks"", ""immer"", ""immutable"", ""react"", ""react-hooks"", ""redux"", ""state-management""]",1
+bytedance/xgplayer,1,javascript,9248,https://github.com/bytedance/xgplayer.git,61,,copilot-instructions.md,2026-07-25T01:20:06.645806+00:00,2018-05-16T12:01:55,"[""dash"", ""flv"", ""flv-parser"", ""fmp4"", ""hls"", ""hls-player"", ""html5-video"", ""html5-video-player"", ""mp4"", ""mp4box"", ""player"", ""video"", ""video-player"", ""videoplayer""]",1
+leonardomso/33-js-concepts,1,javascript,66473,https://github.com/leonardomso/33-js-concepts.git,200,,CLAUDE.md,2026-07-25T01:20:09.284410+00:00,2018-09-04T01:27:04,"[""angular"", ""concepts"", ""es6"", ""es6-javascript"", ""hacktoberfest"", ""javascript"", ""javascript-closures"", ""javascript-engines"", ""javascript-programming"", ""nodejs"", ""primitive-types"", ""programming"", ""react""]",1
+glowing-bear/glowing-bear,1,javascript,972,https://github.com/glowing-bear/glowing-bear.git,72,,CLAUDE.md,2026-07-25T01:20:23.885280+00:00,2013-02-18T12:11:49,"[""irc"", ""websocket"", ""weechat""]",1
+orangecoding/fredy,1,javascript,1236,https://github.com/orangecoding/fredy.git,42,,CLAUDE.md,2026-07-25T01:20:34.842646+00:00,2018-01-15T07:39:00,"[""appartment"", ""appartments"", ""crawler"", ""ebay-kleinanzeigen"", ""fredy"", ""immobilien"", ""immobilienscout24"", ""immonet"", ""immoscout24"", ""immowelt"", ""nodejs"", ""puppeteer"", ""real-estate"", ""real-estate-search"", ""self-hosted"", ""telegrambots"", ""web-scraping"", ""wg-gesucht"", ""wohnungssuche""]",1
+tediousjs/node-mssql,1,javascript,2275,https://github.com/tediousjs/node-mssql.git,92,,copilot-instructions.md,2026-07-25T01:20:36.981999+00:00,2013-08-10T11:12:35,"[""javascript"", ""mssql"", ""nodejs"", ""sql-server"", ""tds""]",1
+bpmn-io/bpmn-js,1,javascript,9584,https://github.com/bpmn-io/bpmn-js.git,55,,CLAUDE.md,2026-07-25T01:20:57.612881+00:00,2014-03-10T12:57:00,"[""bpmn"", ""bpmn-js"", ""browser"", ""hacktoberfest"", ""javascript"", ""modeler"", ""toolkit""]",1
+hackjutsu/lepton,1,javascript,10330,https://github.com/hackjutsu/lepton.git,31,,CLAUDE.md,2026-07-25T01:20:59.594901+00:00,2016-12-30T10:29:25,"[""desktop-client"", ""electron"", ""electron-app"", ""electron-application"", ""electron-builder"", ""gists"", ""github-gist"", ""markdown-editor"", ""notes"", ""react"", ""redux"", ""snippets"", ""webpack3""]",1
+sentsin/layui,1,javascript,25888,https://github.com/sentsin/layui.git,16,,copilot-instructions.md,2026-07-25T01:21:10.965352+00:00,2015-09-22T08:12:03,[],1
+mixpanel/mixpanel-js,1,javascript,939,https://github.com/mixpanel/mixpanel-js.git,54,,CLAUDE.md,2026-07-25T01:21:22.901008+00:00,2014-05-15T07:12:17,"[""analytics"", ""browser"", ""javascript"", ""mixpanel"", ""mixpanel-javascript-library"", ""sdk""]",1
+retirejs/retire.js,1,javascript,4151,https://github.com/retirejs/retire.js.git,98,,.copilot/,2026-07-25T01:21:33.808371+00:00,2013-08-30T09:43:44,"[""build-tool"", ""chrome-extension"", ""firefox-extension"", ""grunt-plugins"", ""insecure-libraries"", ""javascript"", ""sbom"", ""sbom-generator"", ""sbom-tool"", ""scanner"", ""security"", ""software-composition-analysis"", ""vulnerabilities"", ""vulnerable-libraries""]",1
+algolia/shipjs,1,javascript,777,https://github.com/algolia/shipjs.git,27,,CLAUDE.md,2026-07-25T01:21:37.782182+00:00,2019-07-07T03:06:52,"[""automation"", ""ci"", ""conventional-changelog"", ""conventional-commits"", ""github"", ""process"", ""release"", ""semantic"", ""semver"", ""versioning""]",1
+mattiasw/exifreader,1,javascript,986,https://github.com/mattiasw/exifreader.git,27,,CLAUDE.md,2026-07-25T01:21:40.386900+00:00,2012-01-01T11:05:20,[],1
+docmirror/dev-sidecar,1,javascript,23054,https://github.com/docmirror/dev-sidecar.git,18,,copilot-instructions.md,2026-07-25T01:22:00.273797+00:00,2020-09-29T10:38:20,"[""dev-sidecar"", ""dns-ip"", ""electron"", ""fastgit"", ""fastgithub"", ""gfw"", ""internet"", ""mitmproxy"", ""pnpm"", ""proxy""]",1
+bottelet/daybydaycrm,1,javascript,2315,https://github.com/bottelet/daybydaycrm.git,26,,copilot-instructions.md,2026-07-25T01:22:04.404216+00:00,2016-01-14T10:43:51,"[""crm"", ""crm-platform"", ""crm-system"", ""daybyday"", ""daybydaycrm"", ""hacktoberfest"", ""hacktoberfest2020"", ""laravel"", ""managaement"", ""task-manager"", ""tracking""]",1
+openzeppelin/openzeppelin-contracts-upgradeable,1,javascript,1166,https://github.com/openzeppelin/openzeppelin-contracts-upgradeable.git,4,,CLAUDE.md,2026-07-25T01:22:13.783758+00:00,2018-07-20T08:22:39,[],1
+haraka/haraka,1,javascript,5582,https://github.com/haraka/haraka.git,183,,copilot-instructions.md,2026-07-25T01:22:24.548084+00:00,2011-03-10T05:00:20,"[""dkim"", ""haraka"", ""javascript"", ""mta"", ""nodejs"", ""smtp"", ""spf""]",1
+harvard-lil/perma,1,javascript,515,https://github.com/harvard-lil/perma.git,39,,.cursor/,2026-07-25T01:22:27.394198+00:00,2013-05-06T08:17:55,"[""libraries"", ""web-archiving""]",1
+actions/javascript-action,1,javascript,1175,https://github.com/actions/javascript-action.git,28,,copilot-instructions.md,2026-07-25T01:22:29.090394+00:00,2019-09-10T12:11:44,[],1
+bpmn-io/diagram-js,1,javascript,1906,https://github.com/bpmn-io/diagram-js.git,55,,CLAUDE.md,2026-07-25T01:22:29.098727+00:00,2014-01-23T02:31:50,"[""diagram-editor"", ""diagram-js"", ""hacktoberfest"", ""javascript"", ""svg""]",1
+patriksimek/vm2,1,javascript,4081,https://github.com/patriksimek/vm2.git,35,,CLAUDE.md,2026-07-25T01:22:59.234918+00:00,2014-01-14T11:31:39,"[""javascript"", ""node-js"", ""sandbox"", ""security"", ""vm""]",1
+adlered/csdngreener,1,javascript,4171,https://github.com/adlered/csdngreener.git,8,,.claude/,2026-07-25T01:23:00.013927+00:00,2019-02-28T12:13:19,"[""csdn"", ""tampermonkey"", ""userscript""]",1
+davidwells/markdown-magic,1,javascript,864,https://github.com/davidwells/markdown-magic.git,15,,.claude/,2026-07-25T01:23:03.522543+00:00,2016-11-30T05:40:10,"[""docs"", ""docs-generator"", ""dx"", ""markdown"", ""readme"", ""wired""]",1
+zotero/translators,1,javascript,1644,https://github.com/zotero/translators.git,265,,CLAUDE.md,2026-07-25T01:23:05.152079+00:00,2011-07-03T05:40:38,[],1
+mulesoft/api-console,1,javascript,908,https://github.com/mulesoft/api-console.git,45,,.cursorignore,2026-07-25T01:23:08.572146+00:00,2013-06-26T02:50:02,"[""raml"", ""raml-document"", ""raml-tooling""]",1
+krausest/js-framework-benchmark,1,javascript,7445,https://github.com/krausest/js-framework-benchmark.git,320,,copilot-instructions.md,2026-07-25T01:23:08.689561+00:00,2015-12-09T08:10:53,[],1
+damian-pastorini/reldens,1,javascript,571,https://github.com/damian-pastorini/reldens.git,6,,CLAUDE.md,2026-07-25T01:23:17.341963+00:00,2018-09-19T09:55:17,"[""colyseus"", ""discord"", ""game"", ""game-dev"", ""game-development"", ""gamedev"", ""html5-game"", ""mmo"", ""mmo-engine"", ""mmorpg"", ""mmorpg-client"", ""mmorpg-game"", ""mmorpg-server"", ""multiplayer"", ""multiplayer-game"", ""multiple-colyseus-rooms"", ""news"", ""phaser"", ""phaser-game"", ""phaser3""]",1
+zxlie/fehelper,1,javascript,5629,https://github.com/zxlie/fehelper.git,21,,.cursor/,2026-07-25T01:23:22.047490+00:00,2013-03-10T06:02:24,"[""chatgpt"", ""chrome-extension"", ""code-beautify"", ""code-compress"", ""color-transfer"", ""crontab"", ""fehelper"", ""firefox-addon"", ""image-base64"", ""json"", ""json-format"", ""markdown-html"", ""microsoft-edge"", ""microsoft-edge-extension"", ""qrcode"", ""qrcode-decoder"", ""qrcode-generator"", ""web-fehelper""]",1
+moleculerjs/moleculer,1,javascript,6365,https://github.com/moleculerjs/moleculer.git,126,,CLAUDE.md,2026-07-25T01:23:37.689910+00:00,2017-02-17T11:11:35,"[""distributed-systems"", ""microservice"", ""microservice-framework"", ""microservices"", ""moleculer"", ""nodejs""]",1
+inavflight/inav-configurator,1,javascript,770,https://github.com/inavflight/inav-configurator.git,133,,CLAUDE.md,2026-07-25T01:23:37.709325+00:00,2016-04-25T12:28:59,"[""aircraft"", ""drones"", ""hacktoberfest"", ""inav"", ""inav-configurator"", ""uav""]",1
+wheresrhys/fetch-mock,1,javascript,1310,https://github.com/wheresrhys/fetch-mock.git,84,,CLAUDE.md,2026-07-25T01:23:40.252291+00:00,2015-04-30T09:27:58,[],1
+jeremydaly/lambda-api,1,javascript,1466,https://github.com/jeremydaly/lambda-api.git,32,,copilot-instructions.md,2026-07-25T01:23:40.924422+00:00,2017-10-12T05:54:22,"[""api"", ""api-gateway"", ""aws-lambda"", ""nodejs"", ""serverless"", ""serverless-applications"", ""webframework""]",1
+abalabahaha/eris,1,javascript,1507,https://github.com/abalabahaha/eris.git,135,,copilot-instructions.md,2026-07-25T01:24:10.824768+00:00,2016-06-30T10:41:48,"[""bot"", ""discord"", ""discord-api"", ""eris"", ""nodejs""]",1
+nodemailer/wildduck,1,javascript,1955,https://github.com/nodemailer/wildduck.git,41,,CLAUDE.md,2026-07-25T01:24:10.862620+00:00,2017-03-05T09:23:24,"[""imap-server"", ""lmtp"", ""mongodb"", ""pop3-server""]",1
+didi/mpx,1,javascript,3910,https://github.com/didi/mpx.git,69,,CLAUDE.md,2026-07-25T01:24:11.619069+00:00,2018-12-06T01:50:11,"[""alipay-mini-program"", ""development-framework"", ""miniprogram"", ""mpx"", ""reactive-programming"", ""vue"", ""webapp"", ""webpack"", ""wechat-mini-program""]",1
+rstudio/shiny-server,1,javascript,756,https://github.com/rstudio/shiny-server.git,26,,CLAUDE.md,2026-07-25T01:24:12.172056+00:00,2012-08-22T06:42:22,[],1
+imaegoo/twikoo,1,javascript,1007,https://github.com/imaegoo/twikoo.git,30,,CLAUDE.md,2026-07-25T01:24:18.622392+00:00,2020-05-24T03:13:26,"[""cloudbase"", ""comment"", ""comment-system"", ""hexo"", ""twikoojs"", ""vercel"", ""vue""]",1
+olifolkerd/tabulator,1,javascript,7614,https://github.com/olifolkerd/tabulator.git,111,,CLAUDE.md,2026-07-25T01:24:35.949907+00:00,2015-10-24T01:28:31,"[""ajax"", ""cdnjs"", ""data"", ""grid"", ""grid-layout"", ""grid-system"", ""javascript"", ""jquery"", ""json"", ""list"", ""react"", ""sort"", ""table"", ""tabulator"", ""tabulator-table"", ""widget""]",1
+pcottle/learngitbranching,1,javascript,33658,https://github.com/pcottle/learngitbranching.git,313,,CLAUDE.md,2026-07-25T01:24:44.734823+00:00,2012-08-13T10:36:09,[],1
+alpinejs/alpine,1,javascript,16405,https://github.com/alpinejs/alpine.git,115,,CLAUDE.md,2026-07-25T01:24:44.746342+00:00,2019-11-28T01:51:55,[],1
+zhennann/cabloy,1,javascript,922,https://github.com/zhennann/cabloy.git,4,,CLAUDE.md,2026-07-25T01:24:48.374497+00:00,2018-01-14T05:13:19,"[""egg"", ""egg-framework"", ""framework7"", ""full-stack"", ""low-code"", ""low-code-development-platform"", ""nodejs"", ""paas-framework"", ""pro-code"", ""vue-admin"", ""workflow-engine""]",1
+lacymorrow/crossover,1,javascript,1185,https://github.com/lacymorrow/crossover.git,13,,.cursor/,2026-07-25T01:25:15.654243+00:00,2019-10-04T06:37:29,"[""aim"", ""crosshair"", ""crosshair-overlay"", ""crossover"", ""custom-crosshair"", ""electron"", ""fortnite"", ""fps"", ""game-overlay"", ""games"", ""gaming-tools"", ""linux"", ""macos"", ""overlay"", ""screen-overlay"", ""windows""]",1
+nodemailer/nodemailer,1,javascript,17608,https://github.com/nodemailer/nodemailer.git,130,,CLAUDE.md,2026-07-25T01:25:27.341702+00:00,2011-01-19T09:17:36,"[""email"", ""email-sender"", ""nodemailer"", ""rfc822""]",1
+skyvers/skyve,1,javascript,503,https://github.com/skyvers/skyve.git,21,,copilot-instructions.md,2026-07-25T01:25:30.463482+00:00,2014-07-28T06:06:39,"[""framework"", ""java"", ""low-code"", ""skyve"", ""xml""]",1
+scality/cloudserver,1,javascript,1925,https://github.com/scality/cloudserver.git,59,,copilot-instructions.md,2026-07-25T01:26:24.214677+00:00,2016-06-01T09:58:56,"[""artesca"", ""aws-s3"", ""cloud"", ""cloud-native"", ""cloud-storage"", ""docker"", ""javascript"", ""multiple-backends"", ""nodejs"", ""object-storage"", ""s3-storage"", ""storage"", ""zenko""]",1
+newrelic/node-newrelic,1,javascript,1001,https://github.com/newrelic/node-newrelic.git,132,,CLAUDE.md,2026-07-25T01:26:29.717878+00:00,2013-01-03T10:19:32,[],1
+vendia/serverless-express,1,javascript,4843,https://github.com/vendia/serverless-express.git,47,,.claude/,2026-07-25T01:26:53.528814+00:00,2016-09-13T11:29:07,"[""alb"", ""api-gateway"", ""aws"", ""aws-lambda"", ""aws-serverless"", ""dynamodb"", ""express"", ""express-js"", ""expressjs"", ""hacktoberfest"", ""lambda"", ""node"", ""node-js"", ""nodejs"", ""sam"", ""serverless"", ""serverless-applications"", ""serverless-express"", ""serverless-framework"", ""vendia""]",1
+increpare/puzzlescript,1,javascript,1069,https://github.com/increpare/puzzlescript.git,27,,.claude/,2026-07-25T01:27:01.034555+00:00,2013-09-29T08:27:21,"[""game-engine"", ""html5"", ""javascript"", ""puzzlescript"", ""scripting-language""]",1
+cytoscape/cytoscape.js,1,javascript,11073,https://github.com/cytoscape/cytoscape.js.git,136,,CLAUDE.md,2026-07-25T01:27:32.304682+00:00,2011-08-23T03:28:32,"[""analysis"", ""cytoscapejs"", ""graph-theory"", ""javascript"", ""network"", ""visualisation"", ""visualization""]",1
+wekan/wekan,1,javascript,20984,https://github.com/wekan/wekan.git,285,,CLAUDE.md,2026-07-25T01:27:38.524650+00:00,2014-01-21T01:26:28,"[""docker-image"", ""foss"", ""javascript"", ""kanban"", ""meteor"", ""real-time"", ""sandstorm"", ""snapcraft"", ""wekan""]",1
+imba/imba,1,javascript,6498,https://github.com/imba/imba.git,33,,.claude/,2026-07-25T01:27:42.203679+00:00,2014-06-14T06:58:32,"[""declarative"", ""dom"", ""framework"", ""frontend"", ""imba"", ""javascript"", ""programming-language"", ""ui""]",1
+clientio/joint,1,javascript,5278,https://github.com/clientio/joint.git,82,,CLAUDE.md,2026-07-25T01:27:44.164513+00:00,2009-09-11T11:17:53,"[""charts"", ""diagramming"", ""html5"", ""interactive-diagrams"", ""javascript"", ""javascript-library"", ""low-code"", ""no-code"", ""svg"", ""typescript"", ""typescript-library"", ""visual-applications"", ""visualization""]",1
+marko-js/marko,1,javascript,14381,https://github.com/marko-js/marko.git,128,,CLAUDE.md,2026-07-25T01:27:55.030556+00:00,2014-01-07T11:58:21,"[""client-side-rendering"", ""dom"", ""frontend"", ""isomorphic"", ""javascript"", ""nodejs"", ""server-side-rendering"", ""ui-components"", ""vdom""]",1
+wps/domain-story-modeler,1,javascript,634,https://github.com/wps/domain-story-modeler.git,12,,copilot-instructions.md,2026-07-25T01:27:57.679684+00:00,2018-08-31T09:05:00,"[""business-process"", ""collaborative-modeling"", ""domain-driven-design"", ""domainstorytelling"", ""modeling-tool""]",1
+bfirsh/jsnes,1,javascript,6399,https://github.com/bfirsh/jsnes.git,39,,CLAUDE.md,2026-07-25T01:28:16.363900+00:00,2009-06-30T06:24:29,"[""6502"", ""emulation"", ""emulator"", ""javascript"", ""nes""]",1
+apexcharts/apexcharts.js,1,javascript,15101,https://github.com/apexcharts/apexcharts.js.git,226,,.claude/,2026-07-25T01:28:19.090334+00:00,2018-07-24T03:22:23,"[""charts"", ""data-visualization"", ""graphs"", ""interactive"", ""javascript"", ""svg"", ""visualization""]",1
+brasilapi/brasilapi,1,javascript,10477,https://github.com/brasilapi/brasilapi.git,98,,copilot-instructions.md,2026-07-25T01:28:20.928481+00:00,2020-01-30T04:48:16,[],1
+agershun/alasql,1,javascript,5810,https://github.com/agershun/alasql.git,66,,copilot-instructions.md,2026-07-25T01:28:21.304878+00:00,2014-10-26T04:30:37,[],1
+nuknightlab/timelinejs3,1,javascript,3198,https://github.com/nuknightlab/timelinejs3.git,44,,CLAUDE.md,2026-07-25T01:28:23.178916+00:00,2014-07-29T04:24:03,[],1
+hovancik/stretchly,1,javascript,6352,https://github.com/hovancik/stretchly.git,252,,copilot-instructions.md,2026-07-25T01:28:31.802471+00:00,2016-07-10T07:01:00,"[""breaks"", ""bsd"", ""electron"", ""linux"", ""longer-breaks"", ""macos"", ""reminder"", ""windows""]",1
+uiv-lib/uiv,1,javascript,939,https://github.com/uiv-lib/uiv.git,48,,CLAUDE.md,2026-07-25T01:28:36.303358+00:00,2017-02-28T07:03:15,"[""bootstrap"", ""ui"", ""vue"", ""vue3""]",1
+zapier/zapier-platform,1,javascript,531,https://github.com/zapier/zapier-platform.git,75,,copilot-instructions.md,2026-07-25T01:28:44.778743+00:00,2019-06-06T01:44:04,"[""cli"", ""nodejs"", ""zapier""]",1
+jonobr1/two.js,1,javascript,8636,https://github.com/jonobr1/two.js.git,55,,CLAUDE.md,2026-07-25T01:28:51.633466+00:00,2012-09-05T11:19:40,"[""2d"", ""animation"", ""bitmap-graphics"", ""canvas"", ""es6"", ""html5"", ""javascript"", ""renderer"", ""rendering-engine"", ""scenegraph"", ""svg"", ""text-rendering"", ""vector-graphics"", ""webgl""]",1
+dherault/serverless-offline,1,javascript,5259,https://github.com/dherault/serverless-offline.git,270,,CLAUDE.md,2026-07-25T01:28:54.356970+00:00,2016-02-17T08:01:47,"[""aws-apigateway"", ""aws-lambda"", ""serverless""]",1
+toorshia/justgage,1,javascript,1889,https://github.com/toorshia/justgage.git,28,,copilot-instructions.md,2026-07-25T01:28:55.344121+00:00,2012-08-13T10:58:00,[],1
+dynamoose/dynamoose,1,javascript,2248,https://github.com/dynamoose/dynamoose.git,131,,copilot-instructions.md,2026-07-25T01:28:59.589246+00:00,2014-02-18T08:24:54,"[""amazon-dynamodb"", ""dynamodb"", ""dynamoose"", ""javascript"", ""nodejs""]",1
+chinchang/web-maker,1,javascript,2690,https://github.com/chinchang/web-maker.git,23,,CLAUDE.md,2026-07-25T01:29:00.847844+00:00,2016-05-02T11:42:54,"[""chrome-extension"", ""chrome-tabs"", ""code-editor"", ""offline"", ""playground"", ""web""]",1
+zotero/zotero,1,javascript,14656,https://github.com/zotero/zotero.git,86,,CLAUDE.md,2026-07-25T01:29:03.706434+00:00,2011-10-27T07:46:48,[],1
+prismarinejs/flying-squid,1,javascript,596,https://github.com/prismarinejs/flying-squid.git,52,,copilot-instructions.md,2026-07-25T01:29:09.142139+00:00,2015-08-25T11:30:19,"[""game"", ""minecraft"", ""minecraft-server"", ""protocol"", ""server"", ""voxel""]",1
+keyboardio/chrysalis,1,javascript,509,https://github.com/keyboardio/chrysalis.git,47,,CLAUDE.md,2026-07-25T01:29:14.212434+00:00,2018-09-11T07:40:40,"[""chrysalis"", ""configurator"", ""gui"", ""kaleidoscope"", ""keyboard""]",1
+glin/reactable,1,javascript,672,https://github.com/glin/reactable.git,10,,CLAUDE.md,2026-07-25T01:29:31.361267+00:00,2019-03-31T10:22:16,"[""htmlwidgets"", ""r"", ""react"", ""shiny"", ""table""]",1
+davidwells/analytics,1,javascript,2658,https://github.com/davidwells/analytics.git,68,,CLAUDE.md,2026-07-25T01:29:41.787045+00:00,2018-10-24T01:29:28,"[""analytics"", ""analytics-utils"", ""gdpr-compliant"", ""metrics"", ""telemetry"", ""wired""]",1
+yaireo/tagify,1,javascript,2578,https://github.com/yaireo/tagify.git,49,,.cursor/,2026-07-25T01:29:42.884176+00:00,2016-10-13T09:08:08,[],1
+sverweij/dependency-cruiser,1,javascript,6832,https://github.com/sverweij/dependency-cruiser.git,49,,copilot-instructions.md,2026-07-25T01:29:56.734395+00:00,2016-11-20T08:05:37,"[""architecture-diagram"", ""circular-dependencies"", ""dependencies"", ""dependency-analysis"", ""dependency-cruiser"", ""dependency-graph"", ""javascript"", ""jsx"", ""static-analysis"", ""tsx"", ""typescript"", ""vue""]",1
+rollbar/rollbar.js,1,javascript,589,https://github.com/rollbar/rollbar.js.git,102,,.cursor/,2026-07-25T01:29:59.842754+00:00,2012-12-12T08:00:01,"[""crash-reporting"", ""error-handling"", ""error-monitoring"", ""errors"", ""expressjs"", ""javascript"", ""nextjs"", ""nodejs"", ""react"", ""rollbar"", ""typescript""]",1
+zalo/cascadestudio,1,javascript,1408,https://github.com/zalo/cascadestudio.git,12,,CLAUDE.md,2026-07-25T01:30:09.341757+00:00,2020-07-23T09:18:55,"[""brep"", ""cad"", ""modeling"", ""opencascade"", ""scad""]",1
+sitespeedio/sitespeed.io,1,javascript,5001,https://github.com/sitespeedio/sitespeed.io.git,116,,CLAUDE.md,2026-07-25T01:30:31.713108+00:00,2012-07-04T07:17:10,"[""metrics"", ""monitoring"", ""perfmatters"", ""performance-analysis"", ""performance-dashboard"", ""performance-metrics"", ""sitespeed"", ""web"", ""webperf""]",1
+tobychui/arozos,1,javascript,2870,https://github.com/tobychui/arozos.git,16,,CLAUDE.md,2026-07-25T01:30:59.734625+00:00,2018-11-27T09:13:22,"[""aroz"", ""aroz-online"", ""arozos"", ""cloud"", ""diskstation"", ""dsm"", ""golang"", ""google-drive"", ""home-cloud"", ""home-server"", ""javascript"", ""nas"", ""network-attached-storage"", ""raspberry-pi"", ""storage"", ""synology-nas"", ""web-desktop"", ""web-os"", ""webdesktop""]",1
+alshedivat/al-folio,1,javascript,3435,https://github.com/alshedivat/al-folio.git,64,,copilot-instructions.md,2026-07-25T01:31:00.146916+00:00,2016-05-30T04:32:46,[],1
+datadog/dd-trace-js,1,javascript,823,https://github.com/datadog/dd-trace-js.git,246,,.cursor/,2026-07-25T01:31:00.151690+00:00,2018-01-17T06:40:03,"[""apm"", ""datadog"", ""javascript"", ""nodejs"", ""opentracing"", ""tracing""]",1
+automattic/mongoose,1,javascript,27480,https://github.com/automattic/mongoose.git,399,,.github/instructions/,2026-07-25T01:31:05.332321+00:00,2010-04-06T09:39:05,"[""mongo"", ""mongodb"", ""nodejs"", ""odm"", ""orm""]",1
+axios/axios,1,javascript,109106,https://github.com/axios/axios.git,444,,copilot-instructions.md,2026-07-25T01:31:33.044580+00:00,2014-08-18T10:30:27,"[""hacktoberfest"", ""http-client"", ""javascript"", ""nodejs"", ""promise""]",1
+facebook/metro,1,javascript,5598,https://github.com/facebook/metro.git,324,,.claude/,2026-07-25T01:31:34.120669+00:00,2016-12-14T11:02:54,"[""bundler"", ""javascript"", ""react-native""]",1
+azgaar/fantasy-map-generator,1,javascript,5730,https://github.com/azgaar/fantasy-map-generator.git,69,,copilot-instructions.md,2026-07-25T01:31:38.321373+00:00,2017-03-16T08:59:50,"[""cartography"", ""dungeons-and-dragons"", ""fantasy-maps"", ""generator"", ""javascript"", ""map-generation"", ""mapmaker"", ""procedural-generation""]",1
+30-seconds/30-seconds-of-code,1,javascript,115518,https://github.com/30-seconds/30-seconds-of-code.git,390,,copilot-instructions.md,2026-07-25T01:31:47.451237+00:00,2017-11-29T05:35:03,"[""awesome-list"", ""css"", ""education"", ""es6-javascript"", ""git"", ""html"", ""javascript"", ""learn-to-code"", ""learning-resources"", ""nodejs"", ""programming"", ""python"", ""reactjs"", ""snippets"", ""snippets-collection""]",1
+chartbrew/chartbrew,1,javascript,3953,https://github.com/chartbrew/chartbrew.git,23,,.cursor/,2026-07-25T01:31:53.968222+00:00,2019-08-29T01:14:17,"[""analytics"", ""api"", ""chartjs"", ""charts"", ""dashboard"", ""data-visualization"", ""firebase"", ""firebase-firestore"", ""firestore"", ""mongo"", ""mongodb"", ""mysql"", ""nodejs"", ""postgresql"", ""react"", ""reactjs"", ""realtime-database"", ""redux""]",1
+sweetalert2/sweetalert2,1,javascript,18090,https://github.com/sweetalert2/sweetalert2.git,118,,copilot-instructions.md,2026-07-25T01:32:01.459312+00:00,2015-01-03T04:15:52,"[""accessible"", ""alert"", ""angular"", ""confirm"", ""confirmation-dialog"", ""dialog"", ""modal"", ""notifications"", ""popup"", ""prompt"", ""react"", ""sweetalert"", ""sweetalert2"", ""toast"", ""vue"", ""wai-aria""]",1
+cboard-org/cboard,1,javascript,740,https://github.com/cboard-org/cboard.git,83,,copilot-instructions.md,2026-07-25T01:32:04.138917+00:00,2017-02-10T03:00:45,"[""aac"", ""accessibility"", ""assistive-technology"", ""autism"", ""cerebral-palsy"", ""communication"", ""communication-board"", ""disabilities"", ""javascript"", ""progressive-web-app"", ""react"", ""speech"", ""symbols"", ""text-to-speech"", ""tts""]",1
+swagger-api/swagger-editor,1,javascript,9453,https://github.com/swagger-api/swagger-editor.git,16,,CLAUDE.md,2026-07-25T01:32:08.107926+00:00,2014-05-02T10:47:10,"[""hacktoberfest"", ""open-source"", ""openapi-specification"", ""openapi3"", ""openapi31"", ""rest"", ""rest-api"", ""swagger"", ""swagger-editor"", ""swagger-oss"", ""swagger-ui""]",1
+swagger-api/swagger-js,1,javascript,2691,https://github.com/swagger-api/swagger-js.git,202,,CLAUDE.md,2026-07-25T01:32:12.551308+00:00,2012-02-16T12:08:43,"[""hacktoberfest"", ""javascript"", ""open-source"", ""openapi-specification"", ""openapi3"", ""openapi31"", ""rest"", ""rest-api"", ""swagger"", ""swagger-api"", ""swagger-js"", ""swagger-oss""]",1
+codeceptjs/codeceptjs,1,javascript,4226,https://github.com/codeceptjs/codeceptjs.git,387,,CLAUDE.md,2026-07-25T01:32:12.556958+00:00,2015-11-22T01:14:36,"[""acceptance-testing"", ""bdd"", ""bdd-framework"", ""codeceptjs"", ""e2e-tests"", ""end-to-end-testing"", ""graphql-testing"", ""hacktoberfest"", ""javascript"", ""nodejs"", ""pageobject"", ""playwright"", ""selenium"", ""selenium-webdriver"", ""testing"", ""webdriver"", ""webdriverio""]",1
+char0n/ramda-adjunct,1,javascript,686,https://github.com/char0n/ramda-adjunct.git,69,,CLAUDE.md,2026-07-25T01:32:23.799399+00:00,2017-02-07T11:01:37,"[""addons"", ""adjunct"", ""cookbook"", ""extensions"", ""extras"", ""functional-programming"", ""hacktoberfest"", ""ramda"", ""recipes"", ""toolkit"", ""utilities"", ""utils""]",1
+asciidoctor/asciidoctor.js,1,javascript,797,https://github.com/asciidoctor/asciidoctor.js.git,32,,CLAUDE.md,2026-07-25T01:32:28.765813+00:00,2013-05-19T08:46:05,"[""asciidoc"", ""asciidoctor"", ""hacktoberfest"", ""javascript""]",1
+jihong88/suneditor,1,javascript,1991,https://github.com/jihong88/suneditor.git,61,,CLAUDE.md,2026-07-25T01:32:28.785538+00:00,2017-04-13T09:07:41,"[""contenteditable"", ""editor"", ""html-editor"", ""no-dependencies"", ""rich-text-editor"", ""suneditor"", ""vanilla-javascript"", ""web-editor""]",1
+dequelabs/axe-core,1,javascript,7281,https://github.com/dequelabs/axe-core.git,228,,CLAUDE.md,2026-07-25T01:32:42.061742+00:00,2015-06-10T03:26:45,"[""a11y"", ""accessibility"", ""axe""]",1
+dash-industry-forum/dash.js,1,javascript,5536,https://github.com/dash-industry-forum/dash.js.git,187,,CLAUDE.md,2026-07-25T01:32:49.584646+00:00,2012-11-09T10:28:37,"[""abr"", ""adaptive-bitrate-streaming"", ""cmaf"", ""dash"", ""drm"", ""eme"", ""encrypted-media-extensions"", ""javascript"", ""media-source-extensions"", ""mss"", ""smooth-streaming"", ""video""]",1
+handsontable/handsontable,1,javascript,21959,https://github.com/handsontable/handsontable.git,136,,.cursor/,2026-07-25T01:32:51.798761+00:00,2011-05-23T10:38:58,"[""angular-datagrid"", ""angular-table"", ""component"", ""crud-operations"", ""data-editing"", ""data-grid"", ""data-management"", ""data-tables"", ""datagrid"", ""datatable"", ""excel"", ""excel-javascript"", ""grid"", ""grid-component"", ""react-datatable"", ""react-grid"", ""spreadsheet"", ""table"", ""vue-table""]",1
+camunda/camunda-modeler,1,javascript,1690,https://github.com/camunda/camunda-modeler.git,64,,CLAUDE.md,2026-07-25T01:33:00.818845+00:00,2015-09-18T09:38:04,"[""bpmn"", ""camunda"", ""desktop-application"", ""diagram-editor"", ""dmn"", ""hacktoberfest"", ""modeling-tool"", ""workflow""]",1
+prebid/prebid.js,1,javascript,1589,https://github.com/prebid/prebid.js.git,427,,CLAUDE.md,2026-07-25T01:33:00.847350+00:00,2015-07-19T03:26:23,"[""bidder-adapter"", ""header-bidding"", ""prebid""]",1
+troyeguo/koodo-reader,1,javascript,11908,https://github.com/troyeguo/koodo-reader.git,10,,copilot-instructions.md,2026-07-25T01:33:08.821937+00:00,2020-03-05T02:18:30,"[""book"", ""cb7"", ""cbr"", ""cbt"", ""cbz"", ""comic"", ""djvu"", ""docx"", ""ebook"", ""epub"", ""fb2"", ""html"", ""markdown"", ""mobi"", ""pdf"", ""reader"", ""rtf"", ""txt"", ""xml""]",1
+mochajs/mocha,1,javascript,22950,https://github.com/mochajs/mocha.git,423,,copilot-instructions.md,2026-07-25T01:33:16.538080+00:00,2011-03-07T06:44:25,"[""bdd"", ""browser"", ""javascript"", ""mocha"", ""mochajs"", ""node"", ""nodejs"", ""tdd"", ""test"", ""test-framework"", ""testing"", ""testing-tools""]",1
+medic/cht-core,1,javascript,552,https://github.com/medic/cht-core.git,119,,CLAUDE.md,2026-07-25T01:33:37.806228+00:00,2011-11-02T11:19:55,"[""cht"", ""couchdb"", ""ehealth"", ""health"", ""javascript"", ""medical"", ""mhealth"", ""mobile"", ""phone"", ""pouchdb"", ""typescript""]",1
+meteor/meteor,1,javascript,44800,https://github.com/meteor/meteor.git,356,,CLAUDE.md,2026-07-25T01:33:40.160990+00:00,2012-01-19T01:58:17,"[""build-system"", ""framework"", ""hacktoberfest"", ""javascript"", ""meteor"", ""mongodb"", ""nodejs"", ""npm"", ""react"", ""reactive-programming"", ""realtime"", ""rpc"", ""zero-configuration""]",1
+openzeppelin/openzeppelin-contracts,1,javascript,24865,https://github.com/openzeppelin/openzeppelin-contracts.git,423,,CLAUDE.md,2026-07-25T01:33:45.152425+00:00,2016-08-01T08:54:54,"[""ethereum"", ""evm"", ""security"", ""smart-contracts"", ""solidity""]",1
+salesforce/cloudsplaining,1,javascript,2229,https://github.com/salesforce/cloudsplaining.git,29,,CLAUDE.md,2026-07-25T01:34:13.970146+00:00,2020-04-18T02:23:56,"[""aws"", ""aws-iam"", ""aws-security"", ""cloud"", ""cloud-security"", ""hacktoberfest"", ""iam"", ""salesforce"", ""security""]",1
+dyatko/arkit,1,javascript,968,https://github.com/dyatko/arkit.git,6,,CLAUDE.md,2026-07-25T01:34:25.238161+00:00,2019-01-29T05:02:57,"[""architecture"", ""cli"", ""codebase"", ""component"", ""diagram"", ""flow"", ""generate"", ""javascript"", ""js"", ""plantuml"", ""ts"", ""typescript"", ""uml"", ""visualisation""]",1
+salesforce/lwc,1,javascript,1772,https://github.com/salesforce/lwc.git,83,,CLAUDE.md,2026-07-25T01:34:25.366851+00:00,2017-07-28T09:21:56,"[""framework"", ""library"", ""lwc"", ""salesforce"", ""web-component"", ""webcomponents""]",1
+circleci/circleci-docs,1,javascript,849,https://github.com/circleci/circleci-docs.git,89,,copilot-instructions.md,2026-07-25T01:34:32.882317+00:00,2015-12-29T02:14:27,"[""antora"", ""asciidoc"", ""circleci"", ""docs"", ""docsthursday"", ""documentation"", ""hacktoberfest""]",1
+pwndoc/pwndoc,1,javascript,2853,https://github.com/pwndoc/pwndoc.git,30,,CLAUDE.md,2026-07-25T01:34:42.879546+00:00,2020-01-13T11:42:23,"[""audit"", ""collaboration"", ""infosec"", ""penetration-testing"", ""pentest"", ""pentesting-tool"", ""reporting"", ""reporting-tool"", ""security"", ""security-audit"", ""security-tool"", ""vulnerabilities""]",1
+asyncapi/generator,1,javascript,1063,https://github.com/asyncapi/generator.git,122,,CLAUDE.md,2026-07-25T01:34:50.123497+00:00,2018-07-24T01:55:43,"[""asyncapi"", ""codegen"", ""codegenerator"", ""documentation"", ""generator"", ""get-global-docs-autoupdate"", ""get-global-holopin"", ""get-global-prettierignore"", ""hacktoberfest"", ""nodejs""]",1
+sefaria/sefaria-project,1,javascript,760,https://github.com/sefaria/sefaria-project.git,75,,CLAUDE.md,2026-07-25T01:35:19.518947+00:00,2011-09-20T08:23:41,"[""jewish"", ""talmud"", ""torah""]",1
+neomjs/neo,1,javascript,3227,https://github.com/neomjs/neo.git,64,,CLAUDE.md,2026-07-25T01:35:19.752016+00:00,2019-11-10T11:56:02,"[""agent-memory"", ""ai"", ""ai-agent"", ""ai-memory"", ""context-engineering"", ""frontend"", ""frontend-runtime"", ""graph-rag"", ""javascript"", ""json"", ""knowledge-graph"", ""llm"", ""long-term-memory"", ""mcp"", ""mcp-server"", ""multi-agent-systems"", ""rag"", ""scene-graph"", ""semantic-search"", ""web-workers""]",1
+countly/countly-server,1,javascript,5881,https://github.com/countly/countly-server.git,90,,copilot-instructions.md,2026-07-25T01:35:28.251616+00:00,2012-05-28T06:48:40,"[""ai"", ""analytics"", ""coppa"", ""crash-analytics"", ""customer-engagement"", ""dashboard"", ""data-ownership"", ""data-privacy"", ""digital-analytics"", ""feature-flags"", ""gdpr"", ""hipaa"", ""insights"", ""mobile-analytics"", ""push-notifications"", ""remote-configuration"", ""tracking"", ""user-feedback"", ""user-journeys"", ""web-analytics""]",1
+eslint/eslint,1,javascript,27396,https://github.com/eslint/eslint.git,415,,copilot-instructions.md,2026-07-25T01:35:47.377702+00:00,2013-06-29T11:59:48,"[""ecmascript"", ""eslint"", ""javascript"", ""linter"", ""static-code-analysis""]",1
+jsdom/jsdom,1,javascript,21578,https://github.com/jsdom/jsdom.git,301,,CLAUDE.md,2026-07-25T01:35:56.150936+00:00,2010-01-19T06:55:19,"[""dom-apis"", ""html"", ""javascript"", ""jsdom"", ""nodejs""]",1
+formio/formio,1,javascript,2297,https://github.com/formio/formio.git,68,,CLAUDE.md,2026-07-25T01:36:02.886114+00:00,2015-10-10T08:41:03,"[""angular"", ""angularjs"", ""forms"", ""nodejs"", ""react"", ""serverless"", ""vanilla-js"", ""vanillajs"", ""vue""]",1
+mozilla/pdf.js,1,javascript,53544,https://github.com/mozilla/pdf.js.git,385,,CLAUDE.md,2026-07-25T01:36:07.424564+00:00,2011-04-26T06:32:03,[],1
+fonoster/fonos,1,javascript,2305,https://github.com/fonoster/fonos.git,8,,.claude/,2026-07-25T01:36:11.200717+00:00,2018-02-04T02:58:54,[],1
+jens-maus/raspberrymatic,1,javascript,1663,https://github.com/jens-maus/raspberrymatic.git,43,,copilot-instructions.md,2026-07-25T01:36:26.510489+00:00,2016-06-22T01:33:04,"[""buildroot"", ""ccu"", ""ccu3"", ""docker"", ""elv-charly"", ""embedded-devices"", ""esxi"", ""home-automation"", ""homeassistant"", ""homematic"", ""homematicip"", ""iot"", ""kubernetes"", ""linux"", ""operating-system"", ""raspberrymatic"", ""raspberrypi"", ""smarthome"", ""tinkerboard"", ""virtual-appliance""]",1
+irosthebeggar/mstream,1,javascript,2351,https://github.com/irosthebeggar/mstream.git,25,,.claude/,2026-07-25T01:36:53.383663+00:00,2015-12-05T10:26:26,"[""javascript"", ""lokijs"", ""mstream"", ""music"", ""music-streaming"", ""music-streaming-server""]",1
+facebook/react,1,javascript,245642,https://github.com/facebook/react.git,410,,CLAUDE.md,2026-07-25T01:36:56.835367+00:00,2013-05-24T04:15:54,"[""declarative"", ""frontend"", ""javascript"", ""library"", ""react"", ""ui""]",1
+llk/scratch-blocks,1,javascript,2235,https://github.com/llk/scratch-blocks.git,115,,CLAUDE.md,2026-07-25T01:37:01.658025+00:00,2016-01-07T03:49:10,[],1
+grommet/grommet,1,javascript,8355,https://github.com/grommet/grommet.git,352,,copilot-instructions.md,2026-07-25T01:37:03.107092+00:00,2015-03-24T08:54:10,"[""a11y"", ""babel"", ""design-system"", ""grommet"", ""hacktoberfest"", ""javascript"", ""react"", ""ux-framework""]",1
+quarto-dev/quarto-cli,1,javascript,5817,https://github.com/quarto-dev/quarto-cli.git,149,,CLAUDE.md,2026-07-25T01:37:03.199893+00:00,2020-09-25T01:25:46,[],1
+popcorn-official/popcorn-desktop,1,javascript,9864,https://github.com/popcorn-official/popcorn-desktop.git,107,,copilot-instructions.md,2026-07-25T01:37:31.277050+00:00,2016-02-16T11:07:20,"[""bittorrent"", ""desktop"", ""nwjs"", ""popcorn"", ""popcorn-time"", ""popcorntime"", ""streaming""]",1
+linuxmint/cinnamon-spices-applets,1,javascript,744,https://github.com/linuxmint/cinnamon-spices-applets.git,406,,copilot-instructions.md,2026-07-25T01:37:31.972057+00:00,2016-12-31T02:26:11,[],1
+sindresorhus/eslint-plugin-unicorn,1,javascript,5181,https://github.com/sindresorhus/eslint-plugin-unicorn.git,178,,CLAUDE.md,2026-07-25T01:37:34.893270+00:00,2016-04-09T07:48:04,"[""eslint"", ""eslint-config"", ""eslint-plugin"", ""eslint-rules"", ""javascript"", ""linting-rules"", ""nodejs"", ""unicorns"", ""xo""]",1
+zadam/trilium,1,javascript,26506,https://github.com/zadam/trilium.git,98,,CLAUDE.md,2026-07-25T01:37:47.746724+00:00,2017-05-23T12:30:20,"[""electron"", ""electron-app"", ""knowledge-base"", ""knowledge-graph"", ""knowledge-management"", ""knowledge-management-graph"", ""local-first"", ""note-managment"", ""note-taker"", ""note-taking"", ""notebook"", ""notes"", ""notes-app"", ""personal-knowledge-base"", ""personal-wiki"", ""scriptable"", ""self-hosted"", ""self-hosting"", ""wiki""]",1
+webpack/webpack,1,javascript,65833,https://github.com/webpack/webpack.git,393,,CLAUDE.md,2026-07-25T01:37:56.978945+00:00,2012-03-10T10:08:14,"[""amd"", ""build-tool"", ""commonjs"", ""compiler"", ""es2015"", ""es6"", ""esm"", ""javascript"", ""javascript-compiler"", ""javascript-modules"", ""loaders"", ""module-bundler"", ""plugins"", ""web"", ""web-performance"", ""webpack""]",1
+llk/scratch-www,1,javascript,1373,https://github.com/llk/scratch-www.git,71,,CLAUDE.md,2026-07-25T01:38:00.481142+00:00,2015-08-28T08:14:36,[],1
+thatguysam/doesitarm,1,javascript,3789,https://github.com/thatguysam/doesitarm.git,107,,.cursorrules,2026-07-25T01:38:18.325017+00:00,2020-09-16T01:33:22,"[""aarch64"", ""apple"", ""apple-silicon"", ""arm"", ""arm64"", ""bigsur"", ""compatibility"", ""hacktoberfest-accepted"", ""m1"", ""m1-chips"", ""mac-app-store"", ""macos"", ""macos-application"", ""macos-big-sur"", ""rosetta"", ""wwdc""]",1
+sveltejs/kit,1,javascript,20649,https://github.com/sveltejs/kit.git,452,,copilot-instructions.md,2026-07-25T01:38:25.257282+00:00,2020-10-15T02:00:23,"[""svelte""]",1
+endojs/endo,1,javascript,1028,https://github.com/endojs/endo.git,53,,CLAUDE.md,2026-07-25T01:38:25.453234+00:00,2019-11-06T08:09:57,"[""capabilities"", ""captp"", ""hardened"", ""javascript"", ""multi-tenant"", ""ocaps"", ""powerbox"", ""prototype-pollution"", ""sandbox"", ""security"", ""supply-chain""]",1
+wprig/wprig,1,javascript,1322,https://github.com/wprig/wprig.git,31,,copilot-instructions.md,2026-07-25T01:38:30.898930+00:00,2018-05-14T07:29:28,"[""build-tools"", ""performance"", ""progressive"", ""wordpress"", ""wordpress-child-theme"", ""wordpress-starter-theme"", ""wordpress-theme-development""]",1
+gokrazy/gokrazy,1,javascript,3468,https://github.com/gokrazy/gokrazy.git,37,,CLAUDE.md,2026-07-25T01:38:36.919282+00:00,2017-02-04T09:48:07,"[""golang"", ""linux"", ""raspberry-pi"", ""raspberrypi""]",1
+bpmn-io/form-js,1,javascript,542,https://github.com/bpmn-io/form-js.git,26,,CLAUDE.md,2026-07-25T01:38:36.925866+00:00,2021-02-23T12:44:05,"[""bpmn-io"", ""form"", ""form-js"", ""forms"", ""hacktoberfest""]",1
+ever-co/ever-traduora,1,javascript,2123,https://github.com/ever-co/ever-traduora.git,34,,.cursor/,2026-07-25T01:38:41.751792+00:00,2019-03-05T07:46:09,"[""angular"", ""api"", ""i18n"", ""internationalization"", ""localization"", ""nodejs"", ""opensource"", ""self-hosted"", ""teams"", ""translation"", ""translation-management"", ""typescript"", ""webapp""]",1
+rstudio/bookdown,1,javascript,4053,https://github.com/rstudio/bookdown.git,107,,copilot-instructions.md,2026-07-25T01:38:44.276464+00:00,2015-10-28T05:03:18,"[""book"", ""bookdown"", ""epub"", ""gitbook"", ""html"", ""latex"", ""rmarkdown""]",1
+eva-engine/eva.js,1,javascript,1780,https://github.com/eva-engine/eva.js.git,11,,CLAUDE.md,2026-07-25T01:38:50.479535+00:00,2021-03-08T09:13:42,"[""canvas2d"", ""evajs"", ""famework"", ""front-end"", ""game-engine"", ""pixijs"", ""webgl""]",1
+talebook/talebook,1,javascript,5548,https://github.com/talebook/talebook.git,18,,CLAUDE.md,2026-07-25T01:39:01.966360+00:00,2016-09-13T03:35:40,[],1
+nextcloud/mail,1,javascript,1001,https://github.com/nextcloud/mail.git,170,,copilot-instructions.md,2026-07-25T01:39:18.173186+00:00,2016-08-28T10:24:06,"[""hacktoberfest"", ""horde"", ""imap"", ""nextcloud"", ""nextcloud-vue-app"", ""open-source"", ""php"", ""php-mail"", ""single-page-app"", ""smtp"", ""webmail""]",1
+marcocesarato/react-native-big-list,1,javascript,538,https://github.com/marcocesarato/react-native-big-list.git,16,,copilot-instructions.md,2026-07-25T01:39:25.312465+00:00,2021-06-05T08:03:07,"[""android"", ""big"", ""data"", ""expo"", ""fast"", ""flatlist"", ""ios"", ""javascript"", ""js"", ""large"", ""list"", ""massive"", ""memory"", ""performance"", ""react"", ""react-native"", ""react-native-big-list"", ""sticky-headers"", ""web""]",1
+ttop32/mousetooltiptranslator,1,javascript,1256,https://github.com/ttop32/mousetooltiptranslator.git,17,,CLAUDE.md,2026-07-25T01:39:36.326190+00:00,2020-12-24T12:11:12,"[""browser-extension"", ""chatgpt"", ""chrome"", ""chrome-extension"", ""dictionaries"", ""dictionary"", ""dual"", ""ebook"", ""epub"", ""extension"", ""manifest-v3"", ""ocr"", ""pdf"", ""subtitle"", ""translate"", ""translator"", ""tts"", ""vue"", ""webextension"", ""youtube""]",1
+stackernews/stacker.news,1,javascript,521,https://github.com/stackernews/stacker.news.git,57,,.cursor/,2026-07-25T01:39:46.416071+00:00,2021-06-28T10:52:54,"[""bitcoin"", ""graphql"", ""lightning"", ""lightning-network"", ""lnd"", ""micropayments"", ""next"", ""plpgsql"", ""postgresql""]",1

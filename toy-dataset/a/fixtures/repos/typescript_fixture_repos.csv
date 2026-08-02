@@ -1,317 +1,323 @@
-repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url,agent_commits_touching_tests,rejected_mixed_test_diff,accepted
-abagames/crisp-game-lib,typescript,12,1,98516ec1d7543b2ab9d3b9a9ad08f424f57b9a91,98516ec1d7543b2ab9d3b9a9ad08f424f57b9a91,https://github.com/abagames/crisp-game-lib.git,3,1,2
-acacode/swagger-typescript-api,typescript,9,3,9d493e8f64f133c403335d85cf6aaa15e125343b,306d59acb8ffbb00f953f807b97234b21f51d9de,https://github.com/acacode/swagger-typescript-api.git,4,0,4
-acro5piano/react-native-big-calendar,typescript,0,0,,,https://github.com/acro5piano/react-native-big-calendar.git,0,0,0
-adobe/spectrum-web-components,typescript,0,0,,,https://github.com/adobe/spectrum-web-components.git,13,6,7
-aeagle/react-spaces,typescript,0,0,,,https://github.com/aeagle/react-spaces.git,0,0,0
-airtasker/spot,typescript,0,0,,,https://github.com/airtasker/spot.git,1,0,1
-algolia/docsearch,typescript,0,0,,,https://github.com/algolia/docsearch.git,1,0,1
-algolia/instantsearch.js,typescript,2,2,bbba058991ae6ab518bc0de4b68c9059cb6abfe6,55bd627dbacabd538b92aa1c8654ec3631e59ece,https://github.com/algolia/instantsearch.js.git,26,15,11
-alibaba/hooks,typescript,0,0,,,https://github.com/alibaba/hooks.git,0,0,0
-amannn/next-intl,typescript,0,0,,,https://github.com/amannn/next-intl.git,16,13,3
-amondnet/vercel-action,typescript,0,0,,,https://github.com/amondnet/vercel-action.git,3,3,0
-amruthpillai/reactive-resume,typescript,0,0,,,https://github.com/amruthpillai/reactive-resume.git,8,4,4
-angular-eslint/angular-eslint,typescript,0,0,,,https://github.com/angular-eslint/angular-eslint.git,0,0,0
-angular-schule/angular-cli-ghpages,typescript,0,0,,,https://github.com/angular-schule/angular-cli-ghpages.git,0,0,0
-ant-design/ant-design,typescript,7,3,b51a7d2004ebfaae79aae53ca875007fee90fdca,2bb5d832739964d593cb2abad6181375ef6f6b82,https://github.com/ant-design/ant-design.git,86,38,48
-ant-design/ant-design-pro,typescript,5,1,a4d91e49a1bec35676d5d08e22c5ff96e28eafd8,a4d91e49a1bec35676d5d08e22c5ff96e28eafd8,https://github.com/ant-design/ant-design-pro.git,6,4,2
-ant-design/pro-components,typescript,2,2,df9e98b5dfeda62b20cc600a60e7c9106f548574,14aa504c183e8f44533cf11bdf05cf870f8125f7,https://github.com/ant-design/pro-components.git,35,20,15
-antvis/g2,typescript,3,3,22bd63cf2b91846b3138658b5718f0d85d50cf63,93648c7fb5744e19bea182091ff76ea8377285b1,https://github.com/antvis/g2.git,5,0,5
-antvis/g6,typescript,0,0,,,https://github.com/antvis/g6.git,1,0,1
-antvis/l7,typescript,0,0,,,https://github.com/antvis/l7.git,1,1,0
-apidevtools/json-schema-ref-parser,typescript,0,0,,,https://github.com/apidevtools/json-schema-ref-parser.git,0,0,0
-apollographql/apollo-client,typescript,0,0,,,https://github.com/apollographql/apollo-client.git,7,6,1
-appsmithorg/appsmith,typescript,3,2,470aa9ea18146ca8a7d67e295b9cd49da52d893c,b32721f659ee7dcd101552097002b92d046484bc,https://github.com/appsmithorg/appsmith.git,22,9,13
-apptension/aws-boilerplate,typescript,0,0,,,https://github.com/apptension/aws-boilerplate.git,0,0,0
-argos-ci/argos,typescript,29,17,a30ee3c5301da2e7888e540c1b57f6ae25ffd815,682058ce88fa53479af0f5cf7f6d55abaeb5dc59,https://github.com/argos-ci/argos.git,85,45,40
-artalar/reatom,typescript,0,0,,,https://github.com/artalar/reatom.git,9,7,2
-artsy/eigen,typescript,3,3,c925a24c4843724f5b66dc3ea4a0e1336216e5de,e7e6a563d1ecd9926acd1752f9bb542022bce010,https://github.com/artsy/eigen.git,38,30,8
-artsy/force,typescript,10,6,5a006835796ec6423e129ce7efbd618bad93357b,3808ae1b342250d0e57321749f0d6c1a82fcba28,https://github.com/artsy/force.git,51,37,14
-audreyt/ethercalc,typescript,17,6,99932e35e5df2010eb65c175e553ade84466ac78,54c191e9c2516f214f3b057fda5b3697da60ed72,https://github.com/audreyt/ethercalc.git,86,39,47
-auth0/node-auth0,typescript,0,0,,,https://github.com/auth0/node-auth0.git,0,0,0
-aws/aws-cdk,typescript,0,0,,,https://github.com/aws/aws-cdk.git,0,0,0
-azure/azure-sdk-for-js,typescript,181,20,38abf3ed45375b4b0f5a0c5e2259d7dc0064af4f,34be2fc349a89cf6f37b722f6f97125e525b431d,https://github.com/azure/azure-sdk-for-js.git,191,134,57
-azuread/microsoft-authentication-library-for-js,typescript,58,7,fc194a3a63bea62c843e79b4460d9e25773865fc,63f4ca4cb6b2e7d79e4cc6e5a63838c2cbf2b3e3,https://github.com/azuread/microsoft-authentication-library-for-js.git,66,33,33
-bdash-app/bdash,typescript,0,0,,,https://github.com/bdash-app/bdash.git,1,0,1
-bearer/pizzly,typescript,20,8,3eee18d7812c7bf8fb4967e61cc3c85389fdcbd3,dd3c637fda18df8b7c13a145b5d175047bcadee7,https://github.com/bearer/pizzly.git,40,24,16
-benkeen/generatedata,typescript,0,0,,,https://github.com/benkeen/generatedata.git,0,0,0
-bennycode/trading-signals,typescript,0,0,,,https://github.com/bennycode/trading-signals.git,7,5,2
-bestofjs/bestofjs-webui,typescript,0,0,,,https://github.com/bestofjs/bestofjs-webui.git,0,0,0
-betterthantomorrow/calva,typescript,0,0,,,https://github.com/betterthantomorrow/calva.git,8,7,1
-bitwarden/browser,typescript,8,1,6133d0ce49f94f39a59f4f1064750ceb4fba9d8f,6133d0ce49f94f39a59f4f1064750ceb4fba9d8f,https://github.com/bitwarden/browser.git,21,15,6
-blakeblackshear/frigate,typescript,0,0,,,https://github.com/blakeblackshear/frigate.git,5,0,5
-botpress/botpress,typescript,0,0,,,https://github.com/botpress/botpress.git,11,7,4
-brianlovin/brian-lovin-next,typescript,0,0,,,https://github.com/brianlovin/brian-lovin-next.git,2,1,1
-browserless/chrome,typescript,6,3,15ace792dad1c67d9e1cfebefd12d6f5b0fe46cb,46a5bdc0cfd4d05f1d020b13506e32bcae127471,https://github.com/browserless/chrome.git,20,7,13
-caldis/react-zmage,typescript,5,3,154e70fa68d0fa9ec1046952fd999f728bfad3d8,c9a70f7546ecfea58d4afde648dfda44ba1d85b7,https://github.com/caldis/react-zmage.git,26,13,13
-callstack/react-native-testing-library,typescript,0,0,,,https://github.com/callstack/react-native-testing-library.git,1,1,0
-celo-org/celo-monorepo,typescript,0,0,,,https://github.com/celo-org/celo-monorepo.git,1,0,1
-chainsafe/lodestar,typescript,2,2,ce2871791a0fbbb1400cc397890c235d91de8e8d,c35b4283f1527b1a5ef310072b4bfa75c5e8b28e,https://github.com/chainsafe/lodestar.git,36,29,7
-chakra-ui/chakra-ui,typescript,0,0,,,https://github.com/chakra-ui/chakra-ui.git,0,0,0
-chichou/vscode-frida,typescript,0,0,,,https://github.com/chichou/vscode-frida.git,0,0,0
-cloudhut/kowl,typescript,12,6,63e2333cf23eb4cfb6412efa2f9246a82a19e98a,81b6c5330d75bf93ffff91b0785e93e7404028ff,https://github.com/cloudhut/kowl.git,51,39,12
-coinbase/rest-hooks,typescript,2,1,63633c714b5c041e04891255683e5a899c3d3f22,63633c714b5c041e04891255683e5a899c3d3f22,https://github.com/coinbase/rest-hooks.git,11,5,6
-colinhacks/zod,typescript,0,0,,,https://github.com/colinhacks/zod.git,6,2,4
-coreui/coreui-react,typescript,0,0,,,https://github.com/coreui/coreui-react.git,0,0,0
-crowi/crowi,typescript,262,103,d826cd01b80255a9ba039d64a50d086b11009e2d,f647cdcbc1fffc860693696f377cebd30d90603d,https://github.com/crowi/crowi.git,314,141,173
-custom-cards/button-card,typescript,0,0,,,https://github.com/custom-cards/button-card.git,0,0,0
-davidkpiano/xstate,typescript,0,0,,,https://github.com/davidkpiano/xstate.git,0,0,0
-definitelytyped/definitelytyped,typescript,0,0,,,https://github.com/definitelytyped/definitelytyped.git,5,1,4
-desktop/desktop,typescript,0,0,,,https://github.com/desktop/desktop.git,66,48,18
-destinyitemmanager/dim,typescript,0,0,,,https://github.com/destinyitemmanager/dim.git,0,0,0
-didi/logicflow,typescript,9,8,eab30bf78d2e7ea1a867732991f12ac8e8923c3d,e6946884f2a8b963bc4e516a85a28d1fa72d59a9,https://github.com/didi/logicflow.git,18,4,14
-diegomura/react-pdf,typescript,0,0,,,https://github.com/diegomura/react-pdf.git,0,0,0
-dinerojs/dinero.js,typescript,0,0,,,https://github.com/dinerojs/dinero.js.git,10,9,1
-dolanmiu/docx,typescript,0,0,,,https://github.com/dolanmiu/docx.git,1,1,0
-dubzzz/fast-check,typescript,0,0,,,https://github.com/dubzzz/fast-check.git,40,31,9
-eamodio/vscode-gitlens,typescript,0,0,,,https://github.com/eamodio/vscode-gitlens.git,11,6,5
-easysoft/zui,typescript,0,0,,,https://github.com/easysoft/zui.git,0,0,0
-eclipse-theia/theia,typescript,0,0,,,https://github.com/eclipse-theia/theia.git,2,2,0
-eclipse/che,typescript,0,0,,,https://github.com/eclipse/che.git,7,7,0
-eclipsesource/jsonforms,typescript,0,0,,,https://github.com/eclipsesource/jsonforms.git,0,0,0
-effector/effector,typescript,0,0,,,https://github.com/effector/effector.git,0,0,0
-eggjs/egg,typescript,492,27,ea6515b04a0626c7facd7801d0faa71181d81736,2a60d3b310f1c38093795b0497a2536c36d0be59,https://github.com/eggjs/egg.git,103,62,41
-ekalinin/sitemap.js,typescript,2,1,9dbedf2860ddceb69a2e407c919d9b7306937ffb,9dbedf2860ddceb69a2e407c919d9b7306937ffb,https://github.com/ekalinin/sitemap.js.git,19,7,12
-electron-userland/electron-builder,typescript,1,1,a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e,a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e,https://github.com/electron-userland/electron-builder.git,4,2,2
-ericblade/quagga2,typescript,0,0,,,https://github.com/ericblade/quagga2.git,7,6,1
-erxes/erxes,typescript,6,1,83ff2c3a0c5cfc336824be8989098082042c5a09,83ff2c3a0c5cfc336824be8989098082042c5a09,https://github.com/erxes/erxes.git,3,1,2
-espressif/vscode-esp-idf-extension,typescript,0,0,,,https://github.com/espressif/vscode-esp-idf-extension.git,0,0,0
-ethereum/sourcify,typescript,2,1,7b2630e6a437b26bea8d932f7480d734eade1ba5,7b2630e6a437b26bea8d932f7480d734eade1ba5,https://github.com/ethereum/sourcify.git,22,14,8
-excalidraw/excalidraw,typescript,0,0,,,https://github.com/excalidraw/excalidraw.git,1,1,0
-expo/eas-cli,typescript,6,3,4e95a29797520e592481772f49fc7dcdf33d7603,792af28a5d0f77fedfa61064d49702783e34a2a8,https://github.com/expo/eas-cli.git,19,8,11
-facebook/jest,typescript,0,0,,,https://github.com/facebook/jest.git,1,0,1
-faridsafi/react-native-gifted-chat,typescript,0,0,,,https://github.com/faridsafi/react-native-gifted-chat.git,0,0,0
-felixrieseberg/windows95,typescript,0,0,,,https://github.com/felixrieseberg/windows95.git,0,0,0
-firecow/gitlab-ci-local,typescript,1,1,fcccb7ecf715efc151b42ff8c7379ab013b432b7,fcccb7ecf715efc151b42ff8c7379ab013b432b7,https://github.com/firecow/gitlab-ci-local.git,5,2,3
-flavioislima/heroicgameslauncher,typescript,0,0,,,https://github.com/flavioislima/heroicgameslauncher.git,1,1,0
-foambubble/foam,typescript,2,1,9dc8930b8ea6386a35413e662d0b853f87843e70,9dc8930b8ea6386a35413e662d0b853f87843e70,https://github.com/foambubble/foam.git,4,2,2
-forcedotcom/salesforcedx-vscode,typescript,53,9,a5c93fccb18d02c1289327dd5c85b51dea0ddfdd,da759f2f5c70f57582b5c0a846b1286777d47aca,https://github.com/forcedotcom/salesforcedx-vscode.git,141,104,37
-formatjs/formatjs,typescript,4,2,9cc3087bfd45a85982313e0597f1052787574349,549044db21307c318e0456303d27e526b65a2c46,https://github.com/formatjs/formatjs.git,47,28,19
-garden-io/garden,typescript,0,0,,,https://github.com/garden-io/garden.git,0,0,0
-getsentry/sentry-javascript,typescript,48,23,ba3728d782e2c7bfbb0c9ffc205de3a9b9237201,24ef5c3e33db5d0cd08613216e1cb7b38072aba4,https://github.com/getsentry/sentry-javascript.git,211,130,81
-getsentry/sentry-react-native,typescript,44,22,6c36ba51562f95ff1e81726ffc3fc917dc97a78d,26843eb6aa8e858a034b07bfc226d4c1e5b24ea7,https://github.com/getsentry/sentry-react-native.git,88,30,58
-getstream/stream-chat-react-native,typescript,0,0,,,https://github.com/getstream/stream-chat-react-native.git,0,0,0
-gilbarbara/react-joyride,typescript,0,0,,,https://github.com/gilbarbara/react-joyride.git,0,0,0
-gitbookio/gitbook,typescript,0,0,,,https://github.com/gitbookio/gitbook.git,17,7,10
-github/codeql-action,typescript,0,0,,,https://github.com/github/codeql-action.git,4,3,1
-gitpod-io/gitpod,typescript,1,1,a736c1b83bd781786af0da705d0acebabfba7862,a736c1b83bd781786af0da705d0acebabfba7862,https://github.com/gitpod-io/gitpod.git,29,3,26
-glimmerjs/glimmer-vm,typescript,0,0,,,https://github.com/glimmerjs/glimmer-vm.git,0,0,0
-golevelup/nestjs,typescript,2,2,0e067621baa5b8effeff119507b7925182911fbf,f56b8c0f8ec7cdd91d92cdf8a6f2674a35a08918,https://github.com/golevelup/nestjs.git,16,11,5
-grafana/grafana,typescript,57,16,a9f85c8ccdfa0f3d7d41942beb309368ffe35296,ddc3a0bcc2d5f4784ef62106211ff6695f4375fc,https://github.com/grafana/grafana.git,287,116,171
-gre/gl-react,typescript,0,0,,,https://github.com/gre/gl-react.git,7,5,2
-gre/react-native-view-shot,typescript,10,4,d3c8781949e74c08204eac7a8ac47242f1b06571,285d59e6a6236ff33ec397e4b8027f6d99648aa7,https://github.com/gre/react-native-view-shot.git,12,3,9
-hacker0x01/react-datepicker,typescript,0,0,,,https://github.com/hacker0x01/react-datepicker.git,38,15,23
-haehnchen/crypto-trading-bot,typescript,0,0,,,https://github.com/haehnchen/crypto-trading-bot.git,0,0,0
-handsontable/hyperformula,typescript,0,0,,,https://github.com/handsontable/hyperformula.git,1,0,1
-harttle/liquidjs,typescript,0,0,,,https://github.com/harttle/liquidjs.git,10,1,9
-heroku/cli,typescript,0,0,,,https://github.com/heroku/cli.git,1,0,1
-higurashi-kagome/wereader,typescript,0,0,,,https://github.com/higurashi-kagome/wereader.git,0,0,0
-home-assistant/frontend,typescript,2,1,0c25f061ef92e21696554564cdd64e98a23a93ca,0c25f061ef92e21696554564cdd64e98a23a93ca,https://github.com/home-assistant/frontend.git,14,8,6
-homebridge/homebridge,typescript,8,3,a6db6577ce6f362f73f7124c42e8542c71082ee3,d7d8ed02b6a8b36ee751a30609e229c9b987ed85,https://github.com/homebridge/homebridge.git,35,15,20
-honkit/honkit,typescript,6,2,4cc4615861018b364c994153dc03efd0215d1153,e028912af5372c9b6a7b10c2cb5b9aa0c2a9cb5a,https://github.com/honkit/honkit.git,2,0,2
-hubtype/botonic,typescript,0,0,,,https://github.com/hubtype/botonic.git,2,2,0
-ifandelse/machina.js,typescript,123,4,d2b42a84bdcc8b8771f5d2fcf96bb5a32bb78781,1c3dde06aeb3e3c41f58c1bd19c1285d4f494d1f,https://github.com/ifandelse/machina.js.git,8,3,5
-igniteui/igniteui-angular,typescript,3,3,4ee5c3ffddb8125415feb695729d455ed5f164e8,7ff3ee2ba95b82f0a8da42b9a859ff4cb7299dd0,https://github.com/igniteui/igniteui-angular.git,25,18,7
-imbhargav5/rooks,typescript,42,11,2b65024e5acae77868134b8b97904624fa872351,3f3c428d125730caaed20cdda64f7ce2b31c6dc6,https://github.com/imbhargav5/rooks.git,22,8,14
-instawork/hyperview,typescript,0,0,,,https://github.com/instawork/hyperview.git,0,0,0
-iorate/ublacklist,typescript,0,0,,,https://github.com/iorate/ublacklist.git,21,12,9
-jackocnr/intl-tel-input,typescript,0,0,,,https://github.com/jackocnr/intl-tel-input.git,1,1,0
-jamaljsr/polar,typescript,0,0,,,https://github.com/jamaljsr/polar.git,0,0,0
-jamiebrynes7/obsidian-todoist-plugin,typescript,0,0,,,https://github.com/jamiebrynes7/obsidian-todoist-plugin.git,1,1,0
-javascript-obfuscator/javascript-obfuscator,typescript,0,0,,,https://github.com/javascript-obfuscator/javascript-obfuscator.git,0,0,0
-jcmais/node-libcurl,typescript,0,0,,,https://github.com/jcmais/node-libcurl.git,0,0,0
-jesec/flood,typescript,0,0,,,https://github.com/jesec/flood.git,1,1,0
-jigsaw-code/outline-client,typescript,0,0,,,https://github.com/jigsaw-code/outline-client.git,1,1,0
-johannesjo/super-productivity,typescript,26,12,259d9d5a6278e298fd79529f5bd43b2d64099bc2,18c48d5ea8884cd0c07150c712d8810aef4979bb,https://github.com/johannesjo/super-productivity.git,111,74,37
-johnkorzhuk/grabient,typescript,0,0,,,https://github.com/johnkorzhuk/grabient.git,1,0,1
-johnpapa/vscode-peacock,typescript,0,0,,,https://github.com/johnpapa/vscode-peacock.git,6,3,3
-jsforce/jsforce,typescript,0,0,,,https://github.com/jsforce/jsforce.git,0,0,0
-justjake/quickjs-emscripten,typescript,0,0,,,https://github.com/justjake/quickjs-emscripten.git,3,2,1
-kern/filepizza,typescript,0,0,,,https://github.com/kern/filepizza.git,0,0,0
-khan/perseus,typescript,2,1,e1f9a0d2a1b5538650e9d6b2fac3fa219dab0577,e1f9a0d2a1b5538650e9d6b2fac3fa219dab0577,https://github.com/khan/perseus.git,2,1,1
-kinvolk/headlamp,typescript,0,0,,,https://github.com/kinvolk/headlamp.git,0,0,0
-koenkk/zigbee-herdsman,typescript,0,0,,,https://github.com/koenkk/zigbee-herdsman.git,4,1,3
-kriasoft/react-starter-kit,typescript,0,0,,,https://github.com/kriasoft/react-starter-kit.git,0,0,0
-kristiandupont/kanel,typescript,0,0,,,https://github.com/kristiandupont/kanel.git,0,0,0
-kufu/smarthr-ui,typescript,0,0,,,https://github.com/kufu/smarthr-ui.git,17,13,4
-lane711/sonicjs,typescript,104,36,6b4499a4f98c4db22d2bb2298851ae9a3a5ca965,67408e27017d52249196a16f43b4922effd8551f,https://github.com/lane711/sonicjs.git,311,170,141
-lerna/lerna,typescript,0,0,,,https://github.com/lerna/lerna.git,0,0,0
-lichess-org/api,typescript,0,0,,,https://github.com/lichess-org/api.git,0,0,0
-lizhiyao/sentry-miniapp,typescript,12,3,476c0f90038fb6b5b3464136c63c066a23e56819,63b3e5baf724e0320cb48eccb581229b36510e1e,https://github.com/lizhiyao/sentry-miniapp.git,22,12,10
-logchimp/logchimp,typescript,0,0,,,https://github.com/logchimp/logchimp.git,0,0,0
-lucide-icons/lucide,typescript,3,1,a0e202d759da95c243b541f8d3c1c26eada32b2e,a0e202d759da95c243b541f8d3c1c26eada32b2e,https://github.com/lucide-icons/lucide.git,5,3,2
-lume/lume,typescript,0,0,,,https://github.com/lume/lume.git,0,0,0
-marktext/muya,typescript,11,7,b6a62dd2845444a241394d14f8d1d67b6cb31352,00939d2c952bbf16d00018c585165888fe37a6bb,https://github.com/marktext/muya.git,33,7,26
-markuplint/markuplint,typescript,5,4,40685828da697dfa8565288438a5d027dd0fae45,1572fe8b908bb4505a2cf3d12fd2f7ce65496ae4,https://github.com/markuplint/markuplint.git,245,115,130
-marmelab/react-admin,typescript,0,0,,,https://github.com/marmelab/react-admin.git,2,1,1
-martpie/museeks,typescript,0,0,,,https://github.com/martpie/museeks.git,0,0,0
-maygo/tockler,typescript,0,0,,,https://github.com/maygo/tockler.git,0,0,0
-microsoft/applicationinsights-js,typescript,0,0,,,https://github.com/microsoft/applicationinsights-js.git,12,9,3
-microsoft/beachball,typescript,4,2,8bc614d367801d19847d3f2ed5f9ee861b6fae5f,e6196c1cc45b8062bdfa08bf3d7f0683005f1e9d,https://github.com/microsoft/beachball.git,14,7,7
-microsoft/clarity,typescript,0,0,,,https://github.com/microsoft/clarity.git,2,0,2
-microsoft/fast,typescript,0,0,,,https://github.com/microsoft/fast.git,0,0,0
-microsoft/fluentui,typescript,8,3,26229a953219cf4ec5b4c9f7aeb37070e2cf38db,da3b7a4ffe0610abed41f005023f2b8eed2f4282,https://github.com/microsoft/fluentui.git,41,15,26
-microsoft/fluentui-react-native,typescript,0,0,,,https://github.com/microsoft/fluentui-react-native.git,1,1,0
-microsoft/fluidframework,typescript,15,10,e70347986c823316e6a4b3981f0dcff47aee709b,b9363c4b93c443dd925a26cfd6e7a2913c0a2459,https://github.com/microsoft/fluidframework.git,164,117,47
-microsoft/lage,typescript,0,0,,,https://github.com/microsoft/lage.git,7,6,1
-microsoft/maker.js,typescript,0,0,,,https://github.com/microsoft/maker.js.git,2,0,2
-microsoft/playwright,typescript,0,0,,,https://github.com/microsoft/playwright.git,49,23,26
-microsoft/roosterjs,typescript,17,3,2fac28c6d7d47b9029753936fdaf893f42a8441b,aa5407756e5861b68d78663419c4560370c9de2b,https://github.com/microsoft/roosterjs.git,48,28,20
-microsoft/rushstack,typescript,12,3,48853d6b335916de3778c5ac5a3c8261e29f0f2d,947efd5d76c09ce8a62b1a003394d5db689b5b56,https://github.com/microsoft/rushstack.git,33,19,14
-microsoft/typescript,typescript,0,0,,,https://github.com/microsoft/typescript.git,15,5,10
-microsoft/vscode-cmake-tools,typescript,0,0,,,https://github.com/microsoft/vscode-cmake-tools.git,32,11,21
-microsoft/vscode-jupyter,typescript,0,0,,,https://github.com/microsoft/vscode-jupyter.git,9,5,4
-microsoft/vscode-mssql,typescript,0,0,,,https://github.com/microsoft/vscode-mssql.git,38,20,18
-microsoft/vscode-pull-request-github,typescript,4,3,3071d50110b383a403c165c99c78718ad0358386,eacf5393ca03c7f541c0b8db59a7af9585a34587,https://github.com/microsoft/vscode-pull-request-github.git,39,15,24
-midwayjs/midway,typescript,0,0,,,https://github.com/midwayjs/midway.git,0,0,0
-mikro-orm/mikro-orm,typescript,233,74,19ebac464d87ec73576d354bd1dda817d4d40539,441eaa110aeeb0920bb6ac40854802ab9ee7b78b,https://github.com/mikro-orm/mikro-orm.git,178,49,129
-mongodb/node-mongodb-native,typescript,0,0,,,https://github.com/mongodb/node-mongodb-native.git,1,1,0
-moodlehq/moodleapp,typescript,0,0,,,https://github.com/moodlehq/moodleapp.git,0,0,0
-mui-org/material-ui-x,typescript,10,4,4dde297fa37f3cf6e203fba59942817af776f36a,3b4db216c9d709b22db6d302a007edac066a1edb,https://github.com/mui-org/material-ui-x.git,95,51,44
-mxstbr/mxstbr.com,typescript,0,0,,,https://github.com/mxstbr/mxstbr.com.git,0,0,0
-n8n-io/n8n,typescript,379,135,c4c46b8ff93abab45426682f8b371997fb42d52d,d06c2b7f09596d2066e73c5b080b736107d738a3,https://github.com/n8n-io/n8n.git,1036,655,381
-naomiaro/waveform-playlist,typescript,20,10,34b894d0b3393c18c9fff7dcb313ab0b3d984852,1fc1b2fe721808eb2bdb536e19b832fd992e7d5f,https://github.com/naomiaro/waveform-playlist.git,51,27,24
-naver/billboard.js,typescript,0,0,,,https://github.com/naver/billboard.js.git,0,0,0
-neet/masto.js,typescript,0,0,,,https://github.com/neet/masto.js.git,1,0,1
-nexus-mods/vortex,typescript,0,0,,,https://github.com/nexus-mods/vortex.git,12,10,2
-ng-alain/delon,typescript,4,2,569e8ace582aebe1a59d85543e8404cdd9d0e00e,281d8dd2be692476fd4c66ce003574c9ef92450f,https://github.com/ng-alain/delon.git,3,0,3
-ng-select/ng-select,typescript,0,0,,,https://github.com/ng-select/ng-select.git,8,5,3
-ng-zorro/ng-zorro-antd,typescript,1,1,de0faf6dcb333ae430d1f5e85c95303c8081cbeb,de0faf6dcb333ae430d1f5e85c95303c8081cbeb,https://github.com/ng-zorro/ng-zorro-antd.git,12,11,1
-ngneat/transloco,typescript,0,0,,,https://github.com/ngneat/transloco.git,1,1,0
-ngx-translate/core,typescript,0,0,,,https://github.com/ngx-translate/core.git,0,0,0
-nicoespeon/abracadabra,typescript,0,0,,,https://github.com/nicoespeon/abracadabra.git,0,0,0
-node-modules/urllib,typescript,0,0,,,https://github.com/node-modules/urllib.git,5,2,3
-nodecg/nodecg,typescript,6,1,437b807de71bbdf033f20a036a227bbfb4057e68,437b807de71bbdf033f20a036a227bbfb4057e68,https://github.com/nodecg/nodecg.git,7,5,2
-nomcopter/react-mosaic,typescript,0,0,,,https://github.com/nomcopter/react-mosaic.git,1,1,0
-nomiclabs/hardhat,typescript,3,1,c4a7daace7ce9d9d76eca194b1abba4e8f6c64c3,c4a7daace7ce9d9d76eca194b1abba4e8f6c64c3,https://github.com/nomiclabs/hardhat.git,27,21,6
-notionx/react-notion-x,typescript,0,0,,,https://github.com/notionx/react-notion-x.git,0,0,0
-nrwl/nx,typescript,73,19,f9c427a80b88413238454c5d4563cc8be5f7f9b9,51545462a8ac102292011d49be68da2d05ec82fa,https://github.com/nrwl/nx.git,82,37,45
-nrwl/nx-console,typescript,0,0,,,https://github.com/nrwl/nx-console.git,11,3,8
-nteract/semiotic,typescript,4,3,3f777d90385734c2e7d8b66ee4b5edb9204d8afb,489dd18d801c431fb6e6bfeb6b02afa4be1bd26e,https://github.com/nteract/semiotic.git,42,19,23
-nuclearpasta/react-native-drax,typescript,0,0,,,https://github.com/nuclearpasta/react-native-drax.git,0,0,0
-oakserver/oak,typescript,0,0,,,https://github.com/oakserver/oak.git,3,0,3
-olistic/warriorjs,typescript,0,0,,,https://github.com/olistic/warriorjs.git,54,49,5
-omnisharp/omnisharp-vscode,typescript,0,0,,,https://github.com/omnisharp/omnisharp-vscode.git,1,0,1
-online-go/online-go.com,typescript,2,1,594c9d5d7fbd6a4de19e6e84b1d99071894e9f31,594c9d5d7fbd6a4de19e6e84b1d99071894e9f31,https://github.com/online-go/online-go.com.git,11,5,6
-open-wa/wa-automate-nodejs,typescript,0,0,,,https://github.com/open-wa/wa-automate-nodejs.git,0,0,0
-openplayerjs/openplayerjs,typescript,1,1,9c160a8bdb8f7323c046484d6664acadd6c2a33b,9c160a8bdb8f7323c046484d6664acadd6c2a33b,https://github.com/openplayerjs/openplayerjs.git,9,6,3
-openshiporg/openship,typescript,0,0,,,https://github.com/openshiporg/openship.git,1,1,0
-owid/owid-grapher,typescript,2,1,f4fa25584ce59b45dab65f385c577ddcb69615c2,f4fa25584ce59b45dab65f385c577ddcb69615c2,https://github.com/owid/owid-grapher.git,29,15,14
-oxygem/kanmail,typescript,0,0,,,https://github.com/oxygem/kanmail.git,0,0,0
-oznu/homebridge-config-ui-x,typescript,2,1,a53abfdd0146de5211cb9fe1951b721ef15d8cb9,a53abfdd0146de5211cb9fe1951b721ef15d8cb9,https://github.com/oznu/homebridge-config-ui-x.git,38,13,25
-pagopa/io-app,typescript,5,2,70a0a07af4552eb4575467b896b106c347df2bdd,525acb412dbc4c2abee659876ec2326c068d589d,https://github.com/pagopa/io-app.git,21,15,6
-paljs/prisma-tools,typescript,0,0,,,https://github.com/paljs/prisma-tools.git,0,0,0
-parabolinc/parabol,typescript,0,0,,,https://github.com/parabolinc/parabol.git,1,0,1
-paraswap/paraswap-sdk,typescript,0,0,,,https://github.com/paraswap/paraswap-sdk.git,0,0,0
-payloadcms/payload,typescript,5,2,835a0ad49055dada6c7cffdb5515cb8d8a5ca576,787f9df59b46bd05360ace1f27002957d24e6a62,https://github.com/payloadcms/payload.git,40,29,11
-petyosi/react-virtuoso,typescript,0,0,,,https://github.com/petyosi/react-virtuoso.git,0,0,0
-photostructure/exiftool-vendored.js,typescript,0,0,,,https://github.com/photostructure/exiftool-vendored.js.git,1,1,0
-pkief/vscode-material-icon-theme,typescript,0,0,,,https://github.com/pkief/vscode-material-icon-theme.git,0,0,0
-pmndrs/react-spring,typescript,0,0,,,https://github.com/pmndrs/react-spring.git,0,0,0
-pnp/cli-microsoft365,typescript,0,0,,,https://github.com/pnp/cli-microsoft365.git,2,2,0
-pnpm/pnpm,typescript,5,3,d5be835735d18682f79609e6c6903b523d47cde3,99982b9f004fc067bd6df0f6f01af549734060c1,https://github.com/pnpm/pnpm.git,92,32,60
-po-ui/po-angular,typescript,0,0,,,https://github.com/po-ui/po-angular.git,5,5,0
-polymer/lit-html,typescript,0,0,,,https://github.com/polymer/lit-html.git,0,0,0
-postaljs/postal.js,typescript,433,13,7b393f059829ce0d0a47ae3d1e7a6b2718d444c4,ee9f59945e307ef63f7876013bab13dfa0617e54,https://github.com/postaljs/postal.js.git,21,6,15
-posthog/posthog-js,typescript,32,8,aa9f63715d70428c8773c0c6e3d334497ffd3ad4,2595440b0e8771a59388a119ab56857de42b53ee,https://github.com/posthog/posthog-js.git,37,13,24
-powershell/vscode-powershell,typescript,3,3,294738ec550bc8ee685540eff231ebd14720ff83,30d16a85acfaa1e6a2ae7c0c16a0b882f852a69a,https://github.com/powershell/vscode-powershell.git,6,2,4
-prabhuignoto/react-chrono,typescript,0,0,,,https://github.com/prabhuignoto/react-chrono.git,3,3,0
-prisma/prisma,typescript,10,2,45d7e0f0d595df3ee4ca1e469e3d7381b5247ccf,9b0b7f5d59f4f9d0dca4d558f4e537e83da18203,https://github.com/prisma/prisma.git,9,4,5
-probablyup/markdown-to-jsx,typescript,0,0,,,https://github.com/probablyup/markdown-to-jsx.git,21,7,14
-projen/projen,typescript,0,0,,,https://github.com/projen/projen.git,7,3,4
-pubkey/rxdb,typescript,0,0,,,https://github.com/pubkey/rxdb.git,135,34,101
-raawaa/jav-scrapy,typescript,0,0,,,https://github.com/raawaa/jav-scrapy.git,0,0,0
-razorpay/blade,typescript,7,3,a9544ac6a6f46694b14e52be0b6ed1b40679cd6d,b05f2902c11731fe7317e947a05a06a5bc2cac45,https://github.com/razorpay/blade.git,23,7,16
-react-cosmos/react-cosmos,typescript,0,0,,,https://github.com/react-cosmos/react-cosmos.git,3,3,0
-reaviz/reaviz,typescript,0,0,,,https://github.com/reaviz/reaviz.git,0,0,0
-rejetto/hfs,typescript,0,0,,,https://github.com/rejetto/hfs.git,0,0,0
-remeda/remeda,typescript,0,0,,,https://github.com/remeda/remeda.git,3,2,1
-renovatebot/renovate,typescript,9,6,b5cd0317cf0be7a1abbfc12c34f7e3b576031eb7,2d0bd993089d04dea472e53a63ed7fdc0a1aabf1,https://github.com/renovatebot/renovate.git,124,59,65
-revenuecat/react-native-purchases,typescript,2,1,907f6fbb1fb864f277cdad6a38d414e3d37b4ce6,907f6fbb1fb864f277cdad6a38d414e3d37b4ce6,https://github.com/revenuecat/react-native-purchases.git,3,1,2
-ripple/ripple-lib,typescript,2,1,013a83fd63ebb8e25c2a0a261c679a787ebe7731,013a83fd63ebb8e25c2a0a261c679a787ebe7731,https://github.com/ripple/ripple-lib.git,3,1,2
-rocketchat/rocket.chat.electron,typescript,1,1,0e7d83efb67f62dbea3f0ffc244153c9dcd5c543,0e7d83efb67f62dbea3f0ffc244153c9dcd5c543,https://github.com/rocketchat/rocket.chat.electron.git,2,1,1
-rolling-scopes/rsschool-app,typescript,90,40,72157ed12dbc6cee31d0cfeeb113f53fdcf6af3d,a1264f281e087caa14785c6ed1d4e8774c809818,https://github.com/rolling-scopes/rsschool-app.git,65,23,42
-ryohey/signal,typescript,0,0,,,https://github.com/ryohey/signal.git,1,1,0
-sagemathinc/cocalc,typescript,3,3,491cc9c6e8de7744296af6f74f05469e43ca43d1,424ad0506d81c2f26fb656df26248c6c7dce0358,https://github.com/sagemathinc/cocalc.git,50,18,32
-sanity-io/next-sanity,typescript,0,0,,,https://github.com/sanity-io/next-sanity.git,7,6,1
-sanity-io/sanity,typescript,30,16,28787561e762cdf24d49428a07b523657da8e77d,b7b7fc1fcbeee63fc211abff0cbaa67e0ce5d68c,https://github.com/sanity-io/sanity.git,90,40,50
-sap/spartacus,typescript,0,0,,,https://github.com/sap/spartacus.git,1,1,0
-sap/ui5-webcomponents-react,typescript,0,0,,,https://github.com/sap/ui5-webcomponents-react.git,0,0,0
-sboudrias/inquirer.js,typescript,0,0,,,https://github.com/sboudrias/inquirer.js.git,0,0,0
-shinyoshiaki/werift-webrtc,typescript,0,0,,,https://github.com/shinyoshiaki/werift-webrtc.git,7,6,1
-sidequestjs/sidequest,typescript,1,1,cd6666318fb1786e09354954c39cc76ed24c11b5,cd6666318fb1786e09354954c39cc76ed24c11b5,https://github.com/sidequestjs/sidequest.git,5,3,2
-sidorares/node-mysql2,typescript,0,0,,,https://github.com/sidorares/node-mysql2.git,3,0,3
-signoz/signoz,typescript,0,0,,,https://github.com/signoz/signoz.git,24,12,12
-silenceleo/snowb-bmf,typescript,0,0,,,https://github.com/silenceleo/snowb-bmf.git,0,0,0
-sindresorhus/refined-github,typescript,0,0,,,https://github.com/sindresorhus/refined-github.git,13,7,6
-sindresorhus/type-fest,typescript,0,0,,,https://github.com/sindresorhus/type-fest.git,0,0,0
-siriwatknp/mui-treasury,typescript,0,0,,,https://github.com/siriwatknp/mui-treasury.git,2,1,1
-six7/figma-tokens,typescript,6,5,faaee7b582a89e7fd6fabae5de0088f9f7152500,8a9c5e0e7497605377b6dea62b8ddb12574c84e6,https://github.com/six7/figma-tokens.git,39,20,19
-slackapi/bolt-js,typescript,0,0,,,https://github.com/slackapi/bolt-js.git,1,1,0
-slackapi/node-slack-sdk,typescript,0,0,,,https://github.com/slackapi/node-slack-sdk.git,2,2,0
-software-mansion/react-native-gesture-handler,typescript,1,1,1a713d0ccbdd627f3a5cd4e4b76eaa4f28b4dd33,1a713d0ccbdd627f3a5cd4e4b76eaa4f28b4dd33,https://github.com/software-mansion/react-native-gesture-handler.git,5,3,2
-software-mansion/react-native-screens,typescript,0,0,,,https://github.com/software-mansion/react-native-screens.git,28,13,15
-sonarsource/sonarjs,typescript,0,0,,,https://github.com/sonarsource/sonarjs.git,144,58,86
-specklesystems/speckle-server,typescript,0,0,,,https://github.com/specklesystems/speckle-server.git,4,3,1
-steedos/steedos-platform,typescript,0,0,,,https://github.com/steedos/steedos-platform.git,0,0,0
-stoplightio/prism,typescript,0,0,,,https://github.com/stoplightio/prism.git,1,1,0
-storybookjs/react-native,typescript,0,0,,,https://github.com/storybookjs/react-native.git,2,1,1
-streetsidesoftware/cspell,typescript,0,0,,,https://github.com/streetsidesoftware/cspell.git,21,18,3
-streetsidesoftware/vscode-spell-checker,typescript,2,1,f22744d27b76a698adefa5b3ee050392a126cde3,f22744d27b76a698adefa5b3ee050392a126cde3,https://github.com/streetsidesoftware/vscode-spell-checker.git,1,0,1
-strongloop/loopback-next,typescript,0,0,,,https://github.com/strongloop/loopback-next.git,0,0,0
-styled-components/styled-components,typescript,1,1,f674224ece29a6e93a64488ad71c4fa86cf3ec1b,f674224ece29a6e93a64488ad71c4fa86cf3ec1b,https://github.com/styled-components/styled-components.git,12,10,2
-styled-components/styled-components-website,typescript,0,0,,,https://github.com/styled-components/styled-components-website.git,0,0,0
-supabase/supabase-js,typescript,0,0,,,https://github.com/supabase/supabase-js.git,11,8,3
-surgioproject/surgio,typescript,0,0,,,https://github.com/surgioproject/surgio.git,0,0,0
-surveyjs/survey-library,typescript,0,0,,,https://github.com/surveyjs/survey-library.git,15,8,7
-swaponline/multicurrencywallet,typescript,19,5,194d97d8efb069b3470600e114733e58fe3c7369,e72d880fc451d4a0e9f0041563138d9a505eafeb,https://github.com/swaponline/multicurrencywallet.git,62,27,35
-swimlane/ngx-graph,typescript,0,0,,,https://github.com/swimlane/ngx-graph.git,0,0,0
-swimlane/ngx-ui,typescript,0,0,,,https://github.com/swimlane/ngx-ui.git,1,0,1
-syuilo/misskey,typescript,5,1,f6fc78f578c344172349f7795b168b2992953bd0,f6fc78f578c344172349f7795b168b2992953bd0,https://github.com/syuilo/misskey.git,4,2,2
-tabarra/txadmin,typescript,0,0,,,https://github.com/tabarra/txadmin.git,0,0,0
-tabwrangler/tabwrangler,typescript,0,0,,,https://github.com/tabwrangler/tabwrangler.git,0,0,0
-tagspaces/tagspaces,typescript,0,0,,,https://github.com/tagspaces/tagspaces.git,0,0,0
-talentlessguy/tinyhttp,typescript,0,0,,,https://github.com/talentlessguy/tinyhttp.git,5,3,2
-teambit/bit,typescript,1,1,1c63a948410b7eb04c296ca1f8ccb3f98132d295,1c63a948410b7eb04c296ca1f8ccb3f98132d295,https://github.com/teambit/bit.git,3,2,1
-tencent/vconsole,typescript,0,0,,,https://github.com/tencent/vconsole.git,0,0,0
-testing-library/eslint-plugin-testing-library,typescript,0,0,,,https://github.com/testing-library/eslint-plugin-testing-library.git,0,0,0
-thecodingmachine/workadventure,typescript,1,1,441b24bce0adec07e7e52946125c2880d5600d3a,441b24bce0adec07e7e52946125c2880d5600d3a,https://github.com/thecodingmachine/workadventure.git,23,16,7
-theoephraim/node-google-spreadsheet,typescript,52,2,c1db5001accd4dbdb9cc4da08bed7de77b9ed2d5,a2f00b2fc5236987573dcff123450c34af6474b2,https://github.com/theoephraim/node-google-spreadsheet.git,7,3,4
-thomasnordquist/mqtt-explorer,typescript,1,1,d392fe734232bee5da870a69645dc39a6cf2aa4c,d392fe734232bee5da870a69645dc39a6cf2aa4c,https://github.com/thomasnordquist/mqtt-explorer.git,25,19,6
-thymikee/jest-preset-angular,typescript,1,1,70107300b9644cb45af90199064cf34f803fd60f,70107300b9644cb45af90199064cf34f803fd60f,https://github.com/thymikee/jest-preset-angular.git,2,1,1
-tinacms/tinacms,typescript,21,7,f124eabaca10dac9a4d765c9e4135813c4830955,c809733ce8037d81937e81f0c8781a6cf222099b,https://github.com/tinacms/tinacms.git,46,22,24
-tinkoffcreditsystems/taiga-ui,typescript,1,1,ac8653330dc14007149ef88d1321d31efc69d77d,ac8653330dc14007149ef88d1321d31efc69d77d,https://github.com/tinkoffcreditsystems/taiga-ui.git,10,7,3
-tinymce/tinymce,typescript,0,0,,,https://github.com/tinymce/tinymce.git,0,0,0
-traduora/traduora,typescript,0,0,,,https://github.com/traduora/traduora.git,0,0,0
-trezor/trezor-suite,typescript,17,7,e07eed84c9bc1c52870fd5e85e7f8da837404957,1aa0c41ba66b6bcfa8a0d3132b19851f580da1d2,https://github.com/trezor/trezor-suite.git,94,58,36
-trpc/trpc,typescript,10,1,4b955d29620410a5d853ff955273b4c68e9618bf,4b955d29620410a5d853ff955273b4c68e9618bf,https://github.com/trpc/trpc.git,6,5,1
-typedproject/tsed,typescript,0,0,,,https://github.com/typedproject/tsed.git,0,0,0
-typeorm/typeorm,typescript,4,2,4c8fc3a7cbd2e2db90d2ade43b151bbf1c40814b,981d601115e863dd8c5781cf8461dbaf57012b71,https://github.com/typeorm/typeorm.git,3,1,2
-typestrong/ts-loader,typescript,0,0,,,https://github.com/typestrong/ts-loader.git,1,1,0
-ueberdosis/tiptap,typescript,20,11,35645d94ae9cd73448a564104c2e08f64e9564bc,a9efd4d046757c638feddd9a6d72022dcdeb0bbf,https://github.com/ueberdosis/tiptap.git,46,12,34
-umijs/umi,typescript,0,0,,,https://github.com/umijs/umi.git,0,0,0
-vendure-ecommerce/vendure,typescript,0,0,,,https://github.com/vendure-ecommerce/vendure.git,0,0,0
-vercel/vercel,typescript,132,45,168e320bcf21d90b6705dfe7acb043e4a3753034,2522d0a6436c6e348379571219e51a955e0b909a,https://github.com/vercel/vercel.git,203,101,102
-vitejs/vite,typescript,0,0,,,https://github.com/vitejs/vite.git,29,6,23
-vivliostyle/vivliostyle.js,typescript,0,0,,,https://github.com/vivliostyle/vivliostyle.js.git,1,1,0
-voxelum/x-minecraft-launcher,typescript,4,3,0671188522099095e9cb983e735e1351051c6789,b8154a27495a39dcbca0c6bead97dcd9b4f13027,https://github.com/voxelum/x-minecraft-launcher.git,23,9,14
-vscode-icons/vscode-icons,typescript,0,0,,,https://github.com/vscode-icons/vscode-icons.git,1,0,1
-vuejs/vue-router-next,typescript,0,0,,,https://github.com/vuejs/vue-router-next.git,1,1,0
-vuepress-theme-hope/vuepress-theme-hope,typescript,0,0,,,https://github.com/vuepress-theme-hope/vuepress-theme-hope.git,0,0,0
-vuetifyjs/vuetify,typescript,0,0,,,https://github.com/vuetifyjs/vuetify.git,0,0,0
-walletconnect/walletconnect-monorepo,typescript,9,3,5888f9317b592fca69503842f6289c445229b4f7,ebc61853f43deec9057ac481ed5c14d22d86a820,https://github.com/walletconnect/walletconnect-monorepo.git,28,15,13
-webiny/webiny-js,typescript,2,1,82b3fd15dc811c34c320a024fa25e7ed07431e13,82b3fd15dc811c34c320a024fa25e7ed07431e13,https://github.com/webiny/webiny-js.git,11,8,3
-wechatsync/wechatsync,typescript,0,0,,,https://github.com/wechatsync/wechatsync.git,0,0,0
-whiteminds/liveautorecord,typescript,0,0,,,https://github.com/whiteminds/liveautorecord.git,0,0,0
-whitphx/vscode-emacs-mcx,typescript,0,0,,,https://github.com/whitphx/vscode-emacs-mcx.git,24,13,11
-wireapp/wire-desktop,typescript,0,0,,,https://github.com/wireapp/wire-desktop.git,0,0,0
-wireapp/wire-webapp,typescript,25,4,fe46a0bfe9a06e657321416498b6697359fb3459,e82f6fca457b894fbd4dd2b7a9bdfd95df16d5a3,https://github.com/wireapp/wire-webapp.git,25,19,6
-wowanalyzer/wowanalyzer,typescript,0,0,,,https://github.com/wowanalyzer/wowanalyzer.git,3,2,1
-xaviergonz/mobx-keystone,typescript,0,0,,,https://github.com/xaviergonz/mobx-keystone.git,1,1,0
-xbrowsersync/app,typescript,21,1,5c2adffbec4af792750e0ed6ce318ba120d56a6e,5c2adffbec4af792750e0ed6ce318ba120d56a6e,https://github.com/xbrowsersync/app.git,1,0,1
-xiaomi/hiui,typescript,0,0,,,https://github.com/xiaomi/hiui.git,0,0,0
-yang991178/fluent-reader,typescript,0,0,,,https://github.com/yang991178/fluent-reader.git,0,0,0
-yoannmoinet/nipplejs,typescript,10,3,291649ef3e9260f2a1cbab2b9f5f696417a6f294,fc0e27f9351732f210d6e39f6b9f1ce5531f7583,https://github.com/yoannmoinet/nipplejs.git,15,8,7
-zenn-dev/zenn-editor,typescript,2,1,129da49a2f06927480aeb9b65e258b25e89bb2a8,129da49a2f06927480aeb9b65e258b25e89bb2a8,https://github.com/zenn-dev/zenn-editor.git,19,7,12
-zuiidea/antd-admin,typescript,0,0,,,https://github.com/zuiidea/antd-admin.git,0,0,0
-zwave-js/node-zwave-js,typescript,3,1,fb034be40aaba3a175404eed54d5063ae8edf867,fb034be40aaba3a175404eed54d5063ae8edf867,https://github.com/zwave-js/node-zwave-js.git,26,8,18
+repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url,agent_commits_touching_tests,rejected_mixed_test_diff,accepted,created_at,topics
+aeagle/react-spaces,typescript,0,0,,,https://github.com/aeagle/react-spaces.git,0,0,0,2019-07-21T03:58:06,"[""component-library"", ""components"", ""javascript-library"", ""react"", ""reactjs"", ""reactjs-components"", ""web"", ""web-ui"", ""web-ui-framework""]"
+airtasker/spot,typescript,0,0,,,https://github.com/airtasker/spot.git,1,0,1,2018-10-11T09:55:46,"[""api-blueprint"", ""dsl"", ""json-schema"", ""openapi"", ""openapi3"", ""swagger"", ""typescript""]"
+abagames/crisp-game-lib,typescript,12,1,98516ec1d7543b2ab9d3b9a9ad08f424f57b9a91,98516ec1d7543b2ab9d3b9a9ad08f424f57b9a91,https://github.com/abagames/crisp-game-lib.git,3,1,2,2019-12-08T06:51:14,"[""game-development""]"
+alibaba/hooks,typescript,0,0,,,https://github.com/alibaba/hooks.git,0,0,0,2019-06-27T05:20:06,"[""ahooks"", ""hooks-library"", ""react"", ""react-hooks"", ""umi-hooks""]"
+aadsm/jschardet,typescript,2,1,54f2745cae60b30fa3f5546726399c7a8853f5ab,54f2745cae60b30fa3f5546726399c7a8853f5ab,https://github.com/aadsm/jschardet.git,10,3,7,2010-04-17T08:23:09,"[""character-encoding"", ""charset""]"
+amondnet/vercel-action,typescript,0,0,,,https://github.com/amondnet/vercel-action.git,3,3,0,2020-05-16T12:39:37,"[""github-actions"", ""vercel"", ""zeit-now""]"
+acacode/swagger-typescript-api,typescript,9,3,9d493e8f64f133c403335d85cf6aaa15e125343b,306d59acb8ffbb00f953f807b97234b21f51d9de,https://github.com/acacode/swagger-typescript-api.git,4,0,4,2020-01-12T11:46:19,[]
+algolia/docsearch,typescript,0,0,,,https://github.com/algolia/docsearch.git,1,0,1,2015-11-20T10:55:10,"[""algolia"", ""docsearch"", ""documentation"", ""javascript"", ""react"", ""search"", ""typescript""]"
+angular-schule/angular-cli-ghpages,typescript,0,0,,,https://github.com/angular-schule/angular-cli-ghpages.git,0,0,0,2016-04-07T07:42:30,"[""angular"", ""angular-cli"", ""angular-cli-ghpages"", ""circle-ci"", ""cloudflare-pages"", ""gh-pages"", ""github-actions"", ""github-pages"", ""ng-deploy"", ""travis-ci""]"
+annexare/countries,typescript,0,0,,,https://github.com/annexare/countries.git,0,0,0,2014-07-06T04:44:51,"[""calling-codes"", ""capital"", ""cjs"", ""continent"", ""countries"", ""country-codes"", ""csv"", ""currencies"", ""emoji"", ""esm"", ""iso3166"", ""iso3166-1"", ""iso639"", ""iso639-1"", ""json"", ""language-codes"", ""locales"", ""sql"", ""typescript"", ""typings""]"
+angular-eslint/angular-eslint,typescript,0,0,,,https://github.com/angular-eslint/angular-eslint.git,0,0,0,2019-07-28T10:51:06,"[""angular"", ""eslint"", ""typescript""]"
+algolia/instantsearch.js,typescript,2,2,bbba058991ae6ab518bc0de4b68c9059cb6abfe6,55bd627dbacabd538b92aa1c8654ec3631e59ece,https://github.com/algolia/instantsearch.js.git,26,15,11,2015-07-21T12:10:27,[]
+adobe/spectrum-web-components,typescript,0,0,,,https://github.com/adobe/spectrum-web-components.git,18,8,10,2018-11-19T10:15:50,"[""adobe"", ""spectrum"", ""webcomponents""]"
+ant-design/ant-design-mobile-rn,typescript,0,0,,,https://github.com/ant-design/ant-design-mobile-rn.git,0,0,0,2018-05-02T08:38:52,"[""android"", ""antd-mobile"", ""ios"", ""javascript"", ""react"", ""react-native"", ""typescript""]"
+ant-design/ant-design-pro,typescript,5,1,a4d91e49a1bec35676d5d08e22c5ff96e28eafd8,a4d91e49a1bec35676d5d08e22c5ff96e28eafd8,https://github.com/ant-design/ant-design-pro.git,6,4,2,2017-08-25T10:40:44,"[""admin"", ""ant-design"", ""antd"", ""antv"", ""boilerplate"", ""dashboard"", ""enterprise"", ""react"", ""umi""]"
+amannn/next-intl,typescript,0,0,,,https://github.com/amannn/next-intl.git,18,13,5,2020-11-20T11:24:11,"[""date-formatting"", ""i18n"", ""next"", ""react""]"
+antvis/g2,typescript,3,3,22bd63cf2b91846b3138658b5718f0d85d50cf63,93648c7fb5744e19bea182091ff76ea8377285b1,https://github.com/antvis/g2.git,5,0,5,2016-05-26T09:21:04,"[""animation"", ""canvas"", ""chart"", ""grammar"", ""graphics"", ""hacktoberfest"", ""interaction"", ""svg"", ""visualization"", ""webgl""]"
+antvis/g6,typescript,0,0,,,https://github.com/antvis/g6.git,1,0,1,2017-02-13T10:00:43,"[""data-visualization"", ""graph"", ""graph-analytics"", ""graph-drawing"", ""graph-visualization"", ""hacktoberfest"", ""network"", ""tree"", ""visual-analytics"", ""visualization""]"
+apptension/aws-boilerplate,typescript,0,0,,,https://github.com/apptension/aws-boilerplate.git,0,0,0,2020-04-14T09:31:26,[]
+ant-design/pro-components,typescript,2,2,df9e98b5dfeda62b20cc600a60e7c9106f548574,14aa504c183e8f44533cf11bdf05cf870f8125f7,https://github.com/ant-design/pro-components.git,35,20,15,2019-04-28T10:45:11,"[""ant"", ""ant-design"", ""ant-design-pro"", ""dumi"", ""hooks"", ""react"", ""ui"", ""ui-components""]"
+adobe/react-spectrum,typescript,0,0,,,https://github.com/adobe/react-spectrum.git,7,3,4,2019-09-13T11:32:51,"[""accessibility"", ""design-systems"", ""react"", ""react-components"", ""ui-components"", ""wai-aria""]"
+artalar/reatom,typescript,0,0,,,https://github.com/artalar/reatom.git,15,10,5,2019-05-04T06:27:50,"[""flux"", ""react"", ""reactive"", ""reactive-programming"", ""reactivity"", ""reatom"", ""state"", ""state-management"", ""state-manager"", ""store""]"
+apollographql/apollo-client,typescript,0,0,,,https://github.com/apollographql/apollo-client.git,7,6,1,2016-02-26T08:25:00,"[""apollo-client"", ""apollographql"", ""graphql"", ""graphql-client"", ""typescript""]"
+antvis/l7,typescript,0,0,,,https://github.com/antvis/l7.git,1,1,0,2018-11-21T04:19:07,"[""3d"", ""amap"", ""antv"", ""data-visualization"", ""geojson"", ""geospatial"", ""gis"", ""javascript"", ""map"", ""mapbox"", ""maps"", ""point"", ""polygon"", ""webgl""]"
+artsy/eigen,typescript,7,5,c925a24c4843724f5b66dc3ea4a0e1336216e5de,336d814d6d8c35264123dee00fb00c8a51776ced,https://github.com/artsy/eigen.git,50,37,13,2015-01-22T09:52:39,"[""android"", ""app"", ""app-store"", ""art"", ""ios"", ""objective-c"", ""react-native"", ""swift""]"
+aurelia/aurelia,typescript,0,0,,,https://github.com/aurelia/aurelia.git,5,4,1,2018-02-15T05:22:58,"[""aurelia"", ""cordova"", ""cross-platform"", ""electron"", ""framework"", ""frontend"", ""html"", ""javascript"", ""javascript-framework"", ""mobile"", ""pwa"", ""single-page-applications"", ""spa"", ""typescript"", ""web"", ""web-framework"", ""web-performance""]"
+auth0/auth0-spa-js,typescript,2,1,150b0e810d5c6357f306d98c7169b39aa11e7e4c,150b0e810d5c6357f306d98c7169b39aa11e7e4c,https://github.com/auth0/auth0-spa-js.git,3,2,1,2019-04-03T04:22:45,"[""auth0"", ""auth0-js"", ""dx-sdk"", ""javascript"", ""oauth2"", ""openid-connect"", ""pkce"", ""spa""]"
+auth0/react-native-auth0,typescript,0,0,,,https://github.com/auth0/react-native-auth0.git,1,1,0,2016-06-14T11:10:12,"[""dx-sdk"", ""react-native""]"
+automattic/simplenote-electron,typescript,1,1,b0e29b8092cd6610fdf7ce824806ab5fb7e2077b,b0e29b8092cd6610fdf7ce824806ab5fb7e2077b,https://github.com/automattic/simplenote-electron.git,1,0,1,2015-08-22T09:06:44,[]
+4gray/iptvnator,typescript,92,18,2f47ed16cb219dcfd9e200d7690c5f687236797c,80af9257a074d840927c748ebc42680c9edbf20c,https://github.com/4gray/iptvnator.git,91,52,39,2019-10-06T03:37:40,"[""chromeos"", ""electron"", ""epg"", ""fair-source"", ""iptv"", ""iptv-m3u"", ""iptv-player"", ""iptv-player-application"", ""linux"", ""m3u"", ""m3u8"", ""macos"", ""player"", ""player-video"", ""playlist"", ""pwa"", ""snap"", ""tv"", ""video"", ""xtream-codes""]"
+artsy/force,typescript,10,6,5a006835796ec6423e129ce7efbd618bad93357b,3808ae1b342250d0e57321749f0d6c1a82fcba28,https://github.com/artsy/force.git,58,42,16,2014-08-12T06:14:34,"[""artsy"", ""express-js"", ""graphql"", ""javascript"", ""react"", ""typescript""]"
+bdash-app/bdash,typescript,0,0,,,https://github.com/bdash-app/bdash.git,1,0,1,2016-08-23T12:20:03,"[""electron"", ""javascript"", ""sql"", ""visualization""]"
+argos-ci/argos,typescript,45,26,a30ee3c5301da2e7888e540c1b57f6ae25ffd815,a1daa4f80b8c5192401e03d6174d3951d3bbfc04,https://github.com/argos-ci/argos.git,166,93,73,2016-12-15T08:23:42,"[""testing"", ""testing-tools"", ""visual-testing""]"
+benkeen/generatedata,typescript,0,0,,,https://github.com/benkeen/generatedata.git,0,0,0,2012-01-26T09:06:00,"[""data"", ""data-generation"", ""data-generator"", ""data-generators"", ""human-data"", ""json"", ""random"", ""random-generation"", ""randomization"", ""rest-api"", ""test-data"", ""test-data-generator"", ""testing""]"
+bennycode/trading-signals,typescript,0,0,,,https://github.com/bennycode/trading-signals.git,7,5,2,2020-05-28T10:44:05,"[""analysis"", ""cryptotrading"", ""dema"", ""dma"", ""ema"", ""financial"", ""financial-analysis"", ""hacktoberfest"", ""indicator"", ""macd"", ""roc"", ""rsi"", ""signals"", ""sma"", ""smma"", ""technical-analysis"", ""technical-indicators"", ""trading"", ""trading-signals"", ""typescript""]"
+bestofjs/bestofjs-webui,typescript,0,0,,,https://github.com/bestofjs/bestofjs-webui.git,0,0,0,2015-06-19T11:27:39,"[""github-stars"", ""hall-of-fame"", ""trends""]"
+appsmithorg/appsmith,typescript,4,3,470aa9ea18146ca8a7d67e295b9cd49da52d893c,b23ab4547912d7c72d45a2daf093935f771e1ef1,https://github.com/appsmithorg/appsmith.git,36,14,22,2020-06-30T04:07:36,"[""admin-dashboard"", ""admin-panels"", ""app-builder"", ""automation"", ""crud"", ""custom-internal"", ""developer-tools"", ""gui"", ""gui-application"", ""hacktoberfest"", ""internal-tools"", ""java"", ""javascript"", ""low-code"", ""low-code-framework"", ""react"", ""self-hosted"", ""typescript"", ""webdevelopment"", ""workflows""]"
+blakeblackshear/frigate,typescript,0,0,,,https://github.com/blakeblackshear/frigate.git,5,0,5,2019-01-26T01:52:38,"[""ai"", ""camera"", ""google-coral"", ""home-assistant"", ""home-automation"", ""homeautomation"", ""mqtt"", ""nvr"", ""object-detection"", ""realtime"", ""rtsp"", ""tensorflow""]"
+azuread/microsoft-authentication-library-for-js,typescript,58,7,fc194a3a63bea62c843e79b4460d9e25773865fc,63f4ca4cb6b2e7d79e4cc6e5a63838c2cbf2b3e3,https://github.com/azuread/microsoft-authentication-library-for-js.git,72,37,35,2017-02-24T09:49:17,[]
+brianlovin/brian-lovin-next,typescript,0,0,,,https://github.com/brianlovin/brian-lovin-next.git,3,1,2,2018-09-08T10:01:16,[]
+betterthantomorrow/calva,typescript,0,0,,,https://github.com/betterthantomorrow/calva.git,8,7,1,2018-03-15T10:04:33,[]
+auth0/node-auth0,typescript,0,0,,,https://github.com/auth0/node-auth0.git,0,0,0,2012-12-03T09:19:57,"[""dx-sdk""]"
+callstack/react-native-testing-library,typescript,0,0,,,https://github.com/callstack/react-native-testing-library.git,1,1,0,2018-10-01T02:32:13,"[""jest"", ""react"", ""react-native"", ""testing""]"
+browserless/chrome,typescript,6,3,15ace792dad1c67d9e1cfebefd12d6f5b0fe46cb,46a5bdc0cfd4d05f1d020b13506e32bcae127471,https://github.com/browserless/chrome.git,23,9,14,2017-11-17T04:35:31,"[""browserless"", ""chrome"", ""devtools"", ""docker"", ""headless"", ""headless-chrome"", ""puppeteer""]"
+captbaritone/webamp,typescript,0,0,,,https://github.com/captbaritone/webamp.git,1,1,0,2014-11-04T02:50:52,"[""html5"", ""javascript"", ""port"", ""reimplementation"", ""webaudio-api"", ""winamp""]"
+botpress/botpress,typescript,0,0,,,https://github.com/botpress/botpress.git,19,14,5,2016-11-16T09:57:59,"[""agent"", ""ai"", ""botpress"", ""chatbot"", ""chatgpt"", ""gpt"", ""gpt-4"", ""langchain"", ""llm"", ""nlp"", ""openai"", ""prompt""]"
+caldis/react-zmage,typescript,5,3,154e70fa68d0fa9ec1046952fd999f728bfad3d8,c9a70f7546ecfea58d4afde648dfda44ba1d85b7,https://github.com/caldis/react-zmage.git,26,13,13,2017-10-26T08:29:35,"[""animation"", ""es6"", ""image"", ""img"", ""javascript"", ""js"", ""react"", ""react-zmage"", ""slide"", ""slider"", ""slidershow"", ""website"", ""zmage"", ""zoom"", ""zoomer""]"
+chichou/vscode-frida,typescript,0,0,,,https://github.com/chichou/vscode-frida.git,0,0,0,2020-01-14T11:58:22,"[""android"", ""ios"", ""mobile-security"", ""reverse-engineering"", ""vscode""]"
+ant-design/ant-design,typescript,7,3,b51a7d2004ebfaae79aae53ca875007fee90fdca,2bb5d832739964d593cb2abad6181375ef6f6b82,https://github.com/ant-design/ant-design.git,86,38,48,2015-04-24T03:37:24,"[""ant-design"", ""antd"", ""design-systems"", ""react"", ""typescript"", ""ui-kit"", ""ui-library""]"
+chinachu/mirakurun,typescript,0,0,,,https://github.com/chinachu/mirakurun.git,0,0,0,2015-04-04T07:58:21,"[""chinachu"", ""client"", ""dtv"", ""dvb"", ""dvr"", ""epg"", ""isdb"", ""javascript"", ""linux"", ""middleware"", ""mirakurun"", ""openapi"", ""server"", ""typescript""]"
+celo-org/celo-monorepo,typescript,0,0,,,https://github.com/celo-org/celo-monorepo.git,1,0,1,2019-07-18T07:05:59,"[""blockchain"", ""celo"", ""crypto"", ""cryptocurrency"", ""dapp"", ""ethereum"", ""financial-inclusion"", ""smart-contracts"", ""stablecoin""]"
+chakra-ui/chakra-ui,typescript,0,0,,,https://github.com/chakra-ui/chakra-ui.git,0,0,0,2019-08-17T02:27:54,"[""a11y"", ""accessible"", ""ark-ui"", ""chakra-ui"", ""component"", ""css-in-js"", ""dark-mode"", ""design-system"", ""react"", ""react-components"", ""reactjs"", ""styled"", ""ui-components"", ""ui-library"", ""uikit"", ""wai-aria""]"
+coreui/coreui-react,typescript,0,0,,,https://github.com/coreui/coreui-react.git,0,0,0,2018-02-26T06:14:32,"[""bootstrap"", ""bootstrap-react"", ""components-library"", ""coreui"", ""coreui-library"", ""coreui-react"", ""css-library"", ""react"", ""react-bootstrap"", ""react-components"", ""reactjs"", ""reactstrap"", ""ui-components""]"
+colinhacks/zod,typescript,0,0,,,https://github.com/colinhacks/zod.git,6,2,4,2020-03-07T08:59:08,"[""runtime-validation"", ""schema-validation"", ""static-types"", ""type-inference"", ""typescript""]"
+davidkpiano/xstate,typescript,0,0,,,https://github.com/davidkpiano/xstate.git,0,0,0,2015-09-14T03:04:15,[]
+coinbase/rest-hooks,typescript,2,1,63633c714b5c041e04891255683e5a899c3d3f22,63633c714b5c041e04891255683e5a899c3d3f22,https://github.com/coinbase/rest-hooks.git,12,5,7,2019-02-15T03:37:05,[]
+chainsafe/lodestar,typescript,4,3,ce2871791a0fbbb1400cc397890c235d91de8e8d,4191d8e353eb27cba835c7af8b1fc12944908f7b,https://github.com/chainsafe/lodestar.git,48,38,10,2018-06-22T02:41:47,"[""beacon-chain"", ""blockchain"", ""eth2"", ""ethereum"", ""proof-of-stake"", ""serenity"", ""typescript""]"
+callstack/react-native-paper,typescript,0,0,,,https://github.com/callstack/react-native-paper.git,0,0,0,2016-10-19T05:56:53,"[""hacktoberfest"", ""material-design"", ""react-native"", ""ui-kit""]"
+dinerojs/dinero.js,typescript,0,0,,,https://github.com/dinerojs/dinero.js.git,10,9,1,2018-03-10T11:56:04,"[""amount"", ""currency"", ""immutable"", ""javascript"", ""monetary"", ""money"", ""typescript""]"
+didi/logicflow,typescript,9,8,eab30bf78d2e7ea1a867732991f12ac8e8923c3d,e6946884f2a8b963bc4e516a85a28d1fa72d59a9,https://github.com/didi/logicflow.git,18,4,14,2020-12-24T07:55:38,"[""bpmn"", ""diagram"", ""diagramming"", ""didi"", ""flow"", ""flowchart"", ""graph"", ""javascript"", ""javascript-diagramming-library"", ""mvvm"", ""svg"", ""typescript"", ""visualization""]"
+destinyitemmanager/dim,typescript,0,0,,,https://github.com/destinyitemmanager/dim.git,0,0,0,2015-03-04T09:46:50,"[""bungie"", ""destiny"", ""react"", ""typescript""]"
+cloudhut/kowl,typescript,14,8,63e2333cf23eb4cfb6412efa2f9246a82a19e98a,8ff1504d0738ee0bb27477a440233b808c369c0e,https://github.com/cloudhut/kowl.git,56,43,13,2019-09-29T10:15:35,[]
+dyc3/opentogethertube,typescript,1,1,8085c285b65154de9f9e783e66080e95eb0eb63a,8085c285b65154de9f9e783e66080e95eb0eb63a,https://github.com/dyc3/opentogethertube.git,3,1,2,2019-07-21T02:17:16,"[""entertainment"", ""hacktoberfest"", ""nodejs"", ""social"", ""video"", ""video-streaming"", ""video-synchronization"", ""vuejs""]"
+dolanmiu/docx,typescript,0,0,,,https://github.com/dolanmiu/docx.git,1,1,0,2016-03-26T11:43:56,"[""angular"", ""angular2"", ""browser"", ""create"", ""docs"", ""document"", ""docx"", ""docx-generator"", ""express"", ""expressjs"", ""generate"", ""javascript"", ""microsoft"", ""nodejs"", ""office"", ""react"", ""typescript"", ""vuejs"", ""word""]"
+bearer/pizzly,typescript,24,10,3eee18d7812c7bf8fb4967e61cc3c85389fdcbd3,eec9d50a26a2dbc408f689a59ca2961ce21c371d,https://github.com/bearer/pizzly.git,66,44,22,2020-04-09T09:31:24,[]
+eclipsesource/jsonforms,typescript,0,0,,,https://github.com/eclipsesource/jsonforms.git,0,0,0,2015-02-13T10:24:06,"[""angular"", ""customizable"", ""forms"", ""js"", ""json"", ""json-schema"", ""material"", ""react"", ""redux"", ""typescript"", ""vue"", ""vue3""]"
+eclipse/che,typescript,0,0,,,https://github.com/eclipse/che.git,8,8,0,2015-03-26T03:31:01,"[""cloud"", ""cloud-ide"", ""containers"", ""devtools"", ""eclipse"", ""ide"", ""kubernetes""]"
+dubzzz/fast-check,typescript,0,0,,,https://github.com/dubzzz/fast-check.git,40,31,9,2017-10-30T11:41:11,"[""faker"", ""fuzzing"", ""generative-testing"", ""property-based-testing"", ""quickcheck"", ""tdd"", ""testing"", ""typescript"", ""unit-testing""]"
+eamodio/vscode-gitlens,typescript,0,0,,,https://github.com/eamodio/vscode-gitlens.git,11,6,5,2016-08-08T02:50:30,[]
+effector/effector,typescript,0,0,,,https://github.com/effector/effector.git,0,0,0,2018-02-27T10:38:40,"[""business-logic"", ""effector"", ""event-driven"", ""reactive"", ""state"", ""state-management"", ""state-manager""]"
+ekalinin/sitemap.js,typescript,2,1,9dbedf2860ddceb69a2e407c919d9b7306937ffb,9dbedf2860ddceb69a2e407c919d9b7306937ffb,https://github.com/ekalinin/sitemap.js.git,20,8,12,2011-06-29T03:09:12,"[""nodejs"", ""sitemap"", ""sitemap-generator"", ""sitemap-xml""]"
+eclipse-theia/theia,typescript,0,0,,,https://github.com/eclipse-theia/theia.git,2,2,0,2017-02-24T02:42:05,"[""cloud-ide"", ""editor"", ""electron"", ""ide"", ""language-server-protocol"", ""typescript""]"
+elixir-lsp/vscode-elixir-ls,typescript,0,0,,,https://github.com/elixir-lsp/vscode-elixir-ls.git,0,0,0,2019-01-16T10:10:46,"[""elixir"", ""language-server""]"
+desktop/desktop,typescript,0,0,,,https://github.com/desktop/desktop.git,76,52,24,2016-05-11T03:59:00,"[""electron"", ""git"", ""github"", ""github-desktop"", ""typescript""]"
+electron-userland/electron-builder,typescript,3,2,a5d8ab9436dd7db0c58a08cf9594e47613c4fc8e,e0bec44e7fb8e6449ab0462bac2671117d2aafeb,https://github.com/electron-userland/electron-builder.git,13,6,7,2015-05-21T07:45:02,"[""appx"", ""auto-update"", ""builder"", ""contributions-welcome"", ""deb"", ""distribution-electron"", ""dmg"", ""electron"", ""electron-builder"", ""electron-updater"", ""help-wanted"", ""linux"", ""macos"", ""msi"", ""muon"", ""nsis"", ""pkg"", ""rpm"", ""snap"", ""squirrel""]"
+espressif/vscode-esp-idf-extension,typescript,0,0,,,https://github.com/espressif/vscode-esp-idf-extension.git,0,0,0,2018-11-21T03:27:08,[]
+ethereumjs/ethereumjs-monorepo,typescript,0,0,,,https://github.com/ethereumjs/ethereumjs-monorepo.git,10,6,4,2015-07-10T02:54:03,"[""bytecode"", ""client"", ""ethereum"", ""ethereumjs"", ""evm"", ""javascript"", ""monorepo"", ""mpt"", ""typescript"", ""virtual-machine"", ""vm""]"
+elastic/eui,typescript,0,0,,,https://github.com/elastic/eui.git,11,9,2,2017-10-18T02:49:20,"[""css-in-js"", ""design-system"", ""elasticsearch"", ""eui"", ""kibana"", ""react""]"
+excalidraw/excalidraw,typescript,0,0,,,https://github.com/excalidraw/excalidraw.git,3,3,0,2020-01-02T01:04:43,"[""canvas"", ""collaboration"", ""diagrams"", ""drawing"", ""hacktoberfest"", ""productivity"", ""whiteboard""]"
+ericblade/quagga2,typescript,0,0,,,https://github.com/ericblade/quagga2.git,7,6,1,2015-09-12T05:14:20,"[""barcode"", ""barcode-detection"", ""barcode-reader"", ""barcode-recognizer"", ""barcode-scanner"", ""barcodes"", ""camera"", ""ean"", ""hacktoberfest"", ""javascript"", ""node"", ""nodejs"", ""quagga""]"
+faridsafi/react-native-gifted-chat,typescript,0,0,,,https://github.com/faridsafi/react-native-gifted-chat.git,0,0,0,2015-11-14T03:45:34,"[""chat"", ""component"", ""react-native""]"
+facebook/jest,typescript,0,0,,,https://github.com/facebook/jest.git,1,0,1,2013-12-10T12:18:04,[]
+felixrieseberg/windows95,typescript,0,0,,,https://github.com/felixrieseberg/windows95.git,0,0,0,2018-08-23T05:04:38,[]
+ethereum/sourcify,typescript,2,1,7b2630e6a437b26bea8d932f7480d734eade1ba5,7b2630e6a437b26bea8d932f7480d734eade1ba5,https://github.com/ethereum/sourcify.git,25,16,9,2019-04-24T08:23:22,"[""ethereum"", ""smart-contracts"", ""solidity"", ""source-code-verification"", ""verification"", ""vyper""]"
+expo/eas-cli,typescript,8,4,4e95a29797520e592481772f49fc7dcdf33d7603,1a573679e5aa95258f127c8a89420229028bf963,https://github.com/expo/eas-cli.git,25,12,13,2020-08-12T05:05:04,"[""android"", ""apps"", ""automation"", ""ci"", ""cicd"", ""cli"", ""cloud"", ""deployment"", ""expo"", ""hosting"", ""ios"", ""mobile"", ""react-native""]"
+firecow/gitlab-ci-local,typescript,1,1,fcccb7ecf715efc151b42ff8c7379ab013b432b7,fcccb7ecf715efc151b42ff8c7379ab013b432b7,https://github.com/firecow/gitlab-ci-local.git,5,2,3,2020-01-04T06:03:14,"[""cd"", ""ci"", ""git"", ""gitlab"", ""gitlab-ci"", ""local"", ""pipeline"", ""push"", ""uncomitted"", ""untracked""]"
+flavioislima/heroicgameslauncher,typescript,0,0,,,https://github.com/flavioislima/heroicgameslauncher.git,1,1,0,2020-12-30T12:51:57,[]
+fonoster/routr,typescript,2,1,48cc10bb1a6060a1d23305dc6acf6f40b3410023,48cc10bb1a6060a1d23305dc6acf6f40b3410023,https://github.com/fonoster/routr.git,1,0,1,2017-01-18T04:34:29,"[""asterisk"", ""docker"", ""fonoster"", ""freepbx"", ""freeswitch"", ""fusionpbx"", ""ims"", ""instant-messaging"", ""intercom"", ""kamailio"", ""kubernetes"", ""opensips"", ""scaip"", ""server"", ""sip"", ""twilio"", ""voip"", ""webrtc""]"
+foambubble/foam,typescript,2,1,9dc8930b8ea6386a35413e662d0b853f87843e70,9dc8930b8ea6386a35413e662d0b853f87843e70,https://github.com/foambubble/foam.git,5,2,3,2020-06-19T05:04:10,"[""graph-visualisation"", ""markdown"", ""markdown-editor"", ""note-taking"", ""notes-app"", ""personal-knowledge-base"", ""pkm"", ""vscode"", ""zettelkasten""]"
+crowi/crowi,typescript,262,103,d826cd01b80255a9ba039d64a50d086b11009e2d,f647cdcbc1fffc860693696f377cebd30d90603d,https://github.com/crowi/crowi.git,314,141,173,2014-08-18T05:32:58,"[""crowi"", ""knowledge"", ""markdown-wiki"", ""typescript"", ""wiki""]"
+fullstack-build/tslog,typescript,0,0,,,https://github.com/fullstack-build/tslog.git,0,0,0,2020-04-23T09:08:24,"[""error-handling"", ""exceptions"", ""json"", ""json-api"", ""logger"", ""logging"", ""logging-library"", ""pretty-print"", ""stack"", ""stacktrace"", ""typescript-library""]"
+eggjs/egg,typescript,492,27,ea6515b04a0626c7facd7801d0faa71181d81736,2a60d3b310f1c38093795b0497a2536c36d0be59,https://github.com/eggjs/egg.git,105,64,41,2016-06-18T06:53:23,"[""egg"", ""eggjs"", ""enterprise"", ""framework"", ""koa"", ""koa-middleware"", ""koa2"", ""node-framework"", ""nodejs""]"
+fullcalendar/fullcalendar-scheduler,typescript,0,0,,,https://github.com/fullcalendar/fullcalendar-scheduler.git,0,0,0,2015-08-17T01:26:03,[]
+formatjs/formatjs,typescript,4,2,9cc3087bfd45a85982313e0597f1052787574349,549044db21307c318e0456303d27e526b65a2c46,https://github.com/formatjs/formatjs.git,48,28,20,2014-04-24T05:28:36,"[""formatjs"", ""globalization"", ""i18n"", ""internationalization"", ""intl"", ""javascript"", ""localization"", ""react"", ""translation"", ""ui"", ""web""]"
+garden-io/garden,typescript,0,0,,,https://github.com/garden-io/garden.git,0,0,0,2017-12-03T02:10:59,"[""containers"", ""developer-tools"", ""kubernetes"", ""testing"", ""testing-tools""]"
+gitbookio/gitbook,typescript,1,1,f9ad9b53562c744ada57f4dbff68bddd87d7e048,f9ad9b53562c744ada57f4dbff68bddd87d7e048,https://github.com/gitbookio/gitbook.git,23,10,13,2014-03-31T03:01:56,"[""documentation"", ""git"", ""gitbook"", ""markdown""]"
+gilbarbara/react-joyride,typescript,0,0,,,https://github.com/gilbarbara/react-joyride.git,0,0,0,2015-08-28T02:56:09,"[""joyride"", ""react"", ""react-component"", ""tooltip"", ""tour""]"
+getsentry/sentry-react-native,typescript,44,22,6c36ba51562f95ff1e81726ffc3fc917dc97a78d,26843eb6aa8e858a034b07bfc226d4c1e5b24ea7,https://github.com/getsentry/sentry-react-native.git,99,35,64,2016-11-30T02:45:57,"[""android"", ""crash-reporting"", ""ios"", ""javascript"", ""react-native"", ""sdk"", ""sentry"", ""tag-production"", ""team-mobile"", ""typescript""]"
+glimmerjs/glimmer-vm,typescript,0,0,,,https://github.com/glimmerjs/glimmer-vm.git,0,0,0,2015-09-14T05:59:26,"[""emberjs"", ""glimmerjs"", ""hacktoberfest"", ""typescript""]"
+golevelup/nestjs,typescript,2,2,0e067621baa5b8effeff119507b7925182911fbf,f56b8c0f8ec7cdd91d92cdf8a6f2674a35a08918,https://github.com/golevelup/nestjs.git,16,11,5,2019-01-26T06:26:08,"[""event-management"", ""express"", ""graphql"", ""hacktoberfest"", ""hasura"", ""javascript"", ""microservices"", ""nestjs"", ""nodejs"", ""plugins"", ""rabbitmq"", ""typescript"", ""webhooks""]"
+getstream/stream-chat-react-native,typescript,0,0,,,https://github.com/getstream/stream-chat-react-native.git,0,0,0,2019-03-28T08:50:26,"[""chat"", ""chat-api"", ""chat-app"", ""chat-application"", ""chat-sdk"", ""messaging-app"", ""react-native"", ""react-native-app"", ""react-native-chat"", ""react-native-component""]"
+haehnchen/crypto-trading-bot,typescript,0,0,,,https://github.com/haehnchen/crypto-trading-bot.git,0,0,0,2018-09-25T03:48:11,"[""binance"", ""bitfinex"", ""bitmex"", ""bot"", ""bybit"", ""ccxt"", ""coinbase"", ""crypto"", ""cryptocurrency"", ""docker"", ""exchange"", ""javascript"", ""margin"", ""nodejs"", ""trading"", ""trading-bot"", ""trading-strategies"", ""tradingview"", ""websocket""]"
+handsontable/hyperformula,typescript,0,0,,,https://github.com/handsontable/hyperformula.git,1,0,1,2019-09-10T08:02:18,"[""calculation-engine"", ""evaluator"", ""excel"", ""forms"", ""formula"", ""headless-spreadsheet"", ""sheets"", ""spreadsheet"", ""typescript"", ""xls"", ""xlsx""]"
+gre/gl-react,typescript,0,0,,,https://github.com/gre/gl-react.git,7,5,2,2015-08-17T03:49:51,"[""glsl"", ""react"", ""react-native"", ""universal"", ""webgl""]"
+honkit/honkit,typescript,6,2,4cc4615861018b364c994153dc03efd0215d1153,e028912af5372c9b6a7b10c2cb5b9aa0c2a9cb5a,https://github.com/honkit/honkit.git,2,0,2,2020-06-13T12:16:48,"[""asciidoc"", ""book"", ""ebook"", ""gitbook"", ""honkit"", ""javascript"", ""markdown"", ""plugin""]"
+homebridge/homebridge,typescript,11,5,a6db6577ce6f362f73f7124c42e8542c71082ee3,c2d9d7d34dcbfc9323964894117692346ea9f15c,https://github.com/homebridge/homebridge.git,49,17,32,2014-12-01T04:37:39,"[""hap"", ""homebridge"", ""homekit"", ""homekit-accessory-protocol"", ""homekit-api"", ""homekit-bridge"", ""siri""]"
+hubtype/botonic,typescript,0,0,,,https://github.com/hubtype/botonic.git,2,2,0,2018-03-25T09:19:51,"[""bot-framework"", ""bots"", ""chatbots"", ""cms"", ""contentful"", ""conversational-apps"", ""conversational-interfaces"", ""conversational-ui"", ""dialogflow"", ""javascript"", ""nlp"", ""nlu"", ""react"", ""watson""]"
+hydro-dev/hydro,typescript,0,0,,,https://github.com/hydro-dev/hydro.git,0,0,0,2020-04-01T10:14:19,"[""acm-icpc"", ""cpp"", ""hydro"", ""java"", ""mixed-judge"", ""mongodb"", ""node"", ""noip"", ""oi"", ""oj"", ""online-judge"", ""onlinejudge"", ""python"", ""vijos"", ""vj5""]"
+ifandelse/machina.js,typescript,123,4,d2b42a84bdcc8b8771f5d2fcf96bb5a32bb78781,1c3dde06aeb3e3c41f58c1bd19c1285d4f494d1f,https://github.com/ifandelse/machina.js.git,8,3,5,2012-02-28T05:16:42,"[""fsm"", ""state-machine""]"
+framer/motion,typescript,16,11,40d6eb4eb7ae286772f6a8464791c22585416879,51e82aad2f847e62462f4bccfd4de29d9ae5a3b1,https://github.com/framer/motion.git,203,96,107,2018-11-16T09:48:38,[]
+gitpod-io/gitpod,typescript,1,1,a736c1b83bd781786af0da705d0acebabfba7862,a736c1b83bd781786af0da705d0acebabfba7862,https://github.com/gitpod-io/gitpod.git,32,3,29,2018-04-24T03:56:54,"[""cde"", ""cloud"", ""cloud-development"", ""cloud-development-environments"", ""cloud-ide"", ""code-review"", ""dev-environment"", ""developer-environment"", ""developer-experience"", ""disposable"", ""editor"", ""ephemeral"", ""gitpod"", ""ide"", ""jetbrains"", ""prebuilds"", ""remote-development"", ""remote-devtools"", ""vscode""]"
+imbhargav5/rooks,typescript,42,11,2b65024e5acae77868134b8b97904624fa872351,3f3c428d125730caaed20cdda64f7ce2b31c6dc6,https://github.com/imbhargav5/rooks.git,22,8,14,2018-11-08T04:14:39,"[""hook"", ""hooks"", ""react"", ""react-hook"", ""react-hooks"", ""reactjs"", ""rooks"", ""typescript""]"
+home-assistant/frontend,typescript,3,2,0c25f061ef92e21696554564cdd64e98a23a93ca,7e60fbb66ee8099c4166157799d82f16e812e720,https://github.com/home-assistant/frontend.git,24,12,12,2015-07-12T11:58:06,"[""frontend"", ""hacktoberfest"", ""home-assistant"", ""home-automation"", ""lit-element"", ""polymer"", ""webcomponents""]"
+forcedotcom/salesforcedx-vscode,typescript,58,10,a5c93fccb18d02c1289327dd5c85b51dea0ddfdd,3cda8d6d5a394d54d732c1e04fc615794bcbb44f,https://github.com/forcedotcom/salesforcedx-vscode.git,199,155,44,2017-06-21T03:53:45,"[""apex"", ""lightning"", ""salesforce"", ""salesforcedx"", ""typescript"", ""vscode-debugger"", ""vscode-extension"", ""vscode-language""]"
+instawork/hyperview,typescript,0,0,,,https://github.com/instawork/hyperview.git,0,0,0,2018-07-25T06:02:29,[]
+jamiebrynes7/obsidian-todoist-plugin,typescript,0,0,,,https://github.com/jamiebrynes7/obsidian-todoist-plugin.git,1,1,0,2020-08-29T02:13:28,"[""obsidian"", ""obsidian-md"", ""obsidian-plugin"", ""todoist""]"
+javascript-obfuscator/javascript-obfuscator,typescript,0,0,,,https://github.com/javascript-obfuscator/javascript-obfuscator.git,0,0,0,2016-05-09T08:16:53,"[""browser"", ""control-flow"", ""cryptography"", ""encoding"", ""flattening"", ""flow"", ""javascript"", ""javascript-obfuscator"", ""js-obfuscator"", ""literal"", ""mangle"", ""nodejs"", ""obfuscate"", ""obfuscation"", ""obfuscator"", ""protection"", ""security"", ""string"", ""typescript"", ""uglify""]"
+jcmais/node-libcurl,typescript,0,0,,,https://github.com/jcmais/node-libcurl.git,0,0,0,2014-04-16T11:32:43,"[""c-plus-plus"", ""curl"", ""ftp"", ""hacktoberfest"", ""http-client"", ""http2"", ""http3"", ""javascript"", ""libcurl"", ""libcurl-binding"", ""node-addon"", ""node-gyp"", ""node-module"", ""nodejs"", ""prebuilt-binaries"", ""quic""]"
+iorate/ublacklist,typescript,0,0,,,https://github.com/iorate/ublacklist.git,26,16,10,2018-06-25T03:41:25,"[""blocker"", ""chrome-extension"", ""firefox-extension"", ""google-search""]"
+azure/azure-sdk-for-js,typescript,188,23,38abf3ed45375b4b0f5a0c5e2259d7dc0064af4f,cd4f7daafb6cdb356e104a5b1ce37065a7dfacc1,https://github.com/azure/azure-sdk-for-js.git,205,142,63,2017-10-25T06:44:09,"[""azure"", ""azure-sdk"", ""browser"", ""hacktoberfest"", ""javascript"", ""nodejs"", ""typescript""]"
+jamaljsr/polar,typescript,0,0,,,https://github.com/jamaljsr/polar.git,0,0,0,2019-08-09T05:40:08,"[""bitcoin"", ""bitcoind"", ""c-lightning"", ""docker"", ""electron"", ""lightning"", ""lightning-network"", ""lnd"", ""polar"", ""react""]"
+jigsaw-code/outline-client,typescript,0,0,,,https://github.com/jigsaw-code/outline-client.git,1,1,0,2018-03-13T09:42:30,"[""android"", ""chromeos"", ""cordova"", ""electron"", ""ios"", ""linux"", ""macos"", ""shadowsocks"", ""windows""]"
+imolorhe/altair,typescript,0,0,,,https://github.com/imolorhe/altair.git,5,5,0,2017-03-25T09:08:30,[]
+johnkorzhuk/grabient,typescript,0,0,,,https://github.com/johnkorzhuk/grabient.git,1,0,1,2017-05-06T11:41:30,[]
+just-jeb/angular-builders,typescript,0,0,,,https://github.com/just-jeb/angular-builders.git,0,0,0,2018-07-03T02:15:02,"[""angular"", ""angular-cli"", ""angular15"", ""angular16"", ""angular17"", ""angular18"", ""build"", ""builder"", ""builders"", ""custom"", ""customization"", ""customized-builds"", ""dev-server"", ""extend"", ""ivy"", ""jest"", ""jest-test"", ""unit-test"", ""webpack"", ""webpack-dev-server""]"
+jsforce/jsforce,typescript,0,0,,,https://github.com/jsforce/jsforce.git,0,0,0,2014-01-30T08:56:14,"[""jsforce"", ""salesforce""]"
+jesec/flood,typescript,0,0,,,https://github.com/jesec/flood.git,1,1,0,2020-08-03T01:48:43,"[""collaborate"", ""nodejs"", ""qbittorrent"", ""react"", ""rtorrent"", ""transmission"", ""webui""]"
+kern/filepizza,typescript,0,0,,,https://github.com/kern/filepizza.git,0,0,0,2015-02-25T11:29:26,"[""react"", ""webrtc""]"
+justjake/quickjs-emscripten,typescript,0,0,,,https://github.com/justjake/quickjs-emscripten.git,3,2,1,2020-01-05T04:09:48,"[""eval"", ""javascript"", ""plugins"", ""quickjs"", ""wasm""]"
+koenkk/zigbee-herdsman,typescript,0,0,,,https://github.com/koenkk/zigbee-herdsman.git,4,1,3,2019-06-15T07:42:31,"[""hacktoberfest""]"
+kriasoft/react-starter-kit,typescript,0,0,,,https://github.com/kriasoft/react-starter-kit.git,0,0,0,2014-04-16T01:08:18,"[""better-auth"", ""boilerplate"", ""bun"", ""cloudflare"", ""cloudflare-workers"", ""drizzle-orm"", ""gcp"", ""hono"", ""neon"", ""nodejs"", ""react"", ""saas"", ""shadcn-ui"", ""starter-kit"", ""tailwindcss"", ""tanstack-router"", ""template"", ""trpc"", ""typescript"", ""vite""]"
+kristiandupont/kanel,typescript,0,0,,,https://github.com/kristiandupont/kanel.git,0,0,0,2020-02-18T07:08:09,[]
+johnpapa/vscode-peacock,typescript,0,0,,,https://github.com/johnpapa/vscode-peacock.git,21,11,10,2019-02-22T05:50:25,"[""ai-ready"", ""typescript"", ""visual-studio-code"", ""vscode"", ""vscode-extension"", ""vscode-plugin"", ""vsls""]"
+lichess-org/api,typescript,0,0,,,https://github.com/lichess-org/api.git,0,0,0,2018-04-01T09:24:19,"[""lichess""]"
+lucide-icons/lucide,typescript,3,1,a0e202d759da95c243b541f8d3c1c26eada32b2e,a0e202d759da95c243b541f8d3c1c26eada32b2e,https://github.com/lucide-icons/lucide.git,5,3,2,2020-06-08T03:36:21,"[""feather-icons"", ""figma"", ""icons"", ""react"", ""svg"", ""svg-icons"", ""svgs"", ""ui-components"", ""ui-design"", ""vue""]"
+kufu/smarthr-ui,typescript,0,0,,,https://github.com/kufu/smarthr-ui.git,23,17,6,2018-05-10T07:32:43,"[""hacktoberfest""]"
+kinvolk/headlamp,typescript,0,0,,,https://github.com/kinvolk/headlamp.git,0,0,0,2019-11-08T09:00:03,[]
+lizhiyao/sentry-miniapp,typescript,12,3,476c0f90038fb6b5b3464136c63c066a23e56819,63b3e5baf724e0320cb48eccb581229b36510e1e,https://github.com/lizhiyao/sentry-miniapp.git,22,12,10,2019-08-07T02:16:04,"[""alipay-miniprogram"", ""apm"", ""breadcrumbs"", ""bytedance-miniprogram"", ""crash-reporting"", ""distributed-tracing"", ""error-monitoring"", ""error-tracking"", ""mini-program"", ""monitoring"", ""performance-monitoring"", ""qq-miniprogram"", ""sentry"", ""session-tracking"", ""sourcemap"", ""taro"", ""uniapp"", ""weapp"", ""wechat"", ""wechat-miniprogram""]"
+maildev/maildev,typescript,6,1,f78e5cb42e89d88d57d698c384256a1ae2b9abee,f78e5cb42e89d88d57d698c384256a1ae2b9abee,https://github.com/maildev/maildev.git,1,0,1,2013-03-31T07:37:09,"[""developer-tools"", ""development"", ""docker"", ""mailcatcher"", ""maildev"", ""nodejs"", ""nodemailer"", ""smtp"", ""smtp-server"", ""testing""]"
+igniteui/igniteui-angular,typescript,3,3,4ee5c3ffddb8125415feb695729d455ed5f164e8,7ff3ee2ba95b82f0a8da42b9a859ff4cb7299dd0,https://github.com/igniteui/igniteui-angular.git,27,20,7,2016-02-11T01:28:16,"[""angular"", ""angular-charts"", ""angular-components"", ""angular-datatable"", ""angular-grid"", ""angular-table"", ""igniteui"", ""infragistics"", ""progressive-web-apps"", ""typescript"", ""ui-components""]"
+luin/ioredis,typescript,1,1,4760e0a19c194f29f4feb703003dcf046e4509cd,4760e0a19c194f29f4feb703003dcf046e4509cd,https://github.com/luin/ioredis.git,4,0,4,2015-04-02T06:42:46,"[""nodejs"", ""redis"", ""redis-client"", ""redis-cluster"", ""redis-module"", ""redis-sentinel"", ""typescript""]"
+khan/perseus,typescript,2,1,e1f9a0d2a1b5538650e9d6b2fac3fa219dab0577,e1f9a0d2a1b5538650e9d6b2fac3fa219dab0577,https://github.com/khan/perseus.git,2,1,1,2013-01-25T07:54:46,[]
+martpie/museeks,typescript,0,0,,,https://github.com/martpie/museeks.git,0,0,0,2015-03-03T01:01:31,"[""cross-platform"", ""electron"", ""museeks"", ""music"", ""music-player"", ""react""]"
+lume/lume,typescript,0,0,,,https://github.com/lume/lume.git,0,0,0,2014-12-30T06:40:12,"[""3d"", ""3d-engine"", ""3d-graphics"", ""3d-models"", ""css3d"", ""custom-elements"", ""dom-elements"", ""graphics"", ""graphics-engine"", ""graphics-programming"", ""html"", ""javascript"", ""lume"", ""scene"", ""three-d"", ""three-dimensions"", ""threejs"", ""ui"", ""web-components"", ""webgl""]"
+marktext/muya,typescript,11,7,b6a62dd2845444a241394d14f8d1d67b6cb31352,00939d2c952bbf16d00018c585165888fe37a6bb,https://github.com/marktext/muya.git,33,7,26,2018-06-29T02:30:54,"[""markdown"", ""markdown-editor""]"
+maygo/tockler,typescript,0,0,,,https://github.com/maygo/tockler.git,0,0,0,2016-02-28T08:32:04,"[""electron"", ""electron-app"", ""osx"", ""productivity"", ""timeline"", ""timetracker"", ""windows""]"
+meilisearch/meilisearch-js,typescript,0,0,,,https://github.com/meilisearch/meilisearch-js.git,0,0,0,2019-10-02T03:37:57,"[""javascript"", ""meilisearch"", ""nodejs"", ""sdk"", ""typescript""]"
+getsentry/sentry-javascript,typescript,52,26,ba3728d782e2c7bfbb0c9ffc205de3a9b9237201,ecd606ea4d2bc9642c929b8fac0797255d298163,https://github.com/getsentry/sentry-javascript.git,291,194,97,2012-02-01T08:16:25,"[""angular"", ""crash-reporting"", ""ember"", ""error-monitoring"", ""hacktoberfest"", ""javascript"", ""javascript-client"", ""nextjs"", ""node"", ""raven"", ""react"", ""sdk"", ""sentry"", ""sentry-client"", ""tag-production"", ""team-sdk-javascript"", ""team-web-frontend"", ""typescript"", ""vue""]"
+maximeheckel/blog.maximeheckel.com,typescript,0,0,,,https://github.com/maximeheckel/blog.maximeheckel.com.git,0,0,0,2019-08-10T05:04:46,[]
+microsoft/clarity,typescript,0,0,,,https://github.com/microsoft/clarity.git,2,0,2,2020-04-30T12:42:51,"[""clarity"", ""heatmap"", ""session-replay""]"
+microsoft/fast,typescript,0,0,,,https://github.com/microsoft/fast.git,0,0,0,2018-03-02T08:10:30,"[""adaptive-ui"", ""animation-library"", ""color-library"", ""component-architecture"", ""component-library"", ""components"", ""design-architecture"", ""design-systems"", ""development-tools"", ""front-end-framework"", ""react"", ""typescript"", ""web-accessibility"", ""web-components"", ""web-components-schemas"", ""web-standards""]"
+microsoft/fluentui-react-native,typescript,0,0,,,https://github.com/microsoft/fluentui-react-native.git,1,1,0,2019-07-10T08:27:19,[]
+microsoft/just,typescript,0,0,,,https://github.com/microsoft/just.git,1,1,0,2019-01-17T06:07:00,"[""build"", ""javascript"", ""typescript""]"
+johannesjo/super-productivity,typescript,33,17,259d9d5a6278e298fd79529f5bd43b2d64099bc2,817171f329cf56c71e29d26d932c00aef52dd6c6,https://github.com/johannesjo/super-productivity.git,129,86,43,2017-01-06T10:30:58,"[""electron-app"", ""hacktoberfest"", ""hacktoberfest2022"", ""jira"", ""linux"", ""macos"", ""productivity"", ""task-manager"", ""time-tracker"", ""timetracking"", ""to-do-list"", ""todo""]"
+microsoft/maker.js,typescript,0,0,,,https://github.com/microsoft/maker.js.git,2,0,2,2015-05-08T07:39:23,"[""arc"", ""bezier"", ""cad"", ""circle"", ""cnc"", ""draw"", ""drawing"", ""dxf"", ""fonts"", ""geometry"", ""laser"", ""line"", ""maker"", ""openjscad"", ""pdf"", ""rectangle"", ""svg"", ""vector""]"
+marktext/marktext,typescript,189,78,9ffc5b1bec251fd07e6261480e857056c395d363,43bd8b77795fb27b1a9512737c000f7362031ea0,https://github.com/marktext/marktext.git,248,69,179,2017-11-12T04:05:25,"[""dark-mode"", ""editor"", ""electron"", ""focus-mode"", ""latex"", ""linux"", ""mac"", ""macos"", ""markdown"", ""marktext"", ""source-code"", ""typewriter-mode"", ""vue"", ""windows""]"
+marmelab/react-admin,typescript,0,0,,,https://github.com/marmelab/react-admin.git,2,1,1,2016-07-13T07:58:54,"[""admin"", ""admin-dashboard"", ""admin-on-rest"", ""admin-ui"", ""frontend-framework"", ""graphql"", ""material-ui"", ""react"", ""react-admin"", ""reactjs"", ""rest"", ""single-page-app""]"
+microsoft/playwright,typescript,0,0,,,https://github.com/microsoft/playwright.git,36,21,15,2019-11-15T06:32:42,"[""automation"", ""chrome"", ""chromium"", ""e2e-testing"", ""electron"", ""end-to-end-testing"", ""firefox"", ""javascript"", ""playwright"", ""test"", ""test-automation"", ""testing"", ""testing-tools"", ""web"", ""webkit""]"
+markuplint/markuplint,typescript,5,4,40685828da697dfa8565288438a5d027dd0fae45,1572fe8b908bb4505a2cf3d12fd2f7ce65496ae4,https://github.com/markuplint/markuplint.git,245,115,130,2017-09-26T04:25:35,"[""alpinejs"", ""custom-elements"", ""html"", ""htmx"", ""jsx-templates"", ""linter"", ""liquid"", ""mustache-templates"", ""nunjucks"", ""php"", ""pug"", ""react"", ""svelte"", ""vue""]"
+microsoft/roosterjs,typescript,17,3,2fac28c6d7d47b9029753936fdaf893f42a8441b,aa5407756e5861b68d78663419c4560370c9de2b,https://github.com/microsoft/roosterjs.git,52,31,21,2017-07-13T04:39:51,[]
+microsoft/vscode-cmake-tools,typescript,0,0,,,https://github.com/microsoft/vscode-cmake-tools.git,31,11,20,2016-04-16T09:00:29,"[""c"", ""cmake"", ""cpp"", ""ctest"", ""debugging"", ""intellisense"", ""microsoft"", ""tasks"", ""visual-studio-code""]"
+microsoft/vscode-jupyter,typescript,0,0,,,https://github.com/microsoft/vscode-jupyter.git,9,5,4,2020-09-10T11:39:14,"[""datascience"", ""jupyter"", ""machine-learning"", ""vscode"", ""vscode-extension""]"
+microsoft/pxt,typescript,0,0,,,https://github.com/microsoft/pxt.git,0,0,0,2016-01-24T07:35:52,"[""adafruit"", ""blockly"", ""editor"", ""javascript"", ""makecode"", ""microbit"", ""microsoft-makecode"", ""minecraft"", ""pxt"", ""typescript""]"
+microsoft/pxt-arcade,typescript,0,0,,,https://github.com/microsoft/pxt-arcade.git,0,0,0,2018-01-17T01:43:03,"[""makecode""]"
+microsoft/azure-pipelines-tasks,typescript,12,3,20d4556c2573ef64afc7869c9ce801c677bf23d2,6cd05fd34493cbd30d6ff15b0038782c35f23506,https://github.com/microsoft/azure-pipelines-tasks.git,35,2,5,2014-12-06T11:11:46,[]
+microsoft/vscode-pull-request-github,typescript,4,3,3071d50110b383a403c165c99c78718ad0358386,eacf5393ca03c7f541c0b8db59a7af9585a34587,https://github.com/microsoft/vscode-pull-request-github.git,40,16,24,2018-05-24T11:05:02,"[""code-review"", ""github"", ""pull-requests"", ""vscode""]"
+microsoft/rushstack,typescript,13,4,48853d6b335916de3778c5ac5a3c8261e29f0f2d,ac0947092e1d7073c50be3037806dd00e2dc339a,https://github.com/microsoft/rushstack.git,37,21,16,2016-09-30T12:28:20,"[""api"", ""api-extractor"", ""build"", ""bulk-suppressions"", ""eslint"", ""hacktoberfest"", ""heft"", ""lockfile-explorer"", ""monorepo"", ""nodejs"", ""orchestrator"", ""rush"", ""rushstack"", ""toolchain"", ""tsdoc"", ""typescript""]"
+mil-tokyo/webdnn,typescript,0,0,,,https://github.com/mil-tokyo/webdnn.git,10,0,10,2017-04-06T08:11:46,"[""accelerate"", ""deep-neural-networks"", ""javascript"", ""optimization"", ""webgpu""]"
+midwayjs/midway,typescript,0,0,,,https://github.com/midwayjs/midway.git,0,0,0,2018-07-12T06:16:16,"[""aliyun"", ""aws"", ""azure"", ""cloud"", ""dependency-injection-container"", ""enterprise"", ""framework"", ""ioc"", ""midway"", ""mircoservices"", ""react"", ""serverless"", ""serverless-framework"", ""typescript"", ""vue"", ""web""]"
+mxstbr/mxstbr.com,typescript,0,0,,,https://github.com/mxstbr/mxstbr.com.git,0,0,0,2018-10-15T10:12:46,"[""nextjs"", ""prettier"", ""react""]"
+naver/billboard.js,typescript,0,0,,,https://github.com/naver/billboard.js.git,0,0,0,2017-06-08T02:54:44,"[""canvas"", ""charting-library"", ""d3"", ""data-visualizations"", ""graph"", ""svg""]"
+naomiaro/waveform-playlist,typescript,20,10,34b894d0b3393c18c9fff7dcb313ab0b3d984852,1fc1b2fe721808eb2bdb536e19b832fd992e7d5f,https://github.com/naomiaro/waveform-playlist.git,51,27,24,2013-02-12T12:37:03,"[""annotations"", ""audio"", ""audio-player"", ""audio-visualizer"", ""audiorecorder"", ""audioworklet"", ""daw"", ""harmony"", ""music"", ""playback"", ""playlist"", ""tonejs"", ""waveform"", ""webaudio""]"
+moodlehq/moodleapp,typescript,0,0,,,https://github.com/moodlehq/moodleapp.git,0,0,0,2015-03-03T09:18:17,"[""ionic"", ""moodleapp""]"
+matteobruni/tsparticles,typescript,0,0,,,https://github.com/matteobruni/tsparticles.git,0,0,0,2020-02-05T06:00:01,"[""2d"", ""angular"", ""animations"", ""bg"", ""canvas"", ""confetti"", ""fireworks"", ""hacktoberfest"", ""html"", ""javascript"", ""js"", ""npm"", ""particles"", ""react"", ""svelte"", ""ts"", ""tsparticles"", ""typescript"", ""vue"", ""web""]"
+neet/masto.js,typescript,0,0,,,https://github.com/neet/masto.js.git,1,0,1,2018-04-13T07:27:40,"[""fediverse"", ""mastodon"", ""mastodon-api""]"
+microsoft/vscode-mssql,typescript,0,0,,,https://github.com/microsoft/vscode-mssql.git,39,21,18,2016-06-26T04:38:04,[]
+ng-select/ng-select,typescript,0,0,,,https://github.com/ng-select/ng-select.git,10,6,4,2017-07-02T04:43:27,"[""angular"", ""angular-components"", ""angular2"", ""angular4"", ""angular5"", ""angular6"", ""angular7"", ""angular8"", ""autocomplete"", ""dropdown"", ""hacktoberfest"", ""multiselect"", ""select"", ""typeahead"", ""ui-select""]"
+ng-alain/delon,typescript,4,2,569e8ace582aebe1a59d85543e8404cdd9d0e00e,281d8dd2be692476fd4c66ce003574c9ef92450f,https://github.com/ng-alain/delon.git,3,0,3,2017-11-25T10:37:28,"[""angular"", ""angular-components"", ""angular-scaffolding"", ""g2"", ""ng-admin"", ""ng-alain"", ""ng-zorro"", ""scaffold"", ""scaffold-framework"", ""scaffold-template"", ""scaffolding""]"
+ngneat/transloco,typescript,0,0,,,https://github.com/ngneat/transloco.git,1,1,0,2019-08-09T11:52:35,"[""angular"", ""i18n"", ""internationalization"", ""languages"", ""translation""]"
+ngx-translate/core,typescript,0,0,,,https://github.com/ngx-translate/core.git,0,0,0,2015-10-11T08:44:15,"[""angular"", ""i18n"", ""ngx"", ""ngx-translate"", ""npm-package"", ""translation""]"
+node-modules/urllib,typescript,0,0,,,https://github.com/node-modules/urllib.git,5,2,3,2011-05-16T02:04:01,"[""curl"", ""curl-library"", ""http-client"", ""httpclient"", ""request"", ""undici"", ""urllib"", ""urllib2""]"
+naver/egjs-flicking,typescript,0,0,,,https://github.com/naver/egjs-flicking.git,3,2,1,2017-04-28T02:32:33,"[""angular"", ""carousel"", ""desktop"", ""egjs"", ""iscroll"", ""javascript"", ""mobile"", ""react"", ""reactjs"", ""slider"", ""tablet"", ""typescript"", ""vue""]"
+ng-zorro/ng-zorro-antd,typescript,1,1,de0faf6dcb333ae430d1f5e85c95303c8081cbeb,de0faf6dcb333ae430d1f5e85c95303c8081cbeb,https://github.com/ng-zorro/ng-zorro-antd.git,12,11,1,2017-08-08T02:59:33,"[""angular"", ""angular-components"", ""angular-directives"", ""angular-ui-components"", ""ant"", ""ant-design"", ""antd"", ""enterprise"", ""frontend"", ""ivy"", ""ng-zorro"", ""ngx"", ""typescript"", ""ui-components""]"
+nicoespeon/abracadabra,typescript,0,0,,,https://github.com/nicoespeon/abracadabra.git,0,0,0,2019-05-24T01:45:09,"[""javascript"", ""legacy-code"", ""magic"", ""refactoring"", ""typescript"", ""vscode-extension""]"
+nomcopter/react-mosaic,typescript,0,0,,,https://github.com/nomcopter/react-mosaic.git,1,1,0,2017-03-23T03:51:26,"[""react"", ""tiling-window-manager"", ""typescript"", ""window-manager""]"
+notionx/react-notion-x,typescript,0,0,,,https://github.com/notionx/react-notion-x.git,0,0,0,2020-08-15T12:29:59,"[""nextjs"", ""notion"", ""notion-api"", ""react"", ""react-notion"", ""typescript""]"
+noderedis/node-redis,typescript,2,1,23e16ac80855845144ed34077215d094528851e3,23e16ac80855845144ed34077215d094528851e3,https://github.com/noderedis/node-redis.git,38,15,23,2010-09-14T02:05:09,[]
+microsoft/fluidframework,typescript,17,11,e70347986c823316e6a4b3981f0dcff47aee709b,c12943d4ef6cd943241773cd98542ef3003415ac,https://github.com/microsoft/fluidframework.git,174,124,50,2019-08-22T05:37:57,"[""collaboration"", ""crdt"", ""datastructure"", ""distributed"", ""fluid"", ""fluid-framework"", ""microsoft"", ""realtime""]"
+nuclearpasta/react-native-drax,typescript,0,0,,,https://github.com/nuclearpasta/react-native-drax.git,0,0,0,2019-12-20T06:44:59,[]
+nrwl/nx-console,typescript,0,0,,,https://github.com/nrwl/nx-console.git,11,3,8,2018-06-18T10:02:01,[]
+oakserver/oak,typescript,0,0,,,https://github.com/oakserver/oak.git,3,0,3,2018-12-12T10:20:46,"[""deno"", ""http-server"", ""middleware-framework"", ""middleware-frameworks"", ""oak"", ""router-middleware""]"
+nexus-mods/vortex,typescript,0,0,,,https://github.com/nexus-mods/vortex.git,22,17,5,2016-09-05T03:53:53,[]
+mui-org/material-ui-x,typescript,10,4,4dde297fa37f3cf6e203fba59942817af776f36a,3b4db216c9d709b22db6d302a007edac066a1edb,https://github.com/mui-org/material-ui-x.git,106,60,46,2020-04-30T02:52:39,[]
+olistic/warriorjs,typescript,0,0,,,https://github.com/olistic/warriorjs.git,54,49,5,2015-04-29T02:25:02,"[""ai"", ""artificial-intelligence"", ""battle"", ""epic"", ""game"", ""javascript"", ""js"", ""learn"", ""nodejs"", ""sharpen"", ""skills"", ""test"", ""warrior"", ""warriorjs""]"
+mikro-orm/mikro-orm,typescript,233,74,19ebac464d87ec73576d354bd1dda817d4d40539,441eaa110aeeb0920bb6ac40854802ab9ee7b78b,https://github.com/mikro-orm/mikro-orm.git,178,49,129,2018-03-15T09:21:10,"[""database"", ""datamapper"", ""entities"", ""entity"", ""identity-map"", ""javascript"", ""libsql"", ""mongodb"", ""mysql"", ""nodejs"", ""orm"", ""postgre"", ""postgresql"", ""sql"", ""sql-server"", ""sqlite"", ""sqlite3"", ""typescript"", ""typescript-orm"", ""unit-of-work""]"
+nomiclabs/hardhat,typescript,3,1,c4a7daace7ce9d9d76eca194b1abba4e8f6c64c3,c4a7daace7ce9d9d76eca194b1abba4e8f6c64c3,https://github.com/nomiclabs/hardhat.git,27,21,6,2018-04-14T10:20:59,[]
+omnisharp/omnisharp-vscode,typescript,0,0,,,https://github.com/omnisharp/omnisharp-vscode.git,2,1,1,2015-12-03T03:45:21,"[""c-sharp"", ""csharp"", ""omnisharp"", ""vscode""]"
+openplayerjs/openplayerjs,typescript,1,1,9c160a8bdb8f7323c046484d6664acadd6c2a33b,9c160a8bdb8f7323c046484d6664acadd6c2a33b,https://github.com/openplayerjs/openplayerjs.git,9,6,3,2018-09-03T05:41:25,"[""ads"", ""audio"", ""hls"", ""html5"", ""html5-audio"", ""html5-video"", ""html5-video-player"", ""javascript"", ""non-linear"", ""omid"", ""openplayerjs"", ""player"", ""simid"", ""typescript"", ""typescript-library"", ""vast"", ""video"", ""vmap""]"
+openshiporg/openship,typescript,0,0,,,https://github.com/openshiporg/openship.git,1,1,0,2022-08-10T05:43:01,"[""3pl"", ""e-commerce"", ""fulfillment"", ""marketplace-api"", ""netlify"", ""nextjs"", ""oms"", ""order-management"", ""order-management-system"", ""shopify"", ""vercel"", ""warehouse"", ""warehouse-management-system""]"
+open-wa/wa-automate-nodejs,typescript,0,0,,,https://github.com/open-wa/wa-automate-nodejs.git,0,0,0,2019-08-15T12:25:26,"[""api"", ""chatbots"", ""framework"", ""nodejs"", ""typescript""]"
+online-go/online-go.com,typescript,2,1,594c9d5d7fbd6a4de19e6e84b1d99071894e9f31,594c9d5d7fbd6a4de19e6e84b1d99071894e9f31,https://github.com/online-go/online-go.com.git,16,7,9,2017-02-24T03:21:23,"[""baduk"", ""hacktoberfest"", ""igo""]"
+paraswap/paraswap-sdk,typescript,0,0,,,https://github.com/paraswap/paraswap-sdk.git,0,0,0,2019-10-08T01:28:44,"[""blockchain"", ""cryptocurrency"", ""ethereum"", ""exchange"", ""paraswap"", ""solidity"", ""web3""]"
+paljs/prisma-tools,typescript,0,0,,,https://github.com/paljs/prisma-tools.git,0,0,0,2020-04-12T12:18:36,"[""apollo"", ""crud"", ""graphql-modules"", ""graphql-schema"", ""graphql-server"", ""nexus-framework"", ""prisma"", ""prisma-admin"", ""prisma-client"", ""prisma-framework"", ""sdl"", ""typescript""]"
+oznu/homebridge-config-ui-x,typescript,10,5,a53abfdd0146de5211cb9fe1951b721ef15d8cb9,268ef6aab6d65ab5e0212f378fb4b50bb21d6a99,https://github.com/oznu/homebridge-config-ui-x.git,45,14,31,2017-12-21T04:20:54,[]
+parabolinc/parabol,typescript,0,0,,,https://github.com/parabolinc/parabol.git,1,0,1,2015-12-21T05:16:49,"[""agile"", ""graphql"", ""kanban"", ""nodejs"", ""react"", ""realtime"", ""redis"", ""retrospective"", ""saas"", ""stripe""]"
+persian-tools/persian-tools,typescript,0,0,,,https://github.com/persian-tools/persian-tools.git,1,0,1,2018-06-18T10:00:57,"[""card-number"", ""code-melli"", ""code-melli-validator"", ""convert-numbers"", ""convert-persian-number"", ""english-number-to-persian"", ""fuzzy-matching"", ""iban"", ""iranian-national-id"", ""number-to-words"", ""persian-characters"", ""persian-language"", ""persian-words-to-number"", ""remove-commas"", ""sheba"", ""sheba-validator"", ""verify-bank-nunber"", ""verify-national-id"", ""words-to-numbers""]"
+petyosi/react-virtuoso,typescript,0,0,,,https://github.com/petyosi/react-virtuoso.git,0,0,0,2019-05-03T05:39:04,"[""chat"", ""component-library"", ""feed"", ""hacktoberfest"", ""react"", ""virtual"", ""virtualizedlist""]"
+picgo/picgo-core,typescript,0,0,,,https://github.com/picgo/picgo-core.git,0,0,0,2018-09-17T07:26:44,"[""picgo"", ""picture-upload"", ""upload-pictures""]"
+photostructure/exiftool-vendored.js,typescript,0,0,,,https://github.com/photostructure/exiftool-vendored.js.git,1,1,0,2016-10-13T03:56:38,"[""cross-platform"", ""exif"", ""exiftool"", ""gps"", ""image"", ""images"", ""metadata"", ""metadata-extraction"", ""movies"", ""nodejs"", ""photo"", ""photographs"", ""photography"", ""photos"", ""video"", ""videos""]"
+pmndrs/react-spring,typescript,0,0,,,https://github.com/pmndrs/react-spring.git,0,0,0,2018-03-07T03:39:32,"[""animation-library"", ""react"", ""react-spring"", ""spring-physics"", ""springs""]"
+po-ui/po-angular,typescript,0,0,,,https://github.com/po-ui/po-angular.git,5,5,0,2019-06-25T04:50:39,"[""angular"", ""angular-components"", ""enterprise"", ""frontend"", ""hacktoberfest"", ""po"", ""po-ui"", ""ui-components""]"
+polymer/lit-html,typescript,0,0,,,https://github.com/polymer/lit-html.git,0,0,0,2017-06-29T04:27:16,[]
+owid/owid-grapher,typescript,4,2,f4fa25584ce59b45dab65f385c577ddcb69615c2,5dfcba98c799bb21df863e6bc717d9199955715c,https://github.com/owid/owid-grapher.git,44,23,21,2015-05-04T11:06:48,"[""data-visualization"", ""react"", ""typescript""]"
+pnp/cli-microsoft365,typescript,0,0,,,https://github.com/pnp/cli-microsoft365.git,3,2,1,2017-10-12T05:18:21,"[""azure"", ""azure-active-directory"", ""cli"", ""entra-id"", ""hacktoberfest"", ""microsoft"", ""microsoft-365"", ""microsoft-graph"", ""microsoft-planner"", ""microsoft-power-apps"", ""microsoft-power-automate"", ""microsoft-teams"", ""microsoft-viva"", ""microsoft365"", ""office-365"", ""office365"", ""sharepoint"", ""sharepoint-framework"", ""sharepoint-online"", ""spfx""]"
+powershell/vscode-powershell,typescript,3,3,294738ec550bc8ee685540eff231ebd14720ff83,30d16a85acfaa1e6a2ae7c0c16a0b882f852a69a,https://github.com/powershell/vscode-powershell.git,6,2,4,2015-09-08T06:29:04,"[""extensions"", ""hacktoberfest"", ""powershell"", ""visual-studio-code""]"
+nteract/semiotic,typescript,4,3,3f777d90385734c2e7d8b66ee4b5edb9204d8afb,489dd18d801c431fb6e6bfeb6b02afa4be1bd26e,https://github.com/nteract/semiotic.git,43,20,23,2017-03-16T05:46:24,"[""ai"", ""d3"", ""data-visualization"", ""nteract"", ""react"", ""streaming"", ""visualization""]"
+postaljs/postal.js,typescript,433,13,7b393f059829ce0d0a47ae3d1e7a6b2718d444c4,ee9f59945e307ef63f7876013bab13dfa0617e54,https://github.com/postaljs/postal.js.git,21,6,15,2011-10-27T04:40:05,[]
+payloadcms/payload,typescript,5,2,835a0ad49055dada6c7cffdb5515cb8d8a5ca576,787f9df59b46bd05360ace1f27002957d24e6a62,https://github.com/payloadcms/payload.git,43,31,12,2021-01-05T06:49:45,"[""cms"", ""content-management"", ""content-management-system"", ""express"", ""graphql"", ""headless"", ""headless-cms"", ""jamstack"", ""javascript"", ""mit-license"", ""mongodb"", ""nextjs"", ""nodejs"", ""open-source"", ""payload"", ""payloadcms"", ""postgres"", ""react"", ""typescript""]"
+pkief/vscode-material-icon-theme,typescript,0,0,,,https://github.com/pkief/vscode-material-icon-theme.git,0,0,0,2016-09-09T08:41:42,"[""material-icon-theme"", ""material-icons"", ""vscode"", ""vscode-extension"", ""vscode-icons"", ""vscode-theme""]"
+probablyup/markdown-to-jsx,typescript,0,0,,,https://github.com/probablyup/markdown-to-jsx.git,21,7,14,2015-12-06T06:42:02,"[""gfm"", ""jsx"", ""markdown"", ""react"", ""remark""]"
+projen/projen,typescript,0,0,,,https://github.com/projen/projen.git,7,3,4,2020-05-11T05:07:24,"[""aws-cdk"", ""cdk"", ""constructs"", ""generator"", ""hacktoberfest"", ""jsii"", ""repository-management"", ""repository-tools"", ""scaffolding"", ""templates"", ""typescript""]"
+rejetto/hfs,typescript,0,0,,,https://github.com/rejetto/hfs.git,0,0,0,2021-12-19T09:34:54,"[""file-server"", ""file-sharing"", ""http-server"", ""nodejs"", ""typescript"", ""web""]"
+reaviz/reaviz,typescript,0,0,,,https://github.com/reaviz/reaviz.git,0,0,0,2020-04-17T09:17:18,"[""area-charts"", ""bar-charts"", ""bubble-chart"", ""charting-library"", ""charts"", ""d3"", ""d3js"", ""data-visualization"", ""data-viz"", ""funnel-chart"", ""heatmap"", ""line-charts"", ""react"", ""reactjs"", ""sankey-chart"", ""scatter-plot"", ""sparkline"", ""sunburst-chart"", ""treemap"", ""venn-diagram""]"
+react-cosmos/react-cosmos,typescript,0,0,,,https://github.com/react-cosmos/react-cosmos.git,3,3,0,2014-02-05T06:48:27,"[""components"", ""devtools"", ""react"", ""sandbox"", ""testing"", ""ui""]"
+remeda/remeda,typescript,0,0,,,https://github.com/remeda/remeda.git,3,2,1,2018-05-07T08:56:53,"[""functional"", ""programming"", ""typescript"", ""utility""]"
+prabhuignoto/react-chrono,typescript,0,0,,,https://github.com/prabhuignoto/react-chrono.git,3,3,0,2020-08-18T07:02:24,"[""horizontal-timeline"", ""javascript-timeline"", ""react"", ""react-timeline"", ""reactjs"", ""slideshow"", ""timeline"", ""timeline-component"", ""typescript"", ""vertical-timeline"", ""vertical-timeline-react""]"
+ripple/ripple-lib,typescript,2,1,013a83fd63ebb8e25c2a0a261c679a787ebe7731,013a83fd63ebb8e25c2a0a261c679a787ebe7731,https://github.com/ripple/ripple-lib.git,3,1,2,2013-04-25T09:17:19,[]
+revenuecat/react-native-purchases,typescript,2,1,907f6fbb1fb864f277cdad6a38d414e3d37b4ce6,907f6fbb1fb864f277cdad6a38d414e3d37b4ce6,https://github.com/revenuecat/react-native-purchases.git,6,3,3,2018-06-21T09:15:55,"[""android"", ""iap"", ""ios"", ""react-native"", ""stripe"", ""web""]"
+rocketchat/rocket.chat.electron,typescript,1,1,0e7d83efb67f62dbea3f0ffc244153c9dcd5c543,0e7d83efb67f62dbea3f0ffc244153c9dcd5c543,https://github.com/rocketchat/rocket.chat.electron.git,2,1,1,2015-07-08T04:56:41,"[""chat"", ""collaboration"", ""desktop"", ""electron"", ""foss"", ""hacktoberfest"", ""linux"", ""macos"", ""mit"", ""opensource"", ""rocketchat"", ""windows""]"
+quicktype/quicktype,typescript,1,1,2f7de4c6a47ab506455d54a8ff25ee6bb789c275,2f7de4c6a47ab506455d54a8ff25ee6bb789c275,https://github.com/quicktype/quicktype.git,132,79,53,2017-07-13T12:22:50,"[""cplusplus"", ""csharp"", ""elm"", ""golang"", ""graphql"", ""java"", ""json"", ""json-schema"", ""kotlin"", ""objective-c"", ""rust"", ""swift"", ""typescript""]"
+pagopa/io-app,typescript,5,2,70a0a07af4552eb4575467b896b106c347df2bdd,525acb412dbc4c2abee659876ec2326c068d589d,https://github.com/pagopa/io-app.git,24,18,6,2017-04-11T09:34:46,"[""android"", ""cie"", ""io-app"", ""ios"", ""react-native"", ""spid""]"
+nrwl/nx,typescript,74,20,f9c427a80b88413238454c5d4563cc8be5f7f9b9,e7aa5e01fcbdabaac9d7a0b9f6a7af037f092e5b,https://github.com/nrwl/nx.git,85,39,46,2017-08-11T06:50:23,"[""angular"", ""build"", ""build-system"", ""build-tool"", ""building-tool"", ""cli"", ""cypress"", ""hacktoberfest"", ""javascript"", ""monorepo"", ""nextjs"", ""nodejs"", ""nx"", ""nx-workspaces"", ""react"", ""storybook"", ""typescript""]"
+sanity-io/next-sanity,typescript,2,1,85894eb326df4bf655f18279fd110a54d6d4cedd,85894eb326df4bf655f18279fd110a54d6d4cedd,https://github.com/sanity-io/next-sanity.git,9,7,2,2020-10-22T02:46:51,"[""hook"", ""nextjs"", ""preview"", ""real-time"", ""sanity"", ""team-ecosystem"", ""toolkit""]"
+ryohey/signal,typescript,0,0,,,https://github.com/ryohey/signal.git,1,1,0,2016-03-06T03:19:53,"[""audio"", ""editor"", ""midi"", ""music"", ""react"", ""typescript"", ""webaudio""]"
+sap/ui5-webcomponents-react,typescript,0,0,,,https://github.com/sap/ui5-webcomponents-react.git,0,0,0,2019-04-18T12:38:30,"[""open-source"", ""react"", ""typescript"", ""ui-components"", ""web-components""]"
+shinyoshiaki/werift-webrtc,typescript,0,0,,,https://github.com/shinyoshiaki/werift-webrtc.git,7,6,1,2020-02-16T07:37:24,"[""dtls"", ""ice"", ""nodejs"", ""rtp"", ""sctp"", ""srtp"", ""typescript"", ""webm"", ""webrtc""]"
+sidequestjs/sidequest,typescript,1,1,cd6666318fb1786e09354954c39cc76ed24c11b5,cd6666318fb1786e09354954c39cc76ed24c11b5,https://github.com/sidequestjs/sidequest.git,5,3,2,2025-07-23T10:51:48,"[""background-jobs"", ""bullmq-alternative"", ""concurrency"", ""cron"", ""dashboard"", ""distributed"", ""job-queue"", ""mongodb"", ""mysql"", ""no-redis"", ""nodejs"", ""pg-boss-alternative"", ""postgresql"", ""queue"", ""redis-free"", ""scheduler"", ""sqlite"", ""typescript"", ""worker-threads""]"
+silenceleo/snowb-bmf,typescript,0,0,,,https://github.com/silenceleo/snowb-bmf.git,0,0,0,2020-07-31T05:55:32,"[""bitmap"", ""bitmap-font"", ""bitmap-font-generator"", ""bitmap-fonts"", ""bitmapfont"", ""bitmapfonts"", ""bitmaps"", ""bmfont""]"
+rolling-scopes/rsschool-app,typescript,90,40,72157ed12dbc6cee31d0cfeeb113f53fdcf6af3d,a1264f281e087caa14785c6ed1d4e8774c809818,https://github.com/rolling-scopes/rsschool-app.git,66,24,42,2018-05-22T01:18:23,"[""hacktoberfest""]"
+sindresorhus/type-fest,typescript,0,0,,,https://github.com/sindresorhus/type-fest.git,0,0,0,2019-03-13T10:30:19,"[""npm-package"", ""types"", ""typescript"", ""typescript-definitions"", ""utilities""]"
+sap/spartacus,typescript,0,0,,,https://github.com/sap/spartacus.git,1,1,0,2018-09-18T08:56:49,"[""commerce-cloud"", ""open-source""]"
+sindresorhus/refined-github,typescript,0,0,,,https://github.com/sindresorhus/refined-github.git,13,7,6,2016-02-15T04:45:02,[]
+slackapi/bolt-js,typescript,0,0,,,https://github.com/slackapi/bolt-js.git,2,2,0,2016-07-19T02:46:33,"[""framework"", ""javascript"", ""slack"", ""slack-apps"", ""socket-mode"", ""typescript"", ""websocket"", ""websocket-client"", ""websockets""]"
+slackapi/node-slack-sdk,typescript,0,0,,,https://github.com/slackapi/node-slack-sdk.git,4,3,1,2014-03-25T09:56:50,"[""slack"", ""slackapi"", ""socket-mode"", ""typescript"", ""websocket"", ""websocket-client"", ""websockets""]"
+six7/figma-tokens,typescript,8,6,faaee7b582a89e7fd6fabae5de0088f9f7152500,c897e2ec2c93c7542bc34824cb5db57f5b4dae00,https://github.com/six7/figma-tokens.git,41,20,21,2020-05-18T04:43:45,[]
+signoz/signoz,typescript,1,1,08715a704aff70235608721c6bde9c7c14793ac4,08715a704aff70235608721c6bde9c7c14793ac4,https://github.com/signoz/signoz.git,27,14,13,2021-01-03T12:44:36,"[""apm"", ""application-monitoring"", ""distributed-tracing"", ""go"", ""good-first-issue"", ""jaeger"", ""log"", ""logs"", ""metrics"", ""monitoring"", ""nextjs"", ""observability"", ""open-source"", ""opentelemetry"", ""prometheus"", ""react"", ""reactjs"", ""self-hosted"", ""tracing"", ""typescript""]"
+software-mansion/react-native-gesture-handler,typescript,1,1,1a713d0ccbdd627f3a5cd4e4b76eaa4f28b4dd33,1a713d0ccbdd627f3a5cd4e4b76eaa4f28b4dd33,https://github.com/software-mansion/react-native-gesture-handler.git,6,4,2,2016-10-27T08:31:38,"[""gesture"", ""javascript"", ""react-native""]"
+stoplightio/prism,typescript,0,0,,,https://github.com/stoplightio/prism.git,1,1,0,2016-03-18T03:52:09,"[""api-testing"", ""cli"", ""hacktoberfest"", ""http-proxy"", ""mock-server"", ""mocking"", ""oas"", ""openapi"", ""openapi3"", ""postman-collection"", ""prism"", ""stoplight-oss"", ""stoplight-prism"", ""swagger"", ""swagger-oss""]"
+storybookjs/react-native,typescript,0,0,,,https://github.com/storybookjs/react-native.git,2,1,1,2020-01-22T03:17:28,"[""expo"", ""react"", ""react-native"", ""storybook""]"
+prisma/prisma,typescript,27,12,207cfefde00713a981ddf983189767a66fcb5089,3a34e7c64973874d2a2d07a12a94daa684830faf,https://github.com/prisma/prisma.git,285,203,82,2019-06-20T01:33:47,"[""cockroachdb"", ""database"", ""javascript"", ""mariadb"", ""mongo"", ""mongodb"", ""mongodb-orm"", ""mssql"", ""mysql"", ""nodejs"", ""orm"", ""postgres"", ""postgresql"", ""prisma"", ""prisma-client"", ""query-builder"", ""sql-server"", ""sqlite"", ""sqlserver"", ""typescript""]"
+sagemathinc/cocalc,typescript,3,3,491cc9c6e8de7744296af6f74f05469e43ca43d1,424ad0506d81c2f26fb656df26248c6c7dce0358,https://github.com/sagemathinc/cocalc.git,50,18,32,2015-03-19T04:16:53,"[""cloud"", ""coffeescript"", ""gap"", ""julia"", ""jupyter"", ""jupyter-notebook"", ""latex"", ""markdown"", ""mathematics"", ""mathjax"", ""nodejs"", ""octave"", ""pari"", ""postgresql"", ""python"", ""r"", ""sagemath"", ""terminal""]"
+software-mansion/react-native-screens,typescript,0,0,,,https://github.com/software-mansion/react-native-screens.git,31,15,16,2018-08-03T11:36:32,"[""react-native"", ""react-navigation"", ""typescript""]"
+renovatebot/renovate,typescript,10,7,b5cd0317cf0be7a1abbfc12c34f7e3b576031eb7,927b094344cab09784f995b44d11b09126527e8a,https://github.com/renovatebot/renovate.git,158,84,74,2016-12-17T04:21:21,"[""azure-devops"", ""bitbucket"", ""dependencies"", ""dependencies-checking"", ""dependency-manager"", ""github"", ""gitlab"", ""npm"", ""package-management""]"
+sanity-io/sanity,typescript,34,19,28787561e762cdf24d49428a07b523657da8e77d,0c99352987029eccc3eae7860327a8bc147d7775,https://github.com/sanity-io/sanity.git,109,49,60,2017-01-18T07:19:02,"[""cms"", ""headless"", ""react"", ""reactjs"", ""real-time"", ""realtime""]"
+styled-components/styled-components,typescript,1,1,f674224ece29a6e93a64488ad71c4fa86cf3ec1b,f674224ece29a6e93a64488ad71c4fa86cf3ec1b,https://github.com/styled-components/styled-components.git,12,10,2,2016-08-16T06:41:32,"[""css"", ""css-in-js"", ""react"", ""reactnative"", ""rsc"", ""styled-components""]"
+streetsidesoftware/vscode-spell-checker,typescript,2,1,f22744d27b76a698adefa5b3ee050392a126cde3,f22744d27b76a698adefa5b3ee050392a126cde3,https://github.com/streetsidesoftware/vscode-spell-checker.git,2,1,1,2016-05-16T10:42:22,[]
+surgioproject/surgio,typescript,0,0,,,https://github.com/surgioproject/surgio.git,0,0,0,2019-08-20T04:10:41,"[""clash"", ""hysteria"", ""loon"", ""quantumult"", ""shadowsocks"", ""sing-box"", ""snell"", ""stash"", ""surge"", ""trojan"", ""v2ray"", ""vless"", ""vmess""]"
+styled-components/styled-components-website,typescript,0,0,,,https://github.com/styled-components/styled-components-website.git,0,0,0,2017-04-10T03:11:30,"[""documentation"", ""nextjs"", ""preact"", ""react"", ""styled-components""]"
+supabase/supabase-js,typescript,0,0,,,https://github.com/supabase/supabase-js.git,11,8,3,2020-05-15T12:52:16,"[""client-library"", ""database"", ""isomorphic"", ""javascript"", ""js"", ""mit-license"", ""node-js"", ""nuxt"", ""orm"", ""postgres"", ""postgresql"", ""postgrest"", ""supabase"", ""svelte"", ""ts"", ""typescript""]"
+swimlane/ngx-graph,typescript,0,0,,,https://github.com/swimlane/ngx-graph.git,1,1,0,2017-02-23T05:18:33,"[""angular"", ""angular2"", ""chart"", ""dag"", ""data-viz"", ""directed-graph"", ""svg"", ""workflow""]"
+swimlane/ngx-ui,typescript,0,0,,,https://github.com/swimlane/ngx-ui.git,2,1,1,2016-08-17T12:16:19,"[""angular"", ""component"", ""css"", ""dialog"", ""directive"", ""drawer"", ""hacktoberfest"", ""icons"", ""library"", ""select"", ""split"", ""styles"", ""tabs"", ""tree""]"
+streetsidesoftware/cspell,typescript,0,0,,,https://github.com/streetsidesoftware/cspell.git,21,18,3,2017-01-15T01:11:46,"[""spell"", ""spell-checker""]"
+tabwrangler/tabwrangler,typescript,0,0,,,https://github.com/tabwrangler/tabwrangler.git,0,0,0,2012-04-23T04:14:26,"[""chrome-extension"", ""firefox-extension""]"
+tagspaces/tagspaces,typescript,0,0,,,https://github.com/tagspaces/tagspaces.git,0,0,0,2012-11-23T05:25:20,"[""electron"", ""javascript"", ""note-taking"", ""offline-first"", ""open-source"", ""self-hosting"", ""tagspaces""]"
+surveyjs/survey-library,typescript,0,0,,,https://github.com/surveyjs/survey-library.git,18,9,9,2015-08-14T08:53:22,"[""angular"", ""dynamic-form-builder"", ""form"", ""form-builder"", ""form-library"", ""forms"", ""javascript"", ""jquery"", ""json"", ""questionnaire"", ""quiz"", ""react"", ""reactjs"", ""survey"", ""surveyjs"", ""surveys"", ""typescript"", ""vue"", ""vue3"", ""web-forms""]"
+talentlessguy/tinyhttp,typescript,0,0,,,https://github.com/talentlessguy/tinyhttp.git,5,3,2,2020-06-13T01:19:08,[]
+tantaman/strut,typescript,0,0,,,https://github.com/tantaman/strut.git,4,1,3,2012-05-06T10:05:30,[]
+stream-labs/streamlabs-obs,typescript,0,0,,,https://github.com/stream-labs/streamlabs-obs.git,0,0,0,2017-10-26T09:50:19,[]
+swaponline/multicurrencywallet,typescript,19,5,194d97d8efb069b3470600e114733e58fe3c7369,e72d880fc451d4a0e9f0041563138d9a505eafeb,https://github.com/swaponline/multicurrencywallet.git,62,27,35,2018-04-23T09:48:44,"[""atomic"", ""bitcoin"", ""browser"", ""btc"", ""crypto"", ""cryptocurrency"", ""erc"", ""erc20"", ""ethereum"", ""exchange"", ""litecoin"", ""noxoncf"", ""swap"", ""wallet""]"
+testing-library/eslint-plugin-testing-library,typescript,0,0,,,https://github.com/testing-library/eslint-plugin-testing-library.git,0,0,0,2019-09-01T06:12:58,"[""angular"", ""best-practices"", ""development"", ""dom"", ""eslint"", ""eslint-plugin"", ""javascript"", ""markojs"", ""react"", ""reactjs"", ""testing-library"", ""vue""]"
+tencent/vconsole,typescript,0,0,,,https://github.com/tencent/vconsole.git,0,0,0,2016-04-27T03:33:45,"[""console"", ""mobile"", ""wechat""]"
+theoephraim/node-google-spreadsheet,typescript,52,2,c1db5001accd4dbdb9cc4da08bed7de77b9ed2d5,a2f00b2fc5236987573dcff123450c34af6474b2,https://github.com/theoephraim/node-google-spreadsheet.git,7,3,4,2013-03-04T09:53:48,"[""google"", ""google-sheets"", ""google-sheets-api-v4"", ""google-spreadsheets"", ""nodejs"", ""typescript""]"
+sonarsource/sonarjs,typescript,0,0,,,https://github.com/sonarsource/sonarjs.git,148,59,89,2012-05-15T12:35:38,"[""code-quality"", ""javascript"", ""language-team"", ""sonarcloud"", ""sonarqube"", ""static-analysis"", ""static-analyzer"", ""static-code-analysis"", ""typescript""]"
+syuilo/misskey,typescript,5,1,f6fc78f578c344172349f7795b168b2992953bd0,f6fc78f578c344172349f7795b168b2992953bd0,https://github.com/syuilo/misskey.git,5,3,2,2016-12-25T01:16:07,[]
+thymikee/jest-preset-angular,typescript,1,1,70107300b9644cb45af90199064cf34f803fd60f,70107300b9644cb45af90199064cf34f803fd60f,https://github.com/thymikee/jest-preset-angular.git,2,1,1,2017-03-30T08:35:39,"[""angular"", ""jest"", ""testing""]"
+thomasnordquist/mqtt-explorer,typescript,1,1,d392fe734232bee5da870a69645dc39a6cf2aa4c,d392fe734232bee5da870a69645dc39a6cf2aa4c,https://github.com/thomasnordquist/mqtt-explorer.git,25,19,6,2019-01-02T03:38:09,"[""homeautomation"", ""mqtt"", ""mqtt-client"", ""mqtt-explorer"", ""mqtt-smarthome"", ""mqtt-tool""]"
+teradata/covalent,typescript,0,0,,,https://github.com/teradata/covalent.git,0,0,0,2016-07-11T11:30:52,"[""angular"", ""angular-material"", ""angular2"", ""material"", ""material-design"", ""teradata"", ""typescript""]"
+traduora/traduora,typescript,0,0,,,https://github.com/traduora/traduora.git,0,0,0,2019-03-05T07:46:09,[]
+tinacms/tinacms,typescript,31,11,f124eabaca10dac9a4d765c9e4135813c4830955,cf75e5b8dd3209203df9fe1ffbc12a9d965277f9,https://github.com/tinacms/tinacms.git,58,24,34,2019-07-23T06:37:47,"[""cms"", ""content-management-system"", ""forestry"", ""markdown"", ""nextjs"", ""react"", ""tina"", ""tinacms"", ""typescript""]"
+tinymce/tinymce,typescript,0,0,,,https://github.com/tinymce/tinymce.git,0,0,0,2010-01-11T02:46:42,"[""contenteditable"", ""editor"", ""javascript"", ""rich-text-editor"", ""tinymce"", ""wysiwyg"", ""wysiwyg-editor"", ""wysiwyg-html-editor""]"
+tus/tus-node-server,typescript,0,0,,,https://github.com/tus/tus-node-server.git,0,0,0,2015-10-08T04:23:03,"[""aws-s3"", ""azure"", ""file-storage"", ""google-cloud-storage"", ""nodejs"", ""resumable-upload"", ""tus"", ""upload"", ""upload-server""]"
+trpc/trpc,typescript,10,1,4b955d29620410a5d853ff955273b4c68e9618bf,4b955d29620410a5d853ff955273b4c68e9618bf,https://github.com/trpc/trpc.git,6,5,1,2020-07-18T01:17:11,"[""api"", ""next"", ""nextjs"", ""prisma"", ""react"", ""typescript""]"
+snyk/snyk,typescript,0,0,,,https://github.com/snyk/snyk.git,6,6,0,2015-10-30T11:36:00,[]
+typestrong/ts-loader,typescript,0,0,,,https://github.com/typestrong/ts-loader.git,1,1,0,2015-01-21T12:00:16,"[""loader"", ""typescript"", ""webpack"", ""webpack-loader""]"
+typedproject/tsed,typescript,0,0,,,https://github.com/typedproject/tsed.git,5,4,1,2016-02-21T06:38:47,[]
+thecodingmachine/workadventure,typescript,1,1,441b24bce0adec07e7e52946125c2880d5600d3a,441b24bce0adec07e7e52946125c2880d5600d3a,https://github.com/thecodingmachine/workadventure.git,23,16,7,2020-04-03T12:24:15,[]
+typeorm/typeorm,typescript,10,3,4c8fc3a7cbd2e2db90d2ade43b151bbf1c40814b,8a51b756bf31c885da1e1d92cb17d94819c7040a,https://github.com/typeorm/typeorm.git,4,1,3,2016-02-29T07:41:14,"[""active-record"", ""cockroachdb"", ""data-mapper"", ""database"", ""hacktoberfest"", ""javascript"", ""mariadb"", ""mysql"", ""orm"", ""postgresql"", ""sqlite"", ""sqlserver"", ""typeorm"", ""typescript""]"
+teambit/bit,typescript,1,1,1c63a948410b7eb04c296ca1f8ccb3f98132d295,1c63a948410b7eb04c296ca1f8ccb3f98132d295,https://github.com/teambit/bit.git,4,3,1,2017-01-22T02:51:43,"[""ai"", ""collaboration"", ""component-driven"", ""composable"", ""composable-architecture"", ""distributed"", ""front-end"", ""javascript"", ""micro-frontend"", ""micro-services"", ""monorepo"", ""multirepo"", ""multirepo-maintenance"", ""node-js"", ""polyrepo"", ""react"", ""service-oriented-architecture"", ""typescript"", ""vue""]"
+umijs/qiankun,typescript,5,1,d7b0a05c14f80257288fab416a86a355737b553b,d7b0a05c14f80257288fab416a86a355737b553b,https://github.com/umijs/qiankun.git,3,2,1,2019-05-15T05:27:23,"[""framework"", ""javascript"", ""micro-frontend"", ""micro-frontends"", ""microfrontend"", ""microfrontends"", ""microservices""]"
+ultimatehackingkeyboard/agent,typescript,0,0,,,https://github.com/ultimatehackingkeyboard/agent.git,4,1,3,2016-01-12T12:41:16,[]
+surveyjs/survey-creator,typescript,0,0,,,https://github.com/surveyjs/survey-creator.git,7,5,2,2015-12-22T07:21:28,"[""angular-form-builder"", ""angular-forms"", ""drag-and-drop-form-builder"", ""dynamic-form-builder"", ""dynamic-forms"", ""form-builder"", ""form-generator"", ""form-schema"", ""forms"", ""json-form-builder"", ""json-forms"", ""react-form-builder"", ""react-forms"", ""schema-form"", ""survey-application"", ""survey-builder"", ""survey-creator"", ""surveyjs"", ""vue-form-builder"", ""vue-forms""]"
+umijs/umi,typescript,0,0,,,https://github.com/umijs/umi.git,0,0,0,2017-11-22T10:09:36,"[""react"", ""react-framework"", ""umi"", ""umijs""]"
+ueberdosis/tiptap,typescript,20,11,35645d94ae9cd73448a564104c2e08f64e9564bc,a9efd4d046757c638feddd9a6d72022dcdeb0bbf,https://github.com/ueberdosis/tiptap.git,47,13,34,2018-08-20T07:58:58,"[""editor"", ""javascript"", ""js"", ""prosemirror"", ""react"", ""renderless-components"", ""rich-text"", ""tiptap"", ""vue"", ""wysiwyg"", ""wysiwyg-editor""]"
+vivliostyle/vivliostyle.js,typescript,0,0,,,https://github.com/vivliostyle/vivliostyle.js.git,2,2,0,2015-03-30T02:32:08,"[""css"", ""epub"", ""typesetting"", ""vivliostyle""]"
+vkcom/vkui,typescript,0,0,,,https://github.com/vkcom/vkui.git,0,0,0,2017-01-16T12:09:28,"[""javascript"", ""mobile-web"", ""opensource"", ""postcss"", ""reactjs"", ""typescript"", ""ui"", ""uikit"", ""vkontakte"", ""vkui""]"
+uniswap/uniswap-interface,typescript,0,0,,,https://github.com/uniswap/uniswap-interface.git,0,0,0,2017-10-29T05:09:58,[]
+vitejs/vite,typescript,0,0,,,https://github.com/vitejs/vite.git,30,6,24,2020-04-21T05:03:57,"[""build-tool"", ""dev-server"", ""frontend"", ""hmr"", ""vite""]"
+vscode-icons/vscode-icons,typescript,0,0,,,https://github.com/vscode-icons/vscode-icons.git,1,0,1,2016-05-30T11:24:37,"[""icon-theme"", ""icons-provider"", ""vscode"", ""vscode-extension"", ""vscode-icons""]"
+vuejs/vue-router-next,typescript,0,0,,,https://github.com/vuejs/vue-router-next.git,1,1,0,2019-02-07T06:09:43,[]
+wechatsync/wechatsync,typescript,0,0,,,https://github.com/wechatsync/wechatsync.git,0,0,0,2020-09-01T08:58:36,"[""blog"", ""chrome"", ""chrome-extension"", ""markdown"", ""multiplatform"", ""spider"", ""vue"", ""wechat-official-account"", ""writer""]"
+whiteminds/liveautorecord,typescript,0,0,,,https://github.com/whiteminds/liveautorecord.git,0,0,0,2018-04-25T08:59:23,"[""bilibili"", ""douyin"", ""douyu"", ""electron"", ""ffmpeg"", ""huya"", ""typescript"", ""vue""]"
+wireapp/wire-desktop,typescript,0,0,,,https://github.com/wireapp/wire-desktop.git,0,0,0,2016-07-26T01:55:48,"[""desktop"", ""electron"", ""hacktoberfest"", ""wire""]"
+whitphx/vscode-emacs-mcx,typescript,0,0,,,https://github.com/whitphx/vscode-emacs-mcx.git,24,13,11,2019-01-06T03:30:42,"[""emacs"", ""hacktoberfest"", ""vscode"", ""vscode-extension""]"
+voxelum/x-minecraft-launcher,typescript,4,3,0671188522099095e9cb983e735e1351051c6789,b8154a27495a39dcbca0c6bead97dcd9b4f13027,https://github.com/voxelum/x-minecraft-launcher.git,42,19,23,2017-06-28T11:09:01,"[""curseforge"", ""custom-minecraft-launcher"", ""electron"", ""electron-vue"", ""fabricmc"", ""minecraft"", ""minecraft-launcher"", ""minecraftforge"", ""modrinth"", ""nodejs"", ""quiltmc"", ""typescript"", ""vite""]"
+vendure-ecommerce/vendure,typescript,0,0,,,https://github.com/vendure-ecommerce/vendure.git,3,2,1,2018-06-11T02:29:20,"[""ecommerce"", ""ecommerce-api"", ""ecommerce-framework"", ""ecommerce-platform"", ""graphql"", ""graphql-commerce"", ""headless"", ""headless-commerce"", ""nestjs"", ""nodejs"", ""nodejs-ecommerce"", ""shopping-cart""]"
+xaviergonz/mobx-keystone,typescript,0,0,,,https://github.com/xaviergonz/mobx-keystone.git,1,1,0,2019-05-15T07:09:44,"[""data-trees"", ""frp"", ""functional-reactive-programming"", ""immutability"", ""mobx"", ""mobx-keystone"", ""mobx-state-tree"", ""mutability"", ""reactive"", ""snapshots"", ""state-management"", ""state-tree""]"
+xbrowsersync/app,typescript,21,1,5c2adffbec4af792750e0ed6ce318ba120d56a6e,5c2adffbec4af792750e0ed6ce318ba120d56a6e,https://github.com/xbrowsersync/app.git,1,0,1,2016-05-05T08:59:25,[]
+wowup/wowup,typescript,0,0,,,https://github.com/wowup/wowup.git,0,0,0,2020-06-28T04:01:59,"[""world-of-warcraft"", ""world-of-warcraft-addon""]"
+yang991178/fluent-reader,typescript,0,0,,,https://github.com/yang991178/fluent-reader.git,0,0,0,2020-05-31T08:15:55,"[""electron"", ""linux"", ""macos"", ""react"", ""rss"", ""rss-reader"", ""typescript"", ""windows""]"
+walletconnect/walletconnect-monorepo,typescript,9,3,5888f9317b592fca69503842f6289c445229b4f7,ebc61853f43deec9057ac481ed5c14d22d86a820,https://github.com/walletconnect/walletconnect-monorepo.git,29,16,13,2018-08-26T02:02:36,"[""devtools"", ""ethereum"", ""library"", ""mobile"", ""prod"", ""react-native"", ""team-walletkit"", ""typescript"", ""wallet"", ""walletconnect"", ""web3""]"
+yagop/node-telegram-bot-api,typescript,10,5,6a85a56de23cd8b0734fa556bbe90ea9b4ab6113,4ff95eb9619a27927a050436e82259cbb656c83e,https://github.com/yagop/node-telegram-bot-api.git,53,34,19,2015-06-28T10:35:33,"[""api"", ""bot"", ""bot-framework"", ""chatbot"", ""nodejs"", ""telegram""]"
+yorkxin/copy-as-markdown,typescript,4,3,82340d452f66263b756ef2ff1de13173d461977f,6c6a7b175d2e257f5fc666630aa7c89161835ca0,https://github.com/yorkxin/copy-as-markdown.git,13,8,5,2012-03-01T05:21:06,"[""browser"", ""chrome"", ""firefox"", ""webextensions""]"
+zenn-dev/zenn-editor,typescript,2,1,129da49a2f06927480aeb9b65e258b25e89bb2a8,129da49a2f06927480aeb9b65e258b25e89bb2a8,https://github.com/zenn-dev/zenn-editor.git,19,7,12,2020-05-27T07:09:14,[]
+xiaomi/hiui,typescript,0,0,,,https://github.com/xiaomi/hiui.git,0,0,0,2018-10-08T10:10:20,"[""component-library"", ""design-system"", ""design-systems"", ""javascript"", ""react"", ""react-components"", ""typescript"", ""ui-kit"", ""ui-library""]"
+zuiidea/antd-admin,typescript,0,0,,,https://github.com/zuiidea/antd-admin.git,0,0,0,2016-01-25T07:46:15,"[""admin"", ""antd"", ""dashboard"", ""mock"", ""react""]"
+tinkoffcreditsystems/taiga-ui,typescript,2,2,ac8653330dc14007149ef88d1321d31efc69d77d,66e23dbbfec4be420a8d7ef5f09f774e4a37546c,https://github.com/tinkoffcreditsystems/taiga-ui.git,12,7,5,2020-09-25T04:09:18,[]
+vercel/vercel,typescript,140,47,168e320bcf21d90b6705dfe7acb043e4a3753034,6322f4549f108b9754dd485c1bae1e3bd4d34eb0,https://github.com/vercel/vercel.git,226,111,115,2016-09-09T01:12:08,"[""cli"", ""cloud"", ""command"", ""hosting"", ""jamstack"", ""ship"", ""vercel""]"
+zwave-js/node-zwave-js,typescript,3,1,fb034be40aaba3a175404eed54d5063ae8edf867,fb034be40aaba3a175404eed54d5063ae8edf867,https://github.com/zwave-js/node-zwave-js.git,29,9,20,2018-03-25T09:25:32,"[""hacktoberfest"", ""iot"", ""razberry"", ""smart-home"", ""wireless"", ""z-wave"", ""zwave""]"
+yoannmoinet/nipplejs,typescript,10,3,291649ef3e9260f2a1cbab2b9f5f696417a6f294,fc0e27f9351732f210d6e39f6b9f1ce5531f7583,https://github.com/yoannmoinet/nipplejs.git,15,8,7,2015-09-05T09:55:09,"[""dependency-free"", ""dom"", ""frontend"", ""gamedev"", ""joystick"", ""vanilla-javascript""]"
+zeusln/zeus,typescript,0,0,,,https://github.com/zeusln/zeus.git,0,0,0,2019-02-16T08:58:09,"[""android"", ""bitcoin"", ""cashu"", ""core-lightning"", ""cryptocurrency"", ""ecash"", ""ios"", ""ldk"", ""lightning"", ""lightning-network"", ""lnd"", ""lndhub"", ""micropayments"", ""nostr"", ""payments"", ""react-native"", ""self-custody"", ""typescript""]"
+wowanalyzer/wowanalyzer,typescript,0,0,,,https://github.com/wowanalyzer/wowanalyzer.git,3,2,1,2017-01-30T11:02:17,"[""analyzer"", ""hacktoberfest"", ""javascript"", ""log"", ""react"", ""typescript"", ""warcraft"", ""warcraftlogs"", ""world-of-warcraft"", ""wow"", ""wowanalyzer""]"
+wireapp/wire-webapp,typescript,25,4,fe46a0bfe9a06e657321416498b6697359fb3459,e82f6fca457b894fbd4dd2b7a9bdfd95df16d5a3,https://github.com/wireapp/wire-webapp.git,25,19,6,2016-07-21T03:34:05,"[""end-to-end-encryption"", ""hacktober"", ""hacktoberfest"", ""javascript"", ""knockout"", ""libsodium"", ""messenger"", ""reactjs"", ""typescript"", ""webapp"", ""wire""]"

@@ -1,164 +1,180 @@
-repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url,agent_commits_touching_tests,rejected_mixed_test_diff,accepted
-afkt/devutils,java,0,0,,,https://github.com/afkt/devutils.git,0,0,0
-alibaba/druid,java,0,0,,,https://github.com/alibaba/druid.git,21,7,14
-alibaba/nacos,java,27,11,9c60d18f4723e3627c89186cd4aef3a8a3fcd6e6,5f56cbbc7e3d2764025e18df58081b35cdfb5873,https://github.com/alibaba/nacos.git,104,73,31
-alibaba/qlexpress,java,0,0,,,https://github.com/alibaba/qlexpress.git,0,0,0
-antennapod/antennapod,java,0,0,,,https://github.com/antennapod/antennapod.git,1,0,1
-anysoftkeyboard/anysoftkeyboard,java,0,0,,,https://github.com/anysoftkeyboard/anysoftkeyboard.git,11,7,4
-apache/camel,java,84,28,4c099102e6d62f40bd0a0ae4a72647018a58f529,e0837c457a9fe845eb462679dce05a9f835e1de1,https://github.com/apache/camel.git,351,193,158
-apache/cassandra,java,0,0,,,https://github.com/apache/cassandra.git,1,0,1
-apache/groovy,java,0,0,,,https://github.com/apache/groovy.git,5,0,5
-apache/incubator-dolphinscheduler,java,0,0,,,https://github.com/apache/incubator-dolphinscheduler.git,1,0,1
-apache/incubator-pinot,java,24,12,71220243d97ae6e09d2ca8da0a4f2792ea8dcfd8,bb83fa618c22d4d59d838e5ec8429d541d7da90f,https://github.com/apache/incubator-pinot.git,103,56,47
-apache/iotdb,java,4,1,abb9ef93ca183986d71b6dcada58a835b306121d,abb9ef93ca183986d71b6dcada58a835b306121d,https://github.com/apache/iotdb.git,3,1,2
-apache/nifi,java,0,0,,,https://github.com/apache/nifi.git,0,0,0
-apache/pulsar,java,4,2,3bc834f2fa8aae1ffe8f2fb3f795acd3d0de755d,f0d2bcc7a78148765bf1549beca4db03663a6754,https://github.com/apache/pulsar.git,15,9,6
-apache/shardingsphere,java,1,1,8f7ff96f7772fac0f1e984c2e538a37418d71637,8f7ff96f7772fac0f1e984c2e538a37418d71637,https://github.com/apache/shardingsphere.git,40,19,21
-apache/skywalking,java,2,1,40d95a179b0af6fab342316bce905f28918dd4ee,40d95a179b0af6fab342316bce905f28918dd4ee,https://github.com/apache/skywalking.git,1,0,1
-apache/struts,java,5,4,2215b6873cc25aa6967a8d2bc2db1b407b5142ef,789dbf3cd253d528af230272805b3ce392005fb1,https://github.com/apache/struts.git,34,19,15
-apereo/cas,java,0,0,,,https://github.com/apereo/cas.git,0,0,0
-apicurio/apicurio-registry,java,3,1,948e0548ff7bcfce3f0c3377398c2718ea50e45d,948e0548ff7bcfce3f0c3377398c2718ea50e45d,https://github.com/apicurio/apicurio-registry.git,6,1,5
-assertj/assertj-core,java,0,0,,,https://github.com/assertj/assertj-core.git,0,0,0
-atmosphere/atmosphere,java,0,0,,,https://github.com/atmosphere/atmosphere.git,0,0,0
-automattic/simplenote-android,java,0,0,,,https://github.com/automattic/simplenote-android.git,1,1,0
-awslabs/djl,java,0,0,,,https://github.com/awslabs/djl.git,0,0,0
-axonframework/axonframework,java,0,0,,,https://github.com/axonframework/axonframework.git,2,1,1
-baomidou/dynamic-datasource-spring-boot-starter,java,1,1,273fcedaee984c08197c0890f14190b86ab7e0b8,273fcedaee984c08197c0890f14190b86ab7e0b8,https://github.com/baomidou/dynamic-datasource-spring-boot-starter.git,3,1,2
-bardsoftware/ganttproject,java,0,0,,,https://github.com/bardsoftware/ganttproject.git,0,0,0
-bazelbuild/intellij,java,0,0,,,https://github.com/bazelbuild/intellij.git,0,0,0
-bcgit/bc-java,java,1,1,bc9b78cb84c71fc1d87722b91a823152979352f8,bc9b78cb84c71fc1d87722b91a823152979352f8,https://github.com/bcgit/bc-java.git,4,1,3
-ben-manes/caffeine,java,0,0,,,https://github.com/ben-manes/caffeine.git,0,0,0
-bennidi/mbassador,java,0,0,,,https://github.com/bennidi/mbassador.git,0,0,0
-bndtools/bnd,java,0,0,,,https://github.com/bndtools/bnd.git,1,0,1
-btraceio/btrace,java,8,4,a169c26650e1454800e9308ba63bcbb86a334c4c,7007372cbf44e86e9d4bc48b3c7369c9dfc38f19,https://github.com/btraceio/btrace.git,45,20,25
-buchen/portfolio,java,0,0,,,https://github.com/buchen/portfolio.git,9,6,3
-bytedance/scene,java,0,0,,,https://github.com/bytedance/scene.git,0,0,0
-castorini/anserini,java,0,0,,,https://github.com/castorini/anserini.git,0,0,0
-cgeo/cgeo,java,0,0,,,https://github.com/cgeo/cgeo.git,0,0,0
-chromiumembedded/java-cef,java,0,0,,,https://github.com/chromiumembedded/java-cef.git,0,0,0
-clickhouse/clickhouse-jdbc,java,0,0,,,https://github.com/clickhouse/clickhouse-jdbc.git,0,0,0
-cloudfoundry/uaa,java,0,0,,,https://github.com/cloudfoundry/uaa.git,29,20,9
-codecentric/spring-boot-admin,java,0,0,,,https://github.com/codecentric/spring-boot-admin.git,2,1,1
-codelibs/fess,java,39,5,8af0504e255a796df027b9adc0d84edb772595c0,e5d95435916b4b65e9adcfe47ffb98ce85207458,https://github.com/codelibs/fess.git,75,38,37
-codenameone/codenameone,java,36,11,ce006aa379cb23166a2048801708d844a8e24d94,5eba6f7d3fca590033e4057389b9bd3ab885b44b,https://github.com/codenameone/codenameone.git,236,87,149
-crossoverjie/cim,java,0,0,,,https://github.com/crossoverjie/cim.git,0,0,0
-dadoonet/fscrawler,java,2,1,1d30e1e060f7bbd696c1bea896452a955877f238,1d30e1e060f7bbd696c1bea896452a955877f238,https://github.com/dadoonet/fscrawler.git,57,38,19
-datadog/dd-trace-java,java,7,2,f934d486831a98a5d22d6f946a5fd8fabd11f778,4bc4b9256b7de01b59662e5ee5fbb9268f6f12c3,https://github.com/datadog/dd-trace-java.git,70,18,52
-debezium/debezium,java,1,1,f2f7e468bf027084601604eb14b757c6594ac7b2,f2f7e468bf027084601604eb14b757c6594ac7b2,https://github.com/debezium/debezium.git,7,3,4
-dependencytrack/dependency-track,java,0,0,,,https://github.com/dependencytrack/dependency-track.git,3,0,3
-digitalpetri/modbus,java,0,0,,,https://github.com/digitalpetri/modbus.git,0,0,0
-dlsc-software-consulting-gmbh/gemsfx,java,0,0,,,https://github.com/dlsc-software-consulting-gmbh/gemsfx.git,0,0,0
-domaframework/doma,java,3,2,e0d5d3504a70a0581ad524aae52fe50b8daeeef4,aeb58aa8a171cff61675833d86d7ffecd35e86af,https://github.com/domaframework/doma.git,22,9,13
-dotcms/core,java,48,28,413a1ed18d2b1a8fd8c89c993c2f9040e7661e08,14eca3f4adab47364caade442ef1d9b62d40ba2b,https://github.com/dotcms/core.git,171,84,87
-eclipse/jkube,java,4,4,66fb52325361e2c883bab7b6fc53e34ef2893d8b,e641332921f1837c1c3efaf1b82cc479579cbf0f,https://github.com/eclipse/jkube.git,21,12,9
-eclipse/milo,java,0,0,,,https://github.com/eclipse/milo.git,5,1,4
-elastic/elasticsearch,java,11,7,55b644cd0220783d5e7c25d0bfc93c0d6a933ec9,9a5d2d6b90b18cf513511b7be78d6ff341dbc9eb,https://github.com/elastic/elasticsearch.git,61,39,22
-erupts/erupt,java,0,0,,,https://github.com/erupts/erupt.git,0,0,0
-fabric8io/kubernetes-client,java,10,5,d7c769ccc3d2f4a3750976b4430abb40e4e68c14,4428e35f4241cab5f4e2318313f43b6993dc6276,https://github.com/fabric8io/kubernetes-client.git,59,36,23
-facebook/fresco,java,0,0,,,https://github.com/facebook/fresco.git,0,0,0
-flutter/flutter-intellij,java,0,0,,,https://github.com/flutter/flutter-intellij.git,1,0,1
-flyingsaucerproject/flyingsaucer,java,0,0,,,https://github.com/flyingsaucerproject/flyingsaucer.git,1,0,1
-freeplane/freeplane,java,0,0,,,https://github.com/freeplane/freeplane.git,0,0,0
-gessnerfl/fake-smtp-server,java,0,0,,,https://github.com/gessnerfl/fake-smtp-server.git,1,1,0
-glowroot/glowroot,java,0,0,,,https://github.com/glowroot/glowroot.git,2,0,2
-graphql-java/graphql-java,java,1,1,14e580b7129e1f1de3b455660fc8c6cf0c5e08bf,14e580b7129e1f1de3b455660fc8c6cf0c5e08bf,https://github.com/graphql-java/graphql-java.git,55,7,48
-graylog2/graylog2-server,java,19,8,5e6363a977f4f1cf21e16784062c84416d44ce91,d7c671566bc70a5b55db4c9ea753a752e488249c,https://github.com/graylog2/graylog2-server.git,75,49,26
-grishka/smithereen,java,0,0,,,https://github.com/grishka/smithereen.git,0,0,0
-haehnchen/idea-php-symfony2-plugin,java,0,0,,,https://github.com/haehnchen/idea-php-symfony2-plugin.git,0,0,0
-halo-dev/halo,java,0,0,,,https://github.com/halo-dev/halo.git,7,3,4
-hapifhir/hapi-fhir,java,12,8,68d1aeb886693af49b3a0263d954cdbed9f930a1,49cf7855d71eaced71b133b9b24c82c9725b94bf,https://github.com/hapifhir/hapi-fhir.git,97,53,44
-hyperledger/besu,java,8,6,b4ad0e20416bda6133a7cca5f9dda7b7f699abf5,8fe48c6fef45c9974d94f43b5fae9ebc9b99f574,https://github.com/hyperledger/besu.git,76,49,27
-igvteam/igv,java,0,0,,,https://github.com/igvteam/igv.git,2,2,0
-infinispan/infinispan,java,0,0,,,https://github.com/infinispan/infinispan.git,0,0,0
-interestinglab/waterdrop,java,5,2,fe182baced10d67972173afcfb67950ebad67f4a,be5d0f0279d72ba6f6b64e22f44bfc4391117816,https://github.com/interestinglab/waterdrop.git,13,4,9
-irockel/tda,java,0,0,,,https://github.com/irockel/tda.git,0,0,0
-jabref/jabref,java,2,1,72c8491c9ea33f6cb4cdb0b846b8df0bbfb82832,72c8491c9ea33f6cb4cdb0b846b8df0bbfb82832,https://github.com/jabref/jabref.git,33,21,12
-java-operator-sdk/java-operator-sdk,java,1,1,2c16143f6cdf509bb82d54bfa6759f2fecce4bad,2c16143f6cdf509bb82d54bfa6759f2fecce4bad,https://github.com/java-operator-sdk/java-operator-sdk.git,11,9,2
-jline/jline3,java,0,0,,,https://github.com/jline/jline3.git,3,2,1
-joel-costigliola/assertj-core,java,0,0,,,https://github.com/joel-costigliola/assertj-core.git,1,0,1
-kagkarlsson/db-scheduler,java,0,0,,,https://github.com/kagkarlsson/db-scheduler.git,0,0,0
-kestra-io/kestra,java,19,6,cdbec44f1aae350361e5c874fae90019ad89bd26,659356cd40475ae1b8a7f1d24151f74b3f56ab0e,https://github.com/kestra-io/kestra.git,33,16,17
-knowm/xchart,java,3,3,36c4b19ee4762e0ff66cc09e40f78415e9a1eccb,20bb3addca6a3c454f518757bfcec4040ef1d67b,https://github.com/knowm/xchart.git,36,15,21
-kong/unirest-java,java,0,0,,,https://github.com/kong/unirest-java.git,0,0,0
-konsoletyper/teavm,java,0,0,,,https://github.com/konsoletyper/teavm.git,4,0,4
-line/armeria,java,0,0,,,https://github.com/line/armeria.git,2,2,0
-line/centraldogma,java,0,0,,,https://github.com/line/centraldogma.git,0,0,0
-linkedin/ambry,java,4,1,9bf8da3980307966794be5c8c24eb728a740f593,9bf8da3980307966794be5c8c24eb728a740f593,https://github.com/linkedin/ambry.git,34,15,19
-ls1intum/artemis,java,0,0,,,https://github.com/ls1intum/artemis.git,18,16,2
-lucee/lucee,java,0,0,,,https://github.com/lucee/lucee.git,10,0,10
-maxmind/geoip2-java,java,0,0,,,https://github.com/maxmind/geoip2-java.git,8,3,5
-microcks/microcks,java,0,0,,,https://github.com/microcks/microcks.git,1,0,1
-microsoft/mssql-jdbc,java,0,0,,,https://github.com/microsoft/mssql-jdbc.git,2,1,1
-microsoft/playwright-java,java,0,0,,,https://github.com/microsoft/playwright-java.git,0,0,0
-mixpanel/mixpanel-android,java,18,3,0d9a900627066598b0d6eb7f5957307a1472650a,63f13afa5450d0daba0124fee02b2da2df45c0f0,https://github.com/mixpanel/mixpanel-android.git,9,3,6
-mock-server/mockserver,java,0,0,,,https://github.com/mock-server/mockserver.git,0,0,0
-mongodb/mongo-java-driver,java,0,0,,,https://github.com/mongodb/mongo-java-driver.git,0,0,0
-morphiaorg/morphia,java,5,1,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,https://github.com/morphiaorg/morphia.git,15,9,6
-msgpack/msgpack-java,java,0,0,,,https://github.com/msgpack/msgpack-java.git,7,2,5
-mvel/mvel,java,3,1,d8871dc26fdc20f62d06760fe7ceff6d755073ee,d8871dc26fdc20f62d06760fe7ceff6d755073ee,https://github.com/mvel/mvel.git,5,1,4
-neamar/kiss,java,0,0,,,https://github.com/neamar/kiss.git,0,0,0
-netflix/hollow,java,3,3,10d2835046bb0163c79556da97a4b14f6776edac,7bb1ee8801b09e81983358ab72e373a772ef9e3b,https://github.com/netflix/hollow.git,17,5,12
-netflix/mantis,java,0,0,,,https://github.com/netflix/mantis.git,2,1,1
-nitrite/nitrite-java,java,4,2,8b6b31b3b2b8a3d484b3e7c64e30b643e3a73a90,d6e8455736b7deed4337a549f60d8140148e47db,https://github.com/nitrite/nitrite-java.git,9,2,7
-nroduit/weasis,java,0,0,,,https://github.com/nroduit/weasis.git,0,0,0
-onebusaway/onebusaway-android,java,0,0,,,https://github.com/onebusaway/onebusaway-android.git,10,0,10
-open-telemetry/opentelemetry-java-instrumentation,java,1,1,5303808fe9ba17ac962789de4d4c7b3591f61dc5,5303808fe9ba17ac962789de4d4c7b3591f61dc5,https://github.com/open-telemetry/opentelemetry-java-instrumentation.git,91,86,5
-openems/openems,java,0,0,,,https://github.com/openems/openems.git,1,1,0
-openhft/chronicle-wire,java,0,0,,,https://github.com/openhft/chronicle-wire.git,0,0,0
-openhft/zero-allocation-hashing,java,0,0,,,https://github.com/openhft/zero-allocation-hashing.git,0,0,0
-opennms/opennms,java,1,1,9ac319ae65b529af1014d11f6178256c2b764ec6,9ac319ae65b529af1014d11f6178256c2b764ec6,https://github.com/opennms/opennms.git,7,5,2
-openrefine/openrefine,java,0,0,,,https://github.com/openrefine/openrefine.git,4,1,3
-openrewrite/rewrite,java,0,0,,,https://github.com/openrewrite/rewrite.git,46,14,32
-opentripplanner/opentripplanner,java,0,0,,,https://github.com/opentripplanner/opentripplanner.git,2,2,0
-optimatika/ojalgo,java,0,0,,,https://github.com/optimatika/ojalgo.git,0,0,0
-oraxen/oraxen,java,1,1,f86095b922a33070d001e08a2e7d7a3f12357b98,f86095b922a33070d001e08a2e7d7a3f12357b98,https://github.com/oraxen/oraxen.git,10,7,3
-osudroid/osu-droid,java,0,0,,,https://github.com/osudroid/osu-droid.git,0,0,0
-pengrad/java-telegram-bot-api,java,0,0,,,https://github.com/pengrad/java-telegram-bot-api.git,0,0,0
-pinpoint-apm/pinpoint,java,0,0,,,https://github.com/pinpoint-apm/pinpoint.git,0,0,0
-plantuml/plantuml,java,0,0,,,https://github.com/plantuml/plantuml.git,3,1,2
-prestosql/presto,java,2,1,a2ca08fecf22006dc43b5fc042c6318ed2e2e43e,a2ca08fecf22006dc43b5fc042c6318ed2e2e43e,https://github.com/prestosql/presto.git,5,3,2
-prometheus/client_java,java,0,0,,,https://github.com/prometheus/client_java.git,4,3,1
-qiniu/android-sdk,java,0,0,,,https://github.com/qiniu/android-sdk.git,0,0,0
-quarkusio/quarkus,java,6,3,b33131e2e9de22ac137c823fdd3314f25583dd42,4085b94c247e1da15518d7dd33946ff58d0978d2,https://github.com/quarkusio/quarkus.git,47,16,31
-questdb/questdb,java,0,0,,,https://github.com/questdb/questdb.git,2,1,1
-rabbitmq/rabbitmq-java-client,java,0,0,,,https://github.com/rabbitmq/rabbitmq-java-client.git,0,0,0
-randoop/randoop,java,0,0,,,https://github.com/randoop/randoop.git,0,0,0
-red5/red5-server,java,0,0,,,https://github.com/red5/red5-server.git,1,0,1
-rsksmart/rskj,java,0,0,,,https://github.com/rsksmart/rskj.git,4,3,1
-rstudio/rstudio,java,0,0,,,https://github.com/rstudio/rstudio.git,8,4,4
-sakaiproject/sakai,java,0,0,,,https://github.com/sakaiproject/sakai.git,2,2,0
-schemacrawler/schemacrawler,java,0,0,,,https://github.com/schemacrawler/schemacrawler.git,0,0,0
-selenide/selenide,java,1,1,9f69159d4e6286dfabf7b07096f9efa4ea5a9c91,9f69159d4e6286dfabf7b07096f9efa4ea5a9c91,https://github.com/selenide/selenide.git,23,6,17
-seleniumhq/selenium,java,0,0,,,https://github.com/seleniumhq/selenium.git,0,0,0
-sirixdb/sirix,java,24,6,5f65cf7dcca34a7329a2cf2fefc04521f1d8e226,4b84e0a0c0fb7f191e8e9ad9f6cb3109584e5c12,https://github.com/sirixdb/sirix.git,18,6,12
-skadistats/clarity,java,0,0,,,https://github.com/skadistats/clarity.git,2,0,2
-sky-map-team/stardroid,java,0,0,,,https://github.com/sky-map-team/stardroid.git,14,6,8
-slackapi/java-slack-sdk,java,0,0,,,https://github.com/slackapi/java-slack-sdk.git,0,0,0
-sofastack/sofa-ark,java,0,0,,,https://github.com/sofastack/sofa-ark.git,0,0,0
-softinstigate/restheart,java,0,0,,,https://github.com/softinstigate/restheart.git,1,1,0
-sonarsource/sonar-java,java,1,1,1d35938c612dfc89c87cea2d7ef9c27143f6de84,1d35938c612dfc89c87cea2d7ef9c27143f6de84,https://github.com/sonarsource/sonar-java.git,21,15,6
-spair/imgui-java,java,0,0,,,https://github.com/spair/imgui-java.git,1,0,1
-strimzi/strimzi-kafka-operator,java,0,0,,,https://github.com/strimzi/strimzi-kafka-operator.git,0,0,0
-stripe/stripe-java,java,0,0,,,https://github.com/stripe/stripe-java.git,2,2,0
-tartaricacid/touhoulittlemaid,java,0,0,,,https://github.com/tartaricacid/touhoulittlemaid.git,0,0,0
-theonedev/onedev,java,0,0,,,https://github.com/theonedev/onedev.git,0,0,0
-tomakehurst/wiremock,java,3,2,90457450f92dff5a8455d754f6af0a2617e247b7,ffee1e59f437bb92bf6c4ed0f3e1b7df1293ebcb,https://github.com/tomakehurst/wiremock.git,14,7,7
-trinodb/trino,java,0,0,,,https://github.com/trinodb/trino.git,0,0,0
-triplea-game/triplea,java,0,0,,,https://github.com/triplea-game/triplea.git,0,0,0
-tronprotocol/wallet-cli,java,5,2,c9233c1e7d65d0ae03e2fca205a79706405b3dad,3e31a386e46b3c9e1b8285d0b8e2b8a0e341c947,https://github.com/tronprotocol/wallet-cli.git,6,3,3
-typetools/checker-framework,java,0,0,,,https://github.com/typetools/checker-framework.git,0,0,0
-uber/nullaway,java,0,0,,,https://github.com/uber/nullaway.git,0,0,0
-ulisesbocchio/jasypt-spring-boot,java,0,0,,,https://github.com/ulisesbocchio/jasypt-spring-boot.git,0,0,0
-vaadin/flow,java,5,3,b2c4b9a91e353d3acfe08a45e22f61c4f6bab725,3a51a38ebccd02e4d08a94894a89711789f3a2ff,https://github.com/vaadin/flow.git,34,14,20
-viaversion/viabackwards,java,0,0,,,https://github.com/viaversion/viabackwards.git,0,0,0
-viaversion/viaversion,java,0,0,,,https://github.com/viaversion/viaversion.git,0,0,0
-vladimir-bukhtoyarov/bucket4j,java,0,0,,,https://github.com/vladimir-bukhtoyarov/bucket4j.git,0,0,0
-warmuuh/milkman,java,0,0,,,https://github.com/warmuuh/milkman.git,0,0,0
-webbukkit/dynmap,java,0,0,,,https://github.com/webbukkit/dynmap.git,0,0,0
-wechat-group/wxjava,java,14,11,0854e4d971de8e63dd8f6ae745293e8b7478ea6f,fab98621c0901e31deee89d878f32ba3775ca2d5,https://github.com/wechat-group/wxjava.git,94,10,84
-williamfiset/algorithms,java,0,0,,,https://github.com/williamfiset/algorithms.git,42,22,20
-xerial/snappy-java,java,0,0,,,https://github.com/xerial/snappy-java.git,1,0,1
-xipki/xipki,java,0,0,,,https://github.com/xipki/xipki.git,0,0,0
-yahoo/athenz,java,2,1,245d63cff8cc5c03eb19cd39d8413e9d4c2ebd7c,245d63cff8cc5c03eb19cd39d8413e9d4c2ebd7c,https://github.com/yahoo/athenz.git,6,4,2
-zeebe-io/zeebe,java,87,50,44e2200e3a432fe6189283cf901177739b189fce,ee63de2613634953b68a5d16b83ebba76eb32500,https://github.com/zeebe-io/zeebe.git,825,506,319
-zhangdaiscott/jeecg-boot,java,0,0,,,https://github.com/zhangdaiscott/jeecg-boot.git,0,0,0
+repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url,agent_commits_touching_tests,rejected_mixed_test_diff,accepted,created_at,topics
+alibaba/qlexpress,java,0,0,,,https://github.com/alibaba/qlexpress.git,0,0,0,2017-03-15T08:39:54,[]
+activiti/activiti,java,0,0,,,https://github.com/activiti/activiti.git,4,3,1,2012-09-13T11:34:43,"[""activiti"", ""bpm"", ""bpmn"", ""business-process"", ""cloud"", ""hxps"", ""java"", ""microservices"", ""product-activiti"", ""spring""]"
+afkt/devutils,java,0,0,,,https://github.com/afkt/devutils.git,0,0,0,2018-09-07T05:43:54,"[""android"", ""compose"", ""coroutines"", ""databinding"", ""hilt"", ""jetpack"", ""kotlin"", ""leakcanary"", ""library"", ""lifecycle"", ""mvvm"", ""navigation"", ""okhttp"", ""permission"", ""retrofit"", ""room"", ""utils"", ""viewbinding"", ""viewmodel"", ""workmanager""]"
+antennapod/antennapod,java,0,0,,,https://github.com/antennapod/antennapod.git,1,0,1,2012-07-31T10:25:08,"[""android"", ""apps"", ""hacktoberfest"", ""podcast-manager"", ""podcasting20""]"
+apache/groovy,java,0,0,,,https://github.com/apache/groovy.git,5,0,5,2015-04-16T07:00:05,"[""apache"", ""compiler"", ""dynamic-typing"", ""functional-programming"", ""groovy"", ""jvm-languages"", ""metaprogramming"", ""programming-language"", ""static-typing""]"
+anysoftkeyboard/anysoftkeyboard,java,0,0,,,https://github.com/anysoftkeyboard/anysoftkeyboard.git,11,7,4,2012-04-18T12:38:01,"[""android"", ""anysoftkeyboard"", ""java"", ""language"", ""multiple-languages"", ""screen-keyboard""]"
+alibaba/druid,java,0,0,,,https://github.com/alibaba/druid.git,21,7,14,2011-11-03T05:12:51,[]
+alibaba/nacos,java,36,14,9c60d18f4723e3627c89186cd4aef3a8a3fcd6e6,59ca6199de25ca4794653f96b1fc7289457b2906,https://github.com/alibaba/nacos.git,155,112,43,2018-06-15T06:49:27,"[""a2a-registry"", ""agent"", ""ai-registry"", ""configuration-management"", ""distributed-configuration"", ""dubbo"", ""istio"", ""kubernetes"", ""mcp"", ""mcp-management"", ""mcp-registry"", ""microservices"", ""nacos"", ""prompt"", ""skills"", ""spring-cloud""]"
+apache/iotdb,java,4,1,abb9ef93ca183986d71b6dcada58a835b306121d,abb9ef93ca183986d71b6dcada58a835b306121d,https://github.com/apache/iotdb.git,4,2,2,2018-11-24T09:29:17,"[""big-data"", ""database"", ""iot"", ""java"", ""nosql"", ""timeseries"", ""tsdb""]"
+apache/ranger,java,0,0,,,https://github.com/apache/ranger.git,8,4,4,2014-07-27T07:00:08,"[""apache"", ""authz"", ""docker"", ""java"", ""python"", ""ranger""]"
+apache/incubator-dolphinscheduler,java,0,0,,,https://github.com/apache/incubator-dolphinscheduler.git,1,0,1,2019-03-01T04:39:25,[]
+apache/cassandra,java,0,0,,,https://github.com/apache/cassandra.git,1,0,1,2009-05-21T02:10:09,"[""cassandra"", ""database"", ""java""]"
+apache/skywalking,java,2,1,40d95a179b0af6fab342316bce905f28918dd4ee,40d95a179b0af6fab342316bce905f28918dd4ee,https://github.com/apache/skywalking.git,1,0,1,2015-11-07T03:30:36,"[""apm"", ""dapper"", ""distributed-tracing"", ""ebpf"", ""logging"", ""metrics"", ""observability"", ""open-telemetry"", ""prometheus"", ""service-mesh"", ""skywalking"", ""telegraf"", ""web-performance"", ""zabbix""]"
+apicurio/apicurio-registry,java,3,1,948e0548ff7bcfce3f0c3377398c2718ea50e45d,948e0548ff7bcfce3f0c3377398c2718ea50e45d,https://github.com/apicurio/apicurio-registry.git,8,1,7,2019-07-16T12:44:20,[]
+apache/struts,java,11,5,2215b6873cc25aa6967a8d2bc2db1b407b5142ef,f2c1f50da201eeeafc498287499906e3e75792b3,https://github.com/apache/struts.git,54,28,26,2014-01-15T08:00:08,"[""java"", ""struts"", ""web-framework""]"
+apache/pulsar,java,4,2,3bc834f2fa8aae1ffe8f2fb3f795acd3d0de755d,f0d2bcc7a78148765bf1549beca4db03663a6754,https://github.com/apache/pulsar.git,16,9,7,2016-06-28T07:00:03,"[""event-streaming"", ""messaging"", ""pubsub"", ""pulsar"", ""queuing"", ""streaming""]"
+atmosphere/atmosphere,java,0,0,,,https://github.com/atmosphere/atmosphere.git,0,0,0,2010-06-30T02:26:23,"[""acp"", ""agentic-ai"", ""embabel"", ""event-driven"", ""java"", ""koog"", ""langchain4j"", ""mcp"", ""multiagent"", ""quarkus"", ""spring-ai"", ""spring-boot"", ""sse"", ""websocket""]"
+automattic/simplenote-android,java,0,0,,,https://github.com/automattic/simplenote-android.git,1,1,0,2012-09-26T06:34:04,[]
+awslabs/smithy,java,0,0,,,https://github.com/awslabs/smithy.git,0,0,0,2019-03-22T09:38:10,"[""smithy"", ""smithy-models""]"
+baomidou/dynamic-datasource-spring-boot-starter,java,1,1,273fcedaee984c08197c0890f14190b86ab7e0b8,273fcedaee984c08197c0890f14190b86ab7e0b8,https://github.com/baomidou/dynamic-datasource-spring-boot-starter.git,3,1,2,2018-04-28T02:32:16,"[""datasource"", ""distributed-transaction"", ""dynamic-datasource"", ""dynamicdatasource"", ""multi-datasource"", ""multidatasource"", ""mybatis"", ""spring-boot"", ""springboot""]"
+assertj/assertj-core,java,0,0,,,https://github.com/assertj/assertj-core.git,0,0,0,2013-03-14T04:18:49,[]
+apache/ozone,java,11,6,e08b0010449342abca417510714a08e49f7ad132,8b167ca2732c0e44890f8776c738e7d7d3617142,https://github.com/apache/ozone.git,42,15,27,2019-10-02T03:56:19,"[""big-data"", ""hadoop"", ""kubernetes"", ""object-store"", ""s3"", ""storage""]"
+bazelbuild/intellij,java,0,0,,,https://github.com/bazelbuild/intellij.git,0,0,0,2016-07-08T02:19:29,"[""bazel"", ""build-tool"", ""clion"", ""cpp"", ""ide""]"
+apache/nifi,java,0,0,,,https://github.com/apache/nifi.git,0,0,0,2014-12-12T08:00:05,"[""apache"", ""hacktoberfest"", ""java"", ""nifi""]"
+bardsoftware/ganttproject,java,0,0,,,https://github.com/bardsoftware/ganttproject.git,0,0,0,2015-06-28T12:30:00,"[""gantt-chart"", ""ganttproject"", ""java"", ""kotlin"", ""project-management"", ""project-planning""]"
+bennidi/mbassador,java,0,0,,,https://github.com/bennidi/mbassador.git,0,0,0,2012-10-23T07:27:32,"[""concurrent-programming"", ""event-driven"", ""eventbus"", ""java"", ""jvm""]"
+bootique/bootique,java,0,0,,,https://github.com/bootique/bootique.git,0,0,0,2015-12-10T02:45:15,"[""bootique"", ""dependency-injection"", ""java"", ""runnable-jar""]"
+bobbylight/rsyntaxtextarea,java,0,0,,,https://github.com/bobbylight/rsyntaxtextarea.git,11,5,6,2013-08-08T03:40:21,"[""code-editor"", ""java-swing-applications"", ""syntax-highlighting""]"
+beehive-lab/tornadovm,java,0,0,,,https://github.com/beehive-lab/tornadovm.git,5,5,0,2018-09-07T09:37:44,"[""ai"", ""cuda"", ""gpu-acceleration"", ""gpu-computing"", ""gpus"", ""graalvm"", ""java"", ""levelzero"", ""multi-core"", ""nvidia"", ""opencl"", ""parallel-computing"", ""parallel-programming"", ""spirv""]"
+axonframework/axonframework,java,0,0,,,https://github.com/axonframework/axonframework.git,4,1,3,2011-12-02T04:04:42,"[""cqrs"", ""dcb"", ""ddd"", ""domain-driven-design"", ""domaindrivendesign"", ""dynamic-consistency-boundary"", ""dynamicconsistencyboundary"", ""event-sourcing"", ""java"", ""message-driven"", ""performance"", ""scalability""]"
+apache/incubator-pinot,java,32,13,71220243d97ae6e09d2ca8da0a4f2792ea8dcfd8,7d62928d7e2ea4cbc589adfa76bb9204a3ae25f0,https://github.com/apache/incubator-pinot.git,106,57,49,2014-05-19T11:27:48,[]
+bytedance/scene,java,0,0,,,https://github.com/bytedance/scene.git,0,0,0,2019-10-09T03:32:13,"[""activity"", ""android"", ""android-architecture"", ""android-library"", ""fragments"", ""navigation"", ""single-activity"", ""single-activity-framework"", ""single-activity-pattern""]"
+chromiumembedded/java-cef,java,0,0,,,https://github.com/chromiumembedded/java-cef.git,0,0,0,2017-04-02T06:29:41,"[""browser"", ""cef"", ""chromium"", ""framework"", ""java""]"
+carrot2/carrot2,java,0,0,,,https://github.com/carrot2/carrot2.git,0,0,0,2011-09-20T06:19:05,[]
+castorini/anserini,java,0,0,,,https://github.com/castorini/anserini.git,0,0,0,2015-10-05T11:27:54,"[""information-retrieval"", ""lucene""]"
+bcgit/bc-java,java,1,1,98c0693530d691ea36e13458c50b219c67effdcd,98c0693530d691ea36e13458c50b219c67effdcd,https://github.com/bcgit/bc-java.git,4,1,3,2013-06-01T02:38:42,"[""crypto"", ""dtls"", ""java"", ""openpgp"", ""post-quantum-cryptography"", ""tls""]"
+btraceio/btrace,java,8,4,a169c26650e1454800e9308ba63bcbb86a334c4c,7007372cbf44e86e9d4bc48b3c7369c9dfc38f19,https://github.com/btraceio/btrace.git,45,20,25,2014-08-28T06:58:24,"[""btrace"", ""java"", ""java-application"", ""java-platform""]"
+ben-manes/caffeine,java,0,0,,,https://github.com/ben-manes/caffeine.git,0,0,0,2014-12-13T08:45:11,[]
+clickhouse/clickhouse-jdbc,java,0,0,,,https://github.com/clickhouse/clickhouse-jdbc.git,5,2,3,2016-07-15T12:48:27,[]
+crossoverjie/cim,java,0,0,,,https://github.com/crossoverjie/cim.git,0,0,0,2018-05-20T03:55:56,"[""heartbeat"", ""im"", ""netty"", ""tcp""]"
+buchen/portfolio,java,0,0,,,https://github.com/buchen/portfolio.git,9,6,3,2012-03-24T09:43:08,"[""eclipse"", ""financial"", ""investment-portfolio"", ""java"", ""portfolio"", ""portfolio-performance"", ""stocks""]"
+codecentric/spring-boot-admin,java,0,0,,,https://github.com/codecentric/spring-boot-admin.git,2,1,1,2014-07-25T11:39:13,"[""java"", ""spring"", ""spring-boot"", ""spring-boot-admin"", ""spring-cloud""]"
+apereo/cas,java,0,0,,,https://github.com/apereo/cas.git,0,0,0,2011-09-09T01:36:42,"[""authentication"", ""authorization"", ""aws"", ""duosecurity"", ""fido"", ""identity-provider"", ""java"", ""ldap-authentication"", ""mfa"", ""oauth2"", ""open-source"", ""openidconnect"", ""saml2"", ""spring-boot"", ""spring-cloud"", ""spring-framework"", ""spring-webflow"", ""sso"", ""sso-authentication"", ""websso""]"
+digitalpetri/modbus,java,0,0,,,https://github.com/digitalpetri/modbus.git,0,0,0,2014-09-13T12:17:42,"[""java"", ""modbus"", ""modbus-rtu"", ""modbus-security"", ""modbus-serial"", ""modbus-tcp"", ""modbus-tls""]"
+codelibs/fess,java,39,5,8af0504e255a796df027b9adc0d84edb772595c0,e5d95435916b4b65e9adcfe47ffb98ce85207458,https://github.com/codelibs/fess.git,75,38,37,2013-09-13T04:50:05,"[""crawler"", ""elasticsearch"", ""enterprise-search"", ""full-text-search"", ""fulltext-search"", ""java"", ""lucene"", ""search"", ""search-engine""]"
+debezium/debezium,java,1,1,f2f7e468bf027084601604eb14b757c6594ac7b2,f2f7e468bf027084601604eb14b757c6594ac7b2,https://github.com/debezium/debezium.git,10,5,5,2016-01-22T08:17:05,"[""apache-kafka"", ""cdc"", ""change-data-capture"", ""data-pipeline"", ""database"", ""debezium"", ""event-streaming"", ""hacktoberfest"", ""kafka"", ""kafka-connect"", ""kafka-producer""]"
+eclipse-vertx/vertx-sql-client,java,0,0,,,https://github.com/eclipse-vertx/vertx-sql-client.git,0,0,0,2017-04-30T09:50:57,"[""async"", ""mssql"", ""mysql"", ""netty"", ""non-blocking"", ""performance"", ""pg"", ""postgres"", ""reactive"", ""scalability"", ""vertx""]"
+dadoonet/fscrawler,java,4,3,1d30e1e060f7bbd696c1bea896452a955877f238,695c9e93320cbf4b6eb57b06567ded39ce30b8eb,https://github.com/dadoonet/fscrawler.git,130,81,49,2012-06-08T05:23:03,"[""crawler"", ""elasticsearch"", ""java"", ""tika""]"
+dlsc-software-consulting-gmbh/gemsfx,java,0,0,,,https://github.com/dlsc-software-consulting-gmbh/gemsfx.git,0,0,0,2019-09-10T03:30:17,[]
+cloudfoundry/uaa,java,0,0,,,https://github.com/cloudfoundry/uaa.git,31,20,11,2012-02-07T10:40:55,"[""java"", ""oauth"", ""oauth2"", ""oauth2-server"", ""oidc"", ""oidc-proxy"", ""oidc-server"", ""openid-connect""]"
+domaframework/doma,java,3,2,e0d5d3504a70a0581ad524aae52fe50b8daeeef4,aeb58aa8a171cff61675833d86d7ffecd35e86af,https://github.com/domaframework/doma.git,22,9,13,2014-03-04T02:30:03,"[""annotation-processor"", ""dao"", ""doma"", ""java"", ""jdbc"", ""kotlin"", ""no-dependencies"", ""sql""]"
+eclipse/jkube,java,4,4,66fb52325361e2c883bab7b6fc53e34ef2893d8b,e641332921f1837c1c3efaf1b82cc479579cbf0f,https://github.com/eclipse/jkube.git,24,15,9,2019-10-22T01:04:50,"[""cloud-native-java"", ""docker"", ""gradle-plugin"", ""hacktoberfest"", ""java"", ""kubernetes"", ""maven-plugin"", ""openshift""]"
+dependencytrack/dependency-track,java,0,0,,,https://github.com/dependencytrack/dependency-track.git,3,0,3,2013-07-16T07:16:43,"[""appsec"", ""bill-of-materials"", ""bom"", ""component-analysis"", ""cyclonedx"", ""devsecops"", ""hacktoberfest"", ""nvd"", ""ossindex"", ""owasp"", ""package-url"", ""purl"", ""sbom"", ""sca"", ""security"", ""security-automation"", ""software-composition-analysis"", ""software-security"", ""vulnerabilities"", ""vulnerability-detection""]"
+fasterxml/jackson-core,java,0,0,,,https://github.com/fasterxml/jackson-core.git,2,0,2,2011-12-23T02:00:51,"[""hacktoberfest"", ""jackson"", ""json""]"
+flutter/flutter-intellij,java,0,0,,,https://github.com/flutter/flutter-intellij.git,1,0,1,2016-07-25T10:31:03,"[""flutter"", ""intellij-plugin"", ""java""]"
+eclipse/milo,java,12,3,c724d81479d64773bb5493c2a57e3aec309141c4,28d726f85df877e97ae7a4902b3f85acd1cff0ae,https://github.com/eclipse/milo.git,48,12,36,2016-05-06T01:20:04,"[""client"", ""iec-62541"", ""iec62541"", ""industrial-automation"", ""iot"", ""java"", ""milo"", ""opc-ua"", ""opcua"", ""sdk"", ""server"", ""stack""]"
+gessnerfl/fake-smtp-server,java,0,0,,,https://github.com/gessnerfl/fake-smtp-server.git,1,1,0,2017-05-13T06:33:35,"[""fake-smtp-server"", ""smtp-server"", ""spring-boot""]"
+flyingsaucerproject/flyingsaucer,java,0,0,,,https://github.com/flyingsaucerproject/flyingsaucer.git,7,3,4,2010-04-19T11:26:11,[]
+glowroot/glowroot,java,0,0,,,https://github.com/glowroot/glowroot.git,4,0,4,2014-01-29T05:25:58,[]
+fasterxml/jackson-databind,java,0,0,,,https://github.com/fasterxml/jackson-databind.git,8,4,4,2011-12-23T07:17:41,"[""hacktoberfest"", ""jackson"", ""jackson-databind"", ""json""]"
+dbeaver/dbeaver,java,0,0,,,https://github.com/dbeaver/dbeaver.git,2,1,1,2015-10-21T08:26:28,"[""ai"", ""database"", ""databricks"", ""db2"", ""dbeaver"", ""erd"", ""gui"", ""java"", ""jdbc"", ""mysql"", ""nosql"", ""oracle"", ""postgresql"", ""redshift"", ""snowflake"", ""sql"", ""sqlite"", ""sqlserver""]"
+greenmail-mail-test/greenmail,java,0,0,,,https://github.com/greenmail-mail-test/greenmail.git,0,0,0,2014-09-26T12:43:10,"[""greenmail"", ""imap"", ""integration-testing"", ""mock-server"", ""pop3"", ""smtp""]"
+foundationdb/fdb-record-layer,java,0,0,,,https://github.com/foundationdb/fdb-record-layer.git,2,2,0,2018-08-02T08:59:44,"[""foundationdb"", ""relational-database""]"
+grishka/smithereen,java,0,0,,,https://github.com/grishka/smithereen.git,0,0,0,2020-01-06T09:53:28,"[""activitypub"", ""fediverse""]"
+fabric8io/kubernetes-client,java,11,6,d7c769ccc3d2f4a3750976b4430abb40e4e68c14,570ccd0cffcf3368b541e10242607b2d4cc72ff5,https://github.com/fabric8io/kubernetes-client.git,60,36,24,2015-07-09T03:43:13,"[""dsl"", ""java"", ""java-client"", ""kubernetes"", ""kubernetes-client"", ""kubernetes-model"", ""mock-server"", ""mocking-kubernetes"", ""openshift"", ""openshift-client""]"
+hivemq/hivemq-community-edition,java,0,0,,,https://github.com/hivemq/hivemq-community-edition.git,0,0,0,2019-04-01T03:29:54,"[""broker"", ""hivemq"", ""iot"", ""iot-middleware"", ""java"", ""m2m"", ""messaging"", ""mqtt"", ""mqtt-broker"", ""mqtt-protocol"", ""mqtt-server"", ""mqtt5"", ""pubsub""]"
+haehnchen/idea-php-symfony2-plugin,java,0,0,,,https://github.com/haehnchen/idea-php-symfony2-plugin.git,0,0,0,2013-04-07T04:25:16,"[""annotation"", ""autocomplete"", ""doctrine"", ""drupal"", ""intellij"", ""intellij-plugin"", ""java"", ""jetbrains"", ""php"", ""phpstorm"", ""phpstorm-plugin"", ""symfony"", ""twig""]"
+halo-dev/halo,java,0,0,,,https://github.com/halo-dev/halo.git,7,3,4,2018-03-21T12:56:52,"[""blog"", ""blog-engine"", ""cms"", ""content-management-system"", ""halo"", ""halocms"", ""website-builder""]"
+freeplane/freeplane,java,0,0,,,https://github.com/freeplane/freeplane.git,0,0,0,2012-09-13T08:55:51,"[""groovy-scripts"", ""java"", ""knowledge-management"", ""latex"", ""markdown"", ""mindmap"", ""mindmap-editor"", ""mindmapping"", ""mindmaps"", ""note-taking"", ""outliner"", ""presentation"", ""project-management"", ""writing""]"
+graphql-java/graphql-java,java,1,1,14e580b7129e1f1de3b455660fc8c6cf0c5e08bf,14e580b7129e1f1de3b455660fc8c6cf0c5e08bf,https://github.com/graphql-java/graphql-java.git,55,7,48,2015-07-06T06:52:20,"[""graphql"", ""graphql-java"", ""java""]"
+igvteam/igv,java,0,0,,,https://github.com/igvteam/igv.git,2,2,0,2012-02-11T05:30:30,[]
+irockel/tda,java,0,0,,,https://github.com/irockel/tda.git,0,0,0,2016-03-14T08:42:33,"[""java"", ""jvm"", ""jvm-monitor"", ""mcp"", ""mcp-server"", ""performance-tuning"", ""thread-dump"", ""virtual-threads""]"
+java-operator-sdk/java-operator-sdk,java,1,1,2c16143f6cdf509bb82d54bfa6759f2fecce4bad,2c16143f6cdf509bb82d54bfa6759f2fecce4bad,https://github.com/java-operator-sdk/java-operator-sdk.git,12,9,3,2019-05-25T05:11:25,[]
+jenkinsci/kubernetes-plugin,java,0,0,,,https://github.com/jenkinsci/kubernetes-plugin.git,1,1,0,2015-02-16T09:02:22,"[""agent"", ""cloud"", ""kubernetes""]"
+jline/jline3,java,0,0,,,https://github.com/jline/jline3.git,3,2,1,2016-05-31T06:00:01,"[""cli"", ""console"", ""java""]"
+infinispan/infinispan,java,0,0,,,https://github.com/infinispan/infinispan.git,0,0,0,2010-11-04T12:33:19,"[""datagrid"", ""infinispan"", ""infinispan-server"", ""inmemory-cache"", ""key-value-store"", ""nosql"", ""persistent-storage"", ""search-engine"", ""semantic-search"", ""vector-database""]"
+jmetal/jmetal,java,1,1,51e4e43ec433854188e10fc79f875cb97d5eff1e,51e4e43ec433854188e10fc79f875cb97d5eff1e,https://github.com/jmetal/jmetal.git,13,2,11,2014-05-02T04:59:26,"[""java"", ""metaheuristics"", ""multiobjective-optimization"", ""software-framework""]"
+hyperledger/besu,java,9,7,b4ad0e20416bda6133a7cca5f9dda7b7f699abf5,2446dda45a1bb64afd79f491ec17c0302970d8c9,https://github.com/hyperledger/besu.git,90,56,34,2019-09-04T09:11:20,"[""besu"", ""blockchain"", ""ethereum"", ""java"", ""p2p""]"
+kagkarlsson/db-scheduler,java,0,0,,,https://github.com/kagkarlsson/db-scheduler.git,0,0,0,2015-08-12T06:01:34,"[""db-scheduler"", ""hacktoberfest"", ""java"", ""jdbc"", ""job-scheduler"", ""scheduler"", ""spring-boot"", ""task-scheduler""]"
+interestinglab/waterdrop,java,5,2,fe182baced10d67972173afcfb67950ebad67f4a,be5d0f0279d72ba6f6b64e22f44bfc4391117816,https://github.com/interestinglab/waterdrop.git,20,6,14,2017-08-05T09:14:47,[]
+graylog2/graylog2-server,java,22,10,5e6363a977f4f1cf21e16784062c84416d44ce91,bb0ca0de693d300ee735db06690ff55e34e959c3,https://github.com/graylog2/graylog2-server.git,85,57,28,2010-05-17T09:27:02,"[""amqp"", ""gelf"", ""graylog"", ""hacktoberfest"", ""kafka"", ""log-analysis"", ""log-collector"", ""log-management"", ""log-viewer"", ""logging"", ""logging-server"", ""secure-logging"", ""security"", ""siem"", ""syslog""]"
+kong/unirest-java,java,0,0,,,https://github.com/kong/unirest-java.git,0,0,0,2011-04-11T09:19:53,[]
+joel-costigliola/assertj-core,java,0,0,,,https://github.com/joel-costigliola/assertj-core.git,1,0,1,2013-03-14T04:18:49,[]
+lets-mica/mica,java,0,0,,,https://github.com/lets-mica/mica.git,0,0,0,2019-01-23T03:03:45,"[""java"", ""mica"", ""okhttp3"", ""redis"", ""spring"", ""spring-boot"", ""spring-cloud"", ""swagger""]"
+knowm/xchart,java,4,4,36c4b19ee4762e0ff66cc09e40f78415e9a1eccb,614e112488403f9bebca100b154e84a7a79f6b76,https://github.com/knowm/xchart.git,57,22,35,2011-07-20T03:56:44,[]
+konsoletyper/teavm,java,0,0,,,https://github.com/konsoletyper/teavm.git,4,0,4,2013-09-23T08:04:15,"[""aot"", ""java"", ""javascript"", ""jvm"", ""webassembly""]"
+lianjiatech/retrofit-spring-boot-starter,java,3,2,c47dbae4931bcbf8f45827c99371b753b9356c60,534327c4540aead13bd3d38e9e7d05eeda843f9e,https://github.com/lianjiatech/retrofit-spring-boot-starter.git,11,5,6,2020-04-04T01:44:57,"[""http"", ""java"", ""okhttp3"", ""retrofit"", ""spring-boot""]"
+jabref/jabref,java,4,3,72c8491c9ea33f6cb4cdb0b846b8df0bbfb82832,074b68240bb9dabeda46c745f17508e51c84904c,https://github.com/jabref/jabref.git,43,25,18,2014-03-11T02:48:42,"[""academia"", ""academic-publications"", ""ai"", ""biblatex"", ""bibliography"", ""bibtex"", ""citation"", ""citation-generator"", ""citation-style-language"", ""citation-styles"", ""hacktoberfest"", ""jabref"", ""java"", ""javafx"", ""javafx-application"", ""javafx-desktop-apps"", ""latex"", ""ocr"", ""reference-manager"", ""research-tool""]"
+lettuce-io/lettuce-core,java,0,0,,,https://github.com/lettuce-io/lettuce-core.git,9,6,3,2014-05-10T01:08:46,"[""asynchronous"", ""aws-elasticache"", ""azure-redis-cache"", ""java"", ""reactive"", ""redis"", ""redis-client"", ""redis-cluster"", ""redis-sentinel""]"
+matevip/matecloud,java,0,0,,,https://github.com/matevip/matecloud.git,0,0,0,2019-10-30T03:25:43,"[""alibabacloud"", ""cloudspring"", ""jetcache"", ""microservice"", ""microservices-architecture"", ""nacos"", ""nacos-spring-cloud"", ""rbac"", ""rocketmq"", ""saas"", ""spring-boot"", ""spring-cloud"", ""spring-cloud-alibaba"", ""spring-security-oauth2"", ""springboot-admin"", ""springboot-springcloud"", ""springcloud"", ""springcloudalibaba"", ""tenant"", ""vue3""]"
+maxmind/geoip2-java,java,0,0,,,https://github.com/maxmind/geoip2-java.git,9,3,6,2013-04-01T09:40:11,"[""geoip"", ""geoip2"", ""maxmind"", ""mmdb""]"
+linkedin/ambry,java,4,1,9bf8da3980307966794be5c8c24eb728a740f593,9bf8da3980307966794be5c8c24eb728a740f593,https://github.com/linkedin/ambry.git,37,16,21,2013-10-25T08:04:54,[]
+microcks/microcks,java,0,0,,,https://github.com/microcks/microcks.git,1,0,1,2015-02-23T03:46:09,"[""api"", ""api-testing"", ""asyncapi"", ""asyncapi-specification"", ""cncf"", ""cncf-project"", ""event-driven"", ""graphql"", ""kubernetes"", ""mock"", ""mock-server"", ""mocking"", ""openapi"", ""openapi-tooling"", ""openapi3"", ""openapi31"", ""postman-collection"", ""swagger"", ""swagger2"", ""testing""]"
+microsoft/mssql-jdbc,java,4,1,41a8a21f109f2fc052dfdf90f0b14676f347c100,41a8a21f109f2fc052dfdf90f0b14676f347c100,https://github.com/microsoft/mssql-jdbc.git,4,2,2,2016-08-22T09:58:47,[]
+line/centraldogma,java,0,0,,,https://github.com/line/centraldogma.git,0,0,0,2017-08-29T07:23:31,"[""config"", ""config-server"", ""configuration"", ""configuration-management"", ""configuration-server"", ""git"", ""repository"", ""service-configuration"", ""vcs"", ""version-control"", ""zookeeper""]"
+kestra-io/kestra,java,21,8,cdbec44f1aae350361e5c874fae90019ad89bd26,c8e7df469308bfe12c15174960afbfcbfc0a3547,https://github.com/kestra-io/kestra.git,61,23,21,2019-08-24T01:56:15,"[""ai-agents"", ""automation"", ""control-plane"", ""data-engineering"", ""data-orchestration"", ""data-orchestrator"", ""devops"", ""etl"", ""hacktoberfest"", ""high-availability"", ""infra-automation"", ""infra-ops"", ""infrastructure-as-code"", ""java"", ""low-code"", ""orchestration"", ""pipeline"", ""pipeline-as-code"", ""scheduler"", ""workflow""]"
+mongodb/mongo-java-driver,java,0,0,,,https://github.com/mongodb/mongo-java-driver.git,0,0,0,2009-01-15T03:16:29,"[""database"", ""java"", ""java-library"", ""jvm"", ""kotlin"", ""kotlin-coroutines"", ""kotlin-library"", ""mongodb"", ""scala""]"
+mixpanel/mixpanel-android,java,18,3,0d9a900627066598b0d6eb7f5957307a1472650a,63f13afa5450d0daba0124fee02b2da2df45c0f0,https://github.com/mixpanel/mixpanel-android.git,11,4,7,2010-08-05T04:51:12,"[""analytics"", ""analytics-tracking"", ""android"", ""mixpanel"", ""mixpanel-sdk"", ""sdk"", ""tracking""]"
+codenameone/codenameone,java,47,16,ce006aa379cb23166a2048801708d844a8e24d94,396344e89511ba6d0fbd4751830707fd3e5682d7,https://github.com/codenameone/codenameone.git,264,99,165,2015-03-27T07:37:42,"[""android"", ""app-framework"", ""codename-one"", ""cross-platform"", ""desktop"", ""framework"", ""hacktoberfest"", ""ios"", ""java"", ""kotlin"", ""macos"", ""maven"", ""mobile-development"", ""pwa"", ""uwp"", ""windows"", ""wora""]"
+msgpack/msgpack-java,java,0,0,,,https://github.com/msgpack/msgpack-java.git,7,2,5,2011-06-29T08:45:39,[]
+mvel/mvel,java,3,1,d8871dc26fdc20f62d06760fe7ceff6d755073ee,d8871dc26fdc20f62d06760fe7ceff6d755073ee,https://github.com/mvel/mvel.git,5,1,4,2011-05-17T05:59:38,[]
+morphiaorg/morphia,java,5,1,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,https://github.com/morphiaorg/morphia.git,15,9,6,2013-04-25T05:41:02,"[""java"", ""kotlin"", ""mongodb"", ""odm""]"
+netflix/hollow,java,3,3,10d2835046bb0163c79556da97a4b14f6776edac,7bb1ee8801b09e81983358ab72e373a772ef9e3b,https://github.com/netflix/hollow.git,17,5,12,2016-12-02T06:56:43,[]
+netflix/mantis,java,0,0,,,https://github.com/netflix/mantis.git,2,1,1,2019-06-06T11:44:48,[]
+nitrite/nitrite-java,java,4,2,8b6b31b3b2b8a3d484b3e7c64e30b643e3a73a90,d6e8455736b7deed4337a549f60d8140148e47db,https://github.com/nitrite/nitrite-java.git,10,2,8,2017-04-19T06:26:54,"[""android"", ""database"", ""documentdb"", ""embedded-database"", ""mobile-database"", ""nosql"", ""object-database"", ""object-storage""]"
+neamar/kiss,java,0,0,,,https://github.com/neamar/kiss.git,0,0,0,2012-10-02T04:03:43,[]
+intuit/karate,java,49,29,2860718bdb15bb07159e1f38959c5a765ffc15c0,157782b036c117026fa3e52eccd1b303c81b52d7,https://github.com/intuit/karate.git,539,190,349,2017-02-07T03:59:17,[]
+nroduit/weasis,java,0,0,,,https://github.com/nroduit/weasis.git,0,0,0,2012-02-19T08:18:11,"[""dicom"", ""dicom-image"", ""dicom-image-viewer"", ""dicom-images"", ""dicom-pr"", ""dicom-rt"", ""dicom-seg"", ""dicom-viewer"", ""dicom-web-viewer"", ""dicomweb"", ""ecg"", ""export-dicom"", ""medical"", ""medical-imaging"", ""multiplanar-reconstruction"", ""viewer"", ""volume-rendering"", ""weasis""]"
+objectbox/objectbox-java,java,0,0,,,https://github.com/objectbox/objectbox-java.git,0,0,0,2017-01-24T10:29:48,"[""android"", ""database"", ""edge"", ""embedded"", ""java"", ""kotlin"", ""mobile"", ""nosql"", ""sqlite"", ""sustainable"", ""sync"", ""vector""]"
+mock-server/mockserver,java,0,0,,,https://github.com/mock-server/mockserver.git,0,0,0,2013-02-26T06:09:52,"[""grunt-plugin"", ""homebrew"", ""java-client"", ""javascript-client"", ""mock-server"", ""node-client"", ""node-module"", ""proxy"", ""ruby-client""]"
+micronaut-projects/micronaut-core,java,1,1,3db7caf1594e2ab430f1fd9fdfdc028beab0a29c,3db7caf1594e2ab430f1fd9fdfdc028beab0a29c,https://github.com/micronaut-projects/micronaut-core.git,15,2,13,2018-03-07T12:05:08,"[""cloudnative"", ""groovy"", ""java"", ""kotlin"", ""microservices"", ""serverless""]"
+line/armeria,java,0,0,,,https://github.com/line/armeria.git,2,2,0,2015-11-16T04:04:01,"[""gateway"", ""grpc"", ""grpc-client"", ""grpc-server"", ""hacktoberfest"", ""http"", ""http-client"", ""http-server"", ""http2"", ""micro-framework"", ""microservices"", ""netty"", ""rpc"", ""rpc-client"", ""rpc-framework"", ""rpc-library"", ""rpc-server"", ""thrift"", ""thrift-client"", ""thrift-server""]"
+keycloak/keycloak,java,6,4,391b8b077482ef27acbae639dd47704dd9a3cb89,a4e6b73036b5dacd9cb14fb5aa6c438c68bcd317,https://github.com/keycloak/keycloak.git,34,20,14,2013-07-02T01:38:51,"[""keycloak"", ""oidc"", ""saml""]"
+openhft/zero-allocation-hashing,java,0,0,,,https://github.com/openhft/zero-allocation-hashing.git,0,0,0,2014-10-31T04:28:52,"[""cityhash"", ""farmhash"", ""hash-functions"", ""hashing"", ""high-performance"", ""java"", ""murmurhash3"", ""openhft"", ""xxhash""]"
+openhft/chronicle-wire,java,0,0,,,https://github.com/openhft/chronicle-wire.git,1,1,0,2015-01-15T02:47:29,"[""binary"", ""csv"", ""java"", ""json"", ""serialization"", ""yaml""]"
+openapitools/openapi-diff,java,0,0,,,https://github.com/openapitools/openapi-diff.git,2,0,2,2017-12-12T12:39:30,"[""api"", ""diff"", ""openapi"", ""openapi-diff"", ""openapi-specification"", ""openapi3"", ""swagger""]"
+openrefine/openrefine,java,0,0,,,https://github.com/openrefine/openrefine.git,6,3,3,2012-10-15T02:22:48,"[""data-analysis"", ""data-science"", ""data-wrangling"", ""datacleaning"", ""datacleansing"", ""datajournalism"", ""datamining"", ""java"", ""journalism"", ""opendata"", ""reconciliation"", ""wikidata""]"
+pengrad/java-telegram-bot-api,java,0,0,,,https://github.com/pengrad/java-telegram-bot-api.git,0,0,0,2015-08-04T11:58:56,"[""bot"", ""telegram"", ""telegram-api"", ""telegram-bot"", ""telegram-bot-api""]"
+oraxen/oraxen,java,1,1,f86095b922a33070d001e08a2e7d7a3f12357b98,f86095b922a33070d001e08a2e7d7a3f12357b98,https://github.com/oraxen/oraxen.git,10,7,3,2019-08-20T07:36:00,"[""java"", ""minecraft"", ""minecraft-plugin"", ""spigot"", ""spigot-plugin""]"
+osudroid/osu-droid,java,0,0,,,https://github.com/osudroid/osu-droid.git,0,0,0,2020-03-21T08:39:39,"[""andengine"", ""android"", ""droid"", ""java"", ""mobile-app"", ""mobile-development"", ""mobilegame"", ""osu"", ""osu-droid"", ""osudroid"", ""osuforandroid"", ""osugame"", ""rhythm"", ""rhythm-game""]"
+plutext/docx4j,java,0,0,,,https://github.com/plutext/docx4j.git,12,2,10,2012-05-11T10:13:30,[]
+pinpoint-apm/pinpoint,java,0,0,,,https://github.com/pinpoint-apm/pinpoint.git,1,1,0,2014-10-20T09:27:22,"[""agent"", ""apm"", ""distributed-tracing"", ""monitoring"", ""performance"", ""tracing""]"
+prometheus/client_java,java,0,0,,,https://github.com/prometheus/client_java.git,4,3,1,2013-02-03T10:55:49,"[""instrumentation"", ""java"", ""metrics"", ""prometheus""]"
+openrewrite/rewrite,java,0,0,,,https://github.com/openrewrite/rewrite.git,46,14,32,2020-05-12T08:16:14,"[""abstract-syntax-tree"", ""ast"", ""code-search"", ""java"", ""refactoring"", ""refactoring-tools""]"
+qiniu/android-sdk,java,0,0,,,https://github.com/qiniu/android-sdk.git,0,0,0,2012-08-06T01:34:03,[]
+open-telemetry/opentelemetry-java-instrumentation,java,1,1,5303808fe9ba17ac962789de4d4c7b3591f61dc5,5303808fe9ba17ac962789de4d4c7b3591f61dc5,https://github.com/open-telemetry/opentelemetry-java-instrumentation.git,94,89,5,2019-09-25T08:19:14,[]
+randoop/randoop,java,0,0,,,https://github.com/randoop/randoop.git,0,0,0,2015-05-01T08:42:29,"[""java"", ""test"", ""test-automation"", ""test-automation-java"", ""testing"", ""testing-tools""]"
+plantuml/plantuml,java,0,0,,,https://github.com/plantuml/plantuml.git,3,1,2,2010-11-04T03:55:50,"[""diagram"", ""diagram-as-code"", ""diagrams"", ""diagrams-as-code"", ""java"", ""plantuml"", ""uml"", ""uml-diagram""]"
+rabbitmq/rabbitmq-java-client,java,0,0,,,https://github.com/rabbitmq/rabbitmq-java-client.git,0,0,0,2010-09-20T10:43:18,"[""java"", ""rabbitmq""]"
+redis/jedis,java,0,0,,,https://github.com/redis/jedis.git,0,0,0,2010-06-11T01:04:43,"[""java"", ""jedis"", ""redis"", ""redis-client"", ""redis-cluster""]"
+openems/openems,java,0,0,,,https://github.com/openems/openems.git,2,2,0,2016-10-16T02:57:33,"[""climatechange"", ""electric-vehicle-charging-station"", ""energy-management"", ""energy-storage"", ""hacktoberfest"", ""heatpump"", ""photovoltaics"", ""time-of-use-tariff""]"
+rubenlagus/telegrambots,java,3,2,dec89336c8e19cf666267e046c0a13cc26ea2e86,057d150aa7bf9ee6e7269d0c2a761c975aa513bf,https://github.com/rubenlagus/telegrambots.git,6,1,5,2016-01-14T12:13:07,"[""java"", ""java-library"", ""jitpack"", ""maven"", ""polling"", ""spring-boot"", ""telegram"", ""telegram-bot"", ""telegram-bots-api"", ""webhook""]"
+rest-assured/rest-assured,java,2,2,292a10578dd4cb6d199a9cc4ef5e64df4984975f,eeed4998fa81662ceab2ad75a718d9db95baa48c,https://github.com/rest-assured/rest-assured.git,4,1,3,2010-10-21T08:35:43,"[""groovy"", ""http"", ""java"", ""json"", ""kotlin"", ""rest"", ""rest-api"", ""test"", ""test-automation"", ""xml""]"
+prestodb/presto,java,1,1,ccee37748054979b56129eca0b9afeeccaa4640b,ccee37748054979b56129eca0b9afeeccaa4640b,https://github.com/prestodb/presto.git,4,2,2,2012-08-09T01:03:37,"[""big-data"", ""data"", ""hadoop"", ""hive"", ""java"", ""lakehouse"", ""presto"", ""query"", ""sql""]"
+schemacrawler/schemacrawler,java,0,0,,,https://github.com/schemacrawler/schemacrawler.git,0,0,0,2015-07-18T03:54:56,"[""database"", ""database-diagrams"", ""database-document"", ""database-documentation"", ""database-schema"", ""documentation"", ""driver"", ""e-r-diagram"", ""entity-relationship-diagram"", ""er-diagram"", ""java"", ""jdbc"", ""metadata-extraction"", ""reverse-engineering"", ""schema"", ""schemacrawler"", ""schemaspy""]"
+selenide/selenide,java,1,1,9f69159d4e6286dfabf7b07096f9efa4ea5a9c91,9f69159d4e6286dfabf7b07096f9efa4ea5a9c91,https://github.com/selenide/selenide.git,25,7,18,2012-02-07T11:44:33,[]
+skadistats/clarity,java,0,0,,,https://github.com/skadistats/clarity.git,2,0,2,2013-12-25T09:27:19,[]
+opentripplanner/opentripplanner,java,0,0,,,https://github.com/opentripplanner/opentripplanner.git,3,3,0,2011-07-18T04:15:38,[]
+slackapi/java-slack-sdk,java,0,0,,,https://github.com/slackapi/java-slack-sdk.git,0,0,0,2016-07-02T12:29:59,"[""bolt"", ""chatbot"", ""java"", ""jvm-languages"", ""kotlin"", ""slack"", ""slack-api"", ""slack-app"", ""slack-bot"", ""socket-mode"", ""websocket"", ""websocket-client"", ""websockets""]"
+softinstigate/restheart,java,0,0,,,https://github.com/softinstigate/restheart.git,1,1,0,2014-11-16T06:01:01,"[""ai-agents"", ""data-persistence"", ""database"", ""docker"", ""framework"", ""graphql"", ""java"", ""mcp"", ""mcp-server"", ""microservice"", ""model-context-protocol"", ""mongodb"", ""nosql"", ""rest"", ""rest-api"", ""restheart"", ""webservice"", ""websockets""]"
+red5/red5-server,java,0,0,,,https://github.com/red5/red5-server.git,1,0,1,2013-11-19T05:04:10,"[""aac"", ""eclipse"", ""flash"", ""flv"", ""java"", ""live-streaming"", ""mp4"", ""red5"", ""red5-server"", ""red5pro"", ""streaming"", ""vod""]"
+sofastack/sofa-ark,java,0,0,,,https://github.com/sofastack/sofa-ark.git,0,0,0,2018-03-12T09:07:08,"[""classloader-isolation"", ""sofa-ark"", ""sofa-boot"", ""sofastack""]"
+spockframework/spock,java,0,0,,,https://github.com/spockframework/spock.git,1,0,1,2010-12-12T07:02:34,"[""bdd-style-testing-framework"", ""groovy"", ""java"", ""spock-framework"", ""testing""]"
+rsksmart/rskj,java,0,0,,,https://github.com/rsksmart/rskj.git,4,3,1,2017-05-16T02:47:56,[]
+spair/imgui-java,java,0,0,,,https://github.com/spair/imgui-java.git,1,0,1,2019-12-29T09:01:06,"[""binding"", ""dear-imgui"", ""dearimgui"", ""glfw"", ""gui"", ""imgui"", ""imgui-java"", ""java"", ""jni"", ""jvm"", ""lwjgl"", ""lwjgl3"", ""native"", ""opengl"", ""opengl3"", ""port"", ""ui""]"
+spring-projects/spring-amqp,java,0,0,,,https://github.com/spring-projects/spring-amqp.git,0,0,0,2010-11-17T03:50:16,[]
+sirixdb/sirix,java,46,14,5f65cf7dcca34a7329a2cf2fefc04521f1d8e226,164f8d548f75e9e0fec599e6f5aaada6d3af59ed,https://github.com/sirixdb/sirix.git,86,48,38,2012-06-09T02:22:14,"[""comparison"", ""coroutines"", ""diff"", ""diff-algorithm"", ""diffing"", ""hacktoberfest"", ""hashing"", ""java"", ""json"", ""jsoniq"", ""keycloak"", ""kotlin"", ""snapshot"", ""ssd"", ""storage"", ""temporal-data"", ""versioning"", ""vertx"", ""xml"", ""xquery""]"
+spring-projects/spring-integration,java,0,0,,,https://github.com/spring-projects/spring-integration.git,0,0,0,2011-07-22T09:47:27,"[""eip"", ""java"", ""microservices"", ""spring""]"
+sonarsource/sonar-java,java,2,2,1d35938c612dfc89c87cea2d7ef9c27143f6de84,7e97a86e406e187e423c12aa007146cccd3ce9b8,https://github.com/sonarsource/sonar-java.git,27,17,10,2012-09-04T03:53:13,"[""analysis"", ""analyzer"", ""java"", ""language-team"", ""quality"", ""sonarcloud"", ""sonarlint"", ""sonarqube"", ""static-analysis"", ""static-analyzer"", ""static-code-analysis""]"
+stefan-niedermann/nextcloud-notes,java,0,0,,,https://github.com/stefan-niedermann/nextcloud-notes.git,0,0,0,2015-10-01T03:53:21,[]
+spring-projects/sts4,java,0,0,,,https://github.com/spring-projects/sts4.git,0,0,0,2016-08-16T03:04:50,"[""eclipse"", ""spring"", ""spring-boot"", ""sts4"", ""theia"", ""visual-studio-code"", ""vscode-extension""]"
+stripe/stripe-java,java,0,0,,,https://github.com/stripe/stripe-java.git,2,2,0,2011-08-09T12:06:31,"[""java"", ""stripe"", ""stripe-sdk""]"
+strimzi/strimzi-kafka-operator,java,0,0,,,https://github.com/strimzi/strimzi-kafka-operator.git,0,0,0,2016-05-06T08:52:33,"[""data-stream"", ""data-streaming"", ""data-streams"", ""hacktoberfest"", ""kafka"", ""kafka-connect"", ""kafka-streams"", ""kubernetes"", ""kubernetes-controller"", ""kubernetes-operator"", ""messaging"", ""openshift""]"
+tony19/logback-android,java,0,0,,,https://github.com/tony19/logback-android.git,6,2,1,2011-06-29T06:47:06,"[""android"", ""java"", ""logback"", ""logging-library""]"
+tomakehurst/wiremock,java,3,2,90457450f92dff5a8455d754f6af0a2617e247b7,ffee1e59f437bb92bf6c4ed0f3e1b7df1293ebcb,https://github.com/tomakehurst/wiremock.git,14,7,7,2011-10-09T08:27:24,[]
+tartaricacid/touhoulittlemaid,java,0,0,,,https://github.com/tartaricacid/touhoulittlemaid.git,0,0,0,2019-06-30T10:31:31,"[""forge"", ""java"", ""maid"", ""minecraft""]"
+trekawek/coffee-gb,java,0,0,,,https://github.com/trekawek/coffee-gb.git,53,38,15,2017-01-06T12:38:41,"[""emulator"", ""gameboy"", ""gameboy-emulator"", ""z80""]"
+tronprotocol/wallet-cli,java,5,2,c9233c1e7d65d0ae03e2fca205a79706405b3dad,3e31a386e46b3c9e1b8285d0b8e2b8a0e341c947,https://github.com/tronprotocol/wallet-cli.git,9,5,4,2018-01-31T01:07:40,[]
+uber/nullaway,java,0,0,,,https://github.com/uber/nullaway.git,0,0,0,2017-09-01T05:35:57,"[""android"", ""java"", ""nullability"", ""nullability-analysis"", ""static-analysis"", ""static-code-analysis""]"
+ulisesbocchio/jasypt-spring-boot,java,0,0,,,https://github.com/ulisesbocchio/jasypt-spring-boot.git,0,0,0,2015-05-27T02:00:55,"[""encryptable-properties"", ""encryption"", ""java"", ""java-8"", ""java8"", ""security"", ""spring"", ""spring-boot"", ""spring-boot-2"", ""spring-boot-starter"", ""spring-boot2"", ""web"", ""webapp"", ""website""]"
+viaversion/viabackwards,java,0,0,,,https://github.com/viaversion/viabackwards.git,0,0,0,2016-07-18T05:41:30,"[""bukkit"", ""bungeecord"", ""hacktoberfest"", ""java-edition"", ""minecraft"", ""spigot"", ""sponge"", ""viaversion""]"
+spotbugs/spotbugs,java,12,4,abb6351cb2723431e5427b0f7bd8af608e43b283,85a0cba538ee9a5e7b8f9ba3d38479c63cb5db47,https://github.com/spotbugs/spotbugs.git,11,1,10,2016-11-04T10:18:08,"[""code-analysis"", ""findbugs"", ""hacktoberfest"", ""linter"", ""static-analysis"", ""static-code-analysis""]"
+typetools/checker-framework,java,0,0,,,https://github.com/typetools/checker-framework.git,0,0,0,2015-07-03T11:09:17,"[""java"", ""types"", ""verification""]"
+viaversion/viaversion,java,0,0,,,https://github.com/viaversion/viaversion.git,0,0,0,2016-02-28T10:39:27,"[""bukkit"", ""bungeecord"", ""fabric"", ""hacktoberfest"", ""java"", ""java-edition"", ""minecraft"", ""paper"", ""plugin"", ""spigot"", ""sponge"", ""sponge-plugin"", ""velocity"", ""viaversion""]"
+warmuuh/milkman,java,0,0,,,https://github.com/warmuuh/milkman.git,0,0,0,2019-03-27T01:42:47,"[""grpc"", ""hacktoberfest"", ""http"", ""milkman-plugins"", ""rest"", ""testing""]"
+theonedev/onedev,java,0,0,,,https://github.com/theonedev/onedev.git,0,0,0,2018-11-06T02:57:01,"[""ci-cd"", ""devops"", ""git"", ""kanban"", ""packages"", ""self-hosted""]"
+vladimir-bukhtoyarov/bucket4j,java,0,0,,,https://github.com/vladimir-bukhtoyarov/bucket4j.git,0,0,0,2014-10-12T02:19:18,[]
+xerial/snappy-java,java,0,0,,,https://github.com/xerial/snappy-java.git,1,0,1,2012-09-06T01:30:21,[]
+webbukkit/dynmap,java,0,0,,,https://github.com/webbukkit/dynmap.git,0,0,0,2010-12-27T06:47:24,"[""fabricmc-mod"", ""forge-mod"", ""minecraft-mod"", ""papermc-plugins"", ""spigotmc-plugins""]"
+xetorthio/jedis,java,0,0,,,https://github.com/xetorthio/jedis.git,15,9,6,2010-06-11T01:04:43,[]
+xipki/xipki,java,0,0,,,https://github.com/xipki/xipki.git,0,0,0,2014-03-29T08:16:04,"[""acme"", ""ca"", ""certificate"", ""certificate-authority"", ""certification-authority"", ""cmp"", ""crl"", ""est"", ""hsm"", ""mldsa"", ""mlkem"", ""ocsp"", ""ocsp-responder"", ""pkcs11"", ""pki"", ""rest-api""]"
+wechat-group/wxjava,java,14,11,0854e4d971de8e63dd8f6ae745293e8b7478ea6f,fab98621c0901e31deee89d878f32ba3775ca2d5,https://github.com/wechat-group/wxjava.git,99,10,89,2016-01-06T08:24:05,"[""cp"", ""hacktoberfest"", ""java"", ""miniapp"", ""miniprogram"", ""mp"", ""open"", ""sdk"", ""weapp"", ""wechat"", ""wechat-sdk"", ""weixin"", ""weixin-sdk"", ""wxjava"", ""wxpay""]"
+wso2/product-apim,java,0,0,,,https://github.com/wso2/product-apim.git,28,25,3,2014-06-11T08:05:00,"[""api-gateway"", ""api-management"", ""apis"", ""gateway"", ""microservices"", ""rest"", ""synapse""]"
+vaadin/flow,java,5,3,b2c4b9a91e353d3acfe08a45e22f61c4f6bab725,3a51a38ebccd02e4d08a94894a89711789f3a2ff,https://github.com/vaadin/flow.git,34,14,20,2015-04-29T05:54:35,"[""java"", ""vaadin"", ""vaadin-flow"", ""web-application-framework""]"
+yahoo/athenz,java,2,1,245d63cff8cc5c03eb19cd39d8413e9d4c2ebd7c,245d63cff8cc5c03eb19cd39d8413e9d4c2ebd7c,https://github.com/yahoo/athenz.git,7,4,3,2016-11-16T06:23:08,[]
+triplea-game/triplea,java,0,0,,,https://github.com/triplea-game/triplea.git,0,0,0,2015-07-27T09:32:58,"[""free"", ""game"", ""good-first-issue"", ""opensource"", ""strategy"", ""strategy-game"", ""turn-based-strategy"", ""world-war-2""]"
+opennms/opennms,java,1,1,9ac319ae65b529af1014d11f6178256c2b764ec6,9ac319ae65b529af1014d11f6178256c2b764ec6,https://github.com/opennms/opennms.git,8,6,2,2013-04-11T06:22:33,"[""alerting"", ""enterprise-grade"", ""horizon"", ""java"", ""meridian"", ""metrics"", ""monitoring"", ""network-monitoring"", ""network-monitoring-tool"", ""opennms""]"
+rstudio/rstudio,java,0,0,,,https://github.com/rstudio/rstudio.git,8,4,4,2010-12-07T07:10:25,[]
+zhangdaiscott/jeecg-boot,java,0,0,,,https://github.com/zhangdaiscott/jeecg-boot.git,0,0,0,2018-11-26T10:40:00,[]

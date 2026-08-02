@@ -1,281 +1,295 @@
-repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url,agent_commits_touching_tests,rejected_mixed_test_diff,accepted
-3b1b/videos,python,0,0,,,https://github.com/3b1b/videos.git,0,0,0
-agronholm/anyio,python,0,0,,,https://github.com/agronholm/anyio.git,1,0,1
-aiidateam/aiida-core,python,0,0,,,https://github.com/aiidateam/aiida-core.git,1,0,1
-aio-libs/aiobotocore,python,0,0,,,https://github.com/aio-libs/aiobotocore.git,6,4,2
-aio-libs/aiohttp,python,0,0,,,https://github.com/aio-libs/aiohttp.git,0,0,0
-aio-libs/yarl,python,0,0,,,https://github.com/aio-libs/yarl.git,0,0,0
-aiogram/aiogram,python,1,1,49d0784e33b9c0101682504440e66b3d14b8c075,49d0784e33b9c0101682504440e66b3d14b8c075,https://github.com/aiogram/aiogram.git,5,4,1
-airbytehq/airbyte,python,22,10,b3580344b7c2e1a7de4365daa5bcf001e41ebbd3,69506d7107467fa8cc41f41201a558bde0921f5a,https://github.com/airbytehq/airbyte.git,284,147,137
-al-one/hass-xiaomi-miot,python,4,1,148c697ed8f92e63f8d62f47f398c0d4fdb3237d,148c697ed8f92e63f8d62f47f398c0d4fdb3237d,https://github.com/al-one/hass-xiaomi-miot.git,1,0,1
-alberanid/imdbpy,python,0,0,,,https://github.com/alberanid/imdbpy.git,1,1,0
-albumentations-team/albumentations,python,0,0,,,https://github.com/albumentations-team/albumentations.git,0,0,0
-amphibian-dev/toad,python,0,0,,,https://github.com/amphibian-dev/toad.git,4,3,1
-andialbrecht/sqlparse,python,0,0,,,https://github.com/andialbrecht/sqlparse.git,0,0,0
-andymccurdy/redis-py,python,2,1,2a493975b05e2393c66d53bfe900bcc5e3787859,2a493975b05e2393c66d53bfe900bcc5e3787859,https://github.com/andymccurdy/redis-py.git,21,7,14
-ansible/ansible,python,0,0,,,https://github.com/ansible/ansible.git,4,2,2
-apache/tvm,python,0,0,,,https://github.com/apache/tvm.git,19,6,13
-aragonsnow/qiandao,python,0,0,,,https://github.com/aragonsnow/qiandao.git,0,0,0
-archivebox/archivebox,python,47,7,d65eb587d90b9f2c1b25a22a42d4912f9ae6ac0c,c2bb4b25cb849b56718fedc3ae18b3e4e10895ca,https://github.com/archivebox/archivebox.git,38,25,13
-azure/azure-sdk-for-python,python,0,0,,,https://github.com/azure/azure-sdk-for-python.git,0,0,0
-beetbox/beets,python,0,0,,,https://github.com/beetbox/beets.git,3,2,1
-benadida/helios-server,python,0,0,,,https://github.com/benadida/helios-server.git,0,0,0
-binref/refinery,python,0,0,,,https://github.com/binref/refinery.git,0,0,0
-borgbase/vorta,python,0,0,,,https://github.com/borgbase/vorta.git,2,2,0
-bouni/kicad-jlcpcb-tools,python,0,0,,,https://github.com/bouni/kicad-jlcpcb-tools.git,3,1,2
-brainix/pottery,python,0,0,,,https://github.com/brainix/pottery.git,0,0,0
-brndnmtthws/thetagang,python,0,0,,,https://github.com/brndnmtthws/thetagang.git,1,1,0
-bunkerity/bunkerized-nginx,python,0,0,,,https://github.com/bunkerity/bunkerized-nginx.git,0,0,0
-caesar0301/treelib,python,0,0,,,https://github.com/caesar0301/treelib.git,0,0,0
-capitalone/datacompy,python,0,0,,,https://github.com/capitalone/datacompy.git,0,0,0
-catalyst-cooperative/pudl,python,0,0,,,https://github.com/catalyst-cooperative/pudl.git,5,5,0
-ccxt/ccxt,python,0,0,,,https://github.com/ccxt/ccxt.git,0,0,0
-cdgriffith/fastflix,python,0,0,,,https://github.com/cdgriffith/fastflix.git,0,0,0
-ceccopierangiolieugenio/pytermtk,python,0,0,,,https://github.com/ceccopierangiolieugenio/pytermtk.git,6,4,2
-celery/celery,python,6,2,dd4cf64a02d887e9425ec7d822bb623b8a88abf2,de104a2fce76a8949012493b83da48daaa6d0247,https://github.com/celery/celery.git,7,4,3
-chardet/chardet,python,1,1,d650fcc077f92c38b5a2baa49fcda89047e0aa73,d650fcc077f92c38b5a2baa49fcda89047e0aa73,https://github.com/chardet/chardet.git,158,96,62
-chia-network/chia-blockchain,python,0,0,,,https://github.com/chia-network/chia-blockchain.git,3,3,0
-chipsec/chipsec,python,3,2,7747d4549841fcc7065e0130a95c40e37201aeb9,32e2ba62c367523a17ffa01fd25f169d59b6de8e,https://github.com/chipsec/chipsec.git,2,0,2
-cinemagoer/cinemagoer,python,0,0,,,https://github.com/cinemagoer/cinemagoer.git,0,0,0
-coin-or/pulp,python,0,0,,,https://github.com/coin-or/pulp.git,0,0,0
-conda/conda,python,0,0,,,https://github.com/conda/conda.git,1,0,1
-contextlab/hypertools,python,0,0,,,https://github.com/contextlab/hypertools.git,1,1,0
-couchers-org/couchers,python,8,8,5336660be482dd378cbd85ae17e525c99eee9d91,9594434d1eb63d9f79fcb903c97ac17d461416d1,https://github.com/couchers-org/couchers.git,144,97,47
-crossbario/autobahn-python,python,0,0,,,https://github.com/crossbario/autobahn-python.git,0,0,0
-crossbario/autobahn-testsuite,python,0,0,,,https://github.com/crossbario/autobahn-testsuite.git,0,0,0
-crossbario/crossbar,python,0,0,,,https://github.com/crossbario/crossbar.git,0,0,0
-crytic/slither,python,2,2,85c6711ec7ac0e58c4cb693f9a5259091fc9398b,91ebdd92b55695011f6ce6b478c64c0da82c1e3c,https://github.com/crytic/slither.git,19,4,15
-custom-components/alexa_media_player,python,4,2,06981499d6b6a1a02118a1c5c4d2021ff09b03bb,79083aa1af0128195a09ef3a8538f47936959154,https://github.com/custom-components/alexa_media_player.git,10,2,8
-cuthbertlab/music21,python,0,0,,,https://github.com/cuthbertlab/music21.git,3,2,1
-dagster-io/dagster,python,2,2,2ae80f3ae4f73598b6073702f25d6da90f3bfb30,285c33607f1d97520413a5f430e91afb1c7da0fb,https://github.com/dagster-io/dagster.git,101,58,43
-databiosphere/toil,python,0,0,,,https://github.com/databiosphere/toil.git,0,0,0
-datadog/dd-trace-py,python,2,2,9c8c6d0eb66c67ae261329c0f098dd32b6e67b21,870ee85a634c05aabf20ab8dbc34fe2471fa5bbd,https://github.com/datadog/dd-trace-py.git,12,6,6
-datadog/integrations-core,python,29,10,785d277840319005dd42900fd4540bc1997d6ac4,bdac825807a95a07866524d97f7adee73db4757f,https://github.com/datadog/integrations-core.git,126,66,60
-datafolklabs/cement,python,0,0,,,https://github.com/datafolklabs/cement.git,5,3,2
-datalad/datalad,python,0,0,,,https://github.com/datalad/datalad.git,83,57,26
-deepset-ai/haystack,python,5,1,fd10d519d6845854904e4300b8cfe458df0c62c2,fd10d519d6845854904e4300b8cfe458df0c62c2,https://github.com/deepset-ai/haystack.git,43,20,23
-devbisme/skidl,python,0,0,,,https://github.com/devbisme/skidl.git,0,0,0
-digitalbazaar/pyld,python,0,0,,,https://github.com/digitalbazaar/pyld.git,1,0,1
-dimagi/commcare-hq,python,12,8,4c7125c8cf2d2f98af1930fd7ca4e24e04206ed9,f6c6bd3ddd27b557fbc68c5830d4868e02fe7509,https://github.com/dimagi/commcare-hq.git,174,112,62
-dipu-bd/lightnovel-crawler,python,0,0,,,https://github.com/dipu-bd/lightnovel-crawler.git,0,0,0
-django-import-export/django-import-export,python,2,1,e7988d70938bbe6a2d524c4a114a2e9f4a635eb9,e7988d70938bbe6a2d524c4a114a2e9f4a635eb9,https://github.com/django-import-export/django-import-export.git,8,2,6
-django-parler/django-parler,python,0,0,,,https://github.com/django-parler/django-parler.git,2,2,0
-django/django,python,0,0,,,https://github.com/django/django.git,2,0,0
-domainaware/parsedmarc,python,17,4,5b08627eaaf449341718a56467770e625f510e41,7fed72798abeaffc5ec6f82abb9e94838fadd880,https://github.com/domainaware/parsedmarc.git,19,9,10
-drakkar-software/octobot,python,0,0,,,https://github.com/drakkar-software/octobot.git,26,19,7
-efroemling/ballistica,python,0,0,,,https://github.com/efroemling/ballistica.git,0,0,0
-eirannejad/pyrevit,python,0,0,,,https://github.com/eirannejad/pyrevit.git,7,1,6
-elyra-ai/elyra,python,0,0,,,https://github.com/elyra-ai/elyra.git,0,0,0
-emeryberger/csrankings,python,0,0,,,https://github.com/emeryberger/csrankings.git,2,2,0
-emilstenstrom/django-components,python,0,0,,,https://github.com/emilstenstrom/django-components.git,6,2,4
-enarjord/passivbot,python,9,4,88f711d0b3eeb72436f9fe76b2bf1c5f5cc82149,d52da4d7fef17c8106d473e80626e9fad013012d,https://github.com/enarjord/passivbot.git,41,15,26
-enms-automation/enms,python,0,0,,,https://github.com/enms-automation/enms.git,0,0,0
-espressif/esptool,python,0,0,,,https://github.com/espressif/esptool.git,0,0,0
-etal/cnvkit,python,1,1,043917afbd897c6d0ca309275e76d97e87454285,043917afbd897c6d0ca309275e76d97e87454285,https://github.com/etal/cnvkit.git,91,41,50
-ethereum/consensus-specs,python,0,0,,,https://github.com/ethereum/consensus-specs.git,0,0,0
-ethereum/eth2.0-specs,python,0,0,,,https://github.com/ethereum/eth2.0-specs.git,0,0,0
-ethereum/execution-specs,python,4,1,083244a25defa23acc75299d62864940bf1e87ef,083244a25defa23acc75299d62864940bf1e87ef,https://github.com/ethereum/execution-specs.git,11,4,7
-ets-labs/python-dependency-injector,python,0,0,,,https://github.com/ets-labs/python-dependency-injector.git,0,0,0
-evennia/evennia,python,0,0,,,https://github.com/evennia/evennia.git,0,0,0
-evhub/coconut,python,0,0,,,https://github.com/evhub/coconut.git,2,1,1
-ewels/multiqc,python,4,2,be3f0fc534e24b060d6a6126c4b0855700628c00,29ba13b61ef85219b84ca4946e84226fd22013d8,https://github.com/ewels/multiqc.git,15,3,12
-exa-networks/exabgp,python,81,22,fdcce91bc662dac816bc70a9e36bda45c9983bae,a5afd2a66b489456fdd9aaa6be6d3e4b3e172e94,https://github.com/exa-networks/exabgp.git,292,193,99
-ezyang/ghstack,python,0,0,,,https://github.com/ezyang/ghstack.git,0,0,0
-feast-dev/feast,python,29,6,ad20634ed5ed3c69da672c9938ca5b6c8a8e5a0f,9cd35e140a949dc44a9915300f2724dd2e702f03,https://github.com/feast-dev/feast.git,30,17,13
-fgmacedo/python-statemachine,python,0,0,,,https://github.com/fgmacedo/python-statemachine.git,0,0,0
-fizzadar/pyinfra,python,0,0,,,https://github.com/fizzadar/pyinfra.git,1,1,0
-flagsmith/flagsmith,python,0,0,,,https://github.com/flagsmith/flagsmith.git,25,18,7
-freekmurze/dotfiles,python,0,0,,,https://github.com/freekmurze/dotfiles.git,0,0,0
-freelawproject/courtlistener,python,0,0,,,https://github.com/freelawproject/courtlistener.git,51,30,21
-freenas/freenas,python,0,0,,,https://github.com/freenas/freenas.git,1,0,1
-freeopcua/opcua-client-gui,python,0,0,,,https://github.com/freeopcua/opcua-client-gui.git,0,0,0
-frostming/pdm,python,0,0,,,https://github.com/frostming/pdm.git,2,0,2
-galaxyproject/galaxy,python,10,3,32b7ceee070bcc17882148d1b40c91f3fcb5b5dc,aef25d3cb05b424961d4dfcbf0729d2acea55206,https://github.com/galaxyproject/galaxy.git,192,118,74
-getsentry/sentry,python,72,59,1add0b5eb540ff74e1fd0c194728368f2c67b22e,303e91ac0fd07217943c1c377cca3e8b7cab789c,https://github.com/getsentry/sentry.git,852,493,359
-getsentry/sentry-python,python,1,1,0527c030c6a73cf89ea0b0df4ff2a0c8c3e69a26,0527c030c6a73cf89ea0b0df4ff2a0c8c3e69a26,https://github.com/getsentry/sentry-python.git,35,28,7
-ghostmanager/ghostwriter,python,0,0,,,https://github.com/ghostmanager/ghostwriter.git,3,3,0
-gijzelaerr/python-snap7,python,25,6,a3f5be011e152158bb262c99972fcf908b1b4203,8a0ff08b66977fcc16171129569695a48ca60b0e,https://github.com/gijzelaerr/python-snap7.git,53,22,31
-giskard-ai/giskard,python,1,1,25d40a7a3f10135df4ba4251560f449e1e1f4379,25d40a7a3f10135df4ba4251560f449e1e1f4379,https://github.com/giskard-ai/giskard.git,33,24,9
-goauthentik/authentik,python,1,1,e2cb1a8d0c85bfe743cd5457954080f99cf9f394,e2cb1a8d0c85bfe743cd5457954080f99cf9f394,https://github.com/goauthentik/authentik.git,4,3,1
-google/osv,python,0,0,,,https://github.com/google/osv.git,2,2,0
-googlecloudplatform/professional-services,python,0,0,,,https://github.com/googlecloudplatform/professional-services.git,0,0,0
-gradio-app/gradio,python,3,1,df56862a1531fc372a3248716dc4bd07e6db1c52,df56862a1531fc372a3248716dc4bd07e6db1c52,https://github.com/gradio-app/gradio.git,42,18,24
-graphistry/pygraphistry,python,16,5,56ac00e7f3181795e4e39f32b84b9e6f48ce8bca,e656d1224e0adbec33ab2e8f9d3691874065bb91,https://github.com/graphistry/pygraphistry.git,304,156,148
-hail-is/hail,python,0,0,,,https://github.com/hail-is/hail.git,1,1,0
-hay-kot/mealie,python,0,0,,,https://github.com/hay-kot/mealie.git,1,1,0
-home-assistant/supervisor,python,21,8,806bd9f52cd2661771728fb9a3c9749d5395ccef,f49b81840e7146e312a2d85db434cf3b19186711,https://github.com/home-assistant/supervisor.git,115,76,39
-hozn/stravalib,python,0,0,,,https://github.com/hozn/stravalib.git,3,2,1
-huggingface/huggingface_hub,python,6,2,5bac983a5a9b032233a4c519cb9973bd6617344b,f49325209a80214c2dab9b440f1c570dfeaca881,https://github.com/huggingface/huggingface_hub.git,114,61,53
-huggingface/transformers,python,2,1,a8f43eca15b8d1c63deb33f6b97dfab30419e5da,a8f43eca15b8d1c63deb33f6b97dfab30419e5da,https://github.com/huggingface/transformers.git,44,28,16
-hypothesisworks/hypothesis,python,1,1,da414a5bef151d65a39643a46a5012e1b590ec22,da414a5bef151d65a39643a46a5012e1b590ec22,https://github.com/hypothesisworks/hypothesis.git,57,33,24
-idank/explainshell,python,18,7,7a9dd510d45c7d052a6aec731b6ace4d174e950c,59f5ec00ead4d3fec4c922ac3d4438367dc06e4e,https://github.com/idank/explainshell.git,61,46,15
-idom-team/idom,python,0,0,,,https://github.com/idom-team/idom.git,1,1,0
-imageio/imageio,python,0,0,,,https://github.com/imageio/imageio.git,0,0,0
-imerica/dj-rest-auth,python,0,0,,,https://github.com/imerica/dj-rest-auth.git,2,2,0
-intel/neural-compressor,python,2,1,f358f5891a7aa7aa1eac2266680ddab594384641,f358f5891a7aa7aa1eac2266680ddab594384641,https://github.com/intel/neural-compressor.git,6,3,3
-internetarchive/openlibrary,python,2,1,839ac2cc0d73fcc6f1b5c9e4a0fe5bc38aa170d9,839ac2cc0d73fcc6f1b5c9e4a0fe5bc38aa170d9,https://github.com/internetarchive/openlibrary.git,12,6,6
-iodide-project/pyodide,python,0,0,,,https://github.com/iodide-project/pyodide.git,3,2,1
-jannikmi/timezonefinder,python,0,0,,,https://github.com/jannikmi/timezonefinder.git,0,0,0
-jellyfin/jellyfin-mpv-shim,python,0,0,,,https://github.com/jellyfin/jellyfin-mpv-shim.git,0,0,0
-jjjake/internetarchive,python,2,1,21407572f7194ed72d85d79e27c4de3dc08686f0,21407572f7194ed72d85d79e27c4de3dc08686f0,https://github.com/jjjake/internetarchive.git,27,15,12
-jkwill87/mnamer,python,0,0,,,https://github.com/jkwill87/mnamer.git,0,0,0
-kayak/pypika,python,0,0,,,https://github.com/kayak/pypika.git,0,0,0
-kdeldycke/meta-package-manager,python,1,1,5fb4f8e1256139f799bf12a2bd7231fdfbb8c4f4,5fb4f8e1256139f799bf12a2bd7231fdfbb8c4f4,https://github.com/kdeldycke/meta-package-manager.git,26,21,5
-kengz/slm-lab,python,5,2,945625bc82cd5368551ca2aea3c9d6a0f787258d,82b1755e98e9f22530c6c8fdcf456ba93a01c4a2,https://github.com/kengz/slm-lab.git,7,4,3
-kennbroorg/iky,python,6,1,4738c58bf7fcc81b67ab68a88c5b64c10cd6773a,4738c58bf7fcc81b67ab68a88c5b64c10cd6773a,https://github.com/kennbroorg/iky.git,5,4,1
-kennethreitz/pytheory,python,1,1,af14599fe8c3c45a9fffc5da12e254b2407ca319,af14599fe8c3c45a9fffc5da12e254b2407ca319,https://github.com/kennethreitz/pytheory.git,149,60,89
-kevoreilly/capev2,python,0,0,,,https://github.com/kevoreilly/capev2.git,1,1,0
-koordinates/kart,python,0,0,,,https://github.com/koordinates/kart.git,1,0,1
-kornia/kornia,python,4,2,5c04bfc84d2a22e72f24b846f60dc344d9d73d8d,ee23688c2f0250a15395604b13386acecbef88be,https://github.com/kornia/kornia.git,20,14,6
-kovidgoyal/kitty,python,0,0,,,https://github.com/kovidgoyal/kitty.git,0,0,0
-kubeflow/pipelines,python,0,0,,,https://github.com/kubeflow/pipelines.git,10,6,4
-kubeflow/training-operator,python,0,0,,,https://github.com/kubeflow/training-operator.git,4,1,3
-ledfx/ledfx,python,0,0,,,https://github.com/ledfx/ledfx.git,3,3,0
-librephotos/librephotos,python,16,11,2a5ec6b5e7a01ac577a11192159abfc8c79c03f0,7bcf23125ddc48fa368b5a69cebcc4b1bccd02ea,https://github.com/librephotos/librephotos.git,35,10,25
-lihuacai168/anotherfasterrunner,python,17,2,fdedc57b5ec788c8698bfabdd616f99b8e63fe3e,dc9d96e994076d38f6c4e7067fde296ce7731bba,https://github.com/lihuacai168/anotherfasterrunner.git,99,82,17
-linkml/linkml,python,3,2,46366604082651f79ff188e83412ea49ef7d98d3,4028b88b4ade8a7644126cb76a819a712c738911,https://github.com/linkml/linkml.git,56,37,19
-ludwig-ai/ludwig,python,0,0,,,https://github.com/ludwig-ai/ludwig.git,0,0,0
-lumiwealth/lumibot,python,6,5,c1d4f8f93b6d5ac9794f10ed4701a5d5b844bfc5,12a77a9a08ab6746dc140c761e550471f4b7311c,https://github.com/lumiwealth/lumibot.git,68,45,23
-lyft/cartography,python,2,2,2be3f9eddbf6b3926c3ceb0243aeb06c0079685a,e1c1ac32b20d10a75c295db612d31f51602c5ed5,https://github.com/lyft/cartography.git,149,60,89
-macbre/sql-metadata,python,0,0,,,https://github.com/macbre/sql-metadata.git,2,1,1
-maiot-io/zenml,python,4,3,b42144a2df3ab555df3b620080cbb1a9cd99106b,8afa9321480dd3cf53b924666b3b095abc46e86f,https://github.com/maiot-io/zenml.git,26,11,15
-makepath/xarray-spatial,python,6,3,7090718f234477e7c308b86cab3e20822063e4be,95b6bff90433af19530db5435a25b68dbc7cc4f0,https://github.com/makepath/xarray-spatial.git,37,8,29
-mampfes/hacs_waste_collection_schedule,python,2,2,821b14778d6ceea8fbb16e417e0203a14e950e4f,8d808ae4ff99344ee259a56b01c59724e9fa40a5,https://github.com/mampfes/hacs_waste_collection_schedule.git,17,8,9
-man-group/notebooker,python,0,0,,,https://github.com/man-group/notebooker.git,1,1,0
-mandarons/icloud-drive-docker,python,2,1,227e795009eb4b0b6e42405813d00325fd2f5228,227e795009eb4b0b6e42405813d00325fd2f5228,https://github.com/mandarons/icloud-drive-docker.git,15,11,4
-martin-majlis/wikipedia-api,python,0,0,,,https://github.com/martin-majlis/wikipedia-api.git,2,0,2
-martinet101/wingetui,python,0,0,,,https://github.com/martinet101/wingetui.git,1,0,1
-megalinter/megalinter,python,0,0,,,https://github.com/megalinter/megalinter.git,3,2,1
-meltano/meltano,python,6,3,4702bd41207a10b16e8dbdcf5fcb9ab254dae29a,46b7f8c4055ecabfb4bbad4db1f35ab53557ef2c,https://github.com/meltano/meltano.git,24,17,7
-michaelchu/optopsy,python,37,17,9e42aa1adb09f109eb10a9e31730be7b850782ad,2ca67e0fb51c7d690cb15b04aca8a45931caf3eb,https://github.com/michaelchu/optopsy.git,77,47,30
-microsoft/debugpy,python,0,0,,,https://github.com/microsoft/debugpy.git,4,2,2
-microsoft/deepspeed,python,0,0,,,https://github.com/microsoft/deepspeed.git,10,2,8
-microsoft/msticpy,python,0,0,,,https://github.com/microsoft/msticpy.git,5,4,1
-microsoft/olive,python,12,4,8a847c2a7568f4b8f6b36a9f2e0c2f57115126ab,8a274f8d4827a9b0f695ac17e9ae464c413e8f0f,https://github.com/microsoft/olive.git,53,29,24
-microsoft/playwright-python,python,0,0,,,https://github.com/microsoft/playwright-python.git,7,5,2
-microsoft/presidio,python,28,2,98f79b9c646802e456687136e234b2b9137c0e93,eb8df01ae35367251fbcaa03835a57e0e3fa1ad8,https://github.com/microsoft/presidio.git,11,6,5
-microsoft/pyright,python,4,1,4c60ea9967d2633894e873c1b53145a28106f9a8,4c60ea9967d2633894e873c1b53145a28106f9a8,https://github.com/microsoft/pyright.git,20,11,9
-mindwerks/worldengine,python,0,0,,,https://github.com/mindwerks/worldengine.git,1,1,0
-mirumee/ariadne,python,0,0,,,https://github.com/mirumee/ariadne.git,0,0,0
-mirumee/saleor,python,4,2,917690526c6e9cf9e4dbf28c1fcbea8b00badf91,f261c2ef8db241e780b010e00f8cda8448000c9b,https://github.com/mirumee/saleor.git,12,5,7
-mlco2/codecarbon,python,0,0,,,https://github.com/mlco2/codecarbon.git,17,10,7
-mlflow/mlflow,python,0,0,,,https://github.com/mlflow/mlflow.git,0,0,0
-mlrun/mlrun,python,10,6,35bc0b8853be6ba2a0782525f930e2b42641d8ba,262eef14091c69acba1e71141f4d2588768fc31c,https://github.com/mlrun/mlrun.git,75,35,40
-mongodb/mongo-python-driver,python,0,0,,,https://github.com/mongodb/mongo-python-driver.git,7,5,2
-mozilla/fx-private-relay,python,0,0,,,https://github.com/mozilla/fx-private-relay.git,0,0,0
-mozilla/kitsune,python,0,0,,,https://github.com/mozilla/kitsune.git,2,1,1
-mozilla/openwpm,python,0,0,,,https://github.com/mozilla/openwpm.git,0,0,0
-music-assistant/server,python,68,17,582758e08ab43e50fe8e9e081625c927a24f4abf,e2f919ed0976f1a8352b82f4f25cd9e7a3f63a4f,https://github.com/music-assistant/server.git,64,26,38
-nat-n/poethepoet,python,1,1,35e4a1b72cc10b84bb239645911c94d446f4ca96,35e4a1b72cc10b84bb239645911c94d446f4ca96,https://github.com/nat-n/poethepoet.git,10,7,3
-nats-io/nats.py,python,0,0,,,https://github.com/nats-io/nats.py.git,0,0,0
-netbox-community/netbox,python,2,2,f2d8ae29c2960d923847b58b23cda5fff8ff8e06,61696c8633df42b19267d9acc92b1acf32e82d5b,https://github.com/netbox-community/netbox.git,13,6,7
-netbox-community/pynetbox,python,0,0,,,https://github.com/netbox-community/pynetbox.git,0,0,0
-netflix/metaflow,python,9,5,e01469a370481cab0da258d6e88832b5428be721,732ca76d5aea9c4b60870997f463b48929dde354,https://github.com/netflix/metaflow.git,17,9,8
-nicolargo/glances,python,1,1,139506b1099fbb09b4a713b3efe6503c4a4b3398,139506b1099fbb09b4a713b3efe6503c4a4b3398,https://github.com/nicolargo/glances.git,9,3,6
-nilearn/nilearn,python,0,0,,,https://github.com/nilearn/nilearn.git,11,10,1
-nolar/kopf,python,8,3,079390ce54f1411c0cd5e257f39cfd9ecb6ab6e6,b30f7a817869ee4379101cd42c71614bfe6cd125,https://github.com/nolar/kopf.git,11,4,7
-nuitka/nuitka,python,0,0,,,https://github.com/nuitka/nuitka.git,0,0,0
-nvidia/megatron-lm,python,35,14,9b18de4d9c9ccee3332f939ad8216e9424348825,cf2f07d7b1315c96c05554c670c43207c6783e5e,https://github.com/nvidia/megatron-lm.git,128,71,57
-nvidia/nvflare,python,5,5,a365ebb71ca0526c0be0b90258e106ad006aae02,b059daedb0e9486e916d5adeb0b407a19ac1598a,https://github.com/nvidia/nvflare.git,58,32,26
-online-ml/river,python,0,0,,,https://github.com/online-ml/river.git,28,12,16
-onnx/onnx,python,2,1,45f564bfc6ff35e80e480f593ec7d90cf8df3135,45f564bfc6ff35e80e480f593ec7d90cf8df3135,https://github.com/onnx/onnx.git,35,11,24
-open-catalyst-project/ocp,python,0,0,,,https://github.com/open-catalyst-project/ocp.git,4,4,0
-open-telemetry/opentelemetry-python,python,4,4,abd27fb7eefc879d6ff1cd42969a3984d1722e95,ac7a3df2fb5a3de775c1df3cd2a6c71eb53aec73,https://github.com/open-telemetry/opentelemetry-python.git,34,12,22
-open-telemetry/opentelemetry-python-contrib,python,0,0,,,https://github.com/open-telemetry/opentelemetry-python-contrib.git,11,7,4
-openatx/uiautomator2,python,1,1,b407b9eb8876b1de3eda6022d019a8611782f202,b407b9eb8876b1de3eda6022d019a8611782f202,https://github.com/openatx/uiautomator2.git,1,0,1
-opencti-platform/connectors,python,35,10,6e08dd418773d480512a1e17314f1a866e6adb37,f290a6ad7a2d8172a0ba571ac7b973cbda3f7856,https://github.com/opencti-platform/connectors.git,21,4,17
-openmc-dev/openmc,python,0,0,,,https://github.com/openmc-dev/openmc.git,7,6,1
-openmdao/openmdao,python,0,0,,,https://github.com/openmdao/openmdao.git,0,0,0
-openstates/openstates-scrapers,python,0,0,,,https://github.com/openstates/openstates-scrapers.git,0,0,0
-openvinotoolkit/anomalib,python,146,4,74ade818f5e1cfbebdb35a04ffa1d0d8acdaaf35,c7cc8b7fdee18fed13e78746f550fddd603e9f9f,https://github.com/openvinotoolkit/anomalib.git,21,12,9
-openvinotoolkit/nncf,python,0,0,,,https://github.com/openvinotoolkit/nncf.git,3,3,0
-openwpm/openwpm,python,0,0,,,https://github.com/openwpm/openwpm.git,0,0,0
-pdm-project/pdm,python,0,0,,,https://github.com/pdm-project/pdm.git,0,0,0
-plasma-umass/scalene,python,9,3,47fab6465b05250d3da6e7a0cf25b78fac38d134,be5f193229c2c3166cf0b1292a9c28e30a8e90c6,https://github.com/plasma-umass/scalene.git,55,37,18
-plasmapy/plasmapy,python,0,0,,,https://github.com/plasmapy/plasmapy.git,0,0,0
-plotly/dash,python,1,1,224a4c1b975e0e8c7289115206f2225b15c0c0c7,224a4c1b975e0e8c7289115206f2225b15c0c0c7,https://github.com/plotly/dash.git,7,5,2
-posthog/posthog,python,192,94,c341f69ac5dcfc9428ed15af7140938d19f18403,ce4f3cac464b234b4e41f3ee21563468e440bd5e,https://github.com/posthog/posthog.git,1191,635,556
-prefecthq/prefect,python,163,58,90f261bc0c06e5fc6cda92e83c39ff5131f6d52a,3f47d765fea655c92f2d700fedee8635ea2d4d2f,https://github.com/prefecthq/prefect.git,624,307,317
-profusion/sgqlc,python,0,0,,,https://github.com/profusion/sgqlc.git,0,0,0
-psd-tools/psd-tools,python,2,1,44ab6842529e94164252aec76dd5ddbde6a64bb8,44ab6842529e94164252aec76dd5ddbde6a64bb8,https://github.com/psd-tools/psd-tools.git,53,33,20
-pulp/pulpcore,python,3,3,101826c16d41d3dd96abac4e6bc9975383f0094b,e542160c14090b08a4ad7ab61cb555948510759a,https://github.com/pulp/pulpcore.git,29,11,18
-pwndbg/pwndbg,python,0,0,,,https://github.com/pwndbg/pwndbg.git,15,2,13
-pybuilder/pybuilder,python,0,0,,,https://github.com/pybuilder/pybuilder.git,0,0,0
-pyca/cryptography,python,4,2,f7d5248f66c2c3234c122279b6c7a801ae0924e7,8e58ea5e2314ccf5d94b3a2707454768daa1750b,https://github.com/pyca/cryptography.git,97,66,31
-pycqa/pylint,python,0,0,,,https://github.com/pycqa/pylint.git,8,0,8
-pydata/xarray,python,0,0,,,https://github.com/pydata/xarray.git,32,21,11
-pyodide/pyodide,python,0,0,,,https://github.com/pyodide/pyodide.git,0,0,0
-pythainlp/pythainlp,python,0,0,,,https://github.com/pythainlp/pythainlp.git,6,6,0
-python-telegram-bot/python-telegram-bot,python,0,0,,,https://github.com/python-telegram-bot/python-telegram-bot.git,3,2,1
-pytorch/pytorch,python,0,0,,,https://github.com/pytorch/pytorch.git,0,0,0
-qdata/textattack,python,0,0,,,https://github.com/qdata/textattack.git,0,0,0
-qiandao-today/qiandao,python,0,0,,,https://github.com/qiandao-today/qiandao.git,0,0,0
-quantecon/quantecon.py,python,2,1,6eaa3144ed88f379650245ef34ac7ffd21e93fff,6eaa3144ed88f379650245ef34ac7ffd21e93fff,https://github.com/quantecon/quantecon.py.git,13,8,5
-quark-engine/quark-engine,python,0,0,,,https://github.com/quark-engine/quark-engine.git,1,0,1
-quay/quay,python,53,16,d3c0f10e16fe38da75fc2134b8548581e17e5b69,304d2c986beb35d847b1a77d3327adfce79cb557,https://github.com/quay/quay.git,131,65,66
-quic/aimet,python,0,0,,,https://github.com/quic/aimet.git,0,0,0
-ranaroussi/quantstats,python,0,0,,,https://github.com/ranaroussi/quantstats.git,1,0,1
-ray-project/ray,python,36,20,f785c9ab9678cb61a4b72b2824f528b3a235ee76,38045ff05d6cd9771d51fa2dbeccc748e7a65987,https://github.com/ray-project/ray.git,301,179,122
-reactionmechanismgenerator/rmg-py,python,1,1,c0a88a2990d6133400a741abfbab04875d911612,c0a88a2990d6133400a741abfbab04875d911612,https://github.com/reactionmechanismgenerator/rmg-py.git,23,10,13
-reactivex/rxpy,python,0,0,,,https://github.com/reactivex/rxpy.git,6,6,0
-readthedocs/readthedocs.org,python,6,5,a9aa9cb433416d50bf5bbf95ae2a84290d8ac67a,5df203f45328d329e03f64309a1040cced276e88,https://github.com/readthedocs/readthedocs.org.git,56,25,31
-redis/redis-py,python,0,0,,,https://github.com/redis/redis-py.git,0,0,0
-ricequant/rqalpha,python,0,0,,,https://github.com/ricequant/rqalpha.git,0,0,0
-robocorp/rpaframework,python,5,1,b5e15937cacbaf2612e324d314b7d19987b0cb7a,b5e15937cacbaf2612e324d314b7d19987b0cb7a,https://github.com/robocorp/rpaframework.git,7,4,3
-robusta-dev/robusta,python,0,0,,,https://github.com/robusta-dev/robusta.git,3,1,2
-rotki/rotki,python,0,0,,,https://github.com/rotki/rotki.git,1,0,1
-runtimeverification/k,python,0,0,,,https://github.com/runtimeverification/k.git,6,5,1
-rwightman/pytorch-image-models,python,0,0,,,https://github.com/rwightman/pytorch-image-models.git,1,1,0
-s3ql/s3ql,python,1,1,de44eadbcababd810cdb40c102efaa974e8c6b64,de44eadbcababd810cdb40c102efaa974e8c6b64,https://github.com/s3ql/s3ql.git,3,2,1
-saleor/saleor,python,0,0,,,https://github.com/saleor/saleor.git,0,0,0
-saltstack/salt,python,2,1,9b7f0917b3d7e804501bb40bcc23bed1babfd8da,9b7f0917b3d7e804501bb40bcc23bed1babfd8da,https://github.com/saltstack/salt.git,4,3,1
-samuelclay/newsblur,python,0,0,,,https://github.com/samuelclay/newsblur.git,0,0,0
-saulpw/visidata,python,3,2,26382069974975459342a7e5bb73e3bd908d3491,3cc6d5caa4bcaa0bcf46e364f3e0784737280ea0,https://github.com/saulpw/visidata.git,50,4,46
-se2p/pynguin,python,0,0,,,https://github.com/se2p/pynguin.git,0,0,0
-seperman/deepdiff,python,0,0,,,https://github.com/seperman/deepdiff.git,1,0,1
-sharebook-kr/pykrx,python,0,0,,,https://github.com/sharebook-kr/pykrx.git,0,0,0
-sigmahq/pysigma,python,0,0,,,https://github.com/sigmahq/pysigma.git,3,3,0
-silviogutierrez/reactivated,python,0,0,,,https://github.com/silviogutierrez/reactivated.git,0,0,0
-sirver/ultisnips,python,0,0,,,https://github.com/sirver/ultisnips.git,0,0,0
-slackapi/bolt-python,python,0,0,,,https://github.com/slackapi/bolt-python.git,1,1,0
-slackapi/python-slack-sdk,python,0,0,,,https://github.com/slackapi/python-slack-sdk.git,0,0,0
-smileychris/django-countries,python,0,0,,,https://github.com/smileychris/django-countries.git,0,0,0
-splunk/splunk-sdk-python,python,0,0,,,https://github.com/splunk/splunk-sdk-python.git,0,0,0
-streamlit/streamlit,python,11,5,09fd745c8f6372ffe81839bbc28391ff3740a3b2,f60c315dab9c99fb10d5bc67c7d9937cafcd29da,https://github.com/streamlit/streamlit.git,198,132,66
-stripe/stripe-python,python,0,0,,,https://github.com/stripe/stripe-python.git,1,1,0
-stuffanthings/qbit_manage,python,8,1,8201dafcb052c85a312a4540acd42dcd6bfa4854,8201dafcb052c85a312a4540acd42dcd6bfa4854,https://github.com/stuffanthings/qbit_manage.git,3,1,2
-systemd/mkosi,python,0,0,,,https://github.com/systemd/mkosi.git,0,0,0
-tencent/bk-sops,python,5,1,c312acc400ae61354e12bd3a7c2f6a003018c9a9,c312acc400ae61354e12bd3a7c2f6a003018c9a9,https://github.com/tencent/bk-sops.git,5,4,1
-terryyin/lizard,python,0,0,,,https://github.com/terryyin/lizard.git,1,0,1
-thomaspinder/gpjax,python,6,2,fc1085d2cf53f16c27bc2bfe8533ea779fcb182b,b620398bd4d45b317f2199410b570924d7fa7a3a,https://github.com/thomaspinder/gpjax.git,6,3,3
-tmux-python/libtmux,python,0,0,,,https://github.com/tmux-python/libtmux.git,0,0,0
-tmux-python/tmuxp,python,0,0,,,https://github.com/tmux-python/tmuxp.git,0,0,0
-tobymao/sqlglot,python,0,0,,,https://github.com/tobymao/sqlglot.git,22,3,19
-toshas/torch-fidelity,python,0,0,,,https://github.com/toshas/torch-fidelity.git,0,0,0
-trailofbits/algo,python,13,3,b821080ebad55ed26e8e2e20f541ada7cd9d74e1,5a722681170c21276be494034412db206da1f0a6,https://github.com/trailofbits/algo.git,23,10,13
-trailofbits/fickling,python,1,1,8c24c6edabceab156cfd41f4d70b650e1cdad1f7,8c24c6edabceab156cfd41f4d70b650e1cdad1f7,https://github.com/trailofbits/fickling.git,24,8,16
-trailofbits/graphtage,python,0,0,,,https://github.com/trailofbits/graphtage.git,0,0,0
-trigger/trigger,python,0,0,,,https://github.com/trigger/trigger.git,12,10,2
-truenas/freenas,python,0,0,,,https://github.com/truenas/freenas.git,0,0,0
-truenas/middleware,python,0,0,,,https://github.com/truenas/middleware.git,0,0,0
-trustedsec/hate_crack,python,13,12,fe384641df4f9d97641ce79a420e25bebdbb22e8,f0e123ce93af37ba9351ea7e7234254c01e7b77f,https://github.com/trustedsec/hate_crack.git,75,44,31
-tsukumijima/konomitv,python,0,0,,,https://github.com/tsukumijima/konomitv.git,0,0,0
-ulauncher/ulauncher,python,0,0,,,https://github.com/ulauncher/ulauncher.git,0,0,0
-unrealcv/unrealcv,python,0,0,,,https://github.com/unrealcv/unrealcv.git,2,1,1
-vyperlang/vyper,python,0,0,,,https://github.com/vyperlang/vyper.git,11,5,6
-webdataset/webdataset,python,2,1,9e95f50fcf06abb7cbd5043ae16f86653ca1ee5b,9e95f50fcf06abb7cbd5043ae16f86653ca1ee5b,https://github.com/webdataset/webdataset.git,1,0,1
-whitphx/streamlit-webrtc,python,0,0,,,https://github.com/whitphx/streamlit-webrtc.git,10,1,9
-wkentaro/labelme,python,0,0,,,https://github.com/wkentaro/labelme.git,0,0,0
-xesscorp/skidl,python,2,2,6d7714d92a83ca3b2a8d3d11a37b2daf6d8a3ca9,924790fa9922acfecafa4c7a63bdef8d8ab5428a,https://github.com/xesscorp/skidl.git,8,4,4
-xonsh/xonsh,python,1,1,6708eeedcd77d7bc70eb8795125b8608b4d89195,6708eeedcd77d7bc70eb8795125b8608b4d89195,https://github.com/xonsh/xonsh.git,5,3,2
-xpra-org/xpra,python,1,1,12a81977720b62b942ccdcc78ea66ba37dd92d7b,12a81977720b62b942ccdcc78ea66ba37dd92d7b,https://github.com/xpra-org/xpra.git,56,21,35
-ydf0509/funboost,python,0,0,,,https://github.com/ydf0509/funboost.git,0,0,0
-yelp/paasta,python,0,0,,,https://github.com/yelp/paasta.git,23,13,10
-yutto-dev/yutto,python,0,0,,,https://github.com/yutto-dev/yutto.git,8,5,3
-z3z1ma/dbt-osmosis,python,0,0,,,https://github.com/z3z1ma/dbt-osmosis.git,1,0,1
-zachowj/hass-node-red,python,0,0,,,https://github.com/zachowj/hass-node-red.git,0,0,0
-zauberzeug/nicegui,python,0,0,,,https://github.com/zauberzeug/nicegui.git,76,33,43
-zengbin93/czsc,python,0,0,,,https://github.com/zengbin93/czsc.git,3,2,1
-zentralopensource/zentral,python,4,1,ea9605dd50349f5b0963d4e08ce9635b1e21d77c,ea9605dd50349f5b0963d4e08ce9635b1e21d77c,https://github.com/zentralopensource/zentral.git,34,22,12
-zigpy/zha-device-handlers,python,0,0,,,https://github.com/zigpy/zha-device-handlers.git,0,0,0
-zulip/zulip,python,0,0,,,https://github.com/zulip/zulip.git,239,162,77
+repo_name,language,fixture_count,commit_count_with_fixtures,first_fixture_commit,last_fixture_commit,clone_url,agent_commits_touching_tests,rejected_mixed_test_diff,accepted,created_at,topics
+agronholm/anyio,python,0,0,,,https://github.com/agronholm/anyio.git,1,0,1,2018-08-19T09:07:18,"[""async-await"", ""asyncio"", ""trio""]"
+aio-libs/yarl,python,0,0,,,https://github.com/aio-libs/yarl.git,0,0,0,2016-08-02T12:56:42,"[""aiohttp"", ""hacktoberfest"", ""url-parsing"", ""urls""]"
+aiogram/aiogram,python,1,1,49d0784e33b9c0101682504440e66b3d14b8c075,49d0784e33b9c0101682504440e66b3d14b8c075,https://github.com/aiogram/aiogram.git,5,4,1,2017-11-18T02:11:13,"[""aiogram"", ""asyncio"", ""bot"", ""bot-framework"", ""python"", ""telegram-bot"", ""telegram-bot-api""]"
+aio-libs/aiobotocore,python,0,0,,,https://github.com/aio-libs/aiobotocore.git,10,8,2,2015-05-31T07:28:54,"[""aiohttp"", ""asyncio"", ""aws"", ""aws-sdk"", ""botocore"", ""cloud"", ""cloud-management""]"
+al-one/hass-xiaomi-miot,python,4,1,148c697ed8f92e63f8d62f47f398c0d4fdb3237d,148c697ed8f92e63f8d62f47f398c0d4fdb3237d,https://github.com/al-one/hass-xiaomi-miot.git,2,1,1,2020-12-03T12:13:13,"[""custom-component"", ""hass"", ""home-assistant"", ""home-assistant-integration"", ""homeassistant"", ""iot"", ""miio"", ""miot"", ""miot-spec"", ""smart-home"", ""xiaoai"", ""xiaomi"", ""xiaomi-miot""]"
+aiidateam/aiida-core,python,0,0,,,https://github.com/aiidateam/aiida-core.git,1,0,1,2016-12-23T03:38:21,"[""aiida"", ""computational-science"", ""data-provenance"", ""database"", ""provenance"", ""scheduler"", ""ssh"", ""workflow"", ""workflow-engine"", ""workflows""]"
+alberanid/imdbpy,python,0,0,,,https://github.com/alberanid/imdbpy.git,1,1,0,2010-08-01T05:34:24,[]
+aistream-peelout/flow-forecast,python,0,0,,,https://github.com/aistream-peelout/flow-forecast.git,2,2,0,2019-08-15T05:02:09,"[""anomaly-detection"", ""deep-learning"", ""deep-neural-networks"", ""forecasting"", ""hacktoberfest"", ""lstm"", ""pytorch"", ""state-of-the-art-models"", ""time-series"", ""time-series-analysis"", ""time-series-forecasting"", ""time-series-regression"", ""transfer-learning"", ""transformer""]"
+albumentations-team/albumentations,python,0,0,,,https://github.com/albumentations-team/albumentations.git,0,0,0,2018-06-06T03:10:50,"[""augmentation"", ""deep-learning"", ""detection"", ""fast-augmentations"", ""image-augmentation"", ""image-classification"", ""image-processing"", ""image-segmentation"", ""machine-learning"", ""object-detection"", ""python"", ""segmentation""]"
+aio-libs/aiohttp,python,0,0,,,https://github.com/aio-libs/aiohttp.git,0,0,0,2013-10-01T11:04:01,"[""aiohttp"", ""async"", ""asyncio"", ""hacktoberfest"", ""http"", ""http-client"", ""http-server"", ""python""]"
+andialbrecht/sqlparse,python,0,0,,,https://github.com/andialbrecht/sqlparse.git,0,0,0,2012-04-18T07:33:21,[]
+amphibian-dev/toad,python,0,0,,,https://github.com/amphibian-dev/toad.git,4,3,1,2018-08-31T06:01:28,"[""credit-risk"", ""credit-scoring"", ""data-analysis"", ""financial-analysis"", ""python3"", ""scorecard"", ""toad""]"
+aragonsnow/qiandao,python,0,0,,,https://github.com/aragonsnow/qiandao.git,0,0,0,2020-05-11T07:51:12,[]
+asahilinux/m1n1,python,0,0,,,https://github.com/asahilinux/m1n1.git,0,0,0,2021-01-14T06:59:03,[]
+alicevision/meshroom,python,0,0,,,https://github.com/alicevision/meshroom.git,1,1,0,2015-04-22T05:33:16,"[""3d-reconstruction"", ""alicevision"", ""camera-tracking"", ""computer-vision"", ""hdr-imaging"", ""image-stitching"", ""meshroom"", ""multi-view-stereo"", ""nocode"", ""nodal-interface"", ""photogrammetry"", ""structure-from-motion"", ""texturing"", ""workflow-automation""]"
+benadida/helios-server,python,0,0,,,https://github.com/benadida/helios-server.git,0,0,0,2009-07-26T12:25:38,"[""javascript"", ""python"", ""voting""]"
+alltheplaces/alltheplaces,python,0,0,,,https://github.com/alltheplaces/alltheplaces.git,0,0,0,2016-06-15T01:09:18,"[""geojson"", ""hacktoberfest"", ""python"", ""scrapers"", ""scrapy"", ""spider""]"
+andymccurdy/redis-py,python,2,1,2a493975b05e2393c66d53bfe900bcc5e3787859,2a493975b05e2393c66d53bfe900bcc5e3787859,https://github.com/andymccurdy/redis-py.git,21,7,14,2009-11-06T10:22:26,[]
+binref/refinery,python,0,0,,,https://github.com/binref/refinery.git,0,0,0,2019-12-14T12:32:06,"[""commandline"", ""compression"", ""cryptography"", ""malware-analysis"", ""triage""]"
+brainix/pottery,python,0,0,,,https://github.com/brainix/pottery.git,0,0,0,2015-06-10T07:30:43,"[""asyncio"", ""bloom-filter"", ""cache"", ""dict"", ""distributed"", ""distributed-lock"", ""distributed-locks"", ""forhumans"", ""library"", ""lock"", ""no-sql"", ""python"", ""redis"", ""redis-cache"", ""redis-client"", ""resillience""]"
+3b1b/videos,python,0,0,,,https://github.com/3b1b/videos.git,0,0,0,2020-12-31T09:07:33,[]
+borgbase/vorta,python,0,0,,,https://github.com/borgbase/vorta.git,2,2,0,2018-10-27T11:19:36,"[""backup-client"", ""borg"", ""borgbackup"", ""gui"", ""linux-desktop"", ""macos""]"
+caesar0301/treelib,python,0,0,,,https://github.com/caesar0301/treelib.git,0,0,0,2012-07-07T09:42:25,"[""algorithm"", ""datastructures"", ""python"", ""tree"", ""treelib""]"
+blazemeter/taurus,python,2,1,6f95cb3072dad8ad1858debad5c7a12f0029f010,6f95cb3072dad8ad1858debad5c7a12f0029f010,https://github.com/blazemeter/taurus.git,1,0,1,2015-02-17T10:05:08,"[""gatling"", ""jenkins"", ""jmeter"", ""load-testing"", ""performance"", ""python"", ""selenium"", ""titans""]"
+borgbackup/borg,python,0,0,,,https://github.com/borgbackup/borg.git,83,49,34,2015-05-12T11:10:47,"[""backup"", ""borgbackup"", ""compression"", ""deduplication"", ""encryption"", ""python"", ""ssh""]"
+capitalone/datacompy,python,0,0,,,https://github.com/capitalone/datacompy.git,0,0,0,2018-03-23T01:16:03,"[""compare"", ""dask"", ""data"", ""data-science"", ""dataframes"", ""fugue"", ""numpy"", ""pandas"", ""polars"", ""pyspark"", ""python"", ""snowflake"", ""snowpark"", ""spark""]"
+beetbox/beets,python,0,0,,,https://github.com/beetbox/beets.git,6,2,4,2010-08-09T11:17:20,"[""cli"", ""hacktoberfest"", ""music"", ""music-library"", ""musicbrainz"", ""python""]"
+cdgriffith/fastflix,python,0,0,,,https://github.com/cdgriffith/fastflix.git,0,0,0,2019-02-19T02:41:07,"[""av1"", ""avif"", ""encoders"", ""fastflix"", ""ffmpeg"", ""hdr"", ""hdr10"", ""hevc"", ""hevc-encoder"", ""libaom-av1"", ""mkv"", ""mp4"", ""rav1e"", ""svt-av1"", ""vp9"", ""webp"", ""x264"", ""x265""]"
+brndnmtthws/thetagang,python,0,0,,,https://github.com/brndnmtthws/thetagang.git,1,1,0,2020-12-03T08:17:09,"[""bot"", ""buying-shares"", ""get-rich-slowly"", ""ibkr"", ""money"", ""strategy"", ""thetagang"", ""trading-bot""]"
+ansible/ansible,python,0,0,,,https://github.com/ansible/ansible.git,4,2,2,2012-03-06T02:58:02,"[""ansible"", ""python""]"
+chipsec/chipsec,python,3,2,7747d4549841fcc7065e0130a95c40e37201aeb9,32e2ba62c367523a17ffa01fd25f169d59b6de8e,https://github.com/chipsec/chipsec.git,2,0,2,2014-03-06T09:57:10,"[""firmware"", ""firmware-security"", ""firmware-tools"", ""security"", ""security-tools""]"
+celery/celery,python,6,2,dd4cf64a02d887e9425ec7d822bb623b8a88abf2,de104a2fce76a8949012493b83da48daaa6d0247,https://github.com/celery/celery.git,7,4,3,2009-04-24T11:31:24,"[""amqp"", ""python"", ""python-library"", ""python3"", ""queue-tasks"", ""queue-workers"", ""queued-jobs"", ""redis"", ""redis-queue"", ""sqs"", ""sqs-queue"", ""task-manager"", ""task-runner"", ""task-scheduler""]"
+cobbler/cobbler,python,0,0,,,https://github.com/cobbler/cobbler.git,10,6,4,2011-11-08T03:01:00,"[""cobbler"", ""deployment"", ""dhcp"", ""hacktoberfest"", ""pxe"", ""python"", ""tftp""]"
+catalyst-cooperative/pudl,python,0,0,,,https://github.com/catalyst-cooperative/pudl.git,5,5,0,2017-02-01T05:45:40,"[""cems"", ""climate"", ""coal"", ""ddj"", ""eia"", ""eia860"", ""eia923"", ""electricity"", ""emissions"", ""energy"", ""epa"", ""etl"", ""ferc"", ""ghg"", ""natural-gas"", ""open-data"", ""pudl"", ""python"", ""sqlite"", ""utility""]"
+chia-network/chia-blockchain,python,0,0,,,https://github.com/chia-network/chia-blockchain.git,6,4,2,2019-07-16T08:32:40,"[""blockchain"", ""blockchain-network"", ""chia"", ""chia-blockchain"", ""farmer"", ""full-node"", ""harvesters"", ""peer"", ""proof-of-space"", ""proof-of-time"", ""timelord"", ""vdf"", ""wallets""]"
+cloud-cv/evalai,python,12,4,b438c285feb9359e1fc4b7f1c12e398ceb9a6efa,e85104565fe7e2dbf49bbd3df1e7a14487410ff4,https://github.com/cloud-cv/evalai.git,35,21,14,2016-10-21T12:51:45,"[""ai"", ""ai-challenges"", ""angularjs"", ""artificial-intelligence"", ""challenge"", ""codecov"", ""coveralls"", ""django"", ""docker"", ""evalai"", ""evaluation"", ""evaluation-framework"", ""github-actions"", ""leaderboard"", ""machine-learning"", ""python"", ""reproducibility"", ""reproducible-research""]"
+coin-or/pulp,python,0,0,,,https://github.com/coin-or/pulp.git,0,0,0,2015-03-15T03:21:16,"[""constraints"", ""mip"", ""pulp"", ""python"", ""solver""]"
+cmu-db/dbdb.io,python,5,2,8e752fb38aef4ef24bdb6837d9fc982cfecb81ea,b0b24b6e0795421c9bed166a51bfce6ea17bf2ff,https://github.com/cmu-db/dbdb.io.git,20,10,10,2014-05-16T04:59:01,"[""database""]"
+chardet/chardet,python,1,1,d650fcc077f92c38b5a2baa49fcda89047e0aa73,d650fcc077f92c38b5a2baa49fcda89047e0aa73,https://github.com/chardet/chardet.git,159,97,62,2012-07-26T08:30:54,[]
+crossbario/autobahn-python,python,0,0,,,https://github.com/crossbario/autobahn-python.git,0,0,0,2011-07-27T03:22:13,"[""autobahn"", ""pubsub"", ""python"", ""real-time"", ""rpc"", ""wamp"", ""websocket""]"
+crossbario/autobahn-testsuite,python,0,0,,,https://github.com/crossbario/autobahn-testsuite.git,0,0,0,2012-03-19T09:59:18,"[""autobahn"", ""autobahn-testsuite"", ""test-coverage"", ""testsuite"", ""websocket"", ""websocket-client"", ""websocket-server""]"
+conda/conda,python,0,0,,,https://github.com/conda/conda.git,1,0,1,2012-10-15T10:08:03,"[""conda"", ""package-management"", ""python""]"
+crossbario/crossbar,python,0,0,,,https://github.com/crossbario/crossbar.git,0,0,0,2013-10-14T11:10:50,"[""broker"", ""messaging"", ""mqtt"", ""networking"", ""networking-stack"", ""rest"", ""server"", ""wamp"", ""websocket""]"
+custom-components/alexa_media_player,python,4,2,06981499d6b6a1a02118a1c5c4d2021ff09b03bb,79083aa1af0128195a09ef3a8538f47936959154,https://github.com/custom-components/alexa_media_player.git,10,2,8,2018-07-04T03:33:57,"[""alexa"", ""hacktoberfest"", ""home-assistant"", ""homeassistant""]"
+d6t/d6tflow,python,0,0,,,https://github.com/d6t/d6tflow.git,4,3,1,2019-02-03T01:51:22,[]
+damianmoore/photonix,python,0,0,,,https://github.com/damianmoore/photonix.git,0,0,0,2017-03-07T10:30:32,[]
+darknessomi/musicbox,python,0,0,,,https://github.com/darknessomi/musicbox.git,12,3,9,2014-08-05T03:28:24,"[""cli-tool"", ""linux"", ""music"", ""netease-musicbox"", ""python""]"
+dask/distributed,python,0,0,,,https://github.com/dask/distributed.git,1,1,0,2015-09-13T06:42:29,"[""dask"", ""distributed-computing"", ""pydata"", ""python""]"
+dask/dask,python,0,0,,,https://github.com/dask/dask.git,1,1,0,2015-01-04T06:50:00,"[""dask"", ""numpy"", ""pandas"", ""pydata"", ""python"", ""scikit-learn"", ""scipy""]"
+databiosphere/toil,python,0,0,,,https://github.com/databiosphere/toil.git,0,0,0,2015-03-30T09:08:58,"[""aws"", ""common-workflow-language"", ""cwl"", ""gridengine"", ""kubernetes"", ""mesos"", ""pipeline"", ""python"", ""slurm"", ""wdl"", ""workflow"", ""workflow-description-language""]"
+crytic/slither,python,2,2,85c6711ec7ac0e58c4cb693f9a5259091fc9398b,91ebdd92b55695011f6ce6b478c64c0da82c1e3c,https://github.com/crytic/slither.git,19,4,15,2018-09-05T09:56:35,"[""ethereum"", ""solidity"", ""static-analysis"", ""vyper""]"
+datafolklabs/cement,python,0,0,,,https://github.com/datafolklabs/cement.git,6,4,2,2009-12-05T04:04:12,[]
+bram2w/baserow,python,2,1,7bce809cbc6dff9e9df4deece43b6321b92879f7,7bce809cbc6dff9e9df4deece43b6321b92879f7,https://github.com/bram2w/baserow.git,6,5,1,2020-07-20T09:32:04,"[""airtable"", ""airtable-alternative"", ""airtable-replacement"", ""database"", ""low-code"", ""no-code"", ""no-code-database"", ""online-database"", ""postgresql"", ""restful-api"", ""self-hosted"", ""spreadsheet""]"
+datadog/dd-trace-py,python,2,2,9c8c6d0eb66c67ae261329c0f098dd32b6e67b21,870ee85a634c05aabf20ab8dbc34fe2471fa5bbd,https://github.com/datadog/dd-trace-py.git,13,7,6,2016-06-20T06:52:23,"[""apm"", ""ci"", ""datadog"", ""debugging"", ""error-monitoring"", ""observability"", ""profiling"", ""python"", ""security"", ""tracing""]"
+digitalbazaar/pyld,python,0,0,,,https://github.com/digitalbazaar/pyld.git,1,0,1,2011-07-11T03:45:47,"[""json-ld"", ""linked-data"", ""python"", ""rdf"", ""semantic-web""]"
+dipu-bd/lightnovel-crawler,python,0,0,,,https://github.com/dipu-bd/lightnovel-crawler.git,0,0,0,2018-01-17T11:23:35,"[""console-app"", ""discord"", ""kindle-books"", ""lightnovel"", ""lightnovel-crawler"", ""python"", ""telegram"", ""termux"", ""web-scraper""]"
+datalad/datalad,python,0,0,,,https://github.com/datalad/datalad.git,85,57,28,2013-11-01T07:40:08,"[""closember"", ""data-storage"", ""dataset"", ""git-annex"", ""python"", ""usable""]"
+django-parler/django-parler,python,0,0,,,https://github.com/django-parler/django-parler.git,2,2,0,2013-09-09T07:05:32,"[""django"", ""django-models"", ""internationalization"", ""python"", ""translations""]"
+django-import-export/django-import-export,python,2,1,e7988d70938bbe6a2d524c4a114a2e9f4a635eb9,e7988d70938bbe6a2d524c4a114a2e9f4a635eb9,https://github.com/django-import-export/django-import-export.git,8,2,6,2012-11-15T01:12:22,"[""csv"", ""django"", ""import-export"", ""json"", ""python"", ""xls""]"
+deepset-ai/haystack,python,5,1,fd10d519d6845854904e4300b8cfe458df0c62c2,fd10d519d6845854904e4300b8cfe458df0c62c2,https://github.com/deepset-ai/haystack.git,52,24,28,2019-11-14T09:05:28,"[""agent"", ""agents"", ""ai"", ""gemini"", ""generative-ai"", ""gpt-4"", ""information-retrieval"", ""large-language-models"", ""llm"", ""machine-learning"", ""nlp"", ""orchestration"", ""python"", ""pytorch"", ""question-answering"", ""rag"", ""retrieval-augmented-generation"", ""semantic-search"", ""summarization"", ""transformers""]"
+cuthbertlab/music21,python,0,0,,,https://github.com/cuthbertlab/music21.git,3,2,1,2013-11-04T07:31:59,[]
+doubleml/doubleml-for-py,python,0,0,,,https://github.com/doubleml/doubleml-for-py.git,0,0,0,2020-09-09T01:27:25,"[""causal-inference"", ""data-science"", ""double-machine-learning"", ""econometrics"", ""machine-learning"", ""python"", ""scikit-learn"", ""statistics""]"
+django/django,python,0,0,,,https://github.com/django/django.git,0,0,0,2012-04-28T02:47:18,"[""apps"", ""django"", ""framework"", ""models"", ""orm"", ""python"", ""templates"", ""views"", ""web""]"
+couchers-org/couchers,python,8,8,5336660be482dd378cbd85ae17e525c99eee9d91,9594434d1eb63d9f79fcb903c97ac17d461416d1,https://github.com/couchers-org/couchers.git,161,109,52,2020-05-20T01:08:31,[]
+efroemling/ballistica,python,0,0,,,https://github.com/efroemling/ballistica.git,0,0,0,2019-08-22T10:33:57,"[""bombsquad"", ""game"", ""game-engine"", ""game-engine-3d"", ""modders"", ""python"", ""python3""]"
+elastic/rally,python,0,0,,,https://github.com/elastic/rally.git,7,4,3,2015-11-30T07:11:43,"[""elasticsearch""]"
+domainaware/parsedmarc,python,21,6,5b08627eaaf449341718a56467770e625f510e41,ae5f4c7915eb7871ed9698015bb7803a289d8493,https://github.com/domainaware/parsedmarc.git,36,22,14,2018-02-05T11:08:59,[]
+drakkar-software/octobot,python,0,0,,,https://github.com/drakkar-software/octobot.git,29,22,7,2018-02-23T11:13:05,"[""ai-trading"", ""backtest"", ""binance-api"", ""bitcoin"", ""coinbase-bot"", ""cryptocurrencies"", ""free"", ""hyperliquid-trading-bot"", ""paper-trading"", ""python"", ""solana"", ""telegrambot"", ""trading-bot"", ""tradingview-pinescript-signal-alert-bot""]"
+elyra-ai/elyra,python,0,0,,,https://github.com/elyra-ai/elyra.git,0,0,0,2019-10-22T09:37:58,"[""ai"", ""airflow"", ""anaconda"", ""apache-airflow"", ""binder"", ""docker"", ""elyra"", ""hacktoberfest"", ""jupyterlab"", ""jupyterlab-extension"", ""jupyterlab-extensions"", ""jupyterlab-notebooks"", ""kubeflow"", ""kubeflow-pipelines"", ""machine-learning"", ""notebook-jupyter"", ""notebooks"", ""pipelines"", ""pypi"", ""python""]"
+emukit/emukit,python,0,0,,,https://github.com/emukit/emukit.git,0,0,0,2018-09-04T05:01:34,"[""bayesian-optimization"", ""bayesian-quadrature"", ""decision-making"", ""emulation"", ""experimental-design"", ""machine-learning"", ""multi-fidelity"", ""python"", ""sensitivity-analysis"", ""uncertainty-quantification""]"
+emilstenstrom/django-components,python,0,0,,,https://github.com/emilstenstrom/django-components.git,9,3,6,2015-06-11T05:23:48,"[""components"", ""django"", ""django-templates"", ""pypi-package"", ""reusable-components""]"
+espressif/esptool,python,0,0,,,https://github.com/espressif/esptool.git,0,0,0,2014-09-06T02:50:29,[]
+enms-automation/enms,python,0,0,,,https://github.com/enms-automation/enms.git,0,0,0,2017-10-08T08:56:39,"[""configuration-management"", ""infrastructure-as-code"", ""infrastructure-automation"", ""napalm"", ""netmiko"", ""network-automation"", ""network-inventory"", ""network-visualization""]"
+airbytehq/airbyte,python,22,10,b3580344b7c2e1a7de4365daa5bcf001e41ebbd3,69506d7107467fa8cc41f41201a558bde0921f5a,https://github.com/airbytehq/airbyte.git,305,155,150,2020-07-27T11:55:54,"[""bigquery"", ""change-data-capture"", ""data"", ""data-analysis"", ""data-collection"", ""data-engineering"", ""data-integration"", ""data-pipeline"", ""elt"", ""etl"", ""java"", ""mssql"", ""mysql"", ""pipeline"", ""postgresql"", ""python"", ""redshift"", ""s3"", ""self-hosted"", ""snowflake""]"
+contextlab/hypertools,python,0,0,,,https://github.com/contextlab/hypertools.git,36,20,16,2016-09-27T09:31:25,"[""data-visualization"", ""data-wrangling"", ""high-dimensional-data"", ""python"", ""text-vectorization"", ""time-series"", ""topic-modeling"", ""visualization""]"
+ets-labs/python-dependency-injector,python,0,0,,,https://github.com/ets-labs/python-dependency-injector.git,0,0,0,2015-01-04T01:23:05,"[""aiohttp"", ""asyncio"", ""dependency-injection"", ""dependency-injection-container"", ""dependency-injection-framework"", ""design-patterns"", ""factory"", ""flask"", ""flask-application"", ""flask-restful"", ""ioc"", ""ioc-container"", ""python"", ""python-2"", ""python-3"", ""python3"", ""singleton"", ""threadlocal""]"
+ethereum/eth2.0-specs,python,0,0,,,https://github.com/ethereum/eth2.0-specs.git,0,0,0,2018-09-20T05:12:54,[]
+evhub/coconut,python,0,0,,,https://github.com/evhub/coconut.git,2,1,1,2014-10-04T11:43:11,"[""coconut"", ""compiler"", ""functional"", ""functional-language"", ""functional-programming"", ""language"", ""programming-language"", ""python"", ""xonsh"", ""xontrib""]"
+evennia/evennia,python,0,0,,,https://github.com/evennia/evennia.git,0,0,0,2014-01-21T10:22:28,"[""based"", ""django"", ""engine"", ""game-development"", ""game-engine"", ""gamedev"", ""hacktoberfest"", ""moo"", ""mud"", ""multiplayer"", ""mush"", ""mux"", ""python"", ""text"", ""text-based"", ""text-based-adventure"", ""twisted"", ""webclient"", ""webserver""]"
+ezyang/ghstack,python,0,0,,,https://github.com/ezyang/ghstack.git,0,0,0,2018-10-15T03:09:53,[]
+ewels/multiqc,python,4,2,be3f0fc534e24b060d6a6126c4b0855700628c00,29ba13b61ef85219b84ca4946e84226fd22013d8,https://github.com/ewels/multiqc.git,15,3,12,2015-08-04T01:47:05,"[""analysis"", ""bioconda"", ""bioinformatics"", ""multiqc"", ""pypi"", ""python""]"
+falconry/falcon,python,0,0,,,https://github.com/falconry/falcon.git,0,0,0,2012-12-06T06:17:51,"[""api"", ""api-rest"", ""asgi"", ""http"", ""microservices"", ""python"", ""rest"", ""web"", ""wsgi""]"
+facebookresearch/hydra,python,0,0,,,https://github.com/facebookresearch/hydra.git,3,3,0,2019-06-12T07:33:15,[]
+etal/cnvkit,python,1,1,043917afbd897c6d0ca309275e76d97e87454285,043917afbd897c6d0ca309275e76d97e87454285,https://github.com/etal/cnvkit.git,91,41,50,2014-07-07T08:12:27,[]
+enarjord/passivbot,python,9,4,88f711d0b3eeb72436f9fe76b2bf1c5f5cc82149,d52da4d7fef17c8106d473e80626e9fad013012d,https://github.com/enarjord/passivbot.git,87,32,55,2020-12-11T12:21:48,"[""algorithmic-trading"", ""binance"", ""bitget"", ""bybit"", ""futures"", ""gateio"", ""hyperliquid"", ""okx"", ""perpetual-futures"", ""trading""]"
+fgmacedo/python-statemachine,python,0,0,,,https://github.com/fgmacedo/python-statemachine.git,0,0,0,2017-03-22T03:24:42,"[""automata"", ""finite-state-machine"", ""fsm"", ""fsm-library"", ""harel-statechart"", ""hierarchical-state-machine"", ""hsm"", ""python"", ""scxml"", ""state"", ""state-machine"", ""state-machine-diagram"", ""state-machine-dsl"", ""state-management"", ""statechart"", ""statecharts"", ""statemachine""]"
+datadog/integrations-core,python,29,10,785d277840319005dd42900fd4540bc1997d6ac4,bdac825807a95a07866524d97f7adee73db4757f,https://github.com/datadog/integrations-core.git,159,90,69,2015-12-01T04:41:45,"[""datadog"", ""datadog-agent"", ""dd"", ""integrations""]"
+fizzadar/pyinfra,python,0,0,,,https://github.com/fizzadar/pyinfra.git,1,1,0,2014-10-19T07:37:45,"[""cloud-management"", ""configuration-management"", ""high-performance"", ""infrastructure"", ""pyinfra"", ""python"", ""remote-execution""]"
+fireeye/flare-floss,python,0,0,,,https://github.com/fireeye/flare-floss.git,0,0,0,2016-03-02T08:16:10,[]
+elastic/detection-rules,python,1,1,671167f0740b0471085d85e67f51f15f839d7ae9,671167f0740b0471085d85e67f51f15f839d7ae9,https://github.com/elastic/detection-rules.git,1,0,1,2020-06-17T09:48:18,"[""threat-detection"", ""threat-hunting""]"
+fossasia/visdom,python,0,0,,,https://github.com/fossasia/visdom.git,1,0,1,2017-01-25T05:59:45,[]
+freeopcua/opcua-client-gui,python,0,0,,,https://github.com/freeopcua/opcua-client-gui.git,0,0,0,2015-09-26T07:22:37,[]
+frostming/pdm,python,0,0,,,https://github.com/frostming/pdm.git,4,0,4,2019-12-27T03:50:57,[]
+georgedouzas/sports-betting,python,0,0,,,https://github.com/georgedouzas/sports-betting.git,0,0,0,2019-01-08T12:52:28,"[""machine-learning"", ""python"", ""scikit-learn"", ""sports-analytics"", ""sports-betting""]"
+freenas/freenas,python,0,0,,,https://github.com/freenas/freenas.git,2,0,2,2013-03-07T01:23:20,[]
+exa-networks/exabgp,python,80,21,fdcce91bc662dac816bc70a9e36bda45c9983bae,a5afd2a66b489456fdd9aaa6be6d3e4b3e172e94,https://github.com/exa-networks/exabgp.git,293,193,100,2013-08-27T01:56:08,"[""bgp"", ""bgp-ls"", ""ddos-protection"", ""exabgp"", ""flow"", ""flowspec"", ""health-check"", ""ipv4"", ""ipv6"", ""mpls"", ""protection"", ""pypi"", ""python"", ""visualisation"", ""vpls""]"
+feast-dev/feast,python,29,6,ad20634ed5ed3c69da672c9938ca5b6c8a8e5a0f,9cd35e140a949dc44a9915300f2724dd2e702f03,https://github.com/feast-dev/feast.git,35,18,17,2018-12-10T07:20:15,"[""big-data"", ""data-engineering"", ""data-quality"", ""data-science"", ""feature-store"", ""features"", ""machine-learning"", ""ml"", ""mlops"", ""python""]"
+getsentry/sentry-python,python,1,1,0527c030c6a73cf89ea0b0df4ff2a0c8c3e69a26,0527c030c6a73cf89ea0b0df4ff2a0c8c3e69a26,https://github.com/getsentry/sentry-python.git,44,36,8,2018-06-18T10:51:10,"[""crash-reporting"", ""hacktoberfest"", ""python"", ""sdk"", ""sentry"", ""sentry-python"", ""tag-production"", ""team-web-backend""]"
+emeryberger/csrankings,python,0,0,,,https://github.com/emeryberger/csrankings.git,4,3,1,2016-05-03T12:13:00,"[""computer-science"", ""computer-science-rankings"", ""conference"", ""dblp"", ""faculty"", ""metrics"", ""ranking""]"
+graal-research/poutyne,python,0,0,,,https://github.com/graal-research/poutyne.git,4,4,0,2017-12-07T06:30:17,"[""data-science"", ""deep-learning"", ""keras"", ""machine-learning"", ""neural-network"", ""python"", ""pytorch""]"
+fishtown-analytics/dbt,python,10,5,255dc6fe42046b0b56f740f5527c39c3410d1e52,b6aae8c6f01430b531a347e4357b7404af2c841e,https://github.com/fishtown-analytics/dbt.git,68,5,63,2016-03-10T02:38:00,[]
+gijzelaerr/python-snap7,python,25,6,a3f5be011e152158bb262c99972fcf908b1b4203,8a0ff08b66977fcc16171129569695a48ca60b0e,https://github.com/gijzelaerr/python-snap7.git,56,25,31,2013-10-09T01:06:13,"[""ctypes"", ""plc"", ""python"", ""s7"", ""siemens"", ""snap7"", ""wrapper""]"
+grahamdumpleton/wrapt,python,0,0,,,https://github.com/grahamdumpleton/wrapt.git,0,0,0,2013-05-29T10:22:45,[]
+freelawproject/courtlistener,python,0,0,,,https://github.com/freelawproject/courtlistener.git,56,35,21,2014-07-25T01:22:00,"[""courts"", ""government"", ""government-data"", ""legaltech""]"
+google/osv,python,0,0,,,https://github.com/google/osv.git,2,2,0,2021-01-08T02:14:10,[]
+guessit-io/guessit,python,1,1,b52e9af030e4ee6879e39e79bb3bfba09efac0d5,b52e9af030e4ee6879e39e79bb3bfba09efac0d5,https://github.com/guessit-io/guessit.git,27,11,16,2012-02-28T06:13:09,"[""filename"", ""media"", ""parser"", ""python"", ""release"", ""scene""]"
+hopetree/izone,python,0,0,,,https://github.com/hopetree/izone.git,0,0,0,2017-12-24T01:39:43,"[""blog"", ""bootstrap"", ""django"", ""docker"", ""python""]"
+hozn/stravalib,python,0,0,,,https://github.com/hozn/stravalib.git,3,2,1,2013-03-17T02:48:54,[]
+hhyo/archery,python,1,1,0c154e831f769a6d828bc10c6155311315319cfe,0c154e831f769a6d828bc10c6155311315319cfe,https://github.com/hhyo/archery.git,1,0,1,2018-09-28T02:59:33,"[""archery"", ""binlog2sql"", ""clickhouse"", ""data-masking"", ""database-schema"", ""ddl"", ""dml"", ""gh-ost"", ""inception"", ""mysql"", ""oracle"", ""sql-audit"", ""sql-query""]"
+ghostmanager/ghostwriter,python,0,0,,,https://github.com/ghostmanager/ghostwriter.git,3,3,0,2019-07-16T09:19:43,"[""informationsecurity"", ""penetration-testing"", ""red-team"", ""reporting""]"
+hyperledger/cello,python,0,0,,,https://github.com/hyperledger/cello.git,0,0,0,2017-01-11T06:47:08,"[""blockchain"", ""distributed-ledger"", ""hyperledger"", ""operating-system""]"
+hay-kot/mealie,python,0,0,,,https://github.com/hay-kot/mealie.git,3,1,2,2020-12-07T01:04:17,"[""hacktoberfest"", ""hacktoberfest2022"", ""meal-plans"", ""recipe-manager"", ""self-hosted""]"
+home-assistant/supervisor,python,2,1,2f331aafa99ba34219dba655a5db9354038e081e,2f331aafa99ba34219dba655a5db9354038e081e,https://github.com/home-assistant/supervisor.git,129,88,41,2017-03-14T08:54:15,"[""docker"", ""hacktoberfest"", ""home-assistant"", ""home-automation"", ""orchestrator"", ""python""]"
+huggingface/huggingface_hub,python,6,2,5bac983a5a9b032233a4c519cb9973bd6617344b,f49325209a80214c2dab9b440f1c570dfeaca881,https://github.com/huggingface/huggingface_hub.git,124,67,57,2020-12-22T10:20:28,"[""deep-learning"", ""hacktoberfest"", ""machine-learning"", ""model-hub"", ""models"", ""natural-language-processing"", ""pretrained-models"", ""pytorch""]"
+idom-team/idom,python,0,0,,,https://github.com/idom-team/idom.git,1,1,0,2019-02-19T05:25:54,[]
+hypothesisworks/hypothesis,python,1,1,da414a5bef151d65a39643a46a5012e1b590ec22,da414a5bef151d65a39643a46a5012e1b590ec22,https://github.com/hypothesisworks/hypothesis.git,88,57,31,2013-03-10T01:51:19,"[""fuzzing"", ""property-based-testing"", ""python"", ""testing""]"
+idank/explainshell,python,18,7,7a9dd510d45c7d052a6aec731b6ace4d174e950c,59f5ec00ead4d3fec4c922ac3d4438367dc06e4e,https://github.com/idank/explainshell.git,61,46,15,2013-08-30T11:20:11,[]
+imageio/imageio,python,0,0,,,https://github.com/imageio/imageio.git,1,1,0,2013-05-04T10:56:45,"[""animated-gif"", ""dicom"", ""imageio"", ""python"", ""scientific-formats"", ""video"", ""webcam-capture""]"
+ilius/pyglossary,python,4,1,70f22f17c1a3073d8f6302bf0aabe479649647d8,70f22f17c1a3073d8f6302bf0aabe479649647d8,https://github.com/ilius/pyglossary.git,1,0,1,2011-01-23T10:24:30,"[""dictionary"", ""dictionary-conversion"", ""dictionary-tools"", ""glossaries"", ""gtk"", ""linux"", ""pygi"", ""python"", ""stardict"", ""tkinter""]"
+hyperspy/hyperspy,python,1,1,0e7d4a5e73cfb0a9f134723e7fc136ce3b7f5e01,0e7d4a5e73cfb0a9f134723e7fc136ce3b7f5e01,https://github.com/hyperspy/hyperspy.git,5,2,3,2011-08-19T01:14:36,"[""data-analysis"", ""data-visualization"", ""life-sciences"", ""materials-science"", ""multi-dimensional"", ""physical-sciences"", ""python""]"
+imerica/dj-rest-auth,python,0,0,,,https://github.com/imerica/dj-rest-auth.git,2,2,0,2020-02-28T07:35:48,"[""authentication"", ""django"", ""django-rest-framework"", ""jwt"", ""python"", ""rest-api""]"
+intel/scikit-learn-intelex,python,0,0,,,https://github.com/intel/scikit-learn-intelex.git,6,6,0,2018-08-07T06:45:41,"[""ai-inference"", ""ai-machine-learning"", ""ai-training"", ""analytics"", ""big-data"", ""data-analysis"", ""gpu"", ""intel"", ""machine-learning"", ""machine-learning-algorithms"", ""oneapi"", ""python"", ""scikit-learn"", ""swrepo""]"
+iipeace/guider,python,0,0,,,https://github.com/iipeace/guider.git,0,0,0,2015-11-16T12:14:49,"[""analyzer"", ""android"", ""framework"", ""guider"", ""hacktoberfest"", ""linux"", ""monitoring"", ""performance"", ""profiling"", ""tracing""]"
+iodide-project/pyodide,python,0,0,,,https://github.com/iodide-project/pyodide.git,3,2,1,2018-02-23T07:21:29,[]
+frappe/frappe,python,20,8,954877246f4b0c0ee2986bdec9b425833ee2c43a,86a69710c55919cb5bc09a5e92890aecf019e832,https://github.com/frappe/frappe.git,62,30,32,2011-06-08T08:14:16,"[""cms"", ""email"", ""erpnext"", ""frappe"", ""full-stack"", ""javascript"", ""low-code"", ""mariadb"", ""multitenant"", ""postgres"", ""python"", ""rest-api"", ""security"", ""socket-io"", ""web-framework"", ""webhooks""]"
+jannikmi/timezonefinder,python,0,0,,,https://github.com/jannikmi/timezonefinder.git,1,0,1,2016-02-25T12:50:33,"[""coordinates"", ""geolocation"", ""latitude"", ""location"", ""longitude"", ""python"", ""timezone"", ""timezone-library"", ""timezone-picker"", ""timezones""]"
+huggingface/transformers,python,2,1,a8f43eca15b8d1c63deb33f6b97dfab30419e5da,a8f43eca15b8d1c63deb33f6b97dfab30419e5da,https://github.com/huggingface/transformers.git,52,34,18,2018-10-29T01:56:00,"[""audio"", ""deep-learning"", ""deepseek"", ""gemma"", ""glm"", ""hacktoberfest"", ""llm"", ""machine-learning"", ""model-hub"", ""natural-language-processing"", ""nlp"", ""pretrained-models"", ""python"", ""pytorch"", ""pytorch-transformers"", ""qwen"", ""speech-recognition"", ""transformer"", ""vlm""]"
+jjjake/internetarchive,python,2,1,21407572f7194ed72d85d79e27c4de3dc08686f0,21407572f7194ed72d85d79e27c4de3dc08686f0,https://github.com/jjjake/internetarchive.git,28,16,12,2012-08-15T07:18:30,[]
+internetarchive/openlibrary,python,2,1,839ac2cc0d73fcc6f1b5c9e4a0fe5bc38aa170d9,839ac2cc0d73fcc6f1b5c9e4a0fe5bc38aa170d9,https://github.com/internetarchive/openlibrary.git,15,9,6,2008-10-30T05:20:14,"[""books"", ""hacktoberfest"", ""internet-archive"", ""library-catalogue"", ""open-source""]"
+jrnl-org/jrnl,python,0,0,,,https://github.com/jrnl-org/jrnl.git,0,0,0,2012-03-29T05:23:58,"[""cli"", ""command-line"", ""encrypted"", ""journal"", ""journal-application"", ""jrnl"", ""note-taking"", ""notes"", ""productivity"", ""python"", ""shell""]"
+jurajnyiri/homeassistant-tapo-control,python,0,0,,,https://github.com/jurajnyiri/homeassistant-tapo-control.git,0,0,0,2020-10-01T05:08:12,"[""camera"", ""cameras"", ""home-assistant"", ""home-automation"", ""homeassistant"", ""homeassistant-custom-component"", ""ptz"", ""tapo""]"
+kayak/pypika,python,0,0,,,https://github.com/kayak/pypika.git,0,0,0,2016-07-06T02:08:50,"[""builder"", ""data"", ""functional"", ""python"", ""python3"", ""pythonic"", ""query"", ""sql""]"
+jkwill87/mnamer,python,0,0,,,https://github.com/jkwill87/mnamer.git,0,0,0,2017-10-16T08:23:27,"[""batch"", ""cli"", ""media"", ""metadata"", ""movie"", ""organizer"", ""python"", ""television""]"
+inventree/inventree,python,0,0,,,https://github.com/inventree/inventree.git,17,12,5,2017-03-23T01:44:10,"[""django"", ""hacktoberfest"", ""python""]"
+graphistry/pygraphistry,python,21,9,56ac00e7f3181795e4e39f32b84b9e6f48ce8bca,b467bfc362ca91da158865c045be2abc2239c869,https://github.com/graphistry/pygraphistry.git,443,208,235,2015-06-02T08:28:42,"[""csv"", ""cudf"", ""cugraph"", ""gpu"", ""graph"", ""graph-visualization"", ""graphistry"", ""igraph"", ""jupyter"", ""neo4j"", ""network-analysis"", ""network-visualization"", ""networkx"", ""pandas"", ""python"", ""rapids"", ""splunk"", ""tigergraph"", ""visualization"", ""webgl""]"
+kdeldycke/meta-package-manager,python,1,1,5fb4f8e1256139f799bf12a2bd7231fdfbb8c4f4,5fb4f8e1256139f799bf12a2bd7231fdfbb8c4f4,https://github.com/kdeldycke/meta-package-manager.git,35,27,8,2016-08-17T04:14:34,"[""apt"", ""cli-tools"", ""cyclonedx"", ""flatpak"", ""mac-app-store"", ""meta-package-manager"", ""package-manager"", ""package-manager-cli"", ""package-url"", ""php-composer"", ""pip"", ""pipx"", ""ruby-gem"", ""sbom"", ""spdx"", ""swiftbar"", ""swiftbar-plugin"", ""winget"", ""xbar"", ""xbar-plugin""]"
+koordinates/kart,python,0,0,,,https://github.com/koordinates/kart.git,1,0,1,2018-07-23T09:54:52,"[""data"", ""data-versioning"", ""geospatial"", ""geospatial-data"", ""gis"", ""version-control""]"
+kengz/slm-lab,python,5,2,945625bc82cd5368551ca2aea3c9d6a0f787258d,82b1755e98e9f22530c6c8fdcf456ba93a01c4a2,https://github.com/kengz/slm-lab.git,7,4,3,2017-10-02T10:20:22,"[""a2c"", ""a3c"", ""benchmark"", ""deep-reinforcement-learning"", ""dqn"", ""policy-gradient"", ""ppo"", ""pytorch"", ""reinforcement-learning"", ""sac""]"
+israel-dryer/ttkbootstrap,python,11,10,b4970a11ee927896fda747c47c757acff93ab6b1,07a37aefdf696ecb5731770a200f6395f594e23e,https://github.com/israel-dryer/ttkbootstrap.git,150,57,93,2021-03-19T09:28:48,"[""bootstrap"", ""cross-platform"", ""gui"", ""modern-ui"", ""python"", ""python-gui"", ""themes"", ""theming"", ""tkinter"", ""tkinter-theme"", ""tkinter-widgets"", ""ttk"", ""ttkbootstrap"", ""ttkbootstrap-python"", ""widgets""]"
+kevoreilly/capev2,python,1,1,0ad421c5ce9b7b40bb7d706c43cd6eff1542b809,0ad421c5ce9b7b40bb7d706c43cd6eff1542b809,https://github.com/kevoreilly/capev2.git,8,2,6,2019-10-15T06:16:09,"[""cape"", ""configs"", ""debugging-tools"", ""malware"", ""malware-analysis"", ""malware-research"", ""reverse-engineering"", ""sandbox"", ""unpacking""]"
+kvesteri/sqlalchemy-continuum,python,0,0,,,https://github.com/kvesteri/sqlalchemy-continuum.git,3,2,1,2013-05-27T10:30:55,[]
+kovidgoyal/kitty,python,0,0,,,https://github.com/kovidgoyal/kitty.git,0,0,0,2016-10-16T02:48:28,"[""c"", ""go"", ""golang"", ""golang-application"", ""kitty"", ""kitty-terminal"", ""opengl"", ""python"", ""terminal"", ""terminal-emulators"", ""terminfo"", ""vt100""]"
+lightly-ai/lightly,python,0,0,,,https://github.com/lightly-ai/lightly.git,4,1,3,2020-10-13T01:02:56,"[""computer-vision"", ""contrastive-learning"", ""contributions-welcome"", ""deep-learning"", ""embeddings"", ""hacktoberfest"", ""machine-learning"", ""pytorch"", ""self-supervised-learning""]"
+kornia/kornia,python,4,2,5c04bfc84d2a22e72f24b846f60dc344d9d73d8d,ee23688c2f0250a15395604b13386acecbef88be,https://github.com/kornia/kornia.git,45,19,26,2018-08-22T10:31:37,"[""artificial-intelligence"", ""computer-vision"", ""deep-learning"", ""hacktoberfest"", ""image-processing"", ""machine-learning"", ""neural-network"", ""python"", ""pytorch"", ""robotics"", ""spatial-ai""]"
+kubeflow/pipelines,python,0,0,,,https://github.com/kubeflow/pipelines.git,12,7,5,2018-05-12T12:31:47,"[""data-science"", ""kubeflow"", ""kubeflow-pipelines"", ""kubernetes"", ""machine-learning"", ""mlops"", ""pipeline""]"
+ludwig-ai/ludwig,python,0,0,,,https://github.com/ludwig-ai/ludwig.git,0,0,0,2018-12-27T11:58:12,"[""computer-vision"", ""data-centric"", ""data-science"", ""deep"", ""deep-learning"", ""deeplearning"", ""fine-tuning"", ""learning"", ""llama"", ""llama2"", ""llm"", ""llm-training"", ""machine-learning"", ""machinelearning"", ""mistral"", ""ml"", ""natural-language"", ""natural-language-processing"", ""neural-network"", ""pytorch""]"
+ledfx/ledfx,python,0,0,,,https://github.com/ledfx/ledfx.git,3,3,0,2020-12-18T12:49:47,"[""audio-processing"", ""e131"", ""led-strips"", ""microphone"", ""music-visualizer"", ""python"", ""qlc"", ""raspberry-pi"", ""react"", ""webinterface"", ""wled""]"
+macbre/sql-metadata,python,0,0,,,https://github.com/macbre/sql-metadata.git,2,1,1,2017-06-06T03:59:09,"[""database"", ""hive"", ""hiveql"", ""metadata"", ""mysql-query"", ""parser"", ""python-package"", ""python3-library"", ""sql"", ""sql-parser"", ""sqlparse""]"
+librephotos/librephotos,python,70,23,2a5ec6b5e7a01ac577a11192159abfc8c79c03f0,1fde93089f16d452dc669d87b80a64236b2de036,https://github.com/librephotos/librephotos.git,57,19,38,2020-11-11T11:08:19,"[""django"", ""exif"", ""hacktoberfest"", ""machine-learning"", ""photo"", ""python"", ""selfhosted""]"
+makepath/xarray-spatial,python,6,3,7090718f234477e7c308b86cab3e20822063e4be,95b6bff90433af19530db5435a25b68dbc7cc4f0,https://github.com/makepath/xarray-spatial.git,37,8,29,2020-02-08T07:02:33,"[""datashader"", ""numba"", ""python"", ""raster-analysis"", ""spatial-analysis"", ""xarray""]"
+maiot-io/zenml,python,4,3,b42144a2df3ab555df3b620080cbb1a9cd99106b,8afa9321480dd3cf53b924666b3b095abc46e86f,https://github.com/maiot-io/zenml.git,27,11,16,2020-11-19T09:25:46,[]
+man-group/notebooker,python,0,0,,,https://github.com/man-group/notebooker.git,1,1,0,2020-02-28T11:11:17,"[""jupyter"", ""jupyter-notebook"", ""jupyter-notebooks"", ""notebooks"", ""productionise"", ""publishing""]"
+mandarons/icloud-drive-docker,python,11,4,227e795009eb4b0b6e42405813d00325fd2f5228,72a4894a56b682538867af81b8686480cc499b65,https://github.com/mandarons/icloud-drive-docker.git,30,21,9,2021-02-16T10:49:24,"[""docker"", ""icloud"", ""icloud-document-storage"", ""icloud-drive"", ""icloud-photos"", ""icloud-sync"", ""sync""]"
+linkml/linkml,python,3,2,46366604082651f79ff188e83412ea49ef7d98d3,4028b88b4ade8a7644126cb76a819a712c738911,https://github.com/linkml/linkml.git,56,37,19,2021-03-16T04:34:43,"[""data-dictionaries"", ""data-modeling"", ""hacktoberfest"", ""json-ld-context"", ""json-schema"", ""linked-data"", ""linkml"", ""linkml-schema"", ""modeling"", ""owl"", ""rdf"", ""schema"", ""semantic-web"", ""shacl"", ""shex"", ""standards""]"
+lumiwealth/lumibot,python,6,5,c1d4f8f93b6d5ac9794f10ed4701a5d5b844bfc5,12a77a9a08ab6746dc140c761e550471f4b7311c,https://github.com/lumiwealth/lumibot.git,68,45,23,2020-09-10T10:00:16,"[""ai-agents"", ""algorithmic-trading"", ""alpaca"", ""backtesting"", ""broker"", ""crypto-trading"", ""finance"", ""forex"", ""fred"", ""futures-trading"", ""interactive-brokers"", ""llm-agents"", ""multi-agent"", ""options-trading"", ""python"", ""quantitative-finance"", ""sec-filings"", ""stocks"", ""technical-analysis"", ""trading-bot""]"
+martin-majlis/wikipedia-api,python,0,0,,,https://github.com/martin-majlis/wikipedia-api.git,2,0,2,2017-12-11T09:54:02,"[""python3"", ""wikipedia"", ""wikipedia-api"", ""wikipedia-scraper"", ""wikipedia-web-crawler""]"
+lyft/cartography,python,3,3,2be3f9eddbf6b3926c3ceb0243aeb06c0079685a,f32ad76da4730fdbf72d556960b3b49612f9f3f9,https://github.com/lyft/cartography.git,166,69,97,2019-02-27T12:16:29,"[""lyft""]"
+mampfes/hacs_waste_collection_schedule,python,2,2,821b14778d6ceea8fbb16e417e0203a14e950e4f,8d808ae4ff99344ee259a56b01c59724e9fa40a5,https://github.com/mampfes/hacs_waste_collection_schedule.git,24,10,14,2020-04-09T11:02:16,"[""abfall"", ""abfallnavi"", ""abfallplus"", ""garbage"", ""garbage-collection"", ""hacktoberfest"", ""home-assistant"", ""homeassistant"", ""homeassistant-integration"", ""jumomind"", ""muell"", ""muellabfuhr"", ""muellsammlung"", ""mymuell"", ""regioit"", ""waste"", ""waste-collection""]"
+microsoft/debugpy,python,0,0,,,https://github.com/microsoft/debugpy.git,5,2,3,2020-01-15T10:38:20,[]
+meisnate12/plex-meta-manager,python,0,0,,,https://github.com/meisnate12/plex-meta-manager.git,0,0,0,2020-11-30T05:24:30,[]
+microsoft/playwright-python,python,0,0,,,https://github.com/microsoft/playwright-python.git,9,7,2,2020-07-01T03:28:13,"[""chromium"", ""firefox"", ""playwright"", ""webkit""]"
+microsoft/deepspeed,python,0,0,,,https://github.com/microsoft/deepspeed.git,14,4,10,2020-01-23T06:35:18,"[""billion-parameters"", ""compression"", ""data-parallelism"", ""deep-learning"", ""gpu"", ""inference"", ""machine-learning"", ""mixture-of-experts"", ""model-parallelism"", ""pipeline-parallelism"", ""pytorch"", ""trillion-parameters"", ""zero""]"
+michaelchu/optopsy,python,37,17,9e42aa1adb09f109eb10a9e31730be7b850782ad,2ca67e0fb51c7d690cb15b04aca8a45931caf3eb,https://github.com/michaelchu/optopsy.git,77,47,30,2017-09-17T01:49:54,"[""algorithmic"", ""algorithmic-trading"", ""algorithmic-trading-engine"", ""algorithmic-trading-library"", ""backtest"", ""backtesting"", ""backtesting-frameworks"", ""backtesting-trading-strategies"", ""dataframe"", ""option-chain"", ""option-pricing"", ""option-strategies"", ""options"", ""options-framework"", ""options-spreads"", ""options-strategies"", ""options-trading"", ""trade-options"", ""trading""]"
+microsoft/presidio,python,46,3,98f79b9c646802e456687136e234b2b9137c0e93,f0dbdce29eb21a2c58770f87de383f43165cb17c,https://github.com/microsoft/presidio.git,15,7,8,2018-05-04T11:08:58,"[""anonymization"", ""data-anonymization"", ""data-masking"", ""data-obfuscation"", ""data-privacy"", ""data-redaction"", ""de-identification"", ""guardrails"", ""image-redactor"", ""named-entity-recognition"", ""nlp"", ""personally-identifiable-information"", ""phi"", ""pii"", ""pii-detection"", ""privacy"", ""python"", ""sensitive-data"", ""spacy"", ""transformers""]"
+microsoft/msticpy,python,0,0,,,https://github.com/microsoft/msticpy.git,6,5,1,2019-02-21T05:30:03,[]
+mindwerks/worldengine,python,0,0,,,https://github.com/mindwerks/worldengine.git,1,1,0,2013-11-24T05:49:35,[]
+microsoft/olive,python,12,4,8a847c2a7568f4b8f6b36a9f2e0c2f57115126ab,8a274f8d4827a9b0f695ac17e9ae464c413e8f0f,https://github.com/microsoft/olive.git,61,32,29,2019-08-12T07:00:23,[]
+mirumee/ariadne,python,0,0,,,https://github.com/mirumee/ariadne.git,0,0,0,2018-07-09T09:46:17,"[""api"", ""apollo-graphql"", ""apollo-python"", ""ariadne"", ""asgi"", ""django"", ""django-graphql"", ""graphql"", ""graphql-python"", ""graphql-server"", ""python""]"
+mindsdb/mindsdb,python,0,0,,,https://github.com/mindsdb/mindsdb.git,7,5,2,2018-08-02T05:56:45,"[""agents"", ""ai"", ""analytics"", ""artificial-inteligence"", ""bigquery"", ""business-intelligence"", ""databases"", ""hacktoberfest"", ""llms"", ""mcp"", ""mssql"", ""mysql"", ""postgresql"", ""rag""]"
+mlcommons/inference,python,0,0,,,https://github.com/mlcommons/inference.git,0,0,0,2018-09-13T01:53:57,"[""benchmark"", ""machine-learning""]"
+mlco2/codecarbon,python,0,0,,,https://github.com/mlco2/codecarbon.git,17,10,7,2020-05-12T02:44:03,"[""ai-ethics"", ""carbon-emissions"", ""carbon-footprint"", ""co2-emissions"", ""energy-consumption"", ""energy-efficiency"", ""fairness"", ""sustainability""]"
+mirumee/saleor,python,4,2,917690526c6e9cf9e4dbf28c1fcbea8b00badf91,f261c2ef8db241e780b010e00f8cda8448000c9b,https://github.com/mirumee/saleor.git,27,13,14,2013-02-12T04:46:39,[]
+mongodb/mongo-python-driver,python,0,0,,,https://github.com/mongodb/mongo-python-driver.git,7,5,2,2009-01-15T03:18:06,"[""mongodb"", ""mongodb-driver"", ""pymongo"", ""python"", ""python-library""]"
+mne-tools/mne-python,python,0,0,,,https://github.com/mne-tools/mne-python.git,4,1,3,2011-01-28T03:31:13,"[""ecog"", ""eeg"", ""electrocorticography"", ""electroencephalography"", ""machine-learning"", ""magnetoencephalography"", ""meg"", ""neuroimaging"", ""neuroscience"", ""python"", ""statistics"", ""visualization""]"
+mozilla/openwpm,python,0,0,,,https://github.com/mozilla/openwpm.git,0,0,0,2014-06-10T04:59:27,[]
+mozilla/fx-private-relay,python,0,0,,,https://github.com/mozilla/fx-private-relay.git,0,0,0,2019-06-06T09:36:28,[]
+mozilla/kitsune,python,0,0,,,https://github.com/mozilla/kitsune.git,2,1,1,2010-01-26T06:53:57,[]
+nat-n/poethepoet,python,1,1,35e4a1b72cc10b84bb239645911c94d446f4ca96,35e4a1b72cc10b84bb239645911c94d446f4ca96,https://github.com/nat-n/poethepoet.git,10,7,3,2020-05-28T09:56:22,"[""developer-experience"", ""developer-tools"", ""development-workflow"", ""dx"", ""poetry"", ""poetry-plugin"", ""python"", ""task-runner"", ""uv""]"
+nats-io/nats.py,python,0,0,,,https://github.com/nats-io/nats.py.git,0,0,0,2015-12-28T09:08:03,"[""aio"", ""aio-nats"", ""asyncio"", ""cloud-native"", ""nats"", ""python3""]"
+nerevu/riko,python,0,0,,,https://github.com/nerevu/riko.git,4,3,1,2016-06-02T12:22:51,[]
+netbox-community/pynetbox,python,0,0,,,https://github.com/netbox-community/pynetbox.git,0,0,0,2017-05-12T09:35:02,"[""netbox"", ""netbox-api""]"
+microsoft/pyright,python,4,1,4c60ea9967d2633894e873c1b53145a28106f9a8,4c60ea9967d2633894e873c1b53145a28106f9a8,https://github.com/microsoft/pyright.git,23,11,12,2019-03-12T03:38:46,[]
+netflix/metaflow,python,9,5,e01469a370481cab0da258d6e88832b5428be721,732ca76d5aea9c4b60870997f463b48929dde354,https://github.com/netflix/metaflow.git,17,9,8,2019-09-17T05:48:25,"[""agents"", ""ai"", ""aws"", ""azure"", ""cost-optimization"", ""datascience"", ""distributed-training"", ""gcp"", ""generative-ai"", ""high-performance-computing"", ""kubernetes"", ""llm"", ""llmops"", ""machine-learning"", ""ml"", ""ml-infrastructure"", ""ml-platform"", ""mlops"", ""model-management"", ""python""]"
+mlrun/mlrun,python,10,6,35bc0b8853be6ba2a0782525f930e2b42641d8ba,262eef14091c69acba1e71141f4d2588768fc31c,https://github.com/mlrun/mlrun.git,81,37,44,2019-09-01T04:59:19,"[""data-engineering"", ""data-science"", ""experiment-tracking"", ""kubernetes"", ""machine-learning"", ""mlops"", ""mlops-workflow"", ""model-serving"", ""python"", ""workflow""]"
+nicolargo/glances,python,1,1,139506b1099fbb09b4a713b3efe6503c4a4b3398,139506b1099fbb09b4a713b3efe6503c4a4b3398,https://github.com/nicolargo/glances.git,11,4,7,2011-12-04T08:49:15,"[""monitoring"", ""multi-platform"", ""python"", ""restful"", ""restful-api"", ""system"", ""terminal"", ""web""]"
+nilearn/nilearn,python,0,0,,,https://github.com/nilearn/nilearn.git,17,15,2,2011-01-09T07:02:23,"[""brain-connectivity"", ""brain-imaging"", ""brain-mri"", ""decoding"", ""fmri"", ""machine-learning"", ""mvpa"", ""neuroimaging"", ""python""]"
+nolar/kopf,python,4,2,5d72d77c0a1ccb406267f0a00d1aa0489b3d8ecc,b30f7a817869ee4379101cd42c71614bfe6cd125,https://github.com/nolar/kopf.git,11,4,7,2020-08-17T04:45:35,"[""admission-controller"", ""admission-controllers"", ""admission-webhook"", ""asyncio"", ""framework"", ""kopf"", ""kubernetes"", ""kubernetes-concepts"", ""kubernetes-operator"", ""kubernetes-operators"", ""operator"", ""operator-framework"", ""operators"", ""python"", ""python-framework"", ""python3""]"
+netbox-community/netbox,python,2,2,f2d8ae29c2960d923847b58b23cda5fff8ff8e06,61696c8633df42b19267d9acc92b1acf32e82d5b,https://github.com/netbox-community/netbox.git,14,7,7,2016-02-29T02:15:46,"[""cabling"", ""dcim"", ""django"", ""infrastructure-management"", ""ipam"", ""netbox"", ""network"", ""network-automation"", ""python"", ""sot"", ""sysadmin""]"
+music-assistant/server,python,45,17,582758e08ab43e50fe8e9e081625c927a24f4abf,fd7b8dc6d596fc762ab6db916938a683972f17a3,https://github.com/music-assistant/server.git,87,37,50,2019-05-09T06:17:02,[]
+omry/omegaconf,python,0,0,,,https://github.com/omry/omegaconf.git,2,2,0,2018-09-03T02:59:01,"[""configuration-files"", ""configuration-loader"", ""python"", ""python-types"", ""schema-validator"", ""yaml"", ""yaml-configuration""]"
+nuitka/nuitka,python,0,0,,,https://github.com/nuitka/nuitka.git,0,0,0,2013-04-23T03:40:33,"[""compiler"", ""nuitka"", ""packaging-tool"", ""performance"", ""programming"", ""python"", ""python-compiler""]"
+online-ml/river,python,1,1,1e14ee4bb8cdcda3802d9d2a052e2cf5a7744731,1e14ee4bb8cdcda3802d9d2a052e2cf5a7744731,https://github.com/online-ml/river.git,35,15,20,2019-01-24T03:18:26,"[""concept-drift"", ""data-science"", ""incremental-learning"", ""machine-learning"", ""online-learning"", ""online-machine-learning"", ""online-statistics"", ""python"", ""real-time-processing"", ""stream-processing"", ""streaming"", ""streaming-data""]"
+open-catalyst-project/ocp,python,0,0,,,https://github.com/open-catalyst-project/ocp.git,4,4,0,2019-09-26T04:47:27,[]
+jellyfin/jellyfin-mpv-shim,python,112,60,4f14f2bc43b4ba187caed240771b25261c4fc6a9,55354e39f98dafab24a6191317295f9540301b07,https://github.com/jellyfin/jellyfin-mpv-shim.git,344,141,203,2020-01-11T06:44:41,"[""jellyfin"", ""jellyfin-client"", ""mpv""]"
+nvidia/cudnn-frontend,python,1,1,108500194677eb5baba0a53f67ae91f3db1046c0,108500194677eb5baba0a53f67ae91f3db1046c0,https://github.com/nvidia/cudnn-frontend.git,17,12,5,2021-01-22T04:16:29,"[""attention"", ""blackwell"", ""cuda"", ""cuda-kernels"", ""cuda-toolkit"", ""deep-learning"", ""flash-attention"", ""fp8"", ""gemm"", ""gpu"", ""grouped-gemm"", ""hopper"", ""mixture-of-experts"", ""moe"", ""mxfp8"", ""normalization"", ""nvfp4"", ""nvidia"", ""sdpa"", ""transformer""]"
+open-telemetry/opentelemetry-python-contrib,python,0,0,,,https://github.com/open-telemetry/opentelemetry-python-contrib.git,13,8,5,2019-11-08T06:23:43,[]
+openatx/uiautomator2,python,1,1,b407b9eb8876b1de3eda6022d019a8611782f202,b407b9eb8876b1de3eda6022d019a8611782f202,https://github.com/openatx/uiautomator2.git,1,0,1,2017-09-17T12:20:42,"[""python"", ""test"", ""uiautomator""]"
+open-telemetry/opentelemetry-python,python,4,4,abd27fb7eefc879d6ff1cd42969a3984d1722e95,ac7a3df2fb5a3de775c1df3cd2a6c71eb53aec73,https://github.com/open-telemetry/opentelemetry-python.git,33,12,21,2019-05-07T09:13:30,"[""correlationcontext"", ""distributed-tracing"", ""logging"", ""metrics"", ""opentelemetry"", ""python"", ""sdk"", ""tracecontext""]"
+getsentry/sentry,python,77,63,1add0b5eb540ff74e1fd0c194728368f2c67b22e,9171b9534961ec8af4423977fc8bf90d056ced2d,https://github.com/getsentry/sentry.git,966,573,393,2010-08-30T10:06:41,"[""apm"", ""crash-reporting"", ""crash-reports"", ""csp-report"", ""devops"", ""django"", ""error-logging"", ""error-monitoring"", ""fair-source"", ""hacktoberfest"", ""monitor"", ""monitoring"", ""python"", ""sentry"", ""tag-production""]"
+openmc-dev/openmc,python,0,0,,,https://github.com/openmc-dev/openmc.git,8,7,1,2011-07-21T12:33:27,"[""computational-physics"", ""high-performance-computing"", ""monte-carlo-simulation"", ""neutron-transport"", ""neutronics"", ""nuclear-data"", ""nuclear-energy"", ""nuclear-engineering"", ""nuclear-fusion"", ""openmc"", ""particle-transport"", ""photon-transport"", ""radiation-transport""]"
+openstates/openstates-scrapers,python,0,0,,,https://github.com/openstates/openstates-scrapers.git,0,0,0,2009-02-26T10:49:19,"[""government"", ""hacktoberfest"", ""python"", ""scrapers"", ""states"", ""united-states""]"
+openmdao/openmdao,python,0,0,,,https://github.com/openmdao/openmdao.git,0,0,0,2016-08-25T03:53:25,"[""framework"", ""nasa"", ""open-source"", ""openmdao"", ""optimization""]"
+openvinotoolkit/nncf,python,0,0,,,https://github.com/openvinotoolkit/nncf.git,3,3,0,2020-05-13T04:41:05,"[""bert"", ""classification"", ""compression"", ""deep-learning"", ""genai"", ""llm"", ""mixed-precision-training"", ""nlp"", ""object-detection"", ""onnx"", ""openvino"", ""pruning"", ""pytorch"", ""quantization"", ""quantization-aware-training"", ""semantic-segmentation"", ""sparsity"", ""tensorflow"", ""transformers""]"
+pdm-project/pdm,python,0,0,,,https://github.com/pdm-project/pdm.git,0,0,0,2019-12-27T03:50:57,"[""hacktoberfest"", ""package-manager"", ""packaging"", ""pep582"", ""pep621"", ""python"", ""workflow""]"
+photonixapp/photonix,python,0,0,,,https://github.com/photonixapp/photonix.git,0,0,0,2017-03-07T10:30:32,"[""ai"", ""django"", ""docker"", ""docker-image"", ""face-recognition"", ""gallery"", ""google-photos"", ""image-recognition"", ""javascript"", ""management"", ""ml"", ""object-detection"", ""photo"", ""photo-manager"", ""photography"", ""python"", ""react"", ""storage"", ""tensorflow"", ""web""]"
+nvidia/megatron-lm,python,35,14,9b18de4d9c9ccee3332f939ad8216e9424348825,cf2f07d7b1315c96c05554c670c43207c6783e5e,https://github.com/nvidia/megatron-lm.git,146,81,65,2019-03-21T04:15:52,"[""large-language-models"", ""model-para"", ""transformers""]"
+pika/pika,python,0,0,,,https://github.com/pika/pika.git,49,41,8,2009-10-19T11:22:02,"[""amqp0-9-1"", ""client"", ""python"", ""rabbitmq""]"
+pantsbuild/pants,python,3,1,135d8725ed75c5f0663213d4783876575dd009d0,135d8725ed75c5f0663213d4783876575dd009d0,https://github.com/pantsbuild/pants.git,3,2,1,2012-12-17T05:39:04,"[""aws-lambda"", ""build"", ""build-system"", ""build-tool"", ""build-tools"", ""docker"", ""golang"", ""java"", ""javascript"", ""kotlin"", ""monorepo"", ""monorepos"", ""pants"", ""pantsbuild"", ""pex"", ""protobuf"", ""python"", ""rust"", ""scala"", ""shell""]"
+openmined/pysyft,python,3,1,08a9ca4a54c53776786eb9ba69cbd1127246b53a,08a9ca4a54c53776786eb9ba69cbd1127246b53a,https://github.com/openmined/pysyft.git,44,26,18,2017-07-18T08:41:16,"[""cryptography"", ""deep-learning"", ""federated-learning"", ""hacktoberfest"", ""privacy"", ""python"", ""pytorch"", ""secure-computation"", ""syft""]"
+openvinotoolkit/training_extensions,python,5,4,fa757893e372cfcdc717d5bcce6f227f8f3ee10e,8cb3a5e31dc9c609441f61ced5a617154c97ccca,https://github.com/openvinotoolkit/training_extensions.git,58,44,14,2018-10-26T02:02:29,"[""action-recognition"", ""anomaly-detection"", ""automl"", ""computer-vision"", ""datumaro"", ""deep-learning"", ""hyper-parameter-optimization"", ""image-classification"", ""image-segmentation"", ""incremental-learning"", ""machine-learning"", ""neural-networks-compression"", ""object-detection"", ""openvino"", ""pytorch"", ""quantization"", ""self-supervised-learning"", ""semi-supervised-learning"", ""transfer-learning""]"
+profusion/sgqlc,python,0,0,,,https://github.com/profusion/sgqlc.git,0,0,0,2018-01-17T05:49:18,"[""graphql"", ""graphql-client"", ""python"", ""python36""]"
+plasma-umass/scalene,python,9,3,47fab6465b05250d3da6e7a0cf25b78fac38d134,be5f193229c2c3166cf0b1292a9c28e30a8e90c6,https://github.com/plasma-umass/scalene.git,55,37,18,2019-12-17T08:56:28,"[""cpu"", ""cpu-profiling"", ""gpu"", ""gpu-programming"", ""memory-allocation"", ""memory-consumption"", ""performance-analysis"", ""performance-cpu"", ""profiler"", ""profiles-memory"", ""profiling"", ""python"", ""python-profilers"", ""scalene""]"
+lihuacai168/anotherfasterrunner,python,17,2,fdedc57b5ec788c8698bfabdd616f99b8e63fe3e,dc9d96e994076d38f6c4e7067fde296ce7731bba,https://github.com/lihuacai168/anotherfasterrunner.git,99,82,17,2020-12-12T07:16:45,"[""auto"", ""auto-test"", ""automation"", ""autotest"", ""autotesting"", ""django"", ""fasterrunner"", ""httprunner"", ""pytho"", ""python"", ""python-test"", ""test-automation""]"
+onnx/onnx,python,2,1,45f564bfc6ff35e80e480f593ec7d90cf8df3135,45f564bfc6ff35e80e480f593ec7d90cf8df3135,https://github.com/onnx/onnx.git,37,11,26,2017-09-07T04:53:45,"[""ai"", ""artificial-intelligence"", ""deep-learning"", ""deep-neural-networks"", ""dnn"", ""keras"", ""machine-learning"", ""ml"", ""neural-network"", ""onnx"", ""pytorch"", ""scikit-learn"", ""tensorflow""]"
+plasmapy/plasmapy,python,0,0,,,https://github.com/plasmapy/plasmapy.git,1,0,1,2015-11-24T06:36:24,"[""astronomy"", ""astrophysics"", ""atomic-physics"", ""fusion"", ""hedp"", ""heliophysics"", ""high-energy-density-physics"", ""particles"", ""plasma-physics"", ""plasma-science"", ""python"", ""science"", ""solar"", ""space-physics"", ""space-plasma-physics""]"
+pschanely/crosshair,python,0,0,,,https://github.com/pschanely/crosshair.git,55,28,27,2017-08-29T01:11:40,"[""concolic-execution"", ""contracts"", ""dynamic-analysis"", ""fuzzing"", ""hacktoberfest"", ""python"", ""static-analysis"", ""symbolic-execution"", ""testing"", ""testing-framework"", ""type-systems"", ""z3""]"
+pulp/pulpcore,python,3,3,101826c16d41d3dd96abac4e6bc9975383f0094b,e542160c14090b08a4ad7ab61cb555948510759a,https://github.com/pulp/pulpcore.git,31,12,19,2019-02-28T04:18:16,[]
+pwndbg/pwndbg,python,0,0,,,https://github.com/pwndbg/pwndbg.git,15,2,13,2015-02-22T09:35:19,"[""binary-ninja"", ""capture-the-flag"", ""ctf"", ""debugging"", ""disassembler"", ""exploit-development"", ""gdb"", ""gef"", ""hacking-tool"", ""ida-pro"", ""linux"", ""lldb"", ""low-level"", ""malware-analysis"", ""pwnable"", ""pwndbg"", ""python"", ""reverse-engineering""]"
+pybuilder/pybuilder,python,0,0,,,https://github.com/pybuilder/pybuilder.git,0,0,0,2012-07-23T11:38:06,"[""automation"", ""build"", ""build-automation"", ""build-tool"", ""build-tools"", ""pybuilder"", ""python"", ""testing""]"
+plotly/dash,python,1,1,224a4c1b975e0e8c7289115206f2225b15c0c0c7,224a4c1b975e0e8c7289115206f2225b15c0c0c7,https://github.com/plotly/dash.git,10,6,4,2015-04-10T01:53:08,"[""ai"", ""bioinformatics"", ""charting"", ""dash"", ""dashboards"", ""data-science"", ""data-visualization"", ""finance"", ""flask"", ""gui-framework"", ""jupyter"", ""plotly"", ""plotly-dash"", ""productivity"", ""python"", ""react"", ""technical-computing"", ""web-app""]"
+pycqa/pylint,python,0,0,,,https://github.com/pycqa/pylint.git,9,0,9,2015-12-09T05:40:02,[]
+psd-tools/psd-tools,python,2,1,44ab6842529e94164252aec76dd5ddbde6a64bb8,44ab6842529e94164252aec76dd5ddbde6a64bb8,https://github.com/psd-tools/psd-tools.git,53,33,20,2012-10-14T04:26:41,"[""photoshop"", ""psd"", ""python""]"
+opencti-platform/connectors,python,40,13,6e08dd418773d480512a1e17314f1a866e6adb37,be912e74bb5a00399237a89aecd4f043a2cb95bc,https://github.com/opencti-platform/connectors.git,25,5,20,2019-06-18T09:22:05,"[""cti"", ""cybersecurity"", ""misp"", ""mitre-attack"", ""threat-intelligence""]"
+pygithub/pygithub,python,0,0,,,https://github.com/pygithub/pygithub.git,2,0,2,2012-02-25T12:53:47,"[""github"", ""github-api"", ""pygithub"", ""python""]"
+pyodide/pyodide,python,0,0,,,https://github.com/pyodide/pyodide.git,0,0,0,2018-02-23T07:21:29,"[""emscripten"", ""pyodide"", ""python"", ""wasm"", ""webassembly""]"
+pyexcel/pyexcel,python,0,0,,,https://github.com/pyexcel/pyexcel.git,2,1,1,2014-08-22T12:52:20,"[""csv"", ""excel"", ""fods"", ""ods"", ""python"", ""xls"", ""xlsm"", ""xlsx""]"
+pypa/bandersnatch,python,0,0,,,https://github.com/pypa/bandersnatch.git,5,4,1,2018-05-14T02:52:22,"[""bandersnatch"", ""mirror"", ""mirroring"", ""pep381"", ""pypi"", ""pypi-mirror-client""]"
+pydata/xarray,python,0,0,,,https://github.com/pydata/xarray.git,35,22,13,2013-09-30T05:21:10,"[""dask"", ""netcdf"", ""numpy"", ""pandas"", ""python"", ""xarray""]"
+quantecon/quantecon.py,python,2,1,6eaa3144ed88f379650245ef34ac7ffd21e93fff,6eaa3144ed88f379650245ef34ac7ffd21e93fff,https://github.com/quantecon/quantecon.py.git,16,8,8,2013-03-22T12:27:36,"[""computational-economics"", ""economics"", ""python""]"
+python-telegram-bot/python-telegram-bot,python,0,0,,,https://github.com/python-telegram-bot/python-telegram-bot.git,3,2,1,2015-07-07T03:30:39,"[""bot"", ""chatbot"", ""framework"", ""python"", ""telegram""]"
+quark-engine/quark-engine,python,0,0,,,https://github.com/quark-engine/quark-engine.git,2,1,1,2019-10-22T01:19:27,"[""ai"", ""android"", ""artificial-intelligence"", ""blackbox"", ""blackbox-testing"", ""blackhat"", ""defcon"", ""llm-agent"", ""security-vulnerability-assessment"", ""vulnerability""]"
+qdata/textattack,python,0,0,,,https://github.com/qdata/textattack.git,0,0,0,2019-10-15T12:51:44,"[""adversarial-attacks"", ""adversarial-examples"", ""adversarial-machine-learning"", ""data-augmentation"", ""machine-learning"", ""natural-language-processing"", ""nlp"", ""security""]"
+ranaroussi/quantstats,python,0,0,,,https://github.com/ranaroussi/quantstats.git,1,0,1,2019-05-01T01:29:29,"[""algo-trading"", ""algorithmic-trading"", ""algotrading"", ""finance"", ""plotting"", ""python"", ""quant"", ""quantitative-analysis"", ""quantitative-finance"", ""quantitative-trading"", ""visualization""]"
+quic/aimet,python,0,0,,,https://github.com/quic/aimet.git,0,0,0,2020-04-21T06:57:10,"[""auto-ml"", ""compression"", ""deep-learning"", ""deep-neural-networks"", ""machine-learning"", ""network-compression"", ""network-quantization"", ""open-source"", ""opensource"", ""pruning"", ""quantization""]"
+pythainlp/pythainlp,python,0,0,,,https://github.com/pythainlp/pythainlp.git,6,6,0,2016-06-23T02:57:26,"[""computational-linguistics"", ""hacktoberfest"", ""hacktoberfest-accepted"", ""natural-language-processing"", ""nlp-library"", ""python"", ""soundex"", ""text-processing"", ""thai"", ""thai-language"", ""thai-nlp"", ""thai-nlp-library"", ""thai-soundex"", ""word-segmentation""]"
+reactivex/rxpy,python,0,0,,,https://github.com/reactivex/rxpy.git,12,8,4,2013-03-22T06:16:54,"[""python"", ""reactive"", ""reactive-extensions"", ""reactivex"", ""rxpy""]"
+rgerum/pylustrator,python,0,0,,,https://github.com/rgerum/pylustrator.git,0,0,0,2018-06-21T07:03:41,"[""code-generation"", ""gui"", ""interactive"", ""matplotlib"", ""visualisation""]"
+ricequant/rqalpha,python,0,0,,,https://github.com/ricequant/rqalpha.git,0,0,0,2016-07-20T10:38:57,"[""backtest"", ""finance"", ""futures"", ""python"", ""quant"", ""ricequant"", ""rqalpha"", ""stock"", ""ta-lib"", ""trading""]"
+robocorp/rpaframework,python,5,1,b5e15937cacbaf2612e324d314b7d19987b0cb7a,b5e15937cacbaf2612e324d314b7d19987b0cb7a,https://github.com/robocorp/rpaframework.git,7,4,3,2020-01-02T12:11:15,"[""ai"", ""automation"", ""documentai"", ""nlp"", ""ocr"", ""opencv"", ""python"", ""robocorp"", ""robot"", ""robotframework"", ""rpa"", ""rpa-robots""]"
+pybamm-team/pybamm,python,2,1,162ca063e9958d6bae52d078a23045801ad07545,162ca063e9958d6bae52d078a23045801ad07545,https://github.com/pybamm-team/pybamm.git,39,13,26,2018-10-31T10:26:29,"[""batteries"", ""battery-models"", ""hacktoberfest"", ""pybamm"", ""python"", ""simulation"", ""solvers""]"
+rwightman/pytorch-image-models,python,0,0,,,https://github.com/rwightman/pytorch-image-models.git,1,1,0,2019-02-02T05:51:12,[]
+s3ql/s3ql,python,1,1,de44eadbcababd810cdb40c102efaa974e8c6b64,de44eadbcababd810cdb40c102efaa974e8c6b64,https://github.com/s3ql/s3ql.git,3,2,1,2015-07-12T08:33:18,[]
+reactionmechanismgenerator/rmg-py,python,1,1,c0a88a2990d6133400a741abfbab04875d911612,c0a88a2990d6133400a741abfbab04875d911612,https://github.com/reactionmechanismgenerator/rmg-py.git,23,10,13,2009-10-09T09:16:17,"[""chemistry"", ""chemistry-discovery"", ""kinetics"", ""python"", ""reactions"", ""thermodynamics""]"
+readthedocs/readthedocs.org,python,6,5,a9aa9cb433416d50bf5bbf95ae2a84290d8ac67a,5df203f45328d329e03f64309a1040cced276e88,https://github.com/readthedocs/readthedocs.org.git,57,26,31,2010-08-16T07:18:06,"[""docs"", ""mkdocs"", ""python"", ""sphinx"", ""sphinx-doc""]"
+scitools/iris,python,0,0,,,https://github.com/scitools/iris.git,0,0,0,2012-08-06T10:09:14,"[""data-analysis"", ""earth-science"", ""grib"", ""iris"", ""meteorology"", ""netcdf"", ""oceanography"", ""python"", ""spaceweather"", ""visualisation""]"
+seperman/deepdiff,python,0,0,,,https://github.com/seperman/deepdiff.git,0,0,0,2014-09-26T03:21:47,"[""comparison"", ""deep-search"", ""deepdiff"", ""deephash"", ""delta"", ""diff"", ""difference"", ""distance"", ""distance-calculation"", ""hash"", ""hashing"", ""nested"", ""python"", ""reconstruction"", ""recursive"", ""repetition"", ""report-repetition"", ""tree""]"
+silviogutierrez/reactivated,python,0,0,,,https://github.com/silviogutierrez/reactivated.git,0,0,0,2018-07-08T06:14:47,[]
+sharebook-kr/pykrx,python,0,0,,,https://github.com/sharebook-kr/pykrx.git,0,0,0,2018-12-12T05:09:14,[]
+sirver/ultisnips,python,0,0,,,https://github.com/sirver/ultisnips.git,0,0,0,2011-12-30T07:07:24,"[""plugin"", ""snippets"", ""ultisnips"", ""vim""]"
+se2p/pynguin,python,0,0,,,https://github.com/se2p/pynguin.git,0,0,0,2020-07-27T03:50:19,"[""python"", ""search-based-software-testing"", ""test-generation"", ""test-generator"", ""testing-tools""]"
+pyca/cryptography,python,4,2,f7d5248f66c2c3234c122279b6c7a801ae0924e7,8e58ea5e2314ccf5d94b3a2707454768daa1750b,https://github.com/pyca/cryptography.git,106,72,34,2013-08-07T02:23:38,"[""cryptography"", ""python""]"
+smileychris/django-countries,python,0,0,,,https://github.com/smileychris/django-countries.git,0,0,0,2013-06-21T08:02:58,"[""country-codes"", ""django"", ""python""]"
+slackapi/bolt-python,python,0,0,,,https://github.com/slackapi/bolt-python.git,2,2,0,2020-06-02T12:32:17,"[""aiohttp"", ""aiohttp-client"", ""asyncio"", ""bolt"", ""chatbot"", ""chatops"", ""django"", ""docker"", ""fastapi"", ""flask"", ""pypi-url"", ""python"", ""slack"", ""slack-api"", ""socket-mode"", ""web-api"", ""websocket"", ""websocket-client"", ""websockets""]"
+slackapi/python-slack-sdk,python,0,0,,,https://github.com/slackapi/python-slack-sdk.git,1,1,0,2014-11-10T09:32:02,"[""aiohttp"", ""aiohttp-client"", ""asyncio"", ""python"", ""slack"", ""slackapi"", ""socket-mode"", ""websocket"", ""websocket-client"", ""websockets""]"
+stripe/stripe-python,python,0,0,,,https://github.com/stripe/stripe-python.git,2,2,0,2011-06-25T07:53:04,"[""stripe"", ""stripe-sdk""]"
+splunk/splunk-sdk-python,python,0,0,,,https://github.com/splunk/splunk-sdk-python.git,0,0,0,2011-03-20T11:20:06,"[""splunk"", ""splunk-sdk"", ""splunklib""]"
+quay/quay,python,54,17,d3c0f10e16fe38da75fc2134b8548581e17e5b69,9ec928cde193896362577edf3280426d04d83564,https://github.com/quay/quay.git,140,73,67,2019-11-08T05:37:05,"[""containers"", ""docker"", ""oci-distribution"", ""quay""]"
+systemd/mkosi,python,0,0,,,https://github.com/systemd/mkosi.git,0,0,0,2016-07-13T10:31:19,"[""boot"", ""btrfs"", ""btrfs-subvolume"", ""debian"", ""disk-image"", ""distro"", ""efi"", ""fedora"", ""gpt"", ""initramfs"", ""initramfs-generator"", ""initramfs-image"", ""luks"", ""mkosi"", ""opensuse"", ""partition"", ""squashfs"", ""ubuntu"", ""verity""]"
+strawberry-graphql/strawberry,python,0,0,,,https://github.com/strawberry-graphql/strawberry.git,11,7,4,2018-12-21T08:56:55,"[""asgi"", ""asyncio"", ""django"", ""fastapi"", ""graphql"", ""graphql-library"", ""graphql-schema"", ""graphql-server"", ""hacktoberfest"", ""mypy"", ""python"", ""starlette"", ""strawberry""]"
+saulpw/visidata,python,3,2,26382069974975459342a7e5bb73e3bd908d3491,3cc6d5caa4bcaa0bcf46e364f3e0784737280ea0,https://github.com/saulpw/visidata.git,50,4,46,2016-10-27T04:21:00,"[""cli"", ""csv"", ""datajournalism"", ""datawrangling"", ""devops-tools"", ""eda"", ""hdf5"", ""json"", ""opendata"", ""pandas"", ""python"", ""reconciliation"", ""spreadsheet"", ""sqlite"", ""tabular-data"", ""tsv"", ""tui"", ""unix-toolkit""]"
+snapcore/snapcraft,python,0,0,,,https://github.com/snapcore/snapcraft.git,3,2,1,2015-10-29T05:23:15,"[""snaps""]"
+tmux-python/tmuxp,python,0,0,,,https://github.com/tmux-python/tmuxp.git,0,0,0,2013-08-27T05:51:11,"[""cli"", ""cli-utilities"", ""json"", ""python"", ""session-manager"", ""teamocil"", ""terminal"", ""tmux"", ""tmuxinator"", ""yaml""]"
+terryyin/lizard,python,0,0,,,https://github.com/terryyin/lizard.git,1,0,1,2012-06-21T11:31:46,[]
+toshas/torch-fidelity,python,0,0,,,https://github.com/toshas/torch-fidelity.git,0,0,0,2020-04-23T10:44:20,"[""evaluation"", ""frechet-inception-distance"", ""gan"", ""generative-model"", ""inception-score"", ""kernel-inception-distance"", ""metrics"", ""perceptual-path-length"", ""precision"", ""pytorch"", ""reproducibility"", ""reproducible-research""]"
+tmux-python/libtmux,python,0,0,,,https://github.com/tmux-python/libtmux.git,0,0,0,2016-05-22T11:46:12,"[""api"", ""cli"", ""library"", ""python"", ""python-3"", ""terminal"", ""tmux""]"
+thomaspinder/gpjax,python,6,2,fc1085d2cf53f16c27bc2bfe8533ea779fcb182b,b620398bd4d45b317f2199410b570924d7fa7a3a,https://github.com/thomaspinder/gpjax.git,13,7,6,2020-09-27T08:40:59,"[""bayesian-inference"", ""gaussian-processes"", ""jax"", ""machine-learning"", ""probabilistic-programming""]"
+trailofbits/graphtage,python,0,0,,,https://github.com/trailofbits/graphtage.git,0,0,0,2020-04-21T04:47:22,"[""command-line-tool"", ""diff"", ""graph-algorithms"", ""hacktoberfest"", ""hacktoberfest2021"", ""library"", ""python"", ""utility""]"
+trailofbits/fickling,python,1,1,8c24c6edabceab156cfd41f4d70b650e1cdad1f7,8c24c6edabceab156cfd41f4d70b650e1cdad1f7,https://github.com/trailofbits/fickling.git,24,8,16,2021-01-21T05:44:51,"[""machine-learning"", ""python"", ""security""]"
+tencent/bk-sops,python,5,1,c312acc400ae61354e12bd3a7c2f6a003018c9a9,c312acc400ae61354e12bd3a7c2f6a003018c9a9,https://github.com/tencent/bk-sops.git,10,5,5,2018-10-15T10:19:12,[]
+trigger/trigger,python,0,0,,,https://github.com/trigger/trigger.git,12,10,2,2012-02-28T09:57:00,"[""acls"", ""network-automation"", ""network-engineers"", ""networking"", ""networking-programmability"", ""python"", ""systems""]"
+trailofbits/algo,python,13,3,b821080ebad55ed26e8e2e20f541ada7cd9d74e1,5a722681170c21276be494034412db206da1f0a6,https://github.com/trailofbits/algo.git,23,10,13,2016-05-15T03:42:48,"[""ansible"", ""encryption"", ""ikev2"", ""ipsec"", ""security"", ""ssh-tunnel"", ""strongswan"", ""vpn"", ""vpn-client"", ""vpn-server"", ""wireguard""]"
+tobymao/sqlglot,python,0,0,,,https://github.com/tobymao/sqlglot.git,31,7,24,2021-03-13T05:01:56,"[""bigquery"", ""clickhouse"", ""databricks"", ""duckdb"", ""hive"", ""mysql"", ""optimizer"", ""parser"", ""postgres"", ""presto"", ""python"", ""redshift"", ""snowflake"", ""spark"", ""sql"", ""sqlite"", ""sqlparser"", ""transpiler"", ""trino"", ""tsql""]"
+ulauncher/ulauncher,python,0,0,,,https://github.com/ulauncher/ulauncher.git,0,0,0,2015-05-10T08:44:08,"[""gtk"", ""launcher"", ""linux"", ""python""]"
+unrealcv/unrealcv,python,0,0,,,https://github.com/unrealcv/unrealcv.git,2,1,1,2016-09-08T06:03:51,"[""computer-vision"", ""embodied-ai"", ""machine-learning"", ""simulation"", ""synthetic-data"", ""ue4"", ""ue5"", ""virtual-worlds""]"
+ultralytics/yolov3,python,0,0,,,https://github.com/ultralytics/yolov3.git,0,0,0,2018-08-26T08:57:20,"[""deep-learning"", ""machine-learning"", ""object-detection"", ""ultralytics"", ""yolo"", ""yolov3"", ""yolov5""]"
+ultralytics/yolov5,python,0,0,,,https://github.com/ultralytics/yolov5.git,1,1,0,2020-05-18T03:45:11,"[""coreml"", ""deep-learning"", ""ios"", ""machine-learning"", ""ml"", ""object-detection"", ""onnx"", ""pytorch"", ""tflite"", ""ultralytics"", ""yolo"", ""yolov3"", ""yolov5""]"
+truenas/freenas,python,0,0,,,https://github.com/truenas/freenas.git,0,0,0,2013-03-07T01:23:20,[]
+truenas/middleware,python,0,0,,,https://github.com/truenas/middleware.git,0,0,0,2013-03-07T01:23:20,"[""freenas"", ""iscsi"", ""nfs"", ""s3-storage"", ""scale"", ""smb"", ""storage"", ""truenas"", ""zfs""]"
+wkentaro/labelme,python,0,0,,,https://github.com/wkentaro/labelme.git,0,0,0,2016-05-09T12:30:26,"[""annotations"", ""classification"", ""computer-vision"", ""deep-learning"", ""image-annotation"", ""instance-segmentation"", ""python"", ""semantic-segmentation"", ""video-annotation""]"
+whitphx/streamlit-webrtc,python,0,0,,,https://github.com/whitphx/streamlit-webrtc.git,11,1,10,2021-01-04T02:13:24,"[""computer-vision"", ""hacktoberfest"", ""pypi"", ""python"", ""streamlit"", ""streamlit-webrtc"", ""video-processing"", ""video-streaming"", ""webrtc""]"
+vyperlang/vyper,python,0,0,,,https://github.com/vyperlang/vyper.git,11,5,6,2016-11-11T08:56:41,"[""ethereum"", ""ethereum-dapp"", ""language"", ""python"", ""vyper""]"
+xonsh/xonsh,python,1,1,6708eeedcd77d7bc70eb8795125b8608b4d89195,6708eeedcd77d7bc70eb8795125b8608b4d89195,https://github.com/xonsh/xonsh.git,9,3,6,2015-01-21T10:05:27,"[""anthropic"", ""claude"", ""claude-code"", ""cmux"", ""data-engineering"", ""data-scientists"", ""devops"", ""devsecops"", ""hyper"", ""iterm2"", ""kitty"", ""nix"", ""nixos"", ""python-automation"", ""raspberry-pi"", ""security-automation"", ""vscode-extension"", ""wezterm"", ""xonsh""]"
+yoshitomo-matsubara/torchdistill,python,0,0,,,https://github.com/yoshitomo-matsubara/torchdistill.git,0,0,0,2019-12-18T05:40:32,"[""amazon-sagemaker-lab"", ""cifar10"", ""cifar100"", ""coco"", ""colab-notebook"", ""glue"", ""google-colab"", ""image-classification"", ""imagenet"", ""knowledge-distillation"", ""natural-language-processing"", ""nlp"", ""object-detection"", ""pascal-voc"", ""pytorch"", ""pytorch-ecosystem"", ""semantic-segmentation"", ""text-classification"", ""transformer""]"
+zachowj/hass-node-red,python,0,0,,,https://github.com/zachowj/hass-node-red.git,2,2,0,2019-08-18T10:13:48,"[""home-assistant"", ""node-red""]"
+zengbin93/czsc,python,0,0,,,https://github.com/zengbin93/czsc.git,3,2,1,2019-06-11T07:38:57,[]
+xesscorp/skidl,python,4,4,6d7714d92a83ca3b2a8d3d11a37b2daf6d8a3ca9,4f145dac6a03a8f525f8ce5c49d303485952f301,https://github.com/xesscorp/skidl.git,19,7,12,2016-08-16T07:21:55,[]
+yelp/paasta,python,0,0,,,https://github.com/yelp/paasta.git,23,13,10,2015-10-26T09:35:53,"[""docker"", ""infrastructure"", ""k8s"", ""kubernetes"", ""paas"", ""paasta"", ""yelp""]"
+zigpy/zha-device-handlers,python,0,0,,,https://github.com/zigpy/zha-device-handlers.git,0,0,0,2018-11-18T02:48:54,"[""hacktoberfest"", ""home-assistant"", ""home-automation""]"
+yourlabs/django-autocomplete-light,python,18,3,95de194cb514f99c2a3f27859baa241b73797e02,ff9debfec6d643e03cf5524175d897e10692c0df,https://github.com/yourlabs/django-autocomplete-light.git,28,20,8,2012-05-03T11:49:37,"[""autocomplete"", ""django"", ""python""]"
+zentralopensource/zentral,python,4,1,ea9605dd50349f5b0963d4e08ce9635b1e21d77c,ea9605dd50349f5b0963d4e08ce9635b1e21d77c,https://github.com/zentralopensource/zentral.git,67,39,28,2015-10-20T02:03:03,"[""apple-mdm"", ""elasticsearch"", ""endpoint-management"", ""endpoint-security"", ""events"", ""gitops"", ""inventory"", ""jamf"", ""macos"", ""mdm"", ""munki"", ""osquery"", ""santa"", ""splunk"", ""sumologic"", ""terraform"", ""unified-view""]"
+xpra-org/xpra,python,2,2,12a81977720b62b942ccdcc78ea66ba37dd92d7b,365412755aa0a711e56e1d80b8e06dd81ad14df4,https://github.com/xpra-org/xpra.git,83,40,43,2021-01-22T12:36:06,"[""network-access"", ""remote-app"", ""remote-desktop""]"
+trustedsec/hate_crack,python,40,27,1af4c74065c0d1226516de724ca06334eea1aedf,8827f8f9d30f5a731b38b487589b4bbed94e0c82,https://github.com/trustedsec/hate_crack.git,208,120,88,2018-01-26T04:49:13,[]
+rotki/rotki,python,0,0,,,https://github.com/rotki/rotki.git,1,0,1,2018-03-05T11:26:09,"[""accounting"", ""analytics"", ""bitcoin"", ""blockchain"", ""cryptocurrencies"", ""cryptocurrency-exchanges"", ""cryptocurrency-portfolio"", ""cryptocurrency-portfolio-tracking"", ""ethereum"", ""hacktoberfest"", ""management"", ""management-system"", ""portfolio-tracker"", ""tracking""]"
+prefecthq/prefect,python,137,49,90f261bc0c06e5fc6cda92e83c39ff5131f6d52a,3ef82fb58dc8dfdf8fc43fd2bab45007eeec0450,https://github.com/prefecthq/prefect.git,627,304,323,2018-06-29T09:59:26,"[""automation"", ""data"", ""data-engineering"", ""data-ops"", ""data-science"", ""infrastructure"", ""ml-ops"", ""observability"", ""orchestration"", ""pipeline"", ""prefect"", ""python"", ""workflow"", ""workflow-engine""]"
