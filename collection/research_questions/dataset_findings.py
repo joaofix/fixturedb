@@ -41,7 +41,10 @@ Currently covers:
   purity-gate's "by agent adoption intensity" table: that one asks whether
   the *rejection rate* varies by bucket; this asks how many repos *are* in
   each bucket -- i.e. how representative Dataset A's repo pool is of
-  heavy vs. token agent usage.
+  heavy vs. token agent usage. Reported overall, and per language as a
+  funnel (Config -> No commits -> adoption tiers) -- the latter is the
+  exact shape of the paper's funnel/adoption table
+  (`\ref{tab:adoption-intensity}`).
 
   Known limitation (not fixed here): only the bucket label is persisted,
   not the underlying numeric ratio (agent commits / total commits since
@@ -240,6 +243,100 @@ def _render_adoption_intensity_distribution(stats: list[RepoPurityStats]) -> str
     return "\n".join(lines)
 
 
+def _cell(count: int, row_total: int) -> str:
+    pct = 100 * count / row_total if row_total else 0.0
+    return f"{count:,} ({pct:.2f}%)"
+
+
+_LANGUAGE_DISPLAY_NAMES = {
+    "python": "Python",
+    "java": "Java",
+    "javascript": "JavaScript",
+    "typescript": "TypeScript",
+}
+
+_BUCKET_DISPLAY_NAMES = {
+    "no_commits": "No commits",
+    "experimental": "Experimental",
+    "limited": "Limited",
+    "consistent": "Consistent",
+    "pervasive": "Pervasive",
+}
+
+
+def _render_adoption_intensity_funnel_by_language(stats: list[RepoPurityStats]) -> str:
+    """Combines the agent-config funnel with the adoption-intensity
+    breakdown into one row per language -- the exact shape of the paper's
+    funnel/adoption table (`\\ref{tab:adoption-intensity}`); column/row
+    names match that table's wording exactly so this can be copied over
+    without relabeling.
+
+    Agent Configuration Present is every repo with an agent_adoption_
+    intensity value at all (that field is only ever computed for repos
+    already known to have an agent config file, so it's just that row's
+    full count -- the funnel's entry point). No commits and the adoption
+    tiers (Experimental/Limited/Consistent/Pervasive) each report their
+    share of Agent Configuration Present, so those percentages sum to 100%
+    per row (barring any "(not set)" repos, see below). Agent Active Total
+    is Agent Configuration Present minus No commits: the repos that
+    actually had >=1 detectable agent commit.
+
+    "(not set)" -- adoption_intensity never computed at all, e.g. a failed
+    clone before the scan ran -- only gets its own column if at least one
+    repo actually has it (none do in the current corpus); that case means
+    "unknown," not "confirmed zero," so it's excluded from Agent Active
+    Total same as No commits would be, not folded into either bucket."""
+    by_language = _group_by(stats, "language")
+    buckets = [
+        label
+        for label in _ADOPTION_INTENSITY_ORDER
+        if any(s.adoption_intensity == label for s in stats)
+        or (label == _UNSET_LABEL and any(s.adoption_intensity is None for s in stats))
+    ]
+    bucket_headers = [_BUCKET_DISPLAY_NAMES.get(b, b) for b in buckets]
+    non_adopted = {"no_commits", _UNSET_LABEL}
+
+    header = (
+        ["Language", "Agent Configuration Present"]
+        + bucket_headers
+        + ["Agent Active Total"]
+    )
+    lines = [
+        "| " + " | ".join(header) + " |",
+        "|" + "---|" * len(header),
+    ]
+    column_totals = dict.fromkeys(buckets, 0)
+    grand_config = 0
+    grand_total = 0
+    for lang in sorted(by_language):
+        lang_groups = _group_by(by_language[lang], "adoption_intensity")
+        counts = [len(lang_groups.get(label, [])) for label in buckets]
+        config = sum(counts)
+        adopted_total = config - sum(
+            c for label, c in zip(buckets, counts) if label in non_adopted
+        )
+        cells = [_cell(c, config) for c in counts]
+        lang_display = _LANGUAGE_DISPLAY_NAMES.get(lang, lang)
+        lines.append(
+            f"| {lang_display} | {config:,} | "
+            + " | ".join(cells)
+            + f" | {adopted_total:,} |"
+        )
+        for label, c in zip(buckets, counts):
+            column_totals[label] += c
+        grand_config += config
+        grand_total += adopted_total
+    total_cells = [_cell(column_totals[label], grand_config) for label in buckets]
+    lines.append(
+        "| **Total (All Languages)** | "
+        + f"{grand_config:,} | "
+        + " | ".join(total_cells)
+        + f" | {grand_total:,} |"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
@@ -292,7 +389,17 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "above. See this module's docstring for the known limitation (bucket "
         "label only, no underlying numeric ratio persisted).",
         "",
+        "### Overall",
+        "",
         _render_adoption_intensity_distribution(stats),
+        "### Funnel and adoption intensity by language",
+        "",
+        "Config -> No commits -> adoption tiers, per language -- the exact "
+        "shape used for the paper's funnel/adoption table. See this "
+        "function's docstring for exactly what Config/Total mean and how "
+        "the percentages are computed.",
+        "",
+        _render_adoption_intensity_funnel_by_language(stats),
     ]
 
     return "\n".join(lines)

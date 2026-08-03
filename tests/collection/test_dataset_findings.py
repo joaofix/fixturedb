@@ -196,7 +196,9 @@ class TestGenerateReportAdoptionIntensitySection:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        section = report.split("## Agent Adoption Intensity")[1]
+        section = report.split("## Agent Adoption Intensity")[1].split(
+            "### Funnel and adoption intensity by language"
+        )[0]
         table_rows = [
             line
             for line in section.splitlines()
@@ -228,6 +230,95 @@ class TestGenerateReportAdoptionIntensitySection:
         report = generate_report(db_root=tmp_path)
         section = report.split("## Agent Adoption Intensity")[1]
         assert "| (not set) | 1 | 100.00% |" in section
+
+    _BY_LANGUAGE_REPOS = [
+        {"language": "python", "adoption_intensity": "pervasive"},
+        {"language": "python", "adoption_intensity": "experimental"},
+        {"language": "python", "adoption_intensity": "no_commits"},
+        {"language": "java", "adoption_intensity": "limited"},
+        {"language": "java", "adoption_intensity": "limited"},
+    ]
+
+    def _funnel_section(self, report: str) -> str:
+        return report.split("### Funnel and adoption intensity by language")[1]
+
+    def test_funnel_table_has_config_no_commits_and_adopted_total(self, tmp_path):
+        """Agent Configuration Present is the row's full repo count; No
+        commits and the tiers each report their share of it (so those
+        percentages sum to 100%); Agent Active Total is Agent Configuration
+        Present minus No commits. Language names and column headers match
+        the paper's table wording exactly (Java/Python/etc, not the raw
+        lowercase DB values). java: 2 repos, both limited -> Config=2,
+        No commits=0, Limited=2 (100%), Total=2. python: 3 repos, one each
+        of pervasive/experimental/no_commits -> Config=3, No commits=1
+        (33.33%), Total=2 (the two adopted repos)."""
+        _make_db(tmp_path, self._BY_LANGUAGE_REPOS)
+        report = generate_report(db_root=tmp_path)
+        section = self._funnel_section(report)
+
+        assert (
+            "| Language | Agent Configuration Present | No commits | Experimental "
+            "| Limited | Pervasive | Agent Active Total |"
+            in section
+        )
+        assert (
+            "| Java | 2 | 0 (0.00%) | 0 (0.00%) | 2 (100.00%) | 0 (0.00%) | 2 |"
+            in section
+        )
+        assert (
+            "| Python | 3 | 1 (33.33%) | 1 (33.33%) | 0 (0.00%) | 1 (33.33%) | 2 |"
+            in section
+        )
+        assert (
+            "| **Total (All Languages)** | 5 | 1 (20.00%) | 1 (20.00%) | 2 (40.00%) "
+            "| 1 (20.00%) | 4 |"
+            in section
+        )
+
+    def test_funnel_table_omits_tiers_no_repo_uses(self, tmp_path):
+        """Only Pervasive/No commits are ever assigned -- Consistent/Limited/
+        Experimental columns must not appear at all, matching the overall
+        table's same behavior."""
+        _make_db(
+            tmp_path,
+            [
+                {"language": "python", "adoption_intensity": "pervasive"},
+                {"language": "python", "adoption_intensity": "no_commits"},
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        section = self._funnel_section(report)
+
+        assert (
+            "| Language | Agent Configuration Present | No commits | Pervasive "
+            "| Agent Active Total |"
+            in section
+        )
+        for absent in ("Experimental", "Limited", "Consistent"):
+            assert absent not in section
+
+    def test_funnel_table_keeps_not_set_out_of_total(self, tmp_path):
+        """None (adoption_intensity never computed, e.g. a failed clone)
+        means "unknown," not "confirmed zero" -- it gets its own "(not set)"
+        column and, like No commits, is excluded from Agent Active Total
+        (only repos confirmed to have >=1 agent commit count toward it)."""
+        _make_db(
+            tmp_path,
+            [
+                {"language": "python", "adoption_intensity": "no_commits"},
+                {"language": "python", "adoption_intensity": None},
+                {"language": "python", "adoption_intensity": "pervasive"},
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        section = self._funnel_section(report)
+
+        assert "(not set)" in section
+        # Config=3, No commits=1 (33.33%), (not set)=1 (33.33%),
+        # pervasive=1 (33.33%), Total=1 (just the pervasive repo).
+        assert (
+            "| Python | 3 | 1 (33.33%) | 1 (33.33%) | 1 (33.33%) | 1 |" in section
+        )
 
 
 class TestWriteReport:
