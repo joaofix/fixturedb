@@ -120,6 +120,12 @@ fixture itself is not. Pairing rules: `feature_extraction_patterns.yaml`'s `tear
 teardown counterpart defined in a different file (e.g. inherited from a Java base test class) is not
 detected.
 
+**Reporting caveat:** the always-true fixture_types (`@Rule`/`@ClassRule`, `aroundEach`/`aroundAll`) are
+set to 1 with no source-level check, by construction — the mechanism itself guarantees teardown, so
+there's nothing to verify. These rows carry no agent-vs-human signal. If a paper reports an aggregate
+`has_teardown_pair` rate, exclude them or break the rate out per fixture_type instead, the way RQ2 already
+does.
+
 ### fixture_dependencies (Python/pytest only)
 
 A fixture's own parameter names are cross-referenced against every other fixture name detected in the

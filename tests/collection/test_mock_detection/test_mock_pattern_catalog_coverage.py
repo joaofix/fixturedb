@@ -71,9 +71,6 @@ SAMPLES: dict[str, str] = {
     r"sinon\.createStubInstance\s*\(\s*(\w+)": "sinon.createStubInstance(MyClass)",
     r"vi\.fn\s*\(": "vi.fn()",
     'vi\\.mock\\s*\\(\\s*[\'"]([^\'"]+)[\'"]': "vi.mock('./service')",
-    r"gomock\.NewController": "gomock.NewController(t)",
-    r"testify/mock": 'import "github.com/stretchr/testify/mock"',
-    '\\.On\\s*\\(\\s*[\'"](\\w+)[\'"]': '.On("MethodName")',
 }
 
 

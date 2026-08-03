@@ -18,8 +18,7 @@ this one is scoped to the teardown-pairing metric specifically.
 | 1 | Type-based pairing has no block/class locality — can false-pair hooks across independent `describe()` blocks or `@Nested` classes in the same file | **Resolved** — `FixtureResult.container_id` (the AST byte-offset of the nearest enclosing `describe()`/`class_declaration` node) added to `collection/detector_shared.py`, populated by `detector_javascript.py::_enclosing_describe_id()` and `detector_java.py::_enclosing_class_id()`, and required to match in `_calculate_teardown_pairs`'s type-based branch. Internal pairing signal only — not written to `fixtures.csv`/DB. Covered by 5 new tests in `tests/collection/test_extractor_metadata/test_new_metrics.py::TestTeardownDetection` (2 JS, 3 Java, including the `@Nested`-class repro). |
 | 2 | Metric measures presence of cleanup, not correctness | Disclosed (`docs/architecture/metrics-reference.md`, "Known limitations"). Defensible scope choice; flag explicitly if the paper's framing ever drifts toward "agents provide teardown as reliably as humans." |
 | 3 | No inter-rater reliability / manual validation specific to this metric | Disclosed (`docs/reference/limitations.md`, "Validation Status" — no Cohen's kappa available generally). RQ2's per-type `has_teardown_pair` rate additionally is "descriptive only, not run through a significance test" (`collection/research_questions/rq2.py:40-46`) — only the setup-to-teardown *ratio* and *kind distribution* get Mann-Whitney U / chi-square treatment. |
-| 4 | Two mechanisms (`always_has_teardown_fixture_types`) set the flag with zero source-level check, by construction | Not a bug — the language semantics genuinely guarantee it (JUnit `@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`). Not disclosed as "these rows contribute no A-vs-B/C signal" — worth a one-line note if the paper reports an aggregate rate that includes them. |
-| 5 | Fixture detection (and therefore this metric) has no Go coverage, while mock detection does (`testify`, `gomock`) | Scope statement, not a flaw in this metric — Go isn't a fixture-detection language anywhere in the project. Worth pre-empting since a reviewer comparing the mocking section to this one side-by-side may notice the asymmetry. |
+| 4 | Two mechanisms (`always_has_teardown_fixture_types`) set the flag with zero source-level check, by construction | **Resolved** — not a bug (the language semantics genuinely guarantee it: JUnit `@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`), but the "these rows carry no agent-vs-human signal" caveat is now written down: `docs/architecture/metrics-reference.md`'s `has_teardown_pair` section, "Reporting caveat." |
 
 ## What already holds up
 
@@ -133,10 +132,9 @@ Implemented as designed below (no deviations). Verified against the exact
 (The cheaper line-proximity fallback originally sketched here wasn't needed — the root
 fix, above, was implemented directly.)
 
-**Follow-up, not part of this fix:** if Datasets A/B were already extracted with the
-buggy detector before this fix landed, the historical `has_teardown_pair` rate for
-`before_each`/`after_each`/`junit5_*` types in `db/{a,b}.db` may be inflated by an
-unknown amount. Querying the real corpus for how often type-based pairing actually
-fired on multi-block files (per-file describe-block count vs. observed pairing rate)
-would establish whether re-extraction is worth it. Not done as part of this fix — see
-the plan file's note that re-extraction is a separate decision for the user.
+**Corpus impact:** if Datasets A/B were already extracted with the buggy detector
+before this fix landed, the historical `has_teardown_pair` rate for
+`before_each`/`after_each`/`junit5_*` types in `db/{a,b}.db` may have been inflated by
+an unknown amount. Not investigated separately — the user is redoing fixture
+extraction for all datasets soon regardless, which picks up this fix automatically in
+the next version of the corpus.

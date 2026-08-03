@@ -135,7 +135,7 @@ CREATE TABLE IF NOT EXISTS mock_usages (
     fixture_id                  INTEGER NOT NULL REFERENCES fixtures(id),
     repo_id                     INTEGER NOT NULL REFERENCES repositories(id),
     framework                   TEXT,   -- unittest_mock/pytest_mock/mockito/
-                                        -- easymock/jest/sinon/gomock/testify/...
+                                        -- easymock/jest/sinon/vitest/...
     category                    TEXT,   -- test-double taxonomy: dummy/stub/spy/mock/fake
                                         -- (see feature_extraction_patterns.yaml)
     target_identifier           TEXT,   -- the string passed to mock (e.g. "mymodule.Client")

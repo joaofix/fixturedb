@@ -2,11 +2,8 @@
 Unit tests for framework detection across all supported languages.
 
 Tests verify that fixtures are correctly identified with their respective
-testing frameworks (pytest, unittest, junit, nunit, mstest, xunit, testify,
-golang_testing, ava, etc.).
+testing frameworks (pytest, unittest, junit, nunit, mstest, xunit, ava, etc.).
 """
-
-import pytest
 
 from .conftest import extract_and_find_fixtures
 
@@ -317,91 +314,6 @@ public class StepDefinitions {
             "captureScreenshot",
         ):
             assert extract_and_find_fixtures(code, "java", method_name) == []
-
-
-@pytest.mark.skip(reason="Go is not supported")
-class TestGoFrameworkDetection:
-    """Test Go framework detection (golang_testing and testify)"""
-
-    def test_golang_testing_testmain(self):
-        """Go TestMain() should have framework='golang_testing'"""
-        code = """
-package mypackage
-
-import (
-    "testing"
-)
-
-func TestMain(m *testing.M) int {
-    setup()
-    code := m.Run()
-    teardown()
-    return code
-}
-
-func TestSomething(t *testing.T) {
-    t.Log("test")
-}
-"""
-        # Check TestMain
-        fixtures = extract_and_find_fixtures(code, "go", "TestMain")
-        assert len(fixtures) > 0
-        assert fixtures[0].framework == "golang_testing"
-
-    def test_testify_suite_methods(self):
-        """testify SetupSuite/SetupTest should have framework='testify'"""
-        code = """
-package models
-
-import (
-    "testing"
-    "github.com/stretchr/testify/suite"
-)
-
-type DatabaseTestSuite struct {
-    suite.Suite
-    db *Database
-}
-
-func (suite *DatabaseTestSuite) SetupSuite() {
-    suite.db = setupDatabase()
-}
-
-func (suite *DatabaseTestSuite) TeardownSuite() {
-    suite.db.Close()
-}
-
-func (suite *DatabaseTestSuite) SetupTest() {
-    suite.db.ClearData()
-}
-
-func (suite *DatabaseTestSuite) TeardownTest() {
-    // cleanup
-}
-
-func (suite *DatabaseTestSuite) TestQuery() {
-    result := suite.db.Query("SELECT 1")
-    suite.Equal(1, result)
-}
-
-func TestDatabaseTestSuite(t *testing.T) {
-    suite.Run(t, new(DatabaseTestSuite))
-}
-"""
-        # Check SetupSuite
-        fixtures = extract_and_find_fixtures(code, "go", "SetupSuite")
-        assert len(fixtures) > 0
-        assert fixtures[0].framework == "testify"
-
-        # Check SetupTest
-        fixtures = extract_and_find_fixtures(code, "go", "SetupTest")
-        assert len(fixtures) > 0
-        assert fixtures[0].framework == "testify"
-
-        # Check TeardownSuite
-        fixtures = extract_and_find_fixtures(code, "go", "TeardownSuite")
-        assert len(fixtures) > 0
-        assert fixtures[0].framework == "testify"
 
 
 class TestJavaScriptTypeScriptFrameworkDetection:

@@ -253,28 +253,6 @@ describe('Test suite', () => {
             if before_each:
                 assert before_each[0].scope == "per_test"
 
-    def test_go_test_main_in_multiple_files(self, tmp_path):
-        """Go files should be ignored because Go is unsupported."""
-        go_file = tmp_path / "setup_test.go"
-        go_file.write_text("""
-package main
-
-import (
-    "testing"
-)
-
-func TestMain(m *testing.M) {
-    setupGlobal()
-    code := m.Run()
-    cleanupGlobal()
-    os.Exit(code)
-}
-""")
-
-        result = extract_fixtures(go_file, "go")
-        assert result.fixtures == []
-
-
 class TestDetectorBoundaryConditions:
     """Test boundary conditions and limits."""
 

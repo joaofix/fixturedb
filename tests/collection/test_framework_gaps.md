@@ -146,37 +146,6 @@ def test_func(fixture):
 
 ---
 
-## Go Gaps
-
-### 1. testify/suite Pattern
-```go
-type UserSuite struct {
-    suite.Suite
-    db *sql.DB
-}
-
-func (suite *UserSuite) SetupSuite() { }
-func (suite *UserSuite) TearDownSuite() { }
-func (suite *UserSuite) SetupTest() { }
-func (suite *UserSuite) TearDownTest() { }
-```
-**Status:** ❌ NOT DETECTED - Testify not in heuristics
-
-### 2. Table-driven Tests with shared setup
-```go
-func TestWithSetup(t *testing.T) {
-    tests := []struct {
-        name string
-        setup func()
-    }{
-        {"test1", func() { /* setup */ }},
-    }
-}
-```
-**Status:** ⚠️ PARTIAL - setup function might be detected as helper
-
----
-
 ## C# Gaps
 
 ### 1. xUnit Fixture Class Injection
@@ -212,7 +181,6 @@ public class GlobalSetup {
 | Java | Static initializers | ❌ | MEDIUM |
 | JS/TS | AVA test.before/test.after | ❌ | MEDIUM |
 | JS/TS | Vitest explicit typing | ⚠️ | LOW |
-| Go | testify/suite.Suite | ❌ | MEDIUM |
 | C# | xUnit IDisposable | ❓ | MEDIUM |
 | C# | @SetUpFixture class | ⚠️ | LOW |
 

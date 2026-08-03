@@ -236,44 +236,6 @@ beforeEach(() => {
         assert fixture.fixture_type == "before_each"
 
 
-@pytest.mark.skip(reason="Go is not supported")
-class TestGoMockPatterns:
-    """Validate detection of Go mock patterns"""
-
-    def test_gomock_interface_setup(self):
-        """GoMock interface mock in setup function"""
-        code = """
-import "github.com/golang/mock/gomock"
-
-func TestExample(t *testing.T) {
-    ctrl := gomock.NewController(t)
-    defer ctrl.Finish()
-    
-    mockDB := NewMockDatabase(ctrl)
-    mockDB.EXPECT().Query("SELECT *").Return(rows, nil)
-}
-"""
-        # Go uses factory pattern, not fixtures like other languages
-        # Just verify no crashes
-        fixtures = extract_and_find_fixtures(code, "go")
-        assert isinstance(fixtures, list)
-
-    def test_mock_assignment(self):
-        """Simple mock object assignment in test"""
-        code = """
-func setupTest() *MockService {
-    return &MockService{
-        GetUserFunc: func(id int) (*User, error) {
-            return &User{ID: id}, nil
-        },
-    }
-}
-"""
-        # Go helper functions might be detected as fixtures
-        fixtures = extract_and_find_fixtures(code, "go")
-        assert isinstance(fixtures, list)
-
-
 class TestMockDetectionAccuracy:
     """Validate false positive/negative rates in mock detection"""
 

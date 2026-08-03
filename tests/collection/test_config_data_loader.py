@@ -177,8 +177,6 @@ def test_mock_patterns_cover_expected_frameworks():
         "jest",
         "sinon",
         "vitest",
-        "gomock",
-        "testify_mock",
     }
 
 

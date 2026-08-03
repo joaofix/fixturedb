@@ -29,7 +29,6 @@ def create_test_file(language: str, code: str) -> Path:
         "java": ".java",
         "javascript": ".js",
         "typescript": ".ts",
-        "go": ".go",
     }
 
     suffix = suffix_map.get(language, ".txt")

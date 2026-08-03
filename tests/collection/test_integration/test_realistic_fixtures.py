@@ -338,56 +338,6 @@ describe('UserRepository', () => {
         assert_fixture_with_type_detected(code, "typescript", "after_each")
 
 
-@pytest.mark.skip(reason="Go is not supported")
-class TestRealWorldGoFixtures:
-    """Integration tests using realistic Go test code"""
-
-    def test_go_table_driven_tests(self):
-        """Go table-driven test pattern"""
-        code = """
-package user_test
-
-import (
-    "testing"
-    "github.com/golang/mock/gomock"
-)
-
-func TestUserService(t *testing.T) {
-    ctrl := gomock.NewController(t)
-    defer ctrl.Finish()
-    
-    mockRepo := NewMockRepository(ctrl)
-    mockRepo.EXPECT().GetUser(1).Return(&User{ID: 1}, nil)
-    
-    service := NewUserService(mockRepo)
-    
-    tests := []struct {
-        name string
-        id   int
-        want *User
-    }{
-        {"valid id", 1, &User{ID: 1}},
-        {"invalid id", 0, nil},
-    }
-    
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            user, err := service.GetUser(tt.id)
-        })
-    }
-}
-
-func setupTestDB(t *testing.T) *Database {
-    db := NewDatabase()
-    t.Cleanup(func() { db.Close() })
-    return db
-}
-"""
-        # Go doesn't have traditional fixtures, but verify no crashes
-        fixtures = extract_and_find_fixtures(code, "go")
-        assert isinstance(fixtures, list)
-
-
 class TestMultiLanguageConsistency:
     """Validate consistent detection across multiple languages in one test"""
 

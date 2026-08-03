@@ -230,7 +230,6 @@ def _get_extension(language: str) -> str:
         "java": "java",
         "javascript": "js",
         "typescript": "ts",
-        "go": "go",
         "c++": "cpp",
         "c": "c",
     }

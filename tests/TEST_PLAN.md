@@ -27,7 +27,6 @@ This document outlines the comprehensive testing strategy for the fixture extrac
 - `test_extractor_unit/test_java_fixtures.py`
 - `test_extractor_unit/test_javascript_fixtures.py`
 - `test_extractor_unit/test_typescript_fixtures.py`
-- `test_extractor_unit/test_go_fixtures.py`
 - `test_extractor_unit/test_csharp_fixtures.py`
 
 **Language-specific patterns to test:**
@@ -53,12 +52,6 @@ This document outlines the comprehensive testing strategy for the fixture extrac
 - `beforeAll()` / `afterAll()`
 - Factory functions
 - Shared setup objects
-
-**Go:**
-- `func setup*()` factory methods
-- Table-driven test setup
-- `t.Setup()` / `cleanup` deferred functions
-- Helper functions with recognizable naming
 
 **C#:**
 - `[SetUp]` / `[TearDown]` (NUnit)
@@ -121,7 +114,6 @@ This document outlines the comprehensive testing strategy for the fixture extrac
 | Java | JUnit 3/4/5, TestNG | 12+ |
 | JavaScript | Mocha, Jest, async patterns | 12+ |
 | TypeScript | Same as JS + type declarations | 12+ |
-| Go | Functions, tables, interfaces | 10+ |
 | C# | NUnit, xUnit, async | 12+ |
 
 ---
@@ -210,7 +202,6 @@ tests/
 │   ├── test_java_fixtures.py
 │   ├── test_javascript_fixtures.py
 │   ├── test_typescript_fixtures.py
-│   ├── test_go_fixtures.py
 │   └── test_csharp_fixtures.py
 ├── test_extractor_metadata/
 │   ├── test_line_numbers.py

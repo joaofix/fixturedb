@@ -6,7 +6,7 @@ This document describes the test suite for FixtureDB: test organization, how to 
 
 The test suite validates the fixture extraction module (`collection/detector.py`, which uses Tree-sitter ASTs to detect test fixtures) plus the rest of the collection pipeline — agent detection, dataset collectors, sampling, dedup. 431 test files across `tests/` as of this writing.
 
-Languages covered: Python, Java, JavaScript, TypeScript. Go patterns exist for structural parity but are dead code, out of this study's scope (see Mock Detection below). Test framework: pytest, with custom assertion helpers in `tests/conftest.py`.
+Languages covered: Python, Java, JavaScript, TypeScript. Test framework: pytest, with custom assertion helpers in `tests/conftest.py`.
 
 ## Test Organization
 
@@ -26,8 +26,7 @@ tests/
     │   ├── test_python_fixtures.py
     │   ├── test_java_fixtures.py
     │   ├── test_javascript_fixtures.py
-    │   ├── test_typescript_fixtures.py
-    │   └── test_go_fixtures.py      # Skipped: Go isn't in this study's language scope
+    │   └── test_typescript_fixtures.py
     ├── test_extractor_metadata/     # Category 2: metadata accuracy
     │   ├── test_line_numbers.py
     │   ├── test_fixture_types_and_scopes.py
@@ -42,15 +41,13 @@ tests/
     │   ├── test_python_mock_patterns.py
     │   ├── test_java_mock_patterns.py
     │   ├── test_javascript_mock_patterns.py
-    │   ├── test_typescript_mock_patterns.py
-    │   └── test_go_mock_patterns.py # Skipped: Go isn't in this study's language scope
+    │   └── test_typescript_mock_patterns.py
     ├── test_integration/            # Category 5: realistic fixtures
     │   ├── test_python_realistic_fixtures.py
     │   ├── test_java_realistic_fixtures.py
     │   ├── test_javascript_realistic_fixtures.py
     │   ├── test_typescript_realistic_fixtures.py
-    │   ├── test_realistic_fixtures.py
-    │   └── test_go_realistic_fixtures.py  # Skipped: same reason as above
+    │   └── test_realistic_fixtures.py
     └── test_*.py                    # Per-module tests: agent detection, dataset
                                       # collectors (A/B/C), dedup, sampling, CLI, ...
 ```
@@ -60,7 +57,7 @@ tests/
 1. **Unit tests** — small code snippets (1–10 lines), validating fixture detection and scope classification across all languages.
 2. **Metadata tests** — line numbers, LOC, fixture type, scope, complexity metrics (cyclomatic, cognitive), code metrics (parameters, objects instantiated, I/O calls), fixture dependency detection, and scope propagation (pytest only — see [Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)).
 3. **Edge cases** — large fixtures (100+ lines), deep nesting, false positive prevention, unicode, special characters, indentation variations, empty fixtures, malformed code.
-4. **Mock detection** — mock framework identification and test-double category classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across languages. See [Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection) for the full methodology and [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml) for the exact pattern/framework/category catalog (30 patterns, 11 frameworks). Coverage: Python (`unittest.mock`'s `patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`; `pytest-mock`'s `mocker.patch`/`mocker.patch.object`; pytest's built-in `monkeypatch`), Java (Mockito, EasyMock, MockK — not PowerMock, a documented exclusion), JavaScript (Jest's `fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`, Sinon's `stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`), TypeScript (same Jest/Sinon patterns, plus Vitest's `vi.fn`/`vi.mock`), and Go (patterns exist for parity — `gomock`, `testify` — but are unreachable, since Go detection is dead code; `test_go_mock_patterns.py` is skipped accordingly). Every test in this category asserts on `fixture.mocks` directly (framework, category, target_identifier) rather than just that the surrounding fixture was extracted — a fixture can be detected correctly while its mock usage inside is silently missed, which is how several real gaps were originally found (see `mock_patterns_excluded` in the YAML catalog for what's still knowingly unhandled).
+4. **Mock detection** — mock framework identification and test-double category classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across languages. See [Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection) for the full methodology and [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml) for the exact pattern/framework/category catalog (27 patterns, 9 frameworks). Coverage: Python (`unittest.mock`'s `patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`; `pytest-mock`'s `mocker.patch`/`mocker.patch.object`; pytest's built-in `monkeypatch`), Java (Mockito, EasyMock, MockK — not PowerMock, a documented exclusion), JavaScript (Jest's `fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`, Sinon's `stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`), TypeScript (same Jest/Sinon patterns, plus Vitest's `vi.fn`/`vi.mock`). Every test in this category asserts on `fixture.mocks` directly (framework, category, target_identifier) rather than just that the surrounding fixture was extracted — a fixture can be detected correctly while its mock usage inside is silently missed, which is how several real gaps were originally found (see `mock_patterns_excluded` in the YAML catalog for what's still knowingly unhandled).
 5. **Integration tests** — realistic, multi-language test code: Django TestCase hierarchy (Python), JUnit 5 with nested classes (Java), Jest with beforeAll/afterAll (JavaScript), type-annotated Jest (TypeScript), implicit vs. explicit setup patterns, complex fixture dependencies, large test modules with many fixtures.
 
 ## Running Tests

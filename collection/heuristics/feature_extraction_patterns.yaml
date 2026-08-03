@@ -144,14 +144,6 @@ mock_patterns:
     framework: vitest
   - pattern: 'vi\.mock\s*\(\s*[''"]([^''"]+)[''"]'
     framework: vitest
-  # Go (detector_go.py is dead code / not wired in -- kept for parity with
-  # the original pattern table in case Go detection is ever enabled)
-  - pattern: 'gomock\.NewController'
-    framework: gomock
-  - pattern: 'testify/mock'
-    framework: testify_mock
-  - pattern: '\.On\s*\(\s*[''"](\w+)[''"]'
-    framework: testify_mock
 
 # Known gaps -- documented for the same reason fixture_definitions.yaml
 # documents fixture-detection exclusions: absence should be a decision a
