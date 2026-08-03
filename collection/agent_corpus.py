@@ -148,6 +148,7 @@ def _load_qc_repo_rows(
                     repo_name,
                     lang,
                     stars=row.get("stars") or 0,
+                    forks=int(row.get("forks") or 0),
                     clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
                     created_at=row.get("created_at") or "",
@@ -930,6 +931,16 @@ class AgentCorpusCollector:
                         # of the dead defaults this file used to force.
                         "created_at": repo.get("created_at") or "",
                         "topics": repo.get("topics") or "[]",
+                        # repo_data already carries these (computed a few
+                        # lines above, at construct_repo_dict() time) -- were
+                        # previously only reaching db/a.db, never a CSV.
+                        "stars": repo_data.get("stars", 0),
+                        "forks": repo_data.get("forks", 0),
+                        "num_contributors": repo_data.get("num_contributors", 0),
+                        "agent_adoption_intensity": repo_data.get(
+                            "agent_adoption_intensity"
+                        )
+                        or "",
                     }
                 ],
                 [
@@ -945,6 +956,10 @@ class AgentCorpusCollector:
                     "accepted",
                     "created_at",
                     "topics",
+                    "stars",
+                    "forks",
+                    "num_contributors",
+                    "agent_adoption_intensity",
                 ],
             )
 

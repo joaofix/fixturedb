@@ -31,6 +31,7 @@ _OUTPUT_FIELDNAMES = [
     "stars",
     "clone_url",
     "num_contributors",
+    "forks",
     "qc_reason",
     "matched_config_file",
     "processed_at",
@@ -41,14 +42,16 @@ _OUTPUT_FIELDNAMES = [
 
 def _dataset_a_repos_dir(source_dir: Path) -> Path | None:
     """Find the sibling `datasets/a/repos/` directory (real `stars`/
-    `num_contributors`) from whatever `source_dir` Dataset B is actually
-    resolving from.
+    `num_contributors`/`forks`) from whatever `source_dir` Dataset B is
+    actually resolving from.
 
-    `default_repo_source("b")` prefers `datasets/a/fixtures/repos/`, whose
-    schema doesn't carry `stars`/`num_contributors` at all (see
-    `resolve_dataset_b_repos`'s docstring) -- returns None when `source_dir`
-    already *is* `.../a/repos/` (nothing to enrich from) or when no `a`
-    ancestor is found at all (e.g. a synthetic source_dir in a test).
+    `default_repo_source("b")` prefers `datasets/a/fixtures/repos/`, which
+    now carries `stars`/`forks`/`num_contributors` directly for freshly
+    generated data -- this remains a fallback for the fields on older
+    fixture-repos files that predate that (see `resolve_dataset_b_repos`'s
+    docstring) -- returns None when `source_dir` already *is* `.../a/repos/`
+    (nothing to enrich from) or when no `a` ancestor is found at all (e.g. a
+    synthetic source_dir in a test).
     """
     for parent in (source_dir, *source_dir.parents):
         if parent.name == "a":
@@ -57,10 +60,10 @@ def _dataset_a_repos_dir(source_dir: Path) -> Path | None:
     return None
 
 
-def _load_repo_metadata(repos_dir: Path) -> dict[str, tuple[str, str]]:
-    """Build a `{repo_name: (stars, num_contributors)}` lookup from an
+def _load_repo_metadata(repos_dir: Path) -> dict[str, tuple[str, str, str]]:
+    """Build a `{repo_name: (stars, num_contributors, forks)}` lookup from an
     already-collected `datasets/a/repos/*.csv` directory."""
-    lookup: dict[str, tuple[str, str]] = {}
+    lookup: dict[str, tuple[str, str, str]] = {}
     if not repos_dir.exists():
         return lookup
     for csv_path in sorted(repos_dir.glob("*.csv"), key=lambda p: p.name):
@@ -71,6 +74,7 @@ def _load_repo_metadata(repos_dir: Path) -> dict[str, tuple[str, str]]:
                     lookup[repo_name] = (
                         row.get("stars") or "0",
                         row.get("num_contributors") or "0",
+                        row.get("forks") or "0",
                     )
     return lookup
 
@@ -90,10 +94,10 @@ def resolve_dataset_b_repos(
     former is populated. Both source schemas share `repo_name`/`language`/
     `clone_url`; only the fixture-repos source contributes `has_agent_config`
     implicitly (every row there yielded a fixture, so it's always positive).
-    The fixture-repos schema also has no `stars`/`num_contributors` columns
-    at all, so those two fields are backfilled from the sibling
-    `datasets/a/repos/` directory (`_load_repo_metadata`) rather than left at
-    the previous silent `0` default when resolving from that source.
+    Freshly generated fixture-repos files carry `stars`/`forks`/
+    `num_contributors` directly; older ones that predate those columns fall
+    back to the sibling `datasets/a/repos/` directory (`_load_repo_metadata`)
+    rather than a silent `0` default.
 
     `stratified=True` caps each language's rows at `sampling.cochran_sample_size`
     of that language's own real row count (95% confidence, +/-5% margin)
@@ -135,8 +139,8 @@ def resolve_dataset_b_repos(
                     continue
                 lang_seen.add(repo_name)
 
-                fallback_stars, fallback_contributors = metadata_lookup.get(
-                    repo_name, ("0", "0")
+                fallback_stars, fallback_contributors, fallback_forks = (
+                    metadata_lookup.get(repo_name, ("0", "0", "0"))
                 )
                 by_lang.setdefault(lang, []).append(
                     {
@@ -148,6 +152,7 @@ def resolve_dataset_b_repos(
                         or f"https://github.com/{repo_name}.git",
                         "num_contributors": row.get("num_contributors")
                         or fallback_contributors,
+                        "forks": row.get("forks") or fallback_forks,
                         "qc_reason": "",
                         "matched_config_file": row.get("matched_config_file") or "",
                         "processed_at": now,

@@ -169,6 +169,7 @@ def _read_repos_from_files(
                             continue
                         stars = row.get("stargazers") or row.get("watchers") or 0
                         contributors = row.get("contributors") or 0
+                        forks = row.get("forks") or 0
                         # SEART exports topics as a ';'-separated string, not
                         # JSON -- convert here so classify_domain() (which
                         # expects a JSON array string, matching
@@ -190,6 +191,7 @@ def _read_repos_from_files(
                                 "clone_url": f"https://github.com/{name}.git",
                                 "stars": _to_int(stars),
                                 "num_contributors": _to_int(contributors),
+                                "forks": _to_int(forks),
                                 "created_at": (row.get("createdAt") or "").strip(),
                                 "topics": topics_json,
                                 "github_id": github_id,
@@ -390,6 +392,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "clone_url": entry.get("clone_url")
             or f"https://github.com/{full_name}.git",
             "num_contributors": int(entry.get("num_contributors") or 0),
+            "forks": int(entry.get("forks") or 0),
             "created_at": entry.get("created_at") or "",
             "topics": entry.get("topics") or "[]",
         }
@@ -420,6 +423,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "stars": meta.get("stars"),
             "clone_url": meta.get("clone_url"),
             "num_contributors": meta.get("num_contributors"),
+            "forks": meta.get("forks"),
             "qc_reason": qc_reason,
             "matched_config_file": matched_config_file or "",
             "processed_at": datetime.now(timezone.utc).isoformat(),

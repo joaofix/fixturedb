@@ -85,6 +85,31 @@ def test_read_repo_list_carries_through_github_id_and_last_commit_sha(monkeypatc
     assert repos[0]["last_commit_sha"] == "abc123def456"
 
 
+def test_read_repo_list_carries_through_forks(monkeypatch, tmp_path):
+    """The raw SEART export has a real `forks` column (verified directly
+    against github-search-raw/python.csv.gz) that used to be read nowhere
+    in this pipeline, silently defaulting every repo's forks to 0
+    downstream. Confirm it's actually picked up now."""
+    raw_dir = tmp_path / "github-search-raw"
+    raw_dir.mkdir()
+    _write_raw_csv(
+        raw_dir / "python.csv.gz",
+        [
+            {
+                "name": "owner/python-repo",
+                "mainLanguage": "python",
+                "stargazers": "10",
+                "contributors": "2",
+                "forks": "7",
+            }
+        ],
+    )
+
+    repos = qc.read_repo_list(languages=["python"], raw_dir=raw_dir)
+
+    assert repos[0]["forks"] == 7
+
+
 class TestDedupeByLastCommitSha:
     """The cheap, automatic, zero-cost partial win: repos sharing an
     identical *current* HEAD (SEART's lastCommitSHA) are dropped before the
@@ -357,3 +382,15 @@ def test_process_single_empty_matched_config_file_when_no_match(monkeypatch, tmp
     assert row["has_agent_config"] == 0
     assert row["matched_config_file"] == ""
     assert row["qc_reason"] == "no_agent_config"
+
+
+def test_process_single_carries_forks_into_the_row(monkeypatch, tmp_path):
+    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+
+    row = qc._process_single(
+        {"full_name": "owner/repo", "language": "python", "stars": 10, "forks": 7},
+        since="2025-01-01",
+    )
+
+    assert row["forks"] == 7

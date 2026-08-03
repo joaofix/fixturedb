@@ -13,6 +13,7 @@ from collection.dataset_c import (
     count_commits_up_to,
     find_test_files_at_commit,
     find_test_files_with_language,
+    load_dataset_c_repos,
     load_repo_cutoffs,
 )
 from collection.db import initialise_db
@@ -96,6 +97,70 @@ def test_load_repo_cutoffs_reads_csv(tmp_path):
 def test_load_repo_cutoffs_missing_file(tmp_path):
     cutoffs = load_repo_cutoffs(tmp_path / "nonexistent.csv")
     assert cutoffs == {}
+
+
+def test_load_dataset_c_repos_reads_forks_and_num_contributors(tmp_path):
+    """forks/num_contributors used to be silently dropped here even once
+    select_dataset_c_repos.py started writing them -- only `stars` was
+    read back out."""
+    csv_path = tmp_path / "python_repo.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "language",
+                "clone_url",
+                "github_id",
+                "created_at",
+                "topics",
+                "stars",
+                "forks",
+                "num_contributors",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/repo",
+                "language": "python",
+                "clone_url": "https://github.com/owner/repo.git",
+                "github_id": "1",
+                "created_at": "2018-01-01",
+                "topics": "[]",
+                "stars": "10",
+                "forks": "6",
+                "num_contributors": "4",
+            }
+        )
+
+    repos = load_dataset_c_repos(csv_path)
+    assert repos[0]["stars"] == 10
+    assert repos[0]["forks"] == 6
+    assert repos[0]["num_contributors"] == 4
+
+
+def test_load_dataset_c_repos_defaults_forks_and_contributors_when_absent(tmp_path):
+    """Older datasets/c/repos/*.csv files (pre-this-change) have no forks/
+    num_contributors columns at all -- must default to 0, not crash."""
+    csv_path = tmp_path / "python_repo.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh, fieldnames=["repo_name", "language", "clone_url", "github_id"]
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/repo",
+                "language": "python",
+                "clone_url": "https://github.com/owner/repo.git",
+                "github_id": "1",
+            }
+        )
+
+    repos = load_dataset_c_repos(csv_path)
+    assert repos[0]["forks"] == 0
+    assert repos[0]["num_contributors"] == 0
 
 
 def test_find_test_files_at_commit_filters_by_language(tmp_path):

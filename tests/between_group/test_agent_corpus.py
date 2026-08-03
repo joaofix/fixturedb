@@ -239,6 +239,7 @@ class TestQualityControlledInputs:
                 "stars": "123",
                 "clone_url": "https://github.com/good/repo.git",
                 "num_contributors": "4",
+                "forks": "9",
                 "qc_reason": "",
                 "processed_at": "2026-05-22T00:00:00Z",
             },
@@ -302,6 +303,9 @@ class TestQualityControlledInputs:
         assert [repo["full_name"] for repo in repos] == ["good/repo"]
         assert repos[0]["github_id"] != 0
         assert repos[0]["clone_url"] == "https://github.com/good/repo.git"
+        # forks used to be read nowhere along this path (build_repo_row()
+        # accepted it but no caller passed it), silently staying 0.
+        assert repos[0]["forks"] == 9
         assert list(commits.keys()) == ["good/repo", "bad/repo"]
         assert len(commits["good/repo"]) == 1
         assert commits["good/repo"][0]["agent_type"] == "claude"
@@ -765,6 +769,7 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
                 "stars",
                 "clone_url",
                 "num_contributors",
+                "forks",
             ],
         )
         writer.writeheader()
@@ -776,6 +781,7 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
                 "stars": 10,
                 "clone_url": str(main_repo),
                 "num_contributors": 1,
+                "forks": 3,
             }
         )
         writer.writerow(
@@ -786,6 +792,7 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
                 "stars": 5,
                 "clone_url": str(empty_repo),
                 "num_contributors": 1,
+                "forks": 0,
             }
         )
 
@@ -891,11 +898,26 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
     assert rows_by_repo["owner/main-repo"]["rejected_mixed_test_diff"] == "1"
     assert rows_by_repo["owner/main-repo"]["accepted"] == "1"
 
+    # Repo-metadata fields (stars/forks/num_contributors) and
+    # agent_adoption_intensity previously only reached db/a.db -- confirm
+    # they now also land in the CSV, not just left at 0/blank there.
+    assert rows_by_repo["owner/main-repo"]["stars"] == "10"
+    assert rows_by_repo["owner/main-repo"]["forks"] == "3"
+    assert rows_by_repo["owner/main-repo"]["num_contributors"] == "1"
+    # 2 agent commits out of 2 total commits since the repo's start -- a
+    # 100% ratio, well above the "pervasive" (>20%) threshold.
+    assert rows_by_repo["owner/main-repo"]["agent_adoption_intensity"] == "pervasive"
+
     # Zero-yield repo must still get a row (always-write-a-row behavior).
     assert "owner/empty-repo" in rows_by_repo
     assert rows_by_repo["owner/empty-repo"]["agent_commits_touching_tests"] == "0"
     assert rows_by_repo["owner/empty-repo"]["rejected_mixed_test_diff"] == "0"
     assert rows_by_repo["owner/empty-repo"]["accepted"] == "0"
+    assert rows_by_repo["owner/empty-repo"]["stars"] == "5"
+    assert rows_by_repo["owner/empty-repo"]["forks"] == "0"
+    # Zero agent commits detected -- always "no_commits", regardless of the
+    # repo's own total commit count.
+    assert rows_by_repo["owner/empty-repo"]["agent_adoption_intensity"] == "no_commits"
 
 
 @contextmanager

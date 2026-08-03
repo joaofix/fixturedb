@@ -121,11 +121,11 @@ class TestResolveFromFixtureReposCsvs:
 
 
 class TestBackfillsStarsAndContributors:
-    """datasets/a/fixtures/repos/*_fixture_repos.csv has no stars/
-    num_contributors columns at all (see TestResolveFromFixtureReposCsvs) --
-    resolving Dataset B from that source must not silently default those
-    fields to 0 when the sibling datasets/a/repos/ directory has the real
-    values for the same repo."""
+    """Older datasets/a/fixtures/repos/*_fixture_repos.csv files have no
+    stars/num_contributors/forks columns at all (see
+    TestResolveFromFixtureReposCsvs) -- resolving Dataset B from that source
+    must not silently default those fields to 0 when the sibling
+    datasets/a/repos/ directory has the real values for the same repo."""
 
     def test_backfills_from_sibling_dataset_a_repos_dir(self, tmp_path):
         from collection import paths
@@ -151,6 +151,7 @@ class TestBackfillsStarsAndContributors:
                     "language": "python",
                     "stars": "3272",
                     "num_contributors": "93",
+                    "forks": "412",
                 }
             ],
         )
@@ -162,6 +163,7 @@ class TestBackfillsStarsAndContributors:
             rows = list(csv.DictReader(fh))
         assert rows[0]["stars"] == "3272"
         assert rows[0]["num_contributors"] == "93"
+        assert rows[0]["forks"] == "412"
 
     def test_falls_back_to_zero_when_repo_missing_from_dataset_a_repos(self, tmp_path):
         from collection import paths
@@ -182,6 +184,7 @@ class TestBackfillsStarsAndContributors:
                     "language": "python",
                     "stars": "10",
                     "num_contributors": "2",
+                    "forks": "1",
                 }
             ],
         )
@@ -193,11 +196,12 @@ class TestBackfillsStarsAndContributors:
             rows = list(csv.DictReader(fh))
         assert rows[0]["stars"] == "0"
         assert rows[0]["num_contributors"] == "0"
+        assert rows[0]["forks"] == "0"
 
     def test_uses_own_stars_when_source_already_has_them(self, tmp_path):
         """Resolving directly from datasets/a/repos/ (the non-preferred
-        fallback source) already carries real stars/num_contributors --
-        the backfill lookup must not override a real value with itself
+        fallback source) already carries real stars/num_contributors/forks
+        -- the backfill lookup must not override a real value with itself
         incorrectly or blow up when source_dir == the lookup dir."""
         from collection import paths
 
@@ -212,6 +216,7 @@ class TestBackfillsStarsAndContributors:
                     "language": "python",
                     "stars": "42",
                     "num_contributors": "7",
+                    "forks": "5",
                 }
             ],
         )
@@ -223,6 +228,7 @@ class TestBackfillsStarsAndContributors:
             rows = list(csv.DictReader(fh))
         assert rows[0]["stars"] == "42"
         assert rows[0]["num_contributors"] == "7"
+        assert rows[0]["forks"] == "5"
 
 
 class TestDefaultSourcePriority:

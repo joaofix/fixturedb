@@ -146,6 +146,7 @@ def select_human_corpus_repositories(
                     repo_name,
                     lang,
                     stars=row.get("stars") or 0,
+                    forks=int(row.get("forks") or 0),
                     clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
                     created_at=row.get("created_at") or "",

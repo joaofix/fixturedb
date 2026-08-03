@@ -49,6 +49,31 @@ class TestSelectRepos:
             "o/at-window-end",
         }
 
+    def test_reads_forks_and_num_contributors(self, tmp_path):
+        """The raw SEART export has real `forks`/`contributors` columns
+        (verified directly against github-search-raw/python.csv.gz) that
+        used to be read nowhere in this function -- forks silently 0,
+        num_contributors not read at all. Confirm both are picked up now."""
+        _write_gz_csv(
+            tmp_path / "python.csv.gz",
+            [
+                {
+                    "id": "1",
+                    "name": "o/repo",
+                    "createdAt": "2018-06-15",
+                    "forks": "42",
+                    "contributors": "6",
+                }
+            ],
+        )
+
+        selected = select_repos(
+            raw_dir=tmp_path, min_created="2016-01-01", cutoff_date="2020-12-31"
+        )
+
+        assert selected[0]["forks"] == 42
+        assert selected[0]["num_contributors"] == 6
+
     def test_boundary_dates_are_inclusive(self, tmp_path):
         """created == min_created and created == cutoff_date must both be
         kept -- an off-by-one here would silently shrink the window."""
@@ -212,6 +237,8 @@ class TestWritePerLanguageFiles:
             "created_at",
             "topics",
             "stars",
+            "forks",
+            "num_contributors",
         ]
 
     def test_empty_selection(self, tmp_path):

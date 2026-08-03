@@ -82,7 +82,6 @@ CREATE TABLE IF NOT EXISTS fixtures (
     commit_date             TEXT DEFAULT NULL,      -- that commit's own date (ISO, date-only)
     agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/other
     commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
-    match_scope             TEXT DEFAULT NULL,      -- within_repo / cross_repo (source matching scope)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     commit_type             TEXT DEFAULT NULL,      -- Conventional Commits type of the originating commit
                                     -- (agent or human: feat/fix/docs/refactor/test/chore/style/other/none)

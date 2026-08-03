@@ -55,7 +55,10 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
 
     Works with both the combined ``all.csv`` and per-language
     ``{lang}_repo.csv`` files under datasets/c/repos/. Returns a list of
-    dicts with keys: *full_name*, *language*, *clone_url*, *github_id*.
+    dicts with keys: *full_name*, *language*, *clone_url*, *github_id*,
+    *created_at*, *topics*, *stars*, *forks*, *num_contributors* (the last
+    two default to 0 for older CSVs written before select_dataset_c_repos.py
+    carried them through).
 
     github_id defaults to 0 when the column is absent (older CSVs written
     before select_dataset_c_repos.py carried it through) -- callers must
@@ -78,6 +81,14 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
                 stars = int((row.get("stars") or "0").strip())
             except ValueError:
                 stars = 0
+            try:
+                forks = int((row.get("forks") or "0").strip())
+            except ValueError:
+                forks = 0
+            try:
+                num_contributors = int((row.get("num_contributors") or "0").strip())
+            except ValueError:
+                num_contributors = 0
             repos.append(
                 {
                     "full_name": name,
@@ -89,6 +100,8 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
                     "created_at": row.get("created_at") or "",
                     "topics": row.get("topics") or "[]",
                     "stars": stars,
+                    "forks": forks,
+                    "num_contributors": num_contributors,
                 }
             )
     logger.info("Loaded %d Dataset C repos from %s", len(repos), csv_path)
@@ -417,6 +430,8 @@ def _process_repo(
                         "repo_created_at": repo.get("created_at", ""),
                         "repo_topics": repo.get("topics", "[]"),
                         "repo_stars": repo.get("stars", 0),
+                        "repo_forks": repo.get("forks", 0),
+                        "repo_num_contributors": repo.get("num_contributors", 0),
                     },
                 )
                 for fixture in repo_fixtures
@@ -658,6 +673,8 @@ def collect_dataset_c_fixtures(
         repo_created_at = first_fixture.get("repo_created_at", "")
         repo_topics = first_fixture.get("repo_topics", "[]")
         repo_stars = first_fixture.get("repo_stars", 0)
+        repo_forks = first_fixture.get("repo_forks", 0)
+        repo_num_contributors = first_fixture.get("repo_num_contributors", 0)
         # Dataset C's own temporal reference is HUMAN_CORPUS_CUTOFF_DATE
         # (the pre-2022 human baseline window), not AGENT_CORPUS_START_DATE
         # -- repo age here means "age as of the human-era cutoff", matching
@@ -671,11 +688,12 @@ def collect_dataset_c_fixtures(
             full_name=repo_full,
             language=str(language_val),
             stars=repo_stars,
-            forks=0,
+            forks=repo_forks,
             github_id=github_id,
             description="",
             topics=repo_topics,
             created_at=repo_created_at,
+            num_contributors=repo_num_contributors,
             domain=metadata["domain"],
             repo_age_years=metadata["repo_age_years"],
             repo_age_at_collection_years=metadata["repo_age_at_collection_years"],

@@ -46,6 +46,8 @@ _OUTPUT_FIELDNAMES = [
     "created_at",
     "topics",
     "stars",
+    "forks",
+    "num_contributors",
 ]
 
 
@@ -105,6 +107,16 @@ def select_repos(
                     stars = int(float(stars))
                 except (TypeError, ValueError):
                     stars = 0
+                forks = row.get("forks") or 0
+                try:
+                    forks = int(float(forks))
+                except (TypeError, ValueError):
+                    forks = 0
+                contributors = row.get("contributors") or 0
+                try:
+                    contributors = int(float(contributors))
+                except (TypeError, ValueError):
+                    contributors = 0
                 selected.append(
                     {
                         "repo_name": name,
@@ -114,6 +126,8 @@ def select_repos(
                         "created_at": created,
                         "topics": topics_json,
                         "stars": stars,
+                        "forks": forks,
+                        "num_contributors": contributors,
                     }
                 )
 
