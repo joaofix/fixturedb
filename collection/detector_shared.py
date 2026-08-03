@@ -120,6 +120,12 @@ class FixtureResult:
     )  # list of fixture names this fixture depends on (Phase 4)
     raw_source: str = ""
     mocks: list[MockResult] = field(default_factory=list)
+    container_id: Optional[int] = None  # AST byte-offset of the nearest enclosing
+    # describe()/class_declaration node (None if there isn't one) -- lets
+    # _calculate_teardown_pairs's type-based matching tell apart independent
+    # blocks/classes in the same file. Internal pairing signal only, not
+    # written to fixtures.csv/DB (see fixture_result_to_dict()'s explicit
+    # key allowlist below).
 
 
 @dataclass
@@ -338,6 +344,7 @@ def _build_result(
     scope: str,
     framework: Optional[str] = None,
     language: str = "python",
+    container_id: Optional[int] = None,
 ) -> FixtureResult:
     """Build a FixtureResult from a single node spanning the whole fixture.
 
@@ -396,6 +403,7 @@ def _build_result(
         has_teardown_pair=0,  # Calculated in post-processing
         raw_source=src_text,
         mocks=_extract_mocks(func_node, src_bytes),
+        container_id=container_id,
     )
 
 
@@ -726,7 +734,11 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
         a separately-named teardown method -- checked as an OR alongside
         name_based, by substring in the setup fixture's own raw_source.
       - type_based: setup and teardown are different fixture_types, paired
-        by type + matching scope (e.g. junit5_before_each/junit5_after_each).
+        by type + matching scope (e.g. junit5_before_each/junit5_after_each)
+        + matching container_id -- the nearest enclosing describe()/class_
+        declaration node, so two independent describe() blocks (JS) or an
+        outer class and its @Nested inner class (Java) in the same file
+        don't get their hooks cross-paired just for sharing a type+scope.
 
     Only the setup-side fixture of a pair is flagged (has_teardown_pair=1);
     the teardown-side fixture itself is not, matching this column's existing
@@ -763,7 +775,9 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
         elif fixture.fixture_type in TYPE_BASED_TEARDOWN_PAIRS:
             expected_type = TYPE_BASED_TEARDOWN_PAIRS[fixture.fixture_type]
             has_teardown = any(
-                other.fixture_type == expected_type and other.scope == fixture.scope
+                other.fixture_type == expected_type
+                and other.scope == fixture.scope
+                and other.container_id == fixture.container_id
                 for other in fixtures
             )
 

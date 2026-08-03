@@ -39,6 +39,22 @@ JUNIT3_FALLBACK_SCOPE: str = _DEFS["junit3_fallback"]["scope"]
 JUNIT3_FALLBACK_FRAMEWORK: str = _DEFS["junit3_fallback"]["framework"]
 
 
+def _enclosing_class_id(node) -> "int | None":
+    """Walk up from a fixture node to its immediately enclosing
+    class_declaration and return its AST byte-offset as a stable identity
+    for teardown pairing -- distinguishes an @Nested inner class from its
+    outer class (the inner class_declaration is closer and returned first),
+    and two independent top-level classes in one file. None if the node
+    isn't inside any class (shouldn't happen for real Java, but no fixture
+    should be left unpaired-by-construction if it does)."""
+    current = node.parent
+    while current is not None:
+        if current.type == "class_declaration":
+            return current.start_byte
+        current = current.parent
+    return None
+
+
 def _enclosing_class_extends_test_case(node, src_bytes: bytes) -> bool:
     """Walk up from a method node to its immediately enclosing
     class_declaration and check whether it extends TestCase -- JUnit 3's
@@ -105,6 +121,7 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                             scope=scope,
                             framework=framework,
                             language="java",
+                            container_id=_enclosing_class_id(node),
                         )
                     )
                     break
@@ -127,6 +144,7 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                             scope=JUNIT3_FALLBACK_SCOPE,
                             framework=JUNIT3_FALLBACK_FRAMEWORK,
                             language="java",
+                            container_id=_enclosing_class_id(node),
                         )
                     )
 
@@ -154,6 +172,7 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                             scope=scope,
                             framework=framework,
                             language="java",
+                            container_id=_enclosing_class_id(node),
                         )
                     )
                     break

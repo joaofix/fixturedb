@@ -446,6 +446,145 @@ afterEach(() => { teardown(); });
             setup = next(f for f in result.fixtures if f.fixture_type == "before_each")
             assert setup.has_teardown_pair == 1
 
+    def test_javascript_independent_describe_blocks_do_not_cross_pair(self):
+        """Two independent describe() blocks in one file must not have
+        their hooks cross-paired just because they share fixture_type +
+        scope -- container_id (the enclosing describe() block) must also
+        match. Without this, UserService's beforeEach falsely read
+        has_teardown_pair=1 purely because an unrelated afterEach existed
+        in OrderService's block."""
+        code = """
+describe('UserService', () => {
+    beforeEach(() => { setupUser(); });
+});
+describe('OrderService', () => {
+    afterEach(() => { cleanupOrder(); });
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            setup = next(f for f in result.fixtures if f.fixture_type == "before_each")
+            assert setup.has_teardown_pair == 0
+
+    def test_javascript_same_describe_block_still_pairs(self):
+        """A beforeEach/afterEach pair inside the same describe() block
+        must still pair -- guards against the container_id check being
+        overly strict."""
+        code = """
+describe('UserService', () => {
+    beforeEach(() => { setupUser(); });
+    afterEach(() => { cleanupUser(); });
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            setup = next(f for f in result.fixtures if f.fixture_type == "before_each")
+            assert setup.has_teardown_pair == 1
+
+    def test_java_nested_class_does_not_inherit_outer_teardown(self):
+        """A @Nested inner class's own @BeforeEach must not be falsely
+        paired with the OUTER class's @AfterEach just because they share
+        fixture_type + scope -- container_id (the enclosing
+        class_declaration) must also match. Reproduces the exact shape
+        already present in
+        test_java_realistic_fixtures.py::test_junit5_complex_hierarchy."""
+        code = """
+public class UserServiceTest {
+    @BeforeEach
+    public void setUp() { outerInit(); }
+    @AfterEach
+    public void tearDown() { outerCleanup(); }
+
+    @Nested
+    class UserCreationTests {
+        @BeforeEach
+        void setUp() { innerInit(); }
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            before_eaches = sorted(
+                (f for f in result.fixtures if f.fixture_type == "junit5_before_each"),
+                key=lambda f: f.start_line,
+            )
+            assert len(before_eaches) == 2
+            outer_setup, inner_setup = before_eaches
+            assert outer_setup.has_teardown_pair == 1
+            assert inner_setup.has_teardown_pair == 0
+
+    def test_java_independent_top_level_classes_do_not_cross_pair(self):
+        """Two independent top-level classes in one file must not have
+        their hooks cross-paired just because they share fixture_type +
+        scope."""
+        code = """
+class UserServiceTest {
+    @BeforeEach
+    void setUp() { init(); }
+}
+
+class OrderServiceTest {
+    @AfterEach
+    void tearDown() { cleanup(); }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(
+                f for f in result.fixtures if f.fixture_type == "junit5_before_each"
+            )
+            assert setup.has_teardown_pair == 0
+
+    def test_java_nested_class_with_own_complete_pair_still_pairs(self):
+        """A @Nested class with its own complete @BeforeEach/@AfterEach
+        pair must still pair, independent of the outer class's own hooks
+        (and the outer class, which has no @AfterEach of its own, must not
+        be falsely paired with the nested class's @AfterEach either)."""
+        code = """
+public class UserServiceTest {
+    @BeforeEach
+    public void setUp() { outerInit(); }
+
+    @Nested
+    class UserCreationTests {
+        @BeforeEach
+        void setUp() { innerInit(); }
+        @AfterEach
+        void tearDown() { innerCleanup(); }
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            before_eaches = sorted(
+                (f for f in result.fixtures if f.fixture_type == "junit5_before_each"),
+                key=lambda f: f.start_line,
+            )
+            assert len(before_eaches) == 2
+            outer_setup, inner_setup = before_eaches
+            assert outer_setup.has_teardown_pair == 0
+            assert inner_setup.has_teardown_pair == 1
+
     def test_java_junit_rule_always_has_teardown_pair(self):
         """@Rule fields wrap a TestRule whose apply() logic (including any
         teardown) lives outside the test file entirely -- source inspection

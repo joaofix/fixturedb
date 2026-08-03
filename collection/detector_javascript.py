@@ -31,6 +31,23 @@ JS_FIXTURE_CALLS: dict[str, tuple[str, str]] = {
 }
 
 
+def _enclosing_describe_id(node, src_bytes: bytes) -> "int | None":
+    """Walk up from a hook's call_expression node to the nearest enclosing
+    describe(...) call and return its AST byte-offset as a stable identity
+    for teardown pairing -- distinguishes independent describe() blocks in
+    the same file (a beforeEach in one block must not pair with an afterEach
+    in an unrelated sibling block just for sharing a type+scope). None if
+    the hook isn't wrapped in any describe() (e.g. a bare top-level hook)."""
+    current = node.parent
+    while current is not None:
+        if current.type == "call_expression":
+            func_node = current.child_by_field_name("function")
+            if func_node is not None and _source(func_node, src_bytes).strip() == "describe":
+                return current.start_byte
+        current = current.parent
+    return None
+
+
 def _detect_js(
     tree, src_bytes: bytes, language: str = "javascript"
 ) -> list[FixtureResult]:
@@ -61,6 +78,7 @@ def _detect_js(
                             scope=scope,
                             framework=None,  # Ambiguous: could be Jest, Mocha, or Vitest
                             language=language,
+                            container_id=_enclosing_describe_id(target, src_bytes),
                         )
                     )
 
