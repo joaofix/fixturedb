@@ -258,9 +258,3 @@ paper-draft/
 # Archived dataset collection runs (datasets/{a,b,c} snapshots moved aside
 # before a recollection), grouped by week e.g. past-datasets/13-17-jul-2026/
 past-datasets/
-# Generated RQ findings reports (python -m collection.research_questions.rqN),
-# regenerated on demand from db/{a,b,c}.db -- not a collection-pipeline
-# artifact. Anchored to repo root: unanchored `research_questions/` would
-# also match (and hide from git) the tracked collection/research_questions/
-# code package.
-/research_questions/
