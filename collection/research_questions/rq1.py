@@ -11,6 +11,18 @@ functions, which are generic enough to apply here unchanged). B vs C is
 intentionally not computed (see docs/research-questions.md's RQ1 section --
 B vs C is the secondary A/B-anchored finding, not this script's job).
 
+fixture_type is additionally stratified by language (each fixture's own
+test_files.language, not its repo's tag) and re-tested per language. The
+pooled fixture_type comparison can look significant purely because A and
+B/C have different language mixes -- e.g. pytest_decorator only exists in
+Python fixtures, before_each/after_each is the characteristic JS/TS/Mocha
+idiom, so a dataset that happens to be more TS-heavy will look more
+"hook-based" regardless of any real agent-vs-human mechanism preference.
+The stratified table checks whether the difference survives within a
+single shared language; see compute_stratified_categorical_balance()'s
+docstring in _shared.py for the general rationale (first applied for
+RQ2's fixture_type_kind and RQ3's mock prevalence).
+
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet -- lets this run against whatever subset of A/B/C has been collected so
 far.
@@ -20,6 +32,7 @@ python -m collection.research_questions.rq1
 
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,6 +53,7 @@ from ._shared import (
     apply_fdr_correction,
     categorical_effect_size_cell,
     compute_language_leakage,
+    compute_stratified_categorical_balance,
     continuous_effect_size_cell,
     fdr_cell,
     fetch_categorical_column,
@@ -47,6 +61,7 @@ from ._shared import (
     fetch_continuous_column_by_repo,
     fmt,
     render_language_leakage_table,
+    render_stratified_categorical_table,
     repo_level_means,
     require_db_or_none,
     summarize_continuous,
@@ -75,6 +90,26 @@ class DatasetMetrics:
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     agent_type_distribution: dict[str, int] = field(default_factory=dict)
     repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
+    fixture_type_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+
+
+def _fetch_fixture_type_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
+    """fixture_type distribution per fixture's own language (test_files.language,
+    not repositories.language -- see compute_language_leakage()'s docstring for
+    why those two can differ). compute_stratified_categorical_balance() needs
+    this to check whether the pooled fixture_type difference (see this
+    module's docstring) holds within a language, not just because the two
+    datasets have different language mixes."""
+    rows = conn.execute(
+        "SELECT tf.language, f.fixture_type, COUNT(*) FROM fixtures f "
+        "JOIN test_files tf ON f.file_id = tf.id "
+        "WHERE f.fixture_type IS NOT NULL "
+        "GROUP BY tf.language, f.fixture_type"
+    ).fetchall()
+    by_language: dict[str, dict[str, int]] = {}
+    for language, fixture_type, count in rows:
+        by_language.setdefault(language, {})[fixture_type] = count
+    return by_language
 
 
 def load_dataset_metrics(
@@ -89,6 +124,7 @@ def load_dataset_metrics(
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
         continuous_raw = {m: fetch_continuous_column(conn, "fixtures", m) for m in CONTINUOUS_METRICS}
         categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
+        fixture_type_by_language = _fetch_fixture_type_by_language(conn)
         language_leakage = compute_language_leakage(conn)
         # Descriptive only, not run through compare_datasets()'s significance
         # tests: agent_type is the group-defining variable for Dataset A
@@ -116,6 +152,7 @@ def load_dataset_metrics(
         language_leakage=language_leakage,
         agent_type_distribution=agent_type_distribution,
         repo_level_continuous=repo_level_continuous,
+        fixture_type_by_language=fixture_type_by_language,
     )
 
 
@@ -265,6 +302,21 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
             f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
         )
     lines.append("")
+
+    lines += [
+        "**fixture_type, stratified by language (chi-square per language)** -- "
+        "the pooled fixture_type comparison above can look significant purely "
+        f"because {DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have "
+        "different language mixes (see this module's docstring); this checks "
+        "whether the mechanism difference holds within each shared language.",
+        "",
+    ]
+    stratified = compute_stratified_categorical_balance(
+        a.fixture_type_by_language,
+        other.fixture_type_by_language,
+        "fixture_type",
+    )
+    lines.append(render_stratified_categorical_table(stratified))
 
     return "\n".join(lines)
 

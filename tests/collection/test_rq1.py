@@ -131,6 +131,61 @@ def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
             insert_fixture(conn, base)
 
 
+def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
+    """Create db/{dataset}.db with one repo and one test_file per `files`
+    entry -- each entry: {"language": str, "fixtures": [fixture_dict, ...]}.
+    Lets a single repo contribute fixtures in more than one language, for
+    testing language-stratified aggregation (fixture_type_by_language)."""
+    db_file = paths.db_path(dataset, root=root)
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": "python",
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        for file_idx, file_spec in enumerate(files):
+            language = file_spec["language"]
+            file_id = upsert_test_file(
+                conn, repo_id, f"tests/test_{file_idx}.{language}", language
+            )
+            for i, overrides in enumerate(file_spec["fixtures"]):
+                base = {
+                    "file_id": file_id,
+                    "repo_id": repo_id,
+                    "name": f"fixture_{file_idx}_{i}",
+                    "fixture_type": "pytest_decorator",
+                    "scope": "per_test",
+                    "start_line": i,
+                    "end_line": i + 1,
+                    "loc": 5,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 1,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": "",
+                    "framework": "pytest",
+                    "num_mocks": 0,
+                }
+                base.update(overrides)
+                insert_fixture(conn, base)
+
+
 class TestLoadDatasetMetrics:
     def test_missing_db_returns_none(self, tmp_path):
         assert load_dataset_metrics("a", db_root=tmp_path) is None
@@ -171,6 +226,33 @@ class TestLoadDatasetMetrics:
         _make_db(tmp_path, "c", [{}, {}])
         metrics = load_dataset_metrics("c", db_root=tmp_path)
         assert metrics.categorical["commit_type"] == {}
+
+    def test_fixture_type_by_language_groups_by_fixtures_own_language(self, tmp_path):
+        """Grouped by test_files.language (the fixture's own file), not the
+        repo's tagged language -- same distinction compute_language_leakage()
+        relies on."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {"fixture_type": "pytest_decorator"},
+                        {"fixture_type": "pytest_decorator"},
+                    ],
+                },
+                {
+                    "language": "typescript",
+                    "fixtures": [{"fixture_type": "before_each"}],
+                },
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.fixture_type_by_language == {
+            "python": {"pytest_decorator": 2},
+            "typescript": {"before_each": 1},
+        }
 
 
 class TestGenerateReport:
@@ -246,6 +328,46 @@ class TestGenerateReport:
             if line.startswith("| scope |")
         )
         assert "(large)" in scope_line
+
+    def test_fixture_type_stratified_by_language_renders(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [{"language": "python", "fixtures": [{"fixture_type": "pytest_decorator"}] * 5}],
+        )
+        _make_multi_language_db(
+            tmp_path,
+            "b",
+            [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "fixture_type, stratified by language" in report
+        stratified_section = report.split("fixture_type, stratified by language")[1]
+        assert "| python |" in stratified_section
+
+    def test_fixture_type_stratified_by_language_excludes_language_not_shared(self, tmp_path):
+        """A has python + java fixtures, B has python only -- java has no
+        B-side data to compare against, so compute_stratified_categorical_
+        balance() must drop it rather than testing against an empty dist."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {"language": "python", "fixtures": [{"fixture_type": "pytest_decorator"}] * 5},
+                {"language": "java", "fixtures": [{"fixture_type": "junit5_before_each"}] * 5},
+            ],
+        )
+        _make_multi_language_db(
+            tmp_path,
+            "b",
+            [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
+        )
+        report = generate_report(db_root=tmp_path)
+        stratified_section = report.split("fixture_type, stratified by language")[1].split(
+            "## A vs C"
+        )[0]
+        assert "| python |" in stratified_section
+        assert "| java |" not in stratified_section
 
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """The core value proposition: a single repo contributing many
