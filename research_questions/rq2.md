@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-08-03 21:07:53 UTC
+Generated: 2026-08-06 16:14:47 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -23,6 +23,15 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 - Repos with >=1 setup fixture: 1,035
 - Of those, with zero teardown fixtures (ratio undefined): 236 (22.8%)
 - Ratio distribution over the remaining 799 repos: mean=2.30, median=1.25, min=0.2, max=122.0
+
+**Per-repo setup-to-teardown ratio, by language** (each fixture's own language, not its repo's tag -- see compute_language_leakage()'s docstring; a repo with setup fixtures in more than one language contributes one ratio value to each)
+
+| Language | Repos with at least one setup fixture | No-teardown repos (ratio undefined) | No-teardown rate | n (ratio computed) | mean | median | min | max |
+|---|---|---|---|---|---|---|---|---|
+| java | 101 | 38 | 37.6% | 63 | 2.49 | 1.66 | 0.5 | 16.0 |
+| javascript | 99 | 25 | 25.3% | 74 | 1.62 | 1.00 | 0.2 | 10.0 |
+| python | 194 | 88 | 45.4% | 106 | 2.96 | 1.01 | 0.3 | 55.0 |
+| typescript | 731 | 123 | 16.8% | 608 | 2.24 | 1.25 | 0.2 | 122.0 |
 
 **has_teardown_pair rate by fixture_type**
 
@@ -79,6 +88,15 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 - Of those, with zero teardown fixtures (ratio undefined): 191 (24.7%)
 - Ratio distribution over the remaining 581 repos: mean=2.90, median=1.77, min=0.2, max=26.0
 
+**Per-repo setup-to-teardown ratio, by language** (each fixture's own language, not its repo's tag -- see compute_language_leakage()'s docstring; a repo with setup fixtures in more than one language contributes one ratio value to each)
+
+| Language | Repos with at least one setup fixture | No-teardown repos (ratio undefined) | No-teardown rate | n (ratio computed) | mean | median | min | max |
+|---|---|---|---|---|---|---|---|---|
+| java | 194 | 37 | 19.1% | 157 | 3.17 | 2.20 | 0.5 | 26.0 |
+| javascript | 165 | 21 | 12.7% | 144 | 2.44 | 1.23 | 0.1 | 25.0 |
+| python | 391 | 160 | 40.9% | 231 | 3.49 | 1.91 | 0.3 | 28.5 |
+| typescript | 172 | 27 | 15.7% | 145 | 2.23 | 1.50 | 0.2 | 15.3 |
+
 **has_teardown_pair rate by fixture_type**
 
 | fixture_type | n | n with teardown pair | rate |
@@ -133,6 +151,15 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 - Repos with >=1 setup fixture: 2,473
 - Of those, with zero teardown fixtures (ratio undefined): 706 (28.5%)
 - Ratio distribution over the remaining 1,767 repos: mean=4.84, median=2.00, min=0.0, max=121.0
+
+**Per-repo setup-to-teardown ratio, by language** (each fixture's own language, not its repo's tag -- see compute_language_leakage()'s docstring; a repo with setup fixtures in more than one language contributes one ratio value to each)
+
+| Language | Repos with at least one setup fixture | No-teardown repos (ratio undefined) | No-teardown rate | n (ratio computed) | mean | median | min | max |
+|---|---|---|---|---|---|---|---|---|
+| java | 559 | 157 | 28.1% | 402 | 4.34 | 2.08 | 0.1 | 85.0 |
+| javascript | 534 | 132 | 24.7% | 402 | 4.75 | 1.75 | 0.0 | 121.0 |
+| python | 668 | 227 | 34.0% | 441 | 5.04 | 2.00 | 0.3 | 86.0 |
+| typescript | 712 | 190 | 26.7% | 522 | 5.13 | 2.00 | 0.0 | 78.2 |
 
 **has_teardown_pair rate by fixture_type**
 

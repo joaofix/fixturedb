@@ -77,6 +77,62 @@ def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
                 insert_fixture(conn, base)
 
 
+def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
+    """Create db/{dataset}.db with one repo and one test_file per `files`
+    entry -- each entry: {"language": str, "fixtures": [fixture_dict, ...]}.
+    Lets a single repo contribute fixtures in more than one language, for
+    testing language-stratified aggregation (kind_distribution_by_language,
+    per_repo_ratios_by_language)."""
+    db_file = paths.db_path(dataset, root=root)
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": "python",
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        for file_idx, file_spec in enumerate(files):
+            language = file_spec["language"]
+            file_id = upsert_test_file(
+                conn, repo_id, f"tests/test_{file_idx}.{language}", language
+            )
+            for i, overrides in enumerate(file_spec["fixtures"]):
+                base = {
+                    "file_id": file_id,
+                    "repo_id": repo_id,
+                    "name": f"fixture_{file_idx}_{i}",
+                    "fixture_type": "before_each",
+                    "scope": "per_test",
+                    "start_line": i,
+                    "end_line": i + 1,
+                    "loc": 5,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 1,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": "",
+                    "framework": "pytest",
+                    "num_mocks": 0,
+                }
+                base.update(overrides)
+                insert_fixture(conn, base)
+
+
 class TestKind:
     def test_unambiguous_setup_type(self):
         assert _kind("before_each") == "setup"
@@ -209,6 +265,44 @@ class TestLoadDatasetMetrics:
         assert metrics.teardown_rate_by_type["pytest_decorator"] == {"n": 3, "n_with_pair": 1}
         assert metrics.teardown_rate_by_type["junit_rule"] == {"n": 1, "n_with_pair": 1}
 
+    def test_per_repo_ratio_by_language_splits_one_repo_across_languages(self, tmp_path):
+        """A single repo with setup/teardown fixtures in two languages must
+        contribute a separate ratio data point to each language's bucket --
+        the whole reason this exists: the pooled per-repo ratio can hide a
+        language where teardown is neglected because another language in the
+        same repo compensates for it."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {"fixture_type": "before_each"},
+                        {"fixture_type": "before_each"},
+                        {"fixture_type": "after_each"},
+                    ],
+                },
+                {
+                    "language": "typescript",
+                    "fixtures": [{"fixture_type": "before_each"}] * 3,
+                },
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+
+        # Pooled: 5 setup, 1 teardown across the one repo -> a defined (if
+        # skewed) ratio, masking that typescript has zero teardown at all.
+        assert metrics.per_repo_ratios == [5.0]
+        assert metrics.n_repos_zero_teardown == 0
+
+        # Stratified: python's ratio is visible (2 setup / 1 teardown), and
+        # typescript's zero-teardown fixtures show up as undefined, not
+        # folded into python's defined ratio.
+        assert metrics.per_repo_ratios_by_language == {"python": [2.0], "typescript": []}
+        assert metrics.n_repos_with_setup_by_language == {"python": 1, "typescript": 1}
+        assert metrics.n_repos_zero_teardown_by_language == {"python": 0, "typescript": 1}
+
 
 class TestGenerateReport:
     def test_missing_all_dbs_notes_unavailable_without_crashing(self, tmp_path):
@@ -233,6 +327,28 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "Cross-language fixture leakage" in report
         assert "0/1 fixtures (0.00%) leaked." in report
+
+    def test_dataset_summary_includes_per_language_ratio_table(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
+                },
+                {
+                    "language": "typescript",
+                    "fixtures": [{"fixture_type": "before_each"}],
+                },
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "**Per-repo setup-to-teardown ratio, by language**" in report
+        table_section = report.split("**Per-repo setup-to-teardown ratio, by language**")[1]
+        table_section = table_section.split("**has_teardown_pair rate by fixture_type**")[0]
+        assert "| python | 1 | 0 | 0.0% | 1 | 1.00 | 1.00 | 1.0 | 1.0 |" in table_section
+        assert "| typescript | 1 | 1 | 100.0% | 0 |" in table_section
 
     def test_zero_teardown_repos_reported(self, tmp_path):
         _make_db(

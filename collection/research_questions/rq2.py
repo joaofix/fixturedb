@@ -37,6 +37,15 @@ Three metrics, computed per dataset (A/B/C):
    research_questions/_shared.py::repo_level_means() for why that exists
    for their fixture-level continuous metrics).
 
+   Also reported per language (each fixture's own test_files.language, same
+   convention as (1)'s kind_distribution_by_language) -- a repo with setup
+   fixtures in more than one language contributes one ratio value to each
+   language it has setup fixtures in, so this re-buckets by (repo, language)
+   rather than by repo alone. Descriptive only (median/mean/zero-TD % per
+   language), not run through a per-language significance test the way (1)
+   is -- see compute_stratified_categorical_balance() in _shared.py if that
+   inferential comparison is wanted later.
+
 3. **has_teardown_pair rate, per fixture_type** -- reported per type, not
    lumped into (1)'s "other" bucket, since lumping would mix real
    provisioning signal (e.g. how often a pytest_decorator fixture actually
@@ -129,6 +138,31 @@ class DatasetMetrics:
     teardown_rate_by_type: dict[str, dict] = field(default_factory=dict)
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     kind_distribution_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    per_repo_ratios_by_language: dict[str, list[float]] = field(default_factory=dict)
+    n_repos_with_setup_by_language: dict[str, int] = field(default_factory=dict)
+    n_repos_zero_teardown_by_language: dict[str, int] = field(default_factory=dict)
+
+
+def _ratios_from_repo_counts(
+    repo_counts: dict[int, tuple[int, int]],
+) -> tuple[list[float], int, int]:
+    """(ratios, n_repos_with_setup, n_repos_zero_teardown) from a {repo_id:
+    (setup_count, teardown_count)} map -- shared by the overall computation
+    and each per-language slice in load_dataset_metrics() so both apply the
+    identical "repo has >=1 setup fixture; ratio undefined if zero teardown"
+    rule (see this module's docstring, metric 2)."""
+    ratios: list[float] = []
+    n_with_setup = 0
+    n_zero_teardown = 0
+    for setup_count, teardown_count in repo_counts.values():
+        if not setup_count:
+            continue
+        n_with_setup += 1
+        if teardown_count:
+            ratios.append(setup_count / teardown_count)
+        else:
+            n_zero_teardown += 1
+    return ratios, n_with_setup, n_zero_teardown
 
 
 def load_dataset_metrics(
@@ -141,23 +175,27 @@ def load_dataset_metrics(
 
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        kind_distribution, per_repo_counts, kind_distribution_by_language = (
-            _fetch_kinds_and_repo_counts(conn)
-        )
+        (
+            kind_distribution,
+            per_repo_counts,
+            kind_distribution_by_language,
+            per_repo_counts_by_language,
+        ) = _fetch_kinds_and_repo_counts(conn)
         teardown_rate_by_type = _fetch_teardown_rate_by_type(conn)
         language_leakage = compute_language_leakage(conn)
 
-    per_repo_ratios: list[float] = []
-    n_with_setup = 0
-    n_zero_teardown = 0
-    for setup_count, teardown_count in per_repo_counts.values():
-        if not setup_count:
-            continue
-        n_with_setup += 1
-        if teardown_count:
-            per_repo_ratios.append(setup_count / teardown_count)
-        else:
-            n_zero_teardown += 1
+    per_repo_ratios, n_with_setup, n_zero_teardown = _ratios_from_repo_counts(
+        per_repo_counts
+    )
+
+    per_repo_ratios_by_language: dict[str, list[float]] = {}
+    n_repos_with_setup_by_language: dict[str, int] = {}
+    n_repos_zero_teardown_by_language: dict[str, int] = {}
+    for language, repo_counts in per_repo_counts_by_language.items():
+        ratios, n_with, n_zero = _ratios_from_repo_counts(repo_counts)
+        per_repo_ratios_by_language[language] = ratios
+        n_repos_with_setup_by_language[language] = n_with
+        n_repos_zero_teardown_by_language[language] = n_zero
 
     return DatasetMetrics(
         dataset=dataset,
@@ -169,24 +207,39 @@ def load_dataset_metrics(
         teardown_rate_by_type=teardown_rate_by_type,
         language_leakage=language_leakage,
         kind_distribution_by_language=kind_distribution_by_language,
+        per_repo_ratios_by_language=per_repo_ratios_by_language,
+        n_repos_with_setup_by_language=n_repos_with_setup_by_language,
+        n_repos_zero_teardown_by_language=n_repos_zero_teardown_by_language,
     )
 
 
 def _fetch_kinds_and_repo_counts(
     conn: sqlite3.Connection,
-) -> tuple[dict[str, int], dict[int, tuple[int, int]], dict[str, dict[str, int]]]:
-    """Single pass over every fixture: dataset-level kind distribution, plus
-    per-repo (setup_count, teardown_count), plus per-language kind
-    distribution -- classified once via `_kind()` so none of the three
-    views can ever disagree with each other (a second, SQL-side
-    classification would just be `_kind()` duplicated in a different
-    language). The per-language breakdown is what
+) -> tuple[
+    dict[str, int],
+    dict[int, tuple[int, int]],
+    dict[str, dict[str, int]],
+    dict[str, dict[int, tuple[int, int]]],
+]:
+    """Single pass over every fixture: dataset-level kind distribution,
+    per-repo (setup_count, teardown_count), per-language kind distribution,
+    and per-language per-repo (setup_count, teardown_count) -- classified
+    once via `_kind()` so none of these views can ever disagree with each
+    other (a second, SQL-side classification would just be `_kind()`
+    duplicated in a different language).
+
+    The per-language kind distribution is what
     compute_stratified_categorical_balance() needs to check whether an
     A-vs-B/C difference holds within a language, not just in aggregate
-    across each dataset's different language mix."""
+    across each dataset's different language mix. The per-language per-repo
+    counts feed the same question for the setup-to-teardown ratio/zero-TD
+    rate -- grouped by each fixture's own language (test_files.language),
+    not the repo's tag, so a repo with setup fixtures in more than one
+    language contributes a separate (repo, language) data point to each."""
     kind_distribution = {"setup": 0, "teardown": 0, "other": 0}
     per_repo: dict[int, list[int]] = {}
     kind_by_language: dict[str, dict[str, int]] = {}
+    per_repo_by_language: dict[str, dict[int, list[int]]] = {}
 
     rows = conn.execute(
         "SELECT f.repo_id, f.fixture_type, f.name, tf.language FROM fixtures f "
@@ -196,10 +249,15 @@ def _fetch_kinds_and_repo_counts(
         kind = _kind(fixture_type, name)
         kind_distribution[kind] += 1
         counts = per_repo.setdefault(repo_id, [0, 0])
+        lang_counts = per_repo_by_language.setdefault(language, {}).setdefault(
+            repo_id, [0, 0]
+        )
         if kind == "setup":
             counts[0] += 1
+            lang_counts[0] += 1
         elif kind == "teardown":
             counts[1] += 1
+            lang_counts[1] += 1
 
         lang_dist = kind_by_language.setdefault(
             language, {"setup": 0, "teardown": 0, "other": 0}
@@ -207,7 +265,11 @@ def _fetch_kinds_and_repo_counts(
         lang_dist[kind] += 1
 
     per_repo_counts = {repo_id: (c[0], c[1]) for repo_id, c in per_repo.items()}
-    return kind_distribution, per_repo_counts, kind_by_language
+    per_repo_counts_by_language = {
+        language: {repo_id: (c[0], c[1]) for repo_id, c in repo_map.items()}
+        for language, repo_map in per_repo_by_language.items()
+    }
+    return kind_distribution, per_repo_counts, kind_by_language, per_repo_counts_by_language
 
 
 def _fetch_teardown_rate_by_type(conn: sqlite3.Connection) -> dict[str, dict]:
@@ -282,6 +344,30 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
         f"min={fmt(s['min'], 1)}, max={fmt(s['max'], 1)}",
         "",
     ]
+
+    lines += [
+        "**Per-repo setup-to-teardown ratio, by language** (each fixture's "
+        "own language, not its repo's tag -- see compute_language_leakage()'s "
+        "docstring; a repo with setup fixtures in more than one language "
+        "contributes one ratio value to each)",
+        "",
+        "| Language | Repos with at least one setup fixture | "
+        "No-teardown repos (ratio undefined) | No-teardown rate | "
+        "n (ratio computed) | mean | median | min | max |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for language in sorted(metrics.per_repo_ratios_by_language):
+        ratios = metrics.per_repo_ratios_by_language[language]
+        n_with = metrics.n_repos_with_setup_by_language[language]
+        n_zero = metrics.n_repos_zero_teardown_by_language[language]
+        lang_zero_pct = 100 * n_zero / n_with if n_with else 0.0
+        lang_s = summarize_continuous(ratios)
+        lines.append(
+            f"| {language} | {n_with:,} | {n_zero:,} | {lang_zero_pct:.1f}% | "
+            f"{lang_s['n']:,} | {fmt(lang_s['mean'])} | {fmt(lang_s['median'])} | "
+            f"{fmt(lang_s['min'], 1)} | {fmt(lang_s['max'], 1)} |"
+        )
+    lines.append("")
 
     lines += [
         "**has_teardown_pair rate by fixture_type**",
