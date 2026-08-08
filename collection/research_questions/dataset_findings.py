@@ -200,10 +200,10 @@ def _render_repo_distribution(stats: list[RepoPurityStats]) -> str:
         ">=1 test-touching commit -- each repo counted once, not weighted "
         "by its commit volume)",
         "",
-        "| N repos | Mean | Median | Stdev | Min | Max | Repos at 0% rejected | "
+        "| N repos | Median | Mean | Stdev | Min | Max | Repos at 0% rejected | "
         "Repos at 100% rejected |",
         "|---|---|---|---|---|---|---|---|",
-        f"| {summary['n']:,} | {fmt(summary['mean'], 3)} | {fmt(summary['median'], 3)} | "
+        f"| {summary['n']:,} | {fmt(summary['median'], 3)} | {fmt(summary['mean'], 3)} | "
         f"{fmt(summary['stdev'], 3)} | {fmt(summary['min'], 3)} | {fmt(summary['max'], 3)} | "
         f"{fully_accepted_only:,} | {fully_rejected:,} |",
         "",

@@ -340,7 +340,7 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
         f"- Of those, with zero teardown fixtures (ratio undefined): "
         f"{metrics.n_repos_zero_teardown:,} ({zero_pct:.1f}%)",
         f"- Ratio distribution over the remaining {s['n']:,} repos: "
-        f"mean={fmt(s['mean'])}, median={fmt(s['median'])}, "
+        f"median={fmt(s['median'])}, mean={fmt(s['mean'])}, "
         f"min={fmt(s['min'], 1)}, max={fmt(s['max'], 1)}",
         "",
     ]
@@ -353,7 +353,7 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
         "",
         "| Language | Repos with at least one setup fixture | "
         "No-teardown repos (ratio undefined) | No-teardown rate | "
-        "n (ratio computed) | mean | median | min | max |",
+        "n (ratio computed) | median | mean | min | max |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for language in sorted(metrics.per_repo_ratios_by_language):
@@ -364,7 +364,7 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
         lang_s = summarize_continuous(ratios)
         lines.append(
             f"| {language} | {n_with:,} | {n_zero:,} | {lang_zero_pct:.1f}% | "
-            f"{lang_s['n']:,} | {fmt(lang_s['mean'])} | {fmt(lang_s['median'])} | "
+            f"{lang_s['n']:,} | {fmt(lang_s['median'])} | {fmt(lang_s['mean'])} | "
             f"{fmt(lang_s['min'], 1)} | {fmt(lang_s['max'], 1)} |"
         )
     lines.append("")
@@ -405,9 +405,9 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     else:
         sig = "yes" if t.p_value < 0.05 else "no"
         lines.append(
-            f"A mean={fmt(d.get('agent_mean'))}, median={fmt(d.get('agent_median'))} | "
-            f"{other.dataset.upper()} mean={fmt(d.get('human_mean'))}, "
-            f"median={fmt(d.get('human_median'))} | U={fmt(t.statistic, 1)} | "
+            f"A median={fmt(d.get('agent_median'))}, mean={fmt(d.get('agent_mean'))} | "
+            f"{other.dataset.upper()} median={fmt(d.get('human_median'))}, "
+            f"mean={fmt(d.get('human_mean'))} | U={fmt(t.statistic, 1)} | "
             f"p={t.p_value:.4g} | significant (p<0.05): {sig} | "
             f"Cliff's delta (effect size): {continuous_effect_size_cell(t)}"
         )

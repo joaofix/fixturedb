@@ -198,12 +198,12 @@ def compare_datasets_repo_level(
 def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     lines = [f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures", ""]
 
-    lines += ["**Continuous metrics**", "", "| Metric | n | mean | median | min | max | stdev |",
+    lines += ["**Continuous metrics**", "", "| Metric | n | median | mean | min | max | stdev |",
               "|---|---|---|---|---|---|---|"]
     for metric in CONTINUOUS_METRICS:
         s = summarize_continuous(metrics.continuous_raw[metric])
         lines.append(
-            f"| {metric} | {s['n']:,} | {fmt(s['mean'])} | {fmt(s['median'])} | "
+            f"| {metric} | {s['n']:,} | {fmt(s['median'])} | {fmt(s['mean'])} | "
             f"{fmt(s['min'], 0)} | {fmt(s['max'], 0)} | {fmt(s['stdev'])} |"
         )
     lines.append("")
@@ -258,8 +258,8 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "for running all 6 of these tests together (see apply_fdr_correction()'s "
         "docstring).",
         "",
-        "| Metric | A mean | A median | "
-        + f"{other.dataset.upper()} mean | {other.dataset.upper()} median | U | p-value | "
+        "| Metric | A median | A mean | "
+        + f"{other.dataset.upper()} median | {other.dataset.upper()} mean | U | p-value | "
         "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
@@ -273,8 +273,8 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         lines.append(
-            f"| {metric} | {fmt(d.get('agent_mean'))} | {fmt(d.get('agent_median'))} | "
-            f"{fmt(d.get('human_mean'))} | {fmt(d.get('human_median'))} | "
+            f"| {metric} | {fmt(d.get('agent_median'))} | {fmt(d.get('agent_mean'))} | "
+            f"{fmt(d.get('human_median'))} | {fmt(d.get('human_mean'))} | "
             f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | {continuous_effect_size_cell(t)} | "
             f"{fdr_cell(t)} |"
         )
@@ -329,8 +329,8 @@ def _render_repo_level_comparison(
     lines = [
         f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
         "",
-        "| Metric | A mean | A median | "
-        + f"{other.dataset.upper()} mean | {other.dataset.upper()} median | U | p-value | "
+        "| Metric | A median | A mean | "
+        + f"{other.dataset.upper()} median | {other.dataset.upper()} mean | U | p-value | "
         "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
         "|---|---|---|---|---|---|---|---|---|---|",
     ]
@@ -344,8 +344,8 @@ def _render_repo_level_comparison(
             continue
         sig = "yes" if t.p_value < 0.05 else "no"
         lines.append(
-            f"| {metric} | {fmt(d.get('agent_mean'))} | {fmt(d.get('agent_median'))} | "
-            f"{fmt(d.get('human_mean'))} | {fmt(d.get('human_median'))} | "
+            f"| {metric} | {fmt(d.get('agent_median'))} | {fmt(d.get('agent_mean'))} | "
+            f"{fmt(d.get('human_median'))} | {fmt(d.get('human_mean'))} | "
             f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | {continuous_effect_size_cell(t)} | "
             f"{fdr_cell(t)} |"
         )
