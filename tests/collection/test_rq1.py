@@ -84,8 +84,13 @@ def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
 
     Each dict in `fixtures` may override any of the base columns below
     (loc, cyclomatic_complexity, scope, fixture_type, commit_type, ...).
+
+    Dataset "c" writes to c_sampled.db, not c.db -- require_db_or_none()
+    resolves "c" there exclusively (see _shared.py), so a test DB built at
+    the full c.db path would be invisible to load_dataset_metrics()/
+    generate_report() and silently look like "not collected yet."
     """
-    db_file = paths.db_path(dataset, root=root)
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         repo_id, _ = upsert_repository(

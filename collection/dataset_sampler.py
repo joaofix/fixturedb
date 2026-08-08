@@ -10,9 +10,132 @@ import random
 from dataclasses import dataclass, field
 from typing import Dict, List
 
+from collection.config import DATASET_C_SAMPLING_SEED
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
+
+
+@dataclass
+class RepoSamplingResult:
+    """Result of sample_repos_by_language()'s whole-repo stratified sample."""
+
+    sampled_repo_ids: List[int] = field(default_factory=list)
+    sampled_fixture_count: int = 0
+    target_count: int = 0
+    distribution_check: Dict[str, Dict] = field(default_factory=dict)
+    random_seed: int = DATASET_C_SAMPLING_SEED
+
+
+def sample_repos_by_language(
+    repos: List[Dict],
+    target_count: int,
+    tolerance: float = 0.02,
+    seed: int = DATASET_C_SAMPLING_SEED,
+) -> RepoSamplingResult:
+    """Randomly sample whole repos, stratified by language, until the total
+    fixture count is as close as possible to `target_count`.
+
+    Unlike `StratifiedSampler.sample()` below (which samples individual
+    fixture *rows*), this never splits a repo -- a repo's fixtures are
+    either entirely included or entirely excluded. This matters for Dataset
+    C: RQ2's setup-to-teardown ratio and has_teardown_pair rate are computed
+    per repo, so a fixture-level sample could split a repo's setup fixture
+    from its teardown fixture, fabricating an artificial "zero-teardown"
+    repo that's a sampling artifact, not a fact about the data.
+
+    Args:
+        repos: One dict per repo: {"repo_id": int, "language": str,
+            "fixture_count": int}. `fixture_count` is the repo's total
+            fixture count -- the whole point is this can't be subdivided.
+        target_count: Desired total sampled fixture count. Each language's
+            quota is `target_count * (language's share of the TOTAL fixture
+            count across all repos)` -- proportions are computed from
+            Dataset C's own fixture counts, not any other dataset's mix.
+        tolerance: Passed through to distribution_check's tolerance_met flag
+            (diagnostic only -- doesn't affect sampling, see
+            StratifiedSampler.sample()'s docstring for the same convention).
+        seed: Random seed -- defaults to the project-wide
+            DATASET_C_SAMPLING_SEED (config.py / study_parameters.yaml),
+            not a fresh literal, so a plain call is reproducible with the
+            same seed used everywhere else Dataset C sampling happens.
+
+    Returns:
+        RepoSamplingResult. `sampled_fixture_count` will not exactly equal
+        `target_count` -- repos are indivisible chunks, so this is the
+        closest achievable total, not an exact hit.
+    """
+    if not repos:
+        raise ValueError("Cannot sample from an empty repo list")
+
+    total_fixtures = sum(r["fixture_count"] for r in repos)
+    if total_fixtures == 0:
+        raise ValueError("Cannot sample: every repo has fixture_count 0")
+
+    by_language: Dict[str, List[Dict]] = {}
+    for repo in repos:
+        by_language.setdefault(repo["language"], []).append(repo)
+
+    rng = random.Random(seed)
+    sampled_repo_ids: List[int] = []
+    sampled_fixture_count = 0
+    language_totals: Dict[str, int] = {}
+
+    for language, lang_repos in by_language.items():
+        lang_total = sum(r["fixture_count"] for r in lang_repos)
+        quota = target_count * (lang_total / total_fixtures)
+
+        shuffled = lang_repos[:]
+        rng.shuffle(shuffled)
+
+        running_total = 0
+        included: List[Dict] = []
+        for repo in shuffled:
+            if running_total >= quota:
+                break
+            # Stop at whichever boundary -- including this repo, or not --
+            # lands closer to the quota, rather than always overshooting by
+            # stopping at first-exceed.
+            with_repo = running_total + repo["fixture_count"]
+            if abs(with_repo - quota) < abs(running_total - quota):
+                included.append(repo)
+                running_total = with_repo
+            else:
+                break
+
+        sampled_repo_ids.extend(r["repo_id"] for r in included)
+        sampled_fixture_count += running_total
+        language_totals[language] = running_total
+
+        logger.debug(
+            f"  {language}: {len(included)}/{len(lang_repos)} repos, "
+            f"{running_total}/{round(quota)} fixtures (quota)"
+        )
+
+    distribution_check: Dict[str, Dict] = {}
+    for language, lang_repos in by_language.items():
+        lang_total = sum(r["fixture_count"] for r in lang_repos)
+        original_ratio = lang_total / total_fixtures
+        sampled_ratio = (
+            language_totals[language] / sampled_fixture_count
+            if sampled_fixture_count
+            else 0.0
+        )
+        deviation = abs(original_ratio - sampled_ratio)
+        distribution_check[language] = {
+            "original_ratio": round(original_ratio, 4),
+            "sampled_ratio": round(sampled_ratio, 4),
+            "deviation": round(deviation, 4),
+            "tolerance_met": deviation <= tolerance,
+        }
+
+    return RepoSamplingResult(
+        sampled_repo_ids=sampled_repo_ids,
+        sampled_fixture_count=sampled_fixture_count,
+        target_count=target_count,
+        distribution_check=distribution_check,
+        random_seed=seed,
+    )
 
 
 @dataclass

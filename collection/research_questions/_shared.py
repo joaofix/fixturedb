@@ -37,8 +37,24 @@ COMPARISONS = [("b", "A vs B"), ("c", "A vs C")]
 def require_db_or_none(dataset: str, db_root: Path = DB_ROOT) -> Path | None:
     """db/{dataset}.db's path, or None (with a warning logged) if it doesn't
     exist yet -- the shared "skip, don't error" convention every rqN.py
-    script uses so it can run against whatever subset of A/B/C is collected."""
-    db_file = db_path(dataset, root=db_root)
+    script uses so it can run against whatever subset of A/B/C is collected.
+
+    Dataset "c" is a hard exception: this resolves to db/c_sampled.db, never
+    the full db/c.db. The full Dataset C is ~3.3x Dataset A's size, and
+    running the RQ comparisons against that imbalance is methodologically
+    unsound -- see `python -m collection sample-c-repos`
+    (collection/dataset_pipeline.py::sample_dataset_c_repos()), which builds
+    c_sampled.db from a random, language-stratified, whole-repo sample sized
+    to match Dataset A. If c_sampled.db doesn't exist yet, this behaves
+    exactly like any other missing DB (warn, return None, dataset skipped) --
+    there is deliberately no fallback to the full db/c.db here, in any
+    circumstance. This substitution only applies within research_questions/
+    -- db/c.db itself is untouched and still used normally by collection,
+    export/validate/summarize, and analyze-distribution."""
+    if dataset == "c":
+        db_file = db_root / "c_sampled.db"
+    else:
+        db_file = db_path(dataset, root=db_root)
     if not db_file.exists():
         logger.warning(f"{db_file} not found; skipping dataset {dataset!r}")
         return None

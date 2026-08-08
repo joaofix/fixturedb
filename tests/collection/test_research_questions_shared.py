@@ -41,6 +41,19 @@ class TestRequireDbOrNone:
         initialise_db(db_file)
         assert require_db_or_none("a", tmp_path) == db_file
 
+    def test_dataset_c_resolves_to_sampled_db_not_full_db(self, tmp_path):
+        initialise_db(tmp_path / "c_sampled.db")
+        assert require_db_or_none("c", tmp_path) == tmp_path / "c_sampled.db"
+
+    def test_dataset_c_ignores_full_db_when_only_that_exists(self, tmp_path):
+        """The real, full db/c.db existing must never be enough to satisfy
+        dataset "c" for any research_questions/ script -- it's ~3.3x Dataset
+        A's size, and running RQ comparisons against that imbalance is
+        exactly what this redirection exists to prevent."""
+        initialise_db(tmp_path / "c.db")
+        initialise_db(tmp_path / "a.db")  # unrelated dataset present -- must not matter
+        assert require_db_or_none("c", tmp_path) is None
+
 
 class TestSummarizeContinuous:
     def test_known_values(self):

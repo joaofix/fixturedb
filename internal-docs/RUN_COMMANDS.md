@@ -246,6 +246,38 @@ Same four commands with `--dataset b` / `--dataset c` for the other two datasets
 `analyze-distribution` is the one pair-aware verb (defaults to `--dataset a --against b`)
 since its whole job is comparing two already-extracted datasets.
 
+### Required before running any `research_questions/` script
+
+Dataset C's full collection is ~3.3x Dataset A's size -- running the RQ
+comparisons against that imbalance is methodologically unsound. Every
+`research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/`balance.py`/
+`language_contamination.py`) reads a sampled-down Dataset C
+(`db/c_sampled.db` + `datasets/c/fixtures-sampled/`) instead of the full one
+(`db/c.db` + `datasets/c/fixtures/`) -- this is enforced, not optional (see
+`collection/research_questions/_shared.py::require_db_or_none()`'s and
+`language_contamination.py::check_dataset()`'s "c" handling): if the sampled
+artifact doesn't exist yet, Dataset C's section just reports "not available,"
+it never silently falls back to the full DB.
+
+Run this once Dataset A and C have both finished `extract-fixtures`,
+**before** running any `research_questions/` script:
+
+```bash
+python -m collection sample-c-repos --match-dataset a
+  && curl -d "sample-c-repos finished" ntfy.sh/joaofix_fixturedb
+```
+
+Samples whole Dataset C repos (never splits one -- see
+`collection/dataset_sampler.py::sample_repos_by_language()`'s docstring for
+why fixture-level sampling would distort RQ2's setup-to-teardown metrics),
+stratified by language using Dataset C's own original per-language
+proportions, down to `--match-dataset a`'s current live fixture count (or
+pass an explicit `--target-count N` instead). Writes `db/c_sampled.db` +
+`datasets/c/fixtures-sampled/*.csv` + a summary at `output/sample_c_repos.json`
+-- `db/c.db`/`datasets/c/fixtures/*.csv` are read-only inputs, never
+modified. Re-running it fully rebuilds the sampled artifact (not additive) --
+safe to re-run after any change to Dataset A's or C's underlying data.
+
 ## See also
 
 - `AGENTS.md` — full verb-to-dataset matrix and repo/module layout

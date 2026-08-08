@@ -29,6 +29,16 @@ def _write_fixtures_csv(root: Path, dataset: str, filename: str, languages: list
             writer.writerow({"repo_name": "o/r", "language": lang, "fixture_name": f"f{i}"})
 
 
+def _write_sampled_c_fixtures_csv(root: Path, filename: str, languages: list[str]) -> None:
+    path = root / "c" / "fixtures-sampled" / filename
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.DictWriter(fh, fieldnames=["repo_name", "language", "fixture_name"])
+        writer.writeheader()
+        for i, lang in enumerate(languages):
+            writer.writerow({"repo_name": "o/r", "language": lang, "fixture_name": f"f{i}"})
+
+
 class TestCheckDataset:
     def test_missing_fixtures_dir_returns_none(self, tmp_path):
         assert check_dataset("a", datasets_root=tmp_path) is None
@@ -70,6 +80,25 @@ class TestCheckDataset:
         by_name = {r.csv_name: r for r in results}
         assert by_name["python_fixtures.csv"].mismatched == 1
         assert by_name["java_fixtures.csv"].mismatched == 0
+
+    def test_dataset_c_reads_fixtures_sampled_not_fixtures(self, tmp_path):
+        """Dataset "c" must read datasets/c/fixtures-sampled/, never the
+        full datasets/c/fixtures/ -- same "no fallback to the full one"
+        rule as _shared.py::require_db_or_none()'s "c" handling."""
+        _write_fixtures_csv(tmp_path, "c", "python_fixtures.csv", ["python", "java"])
+        _write_sampled_c_fixtures_csv(tmp_path, "python_fixtures.csv", ["python", "python"])
+
+        results = check_dataset("c", datasets_root=tmp_path)
+
+        assert len(results) == 1
+        assert results[0].total == 2
+        assert results[0].mismatched == 0  # from fixtures-sampled/, not the mismatched fixtures/
+
+    def test_dataset_c_missing_fixtures_sampled_returns_none_even_with_full_fixtures_present(
+        self, tmp_path
+    ):
+        _write_fixtures_csv(tmp_path, "c", "python_fixtures.csv", ["python", "java"])
+        assert check_dataset("c", datasets_root=tmp_path) is None
 
 
 class TestGenerateReport:

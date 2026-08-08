@@ -18,7 +18,7 @@ from pathlib import Path
 from . import paths
 from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from .cli_utils import add_language_arg, add_repos_per_language_arg, add_workers_arg
-from .config import CLONES_DIR, LANGUAGE_CONFIGS
+from .config import CLONES_DIR, DATASET_C_SAMPLING_SEED, LANGUAGE_CONFIGS
 from .csv_adapter import get_adapter
 from .db import db_session
 from .logging_utils import configure_logging, get_logger
@@ -367,6 +367,18 @@ def _cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_sample_c_repos(args: argparse.Namespace) -> int:
+    from .dataset_pipeline import sample_dataset_c_repos
+
+    sample_dataset_c_repos(
+        target_count=args.target_count,
+        match_dataset=args.match_dataset,
+        tolerance=args.tolerance,
+        seed=args.seed,
+    )
+    return 0
+
+
 def _cmd_summarize(args: argparse.Namespace) -> int:
     from .dataset_summary import write_summary
 
@@ -536,6 +548,36 @@ def build_parser() -> argparse.ArgumentParser:
     _add_dataset_arg(export)
     export.add_argument("--version", type=str, default="1.0")
 
+    sample_c_repos = subparsers.add_parser(
+        "sample-c-repos",
+        help="Sample whole Dataset C repos, stratified by language, down to "
+        "db/c_sampled.db + datasets/c/fixtures-sampled/ -- required before "
+        "any research_questions/ script will report on Dataset C (see "
+        "internal-docs/RUN_COMMANDS.md)",
+    )
+    sample_c_repos_target = sample_c_repos.add_mutually_exclusive_group(required=True)
+    sample_c_repos_target.add_argument(
+        "--target-count",
+        type=int,
+        default=None,
+        help="Exact target fixture count to sample down to",
+    )
+    sample_c_repos_target.add_argument(
+        "--match-dataset",
+        choices=list(_DATASET_CHOICES),
+        default=None,
+        help="Match this dataset's CURRENT live fixture count (e.g. --match-dataset a)",
+    )
+    sample_c_repos.add_argument(
+        "--tolerance",
+        type=float,
+        default=0.02,
+        help="Per-language deviation-from-original-proportions warning "
+        "threshold in distribution_check -- diagnostic only, doesn't affect "
+        "sampling",
+    )
+    sample_c_repos.add_argument("--seed", type=int, default=DATASET_C_SAMPLING_SEED)
+
     validate = subparsers.add_parser(
         "validate", help="Validate export/{dataset}.zip for completeness and independence"
     )
@@ -637,6 +679,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "export":
         return _cmd_export(args)
+
+    if args.command == "sample-c-repos":
+        return _cmd_sample_c_repos(args)
 
     if args.command == "validate":
         return _cmd_validate(args)

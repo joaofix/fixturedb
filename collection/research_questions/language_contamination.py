@@ -87,8 +87,19 @@ def _check_csv(csv_path: Path) -> FileContamination:
 
 def check_dataset(dataset: str, *, datasets_root: Path = paths.DATASETS_ROOT) -> list[FileContamination] | None:
     """Return per-CSV contamination results for `dataset`, or None if its
-    fixtures/ directory doesn't exist or has no *_fixtures.csv files yet."""
-    fixtures_dir = paths.stage_dir(dataset, "fixtures", root=datasets_root)
+    fixtures/ directory doesn't exist or has no *_fixtures.csv files yet.
+
+    Dataset "c" is a hard exception: this reads datasets/c/fixtures-sampled/
+    instead of the full datasets/c/fixtures/ -- same reasoning and same
+    "no fallback to the full one, ever" rule as
+    _shared.py::require_db_or_none()'s "c" handling, kept consistent across
+    every research_questions/ script even though this particular check
+    isn't a size-sensitive A-vs-C comparison (see
+    collection/dataset_pipeline.py::sample_dataset_c_repos())."""
+    if dataset == "c":
+        fixtures_dir = datasets_root / "c" / "fixtures-sampled"
+    else:
+        fixtures_dir = paths.stage_dir(dataset, "fixtures", root=datasets_root)
     csv_paths = sorted(fixtures_dir.glob("*_fixtures.csv")) if fixtures_dir.exists() else []
     if not csv_paths:
         logger.warning(f"{fixtures_dir} has no *_fixtures.csv files; skipping dataset {dataset!r}")

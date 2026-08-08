@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from collection import paths
 from collection.__main__ import main
 
@@ -518,6 +520,41 @@ class TestExport:
 
         assert rc == 0
         mock_export.assert_called_once_with("a", version="1.0")
+
+
+class TestSampleCRepos:
+    def test_match_dataset_resolves_defaults(self):
+        from collection.config import DATASET_C_SAMPLING_SEED
+
+        with patch(
+            "collection.dataset_pipeline.sample_dataset_c_repos"
+        ) as mock_sample:
+            rc = main(["sample-c-repos", "--match-dataset", "a"])
+
+        assert rc == 0
+        mock_sample.assert_called_once_with(
+            target_count=None,
+            match_dataset="a",
+            tolerance=0.02,
+            seed=DATASET_C_SAMPLING_SEED,
+        )
+
+    def test_explicit_target_count(self):
+        with patch(
+            "collection.dataset_pipeline.sample_dataset_c_repos"
+        ) as mock_sample:
+            main(["sample-c-repos", "--target-count", "50498"])
+
+        assert mock_sample.call_args.kwargs["target_count"] == 50498
+        assert mock_sample.call_args.kwargs["match_dataset"] is None
+
+    def test_target_count_and_match_dataset_mutually_exclusive(self):
+        with pytest.raises(SystemExit):
+            main(["sample-c-repos", "--target-count", "50", "--match-dataset", "a"])
+
+    def test_requires_one_of_target_count_or_match_dataset(self):
+        with pytest.raises(SystemExit):
+            main(["sample-c-repos"])
 
 
 class TestValidate:
