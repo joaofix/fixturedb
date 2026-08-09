@@ -204,18 +204,99 @@ def test_upsert_repository_backward_compatible_without_repo_age_at_collection_ye
         assert row["repo_age_at_collection_years"] is None
 
 
+def test_upsert_repository_round_trips_total_commits_since_agent_start(tmp_path):
+    """total_commits_since_agent_start should be persisted when supplied,
+    and updated on a later upsert -- same treatment as
+    repo_age_at_collection_years above. Backs dataset_findings.py's "All
+    commits" row (`_fetch_total_commits_since_agent_start()`)."""
+    db_path = tmp_path / "test.db"
+    initialise_db(db_path)
+
+    repo = {
+        "github_id": 333,
+        "full_name": "owner/commitcountrepo",
+        "language": "python",
+        "stars": 1,
+        "forks": 0,
+        "description": "",
+        "topics": "[]",
+        "created_at": "2019-01-01",
+        "pushed_at": "",
+        "clone_url": "https://github.com/owner/commitcountrepo.git",
+        "num_contributors": 0,
+        "domain": None,
+        "repo_age_years": None,
+        "total_commits_since_agent_start": 42,
+    }
+
+    with db_session(db_path) as conn:
+        repo_id, _ = upsert_repository(conn, repo)
+        row = conn.execute(
+            "SELECT total_commits_since_agent_start FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert row["total_commits_since_agent_start"] == 42
+
+        # Re-upsert with an updated value (e.g. a backfill run)
+        upsert_repository(conn, {**repo, "total_commits_since_agent_start": 51})
+        row = conn.execute(
+            "SELECT total_commits_since_agent_start FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert row["total_commits_since_agent_start"] == 51
+
+
+def test_upsert_repository_backward_compatible_without_total_commits_since_agent_start(
+    tmp_path,
+):
+    """Callers that don't set total_commits_since_agent_start (Dataset B/C's
+    repo dicts, which never compute it) must not crash -- the column stays
+    NULL, matching repo_age_at_collection_years's backward-compat
+    treatment above."""
+    db_path = tmp_path / "test.db"
+    initialise_db(db_path)
+
+    repo = {
+        "github_id": 444,
+        "full_name": "owner/nocommitcount",
+        "language": "python",
+        "stars": 1,
+        "forks": 0,
+        "description": "",
+        "topics": "[]",
+        "created_at": "2019-01-01",
+        "pushed_at": "",
+        "clone_url": "https://github.com/owner/nocommitcount.git",
+        "num_contributors": 0,
+        "domain": None,
+        "repo_age_years": None,
+        # total_commits_since_agent_start intentionally omitted
+    }
+
+    with db_session(db_path) as conn:
+        repo_id, is_new = upsert_repository(conn, repo)
+        assert is_new is True
+        row = conn.execute(
+            "SELECT total_commits_since_agent_start FROM repositories WHERE id = ?",
+            (repo_id,),
+        ).fetchone()
+        assert row["total_commits_since_agent_start"] is None
+
+
 def test_initialise_db_self_heals_a_schema_predating_column_migrations(tmp_path):
     """Regression test for a real incident: db/a.db's last collection run
-    predated two schema additions (repo_age_at_collection_years,
-    commit_date, repo_age_at_commit_years) and CREATE TABLE IF NOT EXISTS is
-    a no-op on an already-existing table, so those columns were silently
-    missing -- the next upsert_repository()/insert_fixture() call against
-    that file would have crashed with "no such column". Simulates that
-    exact stale state (a DB built from an old schema without these 3
-    columns, with a real row already in it) and confirms a later
-    initialise_db() call -- exactly what every collector already does at
-    the start of run() -- adds the missing columns without touching
-    existing data."""
+    predated schema additions (repo_age_at_collection_years,
+    total_commits_since_agent_start, commit_date, repo_age_at_commit_years)
+    and CREATE TABLE IF NOT EXISTS is a no-op on an already-existing table,
+    so those columns were silently missing -- the next
+    upsert_repository()/insert_fixture() call (or, for
+    total_commits_since_agent_start specifically,
+    backfill_total_commits.py's own query) against that file would have
+    crashed with "no such column". Simulates that exact stale state (a DB
+    built from an old schema without these columns, with a real row already
+    in it) and confirms a later initialise_db() call -- exactly what every
+    collector, and now backfill_total_commits.py's run(), already does at
+    the start -- adds the missing columns without touching existing data."""
     import sqlite3
 
     db_path = tmp_path / "stale.db"
@@ -272,6 +353,7 @@ def test_initialise_db_self_heals_a_schema_predating_column_migrations(tmp_path)
         fixture_cols = {row[1] for row in conn.execute("PRAGMA table_info(fixtures)")}
         assert "repo_age_at_collection_years" in repo_cols
         assert "agent_adoption_intensity" in repo_cols
+        assert "total_commits_since_agent_start" in repo_cols
         assert {"commit_date", "repo_age_at_commit_years"} <= fixture_cols
 
         # Pre-existing row survives the migration untouched.

@@ -483,6 +483,7 @@ def construct_repo_dict(
     repo_age_years: Optional[float] = None,
     repo_age_at_collection_years: Optional[float] = None,
     agent_adoption_intensity: Optional[str] = None,
+    total_commits_since_agent_start: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Construct a repository data dictionary for database insertion.
@@ -513,6 +514,7 @@ def construct_repo_dict(
         "repo_age_at_collection_years": repo_age_at_collection_years,
         "num_contributors": num_contributors or 0,
         "agent_adoption_intensity": agent_adoption_intensity,
+        "total_commits_since_agent_start": total_commits_since_agent_start,
     }
 
 

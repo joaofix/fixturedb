@@ -36,6 +36,11 @@ CREATE TABLE IF NOT EXISTS repositories (
     agent_commits_touching_tests INTEGER DEFAULT 0,  -- Dataset A: agent commits that touched >=1 test file
     agent_commits_rejected_mixed_test_diff INTEGER DEFAULT 0,  -- Dataset A: rejected, a test file had deletions/edits
     agent_commits_accepted  INTEGER DEFAULT 0,      -- Dataset A: accepted, all test file diffs were pure additions
+    total_commits_since_agent_start INTEGER DEFAULT NULL,  -- Dataset A: non-merge commits (agent+human+bot
+                                    -- alike) since AGENT_CORPUS_START_DATE, via count_total_commits_since()
+                                    -- -- the same call already used to compute agent_adoption_intensity, just
+                                    -- persisted this time. NULL for Dataset B/C rows and for Dataset A repos
+                                    -- collected before this column existed (see backfill_total_commits.py).
     collected_at    TEXT DEFAULT (datetime('now'))
 );
 

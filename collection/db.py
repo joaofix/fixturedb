@@ -181,6 +181,7 @@ def insert_test_commit(conn: sqlite3.Connection, test_commit: dict) -> int:
 _COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     ("repositories", "agent_adoption_intensity", "TEXT DEFAULT NULL"),
     ("repositories", "repo_age_at_collection_years", "REAL DEFAULT NULL"),
+    ("repositories", "total_commits_since_agent_start", "INTEGER DEFAULT NULL"),
     ("fixtures", "commit_date", "TEXT DEFAULT NULL"),
     ("fixtures", "repo_age_at_commit_years", "REAL DEFAULT NULL"),
 ]
@@ -251,6 +252,7 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
 
     adoption = repo.get("agent_adoption_intensity")
     repo_age_at_collection = repo.get("repo_age_at_collection_years")
+    total_commits_since_agent_start = repo.get("total_commits_since_agent_start")
 
     conn.execute(
         """
@@ -258,12 +260,12 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
             github_id, full_name, language, stars, forks,
             description, topics, created_at, pushed_at, clone_url,
             domain, repo_age_years, repo_age_at_collection_years, num_contributors,
-            agent_adoption_intensity
+            agent_adoption_intensity, total_commits_since_agent_start
         ) VALUES (
             :github_id, :full_name, :language, :stars, :forks,
             :description, :topics, :created_at, :pushed_at, :clone_url,
             :domain, :repo_age_years, :repo_age_at_collection_years, :num_contributors,
-            :agent_adoption_intensity
+            :agent_adoption_intensity, :total_commits_since_agent_start
         )
         ON CONFLICT(github_id) DO UPDATE SET
             stars       = excluded.stars,
@@ -272,12 +274,14 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
             repo_age_years = excluded.repo_age_years,
             repo_age_at_collection_years = excluded.repo_age_at_collection_years,
             num_contributors = excluded.num_contributors,
-            agent_adoption_intensity = excluded.agent_adoption_intensity
+            agent_adoption_intensity = excluded.agent_adoption_intensity,
+            total_commits_since_agent_start = excluded.total_commits_since_agent_start
     """,
         {
             **repo,
             "agent_adoption_intensity": adoption,
             "repo_age_at_collection_years": repo_age_at_collection,
+            "total_commits_since_agent_start": total_commits_since_agent_start,
         },
     )
 

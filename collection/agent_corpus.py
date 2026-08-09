@@ -605,6 +605,7 @@ class AgentCorpusCollector:
                 repo_age_years=repo_age,
                 repo_age_at_collection_years=repo_age_at_collection,
                 agent_adoption_intensity=adoption_intensity,
+                total_commits_since_agent_start=total_commits,
             )
 
             base_result = {

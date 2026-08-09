@@ -226,6 +226,7 @@ class TestConstructRepoDict:
             domain="web",
             repo_age_years=1.5,
             repo_age_at_collection_years=6.5,
+            total_commits_since_agent_start=123,
         )
 
         assert result["full_name"] == "owner/repo"
@@ -236,6 +237,15 @@ class TestConstructRepoDict:
         assert result["domain"] == "web"
         assert result["repo_age_years"] == 1.5
         assert result["repo_age_at_collection_years"] == 6.5
+        assert result["total_commits_since_agent_start"] == 123
+
+    def test_construct_repo_dict_total_commits_since_agent_start_defaults_to_none(self):
+        """Dataset B/C callers never pass this (they don't run agent_corpus.py's
+        adoption-intensity computation) -- must default to None, not crash or
+        silently default to 0 (which would look like "cloned fine, zero
+        commits" rather than "not applicable to this dataset")."""
+        result = construct_repo_dict(full_name="owner/repo", language="python")
+        assert result["total_commits_since_agent_start"] is None
 
 
 class TestWriteFixtureCsvRow:

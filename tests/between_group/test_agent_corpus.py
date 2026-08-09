@@ -908,6 +908,13 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
     # 100% ratio, well above the "pervasive" (>20%) threshold.
     assert rows_by_repo["owner/main-repo"]["agent_adoption_intensity"] == "pervasive"
 
+    # total_commits_since_agent_start persists the same count_total_commits_since()
+    # call that already produced the ratio above -- previously computed and
+    # discarded, now also landing in the DB row. main-repo has 3 commits
+    # total since 2025-01-01 (the base commit plus the 2 agent commits).
+    assert row_main["total_commits_since_agent_start"] == 3
+    assert row_empty["total_commits_since_agent_start"] is not None
+
     # Zero-yield repo must still get a row (always-write-a-row behavior).
     assert "owner/empty-repo" in rows_by_repo
     assert rows_by_repo["owner/empty-repo"]["agent_commits_touching_tests"] == "0"
