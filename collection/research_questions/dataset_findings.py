@@ -9,8 +9,11 @@ question). See docs/data/dataset-card.md's "About the datasets" section for
 how these are meant to be cited -- as caveats/characterisation alongside the
 RQ1-3 comparisons, not folded into any RQ's own statistical tests.
 
-Every section here reads data that collection already computes and
-persists; this script adds no new instrumentation of its own.
+Every section here reads data collection already computes and persists --
+`db/*.db`, or (for the newest section below) the raw SEART export and
+Dataset A's commit-discovery CSVs; this script adds no new *collection-side*
+instrumentation of its own, though a couple of rows are newly-derived
+queries over existing columns rather than previously-reported numbers.
 
 Currently covers:
 
@@ -53,11 +56,58 @@ Currently covers:
   This section can report bucket membership, not a continuous distribution
   or a mean ratio, without adding new instrumentation there.
 
+- **Commits and repositories summary** (Dataset A, Dataset C): a compact,
+  per-language funnel of how many commits/repos survived each stage of
+  collection -- Dataset A's "how many candidate repos existed, how many had
+  an agent config file, how many had an agent commit at all, how many of
+  those touched tests, how many involved mocks", and Dataset C's "how many
+  candidate repos existed, how many were within the 2016-2020 creation
+  window, how many actually contributed fixtures/mocks". The exact shape of
+  the paper's two summary tables -- row/column names match so this can be
+  copied over without relabeling.
+
+  Sourced from three places, not just db/*.db like the rest of this file:
+  db/a.db and db/c_sampled.db (repository/fixture counts), the raw SEART
+  search export (`github-search-raw/*.csv.gz` -- the "Candidate repos" row,
+  identical for A and C since both draw from the same export, see
+  `paths.py::default_repo_source()`), and Dataset A's own commit-discovery
+  CSVs (`datasets/a/commits/*.csv`, the only place a couple of these counts
+  exist at all -- `db/a.db` only stores counts of commits *touching tests*,
+  not every agent commit found). "Mock commits"/"With mock commits" are a
+  newly-*derived* concept (a commit/repo counts if it introduced >=1
+  fixture with `num_mocks > 0`) -- nothing tracked this before, but it's a
+  plain query over already-persisted columns, not new instrumentation.
+
+  "All commits" is DB-sourced too (`repositories.total_commits_since_
+  agent_start`, `SUM(...)` grouped by language) -- not full repository
+  lifetime history, but non-merge commits since AGENT_CORPUS_START_DATE,
+  the same window/repo population as the rows below it in the table.
+  `agent_corpus.py`'s `analyze` stage already computed this number live (to
+  derive `agent_adoption_intensity`) but discarded it before this change;
+  it's now persisted going forward, and repos collected before this column
+  existed needed a one-time backfill (re-clone + re-derive via the exact
+  same `count_total_commits_since()` call, so backfilled and freshly
+  collected rows mean the same thing) -- see
+  `repository_quality_control/backfill_total_commits.py`. Any repo still
+  missing the column (backfill not run, or its re-clone failed) is simply
+  excluded from the sum rather than counted as 0.
+
+  Known limitations: Dataset C's "With any
+  fixtures"/"With any mocks" rows read the *sampled* `db/c_sampled.db`, not
+  the full `db/c.db` -- consistent with every other "c" reference in
+  `research_questions/`, even though this table isn't itself an A-vs-C
+  comparison -- while "Candidate repos"/"Created within 2016-2020" read the
+  original, never-resampled collection CSVs, since sampling is a later,
+  analysis-time step that doesn't touch those.
+
 python -m collection.research_questions.dataset_findings
 """
 
 from __future__ import annotations
 
+import csv
+import gzip
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -337,7 +387,301 @@ def _render_adoption_intensity_funnel_by_language(stats: list[RepoPurityStats]) 
     return "\n".join(lines)
 
 
-def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
+# ---------------------------------------------------------------------------
+# Commits and repositories summary (Dataset A, Dataset C)
+# ---------------------------------------------------------------------------
+
+_SUMMARY_TABLE_LANGUAGES = ["java", "javascript", "python", "typescript"]
+
+
+def _fetch_raw_seart_repo_counts(
+    raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+) -> dict[str, int] | None:
+    """Row count per raw SEART search export file (github-search-raw/
+    {language}.csv.gz) -- the "Candidate repos" row: the pool BEFORE any
+    date-window/agent-config filtering, identical for Dataset A and Dataset
+    C since both draw from this same raw export (see
+    paths.py::default_repo_source()). None if the directory doesn't exist
+    (e.g. not collected in this environment) -- callers render that as an
+    "N/A" row rather than a false zero."""
+    if not raw_search_dir.exists():
+        return None
+    counts: dict[str, int] = {}
+    for csv_path in sorted(raw_search_dir.glob("*.csv.gz")):
+        language = csv_path.name.removesuffix(".csv.gz").lower()
+        with gzip.open(csv_path, "rt", encoding="utf-8", newline="") as fh:
+            counts[language] = sum(1 for _ in csv.reader(fh)) - 1
+    return counts or None
+
+
+def _fetch_csv_row_counts(csv_dir: Path, suffix: str) -> dict[str, int] | None:
+    """Row count per per-language CSV file matching `*{suffix}` in
+    `csv_dir`, language = filename with `suffix` stripped. None if
+    `csv_dir` doesn't exist. Used for "Agent commits"
+    (datasets/a/commits/, suffix "_commit.csv") and "Created within
+    2016-2020" (datasets/c/repos/, suffix "_repo.csv")."""
+    if not csv_dir.exists():
+        return None
+    counts: dict[str, int] = {}
+    for csv_path in sorted(csv_dir.glob(f"*{suffix}")):
+        language = csv_path.name[: -len(suffix)].lower()
+        with csv_path.open(encoding="utf-8", newline="") as fh:
+            counts[language] = sum(1 for _ in csv.reader(fh)) - 1
+    return counts or None
+
+
+def _fetch_csv_unique_repo_counts(csv_dir: Path, suffix: str) -> dict[str, int] | None:
+    """Unique `repo_name` count per per-language CSV file matching
+    `*{suffix}` in `csv_dir`. None if `csv_dir` doesn't exist. Used for
+    "With agent commits" -- no db/a.db equivalent exists, since
+    `agent_commits_accepted`/`agent_commits_touching_tests` are both
+    test-touching-scoped only, not "any agent commit at all"."""
+    if not csv_dir.exists():
+        return None
+    counts: dict[str, int] = {}
+    for csv_path in sorted(csv_dir.glob(f"*{suffix}")):
+        language = csv_path.name[: -len(suffix)].lower()
+        with csv_path.open(encoding="utf-8", newline="") as fh:
+            reader = csv.DictReader(fh)
+            counts[language] = len({row["repo_name"] for row in reader})
+    return counts or None
+
+
+def _fetch_repos_with_agent_config(conn: sqlite3.Connection) -> dict[str, int]:
+    """"With agent files or directories" -- same query already backing the
+    funnel table's "Agent Configuration Present" (agent_adoption_intensity
+    is only ever computed for repos already known to have an agent config
+    file)."""
+    rows = conn.execute(
+        "SELECT language, COUNT(*) FROM repositories "
+        "WHERE agent_adoption_intensity IS NOT NULL GROUP BY language"
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+def _fetch_agent_commits_touching_tests(conn: sqlite3.Connection) -> dict[str, int]:
+    """"Test commits" -- SUM(agent_commits_touching_tests), not the
+    datasets/a/test-commits/*.csv row count: those CSVs were found to be
+    stale relative to db/a.db (older mtime, lower counts) -- the DB is
+    refreshed on every extract-fixtures run and is the more current source
+    of truth."""
+    rows = conn.execute(
+        "SELECT language, SUM(agent_commits_touching_tests) FROM repositories GROUP BY language"
+    ).fetchall()
+    return {row[0]: row[1] or 0 for row in rows}
+
+
+def _fetch_total_commits_since_agent_start(conn: sqlite3.Connection) -> dict[str, int] | None:
+    """"All commits" -- SUM(total_commits_since_agent_start), live from
+    db/a.db. Non-merge commits (agent, human, and bot alike) since
+    AGENT_CORPUS_START_DATE, on HEAD -- agent_corpus.py's `analyze` stage
+    already computes this per repo (count_total_commits_since()) to derive
+    agent_adoption_intensity, and now persists it too. Repos collected
+    before that column existed (or that failed to re-clone during the
+    one-time backfill, see repository_quality_control/backfill_total_commits.py)
+    have it NULL -- excluded here (not counted as 0), so a partial backfill
+    under-counts rather than producing a misleadingly-precise-looking wrong
+    number.
+
+    Returns None (renders as the table's usual "N/A" row, not a crash) if
+    the column doesn't exist at all yet -- a db/a.db collected before this
+    column was added, and not yet self-healed by running
+    `backfill_total_commits.py` (its `run()` calls `initialise_db()`, which
+    adds the column; this script never does, deliberately -- a read-only
+    report generator shouldn't mutate the DB it's reading as a side effect)."""
+    try:
+        rows = conn.execute(
+            "SELECT language, SUM(total_commits_since_agent_start) FROM repositories "
+            "WHERE total_commits_since_agent_start IS NOT NULL GROUP BY language"
+        ).fetchall()
+    except sqlite3.OperationalError:
+        return None
+    return {row[0]: row[1] or 0 for row in rows}
+
+
+def _fetch_repos_with_test_commits(conn: sqlite3.Connection) -> dict[str, int]:
+    """"With test commits" -- DB-sourced, same authority reasoning as
+    _fetch_agent_commits_touching_tests()."""
+    rows = conn.execute(
+        "SELECT language, COUNT(*) FROM repositories "
+        "WHERE agent_commits_touching_tests > 0 GROUP BY language"
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+def _fetch_mock_commit_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    """"Mock commits" -- distinct commits that introduced >=1 fixture with
+    num_mocks > 0. Reused as-is against db/c_sampled.db for Dataset C's
+    table (identical schema/columns)."""
+    rows = conn.execute(
+        "SELECT r.language, COUNT(DISTINCT f.commit_sha) FROM fixtures f "
+        "JOIN repositories r ON f.repo_id = r.id "
+        "WHERE f.num_mocks > 0 AND f.commit_sha != '' GROUP BY r.language"
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+def _fetch_repos_with_mocks(conn: sqlite3.Connection) -> dict[str, int]:
+    """"With mock commits" / "With any mocks" -- distinct repos with >=1
+    fixture using a mock. Reused as-is for both Dataset A's and Dataset C's
+    tables."""
+    rows = conn.execute(
+        "SELECT r.language, COUNT(DISTINCT f.repo_id) FROM fixtures f "
+        "JOIN repositories r ON f.repo_id = r.id "
+        "WHERE f.num_mocks > 0 GROUP BY r.language"
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+def _fetch_repos_with_fixtures(conn: sqlite3.Connection) -> dict[str, int]:
+    """"With any fixtures" (Dataset C only)."""
+    rows = conn.execute(
+        "SELECT language, COUNT(*) FROM repositories WHERE num_fixtures > 0 GROUP BY language"
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+def _render_language_count_table(
+    row_label_header: str, rows: list[tuple[str, dict[str, int] | None]]
+) -> str:
+    """Markdown table: `{row_label_header} | Java | JavaScript | Python |
+    TypeScript | Total` -- the shared shape behind both the Commits and
+    Repositories summary tables (Dataset A and Dataset C). A row whose
+    dict is None renders "N/A" across every column -- used when a row's
+    source directory doesn't exist in this environment, so a missing input
+    degrades one row, not the whole table."""
+    header = (
+        [row_label_header]
+        + [_LANGUAGE_DISPLAY_NAMES[lang] for lang in _SUMMARY_TABLE_LANGUAGES]
+        + ["Total"]
+    )
+    lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+    for label, counts in rows:
+        if counts is None:
+            lines.append(f"| {label} | " + " | ".join(["N/A"] * (len(_SUMMARY_TABLE_LANGUAGES) + 1)) + " |")
+            continue
+        cells = [counts.get(lang, 0) for lang in _SUMMARY_TABLE_LANGUAGES]
+        total = sum(cells)
+        lines.append(f"| {label} | " + " | ".join(f"{c:,}" for c in cells) + f" | {total:,} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_dataset_a_commit_repo_summary(
+    *,
+    db_root: Path = paths.DB_ROOT,
+    datasets_root: Path = paths.DATASETS_ROOT,
+    raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+) -> list[str]:
+    """## Dataset A: Commits and Repositories Summary -- see this module's
+    docstring for the full per-row data-source breakdown. Independently
+    gated on db/a.db (most rows need it); the CSV/raw-SEART-sourced rows
+    each degrade to their own "N/A" row if their source directory is
+    missing, rather than failing the whole section."""
+    db_file = require_db_or_none("a", db_root)
+    if db_file is None:
+        return [
+            "## Dataset A: Commits and Repositories Summary",
+            "",
+            "_Not available -- db/a.db not collected yet._",
+            "",
+        ]
+
+    with db_session(db_file) as conn:
+        total_commits_since_agent_start = _fetch_total_commits_since_agent_start(conn)
+        agent_commits_touching_tests = _fetch_agent_commits_touching_tests(conn)
+        repos_with_test_commits = _fetch_repos_with_test_commits(conn)
+        mock_commit_counts = _fetch_mock_commit_counts(conn)
+        repos_with_mocks = _fetch_repos_with_mocks(conn)
+        repos_with_agent_config = _fetch_repos_with_agent_config(conn)
+
+    commits_dir = datasets_root / "a" / "commits"
+    agent_commits = _fetch_csv_row_counts(commits_dir, "_commit.csv")
+    repos_with_agent_commits = _fetch_csv_unique_repo_counts(commits_dir, "_commit.csv")
+    candidate_repos = _fetch_raw_seart_repo_counts(raw_search_dir)
+
+    return [
+        "## Dataset A: Commits and Repositories Summary",
+        "",
+        '"All commits" counts non-merge commits (agent, human, and bot '
+        "alike) since AGENT_CORPUS_START_DATE -- not full repository "
+        "lifetime history -- among repos with an agent config file present; "
+        "the same window and repo population as the rows below it, not an "
+        "independent measure.",
+        "",
+        "### Commits",
+        "",
+        _render_language_count_table(
+            "Commits",
+            [
+                ("All commits", total_commits_since_agent_start),
+                ("Agent commits", agent_commits),
+                ("Test commits", agent_commits_touching_tests),
+                ("Mock commits", mock_commit_counts),
+            ],
+        ),
+        "### Repositories",
+        "",
+        _render_language_count_table(
+            "Repositories",
+            [
+                ("Candidate repos", candidate_repos),
+                ("With agent files or directories", repos_with_agent_config),
+                ("With agent commits", repos_with_agent_commits),
+                ("With test commits", repos_with_test_commits),
+                ("With mock commits", repos_with_mocks),
+            ],
+        ),
+    ]
+
+
+def _render_dataset_c_repo_summary(
+    *,
+    db_root: Path = paths.DB_ROOT,
+    datasets_root: Path = paths.DATASETS_ROOT,
+    raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+) -> list[str]:
+    """## Dataset C: Repository Summary -- reads db/c_sampled.db (via the
+    same require_db_or_none("c", ...) redirect every research_questions/
+    script uses), not the full db/c.db, per explicit project convention:
+    consistency with every other "c" reference in this package, even
+    though this table isn't itself an A-vs-C statistical comparison.
+    "Candidate repos"/"Created within 2016-2020" are unaffected either way
+    -- they describe the original collection funnel, which sampling (a
+    later, analysis-time step) never touches."""
+    candidate_repos = _fetch_raw_seart_repo_counts(raw_search_dir)
+    created_in_window = _fetch_csv_row_counts(datasets_root / "c" / "repos", "_repo.csv")
+
+    db_file = require_db_or_none("c", db_root)
+    if db_file is None:
+        with_fixtures: dict[str, int] | None = None
+        with_mocks: dict[str, int] | None = None
+    else:
+        with db_session(db_file) as conn:
+            with_fixtures = _fetch_repos_with_fixtures(conn)
+            with_mocks = _fetch_repos_with_mocks(conn)
+
+    return [
+        "## Dataset C: Repository Summary",
+        "",
+        _render_language_count_table(
+            "Repositories",
+            [
+                ("Candidate repos", candidate_repos),
+                ("Created within 2016-2020", created_in_window),
+                ("With any fixtures", with_fixtures),
+                ("With any mocks", with_mocks),
+            ],
+        ),
+    ]
+
+
+def generate_report(
+    *,
+    db_root: Path = paths.DB_ROOT,
+    datasets_root: Path = paths.DATASETS_ROOT,
+    raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
         "# Dataset Findings (outside RQ1-3)",
@@ -355,58 +699,72 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     stats = load_repo_purity_stats(db_root=db_root)
     if stats is None:
         lines += ["_Not available -- db/a.db not collected yet._", ""]
-        return "\n".join(lines)
-
-    if not stats:
+    elif not stats:
         lines += ["_Dataset A has no repositories recorded yet._", ""]
-        return "\n".join(lines)
+    else:
+        lines += [
+            "## Diff-Purity Gate (Dataset A)",
+            "",
+            "Of Dataset A's agent commits that touched >=1 test file, how many "
+            "were rejected for mixing test-file additions with edits/deletions, "
+            "vs accepted as pure additions?",
+            "",
+            "### Overall",
+            "",
+            _render_totals(stats),
+            "### By language",
+            "",
+            _render_group_table("Rejection rate by repo language", _group_by(stats, "language")),
+            "### By agent adoption intensity",
+            "",
+            _render_group_table(
+                "Rejection rate by agent_adoption_intensity", _group_by(stats, "adoption_intensity")
+            ),
+            "### Per-repo distribution",
+            "",
+            _render_repo_distribution(stats),
+            "## Agent Adoption Intensity (Dataset A repo pool)",
+            "",
+            "How Dataset A's whole repo pool splits across agent_adoption_intensity "
+            "buckets -- bucket *membership*, not the rejection-rate-by-bucket view "
+            "above. See this module's docstring for the known limitation (bucket "
+            "label only, no underlying numeric ratio persisted).",
+            "",
+            "### Overall",
+            "",
+            _render_adoption_intensity_distribution(stats),
+            "### Funnel and adoption intensity by language",
+            "",
+            "Config -> No commits -> adoption tiers, per language -- the exact "
+            "shape used for the paper's funnel/adoption table. See this "
+            "function's docstring for exactly what Config/Total mean and how "
+            "the percentages are computed.",
+            "",
+            _render_adoption_intensity_funnel_by_language(stats),
+        ]
 
-    lines += [
-        "## Diff-Purity Gate (Dataset A)",
-        "",
-        "Of Dataset A's agent commits that touched >=1 test file, how many "
-        "were rejected for mixing test-file additions with edits/deletions, "
-        "vs accepted as pure additions?",
-        "",
-        "### Overall",
-        "",
-        _render_totals(stats),
-        "### By language",
-        "",
-        _render_group_table("Rejection rate by repo language", _group_by(stats, "language")),
-        "### By agent adoption intensity",
-        "",
-        _render_group_table(
-            "Rejection rate by agent_adoption_intensity", _group_by(stats, "adoption_intensity")
-        ),
-        "### Per-repo distribution",
-        "",
-        _render_repo_distribution(stats),
-        "## Agent Adoption Intensity (Dataset A repo pool)",
-        "",
-        "How Dataset A's whole repo pool splits across agent_adoption_intensity "
-        "buckets -- bucket *membership*, not the rejection-rate-by-bucket view "
-        "above. See this module's docstring for the known limitation (bucket "
-        "label only, no underlying numeric ratio persisted).",
-        "",
-        "### Overall",
-        "",
-        _render_adoption_intensity_distribution(stats),
-        "### Funnel and adoption intensity by language",
-        "",
-        "Config -> No commits -> adoption tiers, per language -- the exact "
-        "shape used for the paper's funnel/adoption table. See this "
-        "function's docstring for exactly what Config/Total mean and how "
-        "the percentages are computed.",
-        "",
-        _render_adoption_intensity_funnel_by_language(stats),
-    ]
+    # Independent of the Diff-Purity Gate/Adoption-Intensity sections above
+    # (own prerequisite checks, own "not available" fallbacks) -- Dataset
+    # C's summary in particular must still be attempted even when db/a.db
+    # is missing.
+    lines += _render_dataset_a_commit_repo_summary(
+        db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir
+    )
+    lines += _render_dataset_c_repo_summary(
+        db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir
+    )
 
     return "\n".join(lines)
 
 
-def write_report(output_dir: Path = OUTPUT_DIR, *, db_root: Path = paths.DB_ROOT) -> Path:
-    report = generate_report(db_root=db_root)
+def write_report(
+    output_dir: Path = OUTPUT_DIR,
+    *,
+    db_root: Path = paths.DB_ROOT,
+    datasets_root: Path = paths.DATASETS_ROOT,
+    raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+) -> Path:
+    report = generate_report(db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir)
     output_path = write_markdown_report(output_dir, "dataset_findings.md", report)
     logger.info(f"Dataset findings report written to {output_path}")
     return output_path
