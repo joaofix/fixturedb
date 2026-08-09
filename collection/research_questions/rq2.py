@@ -3,7 +3,7 @@ RQ2 -- Setup and Teardown Characterization (Quantitative): how do
 agent-generated fixtures compare to human-written ones in setup and
 teardown provision?
 
-Three metrics, computed per dataset (A/B/C):
+Three metrics, computed per dataset (A/C):
 
 1. **fixture_type "kind" distribution** -- setup / teardown / other.
    `fixture_type` alone can't cleanly split into setup vs teardown for
@@ -55,8 +55,9 @@ Three metrics, computed per dataset (A/B/C):
    docstring: "only the setup-side fixture of a pair is flagged").
    Descriptive only, not run through a significance test.
 
-A vs B and A vs C only (see rq1.py's rationale -- B vs C deferred until
-those datasets exist).
+A vs C only -- Dataset B (contemporary within-repo human baseline) is still
+collected (db/b.db) but out of scope for this script's reported
+comparisons; see rq1.py's module docstring.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.
@@ -230,7 +231,7 @@ def _fetch_kinds_and_repo_counts(
 
     The per-language kind distribution is what
     compute_stratified_categorical_balance() needs to check whether an
-    A-vs-B/C difference holds within a language, not just in aggregate
+    A-vs-C difference holds within a language, not just in aggregate
     across each dataset's different language mix. The per-language per-repo
     counts feed the same question for the setup-to-teardown ratio/zero-TD
     rate -- grouped by each fixture's own language (test_files.language),
@@ -458,7 +459,7 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
 
 
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
-    loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "b", "c")}
+    loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "c")}
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = [
@@ -476,7 +477,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "",
     ]
 
-    for ds in ("a", "b", "c"):
+    for ds in ("a", "c"):
         metrics = loaded[ds]
         if metrics is None:
             lines += [f"### {DATASET_LABELS[ds]}", "", "_Not available -- db not collected yet._", ""]
@@ -485,7 +486,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
 
     a_metrics = loaded["a"]
     if a_metrics is None:
-        lines.append("_Dataset A not available -- no A vs B / A vs C comparisons computed._")
+        lines.append("_Dataset A not available -- no A vs C comparisons computed._")
     else:
         for other_ds, label in COMPARISONS:
             other_metrics = loaded[other_ds]

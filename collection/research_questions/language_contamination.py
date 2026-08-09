@@ -144,7 +144,7 @@ def generate_report(*, datasets_root: Path = paths.DATASETS_ROOT) -> str:
         "",
     ]
 
-    for dataset in ("a", "b", "c"):
+    for dataset in ("a", "c"):
         results = check_dataset(dataset, datasets_root=datasets_root)
         if results is None:
             lines += [

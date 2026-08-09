@@ -30,8 +30,11 @@ from collection.research_questions.rq1 import (
 
 def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
     """Create db/{dataset}.db with one repo per entry in `repos`, each
-    entry a list of `loc` values for that repo's fixtures."""
-    db_file = paths.db_path(dataset, root=root)
+    entry a list of `loc` values for that repo's fixtures.
+
+    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
+    docstring for why."""
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, loc_values in enumerate(repos):
@@ -140,8 +143,11 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
     """Create db/{dataset}.db with one repo and one test_file per `files`
     entry -- each entry: {"language": str, "fixtures": [fixture_dict, ...]}.
     Lets a single repo contribute fixtures in more than one language, for
-    testing language-stratified aggregation (fixture_type_by_language)."""
-    db_file = paths.db_path(dataset, root=root)
+    testing language-stratified aggregation (fixture_type_by_language).
+
+    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
+    docstring for why."""
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         repo_id, _ = upsert_repository(
@@ -270,11 +276,9 @@ class TestGenerateReport:
         _make_db(tmp_path, "a", [{"loc": 3}, {"loc": 7}])
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
-        assert "## A vs B: Dataset A (agent-authored) vs Dataset B (human-authored, contemporary)" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # B summary, C summary, A-vs-B comparison, A-vs-C comparison,
-        # A-vs-B repo-level, A-vs-C repo-level: 6 total.
-        assert report.count("Not available -- db not collected yet.") == 6
+        # C summary, A-vs-C comparison, A-vs-C repo-level: 3 total.
+        assert report.count("Not available -- db not collected yet.") == 3
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         """_make_db's repo and its one test_file both use "python", so this
@@ -295,16 +299,16 @@ class TestGenerateReport:
         assert "| claude | 1 | 50.0% |" in report
         assert "| copilot | 1 | 50.0% |" in report
 
-    def test_a_vs_b_comparison_renders_significant_difference(self, tmp_path):
+    def test_a_vs_c_comparison_renders_significant_difference(self, tmp_path):
         # Sharply different LOC distributions -> Mann-Whitney should flag significance.
         _make_db(tmp_path, "a", [{"loc": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
-        _make_db(tmp_path, "b", [{"loc": v} for v in [50, 60, 55, 58, 62, 57, 59, 61, 56, 54]])
+        _make_db(tmp_path, "c", [{"loc": v} for v in [50, 60, 55, 58, 62, 57, 59, 61, 56, 54]])
         report = generate_report(db_root=tmp_path)
         comparison_section = report.split("**Continuous metrics (Mann-Whitney U")[1]
         loc_line = next(
             line for line in comparison_section.splitlines() if line.startswith("| loc |")
         )
-        # Fully separated groups (every B value exceeds every A value) --
+        # Fully separated groups (every C value exceeds every A value) --
         # both statistically significant and a large practical effect.
         assert "| yes | 1.000 (large) |" in loc_line
         # Only one continuous metric varies here (loc) -- with a family of
@@ -323,9 +327,9 @@ class TestGenerateReport:
         assert "_insufficient data_" in commit_type_line
 
     def test_categorical_comparison_renders_effect_size(self, tmp_path):
-        # A is all per_test scope, B is all per_class -> maximal association.
+        # A is all per_test scope, C is all per_class -> maximal association.
         _make_db(tmp_path, "a", [{"loc": 1, "scope": "per_test"}] * 10)
-        _make_db(tmp_path, "b", [{"loc": 1, "scope": "per_class"}] * 10)
+        _make_db(tmp_path, "c", [{"loc": 1, "scope": "per_class"}] * 10)
         report = generate_report(db_root=tmp_path)
         scope_line = next(
             line
@@ -342,7 +346,7 @@ class TestGenerateReport:
         )
         _make_multi_language_db(
             tmp_path,
-            "b",
+            "c",
             [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
         )
         report = generate_report(db_root=tmp_path)
@@ -351,8 +355,8 @@ class TestGenerateReport:
         assert "| python |" in stratified_section
 
     def test_fixture_type_stratified_by_language_excludes_language_not_shared(self, tmp_path):
-        """A has python + java fixtures, B has python only -- java has no
-        B-side data to compare against, so compute_stratified_categorical_
+        """A has python + java fixtures, C has python only -- java has no
+        C-side data to compare against, so compute_stratified_categorical_
         balance() must drop it rather than testing against an empty dist."""
         _make_multi_language_db(
             tmp_path,
@@ -364,7 +368,7 @@ class TestGenerateReport:
         )
         _make_multi_language_db(
             tmp_path,
-            "b",
+            "c",
             [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
         )
         report = generate_report(db_root=tmp_path)
@@ -379,23 +383,23 @@ class TestGenerateReport:
         fixtures must not be allowed to dominate the comparison. Dataset A
         here is one repo with 100 fixtures at loc=100 plus one repo with a
         single loc=1 fixture -- fixture-level, the mean is ~99 (dominated
-        by the prolific repo). Dataset B is two repos each with one
+        by the prolific repo). Dataset C is two repos each with one
         loc=50 fixture. Repo-level, A's per-repo means are [100.0, 1.0]
-        (mean 50.5) -- much closer to B's 50 than the fixture-level view
+        (mean 50.5) -- much closer to C's 50 than the fixture-level view
         would suggest, and NOT a significant Mann-Whitney difference,
         unlike the fixture-level comparison over the same data."""
         _make_multi_repo_db(tmp_path, "a", [[100.0] * 100, [1.0]])
-        _make_multi_repo_db(tmp_path, "b", [[50.0], [50.0]])
+        _make_multi_repo_db(tmp_path, "c", [[50.0], [50.0]])
 
         a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        b_metrics = load_dataset_metrics("b", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
 
         assert sorted(a_metrics.repo_level_continuous["loc"]) == [1.0, 100.0]
 
         fixture_level = a_metrics.continuous_raw["loc"]
         assert sum(fixture_level) / len(fixture_level) > 95  # dominated by the prolific repo
 
-        repo_level_result = compare_datasets_repo_level(a_metrics, b_metrics)
+        repo_level_result = compare_datasets_repo_level(a_metrics, c_metrics)
         t = repo_level_result["loc"]
         assert t.is_balanced  # not significant once each repo counts once
 

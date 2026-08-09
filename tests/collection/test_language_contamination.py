@@ -104,7 +104,9 @@ class TestCheckDataset:
 class TestGenerateReport:
     def test_missing_all_datasets_notes_unavailable(self, tmp_path):
         report = generate_report(datasets_root=tmp_path)
-        assert report.count("Not available -- no fixtures/*.csv files collected yet.") == 3
+        # Only A and C are reported now -- B is collected but out of scope
+        # for this script's output.
+        assert report.count("Not available -- no fixtures/*.csv files collected yet.") == 2
 
     def test_reports_totals_and_breakdown(self, tmp_path):
         _write_fixtures_csv(tmp_path, "a", "python_fixtures.csv", ["python", "java"])

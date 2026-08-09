@@ -29,9 +29,10 @@ DATASET_LABELS = {
     "c": "Dataset C (human-authored, pre-LLM)",
 }
 
-# (dataset compared against A, comparison label) -- B vs C intentionally
-# omitted until Dataset B/C actually exist; see rq1.py's module docstring.
-COMPARISONS = [("b", "A vs B"), ("c", "A vs C")]
+# (dataset compared against A, comparison label). Dataset B (contemporary
+# within-repo human baseline) is still collected (db/b.db, paired_collection.py)
+# but intentionally excluded here -- these scripts only ever report A vs C now.
+COMPARISONS = [("c", "A vs C")]
 
 
 def require_db_or_none(dataset: str, db_root: Path = DB_ROOT) -> Path | None:

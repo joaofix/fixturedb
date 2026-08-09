@@ -2,19 +2,19 @@
 RQ1 -- General Metrics Overview (Quantitative): how do agent-generated and
 human-written fixtures compare across structural metrics?
 
-Computes, per dataset (A/B/C), summary statistics for the RQ1 metrics (LOC,
+Computes, per dataset (A/C), summary statistics for the RQ1 metrics (LOC,
 cyclomatic complexity, nesting depth, parameters, objects instantiated,
-external calls, scope, fixture_type, commit_type), plus A vs B and A vs C
-comparisons (Mann-Whitney U for continuous metrics, chi-square for
-categorical ones -- reusing collection/between_group_comparison.py's test
-functions, which are generic enough to apply here unchanged). B vs C is
-intentionally not computed (see docs/research-questions.md's RQ1 section --
-B vs C is the secondary A/B-anchored finding, not this script's job).
+external calls, scope, fixture_type, commit_type), plus an A vs C comparison
+(Mann-Whitney U for continuous metrics, chi-square for categorical ones --
+reusing collection/between_group_comparison.py's test functions, which are
+generic enough to apply here unchanged). Dataset B (contemporary within-repo
+human baseline) is still collected (db/b.db, paired_collection.py) but out
+of scope for this script's reported comparisons.
 
 fixture_type is additionally stratified by language (each fixture's own
 test_files.language, not its repo's tag) and re-tested per language. The
-pooled fixture_type comparison can look significant purely because A and
-B/C have different language mixes -- e.g. pytest_decorator only exists in
+pooled fixture_type comparison can look significant purely because A and C
+have different language mixes -- e.g. pytest_decorator only exists in
 Python fixtures, before_each/after_each is the characteristic JS/TS/Mocha
 idiom, so a dataset that happens to be more TS-heavy will look more
 "hook-based" regardless of any real agent-vs-human mechanism preference.
@@ -24,7 +24,7 @@ docstring in _shared.py for the general rationale (first applied for
 RQ2's fixture_type_kind and RQ3's mock prevalence).
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
-yet -- lets this run against whatever subset of A/B/C has been collected so
+yet -- lets this run against whatever subset of A/C has been collected so
 far.
 
 python -m collection.research_questions.rq1
@@ -129,10 +129,12 @@ def load_dataset_metrics(
         # Descriptive only, not run through compare_datasets()'s significance
         # tests: agent_type is the group-defining variable for Dataset A
         # (which agent authored this fixture), not a content metric to test
-        # A-vs-B/C on -- comparing it against B/C's constant "human"/
-        # "human_pre2022" value would be tautological (echoing commit_kind),
-        # not a real finding. Still shown for B/C too since it doubles as a
-        # sanity check that those corpora really are cleanly non-agent.
+        # A-vs-C on -- comparing it against C's constant "human_pre2022"
+        # value would be tautological (echoing commit_kind), not a real
+        # finding. Still shown for C too (and for B, if this loader is
+        # called on it directly -- it's dataset-letter-agnostic) since it
+        # doubles as a sanity check that those corpora really are cleanly
+        # non-agent.
         agent_type_distribution = fetch_categorical_column(conn, "fixtures", "agent_type")
         # One mean-per-repo value per continuous metric -- see
         # repo_level_means()'s docstring for why this exists alongside
@@ -354,7 +356,7 @@ def _render_repo_level_comparison(
 
 
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
-    loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "b", "c")}
+    loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "c")}
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = [
@@ -372,7 +374,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "",
     ]
 
-    for ds in ("a", "b", "c"):
+    for ds in ("a", "c"):
         metrics = loaded[ds]
         if metrics is None:
             lines += [f"### {DATASET_LABELS[ds]}", "", "_Not available -- db not collected yet._", ""]
@@ -381,7 +383,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
 
     a_metrics = loaded["a"]
     if a_metrics is None:
-        lines.append("_Dataset A not available -- no A vs B / A vs C comparisons computed._")
+        lines.append("_Dataset A not available -- no A vs C comparisons computed._")
     else:
         for other_ds, label in COMPARISONS:
             other_metrics = loaded[other_ds]

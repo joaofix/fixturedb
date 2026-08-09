@@ -1,7 +1,7 @@
 """
 Control-variable balance check: language, domain, repo_age_years -- are the
-repo samples behind two datasets actually comparable before attributing an
-RQ1-3 metric difference to authorship (A vs B) or era (A vs C)?
+repo samples behind Dataset A and Dataset C actually comparable before
+attributing an RQ1-3 metric difference to era (A vs C)?
 
 This exists because the methodology described in docs/data/dataset-card.md's
 "Balance Tests" section and docs/reference/limitations.md's "Control
@@ -14,8 +14,10 @@ architecture, before the Dataset A/B/C split. The docs claimed a balance
 report exists (`between_group_comparison_*.json`); that file has never
 existed in this repo's history.
 
-Run for real (2026-07-31) against the current corpora: domain and
-repo_age_years are NOT balanced, A vs B or A vs C (all four p < 1e-7). See
+Run for real (2026-07-31, when this script still also checked A vs B)
+against the current corpora: domain and repo_age_years were NOT balanced,
+neither A vs B nor A vs C (all four p < 1e-7). This script now reports A vs
+C only -- Dataset B is still collected but out of scope for its output; see
 this module's generate_report() output for current numbers -- every RQ1-3
 comparison should be read with this in mind until it's addressed (stratify,
 regression-adjust, or at minimum explicitly disclose the confound).
@@ -205,7 +207,7 @@ def _render_comparison(
 
 
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
-    loaded = {ds: load_repo_control_variables(ds, db_root=db_root) for ds in ("a", "b", "c")}
+    loaded = {ds: load_repo_control_variables(ds, db_root=db_root) for ds in ("a", "c")}
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = [
@@ -225,7 +227,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "",
     ]
 
-    for ds in ("a", "b", "c"):
+    for ds in ("a", "c"):
         metrics = loaded[ds]
         if metrics is None:
             lines += [f"### {DATASET_LABELS[ds]}", "", "_Not available -- db not collected yet._", ""]
@@ -234,7 +236,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
 
     a_metrics = loaded["a"]
     if a_metrics is None:
-        lines.append("_Dataset A not available -- no A vs B / A vs C balance checks computed._")
+        lines.append("_Dataset A not available -- no A vs C balance checks computed._")
     else:
         for other_ds, label in COMPARISONS:
             other_metrics = loaded[other_ds]

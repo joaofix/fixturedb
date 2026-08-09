@@ -29,8 +29,14 @@ from collection.research_questions.rq2 import (
 
 def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
     """Create db/{dataset}.db under `root` with one repo per entry in `repos`,
-    each populated with the given list of fixture-field overrides."""
-    db_file = paths.db_path(dataset, root=root)
+    each populated with the given list of fixture-field overrides.
+
+    Dataset "c" writes to c_sampled.db, not c.db -- require_db_or_none()
+    resolves "c" there exclusively (see _shared.py), so a test DB built at
+    the full c.db path would be invisible to load_dataset_metrics()/
+    generate_report() and silently look like "not collected yet."
+    """
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, fixtures in enumerate(repos):
@@ -82,8 +88,11 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
     entry -- each entry: {"language": str, "fixtures": [fixture_dict, ...]}.
     Lets a single repo contribute fixtures in more than one language, for
     testing language-stratified aggregation (kind_distribution_by_language,
-    per_repo_ratios_by_language)."""
-    db_file = paths.db_path(dataset, root=root)
+    per_repo_ratios_by_language).
+
+    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
+    docstring for why."""
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         repo_id, _ = upsert_repository(
@@ -314,9 +323,8 @@ class TestGenerateReport:
         _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}, {"fixture_type": "after_each"}]])
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
-        assert "## A vs B: Dataset A (agent-authored) vs Dataset B (human-authored, contemporary)" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        assert report.count("Not available -- db not collected yet.") == 4
+        assert report.count("Not available -- db not collected yet.") == 2
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         """_make_db's repo and its one test_file both use "python", so this
@@ -359,7 +367,7 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "with zero teardown fixtures (ratio undefined): 1 (100.0%)" in report
 
-    def test_a_vs_b_comparison_renders(self, tmp_path):
+    def test_a_vs_c_comparison_renders(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
@@ -370,7 +378,7 @@ class TestGenerateReport:
         )
         _make_db(
             tmp_path,
-            "b",
+            "c",
             [
                 [{"fixture_type": "before_each"}] + [{"fixture_type": "after_each"}] * 4,
                 [{"fixture_type": "before_each"}] + [{"fixture_type": "after_each"}] * 4,

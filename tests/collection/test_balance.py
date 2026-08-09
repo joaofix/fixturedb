@@ -32,8 +32,14 @@ def _make_db(root, dataset: str, repos: list[dict]) -> None:
     `repos`. Each dict may set "language"/"domain"/"repo_age_years"
     (defaults: python/other/None) and "with_fixture" (default True -- a
     repo with with_fixture=False is inserted but gets no fixture row, to
-    exercise the "repos without any fixture are excluded" behavior)."""
-    db_file = paths.db_path(dataset, root=root)
+    exercise the "repos without any fixture are excluded" behavior).
+
+    Dataset "c" writes to c_sampled.db, not c.db -- require_db_or_none()
+    resolves "c" there exclusively (see _shared.py), so a test DB built at
+    the full c.db path would be invisible to load_repo_control_variables()/
+    generate_report() and silently look like "not collected yet."
+    """
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for i, repo_spec in enumerate(repos):
@@ -181,7 +187,7 @@ class TestGenerateReport:
 
     def test_balanced_domain_reports_yes(self, tmp_path):
         _make_db(tmp_path, "a", [{"domain": "web"}, {"domain": "ml"}] * 20)
-        _make_db(tmp_path, "b", [{"domain": "web"}, {"domain": "ml"}] * 20)
+        _make_db(tmp_path, "c", [{"domain": "web"}, {"domain": "ml"}] * 20)
         report = generate_report(db_root=tmp_path)
         domain_line = next(
             line for line in report.splitlines() if line.startswith("| domain |")
@@ -190,7 +196,7 @@ class TestGenerateReport:
 
     def test_imbalanced_domain_flagged_as_not_balanced(self, tmp_path):
         _make_db(tmp_path, "a", [{"domain": "web"}] * 20)
-        _make_db(tmp_path, "b", [{"domain": "ml"}] * 20)
+        _make_db(tmp_path, "c", [{"domain": "ml"}] * 20)
         report = generate_report(db_root=tmp_path)
         domain_line = next(
             line for line in report.splitlines() if line.startswith("| domain |")
@@ -200,7 +206,7 @@ class TestGenerateReport:
 
     def test_repo_age_years_balance_uses_mann_whitney(self, tmp_path):
         _make_db(tmp_path, "a", [{"repo_age_years": v} for v in [1.0, 1.5, 2.0, 2.5, 3.0]])
-        _make_db(tmp_path, "b", [{"repo_age_years": v} for v in [10.0, 10.5, 11.0, 11.5, 12.0]])
+        _make_db(tmp_path, "c", [{"repo_age_years": v} for v in [10.0, 10.5, 11.0, 11.5, 12.0]])
         report = generate_report(db_root=tmp_path)
         age_line = next(
             line for line in report.splitlines() if line.startswith("| repo_age_years |")

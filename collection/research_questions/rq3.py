@@ -3,7 +3,7 @@ RQ3 -- Mocking (Quantitative): how do agent-generated and human-written
 fixtures differ in mock usage -- prevalence, framework selection, category,
 and interaction depth?
 
-Five metrics, computed per dataset (A/B/C):
+Five metrics, computed per dataset (A/C):
 
 1. **Mock prevalence per fixture** -- `fixtures.num_mocks` (continuous,
    Mann-Whitney), plus a derived has_mock/no_mock split (chi-square) so the
@@ -37,8 +37,9 @@ here -- dropped in favor of staying purely quantitative, per this RQ's own
 note that the qualitative layer "can be dropped ... to keep this purely
 quantitative."
 
-A vs B and A vs C only (see rq1.py's rationale -- B vs C deferred until
-those datasets exist).
+A vs C only -- Dataset B (contemporary within-repo human baseline) is still
+collected (db/b.db) but out of scope for this script's reported
+comparisons; see rq1.py's module docstring.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.
@@ -194,7 +195,7 @@ def load_dataset_metrics(
     # Derived from mock_rate_by_language (total/with_mocks per language),
     # no separate query needed -- this is what
     # compute_stratified_categorical_balance() needs to check whether an
-    # A-vs-B/C mock-prevalence difference holds within a language, not just
+    # A-vs-C mock-prevalence difference holds within a language, not just
     # in the aggregate across each dataset's different language mix.
     has_mock_dist_by_language = {
         language: {
@@ -425,7 +426,7 @@ def _render_repo_level_comparison(
 
 
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
-    loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "b", "c")}
+    loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "c")}
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = [
@@ -443,7 +444,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "",
     ]
 
-    for ds in ("a", "b", "c"):
+    for ds in ("a", "c"):
         metrics = loaded[ds]
         if metrics is None:
             lines += [f"### {DATASET_LABELS[ds]}", "", "_Not available -- db not collected yet._", ""]
@@ -452,7 +453,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
 
     a_metrics = loaded["a"]
     if a_metrics is None:
-        lines.append("_Dataset A not available -- no A vs B / A vs C comparisons computed._")
+        lines.append("_Dataset A not available -- no A vs C comparisons computed._")
     else:
         for other_ds, label in COMPARISONS:
             other_metrics = loaded[other_ds]

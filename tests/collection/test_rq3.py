@@ -29,8 +29,11 @@ from collection.research_questions.rq3 import (
 
 def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
     """Create db/{dataset}.db with one repo per entry in `repos`, each
-    entry a list of `num_mocks` values for that repo's fixtures."""
-    db_file = paths.db_path(dataset, root=root)
+    entry a list of `num_mocks` values for that repo's fixtures.
+
+    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
+    docstring for why."""
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, num_mocks_values in enumerate(repos):
@@ -303,11 +306,9 @@ class TestGenerateReport:
         )
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 1 fixtures, 1 mock usages" in report
-        assert "## A vs B: Dataset A (agent-authored) vs Dataset B (human-authored, contemporary)" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # B summary, C summary, A-vs-B comparison, A-vs-C comparison,
-        # A-vs-B repo-level, A-vs-C repo-level: 6 total.
-        assert report.count("Not available -- db not collected yet.") == 6
+        # C summary, A-vs-C comparison, A-vs-C repo-level: 3 total.
+        assert report.count("Not available -- db not collected yet.") == 3
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         _make_db(
@@ -323,7 +324,7 @@ class TestGenerateReport:
         assert "1/2 fixtures (50.00%) leaked." in report
         assert "| python | 2 | 1 | 50.00% | java=1 |" in report
 
-    def test_a_vs_b_comparison_renders_significant_difference(self, tmp_path):
+    def test_a_vs_c_comparison_renders_significant_difference(self, tmp_path):
         # Sharply different num_mocks distributions -> Mann-Whitney should flag significance.
         _make_db(
             tmp_path,
@@ -337,7 +338,7 @@ class TestGenerateReport:
         )
         _make_db(
             tmp_path,
-            "b",
+            "c",
             [
                 {
                     "language": "python",
@@ -350,12 +351,12 @@ class TestGenerateReport:
         num_mocks_line = next(
             line for line in comparison_section.splitlines() if line.startswith("| num_mocks |")
         )
-        # Fully separated groups (every A value exceeds every B value) --
+        # Fully separated groups (every A value exceeds every C value) --
         # both statistically significant and a large practical effect.
         assert "| yes | -1.000 (large) |" in num_mocks_line
         assert num_mocks_line.strip().endswith("(yes) |")
 
-    def test_a_vs_b_comparison_includes_stratified_mock_prevalence(self, tmp_path):
+    def test_a_vs_c_comparison_includes_stratified_mock_prevalence(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
@@ -366,7 +367,7 @@ class TestGenerateReport:
         )
         _make_db(
             tmp_path,
-            "b",
+            "c",
             [
                 {"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}] * 9 + [{"overrides": {"num_mocks": 1}}]},
             ],
@@ -374,7 +375,7 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "**has_mock, stratified by language" in report
         stratified_section = report.split("**has_mock, stratified by language")[1]
-        # python is shared by both A and B -> a real row; java only exists
+        # python is shared by both A and C -> a real row; java only exists
         # in A, so it must not appear at all (no data to compare against).
         assert "| python |" in stratified_section.split("##")[0]
         assert "| java |" not in stratified_section.split("##")[0]
@@ -395,22 +396,22 @@ class TestGenerateReport:
         dominate the comparison -- see the analogous rq1.py test for the
         full reasoning. A: one repo with 100 fixtures at num_mocks=10 plus
         one repo with a single num_mocks=0 fixture (fixture-level mean
-        dominated by the prolific repo). B: two repos each with one
+        dominated by the prolific repo). C: two repos each with one
         num_mocks=5 fixture. Repo-level, A's per-repo means are
-        [10.0, 0.0] (mean 5.0) -- much closer to B's 5.0 than the
+        [10.0, 0.0] (mean 5.0) -- much closer to C's 5.0 than the
         fixture-level view suggests, and not a significant difference."""
         _make_multi_repo_db(tmp_path, "a", [[10.0] * 100, [0.0]])
-        _make_multi_repo_db(tmp_path, "b", [[5.0], [5.0]])
+        _make_multi_repo_db(tmp_path, "c", [[5.0], [5.0]])
 
         a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        b_metrics = load_dataset_metrics("b", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
 
         assert sorted(a_metrics.repo_level_continuous["num_mocks"]) == [0.0, 10.0]
 
         fixture_level = a_metrics.num_mocks_raw
         assert sum(fixture_level) / len(fixture_level) > 9  # dominated by the prolific repo
 
-        t = compare_datasets_repo_level(a_metrics, b_metrics)["num_mocks"]
+        t = compare_datasets_repo_level(a_metrics, c_metrics)["num_mocks"]
         assert t.is_balanced  # not significant once each repo counts once
 
         report = generate_report(db_root=tmp_path)
