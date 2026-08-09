@@ -18,7 +18,12 @@ from pathlib import Path
 from . import paths
 from .agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from .cli_utils import add_language_arg, add_repos_per_language_arg, add_workers_arg
-from .config import CLONES_DIR, DATASET_C_SAMPLING_SEED, LANGUAGE_CONFIGS
+from .config import (
+    AGENT_CORPUS_START_DATE,
+    CLONES_DIR,
+    DATASET_C_SAMPLING_SEED,
+    LANGUAGE_CONFIGS,
+)
 from .csv_adapter import get_adapter
 from .db import db_session
 from .logging_utils import configure_logging, get_logger
@@ -379,6 +384,21 @@ def _cmd_sample_c_repos(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_backfill_total_commits(args: argparse.Namespace) -> int:
+    from .repository_quality_control import backfill_total_commits
+
+    result = backfill_total_commits.run(
+        db_file=args.db or paths.db_path("a"),
+        since=args.since,
+        workers=args.workers,
+    )
+    logger.info(
+        f"[backfill-total-commits] {result['updated']} updated, "
+        f"{result['failed']} failed/skipped"
+    )
+    return 0
+
+
 def _cmd_summarize(args: argparse.Namespace) -> int:
     from .dataset_summary import write_summary
 
@@ -578,6 +598,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sample_c_repos.add_argument("--seed", type=int, default=DATASET_C_SAMPLING_SEED)
 
+    backfill_total_commits = subparsers.add_parser(
+        "backfill-total-commits",
+        help="One-time backfill of repositories.total_commits_since_agent_start "
+        "for Dataset A repos collected before that column existed (Dataset A "
+        "only) -- re-clones each repo missing the column and re-derives it via "
+        "the same count_total_commits_since() call agent_corpus.py already "
+        "uses live",
+    )
+    backfill_total_commits.add_argument(
+        "--db", type=Path, default=None, help="Path to db/a.db (default: db/a.db)"
+    )
+    backfill_total_commits.add_argument("--since", type=str, default=AGENT_CORPUS_START_DATE)
+    add_workers_arg(backfill_total_commits, default=4)
+
     validate = subparsers.add_parser(
         "validate", help="Validate export/{dataset}.zip for completeness and independence"
     )
@@ -682,6 +716,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "sample-c-repos":
         return _cmd_sample_c_repos(args)
+
+    if args.command == "backfill-total-commits":
+        return _cmd_backfill_total_commits(args)
 
     if args.command == "validate":
         return _cmd_validate(args)

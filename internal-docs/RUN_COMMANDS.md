@@ -278,6 +278,32 @@ pass an explicit `--target-count N` instead). Writes `db/c_sampled.db` +
 modified. Re-running it fully rebuilds the sampled artifact (not additive) --
 safe to re-run after any change to Dataset A's or C's underlying data.
 
+### One-time: backfill "All commits" for Dataset A's summary table
+
+`dataset_findings.py`'s "Commits and Repositories Summary" section reports
+"All commits" (non-merge commits since `AGENT_CORPUS_START_DATE`, agent+
+human+bot alike) straight from `db/a.db`'s `repositories.total_commits_
+since_agent_start` column. `agent_corpus.py`'s `analyze` stage now always
+sets this column going forward (it already computed the number live, to
+derive `agent_adoption_intensity` -- this just also persists it), so a
+fresh Dataset A collection needs nothing extra. Repos collected *before*
+this column existed have it `NULL`; backfill them once:
+
+```bash
+python -m collection backfill-total-commits --workers 16 \
+  && curl -d "backfill-total-commits finished" ntfy.sh/joaofix_fixturedb
+```
+
+Re-clones (shallow-since, blob-filtered -- same clone shape `analyze`
+already uses) every repo in `db/a.db` still missing the column and re-derives
+it via the same `count_total_commits_since()` call, so a backfilled row
+means exactly the same thing as one a fresh `analyze` run would produce.
+Resumable and safe to re-run: each repo is written to the DB the moment it's
+computed, and already-populated repos are never re-selected. Repos that fail
+to re-clone (renamed/deleted/network trouble) are left `NULL` and picked up
+by the next run -- `dataset_findings.py`'s query sums only non-NULL rows, so
+a partial backfill just under-counts rather than crashing.
+
 ## See also
 
 - `AGENTS.md` — full verb-to-dataset matrix and repo/module layout
