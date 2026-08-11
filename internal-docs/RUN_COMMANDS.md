@@ -44,41 +44,41 @@ one command to paste.
 
 ```bash
 # Dataset A (agent-authored fixtures)
-python -m collection discover-repos --dataset a --workers 16 \
+python3 -m collection discover-repos --dataset a --workers 16 \
   && curl -d "Dataset A 1/5: discover-repos finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection discover-commits --dataset a --workers 16 \
+  && python3 -m collection discover-commits --dataset a --workers 16 \
   && curl -d "Dataset A 2/5: discover-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection.dedupe_commits_by_sha --dataset a \
+  && python3 -m collection.dedupe_commits_by_sha --dataset a \
   && curl -d "Dataset A 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection filter-test-commits --dataset a --workers 16 \
+  && python3 -m collection filter-test-commits --dataset a --workers 16 \
   && curl -d "Dataset A 4/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection extract-fixtures --dataset a --workers 16 \
+  && python3 -m collection extract-fixtures --dataset a --workers 16 \
   && curl -d "Dataset A 5/5: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
 # Dataset B (human-authored, within-repo control) — run after Dataset A completes
-python -m collection discover-repos --dataset b \
+python3 -m collection discover-repos --dataset b \
   && curl -d "Dataset B 1/5: discover-repos finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection filter-test-commits --dataset b --workers 16 \
+  && python3 -m collection filter-test-commits --dataset b --workers 16 \
   && curl -d "Dataset B 2/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection.dedupe_commits_by_sha --dataset b \
+  && python3 -m collection.dedupe_commits_by_sha --dataset b \
   && curl -d "Dataset B 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection extract-fixtures --dataset b --workers 16 \
+  && python3 -m collection extract-fixtures --dataset b --workers 16 \
   && curl -d "Dataset B 4/5: extract-fixtures finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection.dedupe_fixtures_by_sha --dataset b \
+  && python3 -m collection.dedupe_fixtures_by_sha --dataset b \
   && curl -d "Dataset B 5/5: dedupe_fixtures_by_sha finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
-python -m collection discover-repos --dataset c \
+python3 -m collection discover-repos --dataset c \
   && curl -d "Dataset C 1/4: discover-repos (pass 1) finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection.dedupe_dataset_c_repos \
+  && python3 -m collection.dedupe_dataset_c_repos \
   && curl -d "Dataset C 2/4: dedupe_dataset_c_repos finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection discover-repos --dataset c \
+  && python3 -m collection discover-repos --dataset c \
   && curl -d "Dataset C 3/4: discover-repos (pass 2, post-dedupe) finished" ntfy.sh/joaofix_fixturedb \
-  && python -m collection extract-fixtures --dataset c --workers 16 \
+  && python3 -m collection extract-fixtures --dataset c --workers 16 \
   && curl -d "Dataset C 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
