@@ -3,8 +3,8 @@ RQ1 -- General Metrics Overview (Quantitative): how do agent-generated and
 human-written fixtures compare across structural metrics?
 
 Computes, per dataset (A/C), summary statistics for the RQ1 metrics (LOC,
-cyclomatic complexity, nesting depth, parameters, objects instantiated,
-external calls, scope, fixture_type, commit_type), plus an A vs C comparison
+cyclomatic complexity, nesting depth, parameters, scope, fixture_type,
+commit_type), plus an A vs C comparison
 (Mann-Whitney U for continuous metrics, chi-square for categorical ones --
 reusing collection/between_group_comparison.py's test functions, which are
 generic enough to apply here unchanged). Dataset B (contemporary within-repo
@@ -75,9 +75,11 @@ CONTINUOUS_METRICS = [
     "cyclomatic_complexity",
     "max_nesting_depth",
     "num_parameters",
-    "num_objects_instantiated",
-    "num_external_calls",
 ]
+# num_objects_instantiated/num_external_calls are still detected and
+# persisted (fixtures.num_objects_instantiated/num_external_calls) --
+# excluded here only because they're not part of the paper's reported RQ1
+# metrics, not because collection stopped computing them.
 CATEGORICAL_METRICS = ["scope", "fixture_type", "commit_type"]
 
 

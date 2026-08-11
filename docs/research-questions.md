@@ -14,7 +14,7 @@ isn't part of these scripts' reported output. See
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-What it covers: LOC, cyclomatic complexity, nesting depth, `num_parameters`, scope distribution, `fixture_type` distribution, `num_external_calls`, `num_objects_instantiated`. This is the baseline characterization that grounds everything else — it answers whether agent fixtures are bigger or smaller, simpler or more complex, more or less parameterized than human ones.
+What it covers: LOC, cyclomatic complexity, nesting depth, `num_parameters`, scope distribution, `fixture_type` distribution. This is the baseline characterization that grounds everything else — it answers whether agent fixtures are bigger or smaller, simpler or more complex, more or less parameterized than human ones. (`num_objects_instantiated`/`num_external_calls` are still collected but not part of the paper's reported RQ1 metrics.)
 
 The reported comparison: A vs C establishes the historical baseline — are agent-authored fixtures structurally different from a pre-LLM human baseline?
 
@@ -55,7 +55,7 @@ What it covers: an open-coding taxonomy, positioned last so it synthesizes the p
 
 | RQ | Question | Type | Key Metrics | Datasets |
 |----|----------|------|--------------|----------|
-| RQ1 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | `loc`, `cyclomatic_complexity`, `nesting_depth`, `num_parameters`, `scope`, `num_external_calls`, `commit_type` | A vs C |
+| RQ1 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | `loc`, `cyclomatic_complexity`, `nesting_depth`, `num_parameters`, `scope`, `commit_type` | A vs C |
 | RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_type` (setup vs teardown variants), `has_teardown_pair`, setup-to-teardown ratio | A vs C |
 | RQ3 | How do agent and human fixtures differ in mock usage, framework selection, and interaction depth? | Quantitative | `num_mocks`, `framework`, `category`, `num_interactions_configured` | A vs C |
 | RQ4 | What operations do fixtures perform, and do agents cover the full range of human fixture responsibilities? | Mixed | `category` (manual label), `fixture_type`, `scope` | A vs C |
