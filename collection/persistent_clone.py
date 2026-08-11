@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from collection.logging_utils import get_logger
 
-from .clone_primitives import _output_requests_credentials
+from .clone_primitives import _output_requests_credentials, run_git_no_prompt
 from .config import (
     CLONE_WORKERS,
     CLONES_DIR,
@@ -111,7 +111,7 @@ def clone_repo(
 
     logger.info(f"[clone] Cloning {full_name} …")
     try:
-        result = subprocess.run(
+        result = run_git_no_prompt(
             [
                 "git",
                 "clone",
@@ -180,7 +180,7 @@ def _is_accessible_remote(clone_url: str) -> tuple[bool, bool]:
     - is_credential_required: True if repo asks for credentials (private or removed)
     """
     try:
-        result = subprocess.run(
+        result = run_git_no_prompt(
             ["git", "ls-remote", "--heads", clone_url],
             capture_output=True,
             text=True,
@@ -249,7 +249,7 @@ def _count_commits(repo_dir: Path) -> int:
     count step is local/read-only, so it uses GitPython directly.
     """
     try:
-        subprocess.run(
+        run_git_no_prompt(
             ["git", "fetch", "--depth", "500", "origin"],
             cwd=repo_dir,
             capture_output=True,

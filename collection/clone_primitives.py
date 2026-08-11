@@ -17,6 +17,7 @@ have silently cut off in-window history.
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -62,6 +63,39 @@ def _output_requests_credentials(stderr: str) -> bool:
     return False
 
 
+def _no_prompt_env() -> dict[str, str]:
+    """Env for any git subprocess that talks to a remote (clone/fetch/
+    ls-remote) -- makes git fail immediately on a private/deleted/renamed
+    repo instead of blocking on an interactive Username/Password prompt.
+    GIT_TERMINAL_PROMPT=0 is git's own documented switch for this; its
+    failure message ("fatal: could not read Username...") is already one of
+    CREDENTIAL_PROMPT_PATTERNS above, so existing detection just starts
+    firing fast instead of only after subprocess's timeout= fires (a real
+    incident: without this, a blocked repo burned up to timeout*(retries+1)
+    -- ~20 minutes -- before clone_to_tempdir() gave up, and wasn't even
+    recorded as "requires credentials", since TimeoutExpired never reaches
+    the stderr-inspection path below). GIT_ASKPASS=echo is defense in depth
+    against a configured credential.helper trying some other prompt
+    channel. Reads os.environ fresh (not module-level) so tests can
+    monkeypatch it, and so PATH/etc. stay intact -- git still needs to be
+    findable."""
+    return {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"}
+
+
+def run_git_no_prompt(args: list[str], **kwargs) -> subprocess.CompletedProcess:
+    """subprocess.run() for a git command that touches a remote (clone/
+    fetch/ls-remote) -- never blocks on a credential prompt. `stdin=DEVNULL`
+    is belt-and-suspenders alongside `_no_prompt_env()`'s env vars: even if
+    something still tried to prompt, there's no input to read. `kwargs`
+    forwards timeout=/cwd=/capture_output=/text=/check= as each call site
+    already passes them. Local-only git commands (cat-file, rev-list, plain
+    checkout) never contact a remote and don't need this -- only
+    clone/fetch/ls-remote do."""
+    return subprocess.run(
+        args, env=_no_prompt_env(), stdin=subprocess.DEVNULL, **kwargs
+    )
+
+
 def clone_to_tempdir(
     repo_full_name: str,
     clone_url: str,
@@ -96,7 +130,7 @@ def clone_to_tempdir(
         repo_path = temp_root / f"{owner}__{name}"
 
         try:
-            result = subprocess.run(
+            result = run_git_no_prompt(
                 ["git", "clone", *clone_args, clone_url, str(repo_path)],
                 capture_output=True,
                 text=True,
@@ -235,7 +269,7 @@ def clone_repo_for_commit_scan(
             args.append(f"--shallow-since={shallow_since}")
         args += [clone_url, str(target_dir)]
 
-        result = subprocess.run(args, capture_output=True, text=True, timeout=300)
+        result = run_git_no_prompt(args, capture_output=True, text=True, timeout=300)
         if _output_requests_credentials(result.stderr):
             return False
         ok = bool(
@@ -261,7 +295,7 @@ def shallow_clone_repo(clone_url: str, target_dir: Path) -> bool:
     """
     try:
         target_dir.mkdir(parents=True, exist_ok=True)
-        result = subprocess.run(
+        result = run_git_no_prompt(
             [
                 "git",
                 "clone",

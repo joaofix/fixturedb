@@ -14,7 +14,7 @@ from time import sleep
 
 from collection.logging_utils import get_logger
 
-from .clone_primitives import _output_requests_credentials
+from .clone_primitives import _output_requests_credentials, run_git_no_prompt
 
 logger = get_logger(__name__)
 
@@ -90,7 +90,7 @@ def _checkout_commit(repo_path: Path, commit_sha: str) -> None:
                 continue
 
             try:
-                result = subprocess.run(
+                result = run_git_no_prompt(
                     ["git", "fetch", "--unshallow", "--tags", "origin"],
                     cwd=repo_path,
                     timeout=300,

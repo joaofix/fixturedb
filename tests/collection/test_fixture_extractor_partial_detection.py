@@ -526,6 +526,41 @@ def test_checkout_commit_removes_stale_index_lock_and_retries(tmp_path, monkeypa
     assert not lock_path.exists()
 
 
+def test_checkout_commit_fetch_fallback_uses_no_prompt_env(tmp_path, monkeypatch):
+    """Real incident (2026-08-11): discover-repos got stuck repeatedly on
+    interactive Username/Password prompts. The `git fetch --unshallow`
+    fallback here (reached when a commit isn't available in the current
+    shallow clone) goes through run_git_no_prompt(), not a plain
+    subprocess.run -- patches the global subprocess.run (not
+    commit_checkout's own module-qualified one, since run_git_no_prompt
+    calls through clone_primitives' subprocess reference) so the real
+    env-injection logic actually runs and gets verified."""
+    repo_path = tmp_path / "repo"
+    (repo_path / ".git").mkdir(parents=True)
+
+    calls = {"count": 0}
+    fetch_kwargs = {}
+
+    def fake_run(args, **kwargs):
+        calls["count"] += 1
+        if args[1] == "checkout" and calls["count"] == 1:
+            # Not an index.lock error -- falls through to the fetch fallback.
+            raise subprocess.CalledProcessError(
+                returncode=1, cmd=args, output="", stderr="fatal: reference is not a tree"
+            )
+        if args[1] == "fetch":
+            fetch_kwargs.update(kwargs)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+
+    _checkout_commit(repo_path, "abc1234")
+
+    assert fetch_kwargs["env"]["GIT_TERMINAL_PROMPT"] == "0"
+    assert fetch_kwargs["stdin"] == subprocess.DEVNULL
+
+
 def test_repo_worktree_lock_serializes_concurrent_extractions(tmp_path, monkeypatch):
     repo_path = tmp_path / "repo"
     git_dir = repo_path / ".git"

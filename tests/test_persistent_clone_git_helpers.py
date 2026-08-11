@@ -8,7 +8,11 @@ as part of a broader DIY-vs-library pass.
 import subprocess
 from pathlib import Path
 
-from collection.persistent_clone import _count_commits, _get_head_sha
+from collection.persistent_clone import (
+    _count_commits,
+    _get_head_sha,
+    _is_accessible_remote,
+)
 
 
 def _init_repo(tmp_path: Path) -> Path:
@@ -74,3 +78,49 @@ def test_count_commits_returns_zero_for_non_git_dir(tmp_path):
     not_a_repo.mkdir()
 
     assert _count_commits(not_a_repo) == 0
+
+
+def test_count_commits_fetch_uses_no_prompt_env(tmp_path, monkeypatch):
+    """Real incident (2026-08-11): discover-repos got stuck repeatedly on
+    interactive Username/Password prompts. _count_commits()'s `git fetch`
+    is one of the network calls that must never let git prompt. Patches
+    the underlying subprocess.run (not run_git_no_prompt itself) so the
+    real env-injection logic actually runs and gets verified."""
+    repo = _init_repo(tmp_path)
+    captured_kwargs = []
+
+    def fake_run(args, **kwargs):
+        captured_kwargs.append(kwargs)
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    _count_commits(repo)
+    assert captured_kwargs[0]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+    assert captured_kwargs[0]["stdin"] == subprocess.DEVNULL
+
+
+def test_is_accessible_remote_uses_no_prompt_env(monkeypatch):
+    captured_kwargs = []
+
+    def fake_run(args, **kwargs):
+        captured_kwargs.append(kwargs)
+        return subprocess.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    accessible, requires_creds = _is_accessible_remote("https://example.com/o/r.git")
+    assert accessible is True
+    assert requires_creds is False
+    assert captured_kwargs[0]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+    assert captured_kwargs[0]["stdin"] == subprocess.DEVNULL
+
+
+def test_is_accessible_remote_detects_credential_prompt(monkeypatch):
+    def fake_run(args, **kwargs):
+        return subprocess.CompletedProcess(
+            args, 128, stdout="", stderr="fatal: could not read Username: terminal prompts disabled"
+        )
+
+    monkeypatch.setattr("subprocess.run", fake_run)
+    accessible, requires_creds = _is_accessible_remote("https://example.com/o/private.git")
+    assert accessible is False
+    assert requires_creds is True

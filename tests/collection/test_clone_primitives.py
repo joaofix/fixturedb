@@ -21,9 +21,12 @@ import pytest
 
 from collection.clone_primitives import (
     CloneUnavailable,
+    _no_prompt_env,
     _shallow_clone_is_truncated,
     clone_repo_for_commit_scan,
     clone_to_tempdir,
+    run_git_no_prompt,
+    shallow_clone_repo,
 )
 
 
@@ -32,6 +35,49 @@ def _fake_result(returncode: int, stderr: str = "") -> Mock:
     result.returncode = returncode
     result.stderr = stderr
     return result
+
+
+class TestNoPromptEnv:
+    """Real incident (2026-08-11): a Dataset A discover-repos run got stuck
+    repeatedly on `Username for 'https://github.com':` prompts -- fully
+    automated, nothing there to type a username, so each affected repo just
+    blocked until its subprocess timeout eventually fired (up to 300s,
+    times retries). These tests cover the fix: git must never be given the
+    chance to prompt in the first place."""
+
+    def test_includes_git_terminal_prompt_disabled(self, monkeypatch):
+        monkeypatch.setenv("SOME_UNRELATED_VAR", "keep-me")
+        env = _no_prompt_env()
+        assert env["GIT_TERMINAL_PROMPT"] == "0"
+        assert env["GIT_ASKPASS"] == "echo"
+
+    def test_preserves_rest_of_os_environ(self, monkeypatch):
+        monkeypatch.setenv("SOME_UNRELATED_VAR", "keep-me")
+        env = _no_prompt_env()
+        # PATH (or any other real env var) must survive -- git still needs
+        # to be findable, and this must not silently break unrelated tooling
+        # that reads the environment.
+        assert env["SOME_UNRELATED_VAR"] == "keep-me"
+
+
+class TestRunGitNoPrompt:
+    def test_forwards_no_prompt_env_and_stdin_devnull(self, monkeypatch):
+        captured = {}
+
+        def fake_run(args, **kwargs):
+            captured["args"] = args
+            captured["kwargs"] = kwargs
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        run_git_no_prompt(["git", "clone", "url", "dest"], timeout=10, capture_output=True)
+
+        assert captured["args"] == ["git", "clone", "url", "dest"]
+        assert captured["kwargs"]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+        assert captured["kwargs"]["stdin"] == subprocess.DEVNULL
+        # Caller-supplied kwargs still pass through untouched.
+        assert captured["kwargs"]["timeout"] == 10
+        assert captured["kwargs"]["capture_output"] is True
 
 
 class TestCloneToTempdir:
@@ -259,6 +305,21 @@ class TestCloneRepoForCommitScanShallowSince:
         assert len(captured_args) == 1
         assert not any(a.startswith("--shallow-since=") for a in captured_args[0])
 
+    def test_uses_no_prompt_env_and_stdin_devnull(self, tmp_path, monkeypatch):
+        captured_kwargs = []
+
+        def fake_run(args, **kwargs):
+            captured_kwargs.append(kwargs)
+            target_dir = Path(args[-1])
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / "marker").write_text("x")
+            return Mock(returncode=0, stderr="")
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        clone_repo_for_commit_scan("https://example.com/o/r.git", tmp_path / "repo")
+        assert captured_kwargs[0]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+        assert captured_kwargs[0]["stdin"] == subprocess.DEVNULL
+
     def test_includes_shallow_since_flag_when_given_and_not_truncated(self, tmp_path, monkeypatch):
         captured_args = []
 
@@ -313,3 +374,58 @@ class TestCloneRepoForCommitScanShallowSince:
         # _shallow_clone_is_truncated is only consulted when shallow_since is set,
         # so the fallback (full) clone must not re-trigger it.
         assert truncation_calls["n"] == 1
+
+
+class TestCloneToTempdirNoPromptEnv:
+    def test_uses_no_prompt_env_and_stdin_devnull(self, tmp_path, monkeypatch):
+        captured_kwargs = []
+
+        def fake_run(args, **kwargs):
+            captured_kwargs.append(kwargs)
+            target_dir = Path(args[-1])
+            target_dir.mkdir(parents=True, exist_ok=True)
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        clone_to_tempdir(
+            "owner/repo", "https://example.com/owner/repo.git", [], timeout=10, prefix="t-"
+        )
+        assert captured_kwargs[0]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+        assert captured_kwargs[0]["stdin"] == subprocess.DEVNULL
+
+
+class TestShallowCloneRepo:
+    """shallow_clone_repo() (used by discover-repos' agent-config scan --
+    the exact step that got stuck in the real 2026-08-11 incident) had zero
+    prior test coverage."""
+
+    def test_success(self, tmp_path, monkeypatch):
+        def fake_run(args, **kwargs):
+            target_dir = Path(args[-1])
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / ".git").mkdir()
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        assert shallow_clone_repo("https://example.com/o/r.git", tmp_path / "repo") is True
+
+    def test_credential_prompt_returns_false(self, tmp_path, monkeypatch):
+        def fake_run(args, **kwargs):
+            return _fake_result(128, stderr="fatal: could not read Username: terminal prompts disabled")
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        assert shallow_clone_repo("https://example.com/o/private.git", tmp_path / "repo") is False
+
+    def test_uses_no_prompt_env_and_stdin_devnull(self, tmp_path, monkeypatch):
+        captured_kwargs = []
+
+        def fake_run(args, **kwargs):
+            captured_kwargs.append(kwargs)
+            target_dir = Path(args[-1])
+            target_dir.mkdir(parents=True, exist_ok=True)
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        shallow_clone_repo("https://example.com/o/r.git", tmp_path / "repo")
+        assert captured_kwargs[0]["env"]["GIT_TERMINAL_PROMPT"] == "0"
+        assert captured_kwargs[0]["stdin"] == subprocess.DEVNULL
