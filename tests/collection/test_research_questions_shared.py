@@ -15,20 +15,24 @@ from collection.db import (
 )
 from collection.research_questions._shared import (
     LanguageLeakage,
+    NCounts,
     apply_fdr_correction,
     compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
+    compute_stratified_continuous_balance,
     fdr_cell,
     fetch_categorical_column,
     fetch_categorical_column_by_repo,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
+    format_p_value,
     pct,
     render_categorical_repo_level_table,
+    render_comparison_table,
     render_language_leakage_table,
-    render_stratified_categorical_table,
+    repo_level_category_n_counts,
     repo_level_category_proportions,
     repo_level_means,
     require_db_or_none,
@@ -95,6 +99,22 @@ class TestPct:
     def test_zero_and_one_are_not_treated_as_missing(self):
         assert pct(0.0) == "0.0%"
         assert pct(1.0) == "100.0%"
+
+
+class TestFormatPValue:
+    def test_rounds_to_three_decimals(self):
+        assert format_p_value(0.03142) == "0.031"
+        assert format_p_value(0.5) == "0.500"
+
+    def test_below_threshold_renders_as_less_than(self):
+        assert format_p_value(0.0009) == "<.001"
+        assert format_p_value(0.0001) == "<.001"
+
+    def test_exactly_at_threshold_renders_as_number_not_less_than(self):
+        assert format_p_value(0.001) == "0.001"
+
+    def test_zero_renders_as_less_than(self):
+        assert format_p_value(0.0) == "<.001"
 
 
 def _make_fixtures_db(tmp_path, values: list[dict]) -> None:
@@ -323,26 +343,57 @@ class TestCompareCategoricalRepoLevel:
         assert compare_categorical_repo_level({}, {}, "fixture_type_kind") == {}
 
 
+class TestRepoLevelCategoryNCounts:
+    def test_counts_repos_with_a_nonzero_total_only(self):
+        a_by_repo = {1: {"setup": 5, "teardown": 0}, 2: {}}  # repo 2 has zero total -> excluded
+        other_by_repo = {3: {"setup": 1}, 4: {"setup": 2}, 5: {"setup": 3}}
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        assert n == NCounts(n_a=1, n_c=3)
+
+    def test_empty_input_gives_zero_counts(self):
+        assert repo_level_category_n_counts({}, {}) == NCounts(n_a=0, n_c=0)
+
+
 class TestRenderCategoricalRepoLevelTable:
     def test_renders_one_row_per_category(self):
         a_by_repo = {1: {"setup": 9, "teardown": 1}}
         other_by_repo = {2: {"setup": 1, "teardown": 9}}
         results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
-        rendered = render_categorical_repo_level_table(results, "c")
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        rendered = render_categorical_repo_level_table(results, "c", n)
         assert "| setup |" in rendered
         assert "| teardown |" in rendered
+
+    def test_n_column_shown_for_every_row(self):
+        a_by_repo = {1: {"setup": 9, "teardown": 1}}
+        other_by_repo = {2: {"setup": 1, "teardown": 9}, 3: {"setup": 2, "teardown": 8}}
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        rendered = render_categorical_repo_level_table(results, "c", n)
+        setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
+        assert "| 1 | 2 |" in setup_line  # n_A=1, n_C=2
 
     def test_proportions_rendered_as_percentages(self):
         a_by_repo = {1: {"setup": 3, "teardown": 1}}  # 75%
         other_by_repo = {2: {"setup": 1, "teardown": 3}}  # 25%
         results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
-        rendered = render_categorical_repo_level_table(results, "c")
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        rendered = render_categorical_repo_level_table(results, "c", n)
         setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
         assert "75.0%" in setup_line
         assert "25.0%" in setup_line
 
+    def test_p_values_rendered_exactly_not_as_significant_yes_no(self):
+        a_by_repo = {1: {"setup": 9, "teardown": 1}}
+        other_by_repo = {2: {"setup": 1, "teardown": 9}}
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        rendered = render_categorical_repo_level_table(results, "c", n)
+        assert "significant (p<0.05)" not in rendered
+        assert " (yes)" not in rendered and " (no)" not in rendered
+
     def test_no_categories_renders_placeholder_row(self):
-        rendered = render_categorical_repo_level_table({}, "c")
+        rendered = render_categorical_repo_level_table({}, "c", NCounts(0, 0))
         assert "_(no categories)_" in rendered
 
     def test_insufficient_data_marked_per_category(self):
@@ -352,7 +403,8 @@ class TestRenderCategoricalRepoLevelTable:
         a_by_repo = {1: {"setup": 5}}
         other_by_repo = {2: {}}
         results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
-        rendered = render_categorical_repo_level_table(results, "c")
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        rendered = render_categorical_repo_level_table(results, "c", n)
         setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
         assert "_insufficient data_" in setup_line
 
@@ -556,57 +608,114 @@ class TestComputeStratifiedCategoricalBalance:
         assert results["python"].p_value < 0.05
 
 
-class TestRenderStratifiedCategoricalTable:
-    def test_renders_one_row_per_language(self):
-        a_dist = {"python": {"has_mock": 90, "no_mock": 10}}
-        other_dist = {"python": {"has_mock": 10, "no_mock": 90}}
-        results = compute_stratified_categorical_balance(a_dist, other_dist, "has_mock")
-        rendered = render_stratified_categorical_table(results)
-        assert "| python |" in rendered
+class TestComputeStratifiedContinuousBalance:
+    def test_only_shared_languages_are_compared(self):
+        a_values = {"python": [1.0, 2.0], "java": [5.0, 6.0]}
+        other_values = {"python": [10.0, 20.0], "javascript": [1.0, 2.0]}
+        results = compute_stratified_continuous_balance(a_values, other_values, "loc")
+        assert set(results.keys()) == {"python"}
 
-    def test_no_results_renders_placeholder_row(self):
-        rendered = render_stratified_categorical_table({})
-        assert "_(no language shared by both datasets)_" in rendered
+    def test_no_shared_languages_returns_empty_dict(self):
+        a_values = {"python": [1.0, 2.0]}
+        other_values = {"java": [1.0, 2.0]}
+        assert compute_stratified_continuous_balance(a_values, other_values, "loc") == {}
 
-    def test_insufficient_data_marked_per_language(self):
-        a_dist = {"python": {"has_mock": 0, "no_mock": 0}}
-        other_dist = {"python": {"has_mock": 5, "no_mock": 5}}
-        results = compute_stratified_categorical_balance(a_dist, other_dist, "has_mock")
-        rendered = render_stratified_categorical_table(results)
-        assert "_insufficient data_" in rendered
+    def test_computes_real_mann_whitney_per_language(self):
+        a_values = {"python": [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]}
+        other_values = {"python": [50, 60, 55, 58, 62, 57, 59, 61, 56, 54]}
+        results = compute_stratified_continuous_balance(a_values, other_values, "loc")
+        assert results["python"].p_value < 0.05
 
-    def test_all_zero_category_no_longer_fails_the_test(self):
-        """This exact shape (a whole category, e.g. "teardown", at 0 on
-        both sides for one language) used to crash chi2_contingency inside
-        compute_categorical_balance() -- fixed there by dropping empty
-        columns before testing (see test_between_group_comparison.py's
-        test_all_zero_column_is_dropped_not_a_failure). Confirms the fix
-        holds through compute_stratified_categorical_balance() and renders
-        as a real result, not a "test failed" placeholder."""
-        a_dist = {"javascript": {"setup": 3, "teardown": 0, "other": 2}}
-        other_dist = {"javascript": {"setup": 1, "teardown": 0, "other": 4}}
-        results = compute_stratified_categorical_balance(a_dist, other_dist, "fixture_type_kind")
-        assert "error" not in results["javascript"].details
-        rendered = render_stratified_categorical_table(results)
-        assert "_test failed" not in rendered
-        assert "| javascript |" in rendered
 
-    def test_genuine_test_failure_still_renders_as_test_failed(self):
-        """The "test failed" rendering path itself must still work for a
-        real, otherwise-unhandled compute_categorical_balance() exception
-        -- constructed directly via BalanceTest rather than relying on
-        finding a live scipy failure mode (the main one is now fixed)."""
-        results = {
-            "javascript": BalanceTest(
-                variable="fixture_type_kind_javascript",
-                test_type="chi-square",
-                p_value=1.0,
-                is_balanced=True,
-                details={"error": "some other unrecoverable scipy failure"},
-            )
+class TestRenderComparisonTable:
+    def test_overall_row_always_first_and_never_bh_corrected(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
+        data_rows = [
+            line
+            for line in rendered.splitlines()
+            if line.startswith("| ") and not line.startswith("| Language")
+        ]
+        assert data_rows[0].startswith("| Overall | 5 | 5 |")
+        assert data_rows[0].rstrip("|").rsplit("|", 1)[-1].strip() == "--"
+
+    def test_overall_only_when_no_family_given(self):
+        overall = BalanceTest(variable="commit_type", test_type="chi-square", p_value=0.5, is_balanced=True)
+        rendered = render_comparison_table(overall, NCounts(3, 3), None, None, other_dataset="c")
+        data_rows = [
+            line
+            for line in rendered.splitlines()
+            if line.startswith("| ") and not line.startswith("| Language")
+        ]
+        assert len(data_rows) == 1
+
+    def test_per_language_rows_added_and_bh_corrected_independently_of_overall(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+            "java": BalanceTest(
+                variable="loc_java", test_type="mann-whitney-u", p_value=0.6, is_balanced=True
+            ),
         }
-        rendered = render_stratified_categorical_table(results)
-        assert "_test failed (some other unrecoverable scipy failure)_" in rendered
+        per_language_n = {"python": NCounts(2, 2), "java": NCounts(3, 3)}
+        rendered = render_comparison_table(
+            overall, NCounts(5, 5), per_language, per_language_n, other_dataset="c"
+        )
+        python_line = next(line for line in rendered.splitlines() if line.startswith("| python |"))
+        java_line = next(line for line in rendered.splitlines() if line.startswith("| java |"))
+        # Both languages' raw p-values still shown exactly.
+        assert "0.040" in python_line
+        assert "0.600" in java_line
+        # BH-adjusted p present (not "--") for both -- corrected as a
+        # 2-test family, independent of the Overall row's own p=0.02.
+        assert not python_line.rstrip("|").rsplit("|", 1)[-1].strip() == "--"
+        assert not java_line.rstrip("|").rsplit("|", 1)[-1].strip() == "--"
+
+    def test_chi_square_statistic_shows_degrees_of_freedom(self):
+        overall = BalanceTest(
+            variable="scope", test_type="chi-square", p_value=0.5, is_balanced=True,
+            statistic=3.2, details={"degrees_of_freedom": 2, "cramers_v": 0.1, "cramers_v_magnitude": "small"},
+        )
+        rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
+        assert "chi2=3.2 (df=2)" in rendered
+
+    def test_mann_whitney_statistic_labeled_u(self):
+        overall = BalanceTest(
+            variable="loc", test_type="mann-whitney-u", p_value=0.5, is_balanced=True,
+            statistic=12.0, details={"cliffs_delta": 0.1, "cliffs_delta_magnitude": "negligible"},
+        )
+        rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
+        assert "U=12.0" in rendered
+
+    def test_insufficient_data_row_still_shows_n(self):
+        overall = BalanceTest(
+            variable="loc", test_type="mann-whitney-u", p_value=1.0, is_balanced=True,
+            details={"reason": "insufficient_data"},
+        )
+        rendered = render_comparison_table(overall, NCounts(0, 5), None, None, other_dataset="c")
+        overall_line = next(line for line in rendered.splitlines() if line.startswith("| Overall |"))
+        assert "| Overall | 0 | 5 |" in overall_line
+        assert "_insufficient data_" in overall_line
+
+    def test_error_row_shows_test_failed_marker(self):
+        overall = BalanceTest(
+            variable="loc", test_type="chi-square", p_value=1.0, is_balanced=True,
+            details={"error": "some scipy failure"},
+        )
+        rendered = render_comparison_table(overall, NCounts(1, 1), None, None, other_dataset="c")
+        assert "_test failed (some scipy failure)_" in rendered
+
+    def test_no_significant_yes_no_column(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
+        assert "significant (p<0.05)" not in rendered
+
+    def test_header_names_other_dataset_column(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.5, is_balanced=True)
+        rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
+        assert "n_C" in rendered.splitlines()[0]
 
 
 class TestWriteMarkdownReport:

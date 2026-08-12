@@ -38,20 +38,14 @@ Three metrics, computed per dataset (A/C):
    with setup fixtures but zero teardown ones has an undefined ratio (not
    0, not infinity) -- reported separately as a repo count/percentage, not
    silently dropped from or forced into the ratio distribution. Already
-   one value per repo by construction, unlike (1)'s fixture-level kind
-   distribution -- no separate repo-level declustered version needed here
-   (see rq1.py/rq3.py's "Repo-level aggregates" section and
-   research_questions/_shared.py::repo_level_means() for why that exists
-   for their fixture-level continuous metrics).
+   one value per repo by construction -- no separate repo-level declustered
+   version needed (unlike (1)'s fixture-level kind distribution).
 
    Also reported per language (each fixture's own test_files.language, same
    convention as (1)'s kind_distribution_by_language) -- a repo with setup
    fixtures in more than one language contributes one ratio value to each
    language it has setup fixtures in, so this re-buckets by (repo, language)
-   rather than by repo alone. Descriptive only (median/mean/zero-TD % per
-   language), not run through a per-language significance test the way (1)
-   is -- see compute_stratified_categorical_balance() in _shared.py if that
-   inferential comparison is wanted later.
+   rather than by repo alone.
 
 3. **has_teardown_pair rate, per fixture_type** -- reported per type, not
    lumped into (1)'s "other" bucket, since lumping would mix real
@@ -61,6 +55,18 @@ Three metrics, computed per dataset (A/C):
    flagged -- see detector_shared.py's _calculate_teardown_pairs
    docstring: "only the setup-side fixture of a pair is flagged").
    Descriptive only, not run through a significance test.
+
+Every A-vs-C comparison above (1 and 2, plus the no-teardown-rate check
+folded into metric 1's discussion below) renders through _shared.py's
+render_comparison_table(): one "Overall" row (uncorrected, single pooled
+test) plus one BH-corrected row per language, family-scoped to exactly
+that variable's own 4 languages -- fixture_type_kind, setup_to_teardown_
+ratio, and repo_zero_teardown_rate (the no-teardown-rate check) each form
+their own family, corrected independently of the other two and of their
+own Overall row (see render_comparison_table()'s docstring). The ratio's
+per-language rows reuse the same repo-level values (one value per repo per
+language) the descriptive "by language" table already computes -- no
+fixture-level pseudo-replication risk there, it was already repo-level.
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
@@ -93,17 +99,16 @@ from ._shared import (
     DATASET_LABELS,
     OUTPUT_DIR,
     LanguageLeakage,
-    apply_fdr_correction,
-    categorical_effect_size_cell,
+    NCounts,
     compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
-    continuous_effect_size_cell,
-    fdr_cell,
+    compute_stratified_continuous_balance,
     fmt,
     render_categorical_repo_level_table,
+    render_comparison_table,
     render_language_leakage_table,
-    render_stratified_categorical_table,
+    repo_level_category_n_counts,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -149,6 +154,7 @@ class DatasetMetrics:
     teardown_rate_by_type: dict[str, dict] = field(default_factory=dict)
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     kind_distribution_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    kind_n_by_language: dict[str, int] = field(default_factory=dict)
     per_repo_ratios_by_language: dict[str, list[float]] = field(default_factory=dict)
     n_repos_with_setup_by_language: dict[str, int] = field(default_factory=dict)
     n_repos_zero_teardown_by_language: dict[str, int] = field(default_factory=dict)
@@ -192,6 +198,7 @@ def load_dataset_metrics(
             kind_distribution_by_language,
             per_repo_counts_by_language,
             kind_counts_by_repo,
+            kind_n_by_language,
         ) = _fetch_kinds_and_repo_counts(conn)
         teardown_rate_by_type = _fetch_teardown_rate_by_type(conn)
         language_leakage = compute_language_leakage(conn)
@@ -220,6 +227,7 @@ def load_dataset_metrics(
         teardown_rate_by_type=teardown_rate_by_type,
         language_leakage=language_leakage,
         kind_distribution_by_language=kind_distribution_by_language,
+        kind_n_by_language=kind_n_by_language,
         per_repo_ratios_by_language=per_repo_ratios_by_language,
         n_repos_with_setup_by_language=n_repos_with_setup_by_language,
         n_repos_zero_teardown_by_language=n_repos_zero_teardown_by_language,
@@ -234,14 +242,15 @@ def _fetch_kinds_and_repo_counts(
     dict[str, dict[str, int]],
     dict[str, dict[int, tuple[int, int]]],
     dict[int, dict[str, int]],
+    dict[str, int],
 ]:
     """Single pass over every fixture: dataset-level kind distribution,
     per-repo (setup_count, teardown_count), per-language kind distribution,
-    per-language per-repo (setup_count, teardown_count), and per-repo
-    {setup/teardown/other: count} -- classified once via `_kind()` so none
-    of these views can ever disagree with each other (a second, SQL-side
-    classification would just be `_kind()` duplicated in a different
-    language).
+    per-language per-repo (setup_count, teardown_count), per-repo
+    {setup/teardown/other: count}, and per-language repo count -- classified
+    once via `_kind()` so none of these views can ever disagree with each
+    other (a second, SQL-side classification would just be `_kind()`
+    duplicated in a different language).
 
     The per-language kind distribution is what
     compute_stratified_categorical_balance() needs to check whether an
@@ -254,12 +263,16 @@ def _fetch_kinds_and_repo_counts(
     The per-repo {kind: count} dict (all 3 kinds, unlike per_repo's
     setup/teardown-only pair) is what compare_categorical_repo_level()
     needs for the repo-declustered fixture_type_kind test -- see its
-    docstring in _shared.py."""
+    docstring in _shared.py. The per-language repo count is the n_A/n_C
+    render_comparison_table() needs for fixture_type_kind's per-language
+    rows: how many distinct repos contributed >=1 classified fixture in
+    that language."""
     kind_distribution = {"setup": 0, "teardown": 0, "other": 0}
     per_repo: dict[int, list[int]] = {}
     kind_by_language: dict[str, dict[str, int]] = {}
     per_repo_by_language: dict[str, dict[int, list[int]]] = {}
     kind_counts_by_repo: dict[int, dict[str, int]] = {}
+    repo_ids_by_language: dict[str, set[int]] = {}
 
     rows = conn.execute(
         "SELECT f.repo_id, f.fixture_type, f.name, tf.language FROM fixtures f "
@@ -289,10 +302,15 @@ def _fetch_kinds_and_repo_counts(
         )
         repo_kind_counts[kind] += 1
 
+        repo_ids_by_language.setdefault(language, set()).add(repo_id)
+
     per_repo_counts = {repo_id: (c[0], c[1]) for repo_id, c in per_repo.items()}
     per_repo_counts_by_language = {
         language: {repo_id: (c[0], c[1]) for repo_id, c in repo_map.items()}
         for language, repo_map in per_repo_by_language.items()
+    }
+    kind_n_by_language = {
+        language: len(repo_ids) for language, repo_ids in repo_ids_by_language.items()
     }
     return (
         kind_distribution,
@@ -300,6 +318,7 @@ def _fetch_kinds_and_repo_counts(
         kind_by_language,
         per_repo_counts_by_language,
         kind_counts_by_repo,
+        kind_n_by_language,
     )
 
 
@@ -318,7 +337,9 @@ def _fetch_teardown_rate_by_type(conn: sqlite3.Connection) -> dict[str, dict]:
 
 def compare_datasets(a: DatasetMetrics, other: DatasetMetrics) -> dict[str, BalanceTest]:
     """A vs `other`: Mann-Whitney U on per-repo ratios, chi-square on kind
-    distribution and on zero-teardown-repo rate."""
+    distribution and on zero-teardown-repo rate -- each an Overall
+    (pooled) test; per-language family tests are computed separately in
+    _render_comparison()."""
     ratio_test = compute_continuous_balance(
         human_values=other.per_repo_ratios,
         agent_values=a.per_repo_ratios,
@@ -418,63 +439,107 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     return "\n".join(lines)
 
 
+def _render_ratio_metric(a: DatasetMetrics, other: DatasetMetrics, overall: BalanceTest) -> str:
+    overall_n = NCounts(len(a.per_repo_ratios), len(other.per_repo_ratios))
+    per_language = compute_stratified_continuous_balance(
+        a.per_repo_ratios_by_language, other.per_repo_ratios_by_language, "setup_to_teardown_ratio"
+    )
+    per_language_n = {
+        language: NCounts(
+            len(a.per_repo_ratios_by_language.get(language, [])),
+            len(other.per_repo_ratios_by_language.get(language, [])),
+        )
+        for language in per_language
+    }
+    lines = ["### setup_to_teardown_ratio", ""]
+    lines.append(
+        render_comparison_table(
+            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
+        )
+    )
+    return "\n".join(lines)
+
+
+def _render_kind_metric(a: DatasetMetrics, other: DatasetMetrics, overall: BalanceTest) -> str:
+    overall_n = NCounts(len(a.kind_counts_by_repo), len(other.kind_counts_by_repo))
+    per_language = compute_stratified_categorical_balance(
+        a.kind_distribution_by_language, other.kind_distribution_by_language, "fixture_type_kind"
+    )
+    per_language_n = {
+        language: NCounts(
+            a.kind_n_by_language.get(language, 0), other.kind_n_by_language.get(language, 0)
+        )
+        for language in per_language
+    }
+    lines = ["### fixture_type_kind", ""]
+    lines.append(
+        render_comparison_table(
+            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
+        )
+    )
+    return "\n".join(lines)
+
+
+def _render_zero_teardown_metric(
+    a: DatasetMetrics, other: DatasetMetrics, overall: BalanceTest
+) -> str:
+    overall_n = NCounts(a.n_repos_with_setup, other.n_repos_with_setup)
+
+    def _by_language(metrics: DatasetMetrics) -> dict[str, dict[str, int]]:
+        return {
+            language: {
+                "zero_teardown_type": metrics.n_repos_zero_teardown_by_language[language],
+                "has_teardown_type": (
+                    metrics.n_repos_with_setup_by_language[language]
+                    - metrics.n_repos_zero_teardown_by_language[language]
+                ),
+            }
+            for language in metrics.n_repos_with_setup_by_language
+        }
+
+    per_language = compute_stratified_categorical_balance(
+        _by_language(a), _by_language(other), "repo_zero_teardown_rate"
+    )
+    per_language_n = {
+        language: NCounts(
+            a.n_repos_with_setup_by_language.get(language, 0),
+            other.n_repos_with_setup_by_language.get(language, 0),
+        )
+        for language in per_language
+    }
+    lines = ["### repo_zero_teardown_rate", ""]
+    lines.append(
+        render_comparison_table(
+            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
+        )
+    )
+    return "\n".join(lines)
+
+
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
     result = compare_datasets(a, other)
     lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
 
-    t = result["setup_to_teardown_ratio"]
-    d = t.details
     lines += [
-        "**Per-repo setup-to-teardown ratio (Mann-Whitney U, two-sided)** -- Cliff's "
-        "delta thresholds: negligible <0.147, small <0.33, medium <0.474, else large; "
-        "positive means the comparison dataset tends to have a larger ratio than A, "
-        "negative means A tends to have a larger ratio.",
+        'Every metric below follows the same convention: an "Overall" row '
+        "(a single pooled test, not BH-corrected) plus one BH-corrected row "
+        "per language (one family per metric, 4 languages -- see "
+        "render_comparison_table()'s docstring in _shared.py). Effect size "
+        "is Cliff's delta for setup_to_teardown_ratio (Mann-Whitney U; "
+        "thresholds: negligible <0.147, small <0.33, medium <0.474, else "
+        "large) and Cramer's V for fixture_type_kind/repo_zero_teardown_rate "
+        "(chi-square; thresholds: negligible <0.1, small <0.3, medium <0.5, "
+        "else large). Positive delta means the comparison dataset tends to "
+        "have larger values than A.",
         "",
     ]
-    if d.get("reason") == "insufficient_data":
-        lines.append("_insufficient data_")
-    else:
-        sig = "yes" if t.p_value < 0.05 else "no"
-        lines.append(
-            f"A median={fmt(d.get('agent_median'))}, mean={fmt(d.get('agent_mean'))} | "
-            f"{other.dataset.upper()} median={fmt(d.get('human_median'))}, "
-            f"mean={fmt(d.get('human_mean'))} | U={fmt(t.statistic, 1)} | "
-            f"p={t.p_value:.4g} | significant (p<0.05): {sig} | "
-            f"Cliff's delta (effect size): {continuous_effect_size_cell(t)}"
-        )
-    lines.append("")
-
-    lines += [
-        "**Categorical comparisons (chi-square)** -- Cramer's V thresholds: "
-        "negligible <0.1, small <0.3, medium <0.5, else large. BH-FDR corrects for "
-        "running both of these tests together.",
-        "",
-        "| Metric | chi2 | dof | p-value | significant (p<0.05) | Cramer's V (effect size) | "
-        "BH-FDR adjusted p (sig?) |",
-        "|---|---|---|---|---|---|---|",
-    ]
-    categorical_corrected = apply_fdr_correction(
-        {m: result[m] for m in ("fixture_type_kind", "repo_zero_teardown_rate")}
-    )
-    for metric in ("fixture_type_kind", "repo_zero_teardown_rate"):
-        t = categorical_corrected[metric]
-        d = t.details
-        if d.get("reason") == "insufficient_data":
-            lines.append(f"| {metric} | -- | -- | -- | _insufficient data_ | -- | -- |")
-            continue
-        sig = "yes" if t.p_value < 0.05 else "no"
-        dof = d.get("degrees_of_freedom", "--")
-        lines.append(
-            f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} | "
-            f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
-        )
-    lines.append("")
-
+    lines.append(_render_ratio_metric(a, other, result["setup_to_teardown_ratio"]))
+    lines.append(_render_kind_metric(a, other, result["fixture_type_kind"]))
     lines += [
         "> **`fixture_type_kind`'s result above is not used in the paper.** "
-        "It's a pooled fixture-level chi-square, which treats fixtures "
-        "clustered within a repo as independent observations and inflates "
-        "both chi2 and Cramer's V (see [Limitations § Categorical "
+        "It's a pooled/per-language fixture-level chi-square, which treats "
+        "fixtures clustered within a repo as independent observations and "
+        "inflates both chi2 and Cramer's V (see [Limitations § Categorical "
         "Pseudo-Replication](../docs/reference/limitations.md#categorical-"
         "pseudo-replication)). The paper reports the repo-level "
         '`fixture_type_kind` proportion test in "Repo-level aggregates" '
@@ -482,21 +547,7 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "(already repo-level by construction) and is used as-is.",
         "",
     ]
-
-    lines += [
-        "**fixture_type_kind, stratified by language (chi-square per language)** "
-        "-- the aggregate comparison above can look significant purely because "
-        f"{DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have different "
-        "language mixes; this checks whether the difference holds within each "
-        "shared language.",
-        "",
-    ]
-    stratified = compute_stratified_categorical_balance(
-        a.kind_distribution_by_language,
-        other.kind_distribution_by_language,
-        "fixture_type_kind",
-    )
-    lines.append(render_stratified_categorical_table(stratified))
+    lines.append(_render_zero_teardown_metric(a, other, result["repo_zero_teardown_rate"]))
 
     return "\n".join(lines)
 
@@ -513,7 +564,8 @@ def _render_repo_level_comparison(
     kind_repo_level = compare_categorical_repo_level(
         a.kind_counts_by_repo, other.kind_counts_by_repo, "fixture_type_kind"
     )
-    lines.append(render_categorical_repo_level_table(kind_repo_level, other.dataset))
+    n = repo_level_category_n_counts(a.kind_counts_by_repo, other.kind_counts_by_repo)
+    lines.append(render_categorical_repo_level_table(kind_repo_level, other.dataset, n))
     return "\n".join(lines)
 
 

@@ -10,26 +10,23 @@ Five metrics, computed per dataset (A/C):
    headline "do agents mock more or less" question has both a magnitude
    answer and a plain yes/no-prevalence one.
 2. **Mock prevalence per language** -- same has_mock split, broken down by
-   `test_files.language` (joined via `fixtures.file_id`). Descriptive only,
-   not run through a significance test -- matches rq2.py's
-   teardown_rate_by_type, which is also per-subgroup and descriptive rather
-   than tested, to avoid a combinatorial explosion of small-n tests.
+   `test_files.language` (joined via `fixtures.file_id`), now a full
+   per-language family test (see below), not just descriptive.
 3. **Framework distribution** -- `mock_usages.framework` (chi-square
-   overall), plus per-language (descriptive), so a reader can see whether
-   agents default to the dominant framework per language or show more
-   diversity just by reading the table, without a dedicated per-language
-   test.
+   overall and, now, per language too).
 4. **Test-double category distribution** -- `mock_usages.category`
-   (dummy/stub/spy/mock/fake, chi-square). Not in the original RQ3 text but
-   already deterministically computed by the same detection pass that
-   produces `framework` (see detector_shared.py's `_classify_mock_category`,
-   substring match against feature_extraction_patterns.yaml's
-   `mock_category_keywords`) and squarely inside "mock usage" -- costs
-   nothing extra to fold in.
+   (dummy/stub/spy/mock/fake, chi-square, overall and per language).
+   Not in the original RQ3 text but already deterministically computed by
+   the same detection pass that produces `framework` (see
+   detector_shared.py's `_classify_mock_category`, substring match
+   against feature_extraction_patterns.yaml's `mock_category_keywords`)
+   and squarely inside "mock usage" -- costs nothing extra to fold in.
 5. **Interaction depth** -- `mock_usages.num_interactions_configured`
    (continuous, Mann-Whitney): among mocks that ARE created, how much is
    configured on them (`.return_value`/`.side_effect`/`when(...).thenReturn`
-   style calls)?
+   style calls)? No per-language family (not one of the metrics the paper
+   review named) -- renders Overall-only, both fixture-level and
+   repo-level (unchanged from before).
 
 The old RQ3's qualitative target-layer coding (boundary/internal/
 infrastructure, from `target_identifier`) is deliberately NOT reproduced
@@ -37,13 +34,19 @@ here -- dropped in favor of staying purely quantitative, per this RQ's own
 note that the qualitative layer "can be dropped ... to keep this purely
 quantitative."
 
-has_mock/framework/category are also re-tested in "Repo-level aggregates"
-with per-repo category proportions (Mann-Whitney U + Cliff's delta)
-instead of pooled fixture/mock-level chi-square -- fixtures/mocks cluster
-within repos, so the pooled chi-square treats a repo's hundreds of
-correlated rows as hundreds of independent observations, inflating both
-chi2 and Cramer's V; see compare_categorical_repo_level()'s docstring in
-_shared.py.
+has_mock/framework/category each render through _shared.py's
+render_comparison_table(): one "Overall" row (uncorrected, single pooled
+test) plus one BH-corrected row per language, family-scoped to exactly
+that variable's own 4 languages, corrected independently of the other two
+variables and of their own Overall row (see render_comparison_table()'s
+docstring). They're also re-tested in "Repo-level aggregates" with
+per-repo category proportions (Mann-Whitney U + Cliff's delta) instead of
+pooled fixture/mock-level chi-square -- fixtures/mocks cluster within
+repos, so the pooled chi-square treats a repo's hundreds of correlated
+rows as hundreds of independent observations, inflating both chi2 and
+Cramer's V; see compare_categorical_repo_level()'s docstring in
+_shared.py. `num_mocks`/`num_interactions_configured` have no per-language
+family and are unaffected by any of this.
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
@@ -75,21 +78,19 @@ from ._shared import (
     DATASET_LABELS,
     OUTPUT_DIR,
     LanguageLeakage,
-    apply_fdr_correction,
-    categorical_effect_size_cell,
+    NCounts,
     compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
-    continuous_effect_size_cell,
-    fdr_cell,
     fetch_categorical_column,
     fetch_categorical_column_by_repo,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
     render_categorical_repo_level_table,
+    render_comparison_table,
     render_language_leakage_table,
-    render_stratified_categorical_table,
+    repo_level_category_n_counts,
     repo_level_means,
     require_db_or_none,
     summarize_continuous,
@@ -114,8 +115,11 @@ class DatasetMetrics:
     category_dist: dict[str, int] = field(default_factory=dict)
     mock_rate_by_language: dict[str, dict] = field(default_factory=dict)
     framework_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    category_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    has_mock_n_by_language: dict[str, int] = field(default_factory=dict)
+    mock_usage_n_by_language: dict[str, int] = field(default_factory=dict)
     repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
     has_mock_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
     framework_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
@@ -177,6 +181,49 @@ def _fetch_framework_by_language(conn: sqlite3.Connection) -> dict[str, dict[str
     return result
 
 
+def _fetch_category_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
+    """category distribution per fixture's own language -- framework
+    analogue (see _fetch_framework_by_language()'s docstring), applied to
+    `mock_usages.category`."""
+    rows = conn.execute(
+        "SELECT tf.language, mu.category, COUNT(*) FROM mock_usages mu "
+        "JOIN fixtures f ON mu.fixture_id = f.id "
+        "JOIN test_files tf ON f.file_id = tf.id "
+        "WHERE mu.category IS NOT NULL "
+        "GROUP BY tf.language, mu.category"
+    ).fetchall()
+    result: dict[str, dict[str, int]] = {}
+    for language, category, count in rows:
+        result.setdefault(language, {})[category] = count
+    return result
+
+
+def _fetch_fixture_repo_count_by_language(conn: sqlite3.Connection) -> dict[str, int]:
+    """Distinct repo count per language, among ALL fixtures -- the n_A/n_C
+    denominator for has_mock's per-language rows: every repo with a
+    fixture of that language, not just ones with a mock."""
+    rows = conn.execute(
+        "SELECT tf.language, COUNT(DISTINCT f.repo_id) FROM fixtures f "
+        "JOIN test_files tf ON f.file_id = tf.id GROUP BY tf.language"
+    ).fetchall()
+    return dict(rows)
+
+
+def _fetch_mock_usage_repo_count_by_language(conn: sqlite3.Connection) -> dict[str, int]:
+    """Distinct repo count per language, among mock_usages rows -- the
+    n_A/n_C denominator for framework/category's per-language rows (a
+    different, smaller population than has_mock's: only repos with >=1
+    actual mock in that language). Shared by both framework and category
+    since both are drawn from the same mock_usages population."""
+    rows = conn.execute(
+        "SELECT tf.language, COUNT(DISTINCT mu.repo_id) FROM mock_usages mu "
+        "JOIN fixtures f ON mu.fixture_id = f.id "
+        "JOIN test_files tf ON f.file_id = tf.id "
+        "GROUP BY tf.language"
+    ).fetchall()
+    return dict(rows)
+
+
 def load_dataset_metrics(
     dataset: str, *, db_root: Path = paths.DB_ROOT
 ) -> DatasetMetrics | None:
@@ -196,6 +243,9 @@ def load_dataset_metrics(
         category_dist = fetch_categorical_column(conn, "mock_usages", "category")
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
         framework_by_language = _fetch_framework_by_language(conn)
+        category_by_language = _fetch_category_by_language(conn)
+        has_mock_n_by_language = _fetch_fixture_repo_count_by_language(conn)
+        mock_usage_n_by_language = _fetch_mock_usage_repo_count_by_language(conn)
         language_leakage = compute_language_leakage(conn)
         # continuous_by_repo's "num_mocks" entry is reused below (as
         # num_mocks_by_repo) to derive has_mock_by_repo's per-repo
@@ -247,10 +297,13 @@ def load_dataset_metrics(
         num_interactions_raw=num_interactions_raw,
         has_mock_dist=has_mock_dist,
         has_mock_dist_by_language=has_mock_dist_by_language,
+        has_mock_n_by_language=has_mock_n_by_language,
+        mock_usage_n_by_language=mock_usage_n_by_language,
         framework_dist=framework_dist,
         category_dist=category_dist,
         mock_rate_by_language=mock_rate_by_language,
         framework_by_language=framework_by_language,
+        category_by_language=category_by_language,
         language_leakage=language_leakage,
         repo_level_continuous=repo_level_continuous,
         has_mock_by_repo=has_mock_by_repo,
@@ -259,19 +312,13 @@ def load_dataset_metrics(
     )
 
 
-def compare_datasets(
+def compare_datasets_categorical(
     a: DatasetMetrics, other: DatasetMetrics
-) -> dict[str, dict[str, BalanceTest]]:
-    """A vs `other`: Mann-Whitney U per continuous metric, chi-square per categorical one."""
-    continuous = {
-        metric: compute_continuous_balance(
-            human_values=_continuous_values(other, metric),
-            agent_values=_continuous_values(a, metric),
-            variable=metric,
-        )
-        for metric in CONTINUOUS_METRICS
-    }
-    categorical = {
+) -> dict[str, BalanceTest]:
+    """A vs `other`: pooled fixture/mock-level chi-square per categorical
+    metric (has_mock, framework, category) -- the Overall row for each
+    metric's table."""
+    return {
         metric: compute_categorical_balance(
             human_dist=_categorical_values(other, metric),
             agent_dist=_categorical_values(a, metric),
@@ -279,19 +326,35 @@ def compare_datasets(
         )
         for metric in CATEGORICAL_METRICS
     }
-    return {"continuous": continuous, "categorical": categorical}
 
 
 def compare_datasets_repo_level(
     a: DatasetMetrics, other: DatasetMetrics
 ) -> dict[str, BalanceTest]:
     """A vs `other`, one mean value per repo instead of one value per
-    fixture/mock -- see repo_level_means()'s docstring for why this
-    complements, rather than replaces, compare_datasets() above."""
+    fixture/mock -- num_mocks/num_interactions_configured only (no
+    per-language family; see this module's docstring)."""
     return {
         metric: compute_continuous_balance(
             human_values=other.repo_level_continuous[metric],
             agent_values=a.repo_level_continuous[metric],
+            variable=metric,
+        )
+        for metric in CONTINUOUS_METRICS
+    }
+
+
+def compare_datasets_fixture_level(
+    a: DatasetMetrics, other: DatasetMetrics
+) -> dict[str, BalanceTest]:
+    """A vs `other`, raw per-fixture/mock values -- num_mocks/
+    num_interactions_configured's fixture-level Overall row (kept
+    alongside the repo-level one, unchanged from before this task; no
+    per-language family for either)."""
+    return {
+        metric: compute_continuous_balance(
+            human_values=_continuous_values(other, metric),
+            agent_values=_continuous_values(a, metric),
             variable=metric,
         )
         for metric in CONTINUOUS_METRICS
@@ -353,91 +416,139 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     return "\n".join(lines)
 
 
+def _render_continuous_metric(
+    metric: str,
+    a: DatasetMetrics,
+    other: DatasetMetrics,
+    fixture_level: BalanceTest,
+    repo_level: BalanceTest,
+) -> str:
+    """Overall-only, both bases shown (no per-language family for
+    num_mocks/num_interactions_configured -- see this module's
+    docstring)."""
+    fixture_n = NCounts(
+        len(_continuous_values(a, metric)), len(_continuous_values(other, metric))
+    )
+    repo_n = NCounts(len(a.repo_level_continuous[metric]), len(other.repo_level_continuous[metric]))
+    lines = [f"### {metric}", "", "**Fixture-level**", ""]
+    lines.append(
+        render_comparison_table(fixture_level, fixture_n, None, None, other_dataset=other.dataset)
+    )
+    lines += ["**Repo-level** (one mean value per repo)", ""]
+    lines.append(
+        render_comparison_table(repo_level, repo_n, None, None, other_dataset=other.dataset)
+    )
+    return "\n".join(lines)
+
+
+def _render_categorical_metric(
+    metric: str,
+    a: DatasetMetrics,
+    other: DatasetMetrics,
+    overall: BalanceTest,
+    overall_n: NCounts,
+    a_by_language: dict[str, dict[str, int]],
+    other_by_language: dict[str, dict[str, int]],
+    a_n_by_language: dict[str, int],
+    other_n_by_language: dict[str, int],
+) -> str:
+    per_language = compute_stratified_categorical_balance(a_by_language, other_by_language, metric)
+    per_language_n = {
+        language: NCounts(
+            a_n_by_language.get(language, 0), other_n_by_language.get(language, 0)
+        )
+        for language in per_language
+    }
+    lines = [f"### {metric}", ""]
+    lines.append(
+        render_comparison_table(
+            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
+        )
+    )
+    return "\n".join(lines)
+
+
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
-    result = compare_datasets(a, other)
-    # BH-FDR correction, one family per table -- see
-    # apply_fdr_correction()'s docstring.
-    continuous_corrected = apply_fdr_correction(result["continuous"])
-    categorical_corrected = apply_fdr_correction(result["categorical"])
+    fixture_level = compare_datasets_fixture_level(a, other)
+    repo_level = compare_datasets_repo_level(a, other)
+    categorical_overall = compare_datasets_categorical(a, other)
     lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
 
     lines += [
-        "**Continuous metrics (Mann-Whitney U, two-sided)** -- p-values shrink with "
-        "sample size alone; Cliff's delta is what says how big the difference "
-        "actually is (thresholds: negligible <0.147, small <0.33, medium <0.474, "
-        "else large; positive means the comparison dataset tends to have larger "
-        "values than A, negative means A tends to have larger values). BH-FDR corrects "
-        "for running both of these tests together.",
+        "**Continuous metrics (Mann-Whitney U, two-sided)** -- num_mocks/ "
+        "num_interactions_configured have no per-language family (not one "
+        "of the metrics the paper review named), so both render Overall-only, "
+        "shown at both the fixture-level (every fixture/mock as an "
+        "observation) and repo-level (one mean value per repo) basis. "
+        "Effect size is Cliff's delta (thresholds: negligible <0.147, small "
+        "<0.33, medium <0.474, else large).",
         "",
-        "| Metric | A median | A mean | "
-        + f"{other.dataset.upper()} median | {other.dataset.upper()} mean | U | p-value | "
-        "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
-        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for metric in CONTINUOUS_METRICS:
-        t = continuous_corrected[metric]
-        d = t.details
-        if d.get("reason") == "insufficient_data":
-            lines.append(
-                f"| {metric} | -- | -- | -- | -- | -- | -- | _insufficient data_ | -- | -- |"
-            )
-            continue
-        sig = "yes" if t.p_value < 0.05 else "no"
         lines.append(
-            f"| {metric} | {fmt(d.get('agent_median'))} | {fmt(d.get('agent_mean'))} | "
-            f"{fmt(d.get('human_median'))} | {fmt(d.get('human_mean'))} | "
-            f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | {continuous_effect_size_cell(t)} | "
-            f"{fdr_cell(t)} |"
+            _render_continuous_metric(metric, a, other, fixture_level[metric], repo_level[metric])
         )
-    lines.append("")
 
     lines += [
-        "**Categorical metrics (chi-square)** -- Cramer's V thresholds: "
-        "negligible <0.1, small <0.3, medium <0.5, else large. BH-FDR corrects for "
-        "running all 3 of these tests together.",
+        "**Categorical metrics (chi-square)** -- has_mock/framework/category "
+        'each have a per-language family: an "Overall" row (single pooled '
+        "test, not BH-corrected) plus one BH-corrected row per language "
+        "(one family per metric, 4 languages -- see "
+        "render_comparison_table()'s docstring in _shared.py). Effect size "
+        "is Cramer's V (thresholds: negligible <0.1, small <0.3, medium "
+        "<0.5, else large).",
         "",
-        "| Metric | chi2 | dof | p-value | significant (p<0.05) | Cramer's V (effect size) | "
-        "BH-FDR adjusted p (sig?) |",
-        "|---|---|---|---|---|---|---|",
     ]
-    for metric in CATEGORICAL_METRICS:
-        t = categorical_corrected[metric]
-        d = t.details
-        if d.get("reason") == "insufficient_data":
-            lines.append(f"| {metric} | -- | -- | -- | _insufficient data_ | -- | -- |")
-            continue
-        sig = "yes" if t.p_value < 0.05 else "no"
-        dof = d.get("degrees_of_freedom", "--")
-        lines.append(
-            f"| {metric} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} | "
-            f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
+    lines.append(
+        _render_categorical_metric(
+            "has_mock",
+            a,
+            other,
+            categorical_overall["has_mock"],
+            NCounts(len(a.has_mock_by_repo), len(other.has_mock_by_repo)),
+            a.has_mock_dist_by_language,
+            other.has_mock_dist_by_language,
+            a.has_mock_n_by_language,
+            other.has_mock_n_by_language,
         )
-    lines.append("")
-
+    )
+    lines.append(
+        _render_categorical_metric(
+            "framework",
+            a,
+            other,
+            categorical_overall["framework"],
+            NCounts(len(a.framework_by_repo), len(other.framework_by_repo)),
+            a.framework_by_language,
+            other.framework_by_language,
+            a.mock_usage_n_by_language,
+            other.mock_usage_n_by_language,
+        )
+    )
+    lines.append(
+        _render_categorical_metric(
+            "category",
+            a,
+            other,
+            categorical_overall["category"],
+            NCounts(len(a.category_by_repo), len(other.category_by_repo)),
+            a.category_by_language,
+            other.category_by_language,
+            a.mock_usage_n_by_language,
+            other.mock_usage_n_by_language,
+        )
+    )
     lines += [
         "> **None of `has_mock`/`framework`/`category` above are used in "
-        "the paper.** They're pooled fixture/mock-level chi-square, which "
-        "treats fixtures/mocks clustered within a repo as independent "
-        "observations and inflates both chi2 and Cramer's V (see "
-        "[Limitations § Categorical Pseudo-Replication]"
+        "the paper.** They're pooled/per-language fixture/mock-level "
+        "chi-square, which treats fixtures/mocks clustered within a repo "
+        "as independent observations and inflates both chi2 and Cramer's V "
+        "(see [Limitations § Categorical Pseudo-Replication]"
         "(../docs/reference/limitations.md#categorical-pseudo-replication)). "
         'The paper reports the repo-level proportion tests in "Repo-level '
         'aggregates" below instead.',
         "",
     ]
-
-    lines += [
-        "**has_mock, stratified by language (chi-square per language)** -- "
-        "the aggregate comparison above can look significant purely because "
-        f"{DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have different "
-        "language mixes; this checks whether the difference holds within each "
-        "shared language.",
-        "",
-    ]
-    stratified = compute_stratified_categorical_balance(
-        a.has_mock_dist_by_language, other.has_mock_dist_by_language, "has_mock"
-    )
-    lines.append(render_stratified_categorical_table(stratified))
 
     return "\n".join(lines)
 
@@ -445,34 +556,9 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
 def _render_repo_level_comparison(
     label: str, a: DatasetMetrics, other: DatasetMetrics
 ) -> str:
-    result = compare_datasets_repo_level(a, other)
-    corrected = apply_fdr_correction(result)
     lines = [
         f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
         "",
-        "| Metric | A median | A mean | "
-        + f"{other.dataset.upper()} median | {other.dataset.upper()} mean | U | p-value | "
-        "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
-        "|---|---|---|---|---|---|---|---|---|---|",
-    ]
-    for metric in CONTINUOUS_METRICS:
-        t = corrected[metric]
-        d = t.details
-        if d.get("reason") == "insufficient_data":
-            lines.append(
-                f"| {metric} | -- | -- | -- | -- | -- | -- | _insufficient data_ | -- | -- |"
-            )
-            continue
-        sig = "yes" if t.p_value < 0.05 else "no"
-        lines.append(
-            f"| {metric} | {fmt(d.get('agent_median'))} | {fmt(d.get('agent_mean'))} | "
-            f"{fmt(d.get('human_median'))} | {fmt(d.get('human_mean'))} | "
-            f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | {continuous_effect_size_cell(t)} | "
-            f"{fdr_cell(t)} |"
-        )
-    lines.append("")
-
-    lines += [
         "**has_mock / framework / category, repo-level (Mann-Whitney U on "
         "per-repo category proportions, two-sided)** -- the chi-square "
         "tables above treat every fixture/mock as an independent "
@@ -492,7 +578,8 @@ def _render_repo_level_comparison(
     ):
         lines += [f"_{variable}_", ""]
         repo_level = compare_categorical_repo_level(a_by_repo, other_by_repo, variable)
-        lines.append(render_categorical_repo_level_table(repo_level, other.dataset))
+        n = repo_level_category_n_counts(a_by_repo, other_by_repo)
+        lines.append(render_categorical_repo_level_table(repo_level, other.dataset, n))
 
     return "\n".join(lines)
 
@@ -542,14 +629,12 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     lines += [
         "## Repo-level aggregates",
         "",
-        "The comparisons above treat every fixture/mock as an independent "
-        "observation, but they cluster within repos (shared authorship "
-        "conventions, framework choices, project style) -- a handful of "
-        "unusually prolific repos can dominate a fixture-level result. This "
-        "section re-runs the continuous metrics with one *mean-per-repo* "
-        "value per repo instead, and has_mock/framework/category with one "
-        "*proportion-per-repo* value per category, so each repo counts once "
-        "regardless of how many fixtures/mocks it contributed.",
+        "has_mock/framework/category re-tested with one *proportion-per-repo* "
+        "value per category instead of pooled/per-language fixture/mock-level "
+        "chi-square, so each repo counts once regardless of how many "
+        "fixtures/mocks it contributed. (num_mocks/num_interactions_configured "
+        "already have their own repo-level Overall row above, in the main "
+        "comparison section.)",
         "",
     ]
     if a_metrics is None:

@@ -252,6 +252,23 @@ class TestLoadDatasetMetrics:
         assert {"setup": 2, "teardown": 1, "other": 1} in metrics.kind_counts_by_repo.values()
         assert {"setup": 1, "teardown": 0, "other": 0} in metrics.kind_counts_by_repo.values()
 
+    def test_kind_n_by_language_counts_distinct_repos(self, tmp_path):
+        """One repo contributing fixtures in two languages -> n=1 for each
+        language, not the fixture count."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
+                },
+                {"language": "typescript", "fixtures": [{"fixture_type": "before_each"}]},
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.kind_n_by_language == {"python": 1, "typescript": 1}
+
     def test_per_repo_ratio_computed_only_over_repos_with_teardown(self, tmp_path):
         _make_db(
             tmp_path,
@@ -407,16 +424,21 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        assert "**Per-repo setup-to-teardown ratio (Mann-Whitney U, two-sided)**" in report
-        assert "fixture_type_kind" in report
-        # Both _make_db calls use "python" test_files -- stratified table
-        # should show a real python row, not "no language shared".
-        assert "stratified by language" in report
-        assert "| python |" in report
-        assert "repo_zero_teardown_rate" in report
-        # Effect sizes must actually be present, not just the column headers.
-        assert "Cliff's delta (effect size):" in report
-        assert "Cramer's V (effect size)" in report
+        assert "### setup_to_teardown_ratio" in report
+        assert "### fixture_type_kind" in report
+        assert "### repo_zero_teardown_rate" in report
+        # Both _make_db calls use "python" test_files -- each metric's
+        # per-language family should show a real python row.
+        ratio_section = report.split("### setup_to_teardown_ratio")[1].split(
+            "### fixture_type_kind"
+        )[0]
+        assert "| python |" in ratio_section
+        assert "| Overall |" in ratio_section
+        # Effect size value + magnitude columns must actually have real
+        # data, not just "--" placeholders.
+        assert "large" in report or "medium" in report or "small" in report or "negligible" in report
+        # Exact p-values, not a binary significant/not-significant column.
+        assert "significant (p<0.05)" not in report
 
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """fixture_type_kind's repo-level companion to the chi-square

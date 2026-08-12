@@ -19,6 +19,7 @@ from collection.db import (
     upsert_repository,
     upsert_test_file,
 )
+from collection.research_questions._shared import format_p_value
 from collection.research_questions.rq1 import (
     DatasetMetrics,
     compare_datasets_repo_level,
@@ -329,6 +330,48 @@ class TestLoadDatasetMetrics:
         assert {"pytest_decorator": 2} in metrics.fixture_type_by_repo.values()
         assert {"pytest_decorator": 1} in metrics.fixture_type_by_repo.values()
 
+    def test_fixture_type_n_by_language_counts_distinct_repos(self, tmp_path):
+        """Two repos both contributing python fixtures -> n=2 for python,
+        not the fixture count (3)."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [{"language": "python", "fixtures": [{"fixture_type": "pytest_decorator"}] * 2}],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.fixture_type_n_by_language == {"python": 1}
+
+    def test_scope_by_language_groups_by_fixtures_own_language(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {"language": "python", "fixtures": [{"scope": "per_test"}, {"scope": "per_test"}]},
+                {"language": "typescript", "fixtures": [{"scope": "per_class"}]},
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.scope_by_language == {
+            "python": {"per_test": 2},
+            "typescript": {"per_class": 1},
+        }
+
+    def test_scope_n_and_commit_type_n_count_distinct_repos_with_non_null_value(self, tmp_path):
+        _make_db(tmp_path, "a", [{"scope": "per_test"}, {"scope": None}, {"commit_type": "feat"}])
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.scope_n == 1  # one repo, has >=1 non-null scope fixture
+        assert metrics.commit_type_n == 1
+
+    def test_repo_level_continuous_by_language_is_one_mean_per_repo_per_language(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [{"language": "python", "fixtures": [{"loc": 10}, {"loc": 20}]}],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        # One repo contributing 2 python fixtures -> one repo-level mean (15.0).
+        assert metrics.repo_level_continuous_by_language["loc"] == {"python": [15.0]}
+
 
 class TestGenerateReport:
     def test_missing_all_dbs_notes_unavailable_without_crashing(self, tmp_path):
@@ -364,45 +407,46 @@ class TestGenerateReport:
         assert "| copilot | 1 | 50.0% |" in report
 
     def test_a_vs_c_comparison_renders_significant_difference(self, tmp_path):
-        # Sharply different LOC distributions -> Mann-Whitney should flag significance.
+        """Sharply different LOC distributions -> Mann-Whitney's Overall
+        row (repo-level, per the last task) should show a large effect and
+        a small exact p-value. This db has one repo per side (_make_db),
+        so the repo-level Overall row collapses to n=1 vs n=1 -- always
+        p=1.000 (an n=1-vs-n=1 Mann-Whitney can never reject), so this
+        checks the effect-size/formatting machinery, not significance."""
         _make_db(tmp_path, "a", [{"loc": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
         _make_db(tmp_path, "c", [{"loc": v} for v in [50, 60, 55, 58, 62, 57, 59, 61, 56, 54]])
         report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("**Continuous metrics (Mann-Whitney U")[1]
-        loc_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| loc |")
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        overall_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| Overall |")
         )
-        # Fully separated groups (every C value exceeds every A value) --
-        # both statistically significant and a large practical effect.
-        assert "| yes | 1.000 (large) |" in loc_line
-        # Only one continuous metric varies here (loc) -- with a family of
-        # 6 (some insufficient_data, since only "loc" was set), BH-FDR
-        # still marks this one significant given how strong the raw signal is.
-        assert loc_line.strip().endswith("(yes) |")
+        assert "| 1 | 1 |" in overall_line  # one repo per side
+        assert "large | 1.000" in overall_line
+        assert overall_line.rstrip("|").rsplit("|", 1)[-1].strip() == "--"  # never BH-corrected
 
     def test_categorical_insufficient_data_when_column_all_null(self, tmp_path):
         # commit_type is never set here -> both sides empty -> insufficient data.
         _make_db(tmp_path, "a", [{"loc": 1}])
         _make_db(tmp_path, "c", [{"loc": 1}])
         report = generate_report(db_root=tmp_path)
-        commit_type_line = next(
-            line for line in report.splitlines() if line.startswith("| commit_type |")
+        commit_type_section = report.split("### commit_type")[1].split("## Repo-level")[0]
+        overall_line = next(
+            line for line in commit_type_section.splitlines() if line.startswith("| Overall |")
         )
-        assert "_insufficient data_" in commit_type_line
+        assert "_insufficient data_" in overall_line
 
     def test_categorical_comparison_renders_effect_size(self, tmp_path):
         # A is all per_test scope, C is all per_class -> maximal association.
         _make_db(tmp_path, "a", [{"loc": 1, "scope": "per_test"}] * 10)
         _make_db(tmp_path, "c", [{"loc": 1, "scope": "per_class"}] * 10)
         report = generate_report(db_root=tmp_path)
-        scope_line = next(
-            line
-            for line in report.split("**Categorical metrics (chi-square)")[1].splitlines()
-            if line.startswith("| scope |")
+        scope_section = report.split("### scope")[1].split("### fixture_type")[0]
+        overall_line = next(
+            line for line in scope_section.splitlines() if line.startswith("| Overall |")
         )
-        assert "(large)" in scope_line
+        assert "large" in overall_line
 
-    def test_fixture_type_stratified_by_language_renders(self, tmp_path):
+    def test_fixture_type_per_language_family_renders(self, tmp_path):
         _make_multi_language_db(
             tmp_path,
             "a",
@@ -414,11 +458,13 @@ class TestGenerateReport:
             [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
         )
         report = generate_report(db_root=tmp_path)
-        assert "fixture_type, stratified by language" in report
-        stratified_section = report.split("fixture_type, stratified by language")[1]
-        assert "| python |" in stratified_section
+        fixture_type_section = report.split("### fixture_type")[1].split(
+            "not used in the paper"
+        )[0]
+        assert "| python |" in fixture_type_section
+        assert "| Overall |" in fixture_type_section
 
-    def test_fixture_type_stratified_by_language_excludes_language_not_shared(self, tmp_path):
+    def test_fixture_type_per_language_excludes_language_not_shared(self, tmp_path):
         """A has python + java fixtures, C has python only -- java has no
         C-side data to compare against, so compute_stratified_categorical_
         balance() must drop it rather than testing against an empty dist."""
@@ -436,11 +482,11 @@ class TestGenerateReport:
             [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
         )
         report = generate_report(db_root=tmp_path)
-        stratified_section = report.split("fixture_type, stratified by language")[1].split(
-            "## A vs C"
+        fixture_type_section = report.split("### fixture_type")[1].split(
+            "not used in the paper"
         )[0]
-        assert "| python |" in stratified_section
-        assert "| java |" not in stratified_section
+        assert "| python |" in fixture_type_section
+        assert "| java |" not in fixture_type_section
 
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """The core value proposition: a single repo contributing many
@@ -467,13 +513,16 @@ class TestGenerateReport:
         t = repo_level_result["loc"]
         assert t.is_balanced  # not significant once each repo counts once
 
+        # loc's Overall row (main "### loc" section) IS the repo-level test
+        # now -- there's no separate fixture-level continuous table left to
+        # be misled by, and no separate repo-level-only section either.
         report = generate_report(db_root=tmp_path)
-        assert "## Repo-level aggregates" in report
-        repo_section = report.split("## Repo-level aggregates")[1]
-        loc_line = next(
-            line for line in repo_section.splitlines() if line.startswith("| loc |")
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        overall_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| Overall |")
         )
-        assert "| no |" in loc_line  # not significant, repo-level
+        assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
+        assert format_p_value(t.p_value) in overall_line
 
     def test_repo_level_fixture_type_proportion_table_declusters_a_prolific_repo(
         self, tmp_path

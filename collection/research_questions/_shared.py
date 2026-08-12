@@ -89,6 +89,31 @@ def pct(value: float | None, digits: int = 1) -> str:
     return "--" if value is None else f"{100 * value:.{digits}f}%"
 
 
+def format_p_value(p: float) -> str:
+    """Exact p-value for a table cell -- "<.001" below that threshold
+    (matches conventional reporting style: below the display precision, an
+    exact figure like "0.0003" implies false precision), else 3 decimals
+    (e.g. "0.031"). Replaces every "significant (p<0.05)" yes/no column
+    and every f"{p:.4g}"-style call across rq1.py/rq2.py/rq3.py -- a paper
+    reviewer wants the actual p-value, not just a pass/fail against an
+    arbitrary alpha."""
+    return "<.001" if p < 0.001 else f"{p:.3f}"
+
+
+@dataclass(frozen=True)
+class NCounts:
+    """Repo counts feeding one comparison test -- always COUNT(DISTINCT
+    repo_id) among the rows that actually fed *this specific test*, never
+    a fixture/mock count, even when the test itself is fixture-level.
+    That's deliberate: showing the real repo population behind even a
+    fixture-level chi-square is exactly the context a reader needs to
+    judge pseudo-replication risk themselves (see docs/reference/
+    limitations.md's "Categorical Pseudo-Replication")."""
+
+    n_a: int
+    n_c: int
+
+
 def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest]:
     """Benjamini-Hochberg FDR correction across `tests` -- one "family" of
     related hypotheses tested together (e.g. every RQ1 metric in one A-vs-B
@@ -175,6 +200,32 @@ def compute_stratified_categorical_balance(
     return results
 
 
+def compute_stratified_continuous_balance(
+    a_values_by_language: dict[str, list[float]],
+    other_values_by_language: dict[str, list[float]],
+    variable: str,
+) -> dict[str, BalanceTest]:
+    """Per-language Mann-Whitney U + Cliff's delta, restricted to languages
+    with data on both sides -- continuous analogue of
+    compute_stratified_categorical_balance() above (same rationale: a
+    pooled comparison can look significant purely because the two datasets
+    have different language mixes; this checks whether the difference
+    holds *within* a language). `a_values_by_language`/
+    `other_values_by_language` are typically repo-level (one value per
+    repo per language, e.g. from repo_level_means() grouped by language)
+    rather than raw per-fixture values, so this doesn't reintroduce the
+    fixture-clustering pseudo-replication repo_level_means() exists to fix
+    -- see render_comparison_table()'s docstring for where this is used."""
+    results: dict[str, BalanceTest] = {}
+    for language in sorted(set(a_values_by_language) & set(other_values_by_language)):
+        results[language] = compute_continuous_balance(
+            human_values=other_values_by_language[language],
+            agent_values=a_values_by_language[language],
+            variable=f"{variable}_{language}",
+        )
+    return results
+
+
 def categorical_effect_size_cell(t: BalanceTest) -> str:
     """Cramér's V + magnitude, formatted for one table cell -- '--' if the
     test didn't run (insufficient_data/error). p-values shrink with sample
@@ -194,41 +245,107 @@ def continuous_effect_size_cell(t: BalanceTest) -> str:
     return f"{delta:.3f} ({t.details.get('cliffs_delta_magnitude', '?')})"
 
 
-def render_stratified_categorical_table(results: dict[str, BalanceTest]) -> str:
-    """Markdown table for compute_stratified_categorical_balance()'s output.
-    Applies BH-FDR correction across the languages shown (one "family" --
-    see apply_fdr_correction()'s docstring) before rendering, so callers
-    don't need to remember to do it separately."""
-    corrected = apply_fdr_correction(results)
+def _statistic_cell(t: BalanceTest) -> str:
+    """`t.statistic` labeled by which test produced it -- one column serves
+    both Mann-Whitney U and chi-square (with its degrees of freedom)
+    tests, since render_comparison_table() is metric-agnostic."""
+    if t.statistic is None:
+        return "--"
+    if t.test_type == "chi-square":
+        dof = t.details.get("degrees_of_freedom", "--")
+        return f"chi2={fmt(t.statistic, 1)} (df={dof})"
+    return f"U={fmt(t.statistic, 1)}"
+
+
+def _effect_size_value_cell(t: BalanceTest) -> str:
+    """The raw effect-size number (Cramer's V or Cliff's delta) alone --
+    magnitude is a separate column, see _effect_size_magnitude_cell()."""
+    if t.test_type == "chi-square":
+        return fmt(t.details.get("cramers_v"), 3)
+    return fmt(t.details.get("cliffs_delta"), 3)
+
+
+def _effect_size_magnitude_cell(t: BalanceTest) -> str:
+    """negligible/small/medium/large label for _effect_size_value_cell()'s
+    number -- see _cramers_v_magnitude()/_cliffs_delta_magnitude() in
+    between_group_comparison.py for the exact thresholds."""
+    if t.test_type == "chi-square":
+        return t.details.get("cramers_v_magnitude") or "--"
+    return t.details.get("cliffs_delta_magnitude") or "--"
+
+
+def _comparison_row(label: str, t: BalanceTest, n: NCounts, *, corrected: bool) -> str:
+    """One row of render_comparison_table() -- n columns are always shown
+    (computable independently of whether the test itself could run);
+    Statistic/effect-size/p columns fall back to an insufficient_data/
+    test-failed marker matching the reasons documented on
+    compute_categorical_balance()/compute_continuous_balance() themselves."""
+    d = t.details
+    if d.get("reason") == "insufficient_data":
+        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | _insufficient data_ | -- | -- |"
+    if "error" in d:
+        # compute_categorical_balance() catches chi2_contingency failures
+        # (e.g. a whole category at 0 on both sides -- a zero expected-
+        # frequency cell) and returns p_value=1.0/is_balanced=True as a
+        # safe default so callers never crash on it. That default reads as
+        # a real "not significant" result if rendered plainly here, which
+        # is actively misleading -- it means the test couldn't run at all.
+        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | _test failed ({d['error']})_ | -- | -- |"
+    p_adj = "--"
+    if corrected:
+        adj_p = d.get("adjusted_p_value")
+        if adj_p is not None:
+            p_adj = format_p_value(adj_p)
+    return (
+        f"| {label} | {n.n_a} | {n.n_c} | {_statistic_cell(t)} | "
+        f"{_effect_size_value_cell(t)} | {_effect_size_magnitude_cell(t)} | "
+        f"{format_p_value(t.p_value)} | {p_adj} |"
+    )
+
+
+def render_comparison_table(
+    overall: BalanceTest,
+    overall_n: NCounts,
+    per_language: dict[str, BalanceTest] | None,
+    per_language_n: dict[str, NCounts] | None,
+    *,
+    other_dataset: str,
+) -> str:
+    """The one table every A-vs-C comparison in rq1.py/rq2.py/rq3.py
+    renders through: `| Language | n_A | n_<other> | Statistic | Effect
+    size value | Magnitude | p (raw) | p (BH-adj) |`.
+
+    "Overall" is always the first row -- `overall`'s own raw p-value,
+    never BH-corrected (a single pooled test needs no multiple-comparison
+    correction), so its "p (BH-adj)" cell is always "--".
+
+    If `per_language` is given, applies apply_fdr_correction() to it here
+    -- one family = exactly this variable's per-language tests, nothing
+    else (not the Overall row, not other variables' tests) -- and adds one
+    row per language (sorted alphabetically), each with its own raw + BH-
+    adjusted p. If `per_language` is None, the table is Overall-only (this
+    metric has no per-language family defined for it -- e.g. RQ1's
+    commit_type, RQ3's num_mocks/num_interactions_configured).
+
+    Branches on `t.test_type` ("mann-whitney-u" -> U statistic + Cliff's
+    delta; "chi-square" -> chi2(df) + Cramer's V) via _statistic_cell()/
+    _effect_size_*_cell() so one function serves every metric in every
+    script, continuous or categorical alike -- BalanceTest already carries
+    which kind it is, no extra parameter needed.
+    """
     lines = [
-        "| Language | chi2 | dof | p-value | significant (p<0.05) | Cramer's V (effect size) | "
-        "BH-FDR adjusted p (sig?) |",
-        "|---|---|---|---|---|---|---|",
+        f"| Language | n_A | n_{other_dataset.upper()} | Statistic | "
+        "Effect size value | Magnitude | p (raw) | p (BH-adj) |",
+        "|---|---|---|---|---|---|---|---|",
+        _comparison_row("Overall", overall, overall_n, corrected=False),
     ]
-    if not corrected:
-        lines.append("| _(no language shared by both datasets)_ | -- | -- | -- | -- | -- | -- |")
-    else:
-        for language, t in corrected.items():
-            d = t.details
-            if d.get("reason") == "insufficient_data":
-                lines.append(f"| {language} | -- | -- | -- | _insufficient data_ | -- | -- |")
-                continue
-            if "error" in d:
-                # compute_categorical_balance() catches chi2_contingency
-                # failures (e.g. a whole category at 0 on both sides for
-                # this language -- a zero expected-frequency cell) and
-                # returns p_value=1.0/is_balanced=True as a safe default so
-                # callers never crash on it. That default reads as a real
-                # "not significant" result if rendered plainly here, which
-                # is actively misleading -- it means the test couldn't run
-                # at all, not that no difference was found.
-                lines.append(f"| {language} | -- | -- | -- | _test failed ({d['error']})_ | -- | -- |")
-                continue
-            sig = "yes" if t.p_value < 0.05 else "no"
-            dof = d.get("degrees_of_freedom", "--")
+    if per_language:
+        corrected = apply_fdr_correction(per_language)
+        for language in sorted(corrected):
             lines.append(
-                f"| {language} | {fmt(t.statistic, 1)} | {dof} | {t.p_value:.4g} | {sig} | "
-                f"{categorical_effect_size_cell(t)} | {fdr_cell(t)} |"
+                _comparison_row(
+                    language, corrected[language], per_language_n[language], corrected=True
+                )
             )
     lines.append("")
     return "\n".join(lines)
@@ -356,8 +473,25 @@ def compare_categorical_repo_level(
     }
 
 
+def repo_level_category_n_counts(
+    a_by_repo: dict[int, dict[str, int]], other_by_repo: dict[int, dict[str, int]]
+) -> NCounts:
+    """Repo counts feeding compare_categorical_repo_level()'s tests -- one
+    value per side, not per category: a repo's "total" (the proportion
+    denominator) is summed across *all* categories for this variable, so
+    the set of repos with a nonzero total -- and therefore the set that
+    repo_level_category_proportions() actually draws from -- is identical
+    for every category. Same population every row in
+    render_categorical_repo_level_table() draws from, hence one NCounts
+    for the whole table rather than one per row."""
+    return NCounts(
+        n_a=sum(1 for counts in a_by_repo.values() if sum(counts.values())),
+        n_c=sum(1 for counts in other_by_repo.values() if sum(counts.values())),
+    )
+
+
 def render_categorical_repo_level_table(
-    results: dict[str, BalanceTest], other_dataset: str
+    results: dict[str, BalanceTest], other_dataset: str, n: NCounts
 ) -> str:
     """Markdown table for compare_categorical_repo_level()'s output -- one
     row per category, per-repo proportions (not raw counts) shown as
@@ -366,27 +500,32 @@ def render_categorical_repo_level_table(
     corrected = apply_fdr_correction(results)
     lines = [
         "| Category | A median | A mean | "
-        f"{other_dataset.upper()} median | {other_dataset.upper()} mean | U | p-value | "
-        "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
-        "|---|---|---|---|---|---|---|---|---|",
+        f"{other_dataset.upper()} median | {other_dataset.upper()} mean | n_A | "
+        f"n_{other_dataset.upper()} | Statistic | Effect size value | Magnitude | "
+        "p (raw) | p (BH-adj) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     if not corrected:
-        lines.append("| _(no categories)_ | -- | -- | -- | -- | -- | -- | -- | -- |")
+        lines.append(
+            "| _(no categories)_ | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |"
+        )
     else:
         for category, t in corrected.items():
             d = t.details
             if d.get("reason") == "insufficient_data":
                 lines.append(
-                    f"| {category} | -- | -- | -- | -- | -- | -- | _insufficient data_ | -- |"
+                    f"| {category} | -- | -- | -- | -- | {n.n_a} | {n.n_c} | -- | -- | "
+                    "_insufficient data_ | -- | -- |"
                 )
                 continue
-            sig = "yes" if t.p_value < 0.05 else "no"
+            adj_p = d.get("adjusted_p_value")
+            p_adj = format_p_value(adj_p) if adj_p is not None else "--"
             lines.append(
                 f"| {category} | "
                 f"{pct(d.get('agent_median'))} | {pct(d.get('agent_mean'))} | "
                 f"{pct(d.get('human_median'))} | {pct(d.get('human_mean'))} | "
-                f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | "
-                f"{continuous_effect_size_cell(t)} | {fdr_cell(t)} |"
+                f"{n.n_a} | {n.n_c} | {_statistic_cell(t)} | {_effect_size_value_cell(t)} | "
+                f"{_effect_size_magnitude_cell(t)} | {format_p_value(t.p_value)} | {p_adj} |"
             )
     lines.append("")
     return "\n".join(lines)

@@ -353,6 +353,64 @@ class TestLoadDatasetMetrics:
             "java": {"mockito": 1},
         }
 
+    def test_category_by_language(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "stub"}]}
+                    ],
+                },
+                {
+                    "language": "java",
+                    "fixtures": [
+                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "spy"}]}
+                    ],
+                },
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.category_by_language == {
+            "python": {"stub": 1},
+            "java": {"spy": 1},
+        }
+
+    def test_has_mock_n_by_language_counts_every_repo_with_a_fixture(self, tmp_path):
+        """Every repo with a fixture of that language counts, even ones
+        with zero mocks -- has_mock's per-language chi-square tests
+        has_mock vs no_mock across ALL fixtures, not just mocked ones."""
+        _make_db(
+            tmp_path,
+            "a",
+            [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.has_mock_n_by_language == {"python": 1}
+
+    def test_mock_usage_n_by_language_counts_only_repos_with_a_mock(self, tmp_path):
+        """A different (smaller) population than has_mock_n_by_language:
+        only repos that actually have >=1 mock_usage row, shared by
+        framework and category since both are drawn from mock_usages."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {"overrides": {"num_mocks": 0}},  # no mock -> doesn't count here
+                        {"overrides": {"num_mocks": 1}, "mocks": [{}]},
+                    ],
+                }
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.mock_usage_n_by_language == {"python": 1}
+        assert metrics.has_mock_n_by_language == {"python": 1}
+
     def test_interaction_depth(self, tmp_path):
         _make_db(
             tmp_path,
@@ -428,14 +486,14 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("**Continuous metrics (Mann-Whitney U")[1]
-        num_mocks_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| num_mocks |")
+        num_mocks_section = report.split("### num_mocks")[1].split("### num_interactions_configured")[0]
+        fixture_level_section = num_mocks_section.split("**Repo-level**")[0]
+        overall_line = next(
+            line for line in fixture_level_section.splitlines() if line.startswith("| Overall |")
         )
         # Fully separated groups (every A value exceeds every C value) --
-        # both statistically significant and a large practical effect.
-        assert "| yes | -1.000 (large) |" in num_mocks_line
-        assert num_mocks_line.strip().endswith("(yes) |")
+        # a large practical effect, negative (A's values exceed C's).
+        assert "-1.000 | large" in overall_line
 
     def test_a_vs_c_comparison_includes_stratified_mock_prevalence(self, tmp_path):
         _make_db(
@@ -454,23 +512,23 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        assert "**has_mock, stratified by language" in report
-        stratified_section = report.split("**has_mock, stratified by language")[1]
+        assert "### has_mock" in report
+        has_mock_section = report.split("### has_mock")[1].split("### framework")[0]
         # python is shared by both A and C -> a real row; java only exists
         # in A, so it must not appear at all (no data to compare against).
-        assert "| python |" in stratified_section.split("##")[0]
-        assert "| java |" not in stratified_section.split("##")[0]
+        assert "| python |" in has_mock_section
+        assert "| java |" not in has_mock_section
 
     def test_categorical_insufficient_data_when_no_mock_usages(self, tmp_path):
         # No mock_usages rows at all in either dataset -> framework/category insufficient data.
         _make_db(tmp_path, "a", [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}])
         _make_db(tmp_path, "c", [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}])
         report = generate_report(db_root=tmp_path)
-        framework_line = next(
-            line for line in report.splitlines() if line.startswith("| framework |")
+        framework_section = report.split("### framework")[1].split("### category")[0]
+        overall_line = next(
+            line for line in framework_section.splitlines() if line.startswith("| Overall |")
         )
-        assert "_insufficient data_" in framework_line
-
+        assert "_insufficient data_" in overall_line
 
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """One repo contributing many high-num_mocks fixtures must not
@@ -495,13 +553,16 @@ class TestGenerateReport:
         t = compare_datasets_repo_level(a_metrics, c_metrics)["num_mocks"]
         assert t.is_balanced  # not significant once each repo counts once
 
+        # num_mocks's repo-level Overall row now lives in the main "###
+        # num_mocks" section (its "**Repo-level**" subsection), not a
+        # separate "## Repo-level aggregates" table.
         report = generate_report(db_root=tmp_path)
-        assert "## Repo-level aggregates" in report
-        repo_section = report.split("## Repo-level aggregates")[1]
-        num_mocks_line = next(
-            line for line in repo_section.splitlines() if line.startswith("| num_mocks |")
+        num_mocks_section = report.split("### num_mocks")[1].split("### num_interactions_configured")[0]
+        repo_level_section = num_mocks_section.split("**Repo-level**")[1]
+        overall_line = next(
+            line for line in repo_level_section.splitlines() if line.startswith("| Overall |")
         )
-        assert "| no |" in num_mocks_line
+        assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
 
     def test_repo_level_framework_proportion_table_declusters_a_prolific_repo(self, tmp_path):
         """framework's repo-level companion to the chi-square table: A is
