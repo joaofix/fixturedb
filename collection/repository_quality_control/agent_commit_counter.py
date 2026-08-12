@@ -295,7 +295,16 @@ def run(
                 logger.debug(
                     "Processing (sync) %s (lang=%s)", (r.get("repo_name") or ""), lang
                 )
-                rows, total_examined = process_repo_for_commits(r, since)
+                # A single repo's clone failure (e.g. CloneUnavailable) must
+                # not abort the whole run -- the workers>1 branch below
+                # already tolerates this via fut.result()'s try/except;
+                # this mirrors it so both branches behave identically.
+                try:
+                    rows, total_examined = process_repo_for_commits(r, since)
+                except Exception as e:
+                    logger.exception("Error processing %s: %s", r.get("repo_name"), e)
+                    pbar.update(1)
+                    continue
                 commits_scanned_by_lang[lang] += total_examined
                 # filter out seen shas
                 new_rows = [

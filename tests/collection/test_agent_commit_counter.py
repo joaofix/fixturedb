@@ -8,6 +8,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from collection.clone_primitives import CloneUnavailable
+from collection.repository_quality_control import agent_commit_counter
 from collection.repository_quality_control.agent_commit_counter import (
     process_repo_for_commits,
     run,
@@ -173,6 +175,58 @@ def test_run_accumulates_per_language_totals_across_repos(tmp_path: Path):
     summary_text = (output_dir / "summary.md").read_text()
     assert "| python | 3 |" in summary_text
     assert "| java | 1 |" in summary_text
+
+
+def test_run_workers_1_continues_after_a_clone_failure(tmp_path: Path, monkeypatch):
+    """Real incident (2026-08-12): a single repo's clone failure must not
+    abort the whole discover-commits run. The workers>1 branch already
+    tolerated this (fut.result()'s try/except in run()); the workers=1
+    sync branch called process_repo_for_commits() with no try/except at
+    all, so one CloneUnavailable there would kill the entire run."""
+    good_repo = tmp_path / "good_repo"
+    _make_repo(good_repo, ["Human commit A", "Human commit B"])
+
+    repo_qc_dir = tmp_path / "repo_qc"
+    _write_repo_qc_csv(
+        repo_qc_dir,
+        "python_agent_repo.csv",
+        [
+            {
+                "repo_name": "owner/bad-repo",
+                "language": "python",
+                "clone_url": "https://example.invalid/owner/bad-repo.git",
+                "has_agent_config": "1",
+            },
+            {
+                "repo_name": "owner/good-repo",
+                "language": "python",
+                "clone_url": str(good_repo),
+                "has_agent_config": "1",
+            },
+        ],
+    )
+
+    real_process = agent_commit_counter.process_repo_for_commits
+
+    def fake_process(row, since):
+        if row.get("repo_name") == "owner/bad-repo":
+            raise CloneUnavailable(
+                "clone failed after 3 attempt(s): owner/bad-repo -- "
+                "last error: timed out after 300s"
+            )
+        return real_process(row, since)
+
+    monkeypatch.setattr(agent_commit_counter, "process_repo_for_commits", fake_process)
+
+    output_dir = tmp_path / "out"
+    result = agent_commit_counter.run(
+        since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir
+    )
+    assert result == 0  # run() completed, didn't crash/propagate
+
+    # good-repo's 2 commits still counted despite bad-repo's clone failure.
+    summary_text = (output_dir / "summary.md").read_text()
+    assert "| python | 2 |" in summary_text
 
 
 def test_run_multi_worker_accumulates_per_language_totals_correctly(tmp_path: Path):

@@ -119,6 +119,11 @@ class TestCloneToTempdir:
         assert calls["n"] == 1  # confirmed-permanent -- no retry attempted
 
     def test_generic_failure_retries_then_raises_clone_unavailable(self, tmp_path, monkeypatch):
+        """Real incident (2026-08-12): two verifiably public, reachable
+        repos each failed all 3 clone attempts during a live discover-
+        commits run, but the raised message gave no clue why -- the actual
+        stderr from every attempt was silently discarded. This covers the
+        fix: the last attempt's stderr survives into the exception message."""
         calls = {"n": 0}
 
         def fake_run(*args, **kwargs):
@@ -128,7 +133,7 @@ class TestCloneToTempdir:
         monkeypatch.setattr("subprocess.run", fake_run)
         monkeypatch.setattr("time.sleep", lambda _: None)
 
-        with pytest.raises(CloneUnavailable):
+        with pytest.raises(CloneUnavailable, match="Could not resolve host"):
             clone_to_tempdir(
                 "owner/repo",
                 "https://example.com/owner/repo.git",
@@ -138,6 +143,27 @@ class TestCloneToTempdir:
                 retries=2,
             )
         assert calls["n"] == 3  # 1 initial + 2 retries
+
+    def test_timeout_retries_then_raises_clone_unavailable_with_reason(self, tmp_path, monkeypatch):
+        calls = {"n": 0}
+
+        def fake_run(*args, **kwargs):
+            calls["n"] += 1
+            raise subprocess.TimeoutExpired(cmd=["git", "clone"], timeout=10)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        monkeypatch.setattr("time.sleep", lambda _: None)
+
+        with pytest.raises(CloneUnavailable, match="timed out after 10s"):
+            clone_to_tempdir(
+                "owner/repo",
+                "https://example.com/owner/repo.git",
+                [],
+                timeout=10,
+                prefix="t-",
+                retries=1,
+            )
+        assert calls["n"] == 2  # 1 initial + 1 retry
 
     def test_succeeds_on_a_later_retry(self, tmp_path, monkeypatch):
         calls = {"n": 0}
@@ -169,7 +195,7 @@ class TestCloneToTempdir:
         monkeypatch.setattr("subprocess.run", fake_run)
         monkeypatch.setattr("time.sleep", lambda _: None)
 
-        with pytest.raises(CloneUnavailable):
+        with pytest.raises(CloneUnavailable, match="OSError: network unreachable"):
             clone_to_tempdir(
                 "owner/repo", "https://example.com/owner/repo.git", [], timeout=10, prefix="t-", retries=1
             )

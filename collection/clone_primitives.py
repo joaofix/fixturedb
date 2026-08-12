@@ -122,8 +122,18 @@ def clone_to_tempdir(
     actually reached (see `CloneUnavailable`'s docstring). `retries` only
     defends against a brief blip within one call -- it will not survive a
     sustained outage; recovering from that is the checkpoint layer's job.
+
+    The raised `CloneUnavailable` carries the *last* attempt's actual
+    failure reason (stderr / timeout / exception text) -- real incident
+    (2026-08-12): two verifiably public, reachable repos (confirmed after
+    the fact with a plain `git ls-remote`) each failed all 3 clone attempts
+    during a live Dataset A `discover-commits` run, but the old message was
+    just "clone failed after 3 attempt(s): <repo>" with no way to tell
+    whether that was a timeout, a network blip, or something else --
+    every prior attempt's stderr/exception was silently discarded.
     """
     owner, name = repo_full_name.split("/")
+    last_error = "unknown error"
 
     for attempt in range(retries + 1):
         temp_root = Path(tempfile.mkdtemp(prefix=prefix))
@@ -141,17 +151,23 @@ def clone_to_tempdir(
             if _output_requests_credentials(result.stderr):
                 cleanup_tempdir(temp_root)
                 return None, None
+            last_error = (result.stderr or "").strip()[-500:] or f"git exited {result.returncode}"
         except KeyboardInterrupt:
             cleanup_tempdir(temp_root)
             raise
-        except Exception:
-            pass
+        except subprocess.TimeoutExpired:
+            last_error = f"timed out after {timeout}s"
+        except Exception as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
 
         cleanup_tempdir(temp_root)
         if attempt < retries:
             time.sleep(backoff_base * (2**attempt))
 
-    raise CloneUnavailable(f"clone failed after {retries + 1} attempt(s): {repo_full_name}")
+    raise CloneUnavailable(
+        f"clone failed after {retries + 1} attempt(s): {repo_full_name} -- "
+        f"last error: {last_error}"
+    )
 
 
 def cleanup_tempdir(temp_root: Path | None) -> None:
