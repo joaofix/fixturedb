@@ -59,7 +59,6 @@ def _process_repo_test_commits(
         clone_url,
         repo_name,
         prefix="agent-test-commits-",
-        timeout=300,
         shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
     ) as repo_path:
         if repo_path is None:
@@ -317,7 +316,6 @@ def _process_repo_agent_test_commits(
         clone_url,
         repo_name,
         prefix="agent-test-commits-",
-        timeout=300,
         shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
     ) as repo_path:
         if repo_path is None:

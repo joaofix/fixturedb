@@ -9,12 +9,24 @@ of however many workers the caller uses for local (non-network) scanning."""
 
 from __future__ import annotations
 
+import inspect
 import threading
 import time
 from pathlib import Path
 
 from collection import ephemeral_clone as cm
+from collection.config import CLONE_TIMEOUT_SECONDS
 from collection.ephemeral_clone import temp_clone_commit_history
+
+
+def test_default_timeout_matches_config_constant():
+    """temp_clone_commit_history's default timeout should track
+    config.CLONE_TIMEOUT_SECONDS, not a hardcoded literal -- raised
+    300s -> 600s 2026-08-12 after a genuine large-repo outlier
+    (skforecast/skforecast, ~1GB) timed out even with clone concurrency
+    already throttled."""
+    default = inspect.signature(temp_clone_commit_history).parameters["timeout"].default
+    assert default == CLONE_TIMEOUT_SECONDS
 
 
 def _fake_clone_to_tempdir_factory(tmp_path: Path, calls: list):

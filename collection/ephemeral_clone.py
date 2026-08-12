@@ -25,6 +25,7 @@ from .clone_primitives import (
     cleanup_tempdir,
     clone_to_tempdir,
 )
+from .config import CLONE_TIMEOUT_SECONDS
 
 # Configurable concurrency limit for git clone operations
 DEFAULT_MAX_CONCURRENT_CLONES = int(os.getenv("MAX_CONCURRENT_CLONES", "4"))
@@ -181,7 +182,7 @@ def temp_clone_commit_history(
     repo_full_name: str,
     *,
     prefix: str = "collection-",
-    timeout: int = 300,
+    timeout: int = CLONE_TIMEOUT_SECONDS,
     shallow_since: Optional[str] = None,
 ):
     """Clone history into a temporary directory and cleanup on exit.
