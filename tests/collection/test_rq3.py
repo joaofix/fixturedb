@@ -20,6 +20,8 @@ from collection.db import (
 )
 from collection.research_questions.rq3 import (
     DatasetMetrics,
+    _render_category_aggregate_descriptive_table,
+    _render_category_by_language_table,
     compare_datasets_repo_level,
     generate_report,
     load_dataset_metrics,
@@ -322,11 +324,6 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.framework_dist == {"unittest_mock": 1, "pytest_mock": 1}
         assert metrics.category_dist == {"stub": 1, "mock": 1}
-        # _make_db puts everything under one repo -- framework_by_repo/
-        # category_by_repo's per-repo grouping is exercised for real with
-        # >1 repo in the repo-level report test below.
-        assert list(metrics.framework_by_repo.values()) == [{"unittest_mock": 1, "pytest_mock": 1}]
-        assert list(metrics.category_by_repo.values()) == [{"stub": 1, "mock": 1}]
 
     def test_framework_by_language(self, tmp_path):
         _make_db(
@@ -390,10 +387,12 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.has_mock_n_by_language == {"python": 1}
 
-    def test_mock_usage_n_by_language_counts_only_repos_with_a_mock(self, tmp_path):
-        """A different (smaller) population than has_mock_n_by_language:
-        only repos that actually have >=1 mock_usage row, shared by
-        framework and category since both are drawn from mock_usages."""
+    def test_category_by_repo_and_language_nests_by_language_then_repo(self, tmp_path):
+        """A single repo contributing mocks in two languages must land in
+        two separate language buckets, each keyed by that same repo_id --
+        the per-language repo-level-proportion test
+        (_render_category_by_language_table()) needs this nesting to
+        never mix one language's category mix into another's."""
         _make_db(
             tmp_path,
             "a",
@@ -401,15 +400,25 @@ class TestLoadDatasetMetrics:
                 {
                     "language": "python",
                     "fixtures": [
-                        {"overrides": {"num_mocks": 0}},  # no mock -> doesn't count here
-                        {"overrides": {"num_mocks": 1}, "mocks": [{}]},
+                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "stub"}]}
                     ],
-                }
+                },
+                {
+                    "language": "java",
+                    "fixtures": [
+                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "spy"}]}
+                    ],
+                },
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.mock_usage_n_by_language == {"python": 1}
-        assert metrics.has_mock_n_by_language == {"python": 1}
+        assert set(metrics.category_by_repo_and_language) == {"python", "java"}
+        # _make_db puts every language's fixtures under the same one repo.
+        (python_repo_id, python_counts), = metrics.category_by_repo_and_language["python"].items()
+        (java_repo_id, java_counts), = metrics.category_by_repo_and_language["java"].items()
+        assert python_repo_id == java_repo_id
+        assert python_counts == {"stub": 1}
+        assert java_counts == {"spy": 1}
 
     def test_interaction_depth(self, tmp_path):
         _make_db(
@@ -513,22 +522,27 @@ class TestGenerateReport:
         )
         report = generate_report(db_root=tmp_path)
         assert "### has_mock" in report
-        has_mock_section = report.split("### has_mock")[1].split("### framework")[0]
+        has_mock_section = report.split("### has_mock")[1].split(
+            "**Mocking framework distribution"
+        )[0]
         # python is shared by both A and C -> a real row; java only exists
         # in A, so it must not appear at all (no data to compare against).
         assert "| python |" in has_mock_section
         assert "| java |" not in has_mock_section
 
     def test_categorical_insufficient_data_when_no_mock_usages(self, tmp_path):
-        # No mock_usages rows at all in either dataset -> framework/category insufficient data.
+        # No mock_usages rows at all in either dataset -> has_mock's Overall
+        # row is NOT insufficient (has_mock/no_mock is derived from every
+        # fixture, mocked or not) -- category's per-language table is what
+        # goes empty, since it needs >=1 mock_usages row to have anything
+        # to compare.
         _make_db(tmp_path, "a", [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}])
         _make_db(tmp_path, "c", [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}])
         report = generate_report(db_root=tmp_path)
-        framework_section = report.split("### framework")[1].split("### category")[0]
-        overall_line = next(
-            line for line in framework_section.splitlines() if line.startswith("| Overall |")
-        )
-        assert "_insufficient data_" in overall_line
+        category_section = report.split("| Language | Category |")[1].split(
+            "Aggregate category distribution"
+        )[0]
+        assert "_(no language shared by both datasets)_" in category_section
 
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """One repo contributing many high-num_mocks fixtures must not
@@ -564,40 +578,155 @@ class TestGenerateReport:
         )
         assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
 
-    def test_repo_level_framework_proportion_table_declusters_a_prolific_repo(self, tmp_path):
-        """framework's repo-level companion to the chi-square table: A is
-        one repo with 100 unittest_mock-using fixtures plus one repo with
-        a single pytest_mock-using fixture -- fixture-level, A looks ~99%
-        unittest_mock. Per-repo, A is split 50/50 (1 of 2 repos each way),
-        matching C's identical 1-of-2 split."""
+    def test_framework_by_language_table_shows_raw_fixture_weighted_percentages(self, tmp_path):
+        """The descriptive framework table (2026-08-12 fix) is intentionally
+        NOT repo-declustered -- it makes no statistical claim (see this
+        module's docstring: "no statistical test or effect size is
+        needed"), so a prolific repo's fixtures dominate the percentage
+        exactly as raw pooled counts would suggest, same as any other
+        purely descriptive count."""
         _make_multi_repo_framework_db(
             tmp_path, "a", [["unittest_mock"] * 100, ["pytest_mock"]]
         )
         _make_multi_repo_framework_db(
-            tmp_path, "c", [["unittest_mock"], ["pytest_mock"]]
+            tmp_path, "c", [["unittest_mock"] * 100, ["pytest_mock"]]
         )
-
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert len(a_metrics.framework_by_repo) == 2
-        assert {"unittest_mock": 100} in a_metrics.framework_by_repo.values()
-        assert {"pytest_mock": 1} in a_metrics.framework_by_repo.values()
-
-        pooled_pct = 100 * a_metrics.framework_dist["unittest_mock"] / sum(
-            a_metrics.framework_dist.values()
-        )
-        assert pooled_pct > 95  # dominated by the prolific repo
 
         report = generate_report(db_root=tmp_path)
-        assert "has_mock / framework / category, repo-level" in report
-        repo_section = report.split("## Repo-level aggregates")[1]
-        framework_section = repo_section.split("_framework_")[1].split("_category_")[0]
+        assert "**Mocking framework distribution (descriptive, per language)**" in report
+        table_section = report.split("**Mocking framework distribution")[1].split(
+            "**Test-double category distribution"
+        )[0]
         unittest_mock_line = next(
-            line for line in framework_section.splitlines()
-            if line.startswith("| unittest_mock |")
+            line for line in table_section.splitlines()
+            if line.startswith("| python | unittest_mock |")
         )
-        # Per-repo, both A and C are 1-of-2 repos unittest_mock-only (50%)
-        # -- nowhere near the ~99% pooled figure.
-        assert "| 50.0% | 50.0% | 50.0% | 50.0% |" in unittest_mock_line
+        # 100 of 101 fixtures -> ~99.0%, matching raw pooled counts.
+        assert "99.0% | 99.0%" in unittest_mock_line
+        assert "### framework" not in report  # no chi-square table anymore
+        assert "### category" not in report
+
+    def test_framework_by_language_table_shows_union_of_both_sides_top_3(self, tmp_path):
+        """A framework prominent only in C (not in A's own top 3 at all)
+        must still get a row, with A's real percentage (here 0%) shown
+        alongside -- the union of both sides' top 3, not just A's top 3
+        with C's numbers filled in opportunistically."""
+        _make_multi_repo_framework_db(
+            tmp_path, "a", [["fw_a"] * 8, ["fw_shared"] * 2],
+        )
+        _make_multi_repo_framework_db(
+            tmp_path, "c", [["fw_c"] * 8, ["fw_shared"] * 2],
+        )
+
+        report = generate_report(db_root=tmp_path)
+        table_section = report.split("**Mocking framework distribution")[1].split(
+            "**Test-double category distribution"
+        )[0]
+        fw_c_line = next(
+            line for line in table_section.splitlines() if line.startswith("| python | fw_c |")
+        )
+        # fw_c never appears in A at all, but is C's dominant framework --
+        # still gets a row, with A's (real, 0%) percentage alongside it.
+        assert "| python | fw_c | 0.0% | 80.0% |" in fw_c_line
+
+
+class TestRenderCategoryByLanguageTable:
+    """Direct DatasetMetrics construction (bypassing the DB) for precise
+    statistical-correctness checks that would need an unwieldy number of
+    synthetic repos to demonstrate reliably through the real pipeline."""
+
+    def test_bh_fdr_scoped_independently_per_language(self):
+        """Real risk this covers: if BH-FDR were accidentally applied once
+        across ALL languages' categories combined instead of once per
+        language, a language with only a null (no real difference)
+        pattern could still show as "significant" by riding along with
+        another language's much stronger effect, or vice versa. python
+        here has a stark, perfectly-separated 5-repos-per-side split
+        (every A repo 90% mock, every C repo 10% mock); java has an
+        identical distribution on both sides (a real null). Each
+        language's own family must be corrected using only its own
+        p-values."""
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            category_by_repo_and_language={
+                "python": {i: {"mock": 9, "stub": 1} for i in range(5)},
+                "java": {i: {"mock": 5, "stub": 5} for i in range(100, 105)},
+            },
+        )
+        other = DatasetMetrics(
+            dataset="c",
+            n_fixtures=0,
+            n_mock_usages=0,
+            category_by_repo_and_language={
+                "python": {i: {"mock": 1, "stub": 9} for i in range(5)},
+                "java": {i: {"mock": 5, "stub": 5} for i in range(100, 105)},
+            },
+        )
+        rendered = _render_category_by_language_table(a, other)
+        python_mock_line = next(
+            line for line in rendered.splitlines() if line.startswith("| python | mock |")
+        )
+        java_mock_line = next(
+            line for line in rendered.splitlines() if line.startswith("| java | mock |")
+        )
+        python_p_bh = python_mock_line.rstrip("|").rsplit("|", 1)[-1].strip()
+        java_p_bh = java_mock_line.rstrip("|").rsplit("|", 1)[-1].strip()
+        # python's perfect separation survives its own 2-test (mock/stub)
+        # correction. java's proportions are literally identical on both
+        # sides (5/5 every repo) -- compute_continuous_balance()'s
+        # "identical_distributions" shortcut fires (raw p=1.0, no
+        # adjusted_p_value at all, since apply_fdr_correction() treats
+        # anything with a `details["reason"]` -- identical_distributions
+        # included, not just insufficient_data -- as not part of the
+        # correction family). That itself is the property worth locking
+        # in here: a trivially-identical language's "--" must never turn
+        # into a borrowed/adjusted value just because it shares a render
+        # call with a language that has a real, testable effect.
+        assert python_p_bh != "1.000" and float(python_p_bh) < 0.05
+        assert java_p_bh == "--"
+        assert "0.000" in java_mock_line  # Cliff's delta is 0 -- no difference at all
+
+    def test_insufficient_data_row_when_a_language_has_no_shared_category(self):
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            category_by_repo_and_language={"python": {1: {"mock": 5}}},
+        )
+        other = DatasetMetrics(
+            dataset="c", n_fixtures=0, n_mock_usages=0, category_by_repo_and_language={}
+        )
+        rendered = _render_category_by_language_table(a, other)
+        assert "_(no language shared by both datasets)_" in rendered
+
+    def test_no_shared_language_at_all_renders_placeholder(self):
+        a = DatasetMetrics(dataset="a", n_fixtures=0, n_mock_usages=0)
+        other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
+        rendered = _render_category_by_language_table(a, other)
+        assert "_(no language shared by both datasets)_" in rendered
+
+
+class TestRenderCategoryAggregateDescriptiveTable:
+    def test_renders_plain_percentages_no_test_or_effect_size(self):
+        a = DatasetMetrics(
+            dataset="a", n_fixtures=0, n_mock_usages=0,
+            category_dist={"mock": 8, "stub": 2},
+        )
+        other = DatasetMetrics(
+            dataset="c", n_fixtures=0, n_mock_usages=0,
+            category_dist={"mock": 4, "stub": 4, "spy": 2},
+        )
+        rendered = _render_category_aggregate_descriptive_table(a, other)
+        mock_line = next(line for line in rendered.splitlines() if line.startswith("| mock |"))
+        assert "| mock | 80.0% | 40.0% |" in mock_line
+        # spy never appears in A -- still gets a row, at 0%.
+        spy_line = next(line for line in rendered.splitlines() if line.startswith("| spy |"))
+        assert "| spy | 0.0% | 20.0% |" in spy_line
+        # No p-value/effect-size columns at all -- purely descriptive.
+        assert "δ" not in rendered
+        assert "p (BH)" not in rendered
 
 
 class TestWriteReport:
