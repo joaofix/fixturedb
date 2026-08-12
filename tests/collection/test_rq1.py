@@ -22,6 +22,9 @@ from collection.db import (
 from collection.research_questions._shared import format_p_value
 from collection.research_questions.rq1 import (
     DatasetMetrics,
+    _compute_fixture_dependency_counts_by_repo,
+    _floor_percentage,
+    _p90,
     compare_datasets_repo_level,
     generate_report,
     load_dataset_metrics,
@@ -254,6 +257,156 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                 insert_fixture(conn, base)
 
 
+class TestP90:
+    def test_empty_returns_none(self):
+        assert _p90([]) is None
+
+    def test_single_value_returns_that_value(self):
+        assert _p90([5.0]) == 5.0
+
+    def test_computes_90th_percentile_linear_interpolation(self):
+        # 1..10 -> index (n-1)*0.9=8.1 -> interpolate data[8]=9, data[9]=10
+        # by 0.1 -> 9.1, matching numpy's default percentile() method.
+        assert _p90([float(i) for i in range(1, 11)]) == 9.1
+
+
+class TestFloorPercentage:
+    def test_computes_fraction_at_floor(self):
+        assert _floor_percentage([1, 1, 2, 3], 1) == 0.5
+
+    def test_none_at_floor_returns_zero_not_none(self):
+        assert _floor_percentage([2, 3, 4], 1) == 0.0
+
+    def test_empty_returns_none(self):
+        assert _floor_percentage([], 1) is None
+
+
+class TestComputeFixtureDependencyCountsByRepo:
+    """Real (non-mocked) tree-sitter re-parsing -- raw_source must be
+    genuinely parseable Python, not a placeholder string like every other
+    rq1.py test helper uses."""
+
+    def test_dependency_detected_within_same_file(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        },
+                        {
+                            "name": "user",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def user(db):\n    return db\n",
+                        },
+                    ],
+                }
+            ],
+        )
+        with db_session(tmp_path / "a.db") as conn:
+            by_repo = _compute_fixture_dependency_counts_by_repo(conn)
+        assert len(by_repo) == 1
+        assert sorted(next(iter(by_repo.values()))) == [0.0, 1.0]
+
+    def test_dependency_not_detected_across_files_in_same_repo(self, tmp_path):
+        """detector_shared.py's _detect_fixture_dependencies() is called
+        once per file, on that file's own fixture list only -- a fixture
+        in one file can never "depend on" a same-named fixture defined in
+        a DIFFERENT file of the same repo. This mirrors that scope
+        exactly, so "db" in file 1 must not count as a dependency of
+        "user" in file 2, even though they share a repo."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        }
+                    ],
+                },
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "user",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def user(db):\n    return db\n",
+                        }
+                    ],
+                },
+            ],
+        )
+        with db_session(tmp_path / "a.db") as conn:
+            by_repo = _compute_fixture_dependency_counts_by_repo(conn)
+        assert len(by_repo) == 1
+        assert sorted(next(iter(by_repo.values()))) == [0.0, 0.0]
+
+    def test_non_pytest_decorator_fixture_contributes_zero_but_counts_in_denominator(
+        self, tmp_path
+    ):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        },
+                        {
+                            "name": "setUp",
+                            "fixture_type": "unittest_setup",
+                            "raw_source": "def setUp(self):\n    pass\n",
+                        },
+                    ],
+                }
+            ],
+        )
+        with db_session(tmp_path / "a.db") as conn:
+            by_repo = _compute_fixture_dependency_counts_by_repo(conn)
+        counts = next(iter(by_repo.values()))
+        assert len(counts) == 2  # both fixtures present in the denominator
+        assert sorted(counts) == [0.0, 0.0]
+
+    def test_only_python_fixtures_included(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        }
+                    ],
+                },
+                {
+                    "language": "typescript",
+                    "fixtures": [{"name": "setup", "fixture_type": "before_each"}],
+                },
+            ],
+        )
+        with db_session(tmp_path / "a.db") as conn:
+            by_repo = _compute_fixture_dependency_counts_by_repo(conn)
+        assert sum(len(v) for v in by_repo.values()) == 1  # typescript fixture excluded
+
+
 class TestLoadDatasetMetrics:
     def test_missing_db_returns_none(self, tmp_path):
         assert load_dataset_metrics("a", db_root=tmp_path) is None
@@ -372,6 +525,47 @@ class TestLoadDatasetMetrics:
         # One repo contributing 2 python fixtures -> one repo-level mean (15.0).
         assert metrics.repo_level_continuous_by_language["loc"] == {"python": [15.0]}
 
+    def test_floor_pct_computed_for_cc_and_num_parameters(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+                {"cyclomatic_complexity": 1, "num_parameters": 2},
+                {"cyclomatic_complexity": 3, "num_parameters": 0},
+                {"cyclomatic_complexity": 3, "num_parameters": 0},
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.floor_pct["cyclomatic_complexity"] == 0.5  # 2 of 4 at CC=1
+        assert metrics.floor_pct["num_parameters"] == 0.75  # 3 of 4 at 0 params
+
+    def test_fixture_dependency_count_reaches_repo_level_continuous(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        },
+                        {
+                            "name": "user",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def user(db):\n    return db\n",
+                        },
+                    ],
+                }
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        # One repo, one mean-per-repo value: (0 + 1) / 2 = 0.5.
+        assert metrics.repo_level_continuous["fixture_dependency_count"] == [0.5]
+
 
 class TestGenerateReport:
     def test_missing_all_dbs_notes_unavailable_without_crashing(self, tmp_path):
@@ -416,7 +610,7 @@ class TestGenerateReport:
         _make_db(tmp_path, "a", [{"loc": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
         _make_db(tmp_path, "c", [{"loc": v} for v in [50, 60, 55, 58, 62, 57, 59, 61, 56, 54]])
         report = generate_report(db_root=tmp_path)
-        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        loc_section = report.split("### loc")[1].split("### max_nesting_depth")[0]
         overall_line = next(
             line for line in loc_section.splitlines() if line.startswith("| Overall |")
         )
@@ -517,7 +711,7 @@ class TestGenerateReport:
         # now -- there's no separate fixture-level continuous table left to
         # be misled by, and no separate repo-level-only section either.
         report = generate_report(db_root=tmp_path)
-        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        loc_section = report.split("### loc")[1].split("### max_nesting_depth")[0]
         overall_line = next(
             line for line in loc_section.splitlines() if line.startswith("| Overall |")
         )
@@ -561,6 +755,107 @@ class TestGenerateReport:
         # Per-repo, A is 1 of 2 repos pytest_decorator-only (50%), matching
         # C's identical 1-of-2 split -- nowhere near the 99% pooled figure.
         assert "| 50.0% | 50.0% | 50.0% | 50.0% |" in pytest_decorator_line
+
+    def test_cyclomatic_complexity_and_num_parameters_have_no_mann_whitney_section(
+        self, tmp_path
+    ):
+        _make_db(tmp_path, "a", [{"loc": 1}])
+        _make_db(tmp_path, "c", [{"loc": 1}])
+        report = generate_report(db_root=tmp_path)
+        assert "### cyclomatic_complexity" not in report
+        assert "### num_parameters" not in report
+
+    def test_floor_percentage_footnote_renders(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+                {"cyclomatic_complexity": 3, "num_parameters": 2},
+            ],
+        )
+        _make_db(
+            tmp_path,
+            "c",
+            [
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "Floor-binding check (descriptive only" in report
+        footnote_section = report.split("Floor-binding check (descriptive only")[1].split(
+            "### loc"
+        )[0]
+        cc_line = next(
+            line for line in footnote_section.splitlines()
+            if line.startswith("| cyclomatic_complexity |")
+        )
+        assert "| cyclomatic_complexity | 1 | 50.0% | 100.0% |" in cc_line
+        params_line = next(
+            line for line in footnote_section.splitlines()
+            if line.startswith("| num_parameters |")
+        )
+        assert "| num_parameters | 0 | 50.0% | 100.0% |" in params_line
+
+    def test_primary_metrics_summary_table_renders_loc_median_and_p90(self, tmp_path):
+        _make_multi_repo_db(tmp_path, "a", [[10.0], [20.0]])
+        _make_multi_repo_db(tmp_path, "c", [[10.0], [20.0]])
+        report = generate_report(db_root=tmp_path)
+        assert "Primary metrics, quick reference" in report
+        summary_section = report.split("Primary metrics, quick reference")[1].split(
+            "### loc"
+        )[0]
+        assert "| LOC (median) |" in summary_section
+        assert "| LOC (p90) |" in summary_section
+        assert "| max_nesting_depth (median) |" in summary_section
+        assert "fixture_dependency_count (median, Python-only)" in summary_section
+
+    def test_fixture_dependency_count_section_is_python_only_overall_only(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        }
+                    ],
+                }
+            ],
+        )
+        _make_multi_language_db(
+            tmp_path,
+            "c",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "name": "db",
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": "def db():\n    return 1\n",
+                        }
+                    ],
+                }
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "### fixture_dependency_count" in report
+        section = report.split("### fixture_dependency_count")[1].split(
+            "**Categorical metrics"
+        )[0]
+        assert "Python-only" in section
+        overall_line = next(
+            line for line in section.splitlines() if line.startswith("| Overall |")
+        )
+        assert overall_line.rstrip("|").rsplit("|", 1)[-1].strip() == "--"  # never BH-corrected
+        # Overall-only -- no per-language rows at all.
+        assert "| python |" not in section
 
 
 class TestWriteReport:
