@@ -415,6 +415,18 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     lines.append("")
 
     lines += [
+        "> **None of `has_mock`/`framework`/`category` above are used in "
+        "the paper.** They're pooled fixture/mock-level chi-square, which "
+        "treats fixtures/mocks clustered within a repo as independent "
+        "observations and inflates both chi2 and Cramer's V (see "
+        "[Limitations § Categorical Pseudo-Replication]"
+        "(../docs/reference/limitations.md#categorical-pseudo-replication)). "
+        'The paper reports the repo-level proportion tests in "Repo-level '
+        'aggregates" below instead.',
+        "",
+    ]
+
+    lines += [
         "**has_mock, stratified by language (chi-square per language)** -- "
         "the aggregate comparison above can look significant purely because "
         f"{DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have different "
@@ -469,7 +481,8 @@ def _render_repo_level_comparison(
         "corrupts Cramer's V. This instead compares, per repo, what "
         "fraction of its fixtures/mocks fall in each category -- so each "
         "repo counts once regardless of how many fixtures/mocks it "
-        "contributed.",
+        "contributed. **These are the `has_mock`/`framework`/`category` "
+        "results reported in the paper.**",
         "",
     ]
     for variable, a_by_repo, other_by_repo in (

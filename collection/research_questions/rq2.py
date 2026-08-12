@@ -471,6 +471,19 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     lines.append("")
 
     lines += [
+        "> **`fixture_type_kind`'s result above is not used in the paper.** "
+        "It's a pooled fixture-level chi-square, which treats fixtures "
+        "clustered within a repo as independent observations and inflates "
+        "both chi2 and Cramer's V (see [Limitations § Categorical "
+        "Pseudo-Replication](../docs/reference/limitations.md#categorical-"
+        "pseudo-replication)). The paper reports the repo-level "
+        '`fixture_type_kind` proportion test in "Repo-level aggregates" '
+        "below instead. `repo_zero_teardown_rate` above is unaffected "
+        "(already repo-level by construction) and is used as-is.",
+        "",
+    ]
+
+    lines += [
         "**fixture_type_kind, stratified by language (chi-square per language)** "
         "-- the aggregate comparison above can look significant purely because "
         f"{DATASET_LABELS['a']} and {DATASET_LABELS[other.dataset]} have different "
@@ -491,7 +504,12 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
 def _render_repo_level_comparison(
     label: str, a: DatasetMetrics, other: DatasetMetrics
 ) -> str:
-    lines = [f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
+    lines = [
+        f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
+        "",
+        "**This is the `fixture_type_kind` result reported in the paper.**",
+        "",
+    ]
     kind_repo_level = compare_categorical_repo_level(
         a.kind_counts_by_repo, other.kind_counts_by_repo, "fixture_type_kind"
     )
