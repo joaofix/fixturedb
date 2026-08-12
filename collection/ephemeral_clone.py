@@ -187,24 +187,42 @@ def temp_clone_commit_history(
     """Clone history into a temporary directory and cleanup on exit.
 
     Uses `clone_to_tempdir` helper; yields the repo path (or None on failure).
+    The actual `git clone` subprocess is gated by `_CLONE_SEMAPHORE`
+    (`MAX_CONCURRENT_CLONES`, default 4) -- callers here (test_commit_filter.py,
+    human_test_commit_filter.py) drive this with a much higher worker count
+    (default 12) because most of a worker's time is spent on local,
+    non-network git operations against the already-cloned repo (scanning
+    individual commits for test files) *after* this context manager yields;
+    only the clone itself is bandwidth-bound and needs capping independently
+    of that worker count. Real incident (2026-08-12): with clone concurrency
+    unbounded, up to 12 simultaneous clones exhausted available bandwidth
+    badly enough that even a single repo's shallow clone flirted with the
+    300s timeout, producing repeated CloneUnavailable failures on large but
+    perfectly healthy, public repos (docling, LightRAG, TEN-Agent, ...).
 
     When `shallow_since` is given, bounds the fetched history to
     `--shallow-since=<shallow_since>` (faster, smaller clone), then verifies
     locally that the shallow boundary didn't truncate in-window history (see
     `clone_primitives._shallow_clone_is_truncated`). If it did, the clone is
-    discarded and retried once with full history (`shallow_since=None`).
+    discarded and retried once with full history (`shallow_since=None`) --
+    that fallback clone re-acquires the semaphore on its own (via the
+    recursive call below), rather than holding two slots at once.
     """
     clone_args = ["--filter=blob:limit=10m", "--single-branch", "--no-tags"]
     if shallow_since is not None:
         clone_args.append(f"--shallow-since={shallow_since}")
 
-    repo_path, temp_root = clone_to_tempdir(
-        repo_full_name,
-        clone_url,
-        clone_args,
-        timeout=timeout,
-        prefix=prefix,
-    )
+    _CLONE_SEMAPHORE.acquire()
+    try:
+        repo_path, temp_root = clone_to_tempdir(
+            repo_full_name,
+            clone_url,
+            clone_args,
+            timeout=timeout,
+            prefix=prefix,
+        )
+    finally:
+        _CLONE_SEMAPHORE.release()
     if repo_path is None:
         yield None
         return
