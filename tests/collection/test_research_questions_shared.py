@@ -16,15 +16,20 @@ from collection.db import (
 from collection.research_questions._shared import (
     LanguageLeakage,
     apply_fdr_correction,
+    compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
     fdr_cell,
     fetch_categorical_column,
+    fetch_categorical_column_by_repo,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
+    pct,
+    render_categorical_repo_level_table,
     render_language_leakage_table,
     render_stratified_categorical_table,
+    repo_level_category_proportions,
     repo_level_means,
     require_db_or_none,
     summarize_continuous,
@@ -80,6 +85,18 @@ class TestFmt:
         assert fmt(3.14159, 0) == "3"
 
 
+class TestPct:
+    def test_none_renders_as_dashes_no_percent_sign(self):
+        assert pct(None) == "--"
+
+    def test_proportion_renders_as_percentage(self):
+        assert pct(0.723, 1) == "72.3%"
+
+    def test_zero_and_one_are_not_treated_as_missing(self):
+        assert pct(0.0) == "0.0%"
+        assert pct(1.0) == "100.0%"
+
+
 def _make_fixtures_db(tmp_path, values: list[dict]) -> None:
     db_file = tmp_path / "a.db"
     initialise_db(db_file)
@@ -127,6 +144,59 @@ def _make_fixtures_db(tmp_path, values: list[dict]) -> None:
             insert_fixture(conn, base)
 
 
+def _make_multi_repo_fixtures_db(tmp_path, repos: list[list[str]]) -> None:
+    """db/a.db with one repo per entry in `repos`, each a list of
+    fixture_type values for that repo's fixtures -- for testing per-repo
+    grouping (fetch_categorical_column_by_repo()), unlike _make_fixtures_db()
+    above which puts everything under a single repo."""
+    db_file = tmp_path / "a.db"
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        for repo_idx, fixture_types in enumerate(repos):
+            repo_id, _ = upsert_repository(
+                conn,
+                {
+                    "github_id": repo_idx + 1,
+                    "full_name": f"owner/repo{repo_idx}",
+                    "language": "python",
+                    "stars": 1,
+                    "forks": 0,
+                    "description": "",
+                    "topics": "[]",
+                    "created_at": "2019-01-01T00:00:00Z",
+                    "pushed_at": "2020-01-01T00:00:00Z",
+                    "clone_url": f"https://github.com/owner/repo{repo_idx}.git",
+                    "num_contributors": 1,
+                    "domain": None,
+                    "repo_age_years": None,
+                },
+            )
+            file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
+            for i, fixture_type in enumerate(fixture_types):
+                insert_fixture(
+                    conn,
+                    {
+                        "file_id": file_id,
+                        "repo_id": repo_id,
+                        "name": f"fixture_{repo_idx}_{i}",
+                        "fixture_type": fixture_type,
+                        "scope": "per_test",
+                        "start_line": i,
+                        "end_line": i + 1,
+                        "loc": 5,
+                        "cyclomatic_complexity": 1,
+                        "max_nesting_depth": 1,
+                        "num_objects_instantiated": 0,
+                        "num_external_calls": 0,
+                        "num_parameters": 0,
+                        "has_teardown_pair": 0,
+                        "raw_source": "",
+                        "framework": "pytest",
+                        "num_mocks": 0,
+                    },
+                )
+
+
 class TestFetchContinuousColumn:
     def test_returns_non_null_values(self, tmp_path):
         _make_fixtures_db(tmp_path, [{"loc": 3}, {"loc": 7}, {"loc": None}])
@@ -158,6 +228,29 @@ class TestFetchContinuousColumnByRepo:
         assert sorted(next(iter(by_repo.values()))) == [3, 7]
 
 
+class TestFetchCategoricalColumnByRepo:
+    def test_groups_counts_by_repo_id(self, tmp_path):
+        _make_multi_repo_fixtures_db(
+            tmp_path,
+            [
+                ["pytest_decorator", "pytest_decorator", "before_each"],
+                ["before_each"],
+            ],
+        )
+        db_file = tmp_path / "a.db"
+        with db_session(db_file) as conn:
+            by_repo = fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type")
+        assert len(by_repo) == 2
+        assert {"pytest_decorator": 2, "before_each": 1} in by_repo.values()
+        assert {"before_each": 1} in by_repo.values()
+
+    def test_empty_table_returns_empty_dict(self, tmp_path):
+        db_file = tmp_path / "a.db"
+        initialise_db(db_file)
+        with db_session(db_file) as conn:
+            assert fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type") == {}
+
+
 class TestRepoLevelMeans:
     def test_one_mean_per_repo(self):
         by_repo = {1: [10.0, 20.0], 2: [5.0], 3: [1.0, 2.0, 3.0]}
@@ -173,6 +266,95 @@ class TestRepoLevelMeans:
         by_repo = {1: [5.0] * 1000, 2: [10.0]}
         result = repo_level_means(by_repo)
         assert len(result) == 2
+
+
+class TestRepoLevelCategoryProportions:
+    def test_one_proportion_per_repo(self):
+        by_repo = {
+            1: {"setup": 3, "teardown": 1},  # 3/4
+            2: {"setup": 1, "teardown": 1},  # 1/2
+        }
+        assert sorted(repo_level_category_proportions(by_repo, "setup")) == [0.5, 0.75]
+
+    def test_category_absent_in_a_repo_counts_as_zero_not_skipped(self):
+        by_repo = {1: {"setup": 2, "teardown": 2}, 2: {"teardown": 5}}
+        assert repo_level_category_proportions(by_repo, "setup") == [0.5, 0.0]
+
+    def test_repo_with_no_classified_rows_is_skipped_not_zero(self):
+        """An empty {repo: {}} (zero total) is a missing ratio, not a 0.0
+        one -- must not silently pull the comparison toward 0."""
+        by_repo = {1: {"setup": 1}, 2: {}}
+        assert repo_level_category_proportions(by_repo, "setup") == [1.0]
+
+    def test_empty_input_returns_empty_list(self):
+        assert repo_level_category_proportions({}, "setup") == []
+
+    def test_a_repo_with_many_fixtures_still_contributes_one_value(self):
+        """The categorical analogue of repo_level_means()'s equivalent
+        test: a repo with 1000 classified rows must count once."""
+        by_repo = {1: {"setup": 900, "teardown": 100}, 2: {"setup": 1}}
+        assert len(repo_level_category_proportions(by_repo, "setup")) == 2
+
+
+class TestCompareCategoricalRepoLevel:
+    def test_one_balance_test_per_category_seen_on_either_side(self):
+        a_by_repo = {1: {"setup": 5, "teardown": 5}}
+        other_by_repo = {2: {"setup": 3, "other": 7}}
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        assert set(results.keys()) == {"setup", "teardown", "other"}
+
+    def test_declusters_a_prolific_repo(self):
+        """Core value proposition, mirrored from repo_level_means()'s repo-
+        declustering: one repo with 1000 "setup"-heavy fixtures must not
+        outweigh a second repo with a handful, once compared per-repo."""
+        a_by_repo = {
+            1: {"setup": 900, "teardown": 100},  # 0.9
+            2: {"setup": 1, "teardown": 9},  # 0.1
+        }
+        other_by_repo = {3: {"setup": 5, "teardown": 5}, 4: {"setup": 4, "teardown": 6}}  # 0.5, 0.4
+        result = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        t = result["setup"]
+        # A's per-repo proportions [0.9, 0.1] (median 0.5) vs other's
+        # [0.5, 0.4] (median 0.45) -- close, not a stark difference, unlike
+        # what a fixture-level pooled count (901/1901 vs 9/20) would show.
+        assert t.is_balanced
+
+    def test_empty_input_returns_empty_dict(self):
+        assert compare_categorical_repo_level({}, {}, "fixture_type_kind") == {}
+
+
+class TestRenderCategoricalRepoLevelTable:
+    def test_renders_one_row_per_category(self):
+        a_by_repo = {1: {"setup": 9, "teardown": 1}}
+        other_by_repo = {2: {"setup": 1, "teardown": 9}}
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        rendered = render_categorical_repo_level_table(results, "c")
+        assert "| setup |" in rendered
+        assert "| teardown |" in rendered
+
+    def test_proportions_rendered_as_percentages(self):
+        a_by_repo = {1: {"setup": 3, "teardown": 1}}  # 75%
+        other_by_repo = {2: {"setup": 1, "teardown": 3}}  # 25%
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        rendered = render_categorical_repo_level_table(results, "c")
+        setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
+        assert "75.0%" in setup_line
+        assert "25.0%" in setup_line
+
+    def test_no_categories_renders_placeholder_row(self):
+        rendered = render_categorical_repo_level_table({}, "c")
+        assert "_(no categories)_" in rendered
+
+    def test_insufficient_data_marked_per_category(self):
+        # other_by_repo's only repo has zero classified rows for this
+        # variable at all -> its proportion list is empty (not a 0.0 value)
+        # -> compute_continuous_balance()'s insufficient_data path.
+        a_by_repo = {1: {"setup": 5}}
+        other_by_repo = {2: {}}
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        rendered = render_categorical_repo_level_table(results, "c")
+        setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
+        assert "_insufficient data_" in setup_line
 
 
 def _make_leakage_db(tmp_path, *, repo_language: str, file_fixtures: list[tuple[str, str]]) -> None:

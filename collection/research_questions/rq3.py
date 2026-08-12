@@ -37,6 +37,14 @@ here -- dropped in favor of staying purely quantitative, per this RQ's own
 note that the qualitative layer "can be dropped ... to keep this purely
 quantitative."
 
+has_mock/framework/category are also re-tested in "Repo-level aggregates"
+with per-repo category proportions (Mann-Whitney U + Cliff's delta)
+instead of pooled fixture/mock-level chi-square -- fixtures/mocks cluster
+within repos, so the pooled chi-square treats a repo's hundreds of
+correlated rows as hundreds of independent observations, inflating both
+chi2 and Cramer's V; see compare_categorical_repo_level()'s docstring in
+_shared.py.
+
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
 comparisons; see rq1.py's module docstring.
@@ -69,14 +77,17 @@ from ._shared import (
     LanguageLeakage,
     apply_fdr_correction,
     categorical_effect_size_cell,
+    compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
     continuous_effect_size_cell,
     fdr_cell,
     fetch_categorical_column,
+    fetch_categorical_column_by_repo,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
+    render_categorical_repo_level_table,
     render_language_leakage_table,
     render_stratified_categorical_table,
     repo_level_means,
@@ -106,6 +117,9 @@ class DatasetMetrics:
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
+    has_mock_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
+    framework_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
+    category_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
 
 
 def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
@@ -183,14 +197,34 @@ def load_dataset_metrics(
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
         framework_by_language = _fetch_framework_by_language(conn)
         language_leakage = compute_language_leakage(conn)
-        repo_level_continuous = {
-            m: repo_level_means(fetch_continuous_column_by_repo(conn, table, m))
+        # continuous_by_repo's "num_mocks" entry is reused below (as
+        # num_mocks_by_repo) to derive has_mock_by_repo's per-repo
+        # has_mock/no_mock counts -- no second query needed.
+        continuous_by_repo = {
+            m: fetch_continuous_column_by_repo(conn, table, m)
             for m, table in _CONTINUOUS_METRIC_TABLES.items()
         }
+        repo_level_continuous = {
+            m: repo_level_means(by_repo) for m, by_repo in continuous_by_repo.items()
+        }
+        num_mocks_by_repo = continuous_by_repo["num_mocks"]
+        framework_by_repo = fetch_categorical_column_by_repo(conn, "mock_usages", "framework")
+        category_by_repo = fetch_categorical_column_by_repo(conn, "mock_usages", "category")
 
     has_mock_dist = {
         "has_mock": sum(1 for n in num_mocks_raw if n > 0),
         "no_mock": sum(1 for n in num_mocks_raw if n == 0),
+    }
+    # Derived from num_mocks_by_repo (fixtures.num_mocks > 0), same
+    # threshold has_mock_dist above uses, just grouped by repo instead of
+    # pooled -- what compare_categorical_repo_level() needs for the
+    # repo-declustered has_mock test (see its docstring in _shared.py).
+    has_mock_by_repo = {
+        repo_id: {
+            "has_mock": sum(1 for n in vals if n > 0),
+            "no_mock": sum(1 for n in vals if n == 0),
+        }
+        for repo_id, vals in num_mocks_by_repo.items()
     }
     # Derived from mock_rate_by_language (total/with_mocks per language),
     # no separate query needed -- this is what
@@ -219,6 +253,9 @@ def load_dataset_metrics(
         framework_by_language=framework_by_language,
         language_leakage=language_leakage,
         repo_level_continuous=repo_level_continuous,
+        has_mock_by_repo=has_mock_by_repo,
+        framework_by_repo=framework_by_repo,
+        category_by_repo=category_by_repo,
     )
 
 
@@ -422,6 +459,28 @@ def _render_repo_level_comparison(
             f"{fdr_cell(t)} |"
         )
     lines.append("")
+
+    lines += [
+        "**has_mock / framework / category, repo-level (Mann-Whitney U on "
+        "per-repo category proportions, two-sided)** -- the chi-square "
+        "tables above treat every fixture/mock as an independent "
+        "observation, but they cluster within repos (shared framework "
+        "choice, project convention), which inflates chi2 and partially "
+        "corrupts Cramer's V. This instead compares, per repo, what "
+        "fraction of its fixtures/mocks fall in each category -- so each "
+        "repo counts once regardless of how many fixtures/mocks it "
+        "contributed.",
+        "",
+    ]
+    for variable, a_by_repo, other_by_repo in (
+        ("has_mock", a.has_mock_by_repo, other.has_mock_by_repo),
+        ("framework", a.framework_by_repo, other.framework_by_repo),
+        ("category", a.category_by_repo, other.category_by_repo),
+    ):
+        lines += [f"_{variable}_", ""]
+        repo_level = compare_categorical_repo_level(a_by_repo, other_by_repo, variable)
+        lines.append(render_categorical_repo_level_table(repo_level, other.dataset))
+
     return "\n".join(lines)
 
 
@@ -475,8 +534,9 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "conventions, framework choices, project style) -- a handful of "
         "unusually prolific repos can dominate a fixture-level result. This "
         "section re-runs the continuous metrics with one *mean-per-repo* "
-        "value per repo instead, so each repo counts once regardless of how "
-        "many fixtures/mocks it contributed.",
+        "value per repo instead, and has_mock/framework/category with one "
+        "*proportion-per-repo* value per category, so each repo counts once "
+        "regardless of how many fixtures/mocks it contributed.",
         "",
     ]
     if a_metrics is None:

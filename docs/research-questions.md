@@ -18,7 +18,7 @@ What it covers: LOC, cyclomatic complexity, nesting depth, `num_parameters`, sco
 
 The reported comparison: A vs C establishes the historical baseline — are agent-authored fixtures structurally different from a pre-LLM human baseline?
 
-Generating the findings: `python -m collection.research_questions.rq1` computes per-dataset summary statistics for all of the above, plus an A vs C comparison (Mann-Whitney U for continuous metrics, chi-square for categorical ones), directly from `db/a.db` and `db/c_sampled.db`, and writes the results to `research_questions/rq1.md` (gitignored, regenerated on demand — any dataset not yet collected is skipped rather than erroring).
+Generating the findings: `python -m collection.research_questions.rq1` computes per-dataset summary statistics for all of the above, plus an A vs C comparison (Mann-Whitney U for continuous metrics, chi-square for categorical ones), directly from `db/a.db` and `db/c_sampled.db`, and writes the results to `research_questions/rq1.md` (gitignored, regenerated on demand — any dataset not yet collected is skipped rather than erroring). `fixture_type` is additionally re-tested with per-repo category proportions (Mann-Whitney U + Cliff's δ, in "Repo-level aggregates") to correct for fixtures clustering within repos — the fixture-level chi-square treats a repo's hundreds of correlated fixtures as that many independent observations, which inflates both the chi-square statistic and Cramér's V. See [Limitations § Categorical Pseudo-Replication](reference/limitations.md#categorical-pseudo-replication).
 
 ## RQ2 — Setup and Teardown Characterization (Quantitative)
 
@@ -29,7 +29,7 @@ What it covers: this is the cleanest new angle, and it's already measurable from
 
 This operationalization requires no new AST work — `fixture_type` and `has_teardown_pair` already capture it completely. Pairing is intra-file only: a setup fixture's teardown counterpart in a different file, e.g. inherited from a Java base test class, isn't detected.
 
-The reported comparison asks whether teardown discipline is better or worse in agent-authored fixtures than in the pre-LLM human baseline (A vs C). Key metrics: `fixture_type` (setup vs teardown variants), `has_teardown_pair`, and the setup-to-teardown ratio per repo and per language.
+The reported comparison asks whether teardown discipline is better or worse in agent-authored fixtures than in the pre-LLM human baseline (A vs C). Key metrics: `fixture_type` (setup vs teardown variants), `has_teardown_pair`, and the setup-to-teardown ratio per repo and per language. The setup/teardown/other kind distribution is additionally re-tested with per-repo category proportions (Mann-Whitney U + Cliff's δ, in "Repo-level aggregates") for the same repo-clustering reason as RQ1's `fixture_type` — see [Limitations § Categorical Pseudo-Replication](reference/limitations.md#categorical-pseudo-replication).
 
 ## RQ3 — Mocking (Quantitative)
 
@@ -40,7 +40,7 @@ What it covers: mock prevalence per fixture and per language, framework distribu
 
 The reported comparison asks whether mock prevalence inside fixtures has changed since the pre-LLM era (A vs C), and whether framework choice differs by author type — do agents default to the dominant framework per language, or show more diversity?
 
-Generating the findings: `python -m collection.research_questions.rq3` computes per-dataset mock prevalence (overall and per language), framework distribution, category distribution, and interaction-depth statistics, plus an A vs C comparison (Mann-Whitney U for `num_mocks`/`num_interactions_configured`, chi-square for `has_mock`/`framework`/`category`), directly from `db/a.db` and `db/c_sampled.db`, and writes the results to `research_questions/rq3.md` (gitignored, regenerated on demand — any dataset not yet collected is skipped rather than erroring).
+Generating the findings: `python -m collection.research_questions.rq3` computes per-dataset mock prevalence (overall and per language), framework distribution, category distribution, and interaction-depth statistics, plus an A vs C comparison (Mann-Whitney U for `num_mocks`/`num_interactions_configured`, chi-square for `has_mock`/`framework`/`category`), directly from `db/a.db` and `db/c_sampled.db`, and writes the results to `research_questions/rq3.md` (gitignored, regenerated on demand — any dataset not yet collected is skipped rather than erroring). `has_mock`/`framework`/`category` are additionally re-tested with per-repo category proportions (Mann-Whitney U + Cliff's δ, in "Repo-level aggregates") to correct for fixtures/mocks clustering within repos — see [Limitations § Categorical Pseudo-Replication](reference/limitations.md#categorical-pseudo-replication).
 
 ## RQ4 — Usage Categories (Mixed — Qualitative + Quantitative)
 

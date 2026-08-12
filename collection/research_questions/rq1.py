@@ -23,6 +23,13 @@ single shared language; see compute_stratified_categorical_balance()'s
 docstring in _shared.py for the general rationale (first applied for
 RQ2's fixture_type_kind and RQ3's mock prevalence).
 
+fixture_type is also re-tested in "Repo-level aggregates" with per-repo
+category proportions (Mann-Whitney U + Cliff's delta) instead of pooled
+fixture-level chi-square -- fixtures cluster within repos, so the pooled
+chi-square treats a repo's hundreds of correlated fixtures as hundreds of
+independent observations, inflating both chi2 and Cramer's V; see
+compare_categorical_repo_level()'s docstring in _shared.py.
+
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet -- lets this run against whatever subset of A/C has been collected so
 far.
@@ -52,14 +59,17 @@ from ._shared import (
     LanguageLeakage,
     apply_fdr_correction,
     categorical_effect_size_cell,
+    compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
     continuous_effect_size_cell,
     fdr_cell,
     fetch_categorical_column,
+    fetch_categorical_column_by_repo,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
+    render_categorical_repo_level_table,
     render_language_leakage_table,
     render_stratified_categorical_table,
     repo_level_means,
@@ -93,6 +103,7 @@ class DatasetMetrics:
     agent_type_distribution: dict[str, int] = field(default_factory=dict)
     repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
     fixture_type_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
+    fixture_type_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
 
 
 def _fetch_fixture_type_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
@@ -127,6 +138,7 @@ def load_dataset_metrics(
         continuous_raw = {m: fetch_continuous_column(conn, "fixtures", m) for m in CONTINUOUS_METRICS}
         categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
         fixture_type_by_language = _fetch_fixture_type_by_language(conn)
+        fixture_type_by_repo = fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type")
         language_leakage = compute_language_leakage(conn)
         # Descriptive only, not run through compare_datasets()'s significance
         # tests: agent_type is the group-defining variable for Dataset A
@@ -157,6 +169,7 @@ def load_dataset_metrics(
         agent_type_distribution=agent_type_distribution,
         repo_level_continuous=repo_level_continuous,
         fixture_type_by_language=fixture_type_by_language,
+        fixture_type_by_repo=fixture_type_by_repo,
     )
 
 
@@ -354,6 +367,23 @@ def _render_repo_level_comparison(
             f"{fdr_cell(t)} |"
         )
     lines.append("")
+
+    lines += [
+        "**fixture_type, repo-level (Mann-Whitney U on per-repo category "
+        "proportions, two-sided)** -- the fixture_type chi-square table "
+        "above treats every fixture as an independent observation, but "
+        "fixtures cluster within repos (shared framework choice, project "
+        "convention), which inflates chi2 and partially corrupts Cramer's "
+        "V. This instead compares, per repo, what fraction of its "
+        "fixtures are each fixture_type -- so each repo counts once "
+        "regardless of how many fixtures it contributed.",
+        "",
+    ]
+    fixture_type_repo_level = compare_categorical_repo_level(
+        a.fixture_type_by_repo, other.fixture_type_by_repo, "fixture_type"
+    )
+    lines.append(render_categorical_repo_level_table(fixture_type_repo_level, other.dataset))
+
     return "\n".join(lines)
 
 
@@ -407,9 +437,11 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "conventions, framework choices, project style) -- a handful of "
         "unusually prolific repos can dominate a fixture-level result. This "
         "section re-runs the continuous metrics with one *mean-per-repo* "
-        "value per repo instead, so each repo counts once regardless of how "
-        "many fixtures it contributed. A finding that holds in both views is "
-        "on firmer ground than one that only shows up fixture-level.",
+        "value per repo instead, and fixture_type with one *proportion-per-"
+        "repo* value per category, so each repo counts once regardless of "
+        "how many fixtures it contributed. A finding that holds in both "
+        "views is on firmer ground than one that only shows up "
+        "fixture-level.",
         "",
     ]
     if a_metrics is None:

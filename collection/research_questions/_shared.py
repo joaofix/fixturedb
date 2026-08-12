@@ -14,7 +14,11 @@ from pathlib import Path
 
 from scipy.stats import false_discovery_control
 
-from ..between_group_comparison import BalanceTest, compute_categorical_balance
+from ..between_group_comparison import (
+    BalanceTest,
+    compute_categorical_balance,
+    compute_continuous_balance,
+)
 from ..config import ROOT_DIR
 from ..logging_utils import get_logger
 from ..paths import DB_ROOT, db_path
@@ -77,6 +81,12 @@ def summarize_continuous(values: list[float]) -> dict:
 
 def fmt(value: float | None, digits: int = 2) -> str:
     return "--" if value is None else f"{value:.{digits}f}"
+
+
+def pct(value: float | None, digits: int = 1) -> str:
+    """`value` (a 0..1 proportion) as a percentage string, e.g. "72.3%" --
+    "--" (no "%") if `value` is None, same missing-data convention as fmt()."""
+    return "--" if value is None else f"{100 * value:.{digits}f}%"
 
 
 def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest]:
@@ -240,6 +250,22 @@ def fetch_categorical_column(conn: sqlite3.Connection, table: str, column: str) 
     return {row[0]: row[1] for row in rows}
 
 
+def fetch_categorical_column_by_repo(
+    conn: sqlite3.Connection, table: str, column: str
+) -> dict[int, dict[str, int]]:
+    """{repo_id: {category: count}} for `column` in `table`, non-null
+    values only -- the per-repo grouping repo_level_category_proportions()
+    needs. Categorical analogue of fetch_continuous_column_by_repo() below."""
+    rows = conn.execute(
+        f"SELECT repo_id, {column}, COUNT(*) FROM {table} "
+        f"WHERE {column} IS NOT NULL GROUP BY repo_id, {column}"
+    ).fetchall()
+    by_repo: dict[int, dict[str, int]] = {}
+    for repo_id, category, count in rows:
+        by_repo.setdefault(repo_id, {})[category] = count
+    return by_repo
+
+
 def fetch_continuous_column_by_repo(
     conn: sqlite3.Connection, table: str, column: str
 ) -> dict[int, list[float]]:
@@ -272,6 +298,98 @@ def repo_level_means(by_repo: dict[int, list[float]]) -> list[float]:
     repos dominating the fixture-level result.
     """
     return [sum(vals) / len(vals) for vals in by_repo.values() if vals]
+
+
+def repo_level_category_proportions(
+    by_repo: dict[int, dict[str, int]], category: str
+) -> list[float]:
+    """One proportion value per repo (this category's count / total
+    classified count in that repo), from fetch_categorical_column_by_repo()'s
+    output -- repos with zero classified rows for this variable are
+    skipped (an empty ratio, not a 0.0 one). Categorical analogue of
+    repo_level_means(): feeds compute_continuous_balance() so a
+    Mann-Whitney U + Cliff's delta test treats each *repo* as one
+    observation instead of each fixture/mock -- see
+    compare_categorical_repo_level()'s docstring for why chi-square on raw
+    counts needs this same fix."""
+    return [
+        counts.get(category, 0) / total
+        for counts in by_repo.values()
+        if (total := sum(counts.values()))
+    ]
+
+
+def compare_categorical_repo_level(
+    a_by_repo: dict[int, dict[str, int]],
+    other_by_repo: dict[int, dict[str, int]],
+    variable: str,
+) -> dict[str, BalanceTest]:
+    """Per-category Mann-Whitney U + Cliff's delta on repo-level
+    proportions -- one BalanceTest per category seen on either side (union).
+
+    Why this exists: a plain chi-square on fixture/mock-level counts (as
+    compute_categorical_balance() runs elsewhere in this package) treats
+    every row as an independent draw, but rows cluster within repos --
+    they share a framework choice, a team convention, a codebase. A repo
+    contributing hundreds of correlated rows is effectively one
+    independent observation, not hundreds; treating it as hundreds
+    inflates the chi-square statistic and partially corrupts Cramer's V
+    (which normalizes by n, and n is inflated by the same clustering).
+    This computes, per repo, what fraction of its classified rows fall in
+    each category, then compares those per-repo proportions between
+    groups with Mann-Whitney -- the same de-clustering repo_level_means()
+    already applies to RQ1/RQ2's continuous metrics, extended here to
+    categorical ones. Doesn't replace the fixture-level chi-square (a
+    different, still-real question -- "is the typical row different"),
+    it's the complementary, repo-declustered view."""
+    categories = sorted(
+        {c for counts in a_by_repo.values() for c in counts}
+        | {c for counts in other_by_repo.values() for c in counts}
+    )
+    return {
+        category: compute_continuous_balance(
+            human_values=repo_level_category_proportions(other_by_repo, category),
+            agent_values=repo_level_category_proportions(a_by_repo, category),
+            variable=f"{variable}_{category}_repo_proportion",
+        )
+        for category in categories
+    }
+
+
+def render_categorical_repo_level_table(
+    results: dict[str, BalanceTest], other_dataset: str
+) -> str:
+    """Markdown table for compare_categorical_repo_level()'s output -- one
+    row per category, per-repo proportions (not raw counts) shown as
+    percentages. Applies BH-FDR across the categories shown first (one
+    "family" per variable -- see apply_fdr_correction()'s docstring)."""
+    corrected = apply_fdr_correction(results)
+    lines = [
+        "| Category | A median | A mean | "
+        f"{other_dataset.upper()} median | {other_dataset.upper()} mean | U | p-value | "
+        "significant (p<0.05) | Cliff's delta (effect size) | BH-FDR adjusted p (sig?) |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    if not corrected:
+        lines.append("| _(no categories)_ | -- | -- | -- | -- | -- | -- | -- | -- |")
+    else:
+        for category, t in corrected.items():
+            d = t.details
+            if d.get("reason") == "insufficient_data":
+                lines.append(
+                    f"| {category} | -- | -- | -- | -- | -- | -- | _insufficient data_ | -- |"
+                )
+                continue
+            sig = "yes" if t.p_value < 0.05 else "no"
+            lines.append(
+                f"| {category} | "
+                f"{pct(d.get('agent_median'))} | {pct(d.get('agent_mean'))} | "
+                f"{pct(d.get('human_median'))} | {pct(d.get('human_mean'))} | "
+                f"{fmt(t.statistic, 1)} | {t.p_value:.4g} | {sig} | "
+                f"{continuous_effect_size_cell(t)} | {fdr_cell(t)} |"
+            )
+    lines.append("")
+    return "\n".join(lines)
 
 
 @dataclass

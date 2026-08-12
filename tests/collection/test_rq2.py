@@ -231,6 +231,27 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.kind_distribution == {"setup": 2, "teardown": 1, "other": 1}
 
+    def test_kind_counts_by_repo_groups_all_three_kinds_by_repo_id(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                # repo 0: 2 setup, 1 teardown, 1 other
+                [
+                    {"fixture_type": "before_each"},
+                    {"fixture_type": "before_each"},
+                    {"fixture_type": "after_each"},
+                    {"fixture_type": "pytest_decorator"},
+                ],
+                # repo 1: 1 setup only
+                [{"fixture_type": "before_each"}],
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert len(metrics.kind_counts_by_repo) == 2
+        assert {"setup": 2, "teardown": 1, "other": 1} in metrics.kind_counts_by_repo.values()
+        assert {"setup": 1, "teardown": 0, "other": 0} in metrics.kind_counts_by_repo.values()
+
     def test_per_repo_ratio_computed_only_over_repos_with_teardown(self, tmp_path):
         _make_db(
             tmp_path,
@@ -324,7 +345,8 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        assert report.count("Not available -- db not collected yet.") == 2
+        # C summary, A-vs-C comparison, A-vs-C repo-level: 3 total.
+        assert report.count("Not available -- db not collected yet.") == 3
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         """_make_db's repo and its one test_file both use "python", so this
@@ -395,6 +417,38 @@ class TestGenerateReport:
         # Effect sizes must actually be present, not just the column headers.
         assert "Cliff's delta (effect size):" in report
         assert "Cramer's V (effect size)" in report
+
+    def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
+        """fixture_type_kind's repo-level companion to the chi-square
+        table: A is one repo with 100 setup-only fixtures plus one repo
+        with a single teardown-only fixture -- fixture-level, A looks
+        ~99% setup (dominated by the prolific repo). Per-repo, A is split
+        50/50 (1 of 2 repos each way)."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                [{"fixture_type": "before_each"}] * 100,
+                [{"fixture_type": "after_each"}],
+            ],
+        )
+        _make_db(
+            tmp_path,
+            "c",
+            [
+                [{"fixture_type": "before_each"}],
+                [{"fixture_type": "after_each"}],
+            ],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "## Repo-level aggregates" in report
+        repo_section = report.split("## Repo-level aggregates")[1]
+        setup_line = next(
+            line for line in repo_section.splitlines() if line.startswith("| setup |")
+        )
+        # Per-repo, both A and C are 1-of-2 repos setup-only (50%) --
+        # nowhere near the ~99% pooled figure the chi-square table above sees.
+        assert "| 50.0% | 50.0% | 50.0% | 50.0% |" in setup_line
 
 
 class TestWriteReport:

@@ -25,6 +25,13 @@ Three metrics, computed per dataset (A/C):
    testng_data_provider -- neither, it's not a lifecycle hook) buckets as
    "other" instead of forcing a fake split.
 
+   Also re-tested in "Repo-level aggregates" with per-repo category
+   proportions (Mann-Whitney U + Cliff's delta) instead of pooled
+   fixture-level chi-square -- fixtures cluster within repos, so the
+   pooled chi-square treats a repo's hundreds of correlated fixtures as
+   hundreds of independent observations, inflating both chi2 and Cramer's
+   V; see compare_categorical_repo_level()'s docstring in _shared.py.
+
 2. **Per-repo setup-to-teardown ratio** -- counts only the setup/teardown
    fixtures from (1) (both the type-based and name-based ones), matching
    the RQ's literal "ratio of setup fixtures to teardown fixtures". A repo
@@ -88,11 +95,13 @@ from ._shared import (
     LanguageLeakage,
     apply_fdr_correction,
     categorical_effect_size_cell,
+    compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_categorical_balance,
     continuous_effect_size_cell,
     fdr_cell,
     fmt,
+    render_categorical_repo_level_table,
     render_language_leakage_table,
     render_stratified_categorical_table,
     require_db_or_none,
@@ -133,6 +142,7 @@ class DatasetMetrics:
     dataset: str
     n_fixtures: int
     kind_distribution: dict[str, int] = field(default_factory=dict)
+    kind_counts_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
     per_repo_ratios: list[float] = field(default_factory=list)
     n_repos_with_setup: int = 0
     n_repos_zero_teardown: int = 0
@@ -181,6 +191,7 @@ def load_dataset_metrics(
             per_repo_counts,
             kind_distribution_by_language,
             per_repo_counts_by_language,
+            kind_counts_by_repo,
         ) = _fetch_kinds_and_repo_counts(conn)
         teardown_rate_by_type = _fetch_teardown_rate_by_type(conn)
         language_leakage = compute_language_leakage(conn)
@@ -202,6 +213,7 @@ def load_dataset_metrics(
         dataset=dataset,
         n_fixtures=n_fixtures,
         kind_distribution=kind_distribution,
+        kind_counts_by_repo=kind_counts_by_repo,
         per_repo_ratios=per_repo_ratios,
         n_repos_with_setup=n_with_setup,
         n_repos_zero_teardown=n_zero_teardown,
@@ -221,13 +233,15 @@ def _fetch_kinds_and_repo_counts(
     dict[int, tuple[int, int]],
     dict[str, dict[str, int]],
     dict[str, dict[int, tuple[int, int]]],
+    dict[int, dict[str, int]],
 ]:
     """Single pass over every fixture: dataset-level kind distribution,
     per-repo (setup_count, teardown_count), per-language kind distribution,
-    and per-language per-repo (setup_count, teardown_count) -- classified
-    once via `_kind()` so none of these views can ever disagree with each
-    other (a second, SQL-side classification would just be `_kind()`
-    duplicated in a different language).
+    per-language per-repo (setup_count, teardown_count), and per-repo
+    {setup/teardown/other: count} -- classified once via `_kind()` so none
+    of these views can ever disagree with each other (a second, SQL-side
+    classification would just be `_kind()` duplicated in a different
+    language).
 
     The per-language kind distribution is what
     compute_stratified_categorical_balance() needs to check whether an
@@ -236,11 +250,16 @@ def _fetch_kinds_and_repo_counts(
     counts feed the same question for the setup-to-teardown ratio/zero-TD
     rate -- grouped by each fixture's own language (test_files.language),
     not the repo's tag, so a repo with setup fixtures in more than one
-    language contributes a separate (repo, language) data point to each."""
+    language contributes a separate (repo, language) data point to each.
+    The per-repo {kind: count} dict (all 3 kinds, unlike per_repo's
+    setup/teardown-only pair) is what compare_categorical_repo_level()
+    needs for the repo-declustered fixture_type_kind test -- see its
+    docstring in _shared.py."""
     kind_distribution = {"setup": 0, "teardown": 0, "other": 0}
     per_repo: dict[int, list[int]] = {}
     kind_by_language: dict[str, dict[str, int]] = {}
     per_repo_by_language: dict[str, dict[int, list[int]]] = {}
+    kind_counts_by_repo: dict[int, dict[str, int]] = {}
 
     rows = conn.execute(
         "SELECT f.repo_id, f.fixture_type, f.name, tf.language FROM fixtures f "
@@ -265,12 +284,23 @@ def _fetch_kinds_and_repo_counts(
         )
         lang_dist[kind] += 1
 
+        repo_kind_counts = kind_counts_by_repo.setdefault(
+            repo_id, {"setup": 0, "teardown": 0, "other": 0}
+        )
+        repo_kind_counts[kind] += 1
+
     per_repo_counts = {repo_id: (c[0], c[1]) for repo_id, c in per_repo.items()}
     per_repo_counts_by_language = {
         language: {repo_id: (c[0], c[1]) for repo_id, c in repo_map.items()}
         for language, repo_map in per_repo_by_language.items()
     }
-    return kind_distribution, per_repo_counts, kind_by_language, per_repo_counts_by_language
+    return (
+        kind_distribution,
+        per_repo_counts,
+        kind_by_language,
+        per_repo_counts_by_language,
+        kind_counts_by_repo,
+    )
 
 
 def _fetch_teardown_rate_by_type(conn: sqlite3.Connection) -> dict[str, dict]:
@@ -458,6 +488,17 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     return "\n".join(lines)
 
 
+def _render_repo_level_comparison(
+    label: str, a: DatasetMetrics, other: DatasetMetrics
+) -> str:
+    lines = [f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
+    kind_repo_level = compare_categorical_repo_level(
+        a.kind_counts_by_repo, other.kind_counts_by_repo, "fixture_type_kind"
+    )
+    lines.append(render_categorical_repo_level_table(kind_repo_level, other.dataset))
+    return "\n".join(lines)
+
+
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     loaded = {ds: load_dataset_metrics(ds, db_root=db_root) for ds in ("a", "c")}
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -499,6 +540,35 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
+
+    lines += [
+        "## Repo-level aggregates",
+        "",
+        "The fixture_type_kind comparison above treats every fixture as an "
+        "independent observation, but fixtures cluster within repos (shared "
+        "authorship conventions, framework choices, project style) -- a "
+        "handful of unusually prolific repos can dominate a fixture-level "
+        "result. This section re-runs it with one *proportion-per-repo* "
+        "value per kind instead, so each repo counts once regardless of how "
+        "many fixtures it contributed. (The setup-to-teardown ratio above is "
+        "already repo-level by construction -- one ratio per repo -- so it "
+        "doesn't need a separate view here.)",
+        "",
+    ]
+    if a_metrics is None:
+        lines.append("_Dataset A not available -- no repo-level comparisons computed._")
+    else:
+        for other_ds, label in COMPARISONS:
+            other_metrics = loaded[other_ds]
+            if other_metrics is None:
+                lines += [
+                    f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other_ds]}",
+                    "",
+                    "_Not available -- db not collected yet._",
+                    "",
+                ]
+            else:
+                lines.append(_render_repo_level_comparison(label, a_metrics, other_metrics))
 
     return "\n".join(lines)
 

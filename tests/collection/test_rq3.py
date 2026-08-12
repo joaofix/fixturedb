@@ -154,6 +154,75 @@ def _make_db(root, dataset: str, files: list[dict]) -> None:
                     insert_mock_usage(conn, mock)
 
 
+def _make_multi_repo_framework_db(root, dataset: str, repos: list[list[str]]) -> None:
+    """Create db/{dataset}.db with one repo per entry in `repos`, each a
+    list of mock `framework` values (one fixture+mock per entry) -- for
+    testing framework_by_repo/category_by_repo's repo-declustering,
+    analogous to _make_multi_repo_db() above (which varies `num_mocks`
+    instead).
+
+    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
+    docstring for why."""
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        for repo_idx, frameworks in enumerate(repos):
+            repo_id, _ = upsert_repository(
+                conn,
+                {
+                    "github_id": repo_idx + 1,
+                    "full_name": f"owner/repo{repo_idx}",
+                    "language": "python",
+                    "stars": 1,
+                    "forks": 0,
+                    "description": "",
+                    "topics": "[]",
+                    "created_at": "2019-01-01T00:00:00Z",
+                    "pushed_at": "2020-01-01T00:00:00Z",
+                    "clone_url": f"https://github.com/owner/repo{repo_idx}.git",
+                    "num_contributors": 1,
+                    "domain": None,
+                    "repo_age_years": None,
+                },
+            )
+            file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
+            for i, framework in enumerate(frameworks):
+                fixture_id = insert_fixture(
+                    conn,
+                    {
+                        "file_id": file_id,
+                        "repo_id": repo_id,
+                        "name": f"fixture_{repo_idx}_{i}",
+                        "fixture_type": "pytest_decorator",
+                        "scope": "per_test",
+                        "start_line": i,
+                        "end_line": i + 1,
+                        "loc": 3,
+                        "cyclomatic_complexity": 1,
+                        "max_nesting_depth": 1,
+                        "num_objects_instantiated": 0,
+                        "num_external_calls": 0,
+                        "num_parameters": 0,
+                        "has_teardown_pair": 0,
+                        "raw_source": "",
+                        "framework": "pytest",
+                        "num_mocks": 1,
+                    },
+                )
+                insert_mock_usage(
+                    conn,
+                    {
+                        "fixture_id": fixture_id,
+                        "repo_id": repo_id,
+                        "framework": framework,
+                        "category": "mock",
+                        "target_identifier": "",
+                        "num_interactions_configured": 0,
+                        "raw_snippet": "",
+                    },
+                )
+
+
 class TestLoadDatasetMetrics:
     def test_missing_db_returns_none(self, tmp_path):
         assert load_dataset_metrics("a", db_root=tmp_path) is None
@@ -224,6 +293,13 @@ class TestLoadDatasetMetrics:
         assert row.leaked == 1
         assert row.leaked_by_language == {"java": 1}
 
+    def test_has_mock_by_repo_groups_counts_by_repo_id(self, tmp_path):
+        _make_multi_repo_db(tmp_path, "a", [[1.0] * 100, [0.0]])
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert len(metrics.has_mock_by_repo) == 2
+        assert {"has_mock": 100, "no_mock": 0} in metrics.has_mock_by_repo.values()
+        assert {"has_mock": 0, "no_mock": 1} in metrics.has_mock_by_repo.values()
+
     def test_framework_and_category_distribution(self, tmp_path):
         _make_db(
             tmp_path,
@@ -246,6 +322,11 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.framework_dist == {"unittest_mock": 1, "pytest_mock": 1}
         assert metrics.category_dist == {"stub": 1, "mock": 1}
+        # _make_db puts everything under one repo -- framework_by_repo/
+        # category_by_repo's per-repo grouping is exercised for real with
+        # >1 repo in the repo-level report test below.
+        assert list(metrics.framework_by_repo.values()) == [{"unittest_mock": 1, "pytest_mock": 1}]
+        assert list(metrics.category_by_repo.values()) == [{"stub": 1, "mock": 1}]
 
     def test_framework_by_language(self, tmp_path):
         _make_db(
@@ -421,6 +502,41 @@ class TestGenerateReport:
             line for line in repo_section.splitlines() if line.startswith("| num_mocks |")
         )
         assert "| no |" in num_mocks_line
+
+    def test_repo_level_framework_proportion_table_declusters_a_prolific_repo(self, tmp_path):
+        """framework's repo-level companion to the chi-square table: A is
+        one repo with 100 unittest_mock-using fixtures plus one repo with
+        a single pytest_mock-using fixture -- fixture-level, A looks ~99%
+        unittest_mock. Per-repo, A is split 50/50 (1 of 2 repos each way),
+        matching C's identical 1-of-2 split."""
+        _make_multi_repo_framework_db(
+            tmp_path, "a", [["unittest_mock"] * 100, ["pytest_mock"]]
+        )
+        _make_multi_repo_framework_db(
+            tmp_path, "c", [["unittest_mock"], ["pytest_mock"]]
+        )
+
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert len(a_metrics.framework_by_repo) == 2
+        assert {"unittest_mock": 100} in a_metrics.framework_by_repo.values()
+        assert {"pytest_mock": 1} in a_metrics.framework_by_repo.values()
+
+        pooled_pct = 100 * a_metrics.framework_dist["unittest_mock"] / sum(
+            a_metrics.framework_dist.values()
+        )
+        assert pooled_pct > 95  # dominated by the prolific repo
+
+        report = generate_report(db_root=tmp_path)
+        assert "has_mock / framework / category, repo-level" in report
+        repo_section = report.split("## Repo-level aggregates")[1]
+        framework_section = repo_section.split("_framework_")[1].split("_category_")[0]
+        unittest_mock_line = next(
+            line for line in framework_section.splitlines()
+            if line.startswith("| unittest_mock |")
+        )
+        # Per-repo, both A and C are 1-of-2 repos unittest_mock-only (50%)
+        # -- nowhere near the ~99% pooled figure.
+        assert "| 50.0% | 50.0% | 50.0% | 50.0% |" in unittest_mock_line
 
 
 class TestWriteReport:
