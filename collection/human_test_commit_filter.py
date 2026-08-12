@@ -367,12 +367,13 @@ def _collect_human_test_commits_from_repo_rows(
                         repo_commits_scanned,
                         repo_disagreements,
                     ) = process_fn(repo_rows_for_name[0])
-                except CloneUnavailable:
+                except CloneUnavailable as exc:
                     logger.warning(
                         "[human-test-commits] %s could not be cloned this run; "
                         "leaving it unchecked so it's retried next run (not "
-                        "marked complete)",
+                        "marked complete): %s",
                         repo_name,
+                        exc,
                     )
                     clone_failures += 1
                     pbar.update(1)
@@ -415,12 +416,13 @@ def _collect_human_test_commits_from_repo_rows(
                                 repo_commits_scanned,
                                 repo_disagreements,
                             ) = future.result()
-                        except CloneUnavailable:
+                        except CloneUnavailable as exc:
                             logger.warning(
                                 "[human-test-commits] %s could not be cloned this "
                                 "run; leaving it unchecked so it's retried next "
-                                "run (not marked complete)",
+                                "run (not marked complete): %s",
                                 repo_name,
+                                exc,
                             )
                             clone_failures += 1
                             pbar.update(1)

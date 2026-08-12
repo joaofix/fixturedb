@@ -175,11 +175,12 @@ def collect_agent_test_commits(
                     language, repo_test_commits, repo_count, repo_commits_scanned = (
                         _process_repo_test_commits(repo_name, repo_rows)
                     )
-                except CloneUnavailable:
+                except CloneUnavailable as exc:
                     logger.warning(
                         "[test-commits] %s could not be cloned this run; leaving "
-                        "it unchecked so it's retried next run (not marked complete)",
+                        "it unchecked so it's retried next run (not marked complete): %s",
                         repo_name,
+                        exc,
                     )
                     clone_failures += 1
                     pbar.update(1)
@@ -218,12 +219,13 @@ def collect_agent_test_commits(
                             language, repo_test_commits, repo_count, repo_commits_scanned = (
                                 future.result()
                             )
-                        except CloneUnavailable:
+                        except CloneUnavailable as exc:
                             logger.warning(
                                 "[test-commits] %s could not be cloned this run; "
                                 "leaving it unchecked so it's retried next run "
-                                "(not marked complete)",
+                                "(not marked complete): %s",
                                 repo_name,
+                                exc,
                             )
                             clone_failures += 1
                             pbar.update(1)
