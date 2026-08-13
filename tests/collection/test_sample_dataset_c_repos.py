@@ -16,6 +16,7 @@ import pytest
 from collection.dataset_pipeline import (
     _build_sampled_db,
     _fetch_dataset_c_repo_fixture_counts,
+    _fetch_repo_language_counts_with_fixtures,
     sample_dataset_c_repos,
 )
 from collection.db import (
@@ -144,6 +145,32 @@ class TestFetchDatasetCRepoFixtureCounts:
         with db_session(db_path) as conn:
             rows = _fetch_dataset_c_repo_fixture_counts(conn)
         assert rows == []
+
+
+class TestFetchRepoLanguageCountsWithFixtures:
+    def test_counts_repos_not_fixtures(self, tmp_path):
+        """Two python repos with different fixture counts must each count
+        once towards python's repo count -- this is a repo count, not a
+        fixture count (that's _fetch_dataset_c_repo_fixture_counts above)."""
+        db_path = tmp_path / "a.db"
+        _make_repo_db(
+            db_path,
+            [
+                {"github_id": 1, "language": "python", "num_fixtures": 3},
+                {"github_id": 2, "language": "python", "num_fixtures": 50},
+                {"github_id": 3, "language": "java", "num_fixtures": 1},
+            ],
+        )
+        with db_session(db_path) as conn:
+            counts = _fetch_repo_language_counts_with_fixtures(conn)
+        assert counts == {"python": 2, "java": 1}
+
+    def test_repo_with_no_fixtures_excluded(self, tmp_path):
+        db_path = tmp_path / "a.db"
+        _make_repo_db(db_path, [{"github_id": 1, "language": "python", "num_fixtures": 0}])
+        with db_session(db_path) as conn:
+            counts = _fetch_repo_language_counts_with_fixtures(conn)
+        assert counts == {}
 
 
 class TestBuildSampledDb:
@@ -361,3 +388,36 @@ class TestSampleDatasetCRepos:
         )
 
         assert result["target_count"] == 37
+
+    def test_match_dataset_stratifies_by_its_own_mix_not_dataset_cs(self, tmp_path):
+        """Dataset C's own fixture-count mix here is 50/50 java/python. The
+        match dataset (a.db) is 90% python / 10% java *by repo count*. The
+        sample must follow a.db's 90/10 mix, not c.db's own 50/50 -- this is
+        the whole point of the change."""
+        db_root = tmp_path / "db"
+        _make_repo_db(
+            db_root / "c.db",
+            [{"github_id": i, "language": "python", "num_fixtures": 2} for i in range(1, 6)]
+            + [{"github_id": i, "language": "java", "num_fixtures": 1} for i in range(6, 16)],
+        )
+        _make_repo_db(
+            db_root / "a.db",
+            [{"github_id": i, "language": "python", "num_fixtures": 1} for i in range(100, 109)]
+            + [{"github_id": 200, "language": "java", "num_fixtures": 1}],
+        )
+
+        result = sample_dataset_c_repos(
+            match_dataset="a",
+            db_root=db_root,
+            datasets_root=tmp_path / "datasets",
+            output_dir=tmp_path / "output",
+        )
+
+        check = result["distribution_check"]
+        assert check["python"]["target_ratio"] == pytest.approx(0.9)
+        assert check["java"]["target_ratio"] == pytest.approx(0.1)
+        # java's own C-side fixture-count share (50%) must NOT be what it
+        # actually got sampled at -- it should track the 10% target instead.
+        assert check["java"]["original_ratio"] == pytest.approx(0.5)
+        assert check["java"]["sampled_ratio"] < check["java"]["original_ratio"]
+        assert check["python"]["sampled_fixture_count"] > check["java"]["sampled_fixture_count"]

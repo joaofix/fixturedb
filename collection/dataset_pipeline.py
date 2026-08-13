@@ -259,6 +259,26 @@ def _fetch_dataset_c_repo_fixture_counts(conn: sqlite3.Connection) -> list[dict]
     return [dict(row) for row in rows]
 
 
+def _fetch_repo_language_counts_with_fixtures(conn: sqlite3.Connection) -> dict[str, int]:
+    """Repo count per language among repos with >=1 fixture, for whichever
+    dataset `conn` points at -- same population as
+    _fetch_dataset_c_repo_fixture_counts() above, just counting repos
+    instead of fixtures. Used as sample_dataset_c_repos()'s
+    target_proportions when matching another dataset (e.g. Dataset A):
+    Dataset C's sample should mirror that dataset's real, final,
+    fixture-contributing repo mix, not an earlier candidate pool that
+    includes repos contributing zero data."""
+    rows = conn.execute(
+        """
+        SELECT r.language AS language, COUNT(DISTINCT r.id) AS n
+        FROM repositories r
+        JOIN fixtures f ON f.repo_id = r.id
+        GROUP BY r.language
+        """
+    ).fetchall()
+    return {row["language"]: row["n"] for row in rows}
+
+
 def _build_sampled_db(source_db: Path, output_db: Path, repo_ids: list[int]) -> int:
     """Build a fresh, standalone SQLite DB at `output_db` containing only
     the given repos (and their test_files/fixtures/mock_usages) copied from
@@ -401,14 +421,23 @@ def sample_dataset_c_repos(
     output_dir: Path | None = None,
 ) -> dict:
     """Sample Dataset C down to `target_count` fixtures (or `match_dataset`'s
-    live fixture count), stratified by language, whole repos only. Writes
-    db/c_sampled.db and datasets/c/fixtures-sampled/*.csv; db/c.db and
-    datasets/c/fixtures/*.csv are read-only inputs, never modified.
+    live fixture count *and* language-by-repo-count mix), stratified by
+    language, whole repos only. Writes db/c_sampled.db and
+    datasets/c/fixtures-sampled/*.csv; db/c.db and datasets/c/fixtures/*.csv
+    are read-only inputs, never modified.
 
     Exactly one of `target_count`/`match_dataset` must be given.
-    `match_dataset` reads that dataset's CURRENT live fixture count from its
-    own db/{match_dataset}.db at call time (not a hardcoded number) -- both
-    A and C get re-extracted independently, so this must stay dynamic.
+    `match_dataset` reads that dataset's CURRENT live fixture count *and*
+    per-language repo-with-fixtures count from its own db/{match_dataset}.db
+    at call time (not hardcoded numbers) -- both A and C get re-extracted
+    independently, so this must stay dynamic. The sample's language mix
+    then targets `match_dataset`'s mix instead of Dataset C's own (see
+    sample_repos_by_language()'s target_proportions) -- when a language
+    stratum in Dataset C can't reach its target share, it's capped at
+    everything available and the shortfall redistributes to the other
+    languages, never silently dropped. `target_count` given directly (no
+    match_dataset) has no "other dataset" to match composition against, so
+    it falls back to Dataset C's own mix, unchanged from before.
     """
     if (target_count is None) == (match_dataset is None):
         raise ValueError("Pass exactly one of target_count or match_dataset")
@@ -419,6 +448,7 @@ def sample_dataset_c_repos(
             f"{source_db} not found; run `extract-fixtures --dataset c` first"
         )
 
+    target_proportions: dict[str, int] | None = None
     if match_dataset is not None:
         match_db = paths.db_path(match_dataset, root=db_root)
         if not match_db.exists():
@@ -428,12 +458,17 @@ def sample_dataset_c_repos(
             )
         with db_session(match_db) as conn:
             target_count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+            target_proportions = _fetch_repo_language_counts_with_fixtures(conn)
 
     with db_session(source_db) as conn:
         repos = _fetch_dataset_c_repo_fixture_counts(conn)
 
     result = sample_repos_by_language(
-        repos, target_count=target_count, tolerance=tolerance, seed=seed
+        repos,
+        target_count=target_count,
+        tolerance=tolerance,
+        seed=seed,
+        target_proportions=target_proportions,
     )
 
     sampled_db = db_root / "c_sampled.db"

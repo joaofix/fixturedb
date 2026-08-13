@@ -100,6 +100,20 @@ Currently covers:
   original, never-resampled collection CSVs, since sampling is a later,
   analysis-time step that doesn't touch those.
 
+- **Dataset C sampling-down summary**: how `sample-c-repos --match-dataset
+  a` actually stratified the sample -- per-language "Dataset C's own mix"
+  vs. the match dataset's mix it targeted vs. what was actually achieved,
+  plus repos/fixtures sampled per language. No `db/*.db` involved: reads
+  `output/sample_c_repos.json` directly (`dataset_pipeline.py::
+  sample_dataset_c_repos()`'s own summary artifact), since the sampled
+  repo IDs are one specific historical draw, not something generically
+  recomputable from current DB state. Makes a language-stratum shortfall
+  (Dataset C doesn't have enough repos of some language to hit the match
+  dataset's share) visible -- "Repos sampled" hitting its available count
+  means that language's shortfall was redistributed elsewhere, not
+  silently dropped (see `dataset_sampler.py::
+  _allocate_quotas_with_shortfall_reallocation()`).
+
 python -m collection.research_questions.dataset_findings
 """
 
@@ -107,12 +121,14 @@ from __future__ import annotations
 
 import csv
 import gzip
+import json
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
+from ..dataset_pipeline import _sample_repos_output_path
 from ..db import db_session
 from ..logging_utils import get_logger
 from ._shared import (
@@ -676,11 +692,82 @@ def _render_dataset_c_repo_summary(
     ]
 
 
+def _render_dataset_c_sampling_summary(*, output_dir: Path | None = None) -> list[str]:
+    """## Dataset C: Sampling-Down Summary -- reads output/sample_c_repos.json,
+    the artifact `sample-c-repos`/`sample_dataset_c_repos()` writes on every
+    run (dataset_pipeline.py). Not derived from db/c_sampled.db: the actual
+    sampled repo IDs are one specific historical draw (seeded, but tied to
+    whatever db/c.db and the match dataset looked like at that call time),
+    not something generically recomputable from current DB state.
+
+    "Not available" if the file doesn't exist yet -- same degrade-gracefully
+    convention as every other section in this module."""
+    summary_path = _sample_repos_output_path(output_dir)
+    if not summary_path.exists():
+        return [
+            "## Dataset C: Sampling-Down Summary",
+            "",
+            "_Not available -- run `python -m collection sample-c-repos "
+            "--match-dataset a` first._",
+            "",
+        ]
+
+    data = json.loads(summary_path.read_text(encoding="utf-8"))
+    match_dataset = data.get("match_dataset")
+    distribution_check: dict[str, dict] = data.get("distribution_check", {})
+
+    header = [
+        "Language",
+        "Dataset C's own mix",
+        f"Target ({match_dataset or 'n/a'}'s mix)",
+        "Sampled mix",
+        "Repos sampled",
+        "Fixtures sampled",
+    ]
+    lines = [
+        "## Dataset C: Sampling-Down Summary",
+        "",
+        f"Matched against Dataset {match_dataset}: "
+        f"{data.get('sampled_fixture_count', 0):,}/{data.get('target_count', 0):,} "
+        f"fixtures, {data.get('sampled_repo_count', 0):,} repos, "
+        f"seed={data.get('random_seed')}.",
+        "",
+        'A language whose "Repos sampled" hits its full available count '
+        "took everything Dataset C had for it and still fell short of the "
+        "target mix -- the shortfall was redistributed to the other "
+        "languages, not discarded (see `_allocate_quotas_with_shortfall_"
+        "reallocation()` in `dataset_sampler.py`).",
+        "",
+        "| " + " | ".join(header) + " |",
+        "|" + "---|" * len(header),
+    ]
+    for language in _SUMMARY_TABLE_LANGUAGES:
+        check = distribution_check.get(language)
+        display = _LANGUAGE_DISPLAY_NAMES[language]
+        if check is None:
+            lines.append(f"| {display} | N/A | N/A | N/A | N/A | N/A |")
+            continue
+        available_repos = check.get("dataset_c_available_repo_count", 0)
+        sampled_repos = check.get("sampled_repo_count", 0)
+        exhausted = " (all)" if available_repos and sampled_repos >= available_repos else ""
+        lines.append(
+            f"| {display} "
+            f"| {check['original_ratio'] * 100:.1f}% "
+            f"| {check['target_ratio'] * 100:.1f}% "
+            f"| {check['sampled_ratio'] * 100:.1f}% "
+            f"| {sampled_repos:,}/{available_repos:,}{exhausted} "
+            f"| {check.get('sampled_fixture_count', 0):,}/{check.get('dataset_c_available_fixture_count', 0):,} |"
+        )
+    lines.append("")
+    return lines
+
+
 def generate_report(
     *,
     db_root: Path = paths.DB_ROOT,
     datasets_root: Path = paths.DATASETS_ROOT,
     raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+    sample_output_dir: Path | None = None,
 ) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
@@ -753,6 +840,7 @@ def generate_report(
     lines += _render_dataset_c_repo_summary(
         db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir
     )
+    lines += _render_dataset_c_sampling_summary(output_dir=sample_output_dir)
 
     return "\n".join(lines)
 
@@ -763,8 +851,14 @@ def write_report(
     db_root: Path = paths.DB_ROOT,
     datasets_root: Path = paths.DATASETS_ROOT,
     raw_search_dir: Path = paths.RAW_SEARCH_DIR,
+    sample_output_dir: Path | None = None,
 ) -> Path:
-    report = generate_report(db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir)
+    report = generate_report(
+        db_root=db_root,
+        datasets_root=datasets_root,
+        raw_search_dir=raw_search_dir,
+        sample_output_dir=sample_output_dir,
+    )
     output_path = write_markdown_report(output_dir, "dataset_findings.md", report)
     logger.info(f"Dataset findings report written to {output_path}")
     return output_path

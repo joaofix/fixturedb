@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import json
 
 from collection import paths
 from collection.db import (
@@ -35,6 +36,7 @@ from collection.research_questions.dataset_findings import (
     _fetch_total_commits_since_agent_start,
     _render_dataset_a_commit_repo_summary,
     _render_dataset_c_repo_summary,
+    _render_dataset_c_sampling_summary,
     _render_language_count_table,
     generate_report,
     load_repo_purity_stats,
@@ -872,3 +874,84 @@ class TestGenerateReportIncludesNewSections:
         assert "_Not available -- db/a.db not collected yet._" in report
         assert "## Dataset C: Repository Summary" in report
         assert "| Candidate repos | 0 | 0 | 1 | 0 | 1 |" in report
+
+
+class TestDatasetCSamplingSummarySection:
+    def test_not_available_when_summary_file_missing(self, tmp_path):
+        lines = _render_dataset_c_sampling_summary(output_dir=tmp_path / "output")
+        report = "\n".join(lines)
+        assert "## Dataset C: Sampling-Down Summary" in report
+        assert "_Not available -- run `python -m collection sample-c-repos" in report
+
+    def test_renders_per_language_table_from_summary_json(self, tmp_path):
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(parents=True)
+        summary = {
+            "match_dataset": "a",
+            "target_count": 100,
+            "sampled_fixture_count": 99,
+            "sampled_repo_count": 12,
+            "random_seed": 42,
+            "distribution_check": {
+                "python": {
+                    "original_ratio": 0.5,
+                    "target_ratio": 0.9,
+                    "sampled_ratio": 0.89,
+                    "deviation": 0.01,
+                    "tolerance_met": True,
+                    "dataset_c_available_fixture_count": 500,
+                    "dataset_c_available_repo_count": 50,
+                    "sampled_fixture_count": 88,
+                    "sampled_repo_count": 10,
+                },
+                "java": {
+                    "original_ratio": 0.5,
+                    "target_ratio": 0.1,
+                    "sampled_ratio": 0.11,
+                    "deviation": 0.01,
+                    "tolerance_met": True,
+                    "dataset_c_available_fixture_count": 11,
+                    "dataset_c_available_repo_count": 11,
+                    "sampled_fixture_count": 11,
+                    "sampled_repo_count": 11,
+                },
+            },
+        }
+        (output_dir / "sample_c_repos.json").write_text(json.dumps(summary))
+
+        lines = _render_dataset_c_sampling_summary(output_dir=output_dir)
+        report = "\n".join(lines)
+
+        assert "Matched against Dataset a: 99/100 fixtures, 12 repos, seed=42." in report
+        assert "| Python | 50.0% | 90.0% | 89.0% | 10/50 | 88/500 |" in report
+        # java sampled all 11/11 available repos -- must show the "(all)"
+        # shortfall marker.
+        assert "| Java | 50.0% | 10.0% | 11.0% | 11/11 (all) | 11/11 |" in report
+        # javascript/typescript weren't in distribution_check at all --
+        # must still render as N/A rows, not be silently omitted.
+        assert "| JavaScript | N/A | N/A | N/A | N/A | N/A |" in report
+        assert "| TypeScript | N/A | N/A | N/A | N/A | N/A |" in report
+
+    def test_generate_report_includes_sampling_summary_section(self, tmp_path):
+        output_dir = tmp_path / "output"
+        output_dir.mkdir(parents=True)
+        (output_dir / "sample_c_repos.json").write_text(
+            json.dumps(
+                {
+                    "match_dataset": "a",
+                    "target_count": 10,
+                    "sampled_fixture_count": 10,
+                    "sampled_repo_count": 2,
+                    "random_seed": 42,
+                    "distribution_check": {},
+                }
+            )
+        )
+        report = generate_report(
+            db_root=tmp_path,
+            datasets_root=tmp_path / "datasets",
+            raw_search_dir=tmp_path / "raw",
+            sample_output_dir=output_dir,
+        )
+        assert "## Dataset C: Sampling-Down Summary" in report
+        assert "Matched against Dataset a: 10/10 fixtures, 2 repos, seed=42." in report
