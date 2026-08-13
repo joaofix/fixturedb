@@ -22,6 +22,20 @@ min_commits: 100
 min_test_files: 5
 min_fixtures_found: 1 # repos where we detect zero fixtures are dropped
 
+# Dataset C only: every candidate already comes from SEART GHS
+# (github-search-raw/), pre-filtered at *source* to >=5k non-blank LOC --
+# but that filter uses today's crawl-time GitHub metadata, not the repo's
+# real state at its own pre-2021 cutoff snapshot (same survivorship-bias
+# problem already fixed for min_commits/min_test_files above, which
+# dataset_c.py re-measures honestly from the repo's real git history at
+# its cutoff commit instead of trusting live/source-crawl values -- see
+# internal-docs/methodology-improvements/dataset-c-repo-selection.md).
+# This closes the same gap for LOC. Unlike min_stars (no historical star
+# time series exists at all, so that filter was dropped rather than
+# re-measured -- see dataset-card.md's Known Limitations), LOC *is*
+# derivable from the pinned cutoff commit's own tree.
+min_non_blank_loc: 5000
+
 # Sampling
 target_repos_per_language_between_group: 500
 dataset_c_sampling_seed: 42 # overridable via the DATASET_C_SAMPLING_SEED env var

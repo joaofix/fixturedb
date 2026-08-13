@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from collection.dataset_c import (
+    _count_repo_loc,
     _process_repo,
     _save_dataset_c_checkpoint,
     collect_dataset_c_fixtures,
@@ -667,10 +668,11 @@ def test_dataset_c_persistence_error_logs_warning(tmp_path, caplog):
 
 
 # ---------------------------------------------------------------------------
-# count_commits_up_to / _process_repo quality gates
+# count_commits_up_to / _count_repo_loc / _process_repo quality gates
 #
-# These enforce MIN_COMMITS/MIN_TEST_FILES against the repo's real state at
-# its cutoff commit, not GitHub's live metadata -- see
+# These enforce MIN_COMMITS/MIN_NON_BLANK_LOC/MIN_TEST_FILES against the
+# repo's real state at its cutoff commit, not GitHub's live metadata (or,
+# for LOC, github-search-raw/'s crawl-time source filter) -- see
 # internal-docs/methodology-improvements/dataset-c-repo-selection.md.
 # ---------------------------------------------------------------------------
 
@@ -690,6 +692,36 @@ def test_count_commits_up_to_invalid_sha_returns_zero(tmp_path):
     repo_path = _make_git_repo(tmp_path)
     _commit(repo_path, "a.txt", "1", "2016-01-01T00:00:00")
     assert count_commits_up_to(repo_path, "0" * 40) == 0
+
+
+def test_count_repo_loc_sums_non_blank_lines_across_recognized_languages(tmp_path):
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    (repo_path / "a.py").write_text("line1\nline2\n\nline3\n")  # 3 non-blank
+    (repo_path / "b.js").write_text("line1\n\n\nline2\n")  # 2 non-blank
+
+    assert _count_repo_loc(repo_path) == 5
+
+
+def test_count_repo_loc_ignores_unrecognized_extensions(tmp_path):
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    (repo_path / "README.md").write_text("line1\nline2\nline3\n")
+    (repo_path / "data.json").write_text('{"a": 1}\n')
+
+    assert _count_repo_loc(repo_path) == 0
+
+
+def test_count_repo_loc_skips_vendored_directories(tmp_path):
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+    (repo_path / "src.py").write_text("line1\nline2\n")  # 2 non-blank
+
+    vendored = repo_path / "node_modules" / "some_lib"
+    vendored.mkdir(parents=True)
+    (vendored / "big.js").write_text("\n".join(f"line{i}" for i in range(1000)))
+
+    assert _count_repo_loc(repo_path) == 2
 
 
 @contextmanager
@@ -729,6 +761,47 @@ def test_process_repo_rejects_below_commit_floor_at_cutoff(tmp_path):
     assert results == []
 
 
+def test_process_repo_rejects_below_loc_floor_at_cutoff(tmp_path):
+    """github-search-raw/ pre-filters to >=5k LOC at *source*, but from
+    today's crawl -- a repo that was tiny back at its own cutoff snapshot
+    and only grew past that floor afterward must still be rejected here,
+    the same survivorship-bias fix already applied to commit count above."""
+    repo_path = _make_git_repo(tmp_path)
+    for i in range(6):
+        _commit(repo_path, f"f{i}.txt", str(i), f"2018-01-0{i + 1}T00:00:00")
+    # Tiny amount of real code at the cutoff -- nowhere near a real 5k floor.
+    (repo_path / "test_only_one.py").write_text(
+        "def test_x():\n    assert True\n"
+    )
+    _git(repo_path, "add", "test_only_one.py")
+    import os
+
+    env = dict(os.environ)
+    env["GIT_AUTHOR_DATE"] = "2018-06-01T00:00:00"
+    env["GIT_COMMITTER_DATE"] = "2018-06-01T00:00:00"
+    _git(repo_path, "commit", "-m", "add test file", env=env)
+
+    extractor = AgentFixtureExtractor(
+        clones_dir=tmp_path, source_db=None, start_date="1970-01-01"
+    )
+    repo = {
+        "full_name": "owner/repo",
+        "language": "python",
+        "clone_url": "https://example.com/owner/repo.git",
+    }
+
+    with patch("collection.dataset_c.MIN_COMMITS", 3), patch(
+        "collection.dataset_c.MIN_TEST_FILES", 1
+    ), patch("collection.dataset_c.MIN_NON_BLANK_LOC", 1000), patch(
+        "collection.dataset_c.clone_with_function",
+        side_effect=lambda fn, url, path: _fake_clone_at(repo_path),
+    ):
+        success, results = _process_repo(repo, {}, extractor, tmp_path)
+
+    assert success is True
+    assert results == []
+
+
 def test_process_repo_rejects_below_test_file_floor_at_cutoff(tmp_path):
     repo_path = _make_git_repo(tmp_path)
     for i in range(6):
@@ -754,7 +827,7 @@ def test_process_repo_rejects_below_test_file_floor_at_cutoff(tmp_path):
 
     with patch("collection.dataset_c.MIN_COMMITS", 3), patch(
         "collection.dataset_c.MIN_TEST_FILES", 5
-    ), patch(
+    ), patch("collection.dataset_c.MIN_NON_BLANK_LOC", 1), patch(
         "collection.dataset_c.clone_with_function",
         side_effect=lambda fn, url, path: _fake_clone_at(repo_path),
     ):
@@ -794,7 +867,7 @@ def test_process_repo_extracts_fixtures_when_both_floors_pass(tmp_path):
 
     with patch("collection.dataset_c.MIN_COMMITS", 3), patch(
         "collection.dataset_c.MIN_TEST_FILES", 1
-    ), patch(
+    ), patch("collection.dataset_c.MIN_NON_BLANK_LOC", 1), patch(
         "collection.dataset_c.clone_with_function",
         side_effect=lambda fn, url, path: _fake_clone_at(repo_path),
     ):
@@ -848,7 +921,7 @@ def test_process_repo_extracts_cross_language_leakage_fixtures(tmp_path):
 
     with patch("collection.dataset_c.MIN_COMMITS", 3), patch(
         "collection.dataset_c.MIN_TEST_FILES", 1
-    ), patch(
+    ), patch("collection.dataset_c.MIN_NON_BLANK_LOC", 1), patch(
         "collection.dataset_c.clone_with_function",
         side_effect=lambda fn, url, path: _fake_clone_at(repo_path),
     ):
@@ -896,7 +969,7 @@ def test_process_repo_embeds_github_id_in_fixture_dicts(tmp_path):
 
     with patch("collection.dataset_c.MIN_COMMITS", 3), patch(
         "collection.dataset_c.MIN_TEST_FILES", 1
-    ), patch(
+    ), patch("collection.dataset_c.MIN_NON_BLANK_LOC", 1), patch(
         "collection.dataset_c.clone_with_function",
         side_effect=lambda fn, url, path: _fake_clone_at(repo_path),
     ):

@@ -8,15 +8,16 @@ Entry point: `python -m collection extract-fixtures --dataset c`. See
 agent_corpus.py (Dataset A) and human_corpus.py (Dataset B, the within-repo
 matched control) for the other two datasets.
 
-Repo quality (commit count, test file count) is enforced in _process_repo()
-below from each repo's real git history as of its cutoff commit, not from
-GitHub's live metadata -- see that function's docstring for why. See
-internal-docs/methodology-improvements/dataset-c-repo-selection.md for the
-full reasoning behind this module's current design.
+Repo quality (commit count, test file count, non-blank LOC) is enforced in
+_process_repo() below from each repo's real git history as of its cutoff
+commit, not from GitHub's live metadata -- see that function's docstring
+for why. See internal-docs/methodology-improvements/dataset-c-repo-selection.md
+for the full reasoning behind this module's current design.
 """
 
 import csv
 import json
+import os
 import subprocess
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -27,11 +28,13 @@ from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+from collection.agent_patterns import _EXCLUDED_DIR_NAMES
 from collection.clone_primitives import clone_repo_for_commit_scan
 from collection.config import (
     DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
     MIN_COMMITS,
+    MIN_NON_BLANK_LOC,
     MIN_TEST_FILES,
 )
 from collection.corpus_utils import (
@@ -40,6 +43,7 @@ from collection.corpus_utils import (
     persist_repository_and_fixtures,
 )
 from collection.db import db_session, initialise_db
+from collection.detector_shared import _count_file_loc
 from collection.ephemeral_clone import clone_with_function
 from collection.fixture_extractor import AgentFixtureExtractor
 from collection.language_utils import get_language_static
@@ -233,6 +237,40 @@ def find_test_files_with_language(repo_path: Path) -> List[Tuple[str, str]]:
     return found
 
 
+def _count_repo_loc(repo_path: Path) -> int:
+    """Total non-blank lines of code across every recognized source file
+    (any of the 4 supported languages) in the repo's current checkout.
+
+    Same "which files count" (`get_language_static`) and "what counts as
+    a line" (`_count_file_loc` -- non-blank, no comment-stripping)
+    definitions used everywhere else in this codebase for fixture/file
+    LOC, just summed repo-wide instead of per-fixture. Kept as its own
+    walk rather than folded into `find_test_files_with_language()`'s --
+    that one uses `rglob()`, which has no directory-pruning mechanism, and
+    changing its walk strategy for an unrelated concern isn't worth it
+    when this repo is already checked out locally (no network, no clone
+    -- an extra local-disk pass is cheap).
+
+    Prunes vendored/generated/cache directories via the same
+    `_EXCLUDED_DIR_NAMES` list `agent_patterns.py`/
+    `agent_signal_primitives.py` already use for their own repo-tree
+    walks -- without it, a single `node_modules/` could dwarf a repo's
+    real code volume and make this check meaningless.
+    """
+    total = 0
+    for dirpath, dirnames, filenames in os.walk(repo_path):
+        dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIR_NAMES]
+        for filename in filenames:
+            file_path = Path(dirpath) / filename
+            if get_language_static(file_path) == "unknown":
+                continue
+            try:
+                total += _count_file_loc(file_path.read_bytes())
+            except OSError as exc:
+                logger.debug("Failed to read %s for LOC count: %s", file_path, exc)
+    return total
+
+
 def _load_dataset_c_checkpoint(
     checkpoint_path: Path,
 ) -> Tuple[Set[str], Dict[str, int]]:
@@ -357,6 +395,26 @@ def _process_repo(
                 exc,
             )
             return False, []
+
+        # Second real quality floor, also measured at the cutoff commit
+        # itself. github-search-raw/ already pre-filters candidates to
+        # >=5k non-blank LOC at *source* (SEART GHS, crawl time) -- but
+        # that's today's metadata, not the repo's real size back at its
+        # own pre-2021 cutoff, the same survivorship-bias gap the commit
+        # floor above already closes for commit count. A repo could have
+        # been a tiny toy project in 2020 and only grown past 5k LOC well
+        # afterward. Needs the checkout (unlike the commit floor above),
+        # so it can't run any earlier.
+        repo_loc = _count_repo_loc(actual_repo_path)
+        if repo_loc < MIN_NON_BLANK_LOC:
+            logger.debug(
+                "[Dataset C] %s has only %d non-blank LOC at cutoff %s (need %d)",
+                repo_name,
+                repo_loc,
+                cutoff_sha[:8],
+                MIN_NON_BLANK_LOC,
+            )
+            return True, []
 
         test_files = find_test_files_with_language(actual_repo_path)
         if len(test_files) < MIN_TEST_FILES:

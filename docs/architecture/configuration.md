@@ -171,7 +171,8 @@ SELECT COUNT(*) FROM fixtures;
 ## Quality Filters
 
 Shared thresholds from `collection/config.py`: `MIN_STARS = 500`,
-`MIN_COMMITS = 100`, `MIN_TEST_FILES = 5`.
+`MIN_COMMITS = 100`, `MIN_TEST_FILES = 5`. `MIN_NON_BLANK_LOC = 5000` is
+Dataset C only (below).
 
 ### Dataset A / Dataset B (same repos)
 - Repositories with agent config files and agent commits in the 2025+ window
@@ -183,9 +184,15 @@ Shared thresholds from `collection/config.py`: `MIN_STARS = 500`,
   domain/category stratification, no per-language cap (see `select_dataset_c_repos.py`)
 - **No `MIN_STARS` filter.** GitHub's live star count only reflects today's popularity, not the repo's
   standing at the pre-2021 snapshot — see the methodology doc linked above for why this would bias the
-  sample toward repos that happened to succeed later.
-- `MIN_COMMITS`/`MIN_TEST_FILES` are still enforced, but measured from the repo's real git history as of
-  its own cutoff commit (`dataset_c.py::count_commits_up_to()`), not from GitHub's live metadata
+  sample toward repos that happened to succeed later. Unlike the two thresholds below, there's no
+  historical star time series to re-measure honestly against, so this one is simply dropped rather
+  than re-checked.
+- `MIN_COMMITS`/`MIN_TEST_FILES`/`MIN_NON_BLANK_LOC` are all enforced, but measured from the repo's
+  real git history as of its own cutoff commit (`dataset_c.py::count_commits_up_to()`/
+  `_count_repo_loc()`), not from GitHub's live metadata or `github-search-raw/`'s crawl-time source
+  filter — `MIN_NON_BLANK_LOC` in particular re-verifies that source filter's own `≥5k LOC` floor
+  (see [Dataset Card](../data/dataset-card.md)) honestly against the pre-2021 snapshot, since a repo
+  could have been far smaller back then and only grown past that floor afterward.
 - Pinned pre-2021 cutoff commit per repo (no diff/purity gating — full snapshot extraction)
 
 ## Logging and Monitoring
@@ -210,7 +217,7 @@ Fixed, non-per-run configuration lives as YAML data files, not hardcoded Python 
 | Repo name/description keywords for boilerplate/toy repos | `collection/heuristics/exclusion_keywords.yaml` | `config.EXCLUSION_KEYWORDS` |
 | Known testing frameworks per language | `collection/study_parameters/framework_registry.yaml` | `config.FRAMEWORK_REGISTRY` |
 | Per-language search/test-detection settings | `collection/study_parameters/language_configs.yaml` | `config.LANGUAGE_CONFIGS` |
-| Temporal boundaries, quality thresholds, sampling parameters | `collection/study_parameters/study_parameters.yaml` | `config.HUMAN_CORPUS_CUTOFF_DATE` / `MIN_STARS` / `MIN_COMMITS` / `MIN_TEST_FILES` / `MIN_FIXTURES_FOUND` / `TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP` / `DATASET_C_SAMPLING_SEED` / `TIER1_*` / `TIER2_*` |
+| Temporal boundaries, quality thresholds, sampling parameters | `collection/study_parameters/study_parameters.yaml` | `config.HUMAN_CORPUS_CUTOFF_DATE` / `MIN_STARS` / `MIN_COMMITS` / `MIN_TEST_FILES` / `MIN_NON_BLANK_LOC` / `MIN_FIXTURES_FOUND` / `TARGET_REPOS_PER_LANGUAGE_BETWEEN_GROUP` / `DATASET_C_SAMPLING_SEED` / `TIER1_*` / `TIER2_*` |
 | Agent detection: config-file patterns | `collection/heuristics/agent-mining/agent_files.csv` (mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s `files.csv` schema+content) | `agent_patterns.PAPER_AGENT_CONFIG_PATTERNS` / `LIGHTWEIGHT_AGENT_CONFIG_PATTERNS` |
 | Agent detection: paper's strict-scope agent subset | `collection/heuristics/agent_heuristics.yaml` (`paper_scope`) | `agent_patterns.PAPER_AGENT_CONFIG_PATTERNS` |
 | Agent detection: commit author/trailer signatures | `collection/heuristics/agent-mining/agent_authors.csv` (mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s `authors.csv` schema+content) | `agent_patterns.AGENT_SIGNATURES` |
@@ -228,7 +235,7 @@ Each detected fixture is also classified into the classic test-double taxonomy (
 
 `tests/collection/test_mock_detection/test_mock_pattern_catalog_coverage.py` parametrizes over all 30 `mock_patterns` entries and asserts no other pattern in the catalog also matches the same sample: the bare `Mock()`/`MagicMock()`/`AsyncMock()` pattern is word-boundary-scoped, so it doesn't match inside `EasyMock.createMock(...)`, and MockK's `mock(X.class)` pattern excludes `Mockito.mock(X.class)` via a negative lookbehind. `Mockito.spy(...)` is its own pattern, giving Java `spy`-category coverage distinct from `mock()`.
 
-Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`) and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`) remain plain constants directly in `collection/config.py` — they're single values tuned for this study's design, not open-ended catalogs expected to grow.
+Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`) and quality thresholds (`MIN_STARS`, `MIN_COMMITS`, `MIN_TEST_FILES`, `MIN_NON_BLANK_LOC`) remain plain constants directly in `collection/config.py` — they're single values tuned for this study's design, not open-ended catalogs expected to grow.
 
 ## Environment Variables
 

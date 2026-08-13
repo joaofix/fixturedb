@@ -79,6 +79,7 @@ MIN_STARS = _STUDY_PARAMS["min_stars"]
 MIN_COMMITS = _STUDY_PARAMS["min_commits"]
 MIN_TEST_FILES = _STUDY_PARAMS["min_test_files"]
 MIN_FIXTURES_FOUND = _STUDY_PARAMS["min_fixtures_found"]
+MIN_NON_BLANK_LOC = _STUDY_PARAMS["min_non_blank_loc"]  # Dataset C only
 
 # Agent configuration files are defined in `collection/agent_patterns.py` as
 # explicit pattern lists (with wildcard and directory markers) and imported by
