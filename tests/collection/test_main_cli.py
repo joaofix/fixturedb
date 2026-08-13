@@ -273,17 +273,18 @@ class TestFilterTestCommits:
 
 
 class TestExtractFixtures:
-    def test_dataset_a_skips_when_db_already_has_fixtures(self):
-        with patch("collection.resume_utils.database_has_rows", return_value=True):
-            with patch(
-                "collection.agent_corpus.AgentCorpusCollector"
-            ) as MockCollector:
-                rc = main(["extract-fixtures", "--dataset", "a"])
-
-        assert rc == 0
-        MockCollector.assert_not_called()
-
-    def test_dataset_a_force_reextracts_even_if_db_has_rows(self):
+    def test_dataset_a_does_not_skip_when_db_already_has_fixtures_from_another_language(
+        self,
+    ):
+        """Regression (2026-08-12): unlike the old behavior, dataset a must
+        NOT gate on a dataset-wide database_has_rows() check. A prior
+        `--language python` call can incidentally insert a handful of
+        cross-language fixture rows, which made every subsequent
+        `--language X` call see the DB as "already has fixture rows" and
+        skip entirely -- even without --force, even though X was never
+        processed. The real gate is AgentCorpusCollector.run()'s own
+        per-language DB checkpoints. Mirrors Dataset B's equivalent test
+        below."""
         stats = MagicMock(fixtures_collected=5)
         with patch("collection.resume_utils.database_has_rows", return_value=True):
             with patch(
@@ -293,22 +294,29 @@ class TestExtractFixtures:
                     stats,
                     paths.db_path("a"),
                 )
-                rc = main(["extract-fixtures", "--dataset", "a", "--force"])
+                rc = main(
+                    ["extract-fixtures", "--dataset", "a", "--language", "java"]
+                )
 
         assert rc == 0
-        MockCollector.assert_called_once()
+        MockCollector.return_value.run.assert_called_once_with(
+            repos_per_language=None,
+            languages=None,
+            language="java",
+            force=False,
+            workers=8,
+        )
 
     def test_dataset_a_resolves_defaults(self):
         stats = MagicMock(fixtures_collected=5)
-        with patch("collection.resume_utils.database_has_rows", return_value=False):
-            with patch(
-                "collection.agent_corpus.AgentCorpusCollector"
-            ) as MockCollector:
-                MockCollector.return_value.run.return_value = (
-                    stats,
-                    paths.db_path("a"),
-                )
-                rc = main(["extract-fixtures", "--dataset", "a"])
+        with patch(
+            "collection.agent_corpus.AgentCorpusCollector"
+        ) as MockCollector:
+            MockCollector.return_value.run.return_value = (
+                stats,
+                paths.db_path("a"),
+            )
+            rc = main(["extract-fixtures", "--dataset", "a"])
 
         assert rc == 0
         MockCollector.assert_called_once_with(
@@ -325,15 +333,14 @@ class TestExtractFixtures:
         silently; autospec=True makes the mock enforce the real method
         signature instead."""
         stats = MagicMock(fixtures_collected=5)
-        with patch("collection.resume_utils.database_has_rows", return_value=False):
-            with patch(
-                "collection.agent_corpus.AgentCorpusCollector", autospec=True
-            ) as MockCollector:
-                MockCollector.return_value.run.return_value = (
-                    stats,
-                    paths.db_path("a"),
-                )
-                rc = main(["extract-fixtures", "--dataset", "a", "--workers", "16"])
+        with patch(
+            "collection.agent_corpus.AgentCorpusCollector", autospec=True
+        ) as MockCollector:
+            MockCollector.return_value.run.return_value = (
+                stats,
+                paths.db_path("a"),
+            )
+            rc = main(["extract-fixtures", "--dataset", "a", "--workers", "16"])
 
         assert rc == 0
         MockCollector.return_value.run.assert_called_once_with(
@@ -422,16 +429,15 @@ class TestExtractFixtures:
 
     def test_dataset_c_resolves_defaults(self):
         fake_repos = [{"full_name": "o/r", "language": "python"}]
-        with patch("collection.resume_utils.database_has_rows", return_value=False):
+        with patch(
+            "collection.dataset_c.load_dataset_c_repos",
+            return_value=fake_repos,
+        ) as mock_load:
             with patch(
-                "collection.dataset_c.load_dataset_c_repos",
-                return_value=fake_repos,
-            ) as mock_load:
-                with patch(
-                    "collection.dataset_c.collect_dataset_c_fixtures",
-                    return_value=({"python": 1}, paths.db_path("c")),
-                ) as mock_extract:
-                    rc = main(["extract-fixtures", "--dataset", "c"])
+                "collection.dataset_c.collect_dataset_c_fixtures",
+                return_value=({"python": 1}, paths.db_path("c")),
+            ) as mock_extract:
+                rc = main(["extract-fixtures", "--dataset", "c"])
 
         assert rc == 0
         mock_load.assert_called_once_with(paths.stage_dir("c", "repos") / "all.csv")
@@ -444,27 +450,54 @@ class TestExtractFixtures:
         )
 
     def test_dataset_c_language_filter_selects_per_language_csv(self):
-        with patch("collection.resume_utils.database_has_rows", return_value=False):
+        with patch(
+            "collection.dataset_c.load_dataset_c_repos", return_value=[]
+        ) as mock_load:
+            with patch(
+                "collection.dataset_c.collect_dataset_c_fixtures",
+                return_value=({}, paths.db_path("c")),
+            ):
+                main(
+                    [
+                        "extract-fixtures",
+                        "--dataset",
+                        "c",
+                        "--language",
+                        "python",
+                    ]
+                )
+
+        mock_load.assert_called_once_with(
+            paths.stage_dir("c", "repos") / "python_repo.csv"
+        )
+
+    def test_dataset_c_does_not_skip_when_db_already_has_fixtures_from_another_language(
+        self,
+    ):
+        """Regression (2026-08-12): same bug/fix as Dataset A/B above --
+        dataset c must NOT gate on a dataset-wide database_has_rows() check
+        either. collect_dataset_c_fixtures()'s own per-language JSON
+        checkpoint (dataset_c_checkpoint_{language}.json) is the real gate."""
+        with patch("collection.resume_utils.database_has_rows", return_value=True):
             with patch(
                 "collection.dataset_c.load_dataset_c_repos", return_value=[]
-            ) as mock_load:
+            ):
                 with patch(
                     "collection.dataset_c.collect_dataset_c_fixtures",
                     return_value=({}, paths.db_path("c")),
-                ):
-                    main(
+                ) as mock_extract:
+                    rc = main(
                         [
                             "extract-fixtures",
                             "--dataset",
                             "c",
                             "--language",
-                            "python",
+                            "java",
                         ]
                     )
 
-        mock_load.assert_called_once_with(
-            paths.stage_dir("c", "repos") / "python_repo.csv"
-        )
+        assert rc == 0
+        mock_extract.assert_called_once()
 
 
 class TestAnalyzeDistribution:

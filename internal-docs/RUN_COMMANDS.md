@@ -45,15 +45,21 @@ one command to paste.
 ```bash
 # Dataset A (agent-authored fixtures)
 python3 -m collection discover-repos --dataset a --workers 16 \
-  && curl -d "Dataset A 1/5: discover-repos finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset A 1/8: discover-repos finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection discover-commits --dataset a --workers 16 \
-  && curl -d "Dataset A 2/5: discover-commits finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset A 2/8: discover-commits finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection.dedupe_commits_by_sha --dataset a \
-  && curl -d "Dataset A 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset A 3/8: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection filter-test-commits --dataset a --workers 16 \
-  && curl -d "Dataset A 4/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset a --workers 16 \
-  && curl -d "Dataset A 5/5: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset A 4/8: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset a --language python --workers 16 \
+  && curl -d "Dataset A 5/8: extract-fixtures (python) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset a --language java --workers 16 \
+  && curl -d "Dataset A 6/8: extract-fixtures (java) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset a --language javascript --workers 16 \
+  && curl -d "Dataset A 7/8: extract-fixtures (javascript) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset a --language typescript --workers 16 \
+  && curl -d "Dataset A 8/8: extract-fixtures (typescript) finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
@@ -73,13 +79,19 @@ python3 -m collection discover-repos --dataset b \
 ```bash
 # Dataset C (human-authored, cross-repo baseline) — independent of A/B
 python3 -m collection discover-repos --dataset c \
-  && curl -d "Dataset C 1/4: discover-repos (pass 1) finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset C 1/7: discover-repos (pass 1) finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection.dedupe_dataset_c_repos \
-  && curl -d "Dataset C 2/4: dedupe_dataset_c_repos finished" ntfy.sh/joaofix_fixturedb \
+  && curl -d "Dataset C 2/7: dedupe_dataset_c_repos finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection discover-repos --dataset c \
-  && curl -d "Dataset C 3/4: discover-repos (pass 2, post-dedupe) finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset c --workers 16 \
-  && curl -d "Dataset C 4/4: extract-fixtures finished (collection complete)" ntfy.sh/joaofix_fixturedb
+  && curl -d "Dataset C 3/7: discover-repos (pass 2, post-dedupe) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset c --language python --workers 16 \
+  && curl -d "Dataset C 4/7: extract-fixtures (python) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset c --language java --workers 16 \
+  && curl -d "Dataset C 5/7: extract-fixtures (java) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset c --language javascript --workers 16 \
+  && curl -d "Dataset C 6/7: extract-fixtures (javascript) finished" ntfy.sh/joaofix_fixturedb \
+  && python3 -m collection extract-fixtures --dataset c --language typescript --workers 16 \
+  && curl -d "Dataset C 7/7: extract-fixtures (typescript) finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
@@ -134,22 +146,30 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     at all. Caught via `tests/collection/test_main_cli.py`'s
     `test_dataset_b_run_call_matches_real_signature` (uses `autospec=True` so the
     mock enforces the real method signature instead of silently accepting anything).
-  - If you split `extract-fixtures --dataset b` into separate per-language calls
-    (rather than the single all-languages call above), no `--force` is needed
-    between them, and none should be added — each call correctly gates on its
-    own `human_within_complete:{lang}` DB checkpoint regardless of what other
-    languages already ran. This didn't always hold: a dataset-wide
-    `database_has_rows(output_db, "fixtures")` check used to run before that,
-    so a repo tagged one language but containing test files in another (a
-    genuine, expected outcome, not a bug -- see
-    `docs/architecture/collection.md`'s "Repository deduplication") could make
-    an earlier language's run insert a handful of rows that then caused every
-    subsequent `--language X` call to see the DB as "already has fixture
-    rows" and skip X entirely, silently, even without `--force`. Removed in
-    `collection/__main__.py`; regression test:
-    `test_dataset_b_does_not_skip_when_db_already_has_fixtures_from_another_language`.
-    Datasets A and C still have this dataset-wide gate -- untouched, since
-    neither is ever run split per-language today.
+  - **All three of `extract-fixtures --dataset {a,b,c}` are safe to split into
+    separate per-language calls** (as the Dataset A/C chains above now do), no
+    `--force` needed between them, and none should be added — each call
+    correctly gates on its own per-language checkpoint (`agent_complete:{lang}`
+    for A, `human_within_complete:{lang}` for B, `dataset_c_checkpoint_
+    {language}.json` for C) regardless of what other languages already ran.
+    This didn't always hold for any of them: a dataset-wide
+    `database_has_rows(output_db, "fixtures")` check used to run before the
+    per-language logic was ever reached, so a repo tagged one language but
+    containing test files in another (a genuine, expected outcome, not a bug
+    -- see `docs/architecture/collection.md`'s "Repository deduplication")
+    could make an earlier language's run insert a handful of rows that then
+    caused every subsequent `--language X` call to see the DB as "already has
+    fixture rows" and skip X entirely, silently, even without `--force`. Fixed
+    for B first, then for A and C on 2026-08-12 once splitting them per-language
+    (to get one ntfy notification per language) surfaced the same bug there.
+    Removed in `collection/__main__.py`; regression tests:
+    `test_dataset_{a,b,c}_does_not_skip_when_db_already_has_fixtures_from_another_language`
+    in `tests/collection/test_main_cli.py`. One asymmetry survives: `--force`
+    has no effect at all for `--dataset c` (before or after this fix) --
+    `collect_dataset_c_fixtures()` never accepted a `force` param, so the
+    now-removed dataset-wide gate was the only thing `--force` ever bypassed
+    there; A and B's collectors both wire `--force` through to their own
+    `run()` and honor it for real re-processing.
 - **Dataset C's `discover-repos` runs twice, with `dedupe_dataset_c_repos.py` in
   between.** `dedupe_dataset_c_repos.py` needs Dataset C's already-selected
   candidate pool to check for repos sharing an identical commit at
