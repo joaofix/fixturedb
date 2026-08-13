@@ -80,3 +80,41 @@ def test_collect_test_files_for_commit_detects_modified_test_files(
 
     test_files = collect_test_files_for_commit(repo, commit_sha, "python")
     assert test_files == ["tests/test_widget.py"]
+
+
+def test_collect_test_files_for_commit_survives_modified_files_diff_failure(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Regression (2026-08-12): commit.modified_files computes the diff (a
+    `git diff-tree` subprocess call) the moment it's accessed -- outside
+    traverse_commits()'s own try/except above. Real incident: a repo's
+    --filter=blob:limit=10m partial clone needed an on-demand blob fetch for
+    this diff, that fetch failed, and GitCommandError propagated straight
+    out of the for-loop uncaught -- crashing the entire extract-fixtures run
+    over one commit's diff. Must be caught and treated the same as a failed
+    traverse_commits() call: no test files, not a crash."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init")
+    _git(repo, "config", "user.name", "Test User")
+    _git(repo, "config", "user.email", "test@example.com")
+    (repo / "a.txt").write_text("hello\n", encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-m", "initial")
+    commit_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    from pydriller.domain.commit import Commit
+
+    def _boom(self):
+        raise RuntimeError("simulated git diff-tree failure")
+
+    monkeypatch.setattr(Commit, "modified_files", property(_boom))
+
+    test_files = collect_test_files_for_commit(repo, commit_sha, "python")
+    assert test_files == []

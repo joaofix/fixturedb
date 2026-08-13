@@ -106,7 +106,25 @@ def collect_test_files_for_commit(
     test_files: list[str] = []
     seen: set[str] = set()
 
-    for modified_file in commit.modified_files:
+    # commit.modified_files is a property that computes the diff (a `git
+    # diff-tree` subprocess call) the moment it's accessed here -- not
+    # lazily per-item, so this needs its own try/except, separate from
+    # traverse_commits()'s above. Real incident (2026-08-12): a repo's
+    # --filter=blob:limit=10m partial clone needed to fetch a filtered-out
+    # blob on demand for this specific diff, that fetch failed, and
+    # GitCommandError propagated straight out of this loop uncaught --
+    # crashing the whole extract-fixtures run over one commit's diff,
+    # exactly the kind of single-commit failure traverse_commits()'s own
+    # try/except was already built to absorb.
+    try:
+        modified_files = commit.modified_files
+    except Exception:
+        logger.debug(
+            "Failed to diff commit %s in %s", commit_sha, repo_path, exc_info=True
+        )
+        return []
+
+    for modified_file in modified_files:
         if modified_file.change_type == ModificationType.DELETE:
             continue
 
