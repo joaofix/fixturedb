@@ -1,11 +1,12 @@
 """Tests for collection/research_questions/rq2.py.
 
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
-schema, initialise_db()) and checks the kind classification, per-repo
-ratio computation, teardown-rate-by-type breakdown, and report rendering
--- never touching the real db/ or research_questions/ directories. The
-Mann-Whitney U / chi-square math itself is already covered by
-tests/between_group/test_between_group_comparison.py.
+schema, initialise_db()) and checks the kind classification, per-repo/
+per-language repo-count bookkeeping, and report rendering -- never touching
+the real db/ or research_questions/ directories. The Mann-Whitney U math
+itself (including compare_categorical_repo_level()'s per-category proportion
+test) is already covered by tests/between_group/test_between_group_
+comparison.py and tests/collection/test_research_questions_shared.py.
 """
 
 from __future__ import annotations
@@ -252,9 +253,11 @@ class TestLoadDatasetMetrics:
         assert {"setup": 2, "teardown": 1, "other": 1} in metrics.kind_counts_by_repo.values()
         assert {"setup": 1, "teardown": 0, "other": 0} in metrics.kind_counts_by_repo.values()
 
-    def test_kind_n_by_language_counts_distinct_repos(self, tmp_path):
-        """One repo contributing fixtures in two languages -> n=1 for each
-        language, not the fixture count."""
+    def test_kind_counts_by_repo_and_language_splits_by_fixtures_own_language(self, tmp_path):
+        """One repo contributing fixtures in two languages must get its own
+        {setup/teardown/other: count} entry under EACH language, keyed by
+        that fixture's own test_files.language (not the repo's tag) -- the
+        per-language rows' population."""
         _make_multi_language_db(
             tmp_path,
             "a",
@@ -267,88 +270,18 @@ class TestLoadDatasetMetrics:
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.kind_n_by_language == {"python": 1, "typescript": 1}
-
-    def test_per_repo_ratio_computed_only_over_repos_with_teardown(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                # repo 0: 2 setup, 1 teardown -> ratio 2.0
-                [
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "after_each"},
-                ],
-                # repo 1: 3 setup, 0 teardown -> undefined, counted separately
-                [
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "before_each"},
-                ],
-                # repo 2: 0 setup, 1 teardown -> excluded entirely (no setup fixtures)
-                [{"fixture_type": "after_each"}],
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.per_repo_ratios == [2.0]
-        assert metrics.n_repos_with_setup == 2
-        assert metrics.n_repos_zero_teardown == 1
-
-    def test_teardown_rate_by_type(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [
-                    {"fixture_type": "pytest_decorator", "has_teardown_pair": 1},
-                    {"fixture_type": "pytest_decorator", "has_teardown_pair": 0},
-                    {"fixture_type": "pytest_decorator", "has_teardown_pair": 0},
-                    {"fixture_type": "junit_rule", "has_teardown_pair": 1},
-                ]
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.teardown_rate_by_type["pytest_decorator"] == {"n": 3, "n_with_pair": 1}
-        assert metrics.teardown_rate_by_type["junit_rule"] == {"n": 1, "n_with_pair": 1}
-
-    def test_per_repo_ratio_by_language_splits_one_repo_across_languages(self, tmp_path):
-        """A single repo with setup/teardown fixtures in two languages must
-        contribute a separate ratio data point to each language's bucket --
-        the whole reason this exists: the pooled per-repo ratio can hide a
-        language where teardown is neglected because another language in the
-        same repo compensates for it."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {"fixture_type": "before_each"},
-                        {"fixture_type": "before_each"},
-                        {"fixture_type": "after_each"},
-                    ],
-                },
-                {
-                    "language": "typescript",
-                    "fixtures": [{"fixture_type": "before_each"}] * 3,
-                },
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-
-        # Pooled: 5 setup, 1 teardown across the one repo -> a defined (if
-        # skewed) ratio, masking that typescript has zero teardown at all.
-        assert metrics.per_repo_ratios == [5.0]
-        assert metrics.n_repos_zero_teardown == 0
-
-        # Stratified: python's ratio is visible (2 setup / 1 teardown), and
-        # typescript's zero-teardown fixtures show up as undefined, not
-        # folded into python's defined ratio.
-        assert metrics.per_repo_ratios_by_language == {"python": [2.0], "typescript": []}
-        assert metrics.n_repos_with_setup_by_language == {"python": 1, "typescript": 1}
-        assert metrics.n_repos_zero_teardown_by_language == {"python": 0, "typescript": 1}
+        by_lang = metrics.kind_counts_by_repo_and_language
+        assert set(by_lang) == {"python", "typescript"}
+        # Same repo_id under both languages (one repo, two languages).
+        python_repo_id = next(iter(by_lang["python"]))
+        typescript_repo_id = next(iter(by_lang["typescript"]))
+        assert python_repo_id == typescript_repo_id
+        assert by_lang["python"][python_repo_id] == {"setup": 1, "teardown": 1, "other": 0}
+        assert by_lang["typescript"][typescript_repo_id] == {
+            "setup": 1,
+            "teardown": 0,
+            "other": 0,
+        }
 
 
 class TestGenerateReport:
@@ -362,8 +295,9 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # C summary, A-vs-C comparison, A-vs-C repo-level: 3 total.
-        assert report.count("Not available -- db not collected yet.") == 3
+        # C summary, A-vs-C comparison: 2 total (no separate repo-level
+        # section anymore -- the one table below IS the repo-level result).
+        assert report.count("Not available -- db not collected yet.") == 2
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         """_make_db's repo and its one test_file both use "python", so this
@@ -375,38 +309,27 @@ class TestGenerateReport:
         assert "Cross-language fixture leakage" in report
         assert "0/1 fixtures (0.00%) leaked." in report
 
-    def test_dataset_summary_includes_per_language_ratio_table(self, tmp_path):
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
-                },
-                {
-                    "language": "typescript",
-                    "fixtures": [{"fixture_type": "before_each"}],
-                },
-            ],
-        )
-        report = generate_report(db_root=tmp_path)
-        assert "**Per-repo setup-to-teardown ratio, by language**" in report
-        table_section = report.split("**Per-repo setup-to-teardown ratio, by language**")[1]
-        table_section = table_section.split("**has_teardown_pair rate by fixture_type**")[0]
-        assert "| python | 1 | 0 | 0.0% | 1 | 1.00 | 1.00 | 1.0 | 1.0 |" in table_section
-        assert "| typescript | 1 | 1 | 100.0% | 0 |" in table_section
-
-    def test_zero_teardown_repos_reported(self, tmp_path):
+    def test_removed_metrics_no_longer_appear(self, tmp_path):
+        """Ratio/no-teardown-rate/teardown-pair-rate were dropped from the
+        paper's reported output entirely -- not just de-pooled."""
         _make_db(
             tmp_path,
             "a",
             [[{"fixture_type": "before_each"}, {"fixture_type": "before_each"}]],
         )
+        _make_db(
+            tmp_path,
+            "c",
+            [[{"fixture_type": "before_each"}, {"fixture_type": "after_each"}]],
+        )
         report = generate_report(db_root=tmp_path)
-        assert "with zero teardown fixtures (ratio undefined): 1 (100.0%)" in report
+        assert "setup_to_teardown_ratio" not in report
+        assert "repo_zero_teardown_rate" not in report
+        assert "has_teardown_pair rate by fixture_type" not in report
+        assert "## Repo-level aggregates" not in report
+        assert "ratio undefined" not in report
 
-    def test_a_vs_c_comparison_renders(self, tmp_path):
+    def test_a_vs_c_comparison_renders_median_proportions_and_effect_size(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
@@ -424,28 +347,38 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        assert "### setup_to_teardown_ratio" in report
-        assert "### fixture_type_kind" in report
-        assert "### repo_zero_teardown_rate" in report
-        # Both _make_db calls use "python" test_files -- each metric's
-        # per-language family should show a real python row.
-        ratio_section = report.split("### setup_to_teardown_ratio")[1].split(
-            "### fixture_type_kind"
-        )[0]
-        assert "| python |" in ratio_section
-        assert "| Overall |" in ratio_section
-        # Effect size value + magnitude columns must actually have real
-        # data, not just "--" placeholders.
-        assert "large" in report or "medium" in report or "small" in report or "negligible" in report
+        assert (
+            "| Language | n_A | n_C | Setup A (%) | Setup C (%) | "
+            "Teardown A (%) | Teardown C (%) | V (A↔C) | p (BH) |" in report
+        )
+        # "python" also appears as a row label in the per-dataset
+        # cross-language-leakage tables above -- scope to the comparison
+        # section so we don't match those instead.
+        comparison_section = report.split("## A vs C:")[1]
+        # A: every repo is 4/5 setup, 1/5 teardown. C: every repo is 1/5
+        # setup, 4/5 teardown -- both _make_db calls use "python" test
+        # files, so Overall and the python row should show identical
+        # figures (2 repos, no per-repo variation).
+        overall_line = next(
+            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+        )
+        python_line = next(
+            line for line in comparison_section.splitlines() if line.startswith("| python |")
+        )
+        for line in (overall_line, python_line):
+            assert "| 2 | 2 |" in line
+            assert "80.0% | 20.0%" in line  # Setup A (%) | Setup C (%)
+            assert "20.0% | 80.0%" in line  # Teardown A (%) | Teardown C (%)
+            assert "large" in line  # maximally separated -> large Cliff's delta
         # Exact p-values, not a binary significant/not-significant column.
         assert "significant (p<0.05)" not in report
 
-    def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
-        """fixture_type_kind's repo-level companion to the chi-square
-        table: A is one repo with 100 setup-only fixtures plus one repo
-        with a single teardown-only fixture -- fixture-level, A looks
-        ~99% setup (dominated by the prolific repo). Per-repo, A is split
-        50/50 (1 of 2 repos each way)."""
+    def test_a_vs_c_comparison_declusters_a_prolific_repo(self, tmp_path):
+        """A is one repo with 100 setup-only fixtures plus one repo with a
+        single teardown-only fixture -- fixture-weighted, A would look
+        ~99% setup (dominated by the prolific repo). Per-repo (what's
+        actually reported), A is split 50/50 (1 of 2 repos each way), same
+        as C's much smaller but proportionally identical repos."""
         _make_db(
             tmp_path,
             "a",
@@ -463,14 +396,10 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        assert "## Repo-level aggregates" in report
-        repo_section = report.split("## Repo-level aggregates")[1]
-        setup_line = next(
-            line for line in repo_section.splitlines() if line.startswith("| setup |")
-        )
+        overall_line = next(line for line in report.splitlines() if line.startswith("| Overall |"))
         # Per-repo, both A and C are 1-of-2 repos setup-only (50%) --
-        # nowhere near the ~99% pooled figure the chi-square table above sees.
-        assert "| 50.0% | 50.0% | 50.0% | 50.0% |" in setup_line
+        # nowhere near a ~99%-setup fixture-weighted figure.
+        assert "50.0% | 50.0% | 50.0% | 50.0%" in overall_line
 
 
 class TestWriteReport:
