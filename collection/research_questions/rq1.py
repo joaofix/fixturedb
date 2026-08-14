@@ -3,29 +3,31 @@ RQ1 -- General Metrics Overview (Quantitative): how do agent-generated and
 human-written fixtures compare across structural metrics?
 
 Computes, per dataset (A/C), summary statistics for the RQ1 metrics (LOC,
-nesting depth, scope, fixture_type, commit_type, plus fixture_dependency_count
-below), plus an A vs C comparison. Dataset B (contemporary within-repo
-human baseline) is still collected (db/b.db, paired_collection.py) but out
-of scope for this script's reported comparisons.
+cyclomatic complexity, nesting depth, scope, fixture_type, commit_type),
+plus an A vs C comparison. Dataset B (contemporary within-repo human
+baseline) is still collected (db/b.db, paired_collection.py) but out of
+scope for this script's reported comparisons.
 
-`cyclomatic_complexity`/`num_parameters` were dropped from the comparative
-(Mann-Whitney) analysis 2026-08-12: both floor heavily (CC=1, 0 params is
-the overwhelming majority in both datasets -- most fixtures are simple,
-straight-line setup code), which makes a distributional test not very
-informative. Still shown per-dataset descriptively (`_render_dataset_summary()`'s
+`num_parameters` is dropped from the comparative (Mann-Whitney) analysis:
+0 params is the overwhelming majority in both datasets (most fixtures take
+no arguments), which makes a distributional test not very informative.
+Still shown per-dataset descriptively (`_render_dataset_summary()`'s
 existing "Continuous metrics" table, unaffected) plus a dedicated
-floor-percentage footnote (`% of fixtures at CC=1`/`% at 0 params`, no
-test) in the comparison section, so the floor-binding is documented
-transparently rather than silently dropped.
+floor-percentage footnote (`% of fixtures at 0 params`, no test) in the
+comparison section, so the floor-binding is documented transparently
+rather than silently dropped. `cyclomatic_complexity` also floors heavily
+(CC=1 is the large majority) but is tested anyway, same as `loc`/
+`max_nesting_depth` -- unlike `num_parameters`, it's kept in the primary
+comparative analysis.
 
 Every remaining continuous/categorical comparison renders through
 _shared.py's render_comparison_table(): one "Overall" row (uncorrected,
 single pooled test) plus, for metrics with a defined per-language family,
 one BH-corrected row per language, corrected independently of every other
 metric and of their own Overall row (see render_comparison_table()'s
-docstring). `loc`/`max_nesting_depth`/`scope`/`fixture_type` each have a
-4-language family; `commit_type` and the new `fixture_dependency_count`
-(Python-only by construction -- see below) don't, and render Overall-only.
+docstring). `loc`/`cyclomatic_complexity`/`max_nesting_depth`/`scope`/
+`fixture_type` each have a 4-language family; `commit_type` doesn't, and
+renders Overall-only.
 
 Continuous metrics are repo-level throughout (one value per repo, per
 language for the per-language rows) -- not the raw per-fixture values --
@@ -39,25 +41,6 @@ category proportions (Mann-Whitney U + Cliff's delta), which IS the
 repo-declustered version and the one reported in the paper; see
 compare_categorical_repo_level()'s docstring in _shared.py.
 
-**fixture_dependency_count** (added 2026-08-12): for each Python repo, the
-mean number of a fixture's own parameters that are themselves other
-fixtures defined in the same file -- the classic pytest fixture-injection
-pattern (`def a(b): ...` where `b` is itself a `@pytest.fixture`). This
-isn't a persisted column anywhere: the same detection already runs during
-every extraction pass (`detector_shared.py::_detect_fixture_dependencies()`,
-used internally for scope propagation) but its result is discarded, not
-stored. Recomputed here instead of via a schema migration + fresh
-collection pass -- re-parses each Python `pytest_decorator` fixture's
-already-persisted `raw_source` with the exact same primitives extraction
-uses (`_get_parser("python")`, `_extract_parameter_names()`), matched
-against the other fixture names in that same file (never the whole repo --
-mirrors `_detect_fixture_dependencies()`'s own scope exactly). Non-
-`pytest_decorator` Python fixtures can't structurally have dependencies
-and contribute 0, but still count in the "mean per fixture" denominator
-(averaged over every Python fixture in the repo, not just the
-pytest-decorator subset) -- a deliberate choice, see
-`_compute_fixture_dependency_counts_by_repo()`'s docstring.
-
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet -- lets this run against whatever subset of A/C has been collected so
 far.
@@ -68,7 +51,6 @@ python -m collection.research_questions.rq1
 from __future__ import annotations
 
 import sqlite3
-import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -80,7 +62,6 @@ from ..between_group_comparison import (
     compute_continuous_balance,
 )
 from ..db import db_session
-from ..detector_shared import _extract_parameter_names, _get_parser
 from ..logging_utils import get_logger
 from ._shared import (
     COMPARISONS,
@@ -111,19 +92,16 @@ from ._shared import (
 logger = get_logger(__name__)
 
 # Mann-Whitney-tested continuous metrics -- see this module's docstring for
-# why cyclomatic_complexity/num_parameters were dropped from this list
-# (still fetched fixture-level for the descriptive table + floor-percentage
-# footnote, just not tested). fixture_dependency_count is deliberately NOT
-# in this list -- it's Python-only, has no per-language family, and is
-# computed separately (see _compute_fixture_dependency_counts_by_repo()).
-CONTINUOUS_METRICS = ["loc", "max_nesting_depth"]
+# why num_parameters is dropped from this list (still fetched fixture-level
+# for the descriptive table + floor-percentage footnote, just not tested).
+CONTINUOUS_METRICS = ["loc", "cyclomatic_complexity", "max_nesting_depth"]
 # metric -> the value that "floored" means "structurally minimal" for it
-# (CC=1: no branching; 0 params: no arguments) -- drives the descriptive
-# floor-percentage footnote only, no comparative test.
-FLOOR_CHECK_METRICS = {"cyclomatic_complexity": 1, "num_parameters": 0}
+# (0 params: no arguments) -- drives the descriptive floor-percentage
+# footnote only, no comparative test.
+FLOOR_CHECK_METRICS = {"num_parameters": 0}
 # Fixture-level fetch + the per-dataset descriptive "Continuous metrics"
 # table in _render_dataset_summary() still show all 4 -- that table was
-# never a comparison, so dropping CC/num_parameters from CONTINUOUS_METRICS
+# never a comparison, so dropping num_parameters from CONTINUOUS_METRICS
 # (the Mann-Whitney-tested list) doesn't affect it.
 DESCRIPTIVE_CONTINUOUS_METRICS = CONTINUOUS_METRICS + list(FLOOR_CHECK_METRICS)
 # num_objects_instantiated/num_external_calls are still detected and
@@ -238,20 +216,9 @@ def _fetch_continuous_by_repo_and_language(
     return result
 
 
-def _p90(values: list[float]) -> float | None:
-    """90th percentile, linear interpolation (matches e.g. numpy's default
-    `percentile()` method) -- `None` for an empty list, the value itself
-    for a single-element list (statistics.quantiles() needs >=2 points)."""
-    if not values:
-        return None
-    if len(values) == 1:
-        return values[0]
-    return statistics.quantiles(sorted(values), n=100, method="inclusive")[89]
-
-
 def _floor_percentage(values: list[float], floor: float) -> float | None:
     """Fraction (0..1) of `values` sitting exactly at `floor` -- documents
-    the floor-binding FLOOR_CHECK_METRICS' metrics show (CC=1, 0 params)
+    the floor-binding FLOOR_CHECK_METRICS' metrics show (0 params)
     instead of silently dropping them from the report. `None` (not 0.0)
     for no data, so callers can render "no data" rather than a misleading
     "0% at floor". A 0..1 fraction (not already a 0-100 percentage) to
@@ -259,60 +226,6 @@ def _floor_percentage(values: list[float], floor: float) -> float | None:
     if not values:
         return None
     return sum(1 for v in values if v == floor) / len(values)
-
-
-def _compute_fixture_dependency_counts_by_repo(
-    conn: sqlite3.Connection,
-) -> dict[int, list[float]]:
-    """{repo_id: [dependency_count per Python fixture]} -- mean number of a
-    fixture's own parameters that are themselves other fixtures (the
-    pytest fixture-injection pattern), recomputed here rather than read
-    from a column because it isn't persisted anywhere (see this module's
-    docstring). Mirrors detector_shared.py's _detect_fixture_dependencies()
-    almost verbatim -- same per-FILE name-matching scope (never the whole
-    repo: a fixture can only "depend on" another fixture defined in the
-    same file, matching how that function is actually invoked, once per
-    file, in detector.py), same fixture_type == "pytest_decorator"
-    restriction (the only type with meaningful parameters to check).
-
-    Non-pytest_decorator Python fixtures contribute 0 -- they can't
-    structurally take another fixture as a parameter -- but still count in
-    the denominator: "mean dependencies per fixture" is averaged over
-    every Python fixture in the repo, not just the pytest-decorator
-    subset, so a repo's overall dependency-injection intensity isn't
-    inflated by ignoring the fixtures that never participate in it.
-    """
-    rows = conn.execute(
-        "SELECT f.file_id, f.repo_id, f.name, f.fixture_type, f.raw_source "
-        "FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE tf.language = 'python'"
-    ).fetchall()
-
-    by_file: dict[int, list[tuple]] = {}
-    for row in rows:
-        by_file.setdefault(row[0], []).append(row)
-
-    by_repo: dict[int, list[float]] = {}
-    for file_fixtures in by_file.values():
-        names_in_file = {r[2] for r in file_fixtures}
-        for _file_id, repo_id, name, fixture_type, raw_source in file_fixtures:
-            count = 0
-            if fixture_type == "pytest_decorator" and raw_source:
-                try:
-                    src_bytes = raw_source.encode("utf-8")
-                    tree = _get_parser("python").parse(src_bytes)
-                    func_node = next(
-                        (c for c in tree.root_node.children if c.type == "function_definition"),
-                        None,
-                    )
-                    if func_node is not None:
-                        param_names = _extract_parameter_names(func_node, src_bytes)
-                        count = sum(1 for p in param_names if p in names_in_file)
-                except Exception:
-                    logger.debug("Could not re-parse raw_source for fixture %r", name)
-                    count = 0
-            by_repo.setdefault(repo_id, []).append(float(count))
-    return by_repo
 
 
 def load_dataset_metrics(
@@ -325,10 +238,10 @@ def load_dataset_metrics(
 
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        # DESCRIPTIVE_CONTINUOUS_METRICS (4), not CONTINUOUS_METRICS (2) --
-        # cyclomatic_complexity/num_parameters are still fetched fixture-level
-        # for the per-dataset descriptive table and the floor-percentage
-        # footnote, just no longer Mann-Whitney tested (see module docstring).
+        # DESCRIPTIVE_CONTINUOUS_METRICS (4), not CONTINUOUS_METRICS (3) --
+        # num_parameters is still fetched fixture-level for the per-dataset
+        # descriptive table and the floor-percentage footnote, just no
+        # longer Mann-Whitney tested (see module docstring).
         continuous_raw = {
             m: fetch_continuous_column(conn, "fixtures", m) for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }
@@ -368,13 +281,6 @@ def load_dataset_metrics(
             }
             for metric, by_language in continuous_by_repo_and_language.items()
         }
-        # Python-only, no per-language family (there's only ever one
-        # language in play) -- see this module's docstring and
-        # _compute_fixture_dependency_counts_by_repo()'s for why this isn't
-        # just another CONTINUOUS_METRICS entry.
-        repo_level_continuous["fixture_dependency_count"] = repo_level_means(
-            _compute_fixture_dependency_counts_by_repo(conn)
-        )
 
     floor_pct = {
         metric: _floor_percentage(continuous_raw[metric], floor)
@@ -418,18 +324,6 @@ def compare_datasets_repo_level(
         )
         for metric in CONTINUOUS_METRICS
     }
-
-
-def compare_fixture_dependency(a: DatasetMetrics, other: DatasetMetrics) -> BalanceTest:
-    """A vs `other`, fixture_dependency_count -- one mean-per-repo value,
-    Python repos only. Its own function (not folded into
-    compare_datasets_repo_level()/CONTINUOUS_METRICS) since it's Python-only
-    and has no per-language family -- see this module's docstring."""
-    return compute_continuous_balance(
-        human_values=other.repo_level_continuous["fixture_dependency_count"],
-        agent_values=a.repo_level_continuous["fixture_dependency_count"],
-        variable="fixture_dependency_count",
-    )
 
 
 def compare_datasets_categorical(
@@ -557,47 +451,16 @@ def _render_categorical_metric(
     return "\n".join(lines)
 
 
-def _render_primary_metrics_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """Compact descriptive reference table -- LOC (median, p90), nesting
-    depth (median), fixture_dependency_count (median, Python-only). Purely
-    descriptive (no test/effect-size/p-value columns) -- the real
-    Mann-Whitney tests for each of these live in their own detailed
-    section below (### loc, ### max_nesting_depth, ###
-    fixture_dependency_count)."""
-
-    def _median(values: list[float]) -> float | None:
-        return statistics.median(values) if values else None
-
-    loc_a, loc_c = a.repo_level_continuous["loc"], other.repo_level_continuous["loc"]
-    nesting_a = a.repo_level_continuous["max_nesting_depth"]
-    nesting_c = other.repo_level_continuous["max_nesting_depth"]
-    dep_a = a.repo_level_continuous["fixture_dependency_count"]
-    dep_c = other.repo_level_continuous["fixture_dependency_count"]
-
-    return "\n".join(
-        [
-            f"| Metric | {DATASET_LABELS['a']} | {DATASET_LABELS[other.dataset]} |",
-            "|---|---|---|",
-            f"| LOC (median) | {fmt(_median(loc_a))} | {fmt(_median(loc_c))} |",
-            f"| LOC (p90) | {fmt(_p90(loc_a))} | {fmt(_p90(loc_c))} |",
-            f"| max_nesting_depth (median) | {fmt(_median(nesting_a))} | {fmt(_median(nesting_c))} |",
-            "| fixture_dependency_count (median, Python-only) | "
-            f"{fmt(_median(dep_a))} | {fmt(_median(dep_c))} |",
-            "",
-        ]
-    )
-
-
 def _render_floor_percentage_footnote(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """Descriptive-only footnote for cyclomatic_complexity/num_parameters,
-    replacing their old Mann-Whitney sections -- see this module's
-    docstring for why they were dropped from comparative testing."""
+    """Descriptive-only footnote for num_parameters, replacing its old
+    Mann-Whitney section -- see this module's docstring for why it was
+    dropped from comparative testing."""
     lines = [
         "**Floor-binding check (descriptive only -- not a comparative "
-        "test)** -- `cyclomatic_complexity`/`num_parameters` were dropped "
-        "from Mann-Whitney testing (see this module's docstring) because "
-        "both floor heavily in both datasets; this documents exactly how "
-        "heavily, transparently, instead of silently omitting them.",
+        "test)** -- `num_parameters` was dropped from Mann-Whitney testing "
+        "(see this module's docstring) because it floors heavily in both "
+        "datasets; this documents exactly how heavily, transparently, "
+        "instead of silently omitting it.",
         "",
         f"| Metric | Floor value | {DATASET_LABELS['a']} at floor | "
         f"{DATASET_LABELS[other.dataset]} at floor |",
@@ -628,41 +491,10 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "test, not BH-corrected; each metric's per-language rows are BH-FDR "
         "corrected against each other only (one family per metric, 4 languages).",
         "",
-        "**Primary metrics, quick reference (descriptive only)** -- median/p90 "
-        "of each dataset's per-repo means; the detailed Mann-Whitney sections "
-        "below (and, for fixture_dependency_count, further down) are what's "
-        "actually tested.",
-        "",
-        _render_primary_metrics_summary_table(a, other),
         _render_floor_percentage_footnote(a, other),
     ]
     for metric in CONTINUOUS_METRICS:
         lines.append(_render_continuous_metric(metric, a, other, continuous_overall[metric]))
-
-    lines += [
-        "### fixture_dependency_count",
-        "",
-        "**Python-only** -- mean number of a fixture's own parameters that "
-        "are themselves other fixtures defined in the same file (the pytest "
-        "fixture-injection pattern), one value per Python repo. Overall-only "
-        "(no per-language family -- there's only ever one language here), "
-        "so `p (BH-adj)` is always `--` (a standalone test, not part of any "
-        "family, same convention as `commit_type` above). See this module's "
-        "docstring for exactly how this is computed (recomputed from "
-        "`raw_source` at report time, not a persisted column).",
-        "",
-        render_comparison_table(
-            compare_fixture_dependency(a, other),
-            NCounts(
-                len(a.repo_level_continuous["fixture_dependency_count"]),
-                len(other.repo_level_continuous["fixture_dependency_count"]),
-            ),
-            None,
-            None,
-            other_dataset=other.dataset,
-        ),
-        "",
-    ]
 
     lines += [
         "**Categorical metrics (chi-square)** -- Effect size is Cramer's V "
