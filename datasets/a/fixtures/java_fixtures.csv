@@ -11312,3 +11312,195 @@ firecrawl/firecrawl,java,3b777bfd47609341f164ef927d487fc7a92b443f,apps/java-sdk/
     }",2026-02-27,1.8672142368240932,1
 gre/react-native-view-shot,java,d3c8781949e74c08204eac7a8ac47242f1b06571,example/android/app/src/androidTest/java/com/viewshotexample/DetoxTest.java,mActivityRule,junit_rule,17,18,2,junit,0,per_test,1,1,0,0,0,1,https://github.com/gre/react-native-view-shot/blob/d3c8781949e74c08204eac7a8ac47242f1b06571/example/android/app/src/androidTest/java/com/viewshotexample/DetoxTest.java#L17-L18,claude,agent,none,"@Rule
     public ActivityTestRule<MainActivity> mActivityRule = new ActivityTestRule<>(MainActivity.class, false, false);",2026-03-05,9.527720739219713,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/MultiAgentInstrumentedTest.java,setUp,junit4_before,38,45,7,junit,0,per_test,1,1,0,0,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/MultiAgentInstrumentedTest.java#L38-L45,claude,agent,none,"@Before
+    public void setUp() {
+        context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        repository = MultiAgentRepository.getInstance(context);
+        
+        // Clear any existing data
+        repository.clearAll().join();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/MultiAgentInstrumentedTest.java,tearDown,junit4_after,47,51,5,junit,0,per_test,1,1,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/MultiAgentInstrumentedTest.java#L47-L51,claude,agent,none,"@After
+    public void tearDown() {
+        // Clean up after tests
+        repository.clearAll().join();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/ChatActivityTest.java,setUp,junit4_before,45,52,7,junit,0,per_test,1,1,0,0,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/ChatActivityTest.java#L45-L52,claude,agent,none,"@Before
+    public void setUp() {
+        context = ApplicationProvider.getApplicationContext();
+        repository = MultiAgentRepository.getInstance(context);
+        
+        // Clear any existing configuration
+        clearAgentConfiguration();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/ChatActivityTest.java,tearDown,junit4_after,54,60,7,junit,0,per_test,2,2,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/ChatActivityTest.java#L54-L60,claude,agent,none,"@After
+    public void tearDown() {
+        if (scenario != null) {
+            scenario.close();
+        }
+        clearAgentConfiguration();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/SettingsActivityTest.java,setUp,junit4_before,43,50,7,junit,0,per_test,1,1,0,0,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/SettingsActivityTest.java#L43-L50,claude,agent,none,"@Before
+    public void setUp() {
+        context = ApplicationProvider.getApplicationContext();
+        repository = MultiAgentRepository.getInstance(context);
+        
+        // Clear any existing agents
+        repository.clearAll().join();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/SettingsActivityTest.java,tearDown,junit4_after,52,59,8,junit,0,per_test,2,2,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/androidTest/java/com/agui/chatapp/java/ui/SettingsActivityTest.java#L52-L59,claude,agent,none,"@After
+    public void tearDown() {
+        if (scenario != null) {
+            scenario.close();
+        }
+        // Clean up after tests
+        repository.clearAll().join();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/adapter/EventProcessorTest.java,setUp,junit4_before,22,25,4,junit,0,per_test,1,1,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/adapter/EventProcessorTest.java#L22-L25,claude,agent,none,"@Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/integration/RepositoryConsistencyTest.java,instantExecutorRule,junit_rule,38,39,2,junit,0,per_test,1,1,0,1,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/integration/RepositoryConsistencyTest.java#L38-L39,claude,agent,none,"@Rule
+    public InstantTaskExecutorRule instantExecutorRule = new InstantTaskExecutorRule();",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/integration/RepositoryConsistencyTest.java,setUp,junit4_before,50,61,10,junit,0,per_test,1,1,0,0,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/integration/RepositoryConsistencyTest.java#L50-L61,claude,agent,none,"@Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        context = RuntimeEnvironment.getApplication();
+        application = RuntimeEnvironment.getApplication();
+        
+        // Clear singleton instance for clean test
+        clearSingletonInstance();
+        
+        // Clear any existing data
+        MultiAgentRepository.getInstance(context).clearAll().join();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/integration/RepositoryConsistencyTest.java,tearDown,junit4_after,63,67,5,junit,0,per_test,1,1,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/integration/RepositoryConsistencyTest.java#L63-L67,claude,agent,none,"@After
+    public void tearDown() {
+        // Clear singleton for next test
+        clearSingletonInstance();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/model/ChatMessageTest.java,setUp,junit4_before,19,23,5,junit,0,per_test,1,1,0,1,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/model/ChatMessageTest.java#L19-L23,claude,agent,none,"@Before
+    public void setUp() {
+        staticMessage = new ChatMessage(""test-id"", Role.ASSISTANT, ""Hello"", null);
+        streamingMessage = ChatMessage.createStreaming(""streaming-id"", Role.ASSISTANT, null);
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/AgentRepositoryTest.java,setUp,junit4_before,28,33,6,junit,0,per_test,1,1,0,1,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/AgentRepositoryTest.java#L28-L33,claude,agent,none,"@Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        context = RuntimeEnvironment.getApplication();
+        repository = new AgentRepository(context);
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/MultiAgentRepositoryTest.java,instantExecutorRule,junit_rule,38,39,2,junit,0,per_test,1,1,0,1,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/MultiAgentRepositoryTest.java#L38-L39,claude,agent,none,"@Rule
+    public InstantTaskExecutorRule instantExecutorRule = new InstantTaskExecutorRule();",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/MultiAgentRepositoryTest.java,setUp,junit4_before,53,66,11,junit,0,per_test,1,1,0,0,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/MultiAgentRepositoryTest.java#L53-L66,claude,agent,none,"@Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        context = RuntimeEnvironment.getApplication();
+        
+        // Clear any existing singleton instance using reflection
+        clearSingletonInstance();
+        
+        // Get fresh instance
+        repository = MultiAgentRepository.getInstance(context);
+        
+        // Clear all data for clean test environment
+        repository.clearAll().join();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/MultiAgentRepositoryTest.java,tearDown,junit4_after,68,75,8,junit,0,per_test,2,2,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/repository/MultiAgentRepositoryTest.java#L68-L75,claude,agent,none,"@After
+    public void tearDown() {
+        // Clear data and singleton for next test
+        if (repository != null) {
+            repository.clearAll().join();
+        }
+        clearSingletonInstance();
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,30ead7716cc974b5bf3a0c9a4b411cc835bce3bb,sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/viewmodel/ThreadIdManagementTest.java,setUp,junit4_before,30,34,5,junit,0,per_test,1,1,0,1,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/30ead7716cc974b5bf3a0c9a4b411cc835bce3bb/sdks/community/kotlin/examples/chatapp-java/app/src/test/java/com/agui/chatapp/java/viewmodel/ThreadIdManagementTest.java#L30-L34,claude,agent,none,"@Before
+    public void setUp() {
+        application = RuntimeEnvironment.getApplication();
+        viewModel = new ChatViewModel(application);
+    }",2025-10-09,0.4216290212183436,1
+ag-ui-protocol/ag-ui,java,d364f1d9008e8e043f0d5b6c900a0131b7f62aa8,sdks/community/java/ag-ui/client/src/test/java/com/agui/community/client/HttpAgentTest.java,startServer,junit5_before_each,33,38,6,junit,0,per_test,1,1,0,1,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/d364f1d9008e8e043f0d5b6c900a0131b7f62aa8/sdks/community/java/ag-ui/client/src/test/java/com/agui/community/client/HttpAgentTest.java#L33-L38,claude,agent,none,"@BeforeEach
+    void startServer() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(""localhost"", 0), 0);
+        endpoint = URI.create(""http://localhost:"" + server.getAddress().getPort() + ""/agent"");
+        server.start();
+    }",2026-06-29,1.1416837782340863,1
+ag-ui-protocol/ag-ui,java,d364f1d9008e8e043f0d5b6c900a0131b7f62aa8,sdks/community/java/ag-ui/client/src/test/java/com/agui/community/client/HttpAgentTest.java,stopServer,junit5_after_each,40,43,4,junit,0,per_test,1,1,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/d364f1d9008e8e043f0d5b6c900a0131b7f62aa8/sdks/community/java/ag-ui/client/src/test/java/com/agui/community/client/HttpAgentTest.java#L40-L43,claude,agent,none,"@AfterEach
+    void stopServer() {
+        server.stop(0);
+    }",2026-06-29,1.1416837782340863,1
+ag-ui-protocol/ag-ui,java,d364f1d9008e8e043f0d5b6c900a0131b7f62aa8,sdks/community/java/ag-ui/server/src/test/java/com/agui/community/server/jdk/JdkAgentHttpHandlerTest.java,startServer,junit5_before_each,35,39,5,junit,0,per_test,1,1,0,1,0,1,https://github.com/ag-ui-protocol/ag-ui/blob/d364f1d9008e8e043f0d5b6c900a0131b7f62aa8/sdks/community/java/ag-ui/server/src/test/java/com/agui/community/server/jdk/JdkAgentHttpHandlerTest.java#L35-L39,claude,agent,none,"@BeforeEach
+    void startServer() throws Exception {
+        server = HttpServer.create(new InetSocketAddress(""localhost"", 0), 0);
+        endpoint = URI.create(""http://localhost:"" + server.getAddress().getPort() + ""/agent"");
+    }",2026-06-29,1.1416837782340863,1
+ag-ui-protocol/ag-ui,java,d364f1d9008e8e043f0d5b6c900a0131b7f62aa8,sdks/community/java/ag-ui/server/src/test/java/com/agui/community/server/jdk/JdkAgentHttpHandlerTest.java,stopServer,junit5_after_each,41,44,4,junit,0,per_test,1,1,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/d364f1d9008e8e043f0d5b6c900a0131b7f62aa8/sdks/community/java/ag-ui/server/src/test/java/com/agui/community/server/jdk/JdkAgentHttpHandlerTest.java#L41-L44,claude,agent,none,"@AfterEach
+    void stopServer() {
+        server.stop(0);
+    }",2026-06-29,1.1416837782340863,1
+alibaba/OpenSandbox,java,ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9,tests/java/src/test/java/com/alibaba/opensandbox/e2e/IsolatedSessionE2ETest.java,setup,junit5_before_all,56,76,20,junit,0,per_class,3,2,0,0,0,1,https://github.com/alibaba/OpenSandbox/blob/ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9/tests/java/src/test/java/com/alibaba/opensandbox/e2e/IsolatedSessionE2ETest.java#L56-L76,claude,agent,feat,"@BeforeAll
+    void setup() {
+        sandbox =
+                Sandbox.builder()
+                        .connectionConfig(sharedConnectionConfig)
+                        .image(getSandboxImage())
+                        .readyTimeout(Duration.ofMinutes(2))
+                        .extensions(Map.of(""bootstrap.execd.isolation"", ""enable""))
+                        .build();
+
+        IsolatedCapabilities caps = sandbox.isolation().capabilities();
+        log.info(
+                ""Isolation capabilities: available={} isolator={} version={} message={}"",
+                caps.getAvailable(),
+                caps.getIsolator(),
+                caps.getVersion(),
+                caps.getMessage());
+        if (!caps.getAvailable()) {
+            fail(""Isolation NOT available: "" + (caps.getMessage() != null ? caps.getMessage() : ""unknown reason""));
+        }
+    }",2026-06-23,0.5119780971937029,1
+alibaba/OpenSandbox,java,ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9,tests/java/src/test/java/com/alibaba/opensandbox/e2e/IsolatedSessionE2ETest.java,tearDown,junit5_after_all,78,84,7,junit,0,per_class,2,2,0,0,0,0,https://github.com/alibaba/OpenSandbox/blob/ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9/tests/java/src/test/java/com/alibaba/opensandbox/e2e/IsolatedSessionE2ETest.java#L78-L84,claude,agent,feat,"@AfterAll
+    void tearDown() {
+        if (sandbox != null) {
+            sandbox.kill();
+            sandbox.close();
+        }
+    }",2026-06-23,0.5119780971937029,1
+bethington/ghidra-mcp,java,de5f9ac9c8be0bdd8b6c23874ca6f3de684da73e,src/test/java/com/xebyte/core/FunctionServiceClearFlowAndRepairGhidraTest.java,initializeGhidra,testng_before_class,33,44,12,testng,0,per_class,3,2,0,3,0,0,https://github.com/bethington/ghidra-mcp/blob/de5f9ac9c8be0bdd8b6c23874ca6f3de684da73e/src/test/java/com/xebyte/core/FunctionServiceClearFlowAndRepairGhidraTest.java#L33-L44,claude,agent,none,"@BeforeClass
+    public static void initializeGhidra() throws Exception {
+        String installDir = System.getenv(""GHIDRA_INSTALL_DIR"");
+        assumeTrue(""GHIDRA_INSTALL_DIR is required for real Ghidra tests"",
+            installDir != null && !installDir.isBlank());
+        if (!Application.isInitialized()) {
+            ApplicationConfiguration configuration = new ApplicationConfiguration();
+            configuration.setInitializeLogging(false);
+            Application.initializeApplication(new GhidraApplicationLayout(new File(installDir)),
+                configuration);
+        }
+    }",2026-07-11,0.8596851471594799,1
+bethington/ghidra-mcp,java,de5f9ac9c8be0bdd8b6c23874ca6f3de684da73e,src/test/java/com/xebyte/core/FunctionServiceClearFlowAndRepairGhidraTest.java,setUp,junit4_before,46,65,18,junit,0,per_test,1,1,0,3,0,1,https://github.com/bethington/ghidra-mcp/blob/de5f9ac9c8be0bdd8b6c23874ca6f3de684da73e/src/test/java/com/xebyte/core/FunctionServiceClearFlowAndRepairGhidraTest.java#L46-L65,claude,agent,none,"@Before
+    public void setUp() throws Exception {
+        builder = new ProgramBuilder(""clear-flow-repair"", ProgramBuilder._X64, ""gcc"", this);
+        program = builder.getProgram();
+        builder.createMemory("".text"", ""0x1000"", 0x1100);
+
+        // CALL 0x2000; TEST EAX,EAX; MOV EAX,1; RET
+        builder.setBytes(""0x1000"", ""e8 fb 0f 00 00 85 c0 b8 01 00 00 00 c3"");
+        builder.setBytes(""0x2000"", ""c3"");
+        builder.disassemble(""0x2000"", 1);
+        Function target = builder.createFunction(""0x2000"");
+        builder.withTransaction(() -> target.setNoReturn(true));
+
+        builder.withTransaction(() -> {
+            DisassembleCommand command = new DisassembleCommand(builder.addr(""0x1000""),
+                new AddressSet(builder.addr(""0x1000""), builder.addr(""0x100c"")), true);
+            assertTrue(command.getStatusMsg(), command.applyTo(program, TaskMonitor.DUMMY));
+        });
+        builder.createFunction(""0x1000"");
+    }",2026-07-11,0.8596851471594799,1
+bethington/ghidra-mcp,java,de5f9ac9c8be0bdd8b6c23874ca6f3de684da73e,src/test/java/com/xebyte/core/FunctionServiceClearFlowAndRepairGhidraTest.java,tearDown,junit4_after,67,72,6,junit,0,per_test,2,2,0,0,0,0,https://github.com/bethington/ghidra-mcp/blob/de5f9ac9c8be0bdd8b6c23874ca6f3de684da73e/src/test/java/com/xebyte/core/FunctionServiceClearFlowAndRepairGhidraTest.java#L67-L72,claude,agent,none,"@After
+    public void tearDown() {
+        if (builder != null) {
+            builder.dispose();
+        }
+    }",2026-07-11,0.8596851471594799,1

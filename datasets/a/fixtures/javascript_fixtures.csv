@@ -17379,3 +17379,721 @@ zts212653/clowder-ai,javascript,e5ff2401aaa8e0bed6068d3fc28715bf94ef52fb,desktop
 zts212653/clowder-ai,javascript,e5ff2401aaa8e0bed6068d3fc28715bf94ef52fb,desktop/generate-desktop-config-behavior.test.js,<anonymous>_49,after_each,50,52,3,,0,per_test,2,2,0,0,0,0,https://github.com/zts212653/clowder-ai/blob/e5ff2401aaa8e0bed6068d3fc28715bf94ef52fb/desktop/generate-desktop-config-behavior.test.js#L50-L52,claude,agent,fix,"afterEach(() => {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     })",2026-07-15,0.3394934976043806,1
+Scottcjn/Rustchain,javascript,85738d824699877b152c3e12bab67a1a587af498,contracts/erc20/test/WRTC.test.js,<anonymous>_12,before_each,13,22,8,,0,per_test,1,1,0,0,0,0,https://github.com/Scottcjn/Rustchain/blob/85738d824699877b152c3e12bab67a1a587af498/contracts/erc20/test/WRTC.test.js#L13-L22,qwen_coder,agent,feat,"beforeEach(async function () {
+    [owner, addr1, addr2, bridgeOperator] = await ethers.getSigners();
+
+    // Deploy contract with 1M initial supply
+    initialSupply = ethers.parseUnits(""1000000"", DECIMALS);
+    
+    const WRTC = await ethers.getContractFactory(""WRTC"");
+    wrtc = await WRTC.deploy(initialSupply, bridgeOperator.address);
+    await wrtc.waitForDeployment();
+  })",2026-03-09,0.8788501026694046,1
+Scottcjn/Rustchain,javascript,2587a9d504cc7b1a43c568b8d1c4348d67c74c71,snap/tests/snap.test.js,<anonymous>_14,before_each,15,17,3,,0,per_test,1,1,0,0,0,0,https://github.com/Scottcjn/Rustchain/blob/2587a9d504cc7b1a43c568b8d1c4348d67c74c71/snap/tests/snap.test.js#L15-L17,qwen_coder,agent,feat,"beforeEach(() => {
+  mockSnapState = { accounts: [] };
+})",2026-03-09,0.8788501026694046,1
+Scottcjn/Rustchain,javascript,d2b3dd9eb3d8f75567eff27946301e29e507976d,extension/tests/send-sign-flow.test.js,<anonymous>_97,before_each,98,101,4,,0,per_test,1,1,0,0,0,0,https://github.com/Scottcjn/Rustchain/blob/d2b3dd9eb3d8f75567eff27946301e29e507976d/extension/tests/send-sign-flow.test.js#L98-L101,qwen_coder,agent,feat,"beforeEach(() => {
+    mockSnapState = { accounts: [] };
+    global.window.ethereum = null;
+  })",2026-03-09,0.8788501026694046,1
+Scottcjn/Rustchain,javascript,d2b3dd9eb3d8f75567eff27946301e29e507976d,snap/tests/snap-integration.test.js,<anonymous>_72,before_each,73,75,3,,0,per_test,1,1,0,0,0,0,https://github.com/Scottcjn/Rustchain/blob/d2b3dd9eb3d8f75567eff27946301e29e507976d/snap/tests/snap-integration.test.js#L73-L75,qwen_coder,agent,feat,"beforeEach(() => {
+    mockSnapState = { accounts: [], transactions: [] };
+  })",2026-03-09,0.8788501026694046,1
+amd/gaia,javascript,377e1a3cb0550455573f51b94e87a171b9bd9f57,tests/electron/tray-manager.test.cjs,<anonymous>_41,before_each,42,45,4,,0,per_test,1,1,0,0,0,1,https://github.com/amd/gaia/blob/377e1a3cb0550455573f51b94e87a171b9bd9f57/tests/electron/tray-manager.test.cjs#L42-L45,claude,agent,fix,"beforeEach(() => {
+  jest.clearAllMocks();
+  fs.existsSync.mockReturnValue(true);
+})",2026-06-10,1.4784394250513346,1
+amd/gaia,javascript,377e1a3cb0550455573f51b94e87a171b9bd9f57,tests/electron/tray-manager.test.cjs,<anonymous>_46,after_each,47,49,3,,0,per_test,1,1,0,0,0,0,https://github.com/amd/gaia/blob/377e1a3cb0550455573f51b94e87a171b9bd9f57/tests/electron/tray-manager.test.cjs#L47-L49,claude,agent,fix,"afterEach(() => {
+  setPlatform(ORIGINAL_PLATFORM);
+})",2026-06-10,1.4784394250513346,1
+davila7/claude-code-templates,javascript,5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13,cli-tool/tests/validation/IntegrityValidator.test.js,<anonymous>_9,before_each,10,12,3,,0,per_test,1,1,0,1,0,1,https://github.com/davila7/claude-code-templates/blob/5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13/cli-tool/tests/validation/IntegrityValidator.test.js#L10-L12,claude,agent,none,"beforeEach(() => {
+    validator = new IntegrityValidator();
+  })",2025-10-16,0.28199863107460643,1
+davila7/claude-code-templates,javascript,5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13,cli-tool/tests/validation/IntegrityValidator.test.js,<anonymous>_13,after_each,14,19,6,,0,per_test,2,2,0,0,0,0,https://github.com/davila7/claude-code-templates/blob/5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13/cli-tool/tests/validation/IntegrityValidator.test.js#L14-L19,claude,agent,none,"afterEach(async () => {
+    // Clean up test registry file
+    if (await fs.pathExists(testRegistryPath)) {
+      await fs.remove(testRegistryPath);
+    }
+  })",2025-10-16,0.28199863107460643,1
+davila7/claude-code-templates,javascript,5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13,cli-tool/tests/validation/ReferenceValidator.test.js,<anonymous>_5,before_each,6,8,3,,0,per_test,1,1,0,1,0,0,https://github.com/davila7/claude-code-templates/blob/5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13/cli-tool/tests/validation/ReferenceValidator.test.js#L6-L8,claude,agent,none,"beforeEach(() => {
+    validator = new ReferenceValidator();
+  })",2025-10-16,0.28199863107460643,1
+davila7/claude-code-templates,javascript,5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13,cli-tool/tests/validation/SemanticValidator.test.js,<anonymous>_7,before_each,8,10,3,,0,per_test,1,1,0,1,0,0,https://github.com/davila7/claude-code-templates/blob/5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13/cli-tool/tests/validation/SemanticValidator.test.js#L8-L10,claude,agent,none,"beforeEach(() => {
+    validator = new SemanticValidator();
+  })",2025-10-16,0.28199863107460643,1
+davila7/claude-code-templates,javascript,5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13,cli-tool/tests/validation/StructuralValidator.test.js,<anonymous>_7,before_each,8,10,3,,0,per_test,1,1,0,1,0,0,https://github.com/davila7/claude-code-templates/blob/5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13/cli-tool/tests/validation/StructuralValidator.test.js#L8-L10,claude,agent,none,"beforeEach(() => {
+    validator = new StructuralValidator();
+  })",2025-10-16,0.28199863107460643,1
+davila7/claude-code-templates,javascript,5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13,cli-tool/tests/validation/ValidationOrchestrator.test.js,<anonymous>_7,before_each,8,10,3,,0,per_test,1,1,0,1,0,0,https://github.com/davila7/claude-code-templates/blob/5cba740ddeec7cd6ca1c4fca2267af1ed1a15e13/cli-tool/tests/validation/ValidationOrchestrator.test.js#L8-L10,claude,agent,none,"beforeEach(() => {
+    orchestrator = new ValidationOrchestrator();
+  })",2025-10-16,0.28199863107460643,1
+debpalash/OmniVoice-Studio,javascript,715766cb04a3b9f0741fd68fbb01306a63b444ca,frontend/src/components/ErrorBoundary.test.jsx,<anonymous>_27,before_each,28,32,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/715766cb04a3b9f0741fd68fbb01306a63b444ca/frontend/src/components/ErrorBoundary.test.jsx#L28-L32,claude,agent,none,"beforeEach(() => {
+    vi.mocked(openDocsFor).mockClear();
+    // Suppress the noisy React error log that fires on a thrown render.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  })",2026-05-20,0.10951403148528405,1
+debpalash/OmniVoice-Studio,javascript,715766cb04a3b9f0741fd68fbb01306a63b444ca,frontend/src/components/settings/ApiKeysPanel.test.jsx,<anonymous>_56,before_each,57,59,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/715766cb04a3b9f0741fd68fbb01306a63b444ca/frontend/src/components/settings/ApiKeysPanel.test.jsx#L57-L59,claude,agent,none,"beforeEach(() => {
+    vi.restoreAllMocks();
+  })",2026-05-20,0.10951403148528405,1
+debpalash/OmniVoice-Studio,javascript,715766cb04a3b9f0741fd68fbb01306a63b444ca,frontend/src/components/settings/PerformancePanel.test.jsx,<anonymous>_20,before_each,21,23,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/715766cb04a3b9f0741fd68fbb01306a63b444ca/frontend/src/components/settings/PerformancePanel.test.jsx#L21-L23,claude,agent,none,"beforeEach(() => {
+    vi.restoreAllMocks();
+  })",2026-05-20,0.10951403148528405,1
+debpalash/OmniVoice-Studio,javascript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/components/NetworkToggle.test.jsx,<anonymous>_7,before_each,8,8,1,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/components/NetworkToggle.test.jsx#L8-L8,claude,agent,feat,beforeEach(() => { realFetch = global.fetch; }),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,javascript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/components/NetworkToggle.test.jsx,<anonymous>_8,after_each,9,9,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/components/NetworkToggle.test.jsx#L9-L9,claude,agent,feat,afterEach(() => { global.fetch = realFetch; }),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,javascript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/components/RemoteAuthGate.test.jsx,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/components/RemoteAuthGate.test.jsx#L6-L6,claude,agent,feat,beforeEach(() => sessionStorage.clear()),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,javascript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/components/RemoteAuthGate.test.jsx,<anonymous>_6,after_each,7,7,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/components/RemoteAuthGate.test.jsx#L7-L7,claude,agent,feat,afterEach(() => sessionStorage.clear()),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,javascript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/components/settings/SharingPanel.test.jsx,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/components/settings/SharingPanel.test.jsx#L7-L7,claude,agent,feat,beforeEach(() => { realFetch = global.fetch; }),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,javascript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/components/settings/SharingPanel.test.jsx,<anonymous>_7,after_each,8,8,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/components/settings/SharingPanel.test.jsx#L8-L8,claude,agent,feat,afterEach(() => { global.fetch = realFetch; }),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,javascript,13a379435823d4280378b35c31c7ef007833fcf4,frontend/src/utils/playback.test.js,<anonymous>_9,after_each,10,13,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/13a379435823d4280378b35c31c7ef007833fcf4/frontend/src/utils/playback.test.js#L10-L13,claude,agent,fix,"afterEach(() => {
+  // Leave the singleton idle between tests.
+  stopActivePlayback();
+})",2026-06-11,0.1697467488021903,1
+debpalash/OmniVoice-Studio,javascript,668d824e86929bfeaa257a78a0eb52b14462cb33,frontend/src/utils/breadcrumbs.test.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/668d824e86929bfeaa257a78a0eb52b14462cb33/frontend/src/utils/breadcrumbs.test.js#L6-L6,claude,agent,feat,beforeEach(() => clearBreadcrumbs()),2026-06-11,0.1697467488021903,1
+debpalash/OmniVoice-Studio,javascript,668d824e86929bfeaa257a78a0eb52b14462cb33,frontend/src/utils/bugReport.test.js,<anonymous>_41,before_each,42,45,4,,1,per_test,1,1,0,1,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/668d824e86929bfeaa257a78a0eb52b14462cb33/frontend/src/utils/bugReport.test.js#L42-L45,claude,agent,feat,"beforeEach(() => {
+    // Backend down — the builder must still produce a usable URL.
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+  })",2026-06-11,0.1697467488021903,1
+debpalash/OmniVoice-Studio,javascript,65fc5245dc0fdf455837c0feacba75414f2029d2,frontend/src/components/SegmentTrack.test.jsx,<anonymous>_14,before_each,15,18,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/65fc5245dc0fdf455837c0feacba75414f2029d2/frontend/src/components/SegmentTrack.test.jsx#L15-L18,claude,agent,feat,"beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1000);
+})",2026-06-11,0.1697467488021903,1
+debpalash/OmniVoice-Studio,javascript,7d7d07c8fc03acd3d7806ababf4335050feef3b4,frontend/src/test/aecFarEndBus.test.js,<anonymous>_8,before_each,9,17,9,,0,per_test,2,2,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/7d7d07c8fc03acd3d7806ababf4335050feef3b4/frontend/src/test/aecFarEndBus.test.js#L9-L17,claude,agent,feat,"beforeEach(() => {
+    // Drain any leftover subscribers between tests (module singleton).
+    while (farEndListenerCount() > 0) {
+      // subscribe then immediately unsubscribe can't clear others; instead
+      // rely on each test cleaning up its own. This guard just asserts a
+      // clean baseline.
+      break;
+    }
+  })",2026-06-12,0.17248459958932238,1
+debpalash/OmniVoice-Studio,javascript,0a72a75ed299401f9ba96fe31f7f8ccbf7acd733,frontend/src/test/VoiceSelector.test.jsx,<anonymous>_17,before_each,18,22,5,,1,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/0a72a75ed299401f9ba96fe31f7f8ccbf7acd733/frontend/src/test/VoiceSelector.test.jsx#L18-L22,claude,agent,feat,"beforeEach(() => {
+    window.localStorage.clear();
+    // jsdom doesn't implement scrollIntoView; SearchableSelect calls it on open.
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  })",2026-06-14,0.17796030116358658,1
+debpalash/OmniVoice-Studio,javascript,e297cbfee3149543999fdbd0fa83fad350f179fa,frontend/src/test/TranscriptionPicker.test.jsx,<anonymous>_12,before_each,13,16,4,,1,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/e297cbfee3149543999fdbd0fa83fad350f179fa/frontend/src/test/TranscriptionPicker.test.jsx#L13-L16,claude,agent,feat,"beforeEach(() => {
+    localStorage.clear();
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  })",2026-06-14,0.17796030116358658,1
+debpalash/OmniVoice-Studio,javascript,e297cbfee3149543999fdbd0fa83fad350f179fa,frontend/src/utils/transcriptionsStore.test.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/e297cbfee3149543999fdbd0fa83fad350f179fa/frontend/src/utils/transcriptionsStore.test.js#L7-L7,claude,agent,feat,beforeEach(() => localStorage.clear()),2026-06-14,0.17796030116358658,1
+debpalash/OmniVoice-Studio,javascript,8e3c1a8bccdb5734d744c40935abbe39ab6534cc,frontend/src/test/useRealtimeEvents.test.jsx,<anonymous>_34,before_each,35,41,7,,0,per_test,1,2,0,1,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/8e3c1a8bccdb5734d744c40935abbe39ab6534cc/frontend/src/test/useRealtimeEvents.test.jsx#L35-L41,claude,agent,fix,"beforeEach(() => {
+    FakeWebSocket.instances = [];
+    vi.stubGlobal('WebSocket', FakeWebSocket);
+    if (!AbortSignal.timeout) {
+      AbortSignal.timeout = () => new AbortController().signal;
+    }
+  })",2026-06-14,0.17796030116358658,1
+debpalash/OmniVoice-Studio,javascript,8e3c1a8bccdb5734d744c40935abbe39ab6534cc,frontend/src/test/useRealtimeEvents.test.jsx,<anonymous>_42,after_each,43,46,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/8e3c1a8bccdb5734d744c40935abbe39ab6534cc/frontend/src/test/useRealtimeEvents.test.jsx#L43-L46,claude,agent,fix,"afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  })",2026-06-14,0.17796030116358658,1
+debpalash/OmniVoice-Studio,javascript,62637cad95608c5883608a4e364b81bb218366f1,frontend/src/test/GoalBar.test.jsx,<anonymous>_71,before_each,72,72,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/62637cad95608c5883608a4e364b81bb218366f1/frontend/src/test/GoalBar.test.jsx#L72-L72,claude,agent,feat,beforeEach(() => { vi.restoreAllMocks(); }),2026-06-16,0.1834360027378508,1
+debpalash/OmniVoice-Studio,javascript,62637cad95608c5883608a4e364b81bb218366f1,frontend/src/test/evaluateDonationPrompt.test.jsx,<anonymous>_27,before_each,28,32,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/62637cad95608c5883608a4e364b81bb218366f1/frontend/src/test/evaluateDonationPrompt.test.jsx#L28-L32,claude,agent,feat,"beforeEach(() => {
+    resetDonation();
+    toastCustom.mockClear();
+    toastDismiss.mockClear();
+  })",2026-06-16,0.1834360027378508,1
+debpalash/OmniVoice-Studio,javascript,51ad469ef20471d00feda213daf025c76034d45d,frontend/src/test/ProjectsAudiobookPlayback.test.jsx,<anonymous>_29,before_each,30,35,6,,1,per_test,1,1,0,1,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/51ad469ef20471d00feda213daf025c76034d45d/frontend/src/test/ProjectsAudiobookPlayback.test.jsx#L30-L35,claude,agent,fix,"beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    fetchMock = vi.fn(async () => ({ ok: true, blob: async () => new Blob(['x']) }));
+    vi.stubGlobal('fetch', fetchMock);
+  })",2026-06-20,0.1943874058863792,1
+debpalash/OmniVoice-Studio,javascript,51ad469ef20471d00feda213daf025c76034d45d,frontend/src/test/ProjectsAudiobookPlayback.test.jsx,<anonymous>_35,after_each,36,36,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/51ad469ef20471d00feda213daf025c76034d45d/frontend/src/test/ProjectsAudiobookPlayback.test.jsx#L36-L36,claude,agent,fix,afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); }),2026-06-20,0.1943874058863792,1
+debpalash/OmniVoice-Studio,javascript,1f29e374be68a1779f1ae13ce46b766332adefb9,frontend/src/test/playBlobAudioFallback.test.js,<anonymous>_17,before_each,18,38,21,,1,per_test,1,1,0,1,1,0,https://github.com/debpalash/OmniVoice-Studio/blob/1f29e374be68a1779f1ae13ce46b766332adefb9/frontend/src/test/playBlobAudioFallback.test.js#L18-L38,claude,agent,fix,"beforeEach(() => {
+    audioSrcs = [];
+    // AudioContext whose decodeAudioData fails like WebView2 on a big m4b.
+    global.AudioContext = class {
+      state = 'running';
+      destination = {};
+      async resume() {}
+      async decodeAudioData() { throw new DOMException('Unable to decode audio data', 'EncodingError'); }
+      createBufferSource() { return { connect() {}, start() {}, stop() {} }; }
+      close() {}
+    };
+    global.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ url: '/preview/x.audio', audioUrl: '/preview/x.wav' }),
+    }));
+    global.Audio = class {
+      constructor(url) { this.src = url; audioSrcs.push(url); }
+      play() { return Promise.resolve(); }
+      pause() {}
+    };
+  })",2026-06-24,0.2053388090349076,1
+debpalash/OmniVoice-Studio,javascript,dba8934aa2fc8700a33b7adce6a6737f958ae22f,frontend/src/test/openSettingsTab.test.js,<anonymous>_5,before_each,6,9,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/dba8934aa2fc8700a33b7adce6a6737f958ae22f/frontend/src/test/openSettingsTab.test.js#L6-L9,claude,agent,feat,"beforeEach(() => {
+    useAppStore.getState().setMode('launchpad');
+    useAppStore.getState().setPendingSettingsTab(null);
+  })",2026-06-24,0.2053388090349076,1
+debpalash/OmniVoice-Studio,javascript,022a3bd6b972d72309c7ac3d0d326baaa0bf939a,frontend/src/test/VoicePanel.test.jsx,<anonymous>_48,before_each,49,70,22,,0,per_test,1,2,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/022a3bd6b972d72309c7ac3d0d326baaa0bf939a/frontend/src/test/VoicePanel.test.jsx#L49-L70,claude,agent,feat,"beforeEach(() => {
+    apiJson.mockReset();
+    apiPost.mockReset();
+    installMutate.mockClear();
+    deleteMutate.mockClear();
+    // Stub EventSource (jsdom lacks it).
+    global.EventSource = class {
+      constructor() { this.onmessage = null; }
+      close() {}
+    };
+    // /dictation/models and /dictation/prefs both go through apiJson.
+    apiJson.mockImplementation((path) => {
+      if (path === '/dictation/models') return Promise.resolve(MODELS);
+      if (path === '/dictation/prefs') return Promise.resolve({ enabled: true, mode: 'toggle', model_id: 'sherpa-parakeet-tdt-v3' });
+      return Promise.resolve({});
+    });
+    apiPost.mockResolvedValue({ enabled: true, mode: 'toggle', model_id: 'sherpa-whisper-tiny' });
+    useAppStore.setState({
+      dictationEnabled: true, dictationMode: 'toggle',
+      dictationModelId: 'sherpa-parakeet-tdt-v3', dictationLoaded: true,
+    });
+  })",2026-06-25,0.2080766598220397,1
+debpalash/OmniVoice-Studio,javascript,022a3bd6b972d72309c7ac3d0d326baaa0bf939a,frontend/src/test/VoicePanel.test.jsx,<anonymous>_70,after_each,71,71,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/022a3bd6b972d72309c7ac3d0d326baaa0bf939a/frontend/src/test/VoicePanel.test.jsx#L71-L71,claude,agent,feat,afterEach(() => vi.restoreAllMocks()),2026-06-25,0.2080766598220397,1
+debpalash/OmniVoice-Studio,javascript,ee638bda6c5c33d425f0a74538716dc47804f119,frontend/src/test/PronunciationPanel.test.jsx,<anonymous>_32,before_each,33,37,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/ee638bda6c5c33d425f0a74538716dc47804f119/frontend/src/test/PronunciationPanel.test.jsx#L33-L37,claude,agent,feat,"beforeEach(() => {
+    apiJson.mockReset();
+    apiFetch.mockReset();
+    apiFetch.mockResolvedValue({ ok: true });
+  })",2026-06-25,0.2080766598220397,1
+debpalash/OmniVoice-Studio,javascript,522bbddccf5620224c5412a3a4bb36d974403bfc,frontend/src/test/DubErrorBanner.test.jsx,<anonymous>_27,after_each,28,30,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/522bbddccf5620224c5412a3a4bb36d974403bfc/frontend/src/test/DubErrorBanner.test.jsx#L28-L30,claude,agent,feat,"afterEach(() => {
+    vi.useRealTimers();
+  })",2026-07-01,0.2245037645448323,1
+debpalash/OmniVoice-Studio,javascript,522bbddccf5620224c5412a3a4bb36d974403bfc,frontend/src/test/DubTranslateEngineInstall.test.jsx,<anonymous>_91,before_each,92,95,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/522bbddccf5620224c5412a3a4bb36d974403bfc/frontend/src/test/DubTranslateEngineInstall.test.jsx#L92-L95,claude,agent,feat,"beforeEach(() => {
+    openExternal.mockClear();
+    copyText.mockClear();
+  })",2026-07-01,0.2245037645448323,1
+debpalash/OmniVoice-Studio,javascript,da9315815d97abd718f497273ab751ab33314379,frontend/src/components/settings/LLMProvidersPanel.test.jsx,<anonymous>_52,before_each,53,55,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/da9315815d97abd718f497273ab751ab33314379/frontend/src/components/settings/LLMProvidersPanel.test.jsx#L53-L55,claude,agent,feat,"beforeEach(() => {
+    vi.restoreAllMocks();
+  })",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,86f5213055e9326dabfe5cf950c004a5b81e6b1b,frontend/src/test/BootstrapSplashRecovery.test.jsx,<anonymous>_32,before_each,33,37,5,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/86f5213055e9326dabfe5cf950c004a5b81e6b1b/frontend/src/test/BootstrapSplashRecovery.test.jsx#L33-L37,claude,agent,fix,"beforeEach(() => {
+  warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  invokeMock.mockReset();
+  revealMock.mockReset();
+})",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,86f5213055e9326dabfe5cf950c004a5b81e6b1b,frontend/src/test/BootstrapSplashRecovery.test.jsx,<anonymous>_38,after_each,39,45,7,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/86f5213055e9326dabfe5cf950c004a5b81e6b1b/frontend/src/test/BootstrapSplashRecovery.test.jsx#L39-L45,claude,agent,fix,"afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  warnSpy.mockRestore();
+  delete window.__TAURI_INTERNALS__;
+})",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,86f5213055e9326dabfe5cf950c004a5b81e6b1b,frontend/src/test/BootstrapSplashRecovery.test.jsx,<anonymous>_47,before_each,48,53,6,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/86f5213055e9326dabfe5cf950c004a5b81e6b1b/frontend/src/test/BootstrapSplashRecovery.test.jsx#L48-L53,claude,agent,fix,"beforeEach(() => {
+    vi.useFakeTimers();
+    window.__TAURI_INTERNALS__ = {};
+    // The hook early-returns 'ready' in dev builds; force the packaged path.
+    vi.stubEnv('DEV', false);
+  })",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,86f5213055e9326dabfe5cf950c004a5b81e6b1b,frontend/src/test/splashWatchdog.test.js,<anonymous>_19,before_each,20,23,4,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/86f5213055e9326dabfe5cf950c004a5b81e6b1b/frontend/src/test/splashWatchdog.test.js#L20-L23,claude,agent,fix,"beforeEach(() => {
+  vi.useFakeTimers();
+  warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+})",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,86f5213055e9326dabfe5cf950c004a5b81e6b1b,frontend/src/test/splashWatchdog.test.js,<anonymous>_24,after_each,25,28,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/86f5213055e9326dabfe5cf950c004a5b81e6b1b/frontend/src/test/splashWatchdog.test.js#L25-L28,claude,agent,fix,"afterEach(() => {
+  vi.useRealTimers();
+  warnSpy.mockRestore();
+})",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,b3c18db33f5f381752c7f44acde0c250c007fff1,frontend/src/components/settings/StorageUsagePanel.test.jsx,<anonymous>_79,before_each,80,83,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/b3c18db33f5f381752c7f44acde0c250c007fff1/frontend/src/components/settings/StorageUsagePanel.test.jsx#L80-L83,claude,agent,feat,"beforeEach(() => {
+    vi.restoreAllMocks();
+    _resetCriticalToastForTests();
+  })",2026-07-02,0.2272416153319644,1
+debpalash/OmniVoice-Studio,javascript,eeb3bf4452734c736434b32d3a3402aba9c8209c,frontend/src/test/SupportPageSponsors.test.jsx,<anonymous>_37,before_each,38,41,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/eeb3bf4452734c736434b32d3a3402aba9c8209c/frontend/src/test/SupportPageSponsors.test.jsx#L38-L41,claude,agent,feat,"beforeEach(() => {
+  mockSponsors = [];
+  openExternal.mockClear();
+})",2026-07-03,0.2299794661190965,1
+debpalash/OmniVoice-Studio,javascript,5e135b96554acdfd68f55325586336bb10dbe0fa,frontend/src/test/ContactPage.test.jsx,<anonymous>_18,before_each,19,22,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/5e135b96554acdfd68f55325586336bb10dbe0fa/frontend/src/test/ContactPage.test.jsx#L19-L22,claude,agent,feat,"beforeEach(() => {
+  openExternal.mockClear();
+  useAppStore.getState().setMode?.('launchpad');
+})",2026-07-03,0.2299794661190965,1
+debpalash/OmniVoice-Studio,javascript,48a71548102fc4b65c56bd0f98648ccb9f8ba3d9,frontend/src/test/modelStoreTokenPath.test.jsx,<anonymous>_53,before_each,54,62,9,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/48a71548102fc4b65c56bd0f98648ccb9f8ba3d9/frontend/src/test/modelStoreTokenPath.test.jsx#L54-L62,claude,agent,feat,"beforeEach(() => {
+    apiPost.mockClear();
+    global.EventSource = class {
+      constructor() {
+        this.onmessage = null;
+      }
+      close() {}
+    };
+  })",2026-07-03,0.2299794661190965,1
+debpalash/OmniVoice-Studio,javascript,48a71548102fc4b65c56bd0f98648ccb9f8ba3d9,frontend/src/test/modelStoreTokenPath.test.jsx,<anonymous>_62,after_each,63,63,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/48a71548102fc4b65c56bd0f98648ccb9f8ba3d9/frontend/src/test/modelStoreTokenPath.test.jsx#L63-L63,claude,agent,feat,afterEach(() => vi.restoreAllMocks()),2026-07-03,0.2299794661190965,1
+debpalash/OmniVoice-Studio,javascript,46c4445258b13f89327360a11db21d3465ea8d29,frontend/src/test/ProjectsRelativeTime.test.jsx,<anonymous>_19,before_each,20,22,3,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/46c4445258b13f89327360a11db21d3465ea8d29/frontend/src/test/ProjectsRelativeTime.test.jsx#L20-L22,claude,agent,fix,"beforeEach(() => {
+    localStorage.clear();
+  })",2026-07-04,0.2327173169062286,1
+debpalash/OmniVoice-Studio,javascript,46c4445258b13f89327360a11db21d3465ea8d29,frontend/src/test/ProjectsRelativeTime.test.jsx,<anonymous>_22,after_each,23,25,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/46c4445258b13f89327360a11db21d3465ea8d29/frontend/src/test/ProjectsRelativeTime.test.jsx#L23-L25,claude,agent,fix,"afterEach(() => {
+    vi.restoreAllMocks();
+  })",2026-07-04,0.2327173169062286,1
+debpalash/OmniVoice-Studio,javascript,46c4445258b13f89327360a11db21d3465ea8d29,frontend/src/utils/relativeTime.test.js,<anonymous>_11,before_each,12,15,4,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/46c4445258b13f89327360a11db21d3465ea8d29/frontend/src/utils/relativeTime.test.js#L12-L15,claude,agent,fix,"beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(NOW_MS);
+})",2026-07-04,0.2327173169062286,1
+debpalash/OmniVoice-Studio,javascript,46c4445258b13f89327360a11db21d3465ea8d29,frontend/src/utils/relativeTime.test.js,<anonymous>_15,after_each,16,18,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/46c4445258b13f89327360a11db21d3465ea8d29/frontend/src/utils/relativeTime.test.js#L16-L18,claude,agent,fix,"afterEach(() => {
+  vi.useRealTimers();
+})",2026-07-04,0.2327173169062286,1
+debpalash/OmniVoice-Studio,javascript,bd9272962338cee7b35223d4090e32ca6f2fe21e,frontend/src/test/dubMultiLangGenerate.test.jsx,<anonymous>_131,before_each,132,135,4,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/bd9272962338cee7b35223d4090e32ca6f2fe21e/frontend/src/test/dubMultiLangGenerate.test.jsx#L132-L135,claude,agent,feat,"beforeEach(() => {
+    useAppStore.setState(baseState, true);
+    captured.header.length = 0;
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,bd9272962338cee7b35223d4090e32ca6f2fe21e,frontend/src/test/dubMultiLangGenerate.test.jsx,<anonymous>_135,after_each,136,138,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/bd9272962338cee7b35223d4090e32ca6f2fe21e/frontend/src/test/dubMultiLangGenerate.test.jsx#L136-L138,claude,agent,feat,"afterEach(() => {
+    vi.restoreAllMocks();
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,bd9272962338cee7b35223d4090e32ca6f2fe21e,frontend/src/test/dubMultiLangPersist.test.js,<anonymous>_14,before_each,15,17,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/bd9272962338cee7b35223d4090e32ca6f2fe21e/frontend/src/test/dubMultiLangPersist.test.js#L15-L17,claude,agent,feat,"beforeEach(() => {
+    useAppStore.setState(baseState, true);
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,bd9272962338cee7b35223d4090e32ca6f2fe21e,frontend/src/test/dubMultiLangPersist.test.js,<anonymous>_46,before_each,47,49,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/bd9272962338cee7b35223d4090e32ca6f2fe21e/frontend/src/test/dubMultiLangPersist.test.js#L47-L49,claude,agent,feat,"beforeEach(() => {
+    useAppStore.setState(baseState, true);
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,bd9272962338cee7b35223d4090e32ca6f2fe21e,frontend/src/test/dubTranslateAllOverride.test.jsx,<anonymous>_50,before_each,51,62,12,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/bd9272962338cee7b35223d4090e32ca6f2fe21e/frontend/src/test/dubTranslateAllOverride.test.jsx#L51-L62,claude,agent,feat,"beforeEach(() => {
+    useAppStore.setState(baseState, true);
+    dubApi.dubTranslate.mockReset();
+    useAppStore.setState({
+      dubJobId: 'job1',
+      dubStep: 'editing',
+      dubLangCode: 'es',
+      dubSegments: [
+        { id: '1', text: 'hello there', text_original: 'hello there', start: 0, end: 2 },
+      ],
+    });
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,620321a9cc8a37a200398bccb9fd84625663aaa0,frontend/src/components/BackendCrashNotice.test.jsx,<anonymous>_35,before_each,36,39,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/620321a9cc8a37a200398bccb9fd84625663aaa0/frontend/src/components/BackendCrashNotice.test.jsx#L36-L39,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks();
+    getUnacknowledgedBackendCrash.mockResolvedValue(null);
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,620321a9cc8a37a200398bccb9fd84625663aaa0,frontend/src/utils/bugReport.test.js,<anonymous>_118,before_each,119,122,4,,1,per_test,1,1,0,1,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/620321a9cc8a37a200398bccb9fd84625663aaa0/frontend/src/utils/bugReport.test.js#L119-L122,claude,agent,feat,"beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')));
+    getLastBackendCrash.mockResolvedValue(null);
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,javascript,80f10289feae5dcfa2741c62c062db2c7f71d2e2,frontend/src/components/settings/EnginesTab.test.jsx,<anonymous>_46,before_each,47,50,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/80f10289feae5dcfa2741c62c062db2c7f71d2e2/frontend/src/components/settings/EnginesTab.test.jsx#L47-L50,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks();
+    listEngines.mockResolvedValue(ENGINES);
+  })",2026-07-09,0.2464065708418891,1
+debpalash/OmniVoice-Studio,javascript,efc99be337c9ca7ebf07204c474b68800ba218d4,frontend/src/components/WorkspaceHistory.test.jsx,<anonymous>_7,before_all,8,16,9,,0,per_class,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/efc99be337c9ca7ebf07204c474b68800ba218d4/frontend/src/components/WorkspaceHistory.test.jsx#L8-L16,claude,agent,feat,"beforeAll(() => {
+  // LazyWaveform defers the real <WaveformPlayer> behind an IntersectionObserver;
+  // a no-op stub keeps rows rendered without ever mounting the audio fetch.
+  global.IntersectionObserver = class {
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  };
+})",2026-07-10,0.24914442162902123,1
+debpalash/OmniVoice-Studio,javascript,efc99be337c9ca7ebf07204c474b68800ba218d4,frontend/src/components/settings/HistoryRetentionPanel.test.jsx,<anonymous>_20,before_each,21,23,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/efc99be337c9ca7ebf07204c474b68800ba218d4/frontend/src/components/settings/HistoryRetentionPanel.test.jsx#L21-L23,claude,agent,feat,"beforeEach(() => {
+    vi.restoreAllMocks();
+  })",2026-07-10,0.24914442162902123,1
+debpalash/OmniVoice-Studio,javascript,17ae95281023e4f1b10a64458fa8a4b4854b00b9,frontend/src/test/modelStoreFilter.test.jsx,<anonymous>_111,before_each,112,112,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/17ae95281023e4f1b10a64458fa8a4b4854b00b9/frontend/src/test/modelStoreFilter.test.jsx#L112-L112,claude,agent,feat,beforeEach(() => vi.clearAllMocks()),2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,17ae95281023e4f1b10a64458fa8a4b4854b00b9,frontend/src/test/modelStoreResidency.test.jsx,<anonymous>_190,before_each,191,193,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/17ae95281023e4f1b10a64458fa8a4b4854b00b9/frontend/src/test/modelStoreResidency.test.jsx#L191-L193,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks();
+  })",2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,6978f90f16d0236b37f70bbc0a43dda57bde707a,frontend/src/components/settings/AboutTab.test.jsx,<anonymous>_27,before_each,28,30,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/6978f90f16d0236b37f70bbc0a43dda57bde707a/frontend/src/components/settings/AboutTab.test.jsx#L28-L30,claude,agent,fix,"beforeEach(() => {
+    vi.clearAllMocks();
+  })",2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,6978f90f16d0236b37f70bbc0a43dda57bde707a,frontend/src/components/settings/AboutTab.test.jsx,<anonymous>_47,before_each,48,52,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/6978f90f16d0236b37f70bbc0a43dda57bde707a/frontend/src/components/settings/AboutTab.test.jsx#L48-L52,claude,agent,fix,"beforeEach(() => {
+    vi.clearAllMocks();
+    useAppStore.getState().setMode('launchpad');
+    useAppStore.getState().setPendingSettingsTab(null);
+  })",2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,6978f90f16d0236b37f70bbc0a43dda57bde707a,frontend/src/components/settings/AppearancePanel.test.jsx,<anonymous>_55,before_each,56,60,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/6978f90f16d0236b37f70bbc0a43dda57bde707a/frontend/src/components/settings/AppearancePanel.test.jsx#L56-L60,claude,agent,fix,"beforeEach(() => {
+    useAppStore.getState().setFont(fontIds[0]);
+    useAppStore.getState().setTheme('gruvbox');
+    document.documentElement.style.removeProperty('--font-sans');
+  })",2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,6978f90f16d0236b37f70bbc0a43dda57bde707a,frontend/src/components/settings/HotkeyTab.test.jsx,<anonymous>_22,before_each,23,25,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/6978f90f16d0236b37f70bbc0a43dda57bde707a/frontend/src/components/settings/HotkeyTab.test.jsx#L23-L25,claude,agent,fix,"beforeEach(() => {
+    vi.clearAllMocks();
+  })",2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,6978f90f16d0236b37f70bbc0a43dda57bde707a,frontend/src/test/i18nDirection.test.js,<anonymous>_7,after_each,8,10,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/6978f90f16d0236b37f70bbc0a43dda57bde707a/frontend/src/test/i18nDirection.test.js#L8-L10,claude,agent,fix,"afterEach(async () => {
+    await i18n.changeLanguage('en');
+  })",2026-07-11,0.2518822724161533,1
+debpalash/OmniVoice-Studio,javascript,14d2cae1e8473c77d51e37f4a5cd66e98a551377,frontend/src/test/streamingTts.test.js,<anonymous>_138,before_each,139,143,5,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/14d2cae1e8473c77d51e37f4a5cd66e98a551377/frontend/src/test/streamingTts.test.js#L139-L143,claude,agent,feat,"beforeEach(() => {
+  FakeAudioContext.instances = [];
+  window.AudioContext = FakeAudioContext;
+  apiFetch.mockReset();
+})",2026-07-12,0.2546201232032854,1
+debpalash/OmniVoice-Studio,javascript,14d2cae1e8473c77d51e37f4a5cd66e98a551377,frontend/src/test/streamingTts.test.js,<anonymous>_144,after_each,145,147,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/14d2cae1e8473c77d51e37f4a5cd66e98a551377/frontend/src/test/streamingTts.test.js#L145-L147,claude,agent,feat,"afterEach(() => {
+  stopActivePlayback();
+})",2026-07-12,0.2546201232032854,1
+debpalash/OmniVoice-Studio,javascript,94093605eb271d545e284d4aac15a1ec4152902c,frontend/src/components/settings/ResetPanel.test.jsx,<anonymous>_147,before_each,148,158,11,,0,per_test,3,2,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/94093605eb271d545e284d4aac15a1ec4152902c/frontend/src/components/settings/ResetPanel.test.jsx#L148-L158,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    window.__TAURI_INTERNALS__ = {};
+    invoke.mockImplementation(async (cmd) => {
+      if (cmd === 'reset_scan') return SCOPES;
+      if (cmd === 'reset_purge')
+        return { removed: [], failed: [], refused: [], freed_bytes: 0, restarted: true };
+      return null;
+    });
+  })",2026-07-12,0.2546201232032854,1
+debpalash/OmniVoice-Studio,javascript,94093605eb271d545e284d4aac15a1ec4152902c,frontend/src/components/settings/UninstallPanel.test.jsx,<anonymous>_35,before_each,36,40,5,,0,per_test,2,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/94093605eb271d545e284d4aac15a1ec4152902c/frontend/src/components/settings/UninstallPanel.test.jsx#L36-L40,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks();
+    window.__TAURI_INTERNALS__ = {};
+    invoke.mockImplementation(async (cmd) => (cmd === 'uninstall_scan' ? TARGETS : null));
+  })",2026-07-12,0.2546201232032854,1
+debpalash/OmniVoice-Studio,javascript,283ef36b13bb0b0453b15b1e269305db0aaa6cae,frontend/src/test/dubVoiceMatchRequest.test.jsx,<anonymous>_57,before_each,58,69,12,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/283ef36b13bb0b0453b15b1e269305db0aaa6cae/frontend/src/test/dubVoiceMatchRequest.test.jsx#L58-L69,claude,agent,feat,"beforeEach(() => {
+  useAppStore.setState(baseState, true);
+  dubApi.dubGenerate.mockReset().mockResolvedValue({ task_id: 't1' });
+  clientApi.apiFetch.mockReset().mockResolvedValue(endOfStream());
+  clientApi.apiPost.mockReset();
+  useAppStore.setState({
+    dubJobId: 'job1',
+    dubStep: 'editing',
+    dubLangCode: 'es',
+    dubSegments: [{ id: '1', text: 'hola', text_original: 'hello', start: 0, end: 2 }],
+  });
+})",2026-07-14,0.2600958247775496,1
+debpalash/OmniVoice-Studio,javascript,22a513a404dac29a2acb914a93a4a075daeb4447,frontend/src/test/dubPreviewTabTranscriptSync.test.jsx,<anonymous>_66,before_each,67,81,15,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/22a513a404dac29a2acb914a93a4a075daeb4447/frontend/src/test/dubPreviewTabTranscriptSync.test.jsx#L67-L81,claude,agent,fix,"beforeEach(() => {
+  dubListTracks.mockResolvedValue({ tracks: {} });
+  useAppStore.setState({
+    dubLangCode: 'bn',
+    dubLang: 'Bengali',
+    dubSegments: [
+      {
+        id: '1',
+        text: 'বাংলা লাইন',
+        text_original: 'the original line',
+        translations: { bn: 'বাংলা লাইন', de: 'die deutsche Zeile' },
+      },
+    ],
+  });
+})",2026-07-14,0.2600958247775496,1
+debpalash/OmniVoice-Studio,javascript,9ff394a48bad285064148994bf8809d52e1928bb,frontend/src/test/BootstrapSplashFailedRecovery.test.jsx,<anonymous>_30,before_each,31,37,7,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/9ff394a48bad285064148994bf8809d52e1928bb/frontend/src/test/BootstrapSplashFailedRecovery.test.jsx#L31-L37,claude,agent,fix,"beforeEach(() => {
+  warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  invokeMock.mockReset();
+  vi.useFakeTimers();
+  window.__TAURI_INTERNALS__ = {};
+  vi.stubEnv('DEV', false);
+})",2026-07-16,0.2655715263518138,1
+debpalash/OmniVoice-Studio,javascript,9ff394a48bad285064148994bf8809d52e1928bb,frontend/src/test/BootstrapSplashFailedRecovery.test.jsx,<anonymous>_38,after_each,39,45,7,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/9ff394a48bad285064148994bf8809d52e1928bb/frontend/src/test/BootstrapSplashFailedRecovery.test.jsx#L39-L45,claude,agent,fix,"afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  warnSpy.mockRestore();
+  delete window.__TAURI_INTERNALS__;
+})",2026-07-16,0.2655715263518138,1
+debpalash/OmniVoice-Studio,javascript,577fe5aa3c913a995db1f27079b582c60b302dec,frontend/src/test/BootstrapSplashFailedRender.test.jsx,<anonymous>_30,before_each,31,34,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/577fe5aa3c913a995db1f27079b582c60b302dec/frontend/src/test/BootstrapSplashFailedRender.test.jsx#L31-L34,claude,agent,test,"beforeEach(() => {
+  // Not in a Tauri context: the log/progress subscription effects no-op.
+  delete window.__TAURI_INTERNALS__;
+})",2026-07-16,0.2655715263518138,1
+debpalash/OmniVoice-Studio,javascript,b1bf00a25786d2908e643163a6ed8dc05f80876b,frontend/src/test/probeAudioDuration.test.js,<anonymous>_37,before_each,38,47,10,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/b1bf00a25786d2908e643163a6ed8dc05f80876b/frontend/src/test/probeAudioDuration.test.js#L38-L47,claude,agent,fix,"beforeEach(async () => {
+  revoked = 0;
+  vi.stubGlobal('Audio', FakeAudio);
+  // Patch only the static methods — jsdom needs the real URL constructor.
+  URL.createObjectURL = () => 'blob:probe-test';
+  URL.revokeObjectURL = () => {
+    revoked += 1;
+  };
+  ({ probeAudioDuration } = await import('../utils/format.js'));
+})",2026-07-16,0.2655715263518138,1
+debpalash/OmniVoice-Studio,javascript,b1bf00a25786d2908e643163a6ed8dc05f80876b,frontend/src/test/probeAudioDuration.test.js,<anonymous>_48,after_each,49,54,6,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/b1bf00a25786d2908e643163a6ed8dc05f80876b/frontend/src/test/probeAudioDuration.test.js#L49-L54,claude,agent,fix,"afterEach(() => {
+  URL.createObjectURL = realCreate;
+  URL.revokeObjectURL = realRevoke;
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+})",2026-07-16,0.2655715263518138,1
+debpalash/OmniVoice-Studio,javascript,f3286c5e6e80773200cf4d3549094f1ca7474ecc,frontend/src/test/dubPasteTranslation.test.jsx,<anonymous>_41,before_each,42,51,10,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/f3286c5e6e80773200cf4d3549094f1ca7474ecc/frontend/src/test/dubPasteTranslation.test.jsx#L42-L51,claude,agent,feat,"beforeEach(() => {
+  useAppStore.setState(baseState, true);
+  dubApi.dubParseSubtitleText.mockReset();
+  useAppStore.setState({
+    dubJobId: 'job1',
+    dubStep: 'editing',
+    dubLangCode: 'es',
+    dubSegments: SEGMENTS.map((s) => ({ ...s })),
+  });
+})",2026-07-20,0.27652292950034224,1
+debpalash/OmniVoice-Studio,javascript,3e409404be275d727be9f5b081decf112984bad2,frontend/src/test/AudioTrimmerPreview.test.jsx,<anonymous>_95,before_each,96,107,12,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/3e409404be275d727be9f5b081decf112984bad2/frontend/src/test/AudioTrimmerPreview.test.jsx#L96-L107,claude,agent,fix,"beforeEach(() => {
+    startedSources = [];
+    canvasSpy = stubCanvas();
+    vi.stubGlobal('AudioContext', MockAudioContext);
+    vi.stubGlobal('Audio', MockAudio);
+    window.OfflineAudioContext = MockOfflineAudioContext;
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: () => 'blob:mock',
+      revokeObjectURL: () => {},
+    });
+  })",2026-07-20,0.27652292950034224,1
+debpalash/OmniVoice-Studio,javascript,3e409404be275d727be9f5b081decf112984bad2,frontend/src/test/AudioTrimmerPreview.test.jsx,<anonymous>_107,after_each,108,113,6,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/3e409404be275d727be9f5b081decf112984bad2/frontend/src/test/AudioTrimmerPreview.test.jsx#L108-L113,claude,agent,fix,"afterEach(() => {
+    canvasSpy.mockRestore();
+    vi.unstubAllGlobals();
+    delete window.OfflineAudioContext;
+    vi.restoreAllMocks();
+  })",2026-07-20,0.27652292950034224,1
+debpalash/OmniVoice-Studio,javascript,fc2b0d4cb5ceea4ff13f56a96df007f20dbf79fb,frontend/src/test/AudiobookTabLayout.test.jsx,<anonymous>_37,before_each,38,41,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/fc2b0d4cb5ceea4ff13f56a96df007f20dbf79fb/frontend/src/test/AudiobookTabLayout.test.jsx#L38-L41,claude,agent,refactor,"beforeEach(() => {
+    localStorage.clear();
+    useAppStore.getState().setScript('');
+  })",2026-07-20,0.27652292950034224,1
+debpalash/OmniVoice-Studio,javascript,8f93b8132f85a7e75f134fd8c5a93fd0addd66d6,frontend/src/test/LanguageSwitchPrompt.test.jsx,<anonymous>_21,before_each,22,24,3,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/8f93b8132f85a7e75f134fd8c5a93fd0addd66d6/frontend/src/test/LanguageSwitchPrompt.test.jsx#L22-L24,claude,agent,feat,"beforeEach(() => {
+  seed({});
+})",2026-07-20,0.27652292950034224,1
+debpalash/OmniVoice-Studio,javascript,8f93b8132f85a7e75f134fd8c5a93fd0addd66d6,frontend/src/test/LanguageSwitchPrompt.test.jsx,<anonymous>_24,after_each,25,27,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/8f93b8132f85a7e75f134fd8c5a93fd0addd66d6/frontend/src/test/LanguageSwitchPrompt.test.jsx#L25-L27,claude,agent,feat,"afterEach(() => {
+  vi.restoreAllMocks();
+})",2026-07-20,0.27652292950034224,1
+debpalash/OmniVoice-Studio,javascript,dd4af735f366c02014c631f3605926864c6e4e94,frontend/src/test/AudiobookStopCancel.test.jsx,<anonymous>_76,before_each,77,81,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/dd4af735f366c02014c631f3605926864c6e4e94/frontend/src/test/AudiobookStopCancel.test.jsx#L77-L81,claude,agent,feat,"beforeEach(() => {
+    localStorage.clear();
+    gen.reset();
+    useAppStore.getState().setScript('# One\nHello.\n# Two\nWorld.\n# Three\nDone.');
+  })",2026-07-21,0.2792607802874743,1
+debpalash/OmniVoice-Studio,javascript,283ae3fe8b28e15d5b92baf0b2ad867335d8cafa,frontend/src/test/DubSegmentRowVoicePicker.test.jsx,<anonymous>_60,before_each,61,64,4,,1,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/283ae3fe8b28e15d5b92baf0b2ad867335d8cafa/frontend/src/test/DubSegmentRowVoicePicker.test.jsx#L61-L64,claude,agent,feat,"beforeEach(() => {
+    window.localStorage.clear();
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+  })",2026-07-21,0.2792607802874743,1
+debpalash/OmniVoice-Studio,javascript,283ae3fe8b28e15d5b92baf0b2ad867335d8cafa,frontend/src/test/StoriesEditorVoicePicker.test.jsx,<anonymous>_47,before_each,48,52,5,,1,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/283ae3fe8b28e15d5b92baf0b2ad867335d8cafa/frontend/src/test/StoriesEditorVoicePicker.test.jsx#L48-L52,claude,agent,feat,"beforeEach(() => {
+    window.localStorage.clear();
+    window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    seedStore();
+  })",2026-07-21,0.2792607802874743,1
+debpalash/OmniVoice-Studio,javascript,e6ca31d7a646085c4f51c7482c693b7d1c484543,frontend/src/test/SetupWizardChrome.test.jsx,<anonymous>_56,before_each,57,59,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/e6ca31d7a646085c4f51c7482c693b7d1c484543/frontend/src/test/SetupWizardChrome.test.jsx#L57-L59,claude,agent,fix,"beforeEach(() => {
+  document.body.innerHTML = '';
+})",2026-07-26,0.2929500342231348,1
+debpalash/OmniVoice-Studio,javascript,c3d0d6b123ece55fe84dd750b9f17479cd38ca26,frontend/src/test/UpdateToast.test.jsx,<anonymous>_52,before_each,53,59,7,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/c3d0d6b123ece55fe84dd750b9f17479cd38ca26/frontend/src/test/UpdateToast.test.jsx#L53-L59,claude,agent,feat,"beforeEach(() => {
+  toastCalls.length = 0;
+  dismissed.length = 0;
+  installUpdate.mockClear();
+  openSettingsTab.mockClear();
+  Object.assign(storeState, { dubStep: 'idle', stage: 'idle', ttsInflight: 0 });
+})",2026-07-27,0.29568788501026694,1
+debpalash/OmniVoice-Studio,javascript,c3d0d6b123ece55fe84dd750b9f17479cd38ca26,frontend/src/test/UpdateToast.test.jsx,<anonymous>_60,after_each,61,61,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/c3d0d6b123ece55fe84dd750b9f17479cd38ca26/frontend/src/test/UpdateToast.test.jsx#L61-L61,claude,agent,feat,afterEach(() => vi.clearAllMocks()),2026-07-27,0.29568788501026694,1
+debpalash/OmniVoice-Studio,javascript,c3d0d6b123ece55fe84dd750b9f17479cd38ca26,frontend/src/test/errorToastUserFixable.test.jsx,<anonymous>_70,before_each,71,73,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/c3d0d6b123ece55fe84dd750b9f17479cd38ca26/frontend/src/test/errorToastUserFixable.test.jsx#L71-L73,claude,agent,feat,"beforeEach(() => {
+    toastErrorMock.mockClear();
+  })",2026-07-27,0.29568788501026694,1
+debpalash/OmniVoice-Studio,javascript,c3d0d6b123ece55fe84dd750b9f17479cd38ca26,frontend/src/test/ttsInflight.test.js,<anonymous>_44,before_each,45,48,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/c3d0d6b123ece55fe84dd750b9f17479cd38ca26/frontend/src/test/ttsInflight.test.js#L45-L48,claude,agent,feat,"beforeEach(() => {
+  state.ttsInflight = 0;
+  apiFetch.mockReset();
+})",2026-07-27,0.29568788501026694,1
+debpalash/OmniVoice-Studio,javascript,c3d0d6b123ece55fe84dd750b9f17479cd38ca26,frontend/src/test/updatesPanelBusy.test.jsx,<anonymous>_64,before_each,65,65,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/c3d0d6b123ece55fe84dd750b9f17479cd38ca26/frontend/src/test/updatesPanelBusy.test.jsx#L65-L65,claude,agent,feat,beforeEach(() => installUpdate.mockClear()),2026-07-27,0.29568788501026694,1
+debpalash/OmniVoice-Studio,javascript,07263ef42e21b46115505d546005847ed8093193,frontend/src/test/generatePreflight.test.js,<anonymous>_29,before_each,30,34,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/07263ef42e21b46115505d546005847ed8093193/frontend/src/test/generatePreflight.test.js#L30-L34,claude,agent,fix,"beforeEach(() => {
+    toastFn.mockClear();
+    listEnginesMock.mockReset();
+    _resetPreflight();
+  })",2026-07-29,0.30116358658453113,1
+debpalash/OmniVoice-Studio,javascript,07263ef42e21b46115505d546005847ed8093193,frontend/src/test/generatePreflight.test.js,<anonymous>_140,before_each,141,145,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/07263ef42e21b46115505d546005847ed8093193/frontend/src/test/generatePreflight.test.js#L141-L145,claude,agent,fix,"beforeEach(() => {
+    toastFn.mockClear();
+    listEnginesMock.mockReset();
+    _resetPreflight();
+  })",2026-07-29,0.30116358658453113,1
+debpalash/OmniVoice-Studio,javascript,07263ef42e21b46115505d546005847ed8093193,frontend/src/test/streamingPreflight.test.js,<anonymous>_48,before_each,49,54,6,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/07263ef42e21b46115505d546005847ed8093193/frontend/src/test/streamingPreflight.test.js#L49-L54,claude,agent,fix,"beforeEach(() => {
+    apiFetch.mockReset();
+    preflight.mockReset();
+    state.ttsInflight = 0;
+    state.max = 0;
+  })",2026-07-29,0.30116358658453113,1
+debpalash/OmniVoice-Studio,javascript,07263ef42e21b46115505d546005847ed8093193,frontend/src/test/streamingPreflight.test.js,<anonymous>_88,before_each,89,94,6,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/07263ef42e21b46115505d546005847ed8093193/frontend/src/test/streamingPreflight.test.js#L89-L94,claude,agent,fix,"beforeEach(() => {
+    apiFetch.mockReset();
+    preflight.mockReset();
+    state.ttsInflight = 0;
+    state.max = 0;
+  })",2026-07-29,0.30116358658453113,1
+debpalash/OmniVoice-Studio,javascript,5afcdf787dad0b13ca6365f8e3efed779658a29e,frontend/src/test/generatePreflight.test.js,<anonymous>_202,before_each,203,207,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/5afcdf787dad0b13ca6365f8e3efed779658a29e/frontend/src/test/generatePreflight.test.js#L203-L207,claude,agent,fix,"beforeEach(() => {
+    toastFn.mockClear();
+    listEnginesMock.mockReset();
+    _resetPreflight();
+  })",2026-07-29,0.30116358658453113,1
+debpalash/OmniVoice-Studio,javascript,5afcdf787dad0b13ca6365f8e3efed779658a29e,frontend/src/test/generatePreflight.test.js,<anonymous>_270,before_each,271,275,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/5afcdf787dad0b13ca6365f8e3efed779658a29e/frontend/src/test/generatePreflight.test.js#L271-L275,claude,agent,fix,"beforeEach(() => {
+    toastFn.mockClear();
+    listEnginesMock.mockReset();
+    _resetPreflight();
+  })",2026-07-29,0.30116358658453113,1
+debpalash/OmniVoice-Studio,javascript,1600f02abf7304c41185c3a034be21764cc34873,frontend/src/test/watermarkControl.test.jsx,<anonymous>_33,before_each,34,37,4,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/1600f02abf7304c41185c3a034be21764cc34873/frontend/src/test/watermarkControl.test.jsx#L34-L37,claude,agent,feat,"beforeEach(() => {
+    getStatus.mockReset();
+    setSettings.mockReset();
+  })",2026-07-29,0.30116358658453113,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_99,mocha_before,100,100,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L100-L100,copilot,agent,feat,before(() => setupServer()),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_100,mocha_after,101,101,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L101-L101,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_127,mocha_before,128,128,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L128-L128,copilot,agent,feat,before(() => setupServer()),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_128,mocha_after,129,129,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L129-L129,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_140,mocha_before,141,153,13,,0,per_test,3,2,0,1,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L141-L153,copilot,agent,feat,"before(() => setupServer({
+        ghExec: async (args) => {
+            if (args[0] === ""issue"" && args[1] === ""view"") {
+                return JSON.stringify({
+                    number: 42, title: ""Test issue"", body: ""Description here"",
+                    author: { login: ""dev1"" }, labels: [{ name: ""bug"" }],
+                    state: ""OPEN"", createdAt: ""2025-01-01"", updatedAt: ""2025-01-02"",
+                    comments: [{ body: ""comment1"" }, { body: ""comment2"" }],
+                });
+            }
+            throw new Error(""unexpected gh call"");
+        },
+    }))",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_153,mocha_after,154,154,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L154-L154,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_181,mocha_before,182,200,19,,0,per_test,5,2,0,1,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L182-L200,copilot,agent,feat,"before(() => setupServer({
+        ghExec: async (args) => {
+            if (args[0] === ""pr"" && args[1] === ""view"") {
+                return JSON.stringify({
+                    number: 10, title: ""Fix A"", body: ""PR body"",
+                    author: { login: ""alice"" }, labels: [{ name: ""enhancement"" }],
+                    state: ""OPEN"", isDraft: false, reviewDecision: ""APPROVED"",
+                    headRefName: ""feat/fix-a"", createdAt: ""2025-01-01"", updatedAt: ""2025-01-02"",
+                    comments: [{ author: { login: ""bot"" }, body: ""CI passed"", createdAt: ""2025-01-01T10:00:00Z"", url: """" }],
+                    reviews: [{ author: { login: ""reviewer"" }, body: ""LGTM"", state: ""APPROVED"", submittedAt: ""2025-01-01T11:00:00Z"", url: """" }],
+                    statusCheckRollup: [{ name: ""lint"", status: ""COMPLETED"", conclusion: ""success"", detailsUrl: ""http://ci/1"" }],
+                });
+            }
+            if (args[0] === ""run"" && args[1] === ""list"") {
+                return JSON.stringify([{ databaseId: 100, name: ""CI"", status: ""completed"", conclusion: ""success"" }]);
+            }
+            throw new Error(""unexpected"");
+        },
+    }))",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_200,mocha_after,201,201,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L201-L201,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_244,mocha_before,245,245,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L245-L245,copilot,agent,feat,before(() => setupServer()),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_245,mocha_after,246,246,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L246-L246,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_271,mocha_before,272,272,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L272-L272,copilot,agent,feat,before(() => setupServer()),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_272,mocha_after,273,273,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L273-L273,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_286,mocha_before,287,303,17,,0,per_test,8,2,0,1,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L287-L303,copilot,agent,feat,"before(async () => {
+        const m = createMockDeps({
+            ghExec: async (args) => {
+                ghCalls.push(args);
+                if (args[0] === ""pr"" && args[1] === ""view"") return JSON.stringify({ headRefName: ""feat/x"" });
+                if (args[0] === ""run"" && args[1] === ""list"") return JSON.stringify([{ databaseId: 55, conclusion: ""action_required"" }]);
+                if (args[0] === ""api"") return """"; // approve
+                if (args[0] === ""pr"" && args[1] === ""edit"") return """";
+                return """";
+            },
+        });
+        ghCalls = m.ghCalls;
+        const handler = createHandler(m.deps);
+        server = createServer(handler);
+        await new Promise(r => server.listen(0, ""127.0.0.1"", r));
+        baseUrl = `http://127.0.0.1:${server.address().port}`;
+    })",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_303,mocha_after,304,304,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L304-L304,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_317,mocha_before,318,331,14,,0,per_test,3,2,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L318-L331,copilot,agent,feat,"before(async () => {
+        await setupServer({
+            ghExec: async (args) => {
+                if (args[0] === ""pr"" && args[1] === ""checks"") {
+                    return JSON.stringify([
+                        { name: ""lint"", state: ""FAILURE"", link: ""https://ci.com/runs/111/jobs/1"" },
+                        { name: ""test"", state: ""SUCCESS"", link: ""https://ci.com/runs/222/jobs/2"" },
+                        { name: ""build"", state: ""ERROR"", link: ""https://ci.com/runs/111/jobs/3"" },
+                    ]);
+                }
+                return """"; // rerun calls
+            },
+        });
+    })",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_331,mocha_after,332,332,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L332-L332,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_342,mocha_before,343,346,4,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L343-L346,copilot,agent,feat,"before(async () => {
+        calls = [];
+        await setupServer({ ghExec: async (args) => { calls.push(args); return """"; } });
+    })",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_346,mocha_after,347,347,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L347-L347,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_357,mocha_before,358,371,14,,0,per_test,3,2,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L358-L371,copilot,agent,feat,"before(async () => {
+        await setupServer({
+            ghExec: async (args) => {
+                if (args[0] === ""run"" && args[1] === ""list"") {
+                    return JSON.stringify([
+                        { databaseId: 1, conclusion: ""action_required"" },
+                        { databaseId: 2, conclusion: ""success"" },
+                        { databaseId: 3, conclusion: ""action_required"" },
+                    ]);
+                }
+                return """"; // api approve
+            },
+        });
+    })",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_371,mocha_after,372,372,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L372-L372,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_382,mocha_before,383,386,4,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L383-L386,copilot,agent,feat,"before(async () => {
+        calls = [];
+        await setupServer({ ghExec: async (args) => { calls.push(args); return """"; } });
+    })",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_386,mocha_after,387,387,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L387-L387,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_398,mocha_before,399,399,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L399-L399,copilot,agent,feat,before(() => setupServer()),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_399,mocha_after,400,400,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L400-L400,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_526,mocha_before,527,527,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L527-L527,copilot,agent,feat,"before(() => setupServer({ ghExec: async () => """" }))",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_527,mocha_after,528,528,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L528-L528,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_594,mocha_before,595,595,1,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L595-L595,copilot,agent,feat,before(() => setupServer()),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_595,mocha_after,596,596,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/server.test.mjs#L596-L596,copilot,agent,feat,after(teardownServer),2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,629900b84ee08c65790aa104ca73a68ec8d2830f,packages/apm-contributor-dashboard/tests/stores.test.mjs,<anonymous>_79,mocha_before,80,89,9,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/629900b84ee08c65790aa104ca73a68ec8d2830f/packages/apm-contributor-dashboard/tests/stores.test.mjs#L80-L89,copilot,agent,feat,"before(async () => {
+    // Dynamic imports execute module-level store code (createSignal,
+    // createResource, setInterval) exactly once; ESM caches the modules.
+    issuesStore = await import(""../client/src/stores/issues.js"");
+    prsStore = await import(""../client/src/stores/prs.js"");
+
+    // Allow the async resource fetchers (triggered by createResource's initial
+    // signal value) to resolve before the first test runs.
+    await tick();
+  })",2026-06-19,0.7474332648870636,1
+microsoft/apm,javascript,067470b6c6f40964d9ade24db8be72b8d6695232,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_429,mocha_before,430,472,43,,0,per_test,3,2,0,1,0,1,https://github.com/microsoft/apm/blob/067470b6c6f40964d9ade24db8be72b8d6695232/packages/apm-contributor-dashboard/tests/server.test.mjs#L430-L472,copilot,agent,feat,"before(async () => {
+        await setupServer({
+            ghExec: async (args) => {
+                if (args[0] === ""api"" && args[1] === ""graphql"") {
+                    return makeTriageGqlResponse([
+                        {
+                            number: 100,
+                            title: ""Triaged bug"",
+                            url: ""https://github.com/test/issues/100"",
+                            body: ""Issue description"",
+                            labels: { nodes: [{ name: ""bug"" }] },
+                            comments: {
+                                nodes: [
+                                    {
+                                        body: TRIAGE_DECISION_BLOCK,
+                                        createdAt: ""2025-01-01T10:00:00Z"",
+                                        author: { login: ""triage-bot"", avatarUrl: """" },
+                                        isMinimized: false,
+                                    },
+                                    {
+                                        body: ""Human follow-up comment"",
+                                        createdAt: ""2025-01-02T10:00:00Z"",
+                                        author: { login: ""alice"", avatarUrl: """" },
+                                        isMinimized: false,
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            // Issue without a triage comment -- must be excluded
+                            number: 101,
+                            title: ""Untriaged issue"",
+                            url: ""https://github.com/test/issues/101"",
+                            body: """",
+                            labels: { nodes: [] },
+                            comments: { nodes: [] },
+                        },
+                    ]);
+                }
+                throw new Error(""unexpected gh call"");
+            },
+        });
+    })",2026-07-12,0.810403832991102,1
+microsoft/apm,javascript,067470b6c6f40964d9ade24db8be72b8d6695232,packages/apm-contributor-dashboard/tests/server.test.mjs,<anonymous>_472,mocha_after,473,473,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/apm/blob/067470b6c6f40964d9ade24db8be72b8d6695232/packages/apm-contributor-dashboard/tests/server.test.mjs#L473-L473,copilot,agent,feat,after(teardownServer),2026-07-12,0.810403832991102,1
+rocketride-org/rocketride-server,javascript,243c1f26fbedf94a480b614814fdb1f7d82eeb84,packages/n8n-nodes/test/integration.test.mjs,<anonymous>_10,before_all,11,49,39,,0,per_class,1,2,0,1,0,1,https://github.com/rocketride-org/rocketride-server/blob/243c1f26fbedf94a480b614814fdb1f7d82eeb84/packages/n8n-nodes/test/integration.test.mjs#L11-L49,claude,agent,feat,"beforeAll(async () => {
+	server = createServer((req, res) => {
+		const chunks = [];
+		req.on('data', (chunk) => chunks.push(chunk));
+		req.on('end', () => {
+			const body = Buffer.concat(chunks);
+			received.push({
+				method: req.method,
+				url: req.url,
+				headers: req.headers,
+				bodyText: body.toString('utf8'),
+			});
+			if (req.method === 'GET' && req.url === '/version') {
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(JSON.stringify({ version: 'test' }));
+				return;
+			}
+			if (req.method === 'POST' && req.url === '/webhook') {
+				res.writeHead(200, { 'Content-Type': 'application/json' });
+				res.end(
+					JSON.stringify({
+						status: 'OK',
+						data: {
+							objectsRequested: 1,
+							objectsCompleted: 1,
+							resultTypes: { out: 'text' },
+							objects: { body: { status: 'OK', out: 'echoed' } },
+						},
+					}),
+				);
+				return;
+			}
+			res.writeHead(404);
+			res.end();
+		});
+	});
+	await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+	baseUrl = `http://127.0.0.1:${server.address().port}`;
+})",2026-08-04,0.4736481861738535,1
+rocketride-org/rocketride-server,javascript,243c1f26fbedf94a480b614814fdb1f7d82eeb84,packages/n8n-nodes/test/integration.test.mjs,<anonymous>_50,after_all,51,51,1,,0,per_class,1,1,0,1,0,0,https://github.com/rocketride-org/rocketride-server/blob/243c1f26fbedf94a480b614814fdb1f7d82eeb84/packages/n8n-nodes/test/integration.test.mjs#L51-L51,claude,agent,feat,afterAll(() => new Promise((resolve) => server.close(resolve))),2026-08-04,0.4736481861738535,1
+skypilot-org/skypilot,javascript,57d20f5945f04c47ab8ca5cb818efcc4cd3ef18f,sky/dashboard/src/data/connectors/infra.test.jsx,<anonymous>_33,before_each,34,42,9,,0,per_test,4,2,0,1,0,0,https://github.com/skypilot-org/skypilot/blob/57d20f5945f04c47ab8ca5cb818efcc4cd3ef18f/sky/dashboard/src/data/connectors/infra.test.jsx#L34-L42,claude,agent,none,"beforeEach(() => {
+    jest.clearAllMocks();
+    apiClient.post.mockImplementation(async (path) => {
+      if (path === '/slurm_cluster_names') return scheduled('req-clusters');
+      if (path === '/slurm_gpu_availability') return scheduled('req-gpus');
+      if (path === '/slurm_node_info') return scheduled('req-nodes');
+      throw new Error(`unexpected POST to ${path}`);
+    });
+  })",2026-07-31,4.9664613278576315,1

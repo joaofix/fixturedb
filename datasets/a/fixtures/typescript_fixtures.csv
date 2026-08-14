@@ -159430,3 +159430,1668 @@ vellum-ai/vellum-assistant,typescript,f2d9de2a4aaa6efadca1b0bc4819c1300613e32a,a
 vellum-ai/vellum-assistant,typescript,a9c69bda3aca8698ead59f04b3aad777de49ffb6,clients/web/src/utils/sidebar-sections.test.ts,<anonymous>_20,after_each,21,23,3,,0,per_test,1,1,0,0,0,0,https://github.com/vellum-ai/vellum-assistant/blob/a9c69bda3aca8698ead59f04b3aad777de49ffb6/clients/web/src/utils/sidebar-sections.test.ts#L21-L23,claude,agent,feat,"afterEach(() => {
   daemonClient.get = originalGet;
 })",2026-08-10,0.5010266940451745,1
+FujiwaraChoki/supoclip,typescript,31eb8f9edaf01e8a0999330370c2e28248bac84d,frontend/src/app/api/fonts/[fontName]/route.test.ts,<anonymous>_24,before_each,25,32,8,,0,per_test,1,1,0,1,0,0,https://github.com/FujiwaraChoki/supoclip/blob/31eb8f9edaf01e8a0999330370c2e28248bac84d/frontend/src/app/api/fonts/[fontName]/route.test.ts#L25-L32,claude,agent,feat,"beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(headers).mockResolvedValue(new Headers() as never);
+    vi.mocked(buildBackendAuthHeaders).mockReturnValue({
+      ""x-supoclip-user-id"": ""user-1"",
+    });
+    process.env.BACKEND_INTERNAL_URL = ""http://backend:8000"";
+  })",2026-07-26,0.9911019849418207,1
+GetBindu/Bindu,typescript,ae77e5dbc5d7ecdc8f2fd242c8e59f07eb6f44ad,gateway/tests/integration/bindu-client-e2e.test.ts,<anonymous>_16,after_each,17,22,6,,0,per_test,2,2,0,0,0,0,https://github.com/GetBindu/Bindu/blob/ae77e5dbc5d7ecdc8f2fd242c8e59f07eb6f44ad/gateway/tests/integration/bindu-client-e2e.test.ts#L17-L22,claude,agent,feat,"afterEach(async () => {
+    if (handle) {
+      await handle.close()
+      handle = null
+    }
+  })",2026-04-17,1.0841889117043122,1
+GetBindu/Bindu,typescript,bbb1474f256acda4bbf69a88247f15e58d6f4dbb,gateway/tests/session/summary.test.ts,<anonymous>_44,before_each,45,48,4,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/bbb1474f256acda4bbf69a88247f15e58d6f4dbb/gateway/tests/session/summary.test.ts#L45-L48,claude,agent,fix,"beforeEach(() => {
+    generateTextMock.mockReset()
+    generateTextMock.mockResolvedValue({ text: ""  stub summary  "" })
+  })",2026-04-18,1.0869267624914443,1
+GetBindu/Bindu,typescript,22ca7bfcedd323e01ec31a1de16d970be4030828,gateway/tests/bindu/identity-local.test.ts,<anonymous>_193,after_each,194,194,1,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/22ca7bfcedd323e01ec31a1de16d970be4030828/gateway/tests/bindu/identity-local.test.ts#L194-L194,claude,agent,feat,afterEach(() => setSeedEnv(undefined)),2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,f2038275ddd558b737d0659347b1661215b5b72e,gateway/tests/bindu/auth-resolver.test.ts,<anonymous>_43,after_each,44,50,7,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/f2038275ddd558b737d0659347b1661215b5b72e/gateway/tests/bindu/auth-resolver.test.ts#L44-L50,claude,agent,feat,"afterEach(() =>
+    withEnv({
+      [SEED_ENV]: undefined,
+      [TOKEN_ENV]: undefined,
+      RESOLVER_TEST_VAR: undefined,
+    }),
+  )",2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,f2038275ddd558b737d0659347b1661215b5b72e,gateway/tests/bindu/auth-resolver.test.ts,<anonymous>_87,after_each,88,93,6,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/f2038275ddd558b737d0659347b1661215b5b72e/gateway/tests/bindu/auth-resolver.test.ts#L88-L93,claude,agent,feat,"afterEach(() =>
+    withEnv({
+      [SEED_ENV]: undefined,
+      [TOKEN_ENV]: undefined,
+    }),
+  )",2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,652017639e53e6f2235070161cdd5434df3c40b1,gateway/tests/index-identity.test.ts,<anonymous>_23,after_each,24,24,1,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/652017639e53e6f2235070161cdd5434df3c40b1/gateway/tests/index-identity.test.ts#L24-L24,claude,agent,feat,afterEach(clearIdentityEnv),2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,e57ba201b6817573a0cca4380130704e232e93d5,gateway/tests/api/did-route.test.ts,<anonymous>_53,after_each,54,54,1,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/e57ba201b6817573a0cca4380130704e232e93d5/gateway/tests/api/did-route.test.ts#L54-L54,claude,agent,feat,afterEach(() => setSeedEnv(undefined)),2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,e57ba201b6817573a0cca4380130704e232e93d5,gateway/tests/api/did-route.test.ts,<anonymous>_110,after_each,111,111,1,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/e57ba201b6817573a0cca4380130704e232e93d5/gateway/tests/api/did-route.test.ts#L111-L111,claude,agent,feat,afterEach(() => setSeedEnv(undefined)),2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,e57ba201b6817573a0cca4380130704e232e93d5,gateway/tests/api/did-route.test.ts,<anonymous>_159,after_each,160,160,1,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/e57ba201b6817573a0cca4380130704e232e93d5/gateway/tests/api/did-route.test.ts#L160-L160,claude,agent,feat,afterEach(() => setSeedEnv(undefined)),2026-04-19,1.0896646132785763,1
+GetBindu/Bindu,typescript,88073c135641e4fe4a23e1954cca9d7e34024835,gateway/tests/recipe/loader.test.ts,<anonymous>_23,before_each,24,26,3,,0,per_test,1,1,0,0,0,1,https://github.com/GetBindu/Bindu/blob/88073c135641e4fe4a23e1954cca9d7e34024835/gateway/tests/recipe/loader.test.ts#L24-L26,claude,agent,test,"beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), ""bindu-recipe-test-""))
+  })",2026-04-20,1.0924024640657084,1
+GetBindu/Bindu,typescript,88073c135641e4fe4a23e1954cca9d7e34024835,gateway/tests/recipe/loader.test.ts,<anonymous>_27,after_each,28,30,3,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/88073c135641e4fe4a23e1954cca9d7e34024835/gateway/tests/recipe/loader.test.ts#L28-L30,claude,agent,test,"afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })",2026-04-20,1.0924024640657084,1
+GetBindu/Bindu,typescript,88073c135641e4fe4a23e1954cca9d7e34024835,gateway/tests/recipe/tool.test.ts,<anonymous>_78,before_each,79,81,3,,0,per_test,1,1,0,0,0,1,https://github.com/GetBindu/Bindu/blob/88073c135641e4fe4a23e1954cca9d7e34024835/gateway/tests/recipe/tool.test.ts#L79-L81,claude,agent,test,"beforeEach(() => {
+    tmp = mkdtempSync(join(tmpdir(), ""bindu-tool-test-""))
+  })",2026-04-20,1.0924024640657084,1
+GetBindu/Bindu,typescript,88073c135641e4fe4a23e1954cca9d7e34024835,gateway/tests/recipe/tool.test.ts,<anonymous>_82,after_each,83,85,3,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/88073c135641e4fe4a23e1954cca9d7e34024835/gateway/tests/recipe/tool.test.ts#L83-L85,claude,agent,test,"afterEach(() => {
+    rmSync(tmp, { recursive: true, force: true })
+  })",2026-04-20,1.0924024640657084,1
+GetBindu/Bindu,typescript,d540ef2a53ad23192b9f4f11b67fe35a1e35394a,gateway/tests/bindu/agent-card-fetch.test.ts,<anonymous>_33,before_each,34,36,3,,0,per_test,1,1,0,0,0,1,https://github.com/GetBindu/Bindu/blob/d540ef2a53ad23192b9f4f11b67fe35a1e35394a/gateway/tests/bindu/agent-card-fetch.test.ts#L34-L36,claude,agent,feat,"beforeEach(() => {
+    __resetAgentCardCacheForTests()
+  })",2026-04-20,1.0924024640657084,1
+GetBindu/Bindu,typescript,d540ef2a53ad23192b9f4f11b67fe35a1e35394a,gateway/tests/bindu/agent-card-fetch.test.ts,<anonymous>_37,after_each,38,40,3,,0,per_test,1,1,0,0,0,0,https://github.com/GetBindu/Bindu/blob/d540ef2a53ad23192b9f4f11b67fe35a1e35394a/gateway/tests/bindu/agent-card-fetch.test.ts#L38-L40,claude,agent,feat,"afterEach(() => {
+    vi.restoreAllMocks()
+  })",2026-04-20,1.0924024640657084,1
+HKUDS/nanobot,typescript,6d07aa605951492d1180ed614785f09cf456f6c3,webui/src/tests/main-randomuuid.test.tsx,<anonymous>_16,before_each,17,23,7,,0,per_test,1,1,0,0,0,1,https://github.com/HKUDS/nanobot/blob/6d07aa605951492d1180ed614785f09cf456f6c3/webui/src/tests/main-randomuuid.test.tsx#L17-L23,cursor,agent,test,"beforeEach(() => {
+    vi.resetModules();
+    createRoot.mockClear();
+    render.mockClear();
+    document.body.innerHTML = '<div id=""root""></div>';
+    delete (globalThis.crypto as Crypto & { randomUUID?: Crypto[""randomUUID""] }).randomUUID;
+  })",2026-05-11,0.2683093771389459,1
+HKUDS/nanobot,typescript,6d07aa605951492d1180ed614785f09cf456f6c3,webui/src/tests/main-randomuuid.test.tsx,<anonymous>_24,after_each,25,31,7,,0,per_test,1,1,0,0,0,0,https://github.com/HKUDS/nanobot/blob/6d07aa605951492d1180ed614785f09cf456f6c3/webui/src/tests/main-randomuuid.test.tsx#L25-L31,cursor,agent,test,"afterEach(() => {
+    Object.defineProperty(globalThis.crypto, ""randomUUID"", {
+      value: originalRandomUUID,
+      configurable: true,
+    });
+    document.body.innerHTML = """";
+  })",2026-05-11,0.2683093771389459,1
+LetsFG/LetsFG,typescript,88980dde6252aefd224538c63f602ce7796f7c15,website/tests/durable-search-cache.test.ts,<anonymous>_24,before_each,25,39,15,,0,per_test,1,1,0,0,0,1,https://github.com/LetsFG/LetsFG/blob/88980dde6252aefd224538c63f602ce7796f7c15/website/tests/durable-search-cache.test.ts#L25-L39,claude,agent,fix,"beforeEach(() => {
+  calls = []
+  mockResponse = { status: 200, body: {} }
+  process.env.LETSFG_API_URL = 'https://api.test.local'
+  process.env.LETSFG_WEBSITE_API_KEY = 'test-website-key'
+  globalThis.fetch = (async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    calls.push({ url: input.toString(), init })
+    return {
+      ok: mockResponse.status >= 200 && mockResponse.status < 300,
+      status: mockResponse.status,
+      json: async () => mockResponse.body,
+      text: async () => JSON.stringify(mockResponse.body),
+    } as unknown as Response
+  }) as typeof fetch
+})",2026-05-23,0.2245037645448323,1
+LetsFG/LetsFG,typescript,88980dde6252aefd224538c63f602ce7796f7c15,website/tests/durable-search-cache.test.ts,<anonymous>_40,after_each,41,44,4,,0,per_test,1,1,0,0,0,0,https://github.com/LetsFG/LetsFG/blob/88980dde6252aefd224538c63f602ce7796f7c15/website/tests/durable-search-cache.test.ts#L41-L44,claude,agent,fix,"afterEach(() => {
+  globalThis.fetch = originalFetch
+  process.env = { ...originalEnv }
+})",2026-05-23,0.2245037645448323,1
+LetsFG/LetsFG,typescript,67bdf6d26e07174a33378681f093b5922780554f,website/tests/agent-access-flow.test.ts,<anonymous>_30,before_each,31,46,16,,0,per_test,1,2,2,0,0,1,https://github.com/LetsFG/LetsFG/blob/67bdf6d26e07174a33378681f093b5922780554f/website/tests/agent-access-flow.test.ts#L31-L46,claude,agent,fix,"beforeEach(() => {
+  fetchMock = mock.fn(async (url: string) => {
+    // Return a ""tweet not found"" for any URL containing ""missing""
+    if (url.includes('missing')) {
+      return { ok: false, json: async () => ({}) }
+    }
+    // Return a real-looking oEmbed response otherwise
+    const handle = 'devhandle'
+    const tweetText = url.includes('wrongcode')
+      ? 'This tweet has no challenge code at all'
+      : `I'm getting free programmatic flight search from @LetsFG ✈️ Challenge: PLACEHOLDER https://letsfg.co/for-agents`
+    return { ok: true, json: async () => makeMockOembedResponse(tweetText, handle) }
+  })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(globalThis as any).fetch = fetchMock
+})",2026-05-27,0.23545516769336072,1
+LetsFG/LetsFG,typescript,67bdf6d26e07174a33378681f093b5922780554f,website/tests/agent-access-flow.test.ts,<anonymous>_47,after_each,48,51,4,,0,per_test,1,1,0,0,0,0,https://github.com/LetsFG/LetsFG/blob/67bdf6d26e07174a33378681f093b5922780554f/website/tests/agent-access-flow.test.ts#L48-L51,claude,agent,fix,"afterEach(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (globalThis as any).fetch
+})",2026-05-27,0.23545516769336072,1
+TesslateAI/OpenSail,typescript,aa1c5a4926cd396e625cef8994be292bcbcbf863,app/src/lib/api.refresh.test.ts,<anonymous>_65,before_each,66,88,21,,0,per_test,6,4,0,0,0,1,https://github.com/TesslateAI/OpenSail/blob/aa1c5a4926cd396e625cef8994be292bcbcbf863/app/src/lib/api.refresh.test.ts#L66-L88,claude,agent,feat,"beforeEach(async () => {
+  // Reset modules to get fresh state
+  vi.resetModules();
+
+  // Re-import to trigger module init
+  const axiosMod = await import('axios');
+  const mockCreate = axiosMod.default.create as unknown as ReturnType<typeof vi.fn>;
+
+  // Get the mock instance that create() returns
+  const mockInstance = mockCreate.mock.results[0]?.value;
+  if (!mockInstance) {
+    // Trigger module load
+    await import('./api');
+    const instance = mockCreate.mock.results[0]?.value;
+    if (instance) {
+      const responseCalls = instance.interceptors.response.use.mock.calls;
+      if (responseCalls.length > 0) {
+        _interceptorSuccessHandler = responseCalls[0][0];
+        _interceptorErrorHandler = responseCalls[0][1];
+      }
+    }
+  }
+})",2026-03-01,0.33401779603011633,1
+TesslateAI/OpenSail,typescript,aa1c5a4926cd396e625cef8994be292bcbcbf863,app/src/lib/api.refresh.test.ts,<anonymous>_126,before_each,127,130,4,,0,per_test,1,1,0,0,0,0,https://github.com/TesslateAI/OpenSail/blob/aa1c5a4926cd396e625cef8994be292bcbcbf863/app/src/lib/api.refresh.test.ts#L127-L130,claude,agent,feat,"beforeEach(() => {
+    localStorageMock.clear();
+    vi.clearAllMocks();
+  })",2026-03-01,0.33401779603011633,1
+TesslateAI/OpenSail,typescript,aa1c5a4926cd396e625cef8994be292bcbcbf863,app/src/lib/api.refresh.test.ts,<anonymous>_229,after_each,230,235,6,,0,per_test,1,1,0,0,0,0,https://github.com/TesslateAI/OpenSail/blob/aa1c5a4926cd396e625cef8994be292bcbcbf863/app/src/lib/api.refresh.test.ts#L230-L235,claude,agent,feat,"afterEach(() => {
+  localStorageMock.clear();
+  dispatchEventSpy.mockClear();
+  locationMock.pathname = '/dashboard';
+  locationMock.href = '/dashboard';
+})",2026-03-01,0.33401779603011633,1
+Vexa-ai/vexa,typescript,176f1e1e4f240e9ca856fcee16bac18be09cda24,clients/dashboard/tests/test_recording_master_api.test.ts,<anonymous>_4,after_each,5,7,3,,0,per_test,1,1,0,0,0,0,https://github.com/Vexa-ai/vexa/blob/176f1e1e4f240e9ca856fcee16bac18be09cda24/clients/dashboard/tests/test_recording_master_api.test.ts#L5-L7,claude,agent,chore,"afterEach(() => {
+    vi.restoreAllMocks();
+  })",2026-06-18,1.3552361396303902,1
+YoungCan-Wang/WyckoffTradingAgent,typescript,1045e6b00ca91ffde6cfe9bad1473b5102c4b1cc,web/apps/web/src/lib/__tests__/llm-stream.test.ts,<anonymous>_20,after_each,21,23,3,,0,per_test,1,1,0,0,0,0,https://github.com/YoungCan-Wang/WyckoffTradingAgent/blob/1045e6b00ca91ffde6cfe9bad1473b5102c4b1cc/web/apps/web/src/lib/__tests__/llm-stream.test.ts#L21-L23,cursor,agent,fix,"afterEach(() => {
+  vi.unstubAllGlobals()
+})",2026-05-22,0.3531827515400411,1
+YoungCan-Wang/WyckoffTradingAgent,typescript,2d22a879c0936e70d1b4c3d0a59dc9f6f7d8368d,web/apps/web/src/lib/__tests__/stream-render.test.ts,<anonymous>_4,after_each,5,7,3,,0,per_test,1,1,0,0,0,0,https://github.com/YoungCan-Wang/WyckoffTradingAgent/blob/2d22a879c0936e70d1b4c3d0a59dc9f6f7d8368d/web/apps/web/src/lib/__tests__/stream-render.test.ts#L5-L7,cursor,agent,other,"afterEach(() => {
+    vi.useRealTimers()
+  })",2026-08-02,0.5503080082135524,1
+ag-ui-protocol/ag-ui,typescript,b80612d9bd7a25a13df3aaa751ff048dfe5b8c7a,integrations/adk-middleware/typescript/src/__tests__/adk-agent.test.ts,<anonymous>_7,after_each,8,11,4,,0,per_test,1,1,0,0,0,0,https://github.com/ag-ui-protocol/ag-ui/blob/b80612d9bd7a25a13df3aaa751ff048dfe5b8c7a/integrations/adk-middleware/typescript/src/__tests__/adk-agent.test.ts#L8-L11,claude,agent,feat,"afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.clearAllMocks();
+  })",2026-04-14,0.9336071184120466,1
+alibaba/OpenSandbox,typescript,ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9,tests/javascript/tests/test_isolated_session_e2e.test.ts,<anonymous>_22,before_all,23,37,14,,0,per_class,2,2,0,1,0,1,https://github.com/alibaba/OpenSandbox/blob/ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9/tests/javascript/tests/test_isolated_session_e2e.test.ts#L23-L37,claude,agent,feat,"beforeAll(async () => {
+    sandbox = await Sandbox.create({
+      image: getSandboxImage(),
+      connectionConfig: createConnectionConfig(),
+      extensions: { ""bootstrap.execd.isolation"": ""enable"" },
+    });
+
+    const caps = await sandbox.isolation.capabilities();
+    console.log(
+      `Isolation capabilities: available=${caps.available} isolator=${caps.isolator} version=${caps.version} message=${caps.message}`
+    );
+    if (!caps.available) {
+      throw new Error(`Isolation NOT available: ${caps.message ?? ""unknown reason""}`);
+    }
+  }, 120_000)",2026-06-23,0.5119780971937029,1
+alibaba/OpenSandbox,typescript,ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9,tests/javascript/tests/test_isolated_session_e2e.test.ts,<anonymous>_38,after_all,39,44,6,,0,per_class,2,2,0,0,0,0,https://github.com/alibaba/OpenSandbox/blob/ed3aa1c94df95b59da13b1b0c12bf0698ffe9eb9/tests/javascript/tests/test_isolated_session_e2e.test.ts#L39-L44,claude,agent,feat,"afterAll(async () => {
+    if (sandbox) {
+      await sandbox.kill();
+      await sandbox.close();
+    }
+  })",2026-06-23,0.5119780971937029,1
+alibaba/OpenSandbox,typescript,793c925bb53547799d81771a661f61e74a473e89,sdks/sandbox/javascript/tests/endpointCache.test.ts,<anonymous>_22,before_each,23,25,3,,0,per_test,1,1,0,0,0,1,https://github.com/alibaba/OpenSandbox/blob/793c925bb53547799d81771a661f61e74a473e89/sdks/sandbox/javascript/tests/endpointCache.test.ts#L23-L25,claude,agent,feat,"beforeEach(() => {
+    vi.useFakeTimers();
+  })",2026-06-29,0.5284052019164955,1
+alibaba/OpenSandbox,typescript,793c925bb53547799d81771a661f61e74a473e89,sdks/sandbox/javascript/tests/endpointCache.test.ts,<anonymous>_25,after_each,26,28,3,,0,per_test,1,1,0,0,0,0,https://github.com/alibaba/OpenSandbox/blob/793c925bb53547799d81771a661f61e74a473e89/sdks/sandbox/javascript/tests/endpointCache.test.ts#L26-L28,claude,agent,feat,"afterEach(() => {
+    vi.useRealTimers();
+  })",2026-06-29,0.5284052019164955,1
+buckaroo-data/buckaroo,typescript,4ef5916aeaf6c836dc7a604cd6ff9c49989124f5,packages/buckaroo-js-core/src/components/DFViewerParts/xorqWindow.dom.test.tsx,<anonymous>_103,before_each,104,106,3,,0,per_test,1,1,0,0,0,0,https://github.com/buckaroo-data/buckaroo/blob/4ef5916aeaf6c836dc7a604cd6ff9c49989124f5/packages/buckaroo-js-core/src/components/DFViewerParts/xorqWindow.dom.test.tsx#L104-L106,claude,agent,feat,"beforeEach(() => {
+        latestAgGridProps = null;
+    })",2026-05-06,3.0444900752908968,1
+buckaroo-data/buckaroo,typescript,63b1372a3052aeae16f1e184ec616688e18a4abf,packages/buckaroo-duckdb-node/test/spike.duckdb.test.ts,<anonymous>_44,before_all,45,57,13,,0,per_class,2,2,0,0,1,0,https://github.com/buckaroo-data/buckaroo/blob/63b1372a3052aeae16f1e184ec616688e18a4abf/packages/buckaroo-duckdb-node/test/spike.duckdb.test.ts#L45-L57,claude,agent,feat,"beforeAll(async () => {
+  try {
+    const duck = await import('@duckdb/node-api');
+    const instance = await duck.DuckDBInstance.create(':memory:');
+    connection = (await instance.connect()) as unknown as DuckDBConnectionLike;
+    source = createNodeApiDuckSource(connection);
+  } catch (err) {
+    console.warn(
+      '[spike] @duckdb/node-api not available, skipping DuckDB spike:',
+      (err as Error).message,
+    );
+  }
+})",2026-06-23,3.1759069130732374,1
+bytedance/deer-flow,typescript,aded753de3981ecda82145439e92e2a5d0db758b,frontend/tests/unit/core/auth/gateway-config.test.ts,<anonymous>_45,before_each,46,50,5,,0,per_test,1,1,0,0,0,1,https://github.com/bytedance/deer-flow/blob/aded753de3981ecda82145439e92e2a5d0db758b/frontend/tests/unit/core/auth/gateway-config.test.ts#L46-L50,copilot,agent,fix,"beforeEach(() => {
+    saved = snapshotEnv();
+    setEnv(""DEER_FLOW_INTERNAL_GATEWAY_BASE_URL"", undefined);
+    setEnv(""DEER_FLOW_TRUSTED_ORIGINS"", undefined);
+  })",2026-05-05,0.9911019849418207,1
+bytedance/deer-flow,typescript,aded753de3981ecda82145439e92e2a5d0db758b,frontend/tests/unit/core/auth/gateway-config.test.ts,<anonymous>_51,after_each,52,54,3,,0,per_test,1,1,0,0,0,0,https://github.com/bytedance/deer-flow/blob/aded753de3981ecda82145439e92e2a5d0db758b/frontend/tests/unit/core/auth/gateway-config.test.ts#L52-L54,copilot,agent,fix,"afterEach(() => {
+    restoreEnv(saved);
+  })",2026-05-05,0.9911019849418207,1
+bytedance/deer-flow,typescript,737abc0e45b9baf9d3a31843b7360a4b219a09e5,frontend/tests/unit/core/api/api-client.test.ts,<anonymous>_21,after_each,22,24,3,,0,per_test,1,1,0,0,0,0,https://github.com/bytedance/deer-flow/blob/737abc0e45b9baf9d3a31843b7360a4b219a09e5/frontend/tests/unit/core/api/api-client.test.ts#L22-L24,copilot,agent,fix,"afterEach(() => {
+  vi.unstubAllGlobals();
+})",2026-05-28,1.054072553045859,1
+bytedance/deer-flow,typescript,1baa8ad69609530b95057b581f69ced487a5ed9a,frontend/tests/unit/components/workspace/messages/human-input-card.dom.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/bytedance/deer-flow/blob/1baa8ad69609530b95057b581f69ced487a5ed9a/frontend/tests/unit/components/workspace/messages/human-input-card.dom.test.tsx#L31-L31,claude,agent,feat,afterEach(cleanup),2026-07-27,1.218343600273785,1
+bytedance/deer-flow,typescript,1baa8ad69609530b95057b581f69ced487a5ed9a,frontend/tests/unit/components/workspace/messages/human-input-card.dom.test.tsx,<anonymous>_31,after_each,32,34,3,,0,per_test,1,1,0,0,0,0,https://github.com/bytedance/deer-flow/blob/1baa8ad69609530b95057b581f69ced487a5ed9a/frontend/tests/unit/components/workspace/messages/human-input-card.dom.test.tsx#L32-L34,claude,agent,feat,"afterEach(() => {
+  rs.restoreAllMocks();
+})",2026-07-27,1.218343600273785,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_76,before_each,77,80,4,,0,per_test,1,1,0,0,0,1,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L77-L80,claude,agent,feat,"beforeEach(() => {
+    snap = saveEnv();
+    clearEnv();
+  })",2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_80,after_each,81,81,1,,0,per_test,1,1,0,0,0,0,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L81-L81,claude,agent,feat,afterEach(() => restoreEnv(snap)),2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_153,before_each,154,157,4,,0,per_test,1,1,0,0,0,1,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L154-L157,claude,agent,feat,"beforeEach(() => {
+      snap = saveEnv();
+      clearEnv();
+    })",2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_157,after_each,158,158,1,,0,per_test,1,1,0,0,0,0,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L158-L158,claude,agent,feat,afterEach(() => restoreEnv(snap)),2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_197,before_each,198,201,4,,0,per_test,1,1,0,0,0,1,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L198-L201,claude,agent,feat,"beforeEach(() => {
+    snap = saveEnv();
+    clearEnv();
+  })",2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_201,after_each,202,202,1,,0,per_test,1,1,0,0,0,0,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L202-L202,claude,agent,feat,afterEach(() => restoreEnv(snap)),2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_300,before_each,301,304,4,,0,per_test,1,1,0,0,0,1,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L301-L304,claude,agent,feat,"beforeEach(() => {
+    snap = saveEnv();
+    clearEnv();
+  })",2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,028e2c0c1bcea7089bf07a9877cce573d1224ea8,sdk/typescript/test/paths.test.ts,<anonymous>_304,after_each,305,305,1,,0,per_test,1,1,0,0,0,0,https://github.com/chopratejas/headroom/blob/028e2c0c1bcea7089bf07a9877cce573d1224ea8/sdk/typescript/test/paths.test.ts#L305-L305,claude,agent,feat,afterEach(() => restoreEnv(snap)),2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,ebc7158de2c163f79bb8c7838619a6865127a8cf,sdk/typescript/test/paths.test.ts,<anonymous>_300,before_each,301,305,5,,0,per_test,1,1,0,0,0,1,https://github.com/chopratejas/headroom/blob/ebc7158de2c163f79bb8c7838619a6865127a8cf/sdk/typescript/test/paths.test.ts#L301-L305,claude,agent,test,"beforeEach(() => {
+    snap = saveEnv();
+    clearEnv();
+    process.env[HEADROOM_WORKSPACE_DIR_ENV] = ""/tmp/alt_ws"";
+  })",2026-04-16,0.2683093771389459,1
+chopratejas/headroom,typescript,ebc7158de2c163f79bb8c7838619a6865127a8cf,sdk/typescript/test/paths.test.ts,<anonymous>_305,after_each,306,306,1,,0,per_test,1,1,0,0,0,0,https://github.com/chopratejas/headroom/blob/ebc7158de2c163f79bb8c7838619a6865127a8cf/sdk/typescript/test/paths.test.ts#L306-L306,claude,agent,test,afterEach(() => restoreEnv(snap)),2026-04-16,0.2683093771389459,1
+debpalash/OmniVoice-Studio,typescript,c32041289d0999251441470d08b4baf156ab8458,frontend/src/utils/apiBase.test.ts,<anonymous>_17,before_each,18,24,7,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/c32041289d0999251441470d08b4baf156ab8458/frontend/src/utils/apiBase.test.ts#L18-L24,claude,agent,none,"beforeEach(() => {
+    originalTauriInternals = (window as Window).__TAURI_INTERNALS__;
+    originalTauri = (window as Window).__TAURI__;
+    originalLocation = window.location;
+    // jsdom defaults VITE_OMNIVOICE_API to undefined — no need to stub.
+    vi.resetModules();
+  })",2026-05-20,0.10951403148528405,1
+debpalash/OmniVoice-Studio,typescript,c32041289d0999251441470d08b4baf156ab8458,frontend/src/utils/apiBase.test.ts,<anonymous>_25,after_each,26,44,19,,0,per_test,3,2,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/c32041289d0999251441470d08b4baf156ab8458/frontend/src/utils/apiBase.test.ts#L26-L44,claude,agent,none,"afterEach(() => {
+    if (originalTauriInternals === undefined) {
+      delete (window as Window).__TAURI_INTERNALS__;
+    } else {
+      (window as Window).__TAURI_INTERNALS__ = originalTauriInternals;
+    }
+    if (originalTauri === undefined) {
+      delete (window as Window).__TAURI__;
+    } else {
+      (window as Window).__TAURI__ = originalTauri;
+    }
+    // Restore window.location via the descriptor — jsdom protects against
+    // direct reassignment, so we have to override via defineProperty in each
+    // test then restore here.
+    Object.defineProperty(window, ""location"", {
+      configurable: true,
+      value: originalLocation,
+    });
+  })",2026-05-20,0.10951403148528405,1
+debpalash/OmniVoice-Studio,typescript,715766cb04a3b9f0741fd68fbb01306a63b444ca,frontend/src/utils/errorDocsMap.test.ts,<anonymous>_17,before_each,18,20,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/715766cb04a3b9f0741fd68fbb01306a63b444ca/frontend/src/utils/errorDocsMap.test.ts#L18-L20,claude,agent,none,"beforeEach(() => {
+    vi.mocked(openExternal).mockClear();
+  })",2026-05-20,0.10951403148528405,1
+debpalash/OmniVoice-Studio,typescript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/api/client.test.ts,<anonymous>_4,before_each,5,5,1,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/api/client.test.ts#L5-L5,claude,agent,feat,beforeEach(() => { realFetch = globalThis.fetch; sessionStorage.clear(); }),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,typescript,fa1503c4ebfac27e5475131e9570d4e356ab41c6,frontend/src/api/client.test.ts,<anonymous>_5,after_each,6,6,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/fa1503c4ebfac27e5475131e9570d4e356ab41c6/frontend/src/api/client.test.ts#L6-L6,claude,agent,feat,afterEach(() => { globalThis.fetch = realFetch; sessionStorage.clear(); }),2026-05-30,0.13689253935660506,1
+debpalash/OmniVoice-Studio,typescript,e14644f77ad09c44dc0210728445ee0f106ae5c4,frontend/src/test/client.retry.test.ts,<anonymous>_9,after_each,10,14,5,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/e14644f77ad09c44dc0210728445ee0f106ae5c4/frontend/src/test/client.retry.test.ts#L10-L14,claude,agent,fix,"afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  })",2026-06-20,0.1943874058863792,1
+debpalash/OmniVoice-Studio,typescript,022a3bd6b972d72309c7ac3d0d326baaa0bf939a,frontend/src/test/dictationPrefs.test.ts,<anonymous>_29,before_each,30,40,11,,0,per_test,1,1,0,0,0,1,https://github.com/debpalash/OmniVoice-Studio/blob/022a3bd6b972d72309c7ac3d0d326baaa0bf939a/frontend/src/test/dictationPrefs.test.ts#L30-L40,claude,agent,feat,"beforeEach(() => {
+    apiJson.mockReset();
+    apiPost.mockReset();
+    // Reset to slice seeds.
+    useAppStore.setState({
+      dictationEnabled: true,
+      dictationMode: 'toggle',
+      dictationModelId: 'sherpa-parakeet-tdt-v3',
+      dictationLoaded: false,
+    });
+  })",2026-06-25,0.2080766598220397,1
+debpalash/OmniVoice-Studio,typescript,022a3bd6b972d72309c7ac3d0d326baaa0bf939a,frontend/src/test/dictationPrefs.test.ts,<anonymous>_40,after_each,41,41,1,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/022a3bd6b972d72309c7ac3d0d326baaa0bf939a/frontend/src/test/dictationPrefs.test.ts#L41-L41,claude,agent,feat,afterEach(() => vi.restoreAllMocks()),2026-06-25,0.2080766598220397,1
+debpalash/OmniVoice-Studio,typescript,620321a9cc8a37a200398bccb9fd84625663aaa0,frontend/src/test/client.crash.test.ts,<anonymous>_32,after_each,33,39,7,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/620321a9cc8a37a200398bccb9fd84625663aaa0/frontend/src/test/client.crash.test.ts#L33-L39,claude,agent,feat,"afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    crashMock.mockClear();
+    crashMock.mockResolvedValue(null);
+  })",2026-07-05,0.23545516769336072,1
+debpalash/OmniVoice-Studio,typescript,59621dd9601158e4c25f08f5c897ef565947ed64,frontend/src/test/streamDropError.test.ts,<anonymous>_27,after_each,28,30,3,,0,per_test,1,1,0,0,0,0,https://github.com/debpalash/OmniVoice-Studio/blob/59621dd9601158e4c25f08f5c897ef565947ed64/frontend/src/test/streamDropError.test.ts#L28-L30,claude,agent,fix,"afterEach(() => {
+    vi.restoreAllMocks();
+  })",2026-07-12,0.2546201232032854,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/detect.test.ts,<anonymous>_146,before_each,147,147,1,,0,per_test,1,1,0,0,0,1,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/detect.test.ts#L147-L147,claude,agent,feat,beforeEach(() => { vi.useFakeTimers() }),2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/detect.test.ts,<anonymous>_147,after_each,148,148,1,,0,per_test,1,1,0,0,0,0,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/detect.test.ts#L148-L148,claude,agent,feat,afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers() }),2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/nodeApiSecurity.test.ts,<anonymous>_27,after_each,28,30,3,,0,per_test,1,1,0,0,0,0,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/nodeApiSecurity.test.ts#L28-L30,claude,agent,feat,"afterEach(() => {
+    globalThis.fetch = originalFetch
+  })",2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/nodeApiSecurity.test.ts,<anonymous>_54,after_each,55,57,3,,0,per_test,1,1,0,0,0,0,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/nodeApiSecurity.test.ts#L55-L57,claude,agent,feat,"afterEach(() => {
+    globalThis.fetch = originalFetch
+  })",2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/nodeApiSecurity.test.ts,<anonymous>_123,after_each,124,126,3,,0,per_test,1,1,0,0,0,0,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/nodeApiSecurity.test.ts#L124-L126,claude,agent,feat,"afterEach(() => {
+    globalThis.fetch = originalFetch
+  })",2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/nodeAuthRequest.test.ts,<anonymous>_22,before_each,23,23,1,,0,per_test,1,1,0,0,0,1,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/nodeAuthRequest.test.ts#L23-L23,claude,agent,feat,beforeEach(() => { vi.restoreAllMocks() }),2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/nodeAuthRequest.test.ts,<anonymous>_23,after_each,24,24,1,,0,per_test,1,1,0,0,0,0,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/nodeAuthRequest.test.ts#L24-L24,claude,agent,feat,afterEach(() => { globalThis.fetch = originalFetch }),2026-08-07,8.449007529089664,1
+drakkar-software/octobot,typescript,cbb44670d965d88e51b0757439491710d7586ba0,packages/client/octobot_client_ts/tests/nodePairing.test.ts,<anonymous>_93,after_each,94,97,4,,0,per_test,1,1,0,0,0,0,https://github.com/drakkar-software/octobot/blob/cbb44670d965d88e51b0757439491710d7586ba0/packages/client/octobot_client_ts/tests/nodePairing.test.ts#L94-L97,claude,agent,feat,"afterEach(() => {
+    global.fetch = originalFetch
+    vi.restoreAllMocks()
+  })",2026-08-07,8.449007529089664,1
+estrellaxd/auto_bangumi,typescript,b34fa624035d1dab57222ad5c711cf128246b6b3,webui/src/api/__tests__/update.test.ts,<anonymous>_36,before_each,37,39,3,,0,per_test,1,1,0,0,0,0,https://github.com/estrellaxd/auto_bangumi/blob/b34fa624035d1dab57222ad5c711cf128246b6b3/webui/src/api/__tests__/update.test.ts#L37-L39,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks();
+  })",2026-07-03,4.164271047227926,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/App.test.tsx,<anonymous>_87,after_each,88,90,3,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/App.test.tsx#L88-L90,claude,agent,feat,"afterEach(() => {
+    vi.unstubAllGlobals();
+  })",2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/App.test.tsx,<anonymous>_104,before_each,105,105,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/App.test.tsx#L105-L105,claude,agent,feat,beforeEach(() => stubFetch()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/ExposureFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/ExposureFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/GenericFilterView.test.tsx,<anonymous>_66,after_each,67,67,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/GenericFilterView.test.tsx#L67-L67,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/GroupFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/GroupFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/MacroFilterView.test.tsx,<anonymous>_69,after_each,70,70,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/MacroFilterView.test.tsx#L70-L70,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/MetricFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/MetricFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/ModelFilterView.test.tsx,<anonymous>_130,after_each,131,131,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/ModelFilterView.test.tsx#L131-L131,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/NodeDetail.test.tsx,<anonymous>_76,after_each,77,77,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/NodeDetail.test.tsx#L77-L77,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/SavedQueryFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/SavedQueryFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/SeedFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/SeedFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/SemanticModelFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/SemanticModelFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/SnapshotFilterView.test.tsx,<anonymous>_30,after_each,31,31,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/SnapshotFilterView.test.tsx#L31-L31,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/SourceCollectionPage.test.tsx,<anonymous>_38,after_each,39,39,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/SourceCollectionPage.test.tsx#L39-L39,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/SourceFilterView.test.tsx,<anonymous>_105,after_each,106,106,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/SourceFilterView.test.tsx#L106-L106,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/components/TestFilterView.test.tsx,<anonymous>_84,after_each,85,85,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/components/TestFilterView.test.tsx#L85-L85,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/hooks/useAllNodes.test.ts,<anonymous>_20,after_each,21,21,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/hooks/useAllNodes.test.ts#L21-L21,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/hooks/useIdentity.test.ts,<anonymous>_12,after_each,13,13,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/hooks/useIdentity.test.ts#L13-L13,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/hooks/useNodes.test.ts,<anonymous>_27,after_each,28,28,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/hooks/useNodes.test.ts#L28-L28,claude,agent,feat,afterEach(() => vi.unstubAllGlobals()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/hooks/useQueryHistory.test.ts,<anonymous>_8,after_each,9,9,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/hooks/useQueryHistory.test.ts#L9-L9,claude,agent,feat,afterEach(() => sessionStorage.clear()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/hooks/useResizable.test.ts,<anonymous>_6,after_each,7,7,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/hooks/useResizable.test.ts#L7-L7,claude,agent,feat,afterEach(() => localStorage.clear()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/lib/outboundReferrer.test.ts,<anonymous>_12,after_each,13,13,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/lib/outboundReferrer.test.ts#L13-L13,claude,agent,feat,afterEach(() => resetTelemetryForTests()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/lib/telemetry.test.ts,<anonymous>_28,after_each,29,29,1,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/lib/telemetry.test.ts#L29-L29,claude,agent,feat,afterEach(() => resetTelemetryForTests()),2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/lib/telemetry.test.ts,<anonymous>_72,before_each,73,78,6,,0,per_test,1,1,0,0,0,1,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/lib/telemetry.test.ts#L73-L78,claude,agent,feat,"beforeEach(() => {
+    vi.useFakeTimers();
+    analytics = vi
+      .spyOn(api, 'analytics')
+      .mockResolvedValue({ accepted: 1, skipped: 0 });
+  })",2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/lib/telemetry.test.ts,<anonymous>_79,after_each,80,85,6,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/lib/telemetry.test.ts#L80-L85,claude,agent,feat,"afterEach(() => {
+    resetTelemetryForTests();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  })",2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/pages/Search.test.tsx,<anonymous>_67,before_each,68,75,8,,0,per_test,1,1,0,0,0,1,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/pages/Search.test.tsx#L68-L75,claude,agent,feat,"beforeEach(() => {
+    vi.useFakeTimers();
+    analytics = vi
+      .spyOn(api, 'analytics')
+      .mockResolvedValue({ accepted: 1, skipped: 0 });
+    searchReturn.total = 0;
+    searchReturn.isPending = false;
+  })",2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/pages/Search.test.tsx,<anonymous>_76,after_each,77,82,6,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/pages/Search.test.tsx#L77-L82,claude,agent,feat,"afterEach(() => {
+    resetTelemetryForTests();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  })",2026-08-08,10.40930869267625,1
+fishtown-analytics/dbt,typescript,2dc450eceef75281cb6a612b32132f7a1411e89b,crates/dbt-docs-server/web/src/shared/data-sources/rest/index.test.ts,<anonymous>_23,after_each,24,26,3,,0,per_test,1,1,0,0,0,0,https://github.com/fishtown-analytics/dbt/blob/2dc450eceef75281cb6a612b32132f7a1411e89b/crates/dbt-docs-server/web/src/shared/data-sources/rest/index.test.ts#L24-L26,claude,agent,feat,"afterEach(() => {
+  vi.unstubAllGlobals();
+})",2026-08-08,10.40930869267625,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/components/__tests__/BackupJobsTable.test.tsx,<anonymous>_57,before_each,58,60,3,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/components/__tests__/BackupJobsTable.test.tsx#L58-L60,claude,agent,test,"beforeEach(() => {
+    vi.clearAllMocks()
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/components/__tests__/FileExplorerDialog.test.tsx,<anonymous>_76,before_each,77,81,5,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/components/__tests__/FileExplorerDialog.test.tsx#L77-L81,claude,agent,test,"beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(api.get).mockResolvedValue(mockDirectoryResponse)
+    vi.mocked(sshKeysAPI.getSSHConnections).mockResolvedValue(mockSSHConnectionsResponse)
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/components/__tests__/RepositoryCard.test.tsx,<anonymous>_82,before_each,83,88,6,,0,per_test,1,1,0,0,0,1,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/components/__tests__/RepositoryCard.test.tsx#L83-L88,claude,agent,test,"beforeEach(() => {
+    vi.clearAllMocks()
+    // Setup default mocks
+    vi.spyOn(useMaintenanceJobsModule, 'useMaintenanceJobs').mockReturnValue(mockMaintenanceJobs)
+    vi.spyOn(useMatomoModule, 'useMatomo').mockReturnValue(mockMatomoTracking)
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/components/__tests__/RepositoryCard.test.tsx,<anonymous>_89,after_each,90,92,3,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/components/__tests__/RepositoryCard.test.tsx#L90-L92,claude,agent,test,"afterEach(() => {
+    vi.restoreAllMocks()
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/test/setup.ts,<anonymous>_8,after_each,9,11,3,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/test/setup.ts#L9-L11,claude,agent,test,"afterEach(() => {
+  cleanup()
+})",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/test/setup.ts,<anonymous>_51,before_all,52,65,14,,0,per_class,5,2,0,0,0,1,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/test/setup.ts#L52-L65,claude,agent,test,"beforeAll(() => {
+  console.error = (...args: any[]) => {
+    // Only suppress React Testing Library's specific warnings
+    if (
+      typeof args[0] === 'string' &&
+      (args[0].includes('Warning: ReactDOM.render') ||
+        args[0].includes('Warning: useLayoutEffect') ||
+        args[0].includes('Not implemented: HTMLFormElement.prototype.submit'))
+    ) {
+      return
+    }
+    originalError.call(console, ...args)
+  }
+})",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/test/setup.ts,<anonymous>_66,after_all,67,69,3,,0,per_class,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/test/setup.ts#L67-L69,claude,agent,test,"afterAll(() => {
+  console.error = originalError
+})",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/utils/dateUtils.test.ts,<anonymous>_15,before_each,16,20,5,,0,per_test,1,1,0,0,0,1,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/utils/dateUtils.test.ts#L16-L20,claude,agent,test,"beforeEach(() => {
+    // Mock timezone offset to UTC-5 (EST)
+    // getTimezoneOffset returns UTC - local, so -5 hours = 300 minutes
+    vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300)
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/utils/dateUtils.test.ts,<anonymous>_21,after_each,22,24,3,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/utils/dateUtils.test.ts#L22-L24,claude,agent,test,"afterEach(() => {
+    vi.restoreAllMocks()
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/utils/dateUtils.test.ts,<anonymous>_140,before_each,141,143,3,,0,per_test,1,1,0,0,0,1,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/utils/dateUtils.test.ts#L141-L143,claude,agent,test,"beforeEach(() => {
+    vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300)
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,7ab2f9bbae5b71483127572c5f4a44458bf97cb4,frontend/src/utils/dateUtils.test.ts,<anonymous>_144,after_each,145,147,3,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/7ab2f9bbae5b71483127572c5f4a44458bf97cb4/frontend/src/utils/dateUtils.test.ts#L145-L147,claude,agent,test,"afterEach(() => {
+    vi.restoreAllMocks()
+  })",2026-01-24,0.4517453798767967,1
+karanhudia/borg-ui,typescript,404d6c908a126e3d95f518778764bb4ef4dd8a99,frontend/src/pages/__tests__/Restore.speed-eta.test.tsx,<anonymous>_50,before_each,51,63,11,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/404d6c908a126e3d95f518778764bb4ef4dd8a99/frontend/src/pages/__tests__/Restore.speed-eta.test.tsx#L51-L63,claude,agent,test,"beforeEach(() => {
+    vi.clearAllMocks()
+
+    // Mock repositories API (returns axios response structure)
+    vi.mocked(api.repositoriesAPI.getRepositories).mockResolvedValue({
+      data: { repositories: [] },
+    } as any)
+
+    // Mock restore jobs API with default empty response (axios response structure)
+    vi.mocked(api.restoreAPI.getRestoreJobs).mockResolvedValue({
+      data: { jobs: [] },
+    } as any)
+  })",2026-01-30,0.4681724845995893,1
+karanhudia/borg-ui,typescript,a1f71c658ae12befd2b6ad10a070cbc2fa02e347,frontend/src/pages/__tests__/Restore.logs.test.tsx,<anonymous>_55,before_each,56,68,11,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/a1f71c658ae12befd2b6ad10a070cbc2fa02e347/frontend/src/pages/__tests__/Restore.logs.test.tsx#L56-L68,claude,agent,feat,"beforeEach(() => {
+    vi.clearAllMocks()
+
+    // Mock repositories API (returns axios response structure)
+    vi.mocked(api.repositoriesAPI.getRepositories).mockResolvedValue({
+      data: { repositories: [] },
+    } as any)
+
+    // Mock restore jobs API with default empty response (axios response structure)
+    vi.mocked(api.restoreAPI.getRestoreJobs).mockResolvedValue({
+      data: { jobs: [] },
+    } as any)
+  })",2026-01-30,0.4681724845995893,1
+karanhudia/borg-ui,typescript,801c8cf021ef91e18e777e38424892729e44c294,frontend/src/pages/__tests__/SSHConnectionsSingleKey.hostValidation.test.tsx,<anonymous>_209,before_each,210,214,5,,0,per_test,1,1,0,0,0,0,https://github.com/karanhudia/borg-ui/blob/801c8cf021ef91e18e777e38424892729e44c294/frontend/src/pages/__tests__/SSHConnectionsSingleKey.hostValidation.test.tsx#L210-L214,codex,agent,none,"beforeEach(async () => {
+    await i18n.changeLanguage('en')
+    vi.clearAllMocks()
+    mockState.canManageSsh = true
+  })",2026-05-17,0.7611225188227242,1
+langchain-ai/open-swe,typescript,5274b6534a80edd2d10176102c8e9e68a1b81212,ui/src/features/agents/lib/terminalState.test.ts,<anonymous>_14,before_each,15,15,1,,0,per_test,1,1,0,0,0,0,https://github.com/langchain-ai/open-swe/blob/5274b6534a80edd2d10176102c8e9e68a1b81212/ui/src/features/agents/lib/terminalState.test.ts#L15-L15,langchain_open_swe,agent,feat,beforeEach(() => window.localStorage.clear()),2026-08-11,1.2210814510609171,1
+langwatch/scenario,typescript,de60f82c2dadc20d2081bf4f3cbbd3c332442070,javascript/src/voice/adapters/__tests__/openai-realtime-tool-calls.test.ts,<anonymous>_65,before_all,66,90,25,,0,per_class,1,2,0,2,0,1,https://github.com/langwatch/scenario/blob/de60f82c2dadc20d2081bf4f3cbbd3c332442070/javascript/src/voice/adapters/__tests__/openai-realtime-tool-calls.test.ts#L66-L90,claude,agent,fix,"beforeAll(
+  async () =>
+    await new Promise<void>((doneStart) => {
+      http = createServer();
+      wss = new WebSocketServer({ server: http });
+      wss.on(""connection"", (sock) => {
+        activeSocket = sock;
+        if (socketReadyResolve) socketReadyResolve();
+        sock.on(""message"", (raw) => {
+          const text =
+            typeof raw === ""string""
+              ? raw
+              : Buffer.isBuffer(raw)
+                ? raw.toString(""utf8"")
+                : Buffer.from(raw as ArrayBuffer).toString(""utf8"");
+          try {
+            observedTypes.push(String(JSON.parse(text).type ?? """"));
+          } catch {
+            /* ignore non-JSON */
+          }
+        });
+      });
+      http.listen(0, ""127.0.0.1"", doneStart);
+    }),
+)",2026-06-10,1.1800136892539357,1
+langwatch/scenario,typescript,de60f82c2dadc20d2081bf4f3cbbd3c332442070,javascript/src/voice/adapters/__tests__/openai-realtime-tool-calls.test.ts,<anonymous>_91,after_all,92,95,4,,0,per_class,1,1,0,1,0,0,https://github.com/langwatch/scenario/blob/de60f82c2dadc20d2081bf4f3cbbd3c332442070/javascript/src/voice/adapters/__tests__/openai-realtime-tool-calls.test.ts#L92-L95,claude,agent,fix,"afterAll(async () => {
+  wss.close();
+  await new Promise<void>((done) => http.close(() => done()));
+})",2026-06-10,1.1800136892539357,1
+langwatch/scenario,typescript,de60f82c2dadc20d2081bf4f3cbbd3c332442070,javascript/src/voice/adapters/__tests__/openai-realtime-tool-calls.test.ts,<anonymous>_96,before_each,97,103,7,,0,per_test,1,1,0,1,0,0,https://github.com/langwatch/scenario/blob/de60f82c2dadc20d2081bf4f3cbbd3c332442070/javascript/src/voice/adapters/__tests__/openai-realtime-tool-calls.test.ts#L97-L103,claude,agent,fix,"beforeEach(() => {
+  observedTypes = [];
+  activeSocket = null;
+  socketReady = new Promise<void>((r) => {
+    socketReadyResolve = r;
+  });
+})",2026-06-10,1.1800136892539357,1
+langwatch/scenario,typescript,e675224226974eeb69a0ddffee48d47cca35b77c,javascript/src/voice/adapters/__tests__/twilio-silent-stop-drain.test.ts,<anonymous>_148,after_each,149,157,9,,0,per_test,3,3,0,0,0,0,https://github.com/langwatch/scenario/blob/e675224226974eeb69a0ddffee48d47cca35b77c/javascript/src/voice/adapters/__tests__/twilio-silent-stop-drain.test.ts#L149-L157,claude,agent,fix,"afterEach(async () => {
+  while (tracked.length > 0) {
+    try {
+      await tracked.pop()!.disconnect();
+    } catch {
+      // Best-effort teardown.
+    }
+  }
+})",2026-07-09,1.2594113620807665,1
+langwatch/scenario,typescript,2b32872aa57b13f80e6b063425efac38a0c7604b,javascript/src/voice/__tests__/voice-spans-stt.test.ts,<anonymous>_108,before_each,109,115,7,,0,per_test,1,1,0,3,0,1,https://github.com/langwatch/scenario/blob/2b32872aa57b13f80e6b063425efac38a0c7604b/javascript/src/voice/__tests__/voice-spans-stt.test.ts#L109-L115,claude,agent,feat,"beforeEach(() => {
+    exporter = new InMemorySpanExporter();
+    provider = new NodeTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporter)],
+    });
+    trace.setGlobalTracerProvider(provider);
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,2b32872aa57b13f80e6b063425efac38a0c7604b,javascript/src/voice/__tests__/voice-spans-stt.test.ts,<anonymous>_115,after_each,116,119,4,,0,per_test,1,1,0,0,0,0,https://github.com/langwatch/scenario/blob/2b32872aa57b13f80e6b063425efac38a0c7604b/javascript/src/voice/__tests__/voice-spans-stt.test.ts#L116-L119,claude,agent,feat,"afterEach(async () => {
+    await provider.shutdown();
+    trace.disable();
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,2b32872aa57b13f80e6b063425efac38a0c7604b,javascript/src/voice/__tests__/voice-spans.test.ts,<anonymous>_94,before_each,95,101,7,,0,per_test,1,1,0,3,0,1,https://github.com/langwatch/scenario/blob/2b32872aa57b13f80e6b063425efac38a0c7604b/javascript/src/voice/__tests__/voice-spans.test.ts#L95-L101,claude,agent,feat,"beforeEach(() => {
+    exporter = new InMemorySpanExporter();
+    provider = new NodeTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporter)],
+    });
+    trace.setGlobalTracerProvider(provider);
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,2b32872aa57b13f80e6b063425efac38a0c7604b,javascript/src/voice/__tests__/voice-spans.test.ts,<anonymous>_101,after_each,102,105,4,,0,per_test,1,1,0,0,0,0,https://github.com/langwatch/scenario/blob/2b32872aa57b13f80e6b063425efac38a0c7604b/javascript/src/voice/__tests__/voice-spans.test.ts#L102-L105,claude,agent,feat,"afterEach(async () => {
+    await provider.shutdown();
+    trace.disable();
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,315296936f1d1465f97305431cdedba7730f9136,javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts,<anonymous>_93,before_all,94,124,31,,0,per_class,1,2,0,2,0,1,https://github.com/langwatch/scenario/blob/315296936f1d1465f97305431cdedba7730f9136/javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts#L94-L124,claude,agent,feat,"beforeAll(
+  async () =>
+    await new Promise<void>((doneStart) => {
+      http = createServer();
+      wss = new WebSocketServer({ server: http });
+      wss.on(""connection"", (sock) => {
+        activeSocket = sock;
+        if (socketReadyResolve) socketReadyResolve();
+        sock.on(""message"", (raw) => {
+          const text =
+            typeof raw === ""string""
+              ? raw
+              : Buffer.isBuffer(raw)
+                ? raw.toString(""utf8"")
+                : Buffer.from(raw as ArrayBuffer).toString(""utf8"");
+          let parsed: Record<string, unknown>;
+          try {
+            parsed = JSON.parse(text);
+          } catch {
+            return;
+          }
+          observedEvents.push({
+            type: String(parsed.type ?? """"),
+            raw: text,
+            data: parsed,
+          });
+        });
+      });
+      http.listen(0, ""127.0.0.1"", doneStart);
+    }),
+)",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,315296936f1d1465f97305431cdedba7730f9136,javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts,<anonymous>_125,after_all,126,129,4,,0,per_class,1,1,0,1,0,0,https://github.com/langwatch/scenario/blob/315296936f1d1465f97305431cdedba7730f9136/javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts#L126-L129,claude,agent,feat,"afterAll(async () => {
+  wss.close();
+  await new Promise<void>((done) => http.close(() => done()));
+})",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,315296936f1d1465f97305431cdedba7730f9136,javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts,<anonymous>_216,before_each,217,223,7,,0,per_test,1,1,0,3,0,1,https://github.com/langwatch/scenario/blob/315296936f1d1465f97305431cdedba7730f9136/javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts#L217-L223,claude,agent,feat,"beforeEach(() => {
+    exporter = new InMemorySpanExporter();
+    provider = new NodeTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporter)],
+    });
+    trace.setGlobalTracerProvider(provider);
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,315296936f1d1465f97305431cdedba7730f9136,javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts,<anonymous>_223,after_each,224,227,4,,0,per_test,1,1,0,0,0,0,https://github.com/langwatch/scenario/blob/315296936f1d1465f97305431cdedba7730f9136/javascript/src/voice/adapters/__tests__/openai-realtime-spans.test.ts#L224-L227,claude,agent,feat,"afterEach(async () => {
+    await provider.shutdown();
+    trace.disable();
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,8ba8687cf38849074fe97a83a0ea4733cfdec09a,javascript/src/voice/adapters/__tests__/gemini-live-spans.test.ts,<anonymous>_161,before_each,162,169,8,,0,per_test,1,1,0,3,0,1,https://github.com/langwatch/scenario/blob/8ba8687cf38849074fe97a83a0ea4733cfdec09a/javascript/src/voice/adapters/__tests__/gemini-live-spans.test.ts#L162-L169,claude,agent,feat,"beforeEach(() => {
+    captured.last = null;
+    exporter = new InMemorySpanExporter();
+    provider = new NodeTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporter)],
+    });
+    trace.setGlobalTracerProvider(provider);
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,8ba8687cf38849074fe97a83a0ea4733cfdec09a,javascript/src/voice/adapters/__tests__/gemini-live-spans.test.ts,<anonymous>_169,after_each,170,173,4,,0,per_test,1,1,0,0,0,0,https://github.com/langwatch/scenario/blob/8ba8687cf38849074fe97a83a0ea4733cfdec09a/javascript/src/voice/adapters/__tests__/gemini-live-spans.test.ts#L170-L173,claude,agent,feat,"afterEach(async () => {
+    await provider.shutdown();
+    trace.disable();
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,67f71b1d30610e2da96396dea1e4c7f1a1355831,javascript/src/voice/adapters/__tests__/pipecat-spans.test.ts,<anonymous>_148,before_each,149,155,7,,0,per_test,1,1,0,3,0,1,https://github.com/langwatch/scenario/blob/67f71b1d30610e2da96396dea1e4c7f1a1355831/javascript/src/voice/adapters/__tests__/pipecat-spans.test.ts#L149-L155,claude,agent,feat,"beforeEach(() => {
+    exporter = new InMemorySpanExporter();
+    provider = new NodeTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporter)],
+    });
+    trace.setGlobalTracerProvider(provider);
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,67f71b1d30610e2da96396dea1e4c7f1a1355831,javascript/src/voice/adapters/__tests__/pipecat-spans.test.ts,<anonymous>_155,after_each,156,159,4,,0,per_test,1,1,0,0,0,0,https://github.com/langwatch/scenario/blob/67f71b1d30610e2da96396dea1e4c7f1a1355831/javascript/src/voice/adapters/__tests__/pipecat-spans.test.ts#L156-L159,claude,agent,feat,"afterEach(async () => {
+    await provider.shutdown();
+    trace.disable();
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,8747eed1a8e36db0dfba3ebd08359822fa6d1e52,javascript/src/voice/adapters/__tests__/twilio-spans.test.ts,<anonymous>_232,before_each,233,239,7,,0,per_test,1,1,0,3,0,1,https://github.com/langwatch/scenario/blob/8747eed1a8e36db0dfba3ebd08359822fa6d1e52/javascript/src/voice/adapters/__tests__/twilio-spans.test.ts#L233-L239,claude,agent,feat,"beforeEach(() => {
+    exporter = new InMemorySpanExporter();
+    provider = new NodeTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(exporter)],
+    });
+    trace.setGlobalTracerProvider(provider);
+  })",2026-07-20,1.2895277207392197,1
+langwatch/scenario,typescript,8747eed1a8e36db0dfba3ebd08359822fa6d1e52,javascript/src/voice/adapters/__tests__/twilio-spans.test.ts,<anonymous>_239,after_each,240,250,11,,0,per_test,3,3,0,0,0,0,https://github.com/langwatch/scenario/blob/8747eed1a8e36db0dfba3ebd08359822fa6d1e52/javascript/src/voice/adapters/__tests__/twilio-spans.test.ts#L240-L250,claude,agent,feat,"afterEach(async () => {
+    while (tracked.length > 0) {
+      try {
+        await tracked.pop()!.disconnect();
+      } catch {
+        // Best-effort teardown.
+      }
+    }
+    await provider.shutdown();
+    trace.disable();
+  })",2026-07-20,1.2895277207392197,1
+librephotos/librephotos,typescript,9046aa4953c98c34cce0c5c40b9eebc6b894aa67,apps/frontend/src/__repro__/issue_630.test.tsx,<anonymous>_47,before_all,48,67,19,,0,per_class,1,1,0,1,0,1,https://github.com/librephotos/librephotos/blob/9046aa4953c98c34cce0c5c40b9eebc6b894aa67/apps/frontend/src/__repro__/issue_630.test.tsx#L48-L67,claude,agent,fix,"beforeAll(() => {
+  // Pin ""today"" so the calendar opens on May 2022 and clicking ""21"" means
+  // 21 May 2022. Only Date is faked - timers are left alone for React.
+  vi.useFakeTimers({ toFake: [""Date""] });
+  vi.setSystemTime(new Date(2022, 4, 15, 12, 0, 0));
+
+  // @ts-ignore - jsdom has no matchMedia
+  window.matchMedia = (q: string) => ({
+    matches: false,
+    media: q,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+  // @ts-ignore
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+})",2026-07-22,5.689253935660506,1
+librephotos/librephotos,typescript,9046aa4953c98c34cce0c5c40b9eebc6b894aa67,apps/frontend/src/__repro__/issue_630.test.tsx,<anonymous>_68,after_all,69,71,3,,0,per_class,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/9046aa4953c98c34cce0c5c40b9eebc6b894aa67/apps/frontend/src/__repro__/issue_630.test.tsx#L69-L71,claude,agent,fix,"afterAll(() => {
+  vi.useRealTimers();
+})",2026-07-22,5.689253935660506,1
+librephotos/librephotos,typescript,9046aa4953c98c34cce0c5c40b9eebc6b894aa67,apps/frontend/src/__repro__/issue_832.test.tsx,<anonymous>_77,before_all,78,82,5,,0,per_class,1,1,0,0,0,1,https://github.com/librephotos/librephotos/blob/9046aa4953c98c34cce0c5c40b9eebc6b894aa67/apps/frontend/src/__repro__/issue_832.test.tsx#L78-L82,claude,agent,fix,"beforeAll(async () => {
+    stubMatchMedia();
+    await i18n.changeLanguage(""en"");
+    Settings.defaultZone = VIEWER_ZONE;
+  })",2026-07-22,5.689253935660506,1
+librephotos/librephotos,typescript,9046aa4953c98c34cce0c5c40b9eebc6b894aa67,apps/frontend/src/__repro__/issue_832.test.tsx,<anonymous>_83,after_all,84,86,3,,0,per_class,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/9046aa4953c98c34cce0c5c40b9eebc6b894aa67/apps/frontend/src/__repro__/issue_832.test.tsx#L84-L86,claude,agent,fix,"afterAll(() => {
+    Settings.defaultZone = originalZone;
+  })",2026-07-22,5.689253935660506,1
+librephotos/librephotos,typescript,9046aa4953c98c34cce0c5c40b9eebc6b894aa67,apps/frontend/src/__repro__/issue_840.test.tsx,<anonymous>_83,before_all,84,98,15,,0,per_class,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/9046aa4953c98c34cce0c5c40b9eebc6b894aa67/apps/frontend/src/__repro__/issue_840.test.tsx#L84-L98,claude,agent,fix,"beforeAll(() => {
+  // @ts-ignore - jsdom has no matchMedia, MantineProvider needs it
+  window.matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+  // @ts-ignore
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+})",2026-07-22,5.689253935660506,1
+librephotos/librephotos,typescript,9046aa4953c98c34cce0c5c40b9eebc6b894aa67,apps/mobile/src/stores/localImagesActions.test.ts,<anonymous>_78,before_each,79,94,16,,0,per_test,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/9046aa4953c98c34cce0c5c40b9eebc6b894aa67/apps/mobile/src/stores/localImagesActions.test.ts#L79-L94,claude,agent,fix,"beforeEach(() => {
+    useLocalImagesStore.setState({
+      images: [],
+      lastFetch: undefined,
+      isLoading: false,
+    })
+    mockGetPhotos.mockReset()
+    mockGetPhotos.mockResolvedValue({
+      edges: [
+        edge('1', 'file:///storage/emulated/0/DCIM/Camera/one.jpg'),
+        edge('2', mockUnreadableUri),
+        edge('3', 'file:///storage/emulated/0/DCIM/Camera/three.jpg'),
+      ],
+      page_info: { has_next_page: false, start_cursor: '0', end_cursor: '2' },
+    })
+  })",2026-07-22,5.689253935660506,1
+librephotos/librephotos,typescript,2825f36299bfa163898598c75ed0416caeabdac3,apps/mobile/src/stores/__tests__/configStore.test.ts,<anonymous>_35,before_each,36,40,5,,0,per_test,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/2825f36299bfa163898598c75ed0416caeabdac3/apps/mobile/src/stores/__tests__/configStore.test.ts#L36-L40,claude,agent,fix,"beforeEach(() => {
+    mockDebug.mockClear()
+    mockDeleteLogFiles.mockClear()
+    useConfigStore.setState({ logging: true })
+  })",2026-07-24,5.69472963723477,1
+librephotos/librephotos,typescript,2825f36299bfa163898598c75ed0416caeabdac3,apps/mobile/src/stores/__tests__/uploadActions.test.ts,<anonymous>_111,before_each,112,127,16,,0,per_test,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/2825f36299bfa163898598c75ed0416caeabdac3/apps/mobile/src/stores/__tests__/uploadActions.test.ts#L112-L127,claude,agent,fix,"beforeEach(() => {
+    currentFileId = ''
+    alreadyUploaded.clear()
+    Object.keys(statusDuringUpload).forEach(key => {
+      delete statusDuringUpload[key]
+    })
+    mockGet.mockClear()
+    mockPost.mockClear()
+    mockRequest.mockClear()
+    useLocalImagesStore.setState({
+      images: files.map(file => ({ ...file })),
+      lastFetch: undefined,
+      isLoading: false,
+    })
+    useUploadStore.getState().reset()
+  })",2026-07-24,5.69472963723477,1
+librephotos/librephotos,typescript,bb142027e18bde4b3eb9200963647efb307c4f70,apps/frontend/src/components/job/JobList.test.tsx,<anonymous>_56,before_all,57,70,14,,0,per_class,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/bb142027e18bde4b3eb9200963647efb307c4f70/apps/frontend/src/components/job/JobList.test.tsx#L57-L70,claude,agent,feat,"beforeAll(() => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  window.matchMedia = (query: string) =>
+    ({
+      matches: query.includes(""min-width""),
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList;
+})",2026-07-27,5.702943189596167,1
+librephotos/librephotos,typescript,bb142027e18bde4b3eb9200963647efb307c4f70,apps/frontend/src/components/job/JobList.test.tsx,<anonymous>_94,before_each,95,98,4,,0,per_test,1,1,0,0,0,0,https://github.com/librephotos/librephotos/blob/bb142027e18bde4b3eb9200963647efb307c4f70/apps/frontend/src/components/job/JobList.test.tsx#L95-L98,claude,agent,feat,"beforeEach(() => {
+    navigate.mockClear();
+    useJobsQuery.mockClear();
+  })",2026-07-27,5.702943189596167,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/dimension-autodetect.test.ts,<anonymous>_124,before_each,125,127,3,,0,per_test,1,1,0,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/dimension-autodetect.test.ts#L125-L127,claude,agent,fix,"beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), ""mem0-test-""));
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/dimension-autodetect.test.ts,<anonymous>_128,after_each,129,131,3,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/dimension-autodetect.test.ts#L129-L131,claude,agent,fix,"afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/dimension-autodetect.test.ts,<anonymous>_262,before_each,263,296,29,,9,per_test,1,1,0,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/dimension-autodetect.test.ts#L263-L296,claude,agent,fix,"beforeEach(() => {
+    jest.resetModules();
+
+    const mockEmbedder = createMockEmbedder(768);
+    const mockVStore = createMockVectorStore();
+
+    mockEmbedderFactory = { create: jest.fn().mockReturnValue(mockEmbedder) };
+    mockVectorStoreFactory = { create: jest.fn().mockReturnValue(mockVStore) };
+    mockLlmFactory = {
+      create: jest.fn().mockReturnValue({
+        generateResponse: jest.fn().mockResolvedValue('{""facts"":[]}'),
+      }),
+    };
+    mockHistoryFactory = {
+      create: jest.fn().mockReturnValue({
+        addHistory: jest.fn().mockResolvedValue(undefined),
+        getHistory: jest.fn().mockResolvedValue([]),
+        reset: jest.fn().mockResolvedValue(undefined),
+      }),
+    };
+
+    jest.doMock(""../src/utils/factory"", () => ({
+      EmbedderFactory: mockEmbedderFactory,
+      VectorStoreFactory: mockVectorStoreFactory,
+      LLMFactory: mockLlmFactory,
+      HistoryManagerFactory: mockHistoryFactory,
+    }));
+
+    jest.doMock(""../src/utils/telemetry"", () => ({
+      captureClientEvent: jest.fn().mockResolvedValue(undefined),
+    }));
+
+    MemoryClass = require(""../src/memory"").Memory;
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/dimension-autodetect.test.ts,<anonymous>_297,after_each,298,301,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/dimension-autodetect.test.ts#L298-L301,claude,agent,fix,"afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/qdrant-e2e.test.ts,<anonymous>_42,before_all,43,48,6,,0,per_class,2,2,0,1,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/qdrant-e2e.test.ts#L43-L48,claude,agent,fix,"beforeAll(async () => {
+  if (!qdrantAvailable) return;
+  qdrantClient = new QdrantClient({ host: QDRANT_HOST, port: QDRANT_PORT });
+  const collections = await qdrantClient.getCollections();
+  expect(collections).toBeDefined();
+})",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/qdrant-e2e.test.ts,<anonymous>_85,after_all,86,96,11,,0,per_class,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/qdrant-e2e.test.ts#L86-L96,claude,agent,fix,"afterAll(async () => {
+  await deleteCollectionIfExists(""e2e_test_768"");
+  await deleteCollectionIfExists(""e2e_test_1536"");
+  await deleteCollectionIfExists(""e2e_test_race"");
+  await deleteCollectionIfExists(""e2e_test_race2"");
+  await deleteCollectionIfExists(""e2e_test_noexplicit"");
+  await deleteCollectionIfExists(""e2e_test_explicit"");
+  await deleteCollectionIfExists(""e2e_test_embdims"");
+  await deleteCollectionIfExists(""e2e_test_autodetect"");
+  await deleteCollectionIfExists(""memory_migrations"");
+})",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_61,before_all,62,78,15,,0,per_class,3,2,0,1,1,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L62-L78,claude,agent,fix,"beforeAll(async () => {
+  if (!redisAvailable) return;
+
+  cleanupClient = createClient({ url: REDIS_URL });
+  await cleanupClient.connect();
+
+  // Verify Redis Stack is running with search module
+  const modules = (await cleanupClient.moduleList()) as unknown as any[];
+  const hasSearch = modules.some((mod: any[]) => {
+    const moduleMap = new Map();
+    for (let i = 0; i < mod.length; i += 2) {
+      moduleMap.set(mod[i], mod[i + 1]);
+    }
+    return moduleMap.get(""name"")?.toLowerCase() === ""search"";
+  });
+  expect(hasSearch).toBe(true);
+})",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_79,after_all,80,84,5,,0,per_class,2,2,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L80-L84,claude,agent,fix,"afterAll(async () => {
+  if (!redisAvailable) return;
+  await cleanupRedis();
+  await cleanupClient.quit();
+})",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_92,after_each,93,95,3,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L93-L95,claude,agent,fix,"afterEach(async () => {
+    await cleanupRedis();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_140,before_each,141,149,9,,0,per_test,1,1,0,1,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L141-L149,claude,agent,fix,"beforeEach(async () => {
+    await cleanupRedis();
+    store = new RedisDB({
+      redisUrl: REDIS_URL,
+      collectionName: COLLECTION_NAME,
+      embeddingModelDims: 4, // Small dims for testing
+    });
+    await store.initialize();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_150,after_each,151,154,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L151-L154,claude,agent,fix,"afterEach(async () => {
+    await store.close();
+    await cleanupRedis();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_334,before_each,335,343,9,,0,per_test,1,1,0,1,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L335-L343,claude,agent,fix,"beforeEach(async () => {
+    await cleanupRedis();
+    store = new RedisDB({
+      redisUrl: REDIS_URL,
+      collectionName: COLLECTION_NAME,
+      embeddingModelDims: 4,
+    });
+    await store.initialize();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_344,after_each,345,348,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L345-L348,claude,agent,fix,"afterEach(async () => {
+    await store.close();
+    await cleanupRedis();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/redis-e2e.test.ts,<anonymous>_372,after_each,373,375,3,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/redis-e2e.test.ts#L373-L375,claude,agent,fix,"afterEach(async () => {
+    await cleanupRedis();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_26,before_each,27,29,3,,0,per_test,1,1,0,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L27-L29,claude,agent,fix,"beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), ""mem0-vs-compat-""));
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_30,after_each,31,33,3,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L31-L33,claude,agent,fix,"afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_383,before_each,384,437,50,,12,per_test,1,1,0,1,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L384-L437,claude,agent,fix,"beforeEach(() => {
+    jest.resetModules();
+
+    // Mock redis createClient
+    jest.doMock(""redis"", () => {
+      const store = new Map<string, any>();
+      const mockClient = {
+        connect: jest.fn().mockResolvedValue(undefined),
+        on: jest.fn(),
+        isOpen: false,
+        moduleList: jest.fn().mockResolvedValue([
+          [""name"", ""search"", ""ver"", 20000],
+        ]),
+        ft: {
+          dropIndex: jest.fn().mockResolvedValue(undefined),
+          create: jest.fn().mockResolvedValue(undefined),
+          search: jest.fn().mockResolvedValue({ total: 0, documents: [] }),
+        },
+        hSet: jest.fn().mockImplementation(async (key: string, obj: any) => {
+          store.set(key, obj);
+        }),
+        hGetAll: jest.fn().mockImplementation(async (key: string) => {
+          return store.get(key) || {};
+        }),
+        del: jest.fn().mockImplementation(async (key: string) => {
+          store.delete(key);
+        }),
+        keys: jest.fn().mockResolvedValue([]),
+        quit: jest.fn().mockResolvedValue(undefined),
+      };
+
+      // Track connect calls for assertion
+      mockClient.connect.mockImplementation(async () => {
+        mockClient.isOpen = true;
+      });
+
+      return {
+        createClient: jest.fn().mockReturnValue(mockClient),
+        SchemaFieldTypes: {
+          VECTOR: ""VECTOR"",
+          TAG: ""TAG"",
+          TEXT: ""TEXT"",
+          NUMERIC: ""NUMERIC"",
+        },
+        VectorAlgorithms: {
+          FLAT: ""FLAT"",
+          HNSW: ""HNSW"",
+        },
+        __mockClient: mockClient,
+      };
+    });
+
+    RedisDB = require(""../src/vector_stores/redis"").RedisDB;
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_438,after_each,439,442,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L439-L442,claude,agent,fix,"afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_506,before_each,507,536,28,,12,per_test,1,1,0,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L507-L536,claude,agent,fix,"beforeEach(() => {
+    jest.resetModules();
+
+    jest.doMock(""@supabase/supabase-js"", () => {
+      const mockClient = {
+        from: jest.fn().mockReturnValue({
+          insert: jest.fn().mockReturnValue({
+            select: jest.fn().mockReturnValue({ error: null }),
+          }),
+          select: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({ data: [], error: null }),
+          }),
+          delete: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({ error: null }),
+          }),
+          update: jest.fn().mockReturnValue({
+            eq: jest.fn().mockReturnValue({ error: null }),
+          }),
+          upsert: jest.fn().mockReturnValue({ error: null }),
+        }),
+        rpc: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      return {
+        createClient: jest.fn().mockReturnValue(mockClient),
+        __mockClient: mockClient,
+      };
+    });
+
+    SupabaseDB = require(""../src/vector_stores/supabase"").SupabaseDB;
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_537,after_each,538,541,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L538-L541,claude,agent,fix,"afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_582,before_each,583,610,25,,11,per_test,1,1,1,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L583-L610,claude,agent,fix,"beforeEach(() => {
+    jest.resetModules();
+
+    jest.doMock(""@azure/search-documents"", () => ({
+      SearchClient: jest.fn().mockImplementation(() => ({
+        search: jest.fn().mockReturnValue({
+          [Symbol.asyncIterator]: () => ({ next: () => ({ done: true }) }),
+        }),
+        getDocument: jest.fn().mockResolvedValue(null),
+        mergeOrUploadDocuments: jest.fn().mockResolvedValue({}),
+        deleteDocuments: jest.fn().mockResolvedValue({}),
+      })),
+      SearchIndexClient: jest.fn().mockImplementation(() => ({
+        listIndexes: jest.fn().mockReturnValue({
+          [Symbol.asyncIterator]: () => ({ next: () => ({ done: true }) }),
+        }),
+        createOrUpdateIndex: jest.fn().mockResolvedValue({}),
+        deleteIndex: jest.fn().mockResolvedValue({}),
+      })),
+      AzureKeyCredential: jest.fn().mockImplementation((key: string) => ({ key })),
+    }));
+
+    jest.doMock(""@azure/identity"", () => ({
+      DefaultAzureCredential: jest.fn(),
+    }));
+
+    AzureAISearch = require(""../src/vector_stores/azure_ai_search"").AzureAISearch;
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_611,after_each,612,615,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L612-L615,claude,agent,fix,"afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_657,before_each,658,687,27,,8,per_test,1,1,1,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L658-L687,claude,agent,fix,"beforeEach(() => {
+    jest.resetModules();
+
+    jest.doMock(""cloudflare"", () => {
+      const mockIndexes = {
+        list: jest.fn().mockReturnValue({
+          [Symbol.asyncIterator]: () => ({ next: async () => ({ done: true }) }),
+        }),
+        create: jest.fn().mockResolvedValue({}),
+        delete: jest.fn().mockResolvedValue({}),
+        query: jest.fn().mockResolvedValue({ matches: [] }),
+        getByIds: jest.fn().mockResolvedValue([]),
+        metadataIndex: {
+          list: jest.fn().mockResolvedValue({ metadataIndexes: [] }),
+          create: jest.fn().mockResolvedValue({}),
+        },
+      };
+
+      return {
+        __esModule: true,
+        default: jest.fn().mockImplementation(() => ({
+          apiToken: ""fake-token"",
+          vectorize: { indexes: mockIndexes },
+          __mockIndexes: mockIndexes,
+        })),
+      };
+    });
+
+    VectorizeDB = require(""../src/vector_stores/vectorize"").VectorizeDB;
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_688,after_each,689,692,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L689-L692,claude,agent,fix,"afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_859,before_each,860,891,27,,9,per_test,1,1,0,0,0,1,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L860-L891,claude,agent,fix,"beforeEach(() => {
+    jest.resetModules();
+
+    const mockEmbedder = createMockEmbedder(1536);
+    const mockVStore = createMockVectorStore();
+
+    mockEmbedderFactory = { create: jest.fn().mockReturnValue(mockEmbedder) };
+    mockVectorStoreFactory = { create: jest.fn().mockReturnValue(mockVStore) };
+
+    jest.doMock(""../src/utils/factory"", () => ({
+      EmbedderFactory: mockEmbedderFactory,
+      VectorStoreFactory: mockVectorStoreFactory,
+      LLMFactory: {
+        create: jest.fn().mockReturnValue({
+          generateResponse: jest.fn().mockResolvedValue('{""facts"":[]}'),
+        }),
+      },
+      HistoryManagerFactory: {
+        create: jest.fn().mockReturnValue({
+          addHistory: jest.fn().mockResolvedValue(undefined),
+          getHistory: jest.fn().mockResolvedValue([]),
+          reset: jest.fn().mockResolvedValue(undefined),
+        }),
+      },
+    }));
+
+    jest.doMock(""../src/utils/telemetry"", () => ({
+      captureClientEvent: jest.fn().mockResolvedValue(undefined),
+    }));
+
+    MemoryClass = require(""../src/memory"").Memory;
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,59c3b050bda4c49a40a973553ddd7c1e33afdd9f,mem0-ts/src/oss/tests/vector-stores-compat.test.ts,<anonymous>_892,after_each,893,896,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/59c3b050bda4c49a40a973553ddd7c1e33afdd9f/mem0-ts/src/oss/tests/vector-stores-compat.test.ts#L893-L896,claude,agent,fix,"afterEach(() => {
+    jest.restoreAllMocks();
+    jest.resetModules();
+  })",2026-03-12,2.724161533196441,1
+mem0ai/mem0,typescript,06c25eb00bca4e9d7b12e9dd9d70378b464a294e,mem0-ts/src/oss/tests/graph-memory-parsing.test.ts,<anonymous>_521,before_each,522,524,3,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/06c25eb00bca4e9d7b12e9dd9d70378b464a294e/mem0-ts/src/oss/tests/graph-memory-parsing.test.ts#L522-L524,claude,agent,fix,"beforeEach(() => {
+    (LLMFactory.create as jest.Mock).mockClear();
+  })",2026-03-21,2.74880219028063,1
+mem0ai/mem0,typescript,431cba20e9179bbeb72a0ca74161d54dfa500e3f,mem0-ts/src/oss/tests/qdrant-url-port.test.ts,<anonymous>_36,before_each,37,40,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/431cba20e9179bbeb72a0ca74161d54dfa500e3f/mem0-ts/src/oss/tests/qdrant-url-port.test.ts#L37-L40,claude,agent,fix,"beforeEach(() => {
+  capturedParams = undefined;
+  (require(""@qdrant/js-client-rest"").QdrantClient as jest.Mock).mockClear();
+})",2026-03-28,2.7679671457905544,1
+mem0ai/mem0,typescript,34ed122ef376d9379b89deb10ead0c63285a7748,mem0-ts/src/oss/tests/openai-llm.test.ts,<anonymous>_23,before_each,24,27,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/34ed122ef376d9379b89deb10ead0c63285a7748/mem0-ts/src/oss/tests/openai-llm.test.ts#L24-L27,claude,agent,fix,"beforeEach(() => {
+    capturedConstructorArgs = undefined;
+    mockCreate.mockClear();
+  })",2026-04-23,2.839151266255989,1
+mem0ai/mem0,typescript,34ed122ef376d9379b89deb10ead0c63285a7748,mem0-ts/src/oss/tests/openai-structured-llm.test.ts,<anonymous>_22,before_each,23,26,4,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/34ed122ef376d9379b89deb10ead0c63285a7748/mem0-ts/src/oss/tests/openai-structured-llm.test.ts#L23-L26,claude,agent,fix,"beforeEach(() => {
+    capturedConstructorArgs = undefined;
+    mockCreate.mockClear();
+  })",2026-04-23,2.839151266255989,1
+mem0ai/mem0,typescript,f4ccef51573c6844ee0667759e5ab6b314e57d92,mem0-ts/src/oss/tests/redis.unit.test.ts,<anonymous>_33,before_all,34,38,5,,0,per_class,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/f4ccef51573c6844ee0667759e5ab6b314e57d92/mem0-ts/src/oss/tests/redis.unit.test.ts#L34-L38,claude,agent,fix,"beforeAll(async () => {
+    store = createStore();
+    await store.initialize();
+    mockClient = (store as any).client;
+  })",2026-06-26,3.0143737166324436,1
+mem0ai/mem0,typescript,f4ccef51573c6844ee0667759e5ab6b314e57d92,mem0-ts/src/oss/tests/redis.unit.test.ts,<anonymous>_39,before_each,40,42,3,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/f4ccef51573c6844ee0667759e5ab6b314e57d92/mem0-ts/src/oss/tests/redis.unit.test.ts#L40-L42,claude,agent,fix,"beforeEach(() => {
+    jest.clearAllMocks();
+  })",2026-06-26,3.0143737166324436,1
+mem0ai/mem0,typescript,f89edb45dce1ecd87384d38fc4cc555ff3dfa7db,mem0-ts/src/oss/tests/sarvam.test.ts,<anonymous>_20,before_each,21,29,9,,0,per_test,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/f89edb45dce1ecd87384d38fc4cc555ff3dfa7db/mem0-ts/src/oss/tests/sarvam.test.ts#L21-L29,claude,agent,feat,"beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...ORIGINAL_ENV };
+    delete process.env.SARVAM_API_KEY;
+    delete process.env.SARVAM_API_BASE;
+    mockCreate.mockResolvedValue({
+      choices: [{ message: { content: ""hi"", role: ""assistant"" } }],
+    });
+  })",2026-07-08,3.047227926078029,1
+mem0ai/mem0,typescript,f89edb45dce1ecd87384d38fc4cc555ff3dfa7db,mem0-ts/src/oss/tests/sarvam.test.ts,<anonymous>_30,after_all,31,33,3,,0,per_class,1,1,0,0,0,0,https://github.com/mem0ai/mem0/blob/f89edb45dce1ecd87384d38fc4cc555ff3dfa7db/mem0-ts/src/oss/tests/sarvam.test.ts#L31-L33,claude,agent,feat,"afterAll(() => {
+    process.env = ORIGINAL_ENV;
+  })",2026-07-08,3.047227926078029,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/audit.test.ts,<anonymous>_5,before_each,6,8,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/audit.test.ts#L6-L8,copilot,agent,feat,"beforeEach(() => {
+    logger = new AuditLogger();
+  })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/audit.test.ts,<anonymous>_69,before_each,70,74,5,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/audit.test.ts#L70-L74,copilot,agent,feat,"beforeEach(() => {
+      logger.log({ agentId: 'agent-1', action: 'data.read', decision: 'allow' });
+      logger.log({ agentId: 'agent-2', action: 'data.write', decision: 'deny' });
+      logger.log({ agentId: 'agent-1', action: 'data.delete', decision: 'review' });
+    })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/client.test.ts,<anonymous>_5,before_each,6,15,10,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/client.test.ts#L6-L15,copilot,agent,feat,"beforeEach(() => {
+    client = AgentMeshClient.create('test-agent', {
+      capabilities: ['read', 'write'],
+      policyRules: [
+        { action: 'data.read', effect: 'allow' },
+        { action: 'data.write', effect: 'allow', conditions: { role: 'admin' } },
+        { action: 'data.delete', effect: 'deny' },
+      ],
+    });
+  })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/identity.test.ts,<anonymous>_5,before_each,6,8,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/identity.test.ts#L6-L8,copilot,agent,feat,"beforeEach(() => {
+    identity = AgentIdentity.generate('test-agent', ['read', 'write']);
+  })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/policy.test.ts,<anonymous>_111,before_each,112,115,4,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/policy.test.ts#L112-L115,copilot,agent,feat,"beforeEach(() => {
+      tempDir = mkdtempSync(join(tmpdir(), 'policy-test-'));
+      yamlPath = join(tempDir, 'policy.yaml');
+    })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/policy.test.ts,<anonymous>_116,after_each,117,119,3,,0,per_test,2,2,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/policy.test.ts#L117-L119,copilot,agent,feat,"afterEach(() => {
+      try { unlinkSync(yamlPath); } catch { /* ignore */ }
+    })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,2a13c1c56d58a892b018438944db2852c1d6d5c2,packages/agent-mesh/sdks/typescript/tests/trust.test.ts,<anonymous>_6,before_each,7,9,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2a13c1c56d58a892b018438944db2852c1d6d5c2/packages/agent-mesh/sdks/typescript/tests/trust.test.ts#L7-L9,copilot,agent,feat,"beforeEach(() => {
+    tm = new TrustManager({ initialScore: 0.5 });
+  })",2026-03-02,,1
+microsoft/agent-governance-toolkit,typescript,bd2e209cd4e1c1fbe49d8383fabd8bb8ba7203cb,packages/agentmesh-integrations/mastra-agentmesh/tests/index.test.ts,<anonymous>_141,before_each,142,145,4,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/bd2e209cd4e1c1fbe49d8383fabd8bb8ba7203cb/packages/agentmesh-integrations/mastra-agentmesh/tests/index.test.ts#L142-L145,copilot,agent,feat,"beforeEach(() => {
+    audit = auditMiddleware({ captureData: true, maxEntries: 100 });
+    audit.clear();
+  })",2026-03-10,0.019164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6992c8cc6e20e761a4930a6cc308e7f8629ecc6f,packages/agent-mesh/sdks/typescript/tests/identity-parity.test.ts,<anonymous>_7,before_each,8,15,8,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6992c8cc6e20e761a4930a6cc308e7f8629ecc6f/packages/agent-mesh/sdks/typescript/tests/identity-parity.test.ts#L8-L15,copilot,agent,feat,"beforeEach(() => {
+    identity = AgentIdentity.generate('test-agent', ['read', 'write', 'read:data', 'read:logs'], {
+      name: 'Test Agent',
+      description: 'A test agent',
+      sponsor: 'alice@org.com',
+      organization: 'TestOrg',
+    });
+  })",2026-03-15,0.03285420944558522,1
+microsoft/agent-governance-toolkit,typescript,6992c8cc6e20e761a4930a6cc308e7f8629ecc6f,packages/agent-mesh/sdks/typescript/tests/identity-parity.test.ts,<anonymous>_275,before_each,276,280,5,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6992c8cc6e20e761a4930a6cc308e7f8629ecc6f/packages/agent-mesh/sdks/typescript/tests/identity-parity.test.ts#L276-L280,copilot,agent,feat,"beforeEach(() => {
+    registry = new IdentityRegistry();
+    id1 = AgentIdentity.generate('agent-1', ['read'], { sponsor: 'alice@org.com' });
+    id2 = AgentIdentity.generate('agent-2', ['write'], { sponsor: 'alice@org.com' });
+  })",2026-03-15,0.03285420944558522,1
+microsoft/agent-governance-toolkit,typescript,6992c8cc6e20e761a4930a6cc308e7f8629ecc6f,packages/agent-mesh/sdks/typescript/tests/policy-parity.test.ts,<anonymous>_445,before_each,446,448,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6992c8cc6e20e761a4930a6cc308e7f8629ecc6f/packages/agent-mesh/sdks/typescript/tests/policy-parity.test.ts#L446-L448,copilot,agent,feat,"beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), 'policy-parity-'));
+  })",2026-03-15,0.03285420944558522,1
+microsoft/agent-governance-toolkit,typescript,2186629a32e1088ac16c15edfc9f16b4c820ec4a,packages/agent-mesh/sdks/typescript/tests/key-prefix.test.ts,<anonymous>_59,before_each,60,63,4,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/2186629a32e1088ac16c15edfc9f16b4c820ec4a/packages/agent-mesh/sdks/typescript/tests/key-prefix.test.ts#L60-L63,copilot,agent,fix,"beforeEach(() => {
+    identity = AgentIdentity.generate('prefix-test', ['read']);
+    json = identity.toJSON();
+  })",2026-03-28,0.06844626967830253,1
+microsoft/agent-governance-toolkit,typescript,c63fb931252bf978277fa22477a39f3365b3de94,packages/agent-mesh/sdks/typescript/tests/trust-persistence.test.ts,<anonymous>_12,after_each,13,15,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/c63fb931252bf978277fa22477a39f3365b3de94/packages/agent-mesh/sdks/typescript/tests/trust-persistence.test.ts#L13-L15,copilot,agent,feat,"afterEach(() => {
+  // cleanup is best-effort; individual tests also clean up
+})",2026-03-29,0.07118412046543464,1
+microsoft/agent-governance-toolkit,typescript,e01a3668bc3ed610a8e08391d9b50f9241b73382,packages/agent-mesh/packages/mcp-proxy/tests/policy-audit.test.ts,<anonymous>_13,after_each,14,18,5,,0,per_test,2,2,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/e01a3668bc3ed610a8e08391d9b50f9241b73382/packages/agent-mesh/packages/mcp-proxy/tests/policy-audit.test.ts#L14-L18,copilot,agent,feat,"afterEach(() => {
+  for (const dir of tempDirs.splice(0)) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+})",2026-04-06,0.09308692676249145,1
+microsoft/agent-governance-toolkit,typescript,3f9e519576e3adc29129b20e9caef885b75eca96,packages/agent-mesh/sdks/typescript/tests/lifecycle.test.ts,<anonymous>_7,before_each,8,10,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/3f9e519576e3adc29129b20e9caef885b75eca96/packages/agent-mesh/sdks/typescript/tests/lifecycle.test.ts#L8-L10,copilot,agent,feat,"beforeEach(() => {
+    lm = new LifecycleManager('agent-1');
+  })",2026-04-11,0.10677618069815195,1
+microsoft/agent-governance-toolkit,typescript,3f9e519576e3adc29129b20e9caef885b75eca96,packages/agent-mesh/sdks/typescript/tests/mcp.test.ts,<anonymous>_11,before_each,12,14,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/3f9e519576e3adc29129b20e9caef885b75eca96/packages/agent-mesh/sdks/typescript/tests/mcp.test.ts#L12-L14,copilot,agent,feat,"beforeEach(() => {
+    scanner = new McpSecurityScanner();
+  })",2026-04-11,0.10677618069815195,1
+microsoft/agent-governance-toolkit,typescript,cc346197c222aaeb9d3dba459e71fa346855b776,agent-governance-typescript/tests/surface-parity.test.ts,<anonymous>_12,before_each,13,15,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/cc346197c222aaeb9d3dba459e71fa346855b776/agent-governance-typescript/tests/surface-parity.test.ts#L13-L15,copilot,agent,feat,"beforeEach(() => {
+    checker = new SurfaceParityChecker();
+  })",2026-04-26,0.14784394250513347,1
+microsoft/agent-governance-toolkit,typescript,84e89c9c37af056d5a16409546dfe18a977dd06f,agent-governance-typescript/tests/cascade-containment.test.ts,<anonymous>_7,before_each,8,10,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/84e89c9c37af056d5a16409546dfe18a977dd06f/agent-governance-typescript/tests/cascade-containment.test.ts#L8-L10,copilot,agent,feat,"beforeEach(() => {
+    manager = new CascadeContainmentManager();
+  })",2026-04-26,0.14784394250513347,1
+microsoft/agent-governance-toolkit,typescript,84e89c9c37af056d5a16409546dfe18a977dd06f,agent-governance-typescript/tests/cascade-containment.test.ts,<anonymous>_81,before_each,82,86,5,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/84e89c9c37af056d5a16409546dfe18a977dd06f/agent-governance-typescript/tests/cascade-containment.test.ts#L82-L86,copilot,agent,feat,"beforeEach(() => {
+      manager.registerAgent('caller');
+      manager.registerAgent('callee');
+      manager.addDependency('caller', 'callee');
+    })",2026-04-26,0.14784394250513347,1
+microsoft/agent-governance-toolkit,typescript,7f8baafa7446dd215f7e63aadf67e5be00ed7222,agent-governance-typescript/tests/context-poisoning.test.ts,<anonymous>_20,before_each,21,23,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/7f8baafa7446dd215f7e63aadf67e5be00ed7222/agent-governance-typescript/tests/context-poisoning.test.ts#L21-L23,copilot,agent,feat,"beforeEach(() => {
+    detector = new ContextPoisoningDetector();
+  })",2026-04-26,0.14784394250513347,1
+microsoft/agent-governance-toolkit,typescript,c622e42f6c7766ef2c056fe9661291be6d1b0b9f,agent-governance-typescript/tests/oci-manifest.test.ts,<anonymous>_25,before_each,26,28,3,,0,per_test,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/c622e42f6c7766ef2c056fe9661291be6d1b0b9f/agent-governance-typescript/tests/oci-manifest.test.ts#L26-L28,copilot,agent,feat,"beforeEach(() => {
+    adapter = new OciManifestAdapter();
+  })",2026-04-26,0.14784394250513347,1
+microsoft/agent-governance-toolkit,typescript,c4dba0626f59f62b961cce42cacb7b78098e69cc,agent-governance-typescript/tests/sandbox.test.ts,<anonymous>_79,before_all,80,83,4,,0,per_class,1,1,0,1,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/c4dba0626f59f62b961cce42cacb7b78098e69cc/agent-governance-typescript/tests/sandbox.test.ts#L80-L83,copilot,agent,feat,"beforeAll(async () => {
+    provider = new DockerSandboxProvider();
+    dockerAvailable = await provider.isAvailable();
+  })",2026-05-04,0.1697467488021903,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-auto-reconnect.test.ts,<anonymous>_86,before_each,87,89,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-auto-reconnect.test.ts#L87-L89,copilot,agent,feat,"beforeEach(() => {
+    createdSockets.length = 0;
+  })",2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-event-hooks.test.ts,<anonymous>_85,before_each,86,88,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-event-hooks.test.ts#L86-L88,copilot,agent,feat,"beforeEach(() => {
+    lastMockWs = null;
+  })",2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-event-hooks.test.ts,<anonymous>_143,before_each,144,146,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-event-hooks.test.ts#L144-L146,copilot,agent,feat,"beforeEach(() => {
+    lastMockWs = null;
+  })",2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-event-hooks.test.ts,<anonymous>_191,before_each,192,194,3,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-event-hooks.test.ts#L192-L194,copilot,agent,feat,"beforeEach(() => {
+    lastMockWs = null;
+  })",2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-knock-bootstrap.test.ts,<anonymous>_77,before_each,78,78,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-knock-bootstrap.test.ts#L78-L78,copilot,agent,feat,beforeEach(() => { lastMockWs = null; }),2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-pre-knock-buffer.test.ts,<anonymous>_73,before_each,74,74,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-pre-knock-buffer.test.ts#L74-L74,copilot,agent,feat,beforeEach(() => { lastMockWs = null; }),2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d,agent-governance-typescript/tests/mesh-client-session-desync.test.ts,<anonymous>_61,before_each,62,62,1,,0,per_test,1,1,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/6c3af4cf0bf7e5d8eced83e2c8bfa4e267cd537d/agent-governance-typescript/tests/mesh-client-session-desync.test.ts#L62-L62,copilot,agent,feat,beforeEach(() => { lastMockWs = null; }),2026-05-12,0.19164955509924708,1
+microsoft/agent-governance-toolkit,typescript,f3e306c2e4a2f1ee3fe3b2f9b5ad4add4e877b79,agent-governance-python/agentmesh-integrations/copilot-governance/tests/server.test.ts,<anonymous>_34,before_each,35,38,4,,0,per_test,1,1,0,0,0,1,https://github.com/microsoft/agent-governance-toolkit/blob/f3e306c2e4a2f1ee3fe3b2f9b5ad4add4e877b79/agent-governance-python/agentmesh-integrations/copilot-governance/tests/server.test.ts#L35-L38,copilot,agent,fix,"beforeEach(() => {
+    delete process.env.COPILOT_GOVERNANCE_HOST;
+    vi.spyOn(console, ""log"").mockImplementation(() => undefined);
+  })",2026-05-21,0.216290212183436,1
+microsoft/agent-governance-toolkit,typescript,f3e306c2e4a2f1ee3fe3b2f9b5ad4add4e877b79,agent-governance-python/agentmesh-integrations/copilot-governance/tests/server.test.ts,<anonymous>_39,after_each,40,47,8,,0,per_test,2,2,0,0,0,0,https://github.com/microsoft/agent-governance-toolkit/blob/f3e306c2e4a2f1ee3fe3b2f9b5ad4add4e877b79/agent-governance-python/agentmesh-integrations/copilot-governance/tests/server.test.ts#L40-L47,copilot,agent,fix,"afterEach(() => {
+    if (ORIGINAL_HOST_OVERRIDE === undefined) {
+      delete process.env.COPILOT_GOVERNANCE_HOST;
+    } else {
+      process.env.COPILOT_GOVERNANCE_HOST = ORIGINAL_HOST_OVERRIDE;
+    }
+    vi.restoreAllMocks();
+  })",2026-05-21,0.216290212183436,1
+omnigent-ai/omnigent,typescript,ea5f6d4990177c2450cc277ece683264a74b1b24,ap-web/src/hooks/useApproveHotkey.test.tsx,<anonymous>_27,before_each,28,31,4,,0,per_test,1,1,0,0,0,1,https://github.com/omnigent-ai/omnigent/blob/ea5f6d4990177c2450cc277ece683264a74b1b24/ap-web/src/hooks/useApproveHotkey.test.tsx#L28-L31,claude,agent,fix,"beforeEach(() => {
+  submitApproval.mockClear();
+  blocks = [];
+})",2026-06-19,0.019164955509924708,1
+omnigent-ai/omnigent,typescript,ea5f6d4990177c2450cc277ece683264a74b1b24,ap-web/src/hooks/useApproveHotkey.test.tsx,<anonymous>_31,after_each,32,34,3,,0,per_test,1,1,0,0,0,0,https://github.com/omnigent-ai/omnigent/blob/ea5f6d4990177c2450cc277ece683264a74b1b24/ap-web/src/hooks/useApproveHotkey.test.tsx#L32-L34,claude,agent,fix,"afterEach(() => {
+  blocks = [];
+})",2026-06-19,0.019164955509924708,1
+omnigent-ai/omnigent,typescript,99e25f6de1ae8c9f31f2a70efbfc09d95fd8884c,editors/vscode/src/panel/EditorPanelController.test.ts,<anonymous>_47,before_each,48,53,6,,0,per_test,1,1,0,0,0,1,https://github.com/omnigent-ai/omnigent/blob/99e25f6de1ae8c9f31f2a70efbfc09d95fd8884c/editors/vscode/src/panel/EditorPanelController.test.ts#L48-L53,claude,agent,feat,"beforeEach(() => {
+    fake = makeFakePanel();
+    const win = vscode.window as unknown as Record<string, unknown>;
+    createSpy = vi.fn<unknown[], unknown>(() => fake.panel);
+    win.createWebviewPanel = createSpy;
+  })",2026-07-01,0.05201916495550993,1
+omnigent-ai/omnigent,typescript,99e25f6de1ae8c9f31f2a70efbfc09d95fd8884c,editors/vscode/src/panel/EditorPanelController.test.ts,<anonymous>_54,after_each,55,57,3,,0,per_test,1,1,0,0,0,0,https://github.com/omnigent-ai/omnigent/blob/99e25f6de1ae8c9f31f2a70efbfc09d95fd8884c/editors/vscode/src/panel/EditorPanelController.test.ts#L55-L57,claude,agent,feat,"afterEach(() => {
+    vi.restoreAllMocks();
+  })",2026-07-01,0.05201916495550993,1
+omnigent-ai/omnigent,typescript,7252635cfd01b1836e9e271f66563307b5968f82,web/src/lib/harnessVisibilityPreferences.test.ts,<anonymous>_7,after_each,8,11,4,,0,per_test,1,1,0,0,0,0,https://github.com/omnigent-ai/omnigent/blob/7252635cfd01b1836e9e271f66563307b5968f82/web/src/lib/harnessVisibilityPreferences.test.ts#L8-L11,claude,agent,feat,"afterEach(() => {
+  localStorage.clear();
+  vi.restoreAllMocks();
+})",2026-07-15,0.09034907597535935,1
+omnigent-ai/omnigent,typescript,6cbd72b168d84fbb099db13b9fb67e1a81333123,web/src/shell/NewChatDialog.projectPrefill.test.tsx,<anonymous>_145,before_each,146,156,11,,0,per_test,1,1,0,1,0,1,https://github.com/omnigent-ai/omnigent/blob/6cbd72b168d84fbb099db13b9fb67e1a81333123/web/src/shell/NewChatDialog.projectPrefill.test.tsx#L146-L156,claude,agent,feat,"beforeEach(() => {
+  navigateMock.mockReset();
+  vi.mocked(authenticatedFetch).mockReset();
+  searchParams = new URLSearchParams(""project=Alpha"");
+  localStorage.clear();
+  // A recent on the host that would win under the generic seeding rules —
+  // the project prefill must beat it.
+  localStorage.setItem(RECENT_KEY, JSON.stringify({ host_1: [RECENT_WORKSPACE] }));
+  setHostsAndAgents();
+  setRepoWorktrees();
+})",2026-07-15,0.09034907597535935,1
+omnigent-ai/omnigent,typescript,6cbd72b168d84fbb099db13b9fb67e1a81333123,web/src/shell/NewChatDialog.projectPrefill.test.tsx,<anonymous>_164,after_each,165,168,4,,0,per_test,1,1,0,0,0,0,https://github.com/omnigent-ai/omnigent/blob/6cbd72b168d84fbb099db13b9fb67e1a81333123/web/src/shell/NewChatDialog.projectPrefill.test.tsx#L165-L168,claude,agent,feat,"afterEach(() => {
+  cleanup();
+  localStorage.clear();
+})",2026-07-15,0.09034907597535935,1
+omnigent-ai/omnigent,typescript,bf5b3c3a61822ef1c394bb54c7029d9c527c9a76,web/src/components/theme/ThemeProvider.test.tsx,<anonymous>_21,before_each,22,26,5,,0,per_test,1,1,0,0,0,1,https://github.com/omnigent-ai/omnigent/blob/bf5b3c3a61822ef1c394bb54c7029d9c527c9a76/web/src/components/theme/ThemeProvider.test.tsx#L22-L26,claude,agent,fix,"beforeEach(() => {
+  themeState.reportColorScheme.mockClear();
+  themeState.theme = ""system"";
+  themeState.resolvedTheme = ""light"";
+})",2026-07-26,0.12046543463381246,1
+omnigent-ai/omnigent,typescript,bf5b3c3a61822ef1c394bb54c7029d9c527c9a76,web/src/components/theme/ThemeProvider.test.tsx,<anonymous>_27,after_each,28,28,1,,0,per_test,1,1,0,0,0,0,https://github.com/omnigent-ai/omnigent/blob/bf5b3c3a61822ef1c394bb54c7029d9c527c9a76/web/src/components/theme/ThemeProvider.test.tsx#L28-L28,claude,agent,fix,afterEach(cleanup),2026-07-26,0.12046543463381246,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_84,before_each,85,87,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L85-L87,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_88,after_each,89,91,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L89-L91,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_160,before_each,161,168,8,,0,per_test,2,2,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L161-L168,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+    mockSocketPath = computeSocketPath(TEST_PROJECT_DIR);
+    // Clean up any existing socket
+    if (existsSync(mockSocketPath)) {
+      unlinkSync(mockSocketPath);
+    }
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_169,after_each,170,177,8,,0,per_test,3,3,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L170-L177,claude,agent,none,"afterEach(() => {
+    if (existsSync(mockSocketPath)) {
+      try {
+        unlinkSync(mockSocketPath);
+      } catch {}
+    }
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_209,before_each,210,217,8,,0,per_test,2,2,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L210-L217,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+    mockSocketPath = computeSocketPath(TEST_PROJECT_DIR);
+    // Clean up any existing socket
+    if (existsSync(mockSocketPath)) {
+      unlinkSync(mockSocketPath);
+    }
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_218,after_each,219,234,16,,0,per_test,1,3,0,1,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L219-L234,claude,agent,none,"afterEach(async () => {
+    if (mockServer) {
+      await new Promise<void>((resolve) => {
+        mockServer!.close(() => {
+          mockServer = null;
+          resolve();
+        });
+      });
+    }
+    if (existsSync(mockSocketPath)) {
+      try {
+        unlinkSync(mockSocketPath);
+      } catch {}
+    }
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_351,before_each,352,354,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L352-L354,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_355,after_each,356,365,10,,0,per_test,3,3,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L356-L365,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+    // Clean up any socket file
+    const socketPath = computeSocketPath(TEST_PROJECT_DIR);
+    if (existsSync(socketPath)) {
+      try {
+        unlinkSync(socketPath);
+      } catch {}
+    }
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_397,before_each,398,400,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L398-L400,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_401,after_each,402,404,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L402-L404,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_439,before_each,440,442,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L440-L442,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/daemon-client.test.ts,<anonymous>_443,after_each,444,446,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/daemon-client.test.ts#L444-L446,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/findSessionHandoff.test.ts,<anonymous>_27,before_each,28,35,7,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/findSessionHandoff.test.ts#L28-L35,claude,agent,none,"beforeEach(() => {
+    // Create a temp directory for each test
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'findSessionHandoff-test-'));
+
+    // Save and override CLAUDE_PROJECT_DIR
+    originalProjectDir = process.env.CLAUDE_PROJECT_DIR;
+    process.env.CLAUDE_PROJECT_DIR = testDir;
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/findSessionHandoff.test.ts,<anonymous>_36,after_each,37,47,10,,0,per_test,2,2,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/findSessionHandoff.test.ts#L37-L47,claude,agent,none,"afterEach(() => {
+    // Restore original CLAUDE_PROJECT_DIR
+    if (originalProjectDir !== undefined) {
+      process.env.CLAUDE_PROJECT_DIR = originalProjectDir;
+    } else {
+      delete process.env.CLAUDE_PROJECT_DIR;
+    }
+
+    // Clean up temp directory
+    fs.rmSync(testDir, { recursive: true, force: true });
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/findSessionHandoff.test.ts,<anonymous>_276,before_each,277,281,5,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/findSessionHandoff.test.ts#L277-L281,claude,agent,none,"beforeEach(() => {
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uuid-handoff-test-'));
+    originalProjectDir = process.env.CLAUDE_PROJECT_DIR;
+    process.env.CLAUDE_PROJECT_DIR = testDir;
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/findSessionHandoff.test.ts,<anonymous>_282,after_each,283,290,8,,0,per_test,2,2,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/findSessionHandoff.test.ts#L283-L290,claude,agent,none,"afterEach(() => {
+    if (originalProjectDir !== undefined) {
+      process.env.CLAUDE_PROJECT_DIR = originalProjectDir;
+    } else {
+      delete process.env.CLAUDE_PROJECT_DIR;
+    }
+    fs.rmSync(testDir, { recursive: true, force: true });
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_52,before_each,53,55,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L53-L55,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_56,after_each,57,59,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L57-L59,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_160,before_each,161,163,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L161-L163,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_164,after_each,165,167,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L165-L167,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_269,before_each,270,272,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L270-L272,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_273,after_each,274,276,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L274-L276,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_367,before_each,368,370,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L368-L370,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_371,after_each,372,374,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L372-L374,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_487,before_each,488,490,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L488-L490,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts,<anonymous>_491,after_each,492,494,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/hooks-daemon-migration.test.ts#L492-L494,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/mainHandoffFirst.test.ts,<anonymous>_27,before_each,28,35,7,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/mainHandoffFirst.test.ts#L28-L35,claude,agent,none,"beforeEach(() => {
+    // Create a temp directory for each test
+    testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mainHandoffFirst-test-'));
+
+    // Save and override CLAUDE_PROJECT_DIR
+    originalProjectDir = process.env.CLAUDE_PROJECT_DIR;
+    process.env.CLAUDE_PROJECT_DIR = testDir;
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/mainHandoffFirst.test.ts,<anonymous>_36,after_each,37,47,10,,0,per_test,2,2,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/mainHandoffFirst.test.ts#L37-L47,claude,agent,none,"afterEach(() => {
+    // Restore original CLAUDE_PROJECT_DIR
+    if (originalProjectDir !== undefined) {
+      process.env.CLAUDE_PROJECT_DIR = originalProjectDir;
+    } else {
+      delete process.env.CLAUDE_PROJECT_DIR;
+    }
+
+    // Clean up temp directory
+    fs.rmSync(testDir, { recursive: true, force: true });
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_129,before_each,130,132,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L130-L132,claude,agent,none,"beforeEach(() => {
+        setupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_133,after_each,134,136,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L134-L136,claude,agent,none,"afterEach(() => {
+        cleanupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_188,before_each,189,191,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L189-L191,claude,agent,none,"beforeEach(() => {
+        setupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_192,after_each,193,195,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L193-L195,claude,agent,none,"afterEach(() => {
+        cleanupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_256,before_each,257,259,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L257-L259,claude,agent,none,"beforeEach(() => {
+        setupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_260,after_each,261,263,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L261-L263,claude,agent,none,"afterEach(() => {
+        cleanupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_315,before_each,316,318,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L316-L318,claude,agent,none,"beforeEach(() => {
+        setupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_319,after_each,320,322,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L320-L322,claude,agent,none,"afterEach(() => {
+        cleanupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_360,before_each,361,363,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L361-L363,claude,agent,none,"beforeEach(() => {
+        setupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/pattern-orchestrator.test.ts,<anonymous>_364,after_each,365,367,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/pattern-orchestrator.test.ts#L365-L367,claude,agent,none,"afterEach(() => {
+        cleanupTestEnv();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/session-affinity.test.ts,<anonymous>_70,before_each,71,74,4,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/session-affinity.test.ts#L71-L74,claude,agent,none,"beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'session-affinity-test-'));
+    dbPath = path.join(tempDir, '.claude', 'cache', 'artifact-index', 'context.db');
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/session-affinity.test.ts,<anonymous>_75,after_each,76,78,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/session-affinity.test.ts#L76-L78,claude,agent,none,"afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/skill-backward-compat.test.ts,<anonymous>_15,before_each,16,26,11,,0,per_test,4,2,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/skill-backward-compat.test.ts#L16-L26,claude,agent,none,"beforeEach(() => {
+    const projectDir = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const rulesPath = join(projectDir, '.claude', 'skills', 'skill-rules.json');
+    try {
+      const content = readFileSync(rulesPath, 'utf-8');
+      skillRules = JSON.parse(content);
+    } catch {
+      // Use a minimal valid config for testing
+      skillRules = { skills: {} };
+    }
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/skill-validation-prompt.test.ts,<anonymous>_179,before_each,180,182,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/skill-validation-prompt.test.ts#L180-L182,claude,agent,none,"beforeEach(() => {
+      vi.clearAllMocks();
+    })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/tldr-hooks.test.ts,<anonymous>_208,before_each,209,211,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/tldr-hooks.test.ts#L209-L211,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/tldr-hooks.test.ts,<anonymous>_212,after_each,213,215,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/tldr-hooks.test.ts#L213-L215,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/tldr-hooks.test.ts,<anonymous>_362,before_each,363,365,3,,0,per_test,1,1,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/tldr-hooks.test.ts#L363-L365,claude,agent,none,"beforeEach(() => {
+    setupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/tldr-hooks.test.ts,<anonymous>_366,after_each,367,369,3,,0,per_test,1,1,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/tldr-hooks.test.ts#L367-L369,claude,agent,none,"afterEach(() => {
+    cleanupTestEnv();
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/user-confirm-learning.test.ts,<anonymous>_36,before_each,37,42,6,,0,per_test,2,2,0,0,0,1,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/user-confirm-learning.test.ts#L37-L42,claude,agent,none,"beforeEach(() => {
+    // Clean up state file
+    if (existsSync(STATE_FILE)) {
+      unlinkSync(STATE_FILE);
+    }
+  })",2026-01-10,0.04654346338124572,1
+parcadei/Continuous-Claude-v3,typescript,f8d7173d9e3534d3a7ef934d202454100e55eaa1,.claude/hooks/src/__tests__/user-confirm-learning.test.ts,<anonymous>_43,after_each,44,49,6,,0,per_test,2,2,0,0,0,0,https://github.com/parcadei/Continuous-Claude-v3/blob/f8d7173d9e3534d3a7ef934d202454100e55eaa1/.claude/hooks/src/__tests__/user-confirm-learning.test.ts#L44-L49,claude,agent,none,"afterEach(() => {
+    vi.clearAllMocks();
+    if (existsSync(STATE_FILE)) {
+      unlinkSync(STATE_FILE);
+    }
+  })",2026-01-10,0.04654346338124572,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/components/stream/web-rtc-connection-provider.test.tsx,<anonymous>_38,before_each,39,44,6,,0,per_test,1,1,0,1,0,1,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/components/stream/web-rtc-connection-provider.test.tsx#L39-L44,copilot,agent,none,"beforeEach(() => {
+        // @ts-expect-error the mock implements all public methods
+        vi.mocked(WebRTCConnection).mockImplementation(() => {
+            return new MockWebRTCConnection();
+        });
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/components/stream/web-rtc-connection-provider.test.tsx,<anonymous>_61,after_each,62,64,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/components/stream/web-rtc-connection-provider.test.tsx#L62-L64,copilot,agent,none,"afterEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/components/virtualizer-grid-layout/use-get-target-position.hook.test.tsx,<anonymous>_13,before_each,14,18,5,,0,per_test,1,1,0,0,0,1,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/components/virtualizer-grid-layout/use-get-target-position.hook.test.tsx#L14-L18,copilot,agent,none,"beforeEach(() => {
+        vi.useFakeTimers();
+        vi.clearAllMocks();
+        vi.clearAllTimers();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/components/virtualizer-grid-layout/use-get-target-position.hook.test.tsx,<anonymous>_19,after_each,20,22,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/components/virtualizer-grid-layout/use-get-target-position.hook.test.tsx#L20-L22,copilot,agent,none,"afterEach(() => {
+        vi.useRealTimers();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/dataset/download-dataset-item/download-dataset-item.test.tsx,<anonymous>_28,before_each,29,31,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/dataset/download-dataset-item/download-dataset-item.test.tsx#L29-L31,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/dataset/media-preview/hooks/use-media-item-inference.test.tsx,<anonymous>_59,before_each,60,63,4,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/dataset/media-preview/hooks/use-media-item-inference.test.tsx#L60-L63,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+        queryClient.clear();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/dataset/media-preview/sidebar-items/sidebar-items.test.tsx,<anonymous>_82,before_each,83,89,7,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/dataset/media-preview/sidebar-items/sidebar-items.test.tsx#L83-L89,copilot,agent,none,"beforeEach(() => {
+            server.use(
+                http.delete('/api/projects/{project_id}/images/{media_id}', () => {
+                    return HttpResponse.json(null, { status: 204 });
+                })
+            );
+        })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/footer/status-bar/adapters/connection-status.adapter.test.tsx,<anonymous>_23,before_each,24,26,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/footer/status-bar/adapters/connection-status.adapter.test.tsx#L24-L26,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/footer/status-bar/adapters/use-export-status.test.tsx,<anonymous>_13,before_each,14,16,3,,0,per_test,1,1,0,0,0,1,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/footer/status-bar/adapters/use-export-status.test.tsx#L14-L16,copilot,agent,none,"beforeEach(() => {
+        vi.useFakeTimers();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/footer/status-bar/adapters/use-export-status.test.tsx,<anonymous>_17,after_each,18,20,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/footer/status-bar/adapters/use-export-status.test.tsx#L18-L20,copilot,agent,none,"afterEach(() => {
+        vi.useRealTimers();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/footer/status-bar/adapters/use-upload-status.test.tsx,<anonymous>_13,before_each,14,16,3,,0,per_test,1,1,0,0,0,1,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/footer/status-bar/adapters/use-upload-status.test.tsx#L14-L16,copilot,agent,none,"beforeEach(() => {
+        vi.useFakeTimers();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/footer/status-bar/adapters/use-upload-status.test.tsx,<anonymous>_17,after_each,18,20,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/footer/status-bar/adapters/use-upload-status.test.tsx#L18-L20,copilot,agent,none,"afterEach(() => {
+        vi.useRealTimers();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/main-content/hooks/use-ensure-active-pipeline.test.tsx,<anonymous>_19,before_each,20,23,4,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/main-content/hooks/use-ensure-active-pipeline.test.tsx#L20-L23,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+        queryClient.clear();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/models/model-detail/model-detail.test.tsx,<anonymous>_33,before_all,34,47,14,,0,per_class,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/models/model-detail/model-detail.test.tsx#L34-L47,copilot,agent,none,"beforeAll(() => {
+        queryClient.setQueryData(
+            ['get', '/api/projects/{project_id}', { params: { path: { project_id: projectId } } }],
+            mockedProject
+        );
+        queryClient.setQueryData(['get', '/api/projects'], {
+            projects: [mockedProject],
+            ...getMockedPagination(),
+        });
+        queryClient.setQueryData(
+            ['get', '/api/projects/{project_id}/pipeline', { params: { path: { project_id: projectId } } }],
+            mockedPipeline
+        );
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/models/model-detail/model-detail.test.tsx,<anonymous>_48,after_each,49,51,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/models/model-detail/model-detail.test.tsx#L49-L51,copilot,agent,none,"afterEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/projects-management/project-list-item/project-edition/project-edition.test.tsx,<anonymous>_17,before_each,18,20,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/projects-management/project-list-item/project-edition/project-edition.test.tsx#L18-L20,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/projects-management/project-list-item/project-list-actions/project-list-actions.test.tsx,<anonymous>_34,before_each,35,37,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/projects-management/project-list-item/project-list-actions/project-list-actions.test.tsx#L35-L37,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/projects-management/project-list-item/project-list-item.test.tsx,<anonymous>_46,before_each,47,65,18,,2,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/projects-management/project-list-item/project-list-item.test.tsx#L47-L65,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+        vi.mocked(useNavigate).mockReturnValue(mockNavigate);
+        vi.mocked(useWebRTCConnection).mockReturnValue({
+            stop: vi.fn(),
+            start: vi.fn(),
+            status: 'idle',
+            webRTCConnectionRef: { current: null },
+        });
+
+        server.use(
+            http.get('/api/projects/{project_id}/images', () => {
+                return HttpResponse.json({
+                    media: [],
+                    pagination: { offset: 0, limit: 1, count: 0, total: 0 },
+                });
+            })
+        );
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/projects-management/project-thumbnail/project-thumbnail.test.tsx,<anonymous>_18,after_each,19,22,4,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/projects-management/project-thumbnail/project-thumbnail.test.tsx#L19-L22,copilot,agent,none,"afterEach(() => {
+        server.resetHandlers();
+        cleanup();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/stream/hook/use-auto-play-stream.test.tsx,<anonymous>_61,before_each,62,64,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/stream/hook/use-auto-play-stream.test.tsx#L62-L64,copilot,agent,none,"beforeEach(() => {
+        queryClient.clear();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/toolbar/sources/add-source/add-source.test.tsx,<anonymous>_18,before_each,19,21,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/toolbar/sources/add-source/add-source.test.tsx#L19-L21,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/toolbar/sources/edit-source/edit-source.test.tsx,<anonymous>_18,before_each,19,21,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/toolbar/sources/edit-source/edit-source.test.tsx#L19-L21,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/toolbar/sources/hooks/use-source-mutation.test.tsx,<anonymous>_23,before_each,24,26,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/toolbar/sources/hooks/use-source-mutation.test.tsx#L24-L26,copilot,agent,none,"beforeEach(() => {
+        vi.clearAllMocks();
+    })",2026-01-15,4.199863107460644,1
+openvinotoolkit/anomalib,typescript,6ceaa2807693da2316c3e20241b00327f928b6b1,application/ui/src/features/inspect/train-model/train-model-dialog.test.tsx,<anonymous>_47,before_each,48,50,3,,0,per_test,1,1,0,0,0,0,https://github.com/openvinotoolkit/anomalib/blob/6ceaa2807693da2316c3e20241b00327f928b6b1/application/ui/src/features/inspect/train-model/train-model-dialog.test.tsx#L48-L50,copilot,agent,none,"beforeEach(() => {
+        closeMock.mockClear();
+    })",2026-01-15,4.199863107460644,1
+phuryn/claude-usage,typescript,abb830cbb1e51a83541ae1b9219f2b6f6678be96,vscode-extension/test/install-mode.test.ts,<anonymous>_24,before_each,25,28,4,,0,per_test,1,1,0,0,0,1,https://github.com/phuryn/claude-usage/blob/abb830cbb1e51a83541ae1b9219f2b6f6678be96/vscode-extension/test/install-mode.test.ts#L25-L28,claude,agent,feat,"beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), ""install-mode-""));
+    cleanEnv = { ...process.env, PATH: tmpDir };
+  })",2026-05-29,0.13963039014373715,1
+phuryn/claude-usage,typescript,abb830cbb1e51a83541ae1b9219f2b6f6678be96,vscode-extension/test/install-mode.test.ts,<anonymous>_29,after_each,30,32,3,,0,per_test,1,1,0,0,0,0,https://github.com/phuryn/claude-usage/blob/abb830cbb1e51a83541ae1b9219f2b6f6678be96/vscode-extension/test/install-mode.test.ts#L30-L32,claude,agent,feat,"afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  })",2026-05-29,0.13963039014373715,1
+phuryn/claude-usage,typescript,abb830cbb1e51a83541ae1b9219f2b6f6678be96,vscode-extension/test/python-locator.test.ts,<anonymous>_12,before_each,13,15,3,,0,per_test,1,1,0,0,0,1,https://github.com/phuryn/claude-usage/blob/abb830cbb1e51a83541ae1b9219f2b6f6678be96/vscode-extension/test/python-locator.test.ts#L13-L15,claude,agent,feat,"beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), ""py-locate-""));
+  })",2026-05-29,0.13963039014373715,1
+phuryn/claude-usage,typescript,abb830cbb1e51a83541ae1b9219f2b6f6678be96,vscode-extension/test/python-locator.test.ts,<anonymous>_16,after_each,17,19,3,,0,per_test,1,1,0,0,0,0,https://github.com/phuryn/claude-usage/blob/abb830cbb1e51a83541ae1b9219f2b6f6678be96/vscode-extension/test/python-locator.test.ts#L17-L19,claude,agent,feat,"afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  })",2026-05-29,0.13963039014373715,1
+phuryn/claude-usage,typescript,abb830cbb1e51a83541ae1b9219f2b6f6678be96,vscode-extension/test/server-manager.test.ts,<anonymous>_38,before_each,39,43,5,,0,per_test,1,1,0,2,0,0,https://github.com/phuryn/claude-usage/blob/abb830cbb1e51a83541ae1b9219f2b6f6678be96/vscode-extension/test/server-manager.test.ts#L39-L43,claude,agent,feat,"beforeEach(() => {
+    proc = new FakeProcess();
+    spawnFn = () => proc;
+    sink = new MemorySink();
+  })",2026-05-29,0.13963039014373715,1
+punitarani/fli,typescript,3f3a813c9d9aaa2698cd38739f93146eb49e27c4,fli-js/tests/search/client.test.ts,<anonymous>_30,before_each,31,33,3,,0,per_test,1,1,0,0,0,1,https://github.com/punitarani/fli/blob/3f3a813c9d9aaa2698cd38739f93146eb49e27c4/fli-js/tests/search/client.test.ts#L31-L33,claude,agent,none,"beforeEach(() => {
+    originalEnv = process.env.FLI_TIMEOUT;
+  })",2026-05-23,1.3716632443531827,1
+punitarani/fli,typescript,3f3a813c9d9aaa2698cd38739f93146eb49e27c4,fli-js/tests/search/client.test.ts,<anonymous>_33,after_each,34,36,3,,0,per_test,1,1,0,0,0,0,https://github.com/punitarani/fli/blob/3f3a813c9d9aaa2698cd38739f93146eb49e27c4/fli-js/tests/search/client.test.ts#L34-L36,claude,agent,none,"afterEach(() => {
+    process.env.FLI_TIMEOUT = originalEnv;
+  })",2026-05-23,1.3716632443531827,1
+promptdriven/pdd,typescript,6911210b4b72e5381e7d21c353029a566ad5b636,pdd/frontend/tests/context-audit-wiring.test.tsx,<anonymous>_15,before_each,16,18,3,,0,per_test,1,1,0,0,0,1,https://github.com/promptdriven/pdd/blob/6911210b4b72e5381e7d21c353029a566ad5b636/pdd/frontend/tests/context-audit-wiring.test.tsx#L16-L18,claude,agent,feat,"beforeEach(() => {
+    vi.restoreAllMocks();
+  })",2026-06-10,1.0485968514715949,1
+promptdriven/pdd,typescript,6911210b4b72e5381e7d21c353029a566ad5b636,pdd/frontend/tests/context-audit-wiring.test.tsx,<anonymous>_18,after_each,19,21,3,,0,per_test,1,1,0,0,0,0,https://github.com/promptdriven/pdd/blob/6911210b4b72e5381e7d21c353029a566ad5b636/pdd/frontend/tests/context-audit-wiring.test.tsx#L19-L21,claude,agent,feat,"afterEach(() => {
+    vi.restoreAllMocks();
+  })",2026-06-10,1.0485968514715949,1
+quay/quay,typescript,10750498aa5d41253413a5c310d63859f4db7d61,web/src/routes/RepositoryDetails/Mirroring/__tests__/ArchitectureFilter.test.tsx,<anonymous>_10,before_each,11,21,11,,0,per_test,1,1,0,0,0,1,https://github.com/quay/quay/blob/10750498aa5d41253413a5c310d63859f4db7d61/web/src/routes/RepositoryDetails/Mirroring/__tests__/ArchitectureFilter.test.tsx#L11-L21,claude,agent,feat,"beforeEach(() => {
+    mockOnChange.mockClear();
+    // Default mock implementation - successful load
+    jest
+      .spyOn(UseRegistryCapabilities, 'useMirrorArchitectures')
+      .mockReturnValue({
+        architectures: defaultArchitectures,
+        isLoading: false,
+        error: null,
+      });
+  })",2026-01-28,6.220396988364135,1
+quay/quay,typescript,10750498aa5d41253413a5c310d63859f4db7d61,web/src/routes/RepositoryDetails/Mirroring/__tests__/ArchitectureFilter.test.tsx,<anonymous>_22,after_each,23,25,3,,0,per_test,1,1,0,0,0,0,https://github.com/quay/quay/blob/10750498aa5d41253413a5c310d63859f4db7d61/web/src/routes/RepositoryDetails/Mirroring/__tests__/ArchitectureFilter.test.tsx#L23-L25,claude,agent,feat,"afterEach(() => {
+    jest.restoreAllMocks();
+  })",2026-01-28,6.220396988364135,1
+quay/quay,typescript,1a783a6580e87ec57365aac68d0b12d7c529780a,web/src/routes/Superuser/BuildLogs/BuildLogs.test.tsx,<anonymous>_45,after_each,46,48,3,,0,per_test,1,1,0,0,0,0,https://github.com/quay/quay/blob/1a783a6580e87ec57365aac68d0b12d7c529780a/web/src/routes/Superuser/BuildLogs/BuildLogs.test.tsx#L46-L48,claude,agent,none,"afterEach(() => {
+    vi.clearAllMocks();
+  })",2026-06-09,6.581793292265571,1
+rocketride-org/rocketride-server,typescript,171ba5f19cda8ef1dc3f66fc8670a18c00090d80,packages/client-typescript/tests/sequelize-e2e.test.ts,<anonymous>_153,before_all,154,180,24,,0,per_class,1,1,0,1,1,1,https://github.com/rocketride-org/rocketride-server/blob/171ba5f19cda8ef1dc3f66fc8670a18c00090d80/packages/client-typescript/tests/sequelize-e2e.test.ts#L154-L180,claude,agent,feat,"beforeAll(async () => {
+		client = new RocketRideClient({
+			auth: TEST_CONFIG.auth,
+			uri: TEST_CONFIG.uri,
+		});
+
+		await client.connect();
+		await ensureCleanPipeline(client, E2E_TOKEN);
+
+		const result = await client.use({
+			pipeline: getPostgresPipeline(),
+			token: E2E_TOKEN,
+		});
+		pipelineToken = result.token;
+
+		// Ensure the isolation table exists and is empty before the suite runs.
+		await client.database.query({
+			token: pipelineToken,
+			nodeId: DB_NODE_ID,
+			sql: `CREATE TABLE IF NOT EXISTS ${TEST_TABLE} (id SERIAL PRIMARY KEY, label TEXT NOT NULL)`,
+		});
+		await client.database.query({
+			token: pipelineToken,
+			nodeId: DB_NODE_ID,
+			sql: `TRUNCATE ${TEST_TABLE}`,
+		});
+	}, TEST_CONFIG.timeout)",2026-07-28,0.4544832306639288,1
+rocketride-org/rocketride-server,typescript,171ba5f19cda8ef1dc3f66fc8670a18c00090d80,packages/client-typescript/tests/sequelize-e2e.test.ts,<anonymous>_181,after_all,182,197,16,,0,per_class,1,2,0,1,0,0,https://github.com/rocketride-org/rocketride-server/blob/171ba5f19cda8ef1dc3f66fc8670a18c00090d80/packages/client-typescript/tests/sequelize-e2e.test.ts#L182-L197,claude,agent,feat,"afterAll(async () => {
+		// Drop the isolation table and clean up the pipeline.
+		try {
+			await client.database.query({
+				token: pipelineToken,
+				nodeId: DB_NODE_ID,
+				sql: `DROP TABLE IF EXISTS ${TEST_TABLE}`,
+			});
+		} catch {
+			// Best-effort cleanup
+		}
+		await ensureCleanPipeline(client, E2E_TOKEN);
+		if (client.isConnected()) {
+			await Promise.race([client.disconnect(), new Promise<void>((resolve) => setTimeout(resolve, 10000))]);
+		}
+	}, TEST_CONFIG.timeout)",2026-07-28,0.4544832306639288,1
+strands-agents/sdk-python,typescript,e52d83252f1a7988589e405583f02d7038dc4d66,site/test/redirect-static.test.ts,<anonymous>_23,before_each,24,26,3,,0,per_test,1,1,0,0,0,1,https://github.com/strands-agents/sdk-python/blob/e52d83252f1a7988589e405583f02d7038dc4d66/site/test/redirect-static.test.ts#L24-L26,claude,agent,fix,"beforeEach(() => {
+    contentDir = fs.mkdtempSync(path.join(os.tmpdir(), 'redirect-static-test-'))
+  })",2026-07-24,1.1909650924024642,1
+strands-agents/sdk-python,typescript,e52d83252f1a7988589e405583f02d7038dc4d66,site/test/redirect-static.test.ts,<anonymous>_27,after_each,28,30,3,,0,per_test,1,1,0,0,0,0,https://github.com/strands-agents/sdk-python/blob/e52d83252f1a7988589e405583f02d7038dc4d66/site/test/redirect-static.test.ts#L28-L30,claude,agent,fix,"afterEach(() => {
+    fs.rmSync(contentDir, { recursive: true, force: true })
+  })",2026-07-24,1.1909650924024642,1
+tensorlakeai/tensorlake,typescript,ce4f4fccd77d3fdc504c4d1cd5718aa193001de5,typescript/tests/sandbox-image.test.ts,<anonymous>_583,after_each,584,587,4,,0,per_test,1,1,0,0,0,0,https://github.com/tensorlakeai/tensorlake/blob/ce4f4fccd77d3fdc504c4d1cd5718aa193001de5/typescript/tests/sandbox-image.test.ts#L584-L587,claude,agent,feat,"afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  })",2026-05-12,1.483915126625599,1
+tirth8205/code-review-graph,typescript,1d58ee1a67748c1f0f14a267170ec9fe52f1f1d8,code-review-graph-vscode/test/sqlite.test.ts,<anonymous>_246,mocha_before,247,250,4,,0,per_test,1,1,0,1,0,1,https://github.com/tirth8205/code-review-graph/blob/1d58ee1a67748c1f0f14a267170ec9fe52f1f1d8/code-review-graph-vscode/test/sqlite.test.ts#L247-L250,claude,agent,feat,"before(() => {
+    dbPath = createTestDb();
+    reader = new SqliteReader(dbPath);
+  })",2026-03-17,0.049281314168377825,1
+tirth8205/code-review-graph,typescript,1d58ee1a67748c1f0f14a267170ec9fe52f1f1d8,code-review-graph-vscode/test/sqlite.test.ts,<anonymous>_251,mocha_after,252,255,4,,0,per_test,1,1,0,0,0,0,https://github.com/tirth8205/code-review-graph/blob/1d58ee1a67748c1f0f14a267170ec9fe52f1f1d8/code-review-graph-vscode/test/sqlite.test.ts#L252-L255,claude,agent,feat,"after(() => {
+    reader.close();
+    cleanup(dbPath);
+  })",2026-03-17,0.049281314168377825,1
+usemoss/moss,typescript,6ae2d540baae47dcc15c088e09e8ad92054f5a62,packages/n8n-nodes-moss/test/genericFunctions.test.ts,<anonymous>_34,after_each,35,38,4,,0,per_test,1,1,0,0,0,0,https://github.com/usemoss/moss/blob/6ae2d540baae47dcc15c088e09e8ad92054f5a62/packages/n8n-nodes-moss/test/genericFunctions.test.ts#L35-L38,cursor,agent,none,"afterEach(() => {
+	vi.unstubAllGlobals();
+	vi.restoreAllMocks();
+})",2026-07-21,0.7912388774811773,1
