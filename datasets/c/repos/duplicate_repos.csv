@@ -1,0 +1,15 @@
+repo_to_remove,repo_to_keep,shared_commit_sha,cluster_size,language,stars_removed,stars_kept
+springload/draftail,wagtail/draftail,ec38306947f2f4b02c1fd0b0de2717a09cc37aab,2,typescript,626,631
+davidfig/pixi-viewport,pixijs-userland/pixi-viewport,0aec760f1bdbcb1f9693376a61c041459322d6a0,2,typescript,995,1097
+tannerlinsley/react-location,tanstack/router,e6369e658ba1e63d41eb461fff3dedea42998c47,2,typescript,1803,14898
+themerdev/themer,mjswensen/themer,7c7d67e703acc585deba638fb75fda0d81b4482e,2,typescript,5529,5835
+maputnik/editor,maplibre/maputnik,51fa4a4377a796106acbee5a815ada03b10ccceb,2,typescript,1874,2599
+gnosis/safe-contracts,safe-fndn/safe-smart-account,131d2b4b6568166ae40ba9ce21b9c5355988765c,2,typescript,840,2154
+liihuu/klinechart,klinecharts/KLineChart,3056050e7b61e37703c6b3302d63d93aed0b4f24,2,typescript,1846,4031
+bangle-io/bangle.dev,bangle-io/banger-editor,d5cecfba2fc60f2acbe673560213228000e87e1a,2,typescript,572,674
+zeroturnaround/sql-formatter,sql-formatter-org/sql-formatter,f8b8a45c58cb8def033a8c6a81cacb215eb8cd5b,2,typescript,1140,2880
+shakiba/planck.js,piqnt/planck.js,a1d7030f6e07ad293170767788c8d27d9ff622c1,2,typescript,4525,5243
+efoxteam/emp,empjs/emp,be31d74e42cefd95787249826e7e653989c23aed,2,typescript,2226,2398
+reactjs/ru.reactjs.org,reactjs/ru.react.dev,bd9305d3ead099b78b522967ae26539538e797ef,2,typescript,607,746
+lane711/sonicjs,SonicJs-Org/sonicjs,79afb3db7a040a7a76da346116659b94f0a23979,2,typescript,1369,1662
+solana-labs/solana-web3.js,solana-foundation/solana-web3.js,9108edcaa8faf2c05c3ccc85ff20d3d4df44a34b,2,typescript,2364,2751
