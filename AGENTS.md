@@ -90,7 +90,7 @@ collection/          # Main pipeline code (the "library")
   corpus_utils.py    # Shared repo/fixture persistence helpers
   between_group_comparison.py  # Statistical-test primitives (effect sizes etc.) used by research_questions/ below.
                      # BetweenGroupComparator in here is dead/orphaned -- don't use it
-  research_questions/  # Answers the paper's RQs from db/{a,b,c}.db, writes research_questions/*.md (gitignored):
+  research_questions/  # Answers the paper's RQs from db/{a,b,c}.db, writes research_questions/*.md (committed):
                      # rq1/rq2/rq3.py (structural/teardown/mocking), balance.py (control-variable check),
                      # dataset_findings.py (non-RQ descriptive findings), language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
