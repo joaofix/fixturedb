@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-15 16:00:32 UTC
+Generated: 2026-08-15 16:44:35 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -155,3 +155,46 @@ Side note, not a comparison, and a lower bound, not a live risk estimate -- coun
 |---|---|---|
 | Dataset A | 11,712 | 0 |
 | Dataset C (sampled) | 16,745 | 0 |
+
+## Mock-Category Fallback Rate
+
+Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both a real, specific test-double category (the literal word "mock" found in the fixture body) *and* the classifier's catch-all fallback when none of the 5 category terms (dummy/stub/spy/fake/mock) appear anywhere at all -- nothing in the schema distinguishes which happened for a given row. This reconstructs that split exactly (not an estimate -- see `internal-docs/methodology-improvements/mock-category-fallback-analysis.md`), in the shape the paper cites it: "X% of mock-type classifications result from a positive keyword match, Y% from the fallback."
+
+### Positive match vs. fallback
+
+| Dataset | category='mock' rows | Positive match | Fallback (no keyword) | Positive % / Fallback % |
+|---|---|---|---|---|
+| Dataset A | 10,963 | 7,898 | 3,065 | 72.0% / 28.0% |
+| Dataset C (sampled) | 3,369 | 2,782 | 587 | 82.6% / 17.4% |
+
+### Positive matches split further: framework API name vs. naming-only
+
+"Framework API name" -- the matched call site itself (`mock_usages.raw_snippet`) contains "mock" (`MagicMock(`, `mock.patch(`, `jest.mock(`, ...). "Naming-only" -- the matched call is keyword-free (`jest.fn()`, `vi.fn()`, bare `patch()`, `monkeypatch.setattr()`, ...) but some other identifier in the same fixture body supplied "mock".
+
+| Dataset | n | Framework API name | Naming-only | Fallback |
+|---|---|---|---|---|
+| Dataset A | 10,963 | 6,593 (60.1%) | 1,305 (11.9%) | 3,065 (28.0%) |
+| Dataset C (sampled) | 3,369 | 2,335 (69.3%) | 447 (13.3%) | 587 (17.4%) |
+
+### Per language
+
+The pooled split above can hide a language-specific reversal --
+checking per language matters here specifically because it does:
+
+**Dataset A**
+
+| Language | n | Framework API name | Naming-only | Fallback |
+|---|---|---|---|---|
+| java | 245 | 245 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| javascript | 181 | 95 (52.5%) | 68 (37.6%) | 18 (9.9%) |
+| python | 8,495 | 5,223 (61.5%) | 402 (4.7%) | 2,870 (33.8%) |
+| typescript | 2,042 | 1,030 (50.4%) | 835 (40.9%) | 177 (8.7%) |
+
+**Dataset C (sampled)**
+
+| Language | n | Framework API name | Naming-only | Fallback |
+|---|---|---|---|---|
+| java | 125 | 125 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| javascript | 768 | 401 (52.2%) | 115 (15.0%) | 252 (32.8%) |
+| python | 2,023 | 1,687 (83.4%) | 186 (9.2%) | 150 (7.4%) |
+| typescript | 453 | 122 (26.9%) | 146 (32.2%) | 185 (40.8%) |
