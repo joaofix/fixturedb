@@ -25,9 +25,12 @@ from collection.db import (
 from collection.research_questions.dataset_findings import (
     RepoPurityStats,
     _fetch_agent_commits_touching_tests,
+    _fetch_aliased_mock_import_counts,
     _fetch_csv_row_counts,
     _fetch_csv_unique_repo_counts,
+    _fetch_js_hook_complexity_mismatch,
     _fetch_junit3_fallback_counts,
+    _fetch_mocha_bare_hook_non_bare_count,
     _fetch_mock_commit_counts,
     _fetch_raw_seart_repo_counts,
     _fetch_repos_with_agent_config,
@@ -35,11 +38,14 @@ from collection.research_questions.dataset_findings import (
     _fetch_repos_with_mocks,
     _fetch_repos_with_test_commits,
     _fetch_total_commits_since_agent_start,
+    _render_aliased_mock_import_side_note,
     _render_dataset_a_commit_repo_summary,
     _render_dataset_c_repo_summary,
     _render_dataset_c_sampling_summary,
+    _render_js_hook_complexity_side_note,
     _render_junit3_fallback_side_note,
     _render_language_count_table,
+    _render_mocha_bare_hook_side_note,
     generate_report,
     load_repo_purity_stats,
     write_report,
@@ -170,6 +176,61 @@ def _make_db_with_typed_fixtures(db_file, fixture_types: list[str], *, language=
                     "has_teardown_pair": 0,
                     "raw_source": "",
                     "framework": "junit",
+                    "num_mocks": 0,
+                },
+            )
+
+
+def _make_db_with_fixture_rows(db_file, fixtures: list[dict], *, language="python") -> None:
+    """Create a DB at `db_file` with one repo, one test_file, and one
+    fixture per entry in `fixtures` -- each entry may set fixture_type,
+    raw_source, cyclomatic_complexity (all default to sensible values
+    otherwise). Used by the JS/TS hook complexity, Mocha bare-hook, and
+    aliased-mock-import side-note tests, which each need custom
+    raw_source/cyclomatic_complexity per fixture --
+    _make_db_with_typed_fixtures() above hardcodes both."""
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": language,
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        ext = {"python": "py", "javascript": "js", "typescript": "ts"}.get(language, "txt")
+        file_id = upsert_test_file(conn, repo_id, f"src/test_{language}.{ext}", language)
+        for j, fx in enumerate(fixtures):
+            insert_fixture(
+                conn,
+                {
+                    "file_id": file_id,
+                    "repo_id": repo_id,
+                    "name": fx.get("name", f"fixture_{j}"),
+                    "fixture_type": fx["fixture_type"],
+                    "scope": fx.get("scope", "per_test"),
+                    "start_line": j,
+                    "end_line": j + 1,
+                    "loc": 1,
+                    "cyclomatic_complexity": fx.get("cyclomatic_complexity", 1),
+                    "max_nesting_depth": 1,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": fx.get("raw_source", ""),
+                    "framework": fx.get("framework", "unittest"),
                     "num_mocks": 0,
                 },
             )
@@ -1074,3 +1135,277 @@ class TestJunit3FallbackSideNote:
             db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
         )
         assert "## JUnit 3 Fallback Detection (Java)" in report
+
+
+# Exact snippets/expected values re-used across the JS/TS hook complexity
+# tests below -- verified directly against _true_outer_hook_complexity()
+# before being hardcoded here: raw_simple has no nested construct at all;
+# raw_nested_matching has a nested closure but both it and the true outer
+# function are cc=1 (so a recorded cc=1 isn't actually wrong); raw_nested_
+# mismatch has a branch-free nested closure (cc=1) *and* real branching in
+# the outer hook itself (true cc=2) -- the exact failure shape documented
+# in js-ts-hook-fixture-complexity.md.
+_JS_HOOK_RAW_SIMPLE = "beforeEach(() => {\n  client = new APIClient();\n})"
+_JS_HOOK_RAW_NESTED_MATCHING = (
+    "beforeEach(() => {\n"
+    "    mockApiFetch.mockImplementation(() => {\n"
+    "      return {};\n"
+    "    });\n"
+    "  })"
+)
+_JS_HOOK_RAW_NESTED_MISMATCH = (
+    "beforeEach(() => {\n"
+    "    mockApiFetch.mockImplementation((path) => {\n"
+    "      return jsonOk({});\n"
+    "    });\n"
+    "    if (config.auth) {\n"
+    "      client.setAuth();\n"
+    "    } else {\n"
+    "      client.reset();\n"
+    "    }\n"
+    "  })"
+)
+
+
+class TestJsHookComplexityMismatch:
+    def test_no_nested_construct_not_checked(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [{"fixture_type": "before_each", "raw_source": _JS_HOOK_RAW_SIMPLE, "cyclomatic_complexity": 1}],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_js_hook_complexity_mismatch(conn)
+        assert result == {"total": 1, "nested_construct": 0, "checked": 0, "mismatched": 0}
+
+    def test_nested_construct_with_correct_recorded_cc_not_mismatched(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [
+                {
+                    "fixture_type": "before_each",
+                    "raw_source": _JS_HOOK_RAW_NESTED_MATCHING,
+                    "cyclomatic_complexity": 1,  # matches the true outer cc (1)
+                }
+            ],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_js_hook_complexity_mismatch(conn)
+        assert result == {"total": 1, "nested_construct": 1, "checked": 1, "mismatched": 0}
+
+    def test_nested_construct_with_wrong_recorded_cc_flagged(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [
+                {
+                    "fixture_type": "after_each",
+                    "raw_source": _JS_HOOK_RAW_NESTED_MISMATCH,
+                    # Simulates what the real pipeline recorded: function_list[0]
+                    # picked the inner branch-free closure (cc=1), silently
+                    # missing the outer hook's real if/else (true cc=2).
+                    "cyclomatic_complexity": 1,
+                }
+            ],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_js_hook_complexity_mismatch(conn)
+        assert result == {"total": 1, "nested_construct": 1, "checked": 1, "mismatched": 1}
+
+    def test_other_fixture_types_excluded(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [{"fixture_type": "before_all", "raw_source": _JS_HOOK_RAW_NESTED_MISMATCH, "cyclomatic_complexity": 1}],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_js_hook_complexity_mismatch(conn)
+        assert result == {"total": 0, "nested_construct": 0, "checked": 0, "mismatched": 0}
+
+
+class TestJsHookComplexitySideNote:
+    def test_missing_dbs_render_na_row(self, tmp_path):
+        report = "\n".join(_render_js_hook_complexity_side_note(db_root=tmp_path))
+        assert "## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)" in report
+        assert "| Dataset A | N/A | N/A | N/A | N/A | N/A |" in report
+        assert "| Dataset C (sampled) | N/A | N/A | N/A | N/A | N/A |" in report
+        assert "| Dataset C (full, pre-sampling) | N/A | N/A | N/A | N/A | N/A |" in report
+
+    def test_renders_real_mismatch_rate(self, tmp_path):
+        _make_db_with_fixture_rows(
+            paths.db_path("a", root=tmp_path),
+            [{"fixture_type": "before_each", "raw_source": _JS_HOOK_RAW_NESTED_MISMATCH, "cyclomatic_complexity": 1}],
+            language="javascript",
+        )
+        report = "\n".join(_render_js_hook_complexity_side_note(db_root=tmp_path))
+        assert "| Dataset A | 1 | 1 | 1 | 1 | 100.00% |" in report
+
+    def test_generate_report_includes_js_hook_side_note(self, tmp_path):
+        report = generate_report(
+            db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
+        )
+        assert "## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)" in report
+
+
+class TestMochaBareHookNonBareCount:
+    def test_bare_calls_all_zero_non_bare(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [
+                {"fixture_type": "mocha_before", "raw_source": "before(() => { client = setup(); })"},
+                {"fixture_type": "mocha_after", "raw_source": "after(() => { client.close(); })"},
+            ],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mocha_bare_hook_non_bare_count(conn)
+        assert result == {"total": 2, "non_bare": 0}
+
+    def test_member_expression_shape_flagged(self, tmp_path):
+        """A hypothetical future regression: raw_source captured a
+        member-expression call (page.after(...)) instead of a bare one --
+        the false-positive shape mocha-before-after-detection.md found
+        structurally impossible today. This proves the guard would catch
+        it if that guarantee ever broke."""
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [{"fixture_type": "mocha_after", "raw_source": "page.after(() => { page.close(); })"}],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mocha_bare_hook_non_bare_count(conn)
+        assert result == {"total": 1, "non_bare": 1}
+
+    def test_other_fixture_types_excluded(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [{"fixture_type": "before_each", "raw_source": "page.beforeEach(() => {})"}],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mocha_bare_hook_non_bare_count(conn)
+        assert result == {"total": 0, "non_bare": 0}
+
+
+class TestMochaBareHookSideNote:
+    def test_missing_dbs_render_na_row(self, tmp_path):
+        report = "\n".join(_render_mocha_bare_hook_side_note(db_root=tmp_path))
+        assert "## Mocha Bare `before()`/`after()` Detection (Regression Guard)" in report
+        assert "| Dataset A | N/A | N/A |" in report
+        assert "| Dataset C (sampled) | N/A | N/A |" in report
+
+    def test_renders_real_counts(self, tmp_path):
+        _make_db_with_fixture_rows(
+            paths.db_path("a", root=tmp_path),
+            [{"fixture_type": "mocha_before", "raw_source": "before(() => {})"}],
+            language="javascript",
+        )
+        report = "\n".join(_render_mocha_bare_hook_side_note(db_root=tmp_path))
+        assert "| Dataset A | 1 | 0 |" in report
+
+    def test_generate_report_includes_mocha_side_note(self, tmp_path):
+        report = generate_report(
+            db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
+        )
+        assert "## Mocha Bare `before()`/`after()` Detection (Regression Guard)" in report
+
+
+class TestAliasedMockImportCounts:
+    def test_no_alias_zero(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [
+                {
+                    "fixture_type": "unittest_setup",
+                    "raw_source": "def setUp(self):\n    from unittest.mock import Mock\n    self.m = Mock()",
+                }
+            ],
+            language="python",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_aliased_mock_import_counts(conn)
+        assert result == {"total_python_fixtures": 1, "aliased_in_body": 0}
+
+    def test_class_level_alias_in_body_detected(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [
+                {
+                    "fixture_type": "unittest_setup",
+                    "raw_source": "def setUp(self):\n    from unittest.mock import patch as p\n    self.p = p",
+                }
+            ],
+            language="python",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_aliased_mock_import_counts(conn)
+        assert result == {"total_python_fixtures": 1, "aliased_in_body": 1}
+
+    def test_module_level_alias_not_flagged(self, tmp_path):
+        """import unittest.mock as mock (aliasing the module, not the
+        class/function) is not the risky pattern -- see
+        aliased-mock-import-prevalence.md §5 -- so it must not be counted
+        here."""
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [
+                {
+                    "fixture_type": "unittest_setup",
+                    "raw_source": "def setUp(self):\n    import unittest.mock as mock\n    self.m = mock.MagicMock()",
+                }
+            ],
+            language="python",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_aliased_mock_import_counts(conn)
+        assert result == {"total_python_fixtures": 1, "aliased_in_body": 0}
+
+    def test_non_python_fixtures_excluded(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_fixture_rows(
+            db_file,
+            [{"fixture_type": "before_each", "raw_source": "beforeEach(() => {})"}],
+            language="javascript",
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_aliased_mock_import_counts(conn)
+        assert result == {"total_python_fixtures": 0, "aliased_in_body": 0}
+
+
+class TestAliasedMockImportSideNote:
+    def test_missing_dbs_render_na_row(self, tmp_path):
+        report = "\n".join(_render_aliased_mock_import_side_note(db_root=tmp_path))
+        assert "## Aliased Mock Import Detection (Python)" in report
+        assert "| Dataset A | N/A | N/A |" in report
+        assert "| Dataset C (sampled) | N/A | N/A |" in report
+
+    def test_renders_real_counts(self, tmp_path):
+        _make_db_with_fixture_rows(
+            paths.db_path("a", root=tmp_path),
+            [
+                {
+                    "fixture_type": "unittest_setup",
+                    "raw_source": "def setUp(self):\n    from unittest.mock import MagicMock as MM",
+                }
+            ],
+            language="python",
+        )
+        report = "\n".join(_render_aliased_mock_import_side_note(db_root=tmp_path))
+        assert "| Dataset A | 1 | 1 |" in report
+
+    def test_generate_report_includes_aliased_mock_side_note(self, tmp_path):
+        report = generate_report(
+            db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
+        )
+        assert "## Aliased Mock Import Detection (Python)" in report

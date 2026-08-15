@@ -114,6 +114,56 @@ Currently covers:
   silently dropped (see `dataset_sampler.py::
   _allocate_quotas_with_shortfall_reallocation()`).
 
+- **JS/TS hook fixture complexity (Lizard `function_list` selection)**: a
+  side note, not a comparison -- exact (not sampled) count of
+  `before_each`/`after_each` fixtures whose recorded
+  `cyclomatic_complexity` disagrees with the true outer hook function's
+  own complexity. Lizard orders `function_list` by parse-completion, not
+  source position, so a nested closure inside the hook body (a
+  `.catch(() => {})`, a mock callback) that finishes parsing before the
+  outer hook does can end up at `function_list[0]` -- the entry
+  `analyze_function_complexity()` unconditionally reads -- silently
+  displacing the outer hook's own complexity. See
+  `internal-docs/methodology-improvements/js-ts-hook-fixture-complexity.md`
+  for the full investigation (an 80-fixture manual/sampled check found
+  this in ~16% of Dataset A's at-risk subset, ~0% of Dataset C's). This
+  re-runs Lizard directly against every already-stored `raw_source` that
+  contains a likely nested construct (no network, no re-collection --
+  cheap enough to check exactly rather than sample) and reports the real
+  mismatch count/rate.
+
+- **Mocha bare `before()`/`after()` detection (member-expression false
+  positives)**: a side note and regression guard, not a comparison --
+  count of `mocha_before`/`mocha_after` fixtures whose `raw_source`
+  does *not* start with a bare `before(`/`after(` call, i.e. would
+  indicate the `page.after()`/`browser.before()` false-positive shape
+  investigated in
+  `internal-docs/methodology-improvements/mocha-before-after-detection.md`.
+  That investigation found this is structurally impossible given the
+  detector's exact full-text-equality matching (confirmed 0/80 in a
+  manual sample) -- tracked here as an ongoing regression guard: this
+  should always read 0, and a nonzero value on some future re-collection
+  would mean the detector's matching logic changed in a way that broke
+  that guarantee.
+
+- **Aliased mock import detection (Python)**: a side note, not a
+  comparison -- count of Python fixtures whose `raw_source` contains a
+  direct class/function-level mock alias (`from unittest.mock import
+  patch as p`, etc.), the one pattern that actually breaks the
+  regex-based mock detector (aliasing the `unittest.mock` *module*
+  itself, e.g. `import unittest.mock as mock`, does not -- the patterns
+  match on the bare `Mock`/`MagicMock`/`AsyncMock`/`patch` token
+  regardless of what precedes it). See
+  `internal-docs/methodology-improvements/aliased-mock-import-prevalence.md`.
+  This DB-only check can only ever catch an alias declared *inside* a
+  fixture body (a local import) -- the far more common top-of-file form
+  is invisible to it by construction, since `raw_source` is
+  function-body-only (see that same doc's §3). A 0 here does not mean
+  zero true prevalence, only zero *detectable-from-this-DB* prevalence
+  -- the investigation doc's real-file sampling is what actually
+  calibrates the true rate (found ~0% there too, but via a different,
+  network-dependent method this script deliberately doesn't replicate).
+
 - **JUnit 3 fallback detection (Java)**: a side note, not a comparison --
   raw counts of `junit3_setup`/`junit3_teardown` fixtures (Java's only
   unannotated fixture_types, matched by method name plus a plain substring
@@ -140,12 +190,17 @@ from __future__ import annotations
 import csv
 import gzip
 import json
+import re
 import sqlite3
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from lizard import analyze_file as lizard_analyze_file
+
 from .. import paths
+from ..complexity_provider import _get_extension
 from ..dataset_pipeline import _sample_repos_output_path
 from ..db import db_session
 from ..logging_utils import get_logger
@@ -862,6 +917,322 @@ def _render_junit3_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[
     return lines
 
 
+# ---------------------------------------------------------------------------
+# JS/TS hook fixture complexity (Lizard function_list selection) -- side note
+# ---------------------------------------------------------------------------
+
+_JS_HOOK_FIXTURE_TYPES = ("before_each", "after_each")
+
+
+def _has_nested_js_construct(raw_source: str) -> bool:
+    """Crude heuristic: an extra '=>'/'function' token beyond the hook's
+    own outer wrapper (`beforeEach(() => {...})` already accounts for
+    exactly one) suggests a nested closure inside the fixture body -- the
+    precondition for Lizard's function_list ordering issue (see
+    js-ts-hook-fixture-complexity.md). False positives/negatives both
+    possible (string literals containing "=>", a nested construct with no
+    braces of its own); good enough to bound which fixtures are worth an
+    actual Lizard re-run, not a precise parse."""
+    arrow_count = raw_source.count("=>")
+    func_kw_count = len(re.findall(r"\bfunction\b", raw_source))
+    return (arrow_count - 1) + func_kw_count > 0
+
+
+def _true_outer_hook_complexity(raw_source: str, language: str) -> int | None:
+    """Re-run Lizard directly on one fixture's already-stored raw_source
+    and return the cyclomatic_complexity of the function that actually
+    starts at (or near) line 1 -- the hook's own outer wrapper, always the
+    first token in a JS/TS hook's raw_source (`beforeEach(...)`/
+    `afterEach(...)`). This is the complexity
+    analyze_function_complexity() *should* report but doesn't whenever a
+    nested closure closes first and lands at function_list[0] instead --
+    see js-ts-hook-fixture-complexity.md §5. None if Lizard finds no
+    function starting there (parse failure, or an empty function_list)."""
+    temp_file = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            suffix=f".{_get_extension(language)}", delete=False, mode="w", encoding="utf-8"
+        ) as fh:
+            fh.write(raw_source)
+            temp_file = Path(fh.name)
+        result = lizard_analyze_file(str(temp_file))
+        outer_candidates = [f for f in result.function_list if f.start_line <= 2]
+        if not outer_candidates:
+            return None
+        outer = max(outer_candidates, key=lambda f: f.end_line)
+        return outer.cyclomatic_complexity
+    except Exception as e:
+        logger.debug(f"Lizard re-run failed for JS/TS hook re-check: {type(e).__name__}: {e}")
+        return None
+    finally:
+        if temp_file is not None:
+            temp_file.unlink(missing_ok=True)
+
+
+def _fetch_js_hook_complexity_mismatch(
+    conn: sqlite3.Connection, *, fixture_types: tuple[str, ...] = _JS_HOOK_FIXTURE_TYPES
+) -> dict:
+    """Exact (not sampled) count of before_each/after_each fixtures whose
+    recorded cyclomatic_complexity -- computed at collection time via
+    function_list[0] -- disagrees with the true outer hook function's own
+    complexity, re-derived by re-running Lizard directly against the
+    already-stored raw_source. No network, no re-collection -- this reads
+    data collection already persisted, same as every other section in
+    this file -- so it's cheap enough to check every nested-construct
+    fixture exactly rather than sample (~0.5ms/fixture; the full corpus
+    across both datasets is a few seconds, not minutes)."""
+    placeholders = ",".join("?" * len(fixture_types))
+    rows = conn.execute(
+        f"SELECT f.raw_source, f.cyclomatic_complexity, tf.language "
+        f"FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
+        f"WHERE f.fixture_type IN ({placeholders})",
+        fixture_types,
+    ).fetchall()
+
+    total = len(rows)
+    nested_construct = 0
+    checked = 0
+    mismatched = 0
+    for raw_source, recorded_cc, language in rows:
+        if not raw_source or not _has_nested_js_construct(raw_source):
+            continue
+        nested_construct += 1
+        true_cc = _true_outer_hook_complexity(raw_source, language)
+        if true_cc is None:
+            continue
+        checked += 1
+        if true_cc != recorded_cc:
+            mismatched += 1
+
+    return {
+        "total": total,
+        "nested_construct": nested_construct,
+        "checked": checked,
+        "mismatched": mismatched,
+    }
+
+
+def _render_js_hook_complexity_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
+    """## JS/TS Hook Fixture Complexity (Lizard function_list Selection)."""
+    header = ["Dataset", "before_each/after_each", "Nested construct", "Re-checked", "Mismatched", "Mismatch rate"]
+    lines = [
+        "## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)",
+        "",
+        "Side note, not a comparison: exact re-check, not a sample, of "
+        "whether each `before_each`/`after_each` fixture's recorded "
+        "`cyclomatic_complexity` matches the true outer hook function's "
+        "own complexity. Lizard orders `function_list` by parse-completion, "
+        "not source position -- a nested closure (a `.catch(() => {})`, a "
+        "mock callback) that finishes parsing before the outer hook does "
+        "can land at `function_list[0]`, which "
+        "`analyze_function_complexity()` unconditionally reads, silently "
+        "displacing the outer hook's own complexity. Only fixtures whose "
+        "`raw_source` contains a likely nested construct are re-checked "
+        "(\"Nested construct\" column) -- that's the precondition for the "
+        "issue at all. See "
+        "`internal-docs/methodology-improvements/js-ts-hook-fixture-complexity.md` "
+        "for the full investigation.",
+        "",
+        "| " + " | ".join(header) + " |",
+        "|" + "---|" * len(header),
+    ]
+
+    def _row(label: str, result: dict | None) -> str:
+        if result is None:
+            return f"| {label} | N/A | N/A | N/A | N/A | N/A |"
+        rate = 100 * result["mismatched"] / result["checked"] if result["checked"] else 0.0
+        return (
+            f"| {label} | {result['total']:,} | {result['nested_construct']:,} | "
+            f"{result['checked']:,} | {result['mismatched']:,} | {rate:.2f}% |"
+        )
+
+    a_db = require_db_or_none("a", db_root)
+    a_result = None
+    if a_db is not None:
+        with db_session(a_db) as conn:
+            a_result = _fetch_js_hook_complexity_mismatch(conn)
+    lines.append(_row("Dataset A", a_result))
+
+    c_sampled_db = require_db_or_none("c", db_root)
+    c_sampled_result = None
+    if c_sampled_db is not None:
+        with db_session(c_sampled_db) as conn:
+            c_sampled_result = _fetch_js_hook_complexity_mismatch(conn)
+    lines.append(_row("Dataset C (sampled)", c_sampled_result))
+
+    c_full_db = paths.db_path("c", root=db_root)
+    c_full_result = None
+    if c_full_db.exists():
+        with db_session(c_full_db) as conn:
+            c_full_result = _fetch_js_hook_complexity_mismatch(conn)
+    lines.append(_row("Dataset C (full, pre-sampling)", c_full_result))
+
+    lines.append("")
+    return lines
+
+
+# ---------------------------------------------------------------------------
+# Mocha bare before()/after() detection -- regression guard, side note
+# ---------------------------------------------------------------------------
+
+_MOCHA_BARE_HOOK_TYPES = ("mocha_before", "mocha_after")
+_MOCHA_BARE_CALL_RE = re.compile(r"^\s*(before|after)\s*\(")
+
+
+def _fetch_mocha_bare_hook_non_bare_count(
+    conn: sqlite3.Connection, *, fixture_types: tuple[str, ...] = _MOCHA_BARE_HOOK_TYPES
+) -> dict:
+    """Count of mocha_before/mocha_after fixtures whose raw_source does
+    *not* start with a bare before(/after( call -- the shape a
+    member-expression false positive (page.after(), browser.before())
+    would have, per mocha-before-after-detection.md. Expected to always
+    be 0 -- the detector's exact full-text-equality check makes that
+    false-positive shape structurally impossible, not merely unobserved
+    -- so this is a regression guard, not a live risk estimate: a nonzero
+    value here on some future re-collection would mean the detector's own
+    matching logic changed, not that this check found a real edge case it
+    was designed to look for."""
+    placeholders = ",".join("?" * len(fixture_types))
+    rows = conn.execute(
+        f"SELECT raw_source FROM fixtures WHERE fixture_type IN ({placeholders})",
+        fixture_types,
+    ).fetchall()
+    total = len(rows)
+    non_bare = sum(1 for (raw,) in rows if not raw or not _MOCHA_BARE_CALL_RE.match(raw))
+    return {"total": total, "non_bare": non_bare}
+
+
+def _render_mocha_bare_hook_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
+    """## Mocha Bare before()/after() Detection (Regression Guard)."""
+    header = ["Dataset", "mocha_before/mocha_after", "Non-bare-call shape"]
+    lines = [
+        "## Mocha Bare `before()`/`after()` Detection (Regression Guard)",
+        "",
+        "Side note, not a comparison, and not a live risk estimate -- "
+        "count of `mocha_before`/`mocha_after` fixtures whose "
+        "`raw_source` does not start with a bare `before(`/`after(` "
+        "call, i.e. would indicate the `page.after()`/`browser.before()` "
+        "false-positive shape investigated in "
+        "`internal-docs/methodology-improvements/mocha-before-after-detection.md`. "
+        "That investigation found this is structurally impossible given "
+        "the detector's exact full-text-equality matching (confirmed 0/80 "
+        "in a manual sample) -- this should always read 0; a nonzero value "
+        "would mean the detector's matching logic regressed, not that a "
+        "real edge case was found.",
+        "",
+        "| " + " | ".join(header) + " |",
+        "|" + "---|" * len(header),
+    ]
+
+    def _row(label: str, result: dict | None) -> str:
+        if result is None:
+            return f"| {label} | N/A | N/A |"
+        return f"| {label} | {result['total']:,} | {result['non_bare']:,} |"
+
+    a_db = require_db_or_none("a", db_root)
+    a_result = None
+    if a_db is not None:
+        with db_session(a_db) as conn:
+            a_result = _fetch_mocha_bare_hook_non_bare_count(conn)
+    lines.append(_row("Dataset A", a_result))
+
+    c_sampled_db = require_db_or_none("c", db_root)
+    c_sampled_result = None
+    if c_sampled_db is not None:
+        with db_session(c_sampled_db) as conn:
+            c_sampled_result = _fetch_mocha_bare_hook_non_bare_count(conn)
+    lines.append(_row("Dataset C (sampled)", c_sampled_result))
+
+    lines.append("")
+    return lines
+
+
+# ---------------------------------------------------------------------------
+# Aliased mock import detection (Python) -- side note
+# ---------------------------------------------------------------------------
+
+_ALIASED_MOCK_IMPORT_LIKE_PATTERNS = (
+    "%import patch as%",
+    "%import Mock as%",
+    "%import MagicMock as%",
+    "%import AsyncMock as%",
+)
+
+
+def _fetch_aliased_mock_import_counts(conn: sqlite3.Connection) -> dict:
+    """Count of Python fixtures whose raw_source contains a direct
+    class/function-level mock alias (`from unittest.mock import patch as
+    p`, etc.) -- the one pattern that actually breaks the regex-based
+    mock detector (aliasing the unittest.mock *module* itself, e.g.
+    `import unittest.mock as mock`, does not -- MOCK_PATTERNS match the
+    bare Mock/MagicMock/AsyncMock/patch token regardless of what precedes
+    it). See aliased-mock-import-prevalence.md.
+
+    This can only ever catch an alias declared *inside* a fixture body (a
+    local import) -- the far more common top-of-file form is invisible to
+    a DB-only check by construction, since raw_source is
+    function-body-only. A 0 here does not mean zero true prevalence, only
+    zero *detectable-from-this-DB* prevalence -- see that doc's real-file
+    sampling for what actually calibrates the true rate."""
+    total = conn.execute(
+        "SELECT COUNT(*) FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
+        "WHERE tf.language = 'python'"
+    ).fetchone()[0]
+    clauses = " OR ".join("f.raw_source LIKE ?" for _ in _ALIASED_MOCK_IMPORT_LIKE_PATTERNS)
+    aliased = conn.execute(
+        "SELECT COUNT(*) FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
+        f"WHERE tf.language = 'python' AND ({clauses})",
+        _ALIASED_MOCK_IMPORT_LIKE_PATTERNS,
+    ).fetchone()[0]
+    return {"total_python_fixtures": total, "aliased_in_body": aliased}
+
+
+def _render_aliased_mock_import_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
+    """## Aliased Mock Import Detection (Python)."""
+    header = ["Dataset", "Python fixtures", "Class/function-level alias in body"]
+    lines = [
+        "## Aliased Mock Import Detection (Python)",
+        "",
+        "Side note, not a comparison, and a lower bound, not a live risk "
+        "estimate -- count of Python fixtures whose `raw_source` contains "
+        "a direct class/function-level mock alias (`from unittest.mock "
+        "import patch as p`, etc.), the one pattern that actually breaks "
+        "mock detection. This DB-only check can only catch an alias "
+        "declared *inside* a fixture body -- the far more common "
+        "top-of-file form is invisible to it by construction (`raw_source` "
+        "is function-body-only). See "
+        "`internal-docs/methodology-improvements/aliased-mock-import-prevalence.md` "
+        "for the real-file sampling that actually calibrates the true "
+        "rate (found ~0% there too, via a different, network-dependent "
+        "method this script deliberately doesn't replicate).",
+        "",
+        "| " + " | ".join(header) + " |",
+        "|" + "---|" * len(header),
+    ]
+
+    def _row(label: str, result: dict | None) -> str:
+        if result is None:
+            return f"| {label} | N/A | N/A |"
+        return f"| {label} | {result['total_python_fixtures']:,} | {result['aliased_in_body']:,} |"
+
+    a_db = require_db_or_none("a", db_root)
+    a_result = None
+    if a_db is not None:
+        with db_session(a_db) as conn:
+            a_result = _fetch_aliased_mock_import_counts(conn)
+    lines.append(_row("Dataset A", a_result))
+
+    c_sampled_db = require_db_or_none("c", db_root)
+    c_sampled_result = None
+    if c_sampled_db is not None:
+        with db_session(c_sampled_db) as conn:
+            c_sampled_result = _fetch_aliased_mock_import_counts(conn)
+    lines.append(_row("Dataset C (sampled)", c_sampled_result))
+
+    lines.append("")
+    return lines
+
+
 def generate_report(
     *,
     db_root: Path = paths.DB_ROOT,
@@ -942,6 +1313,9 @@ def generate_report(
     )
     lines += _render_dataset_c_sampling_summary(output_dir=sample_output_dir)
     lines += _render_junit3_fallback_side_note(db_root=db_root)
+    lines += _render_js_hook_complexity_side_note(db_root=db_root)
+    lines += _render_mocha_bare_hook_side_note(db_root=db_root)
+    lines += _render_aliased_mock_import_side_note(db_root=db_root)
 
     return "\n".join(lines)
 
