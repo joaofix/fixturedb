@@ -12,6 +12,8 @@ import statistics
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+import diptest
+import numpy as np
 from scipy.stats import false_discovery_control
 
 from ..between_group_comparison import (
@@ -104,6 +106,68 @@ def summarize_continuous(values: list[float]) -> dict:
     }
 
 
+def run_dip_test(values: list[float]) -> dict | None:
+    """Hartigan & Hartigan's (1985) dip test for unimodality, via the
+    `diptest` package (Cython port of the original Fortran/C algorithm --
+    exact tabulated critical values by default, not a bootstrap p-value,
+    so this is deterministic: no seed needed, reruns always agree).
+
+    Null hypothesis: the distribution is unimodal. The alternative is
+    multimodal (at least bimodal) -- a low p-value is evidence *against*
+    unimodality. This is a single-distribution shape diagnostic, not a
+    between-group comparison -- run it once per dataset/group, not on a
+    combined sample.
+
+    Returns None (not a crash, not a 0/1 result) for fewer than 4 values
+    -- the library's own diptest() warns "Dip test is not valid for n <=
+    3" at that size, so this mirrors summarize_continuous()'s "too little
+    data" convention rather than reporting a number that isn't
+    meaningful. Otherwise {"n", "dip_statistic", "p_value"}."""
+    if len(values) <= 3:
+        return None
+    dip_statistic, p_value = diptest.diptest(np.asarray(values, dtype=float))
+    return {"n": len(values), "dip_statistic": float(dip_statistic), "p_value": float(p_value)}
+
+
+def render_ascii_histogram(
+    values: list[float],
+    *,
+    n_bins: int = 10,
+    bar_width: int = 40,
+    value_range: tuple[float, float] = (0.0, 1.0),
+) -> str:
+    """Fixed-width-bar text histogram of `values` over `value_range`
+    (default 0..1, for proportions like teardown_pct) as a fenced code
+    block, so bar alignment survives markdown rendering. research_questions/
+    reports are plain markdown with no image pipeline, so this renders the
+    distribution's shape inline instead of needing a separate PNG file and
+    a path for the report to reference.
+
+    Values outside `value_range` clamp into the nearest edge bin rather
+    than being dropped, so every input value is always represented in
+    the total count."""
+    if not values:
+        return "_(no data)_"
+    lo, hi = value_range
+    bin_width = (hi - lo) / n_bins
+    counts = [0] * n_bins
+    for v in values:
+        idx = int((v - lo) / bin_width) if v < hi else n_bins - 1
+        idx = max(0, min(idx, n_bins - 1))
+        counts[idx] += 1
+
+    max_count = max(counts)
+    lines = ["```"]
+    for i, count in enumerate(counts):
+        bin_lo = lo + i * bin_width
+        bin_hi = bin_lo + bin_width
+        bar_len = round(bar_width * count / max_count) if max_count else 0
+        bar = "#" * bar_len
+        lines.append(f"{bin_lo:5.2f}-{bin_hi:5.2f} | {bar} ({count})")
+    lines.append("```")
+    return "\n".join(lines)
+
+
 def fmt(value: float | None, digits: int = 2) -> str:
     return "--" if value is None else f"{value:.{digits}f}"
 
@@ -161,9 +225,26 @@ def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest
     `adjusted_p_value`/`significant_after_correction` added to `details`;
     the original `p_value`/`is_balanced` fields are left untouched, so
     both the raw and corrected verdicts stay visible.
-    """
+
+    A test excluded here (no `adjusted_p_value` added) must be one every
+    `_row()`-style renderer across rq1-3/balance.py already treats as
+    "not really tested" and skips before reading `adjusted_p_value` --
+    currently `reason="insufficient_data"` (compute_continuous_balance()/
+    compute_categorical_balance() when one side has no data at all -- a
+    placeholder p_value=1.0, no real statistic) or `"error" in details`.
+    `reason="identical_distributions"` (both sides' values are one single,
+    equal value -- e.g. two repos each 100% teardown) is deliberately
+    *not* excluded: unlike insufficient_data, it's a fully computed real
+    result (p_value=1.0, cliffs_delta=0.0, real medians) that just took a
+    shortcut past the Mann-Whitney call -- BH-correctable like any other
+    p_value, and every renderer's own "skip this row" guard already only
+    checks for insufficient_data/error specifically, so leaving it out
+    here left it with no `adjusted_p_value` for those renderers' `corrected`
+    branch to read -- a real, previously-latent KeyError, not just here."""
     testable_keys = [
-        k for k, t in tests.items() if "reason" not in t.details and "error" not in t.details
+        k
+        for k, t in tests.items()
+        if t.details.get("reason") != "insufficient_data" and "error" not in t.details
     ]
     result = dict(tests)
     if not testable_keys:

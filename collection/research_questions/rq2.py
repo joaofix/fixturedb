@@ -60,6 +60,22 @@ A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
 comparisons; see rq1.py's module docstring.
 
+**Unimodality check (Python teardown_pct)**: a second, distinct metric --
+Hartigan & Hartigan's (1985) dip test for unimodality, run separately per
+dataset on the per-repo Python `teardown_pct` distribution the table
+above already summarizes down to one median (`_render_teardown_dip_test()`,
+`run_dip_test()` in `_shared.py`). This is a single-distribution shape
+diagnostic, not an A vs C comparison test -- it exists to check whether
+Python's near-zero/near-100% median split (see
+internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md
+for why that split exists at all -- `pytest_decorator`'s `"other"`
+classification, not a real absence of teardown) reflects a genuinely
+bimodal population (most repos cluster at one extreme, a distinct
+minority at the other) or a smooth continuum that the median alone
+doesn't reveal. Reported alongside a text histogram of each
+distribution (`render_ascii_histogram()`) since this package's reports
+are plain markdown with no image pipeline.
+
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.
 
@@ -90,9 +106,12 @@ from ._shared import (
     continuous_effect_size_cell,
     format_p_value,
     pct,
+    render_ascii_histogram,
     render_language_leakage_table,
     repo_level_category_n_counts,
+    repo_level_category_proportions,
     require_db_or_none,
+    run_dip_test,
     write_markdown_report,
 )
 
@@ -324,11 +343,77 @@ def _render_kind_proportion_table(a: DatasetMetrics, other: DatasetMetrics) -> s
     return "\n".join(lines)
 
 
+def _python_teardown_proportions(metrics: DatasetMetrics) -> list[float]:
+    """Per-repo teardown_pct for Python repos only -- the same per-repo
+    proportions the Python row of _render_kind_proportion_table() already
+    summarizes down to one median; this exposes the underlying
+    distribution itself for _render_teardown_dip_test()."""
+    python_by_repo = metrics.kind_counts_by_repo_and_language.get("python", {})
+    return repo_level_category_proportions(python_by_repo, "teardown")
+
+
+def _render_teardown_dip_test(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """## Unimodality Check: Python Teardown Proportion (Dip Test).
+
+    Hartigan & Hartigan's (1985) dip test, run separately per dataset on
+    the per-repo Python teardown_pct distribution -- a single-distribution
+    shape diagnostic (is this one distribution unimodal?), not an A vs C
+    comparison test the way every other table in this report is. Reported
+    side by side purely for reading convenience. See run_dip_test()'s
+    docstring in _shared.py for the exact method (tabulated critical
+    values, deterministic) and null hypothesis."""
+    other_label = other.dataset.upper()
+    lines = [
+        "## Unimodality Check: Python Teardown Proportion (Dip Test)",
+        "",
+        "Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & "
+        "Hartigan 1985, The Dip Test of Unimodality], run on the same "
+        "per-repo Python `teardown_pct` values the table above summarizes "
+        "as a single median -- separately per dataset, since this tests "
+        "whether *one* distribution is unimodal, not whether two "
+        "distributions differ. Null hypothesis: the distribution is "
+        "unimodal; a low p-value is evidence of multimodality (e.g. a "
+        'real "most repos provide none, a distinct minority provide '
+        'all" split, rather than a smooth continuum from 0% to 100%).',
+        "",
+    ]
+
+    values_by_label = {
+        label: _python_teardown_proportions(metrics)
+        for label, metrics in (("A", a), (other_label, other))
+    }
+
+    header = ["Dataset", "n (Python repos)", "Dip statistic", "p-value"]
+    lines += ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+    for label, values in values_by_label.items():
+        result = run_dip_test(values)
+        if result is None:
+            lines.append(f"| Dataset {label} | {len(values)} | -- | -- |")
+        else:
+            lines.append(
+                f"| Dataset {label} | {result['n']} | "
+                f"{result['dip_statistic']:.4f} | {format_p_value(result['p_value'])} |"
+            )
+    lines.append("")
+
+    for label, values in values_by_label.items():
+        lines += [
+            f"**Dataset {label} -- teardown_pct distribution across "
+            f"{len(values)} Python repos**",
+            "",
+            render_ascii_histogram(values),
+            "",
+        ]
+
+    return "\n".join(lines)
+
+
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
     lines = [
         f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
         "",
         _render_kind_proportion_table(a, other),
+        _render_teardown_dip_test(a, other),
     ]
     return "\n".join(lines)
 

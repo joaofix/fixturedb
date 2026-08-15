@@ -29,6 +29,7 @@ from collection.research_questions._shared import (
     fmt,
     format_p_value,
     pct,
+    render_ascii_histogram,
     render_categorical_repo_level_table,
     render_comparison_table,
     render_language_leakage_table,
@@ -36,6 +37,7 @@ from collection.research_questions._shared import (
     repo_level_category_proportions,
     repo_level_means,
     require_db_or_none,
+    run_dip_test,
     summarize_continuous,
     write_markdown_report,
 )
@@ -78,6 +80,86 @@ class TestSummarizeContinuous:
         s = summarize_continuous([7.0])
         assert s["n"] == 1
         assert s["stdev"] == 0.0
+
+
+class TestRunDipTest:
+    # Uniform 0.30..0.70 -- the dip test's own p-value is calibrated
+    # against the uniform distribution as the unimodal reference case, so
+    # this is the strongest, least-arbitrary "should not reject
+    # unimodality" fixture available, and needs no RNG to be deterministic.
+    UNIMODAL_VALUES = [i / 100 for i in range(30, 71)]
+    # Two tight, far-separated clusters (0.000-0.020 and 0.980-1.000) --
+    # an extreme, unambiguous bimodal shape, also RNG-free.
+    BIMODAL_VALUES = [i / 1000 for i in range(0, 21)] + [1 - i / 1000 for i in range(0, 21)]
+
+    def test_fewer_than_four_values_returns_none(self):
+        assert run_dip_test([]) is None
+        assert run_dip_test([0.5]) is None
+        assert run_dip_test([0.1, 0.2, 0.3]) is None
+
+    def test_exactly_four_values_does_not_crash(self):
+        result = run_dip_test([0.1, 0.2, 0.3, 0.4])
+        assert result is not None
+        assert result["n"] == 4
+
+    def test_uniform_distribution_not_significant(self):
+        result = run_dip_test(self.UNIMODAL_VALUES)
+        assert result["n"] == len(self.UNIMODAL_VALUES)
+        assert result["p_value"] > 0.05
+
+    def test_bimodal_distribution_significant(self):
+        result = run_dip_test(self.BIMODAL_VALUES)
+        assert result["n"] == len(self.BIMODAL_VALUES)
+        assert result["p_value"] < 0.05
+        # The bimodal split's dip statistic should exceed the uniform
+        # case's -- confirms the two calls aren't returning the same
+        # constant regardless of input.
+        uniform_result = run_dip_test(self.UNIMODAL_VALUES)
+        assert result["dip_statistic"] > uniform_result["dip_statistic"]
+
+    def test_deterministic_no_seed_needed(self):
+        """Two calls on the same data must agree exactly -- the default
+        tabulated-critical-values p-value (not the optional bootstrap
+        mode) is used specifically so this holds without a seed."""
+        first = run_dip_test(self.BIMODAL_VALUES)
+        second = run_dip_test(self.BIMODAL_VALUES)
+        assert first == second
+
+
+class TestRenderAsciiHistogram:
+    def test_empty_values_renders_no_data(self):
+        assert render_ascii_histogram([]) == "_(no data)_"
+
+    def test_renders_fenced_code_block_with_all_bins(self):
+        text = render_ascii_histogram([0.05, 0.05, 0.95], n_bins=10)
+        lines = text.splitlines()
+        assert lines[0] == "```"
+        assert lines[-1] == "```"
+        # 10 bins + 2 fence lines
+        assert len(lines) == 12
+
+    def test_bin_counts_match_input(self):
+        text = render_ascii_histogram([0.05, 0.05, 0.95], n_bins=10)
+        # bin 0 (0.00-0.10) gets the two 0.05s, bin 9 (0.90-1.00) gets the 0.95
+        assert "0.00- 0.10 | " in text or "0.00-0.10" in text
+        assert "(2)" in text
+        assert "(1)" in text
+
+    def test_value_at_exact_upper_edge_clamps_into_last_bin(self):
+        """A value == value_range's upper bound (1.0 for the default 0..1
+        range) must land in the last bin, not be dropped or overflow into
+        a nonexistent 11th bin -- exercises the `v < hi` boundary check."""
+        text = render_ascii_histogram([1.0], n_bins=4)
+        assert "(1)" in text
+        # Only 4 bins + 2 fence lines -- no extra bin created for the edge value.
+        assert len(text.splitlines()) == 6
+
+    def test_out_of_range_value_clamps_instead_of_dropped(self):
+        text = render_ascii_histogram([-5.0, 5.0], n_bins=4)
+        # Both values must still be counted somewhere (clamped to the
+        # nearest edge bin), not silently discarded.
+        total_counted = sum(int(line.rsplit("(", 1)[1].rstrip(")")) for line in text.splitlines()[1:-1])
+        assert total_counted == 2
 
 
 class TestFmt:
@@ -551,6 +633,39 @@ class TestApplyFdrCorrection:
         }
         result = apply_fdr_correction(tests)
         assert "adjusted_p_value" not in result["skip"].details
+        assert "adjusted_p_value" in result["real"].details
+
+    def test_identical_distributions_tests_are_still_corrected(self):
+        """reason='identical_distributions' (both sides are one single,
+        equal value -- compute_continuous_balance()'s "trivially balanced"
+        shortcut) is a real, complete result (p_value=1.0, real medians),
+        not a non-result the way insufficient_data is -- it must still
+        get adjusted_p_value, or every _row()-style renderer's `corrected`
+        branch across rq1-3/balance.py (which only guards against
+        insufficient_data/error, not this reason) hits a KeyError reading
+        it. Real regression: reproduced via rq2.py's
+        TestRenderTeardownDipTest before this fix."""
+        tests = {
+            "real": BalanceTest(variable="real", test_type="mann-whitney-u", p_value=0.01, is_balanced=False),
+            "identical": BalanceTest(
+                variable="identical", test_type="mann-whitney-u", p_value=1.0, is_balanced=True,
+                details={"human_median": 1.0, "agent_median": 1.0, "reason": "identical_distributions"},
+            ),
+        }
+        result = apply_fdr_correction(tests)
+        assert "adjusted_p_value" in result["identical"].details
+        assert "adjusted_p_value" in result["real"].details
+
+    def test_error_tests_still_pass_through_unchanged(self):
+        tests = {
+            "real": BalanceTest(variable="real", test_type="chi-square", p_value=0.01, is_balanced=False),
+            "broken": BalanceTest(
+                variable="broken", test_type="chi-square", p_value=1.0, is_balanced=True,
+                details={"error": "division by zero"},
+            ),
+        }
+        result = apply_fdr_correction(tests)
+        assert "adjusted_p_value" not in result["broken"].details
         assert "adjusted_p_value" in result["real"].details
 
     def test_empty_input_returns_empty_dict(self):

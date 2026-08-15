@@ -22,6 +22,8 @@ from collection.db import (
 from collection.research_questions.rq2 import (
     DatasetMetrics,
     _kind,
+    _python_teardown_proportions,
+    _render_teardown_dip_test,
     generate_report,
     load_dataset_metrics,
     write_report,
@@ -400,6 +402,107 @@ class TestGenerateReport:
         # Per-repo, both A and C are 1-of-2 repos setup-only (50%) --
         # nowhere near a ~99%-setup fixture-weighted figure.
         assert "50.0% | 50.0% | 50.0% | 50.0%" in overall_line
+
+
+class TestPythonTeardownProportions:
+    def test_returns_one_proportion_per_python_repo(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                # repo 0: 2 setUp, 0 tearDown -> 0.0
+                [
+                    {"fixture_type": "unittest_setup", "name": "setUp"},
+                    {"fixture_type": "unittest_setup", "name": "setUp"},
+                ],
+                # repo 1: 1 setUp, 1 tearDown -> 0.5
+                [
+                    {"fixture_type": "unittest_setup", "name": "setUp"},
+                    {"fixture_type": "unittest_setup", "name": "tearDown"},
+                ],
+                # repo 2: 0 setUp, 2 tearDown -> 1.0
+                [
+                    {"fixture_type": "unittest_setup", "name": "tearDown"},
+                    {"fixture_type": "unittest_setup", "name": "tearDown"},
+                ],
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        proportions = _python_teardown_proportions(metrics)
+        assert sorted(proportions) == [0.0, 0.5, 1.0]
+
+    def test_repo_with_only_other_kind_fixtures_contributes_zero_not_excluded(self, tmp_path):
+        """A repo whose only Python fixtures are pytest_decorator ('other'
+        by _kind()) is NOT skipped -- its "other" fixture still counts
+        toward repo_level_category_proportions()'s total-classified
+        denominator (1), so it contributes a real teardown_pct of 0/1 =
+        0.0, same as a repo with a genuine setup-only fixture. This is
+        exactly the mechanism pytest-yield-teardown-vs-fixture-kind.md
+        documents: a 100%-pytest_decorator repo doesn't drop out of the
+        distribution, it silently pins at 0.0 regardless of how much real
+        (yield-detected) teardown it actually has -- fixture_type_kind
+        simply can't see it."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                [{"fixture_type": "unittest_setup", "name": "setUp"}],
+                [{"fixture_type": "pytest_decorator"}],
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        proportions = _python_teardown_proportions(metrics)
+        assert proportions == [0.0, 0.0]
+
+    def test_no_python_fixtures_returns_empty_list(self, tmp_path):
+        _make_multi_language_db(
+            tmp_path, "a", [{"language": "typescript", "fixtures": [{"fixture_type": "before_each"}]}]
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert _python_teardown_proportions(metrics) == []
+
+
+class TestRenderTeardownDipTest:
+    def test_insufficient_data_renders_dashes_not_a_crash(self, tmp_path):
+        """Fewer than 4 Python repos on either side -- run_dip_test()
+        returns None, and the table must degrade to '--' cells, not
+        raise."""
+        _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
+        _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+        report = _render_teardown_dip_test(a_metrics, c_metrics)
+        assert "## Unimodality Check: Python Teardown Proportion (Dip Test)" in report
+        assert "| Dataset A | 1 | -- | -- |" in report
+        assert "| Dataset C | 1 | -- | -- |" in report
+
+    def test_sufficient_data_renders_real_statistic_and_p_value(self, tmp_path):
+        # 5 repos, teardown_pct = [0, 0, 0, 1, 1] -- >3 repos, so
+        # run_dip_test() returns a real result instead of None.
+        repos = [
+            [{"fixture_type": "unittest_setup", "name": "setUp"}],
+            [{"fixture_type": "unittest_setup", "name": "setUp"}],
+            [{"fixture_type": "unittest_setup", "name": "setUp"}],
+            [{"fixture_type": "unittest_setup", "name": "tearDown"}],
+            [{"fixture_type": "unittest_setup", "name": "tearDown"}],
+        ]
+        _make_db(tmp_path, "a", repos)
+        _make_db(tmp_path, "c", repos)
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+        report = _render_teardown_dip_test(a_metrics, c_metrics)
+
+        lines = report.splitlines()
+        a_row = next(line for line in lines if line.startswith("| Dataset A |"))
+        assert "| Dataset A | 5 |" in a_row
+        assert "--" not in a_row  # a real dip statistic/p-value rendered, not a fallback
+        assert "```" in report  # the ASCII histogram's fenced code block
+
+    def test_generate_report_includes_dip_test_section(self, tmp_path):
+        _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
+        _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
+        report = generate_report(db_root=tmp_path)
+        assert "## Unimodality Check: Python Teardown Proportion (Dip Test)" in report
 
 
 class TestWriteReport:

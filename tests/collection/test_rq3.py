@@ -674,18 +674,22 @@ class TestRenderCategoryByLanguageTable:
         python_p_bh = python_mock_line.rstrip("|").rsplit("|", 1)[-1].strip()
         java_p_bh = java_mock_line.rstrip("|").rsplit("|", 1)[-1].strip()
         # python's perfect separation survives its own 2-test (mock/stub)
-        # correction. java's proportions are literally identical on both
+        # correction, unaffected by java's presence in a *different*
+        # per-language family -- that's the real property this test
+        # covers. java's proportions are literally identical on both
         # sides (5/5 every repo) -- compute_continuous_balance()'s
-        # "identical_distributions" shortcut fires (raw p=1.0, no
-        # adjusted_p_value at all, since apply_fdr_correction() treats
-        # anything with a `details["reason"]` -- identical_distributions
-        # included, not just insufficient_data -- as not part of the
-        # correction family). That itself is the property worth locking
-        # in here: a trivially-identical language's "--" must never turn
-        # into a borrowed/adjusted value just because it shares a render
-        # call with a language that has a real, testable effect.
+        # "identical_distributions" shortcut fires (raw p=1.0, a real,
+        # fully-computed result, not a non-result). apply_fdr_correction()
+        # still includes it in java's own 2-test (mock/stub) family --
+        # correctly: BH's step-up procedure can only ever push a p-value
+        # up from its raw value, never down, so p=1.0 (already the
+        # ceiling) can't be dragged into looking "significant" by
+        # riding along with anything -- it renders as an actual "1.000"
+        # (correctly-corrected, still not significant), not "--", which
+        # is reserved for insufficient_data/error (no real p-value to
+        # correct at all), a different case from this one.
         assert python_p_bh != "1.000" and float(python_p_bh) < 0.05
-        assert java_p_bh == "--"
+        assert java_p_bh == "1.000"
         assert "0.000" in java_mock_line  # Cliff's delta is 0 -- no difference at all
 
     def test_insufficient_data_row_when_a_language_has_no_shared_category(self):

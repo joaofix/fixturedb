@@ -15,6 +15,8 @@ pydriller==2.9
 seaborn==0.13.2
 matplotlib==3.10.8
 scipy==1.17.1
+numpy==2.4.3
+diptest==0.11.0
 pytest==9.0.2
 pytest-cov==7.1.0
 openai==2.44.0
