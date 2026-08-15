@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-14 19:20:38 UTC
+Generated: 2026-08-15 02:10:42 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -117,3 +117,13 @@ A language whose "Repos sampled" hits its full available count took everything D
 | JavaScript | 14.6% | 6.4% | 6.4% | 62/549 | 2,528/30,836 |
 | Python | 18.4% | 43.8% | 43.5% | 547/1,087 | 17,111/38,962 |
 | TypeScript | 29.3% | 42.2% | 41.9% | 212/946 | 16,505/61,848 |
+
+## JUnit 3 Fallback Detection (Java)
+
+Side note, not a comparison: raw counts of `junit3_setup`/`junit3_teardown`, Java's only fixture_types identified without an annotation -- by method name plus a substring check on the enclosing class's superclass, which is not an exact-name or recursive type-resolution check. See `internal-docs/methodology-improvements/junit3-fallback-detection.md` for the full investigation (manual review of every instance found in both datasets at time of writing; all genuine, one only via substring coincidence). Tracked here so a re-collection that picks up a materially different count is easy to notice.
+
+| Dataset | junit3_setup | junit3_teardown | Total |
+|---|---|---|---|
+| Dataset A | 1 | 0 | 1 |
+| Dataset C (sampled) | 12 | 2 | 14 |
+| Dataset C (full, pre-sampling) | 1,218 | 653 | 1,871 |
