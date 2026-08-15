@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-08-14 19:20:46 UTC
+Generated: 2026-08-14 22:42:15 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 
@@ -10,14 +10,14 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 ### Dataset A (agent-authored) -- 39,088 fixtures
 
-**Continuous metrics**
+**Continuous metrics** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 39,088 | 4.00 | 7.48 | 1 | 358 | 9.93 |
-| cyclomatic_complexity | 39,088 | 1.00 | 1.22 | 1 | 21 | 0.72 |
-| max_nesting_depth | 39,088 | 1.00 | 1.20 | 1 | 6 | 0.49 |
-| num_parameters | 39,088 | 0.00 | 0.14 | 0 | 11 | 0.45 |
+| loc | 1,044 | 6.50 | 7.82 | 1 | 82 | 5.91 |
+| cyclomatic_complexity | 1,044 | 1.06 | 1.24 | 1 | 6 | 0.48 |
+| max_nesting_depth | 1,044 | 1.09 | 1.22 | 1 | 4 | 0.34 |
+| num_parameters | 1,044 | 0.00 | 0.21 | 0 | 3 | 0.40 |
 
 **scope distribution**
 
@@ -106,14 +106,14 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 ### Dataset C (human-authored, pre-LLM) -- 39,377 fixtures
 
-**Continuous metrics**
+**Continuous metrics** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 39,377 | 5.00 | 8.01 | 1 | 2405 | 17.73 |
-| cyclomatic_complexity | 39,377 | 1.00 | 1.14 | 1 | 22 | 0.63 |
-| max_nesting_depth | 39,377 | 1.00 | 1.11 | 1 | 9 | 0.39 |
-| num_parameters | 39,377 | 0.00 | 0.18 | 0 | 29 | 0.66 |
+| loc | 851 | 6.28 | 8.22 | 1 | 161 | 8.59 |
+| cyclomatic_complexity | 851 | 1.04 | 1.24 | 1 | 9 | 0.61 |
+| max_nesting_depth | 851 | 1.06 | 1.19 | 1 | 3 | 0.31 |
+| num_parameters | 851 | 0.00 | 0.19 | 0 | 3 | 0.39 |
 
 **scope distribution**
 
