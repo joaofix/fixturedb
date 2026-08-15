@@ -553,6 +553,28 @@ class TestGenerateReport:
         assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
         assert format_p_value(t.p_value) in overall_line
 
+    def test_dataset_summary_continuous_table_is_repo_level_not_fixture_level(
+        self, tmp_path
+    ):
+        """The per-dataset "Continuous metrics" table (_render_dataset_summary())
+        must read the same repo-level-means data the comparison tests use,
+        not the raw per-fixture values -- same prolific-repo setup as
+        test_repo_level_aggregate_declusters_a_prolific_repo above: one repo
+        with 100 loc=100 fixtures plus one repo with a single loc=1 fixture.
+        Fixture-level, the median is 100 (dominated by the prolific repo's
+        100 identical values). Repo-level, the two repos' own means are
+        [100.0, 1.0] -- median 50.50, nothing close to the fixture-level
+        figure."""
+        _make_multi_repo_db(tmp_path, "a", [[100.0] * 100, [1.0]])
+
+        report = generate_report(db_root=tmp_path)
+        summary = report.split("### Dataset A")[1].split("###")[0]
+        loc_line = next(
+            line for line in summary.splitlines() if line.startswith("| loc |")
+        )
+        assert "| loc | 2 | 50.50 | 50.50 | 1 | 100 |" in loc_line
+        assert "100.00" not in loc_line  # the fixture-level median/mean
+
     def test_repo_level_fixture_type_proportion_table_declusters_a_prolific_repo(
         self, tmp_path
     ):

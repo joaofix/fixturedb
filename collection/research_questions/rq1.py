@@ -12,8 +12,10 @@ scope for this script's reported comparisons.
 0 params is the overwhelming majority in both datasets (most fixtures take
 no arguments), which makes a distributional test not very informative.
 Still shown per-dataset descriptively (`_render_dataset_summary()`'s
-existing "Continuous metrics" table, unaffected) plus a dedicated
-floor-percentage footnote (`% of fixtures at 0 params`, no test) in the
+"Continuous metrics" table, repo-level like every other metric in that
+table -- see below) plus a dedicated floor-percentage footnote (`% of
+fixtures at 0 params`, deliberately fixture-level -- "what fraction of
+fixtures sit at the floor" is a fixture-level question, no test) in the
 comparison section, so the floor-binding is documented transparently
 rather than silently dropped. `cyclomatic_complexity` also floors heavily
 (CC=1 is the large majority) but is tested anyway, same as `loc`/
@@ -32,7 +34,12 @@ renders Overall-only.
 Continuous metrics are repo-level throughout (one value per repo, per
 language for the per-language rows) -- not the raw per-fixture values --
 so this doesn't reintroduce the fixture-clustering pseudo-replication the
-categorical repo-level proportion fix (see below) exists to correct.
+categorical repo-level proportion fix (see below) exists to correct. This
+includes `_render_dataset_summary()`'s per-dataset "Continuous metrics"
+table (median/mean/min/max/stdev, `n` = repo count): it reads from the
+same repo-level-means data the comparison tests use, not the raw
+per-fixture values, so a single prolific repo can't skew the descriptive
+numbers any more than it can skew the tests themselves.
 fixture_type's Overall/per-language rows stay fixture-level chi-square
 (pseudo-replicated, like every per-language categorical test here --
 that's a known, documented limitation, not fixed by this table) --
@@ -99,10 +106,11 @@ CONTINUOUS_METRICS = ["loc", "cyclomatic_complexity", "max_nesting_depth"]
 # (0 params: no arguments) -- drives the descriptive floor-percentage
 # footnote only, no comparative test.
 FLOOR_CHECK_METRICS = {"num_parameters": 0}
-# Fixture-level fetch + the per-dataset descriptive "Continuous metrics"
-# table in _render_dataset_summary() still show all 4 -- that table was
-# never a comparison, so dropping num_parameters from CONTINUOUS_METRICS
-# (the Mann-Whitney-tested list) doesn't affect it.
+# The per-dataset descriptive "Continuous metrics" table in
+# _render_dataset_summary() (repo-level) and the floor-percentage footnote
+# (deliberately fixture-level) still show/use all 4 -- neither is a
+# comparison, so dropping num_parameters from CONTINUOUS_METRICS (the
+# Mann-Whitney-tested list) doesn't affect either.
 DESCRIPTIVE_CONTINUOUS_METRICS = CONTINUOUS_METRICS + list(FLOOR_CHECK_METRICS)
 # num_objects_instantiated/num_external_calls are still detected and
 # persisted (fixtures.num_objects_instantiated/num_external_calls) --
@@ -239,9 +247,12 @@ def load_dataset_metrics(
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
         # DESCRIPTIVE_CONTINUOUS_METRICS (4), not CONTINUOUS_METRICS (3) --
-        # num_parameters is still fetched fixture-level for the per-dataset
-        # descriptive table and the floor-percentage footnote, just no
-        # longer Mann-Whitney tested (see module docstring).
+        # num_parameters is still fetched fixture-level for the
+        # floor-percentage footnote (a fixture-level question: what fraction
+        # of *fixtures* sit at the floor), even though it's no longer
+        # Mann-Whitney tested and no longer what the per-dataset descriptive
+        # table displays (see module docstring and repo_level_continuous
+        # below).
         continuous_raw = {
             m: fetch_continuous_column(conn, "fixtures", m) for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }
@@ -269,10 +280,15 @@ def load_dataset_metrics(
         # value per repo instead of every fixture as an independent
         # observation. repo_level_continuous_by_language is the same idea,
         # bucketed by each fixture's own language too, for the per-language
-        # family tests.
+        # family tests. Covers DESCRIPTIVE_CONTINUOUS_METRICS (4), not just
+        # CONTINUOUS_METRICS (3) -- num_parameters isn't Mann-Whitney tested,
+        # but _render_dataset_summary()'s descriptive table reads every
+        # metric's median/mean/min/max/stdev from here too, so it stays
+        # repo-level throughout, same as the tested metrics, rather than
+        # silently reverting to fixture-level for just this one column.
         repo_level_continuous = {
             m: repo_level_means(fetch_continuous_column_by_repo(conn, "fixtures", m))
-            for m in CONTINUOUS_METRICS
+            for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }
         continuous_by_repo_and_language = _fetch_continuous_by_repo_and_language(conn)
         repo_level_continuous_by_language = {
@@ -345,10 +361,11 @@ def compare_datasets_categorical(
 def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     lines = [f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures", ""]
 
-    lines += ["**Continuous metrics**", "", "| Metric | n | median | mean | min | max | stdev |",
+    lines += ["**Continuous metrics** (repo-level: one mean per repo, not one value per fixture)",
+              "", "| Metric | n | median | mean | min | max | stdev |",
               "|---|---|---|---|---|---|---|"]
     for metric in DESCRIPTIVE_CONTINUOUS_METRICS:
-        s = summarize_continuous(metrics.continuous_raw[metric])
+        s = summarize_continuous(metrics.repo_level_continuous[metric])
         lines.append(
             f"| {metric} | {s['n']:,} | {fmt(s['median'])} | {fmt(s['mean'])} | "
             f"{fmt(s['min'], 0)} | {fmt(s['max'], 0)} | {fmt(s['stdev'])} |"
