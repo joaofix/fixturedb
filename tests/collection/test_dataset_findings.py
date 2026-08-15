@@ -17,6 +17,7 @@ from collection.db import (
     db_session,
     initialise_db,
     insert_fixture,
+    insert_mock_usage,
     set_repo_analysed,
     update_agent_commit_stats,
     upsert_repository,
@@ -31,6 +32,7 @@ from collection.research_questions.dataset_findings import (
     _fetch_js_hook_complexity_mismatch,
     _fetch_junit3_fallback_counts,
     _fetch_mocha_bare_hook_non_bare_count,
+    _fetch_mock_category_classification_breakdown,
     _fetch_mock_commit_counts,
     _fetch_raw_seart_repo_counts,
     _fetch_repos_with_agent_config,
@@ -46,6 +48,7 @@ from collection.research_questions.dataset_findings import (
     _render_junit3_fallback_side_note,
     _render_language_count_table,
     _render_mocha_bare_hook_side_note,
+    _render_mock_category_fallback_side_note,
     generate_report,
     load_repo_purity_stats,
     write_report,
@@ -234,6 +237,80 @@ def _make_db_with_fixture_rows(db_file, fixtures: list[dict], *, language="pytho
                     "num_mocks": 0,
                 },
             )
+
+
+def _make_db_with_mock_usage_rows(db_file, fixtures: list[dict]) -> None:
+    """Create a DB at `db_file` with one repo, and one test_file per
+    distinct language among `fixtures`, each fixture getting a
+    mock_usages row per entry in its own "mocks" list. Each fixture dict:
+    raw_source, language (default "python"), and mocks: a list of
+    {category, raw_snippet, framework} dicts. Used by the mock-category
+    fallback-rate tests, which need real mock_usages rows (category +
+    raw_snippet) alongside their owning fixture's raw_source --
+    _make_db_with_fixture_rows() above doesn't create mock_usages rows at
+    all."""
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": "python",
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        file_ids: dict[str, int] = {}
+        for i, fx in enumerate(fixtures):
+            language = fx.get("language", "python")
+            ext = {"python": "py", "javascript": "js", "typescript": "ts", "java": "java"}.get(language, "txt")
+            if language not in file_ids:
+                file_ids[language] = upsert_test_file(conn, repo_id, f"src/test_{language}.{ext}", language)
+            file_id = file_ids[language]
+            fixture_id = insert_fixture(
+                conn,
+                {
+                    "file_id": file_id,
+                    "repo_id": repo_id,
+                    "name": fx.get("name", f"fixture_{i}"),
+                    "fixture_type": fx.get("fixture_type", "before_each"),
+                    "scope": "per_test",
+                    "start_line": i,
+                    "end_line": i + 1,
+                    "loc": 1,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 1,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": fx.get("raw_source", ""),
+                    "framework": fx.get("framework", "unittest"),
+                    "num_mocks": len(fx.get("mocks", [])),
+                },
+            )
+            for j, mock in enumerate(fx.get("mocks", [])):
+                insert_mock_usage(
+                    conn,
+                    {
+                        "fixture_id": fixture_id,
+                        "repo_id": repo_id,
+                        "framework": mock.get("framework", "unittest_mock"),
+                        "category": mock["category"],
+                        "target_identifier": mock.get("target_identifier", f"target_{j}"),
+                        "num_interactions_configured": 0,
+                        "raw_snippet": mock.get("raw_snippet", ""),
+                    },
+                )
 
 
 def _write_csv(path, fieldnames, rows: list[dict]) -> None:
@@ -1409,3 +1486,142 @@ class TestAliasedMockImportSideNote:
             db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
         )
         assert "## Aliased Mock Import Detection (Python)" in report
+
+
+class TestMockCategoryClassificationBreakdown:
+    def test_api_name_match_bucketed_correctly(self, tmp_path):
+        db_file = tmp_path / "solo.db"
+        _make_db_with_mock_usage_rows(
+            db_file,
+            [
+                {
+                    "raw_source": "def fixture():\n    m = MagicMock()\n    return m",
+                    "mocks": [{"category": "mock", "raw_snippet": "m = MagicMock()"}],
+                }
+            ],
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mock_category_classification_breakdown(conn)
+        assert result["total"] == 1
+        assert result["api_name"] == 1
+        assert result["naming_only"] == 0
+        assert result["fallback"] == 0
+
+    def test_naming_only_match_bucketed_correctly(self, tmp_path):
+        db_file = tmp_path / "solo.db"
+        _make_db_with_mock_usage_rows(
+            db_file,
+            [
+                {
+                    "language": "typescript",
+                    "raw_source": "beforeEach(() => {\n  mockClient = vi.fn();\n})",
+                    # The matched call site itself (vi.fn()) is keyword-free --
+                    # only "mockClient" elsewhere in the body supplies "mock".
+                    "mocks": [{"category": "mock", "raw_snippet": "vi.fn()"}],
+                }
+            ],
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mock_category_classification_breakdown(conn)
+        assert result["total"] == 1
+        assert result["api_name"] == 0
+        assert result["naming_only"] == 1
+        assert result["fallback"] == 0
+
+    def test_true_fallback_bucketed_correctly(self, tmp_path):
+        db_file = tmp_path / "solo.db"
+        _make_db_with_mock_usage_rows(
+            db_file,
+            [
+                {
+                    "raw_source": "def disable_llm(monkeypatch):\n    monkeypatch.setattr('x.y', lambda: False)",
+                    "mocks": [{"category": "mock", "raw_snippet": "monkeypatch.setattr('x.y', lambda: False)"}],
+                }
+            ],
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mock_category_classification_breakdown(conn)
+        assert result["total"] == 1
+        assert result["api_name"] == 0
+        assert result["naming_only"] == 0
+        assert result["fallback"] == 1
+
+    def test_non_mock_categories_excluded(self, tmp_path):
+        db_file = tmp_path / "solo.db"
+        _make_db_with_mock_usage_rows(
+            db_file,
+            [
+                {
+                    "raw_source": "def fixture():\n    s = stub_thing()",
+                    "mocks": [{"category": "stub", "raw_snippet": "stub_thing()"}],
+                }
+            ],
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mock_category_classification_breakdown(conn)
+        assert result == {"total": 0, "api_name": 0, "naming_only": 0, "fallback": 0, "by_language": {}}
+
+    def test_per_language_breakdown_matches_pooled(self, tmp_path):
+        db_file = tmp_path / "solo.db"
+        _make_db_with_mock_usage_rows(
+            db_file,
+            [
+                {
+                    "language": "python",
+                    "raw_source": "def fixture():\n    m = MagicMock()",
+                    "mocks": [{"category": "mock", "raw_snippet": "MagicMock()"}],
+                },
+                {
+                    "language": "typescript",
+                    "raw_source": "def disable(monkeypatch):\n    monkeypatch.setattr('a', 1)",
+                    "mocks": [{"category": "mock", "raw_snippet": "monkeypatch.setattr('a', 1)"}],
+                },
+            ],
+        )
+        with db_session(db_file) as conn:
+            result = _fetch_mock_category_classification_breakdown(conn)
+        assert result["total"] == 2
+        assert result["by_language"]["python"] == {
+            "total": 1, "api_name": 1, "naming_only": 0, "fallback": 0,
+        }
+        assert result["by_language"]["typescript"] == {
+            "total": 1, "api_name": 0, "naming_only": 0, "fallback": 1,
+        }
+
+
+class TestMockCategoryFallbackSideNote:
+    def test_missing_dbs_render_na(self, tmp_path):
+        report = "\n".join(_render_mock_category_fallback_side_note(db_root=tmp_path))
+        assert "## Mock-Category Fallback Rate" in report
+        assert "| Dataset A | N/A | N/A | N/A | N/A |" in report
+        assert "| Dataset C (sampled) | N/A | N/A | N/A | N/A |" in report
+
+    def test_renders_headline_percentages_in_paper_citable_format(self, tmp_path):
+        # 3 positive (api_name) + 2 fallback = 5 total -> 60.0% / 40.0%,
+        # a round number chosen specifically so the rendered string is
+        # unambiguous to assert on.
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_mock_usage_rows(
+            db_file,
+            [
+                {"raw_source": "m = MagicMock()", "mocks": [{"category": "mock", "raw_snippet": "MagicMock()"}]},
+                {"raw_source": "m = MagicMock()", "mocks": [{"category": "mock", "raw_snippet": "MagicMock()"}]},
+                {"raw_source": "m = MagicMock()", "mocks": [{"category": "mock", "raw_snippet": "MagicMock()"}]},
+                {
+                    "raw_source": "monkeypatch.setattr('a', 1)",
+                    "mocks": [{"category": "mock", "raw_snippet": "monkeypatch.setattr('a', 1)"}],
+                },
+                {
+                    "raw_source": "monkeypatch.setattr('b', 2)",
+                    "mocks": [{"category": "mock", "raw_snippet": "monkeypatch.setattr('b', 2)"}],
+                },
+            ],
+        )
+        report = "\n".join(_render_mock_category_fallback_side_note(db_root=tmp_path))
+        assert "| Dataset A | 5 | 3 | 2 | 60.0% / 40.0% |" in report
+
+    def test_generate_report_includes_mock_category_fallback_side_note(self, tmp_path):
+        report = generate_report(
+            db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
+        )
+        assert "## Mock-Category Fallback Rate" in report

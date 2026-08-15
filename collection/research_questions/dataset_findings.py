@@ -164,6 +164,24 @@ Currently covers:
   calibrates the true rate (found ~0% there too, but via a different,
   network-dependent method this script deliberately doesn't replicate).
 
+- **Mock-category fallback rate**: a side note, not a comparison --
+  `mock_usages.category='mock'` is both a real, specific test-double
+  category (a "mock" keyword literally found in the fixture body) *and*
+  the classifier's catch-all fallback when none of the 5 category terms
+  (`dummy`/`stub`/`spy`/`fake`/`mock`) appear anywhere at all
+  (`_classify_mock_category()`, `detector_shared.py`) -- nothing in the
+  schema distinguishes which happened for a given row. This exactly
+  reconstructs that split (checking whether the fixture's own
+  `raw_source` contains "mock" is exact, not approximate, for
+  `category='mock'` rows specifically -- see
+  `internal-docs/methodology-improvements/mock-category-fallback-analysis.md`
+  for why), plus a finer 3-way split (framework-API-name match vs.
+  naming-only positive match vs. true fallback) and the same split per
+  language -- the per-language view matters here specifically because
+  the pooled Dataset A vs. C fallback-rate difference turned out to be
+  almost entirely a Python/`monkeypatch`-adoption artifact that *reverses
+  direction* for JS/TS, a nuance a pooled-only number would hide.
+
 - **JUnit 3 fallback detection (Java)**: a side note, not a comparison --
   raw counts of `junit3_setup`/`junit3_teardown` fixtures (Java's only
   unannotated fixture_types, matched by method name plus a plain substring
@@ -1233,6 +1251,177 @@ def _render_aliased_mock_import_side_note(*, db_root: Path = paths.DB_ROOT) -> l
     return lines
 
 
+# ---------------------------------------------------------------------------
+# Mock-category fallback rate -- side note
+# ---------------------------------------------------------------------------
+
+def _empty_mock_classification_bucket() -> dict:
+    return {"total": 0, "api_name": 0, "naming_only": 0, "fallback": 0}
+
+
+def _fetch_mock_category_classification_breakdown(conn: sqlite3.Connection) -> dict:
+    """For every mock_usages row already classified category='mock',
+    reconstruct whether that classification came from a positive keyword
+    match or the classifier's fallback (see this module's docstring and
+    internal-docs/methodology-improvements/mock-category-fallback-analysis.md).
+    "mock" is both a real category term and the catch-all -- so, for
+    category='mock' rows specifically (dummy/stub/spy/fake already ruled
+    out by construction), checking the fixture's own raw_source for
+    "mock" (case-insensitive) exactly separates a positive match from a
+    true fallback -- not an approximation.
+
+    Splits positive matches further into api_name (the matched call site
+    itself -- mock_usages.raw_snippet -- contains "mock", e.g.
+    MagicMock(/mock.patch(/jest.mock() vs. naming_only (raw_snippet
+    doesn't, but the fixture's wider raw_source does -- e.g. a
+    keyword-free jest.fn()/vi.fn()/monkeypatch.setattr() call sitting
+    next to a mockClient-named variable elsewhere in the same body).
+
+    Returns {"total", "api_name", "naming_only", "fallback",
+    "by_language": {language: {same 4 keys}}} -- one pass over
+    mock_usages, both the pooled and per-language views come from the
+    same rows so they can't disagree."""
+    rows = conn.execute(
+        "SELECT mu.raw_snippet, f.raw_source, tf.language FROM mock_usages mu "
+        "JOIN fixtures f ON mu.fixture_id = f.id "
+        "JOIN test_files tf ON f.file_id = tf.id "
+        "WHERE mu.category = 'mock'"
+    ).fetchall()
+
+    result = _empty_mock_classification_bucket()
+    by_language: dict[str, dict] = {}
+    for raw_snippet, raw_source, language in rows:
+        snippet_l = (raw_snippet or "").lower()
+        raw_l = (raw_source or "").lower()
+        if "mock" in snippet_l:
+            bucket = "api_name"
+        elif "mock" in raw_l:
+            bucket = "naming_only"
+        else:
+            bucket = "fallback"
+
+        result["total"] += 1
+        result[bucket] += 1
+
+        lang_bucket = by_language.setdefault(language, _empty_mock_classification_bucket())
+        lang_bucket["total"] += 1
+        lang_bucket[bucket] += 1
+
+    result["by_language"] = by_language
+    return result
+
+
+def _render_mock_category_fallback_pct(positive: int, fallback: int, total: int) -> str:
+    """'{positive}% positive / {fallback}% fallback' at one decimal place
+    -- the exact format the paper wants to cite (e.g. "72.0% ... 28.0%
+    from the fallback")."""
+    if total == 0:
+        return "N/A / N/A"
+    return f"{100 * positive / total:.1f}% / {100 * fallback / total:.1f}%"
+
+
+def _render_mock_category_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
+    """## Mock-Category Fallback Rate."""
+    lines = [
+        "## Mock-Category Fallback Rate",
+        "",
+        "Side note, not a comparison: `category='mock'` "
+        "(`mock_usages.category`) is both a real, specific test-double "
+        'category (the literal word "mock" found in the fixture body) '
+        "*and* the classifier's catch-all fallback when none of the 5 "
+        "category terms (dummy/stub/spy/fake/mock) appear anywhere at all "
+        "-- nothing in the schema distinguishes which happened for a given "
+        "row. This reconstructs that split exactly (not an estimate -- see "
+        "`internal-docs/methodology-improvements/mock-category-fallback-analysis.md`), "
+        'in the shape the paper cites it: "X% of mock-type classifications '
+        'result from a positive keyword match, Y% from the fallback."',
+        "",
+    ]
+
+    a_db = require_db_or_none("a", db_root)
+    a_result = None
+    if a_db is not None:
+        with db_session(a_db) as conn:
+            a_result = _fetch_mock_category_classification_breakdown(conn)
+
+    c_sampled_db = require_db_or_none("c", db_root)
+    c_result = None
+    if c_sampled_db is not None:
+        with db_session(c_sampled_db) as conn:
+            c_result = _fetch_mock_category_classification_breakdown(conn)
+
+    # --- Headline: positive vs fallback, the exact number the paper cites ---
+    header = ["Dataset", "category='mock' rows", "Positive match", "Fallback (no keyword)", "Positive % / Fallback %"]
+    lines += ["### Positive match vs. fallback", "", "| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+
+    def _headline_row(label: str, result: dict | None) -> str:
+        if result is None or result["total"] == 0:
+            return f"| {label} | N/A | N/A | N/A | N/A |"
+        positive = result["api_name"] + result["naming_only"]
+        fallback = result["fallback"]
+        pct = _render_mock_category_fallback_pct(positive, fallback, result["total"])
+        return f"| {label} | {result['total']:,} | {positive:,} | {fallback:,} | {pct} |"
+
+    lines.append(_headline_row("Dataset A", a_result))
+    lines.append(_headline_row("Dataset C (sampled)", c_result))
+    lines.append("")
+
+    # --- Finer split: which kind of positive match ---
+    header2 = ["Dataset", "n", "Framework API name", "Naming-only", "Fallback"]
+    lines += [
+        "### Positive matches split further: framework API name vs. naming-only",
+        "",
+        '"Framework API name" -- the matched call site itself '
+        '(`mock_usages.raw_snippet`) contains "mock" (`MagicMock(`, '
+        '`mock.patch(`, `jest.mock(`, ...). "Naming-only" -- the matched '
+        "call is keyword-free (`jest.fn()`, `vi.fn()`, bare `patch()`, "
+        "`monkeypatch.setattr()`, ...) but some other identifier in the "
+        'same fixture body supplied "mock".',
+        "",
+        "| " + " | ".join(header2) + " |",
+        "|" + "---|" * len(header2),
+    ]
+
+    def _split_row(label: str, result: dict | None) -> str:
+        if result is None or result["total"] == 0:
+            return f"| {label} | N/A | N/A | N/A | N/A |"
+        total = result["total"]
+
+        def cell(n: int) -> str:
+            return f"{n:,} ({100 * n / total:.1f}%)"
+
+        return (
+            f"| {label} | {total:,} | {cell(result['api_name'])} | "
+            f"{cell(result['naming_only'])} | {cell(result['fallback'])} |"
+        )
+
+    lines.append(_split_row("Dataset A", a_result))
+    lines.append(_split_row("Dataset C (sampled)", c_result))
+    lines.append("")
+
+    # --- Per language: the pooled number's real driver is language-specific ---
+    lines += [
+        "### Per language",
+        "",
+        "The pooled split above can hide a language-specific reversal --",
+        "checking per language matters here specifically because it does:",
+        "",
+    ]
+    header3 = ["Language", "n", "Framework API name", "Naming-only", "Fallback"]
+    for label, result in (("Dataset A", a_result), ("Dataset C (sampled)", c_result)):
+        lines += [f"**{label}**", "", "| " + " | ".join(header3) + " |", "|" + "---|" * len(header3)]
+        if result is None or not result.get("by_language"):
+            lines.append("| _(no data)_ | -- | -- | -- | -- |")
+            lines.append("")
+            continue
+        for language in sorted(result["by_language"]):
+            lang_result = result["by_language"][language]
+            lines.append(_split_row(language, lang_result))
+        lines.append("")
+
+    return lines
+
+
 def generate_report(
     *,
     db_root: Path = paths.DB_ROOT,
@@ -1316,6 +1505,7 @@ def generate_report(
     lines += _render_js_hook_complexity_side_note(db_root=db_root)
     lines += _render_mocha_bare_hook_side_note(db_root=db_root)
     lines += _render_aliased_mock_import_side_note(db_root=db_root)
+    lines += _render_mock_category_fallback_side_note(db_root=db_root)
 
     return "\n".join(lines)
 
