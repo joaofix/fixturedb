@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-08-14 19:20:47 UTC
+Generated: 2026-08-15 17:34:38 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -61,3 +61,42 @@ Per-repository proportions: for each repo, `setup_pct`/`teardown_pct`/`other_pct
 | javascript | 88 | 144 | 57.5% | 69.7% | 42.5% | 30.3% | 0.140 (negligible) | 0.094 |
 | python | 490 | 558 | 0.0% | 50.0% | 0.0% | 0.0% | 0.371 (medium) | <.001 |
 | typescript | 502 | 177 | 56.4% | 80.3% | 43.6% | 19.7% | 0.352 (medium) | <.001 |
+
+## Unimodality Check: Python Teardown Proportion (Dip Test)
+
+Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, The Dip Test of Unimodality], run on the same per-repo Python `teardown_pct` values the table above summarizes as a single median -- separately per dataset, since this tests whether *one* distribution is unimodal, not whether two distributions differ. Null hypothesis: the distribution is unimodal; a low p-value is evidence of multimodality (e.g. a real "most repos provide none, a distinct minority provide all" split, rather than a smooth continuum from 0% to 100%).
+
+| Dataset | n (Python repos) | Dip statistic | p-value |
+|---|---|---|---|
+| Dataset A | 490 | 0.0174 | 0.415 |
+| Dataset C | 558 | 0.0260 | 0.010 |
+
+**Dataset A -- teardown_pct distribution across 490 Python repos**
+
+```
+ 0.00- 0.10 | ######################################## (416)
+ 0.10- 0.20 | ## (24)
+ 0.20- 0.30 | # (12)
+ 0.30- 0.40 | # (10)
+ 0.40- 0.50 | # (7)
+ 0.50- 0.60 | ## (18)
+ 0.60- 0.70 |  (0)
+ 0.70- 0.80 |  (1)
+ 0.80- 0.90 |  (0)
+ 0.90- 1.00 |  (2)
+```
+
+**Dataset C -- teardown_pct distribution across 558 Python repos**
+
+```
+ 0.00- 0.10 | ######################################## (370)
+ 0.10- 0.20 | #### (38)
+ 0.20- 0.30 | ##### (47)
+ 0.30- 0.40 | #### (35)
+ 0.40- 0.50 | ### (27)
+ 0.50- 0.60 | ### (32)
+ 0.60- 0.70 |  (2)
+ 0.70- 0.80 |  (1)
+ 0.80- 0.90 |  (0)
+ 0.90- 1.00 | # (6)
+```
