@@ -27,6 +27,7 @@ from collection.research_questions.dataset_findings import (
     _fetch_agent_commits_touching_tests,
     _fetch_csv_row_counts,
     _fetch_csv_unique_repo_counts,
+    _fetch_junit3_fallback_counts,
     _fetch_mock_commit_counts,
     _fetch_raw_seart_repo_counts,
     _fetch_repos_with_agent_config,
@@ -37,6 +38,7 @@ from collection.research_questions.dataset_findings import (
     _render_dataset_a_commit_repo_summary,
     _render_dataset_c_repo_summary,
     _render_dataset_c_sampling_summary,
+    _render_junit3_fallback_side_note,
     _render_language_count_table,
     generate_report,
     load_repo_purity_stats,
@@ -118,6 +120,58 @@ def _make_db_with_mock_fixtures(db_file, repos: list[dict]) -> None:
                 num_test_files=1,
                 num_fixtures=len(r.get("fixtures", [])),
                 num_mock_usages=num_mocks_total,
+            )
+
+
+def _make_db_with_typed_fixtures(db_file, fixture_types: list[str], *, language="java") -> None:
+    """Create a DB at `db_file` with one repo, one test_file, and one
+    fixture per entry in `fixture_types` -- used by the JUnit 3 fallback
+    side-note tests below, which need specific fixture_type values
+    _make_db_with_mock_fixtures() above doesn't support (hardcodes
+    "pytest_decorator")."""
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": language,
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        file_id = upsert_test_file(conn, repo_id, "src/test/FooTest.java", language)
+        for j, fixture_type in enumerate(fixture_types):
+            insert_fixture(
+                conn,
+                {
+                    "file_id": file_id,
+                    "repo_id": repo_id,
+                    "name": f"fixture_{j}",
+                    "fixture_type": fixture_type,
+                    "scope": "per_test",
+                    "start_line": j,
+                    "end_line": j + 1,
+                    "loc": 1,
+                    "cyclomatic_complexity": 1,
+                    "max_nesting_depth": 1,
+                    "num_objects_instantiated": 0,
+                    "num_external_calls": 0,
+                    "num_parameters": 0,
+                    "has_teardown_pair": 0,
+                    "raw_source": "",
+                    "framework": "junit",
+                    "num_mocks": 0,
+                },
             )
 
 
@@ -955,3 +1009,68 @@ class TestDatasetCSamplingSummarySection:
         )
         assert "## Dataset C: Sampling-Down Summary" in report
         assert "Matched against Dataset a: 10/10 fixtures, 2 repos, seed=42." in report
+
+
+class TestJunit3FallbackCounts:
+    def test_fetch_counts_both_types(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_typed_fixtures(
+            db_file, ["junit3_setup", "junit3_setup", "junit3_teardown", "before_each"]
+        )
+        with db_session(db_file) as conn:
+            assert _fetch_junit3_fallback_counts(conn) == {
+                "junit3_setup": 2,
+                "junit3_teardown": 1,
+            }
+
+    def test_fetch_counts_missing_type_absent_from_dict(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_typed_fixtures(db_file, ["junit3_setup"])
+        with db_session(db_file) as conn:
+            counts = _fetch_junit3_fallback_counts(conn)
+            assert counts == {"junit3_setup": 1}
+            assert "junit3_teardown" not in counts
+
+    def test_fetch_counts_no_matching_fixtures_returns_empty_dict(self, tmp_path):
+        db_file = paths.db_path("a", root=tmp_path)
+        _make_db_with_typed_fixtures(db_file, ["before_each", "after_each"])
+        with db_session(db_file) as conn:
+            assert _fetch_junit3_fallback_counts(conn) == {}
+
+
+class TestJunit3FallbackSideNote:
+    def test_missing_dbs_render_na_row(self, tmp_path):
+        lines = _render_junit3_fallback_side_note(db_root=tmp_path)
+        report = "\n".join(lines)
+        assert "## JUnit 3 Fallback Detection (Java)" in report
+        assert "| Dataset A | N/A | N/A | N/A |" in report
+        assert "| Dataset C (sampled) | N/A | N/A | N/A |" in report
+        assert "| Dataset C (full, pre-sampling) | N/A | N/A | N/A |" in report
+
+    def test_renders_counts_for_each_db_independently(self, tmp_path):
+        # Dataset A: 1 setup only.
+        _make_db_with_typed_fixtures(paths.db_path("a", root=tmp_path), ["junit3_setup"])
+        # Dataset C sampled (c_sampled.db -- not a paths.db_path() letter,
+        # built directly like _make_db_with_mock_fixtures() does elsewhere
+        # in this file).
+        _make_db_with_typed_fixtures(
+            tmp_path / "c_sampled.db", ["junit3_setup", "junit3_teardown"]
+        )
+        # Dataset C full: a bigger, independent count -- proves the report
+        # doesn't confuse this with the sampled row above.
+        _make_db_with_typed_fixtures(
+            paths.db_path("c", root=tmp_path),
+            ["junit3_setup"] * 3 + ["junit3_teardown"] * 2,
+        )
+
+        report = "\n".join(_render_junit3_fallback_side_note(db_root=tmp_path))
+
+        assert "| Dataset A | 1 | 0 | 1 |" in report
+        assert "| Dataset C (sampled) | 1 | 1 | 2 |" in report
+        assert "| Dataset C (full, pre-sampling) | 3 | 2 | 5 |" in report
+
+    def test_generate_report_includes_junit3_side_note(self, tmp_path):
+        report = generate_report(
+            db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
+        )
+        assert "## JUnit 3 Fallback Detection (Java)" in report

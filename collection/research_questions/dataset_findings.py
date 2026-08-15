@@ -114,6 +114,24 @@ Currently covers:
   silently dropped (see `dataset_sampler.py::
   _allocate_quotas_with_shortfall_reallocation()`).
 
+- **JUnit 3 fallback detection (Java)**: a side note, not a comparison --
+  raw counts of `junit3_setup`/`junit3_teardown` fixtures (Java's only
+  unannotated fixture_types, matched by method name plus a plain substring
+  check on the enclosing class's superclass -- see
+  `internal-docs/methodology-improvements/junit3-fallback-detection.md`
+  for the full investigation of exactly what that check does and does
+  not verify). Tracked here purely so the count is visible on every future
+  re-collection -- a large jump would be worth re-checking by hand the way
+  the investigation above did, since the check's imprecision (a substring
+  match, not exact-name or recursive type resolution) means it's a
+  plausible place for a re-collection to quietly pick up a false positive.
+  Reports Dataset A, Dataset C sampled (`db/c_sampled.db`, what RQ1
+  actually compares), and Dataset C full (`db/c.db`, the raw
+  pre-sampling population re-collection actually changes) side by side --
+  the full/sampled split matters here specifically because sampling
+  varies independently of collection and would otherwise make this count
+  look like it moved when only the sample did.
+
 python -m collection.research_questions.dataset_findings
 """
 
@@ -762,6 +780,88 @@ def _render_dataset_c_sampling_summary(*, output_dir: Path | None = None) -> lis
     return lines
 
 
+# ---------------------------------------------------------------------------
+# JUnit 3 fallback detection (Java) -- side note
+# ---------------------------------------------------------------------------
+
+_JUNIT3_FALLBACK_TYPES = ("junit3_setup", "junit3_teardown")
+
+
+def _fetch_junit3_fallback_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    """Counts of junit3_setup/junit3_teardown in one already-open DB --
+    Java's only fixture_types matched by an unannotated method name plus a
+    substring check on the enclosing class's superclass
+    (detector_java.py::_enclosing_class_extends_test_case()), rather than
+    an annotation. Missing fixture_types (0 rows) are simply absent from
+    the returned dict, same convention as this file's other _fetch_*
+    helpers."""
+    rows = conn.execute(
+        "SELECT fixture_type, COUNT(*) FROM fixtures "
+        "WHERE fixture_type IN (?, ?) GROUP BY fixture_type",
+        _JUNIT3_FALLBACK_TYPES,
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+def _render_junit3_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
+    """## JUnit 3 Fallback Detection (Java) -- see this module's docstring
+    for why this is tracked and why full/sampled Dataset C are both shown.
+
+    Dataset C reads db/c.db directly (not require_db_or_none()'s usual
+    c_sampled.db redirect) for its "full" row -- deliberately, this is the
+    one place in research_questions/ that wants the raw, pre-sampling
+    population rather than the sampled comparison population."""
+    header = ["Dataset", "junit3_setup", "junit3_teardown", "Total"]
+    lines = [
+        "## JUnit 3 Fallback Detection (Java)",
+        "",
+        "Side note, not a comparison: raw counts of `junit3_setup`/"
+        "`junit3_teardown`, Java's only fixture_types identified without an "
+        "annotation -- by method name plus a substring check on the "
+        "enclosing class's superclass, which is not an exact-name or "
+        "recursive type-resolution check. See "
+        "`internal-docs/methodology-improvements/junit3-fallback-detection.md` "
+        "for the full investigation (manual review of every instance found "
+        "in both datasets at time of writing; all genuine, one only via "
+        "substring coincidence). Tracked here so a re-collection that picks "
+        "up a materially different count is easy to notice.",
+        "",
+        "| " + " | ".join(header) + " |",
+        "|" + "---|" * len(header),
+    ]
+
+    def _row(label: str, counts: dict[str, int] | None) -> str:
+        if counts is None:
+            return f"| {label} | N/A | N/A | N/A |"
+        setup = counts.get("junit3_setup", 0)
+        teardown = counts.get("junit3_teardown", 0)
+        return f"| {label} | {setup:,} | {teardown:,} | {setup + teardown:,} |"
+
+    a_db = require_db_or_none("a", db_root)
+    a_counts = None
+    if a_db is not None:
+        with db_session(a_db) as conn:
+            a_counts = _fetch_junit3_fallback_counts(conn)
+    lines.append(_row("Dataset A", a_counts))
+
+    c_sampled_db = require_db_or_none("c", db_root)
+    c_sampled_counts = None
+    if c_sampled_db is not None:
+        with db_session(c_sampled_db) as conn:
+            c_sampled_counts = _fetch_junit3_fallback_counts(conn)
+    lines.append(_row("Dataset C (sampled)", c_sampled_counts))
+
+    c_full_db = paths.db_path("c", root=db_root)
+    c_full_counts = None
+    if c_full_db.exists():
+        with db_session(c_full_db) as conn:
+            c_full_counts = _fetch_junit3_fallback_counts(conn)
+    lines.append(_row("Dataset C (full, pre-sampling)", c_full_counts))
+
+    lines.append("")
+    return lines
+
+
 def generate_report(
     *,
     db_root: Path = paths.DB_ROOT,
@@ -841,6 +941,7 @@ def generate_report(
         db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir
     )
     lines += _render_dataset_c_sampling_summary(output_dir=sample_output_dir)
+    lines += _render_junit3_fallback_side_note(db_root=db_root)
 
     return "\n".join(lines)
 
