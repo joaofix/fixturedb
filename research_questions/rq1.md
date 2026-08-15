@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-08-14 22:42:15 UTC
+Generated: 2026-08-15 01:15:23 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 
@@ -14,7 +14,7 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 1,044 | 6.50 | 7.82 | 1 | 82 | 5.91 |
+| loc | 1,044 | 6.50 | 7.84 | 1 | 82 | 5.91 |
 | cyclomatic_complexity | 1,044 | 1.06 | 1.24 | 1 | 6 | 0.48 |
 | max_nesting_depth | 1,044 | 1.09 | 1.22 | 1 | 4 | 0.34 |
 | num_parameters | 1,044 | 0.00 | 0.21 | 0 | 3 | 0.40 |
@@ -110,7 +110,7 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 851 | 6.28 | 8.22 | 1 | 161 | 8.59 |
+| loc | 851 | 6.30 | 8.24 | 1 | 161 | 8.60 |
 | cyclomatic_complexity | 851 | 1.04 | 1.24 | 1 | 9 | 0.61 |
 | max_nesting_depth | 851 | 1.06 | 1.19 | 1 | 3 | 0.31 |
 | num_parameters | 851 | 0.00 | 0.19 | 0 | 3 | 0.39 |
@@ -190,9 +190,9 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1044 | 851 | U=432366.5 | -0.027 | negligible | 0.317 | -- |
-| java | 84 | 40 | U=1597.5 | -0.049 | negligible | 0.661 | 0.661 |
-| javascript | 88 | 144 | U=6058.0 | -0.044 | negligible | 0.576 | 0.661 |
+| Overall | 1044 | 851 | U=432946.0 | -0.025 | negligible | 0.341 | -- |
+| java | 83 | 39 | U=1647.5 | 0.018 | negligible | 0.876 | 0.876 |
+| javascript | 88 | 144 | U=6058.0 | -0.044 | negligible | 0.576 | 0.767 |
 | python | 490 | 558 | U=117963.5 | -0.137 | negligible | <.001 | <.001 |
 | typescript | 502 | 177 | U=48230.0 | 0.086 | negligible | 0.090 | 0.180 |
 
@@ -200,8 +200,8 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1044 | 851 | U=436087.5 | -0.018 | negligible | 0.473 | -- |
-| java | 84 | 40 | U=1514.0 | -0.099 | negligible | 0.337 | 0.337 |
+| Overall | 1044 | 851 | U=436228.0 | -0.018 | negligible | 0.481 | -- |
+| java | 83 | 39 | U=1469.0 | -0.092 | negligible | 0.377 | 0.377 |
 | javascript | 88 | 144 | U=5095.5 | -0.196 | small | 0.006 | 0.011 |
 | python | 490 | 558 | U=147613.0 | 0.080 | negligible | 0.021 | 0.028 |
 | typescript | 502 | 177 | U=34936.0 | -0.214 | small | <.001 | <.001 |
@@ -210,8 +210,8 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1044 | 851 | U=422450.0 | -0.049 | negligible | 0.057 | -- |
-| java | 84 | 40 | U=1506.5 | -0.103 | negligible | 0.314 | 0.418 |
+| Overall | 1044 | 851 | U=422741.5 | -0.048 | negligible | 0.060 | -- |
+| java | 83 | 39 | U=1477.0 | -0.087 | negligible | 0.401 | 0.534 |
 | javascript | 88 | 144 | U=4938.5 | -0.221 | small | 0.002 | 0.004 |
 | python | 490 | 558 | U=135243.0 | -0.011 | negligible | 0.759 | 0.759 |
 | typescript | 502 | 177 | U=33345.5 | -0.249 | small | <.001 | <.001 |
