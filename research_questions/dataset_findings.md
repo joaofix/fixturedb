@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-15 02:10:42 UTC
+Generated: 2026-08-15 16:00:32 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -127,3 +127,31 @@ Side note, not a comparison: raw counts of `junit3_setup`/`junit3_teardown`, Jav
 | Dataset A | 1 | 0 | 1 |
 | Dataset C (sampled) | 12 | 2 | 14 |
 | Dataset C (full, pre-sampling) | 1,218 | 653 | 1,871 |
+
+## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)
+
+Side note, not a comparison: exact re-check, not a sample, of whether each `before_each`/`after_each` fixture's recorded `cyclomatic_complexity` matches the true outer hook function's own complexity. Lizard orders `function_list` by parse-completion, not source position -- a nested closure (a `.catch(() => {})`, a mock callback) that finishes parsing before the outer hook does can land at `function_list[0]`, which `analyze_function_complexity()` unconditionally reads, silently displacing the outer hook's own complexity. Only fixtures whose `raw_source` contains a likely nested construct are re-checked ("Nested construct" column) -- that's the precondition for the issue at all. See `internal-docs/methodology-improvements/js-ts-hook-fixture-complexity.md` for the full investigation.
+
+| Dataset | before_each/after_each | Nested construct | Re-checked | Mismatched | Mismatch rate |
+|---|---|---|---|---|---|
+| Dataset A | 21,703 | 2,031 | 1,669 | 349 | 20.91% |
+| Dataset C (sampled) | 12,327 | 1,511 | 884 | 68 | 7.69% |
+| Dataset C (full, pre-sampling) | 67,947 | 8,135 | 6,503 | 797 | 12.26% |
+
+## Mocha Bare `before()`/`after()` Detection (Regression Guard)
+
+Side note, not a comparison, and not a live risk estimate -- count of `mocha_before`/`mocha_after` fixtures whose `raw_source` does not start with a bare `before(`/`after(` call, i.e. would indicate the `page.after()`/`browser.before()` false-positive shape investigated in `internal-docs/methodology-improvements/mocha-before-after-detection.md`. That investigation found this is structurally impossible given the detector's exact full-text-equality matching (confirmed 0/80 in a manual sample) -- this should always read 0; a nonzero value would mean the detector's matching logic regressed, not that a real edge case was found.
+
+| Dataset | mocha_before/mocha_after | Non-bare-call shape |
+|---|---|---|
+| Dataset A | 791 | 0 |
+| Dataset C (sampled) | 4,415 | 0 |
+
+## Aliased Mock Import Detection (Python)
+
+Side note, not a comparison, and a lower bound, not a live risk estimate -- count of Python fixtures whose `raw_source` contains a direct class/function-level mock alias (`from unittest.mock import patch as p`, etc.), the one pattern that actually breaks mock detection. This DB-only check can only catch an alias declared *inside* a fixture body -- the far more common top-of-file form is invisible to it by construction (`raw_source` is function-body-only). See `internal-docs/methodology-improvements/aliased-mock-import-prevalence.md` for the real-file sampling that actually calibrates the true rate (found ~0% there too, via a different, network-dependent method this script deliberately doesn't replicate).
+
+| Dataset | Python fixtures | Class/function-level alias in body |
+|---|---|---|
+| Dataset A | 11,712 | 0 |
+| Dataset C (sampled) | 16,745 | 0 |
