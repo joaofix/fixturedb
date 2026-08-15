@@ -384,6 +384,63 @@ class TestLoadDatasetMetrics:
         # One repo contributing 2 python fixtures -> one repo-level mean (15.0).
         assert metrics.repo_level_continuous_by_language["loc"] == {"python": [15.0]}
 
+    def test_no_body_fixture_types_excluded_from_continuous_metrics_only(self, tmp_path):
+        """junit_rule/junit_class_rule (NO_BODY_FIXTURE_TYPES) must not
+        contribute to loc/cyclomatic_complexity/max_nesting_depth's
+        repo-level means (Lizard can't analyze a field declaration -- see
+        _shared.py::NO_BODY_FIXTURE_TYPES), but num_parameters (0 is a
+        genuinely correct value for a field, not a Lizard fallback) and the
+        fixture_type categorical distribution must still include them."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "java",
+                    "fixtures": [
+                        {
+                            "fixture_type": "junit_rule",
+                            "loc": 2,
+                            "cyclomatic_complexity": 1,
+                            "max_nesting_depth": 1,
+                            "num_parameters": 0,
+                        },
+                        {
+                            "fixture_type": "junit4_before",
+                            "loc": 10,
+                            "cyclomatic_complexity": 3,
+                            "max_nesting_depth": 2,
+                            "num_parameters": 2,
+                        },
+                        {
+                            "fixture_type": "junit4_before",
+                            "loc": 10,
+                            "cyclomatic_complexity": 3,
+                            "max_nesting_depth": 2,
+                            "num_parameters": 2,
+                        },
+                    ],
+                }
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+
+        # One repo -- its loc/cc/nesting means exclude the junit_rule
+        # fixture entirely (mean of the two junit4_before fixtures only:
+        # loc 10.0, not (2+10+10)/3=7.33; cc 3.0, not 1.67; nesting 2.0, not 1.67).
+        assert metrics.repo_level_continuous["loc"] == [10.0]
+        assert metrics.repo_level_continuous["cyclomatic_complexity"] == [3.0]
+        assert metrics.repo_level_continuous["max_nesting_depth"] == [2.0]
+        assert metrics.repo_level_continuous_by_language["loc"] == {"java": [10.0]}
+
+        # num_parameters is NOT excluded -- mean includes all 3 fixtures.
+        assert round(metrics.repo_level_continuous["num_parameters"][0], 4) == round(4 / 3, 4)
+
+        # fixture_type categorical distribution still counts junit_rule.
+        assert metrics.categorical["fixture_type"]["junit_rule"] == 1
+        assert metrics.categorical["fixture_type"]["junit4_before"] == 2
+        assert metrics.fixture_type_by_language["java"]["junit_rule"] == 1
+
     def test_floor_pct_computed_for_num_parameters_only(self, tmp_path):
         _make_db(
             tmp_path,

@@ -38,6 +38,31 @@ DATASET_LABELS = {
 # but intentionally excluded here -- these scripts only ever report A vs C now.
 COMPARISONS = [("c", "A vs C")]
 
+# Java fixture_types detected on a field_declaration, not a method/function --
+# @Rule/@ClassRule (detector_java.py). Lizard's function-based analysis
+# structurally cannot find a "function" in a bare field declaration (verified
+# directly: feeding lizard.analyze_file() a `@Rule public X y = new X();`
+# snippet returns an empty function_list every time, even when the
+# initializer contains real branching logic), so cyclomatic_complexity and
+# num_parameters silently fall back to analyze_function_complexity()'s
+# hardcoded defaults (1 and 0) rather than a real measurement -- correct by
+# coincidence for the ~99-100% of these that are a plain `new X(...)`
+# initializer, but not an actual analysis. loc/max_nesting_depth remain
+# genuinely measured (not Lizard-derived), but represent a structurally
+# different code unit (a field, not a function body) than every other
+# fixture_type in any language this project extracts from -- pooling them
+# into the same LOC/CC/nesting_depth comparison mixes two different kinds of
+# "fixture." rq1.py excludes this set from those three continuous-metric
+# comparisons (repo-level and per-language) while keeping it in
+# fixture_type/scope categorical distributions, where "this repo declared N
+# JUnit Rules" is still a meaningful, correctly-measured fact. A single
+# shared constant (not hardcoded per-caller) so any future script needing
+# the same exclusion filters consistently instead of re-deriving or
+# duplicating this list. See
+# internal-docs/methodology-improvements/junit-rule-fixtures.md for the
+# full investigation this constant came out of.
+NO_BODY_FIXTURE_TYPES = {"junit_rule", "junit_class_rule"}
+
 
 def require_db_or_none(dataset: str, db_root: Path = DB_ROOT) -> Path | None:
     """db/{dataset}.db's path, or None (with a warning logged) if it doesn't
@@ -384,12 +409,31 @@ def fetch_categorical_column_by_repo(
 
 
 def fetch_continuous_column_by_repo(
-    conn: sqlite3.Connection, table: str, column: str
+    conn: sqlite3.Connection,
+    table: str,
+    column: str,
+    *,
+    exclude_fixture_types: set[str] | None = None,
 ) -> dict[int, list[float]]:
     """{repo_id: [values]} for `column` in `table`, non-null values only --
-    the per-repo grouping repo_level_means() needs."""
+    the per-repo grouping repo_level_means() needs.
+
+    exclude_fixture_types, when given, adds `fixture_type NOT IN (...)` to
+    the query -- `table` must have a fixture_type column (i.e. be
+    "fixtures") when this is passed; callers against other tables (e.g.
+    rq3.py's mock_usages calls) must leave it None. Exists for
+    NO_BODY_FIXTURE_TYPES (see its own docstring) -- a general opt-in filter
+    rather than something baked into the query unconditionally, since most
+    callers/columns have no reason to exclude anything.
+    """
+    params: tuple = ()
+    where = f"{column} IS NOT NULL"
+    if exclude_fixture_types:
+        placeholders = ", ".join("?" for _ in exclude_fixture_types)
+        where += f" AND fixture_type NOT IN ({placeholders})"
+        params = tuple(exclude_fixture_types)
     rows = conn.execute(
-        f"SELECT repo_id, {column} FROM {table} WHERE {column} IS NOT NULL"
+        f"SELECT repo_id, {column} FROM {table} WHERE {where}", params
     ).fetchall()
     by_repo: dict[int, list[float]] = {}
     for repo_id, value in rows:

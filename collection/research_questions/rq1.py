@@ -22,6 +22,20 @@ rather than silently dropped. `cyclomatic_complexity` also floors heavily
 `max_nesting_depth` -- unlike `num_parameters`, it's kept in the primary
 comparative analysis.
 
+Java's `@Rule`/`@ClassRule` fixtures (`junit_rule`/`junit_class_rule`) are
+excluded from `loc`/`cyclomatic_complexity`/`max_nesting_depth` entirely
+(`_shared.py::NO_BODY_FIXTURE_TYPES`) -- they're detected on a field
+declaration, not a function body, so Lizard structurally cannot analyze
+them (verified directly: an empty function_list every time, even with
+branching in the field's initializer) and `cyclomatic_complexity`/
+`num_parameters` silently fall back to hardcoded defaults rather than a
+real measurement. `loc`/`max_nesting_depth` remain genuinely measured but
+represent a different kind of code unit than every other fixture_type here.
+Still included in `fixture_type`/`scope` categorical distributions, where
+"this repo declared N JUnit Rules" is a meaningful, correctly-measured
+fact. See internal-docs/methodology-improvements/junit-rule-fixtures.md
+for the full investigation.
+
 Every remaining continuous/categorical comparison renders through
 _shared.py's render_comparison_table(): one "Overall" row (uncorrected,
 single pooled test) plus, for metrics with a defined per-language family,
@@ -73,6 +87,7 @@ from ..logging_utils import get_logger
 from ._shared import (
     COMPARISONS,
     DATASET_LABELS,
+    NO_BODY_FIXTURE_TYPES,
     OUTPUT_DIR,
     LanguageLeakage,
     NCounts,
@@ -208,11 +223,20 @@ def _fetch_continuous_by_repo_and_language(
     repo_level_means() per (metric, language) for the per-language
     continuous family tests, the same repo-declustering repo_level_continuous
     already applies pooled (see compute_stratified_continuous_balance()'s
-    docstring in _shared.py for why per-language stays repo-level too)."""
+    docstring in _shared.py for why per-language stays repo-level too).
+
+    Excludes NO_BODY_FIXTURE_TYPES (see _shared.py) -- this function only
+    ever serves CONTINUOUS_METRICS (loc/cyclomatic_complexity/
+    max_nesting_depth), never num_parameters, so the exclusion applies
+    unconditionally rather than needing an opt-in flag the way
+    fetch_continuous_column_by_repo()'s does."""
     columns_sql = ", ".join(f"f.{m}" for m in CONTINUOUS_METRICS)
+    placeholders = ", ".join("?" for _ in NO_BODY_FIXTURE_TYPES)
     rows = conn.execute(
         f"SELECT f.repo_id, tf.language, {columns_sql} FROM fixtures f "
-        "JOIN test_files tf ON f.file_id = tf.id"
+        "JOIN test_files tf ON f.file_id = tf.id "
+        f"WHERE f.fixture_type NOT IN ({placeholders})",
+        tuple(NO_BODY_FIXTURE_TYPES),
     ).fetchall()
     result: dict[str, dict[str, dict[int, list[float]]]] = {m: {} for m in CONTINUOUS_METRICS}
     for row in rows:
@@ -286,8 +310,24 @@ def load_dataset_metrics(
         # metric's median/mean/min/max/stdev from here too, so it stays
         # repo-level throughout, same as the tested metrics, rather than
         # silently reverting to fixture-level for just this one column.
+        #
+        # CONTINUOUS_METRICS (loc/cyclomatic_complexity/max_nesting_depth)
+        # exclude NO_BODY_FIXTURE_TYPES -- see that constant's docstring in
+        # _shared.py. num_parameters does NOT exclude them: 0 is a correct,
+        # not-Lizard-derived value for a field's parameter count, unlike CC
+        # (which is a meaningless Lizard fallback default for these), so it
+        # has no equivalent reason to drop them.
         repo_level_continuous = {
-            m: repo_level_means(fetch_continuous_column_by_repo(conn, "fixtures", m))
+            m: repo_level_means(
+                fetch_continuous_column_by_repo(
+                    conn,
+                    "fixtures",
+                    m,
+                    exclude_fixture_types=(
+                        NO_BODY_FIXTURE_TYPES if m in CONTINUOUS_METRICS else None
+                    ),
+                )
+            )
             for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }
         continuous_by_repo_and_language = _fetch_continuous_by_repo_and_language(conn)
