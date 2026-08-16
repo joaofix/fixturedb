@@ -14,6 +14,7 @@ fixture is found in the first place), see [detection.md](detection.md).
 | `loc` | Non-blank line count | `detector_shared.py::_count_loc()` | all |
 | `num_objects_instantiated` | Regex (constructor patterns) | `complexity_provider.py::_count_object_instantiations()` | all |
 | `num_external_calls` | Regex (I/O patterns) | `detector_shared.py::_count_external_calls()` | all |
+| `num_comment_lines`, `comment_density` | Tree-sitter comment-node walk | `detector_shared.py::_count_comment_lines()` | all |
 | `fixture_type`, `framework`, `scope` | AST pattern match vs. `fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` | all |
 | `has_teardown_pair` | Post-processing, paired against sibling fixtures | `detector_shared.py::_calculate_teardown_pairs()` | all |
 | `fixture_dependencies` | Post-processing, parameter-injection matching | `detector_shared.py::_detect_fixture_dependencies()` | Python/pytest only |
@@ -85,6 +86,16 @@ it's I/O.
 
 **Known limitation:** regex-based, so it can miss uncommon I/O idioms (custom DB wrappers) or
 false-positive on a string literal that happens to contain a matched substring.
+
+### num_comment_lines, comment_density
+
+Comment lines are counted from the AST, not from regex/text scanning: `_count_comment_lines()` walks every descendant of the fixture's own tree-sitter node (the same node `_build_result()` derives `raw_source`/`loc`/every other metric from — no re-parsing) and sums the line span of each node whose type is that language's comment node type — `comment` for Python (line-only; the grammar has no block-comment construct) and JS/TS (one type covers both `//` and `/* */`), or `line_comment`/`block_comment` for Java (two distinct types). A `//`/`#` line comment always spans exactly one line; a `/* */` block comment can span several, clipped to the fixture's own `start_line`/`end_line` if it were ever to extend past them (in practice it can't — every counted node is a genuine descendant, so it's already contained within the fixture's own span by construction).
+
+`comment_density` is `num_comment_lines / loc`, computed after `loc` since it depends on it; `0.0` (not a `ZeroDivisionError`) if `loc` is `0`, though a real fixture's `loc` is never actually 0 (even a bare one-line signature counts as 1 non-blank line).
+
+Because detection is AST-node-based, a `#`/`//`/`/* */` marker sitting inside a string literal is never mistaken for a real comment — the parser already knows it's string content, not a comment token.
+
+**Note on existing DB files:** `num_comment_lines`/`comment_density` were added after `db/a.db`/`db/b.db`/`db/c.db` were already collected — see [Database Schema](database-schema.md#fixtures) for the migration/backfill caveat (self-healed schema, not backfilled values; a full re-extraction is required for real numbers on previously-collected data).
 
 ### num_parameters
 

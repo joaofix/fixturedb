@@ -85,6 +85,8 @@ Individual fixture definitions and their quantitative metrics.
 | `max_nesting_depth` | INTEGER | Maximum block nesting depth |
 | `num_objects_instantiated` | INTEGER | Estimated object creations inside the fixture |
 | `num_external_calls` | INTEGER | Estimated I/O or external calls inside the fixture |
+| `num_comment_lines` | INTEGER | Comment-only lines within the fixture's own line span (tree-sitter comment-node walk) |
+| `comment_density` | REAL | `num_comment_lines / loc`, or `0.0` if `loc` is 0 |
 | `num_parameters` | INTEGER | Number of fixture parameters |
 | `has_teardown_pair` | INTEGER | Binary indicator for teardown or cleanup logic |
 | `raw_source` | TEXT | Original source text for the fixture |
@@ -97,6 +99,8 @@ Individual fixture definitions and their quantitative metrics.
 | `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored; a fixed provenance tag (`'human'`, `'human_pre2022'`) otherwise |
 | `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
 | `repo_age_at_commit_years` | REAL | Repo age at `commit_date` (`created_at` → `commit_date`) — always defined, unlike `repositories.repo_age_years` |
+
+> **`num_comment_lines`/`comment_density` and pre-existing DB files:** these two columns were added after `db/a.db`/`db/b.db`/`db/c.db` were already collected. `initialise_db()`'s column-migration self-heal (`_COLUMN_MIGRATIONS` in `db.py`) adds the columns to any such file automatically, but only backs them with the schema `DEFAULT` (`0`/`0.0`) — it cannot retroactively compute the real count, which requires re-walking that fixture's own tree-sitter node. A `comment_density` of `0.0` on a fixture collected before this change is therefore ambiguous (genuinely zero comments, vs. never measured); a full re-extraction is required before these two columns can be trusted or reported on for any dataset collected earlier.
 
 ### mock_usages
 
