@@ -1007,10 +1007,10 @@ class TestDatasetASummarySection:
 
 
 class TestDatasetCSummarySection:
-    def test_missing_sampled_db_still_renders_csv_sourced_rows(self, tmp_path):
+    def test_missing_db_still_renders_csv_sourced_rows(self, tmp_path):
         """Candidate repos/Created within 2016-2020 come from collection
-        CSVs, unaffected by whether db/c_sampled.db exists -- only the
-        fixture/mock rows should degrade to N/A."""
+        CSVs, unaffected by whether db/c.db exists -- only the fixture/mock
+        rows should degrade to N/A."""
         _write_gzip_csv(
             tmp_path / "raw" / "python.csv.gz", ["id", "name"], [{"id": "1", "name": "o/r0"}]
         )
@@ -1030,23 +1030,25 @@ class TestDatasetCSummarySection:
         assert "| With any fixtures | N/A | N/A | N/A | N/A | N/A |" in report
         assert "| With any mocks | N/A | N/A | N/A | N/A | N/A |" in report
 
-    def test_reads_sampled_db_not_full_db(self, tmp_path):
-        """Confirms the section really goes through the c -> c_sampled.db
-        redirect: a repo written to the full c.db must NOT appear."""
+    def test_reads_full_db_not_sampled_db(self, tmp_path):
+        """Dataset C sampling is deactivated -- a repo written to the full
+        db/c.db must be picked up directly, and a db/c_sampled.db existing
+        alongside it must not matter at all (not read, not preferred)."""
         _make_db_with_mock_fixtures(
             paths.db_path("c", root=tmp_path),
             [{"language": "python", "fixtures": [{"num_mocks": 1}]}],
         )
-        # Full db/c.db has data, but db/c_sampled.db does not exist --
-        # With any fixtures/mocks must still be "not available".
+        # Full db/c.db has data -- must be picked up directly, no sampling
+        # step required first.
         lines = _render_dataset_c_repo_summary(db_root=tmp_path)
         report = "\n".join(lines)
-        assert "| With any fixtures | N/A | N/A | N/A | N/A | N/A |" in report
+        assert "| With any fixtures | 0 | 0 | 1 | 0 | 1 |" in report
 
-        # Now write the sampled db instead -- must be picked up.
+        # A stale db/c_sampled.db (e.g. left over from a previous
+        # sample-c-repos run) existing alongside it must not change anything.
         _make_db_with_mock_fixtures(
             tmp_path / "c_sampled.db",
-            [{"language": "python", "fixtures": [{"num_mocks": 1}]}],
+            [{"language": "python", "fixtures": [{"num_mocks": 5}]}],
         )
         lines = _render_dataset_c_repo_summary(db_root=tmp_path)
         report = "\n".join(lines)
@@ -1182,30 +1184,26 @@ class TestJunit3FallbackSideNote:
         report = "\n".join(lines)
         assert "## JUnit 3 Fallback Detection (Java)" in report
         assert "| Dataset A | N/A | N/A | N/A |" in report
-        assert "| Dataset C (sampled) | N/A | N/A | N/A |" in report
-        assert "| Dataset C (full, pre-sampling) | N/A | N/A | N/A |" in report
+        assert "| Dataset C | N/A | N/A | N/A |" in report
 
     def test_renders_counts_for_each_db_independently(self, tmp_path):
         # Dataset A: 1 setup only.
         _make_db_with_typed_fixtures(paths.db_path("a", root=tmp_path), ["junit3_setup"])
-        # Dataset C sampled (c_sampled.db -- not a paths.db_path() letter,
-        # built directly like _make_db_with_mock_fixtures() does elsewhere
-        # in this file).
-        _make_db_with_typed_fixtures(
-            tmp_path / "c_sampled.db", ["junit3_setup", "junit3_teardown"]
-        )
-        # Dataset C full: a bigger, independent count -- proves the report
-        # doesn't confuse this with the sampled row above.
+        # Dataset C: the full db/c.db, read directly (sampling deactivated).
         _make_db_with_typed_fixtures(
             paths.db_path("c", root=tmp_path),
             ["junit3_setup"] * 3 + ["junit3_teardown"] * 2,
+        )
+        # A stale db/c_sampled.db left over from a previous sample-c-repos
+        # run must not be read or confused with the row above.
+        _make_db_with_typed_fixtures(
+            tmp_path / "c_sampled.db", ["junit3_setup", "junit3_teardown"]
         )
 
         report = "\n".join(_render_junit3_fallback_side_note(db_root=tmp_path))
 
         assert "| Dataset A | 1 | 0 | 1 |" in report
-        assert "| Dataset C (sampled) | 1 | 1 | 2 |" in report
-        assert "| Dataset C (full, pre-sampling) | 3 | 2 | 5 |" in report
+        assert "| Dataset C | 3 | 2 | 5 |" in report
 
     def test_generate_report_includes_junit3_side_note(self, tmp_path):
         report = generate_report(
@@ -1310,8 +1308,7 @@ class TestJsHookComplexitySideNote:
         report = "\n".join(_render_js_hook_complexity_side_note(db_root=tmp_path))
         assert "## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)" in report
         assert "| Dataset A | N/A | N/A | N/A | N/A | N/A |" in report
-        assert "| Dataset C (sampled) | N/A | N/A | N/A | N/A | N/A |" in report
-        assert "| Dataset C (full, pre-sampling) | N/A | N/A | N/A | N/A | N/A |" in report
+        assert "| Dataset C | N/A | N/A | N/A | N/A | N/A |" in report
 
     def test_renders_real_mismatch_rate(self, tmp_path):
         _make_db_with_fixture_rows(
@@ -1377,7 +1374,7 @@ class TestMochaBareHookSideNote:
         report = "\n".join(_render_mocha_bare_hook_side_note(db_root=tmp_path))
         assert "## Mocha Bare `before()`/`after()` Detection (Regression Guard)" in report
         assert "| Dataset A | N/A | N/A |" in report
-        assert "| Dataset C (sampled) | N/A | N/A |" in report
+        assert "| Dataset C | N/A | N/A |" in report
 
     def test_renders_real_counts(self, tmp_path):
         _make_db_with_fixture_rows(
@@ -1465,7 +1462,7 @@ class TestAliasedMockImportSideNote:
         report = "\n".join(_render_aliased_mock_import_side_note(db_root=tmp_path))
         assert "## Aliased Mock Import Detection (Python)" in report
         assert "| Dataset A | N/A | N/A |" in report
-        assert "| Dataset C (sampled) | N/A | N/A |" in report
+        assert "| Dataset C | N/A | N/A |" in report
 
     def test_renders_real_counts(self, tmp_path):
         _make_db_with_fixture_rows(
@@ -1594,7 +1591,7 @@ class TestMockCategoryFallbackSideNote:
         report = "\n".join(_render_mock_category_fallback_side_note(db_root=tmp_path))
         assert "## Mock-Category Fallback Rate" in report
         assert "| Dataset A | N/A | N/A | N/A | N/A |" in report
-        assert "| Dataset C (sampled) | N/A | N/A | N/A | N/A |" in report
+        assert "| Dataset C | N/A | N/A | N/A | N/A |" in report
 
     def test_renders_headline_percentages_in_paper_citable_format(self, tmp_path):
         # 3 positive (api_name) + 2 fallback = 5 total -> 60.0% / 40.0%,

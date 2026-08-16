@@ -67,7 +67,7 @@ Currently covers:
   copied over without relabeling.
 
   Sourced from three places, not just db/*.db like the rest of this file:
-  db/a.db and db/c_sampled.db (repository/fixture counts), the raw SEART
+  db/a.db and db/c.db (repository/fixture counts), the raw SEART
   search export (`github-search-raw/*.csv.gz` -- the "Candidate repos" row,
   identical for A and C since both draw from the same export, see
   `paths.py::default_repo_source()`), and Dataset A's own commit-discovery
@@ -92,13 +92,13 @@ Currently covers:
   missing the column (backfill not run, or its re-clone failed) is simply
   excluded from the sum rather than counted as 0.
 
-  Known limitations: Dataset C's "With any
-  fixtures"/"With any mocks" rows read the *sampled* `db/c_sampled.db`, not
-  the full `db/c.db` -- consistent with every other "c" reference in
-  `research_questions/`, even though this table isn't itself an A-vs-C
-  comparison -- while "Candidate repos"/"Created within 2016-2020" read the
-  original, never-resampled collection CSVs, since sampling is a later,
-  analysis-time step that doesn't touch those.
+  Dataset C's "With any fixtures"/"With any mocks" rows read the full
+  `db/c.db`, same as every other "c" reference in `research_questions/`
+  now that Dataset C sampling is deactivated (see
+  `_shared.py::require_db_or_none()`'s docstring) -- "Candidate repos"/
+  "Created within 2016-2020" read the original collection CSVs either way,
+  since sampling was always a later, analysis-time step that never
+  touched those.
 
 - **Dataset C sampling-down summary**: how `sample-c-repos --match-dataset
   a` actually stratified the sample -- per-language "Dataset C's own mix"
@@ -193,12 +193,10 @@ Currently covers:
   the investigation above did, since the check's imprecision (a substring
   match, not exact-name or recursive type resolution) means it's a
   plausible place for a re-collection to quietly pick up a false positive.
-  Reports Dataset A, Dataset C sampled (`db/c_sampled.db`, what RQ1
-  actually compares), and Dataset C full (`db/c.db`, the raw
-  pre-sampling population re-collection actually changes) side by side --
-  the full/sampled split matters here specifically because sampling
-  varies independently of collection and would otherwise make this count
-  look like it moved when only the sample did.
+  Reports Dataset A and Dataset C (the full `db/c.db`, same as every
+  other "c" reference in `research_questions/` now that Dataset C
+  sampling is deactivated -- see `_shared.py::require_db_or_none()`'s
+  docstring).
 
 python -m collection.research_questions.dataset_findings
 """
@@ -618,8 +616,10 @@ def _fetch_repos_with_test_commits(conn: sqlite3.Connection) -> dict[str, int]:
 
 def _fetch_mock_commit_counts(conn: sqlite3.Connection) -> dict[str, int]:
     """"Mock commits" -- distinct commits that introduced >=1 fixture with
-    num_mocks > 0. Reused as-is against db/c_sampled.db for Dataset C's
-    table (identical schema/columns)."""
+    num_mocks > 0. Dataset A only -- Dataset C's own summary table has no
+    "Mock commits" row (commit-level granularity doesn't apply to a
+    cross-repo snapshot collection the way it does to Dataset A's
+    per-commit scan)."""
     rows = conn.execute(
         "SELECT r.language, COUNT(DISTINCT f.commit_sha) FROM fixtures f "
         "JOIN repositories r ON f.repo_id = r.id "
@@ -748,14 +748,12 @@ def _render_dataset_c_repo_summary(
     datasets_root: Path = paths.DATASETS_ROOT,
     raw_search_dir: Path = paths.RAW_SEARCH_DIR,
 ) -> list[str]:
-    """## Dataset C: Repository Summary -- reads db/c_sampled.db (via the
-    same require_db_or_none("c", ...) redirect every research_questions/
-    script uses), not the full db/c.db, per explicit project convention:
-    consistency with every other "c" reference in this package, even
-    though this table isn't itself an A-vs-C statistical comparison.
+    """## Dataset C: Repository Summary -- reads the full db/c.db (via
+    require_db_or_none("c", ...), same as every other dataset now that
+    Dataset C sampling is deactivated -- see that function's docstring).
     "Candidate repos"/"Created within 2016-2020" are unaffected either way
     -- they describe the original collection funnel, which sampling (a
-    later, analysis-time step) never touches."""
+    later, analysis-time step) never touched even when it was active."""
     candidate_repos = _fetch_raw_seart_repo_counts(raw_search_dir)
     created_in_window = _fetch_csv_row_counts(datasets_root / "c" / "repos", "_repo.csv")
 
@@ -878,12 +876,9 @@ def _fetch_junit3_fallback_counts(conn: sqlite3.Connection) -> dict[str, int]:
 
 def _render_junit3_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
     """## JUnit 3 Fallback Detection (Java) -- see this module's docstring
-    for why this is tracked and why full/sampled Dataset C are both shown.
-
-    Dataset C reads db/c.db directly (not require_db_or_none()'s usual
-    c_sampled.db redirect) for its "full" row -- deliberately, this is the
-    one place in research_questions/ that wants the raw, pre-sampling
-    population rather than the sampled comparison population."""
+    for why this is tracked. Dataset C reads the full db/c.db (via
+    require_db_or_none()) now that Dataset C sampling is deactivated --
+    see _shared.py::require_db_or_none()'s docstring."""
     header = ["Dataset", "junit3_setup", "junit3_teardown", "Total"]
     lines = [
         "## JUnit 3 Fallback Detection (Java)",
@@ -917,19 +912,12 @@ def _render_junit3_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[
             a_counts = _fetch_junit3_fallback_counts(conn)
     lines.append(_row("Dataset A", a_counts))
 
-    c_sampled_db = require_db_or_none("c", db_root)
-    c_sampled_counts = None
-    if c_sampled_db is not None:
-        with db_session(c_sampled_db) as conn:
-            c_sampled_counts = _fetch_junit3_fallback_counts(conn)
-    lines.append(_row("Dataset C (sampled)", c_sampled_counts))
-
-    c_full_db = paths.db_path("c", root=db_root)
-    c_full_counts = None
-    if c_full_db.exists():
-        with db_session(c_full_db) as conn:
-            c_full_counts = _fetch_junit3_fallback_counts(conn)
-    lines.append(_row("Dataset C (full, pre-sampling)", c_full_counts))
+    c_db = require_db_or_none("c", db_root)
+    c_counts = None
+    if c_db is not None:
+        with db_session(c_db) as conn:
+            c_counts = _fetch_junit3_fallback_counts(conn)
+    lines.append(_row("Dataset C", c_counts))
 
     lines.append("")
     return lines
@@ -1071,19 +1059,12 @@ def _render_js_hook_complexity_side_note(*, db_root: Path = paths.DB_ROOT) -> li
             a_result = _fetch_js_hook_complexity_mismatch(conn)
     lines.append(_row("Dataset A", a_result))
 
-    c_sampled_db = require_db_or_none("c", db_root)
-    c_sampled_result = None
-    if c_sampled_db is not None:
-        with db_session(c_sampled_db) as conn:
-            c_sampled_result = _fetch_js_hook_complexity_mismatch(conn)
-    lines.append(_row("Dataset C (sampled)", c_sampled_result))
-
-    c_full_db = paths.db_path("c", root=db_root)
-    c_full_result = None
-    if c_full_db.exists():
-        with db_session(c_full_db) as conn:
-            c_full_result = _fetch_js_hook_complexity_mismatch(conn)
-    lines.append(_row("Dataset C (full, pre-sampling)", c_full_result))
+    c_db = require_db_or_none("c", db_root)
+    c_result = None
+    if c_db is not None:
+        with db_session(c_db) as conn:
+            c_result = _fetch_js_hook_complexity_mismatch(conn)
+    lines.append(_row("Dataset C", c_result))
 
     lines.append("")
     return lines
@@ -1154,12 +1135,12 @@ def _render_mocha_bare_hook_side_note(*, db_root: Path = paths.DB_ROOT) -> list[
             a_result = _fetch_mocha_bare_hook_non_bare_count(conn)
     lines.append(_row("Dataset A", a_result))
 
-    c_sampled_db = require_db_or_none("c", db_root)
-    c_sampled_result = None
-    if c_sampled_db is not None:
-        with db_session(c_sampled_db) as conn:
-            c_sampled_result = _fetch_mocha_bare_hook_non_bare_count(conn)
-    lines.append(_row("Dataset C (sampled)", c_sampled_result))
+    c_db = require_db_or_none("c", db_root)
+    c_result = None
+    if c_db is not None:
+        with db_session(c_db) as conn:
+            c_result = _fetch_mocha_bare_hook_non_bare_count(conn)
+    lines.append(_row("Dataset C", c_result))
 
     lines.append("")
     return lines
@@ -1240,12 +1221,12 @@ def _render_aliased_mock_import_side_note(*, db_root: Path = paths.DB_ROOT) -> l
             a_result = _fetch_aliased_mock_import_counts(conn)
     lines.append(_row("Dataset A", a_result))
 
-    c_sampled_db = require_db_or_none("c", db_root)
-    c_sampled_result = None
-    if c_sampled_db is not None:
-        with db_session(c_sampled_db) as conn:
-            c_sampled_result = _fetch_aliased_mock_import_counts(conn)
-    lines.append(_row("Dataset C (sampled)", c_sampled_result))
+    c_db = require_db_or_none("c", db_root)
+    c_result = None
+    if c_db is not None:
+        with db_session(c_db) as conn:
+            c_result = _fetch_aliased_mock_import_counts(conn)
+    lines.append(_row("Dataset C", c_result))
 
     lines.append("")
     return lines
@@ -1344,10 +1325,10 @@ def _render_mock_category_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -
         with db_session(a_db) as conn:
             a_result = _fetch_mock_category_classification_breakdown(conn)
 
-    c_sampled_db = require_db_or_none("c", db_root)
+    c_db = require_db_or_none("c", db_root)
     c_result = None
-    if c_sampled_db is not None:
-        with db_session(c_sampled_db) as conn:
+    if c_db is not None:
+        with db_session(c_db) as conn:
             c_result = _fetch_mock_category_classification_breakdown(conn)
 
     # --- Headline: positive vs fallback, the exact number the paper cites ---
@@ -1363,7 +1344,7 @@ def _render_mock_category_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -
         return f"| {label} | {result['total']:,} | {positive:,} | {fallback:,} | {pct} |"
 
     lines.append(_headline_row("Dataset A", a_result))
-    lines.append(_headline_row("Dataset C (sampled)", c_result))
+    lines.append(_headline_row("Dataset C", c_result))
     lines.append("")
 
     # --- Finer split: which kind of positive match ---
@@ -1396,7 +1377,7 @@ def _render_mock_category_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -
         )
 
     lines.append(_split_row("Dataset A", a_result))
-    lines.append(_split_row("Dataset C (sampled)", c_result))
+    lines.append(_split_row("Dataset C", c_result))
     lines.append("")
 
     # --- Per language: the pooled number's real driver is language-specific ---
@@ -1408,7 +1389,7 @@ def _render_mock_category_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -
         "",
     ]
     header3 = ["Language", "n", "Framework API name", "Naming-only", "Fallback"]
-    for label, result in (("Dataset A", a_result), ("Dataset C (sampled)", c_result)):
+    for label, result in (("Dataset A", a_result), ("Dataset C", c_result)):
         lines += [f"**{label}**", "", "| " + " | ".join(header3) + " |", "|" + "---|" * len(header3)]
         if result is None or not result.get("by_language"):
             lines.append("| _(no data)_ | -- | -- | -- | -- |")

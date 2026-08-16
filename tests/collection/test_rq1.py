@@ -34,9 +34,10 @@ def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
     """Create db/{dataset}.db with one repo per entry in `repos`, each
     entry a list of `loc` values for that repo's fixtures.
 
-    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
-    docstring for why."""
-    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    Dataset "c" writes to the full c.db, same as every other dataset --
+    Dataset C sampling is deactivated, see _shared.py::
+    require_db_or_none()'s docstring."""
+    db_file = paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, loc_values in enumerate(repos):
@@ -90,9 +91,10 @@ def _make_multi_repo_fixture_type_db(root, dataset: str, repos: list[list[str]])
     fixture_type analogue of _make_multi_repo_db() above (which varies
     `loc` instead), for testing fixture_type_by_repo's repo-declustering.
 
-    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
-    docstring for why."""
-    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    Dataset "c" writes to the full c.db, same as every other dataset --
+    Dataset C sampling is deactivated, see _shared.py::
+    require_db_or_none()'s docstring."""
+    db_file = paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, fixture_types in enumerate(repos):
@@ -146,12 +148,11 @@ def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
     Each dict in `fixtures` may override any of the base columns below
     (loc, cyclomatic_complexity, scope, fixture_type, commit_type, ...).
 
-    Dataset "c" writes to c_sampled.db, not c.db -- require_db_or_none()
-    resolves "c" there exclusively (see _shared.py), so a test DB built at
-    the full c.db path would be invisible to load_dataset_metrics()/
-    generate_report() and silently look like "not collected yet."
+    Dataset "c" writes to the full c.db, same as every other dataset --
+    Dataset C sampling is deactivated, see _shared.py::
+    require_db_or_none()'s docstring.
     """
-    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    db_file = paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         repo_id, _ = upsert_repository(
@@ -203,9 +204,10 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
     Lets a single repo contribute fixtures in more than one language, for
     testing language-stratified aggregation (fixture_type_by_language).
 
-    Dataset "c" writes to c_sampled.db, not c.db -- see _make_db()'s
-    docstring for why."""
-    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    Dataset "c" writes to the full c.db, same as every other dataset --
+    Dataset C sampling is deactivated, see _shared.py::
+    require_db_or_none()'s docstring."""
+    db_file = paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         repo_id, _ = upsert_repository(

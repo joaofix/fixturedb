@@ -34,12 +34,11 @@ def _make_db(root, dataset: str, repos: list[dict]) -> None:
     repo with with_fixture=False is inserted but gets no fixture row, to
     exercise the "repos without any fixture are excluded" behavior).
 
-    Dataset "c" writes to c_sampled.db, not c.db -- require_db_or_none()
-    resolves "c" there exclusively (see _shared.py), so a test DB built at
-    the full c.db path would be invisible to load_repo_control_variables()/
-    generate_report() and silently look like "not collected yet."
+    Dataset "c" writes to the full c.db, same as every other dataset --
+    Dataset C sampling is deactivated, see _shared.py::
+    require_db_or_none()'s docstring.
     """
-    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    db_file = paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for i, repo_spec in enumerate(repos):

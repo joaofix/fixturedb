@@ -71,22 +71,26 @@ def require_db_or_none(dataset: str, db_root: Path = DB_ROOT) -> Path | None:
     exist yet -- the shared "skip, don't error" convention every rqN.py
     script uses so it can run against whatever subset of A/B/C is collected.
 
-    Dataset "c" is a hard exception: this resolves to db/c_sampled.db, never
-    the full db/c.db. The full Dataset C is ~3.3x Dataset A's size, and
-    running the RQ comparisons against that imbalance is methodologically
-    unsound -- see `python -m collection sample-c-repos`
-    (collection/dataset_pipeline.py::sample_dataset_c_repos()), which builds
-    c_sampled.db from a random, language-stratified, whole-repo sample sized
-    to match Dataset A. If c_sampled.db doesn't exist yet, this behaves
-    exactly like any other missing DB (warn, return None, dataset skipped) --
-    there is deliberately no fallback to the full db/c.db here, in any
-    circumstance. This substitution only applies within research_questions/
-    -- db/c.db itself is untouched and still used normally by collection,
-    export/validate/summarize, and analyze-distribution."""
-    if dataset == "c":
-        db_file = db_root / "c_sampled.db"
-    else:
-        db_file = db_path(dataset, root=db_root)
+    Dataset "c" resolves to the full db/c.db, same as every other dataset.
+
+    Previously this redirected "c" to db/c_sampled.db (a random,
+    language-stratified, whole-repo sample sized to match Dataset A's
+    count -- see `python -m collection sample-c-repos`,
+    `dataset_pipeline.py::sample_dataset_c_repos()`), on the reasoning that
+    the full Dataset C is ~3.3x Dataset A's size and comparing against that
+    imbalance was methodologically unsound. Deactivated: research_questions/
+    now reports against the full, unsampled Dataset C directly -- every
+    A-vs-C comparison in this package already runs at the *repo* level
+    (Mann-Whitney U + Cliff's delta on per-repo proportions/means, not a
+    pooled fixture-level test), which is far less sensitive to a repo-count
+    imbalance than a naive fixture-weighted test would be; n_A/n_C repo
+    counts are reported on every comparison row so the imbalance itself
+    stays visible rather than hidden behind a subsample.
+
+    The sampling machinery itself is untouched and still runnable manually
+    (`sample-c-repos`) -- db/c_sampled.db may still exist on disk from a
+    previous run, but nothing in research_questions/ reads it anymore."""
+    db_file = db_path(dataset, root=db_root)
     if not db_file.exists():
         logger.warning(f"{db_file} not found; skipping dataset {dataset!r}")
         return None
