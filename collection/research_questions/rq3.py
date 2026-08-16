@@ -54,12 +54,19 @@ not an authorship-era effect. See docs/reference/limitations.md's
   clearly-labeled aggregate descriptive (percentages only, no inference)
   table is also shown for reference.
 
-`has_mock` is unaffected by any of this -- a binary yes/no isn't a
-language-specific construct the way a framework *name* or a category
-*naming convention* is, so its existing pooled + per-language chi-square
-family (fixture-level, "not used in the paper" -- see below) and its
-pooled repo-level-proportion test (in "Repo-level aggregates", the one
-actually reported) both stand unchanged.
+`has_mock` is unaffected by the language-specific-*construct* reasoning
+above -- a binary yes/no isn't a language-specific construct the way a
+framework *name* or a category *naming convention* is, so it keeps its
+existing pooled + per-language chi-square family (fixture-level, "not
+used in the paper" -- see below) unchanged. Its repo-level-proportion test
+(in "Repo-level aggregates", the one actually reported) now ALSO gets a
+per-language breakdown below the pooled Overall row
+(`_render_has_mock_by_language_table()`) -- not because has_mock is
+language-specific by construction, but because the two datasets' *language
+mixes* still differ, so a pooled repo-level difference can still be partly
+a language-mix artifact; the per-language rows check whether it holds
+within each language too, reusing `compare_categorical_repo_level()`
+exactly as everywhere else in this script, its own BH-FDR family.
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
@@ -144,6 +151,9 @@ class DatasetMetrics:
     has_mock_n_by_language: dict[str, int] = field(default_factory=dict)
     repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
     has_mock_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
+    has_mock_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
+        default_factory=dict
+    )
 
 
 def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
@@ -242,6 +252,34 @@ def _fetch_category_by_repo_and_language(
     return result
 
 
+def _fetch_has_mock_by_repo_and_language(
+    conn: sqlite3.Connection,
+) -> dict[str, dict[int, dict[str, int]]]:
+    """{language: {repo_id: {"has_mock": n, "no_mock": n}}} -- has_mock's
+    per-(language, repo) analogue of _fetch_category_by_repo_and_language(),
+    feeding the per-language repo-level Mann-Whitney test in
+    _render_has_mock_by_language_table(). Grouped by each fixture's own
+    language (test_files.language), not the repo's tag -- same convention
+    every other per-language grouping in this script uses -- so a repo
+    with fixtures in more than one language contributes to each language's
+    own repo-level proportions separately, never mixed together. Same
+    has_mock/no_mock threshold (`num_mocks > 0`) as has_mock_dist/
+    has_mock_by_repo elsewhere in this module, just grouped by language
+    too."""
+    rows = conn.execute(
+        "SELECT tf.language, f.repo_id, "
+        "SUM(CASE WHEN f.num_mocks > 0 THEN 1 ELSE 0 END), "
+        "SUM(CASE WHEN f.num_mocks = 0 THEN 1 ELSE 0 END) "
+        "FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
+        "WHERE f.num_mocks IS NOT NULL "
+        "GROUP BY tf.language, f.repo_id"
+    ).fetchall()
+    result: dict[str, dict[int, dict[str, int]]] = {}
+    for language, repo_id, has_mock, no_mock in rows:
+        result.setdefault(language, {})[repo_id] = {"has_mock": has_mock, "no_mock": no_mock}
+    return result
+
+
 def _fetch_fixture_repo_count_by_language(conn: sqlite3.Connection) -> dict[str, int]:
     """Distinct repo count per language, among ALL fixtures -- the n_A/n_C
     denominator for has_mock's per-language rows: every repo with a
@@ -274,6 +312,7 @@ def load_dataset_metrics(
         framework_by_language = _fetch_framework_by_language(conn)
         category_by_language = _fetch_category_by_language(conn)
         category_by_repo_and_language = _fetch_category_by_repo_and_language(conn)
+        has_mock_by_repo_and_language = _fetch_has_mock_by_repo_and_language(conn)
         has_mock_n_by_language = _fetch_fixture_repo_count_by_language(conn)
         language_leakage = compute_language_leakage(conn)
         # continuous_by_repo's "num_mocks" entry is reused below (as
@@ -334,6 +373,7 @@ def load_dataset_metrics(
         language_leakage=language_leakage,
         repo_level_continuous=repo_level_continuous,
         has_mock_by_repo=has_mock_by_repo,
+        has_mock_by_repo_and_language=has_mock_by_repo_and_language,
     )
 
 
@@ -681,6 +721,64 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     return "\n".join(lines)
 
 
+def _render_has_mock_by_language_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Per-language rows below the pooled Overall table in
+    _render_repo_level_comparison() -- same compare_categorical_repo_level()
+    Mann-Whitney U + Cliff's delta test, computed once per language instead
+    of pooled across all of them. Why this matters even though has_mock
+    isn't a language-specific construct the way framework/category are
+    (see this module's docstring): the two datasets' language mixes still
+    differ (Dataset A skews TypeScript, Dataset C skews Python/JavaScript),
+    so a pooled repo-level difference can still be partly a language-mix
+    artifact rather than a within-language authorship-era effect -- the
+    same risk compute_stratified_categorical_balance() already guards
+    against for the fixture-level chi-square above, applied here to the
+    repo-declustered test instead.
+
+    Only the `has_mock` category's own test is shown per language --
+    `no_mock` is its exact complement (same repos, proportions summing to
+    100%, opposite-signed delta), so it carries no separate information;
+    the pooled Overall table above already shows both categories for the
+    two-category view. This variable's own per-language family (up to 4
+    languages, restricted to ones with data on both sides) is BH-FDR
+    corrected independently of every other family in this report."""
+    languages = sorted(
+        set(a.has_mock_by_repo_and_language) & set(other.has_mock_by_repo_and_language)
+    )
+    lines = [
+        f"| Language | {DATASET_LABELS['a']} (median %) | "
+        f"{DATASET_LABELS[other.dataset]} (median %) | δ (A vs C) | p (BH) |",
+        "|---|---|---|---|---|",
+    ]
+    if not languages:
+        lines.append("| _(no language shared by both datasets)_ | -- | -- | -- | -- |")
+        lines.append("")
+        return "\n".join(lines)
+
+    tests: dict[str, BalanceTest] = {}
+    for language in languages:
+        a_by_repo = a.has_mock_by_repo_and_language[language]
+        other_by_repo = other.has_mock_by_repo_and_language[language]
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, f"has_mock_{language}")
+        tests[language] = results["has_mock"]
+
+    corrected = apply_fdr_correction(tests)
+    for language in languages:
+        t = corrected[language]
+        d = t.details
+        if d.get("reason") == "insufficient_data":
+            lines.append(f"| {language} | -- | -- | -- | _insufficient data_ |")
+            continue
+        adj_p = d.get("adjusted_p_value")
+        p_bh = format_p_value(adj_p) if adj_p is not None else "--"
+        lines.append(
+            f"| {language} | {pct(d.get('agent_median'))} | "
+            f"{pct(d.get('human_median'))} | {fmt(d.get('cliffs_delta'), 3)} | {p_bh} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_repo_level_comparison(
     label: str, a: DatasetMetrics, other: DatasetMetrics
 ) -> str:
@@ -705,6 +803,21 @@ def _render_repo_level_comparison(
     repo_level = compare_categorical_repo_level(a.has_mock_by_repo, other.has_mock_by_repo, "has_mock")
     n = repo_level_category_n_counts(a.has_mock_by_repo, other.has_mock_by_repo)
     lines.append(render_categorical_repo_level_table(repo_level, other.dataset, n))
+
+    lines += [
+        "**has_mock, repo-level, per language** -- the pooled Overall row "
+        "above can still partly reflect each dataset's own language mix "
+        "(Dataset A skews TypeScript, Dataset C skews Python/JavaScript) "
+        "rather than a within-language authorship-era effect, so this "
+        "reruns the same repo-level-proportion Mann-Whitney U + Cliff's "
+        "delta test once per language (own repos, own denominator, "
+        "languages with data on both sides only). Only `has_mock`'s own "
+        "test is shown per language -- `no_mock` is its exact complement "
+        "-- BH-FDR corrected across this variable's own per-language "
+        "family, independent of the Overall row above.",
+        "",
+    ]
+    lines.append(_render_has_mock_by_language_table(a, other))
 
     return "\n".join(lines)
 

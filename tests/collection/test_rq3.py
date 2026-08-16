@@ -22,6 +22,7 @@ from collection.research_questions.rq3 import (
     DatasetMetrics,
     _render_category_aggregate_descriptive_table,
     _render_category_by_language_table,
+    _render_has_mock_by_language_table,
     compare_datasets_repo_level,
     generate_report,
     load_dataset_metrics,
@@ -303,6 +304,39 @@ class TestLoadDatasetMetrics:
         assert {"has_mock": 100, "no_mock": 0} in metrics.has_mock_by_repo.values()
         assert {"has_mock": 0, "no_mock": 1} in metrics.has_mock_by_repo.values()
 
+    def test_has_mock_by_repo_and_language_nests_by_language_then_repo(self, tmp_path):
+        """A single repo contributing fixtures in two languages must land
+        in two separate language buckets, each keyed by that same repo_id
+        -- the per-language repo-level has_mock test
+        (_render_has_mock_by_language_table()) needs this nesting to never
+        mix one language's has_mock proportions into another's, mirroring
+        test_category_by_repo_and_language_nests_by_language_then_repo()
+        above."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {"overrides": {"num_mocks": 1}, "mocks": [{}]},
+                        {"overrides": {"num_mocks": 0}},
+                    ],
+                },
+                {
+                    "language": "java",
+                    "fixtures": [{"overrides": {"num_mocks": 0}}],
+                },
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert set(metrics.has_mock_by_repo_and_language) == {"python", "java"}
+        (python_repo_id, python_counts), = metrics.has_mock_by_repo_and_language["python"].items()
+        (java_repo_id, java_counts), = metrics.has_mock_by_repo_and_language["java"].items()
+        assert python_repo_id == java_repo_id
+        assert python_counts == {"has_mock": 1, "no_mock": 1}
+        assert java_counts == {"has_mock": 0, "no_mock": 1}
+
     def test_framework_and_category_distribution(self, tmp_path):
         _make_db(
             tmp_path,
@@ -579,6 +613,34 @@ class TestGenerateReport:
         )
         assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
 
+    def test_repo_level_has_mock_includes_per_language_rows_below_overall(self, tmp_path):
+        """The '## Repo-level aggregates' has_mock table's per-language
+        breakdown renders below the pooled Overall table -- python (shared
+        by both A and C) gets a real row; java (A-only) must not appear at
+        all, mirroring test_a_vs_c_comparison_includes_stratified_mock_
+        prevalence()'s fixture-level analogue above."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"language": "python", "fixtures": [{"overrides": {"num_mocks": 1}, "mocks": [{}]}]},
+                {"language": "java", "fixtures": [{"overrides": {"num_mocks": 0}}]},
+            ],
+        )
+        _make_db(
+            tmp_path,
+            "c",
+            [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "## Repo-level aggregates" in report
+        repo_level_section = report.split("## Repo-level aggregates")[1]
+        per_language_section = repo_level_section.split(
+            "**has_mock, repo-level, per language**"
+        )[1]
+        assert "| python |" in per_language_section
+        assert "| java |" not in per_language_section
+
     def test_framework_by_language_table_shows_raw_fixture_weighted_percentages(self, tmp_path):
         """The descriptive framework table (2026-08-12 fix) is intentionally
         NOT repo-declustered -- it makes no statistical claim (see this
@@ -711,6 +773,92 @@ class TestRenderCategoryByLanguageTable:
         other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
         rendered = _render_category_by_language_table(a, other)
         assert "_(no language shared by both datasets)_" in rendered
+
+
+class TestRenderHasMockByLanguageTable:
+    """Direct DatasetMetrics construction (bypassing the DB), same
+    rationale as TestRenderCategoryByLanguageTable above."""
+
+    def test_bh_fdr_scoped_independently_per_language(self):
+        """python here has a stark, perfectly-separated 5-repos-per-side
+        split (every A repo 90% has_mock, every C repo 10%); java has an
+        identical distribution on both sides (a real null). Each
+        language's own family (just has_mock -- no_mock isn't tested
+        separately here) must be corrected using only its own p-value, so
+        python's significance can't be diluted or inflated by java's."""
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_by_repo_and_language={
+                "python": {i: {"has_mock": 9, "no_mock": 1} for i in range(5)},
+                "java": {i: {"has_mock": 5, "no_mock": 5} for i in range(100, 105)},
+            },
+        )
+        other = DatasetMetrics(
+            dataset="c",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_by_repo_and_language={
+                "python": {i: {"has_mock": 1, "no_mock": 9} for i in range(5)},
+                "java": {i: {"has_mock": 5, "no_mock": 5} for i in range(100, 105)},
+            },
+        )
+        rendered = _render_has_mock_by_language_table(a, other)
+        python_line = next(line for line in rendered.splitlines() if line.startswith("| python |"))
+        java_line = next(line for line in rendered.splitlines() if line.startswith("| java |"))
+        python_p_bh = python_line.rstrip("|").rsplit("|", 1)[-1].strip()
+        java_p_bh = java_line.rstrip("|").rsplit("|", 1)[-1].strip()
+        # python's perfect separation is significant on its own, single-test
+        # "family" -- unaffected by java's identical-distributions result
+        # living in a completely separate per-language dict entry.
+        assert python_p_bh != "1.000" and float(python_p_bh) < 0.05
+        # java's has_mock proportions are literally identical on both sides
+        # (5/5 every repo) -- a real, fully-computed p=1.0 result (BH's
+        # step-up can only push a p-value up from its raw value, never
+        # down, so this correctly renders as "1.000", not "--", which is
+        # reserved for insufficient_data/error).
+        assert java_p_bh == "1.000"
+        assert "0.000" in java_line  # Cliff's delta is 0 -- no difference at all
+
+    def test_insufficient_data_row_when_a_language_has_no_shared_data(self):
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_by_repo_and_language={"python": {1: {"has_mock": 1, "no_mock": 0}}},
+        )
+        other = DatasetMetrics(
+            dataset="c", n_fixtures=0, n_mock_usages=0, has_mock_by_repo_and_language={}
+        )
+        rendered = _render_has_mock_by_language_table(a, other)
+        assert "_(no language shared by both datasets)_" in rendered
+
+    def test_no_shared_language_at_all_renders_placeholder(self):
+        a = DatasetMetrics(dataset="a", n_fixtures=0, n_mock_usages=0)
+        other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
+        rendered = _render_has_mock_by_language_table(a, other)
+        assert "_(no language shared by both datasets)_" in rendered
+
+    def test_no_mock_omitted_from_output_entirely(self):
+        """no_mock is has_mock's exact complement -- this table shows only
+        has_mock's own test per language, never a separate no_mock row/
+        column (unlike the pooled Overall categorical table above it,
+        which shows both categories)."""
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_by_repo_and_language={"python": {1: {"has_mock": 1, "no_mock": 0}}},
+        )
+        other = DatasetMetrics(
+            dataset="c",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_by_repo_and_language={"python": {2: {"has_mock": 0, "no_mock": 1}}},
+        )
+        rendered = _render_has_mock_by_language_table(a, other)
+        assert "no_mock" not in rendered
 
 
 class TestRenderCategoryAggregateDescriptiveTable:
