@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures differ in mock usage -- prevalence, framework selection, and interaction depth?
 
-Generated: 2026-08-16 01:51:19 UTC
+Generated: 2026-08-16 02:34:18 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ3 definition.
 
@@ -270,3 +270,12 @@ has_mock re-tested with one *proportion-per-repo* value instead of pooled/per-la
 |---|---|---|---|---|---|---|---|---|---|---|
 | has_mock | 0.0% | 12.9% | 0.0% | 5.6% | 1044 | 3244 | U=1405183.5 | -0.170 | small | <.001 | <.001 |
 | no_mock | 100.0% | 87.1% | 100.0% | 94.4% | 1044 | 3244 | U=1981552.5 | 0.170 | small | <.001 | <.001 |
+
+**has_mock, repo-level, per language** -- the pooled Overall row above can still partly reflect each dataset's own language mix (Dataset A skews TypeScript, Dataset C skews Python/JavaScript) rather than a within-language authorship-era effect, so this reruns the same repo-level-proportion Mann-Whitney U + Cliff's delta test once per language (own repos, own denominator, languages with data on both sides only). Only `has_mock`'s own test is shown per language -- `no_mock` is its exact complement -- BH-FDR corrected across this variable's own per-language family, independent of the Overall row above.
+
+| Language | Dataset A (agent-authored) (median %) | Dataset C (human-authored, pre-LLM) (median %) | δ (A vs C) | p (BH) |
+|---|---|---|---|---|
+| java | 0.0% | 0.0% | -0.040 | 0.453 |
+| javascript | 0.0% | 0.0% | 0.082 | 0.162 |
+| python | 11.3% | 0.0% | -0.394 | <.001 |
+| typescript | 0.0% | 0.0% | 0.052 | 0.113 |
