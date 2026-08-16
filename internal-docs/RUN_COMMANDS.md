@@ -266,21 +266,25 @@ Same four commands with `--dataset b` / `--dataset c` for the other two datasets
 `analyze-distribution` is the one pair-aware verb (defaults to `--dataset a --against b`)
 since its whole job is comparing two already-extracted datasets.
 
-### Required before running any `research_questions/` script
+### Dataset C sampling: deactivated, not required before running `research_questions/` scripts
 
-Dataset C's full collection is ~3.3x Dataset A's size -- running the RQ
-comparisons against that imbalance is methodologically unsound. Every
-`research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/`balance.py`/
-`language_contamination.py`) reads a sampled-down Dataset C
-(`db/c_sampled.db` + `datasets/c/fixtures-sampled/`) instead of the full one
-(`db/c.db` + `datasets/c/fixtures/`) -- this is enforced, not optional (see
-`collection/research_questions/_shared.py::require_db_or_none()`'s and
-`language_contamination.py::check_dataset()`'s "c" handling): if the sampled
-artifact doesn't exist yet, Dataset C's section just reports "not available,"
-it never silently falls back to the full DB.
+Every `research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/
+`balance.py`/`language_contamination.py`/`dataset_findings.py`) now reads
+the full Dataset C directly (`db/c.db` + `datasets/c/fixtures/`), same as
+every other dataset -- there is no sampling step to run first. This is a
+deliberate reversal of an earlier convention (see
+`collection/research_questions/_shared.py::require_db_or_none()`'s
+docstring): the full Dataset C is ~3.3x Dataset A's size, and a sampled,
+size-matched subset (`db/c_sampled.db`) used to be required precisely to
+avoid comparing against that imbalance. Every A-vs-C comparison in this
+package already runs at the repo level (Mann-Whitney U + Cliff's delta
+on per-repo proportions/means, not a pooled fixture-level test) with
+`n_A`/`n_C` repo counts reported on every row, which is far less
+sensitive to a repo-count imbalance than a naive fixture-weighted test --
+the team decided that's sufficient and switched back to the full corpus.
 
-Run this once Dataset A and C have both finished `extract-fixtures`,
-**before** running any `research_questions/` script:
+The sampling machinery itself is untouched and still runnable manually if
+ever needed again -- **not required for any current workflow**:
 
 ```bash
 python -m collection sample-c-repos --match-dataset a
@@ -295,8 +299,9 @@ proportions, down to `--match-dataset a`'s current live fixture count (or
 pass an explicit `--target-count N` instead). Writes `db/c_sampled.db` +
 `datasets/c/fixtures-sampled/*.csv` + a summary at `output/sample_c_repos.json`
 -- `db/c.db`/`datasets/c/fixtures/*.csv` are read-only inputs, never
-modified. Re-running it fully rebuilds the sampled artifact (not additive) --
-safe to re-run after any change to Dataset A's or C's underlying data.
+modified. Nothing in `research_questions/` reads `db/c_sampled.db` or
+`datasets/c/fixtures-sampled/` anymore, even if they exist on disk from a
+previous run.
 
 ### One-time: backfill "All commits" for Dataset A's summary table
 
