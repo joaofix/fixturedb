@@ -64,6 +64,8 @@ class FixtureData(TypedDict, total=False):
     max_nesting_depth: int
     num_objects_instantiated: int
     num_external_calls: int
+    num_comment_lines: int
+    comment_density: float
     num_parameters: int
     has_teardown_pair: bool
     raw_source: str
@@ -206,6 +208,8 @@ def write_fixture_csv_row(
         "num_parameters",
         "num_objects_instantiated",
         "num_external_calls",
+        "num_comment_lines",
+        "comment_density",
         "has_teardown_pair",
         "github_url",
         "agent_type",
@@ -251,6 +255,8 @@ def write_fixture_csv_row(
             "num_parameters": fixture.get("num_parameters", 0),
             "num_objects_instantiated": fixture.get("num_objects_instantiated", 0),
             "num_external_calls": fixture.get("num_external_calls", 0),
+            "num_comment_lines": fixture.get("num_comment_lines", 0),
+            "comment_density": fixture.get("comment_density", 0.0),
             "has_teardown_pair": fixture.get("has_teardown_pair", 0),
             "github_url": _build_github_url(
                 repo_name,
@@ -370,6 +376,8 @@ def persist_repository_and_fixtures(
                 "max_nesting_depth": fixture.get("max_nesting_depth"),
                 "num_objects_instantiated": fixture.get("num_objects_instantiated"),
                 "num_external_calls": fixture.get("num_external_calls"),
+                "num_comment_lines": fixture.get("num_comment_lines"),
+                "comment_density": fixture.get("comment_density"),
                 "num_parameters": fixture.get("num_parameters"),
                 "has_teardown_pair": fixture.get("has_teardown_pair"),
                 "raw_source": fixture.get("raw_source"),

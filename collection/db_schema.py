@@ -77,6 +77,8 @@ CREATE TABLE IF NOT EXISTS fixtures (
     max_nesting_depth       INTEGER DEFAULT 0,      -- maximum block nesting level
     num_objects_instantiated INTEGER DEFAULT 0,
     num_external_calls      INTEGER DEFAULT 0,
+    num_comment_lines       INTEGER DEFAULT 0,      -- comment-only lines within the fixture's own line span
+    comment_density         REAL DEFAULT 0.0,        -- num_comment_lines / loc (0.0 if loc is 0)
     num_parameters          INTEGER DEFAULT 0,
     has_teardown_pair       INTEGER DEFAULT 0,      -- 1 if teardown/cleanup logic exists, 0 otherwise
     raw_source              TEXT,              -- original source text

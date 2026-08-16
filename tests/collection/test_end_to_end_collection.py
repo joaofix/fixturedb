@@ -339,6 +339,8 @@ class TestCollectionDataPersistence:
                 "max_nesting_depth": 1,
                 "num_objects_instantiated": 0,
                 "num_external_calls": 0,
+                "num_comment_lines": 0,
+                "comment_density": 0.0,
                 "num_parameters": 0,
                 "has_teardown_pair": False,
                 "raw_source": "def test_fixture(): pass",

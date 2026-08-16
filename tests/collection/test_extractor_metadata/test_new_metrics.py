@@ -884,3 +884,117 @@ public class ServiceTest {
             result = extract_fixtures(Path(f.name), "java")
             setup = next(f for f in result.fixtures if f.name == "setUp")
             assert setup.num_objects_instantiated == 1
+
+
+class TestCommentDensity:
+    """num_comment_lines/comment_density -- counted by walking the fixture's
+    own tree-sitter node for comment-type nodes (see
+    collection/detector_shared.py::_count_comment_lines), not a text-based
+    scan, so a `#`/`//` inside a string literal can never be mistaken for a
+    real comment. comment_density is always cross-checked against
+    num_comment_lines/loc directly (the real formula) rather than a
+    hardcoded fraction, so these tests don't depend on the exact loc a
+    given detector reports for the fixture's own line span (e.g. whether an
+    annotation line is included)."""
+
+    def test_python_hash_comments_only(self):
+        """Two standalone `#` comment lines (kept off any code line, to
+        avoid ambiguity about whether a trailing same-line comment counts
+        -- see _count_comment_lines()'s docstring: it counts by AST node,
+        not by "is this whole physical line comment-only")."""
+        code = """
+@pytest.fixture
+def fixture_with_comments():
+    # comment one
+    x = 1
+    # comment two
+    return x
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "fixture_with_comments")
+            assert fixture.num_comment_lines == 2
+            assert fixture.comment_density == fixture.num_comment_lines / fixture.loc
+
+    def test_java_line_and_block_comments(self):
+        """`//` line comment (1 line) plus a `/* */` block comment spanning
+        two lines -- 3 total, via two distinct tree-sitter node types
+        (line_comment/block_comment)."""
+        code = """
+public class ServiceTest {
+    @Before
+    public void setUp() {
+        // line comment
+        int x = 1;
+        /* block
+           comment */
+        int y = 2;
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_comment_lines == 3  # 1 line comment + 2-line block comment
+            assert setup.comment_density == setup.num_comment_lines / setup.loc
+
+    def test_typescript_line_and_block_comments(self):
+        """Both `//` and `/* */` styles are the same "comment" node type in
+        the JS/TS grammar (unlike Java's two distinct types) -- same 1 + 2
+        = 3 shape as the Java test above."""
+        code = """
+beforeEach(() => {
+    // line comment
+    const x = 1;
+    /* block
+       comment */
+    const y = 2;
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.ts", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "typescript")
+            fixture = result.fixtures[0]
+            assert fixture.num_comment_lines == 3
+            assert fixture.comment_density == fixture.num_comment_lines / fixture.loc
+
+    def test_zero_comments_gives_zero_density(self):
+        code = """
+@pytest.fixture
+def no_comments_fixture():
+    x = 1
+    y = 2
+    return x + y
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "no_comments_fixture")
+            assert fixture.num_comment_lines == 0
+            assert fixture.comment_density == 0.0
+
+    def test_zero_loc_gives_zero_density_not_a_crash(self):
+        """loc=0 can't actually be produced by a real extracted fixture
+        (even a bare one-line signature counts as 1 non-blank line), but
+        _comment_density() -- the pure division helper _build_result() calls
+        after computing loc -- must not raise ZeroDivisionError if it's ever
+        called with one, and must return 0.0 rather than propagating a
+        garbage value."""
+        from collection.detector_shared import _comment_density
+
+        assert _comment_density(0, 0) == 0.0
+        assert _comment_density(5, 0) == 0.0  # non-zero numerator too -- still guarded

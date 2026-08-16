@@ -356,6 +356,8 @@ Contains fixture definitions.
 | max_nesting_depth | INTEGER | Maximum nesting depth |
 | num_objects_instantiated | INTEGER | Objects created |
 | num_external_calls | INTEGER | External function calls |
+| num_comment_lines | INTEGER | Comment-only lines within the fixture |
+| comment_density | REAL | num_comment_lines / loc (0.0 if loc is 0) |
 | num_parameters | INTEGER | Number of parameters |
 | has_teardown_pair | BOOLEAN | Has teardown/cleanup |
 | raw_source | TEXT | Complete fixture source code |

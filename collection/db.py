@@ -184,6 +184,21 @@ _COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     ("repositories", "total_commits_since_agent_start", "INTEGER DEFAULT NULL"),
     ("fixtures", "commit_date", "TEXT DEFAULT NULL"),
     ("fixtures", "repo_age_at_commit_years", "REAL DEFAULT NULL"),
+    # num_comment_lines/comment_density (comment-density metric, added
+    # 2026-08-16): this migration only self-heals the *schema* -- it backs
+    # an existing DB file's fixtures table with the two new columns, at
+    # their DEFAULT (0 / 0.0), so `insert_fixture()` doesn't crash against
+    # a not-yet-migrated file. It does NOT backfill real values for rows
+    # collected before this change: computing the real count requires
+    # re-parsing that fixture's own tree-sitter node, which this migration
+    # (a plain ALTER TABLE) has no access to. A fixture row with
+    # comment_density=0.0 after this migration is therefore ambiguous --
+    # either it genuinely has no comments, or it simply predates this
+    # column and was never measured. db/a.db, db/b.db, db/c.db all need a
+    # full re-extraction (not just this migration) before num_comment_lines/
+    # comment_density can be trusted or reported on.
+    ("fixtures", "num_comment_lines", "INTEGER DEFAULT 0"),
+    ("fixtures", "comment_density", "REAL DEFAULT 0.0"),
 ]
 
 
@@ -455,6 +470,8 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "max_nesting_depth",
         "num_objects_instantiated",
         "num_external_calls",
+        "num_comment_lines",
+        "comment_density",
         "num_parameters",
         "has_teardown_pair",
         "raw_source",

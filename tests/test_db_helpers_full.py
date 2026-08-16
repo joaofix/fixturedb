@@ -64,6 +64,8 @@ def test_db_helpers_end_to_end(tmp_path):
             "max_nesting_depth": 1,
             "num_objects_instantiated": 0,
             "num_external_calls": 0,
+            "num_comment_lines": 0,
+            "comment_density": 0.0,
             "num_parameters": 0,
             "has_teardown_pair": 0,
             "raw_source": "def my_fixture(): pass",
@@ -286,8 +288,9 @@ def test_upsert_repository_backward_compatible_without_total_commits_since_agent
 def test_initialise_db_self_heals_a_schema_predating_column_migrations(tmp_path):
     """Regression test for a real incident: db/a.db's last collection run
     predated schema additions (repo_age_at_collection_years,
-    total_commits_since_agent_start, commit_date, repo_age_at_commit_years)
-    and CREATE TABLE IF NOT EXISTS is a no-op on an already-existing table,
+    total_commits_since_agent_start, commit_date, repo_age_at_commit_years,
+    num_comment_lines, comment_density) and CREATE TABLE IF NOT EXISTS is a
+    no-op on an already-existing table,
     so those columns were silently missing -- the next
     upsert_repository()/insert_fixture() call (or, for
     total_commits_since_agent_start specifically,
@@ -354,7 +357,12 @@ def test_initialise_db_self_heals_a_schema_predating_column_migrations(tmp_path)
         assert "repo_age_at_collection_years" in repo_cols
         assert "agent_adoption_intensity" in repo_cols
         assert "total_commits_since_agent_start" in repo_cols
-        assert {"commit_date", "repo_age_at_commit_years"} <= fixture_cols
+        assert {
+            "commit_date",
+            "repo_age_at_commit_years",
+            "num_comment_lines",
+            "comment_density",
+        } <= fixture_cols
 
         # Pre-existing row survives the migration untouched.
         row = conn.execute(
@@ -412,6 +420,8 @@ def test_insert_fixture_dedupes_per_commit_not_across_commits(tmp_path):
             "max_nesting_depth": 1,
             "num_objects_instantiated": 0,
             "num_external_calls": 0,
+            "num_comment_lines": 0,
+            "comment_density": 0.0,
             "num_parameters": 0,
             "has_teardown_pair": 0,
             "framework": "pytest",
@@ -484,6 +494,8 @@ def test_insert_fixture_dedupes_when_commit_sha_omitted(tmp_path):
             "max_nesting_depth": 1,
             "num_objects_instantiated": 0,
             "num_external_calls": 0,
+            "num_comment_lines": 0,
+            "comment_density": 0.0,
             "num_parameters": 0,
             "has_teardown_pair": 0,
             "raw_source": "def sample_data(): return 1",

@@ -86,6 +86,8 @@ def _seed_db(db_path: Path, *, repo_name: str, github_id: int, stars: int, num_f
                     "max_nesting_depth": 0,
                     "num_objects_instantiated": 0,
                     "num_external_calls": 0,
+                    "num_comment_lines": 0,
+                    "comment_density": 0.0,
                     "num_parameters": 0,
                     "has_teardown_pair": 0,
                     "raw_source": "def fx(): pass",

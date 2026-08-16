@@ -113,6 +113,8 @@ class FixtureResult:
     max_nesting_depth: int  # maximum block nesting level from Lizard
     num_objects_instantiated: int
     num_external_calls: int
+    num_comment_lines: int  # comment-only lines within the fixture's own line span
+    comment_density: float  # num_comment_lines / loc (0.0 if loc == 0)
     num_parameters: int
     has_teardown_pair: int = 0  # 1 if teardown/cleanup logic exists, 0 otherwise
     fixture_dependencies: list[str] = field(
@@ -230,6 +232,80 @@ def _count_external_calls(node, src_bytes: bytes) -> int:
     """
     text = _source(node, src_bytes).lower()
     return sum(len(re.findall(p, text)) for p in EXTERNAL_CALL_PATTERNS)
+
+
+# ---------------------------------------------------------------------------
+# Comment density
+# ---------------------------------------------------------------------------
+
+# Tree-sitter node type(s) that mark a comment, per language (verified
+# directly against each grammar). Python has one undifferentiated `comment`
+# type (line-only -- the grammar has no block comment construct); Java
+# splits `//` and `/* */` into two distinct types; JavaScript/TypeScript
+# share a single `comment` type across both styles.
+COMMENT_NODE_TYPES: dict[str, set[str]] = {
+    "python": {"comment"},
+    "java": {"line_comment", "block_comment"},
+    "javascript": {"comment"},
+    "typescript": {"comment"},
+}
+
+
+def _count_comment_lines(fixture_node, language: str) -> int:
+    """Count comment lines inside `fixture_node`'s own span, from the same
+    parsed tree-sitter tree fixture detection already produced (no
+    re-parsing, no regex over raw_source -- a `#`/`//` inside a string
+    literal would false-positive a text-based scan, but can never be
+    mis-tagged as a comment node by the parser).
+
+    Walks every descendant of `fixture_node` (recursively -- a comment can
+    appear at any depth, not just as a direct child), and for each node
+    whose type is this language's comment node type(s), counts the lines it
+    spans, clipped to `fixture_node`'s own start_line..end_line range. A
+    plain `//`/`#` line comment always spans exactly one line; a `/* */`
+    block comment can span several -- both are handled by the same
+    end-start+1 formula. In practice every comment found this way is
+    already a genuine descendant of `fixture_node`, so it's inherently
+    within the fixture's own line span (can't extend past a parent node's
+    own span) -- the explicit bounds check/clip is a defensive belt, not a
+    load-bearing filter, but is unconditional rather than assumed.
+
+    `language` not in COMMENT_NODE_TYPES (i.e. no comment node type known
+    for it) returns 0 rather than raising -- callers only ever pass one of
+    the four supported languages, but this stays a safe no-op instead of a
+    KeyError if that ever changes."""
+    comment_types = COMMENT_NODE_TYPES.get(language)
+    if not comment_types:
+        return 0
+
+    fixture_start_line = fixture_node.start_point[0] + 1
+    fixture_end_line = fixture_node.end_point[0] + 1
+    total = 0
+
+    def visit(node) -> None:
+        nonlocal total
+        if node.type in comment_types:
+            node_start_line = node.start_point[0] + 1
+            node_end_line = node.end_point[0] + 1
+            if fixture_start_line <= node_start_line <= fixture_end_line:
+                clipped_start = max(node_start_line, fixture_start_line)
+                clipped_end = min(node_end_line, fixture_end_line)
+                total += max(0, clipped_end - clipped_start + 1)
+            return  # comment nodes are leaves -- nothing to descend into
+        for child in node.children:
+            visit(child)
+
+    visit(fixture_node)
+    return total
+
+
+def _comment_density(num_comment_lines: int, loc: int) -> float:
+    """num_comment_lines / loc, or 0.0 if loc is 0 -- avoids a
+    ZeroDivisionError. A real extracted fixture's loc is never actually 0
+    (even a bare one-line signature counts as 1 non-blank line), but this
+    guards the arithmetic defensively rather than assuming that always
+    holds."""
+    return num_comment_lines / loc if loc else 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -383,6 +459,11 @@ def _build_result(
     # Compute nesting depth from AST (Lizard's max_nesting_depth doesn't work for functions)
     nesting_depth = _compute_nesting_depth(func_node)
 
+    # comment_density depends on loc, so it's computed after loc rather than
+    # inline in the FixtureResult(...) call below.
+    loc = _count_loc(src_text)  # Custom counting (non-blank lines)
+    num_comment_lines = _count_comment_lines(func_node, language)
+
     return FixtureResult(
         name=name,
         fixture_type=fixture_type,
@@ -390,7 +471,7 @@ def _build_result(
         scope=scope,
         start_line=func_node.start_point[0] + 1,
         end_line=func_node.end_point[0] + 1,
-        loc=_count_loc(src_text),  # Custom counting (non-blank lines)
+        loc=loc,
         cyclomatic_complexity=metrics.get("cyclomatic_complexity", 1),
         max_nesting_depth=nesting_depth,
         num_objects_instantiated=metrics.get(
@@ -399,6 +480,8 @@ def _build_result(
         num_external_calls=_count_external_calls(
             func_node, src_bytes
         ),  # Custom regex for I/O patterns
+        num_comment_lines=num_comment_lines,  # Tree-sitter comment-node walk
+        comment_density=_comment_density(num_comment_lines, loc),
         num_parameters=metrics.get("num_parameters", 0),
         has_teardown_pair=0,  # Calculated in post-processing
         raw_source=src_text,
@@ -445,6 +528,8 @@ def fixture_result_to_dict(
         "max_nesting_depth": fixture.max_nesting_depth,
         "num_objects_instantiated": fixture.num_objects_instantiated,
         "num_external_calls": fixture.num_external_calls,
+        "num_comment_lines": fixture.num_comment_lines,
+        "comment_density": fixture.comment_density,
         "num_parameters": fixture.num_parameters,
         "has_teardown_pair": fixture.has_teardown_pair,
         "raw_source": fixture.raw_source,

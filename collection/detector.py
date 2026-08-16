@@ -26,6 +26,8 @@ For each of the supported languages, we define:
    - num_objects_instantiated: Custom count of new X(...) constructor calls
      (Java/JS/TS) or capitalized-call heuristic (Python)
    - num_external_calls: Custom regex detection of I/O patterns (db, file, http, network)
+   - num_comment_lines / comment_density: Tree-sitter comment-node walk over
+     the fixture's own AST node; comment_density = num_comment_lines / loc
    - num_parameters: Function signature parameter count via Lizard library,
      with self/cls stripped back out for Python methods
    - max_nesting_depth: Custom tree-sitter AST traversal (Lizard's nesting
@@ -82,7 +84,8 @@ ExtractResult contains:
 Each FixtureResult carries all the fields needed to populate the DB tables:
   fixture_type, scope, start_line, end_line, loc,
   cyclomatic_complexity, max_nesting_depth,
-  num_objects_instantiated, num_external_calls, num_parameters,
+  num_objects_instantiated, num_external_calls,
+  num_comment_lines, comment_density, num_parameters,
   framework (mock framework used, if any), raw_source text
 """
 
