@@ -27,9 +27,9 @@ infer one from the other just because both live in this directory.
   not fuzzy/probabilistic. Full schema: that file's own header comment.
 - exclusion_keywords.yaml: repo name/description keywords that signal a
   boilerplate/toy repo.
-- feature_extraction_patterns.yaml: mock-framework/external-call/
-  object-instantiation regex tables and setup/teardown pairing rules --
-  these drive metrics computed on an already-identified fixture, never the
+- feature_extraction_patterns.yaml: mock-framework/external-call regex
+  tables and setup/teardown pairing rules -- these drive metrics computed
+  on an already-identified fixture, never the
   identification decision itself.
 
 collection/agent_patterns.py consumes load_agent_heuristics()'s merged
@@ -77,9 +77,13 @@ def load_feature_extraction_patterns() -> Dict[str, Any]:
     """Return the parsed feature-extraction pattern catalog.
 
     Holds mock_patterns, mock_interaction_keywords, external_call_patterns,
-    object_instantiation_patterns, and teardown_detection (yield-based,
-    name-based, and type-based setup/teardown pairing rules) -- see
-    feature_extraction_patterns.yaml's header for the full schema.
+    and teardown_detection (yield-based, name-based, and type-based
+    setup/teardown pairing rules) -- see feature_extraction_patterns.yaml's
+    header for the full schema. Does NOT hold object-instantiation
+    patterns -- num_objects_instantiated moved to an AST-based tree-sitter
+    walk (detector_shared.py::_count_object_instantiations()), not a
+    pattern table, see feature_extraction_patterns.yaml's own removal
+    comment.
     """
     return _load_yaml("feature_extraction_patterns.yaml")
 

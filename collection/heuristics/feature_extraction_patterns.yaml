@@ -207,27 +207,19 @@ external_call_patterns:
   - pattern: '\bshutil\.'
     matches: "filesystem operations"
 
-# Patterns counted as object instantiations (constructors), filtered against
-# Lizard's external_call_count for validation (see
-# complexity_provider._count_object_instantiations). `languages: null` means
-# the pattern applies to every language; otherwise it's restricted to the
-# listed languages.
-object_instantiation_patterns:
-  - pattern: '\bnew\s+[\w.]+\s*(?:<.+?>)?\s*\('
-    languages: null
-    note: >
-      Java/JavaScript/TypeScript: new ClassName(...), new
-      ClassName<T>(...) including nested generics, and dotted/namespaced
-      constructors such as new java.util.ArrayList() or new
-      THREE.Vector3() (a common JS/TS idiom this pattern previously
-      missed, since it required the class name to be a single \w+
-      token).
-  - pattern: '\b[A-Z][A-Za-z0-9_]*\s*\('
-    languages: [python]
-    note: >
-      Heuristic: capitalized call ClassName(...) -- catches real
-      constructors and factory functions styled like constructors. Not
-      restricted to Python's actual class names, so it can overcount.
+# object_instantiation_patterns (num_objects_instantiated) used to live
+# here as a regex table (`new X(...)` for Java/JS/TS, a capitalized-call
+# heuristic for Python), filtered against Lizard's external_call_count for
+# validation. Removed 2026-08-16: replaced by a proper tree-sitter AST walk
+# in detector_shared.py::_count_object_instantiations() -- `new X(...)`'s
+# dedicated node type (object_creation_expression/new_expression) in Java/
+# JS/TS, a capitalized-target `call` node in Python (still a heuristic
+# there -- Python has no dedicated "this is a constructor" node -- but now
+# scoped to a genuine call site instead of a text/regex scan). See
+# internal-docs/methodology-improvements/
+# num-objects-instantiated-false-positive-rate.md for why the regex
+# version needed replacing (it matched inside string literals/comments,
+# and against a fixture's own capitalized name).
 
 # Setup/teardown pairing (has_teardown_pair), split by detection mechanism:
 teardown_detection:

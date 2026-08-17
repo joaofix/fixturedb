@@ -146,6 +146,10 @@ def _all_known_fixture_types() -> set[str]:
 
 
 def test_feature_extraction_patterns_has_expected_top_level_sections():
+    """object_instantiation_patterns is deliberately NOT in this set --
+    num_objects_instantiated moved to an AST-based tree-sitter walk
+    (detector_shared.py::_count_object_instantiations()), not a pattern
+    table, see that file's removal comment."""
     patterns = load_feature_extraction_patterns()
     assert set(patterns) == {
         "mock_patterns",
@@ -153,7 +157,6 @@ def test_feature_extraction_patterns_has_expected_top_level_sections():
         "mock_category_keywords",
         "mock_interaction_keywords",
         "external_call_patterns",
-        "object_instantiation_patterns",
         "teardown_detection",
     }
 
@@ -232,12 +235,6 @@ def test_external_call_patterns_are_valid_regex():
     for entry in load_feature_extraction_patterns()["external_call_patterns"]:
         re.compile(entry["pattern"])
         assert entry["matches"].strip()
-
-
-def test_object_instantiation_patterns_are_valid_regex():
-    for entry in load_feature_extraction_patterns()["object_instantiation_patterns"]:
-        re.compile(entry["pattern"])
-        assert entry["languages"] is None or isinstance(entry["languages"], list)
 
 
 def test_mock_interaction_keywords_are_non_empty_strings():

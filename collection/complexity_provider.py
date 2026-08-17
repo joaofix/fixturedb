@@ -22,9 +22,17 @@ BENEFITS of using Lizard:
 - Better cross-language consistency
 - Academic credibility for published research
 
-The object-instantiation (constructor) regex patterns are loaded from
-collection/heuristics/feature_extraction_patterns.yaml rather than
-hardcoded here -- see that file's `object_instantiation_patterns` section.
+Object instantiation (`num_objects_instantiated`) used to be computed here
+too, as a regex-filtered post-processing pass over Lizard's own
+external_call_count. It's been moved to detector_shared.py's
+`_count_object_instantiations()` -- a proper tree-sitter AST walk (`new
+X(...)`'s dedicated node type in Java/JS/TS; a capitalized-target `call`
+node in Python) run against the fixture's already-parsed node, not a
+second regex pass over its raw text. See internal-docs/methodology-
+improvements/num-objects-instantiated-false-positive-rate.md for why:
+the regex approach counted matches inside string literals/comments (e.g.
+SQL embedded in a fixture body, or a fixture's own capitalized name
+self-matching its `def NAME(...):` line) as if they were real code.
 """
 
 from pathlib import Path
@@ -32,14 +40,9 @@ from typing import Optional
 
 from lizard import analyze_file as lizard_analyze_file
 
-from collection.heuristics import load_feature_extraction_patterns
 from collection.logging_utils import get_logger
 
 logger = get_logger(__name__)
-
-_OBJECT_INSTANTIATION_PATTERNS = load_feature_extraction_patterns()[
-    "object_instantiation_patterns"
-]
 
 
 def get_cyclomatic_complexity(file_path: Path, language: str) -> Optional[int]:
@@ -89,19 +92,16 @@ def analyze_function_complexity(
         Dictionary with keys:
         - 'cyclomatic_complexity' (int): McCabe complexity, >= 1
         - 'num_parameters' (int): Function signature parameter count
-        - 'num_external_calls' (int): Lizard's external call count (used for validation)
 
     Note:
-        num_objects_instantiated is computed by filtering Lizard's external_call_count
-        for constructor patterns (new X(...) in Java/JS/TS, capitalized calls in Python).
-        This reduces DIY regex logic while maintaining semantic accuracy.
-
-        num_external_calls from Lizard measures inter-function calls within modules,
-        not I/O operations. Separation of these metrics allows for specialized handling
-        of domain-specific patterns (I/O detection).
-
         LOC is not included because our definition (non-blank lines) differs from
         Lizard's definition (total lines spanning the function).
+
+        num_objects_instantiated is NOT computed here -- see this module's
+        docstring for why (it's an AST walk in detector_shared.py now, not
+        a Lizard-adjacent metric). Lizard's own external_call_count isn't
+        returned either: it was only ever read here to validate/cap the
+        old regex-based object-instantiation count, which no longer exists.
 
     Example:
         >>> code = "def fixture(x):\\n    if x:\\n        return db.query()"
@@ -114,7 +114,6 @@ def analyze_function_complexity(
     metrics = {
         "cyclomatic_complexity": 1,
         "num_parameters": 0,
-        "num_external_calls": 0,
     }
 
     temp_file = None
@@ -137,11 +136,6 @@ def analyze_function_complexity(
                 if hasattr(func_info, "parameter_count")
                 else 0
             )
-            metrics["num_external_calls"] = (
-                func_info.external_call_count
-                if hasattr(func_info, "external_call_count")
-                else 0
-            )
 
     except (OSError, RuntimeError, ValueError) as e:
         # Return defaults (including loc=0) on any error
@@ -158,69 +152,7 @@ def analyze_function_complexity(
                     f"Failed to clean up temp file {temp_file}: {type(e).__name__}: {e}"
                 )
 
-    # Add num_objects_instantiated by post-processing Lizard's external_call_count
-    # for constructor patterns (new X(...) or capitalized calls)
-    try:
-        num_constructors = _count_object_instantiations(
-            source_text, language, metrics["num_external_calls"]
-        )
-        metrics["num_objects_instantiated"] = num_constructors
-    except Exception as e:
-        logger.debug(f"Failed to count object instantiations: {type(e).__name__}: {e}")
-        metrics["num_objects_instantiated"] = 0
-
     return metrics
-
-
-def _count_object_instantiations(
-    source_text: str, language: str, lizard_external_calls: int
-) -> int:
-    """
-    Count object instantiations (constructors) by filtering Lizard's external_call_count.
-
-    Lizard's external_call_count measures all inter-function calls, not specifically
-    constructor instantiations. This function filters the source code for constructor
-    patterns and validates against Lizard's count to minimize false positives.
-
-    Constructor patterns are loaded from
-    collection/heuristics/feature_extraction_patterns.yaml's
-    object_instantiation_patterns (Java/JS/TypeScript: new ClassName(...)
-    with generics; Python: capitalized ClassName(...) heuristic).
-
-    Args:
-        source_text: Source code as string
-        language: Programming language
-        lizard_external_calls: Lizard's external_call_count (for validation)
-
-    Returns:
-        Count of object instantiations found via regex filtering
-    """
-    import re
-
-    text = source_text
-    language_lower = language.lower()
-
-    # Count matches for every pattern that applies to this language (a null
-    # `languages` list means "applies to all languages" -- see
-    # feature_extraction_patterns.yaml's object_instantiation_patterns).
-    constructor_count = 0
-    for entry in _OBJECT_INSTANTIATION_PATTERNS:
-        allowed_languages = entry.get("languages")
-        if allowed_languages and language_lower not in allowed_languages:
-            continue
-        constructor_count += len(re.findall(entry["pattern"], text))
-
-    # Validate against Lizard's count to avoid duplicates
-    # Use the minimum to be conservative (avoid overcounting)
-    # If Lizard found fewer calls than our regex, use Lizard's count
-    if lizard_external_calls > 0 and constructor_count > lizard_external_calls:
-        logger.debug(
-            f"Constructor count ({constructor_count}) exceeds Lizard external_call_count ({lizard_external_calls}). "
-            f"Using Lizard count for validation."
-        )
-        return min(constructor_count, lizard_external_calls)
-
-    return constructor_count
 
 
 def _get_extension(language: str) -> str:

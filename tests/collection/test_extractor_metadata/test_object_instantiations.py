@@ -412,5 +412,168 @@ def mixed_setup():
             assert result.fixtures[0].num_objects_instantiated == 2
 
 
+class TestObjectInstantiationsFalsePositiveFixes:
+    """Regression tests for the two false-positive mechanisms found in
+    internal-docs/methodology-improvements/
+    num-objects-instantiated-false-positive-rate.md -- both fixed by
+    switching to a tree-sitter AST walk instead of a text/regex scan (see
+    detector_shared.py::_count_object_instantiations()). Neither a string
+    literal's contents nor a fixture's own `def NAME(...):` line is ever a
+    `call`/`object_creation_expression`/`new_expression` node, so these
+    can no longer produce a spurious match at all -- not just "usually
+    filtered out"."""
+
+    def test_sql_in_string_literal_not_counted(self):
+        """Reproduces the exact case found manually: db/a.db fixture #46
+        -- a stored count of 4 that included `VALUES (` matched inside an
+        embedded SQL string. True count is 3 (NamedTemporaryFile, Path,
+        TripleStore); VALUES is text inside a string, not a real call."""
+        code = '''
+def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        self.tmp.close()
+        self.db_path = Path(self.tmp.name)
+        store = TripleStore(db_path=self.db_path)
+        store.conn.execute(
+            """
+            INSERT INTO triples
+                (subject, predicate, object, valid_from, source, confidence)
+            VALUES ('mem-1', 'mentions', 'Alice', '2026-05-10', 'test', 1.0)
+            """
+        )
+        store.conn.commit()
+        store.conn.close()
+'''
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_objects_instantiated == 3
+
+    def test_commented_out_code_not_counted_python(self):
+        code = """
+@pytest.fixture
+def setup_with_dead_code():
+    # old_client = OldClient(host, port)
+    client = NewClient()
+    return client
+"""
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "setup_with_dead_code")
+            assert fixture.num_objects_instantiated == 1  # only NewClient
+
+    def test_commented_out_code_not_counted_java(self):
+        """Line comment AND block comment, each containing a real-looking
+        `new X()` -- neither should count."""
+        code = """
+@Before
+public void setUp() {
+    // legacyResource = new LegacyResource();
+    resource = new Resource();
+    /*
+    alsoUnused = new AlsoUnused();
+    */
+}
+"""
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_objects_instantiated == 1  # only Resource
+
+    def test_new_in_js_template_string_not_counted(self):
+        code = """
+beforeEach(() => {
+    const sql = `INSERT INTO t VALUES (new Foo())`;
+    const client = new RealClient();
+});
+"""
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            assert result.fixtures[0].num_objects_instantiated == 1  # only RealClient
+
+    def test_self_named_fixture_not_counted(self):
+        """Regression for the exact real-corpus case found (db/c.db
+        `TEST_ADDRESS`): a fixture whose own capitalized name matches the
+        `def NAME(` signature line must not self-count. True count is 0
+        -- the body makes no instantiation at all."""
+        code = """
+@pytest.fixture
+def TEST_ADDRESS(address_conversion_func):
+    return address_conversion_func("0xdead")
+"""
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "TEST_ADDRESS")
+            assert fixture.num_objects_instantiated == 0
+
+    def test_nested_class_definition_not_counted(self):
+        """Bonus fix found while re-verifying: `class FooFilter(Filter):`
+        matched the OLD regex too (`FooFilter(` looks like a capitalized
+        call) even though defining a class isn't instantiating one. A
+        `class_definition` node is never a `call` node, so this can no
+        longer happen."""
+        code = """
+def setUp(self):
+    class FooFilter(Filter):
+        pass
+    self.f = FooFilter
+"""
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_objects_instantiated == 0
+
+    def test_nested_java_anonymous_class_counts_both_levels(self):
+        """A `new X() { ... }` anonymous class body can itself contain a
+        further instantiation -- both must count (no early return on a
+        match during the AST walk)."""
+        code = """
+@Before
+public void setUp() {
+    handler = new Runnable() {
+        public void run() {
+            helper = new Helper();
+        }
+    };
+}
+"""
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_objects_instantiated == 2  # Runnable + Helper
+
+    def test_dotted_attribute_chain_still_counts(self):
+        """a.b.Foo() -- an arbitrarily deep dotted/attribute chain -- still
+        counts via the capitalized *rightmost* identifier, same as the
+        old regex's intent, just via a real `call` node's `attribute`
+        field instead of text matching."""
+        code = """
+@pytest.fixture
+def setup_nested():
+    obj = a.b.c.Qux()
+    return obj
+"""
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "setup_nested")
+            assert fixture.num_objects_instantiated == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

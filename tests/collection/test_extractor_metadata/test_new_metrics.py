@@ -850,8 +850,11 @@ class TestDottedConstructorInstantiation:
     """new Namespace.ClassName(...) -- a common JS/TS idiom (e.g.
     new THREE.Vector3()) and valid Java (new java.util.ArrayList()) -- must
     be counted, not just a single bare identifier before the constructor
-    call. See collection/heuristics/feature_extraction_patterns.yaml's
-    object_instantiation_patterns."""
+    call. See detector_shared.py's OBJECT_CREATION_NODE_TYPES /
+    _count_object_instantiations() -- a dotted type is still a single
+    object_creation_expression/new_expression node, so this is really
+    testing that the node-type walk isn't accidentally scoped to bare
+    identifiers only."""
 
     def test_javascript_dotted_constructor_counted(self):
         code = """

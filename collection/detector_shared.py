@@ -9,11 +9,12 @@ post-processing passes that need to see the whole fixture list at once
 none of these can live in a single per-language file because they either
 span languages or need the full fixture set as context.
 
-The mock/external-call/object-instantiation regex tables and the
-setup/teardown pairing rules are loaded from
-collection/heuristics/feature_extraction_patterns.yaml rather than
-hardcoded here -- see that file for the full catalog and the reasoning
-behind each pairing.
+The mock/external-call regex tables and the setup/teardown pairing rules
+are loaded from collection/heuristics/feature_extraction_patterns.yaml
+rather than hardcoded here -- see that file for the full catalog and the
+reasoning behind each pairing. `num_objects_instantiated` is the one
+exception: it's AST-based (tree-sitter node types), not a pattern-table
+lookup -- see `_count_object_instantiations()`.
 """
 
 import re
@@ -232,6 +233,93 @@ def _count_external_calls(node, src_bytes: bytes) -> int:
     """
     text = _source(node, src_bytes).lower()
     return sum(len(re.findall(p, text)) for p in EXTERNAL_CALL_PATTERNS)
+
+
+# ---------------------------------------------------------------------------
+# Object instantiation (AST-based, not regex -- see internal-docs/
+# methodology-improvements/num-objects-instantiated-false-positive-rate.md
+# for the investigation that motivated this)
+# ---------------------------------------------------------------------------
+
+# Tree-sitter node type that unambiguously means "a `new X(...)` object
+# creation" in each language (verified directly against each grammar).
+# Java's `array_creation_expression` (`new int[5]`) is a distinct node type
+# from `object_creation_expression` and deliberately excluded -- primitive/
+# array allocation isn't a constructor call, matching the previous regex's
+# behavior (it required a `(` immediately after the type, which array
+# syntax never has). Python has no entry: it has no dedicated node for
+# "this call is a constructor" at all (`Foo()` and `foo()` are both plain
+# `call` nodes) -- see _python_call_is_capitalized() below instead.
+OBJECT_CREATION_NODE_TYPES: dict[str, set[str]] = {
+    "java": {"object_creation_expression"},
+    "javascript": {"new_expression"},
+    "typescript": {"new_expression"},
+}
+
+
+def _python_call_is_capitalized(call_node, src_bytes: bytes) -> bool:
+    """True if `call_node` (a Python `call` node)'s target -- the bare
+    identifier for `Foo()`, or the rightmost identifier for a dotted/
+    attribute chain like `module.Foo()` or `a.b.c.Qux()` -- starts with an
+    uppercase letter. Same capitalized-name heuristic already used to
+    approximate "is this a constructor" in Python (there's no dedicated
+    AST node for it, unlike Java/JS/TS's `new` keyword), just scoped to a
+    genuine `call` node instead of a text/regex scan -- a tree-sitter
+    `attribute` node's own "attribute" field is always the immediate
+    rightmost identifier regardless of how deep the dotted chain is
+    (verified directly: `a.b.c.Qux()`'s outer `attribute` node's
+    "attribute" field is `Qux`, no manual chain-walking needed)."""
+    target = call_node.child_by_field_name("function")
+    if target is None:
+        return False
+    if target.type == "attribute":
+        target = target.child_by_field_name("attribute")
+    if target is None or target.type != "identifier":
+        return False
+    name = _source(target, src_bytes)
+    return bool(name) and name[0].isupper()
+
+
+def _count_object_instantiations(fixture_node, src_bytes: bytes, language: str) -> int:
+    """AST-based object-instantiation count -- walks fixture_node's own
+    already-parsed subtree (the same tree fixture detection already
+    produced; no re-parsing, no regex over raw_source) and counts:
+      - Java: `object_creation_expression` nodes.
+      - JS/TS: `new_expression` nodes.
+      - Python: `call` nodes whose target is capitalized (see
+        _python_call_is_capitalized()).
+
+    Because these are real AST node types (or, for Python, a real `call`
+    node), a match can only occur in genuine, executing code -- a string
+    literal's contents are never parsed as nested code, so a `new X()` (or
+    a SQL fragment, or generated source) sitting inside a string or
+    comment produces no nested node here at all; a fixture's own
+    `def NAME(...):` line is a `function_definition` node, never a `call`
+    node, so a capitalized fixture name can no longer self-match either.
+    Both are exactly the two false-positive mechanisms found in
+    internal-docs/methodology-improvements/
+    num-objects-instantiated-false-positive-rate.md, fixed structurally
+    rather than by filtering matches after the fact.
+
+    No early return on a match (unlike _count_comment_lines()): a nested
+    instantiation -- `new Foo(new Bar())`, or one inside an anonymous
+    Java class body (`new Runnable() { ... new Baz() ... }`) -- must
+    count every occurrence, not just the outermost one."""
+    target_types = OBJECT_CREATION_NODE_TYPES.get(language)
+    count = 0
+
+    def visit(node) -> None:
+        nonlocal count
+        if language == "python":
+            if node.type == "call" and _python_call_is_capitalized(node, src_bytes):
+                count += 1
+        elif target_types and node.type in target_types:
+            count += 1
+        for child in node.children:
+            visit(child)
+
+    visit(fixture_node)
+    return count
 
 
 # ---------------------------------------------------------------------------
@@ -474,9 +562,9 @@ def _build_result(
         loc=loc,
         cyclomatic_complexity=metrics.get("cyclomatic_complexity", 1),
         max_nesting_depth=nesting_depth,
-        num_objects_instantiated=metrics.get(
-            "num_objects_instantiated", 0
-        ),  # Via Lizard + post-processing
+        num_objects_instantiated=_count_object_instantiations(
+            func_node, src_bytes, language
+        ),  # AST-based (tree-sitter node types), not regex
         num_external_calls=_count_external_calls(
             func_node, src_bytes
         ),  # Custom regex for I/O patterns

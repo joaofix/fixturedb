@@ -23,8 +23,9 @@ For each of the supported languages, we define:
 3. **Fixture metrics** — Quantitative properties of the fixture
    - LOC: Lines of code (custom: non-blank line count)
    - Cyclomatic Complexity: Branch count via Lizard library
-   - num_objects_instantiated: Custom count of new X(...) constructor calls
-     (Java/JS/TS) or capitalized-call heuristic (Python)
+   - num_objects_instantiated: Tree-sitter AST node count -- new X(...)'s
+     dedicated node type (Java/JS/TS) or a capitalized-target `call` node
+     (Python, which has no dedicated "constructor" node)
    - num_external_calls: Custom regex detection of I/O patterns (db, file, http, network)
    - num_comment_lines / comment_density: Tree-sitter comment-node walk over
      the fixture's own AST node; comment_density = num_comment_lines / loc
@@ -62,10 +63,10 @@ either is revived.
 
 The detector delegates metric calculation to industry-standard tools:
 - Lizard: cyclomatic complexity, parameter count
-- Tree-sitter: AST parsing for fixture detection, scope analysis, and
-  nesting depth
-- Regex: I/O and constructor-call pattern detection (external_calls,
-  object_instantiation), catalogued in
+- Tree-sitter: AST parsing for fixture detection, scope analysis, nesting
+  depth, comment lines, and object instantiation (`new`/`call` node types
+  -- see detector_shared.py::_count_object_instantiations())
+- Regex: I/O pattern detection (external_calls), catalogued in
   collection/heuristics/feature_extraction_patterns.yaml
 
 See collection/complexity_provider.py for the Lizard integration and
