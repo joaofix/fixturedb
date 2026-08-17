@@ -21,6 +21,9 @@ from collection.db import (
 )
 from collection.research_questions._shared import format_p_value
 from collection.research_questions.rq1 import (
+    CONTINUOUS_METRICS,
+    OTHER_CONTINUOUS_METRICS,
+    PAPER_CONTINUOUS_METRICS,
     DatasetMetrics,
     _floor_percentage,
     compare_datasets_repo_level,
@@ -265,6 +268,28 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                 insert_fixture(conn, base)
 
 
+class TestPaperMetricsTiering:
+    """PAPER_CONTINUOUS_METRICS is the exhaustive, paper-approved continuous
+    set (2026-08-17) -- exactly loc/cyclomatic_complexity/comment_density.
+    max_nesting_depth is fully Mann-Whitney tested (same as the paper
+    metrics) but deliberately NOT in this set -- see this module's
+    docstring for why."""
+
+    def test_paper_continuous_metrics_is_exactly_three(self):
+        assert PAPER_CONTINUOUS_METRICS == ["loc", "cyclomatic_complexity", "comment_density"]
+
+    def test_max_nesting_depth_is_tested_but_not_a_paper_metric(self):
+        assert "max_nesting_depth" in CONTINUOUS_METRICS  # still Mann-Whitney tested
+        assert "max_nesting_depth" in OTHER_CONTINUOUS_METRICS
+        assert "max_nesting_depth" not in PAPER_CONTINUOUS_METRICS
+
+    def test_other_continuous_metrics_is_continuous_minus_paper(self):
+        assert OTHER_CONTINUOUS_METRICS == [
+            m for m in CONTINUOUS_METRICS if m not in PAPER_CONTINUOUS_METRICS
+        ]
+        assert set(OTHER_CONTINUOUS_METRICS) & set(PAPER_CONTINUOUS_METRICS) == set()
+
+
 class TestFloorPercentage:
     def test_computes_fraction_at_floor(self):
         assert _floor_percentage([1, 1, 2, 3], 1) == 0.5
@@ -396,11 +421,14 @@ class TestLoadDatasetMetrics:
 
     def test_no_body_fixture_types_excluded_from_continuous_metrics_only(self, tmp_path):
         """junit_rule/junit_class_rule (NO_BODY_FIXTURE_TYPES) must not
-        contribute to loc/cyclomatic_complexity/max_nesting_depth's
-        repo-level means (Lizard can't analyze a field declaration -- see
-        _shared.py::NO_BODY_FIXTURE_TYPES), but num_parameters (0 is a
-        genuinely correct value for a field, not a Lizard fallback) and the
-        fixture_type categorical distribution must still include them."""
+        contribute to loc/cyclomatic_complexity/max_nesting_depth/
+        comment_density's repo-level means (Lizard can't analyze a field
+        declaration -- see _shared.py::NO_BODY_FIXTURE_TYPES; comment_density
+        is loc-derived and excluded for the same "different kind of code
+        unit" reasoning, not because of Lizard specifically), but
+        num_parameters (0 is a genuinely correct value for a field, not a
+        Lizard fallback) and the fixture_type categorical distribution must
+        still include them."""
         _make_multi_language_db(
             tmp_path,
             "a",
@@ -414,6 +442,7 @@ class TestLoadDatasetMetrics:
                             "cyclomatic_complexity": 1,
                             "max_nesting_depth": 1,
                             "num_parameters": 0,
+                            "comment_density": 0.9,
                         },
                         {
                             "fixture_type": "junit4_before",
@@ -421,6 +450,7 @@ class TestLoadDatasetMetrics:
                             "cyclomatic_complexity": 3,
                             "max_nesting_depth": 2,
                             "num_parameters": 2,
+                            "comment_density": 0.2,
                         },
                         {
                             "fixture_type": "junit4_before",
@@ -428,6 +458,7 @@ class TestLoadDatasetMetrics:
                             "cyclomatic_complexity": 3,
                             "max_nesting_depth": 2,
                             "num_parameters": 2,
+                            "comment_density": 0.2,
                         },
                     ],
                 }
@@ -435,12 +466,14 @@ class TestLoadDatasetMetrics:
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
 
-        # One repo -- its loc/cc/nesting means exclude the junit_rule
-        # fixture entirely (mean of the two junit4_before fixtures only:
-        # loc 10.0, not (2+10+10)/3=7.33; cc 3.0, not 1.67; nesting 2.0, not 1.67).
+        # One repo -- its loc/cc/nesting/comment_density means exclude the
+        # junit_rule fixture entirely (mean of the two junit4_before
+        # fixtures only: loc 10.0, not (2+10+10)/3=7.33; cc 3.0, not 1.67;
+        # nesting 2.0, not 1.67; comment_density 0.2, not (0.9+0.2+0.2)/3=0.433).
         assert metrics.repo_level_continuous["loc"] == [10.0]
         assert metrics.repo_level_continuous["cyclomatic_complexity"] == [3.0]
         assert metrics.repo_level_continuous["max_nesting_depth"] == [2.0]
+        assert metrics.repo_level_continuous["comment_density"] == [0.2]
         assert metrics.repo_level_continuous_by_language["loc"] == {"java": [10.0]}
 
         # num_parameters is NOT excluded -- mean includes all 3 fixtures.
@@ -689,12 +722,15 @@ class TestGenerateReport:
     def test_cyclomatic_complexity_has_a_mann_whitney_section(self, tmp_path):
         """Regression: cyclomatic_complexity was dropped from testing, then
         restored -- must have a real Overall row again, same shape as
-        loc/max_nesting_depth, not just a floor-percentage footnote entry."""
+        loc/comment_density, not just a floor-percentage footnote entry.
+        Boundary is "### comment_density" (the next Paper Metric), not
+        "### max_nesting_depth" -- max_nesting_depth moved to the "Other"
+        tier and no longer immediately follows cyclomatic_complexity."""
         _make_db(tmp_path, "a", [{"cyclomatic_complexity": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
         _make_db(tmp_path, "c", [{"cyclomatic_complexity": v} for v in [5, 6, 5, 5, 6, 5, 6, 5, 6, 5]])
         report = generate_report(db_root=tmp_path)
         assert "### cyclomatic_complexity" in report
-        cc_section = report.split("### cyclomatic_complexity")[1].split("### max_nesting_depth")[0]
+        cc_section = report.split("### cyclomatic_complexity")[1].split("### comment_density")[0]
         overall_line = next(
             line for line in cc_section.splitlines() if line.startswith("| Overall |")
         )
@@ -720,8 +756,12 @@ class TestGenerateReport:
         )
         report = generate_report(db_root=tmp_path)
         assert "Floor-binding check (descriptive only" in report
+        # The footnote now renders in the "Other Extracted Features" tier,
+        # after the Paper Metrics section (loc/cyclomatic_complexity/
+        # comment_density) -- boundary is "### max_nesting_depth" (the
+        # next heading), not "### loc" (which now precedes the footnote).
         footnote_section = report.split("Floor-binding check (descriptive only")[1].split(
-            "### loc"
+            "### max_nesting_depth"
         )[0]
         params_line = next(
             line for line in footnote_section.splitlines()
@@ -734,6 +774,71 @@ class TestGenerateReport:
             line.startswith("| cyclomatic_complexity |")
             for line in footnote_section.splitlines()
         )
+
+    def test_comment_density_has_a_mann_whitney_section_in_paper_metrics(self, tmp_path):
+        """comment_density is the third paper metric (2026-08-17) -- must
+        render a real Overall row, positioned inside "Paper Metrics"
+        (before "Other Extracted Features"), not just be a descriptive-only
+        column."""
+        _make_db(
+            tmp_path, "a",
+            [{"comment_density": v} for v in [0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.2, 0.1, 0.2, 0.1]],
+        )
+        _make_db(
+            tmp_path, "c",
+            [{"comment_density": v} for v in [0.8, 0.9, 0.8, 0.8, 0.9, 0.8, 0.9, 0.8, 0.9, 0.8]],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "### comment_density" in report
+        assert report.index("**Paper Metrics") < report.index("### comment_density")
+        assert report.index("### comment_density") < report.index("**Other Extracted Features")
+        cd_section = report.split("### comment_density")[1].split(
+            "**Other Extracted Features"
+        )[0]
+        overall_line = next(
+            line for line in cd_section.splitlines() if line.startswith("| Overall |")
+        )
+        assert "| 1 | 1 |" in overall_line  # one repo per side
+        assert "large | 1.000" in overall_line
+
+    def test_max_nesting_depth_renders_under_other_not_paper(self, tmp_path):
+        """max_nesting_depth keeps its full Mann-Whitney table (same rigor
+        as the paper metrics) but must render after "Other Extracted
+        Features", not inside "Paper Metrics"."""
+        _make_db(tmp_path, "a", [{"loc": 1}])
+        _make_db(tmp_path, "c", [{"loc": 1}])
+        report = generate_report(db_root=tmp_path)
+        assert "### max_nesting_depth" in report
+        paper_section = report.split("**Paper Metrics")[1].split("**Other Extracted Features")[0]
+        other_section = report.split("**Other Extracted Features")[1].split(
+            "**Categorical metrics"
+        )[0]
+        assert "### max_nesting_depth" not in paper_section
+        assert "### max_nesting_depth" in other_section
+
+    def test_paper_and_other_continuous_summary_tables_split_in_per_dataset_section(
+        self, tmp_path
+    ):
+        """The per-dataset "Continuous metrics" table (median/mean/etc.) is
+        split into a "Paper" table (loc/cyclomatic_complexity/
+        comment_density) and an "Other (not in the paper)" table
+        (max_nesting_depth/num_parameters), not one combined table."""
+        _make_db(tmp_path, "a", [{"loc": 5}])
+        report = generate_report(db_root=tmp_path)
+        summary = report.split("### Dataset A")[1].split("###")[0]
+        assert "**Continuous metrics -- Paper**" in summary
+        assert "**Continuous metrics -- Other (not in the paper)**" in summary
+        paper_table = summary.split("**Continuous metrics -- Paper**")[1].split(
+            "**Continuous metrics -- Other"
+        )[0]
+        other_table = summary.split("**Continuous metrics -- Other")[1]
+        assert "| loc |" in paper_table
+        assert "| cyclomatic_complexity |" in paper_table
+        assert "| comment_density |" in paper_table
+        assert "| max_nesting_depth |" not in paper_table
+        assert "| max_nesting_depth |" in other_table
+        assert "| num_parameters |" in other_table
+        assert "| loc |" not in other_table
 
 
 class TestWriteReport:
