@@ -46,7 +46,7 @@ Each detected fixture carries these fields (`collection/detector_shared.py::Fixt
 | `loc` | Non-blank line count of the fixture's own text | `_count_loc()` |
 | `cyclomatic_complexity`, `num_parameters` | Lizard, run on the fixture's isolated source | `complexity_provider.py` |
 | `max_nesting_depth` | Custom tree-sitter traversal (Lizard doesn't do function-level nesting) | `_compute_nesting_depth()` |
-| `num_objects_instantiated` | Regex over constructor patterns (`new X(...)` for Java/JS/TS, capitalized-call heuristic for Python) | `_count_object_instantiations()` in `complexity_provider.py` |
+| `num_objects_instantiated` | Tree-sitter AST node type (`object_creation_expression`/`new_expression` for Java/JS/TS; capitalized-target `call` node for Python -- no re-parsing, same tree fixture detection already produced) | `_count_object_instantiations()` in `detector_shared.py` |
 | `num_external_calls` | Regex over I/O patterns (db/http/file/subprocess) | `_count_external_calls()` |
 | `has_teardown_pair` | Post-processing, paired against other fixtures in the file | `_calculate_teardown_pairs()` |
 | `fixture_dependencies` | Post-processing, pytest-only | `_detect_fixture_dependencies()` |

@@ -12,7 +12,7 @@ fixture is found in the first place), see [detection.md](detection.md).
 | `num_parameters` | Lizard, self/cls stripped for Python | `complexity_provider.py` + `detector_shared.py::_build_result()` | all |
 | `max_nesting_depth` | Custom tree-sitter traversal | `detector_shared.py::_compute_nesting_depth()` | all |
 | `loc` | Non-blank line count | `detector_shared.py::_count_loc()` | all |
-| `num_objects_instantiated` | Regex (constructor patterns) | `complexity_provider.py::_count_object_instantiations()` | all |
+| `num_objects_instantiated` | Tree-sitter AST node type (`new`/`call` nodes) | `detector_shared.py::_count_object_instantiations()` | all |
 | `num_external_calls` | Regex (I/O patterns) | `detector_shared.py::_count_external_calls()` | all |
 | `num_comment_lines`, `comment_density` | Tree-sitter comment-node walk | `detector_shared.py::_count_comment_lines()` | all |
 | `fixture_type`, `framework`, `scope` | AST pattern match vs. `fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` | all |
@@ -67,15 +67,40 @@ statement is. A flat function reports 1, one level of `if` reports 2. Regression
 
 ### num_objects_instantiated
 
-Regex count of constructor-call patterns: `new ClassName(...)` (with optional generics, e.g.
-`new ArrayList<Foo>()`, and dotted/namespaced constructors, e.g. `new java.util.ArrayList()` or
-`new THREE.Vector3()`) for Java/JS/TS, and a capitalized-call heuristic (`ClassName(...)`) for Python.
-The count is capped at Lizard's own external-call count to avoid overcounting.
+Tree-sitter AST node count, not regex (changed 2026-08-16 -- see below). Walks the fixture's own
+already-parsed node (`_count_object_instantiations()`) and counts:
 
-Pattern catalog: `feature_extraction_patterns.yaml`'s `object_instantiation_patterns`.
+- **Java**: `object_creation_expression` nodes -- `new ClassName(...)`, generics (`new
+  ArrayList<Foo>()`), dotted/namespaced types (`new java.util.ArrayList()`), and anonymous class
+  bodies (`new Runnable() { ... }`, including any further instantiation nested inside that body).
+  Java's `array_creation_expression` (`new int[5]`) is a distinct node type and deliberately
+  excluded -- array allocation isn't a constructor call.
+- **JS/TS**: `new_expression` nodes -- `new ClassName(...)`, `new mod.Bar(...)`, `new Foo<T>()`.
+- **Python**: `call` nodes whose target -- the bare identifier for `Foo()`, or the rightmost
+  identifier for a dotted/attribute chain like `a.b.Foo()` -- starts with an uppercase letter.
+  Python has no dedicated "this is a constructor" AST node (`Foo()` and `foo()` are both plain
+  `call` nodes), so this is still the same capitalized-name heuristic as before -- just scoped to
+  a genuine call site instead of a text/regex scan.
 
-**Known limitation:** the Python heuristic (capitalization) may miss lowercase-named classes or
-factory functions, and doesn't distinguish library classes from user-defined ones.
+**Previously** (before 2026-08-16) this was a regex scan over the fixture's raw source text (Java/
+JS/TS: `` \bnew\s+[\w.]+\s*(?:<.+?>)?\s*\( ``; Python: `` \b[A-Z][A-Za-z0-9_]*\s*\( ``), capped
+against Lizard's own external-call count as a sanity ceiling. That approach counted matches
+wherever the pattern's *text* appeared, regardless of whether it was real code -- see
+[internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md](../../internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md)
+for the investigation that found two concrete false-positive mechanisms this AST-based rewrite
+fixes structurally (a match can never occur inside a string/comment, or against a fixture's own
+`def NAME(...):` line, because neither is ever a `call`/`object_creation_expression`/
+`new_expression` node): text embedded in a string literal or comment (SQL fragments, generated
+source being fed to a compiler test, commented-out code) being read as if it were real code; and a
+Python fixture whose own capitalized name (e.g. `TEST_ADDRESS`, `Popen`) self-matched its own
+signature line, unrelated to anything its body did.
+
+**Known limitation (Python only):** the capitalized-name heuristic can still miss a lowercase-named
+factory function, or count a capitalized function that isn't actually a constructor -- this is a
+genuine language-level ambiguity Python's grammar can't resolve (no `new` keyword, no dedicated
+node), not something AST-based detection can fully close. A 46-match manual review across all four
+languages (see the investigation doc above) found no case of this in practice, but it isn't ruled
+out by construction the way Java/JS/TS's `new`-anchored node types are.
 
 ### num_external_calls
 

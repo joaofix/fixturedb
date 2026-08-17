@@ -1,12 +1,15 @@
-# `num_objects_instantiated`: false-positive rate, corpus-wide
+# `num_objects_instantiated`: false-positive rate, corpus-wide -- RESOLVED
 
-**Date**: 2026-08-16
+**Date**: 2026-08-16 (investigated); fixed same day -- see "Resolution" at
+the bottom.
 **Context**: manual spot-check of one fixture (`db/a.db` fixture #46, a
 `setUp` with `num_objects_instantiated=4`) found the 4th "instantiation"
 was actually `VALUES (` inside a SQL string literal embedded in the
 fixture body -- not real Python code. This investigates how common that
 kind of false positive is across the whole corpus, not just SQL, and
-whether it's the only mechanism. Investigation only, no code changes.
+whether it's the only mechanism. Started as investigation-only; the
+finding was significant enough that a fix was implemented the same day
+(see "Resolution").
 Run against `past-datasets/16-aug-2026/db/{a,c}.db` (the just-archived
 snapshot -- see `git log`'s "Archive datasets/..." commit).
 
@@ -159,3 +162,39 @@ investigation already does, reusable almost verbatim), and (b) skip a
 match that starts at byte 0 of `raw_source` (the fixture's own
 `def`/`async def` line can never itself be an instantiation happening
 *inside* the fixture).
+
+---
+
+## Resolution (2026-08-16, same day)
+
+Rejected as "unacceptable to leave as-is" -- implemented mitigation (a)
+above, generalized: rather than filtering regex matches after the fact,
+`num_objects_instantiated` was rewritten to walk the fixture's own
+already-parsed tree-sitter node directly and count real AST node types --
+`object_creation_expression` (Java), `new_expression` (JS/TS), and a
+capitalized-target `call` node (Python, which has no dedicated
+"constructor" node at all). See `detector_shared.py::
+_count_object_instantiations()`.
+
+This fixes both false-positive mechanisms **structurally**, not just in
+the cases this investigation happened to check: a string literal's or
+comment's contents are never parsed as nested code, so neither can ever
+produce a matching node; a fixture's own `def NAME(...):` line is a
+`function_definition` node, never a `call` node, so the self-match
+mechanism (Finding 2) can't occur either. `complexity_provider.py`'s
+regex-based `_count_object_instantiations()` and
+`feature_extraction_patterns.yaml`'s `object_instantiation_patterns`
+section were both removed rather than kept as unused code.
+
+New regression tests reproduce every case this investigation found by
+hand (SQL-in-string, Java line/block comments, JS template-string,
+self-named `TEST_ADDRESS`-style fixture, plus a bonus case found while
+re-verifying -- a nested `class Foo(Bar):` definition also matched the
+old regex and no longer does) --
+`tests/collection/test_extractor_metadata/test_object_instantiations.py::TestObjectInstantiationsFalsePositiveFixes`.
+
+No DB migration was needed (this changes values, not schema -- the
+column already existed). Landed while `datasets/`/`db/` were already
+empty ahead of the next full collection run (see the "Archive
+datasets/..." commit), so the fix applies cleanly to fresh data with no
+backfill question to resolve.
