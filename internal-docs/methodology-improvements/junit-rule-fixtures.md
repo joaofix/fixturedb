@@ -39,7 +39,13 @@ are always its hardcoded defaults (1 and 0) — never a real measurement.
 
 `loc` is unaffected (computed independently via non-blank line count of the
 real source text, not via Lizard) and `num_objects_instantiated` is
-unaffected (independent regex pass, not gated on Lizard's function count).
+unaffected too -- as of 2026-08-16 it's an independent tree-sitter AST
+walk directly on the fixture's own already-parsed node
+(`detector_shared.py::_count_object_instantiations()`), not routed
+through Lizard at all (previously: an independent regex pass, not gated
+on Lizard's function count -- same conclusion, different mechanism; see
+internal-docs/methodology-improvements/
+num-objects-instantiated-false-positive-rate.md).
 
 ## 3. What the nesting-depth traversal does
 

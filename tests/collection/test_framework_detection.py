@@ -185,11 +185,16 @@ public class TemporaryFolderTest {
         assert rule_fixtures[0].name == "temporaryFolder"
         # Regression check: @Rule/@ClassRule fixtures previously omitted
         # language="java" when calling _build_result(), so complexity
-        # metrics were silently computed in Python mode. Python's object-
-        # instantiation heuristic has an extra capitalized-call pattern
-        # that doesn't apply in Java mode, so "new TemporaryFolder()"
-        # gets double-counted (2) under the Python-mode bug instead of
-        # the correct single count (1) under Java mode.
+        # metrics were silently computed in Python mode. This still
+        # catches that class of bug today, just via a different failure
+        # mode than when this test was written: _count_object_
+        # instantiations() (detector_shared.py) now walks real tree-
+        # sitter node types, and a Java-grammar-parsed tree has no `call`
+        # nodes at all (Java's grammar names invocation/construction
+        # nodes differently) -- so a wrong language="python" here would
+        # silently count 0, not the correct 1, rather than the old
+        # regex-era failure mode (a stray extra capitalized-call pattern
+        # match, double-counting to 2).
         assert rule_fixtures[0].num_objects_instantiated == 1
 
         # Check for junit_class_rule type

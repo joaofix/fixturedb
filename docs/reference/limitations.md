@@ -172,7 +172,7 @@ differs by authorship group.
 | JavaScript | Medium | Framework conventions vary; helper detection relies on naming. |
 | TypeScript | Medium | Same as JavaScript. |
 
-**Known gaps:** Parametrized test detection edge cases, false-positive rates (~5–15% for `num_objects_instantiated`).
+**Known gaps:** Parametrized test detection edge cases. `num_objects_instantiated` was regex-based and matched text wherever it appeared (inside a string literal/comment, or a fixture's own capitalized name self-matching its signature line) until 2026-08-16, when it was rewritten to walk real tree-sitter AST node types instead (`object_creation_expression`/`new_expression` for Java/JS/TS, a capitalized-target `call` node for Python) -- see [internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md](../../internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md) for the investigation and fix. Java/JS/TS are now exact by construction (a string/comment's contents are never parsed as nested code); Python retains a residual, much narrower heuristic-naming ambiguity (a capitalized call that isn't actually a constructor), found in 0 of a 46-match manual sample.
 
 ---
 

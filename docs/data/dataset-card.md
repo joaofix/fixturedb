@@ -64,7 +64,7 @@ All metrics are collected from test files only.
 | `cyclomatic_complexity` | McCabe complexity | Lizard |
 | `max_nesting_depth` | Maximum control-flow nesting | Tree-sitter |
 | `num_parameters` | Formal parameter count from AST | Tree-sitter / Lizard |
-| `num_objects_instantiated` | Constructor-like expressions | AST + regex |
+| `num_objects_instantiated` | Constructor-like expressions | Tree-sitter AST node type |
 | `num_external_calls` | I/O and external operation calls | Regex |
 | `framework` | Testing framework family | AST traversal |
 | `scope` | Execution scope (per_test, per_class, per_module, global) | AST traversal |
