@@ -1,0 +1,1483 @@
+repo_name,language,commit_sha,file_path,fixture_name,fixture_type,start_line,end_line,loc,framework,num_mocks,scope,cyclomatic_complexity,max_nesting_depth,num_parameters,num_objects_instantiated,num_external_calls,num_comment_lines,comment_density,has_teardown_pair,github_url,agent_type,commit_kind,commit_type,raw_source,commit_date,repo_age_at_commit_years,is_complete_addition
+microservices-patterns/ftgo-application,javascript,a835e23bb0f3bc92dd712ff48a1510496ecb10fa,ftgo-api-gateway-graphql/tests/unit/client.test.js,<anonymous>_11,before_each,12,14,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/microservices-patterns/ftgo-application/blob/a835e23bb0f3bc92dd712ff48a1510496ecb10fa/ftgo-api-gateway-graphql/tests/unit/client.test.js#L12-L14,human_pre2022,human,,"beforeEach(() => {
+    context = {consumerServiceProxy: {}, orderServiceProxy: {}, restaurantServiceProxy: {}, deliveryServiceProxy: {}}
+})",2020-08-28,2.847364818617385,1
+microservices-patterns/ftgo-application,javascript,a835e23bb0f3bc92dd712ff48a1510496ecb10fa,ftgo-api-gateway-graphql/tests/unit/schema.test.js,<anonymous>_12,before_each,13,15,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/microservices-patterns/ftgo-application/blob/a835e23bb0f3bc92dd712ff48a1510496ecb10fa/ftgo-api-gateway-graphql/tests/unit/schema.test.js#L13-L15,human_pre2022,human,,"beforeEach(() => {
+    context = {consumerServiceProxy: {}, orderServiceProxy: {}, restaurantServiceProxy: {}, deliveryServiceProxy: {}}
+})",2020-08-28,2.847364818617385,1
+wkeyuan/dwsurvey,javascript,3cf321af4ea423be4aad4f1030e44f3bda6c8ea1,src/main/webapp/js/plugs/echarts/echarts-master/test/ut/spec/util/graphic.js,<anonymous>_5,before_all,6,13,8,,0,per_class,1,1,1,0,0,1,0.125,0,https://github.com/wkeyuan/dwsurvey/blob/3cf321af4ea423be4aad4f1030e44f3bda6c8ea1/src/main/webapp/js/plugs/echarts/echarts-master/test/ut/spec/util/graphic.js#L6-L13,human_pre2022,human,,"beforeAll(function (done) { // jshint ignore:line
+        utHelper.resetPackageLoader(function () {
+            window.require(['echarts/util/graphic'], function (g) {
+                graphic = g;
+                done();
+            });
+        });
+    })",2020-02-18,2.6885694729637235,1
+wkeyuan/dwsurvey,javascript,3cf321af4ea423be4aad4f1030e44f3bda6c8ea1,src/main/webapp/js/plugs/echarts/echarts-master/test/ut/spec/util/model.js,<anonymous>_5,before_all,6,13,8,,0,per_class,1,1,1,0,0,1,0.125,0,https://github.com/wkeyuan/dwsurvey/blob/3cf321af4ea423be4aad4f1030e44f3bda6c8ea1/src/main/webapp/js/plugs/echarts/echarts-master/test/ut/spec/util/model.js#L6-L13,human_pre2022,human,,"beforeAll(function (done) { // jshint ignore:line
+        utHelper.resetPackageLoader(function () {
+            window.require(['echarts/util/model'], function (h) {
+                modelUtil = h;
+                done();
+            });
+        });
+    })",2020-02-18,2.6885694729637235,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/app.js,<anonymous>_8,before_each,9,9,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/app.js#L9-L9,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers', 'config'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/app.js,<anonymous>_9,before_each,10,19,8,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/app.js#L10-L19,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        var $injector = angular.injector(['wasabi.services']);
+
+        SessionFactory = function () {
+            return $injector.get('Session');
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/AddApplicationModalCtrl.js,<anonymous>_12,before_each,13,13,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/AddApplicationModalCtrl.js#L13-L13,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.bootstrap', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/AddApplicationModalCtrl.js,<anonymous>_13,before_each,14,37,24,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/AddApplicationModalCtrl.js#L14-L37,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        application = 'angularjs';
+        applications = [];
+        administeredApplications = [];
+        user = {};
+        appsThatCanBeAdded = [];
+        createController = function (isEditingPermissions) {
+            return $controller('AddApplicationModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'application': application,
+                'applications': applications,
+                'administeredApplications': administeredApplications,
+                'appsThatCanBeAdded': appsThatCanBeAdded,
+                'user': user,
+                'isEditingPermissions': isEditingPermissions || false
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/AddUserModalCtrl.js,<anonymous>_9,before_each,10,10,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/AddUserModalCtrl.js#L10-L10,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.bootstrap', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/AddUserModalCtrl.js,<anonymous>_10,before_each,11,28,18,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/AddUserModalCtrl.js#L11-L28,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        application = 'angularjs';
+        user = {};
+        createController = function (isEditingPermissions, _application, _user) {
+            return $controller('AddUserModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'application': _application || application,
+                'user': _user || user,
+                'isEditingPermissions': isEditingPermissions || false
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/AllApplicationsCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/AllApplicationsCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/AllApplicationsCtrl.js,<anonymous>_7,before_each,8,18,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/AllApplicationsCtrl.js#L8-L18,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        
+        createController = function () {
+            return $controller('AllApplicationsCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ApplicationCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ApplicationCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ApplicationCtrl.js,<anonymous>_7,before_each,8,18,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ApplicationCtrl.js#L8-L18,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        
+        createController = function () {
+            return $controller('ApplicationCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ApplicationsCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ApplicationsCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ApplicationsCtrl.js,<anonymous>_7,before_each,8,18,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ApplicationsCtrl.js#L8-L18,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        
+        createController = function () {
+            return $controller('ApplicationsCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/BucketAssignmentModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/BucketAssignmentModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.bootstrap', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/BucketAssignmentModalCtrl.js,<anonymous>_7,before_each,8,24,17,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/BucketAssignmentModalCtrl.js#L8-L24,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        buckets = [];
+        experiment = 'angularjs';
+        createController = function () {
+            return $controller('BucketAssignmentModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'buckets': buckets,
+                'experiment': experiment
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/BucketModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/BucketModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/BucketModalCtrl.js,<anonymous>_7,before_each,8,35,26,,2,per_test,1,1,3,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/BucketModalCtrl.js#L8-L35,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        bucket = {
+            name: 'something'
+        };
+        buckets = [];
+        
+        createController = function (isCreateBucket, isEditInDetails, isNoControl, bucketStatistics) {
+            return $controller('BucketModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'bucket': bucket,
+                'experimentId': 1,
+                'isCreateBucket': isCreateBucket || false,
+                'isEditInDetails': isEditInDetails || false,
+                'isNoControl': isNoControl || false,
+                'bucketStatistics': bucketStatistics || false,
+                'readOnly': false,
+                'buckets': buckets
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/BucketsCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/BucketsCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/BucketsCtrl.js,<anonymous>_7,before_each,8,27,17,,2,per_test,1,1,3,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/BucketsCtrl.js#L8-L27,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        scope.experiment = {
+            id: 1
+        };
+        
+        createController = function () {
+            return $controller('BucketsCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ChangeDateModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ChangeDateModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ChangeDateModalCtrl.js,<anonymous>_7,before_each,8,29,19,,2,per_test,1,1,3,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ChangeDateModalCtrl.js#L8-L29,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        scope.experiment = {
+            id: 1,
+            endTime: moment().format('YYYY-MM-DDTHH:mm:ssZZ')
+        };
+        
+        createController = function (experiment) {
+            return $controller('ChangeDateModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'experiment': experiment || 1
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ChangeSamplingModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ChangeSamplingModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ChangeSamplingModalCtrl.js,<anonymous>_7,before_each,8,28,18,,2,per_test,1,1,3,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ChangeSamplingModalCtrl.js#L8-L28,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        scope.experiment = {
+            id: 1
+        };
+        
+        createController = function (experiment) {
+            return $controller('ChangeSamplingModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'experiment': experiment || 1
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/CloseBucketConfirmModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/CloseBucketConfirmModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.bootstrap', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/CloseBucketConfirmModalCtrl.js,<anonymous>_7,before_each,8,22,14,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/CloseBucketConfirmModalCtrl.js#L8-L22,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        scope = $rootScope.$new();
+        
+        createController = function () {
+            return $controller('CloseBucketConfirmModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'bucketLabel': 'angularjs'
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/DatePickerCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/DatePickerCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/DatePickerCtrl.js,<anonymous>_7,before_each,8,23,14,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/DatePickerCtrl.js#L8-L23,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        scope.experiment = {};
+        event = {
+            preventDefault: function(){},
+            stopPropagation: function () {}
+        };
+        
+        createController = function () {
+            return $controller('DatePickerCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/DialogModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/DialogModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/DialogModalCtrl.js,<anonymous>_7,before_each,8,34,25,,2,per_test,1,1,3,0,0,1,0.04,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/DialogModalCtrl.js#L8-L34,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        scope.experiment = {};
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        options = {
+            cancelLabel: true,
+            okLabel: true,
+            description: 'hello',
+            header: 'ok',
+            showCancel: true, // apparently this is ignored
+            okCallback: function(){},
+            cancelCallback: function(){}
+        };
+        
+        createController = function () {
+            return $controller('DialogModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'options': options
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/EditApplicationModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/EditApplicationModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.bootstrap', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/EditApplicationModalCtrl.js,<anonymous>_7,before_each,8,22,15,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/EditApplicationModalCtrl.js#L8-L22,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        scope.application = 'hello';
+        createController = function () {
+            return $controller('EditApplicationModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'application': scope.application
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/EditApplicationOnPageCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/EditApplicationOnPageCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/EditApplicationOnPageCtrl.js,<anonymous>_7,before_each,8,17,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/EditApplicationOnPageCtrl.js#L8-L17,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        createController = function () {
+            return $controller('EditApplicationOnPageCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/EmptyBucketConfirmModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/EmptyBucketConfirmModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/EmptyBucketConfirmModalCtrl.js,<anonymous>_7,before_each,8,24,15,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/EmptyBucketConfirmModalCtrl.js#L8-L24,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        label = 'angularjs';
+        
+        createController = function () {
+            return $controller('EmptyBucketConfirmModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'bucketLabel': label
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ExperimentDetailsCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ExperimentDetailsCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ExperimentDetailsCtrl.js,<anonymous>_7,before_each,8,21,13,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ExperimentDetailsCtrl.js#L8-L21,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, $stateParams){
+        scope = $rootScope.$new();
+        state = $stateParams;
+        state['readonly'] = 'false';
+        state['openedFromModal'] = 'false';
+
+        createController = function () {
+            return $controller('ExperimentDetailsCtrl', {
+                '$scope': scope,
+                '$stateParams': state,
+                'simpleRuleEditing': false
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ExperimentModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ExperimentModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ExperimentModalCtrl.js,<anonymous>_7,before_each,8,61,47,,4,per_test,1,1,3,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ExperimentModalCtrl.js#L8-L61,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, $httpBackend){
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+
+        httpBackend = $httpBackend;
+
+        var mockApplicationsFactory = {
+            query: function() {
+                return {
+                    $promise: {
+                        then: function(doneFunc) {
+                            doneFunc([
+                                {
+                                    applicationName: 'app1'
+                                },
+                                {
+                                    applicationName: 'app2'
+                                }
+                            ]);
+                        }
+                    }
+                };
+            }
+        };
+
+        var mockEmailFactory = {
+            saveFavorite: sinon.stub(),
+            removeFavorite: sinon.stub()
+        };
+
+        angular.mock.inject(function($injector){
+            ConfigFactory = $injector.get('ConfigFactory');
+            ApplicationsFactory = mockApplicationsFactory;
+            EmailFactory = mockEmailFactory;
+        });
+
+        createController = function (experiments, experiment, readOnly, applications, allApplications) {
+            return $controller('ExperimentModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'experiments': experiments,
+                'experiment': experiment,
+                'readOnly': readOnly,
+                'applications': applications || 'applications',
+                'allApplications': allApplications,
+                'openedFromModal': false
+                
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ExperimentsCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ExperimentsCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/ExperimentsCtrl.js,<anonymous>_7,before_each,8,21,12,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/ExperimentsCtrl.js#L8-L21,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+        });
+        
+        createController = function () {
+            return $controller('ExperimentsCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/FeedbackCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/FeedbackCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/FeedbackCtrl.js,<anonymous>_7,before_each,8,20,11,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/FeedbackCtrl.js#L8-L20,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+        });
+        
+        createController = function () {
+            return $controller('FeedbackCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/FeedbackModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/FeedbackModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/FeedbackModalCtrl.js,<anonymous>_7,before_each,8,22,13,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/FeedbackModalCtrl.js#L8-L22,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        createController = function () {
+            return $controller('FeedbackModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/FeedbackTableCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/FeedbackTableCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/FeedbackTableCtrl.js,<anonymous>_7,before_each,8,20,11,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/FeedbackTableCtrl.js#L8-L20,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+        });
+        
+        createController = function () {
+            return $controller('FeedbackTableCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/MutualExclusionModalCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/MutualExclusionModalCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/MutualExclusionModalCtrl.js,<anonymous>_7,before_each,8,34,23,,3,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/MutualExclusionModalCtrl.js#L8-L34,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        experiments = [
+            {
+                
+            }
+        ];
+        experiments.$promise = {
+            then: sinon.stub()
+        };
+        id = 1;
+        
+        createController = function (_experiments, _experimentId) {
+            return $controller('MutualExclusionModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'experiments': _experiments || experiments,
+                'experimentId': _experimentId || id
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/MutualExclusionsCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/MutualExclusionsCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/MutualExclusionsCtrl.js,<anonymous>_7,before_each,8,26,16,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/MutualExclusionsCtrl.js#L8-L26,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        scope.experiment = {
+            id: 1
+        };
+        
+        createController = function () {
+            return $controller('MutualExclusionsCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/PagesCtrl.js,<anonymous>_51,before_each,52,59,8,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/PagesCtrl.js#L52-L59,human_pre2022,human,,"beforeEach(function() {
+        module('wasabi', 'ui.router', 'wasabi.controllers');
+        module({
+            DialogsFactory: mockDialogsFactory,
+            ExperimentsFactory: mockExperimentsFactory,
+            ApplicationsFactory: mockApplicationsFactory
+        })
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/PagesCtrl.js,<anonymous>_59,before_each,60,79,17,,2,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/PagesCtrl.js#L60-L79,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller){
+        scope = $rootScope.$new();
+        
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+        
+        scope.experiment = {
+            id: 1
+        };
+        
+        createController = function () {
+            return $controller('PagesCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'pages': []
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/PrioritiesCtrl.js,<anonymous>_6,before_each,7,9,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/PrioritiesCtrl.js#L7-L9,human_pre2022,human,,"beforeEach(function() {
+        module('wasabi', 'ui.router', 'wasabi.controllers');
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/PrioritiesCtrl.js,<anonymous>_9,before_each,10,23,12,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/PrioritiesCtrl.js#L10-L23,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_, UtilitiesFactory){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+        });
+        
+        createController = function () {
+            return $controller('PrioritiesCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/SignInCtrl.js,<anonymous>_6,before_each,7,62,56,,0,per_test,1,2,1,0,0,6,0.10714285714285714,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/SignInCtrl.js#L7-L62,human_pre2022,human,,"beforeEach(function() {
+        var mockAuthzFactory = {
+            getPermissions: function(options) {
+                return {
+                    $promise: {
+                        then: function(doneFunc) {
+                            var adminPerms = {permissionsList: [
+                                {
+                                    applicationName: ""QBO"",
+                                    permissions: [""create"", ""read"", ""update"", ""delete"", ""admin""]
+                                },
+                                {
+                                    applicationName: ""TTO"",
+                                    permissions: [""create"", ""read"", ""update"", ""delete"", ""admin""]
+                                }
+                            ]};
+                            if (options && options.userId && options.userId == 'myuser') {
+                                doneFunc(adminPerms);
+                            }
+                            else {
+                                doneFunc({
+                                    permissionsList: []
+                                });
+                            }
+                        }
+                    }
+                };
+            }
+        },
+        mockAuthFactory = {
+            signIn: function() {
+                return {
+                    $promise: {
+                        then: function(doneFunc) {
+                            var results = {
+                                access_token: 'access_token',
+                                token_type: 'token_type'
+                            };
+                            doneFunc(results);
+                        }
+                    }
+                };
+            }
+        };
+        module('wasabi', 'ui.router', 'wasabi.controllers');
+        module(function ($provide) {
+            $provide.value('AuthFactory', mockAuthFactory);
+            $provide.value('AuthzFactory', mockAuthzFactory);
+        });
+/*
+        module({
+            AuthFactory: mockAuthFactory,
+            AuthzFactory: mockAuthzFactory
+        })
+*/
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/SignInCtrl.js,<anonymous>_62,before_each,63,87,23,,1,per_test,1,1,0,0,0,13,0.5652173913043478,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/SignInCtrl.js#L63-L87,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        var $injector = angular.injector(['wasabi.services']);
+/*
+        AuthFactory = function () {
+            return $injector.get('AuthFactory');
+        };
+*/
+        // AF = {
+        //     signIn: function () {
+        //         return {
+        //             '$promise': sinon.stub()
+        //         };
+        //     }
+        // };
+        
+        createController = function () {
+            return $controller('SignInCtrl', {
+                '$scope': scope
+                // 'AuthFactory': AF
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/SignOutCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/SignOutCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/SignOutCtrl.js,<anonymous>_7,before_each,8,18,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/SignOutCtrl.js#L8-L18,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        
+        createController = function () {
+            return $controller('SignOutCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/TimePickerCtrl.js,<anonymous>_6,before_each,7,7,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/TimePickerCtrl.js#L7-L7,human_pre2022,human,,"beforeEach(module('wasabi', 'ui.router', 'wasabi.controllers'))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/TimePickerCtrl.js,<anonymous>_7,before_each,8,23,14,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/TimePickerCtrl.js#L8-L23,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        scope.experiment = {};
+        event = {
+            preventDefault: function(){},
+            stopPropagation: function () {}
+        };
+        
+        createController = function () {
+            return $controller('TimePickerCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/UserModalCtrl.js,<anonymous>_65,before_each,66,73,8,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/UserModalCtrl.js#L66-L73,human_pre2022,human,,"beforeEach(function() {
+        module('wasabi', 'ui.router', 'wasabi.controllers');
+        module({
+            AuthzFactory: mockAuthzFactory,
+            AuthFactory: mockAuthFactory,
+            DialogsFactory: mockDialogsFactory
+        })
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/UserModalCtrl.js,<anonymous>_73,before_each,74,100,24,,7,per_test,1,1,4,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/UserModalCtrl.js#L74-L100,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_, $httpBackend){
+        $location = _$location_;
+        scope = $rootScope.$new();
+
+        modal = {
+            close: sinon.stub(),
+            dismiss: sinon.stub()
+        };
+
+        utilFactory = {
+            failIfTokenExpired: sinon.stub(),
+            trackEvent: sinon.stub(),
+            handleGlobalError: sinon.stub(),
+            filterAppsForUser: sinon.stub().returns([]),
+            stateImgUrl: sinon.stub()
+        };
+
+        createController = function () {
+            return $controller('UserModalCtrl', {
+                '$scope': scope,
+                '$modalInstance': modal,
+                'user': {},
+                'administeredApplications': [],
+                'UtilitiesFactory': utilFactory
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/UsersCtrl.js,<anonymous>_43,before_each,44,50,7,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/UsersCtrl.js#L44-L50,human_pre2022,human,,"beforeEach(function() {
+        module('wasabi', 'ui.router', 'wasabi.controllers');
+        module({
+            DialogsFactory: mockDialogsFactory,
+            AuthzFactory: mockAuthzFactory
+        });
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/controllers/UsersCtrl.js,<anonymous>_50,before_each,51,60,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/controllers/UsersCtrl.js#L51-L60,human_pre2022,human,,"beforeEach(inject(function($rootScope, $controller, _$location_, UtilitiesFactory){
+        $location = _$location_;
+        scope = $rootScope.$new();
+        
+        createController = function () {
+            return $controller('UsersCtrl', {
+                '$scope': scope
+            });
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/AutocompleteDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/AutocompleteDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/AutocompleteDirective.js,<anonymous>_6,before_each,7,16,9,,0,per_test,1,1,2,0,0,2,0.2222222222222222,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/AutocompleteDirective.js#L7-L16,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<input class=""abtestAutocomplete"" ng-show=""!readOnly"" list=""pagesData.groupPages"" select-function=""selectPage"" enter-function=""selectPageOnEnter"" id=""txtAddPage"" type=""text"" class=""text"" placeholder=""Add Page"" />'
+            //'<input ng-show=""!readOnly"" abtest-autocomplete list=""pagesData.groupPages"" select-function=""selectPage"" enter-function=""selectPageOnEnter"" id=""txtAddPage"" type=""text"" class=""text"" placeholder=""Add Page"" />'
+            //'<div class=""abtestAutocomplete"" abtest-autocomplete listSource=""test"" selectFunction=""test"" enterFunction=""test""></div>'
+        );
+        
+        scope = $rootScope.$new();
+        $compile(el)(scope);
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/ConvertPercentDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/ConvertPercentDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/ConvertPercentDirective.js,<anonymous>_6,before_each,7,14,7,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/ConvertPercentDirective.js#L7-L14,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<input class=""convertPercentTest"" convert-percent type=""text"" ng-model=""myModel"" />'
+        );
+        
+        scope = $rootScope.$new();
+        $compile(el)(scope);
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/CustomTooltip.js,<anonymous>_5,before_each,6,20,14,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/CustomTooltip.js#L6-L20,human_pre2022,human,,"beforeEach(function() {
+        module('wasabi.directives');
+
+        var mockTooltipFactory = {
+            createAndShowTooltip: function(tooltipText, element) {
+                return $('<div class=""tooltip""><span class=""arrow""></span>' + tooltipText + '</div>').appendTo($('body'));
+            },
+            hideTooltip: function($tip) {
+                $tip.remove();
+            }
+        };
+        module(function ($provide) {
+            $provide.value('TooltipFactory', mockTooltipFactory);
+        });
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/CustomTooltip.js,<anonymous>_20,before_each,21,29,8,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/CustomTooltip.js#L21-L29,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<input class=""customTooltipTest"" custom-tooltip=""My tooltip"" type=""text"" />'
+        );
+
+        compiler = $compile;
+        scope = $rootScope.$new();
+        template = $compile(el)(scope);
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/DigitOnlyDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/DigitOnlyDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/DigitOnlyDirective.js,<anonymous>_6,before_each,7,16,9,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/DigitOnlyDirective.js#L7-L16,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<form name=""myForm""><input class=""digitOnlyTest"" name=""digitOnlyInput"" digit-only type=""text"" ng-model=""myModel"" /></form>'
+        );
+        
+        scope = $rootScope.$new();
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/EnsureInterval.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/EnsureInterval.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/EnsureInterval.js,<anonymous>_6,before_each,7,16,9,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/EnsureInterval.js#L7-L16,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<form name=""myForm""><input class=""ensureIntervalTest"" name=""ensureIntervalInput"" ensure-interval type=""text"" ng-model=""myModel"" /></form>'
+        );
+        
+        scope = $rootScope.$new();
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/EnsureNumber.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/EnsureNumber.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/EnsureNumber.js,<anonymous>_6,before_each,7,16,9,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/EnsureNumber.js#L7-L16,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<form name=""myForm""><input class=""ensureNumberTest"" name=""ensureNumberInput"" ensure-number type=""text"" ng-model=""myModel"" /></form>'
+        );
+        
+        scope = $rootScope.$new();
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/EnsureStartGreaterEndTime.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/EnsureStartGreaterEndTime.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/EnsureStartGreaterEndTime.js,<anonymous>_6,before_each,7,20,13,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/EnsureStartGreaterEndTime.js#L7-L20,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<form name=""myForm""><input type=""text"" id=""startTime"" name=""startTime"" ng-model=""experiment.startTime""/><input type=""text"" id=""endTime"" name=""endTime"" ng-model=""experiment.endTime"" ensure-start-greater-end-time/></form>'
+        );
+        
+        scope = $rootScope.$new();
+        scope.experiment = {
+            'startTime': '2015-08-04T11:00:00Z',
+            'endTime': '2015-08-05T11:00:00Z'
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/ExperimentProgressDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/ExperimentProgressDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/ExperimentProgressDirective.js,<anonymous>_6,before_each,7,20,13,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/ExperimentProgressDirective.js#L7-L20,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div experiment-progress progress-value-model=""experiment.progress"" progress-days-left=""{{experiment.progressDaysLeft}}"" class=""exprHead""><canvas width=""70"" height=""70""></canvas></div>'
+        );
+        
+        scope = $rootScope.$new();
+        scope.experiment = {
+            'progress': 3,
+            'progressDaysLeft': 15
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/FadeInOutDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/FadeInOutDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/FadeInOutDirective.js,<anonymous>_6,before_each,7,18,11,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/FadeInOutDirective.js#L7-L18,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div id=""saveMsg"" fade-in-out fade-model-name=""experiment.id"">Experiment saved. You may now add buckets.</div>'
+        );
+        
+        scope = $rootScope.$new();
+        scope.experiment = {
+            'id': null
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/FavoritesStarDirective.js,<anonymous>_5,before_each,6,16,10,,2,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/FavoritesStarDirective.js#L6-L16,human_pre2022,human,,"beforeEach(function() {
+        module('wasabi.directives');
+
+        var mockUtilFactory = {
+            saveFavorite: sinon.stub(),
+            removeFavorite: sinon.stub()
+        };
+        module(function ($provide) {
+            $provide.value('UtilitiesFactory', mockUtilFactory);
+        });
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/FavoritesStarDirective.js,<anonymous>_16,before_each,17,37,19,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/FavoritesStarDirective.js#L17-L37,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><ul id=""exprSummary""><li id=""container""><a href=""#"" favorites-star favorites-star-application-name=""experiment.applicationName"" favorites-star-experiment-name=""experiment.label"" ng-attr-is-favorite=""{{' + 'experiment.isFavorite' + '}}"" class=""star"" title=""Mark as Favorite""></a></li>' +
+            '<li id=""container2""><a href=""#"" favorites-star favorites-star-application-name=""experiment2.applicationName"" favorites-star-experiment-name=""experiment2.label"" ng-attr-is-favorite=""{{' + 'experiment2.isFavorite' + '}}"" class=""star"" title=""Mark as Favorite""></a></li></ul></div>'
+        );
+        
+        scope = $rootScope.$new();
+        scope.experiment = {
+            'applicationName': 'App Name',
+            'label': 'Exp Name',
+            'isFavorite': false
+        };
+        scope.experiment2 = {
+            'applicationName': 'App Name2',
+            'label': 'Exp Name2',
+            'isFavorite': false
+        };
+
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/HelpDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/HelpDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/HelpDirective.js,<anonymous>_6,before_each,7,15,8,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/HelpDirective.js#L7-L15,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><span class=""info"" help help-content=""My help""></span><div id=""help""><div id=""helpContent""></div></div></div>'
+        );
+        
+        scope = $rootScope.$new();
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/LabelLinkContentDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/LabelLinkContentDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/LabelLinkContentDirective.js,<anonymous>_6,before_each,7,26,19,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/LabelLinkContentDirective.js#L7-L26,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><label-link-content href=""{{customHref}}"" class=""exprWrapper"" exp-id=""{{experiment.id}}"" has-update=""{{experiment.hasUpdate}}"" read-only=""{{experiment.readOnly}}"" state=""RUNNING"">' +
+                    '<h3>{{experiment.applicationName}}</h3>' +
+                    '<h2>{{experiment.label}}</h2>' +
+                    '</label-link-content></div>'
+        );
+        
+        scope = $rootScope.$new();
+        scope.experiment = {
+            'id': '1',
+            'homePageTooltip': 'My tooltip1',
+            'hasUpdate': 'true',
+            'readOnly': 'false',
+            'applicationName': 'My app',
+            'label': 'My experiment'
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/LabelLinkDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/LabelLinkDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/LabelLinkDirective.js,<anonymous>_6,before_each,7,25,18,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/LabelLinkDirective.js#L7-L25,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><label-link state=""{{experiment.state}}"" exp-id=""{{experiment.id}}"" ' +
+                    'exp-label=""{{experiment.label}}"" has-update=""{{experiment.hasUpdate}}"" read-only=""{{experiment.readOnly}}""></label-link></div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.experiment = {
+            'id': '1',
+            'state': 'DRAFT',
+            'hasUpdate': true,
+            'readOnly': 'false',
+            'applicationName': 'My app',
+            'label': 'My experiment'
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/NPSWidgetDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/NPSWidgetDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/NPSWidgetDirective.js,<anonymous>_6,before_each,7,19,12,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/NPSWidgetDirective.js#L7-L19,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><ul id=""nps"" nps-widget>' +
+                    '<li>0</li><li>1</li><li>2</li><li>3</li><li>4</li><li>5</li><li>6</li><li>7</li><li>8</li><li>9</li><li>10</li>' +
+                    '</ul>' +
+                    '</div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/NgFocusDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/NgFocusDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/NgFocusDirective.js,<anonymous>_6,before_each,7,18,11,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/NgFocusDirective.js#L7-L18,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><input id=""txtBucketName"" type=""text"" class=""form-control text"" name=""label"" ng-focus ng-model=""bucket"" />' +
+                    '</div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.bucket = {};
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/NoSpacesDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/NoSpacesDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/NoSpacesDirective.js,<anonymous>_6,before_each,7,19,12,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/NoSpacesDirective.js#L7-L19,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div><form name=""myForm""><input id=""txtBucketName"" type=""text"" class=""form-control text"" name=""label"" no-spaces ng-model=""bucket"" />' +
+                    '</form></div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.bucket = {};
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/RememberMeDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/RememberMeDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/RememberMeDirective.js,<anonymous>_6,before_each,7,22,15,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/RememberMeDirective.js#L7-L22,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div style=""padding-bottom:10px"">' +
+                    '<form name=""myForm""><input remember-me type=""checkbox"" id=""chkRememberMe"" ng-model=""credentials.rememberMe"" name=""remember""><label for=""chkRememberMe"" class=""checkboxLabel"">Remember me</label>' +
+                    '</form></div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.credentials = {
+            'rememberMe': false
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/RoleCheckboxes.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/RoleCheckboxes.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/RoleCheckboxes.js,<anonymous>_6,before_each,7,24,17,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/RoleCheckboxes.js#L7-L24,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div style=""padding-bottom:10px"">' +
+                    '<form name=""myForm"">' +
+                    '<input type=""checkbox"" id=""chkAddAppWrite"" ng-model=""data.addWritePrivileges"" ng-class=""{disabled: data.addAdminPrivileges}"" ng-disabled=""data.addAdminPrivileges"" >' +
+                    '<input type=""checkbox"" id=""chkAddAppAdmin"" name=""chkAddAppAdmin"" role-checkboxes=""chkAddAppWrite"" ng-model=""data.addAdminPrivileges"">' +
+                    '</form></div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.data = {
+            'addAdminPrivileges': false
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/ScrollableListDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/ScrollableListDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/ScrollableListDirective.js,<anonymous>_6,before_each,7,24,17,,0,per_test,1,1,2,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/ScrollableListDirective.js#L7-L24,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div style=""padding-bottom:10px"">' +
+                    '        <div id=""addApplicationList"" scrollable-list>' +
+                    '<div class=""scrollListHeader"">' +
+                    '</div>' +
+                    '<div class=""scrollListBody"">' +
+                    '</div></div></div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.data = {
+            'addAdminPrivileges': false
+        };
+        template = $compile(el)(scope);
+        scope.$digest();
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/SearchDirective.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/SearchDirective.js#L6-L6,human_pre2022,human,,beforeEach(module('wasabi.directives')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/directives/SearchDirective.js,<anonymous>_6,before_each,7,28,21,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/directives/SearchDirective.js#L7-L28,human_pre2022,human,,"beforeEach(inject(function($rootScope, $compile){
+        el = angular.element(
+            '<div style=""padding-bottom:10px"">' +
+                    '<form name=""myForm"">' +
+                '<div class=""search"">' +
+                    '<input search type=""text"" id=""txtAddAppSearch"" name=""txtAddAppSearch"" autocorrect=""off"" autocapitalize=""off"" placeholder=""Search""' +
+                    '  ng-model=""data.query""' +
+                    '  ng-change=""search()""/>' +
+                    '<a href=""#"" class=""clear"">Clear Search</a>' +
+                    '</div></form></div>'
+        );
+        
+        compiler = $compile;
+        scope = $rootScope.$new();
+        scope.data = {
+            'query': ''
+        };
+        scope.search = function() {};
+        template = $compile(el)(scope);
+        scope.$digest();
+        form = scope.myForm;
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ApplicationStatisticsFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ApplicationStatisticsFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ApplicationStatisticsFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ApplicationStatisticsFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('ApplicationStatisticsFactory');
+        });
+
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ApplicationsFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ApplicationsFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ApplicationsFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ApplicationsFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('ApplicationsFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/AuthFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/AuthFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/AuthFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/AuthFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockAuthFactory = $injector.get('AuthFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/AuthzFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/AuthzFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/AuthzFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/AuthzFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockAuthFactory = $injector.get('AuthzFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/BucketsFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/BucketsFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/BucketsFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/BucketsFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('BucketsFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ConfigFactory.js,<anonymous>_5,before_each,6,12,6,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ConfigFactory.js#L6-L12,human_pre2022,human,,"beforeEach(inject(function(){
+        var $injector = angular.injector(['wasabi.services', 'config']);
+
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/DialogsFactory.js,<anonymous>_5,before_each,6,12,6,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/DialogsFactory.js#L6-L12,human_pre2022,human,,"beforeEach(inject(function(){
+        var $injector = angular.injector(['ng', 'ui.bootstrap', 'wasabi.services']);
+
+        DialogsFactory = function () {
+            return $injector.get('DialogsFactory');
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ExperimentStatisticsFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ExperimentStatisticsFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ExperimentStatisticsFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ExperimentStatisticsFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('ExperimentStatisticsFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ExperimentsFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ExperimentsFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/ExperimentsFactory.js,<anonymous>_6,before_each,7,20,13,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/ExperimentsFactory.js#L7-L20,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('ExperimentsFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+        ExperimentsFactory = function () {
+            return $injector.get('ExperimentsFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/FeedbackFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/FeedbackFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/FeedbackFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/FeedbackFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('FeedbackFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/HttpInterceptor.js,<anonymous>_5,before_each,6,16,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/HttpInterceptor.js#L6-L16,human_pre2022,human,,"beforeEach(inject(function(){
+        var $injector = angular.injector(['ui.router', 'ngMock', 'wasabi', 'wasabi.services']);
+
+        HttpInterceptor = function () {
+            return $injector.get('HttpInterceptor');
+        };
+        
+        Session = function () {
+            return $injector.get('Session');
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/MutualExclusionsFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/MutualExclusionsFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/MutualExclusionsFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/MutualExclusionsFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('MutualExclusionsFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/PagesFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/PagesFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/PagesFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/PagesFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('PagesFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/PrioritiesFactory.js,<anonymous>_5,before_each,6,6,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/PrioritiesFactory.js#L6-L6,human_pre2022,human,,beforeEach(angular.mock.module('wasabi')),2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/PrioritiesFactory.js,<anonymous>_6,before_each,7,17,10,,0,per_test,1,1,1,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/PrioritiesFactory.js#L7-L17,human_pre2022,human,,"beforeEach (function () {
+        angular.mock.inject(function($injector){
+            $httpBackend = $injector.get('$httpBackend');
+            mockFactory = $injector.get('PrioritiesFactory');
+        });
+        
+        var $injector = angular.injector(['wasabi.services', 'config']);
+        ConfigFactory = function () {
+            return $injector.get('ConfigFactory');
+        };
+    })",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/Session.js,<anonymous>_5,before_each,6,12,6,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/Session.js#L6-L12,human_pre2022,human,,"beforeEach(inject(function(){
+        var $injector = angular.injector(['wasabi.services']);
+
+        Session = function () {
+            return $injector.get('Session');
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/StateFactory.js,<anonymous>_5,before_each,6,12,6,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/StateFactory.js#L6-L12,human_pre2022,human,,"beforeEach(inject(function(){
+        var $injector = angular.injector(['wasabi.services']);
+
+        StateFactory = function () {
+            return $injector.get('StateFactory');
+        };
+    }))",2019-08-28,3.184120465434634,1
+intuit/wasabi,javascript,56e12d5d656d071782c5d980e712d719e61891e8,modules/ui/test/spec/services/UtilitiesFactory.js,<anonymous>_13,before_each,14,24,9,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/intuit/wasabi/blob/56e12d5d656d071782c5d980e712d719e61891e8/modules/ui/test/spec/services/UtilitiesFactory.js#L14-L24,human_pre2022,human,,"beforeEach(inject(function(){
+        var $injector = angular.injector(['ui.router', 'ngMock', 'wasabi', 'wasabi.services']);
+
+        UtilitiesFactory = function () {
+            return $injector.get('UtilitiesFactory');
+        };
+        
+        Session = function () {
+            return $injector.get('Session');
+        };
+    }))",2019-08-28,3.184120465434634,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/ToastService-spec.js,<anonymous>_10,before_each,11,13,3,,0,per_test,1,1,0,1,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/ToastService-spec.js#L11-L13,human_pre2022,human,,"beforeEach(() => {
+        toastService = new ToastService();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/capability/CapabilityApi-spec.js,<anonymous>_20,before_each,21,24,4,,0,per_test,1,1,0,1,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/capability/CapabilityApi-spec.js#L21-L24,human_pre2022,human,,"beforeEach(() => {
+        TestUtils.patchFetch(fetchJSON, fetch);
+        capabilityApi = new CapabilityApi();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/capability/CapabilityApi-spec.js,<anonymous>_25,after_each,26,28,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/capability/CapabilityApi-spec.js#L26-L28,human_pre2022,human,,"afterEach(() => {
+        TestUtils.restoreFetch();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/capability/CapabilityAugmenter-spec.js,<anonymous>_35,before_each,36,39,4,,0,per_test,1,1,0,2,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/capability/CapabilityAugmenter-spec.js#L36-L39,human_pre2022,human,,"beforeEach(() => {
+        mockCapabilityStore = new MockCapabilityStore();
+        augmenter = new CapabilityAugmenter(mockCapabilityStore);
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/capability/CapabilityStore-spec.js,<anonymous>_33,before_each,34,40,7,,0,per_test,1,1,0,1,0,2,0.2857142857142857,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/capability/CapabilityStore-spec.js#L34-L40,human_pre2022,human,,"beforeEach(() => {
+        capabilityStore = new CapabilityStore(mockCapabilityApi);
+        fetchCapabilitiesSpy.reset();
+        // Clear the localStorage namespace, making sure the test
+        // REST API calls are not interfered with.
+        jenkinsNS.clear();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/capability/Capable-spec.js,<anonymous>_10,before_each,11,19,9,,0,per_test,1,1,0,1,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/capability/Capable-spec.js#L11-L19,human_pre2022,human,,"beforeEach(() => {
+        testObj = {
+            _capabilities: [
+                'a.b.LongName',
+                'ShortName',
+            ],
+        };
+        testObj.can = new Capable().can;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/components/ReplayButton-spec.js,<anonymous>_12,before_each,13,15,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/components/ReplayButton-spec.js#L13-L15,human_pre2022,human,,"beforeEach(() => {
+        pipeline = Utils.clone(require('../data/pipeline-1.json'));
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/components/RunButton-spec.js,<anonymous>_14,before_each,15,17,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/components/RunButton-spec.js#L15-L17,human_pre2022,human,,"beforeEach(() => {
+        pipeline = Utils.clone(require('../data/pipeline-1.json'));
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/components/RunButton-spec.js,<anonymous>_48,before_each,49,51,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/components/RunButton-spec.js#L49-L51,human_pre2022,human,,"beforeEach(() => {
+                pipeline.latestRun.state = 'RUNNING';
+            })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/components/TimeHarmonizer-spec.js,<anonymous>_71,before_each,72,74,3,,0,per_test,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/components/TimeHarmonizer-spec.js#L72-L74,human_pre2022,human,,"beforeEach(() => {
+        oldClock = TimeHarmonizerUtil.timeManager.currentTime;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/components/TimeHarmonizer-spec.js,<anonymous>_75,after_each,76,78,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/components/TimeHarmonizer-spec.js#L76-L78,human_pre2022,human,,"afterEach(() => {
+        TimeHarmonizerUtil.timeManager.currentTime = oldClock;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/fetch-spec.js,<anonymous>_15,before_each,16,20,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/fetch-spec.js#L16-L20,human_pre2022,human,,"beforeEach(() => {
+            TestUtils.patchFetchNoJWT();
+            nockServer = nock(prefix);
+            requestUrl = prefix;
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/security-spec.js,<anonymous>_18,before_each,19,21,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/security-spec.js#L19-L21,human_pre2022,human,,"beforeEach(() => {
+            pipeline = Utils.clone(require('./data/pipeline-1.json'));
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/services/DefaultSSEHandler-spec.js,<anonymous>_79,before_each,80,85,6,,1,per_test,1,1,0,4,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/services/DefaultSSEHandler-spec.js#L80-L85,human_pre2022,human,,"beforeEach(() => {
+        pipelineService = new PipelineServiceMock();
+        activityService = new ActivityServiceMock();
+        fetchActivitySpy = sinon.spy(activityService, 'fetchActivity');
+        sseHandler = new DefaultSSEHandler(pipelineService, activityService, new PagerServiceMock());
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/services/LocationService-spec.js,<anonymous>_30,before_each,31,33,3,,0,per_test,1,1,0,1,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/services/LocationService-spec.js#L31-L33,human_pre2022,human,,"beforeEach(() => {
+        locationService = new LocationService();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/services/SSEService-spec.js,<anonymous>_7,before_each,8,10,3,,0,per_test,1,1,0,1,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/services/SSEService-spec.js#L8-L10,human_pre2022,human,,"beforeEach(() => {
+        sseService = new SSEService();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/urlconfig-spec.js,<anonymous>_15,before_each,16,18,3,,0,per_test,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/urlconfig-spec.js#L16-L18,human_pre2022,human,,"beforeEach(() => {
+        UrlConfig.enableReload();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-core-js/test/js/urlconfig-spec.js,<anonymous>_26,after_each,27,29,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-core-js/test/js/urlconfig-spec.js#L27-L29,human_pre2022,human,,"afterEach(() => {
+        setAppUrl(null);
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/activity-spec.js,<anonymous>_177,before_all,178,178,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/activity-spec.js#L178-L178,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/activity-spec.js,<anonymous>_218,before_all,219,219,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/activity-spec.js#L219-L219,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/creation/git/GitFlowManager-spec.js,<anonymous>_12,before_each,13,20,8,,0,per_test,1,1,0,2,0,1,0.125,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/creation/git/GitFlowManager-spec.js#L13-L20,human_pre2022,human,,"beforeEach(() => {
+        manager = new GitFlowManager(
+            // mock out the required api objects & methods
+            {},
+            { listAllCredentials: () => new Promise(() => {}) },
+        );
+        manager.initialize();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/creation/git/GitPWCredentialsManager-spec.js,<anonymous>_19,before_each,20,24,5,,0,per_test,1,1,0,2,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/creation/git/GitPWCredentialsManager-spec.js#L20-L24,human_pre2022,human,,"beforeEach(() => {
+        apiMock = new GitPWCredentialsApiMock();
+        manager = new GitPWCredentialsManager(apiMock);
+        manager.configure(repoUrl, 'master');
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/creation/link-spec.js,<anonymous>_9,before_all,10,12,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/creation/link-spec.js#L10-L12,human_pre2022,human,,"beforeAll(() => {
+        mockExtensionsForI18n();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_58,before_all,59,62,4,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L59-L62,human_pre2022,human,,"beforeAll(() => {
+        mockExtensionsForI18n();
+        jsonDir = path.resolve(__dirname, '../json/pipeline-graph-converter/');
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_90,before_all,91,93,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L91-L93,human_pre2022,human,,"beforeAll(() => {
+            testDataJSON = fs.readFileSync(path.resolve(jsonDir, 'single-node.json'));
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_94,before_each,95,99,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L95-L99,human_pre2022,human,,"beforeEach(() => {
+            testData = JSON.parse(testDataJSON);
+            assert(Array.isArray(testData), 'testData should be array');
+            assert.isAtLeast(testData.length, 1, 'testData should not be empty');
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_119,before_all,120,122,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L120-L122,human_pre2022,human,,"beforeAll(() => {
+            testDataJSON = fs.readFileSync(path.resolve(jsonDir, 'three-nodes.json'));
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_123,before_each,124,128,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L124-L128,human_pre2022,human,,"beforeEach(() => {
+            testData = JSON.parse(testDataJSON);
+            assert(Array.isArray(testData), 'testData should be array');
+            assert.isAtLeast(testData.length, 1, 'testData should not be empty');
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_162,before_all,163,165,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L163-L165,human_pre2022,human,,"beforeAll(() => {
+            testDataJSON = fs.readFileSync(path.resolve(jsonDir, 'pipeline-nodes-example.json'));
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_166,before_each,167,171,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L167-L171,human_pre2022,human,,"beforeEach(() => {
+            testData = JSON.parse(testDataJSON);
+            assert(Array.isArray(testData), 'testData should be array');
+            assert.isAtLeast(testData.length, 1, 'testData should not be empty');
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_222,before_all,223,225,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L223-L225,human_pre2022,human,,"beforeAll(() => {
+            testDataJSON = fs.readFileSync(path.resolve(jsonDir, 'ends-with-parallel.json'));
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_226,before_each,227,231,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L227-L231,human_pre2022,human,,"beforeEach(() => {
+            testData = JSON.parse(testDataJSON);
+            assert(Array.isArray(testData), 'testData should be array');
+            assert.isAtLeast(testData.length, 1, 'testData should not be empty');
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_274,before_all,275,277,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L275-L277,human_pre2022,human,,"beforeAll(() => {
+            testDataJSON = fs.readFileSync(path.resolve(jsonDir, 'every-result.json'));
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js,<anonymous>_278,before_each,279,283,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-graph-converter-spec.js#L279-L283,human_pre2022,human,,"beforeEach(() => {
+            testData = JSON.parse(testDataJSON);
+            assert(Array.isArray(testData), 'testData should be array');
+            assert.isAtLeast(testData.length, 1, 'testData should not be empty');
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipeline-not-found-spec.js,<anonymous>_42,before_all,43,43,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipeline-not-found-spec.js#L43-L43,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipelines-spec.js,<anonymous>_13,before_all,14,14,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipelines-spec.js#L14-L14,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pipelines-spec.js,<anonymous>_18,before_each,19,48,27,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pipelines-spec.js#L19-L48,human_pre2022,human,,"beforeEach(() => {
+            const context = {
+                params: {},
+                location: {},
+                pipelineService: {
+                    allPipelinesPager() {
+                        return {
+                            data: pipelines,
+                        };
+                    },
+                    pipelinesPager() {
+                        return {
+                            data: pipelines,
+                        };
+                    },
+                },
+            };
+
+            const location = {
+                query: {}
+            };
+
+
+            wrapper = shallow(
+                <Pipelines location={location} params={context.params} setTitle={() => {}} />,
+                {
+                    context,
+                }
+            );
+        })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/pullRequests-spec.js,<anonymous>_31,before_all,32,32,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/pullRequests-spec.js#L32-L32,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/run-details-changes-spec.js,<anonymous>_37,before_all,38,38,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/run-details-changes-spec.js#L38-L38,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/run-details-id-navigation-spec.js,<anonymous>_58,before_all,59,59,1,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/run-details-id-navigation-spec.js#L59-L59,human_pre2022,human,,beforeAll(() => mockExtensionsForI18n()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/status-spec.js,<anonymous>_23,before_each,24,29,6,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/status-spec.js#L24-L29,human_pre2022,human,,"beforeEach(() => {
+    tree = sd.shallowRender(<StatusIndicator
+        result=""SUCCESS""
+        {...props}
+    />);
+  })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/status-spec.js,<anonymous>_44,before_each,45,49,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/status-spec.js#L45-L49,human_pre2022,human,,"beforeEach(() => {
+    tree = sd.shallowRender(<SvgStatus
+        result=""FAILURE""
+    />);
+  })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-dashboard/src/test/js/status-spec.js,<anonymous>_60,before_each,61,66,6,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-dashboard/src/test/js/status-spec.js#L61-L66,human_pre2022,human,,"beforeEach(() => {
+    tree = sd.shallowRender(<SvgSpinner
+         result=""RUNNING""
+         percentage={40}
+    />);
+  })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-personalization/src/test/js/components/DashboardCards-spec.jsx,<anonymous>_53,before_each,54,56,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-personalization/src/test/js/components/DashboardCards-spec.jsx#L54-L56,human_pre2022,human,,"beforeEach(() => {
+        favorites = require('../data/favorites.json');
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-personalization/src/test/js/components/PipelineCard-spec.jsx,<anonymous>_29,before_each,30,38,7,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-personalization/src/test/js/components/PipelineCard-spec.jsx#L30-L38,human_pre2022,human,,"beforeEach(() => {
+        const favorites = clone(require('../data/favorites.json'));
+
+        item = favorites[0].item;
+        item._capabilities = ['io.jenkins.blueocean.rest.model.BlueBranch'];
+        favorite = true;
+
+        mockExtensionsForI18n();
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-personalization/src/test/js/model/FavoritesStore-spec.js,<anonymous>_13,before_each,14,17,4,,0,per_test,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-personalization/src/test/js/model/FavoritesStore-spec.js#L14-L17,human_pre2022,human,,"beforeEach(() => {
+        store._fetched = true;
+        store._favoritesNames = [ 'pipe/master', 'pipe/duh', 'other/foo' ];
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-personalization/src/test/js/model/FavoritesStore-spec.js,<anonymous>_18,after_each,19,21,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-personalization/src/test/js/model/FavoritesStore-spec.js#L19-L21,human_pre2022,human,,"afterEach(() => {
+        Fetch.fetchJSON = fj;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-personalization/src/test/js/util/SortUtils-spec.js,<anonymous>_13,before_each,14,16,3,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-personalization/src/test/js/util/SortUtils-spec.js#L14-L16,human_pre2022,human,,"beforeEach(() => {
+        favorites = require('../data/favorites.json');
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-pipeline-editor/src/test/js/services/PipelineStore-spec.js,<anonymous>_9,before_all,10,15,6,,0,per_class,1,1,0,0,0,1,0.16666666666666666,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-pipeline-editor/src/test/js/services/PipelineStore-spec.js#L10-L15,human_pre2022,human,,"beforeAll(() => {
+        // load pipeline metadata so that ""isContainer"" value for various steps is set correctly
+        pipelineMetadataService.cache.pipelineStepMetadata = JSON.parse(
+            require(""fs"").readFileSync(
+                require(""path"").normalize(__dirname + ""/../StepMetadata.json"", ""utf8"")));
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-pipeline-editor/src/test/js/services/PipelineStore-spec.js,<anonymous>_16,before_each,17,23,7,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-pipeline-editor/src/test/js/services/PipelineStore-spec.js#L17-L23,human_pre2022,human,,"beforeEach(() => {
+        const json = require(""fs"").readFileSync(
+            require(""path"").normalize(__dirname + ""/sample-pipeline.json"", ""utf8"")
+        );
+        const internal = convertJsonToInternalModel(JSON.parse(json));
+        pipelineStore.setPipeline(internal);
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-pipeline-editor/src/test/js/services/PipelineSyntaxConverter-spec.js,<anonymous>_5,before_all,6,10,5,,0,per_class,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-pipeline-editor/src/test/js/services/PipelineSyntaxConverter-spec.js#L6-L10,human_pre2022,human,,"beforeAll(() => {
+        pipelineMetadataService.cache.pipelineStepMetadata = JSON.parse(
+            require(""fs"").readFileSync(
+                require(""path"").normalize(__dirname + ""/../StepMetadata.json"", ""utf8"")));
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,blueocean-pipeline-editor/src/test/js/services/PipelineSyntaxConverter-spec.js,<anonymous>_11,after_all,12,14,3,,0,per_class,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/blueocean-pipeline-editor/src/test/js/services/PipelineSyntaxConverter-spec.js#L12-L14,human_pre2022,human,,"afterAll(() => {
+        delete pipelineMetadataService.stepData;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,jenkins-design-language/test/js/components/ReadableDate-spec.jsx,<anonymous>_8,before_each,9,9,1,,0,per_test,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/jenkins-design-language/test/js/components/ReadableDate-spec.jsx#L9-L9,human_pre2022,human,,beforeEach(() => MockDate.set('2017-02-01')),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,jenkins-design-language/test/js/components/ReadableDate-spec.jsx,<anonymous>_9,after_each,10,10,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/jenkins-design-language/test/js/components/ReadableDate-spec.jsx#L10-L10,human_pre2022,human,,afterEach(() => MockDate.reset()),2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,js-extensions/spec/ExtensionRenderer-spec.js,<anonymous>_46,mocha_before,47,55,7,,0,per_test,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/js-extensions/spec/ExtensionRenderer-spec.js#L47-L55,human_pre2022,human,,"before(function() {
+
+        oldDocument = global.document;
+        oldWindow = global.window;
+
+        const doc = jsdom.jsdom('<!doctype html><html><body></body></html>');
+        global.document = doc;
+        global.window = doc.defaultView;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,js-extensions/spec/ExtensionRenderer-spec.js,<anonymous>_56,before_each,57,63,6,,0,per_test,1,1,0,0,0,0,0.0,1,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/js-extensions/spec/ExtensionRenderer-spec.js#L57-L63,human_pre2022,human,,"beforeEach(function () {
+        oldExtensionStore = ExtensionRenderer.ExtensionStore;
+        oldResourceLoadTracker = ExtensionRenderer.ResourceLoadTracker;
+
+        ExtensionRenderer.extensionStore = mockExtensionStore;
+        ExtensionRenderer.resourceLoadTracker = mockResourceLoadTracker;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,js-extensions/spec/ExtensionRenderer-spec.js,<anonymous>_64,after_each,65,68,4,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/js-extensions/spec/ExtensionRenderer-spec.js#L65-L68,human_pre2022,human,,"afterEach(function () {
+        ExtensionRenderer.extensionStore = oldExtensionStore;
+        ExtensionRenderer.resourceLoadTracker = oldResourceLoadTracker;
+    })",2020-12-02,4.85968514715948,1
+jenkinsci/blueocean-plugin,javascript,219eee27a710fde6e455a64d1d4bca5331f6119b,js-extensions/spec/ExtensionRenderer-spec.js,<anonymous>_69,mocha_after,70,73,4,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jenkinsci/blueocean-plugin/blob/219eee27a710fde6e455a64d1d4bca5331f6119b/js-extensions/spec/ExtensionRenderer-spec.js#L70-L73,human_pre2022,human,,"after(function () {
+        global.document = oldDocument;
+        global.window = oldWindow;
+    })",2020-12-02,4.85968514715948,1
+jobrunr/jobrunr,javascript,7f2a661e73c25700a50a2c22d1de413d9d2d1e55,core/src/main/resources/org/jobrunr/dashboard/frontend/cypress/integration/jobs.spec.js,<anonymous>_1,before_each,2,6,5,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/jobrunr/jobrunr/blob/7f2a661e73c25700a50a2c22d1de413d9d2d1e55/core/src/main/resources/org/jobrunr/dashboard/frontend/cypress/integration/jobs.spec.js#L2-L6,human_pre2022,human,,"beforeEach(() => {
+        cy.visit('http://localhost:8000/dashboard/jobs');
+        cy.viewport(1280, 800);
+        waitForSSE();
+    })",2020-12-20,0.7173169062286106,1

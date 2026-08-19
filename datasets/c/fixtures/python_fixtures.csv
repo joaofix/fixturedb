@@ -1,0 +1,8 @@
+repo_name,language,commit_sha,file_path,fixture_name,fixture_type,start_line,end_line,loc,framework,num_mocks,scope,cyclomatic_complexity,max_nesting_depth,num_parameters,num_objects_instantiated,num_external_calls,num_comment_lines,comment_density,has_teardown_pair,github_url,agent_type,commit_kind,commit_type,raw_source,commit_date,repo_age_at_commit_years,is_complete_addition
+eclipse/steady,python,70e603154841705e5bf086fc790ab57c6e36ba86,rest-nvd/tests/test_nvd_rest.py,response,pytest_decorator,32,38,6,pytest,0,per_test,1,1,0,0,1,2,0.3333333333333333,0,https://github.com/eclipse/steady/blob/70e603154841705e5bf086fc790ab57c6e36ba86/rest-nvd/tests/test_nvd_rest.py#L32-L38,human_pre2022,human,,"def response():
+    """"""Sample pytest fixture.
+
+    See more at: http://doc.pytest.org/en/latest/fixture.html
+    """"""
+    # import requests
+    # return requests.get('https://github.com/audreyr/cookiecutter-pypackage')",2020-12-14,2.31895961670089,1

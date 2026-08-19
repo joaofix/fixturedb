@@ -1,0 +1,13 @@
+repo_name,language,commit_sha,file_path,fixture_name,fixture_type,start_line,end_line,loc,framework,num_mocks,scope,cyclomatic_complexity,max_nesting_depth,num_parameters,num_objects_instantiated,num_external_calls,num_comment_lines,comment_density,has_teardown_pair,github_url,agent_type,commit_kind,commit_type,raw_source,commit_date,repo_age_at_commit_years,is_complete_addition
+teradata/kylo,typescript,0ca8cf21e6020ea1fbca51d5da7eead5b2c4827c,ui/ui-app/src/main/resources/static/js/feed-mgr/services/DomainTypesService.spec.ts,<anonymous>_9,before_each,10,10,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/teradata/kylo/blob/0ca8cf21e6020ea1fbca51d5da7eead5b2c4827c/ui/ui-app/src/main/resources/static/js/feed-mgr/services/DomainTypesService.spec.ts#L10-L10,human_pre2022,human,,"beforeEach(mocks.module(""kylo"", moduleName))",2019-01-21,1.949349760438056,1
+teradata/kylo,typescript,0ca8cf21e6020ea1fbca51d5da7eead5b2c4827c,ui/ui-app/src/main/resources/static/js/feed-mgr/visual-query/services/spark/spark-query-parser.spec.ts,<anonymous>_9,before_each,10,10,1,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/teradata/kylo/blob/0ca8cf21e6020ea1fbca51d5da7eead5b2c4827c/ui/ui-app/src/main/resources/static/js/feed-mgr/visual-query/services/spark/spark-query-parser.spec.ts#L10-L10,human_pre2022,human,,"beforeEach(mocks.module(""kylo"", ""kylo.feedmgr"", moduleName))",2019-01-21,1.949349760438056,1
+anji-plus/captcha,typescript,6b310b29734b383dd15c15a59299765480a1c31e,view/angular/src/app/app.component.spec.ts,<anonymous>_5,before_each,6,15,10,,0,per_test,1,1,0,0,0,0,0.0,0,https://github.com/anji-plus/captcha/blob/6b310b29734b383dd15c15a59299765480a1c31e/view/angular/src/app/app.component.spec.ts#L6-L15,human_pre2022,human,,"beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        RouterTestingModule
+      ],
+      declarations: [
+        AppComponent
+      ],
+    }).compileComponents();
+  })",2020-12-31,0.8049281314168378,1
