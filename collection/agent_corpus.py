@@ -152,6 +152,7 @@ def _load_qc_repo_rows(
                     clone_url=row.get("clone_url") or "",
                     num_contributors=row.get("num_contributors") or 0,
                     created_at=row.get("created_at") or "",
+                    pushed_at=row.get("pushed_at") or "",
                     topics=row.get("topics") or "[]",
                 )
                 grouped.setdefault(lang, [])

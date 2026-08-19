@@ -39,7 +39,7 @@ def test_merge_tier2_repos_into_csv_carries_forks_through(tmp_path):
                 "clone_url": "https://github.com/owner/tier2-repo.git",
                 "num_contributors": 3,
                 "created_at": "2025-01-01T00:00:00Z",
-                "pushed_at": "",
+                "pushed_at": "2025-06-01T00:00:00Z",
                 "description": "",
                 "topics": "[]",
                 "domain": None,
@@ -57,6 +57,7 @@ def test_merge_tier2_repos_into_csv_carries_forks_through(tmp_path):
         rows = list(csv.DictReader(fh))
     assert rows[0]["forks"] == "8"
     assert rows[0]["discovery_tier"] == "2"
+    assert rows[0]["pushed_at"] == "2025-06-01T00:00:00Z"
 
 
 def test_tier2_writer_schema_matches_tier1_writer(tmp_path, monkeypatch):
@@ -121,3 +122,9 @@ def test_tier2_writer_schema_matches_tier1_writer(tmp_path, monkeypatch):
     assert len(rows) == 2
     assert rows[0]["forks"] == "2"
     assert rows[1]["forks"] == "4"
+    # Tier 1's row (via _process_single, no pushed_at in the input dict)
+    # and Tier 2's row (via the DB's own pushed_at column) both carry a
+    # pushed_at value under the same header position -- proves the schemas
+    # didn't just avoid raising by accident.
+    assert rows[0]["pushed_at"] == ""
+    assert rows[1]["pushed_at"] == ""

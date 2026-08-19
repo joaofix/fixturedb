@@ -193,6 +193,12 @@ def _read_repos_from_files(
                                 "num_contributors": _to_int(contributors),
                                 "forks": _to_int(forks),
                                 "created_at": (row.get("createdAt") or "").strip(),
+                                # Not date-truncated -- kept at full ISO
+                                # precision, matching the repositories.pushed_at
+                                # column's own "Last push date (ISO)"
+                                # documentation and select_dataset_c_repos.py's
+                                # identical convention for the same raw field.
+                                "pushed_at": (row.get("pushedAt") or "").strip(),
                                 "topics": topics_json,
                                 "github_id": github_id,
                                 # Current HEAD as of the SEART crawl -- used
@@ -394,6 +400,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "num_contributors": int(entry.get("num_contributors") or 0),
             "forks": int(entry.get("forks") or 0),
             "created_at": entry.get("created_at") or "",
+            "pushed_at": entry.get("pushed_at") or "",
             "topics": entry.get("topics") or "[]",
         }
         logger.debug("Processing %s (lang=%s)", full_name, lang)
@@ -432,6 +439,7 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             # instead of always defaulting to domain="other" / age=None --
             # both are genuinely present in the raw SEART export.
             "created_at": meta.get("created_at") or "",
+            "pushed_at": meta.get("pushed_at") or "",
             "topics": meta.get("topics") or "[]",
             # 1 = discovered directly from github-search-raw (this scan); 2 =
             # discovered via Tier-2 SEART matching (see __main__.py's

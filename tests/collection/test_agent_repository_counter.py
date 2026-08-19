@@ -110,6 +110,51 @@ def test_read_repo_list_carries_through_forks(monkeypatch, tmp_path):
     assert repos[0]["forks"] == 7
 
 
+def test_read_repo_list_carries_through_pushed_at(monkeypatch, tmp_path):
+    """Same class of gap as forks/created_at above: the raw SEART export
+    has a real `pushedAt` column that used to be read nowhere in this
+    pipeline, silently defaulting every Dataset A repo's pushed_at to ""
+    downstream (verified: 100% empty across db/a.db's 3,776 repos)."""
+    raw_dir = tmp_path / "github-search-raw"
+    raw_dir.mkdir()
+    _write_raw_csv(
+        raw_dir / "python.csv.gz",
+        [
+            {
+                "name": "owner/python-repo",
+                "mainLanguage": "python",
+                "stargazers": "10",
+                "contributors": "2",
+                "pushedAt": "2025-03-14T00:00:00Z",
+            }
+        ],
+    )
+
+    repos = qc.read_repo_list(languages=["python"], raw_dir=raw_dir)
+
+    assert repos[0]["pushed_at"] == "2025-03-14T00:00:00Z"
+
+
+def test_read_repo_list_missing_pushed_at_defaults_to_empty_string(monkeypatch, tmp_path):
+    raw_dir = tmp_path / "github-search-raw"
+    raw_dir.mkdir()
+    _write_raw_csv(
+        raw_dir / "python.csv.gz",
+        [
+            {
+                "name": "owner/python-repo",
+                "mainLanguage": "python",
+                "stargazers": "10",
+                "contributors": "2",
+            }
+        ],
+    )
+
+    repos = qc.read_repo_list(languages=["python"], raw_dir=raw_dir)
+
+    assert repos[0]["pushed_at"] == ""
+
+
 class TestDedupeByLastCommitSha:
     """The cheap, automatic, zero-cost partial win: repos sharing an
     identical *current* HEAD (SEART's lastCommitSHA) are dropped before the
@@ -394,3 +439,20 @@ def test_process_single_carries_forks_into_the_row(monkeypatch, tmp_path):
     )
 
     assert row["forks"] == 7
+
+
+def test_process_single_carries_pushed_at_into_the_row(monkeypatch, tmp_path):
+    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+
+    row = qc._process_single(
+        {
+            "full_name": "owner/repo",
+            "language": "python",
+            "stars": 10,
+            "pushed_at": "2025-03-14T00:00:00Z",
+        },
+        since="2025-01-01",
+    )
+
+    assert row["pushed_at"] == "2025-03-14T00:00:00Z"
