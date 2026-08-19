@@ -44,6 +44,7 @@ _OUTPUT_FIELDNAMES = [
     "clone_url",
     "github_id",
     "created_at",
+    "pushed_at",
     "topics",
     "stars",
     "forks",
@@ -82,6 +83,12 @@ def select_repos(
                 created = (row.get("createdAt") or row.get("created_at") or "").strip()[:10]
                 if not created or created < min_created or created > cutoff_date:
                     continue
+
+                # Not date-truncated like `created` (which needs [:10] for
+                # the min/max-window comparison above) -- kept at full ISO
+                # precision, matching the repositories.pushed_at column's
+                # own "Last push date (ISO)" documentation.
+                pushed_at = (row.get("pushedAt") or row.get("pushed_at") or "").strip()
 
                 raw_id = (row.get("id") or "").strip()
                 try:
@@ -124,6 +131,7 @@ def select_repos(
                         "clone_url": f"https://github.com/{name}.git",
                         "github_id": github_id,
                         "created_at": created,
+                        "pushed_at": pushed_at,
                         "topics": topics_json,
                         "stars": stars,
                         "forks": forks,

@@ -74,6 +74,42 @@ class TestSelectRepos:
         assert selected[0]["forks"] == 42
         assert selected[0]["num_contributors"] == 6
 
+    def test_reads_pushed_at(self, tmp_path):
+        """pushedAt is a real column in the raw SEART export (verified
+        directly against github-search-raw/python.csv.gz) that used to be
+        read nowhere in this function -- repositories.pushed_at came out
+        empty for every Dataset C repo as a result. Confirm it's now
+        carried through, at full ISO precision (unlike created_at, which
+        is deliberately truncated to date-only for the min/max-window
+        comparison -- pushed_at has no such window check)."""
+        _write_gz_csv(
+            tmp_path / "python.csv.gz",
+            [
+                {
+                    "id": "1",
+                    "name": "o/repo",
+                    "createdAt": "2018-06-15",
+                    "pushedAt": "2020-11-30T08:15:00Z",
+                }
+            ],
+        )
+
+        selected = select_repos(
+            raw_dir=tmp_path, min_created="2016-01-01", cutoff_date="2020-12-31"
+        )
+
+        assert selected[0]["pushed_at"] == "2020-11-30T08:15:00Z"
+
+    def test_missing_pushed_at_defaults_to_empty_string(self, tmp_path):
+        _write_gz_csv(
+            tmp_path / "python.csv.gz",
+            [{"id": "1", "name": "o/repo", "createdAt": "2018-06-15"}],
+        )
+        selected = select_repos(
+            raw_dir=tmp_path, min_created="2016-01-01", cutoff_date="2020-12-31"
+        )
+        assert selected[0]["pushed_at"] == ""
+
     def test_boundary_dates_are_inclusive(self, tmp_path):
         """created == min_created and created == cutoff_date must both be
         kept -- an off-by-one here would silently shrink the window."""
@@ -217,7 +253,7 @@ class TestWritePerLanguageFiles:
         """No domain classification step happens here (unlike
         sample_proportional_repos.py's output), but github_id is required
         -- see test_github_id_is_distinct_per_repo for why. created_at/
-        topics/stars are carried through as raw inputs for
+        pushed_at/topics/stars are carried through as raw inputs for
         compute_repo_metadata(), which dataset_c.py calls downstream at
         fixture-persist time -- see agent_repository_counter.py's identical
         fix (and dataset_c.py's) for why they can't be dropped here."""
@@ -235,6 +271,7 @@ class TestWritePerLanguageFiles:
             "clone_url",
             "github_id",
             "created_at",
+            "pushed_at",
             "topics",
             "stars",
             "forks",

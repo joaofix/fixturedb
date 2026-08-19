@@ -60,9 +60,10 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
     Works with both the combined ``all.csv`` and per-language
     ``{lang}_repo.csv`` files under datasets/c/repos/. Returns a list of
     dicts with keys: *full_name*, *language*, *clone_url*, *github_id*,
-    *created_at*, *topics*, *stars*, *forks*, *num_contributors* (the last
-    two default to 0 for older CSVs written before select_dataset_c_repos.py
-    carried them through).
+    *created_at*, *pushed_at*, *topics*, *stars*, *forks*,
+    *num_contributors* (defaulting to ""/0 for older CSVs written before
+    select_dataset_c_repos.py carried a given column through -- *pushed_at*
+    included, added 2026-08-19).
 
     github_id defaults to 0 when the column is absent (older CSVs written
     before select_dataset_c_repos.py carried it through) -- callers must
@@ -102,6 +103,7 @@ def load_dataset_c_repos(csv_path: Path) -> list[dict]:
                     ).strip(),
                     "github_id": github_id,
                     "created_at": row.get("created_at") or "",
+                    "pushed_at": row.get("pushed_at") or "",
                     "topics": row.get("topics") or "[]",
                     "stars": stars,
                     "forks": forks,
@@ -486,6 +488,7 @@ def _process_repo(
                         # this tuple), so anything compute_repo_metadata()
                         # needs later has to ride along on the fixture dict.
                         "repo_created_at": repo.get("created_at", ""),
+                        "repo_pushed_at": repo.get("pushed_at", ""),
                         "repo_topics": repo.get("topics", "[]"),
                         "repo_stars": repo.get("stars", 0),
                         "repo_forks": repo.get("forks", 0),
@@ -729,6 +732,7 @@ def collect_dataset_c_fixtures(
         github_id = fixtures_list[0].get("github_id", 0) if fixtures_list else 0
         first_fixture = fixtures_list[0] if fixtures_list else {}
         repo_created_at = first_fixture.get("repo_created_at", "")
+        repo_pushed_at = first_fixture.get("repo_pushed_at", "")
         repo_topics = first_fixture.get("repo_topics", "[]")
         repo_stars = first_fixture.get("repo_stars", 0)
         repo_forks = first_fixture.get("repo_forks", 0)
@@ -751,6 +755,7 @@ def collect_dataset_c_fixtures(
             description="",
             topics=repo_topics,
             created_at=repo_created_at,
+            pushed_at=repo_pushed_at,
             num_contributors=repo_num_contributors,
             domain=metadata["domain"],
             repo_age_years=metadata["repo_age_years"],

@@ -164,6 +164,69 @@ def test_load_dataset_c_repos_defaults_forks_and_contributors_when_absent(tmp_pa
     assert repos[0]["num_contributors"] == 0
 
 
+def test_load_dataset_c_repos_reads_pushed_at(tmp_path):
+    """pushed_at used to be silently dropped here (select_dataset_c_repos.py
+    never wrote it, so every Dataset C repositories.pushed_at row came out
+    as an empty string) -- confirm it round-trips once present in the CSV."""
+    csv_path = tmp_path / "python_repo.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh,
+            fieldnames=[
+                "repo_name",
+                "language",
+                "clone_url",
+                "github_id",
+                "created_at",
+                "pushed_at",
+                "topics",
+                "stars",
+                "forks",
+                "num_contributors",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/repo",
+                "language": "python",
+                "clone_url": "https://github.com/owner/repo.git",
+                "github_id": "1",
+                "created_at": "2018-01-01",
+                "pushed_at": "2020-11-30T08:15:00Z",
+                "topics": "[]",
+                "stars": "10",
+                "forks": "6",
+                "num_contributors": "4",
+            }
+        )
+
+    repos = load_dataset_c_repos(csv_path)
+    assert repos[0]["pushed_at"] == "2020-11-30T08:15:00Z"
+
+
+def test_load_dataset_c_repos_defaults_pushed_at_when_absent(tmp_path):
+    """Older datasets/c/repos/*.csv files (pre-this-fix) have no pushed_at
+    column at all -- must default to "", not crash."""
+    csv_path = tmp_path / "python_repo.csv"
+    with csv_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(
+            fh, fieldnames=["repo_name", "language", "clone_url", "github_id"]
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "repo_name": "owner/repo",
+                "language": "python",
+                "clone_url": "https://github.com/owner/repo.git",
+                "github_id": "1",
+            }
+        )
+
+    repos = load_dataset_c_repos(csv_path)
+    assert repos[0]["pushed_at"] == ""
+
+
 def test_find_test_files_at_commit_filters_by_language(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
