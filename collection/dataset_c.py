@@ -186,6 +186,35 @@ def count_commits_up_to(repo_path: Path, commit_sha: str) -> int:
         return 0
 
 
+def _iter_repo_files(repo_path: Path) -> List[Path]:
+    """Every file in repo_path's working tree, in sorted order, with
+    vendored/generated/cache/VCS directories pruned via the same
+    `_EXCLUDED_DIR_NAMES` list `agent_patterns.py`/
+    `agent_signal_primitives.py` use for their own repo-tree walks.
+
+    Shared by `find_test_files_at_commit()`, `find_test_files_with_language()`,
+    and `_count_repo_loc()` below -- all three used to run their own
+    independent `rglob("*")`/`os.walk()` pass, and `rglob()` in particular
+    has no directory-pruning mechanism at all: it always descended into
+    `.git/`, `node_modules/`, `vendor/`, `build/`, etc. too. For a repo
+    with a large committed dependency tree or a long git history, that
+    made those walks unboundedly slow relative to the repo's actual
+    source size -- unlike Dataset A/B, which never walk a working tree at
+    all (they discover test files from each commit's own bounded diff via
+    PyDriller; see `agent_fixture_extractor.py::_find_added_test_files()`).
+    A single stuck/slow repo here can stall an entire ThreadPoolExecutor
+    stage, since the stage only finishes once every submitted future
+    resolves. See internal-docs/methodology-improvements/dataset-c-repo-selection.md.
+    """
+    found: List[Path] = []
+    for dirpath, dirnames, filenames in os.walk(repo_path):
+        dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIR_NAMES]
+        for filename in filenames:
+            found.append(Path(dirpath) / filename)
+    found.sort()
+    return found
+
+
 def find_test_files_at_commit(
     repo_path: Path, language: Optional[str] = None
 ) -> List[str]:
@@ -196,7 +225,7 @@ def find_test_files_at_commit(
     instead, so a multi-language repo's non-primary-language test files
     aren't invisible to Dataset C the way they used to be."""
     test_files: List[str] = []
-    for file_path in sorted(repo_path.rglob("*")):
+    for file_path in _iter_repo_files(repo_path):
         if not file_path.is_file():
             continue
         rel_path = str(file_path.relative_to(repo_path))
@@ -226,7 +255,7 @@ def find_test_files_with_language(repo_path: Path) -> List[Tuple[str, str]]:
     that isn't a test file in *its own* detected language, is skipped.
     """
     found: List[Tuple[str, str]] = []
-    for file_path in sorted(repo_path.rglob("*")):
+    for file_path in _iter_repo_files(repo_path):
         if not file_path.is_file():
             continue
         detected_language = get_language_static(file_path)
@@ -246,30 +275,21 @@ def _count_repo_loc(repo_path: Path) -> int:
     Same "which files count" (`get_language_static`) and "what counts as
     a line" (`_count_file_loc` -- non-blank, no comment-stripping)
     definitions used everywhere else in this codebase for fixture/file
-    LOC, just summed repo-wide instead of per-fixture. Kept as its own
-    walk rather than folded into `find_test_files_with_language()`'s --
-    that one uses `rglob()`, which has no directory-pruning mechanism, and
-    changing its walk strategy for an unrelated concern isn't worth it
-    when this repo is already checked out locally (no network, no clone
-    -- an extra local-disk pass is cheap).
-
-    Prunes vendored/generated/cache directories via the same
-    `_EXCLUDED_DIR_NAMES` list `agent_patterns.py`/
-    `agent_signal_primitives.py` already use for their own repo-tree
-    walks -- without it, a single `node_modules/` could dwarf a repo's
-    real code volume and make this check meaningless.
+    LOC, just summed repo-wide instead of per-fixture. Shares
+    `_iter_repo_files()`'s pruned walk with `find_test_files_at_commit()`/
+    `find_test_files_with_language()` above -- previously ran its own
+    separate, already-pruned `os.walk()`, while those two used an
+    unpruned `rglob()`; unifying on one walk removes that inconsistency
+    and the redundant extra pass.
     """
     total = 0
-    for dirpath, dirnames, filenames in os.walk(repo_path):
-        dirnames[:] = [d for d in dirnames if d not in _EXCLUDED_DIR_NAMES]
-        for filename in filenames:
-            file_path = Path(dirpath) / filename
-            if get_language_static(file_path) == "unknown":
-                continue
-            try:
-                total += _count_file_loc(file_path.read_bytes())
-            except OSError as exc:
-                logger.debug("Failed to read %s for LOC count: %s", file_path, exc)
+    for file_path in _iter_repo_files(repo_path):
+        if get_language_static(file_path) == "unknown":
+            continue
+        try:
+            total += _count_file_loc(file_path.read_bytes())
+        except OSError as exc:
+            logger.debug("Failed to read %s for LOC count: %s", file_path, exc)
     return total
 
 
@@ -791,7 +811,43 @@ def collect_dataset_c_fixtures(
             )
         except Exception as exc:
             logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
+        finally:
+            # Incremental checkpoint, one save per repo actually persisted
+            # above. `repo_full` is already in `completed_repos` by this
+            # point (added via `completed_repos.update(successful_repos)`
+            # once extraction finished, before this loop started) -- what
+            # was missing was flushing that fact to *disk* as we go, not
+            # only once at the very end of this loop (previously the only
+            # other `_save_dataset_c_checkpoint()` call site besides the
+            # KeyboardInterrupt handler above). Without this, a crash or
+            # interrupt partway through this loop left the checkpoint file
+            # exactly as stale as it was when the loop started, even
+            # though every repo processed so far already has real,
+            # committed rows in the DB (`persist_repository_and_fixtures()`
+            # commits per repo, independent of this checkpoint). Re-running
+            # after such an interruption wouldn't corrupt anything --
+            # `insert_fixture()`'s `ON CONFLICT ... DO NOTHING` makes
+            # re-persisting a given repo a no-op -- but it would silently
+            # force a full re-clone/re-extract/re-persist of every repo
+            # already done, which is exactly the state `eclipse/steady`
+            # was found in during the Dataset C health check: 56 fixtures
+            # already committed to db/c.db, but absent from
+            # completed_repos. The `finally` here also means whatever
+            # completed before this repo is saved even if persisting
+            # *this* repo raises something `except Exception` above
+            # doesn't catch (e.g. a KeyboardInterrupt), not just on the
+            # handled-exception path.
+            _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
+            _write_dataset_c_progress(progress_path, completed_repos, counts)
 
+    # Unconditional final save, kept alongside the per-repo one in the loop
+    # above (not a replacement for it): `completed_repos` was already
+    # updated with every extraction-successful repo before this loop even
+    # started, including ones whose fixtures didn't survive sampling into
+    # any `repo_groups` entry -- for those, the loop body above never runs,
+    # so its `finally` never fires. Without this line, such a repo would
+    # stay "pending" on disk forever and be needlessly re-cloned/re-extracted
+    # on every future run despite already being done.
     _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
     _write_dataset_c_progress(progress_path, completed_repos, counts)
 

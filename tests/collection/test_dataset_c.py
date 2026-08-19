@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import sqlite3
 import subprocess
 from contextlib import contextmanager
@@ -265,6 +266,45 @@ def test_find_test_files_with_language_detects_each_files_own_language(tmp_path)
     assert by_path[js_path] == "javascript"
 
 
+def test_find_test_files_with_language_skips_vendored_directories(tmp_path):
+    """Regression: find_test_files_with_language() used to walk via
+    rglob("*"), which has no directory-pruning mechanism -- it descended
+    into .git/, node_modules/, vendor/, etc. just like every other
+    directory. A vendored test-looking file must not surface here, and
+    (more importantly for real repos) a large vendored subtree must not
+    be walked at all. See internal-docs/methodology-improvements/
+    dataset-c-repo-selection.md."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_foo.py").write_text("def test_foo(): pass")
+
+    vendored = repo / "node_modules" / "some_lib" / "tests"
+    vendored.mkdir(parents=True)
+    (vendored / "test_bar.py").write_text("def test_bar(): pass")
+
+    found = find_test_files_with_language(repo)
+    paths = [p for p, _lang in found]
+    assert any("test_foo.py" in p for p in paths)
+    assert not any("test_bar.py" in p for p in paths)
+    assert not any("node_modules" in p for p in paths)
+
+
+def test_find_test_files_at_commit_skips_vendored_directories(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_foo.py").write_text("def test_foo(): pass")
+
+    vendored = repo / ".git" / "some_internal"
+    vendored.mkdir(parents=True)
+    (vendored / "test_bar.py").write_text("def test_bar(): pass")
+
+    files = find_test_files_at_commit(repo, language="python")
+    assert any("test_foo.py" in f for f in files)
+    assert not any("test_bar.py" in f for f in files)
+
+
 def test_dataset_c_snapshot_extraction_tags_human_pre2022(tmp_path):
     """Verify _extract_from_snapshot_file tags fixtures correctly."""
     from collection.fixture_extractor import AgentFixtureExtractor
@@ -352,6 +392,145 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
 
     assert processed == ["owner/pending"]
     mock_persist.assert_not_called()
+
+
+def test_collect_dataset_c_checkpoint_persisted_incrementally(tmp_path):
+    """Regression: the final persist loop used to call
+    _save_dataset_c_checkpoint() exactly once, after every repo in
+    repo_groups had been persisted -- a crash or interrupt partway
+    through the loop left the checkpoint file exactly as stale as it was
+    when the loop started, even though earlier repos in the loop already
+    had real, committed rows in the DB. Each repo's checkpoint credit
+    must now land on disk before the next repo is even attempted."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+    checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, [
+            (
+                repo,
+                {
+                    "name": "f1",
+                    "file_path": "t.py",
+                    "start_line": 1,
+                    "end_line": 5,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            )
+        ]
+
+    on_disk_when_second_repo_persisted = {}
+
+    def fake_persist(output_db, repo_data, fixtures, out_path=None, handle_mocks=False):
+        if repo_data["full_name"] == "owner/second":
+            # Both repos succeeded *extraction*, so completed_repos already
+            # holds both names in memory before this loop even starts --
+            # that part isn't what changed. What must have already
+            # happened on disk by now is the first repo's *persist* count,
+            # which only increments inside this loop, one repo at a time.
+            saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            on_disk_when_second_repo_persisted["repos_persisted"] = saved[
+                "counts"
+            ]["repos_persisted"]
+        return 1
+
+    repos = [
+        {
+            "full_name": "owner/first",
+            "language": "python",
+            "clone_url": "https://github.com/owner/first.git",
+        },
+        {
+            "full_name": "owner/second",
+            "language": "python",
+            "clone_url": "https://github.com/owner/second.git",
+        },
+    ]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures",
+        side_effect=fake_persist,
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="python",
+            fixtures_output_dir=tmp_path,
+        )
+
+    assert on_disk_when_second_repo_persisted.get("repos_persisted") == 1
+
+
+def test_collect_dataset_c_checkpoint_keeps_earlier_repos_credit_on_later_failure(
+    tmp_path,
+):
+    """A later repo's persistence failing must not roll back checkpoint
+    credit already saved to disk for an earlier repo in the same run."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+    checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, [
+            (
+                repo,
+                {
+                    "name": "f1",
+                    "file_path": "t.py",
+                    "start_line": 1,
+                    "end_line": 5,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            )
+        ]
+
+    def fake_persist(output_db, repo_data, fixtures, out_path=None, handle_mocks=False):
+        if repo_data["full_name"] == "owner/second":
+            raise RuntimeError("disk full")
+        return 1
+
+    repos = [
+        {
+            "full_name": "owner/first",
+            "language": "python",
+            "clone_url": "https://github.com/owner/first.git",
+        },
+        {
+            "full_name": "owner/second",
+            "language": "python",
+            "clone_url": "https://github.com/owner/second.git",
+        },
+    ]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures",
+        side_effect=fake_persist,
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="python",
+            fixtures_output_dir=tmp_path,
+        )
+
+    saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    assert "owner/first" in saved["completed_repos"]
+    assert saved["counts"]["repos_persisted"] == 1
 
 
 def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
