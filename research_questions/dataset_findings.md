@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-16 01:51:21 UTC
+Generated: 2026-08-19 15:57:00 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -10,11 +10,11 @@ Of Dataset A's agent commits that touched >=1 test file, how many were rejected 
 
 ### Overall
 
-1,709/3,224 repos had >=1 agent commit touching a test file.
+2,264/3,776 repos had >=1 agent commit touching a test file.
 
 | Touching tests | Accepted (pure addition) | Rejected (mixed diff) | Unclassified (extraction error) | Rejection rate |
 |---|---|---|---|---|
-| 109,862 | 53,569 | 54,701 | 1,592 | 49.79% |
+| 134,086 | 65,838 | 66,615 | 1,633 | 49.68% |
 
 ### By language
 
@@ -22,10 +22,10 @@ Of Dataset A's agent commits that touched >=1 test file, how many were rejected 
 
 | Group | Repos | Touching tests | Rejected | Rejection rate |
 |---|---|---|---|---|
-| typescript | 1,599 | 55,744 | 28,896 | 51.84% |
-| python | 1,101 | 42,953 | 21,001 | 48.89% |
-| java | 245 | 6,686 | 2,816 | 42.12% |
-| javascript | 279 | 4,479 | 1,988 | 44.38% |
+| typescript | 1,899 | 78,419 | 39,878 | 50.85% |
+| python | 1,187 | 41,193 | 19,971 | 48.48% |
+| java | 323 | 7,456 | 3,557 | 47.71% |
+| javascript | 367 | 7,018 | 3,209 | 45.73% |
 
 ### By agent adoption intensity
 
@@ -33,11 +33,11 @@ Of Dataset A's agent commits that touched >=1 test file, how many were rejected 
 
 | Group | Repos | Touching tests | Rejected | Rejection rate |
 |---|---|---|---|---|
-| pervasive | 151 | 45,474 | 22,951 | 50.47% |
-| consistent | 443 | 43,680 | 21,449 | 49.10% |
-| limited | 593 | 17,778 | 8,843 | 49.74% |
-| experimental | 522 | 2,930 | 1,458 | 49.76% |
-| no_commits | 1,515 | 0 | 0 | -- |
+| consistent | 583 | 61,202 | 31,149 | 50.90% |
+| pervasive | 172 | 43,273 | 20,568 | 47.53% |
+| limited | 804 | 25,541 | 12,873 | 50.40% |
+| experimental | 705 | 4,070 | 2,025 | 49.75% |
+| no_commits | 1,512 | 0 | 0 | -- |
 
 ### Per-repo distribution
 
@@ -45,7 +45,7 @@ Of Dataset A's agent commits that touched >=1 test file, how many were rejected 
 
 | N repos | Median | Mean | Stdev | Min | Max | Repos at 0% rejected | Repos at 100% rejected |
 |---|---|---|---|---|---|---|---|
-| 1,709 | 0.500 | 0.484 | 0.272 | 0.000 | 1.000 | 177 | 157 |
+| 2,264 | 0.500 | 0.484 | 0.282 | 0.000 | 1.000 | 273 | 228 |
 
 ## Agent Adoption Intensity (Dataset A repo pool)
 
@@ -55,11 +55,11 @@ How Dataset A's whole repo pool splits across agent_adoption_intensity buckets -
 
 | Bucket | Repos | % of Dataset A repos |
 |---|---|---|
-| no_commits | 1,515 | 46.99% |
-| experimental | 522 | 16.19% |
-| limited | 593 | 18.39% |
-| consistent | 443 | 13.74% |
-| pervasive | 151 | 4.68% |
+| no_commits | 1,512 | 40.04% |
+| experimental | 705 | 18.67% |
+| limited | 804 | 21.29% |
+| consistent | 583 | 15.44% |
+| pervasive | 172 | 4.56% |
 
 ### Funnel and adoption intensity by language
 
@@ -67,11 +67,11 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 
 | Language | Agent Configuration Present | No commits | Experimental | Limited | Consistent | Pervasive | Agent Active Total |
 |---|---|---|---|---|---|---|---|
-| Java | 245 | 115 (46.94%) | 54 (22.04%) | 47 (19.18%) | 23 (9.39%) | 6 (2.45%) | 130 |
-| JavaScript | 279 | 131 (46.95%) | 38 (13.62%) | 61 (21.86%) | 40 (14.34%) | 9 (3.23%) | 148 |
-| Python | 1,101 | 350 (31.79%) | 201 (18.26%) | 261 (23.71%) | 216 (19.62%) | 73 (6.63%) | 751 |
-| TypeScript | 1,599 | 919 (57.47%) | 229 (14.32%) | 224 (14.01%) | 164 (10.26%) | 63 (3.94%) | 680 |
-| **Total (All Languages)** | 3,224 | 1,515 (46.99%) | 522 (16.19%) | 593 (18.39%) | 443 (13.74%) | 151 (4.68%) | 1,709 |
+| Java | 323 | 150 (46.44%) | 72 (22.29%) | 63 (19.50%) | 32 (9.91%) | 6 (1.86%) | 173 |
+| JavaScript | 367 | 191 (52.04%) | 43 (11.72%) | 69 (18.80%) | 52 (14.17%) | 12 (3.27%) | 176 |
+| Python | 1,187 | 391 (32.94%) | 203 (17.10%) | 284 (23.93%) | 234 (19.71%) | 75 (6.32%) | 796 |
+| TypeScript | 1,899 | 780 (41.07%) | 387 (20.38%) | 388 (20.43%) | 265 (13.95%) | 79 (4.16%) | 1,119 |
+| **Total (All Languages)** | 3,776 | 1,512 (40.04%) | 705 (18.67%) | 804 (21.29%) | 583 (15.44%) | 172 (4.56%) | 2,264 |
 
 ## Dataset A: Commits and Repositories Summary
 
@@ -81,42 +81,33 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 
 | Commits | Java | JavaScript | Python | TypeScript | Total |
 |---|---|---|---|---|---|
-| All commits | 391,004 | 188,892 | 1,062,569 | 1,661,364 | 3,303,829 |
-| Agent commits | 16,189 | 15,690 | 110,995 | 179,059 | 321,933 |
-| Test commits | 6,686 | 4,479 | 42,953 | 55,744 | 109,862 |
-| Mock commits | 68 | 48 | 1,302 | 600 | 2,018 |
+| All commits | 440,439 | 322,768 | 1,082,913 | 2,362,339 | 4,208,459 |
+| Agent commits | 18,421 | 24,594 | 134,702 | 255,428 | 433,145 |
+| Test commits | 7,456 | 7,018 | 41,193 | 78,419 | 134,086 |
+| Mock commits | 68 | 82 | 1,244 | 997 | 2,391 |
 
 ### Repositories
 
 | Repositories | Java | JavaScript | Python | TypeScript | Total |
 |---|---|---|---|---|---|
 | Candidate repos | 3,786 | 5,448 | 8,622 | 6,893 | 24,749 |
-| With agent files or directories | 245 | 279 | 1,101 | 1,599 | 3,224 |
-| With agent commits | 159 | 216 | 877 | 927 | 2,179 |
-| With test commits | 130 | 148 | 751 | 680 | 1,709 |
-| With mock commits | 25 | 21 | 272 | 148 | 466 |
+| With agent files or directories | 323 | 367 | 1,187 | 1,899 | 3,776 |
+| With agent commits | 219 | 260 | 998 | 1,491 | 2,968 |
+| With test commits | 173 | 176 | 796 | 1,119 | 2,264 |
+| With mock commits | 26 | 25 | 281 | 242 | 574 |
 
 ## Dataset C: Repository Summary
 
 | Repositories | Java | JavaScript | Python | TypeScript | Total |
 |---|---|---|---|---|---|
 | Candidate repos | 3,786 | 5,448 | 8,622 | 6,893 | 24,749 |
-| Created within 2016-2020 | 1,544 | 2,068 | 3,003 | 2,355 | 8,970 |
-| With any fixtures | 662 | 549 | 1,087 | 946 | 3,244 |
-| With any mocks | 207 | 173 | 294 | 358 | 1,032 |
+| Created within 2016-2020 | 1,398 | 1,916 | 2,721 | 2,107 | 8,142 |
+| With any fixtures | 560 | 551 | 1,048 | 846 | 3,005 |
+| With any mocks | 168 | 171 | 286 | 323 | 948 |
 
 ## Dataset C: Sampling-Down Summary
 
-Matched against Dataset a: 39,377/39,088 fixtures, 851 repos, seed=42.
-
-A language whose "Repos sampled" hits its full available count took everything Dataset C had for it and still fell short of the target mix -- the shortfall was redistributed to the other languages, not discarded (see `_allocate_quotas_with_shortfall_reallocation()` in `dataset_sampler.py`).
-
-| Language | Dataset C's own mix | Target (a's mix) | Sampled mix | Repos sampled | Fixtures sampled |
-|---|---|---|---|---|---|
-| Java | 37.7% | 7.6% | 8.2% | 30/662 | 3,233/79,738 |
-| JavaScript | 14.6% | 6.4% | 6.4% | 62/549 | 2,528/30,836 |
-| Python | 18.4% | 43.8% | 43.5% | 547/1,087 | 17,111/38,962 |
-| TypeScript | 29.3% | 42.2% | 41.9% | 212/946 | 16,505/61,848 |
+_Not available -- run `python -m collection sample-c-repos --match-dataset a` first._
 
 ## JUnit 3 Fallback Detection (Java)
 
@@ -124,8 +115,8 @@ Side note, not a comparison: raw counts of `junit3_setup`/`junit3_teardown`, Jav
 
 | Dataset | junit3_setup | junit3_teardown | Total |
 |---|---|---|---|
-| Dataset A | 1 | 0 | 1 |
-| Dataset C | 1,218 | 653 | 1,871 |
+| Dataset A | 0 | 0 | 0 |
+| Dataset C | 1,189 | 638 | 1,827 |
 
 ## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)
 
@@ -133,8 +124,8 @@ Side note, not a comparison: exact re-check, not a sample, of whether each `befo
 
 | Dataset | before_each/after_each | Nested construct | Re-checked | Mismatched | Mismatch rate |
 |---|---|---|---|---|---|
-| Dataset A | 21,703 | 2,031 | 1,669 | 349 | 20.91% |
-| Dataset C | 67,947 | 8,135 | 6,503 | 797 | 12.26% |
+| Dataset A | 28,623 | 2,811 | 2,330 | 517 | 22.19% |
+| Dataset C | 65,621 | 8,098 | 6,486 | 828 | 12.77% |
 
 ## Mocha Bare `before()`/`after()` Detection (Regression Guard)
 
@@ -142,8 +133,8 @@ Side note, not a comparison, and not a live risk estimate -- count of `mocha_bef
 
 | Dataset | mocha_before/mocha_after | Non-bare-call shape |
 |---|---|---|
-| Dataset A | 791 | 0 |
-| Dataset C | 15,990 | 0 |
+| Dataset A | 1,115 | 0 |
+| Dataset C | 14,994 | 0 |
 
 ## Aliased Mock Import Detection (Python)
 
@@ -151,8 +142,8 @@ Side note, not a comparison, and a lower bound, not a live risk estimate -- coun
 
 | Dataset | Python fixtures | Class/function-level alias in body |
 |---|---|---|
-| Dataset A | 11,712 | 0 |
-| Dataset C | 39,662 | 0 |
+| Dataset A | 11,035 | 0 |
+| Dataset C | 43,707 | 0 |
 
 ## Mock-Category Fallback Rate
 
@@ -162,8 +153,8 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 
 | Dataset | category='mock' rows | Positive match | Fallback (no keyword) | Positive % / Fallback % |
 |---|---|---|---|---|
-| Dataset A | 10,963 | 7,898 | 3,065 | 72.0% / 28.0% |
-| Dataset C | 12,540 | 10,163 | 2,377 | 81.0% / 19.0% |
+| Dataset A | 7,955 | 6,327 | 1,628 | 79.5% / 20.5% |
+| Dataset C | 11,979 | 9,580 | 2,399 | 80.0% / 20.0% |
 
 ### Positive matches split further: framework API name vs. naming-only
 
@@ -171,8 +162,8 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 
 | Dataset | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
-| Dataset A | 10,963 | 6,593 (60.1%) | 1,305 (11.9%) | 3,065 (28.0%) |
-| Dataset C | 12,540 | 8,795 (70.1%) | 1,368 (10.9%) | 2,377 (19.0%) |
+| Dataset A | 7,955 | 4,736 (59.5%) | 1,591 (20.0%) | 1,628 (20.5%) |
+| Dataset C | 11,979 | 8,202 (68.5%) | 1,378 (11.5%) | 2,399 (20.0%) |
 
 ### Per language
 
@@ -183,16 +174,16 @@ checking per language matters here specifically because it does:
 
 | Language | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
-| java | 245 | 245 (100.0%) | 0 (0.0%) | 0 (0.0%) |
-| javascript | 181 | 95 (52.5%) | 68 (37.6%) | 18 (9.9%) |
-| python | 8,495 | 5,223 (61.5%) | 402 (4.7%) | 2,870 (33.8%) |
-| typescript | 2,042 | 1,030 (50.4%) | 835 (40.9%) | 177 (8.7%) |
+| java | 239 | 239 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| javascript | 344 | 193 (56.1%) | 128 (37.2%) | 23 (6.7%) |
+| python | 4,244 | 2,802 (66.0%) | 164 (3.9%) | 1,278 (30.1%) |
+| typescript | 3,128 | 1,502 (48.0%) | 1,299 (41.5%) | 327 (10.5%) |
 
 **Dataset C**
 
 | Language | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
-| java | 3,991 | 3,991 (100.0%) | 0 (0.0%) | 0 (0.0%) |
-| javascript | 2,664 | 957 (35.9%) | 523 (19.6%) | 1,184 (44.4%) |
-| python | 3,858 | 3,262 (84.6%) | 294 (7.6%) | 302 (7.8%) |
-| typescript | 2,027 | 585 (28.9%) | 551 (27.2%) | 891 (44.0%) |
+| java | 3,225 | 3,225 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| javascript | 2,859 | 970 (33.9%) | 609 (21.3%) | 1,280 (44.8%) |
+| python | 4,055 | 3,477 (85.7%) | 286 (7.1%) | 292 (7.2%) |
+| typescript | 1,840 | 530 (28.8%) | 483 (26.2%) | 827 (44.9%) |
