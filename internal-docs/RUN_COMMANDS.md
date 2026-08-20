@@ -291,17 +291,26 @@ python -m collection sample-c-repos --match-dataset a
   && curl -d "sample-c-repos finished" ntfy.sh/joaofix_fixturedb
 ```
 
-Samples whole Dataset C repos (never splits one -- see
-`collection/dataset_sampler.py::sample_repos_by_language()`'s docstring for
-why fixture-level sampling would distort RQ2's setup-to-teardown metrics),
-stratified by language using Dataset C's own original per-language
-proportions, down to `--match-dataset a`'s current live fixture count (or
-pass an explicit `--target-count N` instead). Writes `db/c_sampled.db` +
-`datasets/c/fixtures-sampled/*.csv` + a summary at `output/sample_c_repos.json`
--- `db/c.db`/`datasets/c/fixtures/*.csv` are read-only inputs, never
-modified. Nothing in `research_questions/` reads `db/c_sampled.db` or
-`datasets/c/fixtures-sampled/` anymore, even if they exist on disk from a
-previous run.
+Samples individual fixtures, not whole repos (as of 2026-08-20 -- see
+`collection/dataset_sampler.py::sample_fixtures_by_language()`'s docstring):
+each language sampled independently, down to `--match-dataset a`'s exact
+current live fixture count *for that language* (own detected language,
+`test_files.language` -- not the repo's tag, matching
+`dataset_findings.md`'s "Fixture Counts by Language" table), with
+individual fixtures drawn without replacement regardless of which repo
+they come from -- two fixtures from the same repo can land on opposite
+sides of the sample. Replaces the earlier whole-repo approach (which could
+only ever land close to a target, never on it, since a repo is an
+indivisible chunk of fixtures) for exactly this reason -- do not compute
+repo-level statistics (e.g. RQ2's setup-to-teardown metrics) against
+`db/c_sampled.db`, it was never meant to support that. Pass an explicit
+`--target-count N` instead of `--match-dataset` to split across languages
+by Dataset C's own mix instead of another dataset's. Writes
+`db/c_sampled.db` + `datasets/c/fixtures-sampled/*.csv` + a summary at
+`output/sample_c_repos.json` -- `db/c.db`/`datasets/c/fixtures/*.csv` are
+read-only inputs, never modified. Nothing in `research_questions/` reads
+`db/c_sampled.db` or `datasets/c/fixtures-sampled/` anymore, even if they
+exist on disk from a previous run.
 
 ### One-time: backfill "All commits" for Dataset A's summary table
 
