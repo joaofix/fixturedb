@@ -1,11 +1,21 @@
 """Real (non-mocked) tests for collection.dataset_pipeline's Dataset C
-sample-down: _fetch_dataset_c_repo_fixture_counts(), _build_sampled_db(),
-sample_dataset_c_repos(). Builds tiny real SQLite DBs via collection.db's own
-writers (upsert_repository/upsert_test_file/insert_fixture/insert_mock_usage)
--- same convention as test_dataset_pipeline.py -- rather than raw SQL or
+sample-down: _fetch_fixture_language_counts(),
+_fetch_repo_counts_by_fixture_language(),
+_fetch_dataset_c_fixtures_by_own_language(),
+_build_sampled_db_from_fixtures(), sample_dataset_c_repos(). Builds tiny
+real SQLite DBs via collection.db's own writers
+(upsert_repository/upsert_test_file/insert_fixture/insert_mock_usage) --
+same convention as test_dataset_pipeline.py -- rather than raw SQL or
 mocks, since the id-remapping logic this exists to test is exactly what a
 mock would hide.
-"""
+
+Fixture-level sampling (not whole-repo, the previous approach) means a
+repo's fixtures can now be split across the sample boundary -- several
+tests below build repos with a MIX of languages across their own test
+files specifically to prove sampling/counting follows each fixture's own
+language, not its repo's tag (leakage-aware, matching
+research_questions/dataset_findings.py's "Fixture Counts by Language"
+table's grouping)."""
 
 from __future__ import annotations
 
@@ -14,9 +24,10 @@ import json
 import pytest
 
 from collection.dataset_pipeline import (
-    _build_sampled_db,
-    _fetch_dataset_c_repo_fixture_counts,
-    _fetch_repo_language_counts_with_fixtures,
+    _build_sampled_db_from_fixtures,
+    _fetch_dataset_c_fixtures_by_own_language,
+    _fetch_fixture_language_counts,
+    _fetch_repo_counts_by_fixture_language,
     sample_dataset_c_repos,
 )
 from collection.db import (
@@ -32,9 +43,21 @@ from collection.db import (
 
 def _make_repo_db(path, repos: list[dict]) -> None:
     """repos: [{"github_id": int, "language": str, "num_fixtures": int,
-    "mocks_on_fixture_0": int}, ...]. One test_file per repo, `num_fixtures`
-    plain fixtures, and (if given) that many mock_usages rows attached to
-    the repo's first fixture."""
+    "mocks_on_fixture_0": int, "files": [...]}, ...].
+
+    Default shape (no "files" key): one test_file at the repo's own
+    `language`, `num_fixtures` plain fixtures on it, and (if given) that
+    many mock_usages rows attached to the repo's first fixture -- same as
+    before this suite's fixture-level rewrite.
+
+    `files` (optional) overrides this with an explicit list of
+    {"language": str, "num_fixtures": int} entries -- one test_file per
+    entry, letting a single repo contribute fixtures in more than one
+    language (real leakage), for tests that need to prove grouping is by
+    each fixture's own language, not the repo's tag. When given,
+    `language`/`num_fixtures`/`mocks_on_fixture_0` are ignored for
+    fixture creation (only `language` is still used for the repo's own
+    tag)."""
     initialise_db(path)
     with db_session(path) as conn:
         for spec in repos:
@@ -56,18 +79,32 @@ def _make_repo_db(path, repos: list[dict]) -> None:
                     "repo_age_years": None,
                 },
             )
-            file_id = upsert_test_file(
-                conn, repo_id, f"tests/test_{spec['github_id']}.py", spec["language"]
-            )
-            fixture_ids = []
-            for i in range(spec["num_fixtures"]):
-                fixture_ids.append(
-                    insert_fixture(
+
+            files = spec.get("files") or [
+                {
+                    "language": spec["language"],
+                    "num_fixtures": spec["num_fixtures"],
+                }
+            ]
+
+            total_fixtures = 0
+            total_mocks = 0
+            first_fixture_id: int | None = None
+            for file_idx, file_spec in enumerate(files):
+                file_language = file_spec["language"]
+                file_id = upsert_test_file(
+                    conn,
+                    repo_id,
+                    f"tests/test_{spec['github_id']}_{file_idx}.{file_language}",
+                    file_language,
+                )
+                for i in range(file_spec["num_fixtures"]):
+                    fixture_id = insert_fixture(
                         conn,
                         {
                             "file_id": file_id,
                             "repo_id": repo_id,
-                            "name": f"fixture_{i}",
+                            "name": f"fixture_{file_idx}_{i}",
                             "fixture_type": "pytest_decorator",
                             "scope": "per_test",
                             "start_line": i,
@@ -81,18 +118,21 @@ def _make_repo_db(path, repos: list[dict]) -> None:
                             "comment_density": 0.0,
                             "num_parameters": 0,
                             "has_teardown_pair": 0,
-                            "raw_source": f"def fixture_{i}(): pass",
+                            "raw_source": f"def fixture_{file_idx}_{i}(): pass",
                             "framework": "pytest",
                             "num_mocks": 0,
                         },
                     )
-                )
+                    if first_fixture_id is None:
+                        first_fixture_id = fixture_id
+                    total_fixtures += 1
+
             num_mocks = spec.get("mocks_on_fixture_0", 0)
             for _ in range(num_mocks):
                 insert_mock_usage(
                     conn,
                     {
-                        "fixture_id": fixture_ids[0],
+                        "fixture_id": first_fixture_id,
                         "repo_id": repo_id,
                         "framework": "unittest_mock",
                         "category": "mock",
@@ -101,18 +141,18 @@ def _make_repo_db(path, repos: list[dict]) -> None:
                         "raw_snippet": "Mock()",
                     },
                 )
+                total_mocks += 1
 
             # Mirror what a real collection run does at persist time
             # (persist_repository_and_fixtures() -> set_repo_analysed()) so
             # the denormalized aggregate columns this test suite relies on
-            # (num_test_files/num_fixtures/num_mock_usages) are realistic,
-            # not left at their schema default of 0.
+            # are realistic, not left at their schema default of 0.
             set_repo_analysed(
                 conn,
                 repo_id,
-                num_test_files=1,
-                num_fixtures=spec["num_fixtures"],
-                num_mock_usages=num_mocks,
+                num_test_files=len(files),
+                num_fixtures=total_fixtures,
+                num_mock_usages=total_mocks,
             )
 
 
@@ -124,8 +164,8 @@ def _counts(db_path) -> dict[str, int]:
         }
 
 
-class TestFetchDatasetCRepoFixtureCounts:
-    def test_groups_by_repo_with_own_language_and_count(self, tmp_path):
+class TestFetchFixtureLanguageCounts:
+    def test_groups_by_fixture_own_language(self, tmp_path):
         db_path = tmp_path / "c.db"
         _make_repo_db(
             db_path,
@@ -135,25 +175,42 @@ class TestFetchDatasetCRepoFixtureCounts:
             ],
         )
         with db_session(db_path) as conn:
-            rows = _fetch_dataset_c_repo_fixture_counts(conn)
+            counts = _fetch_fixture_language_counts(conn)
+        assert counts == {"python": 3, "java": 5}
 
-        by_lang = {r["language"]: r for r in rows}
-        assert by_lang["python"]["fixture_count"] == 3
-        assert by_lang["java"]["fixture_count"] == 5
+    def test_leaked_fixture_counted_under_its_own_language_not_repo_tag(self, tmp_path):
+        """A repo tagged python with a leaked javascript test file inside
+        it must have that javascript fixture counted under javascript,
+        not python -- the whole reason this grouping replaced the old
+        repo-tag-based one."""
+        db_path = tmp_path / "c.db"
+        _make_repo_db(
+            db_path,
+            [
+                {
+                    "github_id": 1,
+                    "language": "python",
+                    "files": [
+                        {"language": "python", "num_fixtures": 2},
+                        {"language": "javascript", "num_fixtures": 1},
+                    ],
+                }
+            ],
+        )
+        with db_session(db_path) as conn:
+            counts = _fetch_fixture_language_counts(conn)
+        assert counts == {"python": 2, "javascript": 1}
 
     def test_repo_with_no_fixtures_excluded(self, tmp_path):
         db_path = tmp_path / "c.db"
         _make_repo_db(db_path, [{"github_id": 1, "language": "python", "num_fixtures": 0}])
         with db_session(db_path) as conn:
-            rows = _fetch_dataset_c_repo_fixture_counts(conn)
-        assert rows == []
+            counts = _fetch_fixture_language_counts(conn)
+        assert counts == {}
 
 
-class TestFetchRepoLanguageCountsWithFixtures:
-    def test_counts_repos_not_fixtures(self, tmp_path):
-        """Two python repos with different fixture counts must each count
-        once towards python's repo count -- this is a repo count, not a
-        fixture count (that's _fetch_dataset_c_repo_fixture_counts above)."""
+class TestFetchRepoCountsByFixtureLanguage:
+    def test_counts_distinct_repos_not_fixtures(self, tmp_path):
         db_path = tmp_path / "a.db"
         _make_repo_db(
             db_path,
@@ -164,19 +221,57 @@ class TestFetchRepoLanguageCountsWithFixtures:
             ],
         )
         with db_session(db_path) as conn:
-            counts = _fetch_repo_language_counts_with_fixtures(conn)
+            counts = _fetch_repo_counts_by_fixture_language(conn)
         assert counts == {"python": 2, "java": 1}
 
-    def test_repo_with_no_fixtures_excluded(self, tmp_path):
-        db_path = tmp_path / "a.db"
-        _make_repo_db(db_path, [{"github_id": 1, "language": "python", "num_fixtures": 0}])
+    def test_single_repo_with_two_languages_counts_once_per_language(self, tmp_path):
+        db_path = tmp_path / "c.db"
+        _make_repo_db(
+            db_path,
+            [
+                {
+                    "github_id": 1,
+                    "language": "python",
+                    "files": [
+                        {"language": "python", "num_fixtures": 2},
+                        {"language": "javascript", "num_fixtures": 1},
+                    ],
+                }
+            ],
+        )
         with db_session(db_path) as conn:
-            counts = _fetch_repo_language_counts_with_fixtures(conn)
-        assert counts == {}
+            counts = _fetch_repo_counts_by_fixture_language(conn)
+        assert counts == {"python": 1, "javascript": 1}
 
 
-class TestBuildSampledDb:
-    def test_copies_only_sampled_repos(self, tmp_path):
+class TestFetchDatasetCFixturesByOwnLanguage:
+    def test_returns_one_row_per_fixture_with_own_language(self, tmp_path):
+        db_path = tmp_path / "c.db"
+        _make_repo_db(
+            db_path,
+            [
+                {
+                    "github_id": 1,
+                    "language": "python",
+                    "files": [
+                        {"language": "python", "num_fixtures": 2},
+                        {"language": "javascript", "num_fixtures": 1},
+                    ],
+                }
+            ],
+        )
+        with db_session(db_path) as conn:
+            rows = _fetch_dataset_c_fixtures_by_own_language(conn)
+
+        by_language: dict[str, int] = {}
+        for row in rows:
+            by_language[row["language"]] = by_language.get(row["language"], 0) + 1
+        assert by_language == {"python": 2, "javascript": 1}
+        assert len(rows) == 3
+
+
+class TestBuildSampledDbFromFixtures:
+    def test_copies_only_the_given_fixtures(self, tmp_path):
         source = tmp_path / "c.db"
         _make_repo_db(
             source,
@@ -186,27 +281,45 @@ class TestBuildSampledDb:
             ],
         )
         with db_session(source) as conn:
-            repo_ids = {
-                row["language"]: row["repo_id"]
+            python_fixture_ids = [
+                row["id"]
                 for row in conn.execute(
-                    "SELECT id AS repo_id, language FROM repositories"
+                    "SELECT f.id FROM fixtures f "
+                    "JOIN repositories r ON f.repo_id = r.id "
+                    "WHERE r.language = 'python'"
                 ).fetchall()
-            }
+            ]
 
         output = tmp_path / "c_sampled.db"
-        total = _build_sampled_db(source, output, [repo_ids["python"]])
+        total = _build_sampled_db_from_fixtures(source, output, python_fixture_ids)
 
         assert total == 3
         with db_session(output) as conn:
             names = {row["full_name"] for row in conn.execute("SELECT full_name FROM repositories")}
-        assert names == {"owner/repo1"}  # only the sampled (python) repo
+        assert names == {"owner/repo1"}
+
+    def test_can_copy_a_partial_subset_of_a_repos_fixtures(self, tmp_path):
+        """The core new behavior: unlike the old whole-repo builder, a
+        repo can appear in the output with FEWER fixtures than it has in
+        the source."""
+        source = tmp_path / "c.db"
+        _make_repo_db(source, [{"github_id": 1, "language": "python", "num_fixtures": 5}])
+        with db_session(source) as conn:
+            fixture_ids = [row["id"] for row in conn.execute("SELECT id FROM fixtures").fetchall()]
+
+        output = tmp_path / "c_sampled.db"
+        total = _build_sampled_db_from_fixtures(source, output, fixture_ids[:2])
+
+        assert total == 2
+        with db_session(output) as conn:
+            repo = dict(conn.execute("SELECT * FROM repositories").fetchone())
+            fixture_count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+        assert fixture_count == 2
+        # Aggregate count recomputed from what was actually copied (2),
+        # not carried over from the source repo's real total (5).
+        assert repo["num_fixtures"] == 2
 
     def test_remaps_foreign_keys_not_source_ids(self, tmp_path):
-        """Source repo/file/fixture ids must not be assumed to equal the
-        destination's -- insert extra unsampled repos first so the sampled
-        repo's own source id is guaranteed not to be 1, then verify the
-        copied fixture's file_id/repo_id in the output db actually point at
-        real rows in that same output db, not stale source ids."""
         source = tmp_path / "c.db"
         _make_repo_db(
             source,
@@ -217,12 +330,17 @@ class TestBuildSampledDb:
             ],
         )
         with db_session(source) as conn:
-            java_repo_id = conn.execute(
-                "SELECT id FROM repositories WHERE language = 'java'"
-            ).fetchone()[0]
+            java_fixture_ids = [
+                row["id"]
+                for row in conn.execute(
+                    "SELECT f.id FROM fixtures f "
+                    "JOIN repositories r ON f.repo_id = r.id "
+                    "WHERE r.language = 'java'"
+                ).fetchall()
+            ]
 
         output = tmp_path / "c_sampled.db"
-        _build_sampled_db(source, output, [java_repo_id])
+        _build_sampled_db_from_fixtures(source, output, java_fixture_ids)
 
         with db_session(output) as conn:
             fixtures = conn.execute("SELECT * FROM fixtures").fetchall()
@@ -238,6 +356,25 @@ class TestBuildSampledDb:
                 assert repo_row is not None
                 assert repo_row["full_name"] == "owner/repo3"
 
+    def test_copies_mock_usages_only_for_sampled_fixtures(self, tmp_path):
+        source = tmp_path / "c.db"
+        _make_repo_db(
+            source,
+            [{"github_id": 1, "language": "python", "num_fixtures": 2, "mocks_on_fixture_0": 2}],
+        )
+        with db_session(source) as conn:
+            fixture_ids = [row["id"] for row in conn.execute("SELECT id FROM fixtures ORDER BY id").fetchall()]
+
+        output = tmp_path / "c_sampled.db"
+        # Only the fixture WITHOUT mocks -- its mock_usages must not
+        # appear in the output at all.
+        total = _build_sampled_db_from_fixtures(source, output, [fixture_ids[1]])
+
+        assert total == 1
+        with db_session(output) as conn:
+            mocks = conn.execute("SELECT * FROM mock_usages").fetchall()
+        assert mocks == []
+
     def test_copies_mock_usages_with_remapped_fixture_and_repo_id(self, tmp_path):
         source = tmp_path / "c.db"
         _make_repo_db(
@@ -245,17 +382,17 @@ class TestBuildSampledDb:
             [{"github_id": 1, "language": "python", "num_fixtures": 2, "mocks_on_fixture_0": 2}],
         )
         with db_session(source) as conn:
-            repo_id = conn.execute("SELECT id FROM repositories").fetchone()[0]
+            fixture_ids = [row["id"] for row in conn.execute("SELECT id FROM fixtures ORDER BY id").fetchall()]
 
         output = tmp_path / "c_sampled.db"
-        _build_sampled_db(source, output, [repo_id])
+        _build_sampled_db_from_fixtures(source, output, fixture_ids)
 
         with db_session(output) as conn:
             mocks = conn.execute("SELECT * FROM mock_usages").fetchall()
             assert len(mocks) == 2
-            fixture_ids = {row["id"] for row in conn.execute("SELECT id FROM fixtures")}
+            fixture_ids_out = {row["id"] for row in conn.execute("SELECT id FROM fixtures")}
             for m in mocks:
-                assert m["fixture_id"] in fixture_ids
+                assert m["fixture_id"] in fixture_ids_out
 
     def test_never_writes_to_source_db(self, tmp_path):
         source = tmp_path / "c.db"
@@ -269,8 +406,8 @@ class TestBuildSampledDb:
         before = _counts(source)
 
         with db_session(source) as conn:
-            repo_ids = [row["id"] for row in conn.execute("SELECT id FROM repositories")]
-        _build_sampled_db(source, tmp_path / "c_sampled.db", repo_ids)
+            fixture_ids = [row["id"] for row in conn.execute("SELECT id FROM fixtures").fetchall()]
+        _build_sampled_db_from_fixtures(source, tmp_path / "c_sampled.db", fixture_ids)
 
         assert _counts(source) == before
 
@@ -284,40 +421,36 @@ class TestBuildSampledDb:
             ],
         )
         with db_session(source) as conn:
-            repo_ids = {
-                row["language"]: row["id"]
-                for row in conn.execute("SELECT id, language FROM repositories")
+            fixture_ids = {
+                row["language"]: [
+                    r["id"]
+                    for r in conn.execute(
+                        "SELECT f.id FROM fixtures f JOIN repositories r ON f.repo_id = r.id "
+                        "WHERE r.language = ?",
+                        (row["language"],),
+                    ).fetchall()
+                ]
+                for row in conn.execute("SELECT DISTINCT language FROM repositories").fetchall()
             }
 
         output = tmp_path / "c_sampled.db"
-        _build_sampled_db(source, output, [repo_ids["python"]])
-        _build_sampled_db(source, output, [repo_ids["java"]])  # second call, different repo
+        _build_sampled_db_from_fixtures(source, output, fixture_ids["python"])
+        _build_sampled_db_from_fixtures(source, output, fixture_ids["java"])  # second call
 
         with db_session(output) as conn:
             names = {row["full_name"] for row in conn.execute("SELECT full_name FROM repositories")}
-        assert names == {"owner/repo2"}  # only java's repo -- python's from the first call is gone
+        assert names == {"owner/repo2"}  # only java's repo -- python's is gone
 
-    def test_repo_aggregate_counts_carried_over_unchanged(self, tmp_path):
-        """A repo is never partially included, so num_test_files/
-        num_fixtures/num_mock_usages should carry over exactly, not be
-        recomputed or reset to 0."""
+    def test_empty_fixture_id_list_produces_an_empty_db(self, tmp_path):
         source = tmp_path / "c.db"
-        _make_repo_db(
-            source, [{"github_id": 1, "language": "python", "num_fixtures": 4, "mocks_on_fixture_0": 2}]
-        )
-        with db_session(source) as conn:
-            repo_id = conn.execute("SELECT id FROM repositories").fetchone()[0]
-            src_repo = dict(
-                conn.execute("SELECT * FROM repositories WHERE id = ?", (repo_id,)).fetchone()
-            )
+        _make_repo_db(source, [{"github_id": 1, "language": "python", "num_fixtures": 2}])
 
         output = tmp_path / "c_sampled.db"
-        _build_sampled_db(source, output, [repo_id])
+        total = _build_sampled_db_from_fixtures(source, output, [])
 
+        assert total == 0
         with db_session(output) as conn:
-            dst_repo = dict(conn.execute("SELECT * FROM repositories").fetchone())
-        assert dst_repo["num_fixtures"] == src_repo["num_fixtures"] == 4
-        assert dst_repo["num_mock_usages"] == src_repo["num_mock_usages"] == 2
+            assert conn.execute("SELECT COUNT(*) FROM repositories").fetchone()[0] == 0
 
 
 class TestSampleDatasetCRepos:
@@ -342,9 +475,7 @@ class TestSampleDatasetCRepos:
         output_dir = tmp_path / "output"
         _make_repo_db(
             db_root / "c.db",
-            [
-                {"github_id": i, "language": "python", "num_fixtures": 10} for i in range(1, 11)
-            ]
+            [{"github_id": i, "language": "python", "num_fixtures": 10} for i in range(1, 11)]
             + [{"github_id": i, "language": "java", "num_fixtures": 10} for i in range(11, 21)],
         )
         c_counts_before = _counts(db_root / "c.db")
@@ -360,7 +491,9 @@ class TestSampleDatasetCRepos:
         assert _counts(db_root / "c.db") == c_counts_before
 
         assert (db_root / "c_sampled.db").exists()
-        assert abs(result["sampled_fixture_count"] - 50) <= 10
+        # Split 50/50 by Dataset C's own mix, then rounded -- exact for
+        # an even population like this one.
+        assert result["sampled_fixture_count"] == 50
 
         summary_path = output_dir / "sample_c_repos.json"
         assert summary_path.exists()
@@ -372,7 +505,7 @@ class TestSampleDatasetCRepos:
         assert csv_dir.exists()
         assert any(csv_dir.glob("*_fixtures.csv"))
 
-    def test_match_dataset_reads_live_fixture_count(self, tmp_path):
+    def test_match_dataset_reads_live_per_language_fixture_counts(self, tmp_path):
         db_root = tmp_path / "db"
         _make_repo_db(
             db_root / "c.db",
@@ -390,22 +523,87 @@ class TestSampleDatasetCRepos:
         )
 
         assert result["target_count"] == 37
+        assert result["sampled_fixture_count"] == 37
 
-    def test_match_dataset_stratifies_by_its_own_mix_not_dataset_cs(self, tmp_path):
-        """Dataset C's own fixture-count mix here is 50/50 java/python. The
-        match dataset (a.db) is 90% python / 10% java *by repo count*. The
-        sample must follow a.db's 90/10 mix, not c.db's own 50/50 -- this is
-        the whole point of the change."""
+    def test_matches_exact_per_language_fixture_count_not_approximate(self, tmp_path):
+        """The whole point of the change: the old whole-repo sampler could
+        only ever land close to a target (repos are indivisible 10-fixture
+        chunks here); this must hit it exactly."""
         db_root = tmp_path / "db"
         _make_repo_db(
             db_root / "c.db",
-            [{"github_id": i, "language": "python", "num_fixtures": 2} for i in range(1, 6)]
-            + [{"github_id": i, "language": "java", "num_fixtures": 1} for i in range(6, 16)],
+            [{"github_id": i, "language": "python", "num_fixtures": 10} for i in range(1, 21)],
+        )
+        _make_repo_db(
+            db_root / "a.db", [{"github_id": 100, "language": "python", "num_fixtures": 43}]
+        )
+
+        result = sample_dataset_c_repos(
+            match_dataset="a",
+            db_root=db_root,
+            datasets_root=tmp_path / "datasets",
+            output_dir=tmp_path / "output",
+        )
+
+        assert result["sampled_fixture_count"] == 43  # not just "close to"
+
+    def test_uses_fixtures_own_language_not_repo_tag_for_matching(self, tmp_path):
+        """Dataset C has a repo tagged python with a leaked javascript
+        file inside it. Matching against a's javascript target must be
+        able to draw from that leaked fixture -- proving the sample pool
+        is grouped by each fixture's own language."""
+        db_root = tmp_path / "db"
+        _make_repo_db(
+            db_root / "c.db",
+            [
+                {
+                    "github_id": 1,
+                    "language": "python",
+                    "files": [
+                        {"language": "python", "num_fixtures": 5},
+                        {"language": "javascript", "num_fixtures": 3},
+                    ],
+                }
+            ],
         )
         _make_repo_db(
             db_root / "a.db",
-            [{"github_id": i, "language": "python", "num_fixtures": 1} for i in range(100, 109)]
-            + [{"github_id": 200, "language": "java", "num_fixtures": 1}],
+            [{"github_id": 100, "language": "javascript", "num_fixtures": 2}],
+        )
+
+        result = sample_dataset_c_repos(
+            match_dataset="a",
+            db_root=db_root,
+            datasets_root=tmp_path / "datasets",
+            output_dir=tmp_path / "output",
+        )
+
+        assert result["sampled_fixture_count"] == 2
+        with db_session(db_root / "c_sampled.db") as conn:
+            langs = {
+                row["language"]
+                for row in conn.execute(
+                    "SELECT tf.language FROM fixtures f JOIN test_files tf ON f.file_id = tf.id"
+                ).fetchall()
+            }
+        assert langs == {"javascript"}
+
+    def test_shortfall_language_does_not_affect_other_languages_target(self, tmp_path):
+        """Unlike the old whole-repo sampler's cross-language shortfall
+        redistribution, a language that can't reach its target here must
+        not change any other language's sampled count."""
+        db_root = tmp_path / "db"
+        _make_repo_db(
+            db_root / "c.db",
+            [{"github_id": i, "language": "python", "num_fixtures": 5} for i in range(1, 3)]
+            + [{"github_id": i, "language": "java", "num_fixtures": 1} for i in range(3, 5)],
+        )
+        _make_repo_db(
+            db_root / "a.db",
+            [
+                {"github_id": 100, "language": "python", "num_fixtures": 8},
+                {"github_id": 101, "language": "java", "num_fixtures": 50},  # c only has 2
+            ],
         )
 
         result = sample_dataset_c_repos(
@@ -416,10 +614,30 @@ class TestSampleDatasetCRepos:
         )
 
         check = result["distribution_check"]
-        assert check["python"]["target_ratio"] == pytest.approx(0.9)
-        assert check["java"]["target_ratio"] == pytest.approx(0.1)
-        # java's own C-side fixture-count share (50%) must NOT be what it
-        # actually got sampled at -- it should track the 10% target instead.
-        assert check["java"]["original_ratio"] == pytest.approx(0.5)
-        assert check["java"]["sampled_ratio"] < check["java"]["original_ratio"]
-        assert check["python"]["sampled_fixture_count"] > check["java"]["sampled_fixture_count"]
+        assert check["python"]["sampled_fixture_count"] == 8
+        assert check["python"]["shortfall"] is False
+        assert check["java"]["sampled_fixture_count"] == 2  # took everything available
+        assert check["java"]["shortfall"] is True
+
+    def test_repos_can_appear_with_a_partial_subset_of_their_fixtures(self, tmp_path):
+        db_root = tmp_path / "db"
+        _make_repo_db(
+            db_root / "c.db",
+            [{"github_id": 1, "language": "python", "num_fixtures": 10}],
+        )
+        _make_repo_db(
+            db_root / "a.db", [{"github_id": 100, "language": "python", "num_fixtures": 4}]
+        )
+
+        sample_dataset_c_repos(
+            match_dataset="a",
+            db_root=db_root,
+            datasets_root=tmp_path / "datasets",
+            output_dir=tmp_path / "output",
+        )
+
+        with db_session(db_root / "c_sampled.db") as conn:
+            repo = dict(conn.execute("SELECT * FROM repositories").fetchone())
+            fixture_count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
+        assert fixture_count == 4
+        assert repo["num_fixtures"] == 4  # recomputed, not the source's 10

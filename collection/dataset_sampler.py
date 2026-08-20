@@ -17,227 +17,105 @@ logger = get_logger(__name__)
 
 
 @dataclass
-class RepoSamplingResult:
-    """Result of sample_repos_by_language()'s whole-repo stratified sample."""
+class FixtureSamplingResult:
+    """Result of sample_fixtures_by_language()'s fixture-level, per-language
+    exact-count sample."""
 
-    sampled_repo_ids: List[int] = field(default_factory=list)
+    sampled_fixture_ids: List[int] = field(default_factory=list)
     sampled_fixture_count: int = 0
     target_count: int = 0
     distribution_check: Dict[str, Dict] = field(default_factory=dict)
     random_seed: int = DATASET_C_SAMPLING_SEED
 
 
-def _allocate_quotas_with_shortfall_reallocation(
-    lang_caps: Dict[str, float],
-    target_weights: Dict[str, float],
-    target_count: float,
-) -> Dict[str, float]:
-    """Water-filling allocation: each language's quota is `target_count *
-    (its share of target_weights)`, capped at `lang_caps[language]` (that
-    language's real ceiling -- e.g. its whole fixture population in
-    Dataset C). When a language's computed share would exceed its cap, it's
-    fixed at its cap instead and the shortfall is redistributed across the
-    *remaining* (not-yet-capped) languages, re-normalized among themselves
-    -- repeated until stable, since redistributing to one language can
-    itself push it over its own cap (bounded by len(lang_caps) iterations).
-
-    Only languages present in both `lang_caps` and `target_weights` (with a
-    positive weight) can receive a nonzero quota:
-    - A language in `target_weights` absent from `lang_caps` (nothing to
-      sample) contributes nothing and is excluded from consideration from
-      the start -- its whole share cascades into the others via the same
-      mechanism, no special-casing needed.
-    - A language in `lang_caps` absent from `target_weights` (the target
-      distribution has none of it) gets quota 0 -- correct for "match this
-      other distribution's mix": a language it doesn't have shouldn't
-      appear in the output either.
-
-    `target_weights` need not sum to 1 -- every use is a ratio
-    (`weight / sum of remaining weights`), so raw counts work the same as
-    pre-normalized fractions.
-
-    Returns one entry per key in `lang_caps` (0.0 for any that got no
-    quota), never partial -- every language sample_repos_by_language()
-    iterates over has a quota to look up.
-    """
-    remaining_langs: Dict[str, float] = {
-        lang: weight
-        for lang, weight in target_weights.items()
-        if lang in lang_caps and weight > 0
-    }
-    finalized: Dict[str, float] = {}
-    remaining_total = target_count
-
-    while remaining_langs:
-        weight_sum = sum(remaining_langs.values())
-        if weight_sum <= 0:
-            break
-
-        shares = {
-            lang: remaining_total * (weight / weight_sum)
-            for lang, weight in remaining_langs.items()
-        }
-        overflowing = {
-            lang: lang_caps[lang] for lang, share in shares.items() if share > lang_caps[lang]
-        }
-
-        if not overflowing:
-            finalized.update(shares)
-            break
-
-        for lang, capped_quota in overflowing.items():
-            finalized[lang] = capped_quota
-            remaining_total -= capped_quota
-            del remaining_langs[lang]
-
-    for language in lang_caps:
-        finalized.setdefault(language, 0.0)
-
-    return finalized
-
-
-def sample_repos_by_language(
-    repos: List[Dict],
-    target_count: int,
-    tolerance: float = 0.02,
+def sample_fixtures_by_language(
+    fixtures: List[Dict],
+    target_counts: Dict[str, int],
     seed: int = DATASET_C_SAMPLING_SEED,
-    target_proportions: Dict[str, float] | None = None,
-) -> RepoSamplingResult:
-    """Randomly sample whole repos, stratified by language, until the total
-    fixture count is as close as possible to `target_count`.
+) -> FixtureSamplingResult:
+    """Randomly sample individual fixtures, independently per language,
+    down to an *exact* target fixture count per language.
 
-    Unlike `StratifiedSampler.sample()` below (which samples individual
-    fixture *rows*), this never splits a repo -- a repo's fixtures are
-    either entirely included or entirely excluded. This matters for Dataset
-    C: RQ2's setup-to-teardown ratio and has_teardown_pair rate are computed
-    per repo, so a fixture-level sample could split a repo's setup fixture
-    from its teardown fixture, fabricating an artificial "zero-teardown"
-    repo that's a sampling artifact, not a fact about the data.
+    Unlike a whole-repo sample (a repo's fixtures either all included or
+    all excluded together), this samples fixture *rows* directly: two
+    fixtures from the same repo can land on opposite sides of the sample.
+    Deliberate -- see dataset_pipeline.py::sample_dataset_c_repos()'s
+    docstring for why (this maximizes the number of distinct repos
+    represented in the sample, at the cost of no longer guaranteeing a
+    sampled repo's fixtures are all present together -- repo-level
+    metrics like RQ2's setup/teardown pairing must not be computed
+    against a sample built this way).
 
     Args:
-        repos: One dict per repo: {"repo_id": int, "language": str,
-            "fixture_count": int}. `fixture_count` is the repo's total
-            fixture count -- the whole point is this can't be subdivided.
-        target_count: Desired total sampled fixture count.
-        tolerance: Passed through to distribution_check's tolerance_met flag
-            (diagnostic only -- doesn't affect sampling, see
-            StratifiedSampler.sample()'s docstring for the same convention).
-        seed: Random seed -- defaults to the project-wide
-            DATASET_C_SAMPLING_SEED (config.py / study_parameters.yaml),
-            not a fresh literal, so a plain call is reproducible with the
-            same seed used everywhere else Dataset C sampling happens.
-        target_proportions: Optional per-language weights (raw counts or
-            fractions -- ratio-based, need not sum to 1) to stratify
-            against instead of `repos`' own mix -- e.g. another dataset's
-            language-by-repo-count distribution. When a language's target
-            share exceeds what `repos` actually has available for it, that
-            language is capped at everything it has and the shortfall is
-            redistributed across the other languages
-            (`_allocate_quotas_with_shortfall_reallocation()`) rather than
-            discarded or failed on. `None` (default) preserves the
-            original behavior: proportions computed from `repos`' own
-            total fixture counts (Dataset C's own mix, unaffected by any
-            other dataset).
+        fixtures: One dict per fixture: {"fixture_id": int, "language":
+            str}. `language` should be the fixture's own detected
+            language (not its repo's tag), matching how `target_counts`
+            is meant to be computed by the caller.
+        target_counts: {language: exact fixture count to sample}. A
+            language absent from this dict gets 0 -- symmetric with
+            every other per-language stratification in this codebase
+            ("the target distribution has none of it" means none
+            sampled).
+        seed: Random seed -- project-wide DATASET_C_SAMPLING_SEED by
+            default. Languages are processed in sorted order, so the
+            sequence of `rng.sample()` calls -- and therefore the result
+            -- stays reproducible regardless of dict iteration order.
 
     Returns:
-        RepoSamplingResult. `sampled_fixture_count` will not exactly equal
-        `target_count` -- repos are indivisible chunks, so this is the
-        closest achievable total, not an exact hit.
+        FixtureSamplingResult. When a language's available pool is
+        smaller than its target, every available fixture for that
+        language is included (never a hard failure, never a silent
+        drop) and a warning is logged -- see the per-language
+        `distribution_check[language]["shortfall"]` flag. Unlike
+        whole-repo sampling's cross-language shortfall redistribution,
+        each language here is sampled fully independently -- a shortfall
+        in one language has no effect on any other language's quota.
     """
-    if not repos:
-        raise ValueError("Cannot sample from an empty repo list")
-
-    total_fixtures = sum(r["fixture_count"] for r in repos)
-    if total_fixtures == 0:
-        raise ValueError("Cannot sample: every repo has fixture_count 0")
+    if not fixtures:
+        raise ValueError("Cannot sample from an empty fixture list")
 
     by_language: Dict[str, List[Dict]] = {}
-    for repo in repos:
-        by_language.setdefault(repo["language"], []).append(repo)
-
-    lang_caps = {
-        language: sum(r["fixture_count"] for r in lang_repos)
-        for language, lang_repos in by_language.items()
-    }
-
-    if target_proportions is None:
-        quotas = {
-            language: target_count * (lang_total / total_fixtures)
-            for language, lang_total in lang_caps.items()
-        }
-        target_weight_sum = total_fixtures
-        target_weights = lang_caps
-    else:
-        quotas = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps, target_proportions, target_count
-        )
-        target_weight_sum = sum(target_proportions.values()) or 1
-        target_weights = target_proportions
+    for fixture in fixtures:
+        by_language.setdefault(fixture["language"], []).append(fixture)
 
     rng = random.Random(seed)
-    sampled_repo_ids: List[int] = []
-    sampled_fixture_count = 0
-    language_totals: Dict[str, int] = {}
-    language_repo_counts: Dict[str, int] = {}
-
-    for language, lang_repos in by_language.items():
-        quota = quotas[language]
-
-        shuffled = lang_repos[:]
-        rng.shuffle(shuffled)
-
-        running_total = 0
-        included: List[Dict] = []
-        for repo in shuffled:
-            if running_total >= quota:
-                break
-            # Stop at whichever boundary -- including this repo, or not --
-            # lands closer to the quota, rather than always overshooting by
-            # stopping at first-exceed.
-            with_repo = running_total + repo["fixture_count"]
-            if abs(with_repo - quota) < abs(running_total - quota):
-                included.append(repo)
-                running_total = with_repo
-            else:
-                break
-
-        sampled_repo_ids.extend(r["repo_id"] for r in included)
-        sampled_fixture_count += running_total
-        language_totals[language] = running_total
-        language_repo_counts[language] = len(included)
-
-        logger.debug(
-            f"  {language}: {len(included)}/{len(lang_repos)} repos, "
-            f"{running_total}/{round(quota)} fixtures (quota)"
-        )
-
+    sampled_fixture_ids: List[int] = []
     distribution_check: Dict[str, Dict] = {}
-    for language in by_language:
-        lang_total = lang_caps[language]
-        original_ratio = lang_total / total_fixtures
-        target_ratio = target_weights.get(language, 0) / target_weight_sum
-        sampled_ratio = (
-            language_totals[language] / sampled_fixture_count
-            if sampled_fixture_count
-            else 0.0
-        )
-        deviation = abs(target_ratio - sampled_ratio)
+
+    for language in sorted(target_counts):
+        target = target_counts[language]
+        available = by_language.get(language, [])
+        shortfall = target > len(available)
+        if shortfall:
+            logger.warning(
+                "[sample-c-fixtures] %s: only %d fixtures available in "
+                "Dataset C, target was %d -- taking all available "
+                "instead of failing silently",
+                language,
+                len(available),
+                target,
+            )
+            chosen = list(available)
+        else:
+            chosen = rng.sample(available, target)
+
+        sampled_fixture_ids.extend(fx["fixture_id"] for fx in chosen)
         distribution_check[language] = {
-            "original_ratio": round(original_ratio, 4),
-            "target_ratio": round(target_ratio, 4),
-            "sampled_ratio": round(sampled_ratio, 4),
-            "deviation": round(deviation, 4),
-            "tolerance_met": deviation <= tolerance,
-            "dataset_c_available_fixture_count": lang_total,
-            "dataset_c_available_repo_count": len(by_language[language]),
-            "sampled_fixture_count": language_totals[language],
-            "sampled_repo_count": language_repo_counts[language],
+            "target_count": target,
+            "available_count": len(available),
+            "sampled_count": len(chosen),
+            "shortfall": shortfall,
         }
 
-    return RepoSamplingResult(
-        sampled_repo_ids=sampled_repo_ids,
-        sampled_fixture_count=sampled_fixture_count,
-        target_count=target_count,
+        logger.debug(
+            f"  {language}: {len(chosen)}/{target} fixtures "
+            f"({len(available)} available){' [shortfall]' if shortfall else ''}"
+        )
+
+    return FixtureSamplingResult(
+        sampled_fixture_ids=sampled_fixture_ids,
+        sampled_fixture_count=len(sampled_fixture_ids),
+        target_count=sum(target_counts.values()),
         distribution_check=distribution_check,
         random_seed=seed,
     )

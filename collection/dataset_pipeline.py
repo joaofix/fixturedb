@@ -23,7 +23,7 @@ from . import paths
 from .config import DATASET_C_SAMPLING_SEED
 from .corpus_utils import write_fixture_csv_row
 from .dataset_exporter import AgentDatasetExporter, HumanDatasetExporter
-from .dataset_sampler import StratifiedSampler, sample_repos_by_language
+from .dataset_sampler import StratifiedSampler, sample_fixtures_by_language
 from .dataset_validator import DatasetValidator
 from .db import (
     db_session,
@@ -224,7 +224,8 @@ def validate_dataset(dataset: str, export_root: Path = paths.EXPORT_ROOT) -> dic
 
 
 # ---------------------------------------------------------------------------
-# Dataset C sample-down (repo-level, language-stratified, size-matched to A)
+# Dataset C sample-down (fixture-level, language-stratified, exact-count-
+# matched to another dataset -- e.g. Dataset A)
 #
 # db/c.db and datasets/c/fixtures/*.csv (the full, ~3.3x-Dataset-A-sized
 # originals) are never modified here -- read-only source. This builds a
@@ -234,6 +235,14 @@ def validate_dataset(dataset: str, export_root: Path = paths.EXPORT_ROOT) -> dic
 # make every research_questions/ script read c_sampled.db/fixtures-sampled/
 # instead of the full originals -- see those modules, not this one, for why
 # that's mandatory rather than opt-in.
+#
+# Fixture-level, not whole-repo: each language is sampled independently,
+# down to an *exact* target fixture count (the match dataset's real count
+# for that language), with individual fixtures drawn without replacement
+# regardless of which repo they come from -- see
+# sample_dataset_c_repos()'s docstring for why this replaced the earlier
+# whole-repo approach (which could only ever land close to a target, never
+# on it, since a repo is an indivisible chunk of fixtures).
 # ---------------------------------------------------------------------------
 
 
@@ -242,63 +251,85 @@ def _sample_repos_output_path(output_dir: Path | None = None) -> Path:
     return output_dir / "sample_c_repos.json"
 
 
-def _fetch_dataset_c_repo_fixture_counts(conn: sqlite3.Connection) -> list[dict]:
-    """One row per repo with >=1 fixture: {repo_id, language, fixture_count}
-    -- the population sample_repos_by_language() samples from. Language is
-    the repo's own tagged language (repositories.language), not each
-    fixture's individually-detected one -- a repo is sampled as a whole
-    unit, so it needs exactly one language bucket to belong to."""
+def _fetch_fixture_language_counts(conn: sqlite3.Connection) -> dict[str, int]:
+    """Total fixture count per each fixture's OWN detected language
+    (test_files.language) -- not the fixture's repo's tagged language.
+    Used both to read another dataset's real per-language fixture counts
+    (the sampling target) and Dataset C's own per-language totals (for
+    ratio/shortfall reporting). Same grouping as
+    research_questions/dataset_findings.py's "Fixture Counts by
+    Language" table: a leaked fixture (whose own language differs from
+    its repo's tag) is counted/sampled as the language it's actually
+    written in, not whichever language its repo happens to be filed
+    under."""
     rows = conn.execute(
         """
-        SELECT r.id AS repo_id, r.language AS language, COUNT(f.id) AS fixture_count
-        FROM repositories r
-        JOIN fixtures f ON f.repo_id = r.id
-        GROUP BY r.id
-        """
-    ).fetchall()
-    return [dict(row) for row in rows]
-
-
-def _fetch_repo_language_counts_with_fixtures(conn: sqlite3.Connection) -> dict[str, int]:
-    """Repo count per language among repos with >=1 fixture, for whichever
-    dataset `conn` points at -- same population as
-    _fetch_dataset_c_repo_fixture_counts() above, just counting repos
-    instead of fixtures. Used as sample_dataset_c_repos()'s
-    target_proportions when matching another dataset (e.g. Dataset A):
-    Dataset C's sample should mirror that dataset's real, final,
-    fixture-contributing repo mix, not an earlier candidate pool that
-    includes repos contributing zero data."""
-    rows = conn.execute(
-        """
-        SELECT r.language AS language, COUNT(DISTINCT r.id) AS n
-        FROM repositories r
-        JOIN fixtures f ON f.repo_id = r.id
-        GROUP BY r.language
+        SELECT tf.language AS language, COUNT(*) AS n
+        FROM fixtures f
+        JOIN test_files tf ON f.file_id = tf.id
+        GROUP BY tf.language
         """
     ).fetchall()
     return {row["language"]: row["n"] for row in rows}
 
 
-def _build_sampled_db(source_db: Path, output_db: Path, repo_ids: list[int]) -> int:
+def _fetch_repo_counts_by_fixture_language(conn: sqlite3.Connection) -> dict[str, int]:
+    """Distinct repo count per fixture's own language -- "how many repos
+    have at least one fixture written in this language". Purely
+    descriptive under fixture-level sampling (a repo is no longer a
+    sampling unit, so this isn't a quota) -- exists for the
+    sampling-summary report's "repos touched" figures, which
+    research_questions/dataset_findings.py still reads from the output
+    JSON this module writes."""
+    rows = conn.execute(
+        """
+        SELECT tf.language AS language, COUNT(DISTINCT f.repo_id) AS n
+        FROM fixtures f
+        JOIN test_files tf ON f.file_id = tf.id
+        GROUP BY tf.language
+        """
+    ).fetchall()
+    return {row["language"]: row["n"] for row in rows}
+
+
+def _fetch_dataset_c_fixtures_by_own_language(conn: sqlite3.Connection) -> list[dict]:
+    """One row per fixture: {"fixture_id": int, "language": str} -- the
+    population sample_fixtures_by_language() samples from. `language` is
+    the fixture's own detected language (test_files.language), matching
+    _fetch_fixture_language_counts() above."""
+    rows = conn.execute(
+        """
+        SELECT f.id AS fixture_id, tf.language AS language
+        FROM fixtures f
+        JOIN test_files tf ON f.file_id = tf.id
+        """
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _build_sampled_db_from_fixtures(
+    source_db: Path, output_db: Path, fixture_ids: list[int]
+) -> int:
     """Build a fresh, standalone SQLite DB at `output_db` containing only
-    the given repos (and their test_files/fixtures/mock_usages) copied from
-    `source_db`. `source_db` is opened read-only for this whole call --
-    never written to. `output_db` is always fully rebuilt (removed first,
-    not updated incrementally).
+    the given *fixtures* (not whole repos) copied from `source_db`, plus
+    each fixture's own repo/test_file rows (foreign-key dependencies) and
+    any mock_usages rows belonging to a copied fixture.
 
-    Reuses collection/db.py's own conflict-safe writers (upsert_repository,
-    upsert_test_file, insert_fixture, insert_mock_usage) rather than raw SQL
-    INSERT/SELECT, so the exact column set/handling can't drift from the
-    real schema -- those functions already read whichever columns are
-    present in the dict passed to them, so a plain `SELECT * FROM <table>`
-    row (converted to a dict) is exactly the right shape to pass through
-    unchanged, aside from the id remapping below.
+    A repo/test_file can be partially represented here -- two fixtures
+    from the same repo can land on opposite sides of the sample -- so
+    repositories.num_fixtures/num_test_files/num_mock_usages and
+    test_files.num_fixtures/total_fixture_loc are *recomputed* from what
+    was actually copied, never carried over from the source row
+    unchanged (unlike a whole-repo sample, where a repo is never
+    partially included and the source's own aggregate counts are already
+    correct as-is).
 
-    Autoincrement ids differ between source and dest DBs, so every foreign
-    key (test_files.repo_id, fixtures.file_id/repo_id,
-    mock_usages.fixture_id/repo_id) is remapped via old-id -> new-id maps
-    built as rows are inserted, in FK order: repositories -> test_files ->
-    fixtures -> mock_usages.
+    `source_db` is opened read-only for this whole call, never written
+    to. `output_db` is always fully rebuilt (removed first, not updated
+    incrementally). Reuses collection/db.py's own conflict-safe writers
+    (upsert_repository, upsert_test_file, insert_fixture,
+    insert_mock_usage) rather than raw SQL INSERT, so the exact column
+    set/handling can't drift from the real schema.
 
     Returns the total number of fixtures copied.
     """
@@ -307,70 +338,113 @@ def _build_sampled_db(source_db: Path, output_db: Path, repo_ids: list[int]) -> 
         output_db.unlink()
     initialise_db(output_db)
 
-    total_fixtures = 0
+    if not fixture_ids:
+        return 0
+
     with db_session(source_db) as src, db_session(output_db) as dst:
-        for old_repo_id in repo_ids:
+        placeholders = ",".join("?" for _ in fixture_ids)
+        fixture_rows = [
+            dict(row)
+            for row in src.execute(
+                f"SELECT * FROM fixtures WHERE id IN ({placeholders})",
+                fixture_ids,
+            ).fetchall()
+        ]
+        if not fixture_rows:
+            return 0
+
+        fixtures_by_repo: dict[int, list[dict]] = {}
+        for fx in fixture_rows:
+            fixtures_by_repo.setdefault(fx["repo_id"], []).append(fx)
+
+        repo_id_map: dict[int, int] = {}
+        fixture_id_map: dict[int, int] = {}
+        total_fixtures = 0
+
+        for old_repo_id, repo_fixtures in fixtures_by_repo.items():
             repo_row = dict(
                 src.execute(
                     "SELECT * FROM repositories WHERE id = ?", (old_repo_id,)
                 ).fetchone()
             )
             new_repo_id, _ = upsert_repository(dst, repo_row)
+            repo_id_map[old_repo_id] = new_repo_id
 
-            file_id_map: dict[int, int] = {}
-            for tf_row in src.execute(
-                "SELECT * FROM test_files WHERE repo_id = ?", (old_repo_id,)
-            ).fetchall():
-                tf_row = dict(tf_row)
+            fixtures_by_file: dict[int, list[dict]] = {}
+            for fx in repo_fixtures:
+                fixtures_by_file.setdefault(fx["file_id"], []).append(fx)
+
+            for old_file_id, file_fixtures in fixtures_by_file.items():
+                tf_row = dict(
+                    src.execute(
+                        "SELECT * FROM test_files WHERE id = ?", (old_file_id,)
+                    ).fetchone()
+                )
                 new_file_id = upsert_test_file(
                     dst, new_repo_id, tf_row["relative_path"], tf_row["language"]
                 )
-                file_id_map[tf_row["id"]] = new_file_id
+
+                file_fixture_loc = 0
+                for fx_row in file_fixtures:
+                    old_fixture_id = fx_row["id"]
+                    fx_row = dict(fx_row)
+                    fx_row["file_id"] = new_file_id
+                    fx_row["repo_id"] = new_repo_id
+                    new_fixture_id = insert_fixture(dst, fx_row)
+                    fixture_id_map[old_fixture_id] = new_fixture_id
+                    total_fixtures += 1
+                    file_fixture_loc += fx_row.get("loc") or 0
+
+                # file_loc/num_test_funcs describe the whole source file,
+                # unaffected by how many of its fixtures got sampled --
+                # only the fixture-derived aggregates need recomputing.
                 update_test_file_counts(
                     dst,
                     new_file_id,
                     tf_row["num_test_funcs"],
-                    tf_row["num_fixtures"],
+                    len(file_fixtures),
                     tf_row["file_loc"],
-                    tf_row["total_fixture_loc"],
+                    file_fixture_loc,
                 )
 
-            fixture_id_map: dict[int, int] = {}
-            for fx_row in src.execute(
-                "SELECT * FROM fixtures WHERE repo_id = ?", (old_repo_id,)
-            ).fetchall():
-                fx_row = dict(fx_row)
-                old_fixture_id = fx_row["id"]
-                fx_row["file_id"] = file_id_map[fx_row["file_id"]]
-                fx_row["repo_id"] = new_repo_id
-                new_fixture_id = insert_fixture(dst, fx_row)
-                fixture_id_map[old_fixture_id] = new_fixture_id
-                total_fixtures += 1
+        # One pass over mock_usages after every fixture is inserted, not
+        # per-repo/per-file above -- simpler than threading partial
+        # fixture_id_map state through the loop, and this table is small
+        # enough that a second query over the full old-id set costs
+        # nothing meaningful.
+        old_fixture_ids = list(fixture_id_map.keys())
+        mu_placeholders = ",".join("?" for _ in old_fixture_ids)
+        for mu_row in src.execute(
+            f"SELECT * FROM mock_usages WHERE fixture_id IN ({mu_placeholders})",
+            old_fixture_ids,
+        ).fetchall():
+            mu_row = dict(mu_row)
+            mu_row["fixture_id"] = fixture_id_map[mu_row["fixture_id"]]
+            mu_row["repo_id"] = repo_id_map[mu_row["repo_id"]]
+            insert_mock_usage(dst, mu_row)
 
-            for mu_row in src.execute(
-                "SELECT * FROM mock_usages WHERE repo_id = ?", (old_repo_id,)
-            ).fetchall():
-                mu_row = dict(mu_row)
-                mu_row["fixture_id"] = fixture_id_map[mu_row["fixture_id"]]
-                mu_row["repo_id"] = new_repo_id
-                insert_mock_usage(dst, mu_row)
-
-            # A repo is never partially included, so its aggregate counts
-            # carry over unchanged from the source -- no recomputation
-            # needed (unlike a fixture-level sample, which would invalidate
-            # these).
+        # Recompute each touched repo's aggregate counts from what was
+        # actually copied -- see docstring above for why these can't be
+        # carried over from the source unchanged anymore.
+        for old_repo_id, new_repo_id in repo_id_map.items():
+            repo_fixtures = fixtures_by_repo[old_repo_id]
+            num_test_files = len({fx["file_id"] for fx in repo_fixtures})
+            num_mock_usages = dst.execute(
+                "SELECT COUNT(*) FROM mock_usages WHERE repo_id = ?", (new_repo_id,)
+            ).fetchone()[0]
             set_repo_analysed(
                 dst,
                 new_repo_id,
-                num_test_files=repo_row["num_test_files"],
-                num_fixtures=repo_row["num_fixtures"],
-                num_mock_usages=repo_row["num_mock_usages"],
+                num_test_files=num_test_files,
+                num_fixtures=len(repo_fixtures),
+                num_mock_usages=num_mock_usages,
                 num_contributors=None,
             )
 
     logger.info(
-        f"[sample-c-repos] Built {output_db} from {len(repo_ids)} repos, "
-        f"{total_fixtures} fixtures"
+        f"[sample-c-fixtures] Built {output_db} from {len(fixture_ids)} "
+        f"requested fixtures ({total_fixtures} copied), "
+        f"{len(repo_id_map)} distinct repos touched"
     )
     return total_fixtures
 
@@ -420,24 +494,55 @@ def sample_dataset_c_repos(
     datasets_root: Path = paths.DATASETS_ROOT,
     output_dir: Path | None = None,
 ) -> dict:
-    """Sample Dataset C down to `target_count` fixtures (or `match_dataset`'s
-    live fixture count *and* language-by-repo-count mix), stratified by
-    language, whole repos only. Writes db/c_sampled.db and
-    datasets/c/fixtures-sampled/*.csv; db/c.db and datasets/c/fixtures/*.csv
-    are read-only inputs, never modified.
+    """Sample Dataset C down to `match_dataset`'s exact per-language
+    fixture count (or an explicit `target_count`, split across languages
+    by Dataset C's own mix), fixture-level -- each language sampled
+    independently, individual fixtures drawn without replacement
+    regardless of which repo they come from. Writes db/c_sampled.db and
+    datasets/c/fixtures-sampled/*.csv; db/c.db and
+    datasets/c/fixtures/*.csv are read-only inputs, never modified.
+
+    Fixture-level rather than whole-repo (the previous approach here) so
+    the sample can hit `match_dataset`'s per-language counts *exactly*
+    instead of only approximately -- a whole repo is an indivisible
+    chunk of fixtures, so repo-level sampling could only ever land close
+    to a target, never on it. This is deliberately at the cost of no
+    longer guaranteeing a sampled repo's fixtures are all present
+    together: two fixtures from the same repo can land on opposite sides
+    of the sample, maximizing the number of distinct repos represented
+    (breadth) over keeping any one sampled repo "whole". **Do not compute
+    repo-level statistics (e.g. RQ2's setup/teardown pairing) against
+    db/c_sampled.db for this reason** -- research_questions/ scripts
+    already read the full, unsampled db/c.db for those (Dataset C
+    sampling is deactivated there -- see
+    research_questions/_shared.py::require_db_or_none()'s docstring);
+    this sampled DB was never meant to support that kind of analysis.
 
     Exactly one of `target_count`/`match_dataset` must be given.
-    `match_dataset` reads that dataset's CURRENT live fixture count *and*
-    per-language repo-with-fixtures count from its own db/{match_dataset}.db
-    at call time (not hardcoded numbers) -- both A and C get re-extracted
-    independently, so this must stay dynamic. The sample's language mix
-    then targets `match_dataset`'s mix instead of Dataset C's own (see
-    sample_repos_by_language()'s target_proportions) -- when a language
-    stratum in Dataset C can't reach its target share, it's capped at
-    everything available and the shortfall redistributes to the other
-    languages, never silently dropped. `target_count` given directly (no
-    match_dataset) has no "other dataset" to match composition against, so
-    it falls back to Dataset C's own mix, unchanged from before.
+    `match_dataset` reads that dataset's CURRENT live per-language
+    fixture counts from its own db/{match_dataset}.db at call time (not
+    hardcoded numbers, since both A and C get re-extracted
+    independently), grouped by each fixture's own detected language
+    (test_files.language) -- see _fetch_fixture_language_counts()'s
+    docstring for why that's the right grouping, not the repo's tagged
+    language. `target_count` given directly (no match_dataset) has no
+    other dataset's per-language mix to match, so it's split across
+    languages by Dataset C's own mix instead (same fallback spirit as
+    the old repo-level sampler's).
+
+    When a language's target exceeds what Dataset C actually has
+    available, every available fixture for that language is taken
+    instead (see sample_fixtures_by_language()) and a warning is
+    logged -- unlike the old whole-repo approach, there's no
+    cross-language shortfall redistribution anymore: each language is
+    sampled fully independently, so a shortfall in one language never
+    affects another's target.
+
+    `tolerance` is accepted for CLI-signature/backward-compatibility but
+    no longer affects sampling: a fixture-level sample either hits a
+    language's target exactly or (on shortfall) takes everything
+    available -- there's no probabilistic deviation left to tolerate the
+    way whole-repo chunking had.
     """
     if (target_count is None) == (match_dataset is None):
         raise ValueError("Pass exactly one of target_count or match_dataset")
@@ -448,7 +553,15 @@ def sample_dataset_c_repos(
             f"{source_db} not found; run `extract-fixtures --dataset c` first"
         )
 
-    target_proportions: dict[str, int] | None = None
+    with db_session(source_db) as conn:
+        c_language_counts = _fetch_fixture_language_counts(conn)
+        c_repo_counts_by_language = _fetch_repo_counts_by_fixture_language(conn)
+        fixtures_pool = _fetch_dataset_c_fixtures_by_own_language(conn)
+
+    total_c_fixtures = sum(c_language_counts.values())
+    if total_c_fixtures == 0:
+        raise ValueError(f"Cannot sample: {source_db} has no fixtures")
+
     if match_dataset is not None:
         match_db = paths.db_path(match_dataset, root=db_root)
         if not match_db.exists():
@@ -457,34 +570,66 @@ def sample_dataset_c_repos(
                 f"{match_dataset}` first"
             )
         with db_session(match_db) as conn:
-            target_count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-            target_proportions = _fetch_repo_language_counts_with_fixtures(conn)
+            target_counts = _fetch_fixture_language_counts(conn)
+    else:
+        # No other dataset to match -- split target_count across
+        # languages by Dataset C's own mix, same fallback the old
+        # repo-level sampler used for this case.
+        target_counts = {
+            language: round(target_count * (n / total_c_fixtures))
+            for language, n in c_language_counts.items()
+        }
 
-    with db_session(source_db) as conn:
-        repos = _fetch_dataset_c_repo_fixture_counts(conn)
-
-    result = sample_repos_by_language(
-        repos,
-        target_count=target_count,
-        tolerance=tolerance,
-        seed=seed,
-        target_proportions=target_proportions,
-    )
+    result = sample_fixtures_by_language(fixtures_pool, target_counts, seed=seed)
 
     sampled_db = db_root / "c_sampled.db"
-    total_fixtures = _build_sampled_db(source_db, sampled_db, result.sampled_repo_ids)
+    total_fixtures = _build_sampled_db_from_fixtures(
+        source_db, sampled_db, result.sampled_fixture_ids
+    )
 
     fixtures_sampled_dir = datasets_root / "c" / "fixtures-sampled"
     _write_sampled_fixture_csvs(sampled_db, fixtures_sampled_dir)
+
+    with db_session(sampled_db) as conn:
+        sampled_repo_counts_by_language = _fetch_repo_counts_by_fixture_language(conn)
+        sampled_repo_count = conn.execute(
+            "SELECT COUNT(*) FROM repositories"
+        ).fetchone()[0]
+
+    # distribution_check keeps the same key shape the old whole-repo
+    # sampler produced -- research_questions/dataset_findings.py's
+    # sampling-summary section reads these exact keys and must not be
+    # modified (see this function's docstring). "Repos" figures here are
+    # descriptive breadth, not a quota, under fixture-level sampling.
+    target_weight_sum = sum(target_counts.values()) or 1
+    distribution_check: dict[str, dict] = {}
+    for language in sorted(set(c_language_counts) | set(target_counts)):
+        available = c_language_counts.get(language, 0)
+        target = target_counts.get(language, 0)
+        sampled = result.distribution_check.get(language, {}).get("sampled_count", 0)
+        distribution_check[language] = {
+            "original_ratio": round(available / total_c_fixtures, 4),
+            "target_ratio": round(target / target_weight_sum, 4),
+            "sampled_ratio": round(sampled / result.sampled_fixture_count, 4)
+            if result.sampled_fixture_count
+            else 0.0,
+            "dataset_c_available_fixture_count": available,
+            "dataset_c_available_repo_count": c_repo_counts_by_language.get(language, 0),
+            "sampled_fixture_count": sampled,
+            "sampled_repo_count": sampled_repo_counts_by_language.get(language, 0),
+            "shortfall": result.distribution_check.get(language, {}).get(
+                "shortfall", False
+            ),
+        }
 
     output = {
         "match_dataset": match_dataset,
         "target_count": result.target_count,
         "sampled_fixture_count": result.sampled_fixture_count,
-        "sampled_repo_count": len(result.sampled_repo_ids),
+        "sampled_repo_count": sampled_repo_count,
         "random_seed": result.random_seed,
-        "distribution_check": result.distribution_check,
-        "sampled_repo_ids": result.sampled_repo_ids,
+        "distribution_check": distribution_check,
+        "sampled_fixture_ids": result.sampled_fixture_ids,
         "output_db": str(sampled_db),
         "output_csv_dir": str(fixtures_sampled_dir),
     }
@@ -496,12 +641,12 @@ def sample_dataset_c_repos(
 
     logger.info(
         f"[sample-c-repos] {result.sampled_fixture_count}/{result.target_count} "
-        f"fixtures ({len(result.sampled_repo_ids)} repos) -> {sampled_db}, "
+        f"fixtures ({sampled_repo_count} repos touched) -> {sampled_db}, "
         f"{fixtures_sampled_dir} -- summary at {out_path}"
     )
     assert total_fixtures == result.sampled_fixture_count, (
-        f"_build_sampled_db copied {total_fixtures} fixtures but "
-        f"sample_repos_by_language() expected {result.sampled_fixture_count} "
+        f"_build_sampled_db_from_fixtures copied {total_fixtures} fixtures but "
+        f"sample_fixtures_by_language() expected {result.sampled_fixture_count} "
         "-- population/sample mismatch, investigate before trusting this DB"
     )
     return output

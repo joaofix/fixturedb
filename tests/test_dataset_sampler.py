@@ -1,11 +1,7 @@
 import pytest
 
 from collection.config import DATASET_C_SAMPLING_SEED
-from collection.dataset_sampler import (
-    StratifiedSampler,
-    _allocate_quotas_with_shortfall_reallocation,
-    sample_repos_by_language,
-)
+from collection.dataset_sampler import StratifiedSampler, sample_fixtures_by_language
 
 
 def _make_fixtures():
@@ -51,204 +47,148 @@ def test_sample_full_population_returns_everything():
     assert set(result.sampled_ids) == {f["id"] for f in fixtures}
 
 
-def _make_repos():
-    """python: 100 repos x 10 fixtures = 1000 (50%); java: 50 x 10 = 500
-    (25%); javascript: 25 x 20 = 500 (25%). Total 2000 fixtures across 175
-    repos, 3 languages with distinct proportions and repo-size shapes."""
-    repos = [{"repo_id": i, "language": "python", "fixture_count": 10} for i in range(100)]
-    repos += [{"repo_id": i, "language": "java", "fixture_count": 10} for i in range(100, 150)]
-    repos += [
-        {"repo_id": i, "language": "javascript", "fixture_count": 20} for i in range(150, 175)
-    ]
-    return repos
+def _make_language_fixtures():
+    """python: 100 fixtures across 10 repos (10 each); java: 50 fixtures
+    across 10 repos (5 each); javascript: 50 fixtures across 10 repos (5
+    each). `repo_id` is included (not just `language`, unlike
+    sample_fixtures_by_language()'s minimal required shape) so tests can
+    check whether fixtures from the same repo get split across the
+    sample boundary -- the core new behavior fixture-level sampling adds
+    over the old whole-repo approach."""
+    fixtures = []
+    for i in range(100):
+        fixtures.append({"fixture_id": i, "language": "python", "repo_id": i // 10})
+    for i in range(100, 150):
+        fixtures.append({"fixture_id": i, "language": "java", "repo_id": 1000 + i // 5})
+    for i in range(150, 200):
+        fixtures.append(
+            {"fixture_id": i, "language": "javascript", "repo_id": 2000 + i // 5}
+        )
+    return fixtures
 
 
-class TestSampleReposByLanguage:
+class TestSampleFixturesByLanguage:
     def test_reproducible_with_same_seed(self):
-        repos = _make_repos()
-        r1 = sample_repos_by_language(repos, target_count=200, seed=7)
-        r2 = sample_repos_by_language(repos, target_count=200, seed=7)
-        assert r1.sampled_repo_ids == r2.sampled_repo_ids
+        fixtures = _make_language_fixtures()
+        r1 = sample_fixtures_by_language(fixtures, {"python": 40, "java": 20}, seed=7)
+        r2 = sample_fixtures_by_language(fixtures, {"python": 40, "java": 20}, seed=7)
+        assert r1.sampled_fixture_ids == r2.sampled_fixture_ids
         assert r1.sampled_fixture_count == r2.sampled_fixture_count
 
     def test_default_seed_is_the_project_wide_constant(self):
-        repos = _make_repos()
-        default = sample_repos_by_language(repos, target_count=200)
-        explicit = sample_repos_by_language(
-            repos, target_count=200, seed=DATASET_C_SAMPLING_SEED
+        fixtures = _make_language_fixtures()
+        default = sample_fixtures_by_language(fixtures, {"python": 40})
+        explicit = sample_fixtures_by_language(
+            fixtures, {"python": 40}, seed=DATASET_C_SAMPLING_SEED
         )
         assert default.random_seed == DATASET_C_SAMPLING_SEED
-        assert default.sampled_repo_ids == explicit.sampled_repo_ids
+        assert default.sampled_fixture_ids == explicit.sampled_fixture_ids
 
-    def test_preserves_original_language_proportions(self):
-        repos = _make_repos()
-        # tolerance=0.05, not the 0.02 default: whole-repo sampling is
-        # inherently chunkier than fixture-level sampling (10-20 fixtures
-        # per repo here), so exact-proportion quantization noise at a small
-        # target_count is expected, not a bug -- a real Dataset C run's
-        # chunks are tiny relative to its ~50k target, so this is a
-        # worst-case-shaped test population, not a realistic one.
-        result = sample_repos_by_language(repos, target_count=200, seed=1, tolerance=0.05)
+    def test_samples_exact_target_count_per_language(self):
+        """Unlike whole-repo sampling (only ever approximately reaches a
+        target, since repos are indivisible chunks), fixture-level
+        sampling must hit each language's target exactly whenever enough
+        fixtures exist for it."""
+        fixtures = _make_language_fixtures()
+        result = sample_fixtures_by_language(
+            fixtures, {"python": 37, "java": 12, "javascript": 50}, seed=1
+        )
 
-        assert result.distribution_check["python"]["original_ratio"] == 0.5
-        assert result.distribution_check["java"]["original_ratio"] == 0.25
-        assert result.distribution_check["javascript"]["original_ratio"] == 0.25
-        for lang, check in result.distribution_check.items():
-            assert check["tolerance_met"], f"{lang}: {check}"
+        assert result.distribution_check["python"]["sampled_count"] == 37
+        assert result.distribution_check["java"]["sampled_count"] == 12
+        assert result.distribution_check["javascript"]["sampled_count"] == 50
+        assert result.sampled_fixture_count == 37 + 12 + 50
 
-    def test_never_splits_a_repo(self):
-        """A repo's presence in sampled_repo_ids must be all-or-nothing --
-        sampled_fixture_count must equal the exact sum of fixture_count over
-        only the sampled repos, never a partial count."""
-        repos = _make_repos()
-        result = sample_repos_by_language(repos, target_count=333, seed=3)
+    def test_can_split_fixtures_from_the_same_repo(self):
+        """The whole point of the change: unlike whole-repo sampling, two
+        fixtures from the same repo can land on opposite sides of the
+        sample -- a repo is never all-or-nothing here."""
+        fixtures = [
+            {"fixture_id": 1, "language": "python", "repo_id": 5},
+            {"fixture_id": 2, "language": "python", "repo_id": 5},
+            {"fixture_id": 3, "language": "python", "repo_id": 5},
+        ]
 
-        by_id = {r["repo_id"]: r["fixture_count"] for r in repos}
-        expected = sum(by_id[rid] for rid in result.sampled_repo_ids)
-        assert result.sampled_fixture_count == expected
+        result = sample_fixtures_by_language(fixtures, {"python": 2}, seed=1)
 
-    def test_sampled_count_close_to_but_not_necessarily_exact_target(self):
-        repos = _make_repos()
-        result = sample_repos_by_language(repos, target_count=200, seed=5)
+        assert result.sampled_fixture_count == 2
+        assert len(set(result.sampled_fixture_ids)) == 2
+        assert len(result.sampled_fixture_ids) < 3  # not the whole repo
 
-        # Repos are indivisible chunks of 10-20 fixtures each -- allow a
-        # generous margin rather than asserting an exact match.
-        assert abs(result.sampled_fixture_count - 200) <= 40
+    def test_shortfall_takes_everything_available_and_flags_it(self):
+        """java only has 50 fixtures in the population -- asking for 500
+        must take all 50 (never fail, never silently under-fill without
+        saying so) and flag the shortfall."""
+        fixtures = _make_language_fixtures()
 
-    def test_raises_on_empty_repo_list(self):
+        result = sample_fixtures_by_language(fixtures, {"java": 500}, seed=2)
+
+        assert result.distribution_check["java"]["sampled_count"] == 50
+        assert result.distribution_check["java"]["available_count"] == 50
+        assert result.distribution_check["java"]["shortfall"] is True
+        java_ids = {f["fixture_id"] for f in fixtures if f["language"] == "java"}
+        assert set(result.sampled_fixture_ids) == java_ids
+
+    def test_no_shortfall_flagged_when_target_exactly_met(self):
+        fixtures = _make_language_fixtures()  # javascript has exactly 50
+
+        result = sample_fixtures_by_language(fixtures, {"javascript": 50}, seed=1)
+
+        assert result.distribution_check["javascript"]["shortfall"] is False
+        assert result.distribution_check["javascript"]["sampled_count"] == 50
+
+    def test_language_absent_from_target_gets_zero(self):
+        """A language present in the population but not named in
+        target_counts must contribute nothing to the sample -- matching
+        another dataset's mix means not representing a language it has
+        none of."""
+        fixtures = _make_language_fixtures()
+
+        result = sample_fixtures_by_language(fixtures, {"python": 10}, seed=1)
+
+        java_ids = {f["fixture_id"] for f in fixtures if f["language"] == "java"}
+        assert not (java_ids & set(result.sampled_fixture_ids))
+        assert "java" not in result.distribution_check
+
+    def test_target_language_absent_from_population_takes_all_zero_available(self):
+        """target_counts naming a language the fixture pool simply doesn't
+        have must not crash -- 0 available, shortfall flagged, 0
+        sampled."""
+        fixtures = _make_language_fixtures()
+
+        result = sample_fixtures_by_language(fixtures, {"ruby": 10}, seed=1)
+
+        assert result.distribution_check["ruby"] == {
+            "target_count": 10,
+            "available_count": 0,
+            "sampled_count": 0,
+            "shortfall": True,
+        }
+        assert result.sampled_fixture_ids == []
+
+    def test_each_language_sampled_independently_shortfall_does_not_spread(self):
+        """Unlike the old whole-repo sampler's cross-language shortfall
+        redistribution, a shortfall in one language must not change
+        another language's sampled count at all."""
+        fixtures = _make_language_fixtures()
+
+        result = sample_fixtures_by_language(
+            fixtures, {"java": 500, "python": 40}, seed=1
+        )
+
+        assert result.distribution_check["java"]["shortfall"] is True
+        assert result.distribution_check["python"]["shortfall"] is False
+        assert result.distribution_check["python"]["sampled_count"] == 40
+
+    def test_raises_on_empty_fixture_list(self):
         with pytest.raises(ValueError, match="empty"):
-            sample_repos_by_language([], target_count=10)
+            sample_fixtures_by_language([], {"python": 10})
 
-    def test_raises_when_every_repo_has_zero_fixtures(self):
-        repos = [{"repo_id": 1, "language": "python", "fixture_count": 0}]
-        with pytest.raises(ValueError, match="fixture_count 0"):
-            sample_repos_by_language(repos, target_count=1)
+    def test_target_count_is_sum_of_all_language_targets(self):
+        fixtures = _make_language_fixtures()
 
-
-class TestAllocateQuotasWithShortfallReallocation:
-    def test_even_split_no_shortfall(self):
-        result = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"python": 1000, "java": 1000},
-            target_weights={"python": 0.5, "java": 0.5},
-            target_count=200,
+        result = sample_fixtures_by_language(
+            fixtures, {"python": 40, "java": 20, "javascript": 10}, seed=1
         )
-        assert result == {"python": 100.0, "java": 100.0}
 
-    def test_single_language_short_redistributes_to_the_rest(self):
-        """Matches the plan's worked example: typescript can't cover its
-        51% target share (only 200 fixtures available), so it's capped at
-        200 and the other three languages absorb the shortfall,
-        proportional to their own target shares."""
-        result = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"ts": 200, "py": 5000, "java": 500, "js": 400},
-            target_weights={"ts": 0.51, "py": 0.36, "java": 0.07, "js": 0.06},
-            target_count=1000,
-        )
-        assert result["ts"] == 200
-        assert result["py"] == pytest.approx(587.755, abs=0.01)
-        assert result["java"] == pytest.approx(114.286, abs=0.01)
-        assert result["js"] == pytest.approx(97.959, abs=0.01)
-        assert sum(result.values()) == pytest.approx(1000)
-
-    def test_cascading_double_shortfall(self):
-        """Capping the first short language can push a second language over
-        its own cap too -- must keep reallocating, not stop after one pass."""
-        result = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"ts": 50, "js": 50, "py": 5000, "java": 500},
-            target_weights={"ts": 0.51, "py": 0.36, "java": 0.07, "js": 0.06},
-            target_count=1000,
-        )
-        assert result["ts"] == 50
-        assert result["js"] == 50
-        assert sum(result.values()) == pytest.approx(1000)
-        # Remaining 900 split between python/java proportional to 0.36:0.07.
-        assert result["py"] == pytest.approx(900 * 0.36 / 0.43, abs=0.01)
-        assert result["java"] == pytest.approx(900 * 0.07 / 0.43, abs=0.01)
-
-    def test_target_language_absent_from_population_is_ignored(self):
-        """target_weights can list a language Dataset C simply has no repos
-        of at all -- its share cascades into the other languages, nothing
-        crashes or gets silently dropped."""
-        result = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"py": 100, "java": 100},
-            target_weights={"ts": 0.51, "py": 0.36, "java": 0.07, "js": 0.06},
-            target_count=200,
-        )
-        assert set(result.keys()) == {"py", "java"}
-        assert sum(result.values()) == pytest.approx(200)
-
-    def test_population_language_absent_from_target_gets_zero(self):
-        """A language Dataset C has but the match dataset doesn't must get
-        zero quota -- matching the other dataset's mix means not
-        representing a language it has none of."""
-        result = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"python": 100, "ruby": 50},
-            target_weights={"python": 1.0},
-            target_count=100,
-        )
-        assert result == {"python": 100.0, "ruby": 0.0}
-
-    def test_accepts_raw_counts_not_just_normalized_fractions(self):
-        """target_weights is ratio-based -- raw counts (not summing to 1)
-        must produce the same allocation as their normalized equivalent."""
-        raw = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"python": 1000, "java": 1000},
-            target_weights={"python": 30, "java": 10},
-            target_count=200,
-        )
-        normalized = _allocate_quotas_with_shortfall_reallocation(
-            lang_caps={"python": 1000, "java": 1000},
-            target_weights={"python": 0.75, "java": 0.25},
-            target_count=200,
-        )
-        assert raw == normalized
-
-
-class TestSampleReposByLanguageWithTargetProportions:
-    def test_matches_target_proportions_not_populations_own_mix(self):
-        """_make_repos()'s own mix is 50% python / 25% java / 25%
-        javascript -- with an external target of 80% java / 20% python,
-        the sample must follow the target, not the population's own split."""
-        repos = _make_repos()
-        result = sample_repos_by_language(
-            repos,
-            target_count=200,
-            seed=1,
-            target_proportions={"java": 0.8, "python": 0.2, "javascript": 0.0},
-        )
-        assert result.distribution_check["java"]["target_ratio"] == 0.8
-        assert result.distribution_check["python"]["target_ratio"] == 0.2
-        assert result.distribution_check["javascript"]["target_ratio"] == 0.0
-        # javascript's own repos exist but get no quota -- none sampled.
-        js_repo_ids = {r["repo_id"] for r in repos if r["language"] == "javascript"}
-        assert not (js_repo_ids & set(result.sampled_repo_ids))
-
-    def test_shortfall_stratum_takes_everything_it_has(self):
-        """java only has 500 fixtures total -- asking for an (unreachable)
-        90% of a 1000 target must cap java at its whole population (500,
-        all 50 repos) rather than raising or under-filling silently."""
-        repos = _make_repos()
-        result = sample_repos_by_language(
-            repos,
-            target_count=1000,
-            seed=2,
-            target_proportions={"java": 0.9, "python": 0.05, "javascript": 0.05},
-        )
-        java_repo_ids = {r["repo_id"] for r in repos if r["language"] == "java"}
-        sampled_java_ids = java_repo_ids & set(result.sampled_repo_ids)
-        assert sampled_java_ids == java_repo_ids  # every java repo included
-        assert result.distribution_check["java"]["sampled_fixture_count"] == 500
-        assert result.distribution_check["java"]["dataset_c_available_fixture_count"] == 500
-
-    def test_none_preserves_original_self_derived_behavior(self):
-        """Passing target_proportions=None (the default) must produce
-        exactly the same allocation as before this parameter existed."""
-        repos = _make_repos()
-        with_none = sample_repos_by_language(repos, target_count=200, seed=1)
-        omitted = sample_repos_by_language(repos, target_count=200, seed=1)
-        assert with_none.sampled_repo_ids == omitted.sampled_repo_ids
-        assert (
-            with_none.distribution_check["python"]["original_ratio"]
-            == with_none.distribution_check["python"]["target_ratio"]
-            == 0.5
-        )
+        assert result.target_count == 70
