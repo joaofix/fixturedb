@@ -100,6 +100,15 @@ Currently covers:
   since sampling was always a later, analysis-time step that never
   touched those.
 
+- **Fixture counts by language**: total extracted fixtures per language,
+  per dataset (A and C), straight from `db/*.db`, grouped by each
+  fixture's own detected language (`test_files.language`) rather than its
+  repo's tagged language. Deliberately a different grouping from rq1.py's
+  "Cross-language fixture leakage" table, which groups by repo language
+  instead -- that table's per-language totals include leaked fixtures
+  written in a different language than their repo's tag, so it isn't a
+  clean "how many fixtures exist per language" answer. This section is.
+
 - **Dataset C sampling-down summary**: how `sample-c-repos --match-dataset
   a` actually stratified the sample -- per-language "Dataset C's own mix"
   vs. the match dataset's mix it targeted vs. what was actually achieved,
@@ -648,6 +657,31 @@ def _fetch_repos_with_fixtures(conn: sqlite3.Connection) -> dict[str, int]:
     return {row[0]: row[1] for row in rows}
 
 
+def _fetch_fixture_counts_by_own_language(conn: sqlite3.Connection) -> dict[str, int]:
+    """Total fixture count grouped by each fixture's OWN detected language
+    (`test_files.language`) -- not its repo's tagged language
+    (`repositories.language`). Deliberately a different grouping than
+    rq1.py's "Cross-language fixture leakage" table, which groups by repo
+    language: there, a repo tagged `python` with some leaked JavaScript
+    test files still has all of those fixtures counted under `python`'s
+    "Total fixtures" row, since that table is about *how much* leakage a
+    repo-language bucket contains. Here, every fixture is counted under
+    the language it's actually written in, so leakage doesn't inflate any
+    bucket -- a leaked JavaScript fixture found inside a Python-tagged
+    repo counts under `javascript`, not `python`. Both groupings sum to
+    the same dataset-wide total; only the per-language split differs.
+    """
+    rows = conn.execute(
+        """
+        SELECT tf.language, COUNT(*)
+        FROM fixtures f
+        JOIN test_files tf ON f.file_id = tf.id
+        GROUP BY tf.language
+        """
+    ).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
 def _render_language_count_table(
     row_label_header: str, rows: list[tuple[str, dict[str, int] | None]]
 ) -> str:
@@ -776,6 +810,55 @@ def _render_dataset_c_repo_summary(
                 ("Created within 2016-2020", created_in_window),
                 ("With any fixtures", with_fixtures),
                 ("With any mocks", with_mocks),
+            ],
+        ),
+    ]
+
+
+def _render_fixture_counts_by_language_summary(
+    *, db_root: Path = paths.DB_ROOT
+) -> list[str]:
+    """## Fixture Counts by Language -- total extracted fixtures per
+    language, per dataset, from `db/a.db`/`db/c.db` directly. Counts each
+    fixture under its own detected language
+    (`_fetch_fixture_counts_by_own_language()`), not its repo's tagged
+    language -- a different grouping than rq1.py's "Cross-language
+    fixture leakage" table, whose "Total fixtures" column groups by repo
+    language instead (so that table's per-language totals include leaked
+    fixtures written in a different language). Each dataset degrades to
+    its own "N/A" row if its db isn't collected yet, rather than failing
+    the whole section."""
+    a_db = require_db_or_none("a", db_root)
+    a_counts: dict[str, int] | None = None
+    if a_db is not None:
+        with db_session(a_db) as conn:
+            a_counts = _fetch_fixture_counts_by_own_language(conn)
+
+    c_db = require_db_or_none("c", db_root)
+    c_counts: dict[str, int] | None = None
+    if c_db is not None:
+        with db_session(c_db) as conn:
+            c_counts = _fetch_fixture_counts_by_own_language(conn)
+
+    return [
+        "## Fixture Counts by Language",
+        "",
+        "Total extracted fixtures per language, per dataset, counted by "
+        "each fixture's own detected language -- not its repo's tagged "
+        "language. This is a different grouping than the "
+        '"Cross-language fixture leakage" table in rq1.md\'s per-dataset '
+        "summaries, which groups by repo language instead, so a repo's "
+        "language bucket there includes any fixtures written in a "
+        "different language that were found inside it. The numbers here "
+        "are the clean per-language totals -- a leaked fixture counts "
+        "under the language it's actually written in, not its repo's "
+        "tag.",
+        "",
+        _render_language_count_table(
+            "Dataset",
+            [
+                ("Dataset A (agent-authored)", a_counts),
+                ("Dataset C (human-authored, pre-LLM)", c_counts),
             ],
         ),
     ]
@@ -1481,6 +1564,7 @@ def generate_report(
     lines += _render_dataset_c_repo_summary(
         db_root=db_root, datasets_root=datasets_root, raw_search_dir=raw_search_dir
     )
+    lines += _render_fixture_counts_by_language_summary(db_root=db_root)
     lines += _render_dataset_c_sampling_summary(output_dir=sample_output_dir)
     lines += _render_junit3_fallback_side_note(db_root=db_root)
     lines += _render_js_hook_complexity_side_note(db_root=db_root)

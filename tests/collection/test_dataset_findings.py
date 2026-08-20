@@ -29,6 +29,7 @@ from collection.research_questions.dataset_findings import (
     _fetch_aliased_mock_import_counts,
     _fetch_csv_row_counts,
     _fetch_csv_unique_repo_counts,
+    _fetch_fixture_counts_by_own_language,
     _fetch_js_hook_complexity_mismatch,
     _fetch_junit3_fallback_counts,
     _fetch_mocha_bare_hook_non_bare_count,
@@ -44,6 +45,7 @@ from collection.research_questions.dataset_findings import (
     _render_dataset_a_commit_repo_summary,
     _render_dataset_c_repo_summary,
     _render_dataset_c_sampling_summary,
+    _render_fixture_counts_by_language_summary,
     _render_js_hook_complexity_side_note,
     _render_junit3_fallback_side_note,
     _render_language_count_table,
@@ -186,6 +188,70 @@ def _make_db_with_typed_fixtures(db_file, fixture_types: list[str], *, language=
                     "num_mocks": 0,
                 },
             )
+
+
+def _make_db_with_multi_language_files(
+    db_file, repo_language: str, files: list[tuple[str, int]]
+) -> None:
+    """Create a DB at `db_file` with one repo tagged `repo_language`, and
+    one test_file per (language, fixture_count) entry in `files` -- lets a
+    single repo contribute fixtures in more than one language, i.e. real
+    leakage, unlike every other helper in this file which gives a repo
+    exactly one test_file at the repo's own language. Used by the
+    "Fixture Counts by Language" tests, which must prove the count is
+    grouped by each fixture's own language, not its repo's tag -- mirrors
+    test_rq1.py::_make_multi_language_db()'s shape (kept local rather than
+    imported cross-file, matching this suite's existing convention of each
+    test file owning its own DB-building helpers)."""
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": repo_language,
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        for file_idx, (language, fixture_count) in enumerate(files):
+            file_id = upsert_test_file(
+                conn, repo_id, f"tests/test_{file_idx}.{language}", language
+            )
+            for j in range(fixture_count):
+                insert_fixture(
+                    conn,
+                    {
+                        "file_id": file_id,
+                        "repo_id": repo_id,
+                        "name": f"fixture_{file_idx}_{j}",
+                        "fixture_type": "pytest_decorator",
+                        "scope": "per_test",
+                        "start_line": j,
+                        "end_line": j + 1,
+                        "loc": 1,
+                        "cyclomatic_complexity": 1,
+                        "max_nesting_depth": 1,
+                        "num_objects_instantiated": 0,
+                        "num_external_calls": 0,
+                        "num_comment_lines": 0,
+                        "comment_density": 0.0,
+                        "num_parameters": 0,
+                        "has_teardown_pair": 0,
+                        "raw_source": "",
+                        "framework": "pytest",
+                        "num_mocks": 0,
+                    },
+                )
 
 
 def _make_db_with_fixture_rows(db_file, fixtures: list[dict], *, language="python") -> None:
@@ -1063,6 +1129,60 @@ class TestDatasetCSummarySection:
         assert "| With any fixtures | 0 | 0 | 1 | 0 | 1 |" in report
 
 
+class TestFixtureCountsByLanguageSection:
+    """The new "Fixture Counts by Language" table -- total fixtures per
+    language, per dataset, grouped by each fixture's own detected
+    language rather than its repo's tag. See
+    _fetch_fixture_counts_by_own_language()'s docstring for why that
+    distinction matters."""
+
+    def test_fetch_groups_by_fixtures_own_language_not_repo_tag(self, tmp_path):
+        """The core regression this whole section exists to prevent: a
+        repo tagged python with a leaked javascript test file inside it
+        must NOT have that javascript fixture counted under python."""
+        db_file = tmp_path / "a.db"
+        _make_db_with_multi_language_files(
+            db_file, repo_language="python", files=[("python", 2), ("javascript", 1)]
+        )
+
+        with db_session(db_file) as conn:
+            counts = _fetch_fixture_counts_by_own_language(conn)
+
+        assert counts == {"python": 2, "javascript": 1}
+
+    def test_renders_both_datasets_with_totals(self, tmp_path):
+        _make_db_with_multi_language_files(
+            paths.db_path("a", root=tmp_path), repo_language="python", files=[("python", 3)]
+        )
+        _make_db_with_multi_language_files(
+            paths.db_path("c", root=tmp_path),
+            repo_language="java",
+            files=[("java", 5), ("typescript", 2)],
+        )
+
+        lines = _render_fixture_counts_by_language_summary(db_root=tmp_path)
+        report = "\n".join(lines)
+
+        assert "## Fixture Counts by Language" in report
+        assert "| Dataset A (agent-authored) | 0 | 0 | 3 | 0 | 3 |" in report
+        assert "| Dataset C (human-authored, pre-LLM) | 5 | 0 | 0 | 2 | 7 |" in report
+
+    def test_missing_dataset_db_degrades_to_na_row(self, tmp_path):
+        """Dataset A present, Dataset C not collected yet -- C's row must
+        degrade to N/A, A's row must still render real numbers."""
+        _make_db_with_multi_language_files(
+            paths.db_path("a", root=tmp_path), repo_language="python", files=[("python", 1)]
+        )
+
+        lines = _render_fixture_counts_by_language_summary(db_root=tmp_path)
+        report = "\n".join(lines)
+
+        assert "| Dataset A (agent-authored) | 0 | 0 | 1 | 0 | 1 |" in report
+        assert (
+            "| Dataset C (human-authored, pre-LLM) | N/A | N/A | N/A | N/A | N/A |" in report
+        )
+
+
 class TestGenerateReportIncludesNewSections:
     def test_dataset_c_section_renders_even_when_dataset_a_db_missing(self, tmp_path):
         """The old early-return (db/a.db missing -> stop rendering
@@ -1076,6 +1196,16 @@ class TestGenerateReportIncludesNewSections:
         assert "_Not available -- db/a.db not collected yet._" in report
         assert "## Dataset C: Repository Summary" in report
         assert "| Candidate repos | 0 | 0 | 1 | 0 | 1 |" in report
+
+    def test_fixture_counts_by_language_section_included(self, tmp_path):
+        _make_db_with_multi_language_files(
+            paths.db_path("c", root=tmp_path), repo_language="python", files=[("python", 2)]
+        )
+        report = generate_report(
+            db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
+        )
+        assert "## Fixture Counts by Language" in report
+        assert "| Dataset C (human-authored, pre-LLM) | 0 | 0 | 2 | 0 | 2 |" in report
 
 
 class TestDatasetCSamplingSummarySection:
