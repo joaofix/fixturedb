@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-20 17:30:50 UTC
+Generated: 2026-08-20 22:59:53 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -116,7 +116,16 @@ Total extracted fixtures per language, per dataset, counted by each fixture's ow
 
 ## Dataset C: Sampling-Down Summary
 
-_Not available -- run `python -m collection sample-c-repos --match-dataset a` first._
+Matched against Dataset a: 47,208/47,208 fixtures, 2,325 repos, seed=42.
+
+A language whose "Repos sampled" hits its full available count took everything Dataset C had for it and still fell short of the target mix -- the shortfall was redistributed to the other languages, not discarded (see `_allocate_quotas_with_shortfall_reallocation()` in `dataset_sampler.py`).
+
+| Language | Dataset C's own mix | Target (a's mix) | Sampled mix | Repos sampled | Fixtures sampled |
+|---|---|---|---|---|---|
+| Java | 29.0% | 3.0% | 3.0% | 267/608 | 1,398/55,610 |
+| JavaScript | 21.5% | 8.8% | 8.8% | 557/822 | 4,174/41,318 |
+| Python | 22.8% | 23.4% | 23.4% | 944/1,120 | 11,035/43,707 |
+| TypeScript | 26.7% | 64.8% | 64.8% | 735/762 | 30,601/51,248 |
 
 ## JUnit 3 Fallback Detection (Java)
 
