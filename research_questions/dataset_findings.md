@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-19 15:57:00 UTC
+Generated: 2026-08-20 17:30:50 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -104,6 +104,15 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 | Created within 2016-2020 | 1,398 | 1,916 | 2,721 | 2,107 | 8,142 |
 | With any fixtures | 560 | 551 | 1,048 | 846 | 3,005 |
 | With any mocks | 168 | 171 | 286 | 323 | 948 |
+
+## Fixture Counts by Language
+
+Total extracted fixtures per language, per dataset, counted by each fixture's own detected language -- not its repo's tagged language. This is a different grouping than the "Cross-language fixture leakage" table in rq1.md's per-dataset summaries, which groups by repo language instead, so a repo's language bucket there includes any fixtures written in a different language that were found inside it. The numbers here are the clean per-language totals -- a leaked fixture counts under the language it's actually written in, not its repo's tag.
+
+| Dataset | Java | JavaScript | Python | TypeScript | Total |
+|---|---|---|---|---|---|
+| Dataset A (agent-authored) | 1,398 | 4,174 | 11,035 | 30,601 | 47,208 |
+| Dataset C (human-authored, pre-LLM) | 55,610 | 41,318 | 43,707 | 51,248 | 191,883 |
 
 ## Dataset C: Sampling-Down Summary
 
