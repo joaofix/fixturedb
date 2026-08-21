@@ -92,13 +92,12 @@ Currently covers:
   missing the column (backfill not run, or its re-clone failed) is simply
   excluded from the sum rather than counted as 0.
 
-  Dataset C's "With any fixtures"/"With any mocks" rows read the full
-  `db/c.db`, same as every other "c" reference in `research_questions/`
-  now that Dataset C sampling is deactivated (see
-  `_shared.py::require_db_or_none()`'s docstring) -- "Candidate repos"/
-  "Created within 2016-2020" read the original collection CSVs either way,
-  since sampling was always a later, analysis-time step that never
-  touched those.
+  Dataset C's "With any fixtures"/"With any mocks" rows read
+  `db/c_sampled.db`, same as every other "c" reference in
+  `research_questions/` (see `_shared.py::require_db_or_none()`'s
+  docstring) -- "Candidate repos"/"Created within 2016-2020" read the
+  original collection CSVs either way, since sampling was always a later,
+  analysis-time step that never touched those.
 
 - **Fixture counts by language**: total extracted fixtures per language,
   per dataset (A and C), straight from `db/*.db`, grouped by each
@@ -202,10 +201,9 @@ Currently covers:
   the investigation above did, since the check's imprecision (a substring
   match, not exact-name or recursive type resolution) means it's a
   plausible place for a re-collection to quietly pick up a false positive.
-  Reports Dataset A and Dataset C (the full `db/c.db`, same as every
-  other "c" reference in `research_questions/` now that Dataset C
-  sampling is deactivated -- see `_shared.py::require_db_or_none()`'s
-  docstring).
+  Reports Dataset A and Dataset C (db/c_sampled.db, the fixture-level
+  sample-down, same as every other "c" reference in `research_questions/`
+  -- see `_shared.py::require_db_or_none()`'s docstring).
 
 python -m collection.research_questions.dataset_findings
 """
@@ -782,12 +780,11 @@ def _render_dataset_c_repo_summary(
     datasets_root: Path = paths.DATASETS_ROOT,
     raw_search_dir: Path = paths.RAW_SEARCH_DIR,
 ) -> list[str]:
-    """## Dataset C: Repository Summary -- reads the full db/c.db (via
-    require_db_or_none("c", ...), same as every other dataset now that
-    Dataset C sampling is deactivated -- see that function's docstring).
-    "Candidate repos"/"Created within 2016-2020" are unaffected either way
-    -- they describe the original collection funnel, which sampling (a
-    later, analysis-time step) never touched even when it was active."""
+    """## Dataset C: Repository Summary -- reads db/c_sampled.db (via
+    require_db_or_none("c", ...), same as every other dataset -- see that
+    function's docstring). "Candidate repos"/"Created within 2016-2020"
+    are unaffected either way -- they describe the original collection
+    funnel, which sampling (a later, analysis-time step) never touched."""
     candidate_repos = _fetch_raw_seart_repo_counts(raw_search_dir)
     created_in_window = _fetch_csv_row_counts(datasets_root / "c" / "repos", "_repo.csv")
 
@@ -959,9 +956,9 @@ def _fetch_junit3_fallback_counts(conn: sqlite3.Connection) -> dict[str, int]:
 
 def _render_junit3_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[str]:
     """## JUnit 3 Fallback Detection (Java) -- see this module's docstring
-    for why this is tracked. Dataset C reads the full db/c.db (via
-    require_db_or_none()) now that Dataset C sampling is deactivated --
-    see _shared.py::require_db_or_none()'s docstring."""
+    for why this is tracked. Dataset C reads db/c_sampled.db (via
+    require_db_or_none()), same as every other "c" reference in
+    research_questions/ -- see that function's docstring."""
     header = ["Dataset", "junit3_setup", "junit3_teardown", "Total"]
     lines = [
         "## JUnit 3 Fallback Detection (Java)",

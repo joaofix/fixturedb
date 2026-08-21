@@ -1083,8 +1083,8 @@ class TestDatasetASummarySection:
 class TestDatasetCSummarySection:
     def test_missing_db_still_renders_csv_sourced_rows(self, tmp_path):
         """Candidate repos/Created within 2016-2020 come from collection
-        CSVs, unaffected by whether db/c.db exists -- only the fixture/mock
-        rows should degrade to N/A."""
+        CSVs, unaffected by whether db/c_sampled.db exists -- only the
+        fixture/mock rows should degrade to N/A."""
         _write_gzip_csv(
             tmp_path / "raw" / "python.csv.gz", ["id", "name"], [{"id": "1", "name": "o/r0"}]
         )
@@ -1104,24 +1104,23 @@ class TestDatasetCSummarySection:
         assert "| With any fixtures | N/A | N/A | N/A | N/A | N/A |" in report
         assert "| With any mocks | N/A | N/A | N/A | N/A | N/A |" in report
 
-    def test_reads_full_db_not_sampled_db(self, tmp_path):
-        """Dataset C sampling is deactivated -- a repo written to the full
-        db/c.db must be picked up directly, and a db/c_sampled.db existing
-        alongside it must not matter at all (not read, not preferred)."""
+    def test_reads_sampled_db_not_full_db(self, tmp_path):
+        """A repo written to db/c_sampled.db must be picked up directly,
+        and a full db/c.db existing alongside it must not matter at all
+        (not read, not preferred)."""
         _make_db_with_mock_fixtures(
-            paths.db_path("c", root=tmp_path),
+            tmp_path / "c_sampled.db",
             [{"language": "python", "fixtures": [{"num_mocks": 1}]}],
         )
-        # Full db/c.db has data -- must be picked up directly, no sampling
-        # step required first.
+        # db/c_sampled.db has data -- must be picked up directly.
         lines = _render_dataset_c_repo_summary(db_root=tmp_path)
         report = "\n".join(lines)
         assert "| With any fixtures | 0 | 0 | 1 | 0 | 1 |" in report
 
-        # A stale db/c_sampled.db (e.g. left over from a previous
-        # sample-c-repos run) existing alongside it must not change anything.
+        # A full db/c.db (the unsampled corpus) existing alongside it must
+        # not change anything -- it's never read here.
         _make_db_with_mock_fixtures(
-            tmp_path / "c_sampled.db",
+            paths.db_path("c", root=tmp_path),
             [{"language": "python", "fixtures": [{"num_mocks": 5}]}],
         )
         lines = _render_dataset_c_repo_summary(db_root=tmp_path)
@@ -1155,7 +1154,7 @@ class TestFixtureCountsByLanguageSection:
             paths.db_path("a", root=tmp_path), repo_language="python", files=[("python", 3)]
         )
         _make_db_with_multi_language_files(
-            paths.db_path("c", root=tmp_path),
+            tmp_path / "c_sampled.db",
             repo_language="java",
             files=[("java", 5), ("typescript", 2)],
         )
@@ -1199,7 +1198,7 @@ class TestGenerateReportIncludesNewSections:
 
     def test_fixture_counts_by_language_section_included(self, tmp_path):
         _make_db_with_multi_language_files(
-            paths.db_path("c", root=tmp_path), repo_language="python", files=[("python", 2)]
+            tmp_path / "c_sampled.db", repo_language="python", files=[("python", 2)]
         )
         report = generate_report(
             db_root=tmp_path, datasets_root=tmp_path / "datasets", raw_search_dir=tmp_path / "raw"
@@ -1327,15 +1326,15 @@ class TestJunit3FallbackSideNote:
     def test_renders_counts_for_each_db_independently(self, tmp_path):
         # Dataset A: 1 setup only.
         _make_db_with_typed_fixtures(paths.db_path("a", root=tmp_path), ["junit3_setup"])
-        # Dataset C: the full db/c.db, read directly (sampling deactivated).
+        # Dataset C: db/c_sampled.db, read directly.
         _make_db_with_typed_fixtures(
-            paths.db_path("c", root=tmp_path),
+            tmp_path / "c_sampled.db",
             ["junit3_setup"] * 3 + ["junit3_teardown"] * 2,
         )
-        # A stale db/c_sampled.db left over from a previous sample-c-repos
-        # run must not be read or confused with the row above.
+        # A full db/c.db (the unsampled corpus) must not be read or
+        # confused with the row above.
         _make_db_with_typed_fixtures(
-            tmp_path / "c_sampled.db", ["junit3_setup", "junit3_teardown"]
+            paths.db_path("c", root=tmp_path), ["junit3_setup", "junit3_teardown"]
         )
 
         report = "\n".join(_render_junit3_fallback_side_note(db_root=tmp_path))

@@ -87,15 +87,18 @@ def _check_csv(csv_path: Path) -> FileContamination:
 
 def check_dataset(dataset: str, *, datasets_root: Path = paths.DATASETS_ROOT) -> list[FileContamination] | None:
     """Return per-CSV contamination results for `dataset`, or None if its
-    fixtures/ directory doesn't exist or has no *_fixtures.csv files yet.
+    fixtures directory doesn't exist or has no *_fixtures.csv files yet.
 
-    Dataset "c" reads the full datasets/c/fixtures/, same as every other
-    dataset -- research_questions/ no longer redirects "c" to a sampled
-    subset anywhere (see _shared.py::require_db_or_none()'s docstring for
-    the full reasoning). datasets/c/fixtures-sampled/ (sample-c-repos'
-    own output) still exists and the sampling command itself is
-    unchanged -- just no longer read here."""
-    fixtures_dir = paths.stage_dir(dataset, "fixtures", root=datasets_root)
+    Dataset "c" reads datasets/c/fixtures-sampled/ (sample-c-repos' own
+    per-language CSV output) instead of the full datasets/c/fixtures/ --
+    matches require_db_or_none()'s redirect of "c" to db/c_sampled.db, see
+    that docstring for why. Not built automatically here -- run
+    `sample-c-repos` first if it's missing, same as any other dataset's
+    fixtures/ directory not existing yet."""
+    if dataset == "c":
+        fixtures_dir = datasets_root / "c" / "fixtures-sampled"
+    else:
+        fixtures_dir = paths.stage_dir(dataset, "fixtures", root=datasets_root)
     csv_paths = sorted(fixtures_dir.glob("*_fixtures.csv")) if fixtures_dir.exists() else []
     if not csv_paths:
         logger.warning(f"{fixtures_dir} has no *_fixtures.csv files; skipping dataset {dataset!r}")

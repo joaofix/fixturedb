@@ -71,26 +71,23 @@ def require_db_or_none(dataset: str, db_root: Path = DB_ROOT) -> Path | None:
     exist yet -- the shared "skip, don't error" convention every rqN.py
     script uses so it can run against whatever subset of A/B/C is collected.
 
-    Dataset "c" resolves to the full db/c.db, same as every other dataset.
-
-    Previously this redirected "c" to db/c_sampled.db (a random,
-    language-stratified, whole-repo sample sized to match Dataset A's
-    count -- see `python -m collection sample-c-repos`,
-    `dataset_pipeline.py::sample_dataset_c_repos()`), on the reasoning that
-    the full Dataset C is ~3.3x Dataset A's size and comparing against that
-    imbalance was methodologically unsound. Deactivated: research_questions/
-    now reports against the full, unsampled Dataset C directly -- every
-    A-vs-C comparison in this package already runs at the *repo* level
-    (Mann-Whitney U + Cliff's delta on per-repo proportions/means, not a
-    pooled fixture-level test), which is far less sensitive to a repo-count
-    imbalance than a naive fixture-weighted test would be; n_A/n_C repo
-    counts are reported on every comparison row so the imbalance itself
-    stays visible rather than hidden behind a subsample.
-
-    The sampling machinery itself is untouched and still runnable manually
-    (`sample-c-repos`) -- db/c_sampled.db may still exist on disk from a
-    previous run, but nothing in research_questions/ reads it anymore."""
-    db_file = db_path(dataset, root=db_root)
+    Dataset "c" resolves to db/c_sampled.db instead of the full db/c.db --
+    the fixture-level sample-down built by
+    `python -m collection sample-c-repos --match-dataset a`
+    (`dataset_pipeline.py::sample_dataset_c_repos()`). It draws, per
+    language independently, exactly Dataset A's real fixture count for
+    that language (grouped by each fixture's own detected language, not
+    its repo's tag) directly from Dataset C's fixture pool with a fixed
+    seed -- so every research_questions/ script (including
+    dataset_findings.py's descriptive/data-quality sections, not just the
+    A-vs-C comparison scripts) reports against a same-size counterpart to
+    Dataset A rather than the full corpus, which runs ~3.3x larger.
+    db/c_sampled.db is not built automatically here -- run `sample-c-repos`
+    first (same as any other db/*.db dependency this function resolves)."""
+    if dataset == "c":
+        db_file = db_root / "c_sampled.db"
+    else:
+        db_file = db_path(dataset, root=db_root)
     if not db_file.exists():
         logger.warning(f"{db_file} not found; skipping dataset {dataset!r}")
         return None

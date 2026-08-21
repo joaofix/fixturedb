@@ -34,11 +34,11 @@ def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
     """Create db/{dataset}.db under `root` with one repo per entry in `repos`,
     each populated with the given list of fixture-field overrides.
 
-    Dataset "c" writes to the full c.db, same as every other dataset --
-    Dataset C sampling is deactivated, see _shared.py::
-    require_db_or_none()'s docstring.
+    Dataset "c" writes to c_sampled.db instead of the full c.db --
+    research_questions/ reads Dataset C's fixture-level sample-down, see
+    _shared.py::require_db_or_none()'s docstring.
     """
-    db_file = paths.db_path(dataset, root=root)
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, fixtures in enumerate(repos):
@@ -91,13 +91,12 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
     """Create db/{dataset}.db with one repo and one test_file per `files`
     entry -- each entry: {"language": str, "fixtures": [fixture_dict, ...]}.
     Lets a single repo contribute fixtures in more than one language, for
-    testing language-stratified aggregation (kind_distribution_by_language,
-    per_repo_ratios_by_language).
+    testing language-stratified aggregation (kind_counts_by_repo_and_language).
 
-    Dataset "c" writes to the full c.db, same as every other dataset --
-    Dataset C sampling is deactivated, see _shared.py::
-    require_db_or_none()'s docstring."""
-    db_file = paths.db_path(dataset, root=root)
+    Dataset "c" writes to c_sampled.db instead of the full c.db --
+    research_questions/ reads Dataset C's fixture-level sample-down, see
+    _shared.py::require_db_or_none()'s docstring."""
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
         repo_id, _ = upsert_repository(

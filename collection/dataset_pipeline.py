@@ -510,13 +510,22 @@ def sample_dataset_c_repos(
     longer guaranteeing a sampled repo's fixtures are all present
     together: two fixtures from the same repo can land on opposite sides
     of the sample, maximizing the number of distinct repos represented
-    (breadth) over keeping any one sampled repo "whole". **Do not compute
-    repo-level statistics (e.g. RQ2's setup/teardown pairing) against
-    db/c_sampled.db for this reason** -- research_questions/ scripts
-    already read the full, unsampled db/c.db for those (Dataset C
-    sampling is deactivated there -- see
-    research_questions/_shared.py::require_db_or_none()'s docstring);
-    this sampled DB was never meant to support that kind of analysis.
+    (breadth) over keeping any one sampled repo "whole".
+
+    **Known limitation for repo-level statistics** (e.g. RQ2's per-repo
+    setup/teardown proportions, or any other rqN.py/balance.py comparison
+    -- they all aggregate one value per repo): every research_questions/
+    script now reads this sampled DB for dataset "c"
+    (research_questions/_shared.py::require_db_or_none()), so a repo's
+    per-repo proportion/mean there can be computed from a partial subset
+    of that repo's true fixtures rather than the complete set. Sampling is
+    content-blind (uniform random per language, independent of
+    fixture_type/repo), so this adds *estimation noise* per repo, not a
+    systematic directional bias -- it shouldn't manufacture a false A-vs-C
+    difference, but it can reduce statistical power, particularly for
+    repos that end up with very few sampled fixtures of a given language.
+    See internal-docs/methodology-improvements/dataset-c-fixture-level-sampling.md
+    for the full writeup.
 
     Exactly one of `target_count`/`match_dataset` must be given.
     `match_dataset` reads that dataset's CURRENT live per-language

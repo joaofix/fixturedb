@@ -52,18 +52,17 @@ class TestRequireDbOrNone:
         initialise_db(db_file)
         assert require_db_or_none("a", tmp_path) == db_file
 
-    def test_dataset_c_resolves_to_full_db_not_sampled_db(self, tmp_path):
-        """Dataset "c" sampling is deactivated -- research_questions/ reads
-        the full db/c.db directly now, same as every other dataset."""
-        initialise_db(tmp_path / "c.db")
-        assert require_db_or_none("c", tmp_path) == tmp_path / "c.db"
-
-    def test_dataset_c_ignores_sampled_db_when_only_that_exists(self, tmp_path):
-        """db/c_sampled.db existing (e.g. left over from a previous
-        sample-c-repos run) must never be enough to satisfy dataset "c" --
-        the sampling machinery itself is untouched, but nothing in
-        research_questions/ reads its output anymore."""
+    def test_dataset_c_resolves_to_sampled_db_not_full_db(self, tmp_path):
+        """Dataset "c" resolves to db/c_sampled.db, the fixture-level
+        sample-down -- not the full db/c.db."""
         initialise_db(tmp_path / "c_sampled.db")
+        assert require_db_or_none("c", tmp_path) == tmp_path / "c_sampled.db"
+
+    def test_dataset_c_ignores_full_db_when_only_that_exists(self, tmp_path):
+        """db/c.db existing (the full, unsampled corpus) must never be
+        enough to satisfy dataset "c" on its own -- run `sample-c-repos`
+        first to produce db/c_sampled.db."""
+        initialise_db(tmp_path / "c.db")
         initialise_db(tmp_path / "a.db")  # unrelated dataset present -- must not matter
         assert require_db_or_none("c", tmp_path) is None
 

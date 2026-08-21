@@ -81,12 +81,12 @@ class TestCheckDataset:
         assert by_name["python_fixtures.csv"].mismatched == 1
         assert by_name["java_fixtures.csv"].mismatched == 0
 
-    def test_dataset_c_reads_full_fixtures_not_fixtures_sampled(self, tmp_path):
-        """Dataset "c" reads the full datasets/c/fixtures/, same as every
-        other dataset -- research_questions/ no longer redirects "c" to a
-        sampled subset anywhere (see _shared.py::require_db_or_none()'s
-        docstring). datasets/c/fixtures-sampled/ being present too (e.g.
-        left over from an earlier sample-c-repos run) must not matter."""
+    def test_dataset_c_reads_fixtures_sampled_not_full_fixtures(self, tmp_path):
+        """Dataset "c" reads datasets/c/fixtures-sampled/ (sample-c-repos'
+        own output), not the full datasets/c/fixtures/ -- matches
+        require_db_or_none()'s redirect of "c" to db/c_sampled.db.
+        datasets/c/fixtures/ being present too (the full, unsampled
+        corpus) must not matter."""
         _write_fixtures_csv(tmp_path, "c", "python_fixtures.csv", ["python", "java"])
         _write_sampled_c_fixtures_csv(tmp_path, "python_fixtures.csv", ["python", "python"])
 
@@ -94,15 +94,14 @@ class TestCheckDataset:
 
         assert len(results) == 1
         assert results[0].total == 2
-        assert results[0].mismatched == 1  # from the full fixtures/, not fixtures-sampled/
+        assert results[0].mismatched == 0  # from fixtures-sampled/, not the full fixtures/
 
-    def test_dataset_c_missing_fixtures_sampled_does_not_matter(self, tmp_path):
-        """fixtures-sampled/ not existing at all must not block dataset
-        "c" -- it's never read here anymore."""
+    def test_dataset_c_missing_fixtures_sampled_returns_none(self, tmp_path):
+        """fixtures-sampled/ not existing yet (sample-c-repos not run)
+        must degrade like any other missing fixtures directory -- even if
+        the full datasets/c/fixtures/ has data, it's not read here."""
         _write_fixtures_csv(tmp_path, "c", "python_fixtures.csv", ["python", "java"])
-        results = check_dataset("c", datasets_root=tmp_path)
-        assert results is not None
-        assert results[0].total == 2
+        assert check_dataset("c", datasets_root=tmp_path) is None
 
 
 class TestGenerateReport:
