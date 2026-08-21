@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-08-19 15:56:57 UTC
+Generated: 2026-08-21 00:06:38 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -29,26 +29,26 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 | python | 11,000 | 492 | 4.47% | typescript=323, javascript=144, java=25 |
 | typescript | 31,394 | 1,996 | 6.36% | javascript=1,606, python=358, java=32 |
 
-### Dataset C (human-authored, pre-LLM) -- 191,883 fixtures
+### Dataset C (human-authored, pre-LLM) -- 47,208 fixtures
 
 **fixture_type kind distribution**
 
 | Kind | Count | % |
 |---|---|---|
-| setup | 114,171 | 59.5% |
-| teardown | 46,972 | 24.5% |
-| other | 30,740 | 16.0% |
+| setup | 31,339 | 66.4% |
+| teardown | 11,372 | 24.1% |
+| other | 4,497 | 9.5% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-19,090/191,883 fixtures (9.95%) leaked.
+4,318/47,208 fixtures (9.15%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 58,262 | 3,612 | 6.20% | python=1,677, typescript=1,147, javascript=788 |
-| javascript | 33,157 | 3,058 | 9.22% | typescript=2,081, python=662, java=315 |
-| python | 44,044 | 3,012 | 6.84% | javascript=1,557, typescript=1,008, java=447 |
-| typescript | 56,420 | 9,408 | 16.67% | javascript=8,874, python=336, java=198 |
+| java | 2,541 | 1,168 | 45.97% | typescript=684, python=428, javascript=56 |
+| javascript | 4,454 | 1,385 | 31.10% | typescript=1,223, python=156, java=6 |
+| python | 11,119 | 758 | 6.82% | typescript=607, javascript=135, java=16 |
+| typescript | 29,094 | 1,007 | 3.46% | javascript=914, python=90, java=3 |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
@@ -56,11 +56,11 @@ Per-repository proportions: for each repo, `setup_pct`/`teardown_pct`/`other_pct
 
 | Language | n_A | n_C | Setup A (%) | Setup C (%) | Teardown A (%) | Teardown C (%) | V (A↔C) | p (BH) |
 |---|---|---|---|---|---|---|---|---|
-| Overall | 1354 | 3005 | 50.0% | 65.5% | 22.2% | 13.3% | 0.266 (small) | <.001 |
-| java | 97 | 608 | 66.7% | 64.7% | 25.0% | 15.2% | -0.097 (negligible) | 0.122 |
-| javascript | 115 | 822 | 55.6% | 72.7% | 44.4% | 27.3% | 0.192 (small) | <.001 |
-| python | 531 | 1120 | 0.0% | 50.0% | 0.0% | 0.0% | 0.360 (medium) | <.001 |
-| typescript | 749 | 762 | 57.1% | 76.6% | 42.9% | 23.4% | 0.310 (small) | <.001 |
+| Overall | 1354 | 2325 | 50.0% | 66.7% | 22.2% | 2.3% | 0.235 (small) | <.001 |
+| java | 97 | 267 | 66.7% | 66.7% | 25.0% | 0.0% | -0.130 (negligible) | 0.051 |
+| javascript | 115 | 557 | 55.6% | 81.0% | 44.4% | 19.0% | 0.217 (small) | <.001 |
+| python | 531 | 944 | 0.0% | 37.8% | 0.0% | 0.0% | 0.328 (small) | <.001 |
+| typescript | 749 | 735 | 57.1% | 78.6% | 42.9% | 21.4% | 0.315 (small) | <.001 |
 
 ## Unimodality Check: Python Teardown Proportion (Dip Test)
 
@@ -69,7 +69,7 @@ Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, 
 | Dataset | n (Python repos) | Dip statistic | p-value |
 |---|---|---|---|
 | Dataset A | 531 | 0.0141 | 0.723 |
-| Dataset C | 1120 | 0.0250 | <.001 |
+| Dataset C | 944 | 0.0228 | 0.002 |
 
 **Dataset A -- teardown_pct distribution across 531 Python repos**
 
@@ -86,17 +86,17 @@ Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, 
  0.90- 1.00 |  (2)
 ```
 
-**Dataset C -- teardown_pct distribution across 1120 Python repos**
+**Dataset C -- teardown_pct distribution across 944 Python repos**
 
 ```
- 0.00- 0.10 | ######################################## (740)
- 0.10- 0.20 | #### (74)
- 0.20- 0.30 | ##### (85)
- 0.30- 0.40 | #### (81)
- 0.40- 0.50 | ### (62)
- 0.50- 0.60 | #### (65)
- 0.60- 0.70 |  (5)
- 0.70- 0.80 |  (1)
- 0.80- 0.90 |  (0)
- 0.90- 1.00 |  (7)
+ 0.00- 0.10 | ######################################## (665)
+ 0.10- 0.20 | ### (50)
+ 0.20- 0.30 | ### (57)
+ 0.30- 0.40 | ### (46)
+ 0.40- 0.50 | ## (26)
+ 0.50- 0.60 | ### (56)
+ 0.60- 0.70 | # (16)
+ 0.70- 0.80 |  (3)
+ 0.80- 0.90 |  (3)
+ 0.90- 1.00 | # (22)
 ```

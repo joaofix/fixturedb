@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-08-20 22:59:53 UTC
+Generated: 2026-08-21 00:06:41 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -102,8 +102,8 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 |---|---|---|---|---|---|
 | Candidate repos | 3,786 | 5,448 | 8,622 | 6,893 | 24,749 |
 | Created within 2016-2020 | 1,398 | 1,916 | 2,721 | 2,107 | 8,142 |
-| With any fixtures | 560 | 551 | 1,048 | 846 | 3,005 |
-| With any mocks | 168 | 171 | 286 | 323 | 948 |
+| With any fixtures | 267 | 398 | 893 | 767 | 2,325 |
+| With any mocks | 37 | 87 | 161 | 245 | 530 |
 
 ## Fixture Counts by Language
 
@@ -112,7 +112,7 @@ Total extracted fixtures per language, per dataset, counted by each fixture's ow
 | Dataset | Java | JavaScript | Python | TypeScript | Total |
 |---|---|---|---|---|---|
 | Dataset A (agent-authored) | 1,398 | 4,174 | 11,035 | 30,601 | 47,208 |
-| Dataset C (human-authored, pre-LLM) | 55,610 | 41,318 | 43,707 | 51,248 | 191,883 |
+| Dataset C (human-authored, pre-LLM) | 1,398 | 4,174 | 11,035 | 30,601 | 47,208 |
 
 ## Dataset C: Sampling-Down Summary
 
@@ -134,7 +134,7 @@ Side note, not a comparison: raw counts of `junit3_setup`/`junit3_teardown`, Jav
 | Dataset | junit3_setup | junit3_teardown | Total |
 |---|---|---|---|
 | Dataset A | 0 | 0 | 0 |
-| Dataset C | 1,189 | 638 | 1,827 |
+| Dataset C | 34 | 11 | 45 |
 
 ## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)
 
@@ -143,7 +143,7 @@ Side note, not a comparison: exact re-check, not a sample, of whether each `befo
 | Dataset | before_each/after_each | Nested construct | Re-checked | Mismatched | Mismatch rate |
 |---|---|---|---|---|---|
 | Dataset A | 28,623 | 2,811 | 2,330 | 517 | 22.19% |
-| Dataset C | 65,621 | 8,098 | 6,486 | 828 | 12.77% |
+| Dataset C | 24,798 | 2,959 | 2,244 | 226 | 10.07% |
 
 ## Mocha Bare `before()`/`after()` Detection (Regression Guard)
 
@@ -152,7 +152,7 @@ Side note, not a comparison, and not a live risk estimate -- count of `mocha_bef
 | Dataset | mocha_before/mocha_after | Non-bare-call shape |
 |---|---|---|
 | Dataset A | 1,115 | 0 |
-| Dataset C | 14,994 | 0 |
+| Dataset C | 5,772 | 0 |
 
 ## Aliased Mock Import Detection (Python)
 
@@ -161,7 +161,7 @@ Side note, not a comparison, and a lower bound, not a live risk estimate -- coun
 | Dataset | Python fixtures | Class/function-level alias in body |
 |---|---|---|
 | Dataset A | 11,035 | 0 |
-| Dataset C | 43,707 | 0 |
+| Dataset C | 11,035 | 0 |
 
 ## Mock-Category Fallback Rate
 
@@ -172,7 +172,7 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 | Dataset | category='mock' rows | Positive match | Fallback (no keyword) | Positive % / Fallback % |
 |---|---|---|---|---|
 | Dataset A | 7,955 | 6,327 | 1,628 | 79.5% / 20.5% |
-| Dataset C | 11,979 | 9,580 | 2,399 | 80.0% / 20.0% |
+| Dataset C | 2,594 | 1,864 | 730 | 71.9% / 28.1% |
 
 ### Positive matches split further: framework API name vs. naming-only
 
@@ -181,7 +181,7 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 | Dataset | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
 | Dataset A | 7,955 | 4,736 (59.5%) | 1,591 (20.0%) | 1,628 (20.5%) |
-| Dataset C | 11,979 | 8,202 (68.5%) | 1,378 (11.5%) | 2,399 (20.0%) |
+| Dataset C | 2,594 | 1,445 (55.7%) | 419 (16.2%) | 730 (28.1%) |
 
 ### Per language
 
@@ -201,7 +201,7 @@ checking per language matters here specifically because it does:
 
 | Language | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
-| java | 3,225 | 3,225 (100.0%) | 0 (0.0%) | 0 (0.0%) |
-| javascript | 2,859 | 970 (33.9%) | 609 (21.3%) | 1,280 (44.8%) |
-| python | 4,055 | 3,477 (85.7%) | 286 (7.1%) | 292 (7.2%) |
-| typescript | 1,840 | 530 (28.8%) | 483 (26.2%) | 827 (44.9%) |
+| java | 76 | 76 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| javascript | 294 | 94 (32.0%) | 61 (20.7%) | 139 (47.3%) |
+| python | 1,073 | 933 (87.0%) | 73 (6.8%) | 67 (6.2%) |
+| typescript | 1,151 | 342 (29.7%) | 285 (24.8%) | 524 (45.5%) |

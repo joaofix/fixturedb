@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-08-19 15:56:56 UTC
+Generated: 2026-08-21 00:06:37 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 
@@ -113,60 +113,60 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 | windsurf | 3 | 0.0% |
 | generic | 1 | 0.0% |
 
-### Dataset C (human-authored, pre-LLM) -- 191,883 fixtures
+### Dataset C (human-authored, pre-LLM) -- 47,208 fixtures
 
 **Continuous metrics -- Paper** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 2,989 | 6.25 | 8.14 | 1 | 534 | 12.34 |
-| cyclomatic_complexity | 2,989 | 1.02 | 1.19 | 1 | 14 | 0.50 |
-| comment_density | 2,989 | 0.00 | 0.02 | 0 | 0 | 0.04 |
+| loc | 2,309 | 5.67 | 7.96 | 1 | 157 | 8.91 |
+| cyclomatic_complexity | 2,309 | 1.00 | 1.17 | 1 | 8 | 0.48 |
+| comment_density | 2,309 | 0.00 | 0.02 | 0 | 0 | 0.05 |
 
 **Continuous metrics -- Other (not in the paper)** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| max_nesting_depth | 2,989 | 1.02 | 1.15 | 1 | 4 | 0.29 |
-| num_parameters | 3,005 | 0.00 | 0.13 | 0 | 3 | 0.33 |
+| max_nesting_depth | 2,309 | 1.00 | 1.15 | 1 | 4 | 0.31 |
+| num_parameters | 2,325 | 0.00 | 0.15 | 0 | 4 | 0.40 |
 
 **scope distribution**
 
 | Value | Count | % |
 |---|---|---|
-| per_test | 155,762 | 81.2% |
-| per_class | 31,929 | 16.6% |
-| per_module | 2,848 | 1.5% |
-| global | 1,344 | 0.7% |
+| per_test | 40,561 | 85.9% |
+| per_class | 5,525 | 11.7% |
+| per_module | 754 | 1.6% |
+| global | 368 | 0.8% |
 
 **fixture_type distribution**
 
 | Value | Count | % |
 |---|---|---|
-| before_each | 49,158 | 25.6% |
-| unittest_setup | 26,389 | 13.8% |
-| after_each | 16,463 | 8.6% |
-| pytest_decorator | 16,265 | 8.5% |
-| junit4_before | 13,096 | 6.8% |
-| mocha_before | 10,060 | 5.2% |
-| testng_before_class | 7,951 | 4.1% |
-| testng_data_provider | 7,674 | 4.0% |
-| before_all | 7,614 | 4.0% |
-| junit4_after | 5,346 | 2.8% |
-| junit_rule | 5,119 | 2.7% |
-| mocha_after | 4,934 | 2.6% |
-| testng_after_class | 4,874 | 2.5% |
-| after_all | 4,337 | 2.3% |
-| junit5_before_each | 2,935 | 1.5% |
-| junit_class_rule | 1,632 | 0.9% |
-| testng_before_method | 1,438 | 0.7% |
-| junit5_after_each | 1,232 | 0.6% |
-| junit3_setup | 1,189 | 0.6% |
-| junit5_before_all | 1,141 | 0.6% |
-| pytest_class_method | 1,053 | 0.5% |
-| junit5_after_all | 702 | 0.4% |
-| testng_after_method | 643 | 0.3% |
-| junit3_teardown | 638 | 0.3% |
+| before_each | 19,151 | 40.6% |
+| unittest_setup | 6,591 | 14.0% |
+| after_each | 5,647 | 12.0% |
+| pytest_decorator | 4,155 | 8.8% |
+| mocha_before | 3,828 | 8.1% |
+| before_all | 2,701 | 5.7% |
+| mocha_after | 1,944 | 4.1% |
+| after_all | 1,504 | 3.2% |
+| junit4_before | 335 | 0.7% |
+| pytest_class_method | 289 | 0.6% |
+| testng_before_class | 194 | 0.4% |
+| testng_data_provider | 183 | 0.4% |
+| junit4_after | 158 | 0.3% |
+| testng_after_class | 113 | 0.2% |
+| junit_rule | 112 | 0.2% |
+| junit5_before_each | 82 | 0.2% |
+| junit5_after_each | 44 | 0.1% |
+| junit_class_rule | 40 | 0.1% |
+| testng_before_method | 36 | 0.1% |
+| junit3_setup | 34 | 0.1% |
+| junit5_before_all | 27 | 0.1% |
+| testng_after_method | 15 | 0.0% |
+| junit5_after_all | 14 | 0.0% |
+| junit3_teardown | 11 | 0.0% |
 
 **commit_type distribution**
 
@@ -176,20 +176,20 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-19,090/191,883 fixtures (9.95%) leaked.
+4,318/47,208 fixtures (9.15%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 58,262 | 3,612 | 6.20% | python=1,677, typescript=1,147, javascript=788 |
-| javascript | 33,157 | 3,058 | 9.22% | typescript=2,081, python=662, java=315 |
-| python | 44,044 | 3,012 | 6.84% | javascript=1,557, typescript=1,008, java=447 |
-| typescript | 56,420 | 9,408 | 16.67% | javascript=8,874, python=336, java=198 |
+| java | 2,541 | 1,168 | 45.97% | typescript=684, python=428, javascript=56 |
+| javascript | 4,454 | 1,385 | 31.10% | typescript=1,223, python=156, java=6 |
+| python | 11,119 | 758 | 6.82% | typescript=607, javascript=135, java=16 |
+| typescript | 29,094 | 1,007 | 3.46% | javascript=914, python=90, java=3 |
 
 **agent_type distribution** (descriptive only, not compared against other datasets -- see load_dataset_metrics()'s docstring for why)
 
 | Value | Count | % |
 |---|---|---|
-| human_pre2022 | 191,883 | 100.0% |
+| human_pre2022 | 47,208 | 100.0% |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
@@ -199,31 +199,31 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1354 | 2989 | U=2021803.5 | -0.001 | negligible | 0.964 | -- |
-| java | 96 | 583 | U=27796.5 | -0.007 | negligible | 0.916 | 0.916 |
-| javascript | 115 | 822 | U=44891.5 | -0.050 | negligible | 0.383 | 0.510 |
-| python | 531 | 1120 | U=258929.5 | -0.129 | negligible | <.001 | <.001 |
-| typescript | 749 | 762 | U=297824.0 | 0.044 | negligible | 0.142 | 0.284 |
+| Overall | 1354 | 2309 | U=1448622.5 | -0.073 | negligible | <.001 | -- |
+| java | 96 | 251 | U=10541.0 | -0.125 | negligible | 0.071 | 0.094 |
+| javascript | 115 | 557 | U=28017.0 | -0.125 | negligible | 0.034 | 0.068 |
+| python | 531 | 944 | U=205119.0 | -0.182 | small | <.001 | <.001 |
+| typescript | 749 | 735 | U=286941.5 | 0.042 | negligible | 0.157 | 0.157 |
 
 ### cyclomatic_complexity
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1354 | 2989 | U=1946159.0 | -0.038 | negligible | 0.032 | -- |
-| java | 96 | 583 | U=29524.5 | 0.055 | negligible | 0.365 | 0.365 |
-| javascript | 115 | 822 | U=37864.5 | -0.199 | small | <.001 | <.001 |
-| python | 531 | 1120 | U=322219.0 | 0.084 | negligible | 0.005 | 0.006 |
-| typescript | 749 | 762 | U=228182.0 | -0.200 | small | <.001 | <.001 |
+| Overall | 1354 | 2309 | U=1317504.5 | -0.157 | small | <.001 | -- |
+| java | 96 | 251 | U=10287.0 | -0.146 | negligible | 0.012 | 0.016 |
+| javascript | 115 | 557 | U=22022.0 | -0.312 | small | <.001 | <.001 |
+| python | 531 | 944 | U=241538.5 | -0.036 | negligible | 0.213 | 0.213 |
+| typescript | 749 | 735 | U=211549.5 | -0.231 | small | <.001 | <.001 |
 
 ### comment_density
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1354 | 2989 | U=1968781.0 | -0.027 | negligible | 0.135 | -- |
-| java | 96 | 583 | U=26873.5 | -0.040 | negligible | 0.517 | 0.517 |
-| javascript | 115 | 822 | U=39566.0 | -0.163 | small | 0.002 | 0.005 |
-| python | 531 | 1120 | U=321044.5 | 0.080 | negligible | 0.007 | 0.009 |
-| typescript | 749 | 762 | U=257376.0 | -0.098 | negligible | <.001 | 0.002 |
+| Overall | 1354 | 2309 | U=1307906.5 | -0.163 | small | <.001 | -- |
+| java | 96 | 251 | U=8126.0 | -0.326 | small | <.001 | <.001 |
+| javascript | 115 | 557 | U=22235.5 | -0.306 | small | <.001 | <.001 |
+| python | 531 | 944 | U=232886.0 | -0.071 | negligible | 0.015 | 0.015 |
+| typescript | 749 | 735 | U=234865.5 | -0.147 | negligible | <.001 | <.001 |
 
 **Other Extracted Features (Not in the Paper) -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). Computed and tested with the same rigor as the paper metrics above -- `max_nesting_depth` gets an identical Mann-Whitney/per-language table, `num_parameters` gets a descriptive floor-percentage footnote instead (see below for why) -- just not part of the paper's reported RQ1 comparison.
 
@@ -231,17 +231,17 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Metric | Floor value | Dataset A (agent-authored) at floor | Dataset C (human-authored, pre-LLM) at floor |
 |---|---|---|---|
-| num_parameters | 0 | 91.2% | 93.7% |
+| num_parameters | 0 | 91.2% | 94.0% |
 
 ### max_nesting_depth
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1354 | 2989 | U=1875258.5 | -0.073 | negligible | <.001 | -- |
-| java | 96 | 583 | U=29429.0 | 0.052 | negligible | 0.395 | 0.527 |
-| javascript | 115 | 822 | U=37641.0 | -0.204 | small | <.001 | <.001 |
-| python | 531 | 1120 | U=297124.5 | -0.001 | negligible | 0.979 | 0.979 |
-| typescript | 749 | 762 | U=219742.5 | -0.230 | small | <.001 | <.001 |
+| Overall | 1354 | 2309 | U=1291165.5 | -0.174 | small | <.001 | -- |
+| java | 96 | 251 | U=10449.0 | -0.133 | negligible | 0.023 | 0.023 |
+| javascript | 115 | 557 | U=21504.0 | -0.329 | small | <.001 | <.001 |
+| python | 531 | 944 | U=229789.0 | -0.083 | negligible | 0.005 | 0.007 |
+| typescript | 749 | 735 | U=204026.5 | -0.259 | small | <.001 | <.001 |
 
 **Categorical metrics (chi-square)** -- Effect size is Cramer's V (thresholds: negligible <0.1, small <0.3, medium <0.5, else large). Same Overall-uncorrected / per-language-family-corrected convention as the continuous metrics above. `scope`/`fixture_type` each have a per-language family; `commit_type` doesn't (renders Overall-only).
 
@@ -249,21 +249,21 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1354 | 3005 | chi2=680.3 (df=3) | 0.053 | negligible | <.001 | -- |
-| java | 97 | 608 | chi2=33.3 (df=1) | 0.024 | negligible | <.001 | <.001 |
-| javascript | 115 | 822 | chi2=221.2 (df=1) | 0.070 | negligible | <.001 | <.001 |
-| python | 531 | 1120 | chi2=504.6 (df=3) | 0.096 | negligible | <.001 | <.001 |
-| typescript | 749 | 762 | chi2=236.3 (df=1) | 0.054 | negligible | <.001 | <.001 |
+| Overall | 1354 | 2325 | chi2=41.4 (df=3) | 0.021 | negligible | <.001 | -- |
+| java | 97 | 267 | chi2=11.3 (df=1) | 0.064 | negligible | <.001 | <.001 |
+| javascript | 115 | 557 | chi2=177.0 (df=1) | 0.146 | small | <.001 | <.001 |
+| python | 531 | 944 | chi2=422.5 (df=3) | 0.138 | small | <.001 | <.001 |
+| typescript | 749 | 735 | chi2=200.2 (df=1) | 0.057 | negligible | <.001 | <.001 |
 
 ### fixture_type
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1354 | 3005 | chi2=30317.8 (df=23) | 0.356 | medium | <.001 | -- |
-| java | 97 | 608 | chi2=5457.0 (df=14) | 0.309 | medium | <.001 | <.001 |
-| javascript | 115 | 822 | chi2=456.8 (df=5) | 0.100 | small | <.001 | <.001 |
-| python | 531 | 1120 | chi2=6639.7 (df=2) | 0.348 | medium | <.001 | <.001 |
-| typescript | 749 | 762 | chi2=6790.5 (df=5) | 0.288 | small | <.001 | <.001 |
+| Overall | 1354 | 2325 | chi2=10626.0 (df=23) | 0.335 | medium | <.001 | -- |
+| java | 97 | 267 | chi2=1233.5 (df=14) | 0.664 | large | <.001 | <.001 |
+| javascript | 115 | 557 | chi2=279.5 (df=5) | 0.183 | small | <.001 | <.001 |
+| python | 531 | 944 | chi2=4233.0 (df=2) | 0.438 | medium | <.001 | <.001 |
+| typescript | 749 | 735 | chi2=5951.3 (df=5) | 0.312 | medium | <.001 | <.001 |
 
 > **`fixture_type`'s result above is not used in the paper.** It's a pooled/per-language fixture-level chi-square, which treats fixtures clustered within a repo as independent observations and inflates both chi2 and Cramer's V (see [Limitations § Categorical Pseudo-Replication](../docs/reference/limitations.md#categorical-pseudo-replication)). The paper reports the repo-level `fixture_type` proportion test in "Repo-level aggregates" below instead. `scope`/`commit_type` above are unaffected and are used as-is.
 
@@ -283,27 +283,27 @@ fixture_type re-tested with one *proportion-per-repo* value per category instead
 
 | Category | A median | A mean | C median | C mean | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after_all | 0.0% | 3.1% | 0.0% | 2.5% | 1354 | 3005 | U=1920991.5 | -0.056 | negligible | <.001 | <.001 |
-| after_each | 0.0% | 18.4% | 0.0% | 8.0% | 1354 | 3005 | U=1578630.5 | -0.224 | small | <.001 | <.001 |
-| before_all | 0.0% | 4.9% | 0.0% | 4.9% | 1354 | 3005 | U=1944933.0 | -0.044 | negligible | <.001 | 0.001 |
-| before_each | 8.3% | 28.0% | 0.0% | 23.5% | 1354 | 3005 | U=1836378.5 | -0.097 | negligible | <.001 | <.001 |
-| junit3_setup | 0.0% | 0.0% | 0.0% | 0.4% | 1354 | 3005 | U=2060111.0 | 0.013 | negligible | <.001 | <.001 |
-| junit3_teardown | 0.0% | 0.0% | 0.0% | 0.1% | 1354 | 3005 | U=2050633.0 | 0.008 | negligible | <.001 | 0.001 |
-| junit4_after | 0.0% | 0.3% | 0.0% | 1.7% | 1354 | 3005 | U=2204061.0 | 0.083 | negligible | <.001 | <.001 |
-| junit4_before | 0.0% | 0.9% | 0.0% | 6.8% | 1354 | 3005 | U=2280370.5 | 0.121 | negligible | <.001 | <.001 |
-| junit5_after_all | 0.0% | 0.3% | 0.0% | 0.4% | 1354 | 3005 | U=2056775.0 | 0.011 | negligible | 0.025 | 0.028 |
-| junit5_after_each | 0.0% | 1.0% | 0.0% | 0.6% | 1354 | 3005 | U=2037532.0 | 0.002 | negligible | 0.792 | 0.826 |
-| junit5_before_all | 0.0% | 0.5% | 0.0% | 0.9% | 1354 | 3005 | U=2068329.5 | 0.017 | negligible | 0.003 | 0.004 |
-| junit5_before_each | 0.0% | 2.8% | 0.0% | 2.1% | 1354 | 3005 | U=2032038.5 | -0.001 | negligible | 0.866 | 0.866 |
-| junit_class_rule | 0.0% | 0.0% | 0.0% | 0.2% | 1354 | 3005 | U=2068622.0 | 0.017 | negligible | <.001 | <.001 |
-| junit_rule | 0.0% | 0.1% | 0.0% | 2.3% | 1354 | 3005 | U=2197168.5 | 0.080 | negligible | <.001 | <.001 |
-| mocha_after | 0.0% | 1.1% | 0.0% | 2.1% | 1354 | 3005 | U=2153487.5 | 0.059 | negligible | <.001 | <.001 |
-| mocha_before | 0.0% | 1.4% | 0.0% | 4.6% | 1354 | 3005 | U=2205571.5 | 0.084 | negligible | <.001 | <.001 |
-| pytest_class_method | 0.0% | 1.5% | 0.0% | 1.2% | 1354 | 3005 | U=1974019.0 | -0.030 | negligible | <.001 | <.001 |
-| pytest_decorator | 0.0% | 29.0% | 0.0% | 15.9% | 1354 | 3005 | U=1738202.5 | -0.146 | negligible | <.001 | <.001 |
-| testng_after_class | 0.0% | 0.1% | 0.0% | 0.7% | 1354 | 3005 | U=2141684.5 | 0.053 | negligible | <.001 | <.001 |
-| testng_after_method | 0.0% | 0.1% | 0.0% | 0.1% | 1354 | 3005 | U=2046769.0 | 0.006 | negligible | 0.020 | 0.023 |
-| testng_before_class | 0.0% | 0.2% | 0.0% | 1.9% | 1354 | 3005 | U=2182819.5 | 0.073 | negligible | <.001 | <.001 |
-| testng_before_method | 0.0% | 0.1% | 0.0% | 0.2% | 1354 | 3005 | U=2052025.0 | 0.009 | negligible | 0.005 | 0.006 |
-| testng_data_provider | 0.0% | 0.1% | 0.0% | 0.3% | 1354 | 3005 | U=2050337.0 | 0.008 | negligible | 0.004 | 0.005 |
-| unittest_setup | 0.0% | 6.1% | 0.0% | 18.6% | 1354 | 3005 | U=2302994.0 | 0.132 | negligible | <.001 | <.001 |
+| after_all | 0.0% | 3.1% | 0.0% | 2.8% | 1354 | 2325 | U=1458577.0 | -0.073 | negligible | <.001 | <.001 |
+| after_each | 0.0% | 18.4% | 0.0% | 8.8% | 1354 | 2325 | U=1207114.0 | -0.233 | small | <.001 | <.001 |
+| before_all | 0.0% | 4.9% | 0.0% | 5.4% | 1354 | 2325 | U=1480997.0 | -0.059 | negligible | <.001 | <.001 |
+| before_each | 8.3% | 28.0% | 0.0% | 26.0% | 1354 | 2325 | U=1462962.5 | -0.071 | negligible | <.001 | <.001 |
+| junit3_setup | 0.0% | 0.0% | 0.0% | 0.1% | 1354 | 2325 | U=1579441.0 | 0.003 | negligible | 0.031 | 0.036 |
+| junit3_teardown | 0.0% | 0.0% | 0.0% | 0.1% | 1354 | 2325 | U=1576733.0 | 0.002 | negligible | 0.127 | 0.138 |
+| junit4_after | 0.0% | 0.3% | 0.0% | 1.3% | 1354 | 2325 | U=1602091.5 | 0.018 | negligible | <.001 | <.001 |
+| junit4_before | 0.0% | 0.9% | 0.0% | 3.6% | 1354 | 2325 | U=1639972.5 | 0.042 | negligible | <.001 | <.001 |
+| junit5_after_all | 0.0% | 0.3% | 0.0% | 0.2% | 1354 | 2325 | U=1556449.0 | -0.011 | negligible | <.001 | <.001 |
+| junit5_after_each | 0.0% | 1.0% | 0.0% | 0.5% | 1354 | 2325 | U=1541762.0 | -0.020 | negligible | <.001 | <.001 |
+| junit5_before_all | 0.0% | 0.5% | 0.0% | 0.3% | 1354 | 2325 | U=1554053.0 | -0.013 | negligible | <.001 | <.001 |
+| junit5_before_each | 0.0% | 2.8% | 0.0% | 1.0% | 1354 | 2325 | U=1526435.0 | -0.030 | negligible | <.001 | <.001 |
+| junit_class_rule | 0.0% | 0.0% | 0.0% | 0.3% | 1354 | 2325 | U=1581869.0 | 0.005 | negligible | 0.032 | 0.036 |
+| junit_rule | 0.0% | 0.1% | 0.0% | 1.1% | 1354 | 2325 | U=1604349.5 | 0.019 | negligible | <.001 | <.001 |
+| mocha_after | 0.0% | 1.1% | 0.0% | 2.2% | 1354 | 2325 | U=1626596.5 | 0.033 | negligible | <.001 | <.001 |
+| mocha_before | 0.0% | 1.4% | 0.0% | 4.9% | 1354 | 2325 | U=1677283.5 | 0.066 | negligible | <.001 | <.001 |
+| pytest_class_method | 0.0% | 1.5% | 0.0% | 1.2% | 1354 | 2325 | U=1524659.0 | -0.031 | negligible | <.001 | <.001 |
+| pytest_decorator | 0.0% | 29.0% | 0.0% | 17.6% | 1354 | 2325 | U=1369430.5 | -0.130 | negligible | <.001 | <.001 |
+| testng_after_class | 0.0% | 0.1% | 0.0% | 0.5% | 1354 | 2325 | U=1592138.5 | 0.012 | negligible | 0.002 | 0.002 |
+| testng_after_method | 0.0% | 0.1% | 0.0% | 0.0% | 1354 | 2325 | U=1577292.5 | 0.002 | negligible | 0.306 | 0.320 |
+| testng_before_class | 0.0% | 0.2% | 0.0% | 1.0% | 1354 | 2325 | U=1599465.0 | 0.016 | negligible | <.001 | <.001 |
+| testng_before_method | 0.0% | 0.1% | 0.0% | 0.1% | 1354 | 2325 | U=1577483.5 | 0.002 | negligible | 0.329 | 0.329 |
+| testng_data_provider | 0.0% | 0.1% | 0.0% | 0.4% | 1354 | 2325 | U=1581865.0 | 0.005 | negligible | 0.032 | 0.036 |
+| unittest_setup | 0.0% | 6.1% | 0.0% | 20.5% | 1354 | 2325 | U=1805287.5 | 0.147 | negligible | <.001 | <.001 |

@@ -2,7 +2,7 @@
 
 > Are the repo samples behind two datasets comparable on language, domain, and repo age -- before attributing an RQ1-3 fixture-metric difference to authorship or era? See this module's docstring for why this check didn't previously run against the current data.
 
-Generated: 2026-08-19 15:56:59 UTC
+Generated: 2026-08-21 00:06:40 UTC
 
 Repo-level (each fixture-yielding repo counted once), not fixture-weighted -- see this module's docstring for why.
 
@@ -31,28 +31,28 @@ Repo-level (each fixture-yielding repo counted once), not fixture-weighted -- se
 | devops | 27 | 2.0% |
 | security | 25 | 1.8% |
 
-### Dataset C (human-authored, pre-LLM) -- 3,005 fixture-yielding repos
+### Dataset C (human-authored, pre-LLM) -- 2,325 fixture-yielding repos
 
 **language distribution**
 
 | Value | Count | % |
 |---|---|---|
-| python | 1,048 | 34.9% |
-| typescript | 846 | 28.2% |
-| java | 560 | 18.6% |
-| javascript | 551 | 18.3% |
+| python | 893 | 38.4% |
+| typescript | 767 | 33.0% |
+| javascript | 398 | 17.1% |
+| java | 267 | 11.5% |
 
 **domain distribution**
 
 | Value | Count | % |
 |---|---|---|
-| other | 1,896 | 63.1% |
-| web | 535 | 17.8% |
-| ml | 210 | 7.0% |
-| database | 114 | 3.8% |
-| security | 93 | 3.1% |
-| systems | 82 | 2.7% |
-| devops | 75 | 2.5% |
+| other | 1,432 | 61.6% |
+| web | 443 | 19.1% |
+| ml | 174 | 7.5% |
+| database | 77 | 3.3% |
+| security | 70 | 3.0% |
+| systems | 66 | 2.8% |
+| devops | 63 | 2.7% |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
@@ -60,6 +60,6 @@ Repo-level (each fixture-yielding repo counted once), not fixture-weighted -- se
 
 | Variable | Test | statistic | p-value | balanced (p>=0.05) | effect size | BH-FDR adjusted p (sig?) |
 |---|---|---|---|---|---|---|
-| language | chi-square | 326.3 | 2.015e-70 | **no** | 0.274 (small) | 6.044e-70 (yes) |
-| domain | chi-square | 291.1 | 6.625e-60 | **no** | 0.258 (small) | 9.938e-60 (yes) |
-| repo_age_years | mann-whitney-u | 837690.5 | 2.165e-30 | **no** | -0.268 (small) | 2.165e-30 (yes) |
+| language | chi-square | 171.9 | 5.003e-37 | **no** | 0.216 (small) | 7.505e-37 (yes) |
+| domain | chi-square | 229.4 | 1.005e-46 | **no** | 0.250 (small) | 3.016e-46 (yes) |
+| repo_age_years | mann-whitney-u | 643321.0 | 6.81e-30 | **no** | -0.274 (small) | 6.81e-30 (yes) |
