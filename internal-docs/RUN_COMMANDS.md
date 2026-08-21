@@ -266,25 +266,18 @@ Same four commands with `--dataset b` / `--dataset c` for the other two datasets
 `analyze-distribution` is the one pair-aware verb (defaults to `--dataset a --against b`)
 since its whole job is comparing two already-extracted datasets.
 
-### Dataset C sampling: deactivated, not required before running `research_questions/` scripts
+### Dataset C sampling: required before running `research_questions/` scripts
 
 Every `research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/
-`balance.py`/`language_contamination.py`/`dataset_findings.py`) now reads
-the full Dataset C directly (`db/c.db` + `datasets/c/fixtures/`), same as
-every other dataset -- there is no sampling step to run first. This is a
-deliberate reversal of an earlier convention (see
+`balance.py`/`language_contamination.py`/`dataset_findings.py`) reads
+Dataset C's fixture-level sample-down (`db/c_sampled.db` +
+`datasets/c/fixtures-sampled/`), not the full `db/c.db` +
+`datasets/c/fixtures/` -- see
 `collection/research_questions/_shared.py::require_db_or_none()`'s
-docstring): the full Dataset C is ~3.3x Dataset A's size, and a sampled,
-size-matched subset (`db/c_sampled.db`) used to be required precisely to
-avoid comparing against that imbalance. Every A-vs-C comparison in this
-package already runs at the repo level (Mann-Whitney U + Cliff's delta
-on per-repo proportions/means, not a pooled fixture-level test) with
-`n_A`/`n_C` repo counts reported on every row, which is far less
-sensitive to a repo-count imbalance than a naive fixture-weighted test --
-the team decided that's sufficient and switched back to the full corpus.
-
-The sampling machinery itself is untouched and still runnable manually if
-ever needed again -- **not required for any current workflow**:
+docstring. Run `sample-c-repos` (below) at least once after any Dataset C
+re-collection, before regenerating RQ reports -- if `db/c_sampled.db`
+doesn't exist yet, every dataset-C-dependent row/section degrades to N/A
+rather than erroring.
 
 ```bash
 python -m collection sample-c-repos --match-dataset a
@@ -299,18 +292,26 @@ current live fixture count *for that language* (own detected language,
 `dataset_findings.md`'s "Fixture Counts by Language" table), with
 individual fixtures drawn without replacement regardless of which repo
 they come from -- two fixtures from the same repo can land on opposite
-sides of the sample. Replaces the earlier whole-repo approach (which could
+sides of the sample. Replaces an earlier whole-repo approach (which could
 only ever land close to a target, never on it, since a repo is an
-indivisible chunk of fixtures) for exactly this reason -- do not compute
-repo-level statistics (e.g. RQ2's setup-to-teardown metrics) against
-`db/c_sampled.db`, it was never meant to support that. Pass an explicit
-`--target-count N` instead of `--match-dataset` to split across languages
-by Dataset C's own mix instead of another dataset's. Writes
-`db/c_sampled.db` + `datasets/c/fixtures-sampled/*.csv` + a summary at
+indivisible chunk of fixtures).
+
+**Known limitation**: because a repo's fixtures can now be only partially
+represented, every `research_questions/` repo-level statistic (e.g. RQ2's
+per-repo setup/teardown proportions, or any other rqN.py/balance.py
+comparison -- they all aggregate one value per repo) can be computed from
+an incomplete per-repo fixture set for Dataset C. Sampling is
+content-blind (uniform random per language, independent of
+fixture_type/repo), so this adds per-repo estimation noise, not a
+systematic bias -- see
+`collection/dataset_pipeline.py::sample_dataset_c_repos()`'s docstring and
+`internal-docs/methodology-improvements/dataset-c-fixture-level-sampling.md`
+for the full writeup. Pass an explicit `--target-count N` instead of
+`--match-dataset` to split across languages by Dataset C's own mix instead
+of another dataset's. Writes `db/c_sampled.db` +
+`datasets/c/fixtures-sampled/*.csv` + a summary at
 `output/sample_c_repos.json` -- `db/c.db`/`datasets/c/fixtures/*.csv` are
-read-only inputs, never modified. Nothing in `research_questions/` reads
-`db/c_sampled.db` or `datasets/c/fixtures-sampled/` anymore, even if they
-exist on disk from a previous run.
+read-only inputs, never modified.
 
 ### One-time: backfill "All commits" for Dataset A's summary table
 

@@ -98,14 +98,12 @@ than worked around from `dataset_pipeline.py`'s side.
   `repositories.num_fixtures`/`num_test_files`/`num_mock_usages` and
   `test_files.num_fixtures`/`total_fixture_loc` reflect only what was
   actually sampled for that repo/file, not the source's real totals.
-- **Do not compute repo-level statistics against `db/c_sampled.db`** --
-  e.g. RQ2's setup/teardown pairing assumes a repo's fixtures are either
-  fully present or fully absent; a fixture-level sample breaks that
-  assumption by construction. This was never a live concern in practice
-  since Dataset C sampling is deactivated for `research_questions/`
-  scripts already (they read the full, unsampled `db/c.db` -- see
-  `_shared.py::require_db_or_none()`'s docstring), but it's worth stating
-  explicitly for any future use of `db/c_sampled.db`.
+- **Repo-level statistics computed against `db/c_sampled.db` carry
+  per-repo sampling noise** -- e.g. RQ2's setup/teardown proportions
+  assume a repo's fixtures are either fully present or fully absent; a
+  fixture-level sample breaks that assumption by construction. At the
+  time this was written, this was not a live concern -- see
+  section 6 below for why it now is, and for the update.
 
 ## 5. Tests
 
@@ -127,3 +125,82 @@ fixtures copied than the source repo has, with recomputed aggregate
 counts).
 
 Full suite: 1,676 passed after this change.
+
+## 6. `research_questions/` switched back to reading `db/c_sampled.db` (2026-08-20)
+
+**Status: Implemented, 2026-08-20 (same day as section 1-5 above).**
+
+### Request
+
+Point every `research_questions/*.py` script (not just the sampling
+machinery itself) at Dataset C's fixture-level sample-down instead of the
+full, ~3.3x-larger `db/c.db` -- global, including `dataset_findings.py`'s
+descriptive/data-quality sections (repo-purity/adoption-intensity report,
+the "Fixture Counts by Language" table, and the JUnit3-fallback/JS-hook-
+complexity/mocha-bare-hook/aliased-mock-import/mock-category-fallback side
+notes), not scoped to just the A-vs-C statistical comparison scripts. This
+reverses the "deactivated" decision `require_db_or_none()`'s docstring
+used to describe (see git history for that version) -- the team's
+reasoning this time: with the sampling algorithm now exact-per-language
+(section 1-4 above), there's no longer an approximation-quality objection
+to routing everything through it.
+
+### What changed
+
+- `collection/research_questions/_shared.py::require_db_or_none()`:
+  dataset `"c"` now resolves to `db_root / "c_sampled.db"` instead of
+  `db_path("c", root=db_root)` (`db_root / "c.db"`). Still returns `None`
+  with a logged warning if that file doesn't exist yet -- same "skip,
+  don't error" convention as every other dataset, so a Dataset C
+  re-collection without a matching `sample-c-repos` re-run degrades
+  gracefully rather than silently reading stale/full data.
+- `collection/research_questions/language_contamination.py::check_dataset()`:
+  dataset `"c"` now reads `datasets_root / "c" / "fixtures-sampled"`
+  instead of `paths.stage_dir("c", "fixtures", root=datasets_root)`
+  (`datasets/c/fixtures/`) -- matches the DB-side redirect above.
+- Every docstring/comment across `dataset_pipeline.py`,
+  `dataset_findings.py`, `RUN_COMMANDS.md`, and the affected test files
+  that described dataset C sampling as "deactivated" was updated to
+  describe the new reality (`sample-c-repos` is now a required step
+  before regenerating RQ reports, not an inert, never-read side capability).
+
+### Known limitation accepted, not worked around
+
+Every comparison in `rq1.py`/`rq2.py`/`rq3.py`/`balance.py` works by
+aggregating one proportion/mean per repo (the repo-de-clustering
+methodology used throughout this package, to avoid treating a repo's
+correlated fixtures as independent observations). `db/c_sampled.db` can
+now represent a Dataset C repo only partially (section 4's "Repos can
+appear partially" point) -- average fixtures/repo dropped from ~63.9 in
+the full corpus to ~20.3 in the sample (2026-08-20 collection: 191,883
+fixtures / 3,005 repos vs. 47,208 fixtures / 2,325 repos touched). So a
+Dataset C repo's per-repo proportion/mean computed against the sample can
+now differ from its true value in the full corpus.
+
+This was evaluated and accepted as a **known limitation, not a blocker**:
+`sample_fixtures_by_language()` samples uniformly at random per language,
+with no consideration of `fixture_type`, repo, or any other fixture
+attribute -- so a repo's sampled subset is a fair (if smaller) random
+draw from its own true fixture set, not a systematically skewed one. This
+adds *estimation noise* to a repo's per-repo statistic (worse for repos
+that end up with very few sampled fixtures of a given language), not a
+*directional bias* -- it should not manufacture a false A-vs-C
+difference, though it can reduce statistical power to detect a real one
+relative to comparing against the full corpus. Documented here, in
+`_shared.py::require_db_or_none()`'s docstring, and in
+`dataset_pipeline.py::sample_dataset_c_repos()`'s docstring rather than
+worked around, since there is no way to route around it without either
+reverting to whole-repo sampling (rejected in section 1-4 above) or
+scoping the redirect down to non-repo-level sections only (considered and
+explicitly rejected for this change).
+
+### Tests
+
+`tests/collection/test_research_questions_shared.py::TestRequireDbOrNone`,
+`tests/collection/test_language_contamination.py::TestCheckDataset`,
+and every `_make_db*`-style helper in `test_rq1.py`/`test_rq2.py`/
+`test_rq3.py`/`test_balance.py`/`test_dataset_findings.py` that writes
+synthetic dataset-C data updated to write to `c_sampled.db`/
+`fixtures-sampled/` (mirroring the new redirect) instead of `c.db`/
+`fixtures/`, with the corresponding "must NOT read the other path" cases
+inverted to match.
