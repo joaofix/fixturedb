@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-08-21 00:06:38 UTC
+Generated: 2026-08-22 18:49:49 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -52,19 +52,37 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
-Per-repository proportions: for each repo, `setup_pct`/`teardown_pct`/`other_pct` = that repo's setup/teardown/other-classified fixtures divided by its total classified fixtures (the three sum to 100% per repo; `other_pct` isn't shown below). Median is taken over those per-repo proportions, not a single pooled fixture-level percentage. "V (A↔C)"/"p (BH)" are the `setup` category's own repo-level Mann-Whitney U + Cliff's delta test (`setup`/`teardown` aren't independent -- together with `other` they sum to 100% per repo -- so this one test represents the row). The column is labeled "V" for consistency with the paper's other effect-size columns, but the number is Cliff's delta, not literally Cramer's V. Overall is a single pooled test (raw p, never BH-corrected); each language's p is BH-FDR-corrected against the other 3 languages' `setup` tests only.
+### Table 1: Fixture Counts by Type (tab:rq2-counts)
 
-| Language | n_A | n_C | Setup A (%) | Setup C (%) | Teardown A (%) | Teardown C (%) | V (A↔C) | p (BH) |
-|---|---|---|---|---|---|---|---|---|
-| Overall | 1354 | 2325 | 50.0% | 66.7% | 22.2% | 2.3% | 0.235 (small) | <.001 |
-| java | 97 | 267 | 66.7% | 66.7% | 25.0% | 0.0% | -0.130 (negligible) | 0.051 |
-| javascript | 115 | 557 | 55.6% | 81.0% | 44.4% | 19.0% | 0.217 (small) | <.001 |
-| python | 531 | 944 | 0.0% | 37.8% | 0.0% | 0.0% | 0.328 (small) | <.001 |
-| typescript | 749 | 735 | 57.1% | 78.6% | 42.9% | 21.4% | 0.315 (small) | <.001 |
+Raw counts of setup-classified and teardown-classified fixtures ("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are excluded from both columns). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
 
-## Unimodality Check: Python Teardown Proportion (Dip Test)
+| Language | Setup A | Setup C | Teardown A | Teardown C |
+|---|---|---|---|---|
+| Total | 23,759 | 31,339 | 14,942 | 11,372 |
+| java | 894 | 708 | 422 | 355 |
+| javascript | 2,471 | 2,892 | 1,703 | 1,282 |
+| python | 1,890 | 4,951 | 720 | 1,922 |
+| typescript | 18,504 | 22,788 | 12,097 | 7,813 |
 
-Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, The Dip Test of Unimodality], run on the same per-repo Python `teardown_pct` values the table above summarizes as a single median -- separately per dataset, since this tests whether *one* distribution is unimodal, not whether two distributions differ. Null hypothesis: the distribution is unimodal; a low p-value is evidence of multimodality (e.g. a real "most repos provide none, a distinct minority provide all" split, rather than a smooth continuum from 0% to 100%).
+### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)
+
+Per-repository binary coverage: 1 if a repo has >=1 teardown-classified fixture, else 0 (population: repos with >=1 setup/teardown/other-classified fixture). "Coverage A/C (%)" is the share of that population with the indicator at 1. "delta" is Cliff's delta from a Mann-Whitney U test on the indicator between datasets. Overall is a single pooled test (raw p, never BH-corrected); each language's p is BH-FDR-corrected against the other 3 languages' tests only.
+
+| Language | n_A | n_C | Coverage A (%) | Coverage C (%) | delta | p (BH) |
+|---|---|---|---|---|---|---|
+| Overall | 1354 | 2325 | 61.4% | 50.3% | -0.111 (negligible) | <.001 |
+| java | 97 | 267 | 66.0% | 47.2% | -0.188 (small) | 0.002 |
+| javascript | 115 | 557 | 77.4% | 55.5% | -0.219 (small) | <.001 |
+| python | 531 | 944 | 19.4% | 32.0% | 0.126 (negligible) | <.001 |
+| typescript | 749 | 735 | 84.8% | 68.0% | -0.168 (small) | <.001 |
+
+## Supplementary Analyses
+
+Analyses below are not part of either main paper table (tab:rq2-counts, tab:rq2-coverage) but are kept and computed since they may still be referenced in prose.
+
+### Unimodality Check: Python Teardown Proportion (Dip Test)
+
+Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, The Dip Test of Unimodality], run on the per-repo Python `teardown_pct` distribution (each repo's teardown-classified fixtures divided by its total classified fixtures) -- separately per dataset, since this tests whether *one* distribution is unimodal, not whether two distributions differ. Not the same value as Table 2's binary coverage indicator. Null hypothesis: the distribution is unimodal; a low p-value is evidence of multimodality (e.g. a real "most repos provide none, a distinct minority provide all" split, rather than a smooth continuum from 0% to 100%).
 
 | Dataset | n (Python repos) | Dip statistic | p-value |
 |---|---|---|---|
