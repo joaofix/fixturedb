@@ -4,8 +4,8 @@ Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks the kind classification, per-repo/
 per-language repo-count bookkeeping, and report rendering -- never touching
 the real db/ or research_questions/ directories. The Mann-Whitney U math
-itself (including compare_categorical_repo_level()'s per-category proportion
-test) is already covered by tests/between_group/test_between_group_
+itself (including compute_continuous_balance()'s mean/median/Cliff's-delta
+computation) is already covered by tests/between_group/test_between_group_
 comparison.py and tests/collection/test_research_questions_shared.py.
 """
 
@@ -315,8 +315,9 @@ class TestGenerateReport:
         assert "0/1 fixtures (0.00%) leaked." in report
 
     def test_removed_metrics_no_longer_appear(self, tmp_path):
-        """Ratio/no-teardown-rate/teardown-pair-rate were dropped from the
-        paper's reported output entirely -- not just de-pooled."""
+        """Ratio/no-teardown-rate/teardown-pair-rate/median-proportion
+        table were dropped from the paper's reported output entirely --
+        not just de-pooled."""
         _make_db(
             tmp_path,
             "a",
@@ -333,57 +334,124 @@ class TestGenerateReport:
         assert "has_teardown_pair rate by fixture_type" not in report
         assert "## Repo-level aggregates" not in report
         assert "ratio undefined" not in report
+        # The old median setup_pct/teardown_pct proportion table -- fully
+        # replaced by Table 1 (counts) + Table 2 (coverage).
+        assert "V (A↔C)" not in report
+        assert "Setup A (%) | Setup C (%)" not in report
 
-    def test_a_vs_c_comparison_renders_median_proportions_and_effect_size(self, tmp_path):
+    def test_kind_counts_table_renders_absolute_counts_per_language(self, tmp_path):
+        """Table 1: purely descriptive setup/teardown counts, "other"
+        excluded, fixed four-language row order with zero-filled rows for
+        languages absent from the data."""
+        _make_db(
+            tmp_path,
+            "a",
+            [[{"fixture_type": "before_each"}] * 3 + [{"fixture_type": "after_each"}] * 2],
+        )
+        _make_db(
+            tmp_path,
+            "c",
+            [[{"fixture_type": "before_each"}] + [{"fixture_type": "after_each"}] * 4],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "### Table 1: Fixture Counts by Type (tab:rq2-counts)" in report
+        assert "| Language | Setup A | Setup C | Teardown A | Teardown C |" in report
+        comparison_section = report.split("## A vs C:")[1]
+        assert "| Total | 3 | 1 | 2 | 4 |" in comparison_section
+        assert "| python | 3 | 1 | 2 | 4 |" in comparison_section
+        # java/javascript/typescript have no data on either side -- zero,
+        # not omitted.
+        assert "| java | 0 | 0 | 0 | 0 |" in comparison_section
+        assert "| javascript | 0 | 0 | 0 | 0 |" in comparison_section
+        assert "| typescript | 0 | 0 | 0 | 0 |" in comparison_section
+
+    def test_kind_counts_table_excludes_other_classified_fixtures(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [[{"fixture_type": "before_each"}, {"fixture_type": "pytest_decorator"}]],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        report = generate_report(db_root=tmp_path)
+        comparison_section = report.split("## A vs C:")[1]
+        assert "| Total | 1 | 0 | 0 | 1 |" in comparison_section
+
+    def test_kind_counts_table_total_includes_languages_outside_the_fixed_four(self, tmp_path):
+        """The Total row is the dataset-wide sum across every language
+        present, not just the four canonical rows shown -- a 5th language
+        still counts toward Total even though it gets no row of its own."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [{"language": "rust", "fixtures": [{"fixture_type": "before_each"}]}],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        report = generate_report(db_root=tmp_path)
+        comparison_section = report.split("## A vs C:")[1]
+        assert "| Total | 1 | 0 | 0 | 1 |" in comparison_section
+        assert "| rust |" not in comparison_section
+
+    def test_teardown_coverage_table_renders_percentages_and_effect_size(self, tmp_path):
+        """Table 2: A has 1 of 2 repos with any teardown (50%); C has 2 of
+        2 (100%) -- maximally separated, so Cliff's delta is "large"."""
         _make_db(
             tmp_path,
             "a",
             [
-                [{"fixture_type": "before_each"}] * 4 + [{"fixture_type": "after_each"}],
-                [{"fixture_type": "before_each"}] * 4 + [{"fixture_type": "after_each"}],
+                [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
+                [{"fixture_type": "before_each"}],
             ],
         )
         _make_db(
             tmp_path,
             "c",
             [
-                [{"fixture_type": "before_each"}] + [{"fixture_type": "after_each"}] * 4,
-                [{"fixture_type": "before_each"}] + [{"fixture_type": "after_each"}] * 4,
+                [{"fixture_type": "after_each"}],
+                [{"fixture_type": "after_each"}],
             ],
         )
         report = generate_report(db_root=tmp_path)
+        assert "### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)" in report
         assert (
-            "| Language | n_A | n_C | Setup A (%) | Setup C (%) | "
-            "Teardown A (%) | Teardown C (%) | V (A↔C) | p (BH) |" in report
+            "| Language | n_A | n_C | Coverage A (%) | Coverage C (%) | delta | p (BH) |"
+            in report
         )
-        # "python" also appears as a row label in the per-dataset
-        # cross-language-leakage tables above -- scope to the comparison
-        # section so we don't match those instead.
-        comparison_section = report.split("## A vs C:")[1]
-        # A: every repo is 4/5 setup, 1/5 teardown. C: every repo is 1/5
-        # setup, 4/5 teardown -- both _make_db calls use "python" test
-        # files, so Overall and the python row should show identical
-        # figures (2 repos, no per-repo variation).
+        # "python" also appears as a row label in Table 1 (counts), above
+        # Table 2 in the same comparison section -- scope past the Table 2
+        # heading so we don't match that row instead.
+        coverage_section = report.split("### Table 2: Teardown Coverage by Repository")[1]
         overall_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+            line for line in coverage_section.splitlines() if line.startswith("| Overall |")
         )
         python_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| python |")
+            line for line in coverage_section.splitlines() if line.startswith("| python |")
         )
         for line in (overall_line, python_line):
             assert "| 2 | 2 |" in line
-            assert "80.0% | 20.0%" in line  # Setup A (%) | Setup C (%)
-            assert "20.0% | 80.0%" in line  # Teardown A (%) | Teardown C (%)
-            assert "large" in line  # maximally separated -> large Cliff's delta
-        # Exact p-values, not a binary significant/not-significant column.
+            assert "50.0% | 100.0%" in line  # Coverage A (%) | Coverage C (%)
+            assert "large" in line
         assert "significant (p<0.05)" not in report
 
-    def test_a_vs_c_comparison_declusters_a_prolific_repo(self, tmp_path):
-        """A is one repo with 100 setup-only fixtures plus one repo with a
-        single teardown-only fixture -- fixture-weighted, A would look
-        ~99% setup (dominated by the prolific repo). Per-repo (what's
-        actually reported), A is split 50/50 (1 of 2 repos each way), same
-        as C's much smaller but proportionally identical repos."""
+    def test_teardown_coverage_repo_with_only_setup_counts_as_zero_coverage(self, tmp_path):
+        """A repo whose only classified fixtures are setup (no teardown at
+        all) contributes 0 to the coverage indicator -- not skipped, not
+        1."""
+        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
+        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        report = generate_report(db_root=tmp_path)
+        comparison_section = report.split("## A vs C:")[1]
+        overall_line = next(
+            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+        )
+        assert "0.0% | 100.0%" in overall_line
+
+    def test_teardown_coverage_declusters_a_prolific_repo(self, tmp_path):
+        """A is one repo with 100 setup-only fixtures (0 teardown ->
+        coverage 0) plus one repo with a single teardown-only fixture
+        (coverage 1) -- fixture-weighted, "teardown coverage" would look
+        ~1% (1 of 101 fixtures). Per-repo (what's actually reported), A is
+        50% (1 of 2 repos has any teardown at all), same as C's much
+        smaller but proportionally identical repos."""
         _make_db(
             tmp_path,
             "a",
@@ -401,10 +469,28 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        overall_line = next(line for line in report.splitlines() if line.startswith("| Overall |"))
-        # Per-repo, both A and C are 1-of-2 repos setup-only (50%) --
-        # nowhere near a ~99%-setup fixture-weighted figure.
-        assert "50.0% | 50.0% | 50.0% | 50.0%" in overall_line
+        comparison_section = report.split("## A vs C:")[1]
+        overall_line = next(
+            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+        )
+        # Per-repo, both A and C are 1-of-2 repos with any teardown (50%) --
+        # nowhere near a ~1%-teardown fixture-weighted figure.
+        assert "50.0% | 50.0%" in overall_line
+
+    def test_teardown_coverage_language_absent_from_both_sides_shows_insufficient_data(
+        self, tmp_path
+    ):
+        """java/javascript/typescript have zero repos on either side (both
+        _make_db calls default to "python" test files) -- must degrade to
+        '--' cells, not crash or divide by zero."""
+        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
+        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        report = generate_report(db_root=tmp_path)
+        coverage_section = report.split("### Table 2: Teardown Coverage by Repository")[1]
+        java_line = next(
+            line for line in coverage_section.splitlines() if line.startswith("| java |")
+        )
+        assert "| java | 0 | 0 | -- | -- | -- | -- |" == java_line
 
 
 class TestPythonTeardownProportions:
@@ -475,7 +561,7 @@ class TestRenderTeardownDipTest:
         a_metrics = load_dataset_metrics("a", db_root=tmp_path)
         c_metrics = load_dataset_metrics("c", db_root=tmp_path)
         report = _render_teardown_dip_test(a_metrics, c_metrics)
-        assert "## Unimodality Check: Python Teardown Proportion (Dip Test)" in report
+        assert "### Unimodality Check: Python Teardown Proportion (Dip Test)" in report
         assert "| Dataset A | 1 | -- | -- |" in report
         assert "| Dataset C | 1 | -- | -- |" in report
 
@@ -505,7 +591,11 @@ class TestRenderTeardownDipTest:
         _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
         _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
         report = generate_report(db_root=tmp_path)
-        assert "## Unimodality Check: Python Teardown Proportion (Dip Test)" in report
+        assert "## Supplementary Analyses" in report
+        assert "### Unimodality Check: Python Teardown Proportion (Dip Test)" in report
+        # Supplementary section comes after both main tables' comparison
+        # section, not interleaved with it.
+        assert report.index("## Supplementary Analyses") > report.index("## A vs C:")
 
 
 class TestWriteReport:

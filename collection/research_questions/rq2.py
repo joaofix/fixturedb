@@ -3,11 +3,11 @@ RQ2 -- Setup and Teardown Characterization (Quantitative): how do
 agent-generated fixtures compare to human-written ones in setup and
 teardown provision?
 
-One metric, computed per dataset (A/C): **fixture_type "kind" distribution**
--- setup / teardown / other. `fixture_type` alone can't cleanly split into
-setup vs teardown for every type, so classification reuses two existing
-tables from detector_shared.py -- the exact same ones `has_teardown_pair`
-itself is computed from -- rather than a duplicate, drifting lookup:
+Two paper tables, both keyed on **fixture_type "kind"** -- setup / teardown
+/ other. `fixture_type` alone can't cleanly split into setup vs teardown
+for every type, so classification (`_kind()`) reuses two existing tables
+from detector_shared.py -- the exact same ones `has_teardown_pair` itself
+is computed from -- rather than a duplicate, drifting lookup:
   - `TYPE_BASED_TEARDOWN_PAIRS`: types where setup/teardown are different
     fixture_types (before_each/after_each, junit5_before_each/
     junit5_after_each, ...) -- classified by type alone.
@@ -21,60 +21,80 @@ vitest_around_each/vitest_around_all -- inherently both at once, see
 ALWAYS_HAS_TEARDOWN_TYPES; testng_data_provider -- neither, it's not a
 lifecycle hook) buckets as "other" instead of forcing a fake split.
 
-For each repo, this yields three proportions -- setup_pct/teardown_pct/
-other_pct (that repo's classified fixtures falling in each kind, summing
-to 100%). The paper's one reported table is: median per-repo setup_pct/
-teardown_pct for A and C, per language and Overall, plus one repo-level
-effect size + BH-FDR-corrected p-value per language.
+**Table 1 (tab:rq2-counts) -- absolute fixture counts**
+(`_render_kind_counts_table()`): purely descriptive, no statistics. For
+each language and a Total row, the raw count of setup-classified and
+teardown-classified fixtures in each dataset ("other" fixtures, e.g. a
+bare `@pytest.fixture`, are excluded from both columns -- this table
+answers "how many", not "what fraction"). Total is the dataset-wide sum
+across every language present, not just the four rows shown.
 
-That test reuses `compare_categorical_repo_level()` (`_shared.py`) exactly
-as already used elsewhere in this package -- per-repo category
-proportions compared via Mann-Whitney U + Cliff's delta, one BalanceTest
-per category (setup/teardown/other), the same de-clustering fix RQ1/RQ3's
-repo-level aggregates already apply: a plain chi-square over fixture-level
-counts treats a repo's hundreds of correlated fixtures as that many
-independent observations, inflating both the statistic and its effect
-size; this instead compares one proportion per repo, so each repo counts
-once. **The table's single "V (A<->C)"/"p (BH)" column pair per row is the
-`setup` category's own test** -- setup_pct and teardown_pct aren't
-independent (together with other_pct they sum to 100% per repo), so one
-test represents the whole row; setup is picked since it's the table's
-first descriptive column. The column is labeled "V" for consistency with
-the paper's other effect-size columns, but the number itself is Cliff's
-delta (from the Mann-Whitney test above), not literally Cramer's V (which
-would come from a chi-square test instead) -- flagged explicitly here and
-in the table's own intro text so this isn't a silent mislabel.
-`teardown`'s median rides along from the same per-(language) test call,
-purely descriptive (no separate significance test of its own). `other` is
-computed and available (`kind_counts_by_repo*`) but not shown in the main
-table.
+**Table 2 (tab:rq2-coverage) -- teardown coverage**
+(`_render_teardown_coverage_table()`): the inferential table. For each
+repo, a binary indicator -- does it have >=1 teardown-classified fixture
+at all (1) or none (0)? Compared between datasets via Mann-Whitney U +
+Cliff's delta (`compute_continuous_balance()` on the 0/1 values directly
+-- the mean of a 0/1 list *is* "% of repos with >=1 teardown fixture", so
+`agent_mean`/`human_mean` from the same call double as the "Coverage A/C
+(%)" columns, no separate aggregation needed). Population (and n_A/n_C):
+repos with >=1 setup/teardown/other-classified fixture -- the same
+"denominator" convention `repo_level_category_proportions()` uses
+elsewhere in this package (a repo with zero classified fixtures is
+skipped, not counted as 0-coverage). Overall is one pooled, uncorrected
+test; each language's p is BH-FDR-corrected against the other 3
+languages' tests only (this variable's own family -- see
+`apply_fdr_correction()`'s docstring).
 
-The Overall row is `setup`'s pooled (dataset-wide) test, raw p-value, never
-BH-corrected (a single test needs no multiple-comparison correction, same
-convention as every other RQ1-3 comparison table's Overall row). Each
-language's row is BH-FDR-corrected against the other 3 languages' `setup`
-tests only -- this variable's own family, independent of every other
-metric and of the Overall row (see `apply_fdr_correction()`'s docstring).
+Both tables render a fixed four-language row order (java, javascript,
+python, typescript) rather than this package's usual "intersection of
+languages present on both sides" convention (`compute_stratified_*_
+balance()`) -- a deliberate simplification matching the paper's table
+spec; `compute_continuous_balance()` already degrades a missing-on-one-
+side language to its existing `insufficient_data` fallback, so this only
+changes behavior for a language genuinely absent from one side (both real
+A/C collections have fixtures in all four).
+
+These two tables replace the single, previously-reported repo-level
+median setup_pct/teardown_pct/other_pct proportion table (Mann-Whitney U
++ Cliff's delta on per-repo *proportions*, "V" labeled for paper-column
+consistency though the number was Cliff's delta) -- the paper settled on
+two narrower tables (one purely descriptive, one inferential-but-simpler:
+a binary coverage rate instead of a continuous proportion) instead of one
+combined table. `compare_categorical_repo_level()`/
+`repo_level_category_proportions()` (`_shared.py`) are still used
+elsewhere in this package (rq1.py/rq3.py) -- only rq2.py's own use of them
+for that removed table is gone.
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
 comparisons; see rq1.py's module docstring.
 
-**Unimodality check (Python teardown_pct)**: a second, distinct metric --
-Hartigan & Hartigan's (1985) dip test for unimodality, run separately per
-dataset on the per-repo Python `teardown_pct` distribution the table
-above already summarizes down to one median (`_render_teardown_dip_test()`,
-`run_dip_test()` in `_shared.py`). This is a single-distribution shape
-diagnostic, not an A vs C comparison test -- it exists to check whether
-Python's near-zero/near-100% median split (see
-internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md
-for why that split exists at all -- `pytest_decorator`'s `"other"`
-classification, not a real absence of teardown) reflects a genuinely
-bimodal population (most repos cluster at one extreme, a distinct
-minority at the other) or a smooth continuum that the median alone
-doesn't reveal. Reported alongside a text histogram of each
-distribution (`render_ascii_histogram()`) since this package's reports
-are plain markdown with no image pipeline.
+## Supplementary analyses (not part of either main table)
+
+**Unimodality check (Python teardown_pct)**: Hartigan & Hartigan's (1985)
+dip test for unimodality, run separately per dataset on the per-repo
+Python `teardown_pct` distribution (`_render_teardown_dip_test()`,
+`run_dip_test()` in `_shared.py`, `_python_teardown_proportions()` for the
+underlying per-repo values -- unrelated to Table 2's binary coverage
+indicator, this is the continuous 0..1 proportion the old table used to
+summarize as a median). A single-distribution shape diagnostic, not an A
+vs C comparison test -- it exists to check whether Python's near-zero/
+near-100% split (see internal-docs/methodology-improvements/
+pytest-yield-teardown-vs-fixture-kind.md for why that split exists at all
+-- `pytest_decorator`'s `"other"` classification, not a real absence of
+teardown) reflects a genuinely bimodal population or a smooth continuum.
+Reported alongside a text histogram of each distribution
+(`render_ascii_histogram()`) since this package's reports are plain
+markdown with no image pipeline. Kept and still computed (not part of
+either paper table, but may still be cited in prose) -- rendered under
+`generate_report()`'s "## Supplementary Analyses" section, after both
+main tables.
+
+**`has_teardown_pair`**: no separate analysis of this fixtures-table
+column exists in this script (it never has -- `_kind()`'s classification
+above is this script's own, independent teardown detection, built from
+the same two lookup tables `has_teardown_pair` itself is computed from,
+not from that column directly). Nothing to relabel as supplementary here.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.
@@ -90,7 +110,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
-from ..between_group_comparison import BalanceTest
+from ..between_group_comparison import BalanceTest, compute_continuous_balance
 from ..db import db_session
 from ..detector_shared import NAME_BASED_TEARDOWN_PAIRS, TYPE_BASED_TEARDOWN_PAIRS
 from ..logging_utils import get_logger
@@ -101,7 +121,6 @@ from ._shared import (
     LanguageLeakage,
     NCounts,
     apply_fdr_correction,
-    compare_categorical_repo_level,
     compute_language_leakage,
     continuous_effect_size_cell,
     format_p_value,
@@ -116,6 +135,11 @@ from ._shared import (
 )
 
 logger = get_logger(__name__)
+
+# Fixed row order for both paper tables -- see the module docstring for why
+# this is a fixed list rather than the "languages present on both sides"
+# intersection convention used elsewhere in this package.
+RQ2_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
 
 TYPE_BASED_SETUP_TYPES: set[str] = set(TYPE_BASED_TEARDOWN_PAIRS.keys())
 TYPE_BASED_TEARDOWN_TYPES: set[str] = set(TYPE_BASED_TEARDOWN_PAIRS.values())
@@ -196,13 +220,15 @@ def _fetch_kinds_and_repo_counts(
     with each other (a second, SQL-side classification would just be
     `_kind()` duplicated in a different language).
 
-    `kind_counts_by_repo` feeds compare_categorical_repo_level() for the
-    Overall row's repo-declustered test; `kind_counts_by_repo_and_language`
-    feeds the same per language -- grouped by each fixture's own language
-    (test_files.language), not the repo's tag, so a repo with fixtures in
-    more than one language contributes to each language's own repo-level
-    proportions separately. Both also feed repo_level_category_n_counts()
-    for the table's n_A/n_C columns."""
+    `kind_counts_by_repo` feeds Table 2's Overall row (via
+    _teardown_coverage_indicators() + compute_continuous_balance());
+    `kind_counts_by_repo_and_language` feeds both tables' per-language rows
+    -- Table 1's raw counts (_language_kind_totals(), summed across repos)
+    and Table 2's per-language coverage test -- grouped by each fixture's
+    own language (test_files.language), not the repo's tag, so a repo with
+    fixtures in more than one language contributes to each language
+    separately. Both also feed repo_level_category_n_counts() for Table
+    2's n_A/n_C columns."""
     kind_distribution = {"setup": 0, "teardown": 0, "other": 0}
     kind_counts_by_repo: dict[int, dict[str, int]] = {}
     kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = {}
@@ -244,98 +270,136 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     return "\n".join(lines)
 
 
-def _kind_proportion_row(
-    label: str,
-    setup_test: BalanceTest,
-    teardown_test: BalanceTest,
-    n: NCounts,
-    *,
-    corrected: bool,
-) -> str:
-    """One row: descriptive setup/teardown medians (from each category's
-    own repo-level BalanceTest) plus setup's own effect size/p-value,
-    which stands in for the whole row -- see this module's docstring for
-    why. `corrected` selects between setup_test's raw p (Overall, a single
-    pooled test) and its BH-adjusted p (per-language rows, already computed
-    by apply_fdr_correction() before this is called)."""
-    d = setup_test.details
-    if d.get("reason") == "insufficient_data" or "error" in d:
-        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | -- | -- | -- | -- |"
-    p_cell = (
-        format_p_value(d["adjusted_p_value"]) if corrected else format_p_value(setup_test.p_value)
-    )
-    td = teardown_test.details
-    return (
-        f"| {label} | {n.n_a} | {n.n_c} | "
-        f"{pct(d.get('agent_median'))} | {pct(d.get('human_median'))} | "
-        f"{pct(td.get('agent_median'))} | {pct(td.get('human_median'))} | "
-        f"{continuous_effect_size_cell(setup_test)} | {p_cell} |"
-    )
+def _language_kind_totals(
+    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]],
+) -> dict[str, dict[str, int]]:
+    """{language: {setup/teardown/other: total count across every repo}} --
+    Table 1's per-language raw counts, summed from the same per-repo counts
+    Table 2 and the dip test draw their per-repo populations/proportions
+    from (no separate fetch/classification pass)."""
+    totals: dict[str, dict[str, int]] = {}
+    for language, by_repo in kind_counts_by_repo_and_language.items():
+        lang_totals = totals.setdefault(language, {"setup": 0, "teardown": 0, "other": 0})
+        for repo_counts in by_repo.values():
+            for kind, count in repo_counts.items():
+                lang_totals[kind] += count
+    return totals
 
 
-def _render_kind_proportion_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """The paper's one RQ2 table -- see this module's docstring for the
-    full methodology (repo-level setup/teardown/other proportions, Mann-
-    Whitney U + Cliff's delta via compare_categorical_repo_level(), the
-    "V" labeling caveat)."""
+def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Table 1 (tab:rq2-counts): absolute setup/teardown fixture counts per
+    language, purely descriptive -- no statistics, "other"-classified
+    fixtures excluded from both columns. See this module's docstring for
+    the full methodology."""
     other_label = other.dataset.upper()
     lines = [
-        "Per-repository proportions: for each repo, "
-        "`setup_pct`/`teardown_pct`/`other_pct` = that repo's "
-        "setup/teardown/other-classified fixtures divided by its total "
-        "classified fixtures (the three sum to 100% per repo; `other_pct` "
-        "isn't shown below). Median is taken over those per-repo "
-        "proportions, not a single pooled fixture-level percentage. "
-        f'"V (A↔{other_label})"/"p (BH)" are the `setup` category\'s own '
-        "repo-level Mann-Whitney U + Cliff's delta test (`setup`/`teardown` "
-        "aren't independent -- together with `other` they sum to 100% per "
-        "repo -- so this one test represents the row). The column is "
-        "labeled \"V\" for consistency with the paper's other effect-size "
-        "columns, but the number is Cliff's delta, not literally Cramer's "
-        "V. Overall is a single pooled test (raw p, never BH-corrected); "
-        "each language's p is BH-FDR-corrected against the other 3 "
-        "languages' `setup` tests only.",
+        "Raw counts of setup-classified and teardown-classified fixtures "
+        '("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are '
+        "excluded from both columns). Total is the dataset-wide sum across "
+        "every language present, not just the four rows below. Purely "
+        "descriptive -- no significance test.",
         "",
-        "| Language | n_A | "
-        f"n_{other_label} | Setup A (%) | Setup {other_label} (%) | "
-        f"Teardown A (%) | Teardown {other_label} (%) | V (A↔{other_label}) | p (BH) |",
-        "|---|---|---|---|---|---|---|---|---|",
+        f"| Language | Setup A | Setup {other_label} | Teardown A | Teardown {other_label} |",
+        "|---|---|---|---|---|",
+        (
+            f"| Total | {a.kind_distribution.get('setup', 0):,} | "
+            f"{other.kind_distribution.get('setup', 0):,} | "
+            f"{a.kind_distribution.get('teardown', 0):,} | "
+            f"{other.kind_distribution.get('teardown', 0):,} |"
+        ),
     ]
 
-    overall = compare_categorical_repo_level(
-        a.kind_counts_by_repo, other.kind_counts_by_repo, "fixture_type_kind"
-    )
-    overall_n = repo_level_category_n_counts(a.kind_counts_by_repo, other.kind_counts_by_repo)
-    lines.append(
-        _kind_proportion_row(
-            "Overall", overall["setup"], overall["teardown"], overall_n, corrected=False
+    a_totals = _language_kind_totals(a.kind_counts_by_repo_and_language)
+    other_totals = _language_kind_totals(other.kind_counts_by_repo_and_language)
+    for language in RQ2_LANGUAGES:
+        a_kind = a_totals.get(language, {})
+        other_kind = other_totals.get(language, {})
+        lines.append(
+            f"| {language} | {a_kind.get('setup', 0):,} | {other_kind.get('setup', 0):,} | "
+            f"{a_kind.get('teardown', 0):,} | {other_kind.get('teardown', 0):,} |"
         )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[float]:
+    """Per-repo binary indicator: 1.0 if that repo has >=1 teardown-
+    classified fixture, else 0.0. Population is repos with >=1 classified
+    (setup/teardown/other) fixture -- a repo with none is skipped, not
+    counted as 0-coverage, matching repo_level_category_proportions()'s
+    convention elsewhere in this package. Feeds compute_continuous_balance()
+    directly: the mean of these 0/1 values *is* "% of repos with >=1
+    teardown fixture", so that call's agent_mean/human_mean double as
+    Table 2's Coverage A/C (%) columns."""
+    return [1.0 if counts.get("teardown", 0) > 0 else 0.0 for counts in by_repo.values() if sum(counts.values())]
+
+
+def _render_teardown_coverage_row(
+    label: str, test: BalanceTest, n: NCounts, *, corrected: bool
+) -> str:
+    """One row of Table 2 -- coverage percentages come from the same
+    compute_continuous_balance() call's agent_mean/human_mean (see
+    _teardown_coverage_indicators()'s docstring), delta from Cliff's delta.
+    `corrected` selects between `test`'s raw p (Overall, a single pooled
+    test) and its BH-adjusted p (per-language rows, already computed by
+    apply_fdr_correction() before this is called)."""
+    d = test.details
+    if d.get("reason") == "insufficient_data" or "error" in d:
+        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | -- | -- |"
+    p_cell = format_p_value(d["adjusted_p_value"]) if corrected else format_p_value(test.p_value)
+    return (
+        f"| {label} | {n.n_a} | {n.n_c} | "
+        f"{pct(d.get('agent_mean'))} | {pct(d.get('human_mean'))} | "
+        f"{continuous_effect_size_cell(test)} | {p_cell} |"
     )
 
-    languages = sorted(
-        set(a.kind_counts_by_repo_and_language) & set(other.kind_counts_by_repo_and_language)
+
+def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Table 2 (tab:rq2-coverage): % of repos with >=1 teardown-classified
+    fixture, Mann-Whitney U + Cliff's delta on the per-repo binary
+    indicator, BH-FDR-corrected across the four-language family. See this
+    module's docstring for the full methodology."""
+    other_label = other.dataset.upper()
+    lines = [
+        "Per-repository binary coverage: 1 if a repo has >=1 teardown-"
+        "classified fixture, else 0 (population: repos with >=1 setup/"
+        'teardown/other-classified fixture). "Coverage A/C (%)" is the '
+        'share of that population with the indicator at 1. "delta" is '
+        "Cliff's delta from a Mann-Whitney U test on the indicator between "
+        "datasets. Overall is a single pooled test (raw p, never "
+        "BH-corrected); each language's p is BH-FDR-corrected against the "
+        "other 3 languages' tests only.",
+        "",
+        f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) | delta | p (BH) |",
+        "|---|---|---|---|---|---|---|",
+    ]
+
+    overall_test = compute_continuous_balance(
+        human_values=_teardown_coverage_indicators(other.kind_counts_by_repo),
+        agent_values=_teardown_coverage_indicators(a.kind_counts_by_repo),
+        variable="teardown_coverage_overall",
     )
-    per_language_results: dict[str, dict[str, BalanceTest]] = {}
+    overall_n = repo_level_category_n_counts(a.kind_counts_by_repo, other.kind_counts_by_repo)
+    lines.append(_render_teardown_coverage_row("Overall", overall_test, overall_n, corrected=False))
+
+    per_language_tests: dict[str, BalanceTest] = {}
     per_language_n: dict[str, NCounts] = {}
-    for language in languages:
-        a_by_repo = a.kind_counts_by_repo_and_language[language]
-        other_by_repo = other.kind_counts_by_repo_and_language[language]
-        per_language_results[language] = compare_categorical_repo_level(
-            a_by_repo, other_by_repo, f"fixture_type_kind_{language}"
+    for language in RQ2_LANGUAGES:
+        a_by_repo = a.kind_counts_by_repo_and_language.get(language, {})
+        other_by_repo = other.kind_counts_by_repo_and_language.get(language, {})
+        per_language_tests[language] = compute_continuous_balance(
+            human_values=_teardown_coverage_indicators(other_by_repo),
+            agent_values=_teardown_coverage_indicators(a_by_repo),
+            variable=f"teardown_coverage_{language}",
         )
         per_language_n[language] = repo_level_category_n_counts(a_by_repo, other_by_repo)
 
-    corrected_setup = apply_fdr_correction(
-        {language: result["setup"] for language, result in per_language_results.items()}
-    )
-    for language in languages:
+    corrected_tests = apply_fdr_correction(per_language_tests)
+    for language in RQ2_LANGUAGES:
         lines.append(
-            _kind_proportion_row(
-                language,
-                corrected_setup[language],
-                per_language_results[language]["teardown"],
-                per_language_n[language],
-                corrected=True,
+            _render_teardown_coverage_row(
+                language, corrected_tests[language], per_language_n[language], corrected=True
             )
         )
 
@@ -344,34 +408,38 @@ def _render_kind_proportion_table(a: DatasetMetrics, other: DatasetMetrics) -> s
 
 
 def _python_teardown_proportions(metrics: DatasetMetrics) -> list[float]:
-    """Per-repo teardown_pct for Python repos only -- the same per-repo
-    proportions the Python row of _render_kind_proportion_table() already
-    summarizes down to one median; this exposes the underlying
-    distribution itself for _render_teardown_dip_test()."""
+    """Per-repo teardown_pct for Python repos only -- a continuous 0..1
+    proportion, distinct from Table 2's binary coverage indicator; this
+    exposes the underlying distribution for _render_teardown_dip_test()."""
     python_by_repo = metrics.kind_counts_by_repo_and_language.get("python", {})
     return repo_level_category_proportions(python_by_repo, "teardown")
 
 
 def _render_teardown_dip_test(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """## Unimodality Check: Python Teardown Proportion (Dip Test).
+    """### Unimodality Check: Python Teardown Proportion (Dip Test).
 
-    Hartigan & Hartigan's (1985) dip test, run separately per dataset on
-    the per-repo Python teardown_pct distribution -- a single-distribution
-    shape diagnostic (is this one distribution unimodal?), not an A vs C
-    comparison test the way every other table in this report is. Reported
-    side by side purely for reading convenience. See run_dip_test()'s
-    docstring in _shared.py for the exact method (tabulated critical
-    values, deterministic) and null hypothesis."""
+    Supplementary -- not part of either main paper table (tab:rq2-counts,
+    tab:rq2-coverage), rendered under generate_report()'s "## Supplementary
+    Analyses" section since it may still be cited in prose. Hartigan &
+    Hartigan's (1985) dip test, run separately per dataset on the per-repo
+    Python teardown_pct distribution -- a single-distribution shape
+    diagnostic (is this one distribution unimodal?), not an A vs C
+    comparison test the way both main tables are. Reported side by side
+    purely for reading convenience. See run_dip_test()'s docstring in
+    _shared.py for the exact method (tabulated critical values,
+    deterministic) and null hypothesis."""
     other_label = other.dataset.upper()
     lines = [
-        "## Unimodality Check: Python Teardown Proportion (Dip Test)",
+        "### Unimodality Check: Python Teardown Proportion (Dip Test)",
         "",
         "Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & "
-        "Hartigan 1985, The Dip Test of Unimodality], run on the same "
-        "per-repo Python `teardown_pct` values the table above summarizes "
-        "as a single median -- separately per dataset, since this tests "
-        "whether *one* distribution is unimodal, not whether two "
-        "distributions differ. Null hypothesis: the distribution is "
+        "Hartigan 1985, The Dip Test of Unimodality], run on the per-repo "
+        "Python `teardown_pct` distribution (each repo's teardown-"
+        "classified fixtures divided by its total classified fixtures) -- "
+        "separately per dataset, since this tests whether *one* "
+        "distribution is unimodal, not whether two distributions differ. "
+        "Not the same value as Table 2's binary coverage indicator. Null "
+        "hypothesis: the distribution is "
         "unimodal; a low p-value is evidence of multimodality (e.g. a "
         'real "most repos provide none, a distinct minority provide '
         'all" split, rather than a smooth continuum from 0% to 100%).',
@@ -412,8 +480,12 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     lines = [
         f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
         "",
-        _render_kind_proportion_table(a, other),
-        _render_teardown_dip_test(a, other),
+        "### Table 1: Fixture Counts by Type (tab:rq2-counts)",
+        "",
+        _render_kind_counts_table(a, other),
+        "### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)",
+        "",
+        _render_teardown_coverage_table(a, other),
     ]
     return "\n".join(lines)
 
@@ -459,6 +531,19 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
+
+        lines += [
+            "## Supplementary Analyses",
+            "",
+            "Analyses below are not part of either main paper table "
+            "(tab:rq2-counts, tab:rq2-coverage) but are kept and computed "
+            "since they may still be referenced in prose.",
+            "",
+        ]
+        for other_ds, _label in COMPARISONS:
+            other_metrics = loaded[other_ds]
+            if other_metrics is not None:
+                lines.append(_render_teardown_dip_test(a_metrics, other_metrics))
 
     return "\n".join(lines)
 
