@@ -1,8 +1,8 @@
 # RQ3 -- Mocking
 
-> How do agent-generated and human-written fixtures differ in mock usage -- prevalence, framework selection, and interaction depth?
+> How do agent-generated and human-written fixtures differ in mock usage -- coverage and intensity?
 
-Generated: 2026-08-21 00:06:39 UTC
+Generated: 2026-08-23 02:26:39 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ3 definition.
 
@@ -190,7 +190,25 @@ Mock prevalence: 2,882/47,208 fixtures (6.1%)
 |---|---|---|---|---|---|---|---|
 | Overall | 574 | 530 | U=137644.0 | -0.095 | negligible | <.001 | -- |
 
-**has_mock (chi-square)** -- an "Overall" row (single pooled test, not BH-corrected) plus one BH-corrected row per language (one family, 4 languages -- see render_comparison_table()'s docstring in _shared.py). Effect size is Cramer's V (thresholds: negligible <0.1, small <0.3, medium <0.5, else large). framework/category are shown further below instead -- see this module's docstring for why they don't get a chi-square table.
+### Mocking Coverage and Intensity (paper table)
+
+**Coverage** = % of repos with >=1 fixture containing a mock at all (population: every repo with >=1 fixture, of that language for the per-language rows). **Intensity** = median `num_mocks` across a repo's own mocking fixtures (`num_mocks > 0` only), then the median of those per-repo values across repos -- **computed only over repos where Coverage = 1**; non-mocking repos are excluded from Intensity entirely, not counted as 0. n_A/n_C is Coverage's population size for that row -- Intensity's true n can be smaller, since it's a strict subset (mocking repos only); this table has one n column pair per row, not one per metric. Both effect sizes are Cliff's delta from a Mann-Whitney U test on the underlying per-repo values (binary for coverage, the per-repo median for intensity). Overall is two single pooled tests (raw p, never BH-corrected). Each language's coverage AND intensity tests (8 tests: 4 languages x 2 metrics) are BH-FDR corrected together as one combined family, not two separate 4-test families -- both are RQ3 metrics reported in this same table.
+
+| Language | n_A | n_C | Coverage A (%) | Coverage C (%) | δ_cov | p_cov | Intensity A | Intensity C | δ_int | p_int |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1354 | 2325 | 42.4% | 22.8% | -0.196 (small) | <.001 | 1.50 | 1.00 | -0.130 (negligible) | <.001 |
+| java | 97 | 267 | 28.9% | 11.2% | -0.176 (small) | <.001 | 1.50 | 2.00 | 0.090 (negligible) | 0.623 |
+| javascript | 115 | 557 | 21.7% | 20.8% | -0.009 (negligible) | 0.827 | 2.00 | 1.00 | -0.277 (small) | 0.026 |
+| python | 531 | 944 | 56.3% | 18.2% | -0.381 (medium) | <.001 | 1.50 | 1.00 | -0.111 (negligible) | 0.047 |
+| typescript | 749 | 735 | 33.1% | 31.2% | -0.020 (negligible) | 0.561 | 1.00 | 1.00 | -0.122 (negligible) | 0.026 |
+
+## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)
+
+Kept for transparency/comparison only -- not one of RQ3's reported tables. Pooled + per-language fixture-level `has_mock` chi-square, already flagged as repo-level pseudo-replication (every fixture treated as an independent observation, though fixtures cluster within repos) before the table above existed -- see [Limitations § Categorical Pseudo-Replication](../docs/reference/limitations.md#categorical-pseudo-replication). The paper's actual mocking-coverage result is the Coverage column in the main table above, computed at the repo level directly.
+
+### A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
+
+**has_mock (chi-square)** -- an "Overall" row (single pooled test, not BH-corrected) plus one BH-corrected row per language (one family, 4 languages -- see render_comparison_table()'s docstring in _shared.py). Effect size is Cramer's V (thresholds: negligible <0.1, small <0.3, medium <0.5, else large).
 
 ### has_mock
 
@@ -201,78 +219,3 @@ Mock prevalence: 2,882/47,208 fixtures (6.1%)
 | javascript | 115 | 557 | chi2=38.5 (df=1) | 0.068 | negligible | <.001 | <.001 |
 | python | 531 | 944 | chi2=1082.8 (df=1) | 0.221 | small | <.001 | <.001 |
 | typescript | 749 | 735 | chi2=81.3 (df=1) | 0.036 | negligible | <.001 | <.001 |
-
-> **`has_mock`'s result above is not used in the paper.** It's a pooled/per-language fixture-level chi-square, which treats fixtures clustered within a repo as independent observations and inflates both chi2 and Cramer's V (see [Limitations § Categorical Pseudo-Replication](../docs/reference/limitations.md#categorical-pseudo-replication)). The paper reports the repo-level `has_mock` proportion test in "Repo-level aggregates" below instead.
-
-**Mocking framework distribution (descriptive, per language)** -- no statistical test or effect size: framework names are language-specific by construction (`unittest.mock` is Python-only, Sinon is JS-only, Mockito is Java-only), so a pooled cross-language comparison would just reflect each dataset's language mix (Dataset A is TypeScript-heavy, Dataset C skews Python/JavaScript), not an authorship-era effect. Top 3 frameworks per language per dataset (union of both sides' top 3), as a percentage of that language's own mock usages.
-
-| Language | Framework | Dataset A (agent-authored) (%) | Dataset C (human-authored, pre-LLM) (%) |
-|---|---|---|---|
-| java | mockito | 100.0% | 100.0% |
-| javascript | vitest | 53.4% | 0.0% |
-| javascript | jest | 36.1% | 60.3% |
-| javascript | sinon | 10.5% | 39.5% |
-| javascript | unittest_mock | 0.0% | 0.2% |
-| python | unittest_mock | 58.8% | 81.6% |
-| python | pytest_monkeypatch | 39.1% | 10.7% |
-| python | pytest_mock | 2.1% | 7.7% |
-| typescript | vitest | 59.0% | 0.0% |
-| typescript | jest | 38.8% | 53.0% |
-| typescript | sinon | 2.2% | 46.9% |
-| typescript | unittest_mock | 0.0% | 0.0% |
-
-**Test-double category distribution, per language (Mann-Whitney U on per-repo category proportions, two-sided)** -- category naming conventions also vary systematically by language/ecosystem (Sinon's explicit `.spy()`/`.stub()` API vs Python's monolithic `Mock`/`MagicMock`), so this is computed once per language instead of pooled, reusing the same repo-level-proportion approach used elsewhere in this script. Each language's own category family (up to 5: dummy/fake/mock/spy/stub) is BH-FDR corrected independently of every other language's. Positive δ means the comparison dataset tends to have a larger proportion than A.
-
-| Language | Category | Dataset A (agent-authored) (median %) | Dataset C (human-authored, pre-LLM) (median %) | δ (A vs C) | p (BH) |
-|---|---|---|---|---|---|
-| java | dummy | 0.0% | 0.0% | -0.071 | 0.383 |
-| java | fake | 0.0% | 0.0% | -0.001 | 1.000 |
-| java | mock | 100.0% | 100.0% | -0.096 | 0.508 |
-| java | spy | 0.0% | 0.0% | 0.132 | 0.383 |
-| java | stub | 0.0% | 0.0% | -0.070 | 0.507 |
-| javascript | fake | 0.0% | 0.0% | -0.085 | 0.215 |
-| javascript | mock | 55.6% | 50.0% | 0.064 | 0.648 |
-| javascript | spy | 0.0% | 0.0% | 0.049 | 0.648 |
-| javascript | stub | 0.0% | 0.0% | -0.163 | 0.215 |
-| python | dummy | 0.0% | 0.0% | -0.002 | 0.914 |
-| python | fake | 0.0% | 0.0% | -0.191 | <.001 |
-| python | mock | 100.0% | 100.0% | 0.216 | <.001 |
-| python | spy | 0.0% | 0.0% | -0.011 | 0.391 |
-| python | stub | 0.0% | 0.0% | -0.167 | <.001 |
-| typescript | dummy | 0.0% | 0.0% | 0.026 | 0.013 |
-| typescript | fake | 0.0% | 0.0% | -0.081 | 0.010 |
-| typescript | mock | 84.9% | 27.3% | -0.205 | <.001 |
-| typescript | spy | 0.0% | 5.9% | 0.223 | <.001 |
-| typescript | stub | 0.0% | 0.0% | -0.052 | 0.210 |
-
-**Aggregate category distribution (descriptive only -- not used for inference)** -- pooled across all languages and repos, shown for reference only; the per-language table above is the real A-vs-C comparison.
-
-| Category | Dataset A (agent-authored) (%) | Dataset C (human-authored, pre-LLM) (%) |
-|---|---|---|
-| dummy | 0.5% | 0.5% |
-| fake | 6.5% | 3.2% |
-| mock | 75.7% | 42.3% |
-| spy | 7.5% | 20.9% |
-| stub | 9.8% | 33.1% |
-
-## Repo-level aggregates
-
-has_mock re-tested with one *proportion-per-repo* value instead of pooled/per-language fixture-level chi-square, so each repo counts once regardless of how many fixtures it contributed. (num_mocks/num_interactions_configured already have their own repo-level Overall row above, in the main comparison section; framework/category are handled entirely in the main comparison section too -- see this module's docstring.)
-
-### A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
-
-**has_mock, repo-level (Mann-Whitney U on per-repo category proportions, two-sided)** -- the chi-square table above treats every fixture as an independent observation, but fixtures cluster within repos (shared framework choice, project convention), which inflates chi2 and partially corrupts Cramer's V. This instead compares, per repo, what fraction of its fixtures have >=1 mock -- so each repo counts once regardless of how many fixtures it contributed. **This is the `has_mock` result reported in the paper.** (framework's per-language descriptive table and category's per-language repo-level proportion table are both in the main comparison section above instead -- neither gets a pooled-across-languages view here, see this module's docstring for why.)
-
-| Category | A median | A mean | C median | C mean | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|---|---|---|
-| has_mock | 0.0% | 11.7% | 0.0% | 6.2% | 1354 | 2325 | U=1261489.5 | -0.199 | small | <.001 | <.001 |
-| no_mock | 100.0% | 88.3% | 100.0% | 93.8% | 1354 | 2325 | U=1886560.5 | 0.199 | small | <.001 | <.001 |
-
-**has_mock, repo-level, per language** -- the pooled Overall row above can still partly reflect each dataset's own language mix (Dataset A skews TypeScript, Dataset C skews Python/JavaScript) rather than a within-language authorship-era effect, so this reruns the same repo-level-proportion Mann-Whitney U + Cliff's delta test once per language (own repos, own denominator, languages with data on both sides only). Only `has_mock`'s own test is shown per language -- `no_mock` is its exact complement -- BH-FDR corrected across this variable's own per-language family, independent of the Overall row above.
-
-| Language | Dataset A (agent-authored) (median %) | Dataset C (human-authored, pre-LLM) (median %) | δ (A vs C) | p (BH) |
-|---|---|---|---|---|
-| java | 0.0% | 0.0% | -0.170 | <.001 |
-| javascript | 0.0% | 0.0% | 0.010 | 0.819 |
-| python | 10.0% | 0.0% | -0.401 | <.001 |
-| typescript | 0.0% | 0.0% | -0.007 | 0.819 |
