@@ -39,6 +39,20 @@ def test_is_test_file_path_bare_lowercase_suffix_requires_boundary() -> None:
     assert not is_test_file_path("src/contest.js", "javascript")
 
 
+def test_is_test_file_path_directory_convention_alone_is_sufficient() -> None:
+    """The test_path_patterns fallback (a file merely sitting under a
+    conventional test directory) has to work on its own, without a
+    suffix match riding along -- every directory-convention example above
+    (WidgetTest.java, widget.spec.ts) happens to *also* match by suffix, so
+    none of them actually exercise this branch in isolation. This is the
+    same branch _count_test_files() delegates to for the MIN_TEST_FILES
+    eligibility gate (see persistent_clone.py)."""
+    assert is_test_file_path("tests/helpers.py", "python")  # no _test.py-style suffix
+    assert is_test_file_path("src/test/java/com/example/Fixtures.java", "java")  # no Test.java suffix
+    assert is_test_file_path("src/__tests__/helpers.ts", "typescript")  # no .spec.ts suffix
+    assert not is_test_file_path("src/helpers.py", "python")  # not under a test dir at all
+
+
 def test_collect_test_files_for_commit_detects_modified_test_files(
     tmp_path: Path,
 ) -> None:
