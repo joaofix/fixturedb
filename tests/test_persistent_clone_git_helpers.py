@@ -10,6 +10,7 @@ from pathlib import Path
 
 from collection.persistent_clone import (
     _count_commits,
+    _count_test_files,
     _get_head_sha,
     _is_accessible_remote,
 )
@@ -124,3 +125,51 @@ def test_is_accessible_remote_detects_credential_prompt(monkeypatch):
     accessible, requires_creds = _is_accessible_remote("https://example.com/o/private.git")
     assert accessible is False
     assert requires_creds is True
+
+
+def test_count_test_files_counts_every_directory_pattern_match_not_just_one(tmp_path):
+    """Regression test: `_count_test_files()` used to credit at most 1 file
+    per matched `test_path_patterns` directory, no matter how many test
+    files actually lived there (a stray `break` after the first match).
+    Delegating to `is_test_file_path()` fixed that -- these 3 files live
+    under Python's `tests/` directory convention without a `_test.py`-style
+    suffix, so the old code would have reported 1, not 3."""
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    for name in ("fixtures.py", "conftest.py", "helpers.py"):
+        (tests_dir / name).write_text("# not test-suffix-named\n")
+
+    # conftest.py matches via suffix convention; fixtures.py/helpers.py only
+    # match via the "tests/" directory convention.
+    assert _count_test_files(tmp_path, "python") == 3
+
+
+def test_count_test_files_counts_suffix_matches_across_nested_dirs(tmp_path):
+    src = tmp_path / "pkg"
+    src.mkdir()
+    (src / "widget_test.py").write_text("x\n")
+    (src / "widget.py").write_text("x\n")
+
+    assert _count_test_files(tmp_path, "python") == 1
+
+
+def test_count_test_files_does_not_double_count_a_file_matching_both_conventions(tmp_path):
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "widget_test.py").write_text("x\n")  # suffix AND directory match
+
+    assert _count_test_files(tmp_path, "python") == 1
+
+
+def test_count_test_files_ignores_non_test_files(tmp_path):
+    (tmp_path / "widget.py").write_text("x\n")
+    (tmp_path / "README.md").write_text("x\n")
+
+    assert _count_test_files(tmp_path, "python") == 0
+
+
+def test_count_test_files_unknown_language_returns_zero(tmp_path):
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "widget_test.rb").write_text("x\n")
+
+    assert _count_test_files(tmp_path, "ruby") == 0

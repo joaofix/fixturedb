@@ -29,6 +29,7 @@ from .config import (
     MIN_TEST_FILES,
 )
 from .db import db_session, get_repos_by_status, set_repo_status
+from .test_commit_utils import is_test_file_path
 
 logger = get_logger(__name__)
 
@@ -149,8 +150,7 @@ def clone_repo(
             f"insufficient commits ({commit_count} < {MIN_COMMITS})",
         )
 
-    config = LANGUAGE_CONFIGS.get(language)
-    test_file_count = _count_test_files(target_dir, config)
+    test_file_count = _count_test_files(target_dir, language)
     if test_file_count < MIN_TEST_FILES:
         shutil.rmtree(target_dir, ignore_errors=True)
         logger.debug(f"[clone] Skip {full_name}: only {test_file_count} test files")
@@ -260,22 +260,26 @@ def _count_commits(repo_dir: Path) -> int:
         return 0
 
 
-def _count_test_files(repo_dir: Path, config) -> int:
-    """Count files that match the language's test file naming conventions."""
-    if config is None:
-        return 0
+def _count_test_files(repo_dir: Path, language: str) -> int:
+    """Count files that match the language's test file conventions.
 
-    count = 0
-    for suffix in config.test_file_suffixes:
-        count += len(list(repo_dir.rglob(f"*{suffix}")))
+    Delegates to `is_test_file_path()` -- the same canonical definition
+    used everywhere else a file's test-file status is load-bearing
+    (fixture-extraction candidacy, commit purity gating, Dataset C's own
+    file-language detection) -- so the >=MIN_TEST_FILES eligibility gate
+    can't disagree with what "test file" means downstream.
 
-    for pattern in config.test_path_patterns:
-        for path in repo_dir.rglob("*"):
-            if pattern in str(path.relative_to(repo_dir)) and path.is_file():
-                count += 1
-                break
-
-    return count
+    Previously this duplicated its own looser, buggy approximation: a
+    suffix-glob count plus, per directory pattern (e.g. "tests/"), a flat
+    +1 if *any* file matched -- capped at 1 per pattern no matter how many
+    files actually lived there, silently undercounting repos whose test
+    files live in a conventional directory without a conventional suffix.
+    """
+    return sum(
+        1
+        for path in repo_dir.rglob("*")
+        if path.is_file() and is_test_file_path(str(path.relative_to(repo_dir)), language)
+    )
 
 
 def clone_pending_repos(
