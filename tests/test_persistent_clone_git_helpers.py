@@ -74,11 +74,16 @@ def test_count_commits_counts_all_commits_on_head(tmp_path, monkeypatch):
     assert _count_commits(repo) == 3
 
 
-def test_count_commits_returns_zero_for_non_git_dir(tmp_path):
+def test_count_commits_returns_none_not_zero_when_verification_fails(tmp_path):
+    """Regression guard: a failed fetch/rev-list (here, not even a git repo)
+    must come back as None, distinguishable from a confirmed low count --
+    collapsing it to 0 would make clone_repo() report a confident
+    "insufficient commits (0 < N)" skip for a repo that was never actually
+    verified. See _count_commits()'s docstring."""
     not_a_repo = tmp_path / "not_a_repo"
     not_a_repo.mkdir()
 
-    assert _count_commits(not_a_repo) == 0
+    assert _count_commits(not_a_repo) is None
 
 
 def test_count_commits_fetch_uses_no_prompt_env(tmp_path, monkeypatch):
@@ -173,3 +178,18 @@ def test_count_test_files_unknown_language_returns_zero(tmp_path):
     (tmp_path / "tests" / "widget_test.rb").write_text("x\n")
 
     assert _count_test_files(tmp_path, "ruby") == 0
+
+
+def test_count_test_files_excludes_git_internals(tmp_path):
+    """.git/ is walked by rglob("*") like any other directory but must be
+    skipped -- it's git bookkeeping, not the checked-out tree, and this
+    file would otherwise match Python's conftest.py suffix convention."""
+    git_hooks = tmp_path / ".git" / "hooks"
+    git_hooks.mkdir(parents=True)
+    (git_hooks / "conftest.py").write_text("# not a real fixture file\n")
+
+    tests_dir = tmp_path / "tests"
+    tests_dir.mkdir()
+    (tests_dir / "widget_test.py").write_text("x\n")
+
+    assert _count_test_files(tmp_path, "python") == 1

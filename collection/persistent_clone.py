@@ -80,7 +80,15 @@ def clone_repo(
     Clone a repository after fast pre-checks via git and GitHub API.
 
     Returns (repo_id, status, pinned_commit_or_None, skip_reason_or_None).
-    status is one of: 'cloned' | 'skipped' | 'error'.
+    status is one of: 'cloned' | 'skipped' | 'error'. Never raises -- both
+    real call sites (`tiered_agent_corpus_scanner.py`,
+    `paired_collection.py`) call this directly inside a plain per-repo loop
+    with no try/except of their own (`clone_pending_repos()` below is the
+    only caller with its own try/except-free ThreadPoolExecutor loop too),
+    so one repo hitting an unanticipated failure here (disk full, a
+    pathological filename, a git-internals edge case) must degrade to an
+    'error' row for that repo, not crash the rest of the batch still
+    in flight -- see the outer try/except below.
     """
     target_dir = CLONES_DIR / full_name.replace("/", "__")
 
@@ -110,8 +118,8 @@ def clone_repo(
     if not _has_sufficient_test_files(full_name, language):
         return repo_id, "skipped", None, "insufficient test files (GitHub API check)"
 
-    logger.info(f"[clone] Cloning {full_name} …")
     try:
+        logger.info(f"[clone] Cloning {full_name} …")
         result = run_git_no_prompt(
             [
                 "git",
@@ -134,38 +142,55 @@ def clone_repo(
         if result.returncode != 0:
             message = result.stderr.strip()[:300]
             logger.warning(f"[clone] Failed {full_name}: {message}")
+            shutil.rmtree(target_dir, ignore_errors=True)
             return repo_id, "error", None, None
+
+        commit_count = _count_commits(target_dir)
+        if commit_count is None:
+            # Fetch/rev-list itself failed (network blip, transient git
+            # error) -- NOT the same as a confirmed low count. Recording
+            # this as "insufficient commits (0 < N)" would misfile a
+            # transient failure as a confident, permanent rejection --
+            # exactly the class of bug clone_primitives.py's
+            # CloneUnavailable docstring describes already having bitten a
+            # real Dataset B run elsewhere. Surface it as 'error' instead.
+            shutil.rmtree(target_dir, ignore_errors=True)
+            logger.warning(f"[clone] Error {full_name}: could not verify commit count")
+            return repo_id, "error", None, "commit count verification failed"
+        if commit_count < MIN_COMMITS:
+            shutil.rmtree(target_dir, ignore_errors=True)
+            logger.debug(f"[clone] Skip {full_name}: only {commit_count} commits")
+            return (
+                repo_id,
+                "skipped",
+                None,
+                f"insufficient commits ({commit_count} < {MIN_COMMITS})",
+            )
+
+        test_file_count = _count_test_files(target_dir, language)
+        if test_file_count < MIN_TEST_FILES:
+            shutil.rmtree(target_dir, ignore_errors=True)
+            logger.debug(f"[clone] Skip {full_name}: only {test_file_count} test files")
+            return (
+                repo_id,
+                "skipped",
+                None,
+                f"insufficient test files ({test_file_count} < {MIN_TEST_FILES})",
+            )
+
+        commit = _get_head_sha(target_dir)
+        logger.info(
+            f"[clone] ✓ {full_name} ({test_file_count} test files, commit {commit[:8]})"
+        )
+        return repo_id, "cloned", commit, None
     except subprocess.TimeoutExpired:
         shutil.rmtree(target_dir, ignore_errors=True)
+        logger.warning(f"[clone] Timed out cloning/processing {full_name}")
         return repo_id, "error", None, None
-
-    commit_count = _count_commits(target_dir)
-    if commit_count < MIN_COMMITS:
+    except Exception as exc:
         shutil.rmtree(target_dir, ignore_errors=True)
-        logger.debug(f"[clone] Skip {full_name}: only {commit_count} commits")
-        return (
-            repo_id,
-            "skipped",
-            None,
-            f"insufficient commits ({commit_count} < {MIN_COMMITS})",
-        )
-
-    test_file_count = _count_test_files(target_dir, language)
-    if test_file_count < MIN_TEST_FILES:
-        shutil.rmtree(target_dir, ignore_errors=True)
-        logger.debug(f"[clone] Skip {full_name}: only {test_file_count} test files")
-        return (
-            repo_id,
-            "skipped",
-            None,
-            f"insufficient test files ({test_file_count} < {MIN_TEST_FILES})",
-        )
-
-    commit = _get_head_sha(target_dir)
-    logger.info(
-        f"[clone] ✓ {full_name} ({test_file_count} test files, commit {commit[:8]})"
-    )
-    return repo_id, "cloned", commit, None
+        logger.warning(f"[clone] Unexpected error processing {full_name}: {exc}")
+        return repo_id, "error", None, f"unexpected error: {exc}"
 
 
 def _get_head_sha(repo_dir: Path) -> str:
@@ -240,13 +265,21 @@ def _has_sufficient_test_files(full_name: str, language: str) -> bool:
         return True
 
 
-def _count_commits(repo_dir: Path) -> int:
+def _count_commits(repo_dir: Path) -> int | None:
     """Fetch a small amount of history, then count commits on HEAD.
 
     The fetch step stays a subprocess call (a network operation that relies
     on subprocess's own timeout= to avoid hanging on an unresponsive remote
     -- GitPython's clone/fetch helpers don't expose the same guard). The
     count step is local/read-only, so it uses GitPython directly.
+
+    Returns None -- not 0 -- if the fetch or rev-list itself fails (network
+    blip, transient git error). Silently collapsing that to 0 would make a
+    transient failure indistinguishable from a confirmed low commit count,
+    permanently and confidently mis-skipping a repo that was never actually
+    checked -- clone_primitives.py's CloneUnavailable docstring documents
+    this exact failure mode already having bitten a real Dataset B run
+    elsewhere. Callers must treat None as "couldn't verify", not "0".
     """
     try:
         run_git_no_prompt(
@@ -257,7 +290,7 @@ def _count_commits(repo_dir: Path) -> int:
         )
         return int(git.Repo(repo_dir).git.rev_list("--count", "HEAD", kill_after_timeout=10))
     except Exception:
-        return 0
+        return None
 
 
 def _count_test_files(repo_dir: Path, language: str) -> int:
@@ -274,12 +307,22 @@ def _count_test_files(repo_dir: Path, language: str) -> int:
     +1 if *any* file matched -- capped at 1 per pattern no matter how many
     files actually lived there, silently undercounting repos whose test
     files live in a conventional directory without a conventional suffix.
+
+    `.git/` is walked by `rglob("*")` like any other directory but is
+    explicitly excluded -- it's git-internal bookkeeping, not part of the
+    checked-out tree, and walking it is both wasted work (large repos can
+    carry many loose/packed objects even at depth 1) and a source of
+    surprise if `is_test_file_path()`'s directory-pattern fallback ever
+    happened to line up with a `.git` internal path.
     """
-    return sum(
-        1
-        for path in repo_dir.rglob("*")
-        if path.is_file() and is_test_file_path(str(path.relative_to(repo_dir)), language)
-    )
+    count = 0
+    for path in repo_dir.rglob("*"):
+        rel = path.relative_to(repo_dir)
+        if ".git" in rel.parts:
+            continue
+        if path.is_file() and is_test_file_path(str(rel), language):
+            count += 1
+    return count
 
 
 def clone_pending_repos(
