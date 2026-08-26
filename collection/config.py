@@ -77,6 +77,12 @@ def shallow_clone_since(since_date: str) -> str:
 
 MIN_STARS = _STUDY_PARAMS["min_stars"]
 MIN_COMMITS = _STUDY_PARAMS["min_commits"]
+# Companion threshold to LanguageConfig.test_path_patterns/test_file_suffixes
+# above -- what counts as a "test file" is that catalog + is_test_file_path()
+# (collection/test_commit_utils.py); this is just the "how many" floor,
+# enforced post-clone by persistent_clone.py::_count_test_files(). A
+# same-named, independent tier-2 discovery-query threshold also exists
+# further down (TIER2_MIN_TEST_FILES) -- see that constant's own call sites.
 MIN_TEST_FILES = _STUDY_PARAMS["min_test_files"]
 MIN_FIXTURES_FOUND = _STUDY_PARAMS["min_fixtures_found"]
 MIN_NON_BLANK_LOC = _STUDY_PARAMS["min_non_blank_loc"]  # Dataset C only
@@ -136,6 +142,16 @@ class LanguageConfig:
     github_language: str  # label used by GitHub search API
     min_stars: int = MIN_STARS
     full_target: int = 500  # target count for full production dataset
+
+    # test_path_patterns/test_file_suffixes below are the catalog -- data
+    # only, no matching logic here, same split as AGENT_SIGNATURES/
+    # agent_heuristics.yaml further down this file. The plain-string (not
+    # regex) boundary-aware matching that interprets these entries lives in
+    # is_test_file_path() (collection/test_commit_utils.py) -- the single
+    # canonical "is this a test file" definition, reused for fixture-
+    # extraction candidacy, commit purity gating, and Dataset C's own
+    # file-language detection. MIN_TEST_FILES below is the companion
+    # threshold ("how many test files must a repo have").
 
     # Paths that signal "this is a test file"
     test_path_patterns: list[str] = field(default_factory=list)
