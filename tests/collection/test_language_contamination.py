@@ -105,17 +105,33 @@ class TestCheckDataset:
 
 
 class TestGenerateReport:
-    def test_missing_all_datasets_notes_unavailable(self, tmp_path):
+    def test_missing_dataset_a_notes_unavailable(self, tmp_path):
         report = generate_report(datasets_root=tmp_path)
-        # Only A and C are reported now -- B is collected but out of scope
-        # for this script's output.
-        assert report.count("Not available -- no fixtures/*.csv files collected yet.") == 2
+        assert "Not available -- no fixtures/*.csv files collected yet." in report
+
+    def test_missing_dataset_c_notes_unavailable_with_sample_c_repos_hint(self, tmp_path):
+        """Dataset C's not-available message is its own, distinct from A's
+        -- it points at running sample-c-repos, since fixtures-sampled/ is
+        what's actually being checked, not the full fixtures/ directory."""
+        report = generate_report(datasets_root=tmp_path)
+        assert (
+            "_Not available -- run `sample-c-repos` first "
+            "(`datasets/c/fixtures-sampled/` not found)._" in report
+        )
 
     def test_reports_totals_and_breakdown(self, tmp_path):
         _write_fixtures_csv(tmp_path, "a", "python_fixtures.csv", ["python", "java"])
         report = generate_report(datasets_root=tmp_path)
         assert "1/2 fixtures mismatched (50.00%)" in report
         assert "java=1" in report
+
+    def test_dataset_c_section_states_it_checks_the_sampled_subset(self, tmp_path):
+        _write_sampled_c_fixtures_csv(tmp_path, "python_fixtures.csv", ["python"])
+        report = generate_report(datasets_root=tmp_path)
+        assert "Dataset C is checked against its fixture-level sample-down" in report
+        dataset_c_section = report.split("### Dataset C")[1]
+        assert "`datasets/c/fixtures-sampled/`" in dataset_c_section
+        assert "not the full `datasets/c/fixtures/` corpus" in dataset_c_section
 
 
 class TestWriteReport:

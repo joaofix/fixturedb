@@ -1,8 +1,15 @@
 """
 Cross-language contamination check: for each dataset's per-language fixture
-CSV (`datasets/{a,b,c}/fixtures/{language}_fixtures.csv`), what fraction of
+CSV (`datasets/{a,c}/fixtures/{language}_fixtures.csv`), what fraction of
 its rows carry a `language` value that does not match the file's own
 nominal (filename) language?
+
+Dataset "c" is checked against `datasets/c/fixtures-sampled/` (the
+fixture-level sample-down), not the full `datasets/c/fixtures/` corpus --
+see `check_dataset()`'s docstring, and matches `require_db_or_none()`'s
+identical redirect of "c" to `db/c_sampled.db` everywhere else in
+`research_questions/`. Stated explicitly in the generated report's own
+text too (`generate_report()`), not just here.
 
 Why this is a real check, not a tautology: a fixture's `language` column and
 the CSV file it's routed into are written from the same per-fixture source
@@ -114,6 +121,17 @@ def _render_dataset(dataset: str, results: list[FileContamination]) -> str:
     lines = [
         f"### {DATASET_LABELS[dataset]} -- {mismatched:,}/{total:,} fixtures mismatched ({pct:.2f}%)",
         "",
+    ]
+    if dataset == "c":
+        lines += [
+            "_Checked against `datasets/c/fixtures-sampled/` -- the "
+            "fixture-level sample-down (`sample-c-repos --match-dataset a`), "
+            "not the full `datasets/c/fixtures/` corpus. Same source every "
+            "other `research_questions/` script uses for Dataset C "
+            "(`db/c_sampled.db`)._",
+            "",
+        ]
+    lines += [
         "| CSV file | nominal language | total | mismatched | mismatched % | mismatched languages found |",
         "|---|---|---|---|---|---|",
     ]
@@ -139,6 +157,10 @@ def generate_report(*, datasets_root: Path = paths.DATASETS_ROOT) -> str:
         "> For each dataset's per-language fixture CSV, what fraction of rows carry a "
         "`language` value that doesn't match the file's own nominal (filename) language?",
         "",
+        "Dataset C is checked against its fixture-level sample-down "
+        "(`datasets/c/fixtures-sampled/`), not the full corpus "
+        "(`datasets/c/fixtures/`) -- see this module's docstring.",
+        "",
         f"Generated: {generated_at}",
         "",
     ]
@@ -146,10 +168,16 @@ def generate_report(*, datasets_root: Path = paths.DATASETS_ROOT) -> str:
     for dataset in ("a", "c"):
         results = check_dataset(dataset, datasets_root=datasets_root)
         if results is None:
+            not_available = (
+                "_Not available -- run `sample-c-repos` first "
+                "(`datasets/c/fixtures-sampled/` not found)._"
+                if dataset == "c"
+                else "_Not available -- no fixtures/*.csv files collected yet._"
+            )
             lines += [
                 f"### {DATASET_LABELS[dataset]}",
                 "",
-                "_Not available -- no fixtures/*.csv files collected yet._",
+                not_available,
                 "",
             ]
         else:
