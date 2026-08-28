@@ -85,9 +85,8 @@ def get_agent_commits(repo_path: Path, start_date: str) -> tuple[list[dict], int
     try:
         from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
-        # corpus_db_path is stored but never read by scan_repo_for_agent_commits
-        # (only Tier2RepoMatcher's candidate queries actually open the DB), so
-        # this works whether or not db/corpus.db exists on disk.
+        # corpus_db_path is stored but never read by scan_repo_for_agent_commits,
+        # so this works whether or not db/corpus.db exists on disk.
         scanner = Tier1RepositoryScanner(paths.corpus_db_path())
         commits, total_examined = scanner.scan_repo_for_agent_commits(
             repo_path, start_date=start_date

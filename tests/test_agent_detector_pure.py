@@ -1,7 +1,6 @@
 import subprocess
 from pathlib import Path
 
-from collection.agent_signal_primitives import AgentCommitVerifier
 from collection.tiered_agent_corpus_scanner import (
     _BOT,
     Tier1RepositoryScanner,
@@ -172,26 +171,6 @@ def test_detect_agent_trailer_overrides_author_name_collision():
     )
 
 
-def test_agent_commit_verifier_trailer_overrides_author_name_collision():
-    """Same regression as test_detect_agent_trailer_overrides_author_name_collision,
-    exercised through AgentCommitVerifier (Tier 2). This path already
-    checked trailer before author identity prior to this fix -- kept here
-    as an explicit lock-in test alongside Tier 1's, so both detectors are
-    covered for the same scenario."""
-    from collection.agent_signal_primitives import AgentCommitVerifier
-
-    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
-    result = verifier._detect_agent_in_commit(
-        {
-            "sha": "abc123",
-            "author_name": "Devin Smith",
-            "author_email": "devin.smith@gmail.com",
-            "message": "Fix bug\n\nCo-authored-by: Claude <claude@anthropic.com>",
-        }
-    )
-    assert result == "claude"
-
-
 def test_detect_agent_bot_status_overrides_coincidental_trailer():
     """A bot-authored commit whose message happens to contain an
     agent-style trailer (e.g. templated tooling stamping a "Generated-by:"
@@ -206,29 +185,6 @@ def test_detect_agent_bot_status_overrides_coincidental_trailer():
         )
         is _BOT
     )
-
-
-def test_agent_commit_verifier_bot_status_overrides_coincidental_trailer():
-    """Regression: AgentCommitVerifier._detect_agent_in_commit (Tier 2)
-    used to check the trailer before bot status, so a bot-authored commit
-    whose message happened to contain an agent-style trailer was
-    misattributed to that agent instead of being excluded as bot -- verified
-    by direct reproduction before this fix (dependabot[bot] + a
-    "Generated-by: Claude" line in the body returned "claude", not None).
-    Bot status is now checked first, matching Tier 1's already-correct
-    behavior for the same scenario."""
-    from collection.agent_signal_primitives import AgentCommitVerifier
-
-    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
-    result = verifier._detect_agent_in_commit(
-        {
-            "sha": "abc123",
-            "author_name": "dependabot[bot]",
-            "author_email": "dependabot@users.noreply.github.com",
-            "message": "Bump lodash from 1.0 to 2.0\n\nGenerated-by: Claude <claude@anthropic.com>",
-        }
-    )
-    assert result is None
 
 
 def test_agent_trailer_re_tolerates_missing_hyphens():
@@ -250,27 +206,11 @@ def test_agent_trailer_re_tolerates_missing_hyphens():
 
 
 def test_detect_agent_tolerates_missing_hyphens_in_trailer():
-    """Same regression, exercised end-to-end through both detection paths
-    (Tier1RepositoryScanner and AgentCommitVerifier)."""
-    from collection.agent_signal_primitives import AgentCommitVerifier
-
+    """Same regression, exercised end-to-end through Tier1RepositoryScanner."""
     body = "Fix bug\n\nCoauthoredby: Claude <claude@anthropic.com>"
 
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     assert scanner._detect_agent_in_commit("Someone", "someone@example.com", body) == "claude"
-
-    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
-    assert (
-        verifier._detect_agent_in_commit(
-            {
-                "sha": "abc123",
-                "author_name": "Someone",
-                "author_email": "someone@example.com",
-                "message": body,
-            }
-        )
-        == "claude"
-    )
 
 
 def test_detect_agent_bot_authors_are_excluded():
@@ -470,115 +410,6 @@ def test_is_test_file_path_javascript():
     assert _is_test_file_path("__tests__/my.test.js", "javascript")
     assert _is_test_file_path("spec/my.spec.js", "javascript")
     assert not _is_test_file_path("lib/foo.js", "javascript")
-
-
-def test_agent_commit_verifier_ignores_prose_mentions_in_commit_message():
-    """Regression test: AgentCommitVerifier._detect_agent_in_commit used to
-    fall back to scanning the entire free-text commit message body, so a
-    prose mention of an agent's name with no real trailer (or an unrelated
-    word coinciding with an agent's keyword) was misattributed as agent
-    authorship. Only the trailer/author-identity fields are legitimate
-    signal."""
-    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
-
-    assert (
-        verifier._detect_agent_in_commit(
-            {
-                "sha": "abc123",
-                "author_name": "Alice Human",
-                "author_email": "alice@example.com",
-                "message": (
-                    "Revert a bad Claude suggestion from last week's PR\n\n"
-                    "This undoes the regression."
-                ),
-            }
-        )
-        is None
-    )
-
-    assert (
-        verifier._detect_agent_in_commit(
-            {
-                "sha": "def456",
-                "author_name": "Bob Human",
-                "author_email": "bob@example.com",
-                "message": "Fix cursor blinking bug in the text editor widget",
-            }
-        )
-        is None
-    )
-
-
-def test_agent_commit_verifier_word_boundary_rejects_compound_word_collision():
-    """Regression test: same word-boundary fix as Tier1RepositoryScanner,
-    applied to AgentCommitVerifier's author name/email check."""
-    verifier = AgentCommitVerifier(clones_dir=Path("/tmp"))
-    assert (
-        verifier._detect_agent_in_commit(
-            {
-                "sha": "abc123",
-                "author_name": "Gina McGeminicorp",
-                "author_email": "gmcgeminicorp@example.com",
-                "message": "Refactor build script",
-            }
-        )
-        is None
-    )
-
-
-def test_agent_commit_verifier_detects_trailers(tmp_path):
-    repo = tmp_path / "repo"
-    repo.mkdir()
-    subprocess.run(
-        ["git", "init", "-b", "main", str(repo)], check=True, capture_output=True
-    )
-    subprocess.run(
-        ["git", "-C", str(repo), "config", "user.email", "a@b.com"],
-        check=True,
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(repo), "config", "user.name", "A"],
-        check=True,
-        capture_output=True,
-    )
-    (repo / "f.py").write_text("x = 1\n")
-    subprocess.run(
-        ["git", "-C", str(repo), "add", "f.py"], check=True, capture_output=True
-    )
-    subprocess.run(
-        [
-            "git",
-            "-C",
-            str(repo),
-            "commit",
-            "-m",
-            "feat\n\nCo-authored-by: Claude <claude@anthropic.com>",
-        ],
-        check=True,
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(repo), "config", "user.email", "b@b.com"],
-        check=True,
-        capture_output=True,
-    )
-    (repo / "g.py").write_text("y = 2\n")
-    subprocess.run(
-        ["git", "-C", str(repo), "add", "g.py"], check=True, capture_output=True
-    )
-    subprocess.run(
-        ["git", "-C", str(repo), "commit", "-m", "fix"],
-        check=True,
-        capture_output=True,
-    )
-
-    verifier = AgentCommitVerifier(clones_dir=tmp_path)
-    result = verifier.verify_repository(str(repo.name), start_date="2020-01-01")
-
-    assert result.total_agent_commits == 1
-    assert result.repo_name == repo.name
-    assert list(result.agent_commits.values()) == ["claude"]
 
 
 def test_known_human_collision_excludes_author_identity_match():

@@ -244,7 +244,7 @@ def match_agent_keyword(
     text "cursor") -- no purely textual heuristic on freely-editable author/
     commit-message text can fully rule that out. See
     collection/heuristics/agent_heuristics.yaml's module comment for this
-    known, inherent limitation of name-based Tier 1/Tier 2 detection.
+    known, inherent limitation of name-based agent detection.
 
     Boundary assertions are only applied on a side whose adjacent keyword
     character is itself a word character. A plain `\\b` on both sides breaks

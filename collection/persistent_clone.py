@@ -80,15 +80,17 @@ def clone_repo(
     Clone a repository after fast pre-checks via git and GitHub API.
 
     Returns (repo_id, status, pinned_commit_or_None, skip_reason_or_None).
-    status is one of: 'cloned' | 'skipped' | 'error'. Never raises -- both
-    real call sites (`tiered_agent_corpus_scanner.py`,
-    `paired_collection.py`) call this directly inside a plain per-repo loop
-    with no try/except of their own (`clone_pending_repos()` below is the
-    only caller with its own try/except-free ThreadPoolExecutor loop too),
-    so one repo hitting an unanticipated failure here (disk full, a
-    pathological filename, a git-internals edge case) must degrade to an
-    'error' row for that repo, not crash the rest of the batch still
-    in flight -- see the outer try/except below.
+    status is one of: 'cloned' | 'skipped' | 'error'. Never raises --
+    `paired_collection.py` (the only real call site now that
+    `tiered_agent_corpus_scanner.py`'s Tier 2 discovery, this function's
+    other former caller, has been removed) calls this directly inside a
+    plain per-repo loop with no try/except of its own
+    (`clone_pending_repos()` below is the only other caller, with its own
+    try/except-free ThreadPoolExecutor loop), so one repo hitting an
+    unanticipated failure here (disk full, a pathological filename, a
+    git-internals edge case) must degrade to an 'error' row for that repo,
+    not crash the rest of the batch still in flight -- see the outer
+    try/except below.
     """
     target_dir = CLONES_DIR / full_name.replace("/", "__")
 

@@ -80,9 +80,7 @@ MIN_COMMITS = _STUDY_PARAMS["min_commits"]
 # Companion threshold to LanguageConfig.test_path_patterns/test_file_suffixes
 # above -- what counts as a "test file" is that catalog + is_test_file_path()
 # (collection/test_commit_utils.py); this is just the "how many" floor,
-# enforced post-clone by persistent_clone.py::_count_test_files(). A
-# same-named, independent tier-2 discovery-query threshold also exists
-# further down (TIER2_MIN_TEST_FILES) -- see that constant's own call sites.
+# enforced post-clone by persistent_clone.py::_count_test_files().
 MIN_TEST_FILES = _STUDY_PARAMS["min_test_files"]
 MIN_FIXTURES_FOUND = _STUDY_PARAMS["min_fixtures_found"]
 MIN_NON_BLANK_LOC = _STUDY_PARAMS["min_non_blank_loc"]  # Dataset C only
@@ -252,24 +250,9 @@ MAX_COLLECTION_ITERATIONS = 10
 FILE_SIZE_WARN_MB = 10
 
 # ---------------------------------------------------------------------------
-# Agent Detection Configuration (Two-Tier Methodology)
+# Agent Detection Configuration
 # ---------------------------------------------------------------------------
 # Agent config-file patterns and commit signatures live in
 # collection/heuristics/agent_heuristics.yaml, loaded via
 # collection/agent_patterns.py (AGENT_SIGNATURES, LIGHTWEIGHT_AGENT_CONFIG_PATTERNS,
-# PAPER_AGENT_CONFIG_PATTERNS) — not duplicated here. Thresholds below live in
-# collection/study_parameters/study_parameters.yaml.
-
-# Tier 1 assessment thresholds (Phase 1C)
-# If Tier 1 (corpus repos) falls below these, Phase 1D (matched repo discovery) is triggered
-TIER1_MINIMUM_REPOS_WITH_AGENT = _STUDY_PARAMS["tier1_minimum_repos_with_agent"]
-TIER1_MINIMUM_AGENT_COMMITS = _STUDY_PARAMS["tier1_minimum_agent_commits"]
-
-# Tier 2 matching criteria (Phase 1D: SEART-based discovery)
-# Parameters for finding supplementary repos when Tier 1 insufficient
-TIER2_MATCHING_MIN_STARS = _STUDY_PARAMS["tier2_matching_min_stars"]
-TIER2_MATCHING_MAX_STARS = _STUDY_PARAMS["tier2_matching_max_stars"]
-TIER2_MATCHING_STAR_TOLERANCE = _STUDY_PARAMS["tier2_matching_star_tolerance"]
-TIER2_MIN_COMMITS = _STUDY_PARAMS["tier2_min_commits"]
-TIER2_MIN_TEST_FILES = _STUDY_PARAMS["tier2_min_test_files"]
-TIER2_MUST_HAVE_AGENT_CONFIGS = _STUDY_PARAMS["tier2_must_have_agent_configs"]
+# PAPER_AGENT_CONFIG_PATTERNS) — not duplicated here.

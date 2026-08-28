@@ -441,12 +441,12 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
             "created_at": meta.get("created_at") or "",
             "pushed_at": meta.get("pushed_at") or "",
             "topics": meta.get("topics") or "[]",
-            # 1 = discovered directly from github-search-raw (this scan); 2 =
-            # discovered via Tier-2 SEART matching (see __main__.py's
-            # _merge_tier2_repos_into_csv). Always present, both writers use
-            # the same column set/order, so append_dicts()'s "only write the
-            # header if the file doesn't already exist" behavior can't leave
-            # a subset of rows misaligned with the header.
+            # Always 1 now (discovered directly from github-search-raw).
+            # Historically also took the value 2 for repos discovered via a
+            # since-removed Tier-2 SEART-matching fallback -- the column is
+            # kept rather than dropped so existing datasets/a/repos/*.csv
+            # rows (already carrying this column) stay schema-compatible
+            # with freshly-written ones.
             "discovery_tier": 1,
         }
         return row

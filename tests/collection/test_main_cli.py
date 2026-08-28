@@ -195,53 +195,6 @@ class TestDiscoverCommits:
                 raised = True
             assert raised
 
-    def test_tier2_runs_assessment_before_commit_scan(self):
-        fake_assessment = MagicMock(sufficient=True, summary="all good")
-        with patch(
-            "collection.tier2_discovery.assess_tier1_yield",
-            return_value=fake_assessment,
-        ) as mock_assess:
-            with patch(
-                "collection.repository_quality_control.agent_commit_counter.run",
-                return_value=0,
-            ) as mock_run:
-                main(["discover-commits", "--dataset", "a", "--tier2"])
-
-        mock_assess.assert_called_once()
-        mock_run.assert_called_once()
-
-    def test_tier2_discovers_and_merges_when_insufficient(self, tmp_path):
-        fake_assessment = MagicMock(
-            sufficient=False, summary="insufficient", repos_with_agent=2
-        )
-        with patch(
-            "collection.tier2_discovery.assess_tier1_yield",
-            return_value=fake_assessment,
-        ):
-            with patch(
-                "collection.tier2_discovery.load_corpus_repos",
-                return_value=[{"full_name": "owner/existing"}],
-            ):
-                with patch(
-                    "collection.tier2_discovery.discover_tier2_repos",
-                    return_value=[
-                        {"repo_name": "owner/new-repo", "discovery_tier": 2}
-                    ],
-                ) as mock_discover:
-                    with patch(
-                        "collection.__main__._merge_tier2_repos_into_csv"
-                    ) as mock_merge:
-                        with patch(
-                            "collection.repository_quality_control.agent_commit_counter.run",
-                            return_value=0,
-                        ):
-                            main(["discover-commits", "--dataset", "a", "--tier2"])
-
-        mock_discover.assert_called_once()
-        exclude_arg = mock_discover.call_args.kwargs["exclude"]
-        assert exclude_arg == {"owner/existing"}
-        mock_merge.assert_called_once()
-
 
 class TestFilterTestCommits:
     def test_dataset_a(self):

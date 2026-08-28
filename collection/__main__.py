@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 from . import paths
@@ -24,7 +23,6 @@ from .config import (
     DATASET_C_SAMPLING_SEED,
     LANGUAGE_CONFIGS,
 )
-from .csv_adapter import get_adapter
 from .db import db_session
 from .logging_utils import configure_logging, get_logger
 from .paired_collection import main as paired_main
@@ -101,103 +99,9 @@ def _cmd_discover_repos(args: argparse.Namespace) -> int:
 # discover-commits (Dataset A only)
 # ---------------------------------------------------------------------------
 
-_TIER2_REPO_FIELDNAMES = [
-    "repo_name",
-    "has_agent_config",
-    "language",
-    "stars",
-    "clone_url",
-    "num_contributors",
-    "forks",
-    "qc_reason",
-    "matched_config_file",
-    "processed_at",
-    "created_at",
-    "pushed_at",
-    "topics",
-    "discovery_tier",
-]
-
-
-def _merge_tier2_repos_into_csv(
-    corpus_db: Path, discovered: list[dict], output_repos_dir: Path
-) -> int:
-    """Fetch full repo metadata for newly Tier-2-discovered repos and append
-    them to `datasets/a/repos/{lang}_repo.csv`, tagged `discovery_tier=2`, so
-    Tier 2 output actually flows into the commit-scan step instead of sitting
-    in an unread side artifact (the old phase 1D's failure mode)."""
-    if not discovered:
-        return 0
-    names = [d["repo_name"] for d in discovered]
-    with db_session(corpus_db) as conn:
-        placeholders = ",".join("?" for _ in names)
-        rows = conn.execute(
-            f"SELECT full_name, language, stars, forks, clone_url, created_at, pushed_at, topics "
-            f"FROM repositories WHERE full_name IN ({placeholders})",
-            names,
-        ).fetchall()
-
-    by_lang: dict[str, list[dict]] = {}
-    now = datetime.now(timezone.utc).isoformat()
-    for row in rows:
-        lang = (row["language"] or "unknown").lower()
-        by_lang.setdefault(lang, []).append(
-            {
-                "repo_name": row["full_name"],
-                "has_agent_config": 1,
-                "language": lang,
-                "stars": row["stars"] or 0,
-                "clone_url": row["clone_url"] or "",
-                "num_contributors": 0,
-                "forks": row["forks"] or 0,
-                "qc_reason": "",
-                "matched_config_file": "",
-                "processed_at": now,
-                "created_at": row["created_at"] or "",
-                "pushed_at": row["pushed_at"] or "",
-                "topics": row["topics"] or "[]",
-                "discovery_tier": 2,
-            }
-        )
-
-    output_repos_dir.mkdir(parents=True, exist_ok=True)
-    for lang, lang_rows in by_lang.items():
-        csv_path = output_repos_dir / f"{lang}_repo.csv"
-        get_adapter().append_dicts(csv_path, lang_rows, _TIER2_REPO_FIELDNAMES)
-    return sum(len(v) for v in by_lang.values())
-
-
-def _run_tier2_discovery(since: str) -> None:
-    from . import tier2_discovery
-
-    corpus_db = paths.corpus_db_path()
-    assessment = tier2_discovery.assess_tier1_yield(corpus_db, CLONES_DIR)
-    logger.info(assessment.summary)
-    if assessment.sufficient:
-        logger.info("Tier 1 sufficient; skipping Tier 2 discovery")
-        return
-
-    exclude = {
-        r["full_name"] for r in tier2_discovery.load_corpus_repos(corpus_db)
-    }
-    from .config import TIER1_MINIMUM_REPOS_WITH_AGENT
-
-    target = max(1, TIER1_MINIMUM_REPOS_WITH_AGENT - assessment.repos_with_agent)
-    discovered = tier2_discovery.discover_tier2_repos(
-        corpus_db, exclude=exclude, target_count=target
-    )
-    merged = _merge_tier2_repos_into_csv(
-        corpus_db, discovered, paths.stage_dir("a", "repos")
-    )
-    logger.info(f"Tier 2 discovery merged {merged} repos into datasets/a/repos/")
-
-
 def _cmd_discover_commits(args: argparse.Namespace) -> int:
     if args.dataset != "a":
         return _unsupported("discover-commits", args.dataset, ("a",))
-
-    if args.tier2:
-        _run_tier2_discovery(args.since)
 
     from .repository_quality_control import agent_commit_counter
 
@@ -463,7 +367,7 @@ def _cmd_status() -> int:
         print()
 
     corpus_db = paths.corpus_db_path()
-    print(f"db/corpus.db: {'present' if corpus_db.exists() else 'absent (run `paired` if --tier2 is needed)'}")
+    print(f"db/corpus.db: {'present' if corpus_db.exists() else 'absent (run `paired` to produce it)'}")
     return 0
 
 
@@ -504,12 +408,6 @@ def build_parser() -> argparse.ArgumentParser:
     add_workers_arg(discover_commits, default=4)
     discover_commits.add_argument("--input-dir", type=Path, default=None)
     discover_commits.add_argument("--output-dir", type=Path, default=None)
-    discover_commits.add_argument(
-        "--tier2",
-        action="store_true",
-        help="If Tier-1 corpus yield is insufficient, also run Tier-2 SEART-based "
-        "discovery against db/corpus.db and merge results into datasets/a/repos/",
-    )
 
     filter_test_commits = subparsers.add_parser(
         "filter-test-commits", help="Filter commits down to ones touching test files"

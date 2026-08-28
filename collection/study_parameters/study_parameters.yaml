@@ -39,14 +39,3 @@ min_non_blank_loc: 5000
 # Sampling
 target_repos_per_language_between_group: 500
 dataset_c_sampling_seed: 42 # overridable via the DATASET_C_SAMPLING_SEED env var
-
-# Tier-2 supplementary repo discovery (sensitivity analysis, not the main
-# between-group comparison -- see docs/architecture/agent-detection.md)
-tier1_minimum_repos_with_agent: 30 # below this, Tier-2 discovery is triggered
-tier1_minimum_agent_commits: 100
-tier2_matching_min_stars: 50
-tier2_matching_max_stars: 50000
-tier2_matching_star_tolerance: 2.0 # allow repos within 2x star count of corpus median
-tier2_min_commits: 100
-tier2_min_test_files: 5
-tier2_must_have_agent_configs: true

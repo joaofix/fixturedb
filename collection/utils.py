@@ -74,14 +74,14 @@ def detect_agent_in_commit(
     current caller needs to distinguish the two through this function
     alone; a caller that does should call is_bot_author() itself.
 
-    This is the single implementation shared by Tier 1
-    (`Tier1RepositoryScanner` in tiered_agent_corpus_scanner.py, the
-    corpus's primary detection method) and Tier 2 (`AgentCommitVerifier` in
-    agent_signal_primitives.py, supplementary discovery) -- kept as one copy
-    deliberately, since two independently-maintained copies of this same
-    priority order have previously drifted out of sync with each other (see
+    Used by `Tier1RepositoryScanner` in tiered_agent_corpus_scanner.py --
+    the sole agent-detection method now that Tier 2 (a second,
+    independently-maintained copy of this same priority order in
+    agent_signal_primitives.py's `AgentCommitVerifier`) has been removed.
+    That duplication had previously drifted out of sync (see
     tiered_agent_corpus_scanner.py's `_is_test_file_path` docstring for the
-    same failure mode elsewhere in this codebase).
+    same failure mode elsewhere in this codebase) -- one reason Tier 2's
+    removal simplifies things, not just because it went unused.
 
     Matching is word-boundary-based (not a bare substring check),
     case-insensitive. This prevents a keyword from matching inside an

@@ -142,9 +142,9 @@ def test_get_repo_contents_retries_on_rate_limit_then_succeeds(monkeypatch):
     """Regression: a 403 (X-RateLimit-Remaining: 0) or 429 response was
     treated identically to a genuine 404 -- returned None immediately, no
     retry -- which has_agent_config_files() then silently records as
-    "verified: no agent config files," permanently dropping a repo from the
-    Tier 2 candidate pool just because the scan happened to hit a rate
-    limit, indistinguishable from a real negative."""
+    "verified: no agent config files," permanently dropping a repo from
+    the candidate pool just because the scan happened to hit a rate limit,
+    indistinguishable from a real negative."""
     checker = GitHubAgentFileChecker()
 
     class FakeSuccessResponse:
