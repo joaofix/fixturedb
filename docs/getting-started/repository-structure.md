@@ -16,7 +16,6 @@ fixturedb/
 │       ├── repo_resolve.py                  # discover-repos --dataset b
 │       ├── select_dataset_c_repos.py        # discover-repos --dataset c
 │       ├── test_commit_filter.py            # filter-test-commits --dataset {a,b}
-│       ├── tier2_discovery.py               # Tier-1/Tier-2 agent-commit discovery (discover-commits --tier2)
 │       │
 │       ├── agent_corpus.py                  # Dataset A collector (AgentCorpusCollector) -- extract-fixtures --dataset a
 │       ├── human_corpus.py                  # Dataset B collector (HumanCorpusCollector) -- extract-fixtures --dataset b
@@ -28,7 +27,7 @@ fixturedb/
 │       │
 │       ├── between_group_comparison.py      # Statistical comparison
 │       ├── agent_signal_primitives.py       # Agent detection in commits (formerly agent_detector.py)
-│       ├── tiered_agent_corpus_scanner.py   # Tier1/Tier2 corpus-scale orchestration (formerly agent_commit_detector.py)
+│       ├── tiered_agent_corpus_scanner.py   # Tier 1 corpus-scale orchestration (formerly agent_commit_detector.py)
 │       ├── fixture_extractor.py             # Fixture extraction at commit level
 │       ├── db.py                            # Database schema and helpers
 │       ├── config.py                        # Thresholds, dates -- re-exports catalogs from study_parameters/ and heuristics/
@@ -55,8 +54,7 @@ fixturedb/
 │   │   └── c/{repos,fixtures}/
 │   │
 │   ├── db/                                  # Secondary: per-dataset SQLite DBs
-│   │   ├── a.db, b.db, c.db
-│   │   └── corpus.db                        # Paired-study bootstrap DB (only needed for --tier2)
+│   │   └── a.db, b.db, c.db
 │   │
 │   ├── export/                              # Final per-dataset export ZIPs (a.zip, b.zip, c.zip)
 │   │
@@ -147,7 +145,7 @@ discover-repos --dataset a   → datasets/a/repos/
 discover-repos --dataset c   → datasets/c/repos/
 discover-repos --dataset b   → datasets/b/repos/ (resolved from Dataset A's repos)
     ↓
-discover-commits --dataset a [--tier2]      → datasets/a/commits/
+discover-commits --dataset a                → datasets/a/commits/
     ↓
 filter-test-commits --dataset a             → datasets/a/test-commits/
 filter-test-commits --dataset b             → datasets/b/test-commits/
@@ -177,7 +175,6 @@ See [docs/INDEX.md](../INDEX.md) for the full documentation map — the tree abo
 |------|---------|
 | collection/__main__.py | CLI entrypoint |
 | collection/*.py | Core modules |
-| db/corpus.db | Paired-study bootstrap DB (input only, only needed for `--tier2`) |
 | db/{a,b,c}.db | Per-dataset results (output, created during collection) |
 | conftest.py | Shared pytest fixtures |
 | requirements.txt | Dependencies |

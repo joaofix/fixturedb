@@ -236,6 +236,6 @@ When writing papers using this dataset:
 ## See Also
 
 - [Database Schema](../architecture/database-schema.md) — schema reference, per-dataset differences, query pattern this guide builds on
-- [Agent Detection](../architecture/agent-detection.md) — Tier 1 vs Tier 2/3 detection methods
+- [Agent Detection](../architecture/agent-detection.md) — agent detection methodology
 - [Limitations](../reference/limitations.md) — threats to validity, including the A-vs-B/A-vs-C distinction
 - [Reproducing Results](reproducing.md) — how to reproduce collection for a given dataset

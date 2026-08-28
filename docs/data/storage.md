@@ -8,7 +8,6 @@ Each dataset writes to its own SQLite file under `db/`, not a single shared data
 
 ```
 db/
-├── corpus.db   # pre-A/B/C paired-study corpus (only needed for --tier2 discovery)
 ├── a.db        # Dataset A
 ├── b.db        # Dataset B
 └── c.db        # Dataset C
@@ -30,7 +29,6 @@ how many repos/languages a given run targets; run
 | Component | Persists after collection? | Notes |
 |-----------|----------------------------|-------|
 | `db/{a,b,c}.db` | Yes | The actual deliverable — required for `sample`/`export`/`validate`/`summarize` |
-| `db/corpus.db` | Only if `--tier2` was used | Not touched by the default Tier 1 collection path |
 | `clones/` | No — safe to delete once collection finishes | Full or shallow git clones of every candidate repo; by far the largest transient consumer of disk space, since it holds full commit history for repos under active scan |
 | `datasets/{a,b,c}/**/*.csv` | Yes | Stage-by-stage CSV outputs (repos/commits/test-commits/fixtures); the real source of truth for downstream steps — see [Repository Structure](../getting-started/repository-structure.md) |
 | `export/{a,b,c}.zip` | Yes | Self-contained per-dataset export (see [CSV Export Guide](csv-export-guide.md)); much smaller than the source DB since it's the sampled subset only |

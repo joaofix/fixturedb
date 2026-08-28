@@ -8,12 +8,11 @@ its own SQLite database rather than one shared file:
 
 | Database | Purpose | `fixtures.commit_kind` |
 |----------|---------|-------------------------|
-| `db/corpus.db` | Pre-A/B/C paired-study repository corpus with pinned commits (only needed for `--tier2` agent discovery, see [Agent Detection](agent-detection.md)) | n/a |
 | `db/a.db` | Dataset A: agent-authored fixtures (2025+, Tier 1 detection) | always `'agent'` |
 | `db/b.db` | Dataset B: human-authored fixtures, within-repo control (same repos as A, non-agent commits) | always `'human'` |
 | `db/c.db` | Dataset C: human-authored fixtures, cross-repo baseline (independent pre-2021 repo pool, snapshot extraction) | not set (Dataset C has no commit-level agent/human distinction to make — every fixture in it is human-authored by construction) |
 
-All four use the identical schema below (defined once in `collection/db_schema.py`)
+All three use the identical schema below (defined once in `collection/db_schema.py`)
 and run in SQLite WAL mode for safe concurrent reads. Because each dataset is a
 separate file, there is no single query that spans all three — see
 [Query examples](#query-examples) for the recommended cross-dataset pattern.

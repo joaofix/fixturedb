@@ -21,7 +21,7 @@ reviewable output of each stage; the per-dataset SQLite databases under
 | Verb | a | b | c |
 |---|---|---|---|
 | `discover-repos` | ✓ | ✓ (resolved from A) | ✓ |
-| `discover-commits [--tier2]` | ✓ | — | — |
+| `discover-commits` | ✓ | — | — |
 | `filter-test-commits` | ✓ | ✓ | — |
 | `extract-fixtures` | ✓ | ✓ | ✓ |
 | `analyze-distribution --against Y` | ✓ | ✓ | ✓ |
@@ -33,9 +33,9 @@ reviewable output of each stage; the per-dataset SQLite databases under
 Invoking a verb for a dataset it doesn't apply to (e.g. `discover-commits --dataset c`)
 exits 1 with an explicit message rather than silently doing nothing.
 
-Also: `python -m collection paired` bootstraps `db/corpus.db` (only needed for
-`discover-commits --tier2`); `python -m collection status` prints a short
-per-dataset status summary.
+Also: `python -m collection paired` bootstraps `db/corpus.db` (see "Study
+Model" below); `python -m collection status` prints a short per-dataset
+status summary.
 
 ## Example: Dataset A end-to-end
 

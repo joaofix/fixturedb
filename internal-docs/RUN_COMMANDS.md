@@ -104,25 +104,17 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   `filter-test-commits`/`extract-fixtures` commands above make zero GitHub REST API
   calls (verified: the only two `api.github.com` call sites in the whole package,
   `agent_signal_primitives.py`'s Contents-API check and `persistent_clone.py`'s
-  Code-Search-API call, both live exclusively inside `Tier2RepoMatcher` in
-  `tiered_agent_corpus_scanner.py`, reachable only via `discover-commits --dataset a
-  --tier2`, which none of those commands use — `dedupe_dataset_c_repos.py` is a
-  separate, real exception, see below). Every clone here is also plain
-  anonymous `git clone` over HTTPS — `clone_primitives.py`/`ephemeral_clone.py`
-  never read `GITHUB_TOKEN`, so there's no authenticated-tier allowance to raise
-  even if you set one. So the actual ceiling is GitHub's own throttling on many
+  Code-Search-API call, are reached only via `dedupe_dataset_c_repos.py` and
+  `paired_collection.py`'s `clone_repo()` call respectively — neither is on any
+  of the commands above). Every clone here is also plain anonymous `git clone`
+  over HTTPS — `clone_primitives.py`/`ephemeral_clone.py` never read
+  `GITHUB_TOKEN`, so there's no authenticated-tier allowance to raise even if
+  you set one. So the actual ceiling is GitHub's own throttling on many
   concurrent *anonymous* clone connections from one IP, plus the single SQLite
   writer serializing DB inserts — neither of which more cores relax. 16 is the top
   of the range the codebase's own `toy`-verb `--workers` help text documents as
   safe without further testing; push higher only after watching a run for clone
   failures / `database is locked` retries at 16 and confirming there's headroom.
-  - **If you do add `--tier2`** to `discover-commits --dataset a`, this changes:
-    that path calls the real GitHub REST API, and specifically the Code Search API
-    (`persistent_clone.py`), which has a much stricter native limit than the
-    general API (10 req/min unauthenticated, 30/min authenticated) — a `GITHUB_TOKEN`
-    matters a lot there, and 16 concurrent workers hammering that endpoint would
-    exhaust it almost immediately. Not a concern for the commands below since none
-    use `--tier2`.
   - `discover-commits`/`filter-test-commits` honor `--workers` directly.
     `discover-repos` only does for `--dataset a` (`agent_repository_counter.run()`
     threads its clone-probe step) -- `--dataset b`/`--dataset c` are both a pure
@@ -241,11 +233,6 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   `internal-docs/methodology-improvements/repo-deduplication.md` section 9.
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
-- **`--tier2`** (Dataset A's `discover-commits` only): if Tier-1 commit-trailer
-  detection yields too few agent commits, also runs Tier-2 SEART-based discovery
-  against `db/corpus.db`. Requires that DB to exist first — bootstrap it with
-  `python -m collection paired` if you intend to use `--tier2`. Off by default; the
-  commands above don't need it.
 - Each verb is checkpointed and safe to re-run — already-completed languages/repos
   are skipped, not redone (see each collector's `is_global_checkpoint_completed`
   usage in `collection/db.py`).

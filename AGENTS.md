@@ -55,7 +55,6 @@ collection/          # Main pipeline code (the "library")
   tiered_agent_corpus_scanner.py  # Commit scanning, agent detection, adoption intensity (formerly agent_commit_detector.py)
   agent_signal_primitives.py  # Low-level agent config-file + commit-trailer detection (formerly agent_detector.py)
   agent_patterns.py  # Loads the agent catalog (see heuristics/ below) and derives detection dicts
-  tier2_discovery.py # Tier-1 corpus assessment + Tier-2 SEART discovery (discover-commits --dataset a --tier2)
   heuristics/        # Detection-heuristic catalogs as YAML/CSV -- pattern/keyword tables that
                      # drive a classification decision (agent vs. human, fixture vs. not,
                      # boilerplate repo vs. not), as opposed to study_parameters/'s plain settings
@@ -109,7 +108,7 @@ One CLI, one set of step verbs shared across all three datasets:
 
 ```bash
 python -m collection discover-repos       --dataset {a,b,c}
-python -m collection discover-commits     --dataset a [--tier2]
+python -m collection discover-commits     --dataset a
 python -m collection filter-test-commits  --dataset {a,b}
 python -m collection extract-fixtures     --dataset {a,b,c}
 python -m collection analyze-distribution --dataset a --against b
@@ -126,8 +125,6 @@ that doesn't apply exits 1 with an explicit message. Every verb resolves its def
 input/output directories through `collection/paths.py`; `toy` runs the identical step
 functions rooted under `toy-dataset/` instead of `datasets/`+`db/`.
 
-`python -m collection paired` bootstraps `db/corpus.db`, only needed for `--tier2`.
-
 The `dedupe_*.py` scripts sit outside this verb interface -- invoke as
 `python -m collection.dedupe_fixtures_by_sha --dataset b`, etc. For the full ordered
 command chain per dataset, see `internal-docs/RUN_COMMANDS.md`.
@@ -135,7 +132,7 @@ command chain per dataset, see `internal-docs/RUN_COMMANDS.md`.
 ## Database
 
 SQLite via `collection/db.py`. One output database per dataset: `db/a.db`, `db/b.db`,
-`db/c.db` (plus `db/corpus.db`, the paired-study bootstrap DB). Schema includes
+`db/c.db`. Schema includes
 `repositories`, `test_files`, `fixtures`, `commit_observations`, `test_commits`,
 `mock_usages`. Use `db_session()` context manager for all DB access — it handles WAL
 mode, retries, and connection pooling. The database is secondary: the CSV files under

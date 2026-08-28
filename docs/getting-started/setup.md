@@ -9,7 +9,6 @@ Required: Python 3.10+ (tested with 3.12.3), and Git on PATH (needed for reposit
 Optional:
 - A `clones/` directory for repository cloning during collection — auto-populated if not present, and only needed once `discover-commits`/`extract-fixtures` actually clones repos.
 - A GitHub API token, for higher rate limits when discovering agent repositories. Set it via `--github-token` or the `GITHUB_TOKEN` environment variable.
-- `corpus.db`, a paired-study bootstrap database read only by `discover-commits --tier2` — the default Tier 1 collection path for all three datasets doesn't touch it.
 
 ## Installation
 
@@ -51,7 +50,7 @@ The authoritative, reproducible pipeline for the paper's three datasets is
 ```bash
 # Dataset A: discover repos, scan for agent commits, filter to test-touching commits, extract
 python -m collection discover-repos      --dataset a
-python -m collection discover-commits    --dataset a  # add --tier2 only if Tier 1 yield is insufficient
+python -m collection discover-commits    --dataset a
 python -m collection filter-test-commits --dataset a
 python -m collection extract-fixtures    --dataset a
 
@@ -105,16 +104,6 @@ All parameters are command-line arguments. No configuration files needed:
 python -m collection extract-fixtures --dataset b --help
 python -m collection extract-fixtures --dataset c --help
 python -m collection extract-fixtures --dataset a --help
-```
-
-## Database Setup
-
-`db/corpus.db` (only needed for `discover-commits --tier2`) should already be
-present in the root directory if you're bootstrapping from a paired-study
-corpus. Verify:
-
-```bash
-sqlite3 db/corpus.db "SELECT COUNT(*) as fixture_count FROM fixtures;"
 ```
 
 ## GitHub API Setup (Optional)

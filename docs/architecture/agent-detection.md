@@ -2,16 +2,16 @@
 
 Identifying AI coding agent involvement in commits for the between-group study.
 
-**Module layering.** `collection/agent_patterns.py` holds the shared, low-level matching primitives (`match_agent_keyword()`, `path_matches_pattern()`, `repo_contains_patterns()`) and loads the agent catalog from [`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml). `collection/agent_signal_primitives.py` builds single-repo detection blocks on top of those primitives — config-file scanning, commit-trailer verification. `collection/tiered_agent_corpus_scanner.py` is the corpus-scale orchestrator and the actual pipeline entry point for both tiers below.
+**Module layering.** `collection/agent_patterns.py` holds the shared, low-level matching primitives (`match_agent_keyword()`, `path_matches_pattern()`, `repo_contains_patterns()`) and loads the agent catalog from [`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml). `collection/agent_signal_primitives.py` provides `GitHubAgentFileChecker`, a pre-clone GitHub-API check for agent config files, used by `dedupe_dataset_c_repos.py` (Dataset C dedup). `collection/tiered_agent_corpus_scanner.py` is the corpus-scale orchestrator and the actual pipeline entry point for the method below.
 
 ---
 
-## Tier 1: Author Metadata + Co-authored-by Trailers (primary method)
+## Tier 1: Author Metadata + Co-authored-by Trailers (primary and only method)
 
 Used for Dataset A, the study's main agent corpus. Checked in order, first match wins:
 
 1. **Bot status.** The commit's author name and email are checked against `bots.csv`'s catalog. This is never overridden by a later signal: a bot-authored commit whose message happens to contain an agent-style trailer (e.g. templated tooling stamping a `Generated-by:` line onto a dependency-bump commit) must still be excluded as a bot, not misattributed to that agent.
-2. **Co-authored-by trailers.** The commit body is scanned for `Co-authored-by:`, `Assisted-by:`, `Generated-by:` lines — case-insensitive, and hyphen-tolerant on "co-authored-by" specifically, so `Coauthored-by`/`Co-authoredby`/`Coauthoredby` all match too (a real variant some agents emit, not just the canonical spelling). The trailer value is checked the same way. Both Tier 1 (`Tier1RepositoryScanner`) and Tier 2 (`AgentCommitVerifier`) share the same trailer regex (`AGENT_TRAILER_RE` in `collection/utils.py`); they used to have two independently-maintained patterns that had drifted apart, with Tier 2's not tolerating the hyphen variants and not recognizing `Assisted-by`/`Generated-by` at all. This check runs before author metadata because it's the less collision-prone signal — a deliberate, structured convention only agents/tooling emit, unlike a freely-editable author-name field a human can also happen to share (see Known Limitations below).
+2. **Co-authored-by trailers.** The commit body is scanned for `Co-authored-by:`, `Assisted-by:`, `Generated-by:` lines — case-insensitive, and hyphen-tolerant on "co-authored-by" specifically, so `Coauthored-by`/`Co-authoredby`/`Coauthoredby` all match too (a real variant some agents emit, not just the canonical spelling). The trailer value is checked the same way. `Tier1RepositoryScanner` uses the trailer regex `AGENT_TRAILER_RE` in `collection/utils.py`. This check runs before author metadata because it's the less collision-prone signal — a deliberate, structured convention only agents/tooling emit, unlike a freely-editable author-name field a human can also happen to share (see Known Limitations below).
 3. **Author metadata.** The commit's author name and email are checked against the `commit_signatures` catalog — some tools set themselves as the primary author, similar to how CI bots operate.
 
 Matching is word-boundary-based (`agent_patterns.py::match_agent_keyword()`), not a bare substring check, so a keyword can't match inside an unrelated compound word (e.g. "cline" no longer matches inside "McLine"). It does not, however, rule out an exact whole-word collision with a common name when no trailer is present to disambiguate (see Known Limitations below).
@@ -58,17 +58,7 @@ diff --git a/tests/test_existing.py b/tests/test_existing.py
 
 ---
 
-## Tier 2: Repository Discovery via Config Files (supplementary)
-
-Used to discover additional candidate repositories beyond Dataset A's existing corpus, for sensitivity analysis — not part of the main between-group comparison.
-
-1. **GitHub API pre-filter** (`GitHubAgentFileChecker`) — a cheap Contents-API check for known agent config files/directories (`CLAUDE.md`, `.cursorrules`, `.claude/`, etc.), before cloning anything.
-2. **Local file scan** (`AgentFileScanner`) — after cloning a candidate, re-confirms agent config files are present in the actual working tree. It walks the tree with `os.walk` while pruning `.git/`, `node_modules/`, `vendor/`, `build/`, `dist/`, and similar dependency/artifact directories, both to avoid false positives from a vendored dependency's own config file and to avoid the wasted I/O of walking `.git`'s internal objects.
-3. **Commit verification** (`AgentCommitVerifier`) — once a repo passes both file checks, its commits are checked the same way as Tier 1: word-boundary match against author identity and trailers, not the free-text commit message body (see Known Limitations).
-
-Implementation: `Tier2RepoMatcher` in `tiered_agent_corpus_scanner.py`, delegating to `GitHubAgentFileChecker`/`AgentFileScanner`/`AgentCommitVerifier` in `agent_signal_primitives.py`.
-
-### Agent catalog
+## Agent Catalog
 
 The full, current catalog of recognized agents lives in five data files, not duplicated here — the catalog of coding agents grows faster than any doc can track, so these are the single source of truth, and adding or updating an agent is a data change, not a code change.
 
@@ -100,7 +90,7 @@ Two other bare-word additions with real collision potential, `gemini` and `winds
 
 **Free-text commit messages are not scanned.** Only structured fields — author name/email, trailer lines — are checked. Scanning the full commit-message body for agent keywords produces real false positives, e.g. "Revert a bad Claude suggestion" (a prose mention, no real attribution) or "Fix cursor blinking bug" (an unrelated UI element, not the Cursor agent), so this path isn't used as a broader-recall option.
 
-**Explicit attribution is required.** An agent-assisted commit with no trailer and no agent-identity author isn't detected at all under Tier 1 — a deliberate false-negative tradeoff for precision, not a bug. Tier 2's file-presence check is a coarser, supplementary signal for exactly this reason, and isn't used for the main comparison.
+**Explicit attribution is required.** An agent-assisted commit with no trailer and no agent-identity author isn't detected at all under Tier 1 — a deliberate false-negative tradeoff for precision, not a bug.
 
 **Bot detection is a fixed, mostly-upstream list, not a generic pattern.** `bots.csv` is labri-progress/agent-mining's own catalog verbatim, plus a short, deliberately narrow list of this project's own additions: specific bot accounts (currently `copilot-swe-agent[bot]`, `anthropic-code-agent[bot]`) individually confirmed present in this project's corpus and specifically prone to misattribution, since their names contain an agent keyword (e.g. "copilot"/"claude") that would otherwise count them as agent-authored rather than excluded. This trades recall for precision against a generic `"[bot]" in author_name` substring check — a CI/automation bot account that's in neither upstream's list nor this short addition isn't detected as a bot, and its commits fall through to being counted as human-authored (or agent-authored, if its name happens to contain an agent keyword). Extending the addition list requires the same bar as the two entries already there: a specific, individually-confirmed account, not a speculative pattern.
 
@@ -110,7 +100,7 @@ Two other bare-word additions with real collision potential, `gemini` and `winds
 
 ## Reproducibility
 
-Detection is fully deterministic given a pinned commit SHA: the same repository state, pattern catalog, and date cutoff always produce the same classification. The only non-deterministic inputs are external — repository state changing over time as new commits land, and live GitHub API availability during Tier 2 discovery.
+Detection is fully deterministic given a pinned commit SHA: the same repository state, pattern catalog, and date cutoff always produce the same classification. The only non-deterministic input is external — repository state changing over time as new commits land.
 
 ---
 
@@ -118,4 +108,4 @@ Detection is fully deterministic given a pinned commit SHA: the same repository 
 
 - [Fixture Detection Logic](detection.md) — how fixtures themselves are found and measured, a separate concern from who authored the commit
 - [Manual-Validation Sampling](../usage/validation-sampling.md) — drawing a review sample to spot-check detection precision on a specific collection run
-- `tests/test_agent_detector_pure.py`, `tests/collection/test_two_tier_agent_collection.py`, `tests/collection/test_agent_file_scanner.py`, `tests/collection/test_agent_patterns_extra.py`, `tests/collection/test_agent_patterns_thorough.py` — the real, current test coverage for everything described above
+- `tests/test_agent_detector_pure.py`, `tests/collection/test_two_tier_agent_collection.py`, `tests/collection/test_agent_patterns_extra.py`, `tests/collection/test_agent_patterns_thorough.py` — the real, current test coverage for everything described above

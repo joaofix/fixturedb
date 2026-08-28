@@ -26,7 +26,7 @@ Run each verb from the project root, one dataset at a time:
 ```bash
 # Dataset A: discover repos, scan for agent commits, filter to test-touching commits, extract
 python -m collection discover-repos      --dataset a
-python -m collection discover-commits    --dataset a [--tier2]   # --tier2 only if Tier 1 yield is insufficient
+python -m collection discover-commits    --dataset a
 python -m collection filter-test-commits --dataset a
 python -m collection extract-fixtures    --dataset a
 
@@ -80,17 +80,12 @@ to smoke-test the same code path end-to-end at small scale, entirely under
 
 ## Reproducing from Frozen Inputs
 
-`db/corpus.db` is **not** part of the default reproduction path — it's only
-read by `discover-commits --tier2` (see [Database Schema § Database overview](../architecture/database-schema.md#database-overview)).
-The default Tier 1 path for all three datasets reproduces from `github-search-raw/`
-and each stage's own CSV output under `datasets/{a,b,c}/`, not from `corpus.db`.
+All three datasets reproduce from the `github-search-raw/` snapshot and each
+stage's own CSV output under `datasets/{a,b,c}/`.
 
 ```bash
 # Verify clones are available
 ls clones/ | wc -l
-
-# Only relevant if a run used --tier2:
-sqlite3 db/corpus.db "PRAGMA integrity_check;"
 ```
 
 See Determinism & Reproducibility Guarantees below for exactly what has to stay fixed for a reproduction to match.
@@ -157,7 +152,7 @@ Agent detection (co-authored-by trailer parsing, Tier 1), fixture extraction (tr
 
 ### Conditional determinism
 
-Repository selection depends on the `github-search-raw/` snapshot and each stage's own QC CSV outputs (plus `corpus.db`, only for a `--tier2` run). Temporal boundaries are fixed via `AGENT_CORPUS_START_DATE`/`HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`. Clone freshness depends on git history at time of collection — Dataset C pins an explicit cutoff commit SHA to avoid this issue. Live GitHub state can change between runs (repos going private or being deleted) — see [Limitations § Repository Availability](../reference/limitations.md#repository-availability).
+Repository selection depends on the `github-search-raw/` snapshot and each stage's own QC CSV outputs. Temporal boundaries are fixed via `AGENT_CORPUS_START_DATE`/`HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`. Clone freshness depends on git history at time of collection — Dataset C pins an explicit cutoff commit SHA to avoid this issue. Live GitHub state can change between runs (repos going private or being deleted) — see [Limitations § Repository Availability](../reference/limitations.md#repository-availability).
 
 Guarantee: if the `github-search-raw/` snapshot, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
 

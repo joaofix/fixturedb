@@ -10,7 +10,7 @@ The between-group methodology collects human and agent corpora at different time
 
 ### Agent Detection Conservatism
 - **Problem:** Agents are identified via Tier 1 detection only — `co-authored-by` commit trailers and author identity. Agents without proper trailers are classified as human, so the true agent detection rate may be higher than reported.
-- **Mitigation:** Use conservative Tier 1 estimates. Tier 2 (heuristic-based) detection is documented in [Agent Detection Methodology](../architecture/agent-detection.md).
+- **Mitigation:** Use conservative Tier 1 estimates. See [Agent Detection Methodology](../architecture/agent-detection.md) for the full detection method.
 
 ### Differential False-Negative Risk: Dataset B vs. Dataset C
 - **Dataset B** draws its repo pool from the *same* agent-adopting repositories as Dataset A (every B repo is a subset of A's agent-config-having pool). This is a real strength for controlling repo-level confounds (domain, maturity) — but it also means B's "human"-labeled commits sit in repos where agent use is actively encouraged, so an untrailed, informally-agent-assisted commit (see "Agent Detection Conservatism" above) is more likely to occur in B than it would in a naive agent-free control.
@@ -21,7 +21,7 @@ The between-group methodology collects human and agent corpora at different time
 
 ### Repository Availability
 - **Problem:** The human corpus assumes pre-2021 repositories are still publicly available; the agent corpus depends on GitHub API availability and rate limits. Extinct or private repositories can't be collected.
-- **Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling; `--tier2` agent discovery additionally falls back to the pre-curated `db/corpus.db`.
+- **Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling.
 
 ### Repository-Level Duplication (Forks, Org Transfers, Shadow Copies)
 - **Problem:** Two different `repo_name`s in `github-search-raw/` can share partly or fully identical git history — GitHub org transfers, community mirrors, and independently-created "shadow copies" (a raw `git push` of one repo's history into a brand-new repo object). Each is counted as an independent repository, silently inflating sample size and duplicating fixtures. Not caught by the "exclude forks" query filter applied at source — `isFork=true` appears zero times across the entire raw candidate pool, since GitHub's own fork bookkeeping only covers repos created via its "Fork" button/API.
