@@ -2,67 +2,69 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-08-22 18:49:49 UTC
+Generated: 2026-08-31 20:52:47 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
 ## Per-dataset summary
 
-### Dataset A (agent-authored) -- 47,208 fixtures
+### Dataset A (agent-authored) -- 67,979 fixtures
 
 **fixture_type kind distribution**
 
 | Kind | Count | % |
 |---|---|---|
-| setup | 23,759 | 50.3% |
-| teardown | 14,942 | 31.7% |
-| other | 8,507 | 18.0% |
+| setup | 44,157 | 65.0% |
+| teardown | 19,775 | 29.1% |
+| setup_and_teardown | 3,858 | 5.7% |
+| other | 189 | 0.3% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-3,561/47,208 fixtures (7.54%) leaked.
+5,043/67,979 fixtures (7.42%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 1,429 | 111 | 7.77% | typescript=83, python=27, javascript=1 |
-| javascript | 3,385 | 962 | 28.42% | typescript=797, python=142, java=23 |
-| python | 11,000 | 492 | 4.47% | typescript=323, javascript=144, java=25 |
-| typescript | 31,394 | 1,996 | 6.36% | javascript=1,606, python=358, java=32 |
+| java | 2,083 | 232 | 11.14% | typescript=145, python=86, javascript=1 |
+| javascript | 3,873 | 1,173 | 30.29% | typescript=990, python=160, java=23 |
+| python | 20,148 | 1,192 | 5.92% | typescript=907, javascript=152, java=133 |
+| typescript | 41,875 | 2,446 | 5.84% | javascript=1,894, python=520, java=32 |
 
-### Dataset C (human-authored, pre-LLM) -- 47,208 fixtures
+### Dataset C (human-authored, pre-LLM) -- 67,979 fixtures
 
 **fixture_type kind distribution**
 
 | Kind | Count | % |
 |---|---|---|
-| setup | 31,339 | 66.4% |
-| teardown | 11,372 | 24.1% |
-| other | 4,497 | 9.5% |
+| setup | 50,022 | 73.6% |
+| teardown | 16,152 | 23.8% |
+| setup_and_teardown | 1,236 | 1.8% |
+| other | 569 | 0.8% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-4,318/47,208 fixtures (9.15%) leaked.
+6,214/67,979 fixtures (9.14%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 2,541 | 1,168 | 45.97% | typescript=684, python=428, javascript=56 |
-| javascript | 4,454 | 1,385 | 31.10% | typescript=1,223, python=156, java=6 |
-| python | 11,119 | 758 | 6.82% | typescript=607, javascript=135, java=16 |
-| typescript | 29,094 | 1,007 | 3.46% | javascript=914, python=90, java=3 |
+| java | 3,897 | 1,883 | 48.32% | typescript=985, python=819, javascript=79 |
+| javascript | 5,467 | 2,067 | 37.81% | typescript=1,791, python=267, java=9 |
+| python | 19,523 | 1,026 | 5.26% | typescript=841, javascript=172, java=13 |
+| typescript | 39,092 | 1,238 | 3.17% | javascript=1,096, python=139, java=3 |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
 ### Table 1: Fixture Counts by Type (tab:rq2-counts)
 
-Raw counts of setup-classified and teardown-classified fixtures ("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are excluded from both columns). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
+Raw counts of setup-classified and teardown-classified fixtures ("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are excluded from both columns; a fixture classified as providing both -- e.g. a pytest fixture with setup code before its `yield` -- is counted in both columns, so they are not mutually exclusive). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
 
 | Language | Setup A | Setup C | Teardown A | Teardown C |
 |---|---|---|---|---|
-| Total | 23,759 | 31,339 | 14,942 | 11,372 |
-| java | 894 | 708 | 422 | 355 |
-| javascript | 2,471 | 2,892 | 1,703 | 1,282 |
-| python | 1,890 | 4,951 | 720 | 1,922 |
-| typescript | 18,504 | 22,788 | 12,097 | 7,813 |
+| Total | 48,015 | 51,258 | 23,633 | 17,388 |
+| java | 1,270 | 987 | 609 | 499 |
+| javascript | 2,782 | 3,344 | 1,965 | 1,403 |
+| python | 18,619 | 16,142 | 4,932 | 4,800 |
+| typescript | 25,344 | 30,785 | 16,127 | 10,686 |
 
 ### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)
 
@@ -70,11 +72,11 @@ Per-repository binary coverage: 1 if a repo has >=1 teardown-classified fixture,
 
 | Language | n_A | n_C | Coverage A (%) | Coverage C (%) | delta | p (BH) |
 |---|---|---|---|---|---|---|
-| Overall | 1354 | 2325 | 61.4% | 50.3% | -0.111 (negligible) | <.001 |
-| java | 97 | 267 | 66.0% | 47.2% | -0.188 (small) | 0.002 |
-| javascript | 115 | 557 | 77.4% | 55.5% | -0.219 (small) | <.001 |
-| python | 531 | 944 | 19.4% | 32.0% | 0.126 (negligible) | <.001 |
-| typescript | 749 | 735 | 84.8% | 68.0% | -0.168 (small) | <.001 |
+| Overall | 1647 | 2472 | 77.6% | 62.4% | -0.152 (small) | <.001 |
+| java | 122 | 315 | 63.9% | 47.0% | -0.170 (small) | 0.001 |
+| javascript | 137 | 563 | 77.4% | 58.8% | -0.186 (small) | <.001 |
+| python | 656 | 1045 | 67.4% | 58.4% | -0.090 (negligible) | <.001 |
+| typescript | 928 | 749 | 84.6% | 71.7% | -0.129 (negligible) | <.001 |
 
 ## Supplementary Analyses
 
@@ -86,35 +88,35 @@ Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, 
 
 | Dataset | n (Python repos) | Dip statistic | p-value |
 |---|---|---|---|
-| Dataset A | 531 | 0.0141 | 0.723 |
-| Dataset C | 944 | 0.0228 | 0.002 |
+| Dataset A | 656 | 0.0320 | <.001 |
+| Dataset C | 1045 | 0.0297 | <.001 |
 
-**Dataset A -- teardown_pct distribution across 531 Python repos**
-
-```
- 0.00- 0.10 | ######################################## (449)
- 0.10- 0.20 | ## (27)
- 0.20- 0.30 | # (16)
- 0.30- 0.40 | # (10)
- 0.40- 0.50 | # (9)
- 0.50- 0.60 | # (16)
- 0.60- 0.70 |  (1)
- 0.70- 0.80 |  (1)
- 0.80- 0.90 |  (0)
- 0.90- 1.00 |  (2)
-```
-
-**Dataset C -- teardown_pct distribution across 944 Python repos**
+**Dataset A -- teardown_pct distribution across 656 Python repos**
 
 ```
- 0.00- 0.10 | ######################################## (665)
- 0.10- 0.20 | ### (50)
- 0.20- 0.30 | ### (57)
- 0.30- 0.40 | ### (46)
- 0.40- 0.50 | ## (26)
- 0.50- 0.60 | ### (56)
- 0.60- 0.70 | # (16)
- 0.70- 0.80 |  (3)
- 0.80- 0.90 |  (3)
- 0.90- 1.00 | # (22)
+ 0.00- 0.10 | ######################################## (258)
+ 0.10- 0.20 | ########## (64)
+ 0.20- 0.30 | ############ (78)
+ 0.30- 0.40 | ########## (67)
+ 0.40- 0.50 | ####### (45)
+ 0.50- 0.60 | ######### (59)
+ 0.60- 0.70 | #### (27)
+ 0.70- 0.80 | ## (10)
+ 0.80- 0.90 | # (5)
+ 0.90- 1.00 | ####### (43)
+```
+
+**Dataset C -- teardown_pct distribution across 1045 Python repos**
+
+```
+ 0.00- 0.10 | ######################################## (501)
+ 0.10- 0.20 | ######## (99)
+ 0.20- 0.30 | ######## (102)
+ 0.30- 0.40 | ###### (76)
+ 0.40- 0.50 | #### (52)
+ 0.50- 0.60 | ######## (97)
+ 0.60- 0.70 | ## (30)
+ 0.70- 0.80 | # (13)
+ 0.80- 0.90 | # (9)
+ 0.90- 1.00 | ##### (66)
 ```
