@@ -1,12 +1,20 @@
 """Tests for collection/research_questions/rq2.py.
 
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
-schema, initialise_db()) and checks the kind classification, per-repo/
-per-language repo-count bookkeeping, and report rendering -- never touching
-the real db/ or research_questions/ directories. The Mann-Whitney U math
-itself (including compute_continuous_balance()'s mean/median/Cliff's-delta
-computation) is already covered by tests/between_group/test_between_group_
-comparison.py and tests/collection/test_research_questions_shared.py.
+schema, initialise_db()) and checks per-repo/per-language repo-count
+bookkeeping and report rendering -- never touching the real db/ or
+research_questions/ directories. rq2.py no longer classifies fixture_type_kind
+itself (that now happens at extraction time -- see detector_shared.py's
+_classify_fixture_kinds() and detector_python.py's pytest body-analysis
+classification, both covered by their own test files:
+test_fixture_kind_classification.py and test_classify_pytest_fixture_kind.py),
+so these fixture-dict literals set fixture_type_kind directly via
+_default_fixture_type_kind() below -- a thin test-only wrapper around those
+same two real functions, not a reimplementation, so this file's synthetic
+data stays in sync with production classification automatically. The
+Mann-Whitney U math itself (including compute_continuous_balance()'s mean/
+median/Cliff's-delta computation) is already covered by tests/between_group/
+test_between_group_comparison.py and tests/collection/test_research_questions_shared.py.
 """
 
 from __future__ import annotations
@@ -19,15 +27,28 @@ from collection.db import (
     upsert_repository,
     upsert_test_file,
 )
+from collection.detector_python import classify_pytest_fixture_kind_from_source
+from collection.detector_shared import _classify_fixture_kind
 from collection.research_questions.rq2 import (
     DatasetMetrics,
-    _kind,
     _python_teardown_proportions,
     _render_teardown_dip_test,
     generate_report,
     load_dataset_metrics,
     write_report,
 )
+
+
+def _default_fixture_type_kind(fixture_type: str, name: str, raw_source: str) -> str:
+    """What extraction would have set fixture_type_kind to, given only
+    fixture_type/name/raw_source -- delegates to the same two real
+    functions detector_shared._classify_fixture_kinds()/detector_python's
+    _detect_python() call in production, so _make_db()/_make_multi_language_db()
+    callers below can omit fixture_type_kind and still get a realistic
+    default instead of every fixture literal in this file needing one."""
+    if fixture_type == "pytest_decorator":
+        return classify_pytest_fixture_kind_from_source(raw_source or "")
+    return _classify_fixture_kind(fixture_type, name or "")
 
 
 def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
@@ -84,6 +105,12 @@ def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
                     "num_mocks": 0,
                 }
                 base.update(overrides)
+                base.setdefault(
+                    "fixture_type_kind",
+                    _default_fixture_type_kind(
+                        base["fixture_type"], base.get("name", ""), base.get("raw_source", "")
+                    ),
+                )
                 insert_fixture(conn, base)
 
 
@@ -145,55 +172,13 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                     "num_mocks": 0,
                 }
                 base.update(overrides)
+                base.setdefault(
+                    "fixture_type_kind",
+                    _default_fixture_type_kind(
+                        base["fixture_type"], base.get("name", ""), base.get("raw_source", "")
+                    ),
+                )
                 insert_fixture(conn, base)
-
-
-class TestKind:
-    def test_unambiguous_setup_type(self):
-        assert _kind("before_each") == "setup"
-        assert _kind("junit5_before_each") == "setup"
-
-    def test_unambiguous_teardown_type(self):
-        assert _kind("after_each") == "teardown"
-        assert _kind("junit5_after_each") == "teardown"
-
-    def test_genuinely_ambiguous_types_are_other(self):
-        # pytest_decorator (optional teardown via yield, not type or name);
-        # junit_rule/vitest_around_* (inherently both at once);
-        # testng_data_provider (not a lifecycle hook at all) -- none of
-        # these can be split by type OR name.
-        for fixture_type in (
-            "pytest_decorator",
-            "junit_rule",
-            "junit_class_rule",
-            "vitest_around_each",
-            "vitest_around_all",
-            "testng_data_provider",
-        ):
-            assert _kind(fixture_type) == "other"
-
-    def test_name_based_types_without_a_name_are_other(self):
-        # unittest_setup/pytest_class_method need a name to disambiguate --
-        # type alone isn't enough.
-        assert _kind("unittest_setup") == "other"
-        assert _kind("pytest_class_method") == "other"
-
-    def test_name_based_setup_names(self):
-        assert _kind("unittest_setup", "setUp") == "setup"
-        assert _kind("unittest_setup", "setUpClass") == "setup"
-        assert _kind("unittest_setup", "setUpModule") == "setup"
-        assert _kind("pytest_class_method", "setup_method") == "setup"
-        assert _kind("pytest_class_method", "setup_class") == "setup"
-
-    def test_name_based_teardown_names(self):
-        assert _kind("unittest_setup", "tearDown") == "teardown"
-        assert _kind("unittest_setup", "tearDownClass") == "teardown"
-        assert _kind("unittest_setup", "tearDownModule") == "teardown"
-        assert _kind("pytest_class_method", "teardown_method") == "teardown"
-        assert _kind("pytest_class_method", "teardown_class") == "teardown"
-
-    def test_name_based_type_with_unrecognized_name_is_other(self):
-        assert _kind("unittest_setup", "some_helper_method") == "other"
 
 
 class TestLoadDatasetMetrics:
@@ -216,7 +201,12 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert isinstance(metrics, DatasetMetrics)
         assert metrics.n_fixtures == 4
-        assert metrics.kind_distribution == {"setup": 2, "teardown": 1, "other": 1}
+        assert metrics.kind_distribution == {
+            "setup": 2,
+            "teardown": 1,
+            "setup_and_teardown": 0,
+            "other": 1,
+        }
 
     def test_kind_distribution_splits_name_based_types(self, tmp_path):
         """unittest_setup/pytest_class_method rows must be classified by
@@ -235,7 +225,12 @@ class TestLoadDatasetMetrics:
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.kind_distribution == {"setup": 2, "teardown": 1, "other": 1}
+        assert metrics.kind_distribution == {
+            "setup": 2,
+            "teardown": 1,
+            "setup_and_teardown": 0,
+            "other": 1,
+        }
 
     def test_kind_counts_by_repo_groups_all_three_kinds_by_repo_id(self, tmp_path):
         _make_db(
@@ -255,14 +250,24 @@ class TestLoadDatasetMetrics:
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert len(metrics.kind_counts_by_repo) == 2
-        assert {"setup": 2, "teardown": 1, "other": 1} in metrics.kind_counts_by_repo.values()
-        assert {"setup": 1, "teardown": 0, "other": 0} in metrics.kind_counts_by_repo.values()
+        assert {
+            "setup": 2,
+            "teardown": 1,
+            "setup_and_teardown": 0,
+            "other": 1,
+        } in metrics.kind_counts_by_repo.values()
+        assert {
+            "setup": 1,
+            "teardown": 0,
+            "setup_and_teardown": 0,
+            "other": 0,
+        } in metrics.kind_counts_by_repo.values()
 
     def test_kind_counts_by_repo_and_language_splits_by_fixtures_own_language(self, tmp_path):
         """One repo contributing fixtures in two languages must get its own
-        {setup/teardown/other: count} entry under EACH language, keyed by
-        that fixture's own test_files.language (not the repo's tag) -- the
-        per-language rows' population."""
+        {setup/teardown/setup_and_teardown/other: count} entry under EACH
+        language, keyed by that fixture's own test_files.language (not the
+        repo's tag) -- the per-language rows' population."""
         _make_multi_language_db(
             tmp_path,
             "a",
@@ -281,10 +286,16 @@ class TestLoadDatasetMetrics:
         python_repo_id = next(iter(by_lang["python"]))
         typescript_repo_id = next(iter(by_lang["typescript"]))
         assert python_repo_id == typescript_repo_id
-        assert by_lang["python"][python_repo_id] == {"setup": 1, "teardown": 1, "other": 0}
+        assert by_lang["python"][python_repo_id] == {
+            "setup": 1,
+            "teardown": 1,
+            "setup_and_teardown": 0,
+            "other": 0,
+        }
         assert by_lang["typescript"][typescript_repo_id] == {
             "setup": 1,
             "teardown": 0,
+            "setup_and_teardown": 0,
             "other": 0,
         }
 
@@ -376,6 +387,35 @@ class TestGenerateReport:
         comparison_section = report.split("## A vs C:")[1]
         assert "| Total | 1 | 0 | 0 | 1 |" in comparison_section
 
+    def test_kind_counts_table_counts_setup_and_teardown_fixture_in_both_columns(
+        self, tmp_path
+    ):
+        """A pytest_decorator fixture classified 'setup_and_teardown'
+        (real yield-after-setup raw_source) is not "other" -- it counts
+        toward both the Setup and Teardown columns, since it genuinely
+        provides both."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                [
+                    {
+                        "fixture_type": "pytest_decorator",
+                        "raw_source": (
+                            "def db():\n    conn = connect()\n"
+                            "    yield conn\n    conn.close()\n"
+                        ),
+                    }
+                ]
+            ],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        report = generate_report(db_root=tmp_path)
+        comparison_section = report.split("## A vs C:")[1]
+        # Setup A=1, Setup C=0, Teardown A=1, Teardown C=1 -- the single A
+        # fixture counted in both the Setup and Teardown A columns.
+        assert "| Total | 1 | 0 | 1 | 1 |" in comparison_section
+
     def test_kind_counts_table_total_includes_languages_outside_the_fixed_four(self, tmp_path):
         """The Total row is the dataset-wide sum across every language
         present, not just the four canonical rows shown -- a 5th language
@@ -444,6 +484,36 @@ class TestGenerateReport:
             line for line in comparison_section.splitlines() if line.startswith("| Overall |")
         )
         assert "0.0% | 100.0%" in overall_line
+
+    def test_teardown_coverage_counts_setup_and_teardown_classified_repo_as_covered(
+        self, tmp_path
+    ):
+        """A repo whose only classified fixture is a pytest_decorator
+        classified 'setup_and_teardown' (real yield-after-setup
+        raw_source) counts as covered (1), the same as a repo with a
+        plain 'teardown'-classified fixture."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                [
+                    {
+                        "fixture_type": "pytest_decorator",
+                        "raw_source": (
+                            "def db():\n    conn = connect()\n"
+                            "    yield conn\n    conn.close()\n"
+                        ),
+                    }
+                ]
+            ],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
+        report = generate_report(db_root=tmp_path)
+        comparison_section = report.split("## A vs C:")[1]
+        overall_line = next(
+            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+        )
+        assert "100.0% | 0.0%" in overall_line
 
     def test_teardown_coverage_declusters_a_prolific_repo(self, tmp_path):
         """A is one repo with 100 setup-only fixtures (0 teardown ->
@@ -521,16 +591,20 @@ class TestPythonTeardownProportions:
         assert sorted(proportions) == [0.0, 0.5, 1.0]
 
     def test_repo_with_only_other_kind_fixtures_contributes_zero_not_excluded(self, tmp_path):
-        """A repo whose only Python fixtures are pytest_decorator ('other'
-        by _kind()) is NOT skipped -- its "other" fixture still counts
-        toward repo_level_category_proportions()'s total-classified
-        denominator (1), so it contributes a real teardown_pct of 0/1 =
-        0.0, same as a repo with a genuine setup-only fixture. This is
-        exactly the mechanism pytest-yield-teardown-vs-fixture-kind.md
-        documents: a 100%-pytest_decorator repo doesn't drop out of the
-        distribution, it silently pins at 0.0 regardless of how much real
-        (yield-detected) teardown it actually has -- fixture_type_kind
-        simply can't see it."""
+        """A repo whose only Python fixtures are pytest_decorator with no
+        raw_source to analyze ('other' -- see
+        test_classify_pytest_fixture_kind.py::TestClassifyFromSource.
+        test_empty_string_returns_other) is NOT skipped -- its "other"
+        fixture still counts toward the
+        total-classified denominator (1), so it contributes a real
+        teardown_pct of 0/1 = 0.0, same as a repo with a genuine setup-only
+        fixture. Historical note: before classify_pytest_fixture_kind_
+        from_source() existed, this was true for *every* pytest_decorator
+        fixture regardless of its actual source -- see
+        pytest-yield-teardown-vs-fixture-kind.md. Now it's only true when
+        there's no raw_source to classify from; see
+        test_pytest_decorator_teardown_is_counted below for the real,
+        source-analyzed case."""
         _make_db(
             tmp_path,
             "a",
@@ -542,6 +616,32 @@ class TestPythonTeardownProportions:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         proportions = _python_teardown_proportions(metrics)
         assert proportions == [0.0, 0.0]
+
+    def test_pytest_decorator_teardown_is_counted(self, tmp_path):
+        """A pytest_decorator fixture with real yield-after-setup
+        raw_source is classified 'setup_and_teardown' and counts toward
+        the teardown_pct numerator -- the gap the previous test's
+        docstring and pytest-yield-teardown-vs-fixture-kind.md describe is
+        now closed for fixtures with real source to analyze."""
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                [
+                    {
+                        "fixture_type": "pytest_decorator",
+                        "raw_source": (
+                            "def db():\n    conn = connect()\n"
+                            "    yield conn\n    conn.close()\n"
+                        ),
+                    }
+                ],
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.kind_distribution["setup_and_teardown"] == 1
+        proportions = _python_teardown_proportions(metrics)
+        assert proportions == [1.0]
 
     def test_no_python_fixtures_returns_empty_list(self, tmp_path):
         _make_multi_language_db(

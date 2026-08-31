@@ -211,6 +211,7 @@ def write_fixture_csv_row(
         "num_comment_lines",
         "comment_density",
         "has_teardown_pair",
+        "fixture_type_kind",
         "github_url",
         "agent_type",
         "commit_kind",
@@ -258,6 +259,7 @@ def write_fixture_csv_row(
             "num_comment_lines": fixture.get("num_comment_lines", 0),
             "comment_density": fixture.get("comment_density", 0.0),
             "has_teardown_pair": fixture.get("has_teardown_pair", 0),
+            "fixture_type_kind": fixture.get("fixture_type_kind", "other"),
             "github_url": _build_github_url(
                 repo_name,
                 fixture.get("commit_sha", ""),
@@ -380,6 +382,7 @@ def persist_repository_and_fixtures(
                 "comment_density": fixture.get("comment_density"),
                 "num_parameters": fixture.get("num_parameters"),
                 "has_teardown_pair": fixture.get("has_teardown_pair"),
+                "fixture_type_kind": fixture.get("fixture_type_kind", "other"),
                 "raw_source": fixture.get("raw_source"),
                 "framework": fixture.get("framework"),
                 "num_mocks": len(fixture.get("mocks", []) or []),

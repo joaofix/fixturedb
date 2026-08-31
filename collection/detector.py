@@ -105,6 +105,7 @@ from .detector_shared import (
     FixtureResult,
     MockResult,
     _calculate_teardown_pairs,
+    _classify_fixture_kinds,
     _count_file_loc,
     _detect_fixture_dependencies,
     _get_parser,
@@ -237,6 +238,7 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
         )  # Phase 4: detect pytest fixture dependencies
         _propagate_fixture_scopes(fixtures)  # Phase 4: propagate scope constraints
         _calculate_teardown_pairs(fixtures)
+        _classify_fixture_kinds(fixtures)  # setup/teardown/setup_and_teardown/other
 
         # Extraction phase: Use Lizard for file-level metrics instead of manual counting
         # This provides consistency with fixture-level complexity analysis

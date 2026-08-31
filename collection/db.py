@@ -199,6 +199,13 @@ _COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     # comment_density can be trusted or reported on.
     ("fixtures", "num_comment_lines", "INTEGER DEFAULT 0"),
     ("fixtures", "comment_density", "REAL DEFAULT 0.0"),
+    # fixture_type_kind (setup/teardown/setup_and_teardown/other, added
+    # 2026-08-30): same self-heals-schema-only caveat as num_comment_lines/
+    # comment_density above -- a row on a not-yet-migrated file lands at
+    # this DEFAULT ('other') after migration, indistinguishable from a
+    # genuinely-other-classified fixture until a full re-extraction backs
+    # it with a real value.
+    ("fixtures", "fixture_type_kind", "TEXT DEFAULT 'other'"),
 ]
 
 
@@ -474,6 +481,7 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "comment_density",
         "num_parameters",
         "has_teardown_pair",
+        "fixture_type_kind",
         "raw_source",
         "framework",
         "num_mocks",
@@ -503,6 +511,13 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
     if "commit_sha" not in columns:
         columns.append("commit_sha")
         fixture = {**fixture, "commit_sha": fixture.get("commit_sha") or ""}
+
+    # fixture_type_kind is in the unconditional `columns` list above (real
+    # extraction always sets it via fixture_result_to_dict()), but plenty of
+    # callers -- tests, and any hand-built fixture dict -- don't supply it
+    # (or supply it as None). Default it here rather than requiring every
+    # one of them to, same reasoning as commit_sha above.
+    fixture = {**fixture, "fixture_type_kind": fixture.get("fixture_type_kind") or "other"}
 
     # Build the INSERT statement
     cols_str = ", ".join(columns)

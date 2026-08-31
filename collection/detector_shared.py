@@ -118,6 +118,10 @@ class FixtureResult:
     comment_density: float  # num_comment_lines / loc (0.0 if loc == 0)
     num_parameters: int
     has_teardown_pair: int = 0  # 1 if teardown/cleanup logic exists, 0 otherwise
+    fixture_type_kind: str = "other"  # setup/teardown/setup_and_teardown/other --
+    # set by _classify_fixture_kinds() in post-processing (pytest_decorator is the
+    # one exception, classified directly in detector_python.py's _detect_python()
+    # via body analysis -- see that post-processing pass's docstring above)
     fixture_dependencies: list[str] = field(
         default_factory=list
     )  # list of fixture names this fixture depends on (Phase 4)
@@ -620,6 +624,7 @@ def fixture_result_to_dict(
         "comment_density": fixture.comment_density,
         "num_parameters": fixture.num_parameters,
         "has_teardown_pair": fixture.has_teardown_pair,
+        "fixture_type_kind": fixture.fixture_type_kind,
         "raw_source": fixture.raw_source,
         "mocks": [
             {
@@ -955,3 +960,61 @@ def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
             )
 
         fixture.has_teardown_pair = 1 if has_teardown else 0
+
+
+# ---------------------------------------------------------------------------
+# fixture_type_kind: setup / teardown / setup_and_teardown / other
+# ---------------------------------------------------------------------------
+#
+# A coarser, RQ2-facing classification than has_teardown_pair above -- not
+# "does this fixture have teardown at all" but "is *this* fixture the setup
+# side, the teardown side, both, or neither". Reuses the exact same
+# TYPE_BASED_TEARDOWN_PAIRS/NAME_BASED_TEARDOWN_PAIRS tables has_teardown_pair
+# is computed from, rather than a second, drifting lookup.
+#
+# `pytest_decorator` is handled separately, NOT here: type/name alone can't
+# split it (every pytest fixture is just named whatever the developer called
+# it), so detector_python.py's _detect_python() classifies it directly via
+# body analysis (classify_pytest_fixture_kind()) at detection time, using
+# the tree-sitter body node it already has -- before _classify_fixture_kinds()
+# ever runs. This function skips fixture_type == "pytest_decorator" rows
+# rather than overwriting that.
+TYPE_BASED_SETUP_KIND_TYPES: set[str] = set(TYPE_BASED_TEARDOWN_PAIRS.keys())
+TYPE_BASED_TEARDOWN_KIND_TYPES: set[str] = set(TYPE_BASED_TEARDOWN_PAIRS.values())
+NAME_BASED_SETUP_KIND_NAMES: dict[str, set[str]] = {
+    ft: set(names.keys()) for ft, names in NAME_BASED_TEARDOWN_PAIRS.items()
+}
+NAME_BASED_TEARDOWN_KIND_NAMES: dict[str, set[str]] = {
+    ft: set(names.values()) for ft, names in NAME_BASED_TEARDOWN_PAIRS.items()
+}
+
+
+def _classify_fixture_kind(fixture_type: str, name: str) -> str:
+    """setup/teardown/other for one (fixture_type, name) pair -- everything
+    except pytest_decorator (see module comment above). junit_rule/
+    vitest_around_*/testng_data_provider fall through to 'other': they
+    can't be split by type or name either, but unlike pytest_decorator
+    there's no body-analysis mechanism for them (yet)."""
+    if fixture_type in TYPE_BASED_SETUP_KIND_TYPES:
+        return "setup"
+    if fixture_type in TYPE_BASED_TEARDOWN_KIND_TYPES:
+        return "teardown"
+    if fixture_type in NAME_BASED_TEARDOWN_PAIRS:
+        if name in NAME_BASED_SETUP_KIND_NAMES[fixture_type]:
+            return "setup"
+        if name in NAME_BASED_TEARDOWN_KIND_NAMES[fixture_type]:
+            return "teardown"
+    return "other"
+
+
+def _classify_fixture_kinds(fixtures: list[FixtureResult]) -> None:
+    """Post-process fixtures to set fixture_type_kind for every fixture
+    except pytest_decorator, which detector_python.py's _detect_python()
+    already classified directly (body analysis, not type/name) at
+    detection time. Modifies fixtures in-place."""
+    for fixture in fixtures:
+        if fixture.fixture_type == "pytest_decorator":
+            continue
+        fixture.fixture_type_kind = _classify_fixture_kind(
+            fixture.fixture_type, fixture.name
+        )

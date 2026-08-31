@@ -88,6 +88,7 @@ Individual fixture definitions and their quantitative metrics.
 | `comment_density` | REAL | `num_comment_lines / loc`, or `0.0` if `loc` is 0 |
 | `num_parameters` | INTEGER | Number of fixture parameters |
 | `has_teardown_pair` | INTEGER | Binary indicator for teardown or cleanup logic |
+| `fixture_type_kind` | TEXT | `setup`/`teardown`/`setup_and_teardown`/`other`, set at extraction time -- see `collection/detector_shared.py`'s `_classify_fixture_kinds()` and `collection/detector_python.py`'s `classify_pytest_fixture_kind()` docstrings for the per-fixture-type rules |
 | `raw_source` | TEXT | Original source text for the fixture |
 | `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |
 | `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |

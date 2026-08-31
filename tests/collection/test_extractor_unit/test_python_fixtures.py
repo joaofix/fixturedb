@@ -232,6 +232,59 @@ def test_something(value):
         assert_fixture_count(code, "python", 0)
 
 
+class TestPytestFixtureTypeKindWiring:
+    """End-to-end check that fixture_type_kind is set on real extracted
+    pytest_decorator fixtures -- detector_python.py's _detect_python()
+    classifies these directly via classify_pytest_fixture_kind() (body
+    analysis) at detection time, not detector_shared.py's generic
+    _classify_fixture_kinds() pass. Full branch coverage of the
+    classification algorithm itself lives in
+    test_classify_pytest_fixture_kind.py; these just confirm it's actually
+    wired into extraction, on a real FixtureResult, not just callable in
+    isolation."""
+
+    def test_no_yield_is_setup(self):
+        code = """
+@pytest.fixture
+def config():
+    return {"debug": True}
+"""
+        fixture = assert_fixture_detected(code, "python", "config")
+        assert fixture.fixture_type_kind == "setup"
+
+    def test_yield_after_setup_is_setup_and_teardown(self):
+        code = """
+@pytest.fixture
+def db():
+    conn = connect()
+    yield conn
+    conn.close()
+"""
+        fixture = assert_fixture_detected(code, "python", "db")
+        assert fixture.fixture_type_kind == "setup_and_teardown"
+
+    def test_bare_first_yield_is_teardown(self):
+        code = """
+@pytest.fixture
+def cleanup_only():
+    yield
+    remove_temp_files()
+"""
+        fixture = assert_fixture_detected(code, "python", "cleanup_only")
+        assert fixture.fixture_type_kind == "teardown"
+
+    def test_addfinalizer_is_setup_and_teardown(self):
+        code = """
+@pytest.fixture
+def db(request):
+    conn = connect()
+    request.addfinalizer(conn.close)
+    return conn
+"""
+        fixture = assert_fixture_detected(code, "python", "db")
+        assert fixture.fixture_type_kind == "setup_and_teardown"
+
+
 class TestModuleLevelFixtures:
     """Nose-style module/package-level setup and teardown are deliberately
     NOT detected -- only pytest and unittest are in scope for Python (see

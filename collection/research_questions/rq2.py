@@ -3,23 +3,25 @@ RQ2 -- Setup and Teardown Characterization (Quantitative): how do
 agent-generated fixtures compare to human-written ones in setup and
 teardown provision?
 
-Two paper tables, both keyed on **fixture_type "kind"** -- setup / teardown
-/ other. `fixture_type` alone can't cleanly split into setup vs teardown
-for every type, so classification (`_kind()`) reuses two existing tables
-from detector_shared.py -- the exact same ones `has_teardown_pair` itself
-is computed from -- rather than a duplicate, drifting lookup:
-  - `TYPE_BASED_TEARDOWN_PAIRS`: types where setup/teardown are different
-    fixture_types (before_each/after_each, junit5_before_each/
-    junit5_after_each, ...) -- classified by type alone.
-  - `NAME_BASED_TEARDOWN_PAIRS`: types where setup and teardown share ONE
-    fixture_type, distinguished only by fixture name (unittest_setup's
-    setUp/tearDown, pytest_class_method's setup_method/teardown_method) --
-    classified by (type, name).
-Everything else (pytest_decorator -- setup with an *optional* teardown via
-`yield`, not captured by type or name; junit_rule/junit_class_rule/
-vitest_around_each/vitest_around_all -- inherently both at once, see
-ALWAYS_HAS_TEARDOWN_TYPES; testng_data_provider -- neither, it's not a
-lifecycle hook) buckets as "other" instead of forcing a fake split.
+Two paper tables, both keyed on **fixtures.fixture_type_kind** -- setup /
+teardown / setup_and_teardown / other. This is a persisted DB column, set
+once at *extraction* time (not computed here) by
+`detector_shared._classify_fixture_kinds()` for every fixture type except
+`pytest_decorator`, plus `detector_python._detect_python()`'s own direct
+body-analysis classification for `pytest_decorator` -- see those two
+functions' docstrings for the exact per-type rules and why `pytest_decorator`
+needs its own mechanism (type/name alone can't split it: every pytest
+fixture is just named whatever the developer called it; see
+internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md).
+This module just reads the column and renders it -- no classification logic
+lives here, so a dataset's `fixture_type_kind` numbers are identical
+regardless of when its RQ2 report is (re)generated relative to extraction.
+
+Table 1's Setup/Teardown columns and Table 2's teardown-coverage indicator
+both treat a `setup_and_teardown`-classified fixture as counting toward
+*both* setup and teardown -- it genuinely provides both, so excluding it
+from either column would undercount that dataset's real setup/teardown
+provision.
 
 **Table 1 (tab:rq2-counts) -- absolute fixture counts**
 (`_render_kind_counts_table()`): purely descriptive, no statistics. For
@@ -91,10 +93,11 @@ either paper table, but may still be cited in prose) -- rendered under
 main tables.
 
 **`has_teardown_pair`**: no separate analysis of this fixtures-table
-column exists in this script (it never has -- `_kind()`'s classification
-above is this script's own, independent teardown detection, built from
-the same two lookup tables `has_teardown_pair` itself is computed from,
-not from that column directly). Nothing to relabel as supplementary here.
+column exists in this script (it never has -- `fixture_type_kind` above is
+computed by its own, independent teardown-detection pass at extraction
+time, built from the same lookup tables `has_teardown_pair` itself is
+computed from, not derived from that column). Nothing to relabel as
+supplementary here.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.
@@ -112,7 +115,6 @@ from pathlib import Path
 from .. import paths
 from ..between_group_comparison import BalanceTest, compute_continuous_balance
 from ..db import db_session
-from ..detector_shared import NAME_BASED_TEARDOWN_PAIRS, TYPE_BASED_TEARDOWN_PAIRS
 from ..logging_utils import get_logger
 from ._shared import (
     COMPARISONS,
@@ -128,7 +130,6 @@ from ._shared import (
     render_ascii_histogram,
     render_language_leakage_table,
     repo_level_category_n_counts,
-    repo_level_category_proportions,
     require_db_or_none,
     run_dip_test,
     write_markdown_report,
@@ -140,31 +141,6 @@ logger = get_logger(__name__)
 # this is a fixed list rather than the "languages present on both sides"
 # intersection convention used elsewhere in this package.
 RQ2_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
-
-TYPE_BASED_SETUP_TYPES: set[str] = set(TYPE_BASED_TEARDOWN_PAIRS.keys())
-TYPE_BASED_TEARDOWN_TYPES: set[str] = set(TYPE_BASED_TEARDOWN_PAIRS.values())
-
-# fixture_type -> {setup names} / {teardown names}, for the fixture_types
-# where type alone is ambiguous and the fixture's own name disambiguates.
-NAME_BASED_SETUP_NAMES: dict[str, set[str]] = {
-    ft: set(names.keys()) for ft, names in NAME_BASED_TEARDOWN_PAIRS.items()
-}
-NAME_BASED_TEARDOWN_NAMES: dict[str, set[str]] = {
-    ft: set(names.values()) for ft, names in NAME_BASED_TEARDOWN_PAIRS.items()
-}
-
-
-def _kind(fixture_type: str, name: str | None = None) -> str:
-    if fixture_type in TYPE_BASED_SETUP_TYPES:
-        return "setup"
-    if fixture_type in TYPE_BASED_TEARDOWN_TYPES:
-        return "teardown"
-    if fixture_type in NAME_BASED_TEARDOWN_PAIRS and name is not None:
-        if name in NAME_BASED_SETUP_NAMES[fixture_type]:
-            return "setup"
-        if name in NAME_BASED_TEARDOWN_NAMES[fixture_type]:
-            return "teardown"
-    return "other"
 
 
 @dataclass
@@ -206,6 +182,14 @@ def load_dataset_metrics(
     )
 
 
+def _empty_kind_counts() -> dict[str, int]:
+    """A fresh {setup/teardown/setup_and_teardown/other: 0} dict -- the one
+    place that dict literal is spelled out, so every kind_distribution/
+    kind_counts_by_repo(_and_language) entry stays in sync if a kind is
+    ever added or renamed."""
+    return dict.fromkeys(("setup", "teardown", "setup_and_teardown", "other"), 0)
+
+
 def _fetch_kinds_and_repo_counts(
     conn: sqlite3.Connection,
 ) -> tuple[
@@ -214,11 +198,12 @@ def _fetch_kinds_and_repo_counts(
     dict[str, dict[int, dict[str, int]]],
 ]:
     """Single pass over every fixture: dataset-level kind distribution
-    (descriptive only), per-repo {setup/teardown/other: count} (Overall),
-    and the same per-repo counts bucketed by each fixture's own language
-    too -- classified once via `_kind()` so these views can't disagree
-    with each other (a second, SQL-side classification would just be
-    `_kind()` duplicated in a different language).
+    (descriptive only), per-repo {setup/teardown/setup_and_teardown/other:
+    count} (Overall), and the same per-repo counts bucketed by each
+    fixture's own language too -- reading fixtures.fixture_type_kind
+    directly, already classified once at extraction time (see this
+    module's docstring), so this is a straight read, not a
+    re-classification.
 
     `kind_counts_by_repo` feeds Table 2's Overall row (via
     _teardown_coverage_indicators() + compute_continuous_balance());
@@ -229,26 +214,25 @@ def _fetch_kinds_and_repo_counts(
     fixtures in more than one language contributes to each language
     separately. Both also feed repo_level_category_n_counts() for Table
     2's n_A/n_C columns."""
-    kind_distribution = {"setup": 0, "teardown": 0, "other": 0}
+    kind_distribution = _empty_kind_counts()
     kind_counts_by_repo: dict[int, dict[str, int]] = {}
     kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = {}
 
     rows = conn.execute(
-        "SELECT f.repo_id, f.fixture_type, f.name, tf.language FROM fixtures f "
+        "SELECT f.repo_id, f.fixture_type_kind, tf.language FROM fixtures f "
         "JOIN test_files tf ON f.file_id = tf.id WHERE f.fixture_type IS NOT NULL"
     ).fetchall()
-    for repo_id, fixture_type, name, language in rows:
-        kind = _kind(fixture_type, name)
+    for repo_id, kind, language in rows:
         kind_distribution[kind] += 1
 
         repo_kind_counts = kind_counts_by_repo.setdefault(
-            repo_id, {"setup": 0, "teardown": 0, "other": 0}
+            repo_id, _empty_kind_counts()
         )
         repo_kind_counts[kind] += 1
 
         lang_repo_counts = kind_counts_by_repo_and_language.setdefault(
             language, {}
-        ).setdefault(repo_id, {"setup": 0, "teardown": 0, "other": 0})
+        ).setdefault(repo_id, _empty_kind_counts())
         lang_repo_counts[kind] += 1
 
     return kind_distribution, kind_counts_by_repo, kind_counts_by_repo_and_language
@@ -259,7 +243,7 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
 
     total_kind = sum(metrics.kind_distribution.values())
     lines += ["**fixture_type kind distribution**", "", "| Kind | Count | % |", "|---|---|---|"]
-    for kind in ("setup", "teardown", "other"):
+    for kind in ("setup", "teardown", "setup_and_teardown", "other"):
         count = metrics.kind_distribution.get(kind, 0)
         kind_pct = 100 * count / total_kind if total_kind else 0.0
         lines.append(f"| {kind} | {count:,} | {kind_pct:.1f}% |")
@@ -273,39 +257,58 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
 def _language_kind_totals(
     kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]],
 ) -> dict[str, dict[str, int]]:
-    """{language: {setup/teardown/other: total count across every repo}} --
-    Table 1's per-language raw counts, summed from the same per-repo counts
-    Table 2 and the dip test draw their per-repo populations/proportions
-    from (no separate fetch/classification pass)."""
+    """{language: {setup/teardown/setup_and_teardown/other: total count
+    across every repo}} -- Table 1's per-language raw counts, summed from
+    the same per-repo counts Table 2 and the dip test draw their per-repo
+    populations/proportions from (no separate fetch/classification pass)."""
     totals: dict[str, dict[str, int]] = {}
     for language, by_repo in kind_counts_by_repo_and_language.items():
-        lang_totals = totals.setdefault(language, {"setup": 0, "teardown": 0, "other": 0})
+        lang_totals = totals.setdefault(language, _empty_kind_counts())
         for repo_counts in by_repo.values():
             for kind, count in repo_counts.items():
                 lang_totals[kind] += count
     return totals
 
 
+def _effective_setup_count(kind_counts: dict[str, int]) -> int:
+    """Setup-providing fixture count: 'setup' plus 'setup_and_teardown' --
+    the latter genuinely provides setup too, so excluding it here would
+    undercount."""
+    return kind_counts.get("setup", 0) + kind_counts.get("setup_and_teardown", 0)
+
+
+def _effective_teardown_count(kind_counts: dict[str, int]) -> int:
+    """Teardown-providing fixture count: 'teardown' plus
+    'setup_and_teardown', for the same reason as _effective_setup_count()."""
+    return kind_counts.get("teardown", 0) + kind_counts.get("setup_and_teardown", 0)
+
+
 def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Table 1 (tab:rq2-counts): absolute setup/teardown fixture counts per
     language, purely descriptive -- no statistics, "other"-classified
-    fixtures excluded from both columns. See this module's docstring for
-    the full methodology."""
+    fixtures excluded from both columns. A 'setup_and_teardown'-classified
+    fixture (pytest_decorator only -- see this module's docstring) counts
+    toward *both* columns, since it genuinely provides both -- so the two
+    columns are not mutually exclusive and Setup+Teardown can exceed the
+    dataset's total fixture count."""
     other_label = other.dataset.upper()
     lines = [
         "Raw counts of setup-classified and teardown-classified fixtures "
         '("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are '
-        "excluded from both columns). Total is the dataset-wide sum across "
-        "every language present, not just the four rows below. Purely "
-        "descriptive -- no significance test.",
+        "excluded from both columns; a fixture classified as providing "
+        "both -- e.g. a pytest fixture with setup code before its `yield` "
+        "-- is counted in both columns, so they are not mutually "
+        "exclusive). Total is the dataset-wide sum across every language "
+        "present, not just the four rows below. Purely descriptive -- no "
+        "significance test.",
         "",
         f"| Language | Setup A | Setup {other_label} | Teardown A | Teardown {other_label} |",
         "|---|---|---|---|---|",
         (
-            f"| Total | {a.kind_distribution.get('setup', 0):,} | "
-            f"{other.kind_distribution.get('setup', 0):,} | "
-            f"{a.kind_distribution.get('teardown', 0):,} | "
-            f"{other.kind_distribution.get('teardown', 0):,} |"
+            f"| Total | {_effective_setup_count(a.kind_distribution):,} | "
+            f"{_effective_setup_count(other.kind_distribution):,} | "
+            f"{_effective_teardown_count(a.kind_distribution):,} | "
+            f"{_effective_teardown_count(other.kind_distribution):,} |"
         ),
     ]
 
@@ -315,8 +318,10 @@ def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
         a_kind = a_totals.get(language, {})
         other_kind = other_totals.get(language, {})
         lines.append(
-            f"| {language} | {a_kind.get('setup', 0):,} | {other_kind.get('setup', 0):,} | "
-            f"{a_kind.get('teardown', 0):,} | {other_kind.get('teardown', 0):,} |"
+            f"| {language} | {_effective_setup_count(a_kind):,} | "
+            f"{_effective_setup_count(other_kind):,} | "
+            f"{_effective_teardown_count(a_kind):,} | "
+            f"{_effective_teardown_count(other_kind):,} |"
         )
 
     lines.append("")
@@ -325,14 +330,20 @@ def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
 
 def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[float]:
     """Per-repo binary indicator: 1.0 if that repo has >=1 teardown-
-    classified fixture, else 0.0. Population is repos with >=1 classified
-    (setup/teardown/other) fixture -- a repo with none is skipped, not
-    counted as 0-coverage, matching repo_level_category_proportions()'s
-    convention elsewhere in this package. Feeds compute_continuous_balance()
-    directly: the mean of these 0/1 values *is* "% of repos with >=1
-    teardown fixture", so that call's agent_mean/human_mean double as
-    Table 2's Coverage A/C (%) columns."""
-    return [1.0 if counts.get("teardown", 0) > 0 else 0.0 for counts in by_repo.values() if sum(counts.values())]
+    providing fixture (classified 'teardown' or 'setup_and_teardown' --
+    see _effective_teardown_count()), else 0.0. Population is repos with
+    >=1 classified (setup/teardown/setup_and_teardown/other) fixture -- a
+    repo with none is skipped, not counted as 0-coverage, matching
+    repo_level_category_proportions()'s convention elsewhere in this
+    package. Feeds compute_continuous_balance() directly: the mean of
+    these 0/1 values *is* "% of repos with >=1 teardown fixture", so that
+    call's agent_mean/human_mean double as Table 2's Coverage A/C (%)
+    columns."""
+    return [
+        1.0 if _effective_teardown_count(counts) > 0 else 0.0
+        for counts in by_repo.values()
+        if sum(counts.values())
+    ]
 
 
 def _render_teardown_coverage_row(
@@ -410,9 +421,21 @@ def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) ->
 def _python_teardown_proportions(metrics: DatasetMetrics) -> list[float]:
     """Per-repo teardown_pct for Python repos only -- a continuous 0..1
     proportion, distinct from Table 2's binary coverage indicator; this
-    exposes the underlying distribution for _render_teardown_dip_test()."""
+    exposes the underlying distribution for _render_teardown_dip_test().
+
+    A local reimplementation of repo_level_category_proportions() rather
+    than a direct call: that shared helper reads a single category key,
+    but a 'setup_and_teardown'-classified fixture is teardown-providing
+    too (see _effective_teardown_count()), and this variable's numerator
+    needs to reflect that the same way Table 2's coverage indicator
+    does -- the denominator (all classified fixtures in the repo) is
+    unaffected either way."""
     python_by_repo = metrics.kind_counts_by_repo_and_language.get("python", {})
-    return repo_level_category_proportions(python_by_repo, "teardown")
+    return [
+        _effective_teardown_count(counts) / total
+        for counts in python_by_repo.values()
+        if (total := sum(counts.values()))
+    ]
 
 
 def _render_teardown_dip_test(a: DatasetMetrics, other: DatasetMetrics) -> str:

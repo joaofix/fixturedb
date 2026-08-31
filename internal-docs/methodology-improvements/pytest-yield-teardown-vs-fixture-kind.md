@@ -155,3 +155,57 @@ p<.001) -- not 0.469, and not from a chi-square/Cramer's V (RQ2 no longer
 computes a pooled fixture-type_kind chi-square at all, per this file's
 own rewrite -- only the repo-level Mann-Whitney/Cliff's-delta test
 described in rq2.py's docstring).
+
+---
+
+## Update (2026-08-30): superseded -- `pytest_decorator` now has its own real classification
+
+§1's premise ("`fixture_type_kind` isn't computed or persisted anywhere...
+`pytest_decorator` is in neither `TYPE_BASED_TEARDOWN_PAIRS` nor
+`NAME_BASED_TEARDOWN_PAIRS`... every `pytest_decorator` fixture is
+classified `"other"`, unconditionally") described a *type/name-only*
+classification, and correctly concluded type/name alone can't split
+`pytest_decorator` into setup/teardown. It did not conclude the split was
+impossible outright -- only that `fixture_type`/`name` were the wrong
+inputs for it, since a pytest fixture is just named whatever the developer
+called it.
+
+`detector_python.classify_pytest_fixture_kind()` adds a third mechanism:
+**body analysis**. `detector_python._detect_python()` calls it for every
+`pytest_decorator` fixture at *extraction* time, directly against the
+tree-sitter body node it already has while detecting the fixture (no
+re-parsing needed):
+
+1. `request.addfinalizer(...)` (any receiver) anywhere in the body ->
+   `setup_and_teardown`.
+2. No `yield` anywhere in the body -> `setup`.
+3. A bare `yield` (no value) as the first executable statement -> `teardown`.
+4. Everything else (a `yield` present but not first, or a valued `yield`
+   first) -> `setup_and_teardown`.
+
+So `pytest_decorator` fixtures are no longer universally `"other"` --
+they land in `setup`, `teardown`, or the (new) `setup_and_teardown`
+bucket, and only a fixture whose body can't be classified (shouldn't
+happen on real extracted data) falls back to `"other"`, the same default
+the DB column itself now has. This directly addresses §4's finding above:
+the 23.8% fixture-level (A) / lower (C) real yield-based teardown rate
+that `has_teardown_pair` could already see but `fixture_type_kind`
+couldn't is now visible to `fixture_type_kind` too, via the
+`setup_and_teardown` bucket. Table 1 (`tab:rq2-counts`) and Table 2
+(`tab:rq2-coverage`) both treat `setup_and_teardown` as providing both
+setup and teardown -- see `rq2.py`'s module docstring for the exact table
+semantics.
+
+`fixture_type_kind` is now a real, persisted `fixtures` table column
+(`detector_shared._classify_fixture_kinds()` sets it at extraction time
+for every other fixture type) -- `rq2.py` just reads it, rather than
+reclassifying on every report run as an earlier version of this change
+did. `detector_python.classify_pytest_fixture_kind_from_source()` (a
+`raw_source`-string wrapper around the same algorithm) still exists for
+anything working from already-persisted text instead of a live AST node --
+ad-hoc analysis, or backfilling this column into a database collected
+before it existed -- but isn't on the extraction hot path.
+
+`has_teardown_pair` (§2 above) is unaffected by this change and remains
+the more direct "does this fixture provide teardown" signal for anything
+outside RQ2's specific `fixture_type_kind` table framing.

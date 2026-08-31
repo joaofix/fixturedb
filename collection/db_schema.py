@@ -81,6 +81,10 @@ CREATE TABLE IF NOT EXISTS fixtures (
     comment_density         REAL DEFAULT 0.0,        -- num_comment_lines / loc (0.0 if loc is 0)
     num_parameters          INTEGER DEFAULT 0,
     has_teardown_pair       INTEGER DEFAULT 0,      -- 1 if teardown/cleanup logic exists, 0 otherwise
+    fixture_type_kind       TEXT DEFAULT 'other',   -- setup/teardown/setup_and_teardown/other;
+                                    -- computed at extraction time (detector_shared.py's
+                                    -- _classify_fixture_kinds(), or detector_python.py's
+                                    -- body-analysis classification for pytest_decorator)
     raw_source              TEXT,              -- original source text
     framework               TEXT,              -- testing framework (pytest, unittest, junit, nunit, testify, etc.)
     num_mocks               INTEGER DEFAULT 0, -- count of distinct mock usages in this fixture
