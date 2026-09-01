@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-09-01 01:18:45 UTC
+Generated: 2026-09-01 01:51:42 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -81,6 +81,21 @@ Per-repository binary coverage: 1 if a repo has >=1 teardown-classified fixture,
 ## Supplementary Analyses
 
 Analyses below are not part of either main paper table (tab:rq2-counts, tab:rq2-coverage) but are kept and computed since they may still be referenced in prose.
+
+### Fixture Kind Classification Coverage by Language
+
+Per-language, per-dataset breakdown of `fixture_type_kind` (setup / teardown / setup_and_teardown / other) -- the same counts behind Table 1 above and the pooled dataset-wide `other` % in `Per-dataset summary`, just split out per language instead of pooled. `other` fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider` -- neither is inherently setup or teardown) are not spread evenly across languages: the higher a language's `other` %, the smaller its `answerable` setup/teardown denominator relative to languages with none. Worth re-checking whenever a new dataset is extracted -- a new language or framework can introduce its own unclassifiable fixture types.
+
+| Dataset | Language | Total fixtures | setup | teardown | setup_and_teardown | other (count) | other (%) |
+|---|---|---|---|---|---|---|---|
+| A | java | 2,039 | 1,270 | 609 | 0 | 160 | 7.8% |
+| A | javascript | 4,747 | 2,782 | 1,965 | 0 | 0 | 0.0% |
+| A | python | 19,722 | 14,761 | 1,074 | 3,858 | 29 | 0.1% |
+| A | typescript | 41,471 | 25,344 | 16,127 | 0 | 0 | 0.0% |
+| C | java | 2,039 | 987 | 499 | 0 | 553 | 27.1% |
+| C | javascript | 4,747 | 3,344 | 1,403 | 0 | 0 | 0.0% |
+| C | python | 19,722 | 14,906 | 3,564 | 1,236 | 16 | 0.1% |
+| C | typescript | 41,471 | 30,785 | 10,686 | 0 | 0 | 0.0% |
 
 ### Unimodality Check: Python Teardown Proportion (Dip Test)
 

@@ -92,6 +92,21 @@ either paper table, but may still be cited in prose) -- rendered under
 `generate_report()`'s "## Supplementary Analyses" section, after both
 main tables.
 
+**Fixture kind classification coverage by language**
+(`_render_kind_classification_coverage_table()`): breaks Table 1's pooled,
+dataset-wide `other` percentage (see "Per-dataset summary" above) out per
+language instead, since `other` is not spread evenly -- e.g. `junit_rule`/
+`junit_class_rule`/`testng_data_provider` (java-only fixture types that
+aren't inherently setup or teardown) make java's `other` share far higher
+than javascript/typescript's (near 0%) or python's (negligible). A
+language with a high `other` share has a meaningfully smaller "answerable"
+setup/teardown denominator than one without (see `_pct_cell()`'s
+docstring for that denominator), which the pooled dataset-wide number
+alone doesn't surface. Worth checking on every future dataset extraction
+(a new language or framework can introduce its own unclassifiable
+fixture types), not just once at paper-writing time -- hence a permanent
+report section rather than a one-off query.
+
 **`has_teardown_pair`**: no separate analysis of this fixtures-table
 column exists in this script (it never has -- `fixture_type_kind` above is
 computed by its own, independent teardown-detection pass at extraction
@@ -527,6 +542,65 @@ def _render_teardown_dip_test(a: DatasetMetrics, other: DatasetMetrics) -> str:
     return "\n".join(lines)
 
 
+def _render_kind_classification_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """### Fixture Kind Classification Coverage by Language.
+
+    Supplementary -- not part of either main paper table (tab:rq2-counts,
+    tab:rq2-coverage), rendered under generate_report()'s "## Supplementary
+    Analyses" section. Table 1 above reports Setup/Teardown percentages
+    against each language's *whole* classified-fixture count (see
+    _pct_cell()'s docstring) but never shows the 'other' slice of that same
+    denominator on its own; this table does, broken out per language
+    instead of pooled dataset-wide (the "Per-dataset summary" section's
+    kind distribution) -- 'other' fixtures (e.g. a JUnit `@Rule`/
+    `@ClassRule` field, or a TestNG `@DataProvider`) aren't spread evenly
+    across languages, so a language with a high 'other' share has a
+    meaningfully smaller "answerable" setup/teardown denominator than one
+    without. Reuses _language_kind_totals() -- the same per-language
+    totals Table 1 itself renders from -- so this is a different view of
+    the identical numbers, not a separate computation."""
+    other_label = other.dataset.upper()
+    lines = [
+        "### Fixture Kind Classification Coverage by Language",
+        "",
+        "Per-language, per-dataset breakdown of `fixture_type_kind` "
+        "(setup / teardown / setup_and_teardown / other) -- the same "
+        "counts behind Table 1 above and the pooled dataset-wide `other` "
+        "% in `Per-dataset summary`, just split out per language instead "
+        "of pooled. `other` fixtures (e.g. a JUnit `@Rule`/`@ClassRule` "
+        "field, or a TestNG `@DataProvider` -- neither is inherently "
+        "setup or teardown) are not spread evenly across languages: the "
+        "higher a language's `other` %, the smaller its `answerable` "
+        "setup/teardown denominator relative to languages with none. "
+        "Worth re-checking whenever a new dataset is extracted -- a new "
+        "language or framework can introduce its own unclassifiable "
+        "fixture types.",
+        "",
+        "| Dataset | Language | Total fixtures | setup | teardown | "
+        "setup_and_teardown | other (count) | other (%) |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+
+    a_totals = _language_kind_totals(a.kind_counts_by_repo_and_language)
+    other_totals = _language_kind_totals(other.kind_counts_by_repo_and_language)
+    for label, totals in (("A", a_totals), (other_label, other_totals)):
+        for language in RQ2_LANGUAGES:
+            kind_counts = totals.get(language, {})
+            total = sum(kind_counts.values())
+            other_count = kind_counts.get("other", 0)
+            other_pct = 100 * other_count / total if total else 0.0
+            lines.append(
+                f"| {label} | {language} | {total:,} | "
+                f"{kind_counts.get('setup', 0):,} | "
+                f"{kind_counts.get('teardown', 0):,} | "
+                f"{kind_counts.get('setup_and_teardown', 0):,} | "
+                f"{other_count:,} | {other_pct:.1f}% |"
+            )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
     lines = [
         f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
@@ -594,6 +668,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         for other_ds, _label in COMPARISONS:
             other_metrics = loaded[other_ds]
             if other_metrics is not None:
+                lines.append(_render_kind_classification_coverage_table(a_metrics, other_metrics))
                 lines.append(_render_teardown_dip_test(a_metrics, other_metrics))
 
     return "\n".join(lines)

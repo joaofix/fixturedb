@@ -33,6 +33,7 @@ from collection.research_questions.rq2 import (
     DatasetMetrics,
     _pct_cell,
     _python_teardown_proportions,
+    _render_kind_classification_coverage_table,
     _render_teardown_dip_test,
     generate_report,
     load_dataset_metrics,
@@ -681,6 +682,98 @@ class TestPythonTeardownProportions:
         assert _python_teardown_proportions(metrics) == []
 
 
+class TestRenderKindClassificationCoverageTable:
+    def test_header_and_section_title_present(self, tmp_path):
+        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
+        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
+        assert "### Fixture Kind Classification Coverage by Language" in report
+        assert (
+            "| Dataset | Language | Total fixtures | setup | teardown | "
+            "setup_and_teardown | other (count) | other (%) |" in report
+        )
+
+    def test_renders_one_row_per_language_per_dataset_with_zero_filled_absent_languages(
+        self, tmp_path
+    ):
+        """Every RQ2_LANGUAGES row must render for both datasets, even a
+        language with zero fixtures on one side -- 0 rows, not omitted,
+        matching Table 1's own zero-filled-row convention."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [{"language": "java", "fixtures": [{"fixture_type": "junit_rule", "name": "tempFolder"}]}],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
+        lines = report.splitlines()
+
+        # java is 100% "other" in A (junit_rule) -- a real java row, not
+        # omitted just because setup/teardown are both 0.
+        assert "| A | java | 1 | 0 | 0 | 0 | 1 | 100.0% |" in lines
+        # javascript has zero fixtures in A at all -- still a zero-filled
+        # row, not omitted, and no ZeroDivisionError.
+        assert "| A | javascript | 0 | 0 | 0 | 0 | 0 | 0.0% |" in lines
+        # python is the only language populated in C, all "setup"
+        # (before_each), 0% other.
+        assert "| C | python | 1 | 1 | 0 | 0 | 0 | 0.0% |" in lines
+        assert "| C | java | 0 | 0 | 0 | 0 | 0 | 0.0% |" in lines
+
+    def test_setup_and_teardown_counted_in_its_own_column_not_folded_into_setup_or_teardown(
+        self, tmp_path
+    ):
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "python",
+                    "fixtures": [
+                        {
+                            "fixture_type": "pytest_decorator",
+                            "raw_source": (
+                                "def db():\n    conn = connect()\n"
+                                "    yield conn\n    conn.close()\n"
+                            ),
+                        }
+                    ],
+                }
+            ],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
+        assert "| A | python | 1 | 0 | 0 | 1 | 0 | 0.0% |" in report.splitlines()
+
+    def test_other_percentage_matches_hand_computed_value(self, tmp_path):
+        # java: 3 setup, 1 other -> other% = 1/4 = 25.0%
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "java",
+                    "fixtures": [
+                        {"fixture_type": "before_each"},
+                        {"fixture_type": "before_each"},
+                        {"fixture_type": "before_each"},
+                        {"fixture_type": "junit_rule", "name": "tempFolder"},
+                    ],
+                }
+            ],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
+        assert "| A | java | 4 | 3 | 0 | 0 | 1 | 25.0% |" in report.splitlines()
+
+
 class TestRenderTeardownDipTest:
     def test_insufficient_data_renders_dashes_not_a_crash(self, tmp_path):
         """Fewer than 4 Python repos on either side -- run_dip_test()
@@ -726,6 +819,19 @@ class TestRenderTeardownDipTest:
         # Supplementary section comes after both main tables' comparison
         # section, not interleaved with it.
         assert report.index("## Supplementary Analyses") > report.index("## A vs C:")
+
+    def test_generate_report_includes_kind_classification_coverage_section(self, tmp_path):
+        _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
+        _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
+        report = generate_report(db_root=tmp_path)
+        assert "### Fixture Kind Classification Coverage by Language" in report
+        # Under Supplementary Analyses, before the dip test section (both
+        # comparisons render in the same order generate_report() calls them).
+        assert (
+            report.index("## Supplementary Analyses")
+            < report.index("### Fixture Kind Classification Coverage by Language")
+            < report.index("### Unimodality Check: Python Teardown Proportion (Dip Test)")
+        )
 
 
 class TestWriteReport:
