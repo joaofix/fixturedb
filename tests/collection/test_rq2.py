@@ -31,6 +31,7 @@ from collection.detector_python import classify_pytest_fixture_kind_from_source
 from collection.detector_shared import _classify_fixture_kind
 from collection.research_questions.rq2 import (
     DatasetMetrics,
+    _answerable_total,
     _pct_cell,
     _python_teardown_proportions,
     _render_kind_classification_coverage_table,
@@ -181,6 +182,22 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                     ),
                 )
                 insert_fixture(conn, base)
+
+
+class TestAnswerableTotal:
+    def test_excludes_other_from_the_sum(self):
+        assert _answerable_total({"setup": 3, "teardown": 2, "setup_and_teardown": 1, "other": 10}) == 6
+
+    def test_missing_keys_default_to_zero(self):
+        assert _answerable_total({}) == 0
+        assert _answerable_total({"other": 5}) == 0
+
+    def test_setup_and_teardown_counted_once_not_double_counted(self):
+        """_answerable_total is a single sum over the three kinds, unlike
+        _effective_setup_count/_effective_teardown_count which each add
+        setup_and_teardown separately -- it must not be double-counted
+        here just because it feeds both effective counts elsewhere."""
+        assert _answerable_total({"setup": 1, "teardown": 1, "setup_and_teardown": 1}) == 3
 
 
 class TestPctCell:
@@ -410,11 +427,47 @@ class TestGenerateReport:
         _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
         report = generate_report(db_root=tmp_path)
         comparison_section = report.split("## A vs C:")[1]
-        # A: 1 setup + 1 other = 2 total (the percentage denominator
-        # includes the "other" fixture even though it's excluded from the
-        # counts themselves) -> setup 1/2=50.0%, teardown 0/2=0.0%.
-        # C: 1 teardown = 1 total -> setup 0/1=0.0%, teardown 1/1=100.0%.
-        assert "| Total | 1 (50.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
+        # A: 1 setup + 1 other -- the "other" fixture is excluded from
+        # BOTH the counts AND the percentage denominator (answerable
+        # total = 1, the "other" fixture doesn't count) -> setup
+        # 1/1=100.0%, teardown 0/1=0.0%.
+        # C: 1 teardown = 1 answerable total -> setup 0/1=0.0%,
+        # teardown 1/1=100.0%.
+        assert "| Total | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
+
+    def test_kind_counts_table_other_fixtures_dont_dilute_the_percentage_denominator(
+        self, tmp_path
+    ):
+        """A language with a large 'other' share must not show a lower
+        Setup%/Teardown% purely because of how much of it is
+        unclassifiable -- the denominator is the *answerable* count only
+        (setup+teardown+setup_and_teardown), not the whole classified
+        count including 'other'. 3 setup + 6 other (junit_rule) -> without
+        this behavior the naive whole-count denominator (9) would report
+        setup at 33.3%; the correct answerable denominator (3) reports
+        100.0%."""
+        _make_multi_language_db(
+            tmp_path,
+            "a",
+            [
+                {
+                    "language": "java",
+                    "fixtures": (
+                        [{"fixture_type": "before_each"}] * 3
+                        + [{"fixture_type": "junit_rule", "name": "tempFolder"}] * 6
+                    ),
+                }
+            ],
+        )
+        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        report = generate_report(db_root=tmp_path)
+        comparison_section = report.split("## A vs C:")[1]
+        java_line = next(
+            line for line in comparison_section.splitlines() if line.startswith("| java |")
+        )
+        # C's fixture is "python" (the _make_db default language), so C's
+        # java row is entirely zero-filled -- "0" not "0 (0.0%)".
+        assert "| java | 3 (100.0%) | 0 | 0 (0.0%) | 0 |" == java_line
 
     def test_kind_counts_table_counts_setup_and_teardown_fixture_in_both_columns(
         self, tmp_path

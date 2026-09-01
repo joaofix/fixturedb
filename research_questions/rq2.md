@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-09-01 01:51:42 UTC
+Generated: 2026-09-01 02:04:19 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -56,14 +56,14 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 ### Table 1: Fixture Counts by Type (tab:rq2-counts)
 
-Raw counts of setup-classified and teardown-classified fixtures, each also shown as a percentage of that language's total classified fixture count (setup + teardown + setup_and_teardown + other, not just the setup+teardown sum) ("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are excluded from the counts themselves, only used in the percentage denominator; a fixture classified as providing both -- e.g. a pytest fixture with setup code before its `yield` -- is counted in both columns, so they are not mutually exclusive and the two percentages can sum past 100%). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
+Raw counts of setup-classified and teardown-classified fixtures, each also shown as a percentage of that language's *answerable* fixture count (setup + teardown + setup_and_teardown -- "other"-classified fixtures, e.g. a JUnit `@Rule` or a TestNG `@DataProvider` (see the Fixture Kind Classification Coverage by Language table below), are excluded from both the counts themselves and this percentage denominator, since they were never a setup/teardown candidate in the first place; a fixture classified as providing both -- e.g. a pytest fixture with setup code before its `yield` -- is counted in both columns, so they are not mutually exclusive and the two percentages can sum past 100%). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
 
 | Language | Setup A | Setup C | Teardown A | Teardown C |
 |---|---|---|---|---|
-| Total | 48,015 (70.6%) | 51,258 (75.4%) | 23,633 (34.8%) | 17,388 (25.6%) |
-| java | 1,270 (62.3%) | 987 (48.4%) | 609 (29.9%) | 499 (24.5%) |
+| Total | 48,015 (70.8%) | 51,258 (76.0%) | 23,633 (34.9%) | 17,388 (25.8%) |
+| java | 1,270 (67.6%) | 987 (66.4%) | 609 (32.4%) | 499 (33.6%) |
 | javascript | 2,782 (58.6%) | 3,344 (70.4%) | 1,965 (41.4%) | 1,403 (29.6%) |
-| python | 18,619 (94.4%) | 16,142 (81.8%) | 4,932 (25.0%) | 4,800 (24.3%) |
+| python | 18,619 (94.5%) | 16,142 (81.9%) | 4,932 (25.0%) | 4,800 (24.4%) |
 | typescript | 25,344 (61.1%) | 30,785 (74.2%) | 16,127 (38.9%) | 10,686 (25.8%) |
 
 ### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)
@@ -84,7 +84,7 @@ Analyses below are not part of either main paper table (tab:rq2-counts, tab:rq2-
 
 ### Fixture Kind Classification Coverage by Language
 
-Per-language, per-dataset breakdown of `fixture_type_kind` (setup / teardown / setup_and_teardown / other) -- the same counts behind Table 1 above and the pooled dataset-wide `other` % in `Per-dataset summary`, just split out per language instead of pooled. `other` fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider` -- neither is inherently setup or teardown) are not spread evenly across languages: the higher a language's `other` %, the smaller its `answerable` setup/teardown denominator relative to languages with none. Worth re-checking whenever a new dataset is extracted -- a new language or framework can introduce its own unclassifiable fixture types.
+Per-language, per-dataset breakdown of `fixture_type_kind` (setup / teardown / setup_and_teardown / other) -- the same counts behind Table 1 above and the pooled dataset-wide `other` % in `Per-dataset summary`, just split out per language instead of pooled. Table 1 excludes `other` entirely from its own percentage denominator, so it never shows this slice; `other` fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider` -- neither is inherently setup or teardown) are not spread evenly across languages, so a language with a high `other` % has that much smaller a share of its fixtures represented in Table 1's counts at all. Worth re-checking whenever a new dataset is extracted -- a new language or framework can introduce its own unclassifiable fixture types.
 
 | Dataset | Language | Total fixtures | setup | teardown | setup_and_teardown | other (count) | other (%) |
 |---|---|---|---|---|---|---|---|

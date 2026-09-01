@@ -26,9 +26,14 @@ provision.
 **Table 1 (tab:rq2-counts) -- absolute fixture counts**
 (`_render_kind_counts_table()`): purely descriptive, no statistics. For
 each language and a Total row, the raw count of setup-classified and
-teardown-classified fixtures in each dataset ("other" fixtures, e.g. a
-bare `@pytest.fixture`, are excluded from both columns -- this table
-answers "how many", not "what fraction"). Total is the dataset-wide sum
+teardown-classified fixtures in each dataset, each also shown as a
+percentage of that language's *answerable* fixture count -- setup +
+teardown + setup_and_teardown, excluding 'other' entirely from both the
+counts and the percentage denominator (see `_answerable_total()`'s
+docstring for why: an 'other'-classified fixture, e.g. a JUnit `@Rule` or
+a TestNG `@DataProvider`, was never a setup/teardown candidate to begin
+with, so it shouldn't dilute the rate at which the *answerable* fixtures
+were classified one way or the other). Total is the dataset-wide sum
 across every language present, not just the four rows shown.
 
 **Table 2 (tab:rq2-coverage) -- teardown coverage**
@@ -98,14 +103,17 @@ dataset-wide `other` percentage (see "Per-dataset summary" above) out per
 language instead, since `other` is not spread evenly -- e.g. `junit_rule`/
 `junit_class_rule`/`testng_data_provider` (java-only fixture types that
 aren't inherently setup or teardown) make java's `other` share far higher
-than javascript/typescript's (near 0%) or python's (negligible). A
-language with a high `other` share has a meaningfully smaller "answerable"
-setup/teardown denominator than one without (see `_pct_cell()`'s
-docstring for that denominator), which the pooled dataset-wide number
-alone doesn't surface. Worth checking on every future dataset extraction
-(a new language or framework can introduce its own unclassifiable
-fixture types), not just once at paper-writing time -- hence a permanent
-report section rather than a one-off query.
+than javascript/typescript's (near 0%) or python's (negligible). Table 1
+excludes 'other' from its own denominator entirely (see
+`_answerable_total()`'s docstring), so this table isn't explaining a
+dilution of Table 1's percentages -- it's showing how much of each
+language's fixture population Table 1 is silently *not describing at
+all*: a language with a high `other` share has that much smaller a slice
+of its real setup/teardown-relevant fixtures represented anywhere in
+Table 1's counts. Worth checking on every future dataset extraction (a
+new language or framework can introduce its own unclassifiable fixture
+types), not just once at paper-writing time -- hence a permanent report
+section rather than a one-off query.
 
 **`has_teardown_pair`**: no separate analysis of this fixtures-table
 column exists in this script (it never has -- `fixture_type_kind` above is
@@ -298,18 +306,37 @@ def _effective_teardown_count(kind_counts: dict[str, int]) -> int:
     return kind_counts.get("teardown", 0) + kind_counts.get("setup_and_teardown", 0)
 
 
+def _answerable_total(kind_counts: dict[str, int]) -> int:
+    """Denominator for Table 1's Setup%/Teardown% cells: setup + teardown +
+    setup_and_teardown, excluding 'other'. A fixture classified 'other'
+    (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider`
+    -- see _render_kind_classification_coverage_table()'s docstring) was
+    never a candidate to be setup or teardown in the first place (no
+    setup/teardown pairing mechanism applies to it, and unlike
+    pytest_decorator there's no body-analysis fallback either), so it
+    shouldn't dilute the percentage of the fixtures that WERE classified
+    one way or the other -- a language with a large 'other' share (java,
+    see the coverage table below) would otherwise report artificially low
+    Setup%/Teardown% purely because of how many of its fixtures could not
+    be classified at all, not because of its actual setup/teardown
+    provision."""
+    return kind_counts.get("setup", 0) + kind_counts.get("teardown", 0) + kind_counts.get(
+        "setup_and_teardown", 0
+    )
+
+
 def _pct_cell(count: int, total: int) -> str:
     """`count` formatted as "N (P%)", P = count/total*100 to one decimal
     place -- just "N" (no percentage) if total is 0, the zero-filled-row
     case for a language absent from this dataset (see
     _render_kind_counts_table()'s "zero, not omitted" convention), which
     would otherwise divide by zero. `total` is always the language's (or,
-    for the Total row, the dataset's) *whole* classified-fixture count --
-    setup + teardown + setup_and_teardown + other -- not the setup/
-    teardown sum, since a setup_and_teardown fixture is in both and an
-    other-classified one is in neither; see _render_kind_counts_table()'s
-    docstring for why that's the only total that keeps Setup%/Teardown%
-    consistent with every other table's fixture counts."""
+    for the Total row, the dataset's) *answerable* fixture count -- setup +
+    teardown + setup_and_teardown, excluding 'other' (see
+    _answerable_total()'s docstring for why) -- not the raw setup/teardown
+    sum, since a setup_and_teardown fixture is in both; see
+    _render_kind_counts_table()'s docstring for how that denominator keeps
+    Setup%/Teardown% consistent with each other."""
     if total == 0:
         return f"{count:,}"
     return f"{count:,} ({100 * count / total:.1f}%)"
@@ -317,39 +344,42 @@ def _pct_cell(count: int, total: int) -> str:
 
 def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Table 1 (tab:rq2-counts): absolute setup/teardown fixture counts per
-    language, each also shown as a percentage of that language's *whole*
-    classified fixture count (setup + teardown + setup_and_teardown +
-    other -- see _pct_cell()'s docstring for why, not just the raw
-    setup/teardown counts). Purely descriptive -- no statistics.
-    "other"-classified fixtures are excluded from the setup/teardown
-    counts themselves (only used in the percentage denominator). A
-    'setup_and_teardown'-classified fixture (pytest_decorator only -- see
-    this module's docstring) counts toward *both* columns, since it
-    genuinely provides both -- so the two columns are not mutually
-    exclusive and Setup+Teardown (and Setup%+Teardown%) can exceed the
-    dataset's total fixture count (100%)."""
+    language, each also shown as a percentage of that language's
+    *answerable* fixture count (setup + teardown + setup_and_teardown,
+    excluding 'other' -- see _answerable_total()'s docstring for why, not
+    just the raw setup/teardown counts). Purely descriptive -- no
+    statistics. "other"-classified fixtures are excluded from both the
+    counts themselves and the percentage denominator -- they were never a
+    setup/teardown candidate to begin with. A 'setup_and_teardown'-
+    classified fixture (pytest_decorator only -- see this module's
+    docstring) counts toward *both* columns, since it genuinely provides
+    both -- so the two columns are not mutually exclusive and
+    Setup+Teardown (and Setup%+Teardown%) can exceed the dataset's
+    answerable fixture count (100%)."""
     other_label = other.dataset.upper()
     lines = [
         "Raw counts of setup-classified and teardown-classified fixtures, "
-        "each also shown as a percentage of that language's total "
-        "classified fixture count (setup + teardown + setup_and_teardown "
-        "+ other, not just the setup+teardown sum) "
-        '("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are '
-        "excluded from the counts themselves, only used in the percentage "
-        "denominator; a fixture classified as providing both -- e.g. a "
-        "pytest fixture with setup code before its `yield` -- is counted "
-        "in both columns, so they are not mutually exclusive and the two "
-        "percentages can sum past 100%). Total is the dataset-wide sum "
-        "across every language present, not just the four rows below. "
-        "Purely descriptive -- no significance test.",
+        "each also shown as a percentage of that language's *answerable* "
+        "fixture count (setup + teardown + setup_and_teardown -- "
+        '"other"-classified fixtures, e.g. a JUnit `@Rule` or a TestNG '
+        "`@DataProvider` (see the Fixture Kind Classification Coverage by "
+        "Language table below), are excluded from both the counts "
+        "themselves and this percentage denominator, since they were "
+        "never a setup/teardown candidate in the first place; a fixture "
+        "classified as providing both -- e.g. a pytest fixture with setup "
+        "code before its `yield` -- is counted in both columns, so they "
+        "are not mutually exclusive and the two percentages can sum past "
+        "100%). Total is the dataset-wide sum across every language "
+        "present, not just the four rows below. Purely descriptive -- no "
+        "significance test.",
         "",
         f"| Language | Setup A | Setup {other_label} | Teardown A | Teardown {other_label} |",
         "|---|---|---|---|---|",
         (
-            f"| Total | {_pct_cell(_effective_setup_count(a.kind_distribution), sum(a.kind_distribution.values()))} | "
-            f"{_pct_cell(_effective_setup_count(other.kind_distribution), sum(other.kind_distribution.values()))} | "
-            f"{_pct_cell(_effective_teardown_count(a.kind_distribution), sum(a.kind_distribution.values()))} | "
-            f"{_pct_cell(_effective_teardown_count(other.kind_distribution), sum(other.kind_distribution.values()))} |"
+            f"| Total | {_pct_cell(_effective_setup_count(a.kind_distribution), _answerable_total(a.kind_distribution))} | "
+            f"{_pct_cell(_effective_setup_count(other.kind_distribution), _answerable_total(other.kind_distribution))} | "
+            f"{_pct_cell(_effective_teardown_count(a.kind_distribution), _answerable_total(a.kind_distribution))} | "
+            f"{_pct_cell(_effective_teardown_count(other.kind_distribution), _answerable_total(other.kind_distribution))} |"
         ),
     ]
 
@@ -358,8 +388,8 @@ def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     for language in RQ2_LANGUAGES:
         a_kind = a_totals.get(language, {})
         other_kind = other_totals.get(language, {})
-        a_total = sum(a_kind.values())
-        other_total = sum(other_kind.values())
+        a_total = _answerable_total(a_kind)
+        other_total = _answerable_total(other_kind)
         lines.append(
             f"| {language} | {_pct_cell(_effective_setup_count(a_kind), a_total)} | "
             f"{_pct_cell(_effective_setup_count(other_kind), other_total)} | "
@@ -547,18 +577,18 @@ def _render_kind_classification_coverage_table(a: DatasetMetrics, other: Dataset
 
     Supplementary -- not part of either main paper table (tab:rq2-counts,
     tab:rq2-coverage), rendered under generate_report()'s "## Supplementary
-    Analyses" section. Table 1 above reports Setup/Teardown percentages
-    against each language's *whole* classified-fixture count (see
-    _pct_cell()'s docstring) but never shows the 'other' slice of that same
-    denominator on its own; this table does, broken out per language
+    Analyses" section. Table 1 above excludes 'other' entirely from its
+    own denominator (see _answerable_total()'s docstring) and never shows
+    the 'other' slice on its own; this table does, broken out per language
     instead of pooled dataset-wide (the "Per-dataset summary" section's
     kind distribution) -- 'other' fixtures (e.g. a JUnit `@Rule`/
     `@ClassRule` field, or a TestNG `@DataProvider`) aren't spread evenly
-    across languages, so a language with a high 'other' share has a
-    meaningfully smaller "answerable" setup/teardown denominator than one
-    without. Reuses _language_kind_totals() -- the same per-language
-    totals Table 1 itself renders from -- so this is a different view of
-    the identical numbers, not a separate computation."""
+    across languages, so a language with a high 'other' share has that
+    much smaller a slice of its fixtures represented anywhere in Table 1's
+    counts at all (not a diluted rate -- an outright absence). Reuses
+    _language_kind_totals() -- the same per-language totals Table 1 itself
+    renders from -- so this is a different view of the identical numbers,
+    not a separate computation."""
     other_label = other.dataset.upper()
     lines = [
         "### Fixture Kind Classification Coverage by Language",
@@ -567,14 +597,15 @@ def _render_kind_classification_coverage_table(a: DatasetMetrics, other: Dataset
         "(setup / teardown / setup_and_teardown / other) -- the same "
         "counts behind Table 1 above and the pooled dataset-wide `other` "
         "% in `Per-dataset summary`, just split out per language instead "
-        "of pooled. `other` fixtures (e.g. a JUnit `@Rule`/`@ClassRule` "
-        "field, or a TestNG `@DataProvider` -- neither is inherently "
-        "setup or teardown) are not spread evenly across languages: the "
-        "higher a language's `other` %, the smaller its `answerable` "
-        "setup/teardown denominator relative to languages with none. "
-        "Worth re-checking whenever a new dataset is extracted -- a new "
-        "language or framework can introduce its own unclassifiable "
-        "fixture types.",
+        "of pooled. Table 1 excludes `other` entirely from its own "
+        "percentage denominator, so it never shows this slice; `other` "
+        "fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG "
+        "`@DataProvider` -- neither is inherently setup or teardown) are "
+        "not spread evenly across languages, so a language with a high "
+        "`other` % has that much smaller a share of its fixtures "
+        "represented in Table 1's counts at all. Worth re-checking "
+        "whenever a new dataset is extracted -- a new language or "
+        "framework can introduce its own unclassifiable fixture types.",
         "",
         "| Dataset | Language | Total fixtures | setup | teardown | "
         "setup_and_teardown | other (count) | other (%) |",
