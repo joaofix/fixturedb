@@ -107,6 +107,19 @@ def summarize_continuous(values: list[float]) -> dict:
     }
 
 
+def percentile(values: list[float], q: float) -> float | None:
+    """The qth percentile (0-100) of `values`, via numpy's default linear
+    interpolation -- None (not a crash, not 0.0) for an empty list, same
+    missing-data convention as summarize_continuous()'s median. Not used
+    by summarize_continuous() itself: that function's own median stays on
+    statistics.median() (unchanged, already relied on by existing
+    per-language median columns) -- this is for callers that need an
+    arbitrary percentile (e.g. Q3/P90) alongside it, not a replacement."""
+    if not values:
+        return None
+    return float(np.percentile(values, q))
+
+
 def run_dip_test(values: list[float]) -> dict | None:
     """Hartigan & Hartigan's (1985) dip test for unimodality, via the
     `diptest` package (Cython port of the original Fortran/C algorithm --
@@ -381,15 +394,36 @@ def _effect_size_magnitude_cell(t: BalanceTest) -> str:
     return t.details.get("cliffs_delta_magnitude") or "--"
 
 
-def _comparison_row(label: str, t: BalanceTest, n: NCounts, *, corrected: bool) -> str:
+def _comparison_row(
+    label: str,
+    t: BalanceTest,
+    n: NCounts,
+    *,
+    corrected: bool,
+    medians: tuple[float | None, float | None] | None = None,
+    q3: tuple[float | None, float | None] | None = None,
+    p90: tuple[float | None, float | None] | None = None,
+) -> str:
     """One row of render_comparison_table() -- n columns are always shown
     (computable independently of whether the test itself could run);
     Statistic/effect-size/p columns fall back to an insufficient_data/
     test-failed marker matching the reasons documented on
-    compute_categorical_balance()/compute_continuous_balance() themselves."""
+    compute_categorical_balance()/compute_continuous_balance() themselves.
+
+    `medians`/`q3`/`p90`, each independently optional, are (a_value,
+    other_value) pairs rendered as two extra cells apiece, in that fixed
+    order, right after n_C -- opt-in via render_comparison_table()'s own
+    same-named parameters (see its docstring); None (the default, for
+    each) renders no extra cells for that pair at all. A None *element*
+    inside a given pair (e.g. a language with a per-language test but no
+    computed value) renders "--" for just that cell via fmt(), same
+    missing-data convention as everywhere else in this table."""
+    extra_cells = "".join(
+        f"{fmt(pair[0])} | {fmt(pair[1])} | " for pair in (medians, q3, p90) if pair is not None
+    )
     d = t.details
     if d.get("reason") == "insufficient_data":
-        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | _insufficient data_ | -- | -- |"
+        return f"| {label} | {n.n_a} | {n.n_c} | {extra_cells}-- | -- | _insufficient data_ | -- | -- |"
     if "error" in d:
         # compute_categorical_balance() catches chi2_contingency failures
         # (e.g. a whole category at 0 on both sides -- a zero expected-
@@ -397,14 +431,14 @@ def _comparison_row(label: str, t: BalanceTest, n: NCounts, *, corrected: bool) 
         # safe default so callers never crash on it. That default reads as
         # a real "not significant" result if rendered plainly here, which
         # is actively misleading -- it means the test couldn't run at all.
-        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | _test failed ({d['error']})_ | -- | -- |"
+        return f"| {label} | {n.n_a} | {n.n_c} | {extra_cells}-- | -- | _test failed ({d['error']})_ | -- | -- |"
     p_adj = "--"
     if corrected:
         adj_p = d.get("adjusted_p_value")
         if adj_p is not None:
             p_adj = format_p_value(adj_p)
     return (
-        f"| {label} | {n.n_a} | {n.n_c} | {_statistic_cell(t)} | "
+        f"| {label} | {n.n_a} | {n.n_c} | {extra_cells}{_statistic_cell(t)} | "
         f"{_effect_size_value_cell(t)} | {_effect_size_magnitude_cell(t)} | "
         f"{format_p_value(t.p_value)} | {p_adj} |"
     )
@@ -417,6 +451,9 @@ def render_comparison_table(
     per_language_n: dict[str, NCounts] | None,
     *,
     other_dataset: str,
+    per_language_medians: dict[str, tuple[float | None, float | None]] | None = None,
+    per_language_q3: dict[str, tuple[float | None, float | None]] | None = None,
+    per_language_p90: dict[str, tuple[float | None, float | None]] | None = None,
 ) -> str:
     """The one table every A-vs-C comparison in rq1.py/rq2.py/rq3.py
     renders through: `| Language | n_A | n_<other> | Statistic | Effect
@@ -434,24 +471,75 @@ def render_comparison_table(
     metric has no per-language family defined for it -- e.g. RQ1's
     commit_type, RQ3's num_mocks/num_interactions_configured).
 
+    `per_language_medians`/`per_language_q3`/`per_language_p90`, each
+    independently optional, are {language: (a_value, other_value)} --
+    inserts "A <label>"/"<OTHER> <label>" column pairs right after
+    n_<OTHER>, in that fixed order (median, then Q3, then P90 -- whichever
+    of the three are given), for every row including Overall (Overall's
+    own cells for each pair always render "--": there is no per-language
+    value to show there, this only keeps the row's column count
+    consistent with the rest of the table -- Overall's own statistic/
+    effect-size/p cells are unaffected). A language present in
+    `per_language` but missing from one of these dicts (shouldn't happen
+    when they're all built from the same language set, but not relied
+    upon) renders "--" for that pair's two cells, rather than a ragged
+    row. Each opt-in parameter defaults to None -- every existing caller's
+    table is byte-for-byte unchanged; currently only rq1.py's three paper
+    continuous metrics (loc/cyclomatic_complexity/comment_density) pass
+    any of these.
+
     Branches on `t.test_type` ("mann-whitney-u" -> U statistic + Cliff's
     delta; "chi-square" -> chi2(df) + Cramer's V) via _statistic_cell()/
     _effect_size_*_cell() so one function serves every metric in every
     script, continuous or categorical alike -- BalanceTest already carries
     which kind it is, no extra parameter needed.
     """
+    other_label = other_dataset.upper()
+    extra_specs = [
+        ("median", per_language_medians),
+        ("Q3", per_language_q3),
+        ("P90", per_language_p90),
+    ]
+    header_extra = "".join(
+        f"A {label} | {other_label} {label} | " for label, d in extra_specs if d is not None
+    )
+    num_extra_cols = 2 * sum(1 for _, d in extra_specs if d is not None)
+    num_columns = 8 + num_extra_cols
+
+    def _pair(d: dict[str, tuple[float | None, float | None]] | None, language: str):
+        """None if this extra column isn't in use at all; (None, None) --
+        renders as "--"/"--" -- for Overall (no per-language value to
+        show) or a language missing from `d`; otherwise `d`'s real pair."""
+        if d is None:
+            return None
+        return d.get(language, (None, None))
+
     lines = [
-        f"| Language | n_A | n_{other_dataset.upper()} | Statistic | "
+        f"| Language | n_A | n_{other_label} | {header_extra}Statistic | "
         "Effect size value | Magnitude | p (raw) | p (BH-adj) |",
-        "|---|---|---|---|---|---|---|---|",
-        _comparison_row("Overall", overall, overall_n, corrected=False),
+        "|" + "---|" * num_columns,
+        _comparison_row(
+            "Overall",
+            overall,
+            overall_n,
+            corrected=False,
+            medians=_pair(per_language_medians, "Overall"),
+            q3=_pair(per_language_q3, "Overall"),
+            p90=_pair(per_language_p90, "Overall"),
+        ),
     ]
     if per_language:
         corrected = apply_fdr_correction(per_language)
         for language in sorted(corrected):
             lines.append(
                 _comparison_row(
-                    language, corrected[language], per_language_n[language], corrected=True
+                    language,
+                    corrected[language],
+                    per_language_n[language],
+                    corrected=True,
+                    medians=_pair(per_language_medians, language),
+                    q3=_pair(per_language_q3, language),
+                    p90=_pair(per_language_p90, language),
                 )
             )
     lines.append("")

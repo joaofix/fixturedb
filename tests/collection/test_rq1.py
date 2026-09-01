@@ -553,6 +553,67 @@ class TestGenerateReport:
         assert "large | 1.000" in overall_line
         assert overall_line.rstrip("|").rsplit("|", 1)[-1].strip() == "--"  # never BH-corrected
 
+    def test_paper_continuous_tables_report_per_language_medians(self, tmp_path):
+        """loc/cyclomatic_complexity/comment_density's per-language rows
+        get "A median"/"C median" columns -- the median of the same
+        per-repo mean values the Mann-Whitney test itself runs on. One
+        repo per side (_make_db), so the per-repo mean *is* the "median"
+        here (a 1-element list's median is that element)."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [2, 4, 6]])  # mean 4.0
+        _make_db(tmp_path, "c", [{"loc": v} for v in [10, 20]])  # mean 15.0
+        report = generate_report(db_root=tmp_path)
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        header = next(line for line in loc_section.splitlines() if line.startswith("| Language"))
+        assert "A median" in header
+        assert "C median" in header
+        python_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| python |")
+        )
+        assert "| python | 1 | 1 | 4.00 | 15.00 |" in python_line
+
+    def test_paper_continuous_overall_row_has_dashed_medians(self, tmp_path):
+        _make_db(tmp_path, "a", [{"loc": v} for v in [2, 4, 6]])
+        _make_db(tmp_path, "c", [{"loc": v} for v in [10, 20]])
+        report = generate_report(db_root=tmp_path)
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        overall_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| Overall |")
+        )
+        assert "| Overall | 1 | 1 | -- | -- | -- | -- | -- | -- |" in overall_line
+
+    def test_paper_continuous_tables_report_per_language_q3_and_p90(self, tmp_path):
+        """Q3/P90 use the exact same per-repo means the median column and
+        the Mann-Whitney test itself use -- multiple repos per side here
+        (unlike the median test above) so Q3/P90 actually differ from the
+        median, proving they're real percentiles, not just an alias for
+        it."""
+        _make_multi_repo_db(tmp_path, "a", [[1], [2], [3], [4]])  # repo means 1,2,3,4
+        _make_multi_repo_db(tmp_path, "c", [[10], [20], [30], [40]])  # repo means 10,20,30,40
+        report = generate_report(db_root=tmp_path)
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        header = next(line for line in loc_section.splitlines() if line.startswith("| Language"))
+        assert header.index("A median") < header.index("A Q3") < header.index("A P90")
+        python_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| python |")
+        )
+        assert (
+            "| python | 4 | 4 | 2.50 | 25.00 | 3.25 | 32.50 | 3.70 | 37.00 |" in python_line
+        )
+
+    def test_other_tier_continuous_table_has_no_median_columns(self, tmp_path):
+        """max_nesting_depth (OTHER_CONTINUOUS_METRICS) keeps its original
+        8-column table -- median/Q3/P90 columns are opt-in per call site,
+        not a blanket render_comparison_table() change."""
+        _make_db(tmp_path, "a", [{"max_nesting_depth": v} for v in [1, 2, 3]])
+        _make_db(tmp_path, "c", [{"max_nesting_depth": v} for v in [1, 2]])
+        report = generate_report(db_root=tmp_path)
+        section = report.split("### max_nesting_depth")[1].split("**Categorical metrics")[0]
+        header = next(line for line in section.splitlines() if line.startswith("| Language"))
+        assert "median" not in header.lower()
+        assert "Q3" not in header
+        assert "P90" not in header
+        assert header.count("|") == 9  # unchanged 8-column table
+
     def test_categorical_insufficient_data_when_column_all_null(self, tmp_path):
         # commit_type is never set here -> both sides empty -> insufficient data.
         _make_db(tmp_path, "a", [{"loc": 1}])

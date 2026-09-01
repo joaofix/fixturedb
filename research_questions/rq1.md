@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-08-31 20:52:41 UTC
+Generated: 2026-09-01 01:19:01 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 
@@ -198,37 +198,37 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
-**Paper Metrics -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). These three (`loc`, `cyclomatic_complexity`, `comment_density`) are the only continuous metrics reported in the paper -- see this module's docstring.
+**Paper Metrics -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). These three (`loc`, `cyclomatic_complexity`, `comment_density`) are the only continuous metrics reported in the paper -- see this module's docstring. Each per-language row also reports `A median`/`C median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` (90th percentile) -- the same per-repo mean values the Mann-Whitney test itself runs on, alongside (not a replacement for) the effect size and p-value. Q3/P90 exist to explain an effect that reaches significance despite identical medians -- a real difference concentrated in the upper tail, invisible to the median alone.
 
 ### loc
 
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1647 | 2450 | U=1867489.5 | -0.074 | negligible | <.001 | -- |
-| java | 121 | 288 | U=15396.0 | -0.116 | negligible | 0.063 | 0.125 |
-| javascript | 137 | 563 | U=35982.0 | -0.067 | negligible | 0.223 | 0.265 |
-| python | 656 | 1045 | U=276792.0 | -0.192 | small | <.001 | <.001 |
-| typescript | 928 | 749 | U=358531.5 | 0.032 | negligible | 0.265 | 0.265 |
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1647 | 2450 | -- | -- | -- | -- | -- | -- | U=1867489.5 | -0.074 | negligible | <.001 | -- |
+| java | 121 | 288 | 7.67 | 6.54 | 10.50 | 10.00 | 13.62 | 15.83 | U=15396.0 | -0.116 | negligible | 0.063 | 0.125 |
+| javascript | 137 | 563 | 5.27 | 5.00 | 8.11 | 8.00 | 13.29 | 13.00 | U=35982.0 | -0.067 | negligible | 0.223 | 0.265 |
+| python | 656 | 1045 | 8.00 | 6.13 | 11.27 | 9.85 | 16.00 | 14.95 | U=276792.0 | -0.192 | small | <.001 | <.001 |
+| typescript | 928 | 749 | 5.37 | 5.54 | 7.32 | 7.83 | 10.33 | 11.34 | U=358531.5 | 0.032 | negligible | 0.265 | 0.265 |
 
 ### cyclomatic_complexity
 
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1647 | 2450 | U=1714968.0 | -0.150 | small | <.001 | -- |
-| java | 121 | 288 | U=14285.0 | -0.180 | small | <.001 | <.001 |
-| javascript | 137 | 563 | U=27241.0 | -0.294 | small | <.001 | <.001 |
-| python | 656 | 1045 | U=339636.0 | -0.009 | negligible | 0.739 | 0.739 |
-| typescript | 928 | 749 | U=272240.0 | -0.217 | small | <.001 | <.001 |
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1647 | 2450 | -- | -- | -- | -- | -- | -- | U=1714968.0 | -0.150 | small | <.001 | -- |
+| java | 121 | 288 | 1.00 | 1.00 | 1.33 | 1.09 | 1.50 | 1.57 | U=14285.0 | -0.180 | small | <.001 | <.001 |
+| javascript | 137 | 563 | 1.00 | 1.00 | 1.33 | 1.00 | 1.78 | 1.16 | U=27241.0 | -0.294 | small | <.001 | <.001 |
+| python | 656 | 1045 | 1.07 | 1.06 | 1.34 | 1.36 | 1.75 | 1.85 | U=339636.0 | -0.009 | negligible | 0.739 | 0.739 |
+| typescript | 928 | 749 | 1.02 | 1.00 | 1.20 | 1.04 | 1.44 | 1.20 | U=272240.0 | -0.217 | small | <.001 | <.001 |
 
 ### comment_density
 
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1647 | 2450 | U=1764204.0 | -0.126 | negligible | <.001 | -- |
-| java | 121 | 288 | U=13345.0 | -0.234 | small | <.001 | <.001 |
-| javascript | 137 | 563 | U=28601.5 | -0.258 | small | <.001 | <.001 |
-| python | 656 | 1045 | U=337513.0 | -0.015 | negligible | 0.575 | 0.575 |
-| typescript | 928 | 749 | U=307268.0 | -0.116 | negligible | <.001 | <.001 |
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1647 | 2450 | -- | -- | -- | -- | -- | -- | U=1764204.0 | -0.126 | negligible | <.001 | -- |
+| java | 121 | 288 | 0.00 | 0.00 | 0.04 | 0.01 | 0.08 | 0.06 | U=13345.0 | -0.234 | small | <.001 | <.001 |
+| javascript | 137 | 563 | 0.00 | 0.00 | 0.03 | 0.00 | 0.10 | 0.04 | U=28601.5 | -0.258 | small | <.001 | <.001 |
+| python | 656 | 1045 | 0.01 | 0.00 | 0.03 | 0.03 | 0.06 | 0.08 | U=337513.0 | -0.015 | negligible | 0.575 | 0.575 |
+| typescript | 928 | 749 | 0.01 | 0.00 | 0.02 | 0.01 | 0.05 | 0.05 | U=307268.0 | -0.116 | negligible | <.001 | <.001 |
 
 **Other Extracted Features (Not in the Paper) -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). Computed and tested with the same rigor as the paper metrics above -- `max_nesting_depth` gets an identical Mann-Whitney/per-language table, `num_parameters` gets a descriptive floor-percentage footnote instead (see below for why) -- just not part of the paper's reported RQ1 comparison.
 

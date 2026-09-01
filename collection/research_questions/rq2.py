@@ -283,32 +283,58 @@ def _effective_teardown_count(kind_counts: dict[str, int]) -> int:
     return kind_counts.get("teardown", 0) + kind_counts.get("setup_and_teardown", 0)
 
 
+def _pct_cell(count: int, total: int) -> str:
+    """`count` formatted as "N (P%)", P = count/total*100 to one decimal
+    place -- just "N" (no percentage) if total is 0, the zero-filled-row
+    case for a language absent from this dataset (see
+    _render_kind_counts_table()'s "zero, not omitted" convention), which
+    would otherwise divide by zero. `total` is always the language's (or,
+    for the Total row, the dataset's) *whole* classified-fixture count --
+    setup + teardown + setup_and_teardown + other -- not the setup/
+    teardown sum, since a setup_and_teardown fixture is in both and an
+    other-classified one is in neither; see _render_kind_counts_table()'s
+    docstring for why that's the only total that keeps Setup%/Teardown%
+    consistent with every other table's fixture counts."""
+    if total == 0:
+        return f"{count:,}"
+    return f"{count:,} ({100 * count / total:.1f}%)"
+
+
 def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Table 1 (tab:rq2-counts): absolute setup/teardown fixture counts per
-    language, purely descriptive -- no statistics, "other"-classified
-    fixtures excluded from both columns. A 'setup_and_teardown'-classified
-    fixture (pytest_decorator only -- see this module's docstring) counts
-    toward *both* columns, since it genuinely provides both -- so the two
-    columns are not mutually exclusive and Setup+Teardown can exceed the
-    dataset's total fixture count."""
+    language, each also shown as a percentage of that language's *whole*
+    classified fixture count (setup + teardown + setup_and_teardown +
+    other -- see _pct_cell()'s docstring for why, not just the raw
+    setup/teardown counts). Purely descriptive -- no statistics.
+    "other"-classified fixtures are excluded from the setup/teardown
+    counts themselves (only used in the percentage denominator). A
+    'setup_and_teardown'-classified fixture (pytest_decorator only -- see
+    this module's docstring) counts toward *both* columns, since it
+    genuinely provides both -- so the two columns are not mutually
+    exclusive and Setup+Teardown (and Setup%+Teardown%) can exceed the
+    dataset's total fixture count (100%)."""
     other_label = other.dataset.upper()
     lines = [
-        "Raw counts of setup-classified and teardown-classified fixtures "
+        "Raw counts of setup-classified and teardown-classified fixtures, "
+        "each also shown as a percentage of that language's total "
+        "classified fixture count (setup + teardown + setup_and_teardown "
+        "+ other, not just the setup+teardown sum) "
         '("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are '
-        "excluded from both columns; a fixture classified as providing "
-        "both -- e.g. a pytest fixture with setup code before its `yield` "
-        "-- is counted in both columns, so they are not mutually "
-        "exclusive). Total is the dataset-wide sum across every language "
-        "present, not just the four rows below. Purely descriptive -- no "
-        "significance test.",
+        "excluded from the counts themselves, only used in the percentage "
+        "denominator; a fixture classified as providing both -- e.g. a "
+        "pytest fixture with setup code before its `yield` -- is counted "
+        "in both columns, so they are not mutually exclusive and the two "
+        "percentages can sum past 100%). Total is the dataset-wide sum "
+        "across every language present, not just the four rows below. "
+        "Purely descriptive -- no significance test.",
         "",
         f"| Language | Setup A | Setup {other_label} | Teardown A | Teardown {other_label} |",
         "|---|---|---|---|---|",
         (
-            f"| Total | {_effective_setup_count(a.kind_distribution):,} | "
-            f"{_effective_setup_count(other.kind_distribution):,} | "
-            f"{_effective_teardown_count(a.kind_distribution):,} | "
-            f"{_effective_teardown_count(other.kind_distribution):,} |"
+            f"| Total | {_pct_cell(_effective_setup_count(a.kind_distribution), sum(a.kind_distribution.values()))} | "
+            f"{_pct_cell(_effective_setup_count(other.kind_distribution), sum(other.kind_distribution.values()))} | "
+            f"{_pct_cell(_effective_teardown_count(a.kind_distribution), sum(a.kind_distribution.values()))} | "
+            f"{_pct_cell(_effective_teardown_count(other.kind_distribution), sum(other.kind_distribution.values()))} |"
         ),
     ]
 
@@ -317,11 +343,13 @@ def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     for language in RQ2_LANGUAGES:
         a_kind = a_totals.get(language, {})
         other_kind = other_totals.get(language, {})
+        a_total = sum(a_kind.values())
+        other_total = sum(other_kind.values())
         lines.append(
-            f"| {language} | {_effective_setup_count(a_kind):,} | "
-            f"{_effective_setup_count(other_kind):,} | "
-            f"{_effective_teardown_count(a_kind):,} | "
-            f"{_effective_teardown_count(other_kind):,} |"
+            f"| {language} | {_pct_cell(_effective_setup_count(a_kind), a_total)} | "
+            f"{_pct_cell(_effective_setup_count(other_kind), other_total)} | "
+            f"{_pct_cell(_effective_teardown_count(a_kind), a_total)} | "
+            f"{_pct_cell(_effective_teardown_count(other_kind), other_total)} |"
         )
 
     lines.append("")

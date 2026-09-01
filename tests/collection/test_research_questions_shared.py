@@ -29,6 +29,7 @@ from collection.research_questions._shared import (
     fmt,
     format_p_value,
     pct,
+    percentile,
     render_ascii_histogram,
     render_categorical_repo_level_table,
     render_comparison_table,
@@ -81,6 +82,25 @@ class TestSummarizeContinuous:
         s = summarize_continuous([7.0])
         assert s["n"] == 1
         assert s["stdev"] == 0.0
+
+
+class TestPercentile:
+    def test_empty_list_returns_none(self):
+        assert percentile([], 75) is None
+
+    def test_single_value_returns_that_value_for_any_percentile(self):
+        assert percentile([7.0], 25) == 7.0
+        assert percentile([7.0], 90) == 7.0
+
+    def test_known_values(self):
+        values = [10.0, 20.0, 30.0, 40.0]
+        assert percentile(values, 50) == 25.0
+        assert percentile(values, 75) == 32.5
+        assert percentile(values, 90) == 37.0
+
+    def test_50th_percentile_matches_median(self):
+        values = [3.0, 1.0, 4.0, 1.0, 5.0, 9.0, 2.0, 6.0]
+        assert percentile(values, 50) == summarize_continuous(values)["median"]
 
 
 class TestRunDipTest:
@@ -838,6 +858,169 @@ class TestRenderComparisonTable:
         overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.5, is_balanced=True)
         rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
         assert "n_C" in rendered.splitlines()[0]
+
+    def test_no_per_language_medians_means_no_median_columns(self):
+        """The default (per_language_medians=None) renders the original
+        8-column table, byte-for-byte -- every existing caller (rq2.py/
+        rq3.py, RQ1's own categorical tables) doesn't pass this arg."""
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.5, is_balanced=True)
+        rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
+        header = rendered.splitlines()[0]
+        assert "median" not in header.lower()
+        assert header.count("|") == 9  # 8 columns -> 9 pipes
+
+    def test_per_language_medians_add_columns_named_for_each_dataset(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+        }
+        per_language_n = {"python": NCounts(2, 2)}
+        rendered = render_comparison_table(
+            overall,
+            NCounts(5, 5),
+            per_language,
+            per_language_n,
+            other_dataset="c",
+            per_language_medians={"python": (7.5, 3.25)},
+        )
+        header = rendered.splitlines()[0]
+        assert "A median" in header
+        assert "C median" in header
+        assert header.count("|") == 11  # 10 columns -> 11 pipes
+
+    def test_per_language_medians_values_land_on_the_right_row(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+            "java": BalanceTest(
+                variable="loc_java", test_type="mann-whitney-u", p_value=0.6, is_balanced=True
+            ),
+        }
+        per_language_n = {"python": NCounts(2, 2), "java": NCounts(3, 3)}
+        rendered = render_comparison_table(
+            overall,
+            NCounts(5, 5),
+            per_language,
+            per_language_n,
+            other_dataset="c",
+            per_language_medians={"python": (7.5, 3.25), "java": (1.0, 2.0)},
+        )
+        python_line = next(line for line in rendered.splitlines() if line.startswith("| python |"))
+        java_line = next(line for line in rendered.splitlines() if line.startswith("| java |"))
+        assert "| python | 2 | 2 | 7.50 | 3.25 |" in python_line
+        assert "| java | 3 | 3 | 1.00 | 2.00 |" in java_line
+
+    def test_overall_row_medians_are_always_dashes(self):
+        """Overall gets no aggregate median -- just placeholder cells so
+        the row's column count matches the rest of the table."""
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+        }
+        per_language_n = {"python": NCounts(2, 2)}
+        rendered = render_comparison_table(
+            overall,
+            NCounts(5, 5),
+            per_language,
+            per_language_n,
+            other_dataset="c",
+            per_language_medians={"python": (7.5, 3.25)},
+        )
+        overall_line = next(line for line in rendered.splitlines() if line.startswith("| Overall |"))
+        assert "| Overall | 5 | 5 | -- | -- |" in overall_line
+
+    def test_language_missing_from_medians_dict_renders_dashes_not_ragged(self):
+        """A language present in per_language but absent from
+        per_language_medians (e.g. a real gap upstream) still gets its two
+        median cells -- "--"/"--" -- rather than a short row."""
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+        }
+        per_language_n = {"python": NCounts(2, 2)}
+        rendered = render_comparison_table(
+            overall,
+            NCounts(5, 5),
+            per_language,
+            per_language_n,
+            other_dataset="c",
+            per_language_medians={},  # python missing entirely
+        )
+        python_line = next(line for line in rendered.splitlines() if line.startswith("| python |"))
+        assert "| python | 2 | 2 | -- | -- |" in python_line
+
+    def test_insufficient_data_row_still_has_median_columns_when_requested(self):
+        overall = BalanceTest(
+            variable="loc", test_type="mann-whitney-u", p_value=1.0, is_balanced=True,
+            details={"reason": "insufficient_data"},
+        )
+        rendered = render_comparison_table(
+            overall, NCounts(0, 5), None, None, other_dataset="c", per_language_medians={}
+        )
+        overall_line = next(line for line in rendered.splitlines() if line.startswith("| Overall |"))
+        assert "| Overall | 0 | 5 | -- | -- | -- | -- | _insufficient data_ | -- | -- |" == overall_line
+
+    def test_q3_and_p90_add_their_own_columns_independently_of_medians(self):
+        """Q3/P90 don't require per_language_medians -- each of the three
+        extra-column kinds is independently optional."""
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+        }
+        per_language_n = {"python": NCounts(2, 2)}
+        rendered = render_comparison_table(
+            overall,
+            NCounts(5, 5),
+            per_language,
+            per_language_n,
+            other_dataset="c",
+            per_language_q3={"python": (11.0, 9.0)},
+        )
+        header = rendered.splitlines()[0]
+        assert "A Q3" in header
+        assert "C Q3" in header
+        assert "median" not in header.lower()
+        assert header.count("|") == 11  # 10 columns -> 11 pipes
+        python_line = next(line for line in rendered.splitlines() if line.startswith("| python |"))
+        assert "| python | 2 | 2 | 11.00 | 9.00 |" in python_line
+
+    def test_median_q3_p90_columns_appear_in_that_fixed_order(self):
+        overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.02, is_balanced=False)
+        per_language = {
+            "python": BalanceTest(
+                variable="loc_python", test_type="mann-whitney-u", p_value=0.04, is_balanced=False
+            ),
+        }
+        per_language_n = {"python": NCounts(2, 2)}
+        rendered = render_comparison_table(
+            overall,
+            NCounts(5, 5),
+            per_language,
+            per_language_n,
+            other_dataset="c",
+            per_language_medians={"python": (5.0, 4.0)},
+            per_language_q3={"python": (11.0, 9.0)},
+            per_language_p90={"python": (20.0, 15.0)},
+        )
+        header = rendered.splitlines()[0]
+        assert header.index("A median") < header.index("A Q3") < header.index("A P90") < header.index("Statistic")
+        assert header.count("|") == 15  # 14 columns -> 15 pipes
+        python_line = next(line for line in rendered.splitlines() if line.startswith("| python |"))
+        assert (
+            "| python | 2 | 2 | 5.00 | 4.00 | 11.00 | 9.00 | 20.00 | 15.00 |" in python_line
+        )
+        overall_line = next(line for line in rendered.splitlines() if line.startswith("| Overall |"))
+        assert "| Overall | 5 | 5 | -- | -- | -- | -- | -- | -- |" in overall_line
 
 
 class TestWriteMarkdownReport:

@@ -135,6 +135,7 @@ from ._shared import (
     fetch_continuous_column_by_repo,
     fmt,
     pct,
+    percentile,
     render_categorical_repo_level_table,
     render_comparison_table,
     render_language_leakage_table,
@@ -504,11 +505,81 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     return "\n".join(lines)
 
 
+def _per_language_medians(
+    metric: str, a: DatasetMetrics, other: DatasetMetrics
+) -> dict[str, tuple[float | None, float | None]]:
+    """{language: (A median, other median)} of the exact same per-repo mean
+    values compute_stratified_continuous_balance() tests for this metric
+    (repo_level_continuous_by_language) -- summarize_continuous()'s own
+    median, the same aggregation _render_continuous_summary_table() uses
+    for the dataset-wide descriptive tables, not a new computation. Only
+    languages present on both sides get a real per-language *test* row
+    (render_comparison_table()'s `per_language` is already restricted to
+    that intersection), so computing this over the union of languages
+    present on either side is harmless -- entries for a language missing
+    on one side simply never get looked up as a table row."""
+    languages = set(a.repo_level_continuous_by_language[metric]) | set(
+        other.repo_level_continuous_by_language[metric]
+    )
+    return {
+        language: (
+            summarize_continuous(
+                a.repo_level_continuous_by_language[metric].get(language, [])
+            )["median"],
+            summarize_continuous(
+                other.repo_level_continuous_by_language[metric].get(language, [])
+            )["median"],
+        )
+        for language in languages
+    }
+
+
+def _per_language_percentile(
+    metric: str, a: DatasetMetrics, other: DatasetMetrics, q: float
+) -> dict[str, tuple[float | None, float | None]]:
+    """{language: (A value, other value)} of the qth percentile (0-100) of
+    the exact same per-repo mean values compute_stratified_continuous_
+    balance() tests for this metric (repo_level_continuous_by_language) --
+    _shared.py's percentile(), not a new aggregation. Sibling of
+    _per_language_medians() above (which stays on statistics.median() via
+    summarize_continuous() rather than being rewritten to call
+    percentile(values, 50) -- no behavior change for the already-shipped
+    median columns). Same union-of-languages reasoning as
+    _per_language_medians()'s docstring."""
+    languages = set(a.repo_level_continuous_by_language[metric]) | set(
+        other.repo_level_continuous_by_language[metric]
+    )
+    return {
+        language: (
+            percentile(a.repo_level_continuous_by_language[metric].get(language, []), q),
+            percentile(other.repo_level_continuous_by_language[metric].get(language, []), q),
+        )
+        for language in languages
+    }
+
+
 def _render_continuous_metric(
-    metric: str, a: DatasetMetrics, other: DatasetMetrics, overall: BalanceTest
+    metric: str,
+    a: DatasetMetrics,
+    other: DatasetMetrics,
+    overall: BalanceTest,
+    *,
+    include_percentile_columns: bool = False,
 ) -> str:
     """One metric's full table (Overall + per-language family rows),
-    repo-level throughout -- see compare_datasets_repo_level()'s docstring."""
+    repo-level throughout -- see compare_datasets_repo_level()'s docstring.
+
+    `include_percentile_columns`: adds "A median"/"<OTHER> median", "A
+    Q3"/"<OTHER> Q3", and "A P90"/"<OTHER> P90" columns (per
+    render_comparison_table()'s per_language_medians/per_language_q3/
+    per_language_p90) -- set only for the three paper continuous metrics
+    (loc/cyclomatic_complexity/comment_density), not max_nesting_depth, so
+    the paper's per-language comparison tables show the underlying
+    distribution (not just its center) alongside the effect size, without
+    changing the "Other" tier's table shape. Q3/P90 exist specifically to
+    explain an effect that reaches significance despite identical
+    medians -- a real difference concentrated in the upper tail of one
+    distribution, invisible to the median alone."""
     overall_n = NCounts(
         len(a.repo_level_continuous[metric]), len(other.repo_level_continuous[metric])
     )
@@ -524,10 +595,26 @@ def _render_continuous_metric(
         )
         for language in per_language
     }
+    per_language_medians = (
+        _per_language_medians(metric, a, other) if include_percentile_columns else None
+    )
+    per_language_q3 = (
+        _per_language_percentile(metric, a, other, 75) if include_percentile_columns else None
+    )
+    per_language_p90 = (
+        _per_language_percentile(metric, a, other, 90) if include_percentile_columns else None
+    )
     lines = [f"### {metric}", ""]
     lines.append(
         render_comparison_table(
-            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
+            overall,
+            overall_n,
+            per_language,
+            per_language_n,
+            other_dataset=other.dataset,
+            per_language_medians=per_language_medians,
+            per_language_q3=per_language_q3,
+            per_language_p90=per_language_p90,
         )
     )
     return "\n".join(lines)
@@ -614,11 +701,22 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         f"**Paper Metrics -- Continuous** {continuous_intro} These three "
         "(`loc`, `cyclomatic_complexity`, `comment_density`) are the only "
         "continuous metrics reported in the paper -- see this module's "
-        "docstring.",
+        "docstring. Each per-language row also reports `A median`/`C "
+        "median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` "
+        "(90th percentile) -- the same per-repo mean values the "
+        "Mann-Whitney test itself runs on, alongside (not a replacement "
+        "for) the effect size and p-value. Q3/P90 exist to explain an "
+        "effect that reaches significance despite identical medians -- a "
+        "real difference concentrated in the upper tail, invisible to the "
+        "median alone.",
         "",
     ]
     for metric in PAPER_CONTINUOUS_METRICS:
-        lines.append(_render_continuous_metric(metric, a, other, continuous_overall[metric]))
+        lines.append(
+            _render_continuous_metric(
+                metric, a, other, continuous_overall[metric], include_percentile_columns=True
+            )
+        )
 
     lines += [
         f"**Other Extracted Features (Not in the Paper) -- Continuous** "

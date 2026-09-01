@@ -31,6 +31,7 @@ from collection.detector_python import classify_pytest_fixture_kind_from_source
 from collection.detector_shared import _classify_fixture_kind
 from collection.research_questions.rq2 import (
     DatasetMetrics,
+    _pct_cell,
     _python_teardown_proportions,
     _render_teardown_dip_test,
     generate_report,
@@ -179,6 +180,27 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                     ),
                 )
                 insert_fixture(conn, base)
+
+
+class TestPctCell:
+    def test_known_percentage_rounds_to_one_decimal(self):
+        assert _pct_cell(3, 5) == "3 (60.0%)"
+
+    def test_zero_total_renders_bare_count_no_percentage(self):
+        """Avoids a ZeroDivisionError for a language absent from a
+        dataset -- the zero-filled-row case elsewhere in this table."""
+        assert _pct_cell(0, 0) == "0"
+
+    def test_count_can_exceed_total_for_setup_and_teardown_double_counting(self):
+        """Not a real total>100% bug -- a setup_and_teardown fixture
+        legitimately counts toward both the setup and teardown numerators
+        against the same denominator, so a single-kind total (e.g. every
+        fixture is setup_and_teardown) renders exactly 100%, not capped
+        or an error."""
+        assert _pct_cell(4, 4) == "4 (100.0%)"
+
+    def test_large_counts_keep_thousands_separator(self):
+        assert _pct_cell(18619, 20148) == "18,619 (92.4%)"
 
 
 class TestLoadDatasetMetrics:
@@ -368,10 +390,12 @@ class TestGenerateReport:
         assert "### Table 1: Fixture Counts by Type (tab:rq2-counts)" in report
         assert "| Language | Setup A | Setup C | Teardown A | Teardown C |" in report
         comparison_section = report.split("## A vs C:")[1]
-        assert "| Total | 3 | 1 | 2 | 4 |" in comparison_section
-        assert "| python | 3 | 1 | 2 | 4 |" in comparison_section
+        # A: 3 setup + 2 teardown = 5 total -> 60.0%/40.0%.
+        # C: 1 setup + 4 teardown = 5 total -> 20.0%/80.0%.
+        assert "| Total | 3 (60.0%) | 1 (20.0%) | 2 (40.0%) | 4 (80.0%) |" in comparison_section
+        assert "| python | 3 (60.0%) | 1 (20.0%) | 2 (40.0%) | 4 (80.0%) |" in comparison_section
         # java/javascript/typescript have no data on either side -- zero,
-        # not omitted.
+        # not omitted, and no percentage (would be a division by zero).
         assert "| java | 0 | 0 | 0 | 0 |" in comparison_section
         assert "| javascript | 0 | 0 | 0 | 0 |" in comparison_section
         assert "| typescript | 0 | 0 | 0 | 0 |" in comparison_section
@@ -385,7 +409,11 @@ class TestGenerateReport:
         _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
         report = generate_report(db_root=tmp_path)
         comparison_section = report.split("## A vs C:")[1]
-        assert "| Total | 1 | 0 | 0 | 1 |" in comparison_section
+        # A: 1 setup + 1 other = 2 total (the percentage denominator
+        # includes the "other" fixture even though it's excluded from the
+        # counts themselves) -> setup 1/2=50.0%, teardown 0/2=0.0%.
+        # C: 1 teardown = 1 total -> setup 0/1=0.0%, teardown 1/1=100.0%.
+        assert "| Total | 1 (50.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
 
     def test_kind_counts_table_counts_setup_and_teardown_fixture_in_both_columns(
         self, tmp_path
@@ -413,8 +441,10 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         comparison_section = report.split("## A vs C:")[1]
         # Setup A=1, Setup C=0, Teardown A=1, Teardown C=1 -- the single A
-        # fixture counted in both the Setup and Teardown A columns.
-        assert "| Total | 1 | 0 | 1 | 1 |" in comparison_section
+        # fixture counted in both the Setup and Teardown A columns, each
+        # against a 1-fixture total -> 100.0% in both A columns (percentages
+        # summing past 100% is expected here, see this table's docstring).
+        assert "| Total | 1 (100.0%) | 0 (0.0%) | 1 (100.0%) | 1 (100.0%) |" in comparison_section
 
     def test_kind_counts_table_total_includes_languages_outside_the_fixed_four(self, tmp_path):
         """The Total row is the dataset-wide sum across every language
@@ -428,7 +458,7 @@ class TestGenerateReport:
         _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
         report = generate_report(db_root=tmp_path)
         comparison_section = report.split("## A vs C:")[1]
-        assert "| Total | 1 | 0 | 0 | 1 |" in comparison_section
+        assert "| Total | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
         assert "| rust |" not in comparison_section
 
     def test_teardown_coverage_table_renders_percentages_and_effect_size(self, tmp_path):

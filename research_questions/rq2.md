@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-08-31 20:52:47 UTC
+Generated: 2026-09-01 01:18:45 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -56,15 +56,15 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 ### Table 1: Fixture Counts by Type (tab:rq2-counts)
 
-Raw counts of setup-classified and teardown-classified fixtures ("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are excluded from both columns; a fixture classified as providing both -- e.g. a pytest fixture with setup code before its `yield` -- is counted in both columns, so they are not mutually exclusive). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
+Raw counts of setup-classified and teardown-classified fixtures, each also shown as a percentage of that language's total classified fixture count (setup + teardown + setup_and_teardown + other, not just the setup+teardown sum) ("other"-classified fixtures, e.g. a bare `@pytest.fixture`, are excluded from the counts themselves, only used in the percentage denominator; a fixture classified as providing both -- e.g. a pytest fixture with setup code before its `yield` -- is counted in both columns, so they are not mutually exclusive and the two percentages can sum past 100%). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
 
 | Language | Setup A | Setup C | Teardown A | Teardown C |
 |---|---|---|---|---|
-| Total | 48,015 | 51,258 | 23,633 | 17,388 |
-| java | 1,270 | 987 | 609 | 499 |
-| javascript | 2,782 | 3,344 | 1,965 | 1,403 |
-| python | 18,619 | 16,142 | 4,932 | 4,800 |
-| typescript | 25,344 | 30,785 | 16,127 | 10,686 |
+| Total | 48,015 (70.6%) | 51,258 (75.4%) | 23,633 (34.8%) | 17,388 (25.6%) |
+| java | 1,270 (62.3%) | 987 (48.4%) | 609 (29.9%) | 499 (24.5%) |
+| javascript | 2,782 (58.6%) | 3,344 (70.4%) | 1,965 (41.4%) | 1,403 (29.6%) |
+| python | 18,619 (94.4%) | 16,142 (81.8%) | 4,932 (25.0%) | 4,800 (24.3%) |
+| typescript | 25,344 (61.1%) | 30,785 (74.2%) | 16,127 (38.9%) | 10,686 (25.8%) |
 
 ### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)
 
