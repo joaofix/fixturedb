@@ -89,6 +89,17 @@ conceptually distinct from Coverage/Intensity above (a repo-level *mean*
 across every fixture including non-mocking ones, vs Intensity's *median
 among mocking fixtures only*).
 
+**Mock Fixture Counts by Language** (`_render_mock_counts_table()`): an
+additional, purely descriptive table (no statistics), rendered right
+after the Coverage/Intensity paper table -- NOT a replacement for it.
+The RQ2-counts-table analogue for mocking: raw count + percentage of
+`has_mock` fixtures per language, both datasets side by side, denominator
+is simply that language's total fixture count (no 'other'
+category/double-counting complication the way RQ2's setup/teardown kind
+has -- has_mock is a clean binary). Reuses has_mock_dist/has_mock_dist_
+by_language, the same counts already backing "Mock prevalence"/"Mock
+prevalence by language" in the per-dataset summary above.
+
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
 comparisons; see rq1.py's module docstring.
@@ -657,6 +668,65 @@ def _render_mocking_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> s
     return "\n".join(lines)
 
 
+def _render_mock_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Fixture-level mock counts by language -- the RQ3 analogue of
+    rq2.py's Table 1 (tab:rq2-counts): raw count and percentage of
+    fixtures with >=1 mock (`has_mock`), per language, both datasets side
+    by side. Purely descriptive, no statistics -- the paper's actual
+    mocking comparison is the repo-level Coverage/Intensity table above
+    (Mann-Whitney U + Cliff's delta). Simpler than RQ2's counts table
+    besides: `has_mock` is a clean binary (a fixture either has >=1 mock
+    or it doesn't), so there's no 'other' category to exclude from the
+    denominator and no double-counting concern the way RQ2's
+    setup_and_teardown kind creates -- the denominator for every row here
+    is simply that language's (or, for Overall, the dataset's) total
+    fixture count, no exclusions needed. Reuses has_mock_dist/has_mock_
+    dist_by_language -- the exact counts already backing 'Mock
+    prevalence'/'Mock prevalence by language' in the per-dataset summary
+    above -- so this is a different view of identical numbers, not a
+    separate computation."""
+    other_label = other.dataset.upper()
+    lines = [
+        "### Mock Fixture Counts by Language",
+        "",
+        "Raw count of fixtures with >=1 mock (`has_mock`), per language, "
+        "each also shown as a percentage of that language's total fixture "
+        "count. Unlike RQ2's setup/teardown counts table, `has_mock` is a "
+        "clean binary with no 'other' category and no double-counting "
+        "concern, so the denominator here is simply the total fixture "
+        "count for that language/dataset -- no exclusions. Total is the "
+        "dataset-wide sum across every language present, not just the "
+        "four rows below. Purely descriptive -- no significance test "
+        "(see the Coverage/Intensity table above for the paper's actual, "
+        "repo-level mocking comparison).",
+        "",
+        f"| Language | Mock A (n) | Mock A (%) | Mock {other_label} (n) | Mock {other_label} (%) |",
+        "|---|---|---|---|---|",
+    ]
+
+    def _row(label: str, a_dist: dict[str, int], other_dist: dict[str, int]) -> str:
+        a_total = sum(a_dist.values())
+        other_total = sum(other_dist.values())
+        a_mock = a_dist.get("has_mock", 0)
+        other_mock = other_dist.get("has_mock", 0)
+        a_pct = 100 * a_mock / a_total if a_total else 0.0
+        other_pct = 100 * other_mock / other_total if other_total else 0.0
+        return f"| {label} | {a_mock:,} | {a_pct:.1f}% | {other_mock:,} | {other_pct:.1f}% |"
+
+    lines.append(_row("Overall", a.has_mock_dist, other.has_mock_dist))
+    for language in RQ3_LANGUAGES:
+        lines.append(
+            _row(
+                language,
+                a.has_mock_dist_by_language.get(language, {}),
+                other.has_mock_dist_by_language.get(language, {}),
+            )
+        )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     lines = [
         f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures, "
@@ -779,6 +849,8 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
 
     lines += ["### Mocking Coverage and Intensity (paper table)", ""]
     lines.append(_render_mocking_summary_table(a, other))
+
+    lines.append(_render_mock_counts_table(a, other))
 
     return "\n".join(lines)
 

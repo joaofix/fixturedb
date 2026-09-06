@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures differ in mock usage -- coverage and intensity?
 
-Generated: 2026-08-31 20:52:51 UTC
+Generated: 2026-09-06 02:39:35 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ3 definition.
 
@@ -201,6 +201,18 @@ Mock prevalence: 3,960/67,979 fixtures (5.8%)
 | javascript | 137 | 563 | 22.6% | 21.7% | -0.010 (negligible) | 0.824 | 2.00 | 1.00 | -0.176 (small) | 0.161 |
 | python | 656 | 1045 | 58.1% | 21.6% | -0.365 (medium) | <.001 | 1.50 | 1.00 | -0.089 (negligible) | 0.090 |
 | typescript | 928 | 749 | 34.2% | 32.8% | -0.013 (negligible) | 0.761 | 1.00 | 1.00 | -0.133 (negligible) | 0.007 |
+
+### Mock Fixture Counts by Language
+
+Raw count of fixtures with >=1 mock (`has_mock`), per language, each also shown as a percentage of that language's total fixture count. Unlike RQ2's setup/teardown counts table, `has_mock` is a clean binary with no 'other' category and no double-counting concern, so the denominator here is simply the total fixture count for that language/dataset -- no exclusions. Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test (see the Coverage/Intensity table above for the paper's actual, repo-level mocking comparison).
+
+| Language | Mock A (n) | Mock A (%) | Mock C (n) | Mock C (%) |
+|---|---|---|---|---|
+| Overall | 6,688 | 9.8% | 3,960 | 5.8% |
+| java | 154 | 7.6% | 61 | 3.0% |
+| javascript | 183 | 3.9% | 341 | 7.2% |
+| python | 4,350 | 22.1% | 992 | 5.0% |
+| typescript | 2,001 | 4.8% | 2,566 | 6.2% |
 
 ## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)
 

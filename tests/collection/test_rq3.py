@@ -24,6 +24,7 @@ from collection.research_questions.rq3 import (
     DatasetMetrics,
     _mocking_coverage_indicators,
     _mocking_intensities_by_repo,
+    _render_mock_counts_table,
     _render_mocking_summary_table,
     compare_datasets_repo_level,
     generate_report,
@@ -596,6 +597,35 @@ class TestGenerateReport:
         assert "### framework" not in report
         assert "### category" not in report
 
+    def test_mock_counts_table_present_after_paper_table_additive_not_replacing(self, tmp_path):
+        """New additional table -- must appear, must come after the
+        Coverage/Intensity paper table (not replace or precede it), and
+        every other existing section must remain untouched."""
+        _make_db(
+            tmp_path,
+            "a",
+            [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 1}, "mocks": [{}]}]}],
+        )
+        _make_db(
+            tmp_path,
+            "c",
+            [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "### Mock Fixture Counts by Language" in report
+        assert "| Language | Mock A (n) | Mock A (%) | Mock C (n) | Mock C (%) |" in report
+        assert (
+            report.index("### Mocking Coverage and Intensity (paper table)")
+            < report.index("### Mock Fixture Counts by Language")
+        )
+        # Untouched pre-existing sections still present.
+        assert "## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)" in report
+        counts_section = report.split("### Mock Fixture Counts by Language")[1].split(
+            "## Legacy:"
+        )[0]
+        assert "| Overall | 1 | 100.0% | 0 | 0.0% |" in counts_section
+        assert "| python | 1 | 100.0% | 0 | 0.0% |" in counts_section
+
     def test_paper_table_shows_fixed_four_language_rows_including_absent_ones(self, tmp_path):
         """Unlike the legacy has_mock table's intersection convention,
         the paper table always shows all four canonical language rows --
@@ -649,6 +679,76 @@ class TestMockingIntensitiesByRepo:
 
     def test_empty_dict_returns_empty_list(self):
         assert _mocking_intensities_by_repo({}) == []
+
+
+class TestRenderMockCountsTable:
+    """Direct DatasetMetrics construction (bypassing the DB) -- has_mock_dist/
+    has_mock_dist_by_language only, the two fields this table reads."""
+
+    def test_header_matches_requested_format(self):
+        a = DatasetMetrics(dataset="a", n_fixtures=0, n_mock_usages=0)
+        other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
+        rendered = _render_mock_counts_table(a, other)
+        assert "### Mock Fixture Counts by Language" in rendered
+        assert (
+            "| Language | Mock A (n) | Mock A (%) | Mock C (n) | Mock C (%) |" in rendered
+        )
+
+    def test_renders_hand_verified_counts_and_percentages(self):
+        """A/python: 3 mock / 12 total = 25.0%. C/python: 1 mock / 4 total
+        = 25.0% (same rate, different n -- percentages must be computed
+        independently per side, not shared)."""
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_dist={"has_mock": 3, "no_mock": 9},
+            has_mock_dist_by_language={"python": {"has_mock": 3, "no_mock": 9}},
+        )
+        other = DatasetMetrics(
+            dataset="c",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_dist={"has_mock": 1, "no_mock": 3},
+            has_mock_dist_by_language={"python": {"has_mock": 1, "no_mock": 3}},
+        )
+        rendered = _render_mock_counts_table(a, other)
+        lines = rendered.splitlines()
+        assert "| Overall | 3 | 25.0% | 1 | 25.0% |" in lines
+        assert "| python | 3 | 25.0% | 1 | 25.0% |" in lines
+
+    def test_language_absent_from_one_side_renders_zero_not_division_error(self):
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_dist={"has_mock": 2, "no_mock": 2},
+            has_mock_dist_by_language={"java": {"has_mock": 2, "no_mock": 2}},
+        )
+        other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
+        rendered = _render_mock_counts_table(a, other)
+        lines = rendered.splitlines()
+        assert "| java | 2 | 50.0% | 0 | 0.0% |" in lines
+        # javascript/python/typescript absent on both sides -- still
+        # rendered as zero-filled rows, not omitted.
+        for language in ("javascript", "python", "typescript"):
+            assert f"| {language} | 0 | 0.0% | 0 | 0.0% |" in lines
+
+    def test_denominator_is_total_fixture_count_no_exclusions(self):
+        """Unlike RQ2's setup/teardown table, there is no 'other' category
+        to exclude -- the denominator is exactly has_mock + no_mock, the
+        language's whole fixture count."""
+        a = DatasetMetrics(
+            dataset="a",
+            n_fixtures=0,
+            n_mock_usages=0,
+            has_mock_dist={"has_mock": 1, "no_mock": 1},
+            has_mock_dist_by_language={"java": {"has_mock": 1, "no_mock": 1}},
+        )
+        other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
+        rendered = _render_mock_counts_table(a, other)
+        java_line = next(line for line in rendered.splitlines() if line.startswith("| java |"))
+        assert "| java | 1 | 50.0% | 0 | 0.0% |" == java_line
 
 
 class TestRenderMockingSummaryTable:
