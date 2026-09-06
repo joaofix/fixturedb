@@ -91,7 +91,9 @@ def test_fixture_definitions_java_shapes_and_scopes():
     for ann, fields in java_defs["ambiguous_annotations"].items():
         assert ann.startswith("@")
         assert fields["scope"] in VALID_SCOPES
-        assert fields["framework"].strip()
+        assert fields["junit4_fixture_type"].strip()
+        assert fields["testng_fixture_type"].strip()
+        assert fields["ambiguous_fixture_type"].strip()
     assert set(java_defs["junit3_fallback"]["names"].values()) == {
         "junit3_setup",
         "junit3_teardown",
@@ -122,8 +124,10 @@ def test_fixture_definitions_javascript_typescript_shapes_and_scopes():
 
 def _all_known_fixture_types() -> set[str]:
     """Every fixture_type value that fixture_definitions.yaml can produce
-    (including the dormant junit4_before_class/after_class, kept in case
-    the JUnit4/TestNG ambiguity is ever disambiguated -- see java.known_imprecisions)."""
+    -- for java.ambiguous_annotations, all three possible per-file
+    resolutions (junit4_/testng_/ambiguous_fixture_type), since which one a
+    given file gets depends on its own imports at detection time, not on
+    anything decidable from the catalog alone -- see java.known_imprecisions."""
     defs = load_fixture_definitions()
     types: set[str] = set()
 
@@ -138,6 +142,7 @@ def _all_known_fixture_types() -> set[str]:
     for f in java_defs["ambiguous_annotations"].values():
         types.add(f["junit4_fixture_type"])
         types.add(f["testng_fixture_type"])
+        types.add(f["ambiguous_fixture_type"])
 
     js_defs = defs["javascript_typescript"]
     types.update(f["fixture_type"] for f in js_defs["hooks"].values())

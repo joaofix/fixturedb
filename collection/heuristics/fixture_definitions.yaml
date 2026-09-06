@@ -15,7 +15,12 @@
 #   per_test   -- runs before/after every test function
 #   per_class  -- runs once per test class/suite
 #   per_module -- runs once per file/module
-#   global     -- runs once per test session (pytest scope="session" only)
+#   global     -- runs once per test session (pytest scope="session"), or,
+#                 for TestNG's suite/test/groups-level hooks (@BeforeSuite/
+#                 @BeforeTest/@BeforeGroups and their After* counterparts),
+#                 the closest available approximation -- all three run at a
+#                 broader-than-class granularity with no finer bucket in
+#                 this 4-value vocabulary to distinguish them by.
 #
 # Async fixtures: captured identically to sync ones, in every language.
 # The lifecycle hook name / decorator / annotation is the detection signal,
@@ -128,16 +133,37 @@ java:
     "@BeforeMethod": {fixture_type: testng_before_method, scope: per_test, family: testng, framework: testng}
     "@AfterMethod": {fixture_type: testng_after_method, scope: per_test, family: testng, framework: testng}
     "@DataProvider": {fixture_type: testng_data_provider, scope: per_test, family: testng, framework: testng}
+    "@Factory": {fixture_type: testng_factory, scope: per_test, family: testng, framework: testng}
+    "@BeforeSuite": {fixture_type: testng_before_suite, scope: global, family: testng, framework: testng}
+    "@AfterSuite": {fixture_type: testng_after_suite, scope: global, family: testng, framework: testng}
+    "@BeforeTest": {fixture_type: testng_before_test, scope: global, family: testng, framework: testng}
+    "@AfterTest": {fixture_type: testng_after_test, scope: global, family: testng, framework: testng}
+    "@BeforeGroups": {fixture_type: testng_before_groups, scope: global, family: testng, framework: testng}
+    "@AfterGroups": {fixture_type: testng_after_groups, scope: global, family: testng, framework: testng}
     "@Rule": {fixture_type: junit_rule, scope: per_test, family: junit4, framework: junit}
     "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4, framework: junit}
-  # Same annotation name exists in both JUnit4 and TestNG; the detector
-  # cannot disambiguate from the annotation alone and defaults to TestNG
-  # (documented imprecision -- see the "Known imprecisions" note below).
-  # framework matches whichever fixture_type is actually chosen at runtime
-  # (currently always testng_fixture_type -- see known_imprecisions).
+  # @Factory supplies test-class instances (data-driven class
+  # instantiation), the same "supplies inputs rather than doing setup/
+  # teardown" role @DataProvider plays -- fixture_type_kind classification
+  # (detector_shared.py) falls through to 'other' for both by construction
+  # (neither is in feature_extraction_patterns.yaml's type_based_pairs),
+  # same scope value (per_test) for consistency, not because either
+  # mapping is a precise fit. No JUnit collision risk for this name, so
+  # (unlike @BeforeClass/@AfterClass below) it needs no import-based
+  # disambiguation.
+  #
+  # Same annotation name exists in both JUnit4 and TestNG for @BeforeClass/
+  # @AfterClass; the detector resolves it per-file by checking which of
+  # org.junit.*/org.testng.* is imported (detector_java.py's
+  # _detect_test_framework_imports()) -- see ambiguous_annotations below
+  # for the three possible outcomes. fixture_type_kind (setup/teardown) is
+  # unaffected either way: all three possible fixture_type values below
+  # are wired into feature_extraction_patterns.yaml's type_based_pairs, so
+  # framework ambiguity never blocks correct setup/teardown classification,
+  # only the framework-specific fixture_type label.
   ambiguous_annotations:
-    "@BeforeClass": {junit4_fixture_type: junit4_before_class, testng_fixture_type: testng_before_class, scope: per_class, framework: testng}
-    "@AfterClass": {junit4_fixture_type: junit4_after_class, testng_fixture_type: testng_after_class, scope: per_class, framework: testng}
+    "@BeforeClass": {junit4_fixture_type: junit4_before_class, testng_fixture_type: testng_before_class, ambiguous_fixture_type: before_class_ambiguous, scope: per_class}
+    "@AfterClass": {junit4_fixture_type: junit4_after_class, testng_fixture_type: testng_after_class, ambiguous_fixture_type: after_class_ambiguous, scope: per_class}
   # Plain setUp()/tearDown() methods with no annotation at all, inside a
   # (JUnit3-style) TestCase subclass.
   junit3_fallback:
@@ -147,7 +173,18 @@ java:
     scope: per_test
     framework: junit
   known_imprecisions:
-    - "@BeforeClass/@AfterClass are always attributed to TestNG when ambiguous with JUnit4, since the detector doesn't inspect imports to disambiguate -- see the TODO in detector_java.py. framework is reported as testng to match, consistently with the chosen fixture_type."
+    - >
+      @BeforeClass/@AfterClass resolve to the ambiguous_fixture_type
+      (framework left unresolved/null) whenever the file has both an
+      org.junit.* and an org.testng.* import, or neither -- e.g. a file
+      that only uses TestNG assertions/annotations elsewhere without ever
+      importing org.testng.annotations.BeforeClass/AfterClass by that
+      exact name, or a file mixing both frameworks. Measured (2026-09-06)
+      against known-TestNG-adjacent Java files: ~0% of Dataset A's sample,
+      ~5% of Dataset C's sample fall into this dual-or-neither-import
+      case. fixture_type_kind is still correctly setup/teardown in every
+      case (see the comment above ambiguous_annotations) -- only the
+      framework-specific fixture_type/framework fields are affected.
     - >
       Fixture scope is inferred from annotation type (@BeforeAll ->
       per_class, @BeforeEach -> per_test). JUnit 5's instance lifecycle
@@ -155,15 +192,27 @@ java:
       effective scope of @BeforeAll (allowing it to be a non-static,
       per-instance method shared across the class's tests instead of a
       true static per-class hook), is not currently accounted for.
+    - >
+      TestNG @BeforeSuite/@AfterSuite/@BeforeTest/@AfterTest/@BeforeGroups/
+      @AfterGroups are all mapped to scope: global, the closest available
+      approximation -- see the scope vocabulary comment at the top of this
+      file. The three levels (suite/test/groups) are not distinguished
+      from each other or from pytest's session scope; no finer-grained
+      scope value exists in the current vocabulary to do so.
   excluded:
     - case: "JUnit 5 Extension lifecycle methods (BeforeEachCallback, AfterEachCallback, etc.)"
       reason: >
         These are implemented via interfaces, not annotations -- the
         detector only looks for annotation nodes on methods/fields.
-    - case: "TestNG @BeforeSuite / @AfterSuite / @BeforeTest / @AfterTest"
+    - case: "TestNG @Listeners"
       reason: >
-        Only @BeforeMethod/@AfterMethod are handled; the other TestNG
-        lifecycle levels are not in the annotation table.
+        Class-level listener registration (e.g. @Listeners(MyListener.class)
+        on the class declaration itself), not a setup/teardown method or
+        data-supplying method -- doesn't fit this project's fixture
+        definition at all. Also structurally never reachable even if it
+        were added to the annotation table: the detector only inspects
+        annotations on method_declaration/field_declaration nodes, never
+        on the enclosing class_declaration itself.
     - case: "Spring (all annotations, e.g. @Bean, @TestConfiguration, @BeforeTransaction/@AfterTransaction)"
       reason: >
         Scope decision: only the dominant, actively-maintained testing

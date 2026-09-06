@@ -126,22 +126,29 @@ public class TestCalculator {
         assert fixtures[0].framework == "junit"
 
     def test_junit_class_annotations(self):
-        """@BeforeClass/@AfterClass are ambiguous between JUnit4 and TestNG;
-        the detector defaults to TestNG (fixture_type=testng_before_class),
-        and framework is reported as 'testng' to match -- see the
-        known_imprecisions note in fixture_definitions.yaml."""
+        """@BeforeClass/@AfterClass are ambiguous between JUnit4 and TestNG
+        by annotation name alone -- resolved per-file via the file's own
+        imports (detector_java.py's _detect_test_framework_imports()).
+        This file imports only org.junit.BeforeClass/AfterClass (no
+        org.testng import anywhere), so both correctly resolve to the
+        JUnit4-specific fixture_type/framework here -- see
+        TestClassLevelFrameworkResolution in test_java_fixtures.py for the
+        full matrix (junit-only/testng-only/both/neither) and the
+        known_imprecisions note in fixture_definitions.yaml for what
+        happens when the imports don't unambiguously indicate one
+        framework."""
         code = """
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
 
 public class ExpensiveResourceTest {
     private static ExpensiveResource resource;
-    
+
     @BeforeClass
     public static void setUpClass() {
         resource = new ExpensiveResource();
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
         resource.cleanup();
@@ -151,12 +158,16 @@ public class ExpensiveResourceTest {
         # Check @BeforeClass
         fixtures = extract_and_find_fixtures(code, "java", "setUpClass")
         assert len(fixtures) > 0
-        assert fixtures[0].framework == "testng"
+        assert fixtures[0].fixture_type == "junit4_before_class"
+        assert fixtures[0].framework == "junit"
+        assert fixtures[0].fixture_type_kind == "setup"
 
         # Check @AfterClass
         fixtures = extract_and_find_fixtures(code, "java", "tearDownClass")
         assert len(fixtures) > 0
-        assert fixtures[0].framework == "testng"
+        assert fixtures[0].fixture_type == "junit4_after_class"
+        assert fixtures[0].framework == "junit"
+        assert fixtures[0].fixture_type_kind == "teardown"
 
     def test_junit_rule_annotations(self):
         """JUnit @Rule/@ClassRule should have framework='junit'"""

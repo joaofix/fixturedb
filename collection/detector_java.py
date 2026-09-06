@@ -8,9 +8,19 @@ fixture_definitions.yaml's java.excluded list for why.
 Pattern tables are loaded from
 collection/heuristics/fixture_definitions.yaml rather than hardcoded here
 -- see that file for the full operational definition of "fixture" per
-language, including documented exclusions and known imprecisions (e.g. an
-ambiguous @BeforeClass/@AfterClass is always attributed to TestNG).
+language, including documented exclusions and known imprecisions. Notably:
+@BeforeClass/@AfterClass collide with JUnit4's own annotations of the same
+name -- resolved per-file via _detect_test_framework_imports() below (which
+of org.junit.*/org.testng.* is imported), falling back to an
+"ambiguous"-labeled fixture_type (framework left unresolved) only when both
+or neither import is present -- see fixture_definitions.yaml's
+java.known_imprecisions for measured prevalence of that fallback case.
+fixture_type_kind (setup/teardown) is correct regardless of which of the
+three fixture_type outcomes is chosen -- see JUNIT_TESTNG_AMBIGUOUS's
+docstring.
 """
+
+import re
 
 from .detector_shared import FixtureResult, _build_result, _source
 from .heuristics import load_fixture_definitions
@@ -22,16 +32,46 @@ JUNIT_FIXTURE_ANNOTATIONS: dict[str, tuple[str, str, str]] = {
     for ann, fields in _DEFS["annotations"].items()
 }
 
-# Annotations that appear in both JUnit4 and TestNG (require context to disambiguate)
+# Annotations that appear in both JUnit4 and TestNG (require context to
+# disambiguate). Each entry: (junit4_fixture_type, testng_fixture_type,
+# ambiguous_fixture_type, scope) -- framework is no longer a fixed value
+# here (dropped from fixture_definitions.yaml's ambiguous_annotations)
+# since it's resolved per-file at detection time instead, see
+# _detect_java()'s use of _detect_test_framework_imports() below.
+#
+# All three possible fixture_type outcomes (junit4_/testng_/ambiguous) are
+# wired into feature_extraction_patterns.yaml's teardown_detection.
+# type_based_pairs, so fixture_type_kind (setup vs teardown) is always
+# correctly derived downstream regardless of which one gets chosen --
+# framework ambiguity affects only the fixture_type/framework label, never
+# the setup/teardown classification.
 JUNIT_TESTNG_AMBIGUOUS: dict[str, tuple[str, str, str, str]] = {
     ann: (
         fields["junit4_fixture_type"],
         fields["testng_fixture_type"],
+        fields["ambiguous_fixture_type"],
         fields["scope"],
-        fields["framework"],
     )
     for ann, fields in _DEFS["ambiguous_annotations"].items()
 }
+
+# Whole-file substring check for org.junit.*/org.testng.* imports (`static`
+# imports included, e.g. `import static org.testng.Assert.assertEquals`) --
+# used only to disambiguate the @BeforeClass/@AfterClass name collision
+# above. Computed once per file (imports are file-scoped in Java, not
+# per-class), not per annotation occurrence.
+_JUNIT_IMPORT_RE = re.compile(rb"import\s+(?:static\s+)?org\.junit\b")
+_TESTNG_IMPORT_RE = re.compile(rb"import\s+(?:static\s+)?org\.testng\b")
+
+
+def _detect_test_framework_imports(src_bytes: bytes) -> tuple[bool, bool]:
+    """(has_junit_import, has_testng_import) for the whole file -- the
+    signal JUNIT_TESTNG_AMBIGUOUS resolution uses to pick junit4_/testng_/
+    ambiguous_fixture_type for @BeforeClass/@AfterClass."""
+    return (
+        bool(_JUNIT_IMPORT_RE.search(src_bytes)),
+        bool(_TESTNG_IMPORT_RE.search(src_bytes)),
+    )
 
 # JUnit3-style setUp()/tearDown() methods with no annotation at all.
 JUNIT3_FALLBACK_NAMES: dict[str, str] = _DEFS["junit3_fallback"]["names"]
@@ -74,6 +114,11 @@ def _enclosing_class_extends_test_case(node, src_bytes: bytes) -> bool:
 
 def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[FixtureResult]:
     results = []
+    # Computed once for the whole file -- imports are file-scoped, not
+    # per-class/per-method, so re-scanning per annotation occurrence would
+    # be wasted work. Only consulted for the JUNIT_TESTNG_AMBIGUOUS branch
+    # below.
+    has_junit_import, has_testng_import = _detect_test_framework_imports(src_bytes)
 
     def visit(node):
         if node.type == "method_declaration":
@@ -101,14 +146,26 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
                 scope = None
                 framework = None
 
-                # Handle ambiguous annotations (same name in JUnit4 and TestNG)
+                # Handle ambiguous annotations (same name in JUnit4 and TestNG) --
+                # resolved via the file's own imports, computed once above.
+                # fixture_type_kind is unaffected by which branch fires here
+                # (see JUNIT_TESTNG_AMBIGUOUS's docstring) -- only the
+                # framework-specific label and `framework` itself change.
                 if ann_key in JUNIT_TESTNG_AMBIGUOUS:
-                    junit4_type, testng_type, scope, framework = JUNIT_TESTNG_AMBIGUOUS[
+                    junit4_type, testng_type, ambiguous_type, scope = JUNIT_TESTNG_AMBIGUOUS[
                         ann_key
                     ]
-                    # Default to TestNG for backward compatibility with existing corpus
-                    # TODO: Could improve by checking for TestNG-specific imports
-                    fixture_type = testng_type
+                    if has_junit_import and not has_testng_import:
+                        fixture_type, framework = junit4_type, "junit"
+                    elif has_testng_import and not has_junit_import:
+                        fixture_type, framework = testng_type, "testng"
+                    else:
+                        # Both imports present (mixed-framework file) or
+                        # neither (e.g. the annotation's own import isn't
+                        # literally named org.junit/org.testng.Before/
+                        # AfterClass) -- genuinely can't tell, so don't
+                        # guess. framework stays None/unresolved.
+                        fixture_type, framework = ambiguous_type, None
                 elif ann_key in JUNIT_FIXTURE_ANNOTATIONS:
                     fixture_type, scope, framework = JUNIT_FIXTURE_ANNOTATIONS[ann_key]
 

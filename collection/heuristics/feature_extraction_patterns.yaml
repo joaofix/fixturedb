@@ -266,11 +266,15 @@ teardown_detection:
   # separate junit5_after_each fixture in the same class). Maps
   # setup_fixture_type -> teardown_fixture_type.
   #
-  # junit4_before_class/junit4_after_class are included even though the
-  # ambiguous @BeforeClass/@AfterClass resolution currently always produces
-  # testng_before_class/testng_after_class instead (see
-  # fixture_definitions.yaml's java.known_imprecisions) -- kept dormant here
-  # so this mapping doesn't need to change if that disambiguation improves.
+  # junit4_before_class/testng_before_class/before_class_ambiguous (and
+  # their After* counterparts) are the three possible outcomes of the
+  # @BeforeClass/@AfterClass JUnit4/TestNG name collision -- see
+  # detector_java.py's _detect_test_framework_imports()/
+  # JUNIT_TESTNG_AMBIGUOUS and fixture_definitions.yaml's
+  # java.known_imprecisions. All three are listed here so fixture_type_kind
+  # (setup vs teardown) is always correctly derived regardless of which one
+  # a given file resolves to -- framework-label ambiguity must never block
+  # setup/teardown classification.
   type_based_pairs:
     junit5_before_each: junit5_after_each
     junit5_before_all: junit5_after_all
@@ -278,6 +282,10 @@ teardown_detection:
     junit4_before_class: junit4_after_class
     testng_before_method: testng_after_method
     testng_before_class: testng_after_class
+    before_class_ambiguous: after_class_ambiguous
+    testng_before_suite: testng_after_suite
+    testng_before_test: testng_after_test
+    testng_before_groups: testng_after_groups
     junit3_setup: junit3_teardown
     before_each: after_each
     before_all: after_all

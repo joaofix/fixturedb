@@ -153,23 +153,44 @@ public class T {{
 
 
 def _java_ambiguous_annotation_cases():
-    """Always resolves to the testng_* variant -- see known_imprecisions."""
+    """Three cases per ambiguous annotation, one per possible per-file
+    import resolution (see detector_java.py's _detect_test_framework_
+    imports()/JUNIT_TESTNG_AMBIGUOUS): junit-import-only ->
+    junit4_fixture_type/framework="junit", testng-import-only ->
+    testng_fixture_type/framework="testng", neither import present ->
+    ambiguous_fixture_type/framework=None. (The fourth theoretical case,
+    both imports present, is covered separately in
+    test_java_fixtures.py -- not exhaustively re-derived here since it's
+    the same ambiguous_type/None outcome as the neither-import case.)"""
     cases = []
     for ann, fields in _JAVA_DEFS["ambiguous_annotations"].items():
         ann_name = ann.lstrip("@")
-        code = f"""
+        scope = fields["scope"]
+        variants = [
+            ("junit_import", "import org.junit.Test;", fields["junit4_fixture_type"], "junit"),
+            (
+                "testng_import",
+                "import org.testng.annotations.Test;",
+                fields["testng_fixture_type"],
+                "testng",
+            ),
+            ("no_import", "", fields["ambiguous_fixture_type"], None),
+        ]
+        for variant_id, import_line, expected_type, expected_framework in variants:
+            code = f"""
+{import_line}
 public class T {{
     {ann}
     public static void m() {{
     }}
 }}
 """
-        cases.append(
-            pytest.param(
-                code, fields["testng_fixture_type"], fields["scope"], fields["framework"],
-                id=f"ambiguous_annotations:{ann_name}",
+            cases.append(
+                pytest.param(
+                    code, expected_type, scope, expected_framework,
+                    id=f"ambiguous_annotations:{ann_name}:{variant_id}",
+                )
             )
-        )
     return cases
 
 
@@ -231,7 +252,7 @@ public class T {{
 def test_java_catalog_case_count_matches_yaml():
     expected = (
         len(_JAVA_DEFS["annotations"])
-        + len(_JAVA_DEFS["ambiguous_annotations"])
+        + len(_JAVA_DEFS["ambiguous_annotations"]) * 3  # 3 import-resolution variants each
         + len(_JAVA_DEFS["junit3_fallback"]["names"])
     )
     assert len(JAVA_METHOD_CASES) == expected
