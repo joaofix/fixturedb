@@ -469,6 +469,95 @@ def test_collect_dataset_c_checkpoint_persisted_incrementally(tmp_path):
     assert on_disk_when_second_repo_persisted.get("repos_persisted") == 1
 
 
+def test_collect_dataset_c_checkpoint_does_not_mark_unpersisted_repos_complete(
+    tmp_path,
+):
+    """Regression: completed_repos used to be bulk-updated with every
+    extraction-successful repo right after extraction finished, before the
+    persist loop below even started -- so the very first per-iteration
+    checkpoint save would flush *every* repo in repo_groups to disk as
+    "completed", including ones whose own persist_repository_and_fixtures()
+    call hadn't run yet. A crash right after that first save would then
+    permanently skip re-persisting the not-yet-persisted repos on the next
+    resume, even though db/c.db never got their rows. A repo must only
+    appear in the on-disk completed_repos once its own persist call has
+    actually happened."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+    checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, [
+            (
+                repo,
+                {
+                    "name": "f1",
+                    "file_path": "t.py",
+                    "start_line": 1,
+                    "end_line": 5,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": repo.get("language", "unknown"),
+                },
+            )
+        ]
+
+    on_disk_while_second_repo_persisting = {}
+
+    def fake_persist(output_db, repo_data, fixtures, out_path=None, handle_mocks=False):
+        if repo_data["full_name"] == "owner/second":
+            # owner/second's own finally block (which adds it to
+            # completed_repos and saves) hasn't run yet -- we're still
+            # inside its persist call. Only owner/first, whose persist call
+            # already returned, may legitimately be on disk at this point.
+            saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            on_disk_while_second_repo_persisting["completed_repos"] = saved[
+                "completed_repos"
+            ]
+        return 1
+
+    repos = [
+        {
+            "full_name": "owner/first",
+            "language": "python",
+            "clone_url": "https://github.com/owner/first.git",
+        },
+        {
+            "full_name": "owner/second",
+            "language": "python",
+            "clone_url": "https://github.com/owner/second.git",
+        },
+    ]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures",
+        side_effect=fake_persist,
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="python",
+            fixtures_output_dir=tmp_path,
+        )
+
+    # While owner/second's own persist call is still running (its finally
+    # block hasn't added it to completed_repos yet), it must not already be
+    # marked completed on disk -- only owner/first, whose persist call
+    # already finished, may be there.
+    assert on_disk_while_second_repo_persisting.get("completed_repos") == [
+        "owner/first"
+    ]
+
+    # By the time the whole run finishes, both repos are genuinely done.
+    final = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    assert set(final["completed_repos"]) == {"owner/first", "owner/second"}
+
+
 def test_collect_dataset_c_checkpoint_keeps_earlier_repos_credit_on_later_failure(
     tmp_path,
 ):

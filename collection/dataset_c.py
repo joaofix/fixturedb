@@ -692,7 +692,15 @@ def collect_dataset_c_fixtures(
                 _write_dataset_c_progress(progress_path, completed_repos, counts)
                 raise
 
-    completed_repos.update(successful_repos)
+    # NOTE: successful_repos is intentionally *not* folded into
+    # completed_repos here. A repo with real candidate fixtures still has
+    # persistence work pending (below) -- it's only safe to mark such a
+    # repo "completed" (i.e. skippable on the next resume) once its own
+    # persist_repository_and_fixtures() call has actually run. Repos with
+    # nothing to persist are handled right after repo_groups is built,
+    # below; repos *with* pending persistence are added to completed_repos
+    # one at a time inside the persist loop's own finally block. See that
+    # loop's comment for what this fixes.
 
     # Clear stale CSV output for a fresh run so we don't append duplicates
     # on top of a previous run that used the same language CSV.
@@ -728,6 +736,18 @@ def collect_dataset_c_fixtures(
         repo_full_name = fixture.get("repo_full_name")
         if repo_full_name is not None:
             repo_groups[repo_full_name].append(fixture)
+
+    # Repos that succeeded extraction but ended up with no persistence work
+    # pending -- either _process_repo() found nothing to extract, or every
+    # candidate they produced was dropped by stratified_sample_by_language()
+    # -- have nothing left to happen to them. Safe (and correct) to mark
+    # them completed and flush that to disk right away, unlike the repos
+    # below that still have a pending persist_repository_and_fixtures() call.
+    resolved_now = successful_repos - set(repo_groups)
+    if resolved_now:
+        completed_repos.update(resolved_now)
+        _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
+        _write_dataset_c_progress(progress_path, completed_repos, counts)
 
     for repo_full, fixtures_list in repo_groups.items():
         # The repo's own tagged language, not fixtures_list[0]'s -- a
@@ -812,42 +832,40 @@ def collect_dataset_c_fixtures(
         except Exception as exc:
             logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
         finally:
-            # Incremental checkpoint, one save per repo actually persisted
-            # above. `repo_full` is already in `completed_repos` by this
-            # point (added via `completed_repos.update(successful_repos)`
-            # once extraction finished, before this loop started) -- what
-            # was missing was flushing that fact to *disk* as we go, not
-            # only once at the very end of this loop (previously the only
-            # other `_save_dataset_c_checkpoint()` call site besides the
-            # KeyboardInterrupt handler above). Without this, a crash or
-            # interrupt partway through this loop left the checkpoint file
-            # exactly as stale as it was when the loop started, even
-            # though every repo processed so far already has real,
-            # committed rows in the DB (`persist_repository_and_fixtures()`
-            # commits per repo, independent of this checkpoint). Re-running
-            # after such an interruption wouldn't corrupt anything --
+            # `repo_full` is only added to completed_repos *here*, after its
+            # own persist_repository_and_fixtures() call above has actually
+            # run (whether it succeeded or raised) -- not any earlier. It
+            # used to be folded into completed_repos in one bulk update
+            # right after extraction finished, before this loop even
+            # started; that made every repo in repo_groups "completed" in
+            # memory from the very first loop iteration onward, so the
+            # per-iteration checkpoint save below would flush repos #2..N
+            # to disk as done while their own persistence call hadn't run
+            # yet. A crash or kill partway through this loop then
+            # permanently skipped those never-persisted repos on the next
+            # resume (checkpoint said done; db/c.db never got their rows) --
+            # the exact kind of silent data loss this checkpoint exists to
+            # prevent. Adding repo_full one at a time here, right before the
+            # save, means the on-disk checkpoint can never claim a repo is
+            # done ahead of its own persist call actually having run.
+            #
+            # This save still happens once per repo (one `_save_dataset_c_
+            # checkpoint()` call per loop iteration, in a `finally` so it
+            # also fires if persisting *this* repo raises something
+            # `except Exception` above doesn't catch, e.g. a
+            # KeyboardInterrupt) -- not only once at the very end -- so an
+            # interruption anywhere in this loop still keeps everything
+            # persisted so far off the pending list on the next run.
             # `insert_fixture()`'s `ON CONFLICT ... DO NOTHING` makes
-            # re-persisting a given repo a no-op -- but it would silently
-            # force a full re-clone/re-extract/re-persist of every repo
-            # already done, which is exactly the state `eclipse/steady`
-            # was found in during the Dataset C health check: 56 fixtures
-            # already committed to db/c.db, but absent from
-            # completed_repos. The `finally` here also means whatever
-            # completed before this repo is saved even if persisting
-            # *this* repo raises something `except Exception` above
-            # doesn't catch (e.g. a KeyboardInterrupt), not just on the
-            # handled-exception path.
+            # re-persisting a given repo a no-op regardless, so this is
+            # belt-and-suspenders, not load-bearing for correctness.
+            completed_repos.add(repo_full)
             _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
             _write_dataset_c_progress(progress_path, completed_repos, counts)
 
-    # Unconditional final save, kept alongside the per-repo one in the loop
-    # above (not a replacement for it): `completed_repos` was already
-    # updated with every extraction-successful repo before this loop even
-    # started, including ones whose fixtures didn't survive sampling into
-    # any `repo_groups` entry -- for those, the loop body above never runs,
-    # so its `finally` never fires. Without this line, such a repo would
-    # stay "pending" on disk forever and be needlessly re-cloned/re-extracted
-    # on every future run despite already being done.
+    # Unconditional final save, kept alongside the per-repo ones above (not
+    # a replacement for them) as a final flush -- e.g. covers repo_groups
+    # being empty outright (loop body never runs at all).
     _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
     _write_dataset_c_progress(progress_path, completed_repos, counts)
 
