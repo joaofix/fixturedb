@@ -394,6 +394,89 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
     mock_persist.assert_not_called()
 
 
+def test_collect_dataset_c_fresh_start_does_not_clear_other_languages_csv(tmp_path):
+    """Regression: a language's own first-ever run (fresh_start=True for
+    *its* checkpoint) used to clear the stale-CSV output for every language
+    seen in `candidates` -- not just its own -- and a repo's candidates can
+    legitimately include a *different* language's fixtures via cross-
+    language leakage (find_test_files_with_language() looks at all 4
+    languages, regardless of which language's repo list this run is
+    processing). So a java run's first invocation, on discovering even one
+    leaked python test file, would delete an already-complete
+    python_fixtures.csv outright -- even though python's own checkpoint
+    (and the DB) still correctly considered every one of its repos done,
+    so nothing would ever regenerate those rows. Passing `language`
+    explicitly (the only way this is ever invoked in practice) must scope
+    the clear to that language alone."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+
+    # Simulate a previously-completed, unrelated python run: its CSV
+    # already has real content and, crucially, no fresh_start clearing
+    # should ever look at it during *this* java run.
+    python_csv = tmp_path / "python_fixtures.csv"
+    python_csv.write_text("repo_name,language\nowner/old-python-repo,python\n")
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        # This java-repo-list repo also has a leaked python test file --
+        # candidates ends up containing both languages.
+        return True, [
+            (
+                repo,
+                {
+                    "name": "javaFixture",
+                    "file_path": "T.java",
+                    "start_line": 1,
+                    "end_line": 5,
+                    "framework": "junit",
+                    "repo_full_name": repo["full_name"],
+                    "language": "java",
+                },
+            ),
+            (
+                repo,
+                {
+                    "name": "leaked_python_fixture",
+                    "file_path": "conftest.py",
+                    "start_line": 1,
+                    "end_line": 3,
+                    "framework": "pytest",
+                    "repo_full_name": repo["full_name"],
+                    "language": "python",
+                },
+            ),
+        ]
+
+    repos = [
+        {
+            "full_name": "owner/java-repo",
+            "language": "java",
+            "clone_url": "https://github.com/owner/java-repo.git",
+        },
+    ]
+
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ), patch(
+        "collection.dataset_c.stratified_sample_by_language",
+        side_effect=lambda c, t, seed=42: c,
+    ):
+        collect_dataset_c_fixtures(
+            agent_repos=repos,
+            clones_dir=tmp_path / "clones",
+            output_db=output_db,
+            workers=1,
+            language="java",
+            fixtures_output_dir=tmp_path,
+        )
+
+    # python_fixtures.csv must survive this java run untouched, even though
+    # this run's own candidates included a leaked python fixture.
+    assert python_csv.read_text() == (
+        "repo_name,language\nowner/old-python-repo,python\n"
+    )
+
+
 def test_collect_dataset_c_checkpoint_persisted_incrementally(tmp_path):
     """Regression: the final persist loop used to call
     _save_dataset_c_checkpoint() exactly once, after every repo in

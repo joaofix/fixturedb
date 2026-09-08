@@ -708,7 +708,33 @@ def collect_dataset_c_fixtures(
 
     fresh_start = not checkpoint_path.exists()
     if fresh_start:
-        for lang in {c[1].get("language") for c in candidates}:
+        # Only clear the CSV(s) this *invocation* actually owns -- when
+        # `language` is given (the only way this is ever invoked in
+        # practice, see internal-docs/RUN_COMMANDS.md's per-language
+        # Dataset C chain), that's exactly {language}, never every language
+        # discovered in `candidates`. Fixture extraction discovers a
+        # repo's test files in *any* of the 4 supported languages
+        # (find_test_files_with_language(), for cross-language leakage --
+        # e.g. a python-repo-list run can surface a javascript test file),
+        # so `candidates` legitimately mixes languages beyond the one this
+        # run's checkpoint gates. Deriving the clear-list from `candidates`
+        # meant a language's *first-ever* run (fresh_start=True for *its*
+        # checkpoint) could delete another, already-fully-collected
+        # language's CSV outright just because a leaked fixture of that
+        # language happened to show up here -- silently destroying that
+        # other language's committed output while its own checkpoint (and
+        # the DB, which is unaffected since ON CONFLICT DO NOTHING makes
+        # re-persisting a no-op) still claimed it was done, with nothing
+        # left to ever regenerate those rows on a future run (pending_repos
+        # for that other language would already be empty). Only the
+        # `language is None` case (the whole corpus run in one invocation,
+        # not the per-language chain) still needs the old "every language
+        # seen" behavior, since there's no separate later invocation whose
+        # own fresh_start could destroy this run's own output.
+        langs_to_clear = (
+            {language} if language else {c[1].get("language") for c in candidates}
+        )
+        for lang in langs_to_clear:
             if lang is None:
                 lang = "unknown"
             try:
