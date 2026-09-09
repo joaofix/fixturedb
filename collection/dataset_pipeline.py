@@ -230,11 +230,12 @@ def validate_dataset(dataset: str, export_root: Path = paths.EXPORT_ROOT) -> dic
 # db/c.db and datasets/c/fixtures/*.csv (the full, ~3.3x-Dataset-A-sized
 # originals) are never modified here -- read-only source. This builds a
 # separate, standalone db/c_sampled.db + datasets/c/fixtures-sampled/*.csv
-# alongside them. research_questions/_shared.py::require_db_or_none() and
-# language_contamination.py::check_dataset() are the enforcement points that
-# make every research_questions/ script read c_sampled.db/fixtures-sampled/
-# instead of the full originals -- see those modules, not this one, for why
-# that's mandatory rather than opt-in.
+# alongside them. research_questions/_shared.py::require_db_or_none() is
+# the enforcement point that makes every research_questions/ script
+# (language_contamination.py included, since its 2026-09 rewrite to read
+# db/*.db directly instead of the fixture CSVs) read c_sampled.db instead
+# of the full db/c.db -- see that function's docstring for why that's
+# mandatory rather than opt-in.
 #
 # Fixture-level, not whole-repo: each language is sampled independently,
 # down to an *exact* target fixture count (the match dataset's real count
