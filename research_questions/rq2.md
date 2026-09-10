@@ -2,7 +2,7 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-09-08 01:16:49 UTC
+Generated: 2026-09-10 03:28:18 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -81,6 +81,18 @@ Per-repository binary coverage: 1 if a repo has >=1 teardown-classified fixture,
 ## Supplementary Analyses
 
 Analyses below are not part of either main paper table (tab:rq2-counts, tab:rq2-coverage) but are kept and computed since they may still be referenced in prose.
+
+### Setup Coverage by Repository
+
+Per-repository binary coverage: 1 if a repo has >=1 setup-classified fixture, else 0 (population: repos with >=1 setup/teardown/other-classified fixture -- same population as Table 2's teardown coverage). "Setup Coverage A/C (%)" is the share of that population with the indicator at 1, from a Mann-Whitney U test on the indicator between datasets (no effect-size column -- see Table 2 for delta if needed, same underlying test shape). Overall is a single pooled test (raw p, never BH-corrected); each language's p is BH-FDR-corrected against the other 3 languages' tests only, its own family independent of Table 2's.
+
+| Language | n_A | n_C | Setup Coverage A (%) | Setup Coverage C (%) | p (BH) |
+|---|---|---|---|---|---|
+| Overall | 1687 | 2494 | 96.6% | 94.6% | 0.002 |
+| java | 127 | 325 | 94.5% | 84.0% | 0.012 |
+| javascript | 143 | 563 | 92.3% | 88.3% | 0.224 |
+| python | 678 | 1040 | 99.3% | 98.9% | 0.500 |
+| typescript | 948 | 758 | 94.7% | 96.3% | 0.224 |
 
 ### Fixture Kind Classification Coverage by Language
 

@@ -78,6 +78,21 @@ comparisons; see rq1.py's module docstring.
 
 ## Supplementary analyses (not part of either main table)
 
+**Setup coverage by repository** (`_render_setup_coverage_table()`): the
+setup analogue of Table 2 -- same per-repo binary indicator (>=1
+setup-classified fixture, via `_setup_coverage_indicators()`), same
+Mann-Whitney U + BH-FDR-per-language-family methodology, same population
+convention, just measuring setup instead of teardown. Not one of the two
+paper tables: setup coverage sits near-ceiling (92-99%) for javascript/
+python/typescript in both datasets, so a fifth paper table would mostly
+report a flat, unremarkable ceiling effect -- except java, where it
+doesn't (94.5% A vs 84.0% H, BH-corrected p=0.012), a real and
+significant gap worth a permanent, re-checkable table rather than a
+one-off finding that could silently drift on a future dataset extraction
+without anyone noticing. No effect-size column (unlike Table 2) since
+this table's job is flagging *whether* a gap exists per language, not
+characterizing its size for the paper.
+
 **Unimodality check (Python teardown_pct)**: Hartigan & Hartigan's (1985)
 dip test for unimodality, run separately per dataset on the per-repo
 Python `teardown_pct` distribution (`_render_teardown_dip_test()`,
@@ -419,6 +434,21 @@ def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[fl
     ]
 
 
+def _setup_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[float]:
+    """Per-repo binary indicator: 1.0 if that repo has >=1 setup-providing
+    fixture (classified 'setup' or 'setup_and_teardown' -- see
+    _effective_setup_count()), else 0.0. Same population/skip convention
+    as _teardown_coverage_indicators() (repos with >=1 classified fixture;
+    a repo with none is skipped, not counted as 0-coverage) -- the setup
+    analogue of that function, feeding _render_setup_coverage_table()
+    the same way _teardown_coverage_indicators() feeds Table 2."""
+    return [
+        1.0 if _effective_setup_count(counts) > 0 else 0.0
+        for counts in by_repo.values()
+        if sum(counts.values())
+    ]
+
+
 def _render_teardown_coverage_row(
     label: str, test: BalanceTest, n: NCounts, *, corrected: bool
 ) -> str:
@@ -483,6 +513,83 @@ def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) ->
     for language in RQ2_LANGUAGES:
         lines.append(
             _render_teardown_coverage_row(
+                language, corrected_tests[language], per_language_n[language], corrected=True
+            )
+        )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_setup_coverage_row(label: str, test: BalanceTest, n: NCounts, *, corrected: bool) -> str:
+    """One row of the Setup Coverage table -- same shape as
+    _render_teardown_coverage_row(), minus the effect-size column (not
+    requested for this supplementary table)."""
+    d = test.details
+    if d.get("reason") == "insufficient_data" or "error" in d:
+        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | -- |"
+    p_cell = format_p_value(d["adjusted_p_value"]) if corrected else format_p_value(test.p_value)
+    return (
+        f"| {label} | {n.n_a} | {n.n_c} | "
+        f"{pct(d.get('agent_mean'))} | {pct(d.get('human_mean'))} | {p_cell} |"
+    )
+
+
+def _render_setup_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Setup Coverage by Repository -- the setup analogue of Table 2
+    (teardown coverage): % of repos with >=1 setup-classified fixture,
+    Mann-Whitney U on the per-repo binary indicator (_setup_coverage_
+    indicators()), BH-FDR-corrected across the four-language family,
+    same as Table 2's own family. Supplementary, not a paper table -- see
+    this module's docstring for why (setup coverage sits near-ceiling for
+    3 of 4 languages; only java shows a real, significant gap, not wide
+    enough a story across the board to warrant its own paper table, but
+    worth a permanent check on every future dataset extraction the same
+    way Table 1's 'other' breakdown is)."""
+    other_label = other.dataset.upper()
+    lines = [
+        "### Setup Coverage by Repository",
+        "",
+        "Per-repository binary coverage: 1 if a repo has >=1 setup-"
+        "classified fixture, else 0 (population: repos with >=1 setup/"
+        'teardown/other-classified fixture -- same population as Table '
+        '2\'s teardown coverage). "Setup Coverage A/C (%)" is the share '
+        "of that population with the indicator at 1, from a Mann-Whitney "
+        "U test on the indicator between datasets (no effect-size column "
+        "-- see Table 2 for delta if needed, same underlying test shape). "
+        "Overall is a single pooled test (raw p, never BH-corrected); "
+        "each language's p is BH-FDR-corrected against the other 3 "
+        "languages' tests only, its own family independent of Table 2's.",
+        "",
+        f"| Language | n_A | n_{other_label} | Setup Coverage A (%) | "
+        f"Setup Coverage {other_label} (%) | p (BH) |",
+        "|---|---|---|---|---|---|",
+    ]
+
+    overall_test = compute_continuous_balance(
+        human_values=_setup_coverage_indicators(other.kind_counts_by_repo),
+        agent_values=_setup_coverage_indicators(a.kind_counts_by_repo),
+        variable="setup_coverage_overall",
+    )
+    overall_n = repo_level_category_n_counts(a.kind_counts_by_repo, other.kind_counts_by_repo)
+    lines.append(_render_setup_coverage_row("Overall", overall_test, overall_n, corrected=False))
+
+    per_language_tests: dict[str, BalanceTest] = {}
+    per_language_n: dict[str, NCounts] = {}
+    for language in RQ2_LANGUAGES:
+        a_by_repo = a.kind_counts_by_repo_and_language.get(language, {})
+        other_by_repo = other.kind_counts_by_repo_and_language.get(language, {})
+        per_language_tests[language] = compute_continuous_balance(
+            human_values=_setup_coverage_indicators(other_by_repo),
+            agent_values=_setup_coverage_indicators(a_by_repo),
+            variable=f"setup_coverage_{language}",
+        )
+        per_language_n[language] = repo_level_category_n_counts(a_by_repo, other_by_repo)
+
+    corrected_tests = apply_fdr_correction(per_language_tests)
+    for language in RQ2_LANGUAGES:
+        lines.append(
+            _render_setup_coverage_row(
                 language, corrected_tests[language], per_language_n[language], corrected=True
             )
         )
@@ -699,6 +806,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         for other_ds, _label in COMPARISONS:
             other_metrics = loaded[other_ds]
             if other_metrics is not None:
+                lines.append(_render_setup_coverage_table(a_metrics, other_metrics))
                 lines.append(_render_kind_classification_coverage_table(a_metrics, other_metrics))
                 lines.append(_render_teardown_dip_test(a_metrics, other_metrics))
 
