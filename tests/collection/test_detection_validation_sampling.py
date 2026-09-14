@@ -302,9 +302,7 @@ class TestRunDetectionValidationSampling:
                 rows = list(reader)
             assert len(rows) == r.sample_size
             for row in rows:
-                assert row["rater_1"] == ""
-                assert row["rater_2"] == ""
-                assert row["agreed_label"] == ""
+                assert row["rater_label"] == ""
                 assert row["notes"] == ""
 
         # mock-detection: 1 mocking fixture per repo, 2 repos (a+c) -> N=2.

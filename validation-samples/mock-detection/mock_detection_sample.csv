@@ -1,9 +1,9 @@
-id,source_url,raw_snippet,detected_label,rater_1,rater_2,agreed_label,notes
+id,source_url,raw_snippet,detected_label,rater_label,notes
 A:java:6113,https://github.com/datahub-project/datahub/blob/050913a4642417a4525c4840def5c5f6cf68757d/datahub-graphql-core/src/test/java/com/linkedin/datahub/graphql/loaders/ParentNodesBatchLoaderTest.java#L61-L65,"@BeforeMethod
   public void setup() {
     _entityClient = Mockito.mock(EntityClient.class);
     _context = getMockAllowContext();
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:62581,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba211b3afe8ded5e1398bedae0dc/openam-core/src/test/java/org/forgerock/openam/cts/monitoring/impl/queue/DefaultMonitoringResultHandlerTest.java#L37-L44,"@BeforeMethod
     public void setup() {
         mockResultHandler = mock(ResultHandler.class);
@@ -11,18 +11,18 @@ C:java:62581,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba2
         operation = CTSOperation.LIST;
 
         handler = new DefaultMonitoringResultHandler(mockResultHandler, mockStore, operation);
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 A:java:22414,https://github.com/dotcms/core/blob/413a1ed18d2b1a8fd8c89c993c2f9040e7661e08/dotCMS/src/test/java/com/dotcms/rest/api/v1/system/monitor/MonitorHelperTest.java#L21-L24,"@Before
     public void setUp() {
         request = mock(HttpServletRequest.class);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:97768,https://github.com/eclipse-ditto/ditto/blob/0df160ea4145ff872ef1ad7236ad9e268635e23d/services/models/thingsearch/src/test/java/org/eclipse/ditto/services/models/thingsearch/query/filter/ParameterOptionVisitorTest.java#L60-L66,"@Before
     public void before() {
         qbMock = Mockito.mock(QueryBuilder.class, new AnswerWithSelf());
         visitor = new ParameterOptionVisitor(exprFactoryMock, qbMock);
 
         when(exprFactoryMock.sortBy(Mockito.any(String.class))).thenReturn(exprMock);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:62701,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba211b3afe8ded5e1398bedae0dc/openam-core-rest/src/test/java/org/forgerock/openam/core/rest/cts/CoreTokenResourceTest.java#L59-L67,"@BeforeMethod
     public void setup() {
         mockToken = mock(Token.class);
@@ -31,7 +31,7 @@ C:java:62701,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba2
         mockSerialisation = mock(JSONSerialisation.class);
 
         resource = new CoreTokenResource(mockSerialisation, mockStore, mockDebug);
-    }",has_mock=True (num_mocks=4),,,,
+    }",has_mock=True (num_mocks=4),,
 C:java:83868,https://github.com/dlsc-software-consulting-gmbh/workbenchfx/blob/e5b91d5fbd195a843ee7d477c5766b04f737c48e/workbenchfx-core/src/test/java/com/dlsc/workbenchfx/view/AddModulePresenterTest.java#L29-L40,"@BeforeEach
   void setup() {
     mockCall = mock(Callback.class);
@@ -43,7 +43,7 @@ C:java:83868,https://github.com/dlsc-software-consulting-gmbh/workbenchfx/blob/e
     when(mockBench.getPageFactory()).thenReturn(mockCall);
 
     mockView = mock(AddModuleView.class);
-  }",has_mock=True (num_mocks=3),,,,
+  }",has_mock=True (num_mocks=3),,
 C:java:76457,https://github.com/netflix/conductor/blob/39ce9096762245ce1ba03b67ca6421eb68567d39/redis-persistence/src/test/java/com/netflix/conductor/redis/dao/RedisRateLimitDAOTest.java#L46-L54,"@Before
     public void init() {
         ConductorProperties conductorProperties = mock(ConductorProperties.class);
@@ -52,7 +52,7 @@ C:java:76457,https://github.com/netflix/conductor/blob/39ce9096762245ce1ba03b67c
         JedisProxy jedisProxy = new JedisProxy(jedisMock);
 
         rateLimitingDao = new RedisRateLimitingDAO(jedisProxy, objectMapper, conductorProperties, properties);
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 C:java:49415,https://github.com/airsonic/airsonic/blob/d982348042756f0e7bf920cb66705b83193cbff0/airsonic-main/src/test/java/org/airsonic/player/api/jukebox/AirsonicRestApiJukeboxIntTest.java#L18-L26,"@Before
     @Override
     public void setup() throws Exception {
@@ -61,7 +61,7 @@ C:java:49415,https://github.com/airsonic/airsonic/blob/d982348042756f0e7bf920cb6
         when(mockJavaPlayer.getPlayingInfos()).thenReturn(() -> 0);
         when(mockJavaPlayer.getGain()).thenReturn(0.75f);
         when(javaPlayerFactory.createJavaPlayer()).thenReturn(mockJavaPlayer);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:104995,https://github.com/dtinit/data-transfer-project/blob/d5c4479d817d5b363af8d07ee757fe99f8713cc8/extensions/data-transfer/portability-data-transfer-koofr/src/test/java/org/datatransferproject/transfer/koofr/videos/KoofrVideosImporterTest.java#L44-L66,"@Before
   public void setUp() throws Exception {
     server = new MockWebServer();
@@ -84,7 +84,7 @@ C:java:104995,https://github.com/dtinit/data-transfer-project/blob/d5c4479d817d5
               return callable.call();
             });
     authData = new TokensAndUrlAuthData(""acc"", ""refresh"", """");
-  }",has_mock=True (num_mocks=4),,,,
+  }",has_mock=True (num_mocks=4),,
 C:java:91257,https://github.com/spring-attic/spring-cloud-gcp/blob/0947d7e56f11dd95de92e51a7e5f3edfa84409cb/spring-cloud-gcp-data-spanner/src/test/java/org/springframework/cloud/gcp/data/spanner/repository/support/SpannerRepositoryFactoryBeanTests.java#L45-L55,"@Before
 	@SuppressWarnings(""unchecked"")
 	public void setUp() {
@@ -95,7 +95,7 @@ C:java:91257,https://github.com/spring-attic/spring-cloud-gcp/blob/0947d7e56f11d
 		this.spannerRepositoryFactoryBean
 				.setSpannerMappingContext(this.spannerMappingContext);
 		this.spannerRepositoryFactoryBean.setSpannerTemplate(this.spannerTemplate);
-	}",has_mock=True (num_mocks=1),,,,
+	}",has_mock=True (num_mocks=1),,
 C:java:98636,https://github.com/aws/serverless-java-container/blob/81ee66f2667070483629804b5222aeef9378ec86/aws-serverless-java-container-core/src/test/java/com/amazonaws/serverless/proxy/internal/servlet/ApacheCombinedServletLogFormatterTest.java#L34-L49,"@Before
   public void setup() {
     proxyRequest = new AwsProxyRequest();
@@ -111,7 +111,7 @@ C:java:98636,https://github.com/aws/serverless-java-container/blob/81ee66f266707
     proxyRequest.setRequestContext(context);
 
     sut = new ApacheCombinedServletLogFormatter(fixedClock);
-  }",has_mock=True (num_mocks=2),,,,
+  }",has_mock=True (num_mocks=2),,
 C:java:49883,https://github.com/zalando/zalenium/blob/4b322387d0a88c6c81fec7466558df1e85fab98d/src/test/java/de/zalando/ep/zalenium/servlet/ActionsServletTest.java#L20-L31,"@Before
     public void initMocksAndService() throws IOException {
         request = mock(HttpServletRequest.class);
@@ -123,7 +123,7 @@ C:java:49883,https://github.com/zalando/zalenium/blob/4b322387d0a88c6c81fec74665
                 return new ResponseAction(""SUCCESS"", 200);
             }
         };
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 C:java:104974,https://github.com/dtinit/data-transfer-project/blob/d5c4479d817d5b363af8d07ee757fe99f8713cc8/extensions/data-transfer/portability-data-transfer-facebook/src/test/java/org/datatransferproject/transfer/facebook/photos/FacebookPhotosExporterTest.java#L67-L118,"@Before
   public void setUp() throws IOException {
     FacebookPhotosInterface photosInterface = mock(FacebookPhotosInterface.class);
@@ -175,7 +175,7 @@ C:java:104974,https://github.com/dtinit/data-transfer-project/blob/d5c4479d817d5
             null,
             store,
             imageStreamProvider);
-  }",has_mock=True (num_mocks=6),,,,
+  }",has_mock=True (num_mocks=6),,
 C:java:67123,https://github.com/apache/pulsar/blob/956328d84e4109583dfb6f5a90c48a06e5a53aa6/pulsar-broker/src/test/java/org/apache/pulsar/broker/service/PersistentTopicTest.java#L161-L213,"@BeforeMethod
     public void setup() throws Exception {
         executor = OrderedExecutor.newBuilder().numThreads(1).build();
@@ -228,12 +228,12 @@ C:java:67123,https://github.com/apache/pulsar/blob/956328d84e4109583dfb6f5a90c48
         doReturn(CompletableFuture.completedFuture(true)).when(nsSvc).checkTopicOwnership(any());
 
         setupMLAsyncCallbackMocks();
-    }",has_mock=True (num_mocks=7),,,,
+    }",has_mock=True (num_mocks=7),,
 C:java:58587,https://github.com/apache/servicecomb-java-chassis/blob/da7b7718f493600670076b8418dbb043977ffed4/foundations/foundation-vertx/src/test/java/org/apache/servicecomb/foundation/vertx/stream/TestBufferInputStream.java#L39-L43,"@Before
   public void setUp() throws Exception {
     ByteBuf buffer = Mockito.mock(ByteBuf.class);
     instance = new BufferInputStream(buffer);
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:84101,https://github.com/apache/shardingsphere/blob/0cede36fcb01108eaf5164bd44f835489c6c229c/shardingsphere-proxy/shardingsphere-proxy-backend/src/test/java/org/apache/shardingsphere/proxy/backend/text/data/impl/SchemaAssignedDatabaseBackendHandlerTest.java#L77-L87,"@Before
     public void setUp() throws IllegalAccessException, NoSuchFieldException, SQLException {
         Field metaDataContexts = ProxyContext.getInstance().getClass().getDeclaredField(""metaDataContexts"");
@@ -244,18 +244,18 @@ C:java:84101,https://github.com/apache/shardingsphere/blob/0cede36fcb01108eaf516
         mockDatabaseCommunicationEngine(new UpdateResponseHeader(mock(SQLStatement.class)));
         schemaAssignedDatabaseBackendHandler = new SchemaAssignedDatabaseBackendHandler(mock(SQLStatement.class), EXECUTE_SQL, backendConnection);
         setBackendHandlerFactory(schemaAssignedDatabaseBackendHandler);
-    }",has_mock=True (num_mocks=3),,,,
+    }",has_mock=True (num_mocks=3),,
 C:java:45654,https://github.com/google/volley/blob/cd0839113b100f163df1ebd04ce6d5b9e36e9863/src/test/java/com/android/volley/toolbox/ImageLoaderTest.java#L45-L50,"@Before
     public void setUp() {
         mRequestQueue = mock(RequestQueue.class);
         mImageCache = mock(ImageLoader.ImageCache.class);
         mImageLoader = new ImageLoader(mRequestQueue, mImageCache);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:95810,https://github.com/apache/hop/blob/8765f82a47c7f003c6b66c7881b418990d2779fd/engine/src/test/java/org/apache/hop/www/PrepareExecutionPipelineServletTest.java#L60-L64,"@Before
   public void setup() {
     mockPipelineMap = mock( PipelineMap.class );
     prepareExecutionPipelineServlet = new PrepareExecutionPipelineServlet( mockPipelineMap );
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:82044,https://github.com/pytorch/serve/blob/c889f5bdd296f09ce248acdc58ceb69796bf033b/serving-sdk/src/test/java/org/pytorch/serve/servingsdk/ModelServerEndpointTest.java#L43-L77,"@Before
     public void beforeSuite() throws IOException {
         c = Mockito.mock(Context.class);
@@ -290,7 +290,7 @@ C:java:82044,https://github.com/pytorch/serve/blob/c889f5bdd296f09ce248acdc58ceb
         Mockito.when(ea.description()).thenReturn(""This is a test endpoint"");
         Mockito.when(ea.endpointType()).thenReturn(EndpointTypes.INFERENCE);
         Mockito.when(rsp.getOutputStream()).thenReturn(outputStream);
-    }",has_mock=True (num_mocks=10),,,,
+    }",has_mock=True (num_mocks=10),,
 C:java:83072,https://github.com/quarkusio/quarkus/blob/e1d63ce1f61e6acac322defc4c2fdb8363a0b169/independent-projects/tools/devtools-common/src/test/java/io/quarkus/devtools/project/buildfile/MavenBuildFileTest.java#L23-L44,"@BeforeEach
     void setUp(@TempDir Path projectDirPath) throws IOException {
         Model model = new Model();
@@ -312,7 +312,7 @@ C:java:83072,https://github.com/quarkusio/quarkus/blob/e1d63ce1f61e6acac322defc4
         MojoUtils.write(model, pomPath.toFile());
         QuarkusPlatformDescriptor mock = Mockito.mock(QuarkusPlatformDescriptor.class);
         mavenBuildFile = new MavenBuildFile(projectDirPath, mock);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:95955,https://github.com/apache/hop/blob/8765f82a47c7f003c6b66c7881b418990d2779fd/plugins/databases/greenplum/src/test/java/org/apache/hop/databases/greenplum/GreenplumValueMetaBaseTest.java#L91-L100,"@Before
   public void setUp() {
     listener = new StoreLoggingEventListener();
@@ -322,12 +322,12 @@ C:java:95955,https://github.com/apache/hop/blob/8765f82a47c7f003c6b66c7881b41899
     dbMeta = spy( new DatabaseMeta() );
     resultSet = mock( ResultSet.class );
     variables = spy(new Variables() );
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:91401,https://github.com/apache/inlong/blob/23cff5b60137c262de774fa3dee8f7dcea18647a/tubemq-server/src/test/java/org/apache/tubemq/server/master/nodemanage/nodebroker/BrokerInfoHolderTest.java#L30-L34,"@Before
     public void setUp() throws Exception {
         brokerConfManager = mock(BrokerConfManager.class);
         brokerInfoHolder = new BrokerInfoHolder(10, brokerConfManager);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:66953,https://github.com/apache/pulsar/blob/956328d84e4109583dfb6f5a90c48a06e5a53aa6/managed-ledger/src/test/java/org/apache/bookkeeper/mledger/impl/EntryCacheTest.java#L55-L62,"@BeforeMethod
     public void setUp(Method method) throws Exception {
         super.setUp(method);
@@ -335,12 +335,12 @@ C:java:66953,https://github.com/apache/pulsar/blob/956328d84e4109583dfb6f5a90c48
         when(ml.getName()).thenReturn(""name"");
         when(ml.getExecutor()).thenReturn(executor);
         when(ml.getMBean()).thenReturn(new ManagedLedgerMBeanImpl(ml));
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:89509,https://github.com/spring-projects/spring-authorization-server/blob/8224a0d971a452d5f367a823ae87a8dc19df2599/oauth2-authorization-server/src/test/java/org/springframework/security/oauth2/server/authorization/web/OAuth2TokenRevocationEndpointFilterTests.java#L70-L74,"@Before
 	public void setUp() {
 		this.authenticationManager = mock(AuthenticationManager.class);
 		this.filter = new OAuth2TokenRevocationEndpointFilter(this.authenticationManager);
-	}",has_mock=True (num_mocks=1),,,,
+	}",has_mock=True (num_mocks=1),,
 A:java:22034,https://github.com/frooodle/stirling-pdf/blob/7d7f1272e4b974999d57093179343113334a6e17/common/src/test/java/stirling/software/common/service/FileStorageTest.java#L35-L44,"@BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -350,20 +350,20 @@ A:java:22034,https://github.com/frooodle/stirling-pdf/blob/7d7f1272e4b974999d570
         mockFile = mock(MultipartFile.class);
         when(mockFile.getOriginalFilename()).thenReturn(""test.pdf"");
         when(mockFile.getContentType()).thenReturn(""application/pdf"");
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:62984,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba211b3afe8ded5e1398bedae0dc/openam-oauth2/src/test/java/org/forgerock/openam/oauth2/validation/ConfirmationKeyValidatorTest.java#L44-L49,"@BeforeMethod
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         validator = new ConfirmationKeyValidator(utils);
         request = mock(OAuth2Request.class);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:51870,https://github.com/netflix/mantis/blob/884b891b5b91d146932f4efe7012fc17941bb3b8/mantis-publish/mantis-publish-netty/src/test/java/io/mantisrx/publish/netty/pipeline/HttpEventChannelInitializerTest.java#L40-L46,"@BeforeEach
     void setup() {
         Registry registry = new DefaultRegistry();
         MrePublishConfiguration config = mock(MrePublishConfiguration.class);
         channel = new EmbeddedChannel();
         initializer = new HttpEventChannelInitializer(registry, config, mock(EventLoopGroup.class));
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 C:java:98680,https://github.com/apache/incubator-seata/blob/8397e90137ded9cf2937c7ede3de43ec248d333d/rm-datasource/src/test/java/io/seata/rm/datasource/ConnectionProxyTest.java#L50-L69,"@BeforeEach
     public void initBeforeEach() throws Exception {
         branchRollbackFlagField = ConnectionProxy.LockRetryPolicy.class.getDeclaredField(""LOCK_RETRY_POLICY_BRANCH_ROLLBACK_ON_CONFLICT"");
@@ -383,7 +383,7 @@ C:java:98680,https://github.com/apache/incubator-seata/blob/8397e90137ded9cf2937
         DefaultResourceManager defaultResourceManager = DefaultResourceManager.get();
         Assertions.assertNotNull(defaultResourceManager);
         DefaultResourceManager.mockResourceManager(BranchType.AT, rm);
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 C:java:52463,https://github.com/firebase/firebase-admin-java/blob/b8321ac36b6d8b03c8f932a2ba8405639f2a73f7/src/test/java/com/google/firebase/database/core/RepoTest.java#L61-L102,"@BeforeClass
   public static void setUpClass() throws IOException {
     FirebaseApp testApp = FirebaseApp.initializeApp(
@@ -425,7 +425,7 @@ C:java:52463,https://github.com/firebase/firebase-admin-java/blob/b8321ac36b6d8b
         Mockito.any(),
         Mockito.anyString(),
         Mockito.any(RequestResultCallback.class));
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:62559,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba211b3afe8ded5e1398bedae0dc/openam-core/src/test/java/org/forgerock/openam/cts/impl/query/worker/queries/CTSWorkerBaseQueryTest.java#L44-L51,"@BeforeMethod
     public void setup() throws Exception {
         mockBuilder = mock(QueryBuilder.class);
@@ -433,7 +433,7 @@ C:java:62559,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba2
         mockConnection = mock(Connection.class);
         given(mockConnectionFactory.create()).willReturn(mockConnection);
         query = new FakeQuery(mockConnectionFactory, mockBuilder);
-    }",has_mock=True (num_mocks=3),,,,
+    }",has_mock=True (num_mocks=3),,
 C:java:105926,https://github.com/besu-eth/besu/blob/98383c5777ef54007a0e3cb0d51ea9016c6e6d27/consensus/ibft/src/test/java/org/hyperledger/besu/consensus/ibft/validation/FutureRoundProposalMessageValidatorTest.java#L51-L62,"@Before
   public void setup() {
 
@@ -445,7 +445,7 @@ C:java:105926,https://github.com/besu-eth/besu/blob/98383c5777ef54007a0e3cb0d51e
     validator =
         new FutureRoundProposalMessageValidator(
             messageValidatorFactory, roundIdentifier.getSequenceNumber(), parentHeader);
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:56277,https://github.com/hivemq/hivemq-community-edition/blob/88b37ce2006cac74dd89494b531cd4098340657b/src/test/java/com/hivemq/extensions/handler/DisconnectOutboundInterceptorHandlerTest.java#L88-L108,"@Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -466,11 +466,11 @@ C:java:56277,https://github.com/hivemq/hivemq-community-edition/blob/88b37ce2006
         handler = new DisconnectInterceptorHandler(configurationService, asyncer, hiveMQExtensions,
                 pluginTaskExecutorService);
         channel.pipeline().addFirst(handler);
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 C:java:95654,https://github.com/apache/hop/blob/8765f82a47c7f003c6b66c7881b418990d2779fd/core/src/test/java/org/apache/hop/core/row/ValueMetaAndDataTest.java#L62-L65,"@Before
   public void before() {
     pluginRegistry = Mockito.mock( PluginRegistry.class );
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:67600,https://github.com/apache/pulsar/blob/956328d84e4109583dfb6f5a90c48a06e5a53aa6/pulsar-package-management/bookkeeper-storage/src/test/java/org/apache/pulsar/packages/management/storage/bookkeeper/DLOutputStreamTest.java#L48-L58,"@BeforeMethod
     public void setup() {
         dlm = mock(DistributedLogManager.class);
@@ -481,12 +481,12 @@ C:java:67600,https://github.com/apache/pulsar/blob/956328d84e4109583dfb6f5a90c48
         when(writer.markEndOfStream()).thenReturn(CompletableFuture.completedFuture(null));
         when(writer.asyncClose()).thenReturn(CompletableFuture.completedFuture(null));
         when(writer.writeBulk(any(List.class)))
-            .thenReturn(CompletableFuture.completedFuture(Collections.singletonList(DLSN.InitialDLSN))); }",has_mock=True (num_mocks=2),,,,
+            .thenReturn(CompletableFuture.completedFuture(Collections.singletonList(DLSN.InitialDLSN))); }",has_mock=True (num_mocks=2),,
 C:java:58097,https://github.com/rubenlagus/telegrambots/blob/adb765d739ab63fa6969d047a247b950a3e4d1b4/telegrambots-abilities/src/test/java/org/telegram/abilitybots/api/sender/SilentSenderTest.java#L23-L27,"@BeforeEach
   void setUp() {
     sender = mock(MessageSender.class);
     silent = new SilentSender(sender);
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:104986,https://github.com/dtinit/data-transfer-project/blob/d5c4479d817d5b363af8d07ee757fe99f8713cc8/extensions/data-transfer/portability-data-transfer-google/src/test/java/org/datatransferproject/datatransfer/google/videos/GoogleVideosImporterTest.java#L63-L79,"@Before
   public void setUp() throws Exception {
     // Create files so we can accurately check the length of file counting
@@ -503,7 +503,7 @@ C:java:104986,https://github.com/dtinit/data-transfer-project/blob/d5c4479d817d5
     when(streamProvider.getConnection(any())).thenReturn(mock(HttpURLConnection.class));
     googleVideosImporter =
         new GoogleVideosImporter(null, dataStore, mock(Monitor.class), streamProvider);
-  }",has_mock=True (num_mocks=4),,,,
+  }",has_mock=True (num_mocks=4),,
 C:java:89583,https://github.com/apolloconfig/apollo/blob/ad63e140afcf6bb0774f40a8fa3d3cc330c7439b/apollo-client/src/test/java/com/ctrip/framework/apollo/spring/BootstrapConfigTest.java#L106-L122,"@BeforeClass
     public static void beforeClass() throws Exception {
       doSetUp();
@@ -520,7 +520,7 @@ C:java:89583,https://github.com/apolloconfig/apollo/blob/ad63e140afcf6bb0774f40a
 
       mockConfig(ConfigConsts.NAMESPACE_APPLICATION, anotherConfig);
       mockConfig(FX_APOLLO_NAMESPACE, config);
-    }",has_mock=True (num_mocks=2),,,,
+    }",has_mock=True (num_mocks=2),,
 C:java:51806,https://github.com/netflix/mantis/blob/884b891b5b91d146932f4efe7012fc17941bb3b8/mantis-connectors/mantis-connector-iceberg/src/test/java/io/mantisrx/connector/iceberg/sink/writer/FixedIcebergWriterPoolTest.java#L56-L74,"@BeforeEach
     void setUp() {
         Parameters parameters = StageOverrideParameters.newParameters();
@@ -539,13 +539,13 @@ C:java:51806,https://github.com/netflix/mantis/blob/884b891b5b91d146932f4efe7012
         this.record.setField(""id"", 1);
         // Identity partitioning (without explicitly using a Partitioner).
         this.partition = this.record.copy();
-    }",has_mock=True (num_mocks=3),,,,
+    }",has_mock=True (num_mocks=3),,
 C:java:1722,https://github.com/airbytehq/airbyte/blob/d16ef618e51fda67e41428b8b70aa24f8cd3adb7/airbyte-analytics/src/test/java/io/airbyte/analytics/TrackingClientSingletonTest.java#L49-L54,"@BeforeEach
   void setup() {
     configRepository = mock(ConfigRepository.class);
     // equivalent of resetting TrackingClientSingleton to uninitialized state.
     TrackingClientSingleton.initialize(null);
-  }",has_mock=True (num_mocks=1),,,,
+  }",has_mock=True (num_mocks=1),,
 C:java:97282,https://github.com/eclipse-jdtls/eclipse.jdt.ls/blob/a29f8b052311c6c7b788fd3d0e04e57d72db8ca1/org.eclipse.jdt.ls.tests/src/org/eclipse/jdt/ls/core/internal/handlers/ImplementationsHandlerTest.java#L48-L55,"@Before
 	public void setup() throws Exception{
 		importProjects(""eclipse/hello"");
@@ -553,7 +553,7 @@ C:java:97282,https://github.com/eclipse-jdtls/eclipse.jdt.ls/blob/a29f8b052311c6
 		preferenceManager = mock(PreferenceManager.class);
 		when(preferenceManager.getPreferences()).thenReturn(new Preferences());
 		handler = new ImplementationsHandler(preferenceManager);
-	}",has_mock=True (num_mocks=1),,,,
+	}",has_mock=True (num_mocks=1),,
 C:java:62719,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba211b3afe8ded5e1398bedae0dc/openam-core-rest/src/test/java/org/forgerock/openam/core/rest/sms/SmsJsonConverterTest.java#L94-L152,"@BeforeClass
     public void setup() throws UnsupportedEncodingException {
         serviceSchema = mock(ServiceSchema.class);
@@ -612,13 +612,13 @@ C:java:62719,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba2
                 field(SECTION_1_NAME, sectionValue),
                 field(SCRIPT_VALUE_NAME, Base64.encode(SCRIPT_VALUE.getBytes(""UTF-8""))),
                 field(PASSWORD_VALUE_NAME, STRING_VALUE)));
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:61502,https://github.com/linkedin/cruise-control/blob/5a0e8edb7bbbd59760defa856f496a9050448e5f/cruise-control/src/test/java/com/linkedin/kafka/cruisecontrol/monitor/sampling/prometheus/PrometheusMetricSamplerTest.java#L72-L77,"@Before
     public void setUp() {
         _prometheusAdapter = mock(PrometheusAdapter.class);
         _prometheusMetricSampler = new PrometheusMetricSampler();
         _prometheusQueryMap = new DefaultPrometheusQuerySupplier().get();
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:java:58974,https://github.com/tmobile/pacbot/blob/4b5361d99e7efbbc5603ec9c6568ba639105c773/jobs/pacman-awsrules/src/test/java/com/tmobile/cloud/awsrules/utils/PacmanUtilsTest.java#L89-L115,"@Before
     public void setUp() throws Exception{
         ec2ServiceClient = PowerMockito.mock(AmazonEC2.class); 
@@ -645,13 +645,13 @@ C:java:58974,https://github.com/tmobile/pacbot/blob/4b5361d99e7efbbc5603ec9c6568
         PowerMockito.when(httpResponse.getStatusLine()).thenReturn(new BasicStatusLine(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, ""FINE!""));
         PowerMockito.when(entity.getContent()).thenReturn(input);
         PowerMockito.when(httpResponse.getEntity()).thenReturn(entity);
-    }",has_mock=True (num_mocks=10),,,,
+    }",has_mock=True (num_mocks=10),,
 C:java:60077,https://github.com/rsksmart/rskj/blob/e4260bb76268fb628c4730af8f9deb70c279814d/rskj-core/src/test/java/org/ethereum/vm/VMTest.java#L97-L102,"@BeforeClass
     public static void setupClass() {
         spy(LoggerFactory.class);
         logger = PowerMockito.mock(Logger.class);
         PowerMockito.when(LoggerFactory.getLogger(""VM"")).thenReturn(logger);
-    }",has_mock=True (num_mocks=1),,,,
+    }",has_mock=True (num_mocks=1),,
 C:javascript:129273,https://github.com/glin/reactable/blob/3470d1d22cfbf7ddbb9e709b78c6e99fc44922ee/srcjs/__tests__/Reactable.test.js#L3021-L3028,"beforeEach(() => {
     window.Shiny = {
       onInputChange: jest.fn(),
@@ -659,7 +659,7 @@ C:javascript:129273,https://github.com/glin/reactable/blob/3470d1d22cfbf7ddbb9e7
       bindAll: jest.fn(),
       unbindAll: jest.fn()
     }
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 C:javascript:123986,https://github.com/liskhq/lisk-desktop/blob/db96e16dd48f586d91544a79172c9896f8277efa/src/store/middlewares/account.test.js#L67-L110,"beforeEach(() => {
     jest.useFakeTimers();
     store = jest.fn();
@@ -703,14 +703,14 @@ C:javascript:123986,https://github.com/liskhq/lisk-desktop/blob/db96e16dd48f586d
     accountDataUpdatedSpy = jest.spyOn(accountActions, 'accountDataUpdated');
     window.Notification = () => { };
     windowNotificationSpy = jest.spyOn(window, 'Notification');
-  })",has_mock=True (num_mocks=9),,,,
+  })",has_mock=True (num_mocks=9),,
 C:javascript:119535,https://github.com/react-bootstrap-table/react-bootstrap-table2/blob/b2695fd9f40718d6b0310caed68426ad602f71ca/packages/react-bootstrap-table2-paginator/test/pagination.test.js#L70-L76,"beforeEach(() => {
       pageListRenderer = jest.fn().mockReturnValue(null);
       const props = createMockProps({ pageListRenderer });
       wrapper = shallow(<Pagination { ...props } />);
       wrapper.render();
       instance = wrapper.instance();
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:118737,https://github.com/samtecspg/articulate/blob/cca568f83ce9539ceba1351313ee65c886f0dd91/ui/app/utils/tests/injectSaga.test.js#L105-L120,"beforeEach(() => {
     store = configureStore({}, memoryHistory);
     injectors = {
@@ -726,7 +726,7 @@ C:javascript:118737,https://github.com/samtecspg/articulate/blob/cca568f83ce9539
       return null;
     };
     sagaInjectors.default.mockClear();
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:javascript:140087,https://github.com/kiesun/awesome-frontend-source-interpretation/blob/3701ede3af79dac8795fe343cd310e2d19303bdc/packages/react-events/src/__tests__/Press-test.internal.js#L176-L185,"beforeEach(() => {
       onPressEnd = jest.fn();
       ref = React.createRef();
@@ -736,14 +736,14 @@ C:javascript:140087,https://github.com/kiesun/awesome-frontend-source-interpreta
         </Press>
       );
       ReactDOM.render(element, container);
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:130670,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8845e58a88173cfdaf7e9ca3d/src/api/__tests__/Feed.test.js#L551-L554,"beforeEach(() => {
             feed.file = file;
             feed.fetchFeedItemErrorCallback = jest.fn();
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:123710,https://github.com/ibm/openapi-validator/blob/80dc78afdbbc78719ae54d44c1ce20403f18c6ea/test/spectral/tests/spectral-validator.test.js#L13-L15,"beforeEach(() => {
     consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:130054,https://github.com/datadog/dd-trace-js/blob/bc87e0dd13de5a3c7f815f4ce70ca01bb82c6e2d/packages/dd-trace/test/profiling/profilers/native/cpu.spec.js#L13-L26,"beforeEach(() => {
     stop = sinon.stub().returns('profile')
     pprof = {
@@ -757,32 +757,32 @@ C:javascript:130054,https://github.com/datadog/dd-trace-js/blob/bc87e0dd13de5a3c
     NativeCpuProfiler = proxyquire('../../../../src/profiling/profilers/native/cpu', {
       '../../util': { maybeRequire }
     }).NativeCpuProfiler
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 C:javascript:110160,https://github.com/facebookarchive/atom-ide-ui/blob/aa681233c3df90fc68b36aed2bd16aac9661a9c2/modules/nuclide-commons/__tests__/process-test.js#L416-L419,"beforeEach(() => {
       // Suppress console spew.
       jest.spyOn(console, 'log'); // suppress log printing
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:118740,https://github.com/samtecspg/articulate/blob/cca568f83ce9539ceba1351313ee65c886f0dd91/ui/app/utils/tests/request.test.js#L10-L12,"beforeEach(() => {
     window.fetch = jest.fn();
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:javascript:25851,https://github.com/prebid/prebid.js/blob/008eb304a928f6dfac2907ca8f131908ecf4a541/test/spec/modules/nexx360AnalyticsAdapter_spec.js#L29-L31,"beforeEach(function () {
     sinon.stub(events, 'getEvents').returns([]);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:111584,https://github.com/hyperledger-archives/composer/blob/12800550440030d253a9e73be8650d331b14597f/packages/composer-cli/test/network/list.js#L75-L80,"beforeEach(() => {
             mockBusinessNetworkDefinition.getSerializer.returns(mockSerializer);
             mockSerializer.toJSON.returns('FOO');
             spyCmd = sinon.spy(CmdUtil, 'log');
             spyPretty = sinon.spy(Pretty, 'render');
-        })",has_mock=True (num_mocks=2),,,,
+        })",has_mock=True (num_mocks=2),,
 C:javascript:193402,https://github.com/hoppscotch/hoppscotch/blob/ab9f2c0a6619e21ed609ffc8b063a82fed24f7ba/helpers/__tests__/platformutils.spec.js#L6-L8,"beforeEach(() => {
     platformGetter = jest.spyOn(navigator, ""platform"", ""get"")
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:130897,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8845e58a88173cfdaf7e9ca3d/src/elements/content-explorer/__tests__/ContentExplorer.test.js#L397-L402,"beforeEach(() => {
                 wrapper = getWrapper();
                 instance = wrapper.instance();
                 instance.setState({ currentCollection: baseCollection });
                 instance.setState = jest.fn();
-            })",has_mock=True (num_mocks=1),,,,
+            })",has_mock=True (num_mocks=1),,
 C:javascript:113744,https://github.com/cloudboost/cloudboost/blob/7ba2ed17099fa85e6fc652302822601283c6fa13/dashboard-ui/test/component/dashboardproject/exitApp.test.js#L6-L19,"before(() => {
     const props = {
       onDeleteDev: sinon.spy(),
@@ -796,7 +796,7 @@ C:javascript:113744,https://github.com/cloudboost/cloudboost/blob/7ba2ed17099fa8
       appId: util.makeString(),
     };
     wrapper = shallow(<DeleteApp {...props}/>, themeContext);
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 C:javascript:182821,https://github.com/bvaughn/react-window/blob/c057b19bd0f6c6209da56c25e6ccf561343a9d58/src/__tests__/shouldComponentUpdate.js#L8-L15,"beforeEach(() => {
     render = jest.fn(() => null);
 
@@ -804,19 +804,19 @@ C:javascript:182821,https://github.com/bvaughn/react-window/blob/c057b19bd0f6c62
       shouldComponentUpdate = shouldComponentUpdate.bind(this);
       render = render;
     };
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:63209,https://github.com/openidentityplatform/openam/blob/a043dd26fbacba211b3afe8ded5e1398bedae0dc/openam-ui/openam-ui-ria/src/test/js/org/forgerock/openam/ui/common/RouteToTest.js#L109-L113,"beforeEach(() => {
                 promise = $.Deferred();
                 SessionManager.logout = sinon.stub().returns(promise);
                 sinon.spy(RouteTo, ""setGoToUrlProperty"");
-            })",has_mock=True (num_mocks=2),,,,
+            })",has_mock=True (num_mocks=2),,
 C:javascript:111754,https://github.com/hyperledger-archives/composer/blob/12800550440030d253a9e73be8650d331b14597f/packages/composer-common/test/introspect/enumdeclaration.js#L60-L66,"beforeEach(() => {
         sandbox = sinon.sandbox.create();
         mockModelManager = sinon.createStubInstance(ModelManager);
         mockSystemEvent = sinon.createStubInstance(EventDeclaration);
         mockSystemEvent.getFullyQualifiedName.returns('org.hyperledger.composer.system.Event');
         mockModelManager.getSystemTypes.returns([mockSystemEvent]);
-    })",has_mock=True (num_mocks=2),,,,
+    })",has_mock=True (num_mocks=2),,
 C:javascript:181921,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341ce2e0b2650389569fba64/static/__tests__/dtale/DataViewer-upload-web-test.jsx#L21-L73,"beforeAll(() => {
     delete window.location;
     delete window.close;
@@ -869,18 +869,18 @@ C:javascript:181921,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341c
     jest.mock(""chartjs-chart-box-and-violin-plot/build/Chart.BoxPlot.js"", () => ({}));
     DataViewer = require(""../../dtale/DataViewer"").DataViewer;
     Upload = require(""../../popups/Upload"").ReactUpload;
-  })",has_mock=True (num_mocks=9),,,,
+  })",has_mock=True (num_mocks=9),,
 C:javascript:121991,https://github.com/moleculerjs/moleculer/blob/dcfd7eb0078e54a83ff44c4b6ccf0141489855f3/test/unit/transporters/tcp.spec.js#L1185-L1190,"beforeEach(() => {
 			Math.random = jest.fn(() => 0);
 			transporter.deserialize = jest.fn((type, msg) => msg);
 			transporter.nodes.disconnected = jest.fn();
 			transporter.nodes.processNodeInfo = jest.fn();
-		})",has_mock=True (num_mocks=4),,,,
+		})",has_mock=True (num_mocks=4),,
 C:javascript:113157,https://github.com/trufflesuite/drizzle/blob/49dde3e1b315aabb75fe9a362d391608a966a5c1/packages/store/test/accounts.test.js#L9-L13,"beforeEach(() => {
     mockedGetAccounts = jest.fn()
     mockedWeb3 = { eth: { getAccounts: mockedGetAccounts } }
     gen = getAccounts({ web3: mockedWeb3 })
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:120294,https://github.com/hql287/manta/blob/a1df5eae81c87795f97d0bea95ad7eac69023b3a/app/middlewares/__tests__/InvoicesMW.spec.js#L26-L33,"beforeEach(() => {
     next = jest.fn();
     dispatch = jest.fn();
@@ -888,15 +888,15 @@ C:javascript:120294,https://github.com/hql287/manta/blob/a1df5eae81c87795f97d0be
       form: { settings: { editMode: { active: false } } }
     }));
     middleware = InvoicesMW({ dispatch, getState })(next);
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 C:javascript:113877,https://github.com/sortablejs/vue.draggable.next/blob/f93e2858a88ce865445c6c2fe17380348a035dbf/tests/unit/vuedraggable.spec.js#L524-L527,"beforeEach(() => {
           move = jest.fn();
           wrapper.setProps({ move });
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:198166,https://github.com/redwoodjs/graphql/blob/cc905f56bc84208d70699d1162d6faf9b2c1faf4/packages/cli/src/commands/destroy/cell/__tests__/cell.test.js#L29-L32,"afterEach(() => {
   fs.__setMockFiles({})
   jest.spyOn(fs, 'unlinkSync').mockClear()
-})",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=1),,
 C:javascript:130920,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8845e58a88173cfdaf7e9ca3d/src/elements/content-preview/__tests__/ContentPreview.test.js#L635-L643,"beforeEach(() => {
             props = {
                 token: 'token',
@@ -905,11 +905,11 @@ C:javascript:130920,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8
             const wrapper = getWrapper(props);
             instance = wrapper.instance();
             instance.getTotalFileFetchTime = jest.fn().mockReturnValue(FETCHING_TIME);
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:183637,https://github.com/styled-components/styled-components/blob/601e4ac58873312aa22f157c2cdad6d13e50d06c/packages/styled-components/src/test/theme.test.js#L12-L15,"beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     styled = resetStyled();
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:113757,https://github.com/cloudboost/cloudboost/blob/7ba2ed17099fa85e6fc652302822601283c6fa13/dashboard-ui/test/component/payment/billing.test.js#L6-L24,"before(() => {
     const props = {
       billingChangeHandler: sinon.spy(),
@@ -928,7 +928,7 @@ C:javascript:113757,https://github.com/cloudboost/cloudboost/blob/7ba2ed17099fa8
       },
     };
     wrapper = shallow(<Billing {...props}/>, themeContext);
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 C:javascript:182035,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341ce2e0b2650389569fba64/static/__tests__/dtale/xarray/dimensions-clear-test.jsx#L21-L74,"beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, ""offsetHeight"", {
       configurable: true,
@@ -982,7 +982,7 @@ C:javascript:182035,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341c
     jest.mock(""chart.js"", () => mockChartUtils);
     jest.mock(""chartjs-plugin-zoom"", () => ({}));
     jest.mock(""chartjs-chart-box-and-violin-plot/build/Chart.BoxPlot.js"", () => ({}));
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 A:javascript:25374,https://github.com/lokus-ai/lokus/blob/ba530d30483d67cadab53e992edb9db72a416e6d/tests/unit/plugins/TerminalAPI.test.js#L12-L24,"beforeEach(() => {
         mockTerminalManager = {
             createTerminal: vi.fn(),
@@ -995,7 +995,7 @@ A:javascript:25374,https://github.com/lokus-ai/lokus/blob/ba530d30483d67cadab53e
         };
         terminalAPI = new TerminalAPI(mockTerminalManager);
         terminalAPI.currentPluginId = 'test-plugin';
-    })",has_mock=True (num_mocks=7),,,,
+    })",has_mock=True (num_mocks=7),,
 C:javascript:109642,https://github.com/canonicalltd/react-native/blob/98e0ce38cdcb8c489a064c436a353be754e95f89/packager/react-packager/src/Server/__tests__/Server-test.js#L62-L84,"beforeEach(() => {
     FileWatcher = require('node-haste').FileWatcher;
     Bundler.prototype.bundle = jest.fn(() =>
@@ -1018,10 +1018,10 @@ C:javascript:109642,https://github.com/canonicalltd/react-native/blob/98e0ce38cd
 
     server = new Server(options);
     requestHandler = server.processRequest.bind(server);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:140759,https://github.com/googleforcreators/web-stories-wp/blob/ecbd94faf27f7fafd6c1f3b6a6b973e225a6e273/assets/src/dashboard/app/reducer/test/media.js#L33-L35,"beforeAll(() => {
     jest.spyOn(Date, 'now').mockImplementation(() => MOCK_ERROR_ID);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:131100,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8845e58a88173cfdaf7e9ca3d/src/utils/__tests__/LocalStore.test.js#L9-L20,"beforeAll(() => {
         originalLocalStorage = window.localStorage;
         delete window.localStorage;
@@ -1033,17 +1033,17 @@ C:javascript:131100,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8
                 setItem: jest.fn().mockName('setItem'),
             },
         });
-    })",has_mock=True (num_mocks=3),,,,
+    })",has_mock=True (num_mocks=3),,
 C:javascript:124234,https://github.com/hyperledger/fabric-sdk-node/blob/4750be6aab2e839edba8b97a18d7e2f8c1ee04fe/fabric-ca-client/test/AffiliationService.js#L184-L190,"beforeEach(() => {
 			const mockClient = sinon.createStubInstance(FabricCAClient);
 			affiliation = new AffiliationService(mockClient);
 
 			checkRegistrarStub = sinon.stub();
 			AffiliationServiceRewire.__set__('checkRegistrar', checkRegistrarStub);
-		})",has_mock=True (num_mocks=2),,,,
+		})",has_mock=True (num_mocks=2),,
 C:javascript:141155,https://github.com/linagora/twake-drive/blob/45f49d4ef27634758c7a15c6d3e58e28ae7c7d40/src/photos/targets/services/onPhotoUpload.spec.js#L24-L26,"beforeEach(() => {
     jest.spyOn(Date, 'now').mockImplementation(() => 1000)
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:196760,https://github.com/mondaycom/vibe/blob/1a10203ebb641e0866b6992792f0a1d00d0ea7f2/src/hooks/useKeyEvent-test.js#L62-L73,"beforeEach(() => {
       callbackStub = sinon.stub();
       element = document.createElement(""div"");
@@ -1055,14 +1055,14 @@ C:javascript:196760,https://github.com/mondaycom/vibe/blob/1a10203ebb641e0866b69
           callback: callbackStub
         });
       });
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:113171,https://github.com/trufflesuite/drizzle/blob/49dde3e1b315aabb75fe9a362d391608a966a5c1/packages/store/test/web3.test.js#L129-L132,"beforeAll(async () => {
       global.window = {}
       global.provider.providers = { WebSocketProvider: jest.fn() }
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:137783,https://github.com/wordpress/gutenberg/blob/b88ae765bacd596ff77392159d909de34c653151/packages/api-fetch/src/test/index.js#L19-L21,"beforeEach( () => {
 		window.fetch = jest.fn();
-	} )",has_mock=True (num_mocks=1),,,,
+	} )",has_mock=True (num_mocks=1),,
 C:javascript:182120,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341ce2e0b2650389569fba64/static/__tests__/popups/charts/bar-test.jsx#L25-L84,"beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, ""offsetHeight"", {
       configurable: true,
@@ -1122,7 +1122,7 @@ C:javascript:182120,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341c
     jest.mock(""chartjs-chart-box-and-violin-plot/build/Chart.BoxPlot.js"", () => ({}));
     Charts = require(""../../../popups/charts/Charts"").ReactCharts;
     ChartsBody = require(""../../../popups/charts/ChartsBody"").default;
-  })",has_mock=True (num_mocks=5),,,,
+  })",has_mock=True (num_mocks=5),,
 A:javascript:61937,https://github.com/ruvnet/claude-flow/blob/af1c8a7c7258f57e30ebe9240edaddfeccdd6737/tests/hive-mind/integration/resume-command.test.js#L71-L84,"beforeEach(() => {
     // Create temporary directory
     tempDir = mkdtempSync(path.join(tmpdir(), 'resume-test-'));
@@ -1136,7 +1136,7 @@ A:javascript:61937,https://github.com/ruvnet/claude-flow/blob/af1c8a7c7258f57e30
     
     // Initialize session manager
     sessionManager = new HiveMindSessionManager(tempDir);
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:javascript:115712,https://github.com/rclone/rclone-webui-react/blob/79b7935025123a75c50a7afe9f70bb34467b9d8b/src/views/Explorer/RemoteExplorerLayout/RemoteExplorerLayout.test.js#L30-L38,"beforeEach(() => {
             const initialState = {};
 
@@ -1145,11 +1145,11 @@ C:javascript:115712,https://github.com/rclone/rclone-webui-react/blob/79b7935025
                 activeRemoteContainerID: {0: ""P14"", 1: ""38K"", 2: ""XXN""},
             };
             wrapper = setUp(initialState, props)
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:111677,https://github.com/hyperledger-archives/composer/blob/12800550440030d253a9e73be8650d331b14597f/packages/composer-common/test/codegen/fromcto/typescript/typescriptvisitor.js#L37-L40,"beforeEach(() => {
         typescriptVisitor = new TypescriptVisitor();
         mockFileWriter = sinon.createStubInstance(fileWriter);
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:124221,https://github.com/react-static/react-static/blob/c912e461a13b9b171f18dedc2c4438df14439c45/packages/react-static/src/browser/__tests__/index.test.js#L8-L19,"beforeEach(() => {
       originalDocumentDescriptor = Object.getOwnPropertyDescriptor(
         global,
@@ -1161,7 +1161,7 @@ C:javascript:124221,https://github.com/react-static/react-static/blob/c912e461a1
       Object.defineProperty(global, 'document', {
         get: getDocumentMock,
       })
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 A:javascript:23615,https://github.com/akitaonrails/FrankMD/blob/e35f6eb738b218caba1340723d016633d8ead99f/test/javascript/controllers/help_controller.test.js#L11-L37,"beforeEach(() => {
     document.body.innerHTML = `
       <div data-controller=""help"">
@@ -1188,22 +1188,22 @@ A:javascript:23615,https://github.com/akitaonrails/FrankMD/blob/e35f6eb738b218ca
         resolve()
       }, 0)
     })
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:javascript:26066,https://github.com/learningequality/kolibri/blob/d32980e8e1f11bd10b0dc2e73b2d3f230bba8004/kolibri/core/assets/test/api-resource.spec.js#L568-L573,"beforeEach(function() {
           response = 'Error';
           client = jest.fn().mockRejectedValue(response);
           resource.client = client;
           logstub = jest.spyOn(Resources.logging, 'error').mockImplementation(() => {});
-        })",has_mock=True (num_mocks=2),,,,
+        })",has_mock=True (num_mocks=2),,
 C:javascript:184753,https://github.com/priceline/design-system/blob/b661954fd76583a91f1f26e8baa422c93cbd4f3f/packages/popover/src/PopoverContent/PopoverContent.spec.js#L8-L11,"beforeEach(() => {
     consoleError = console.error
     console.error = jest.fn()
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:130972,https://github.com/box/box-ui-elements/blob/349ca6fa558b6fe8845e58a88173cfdaf7e9ca3d/src/elements/content-sidebar/__tests__/ActivitySidebar.test.js#L586-L590,"beforeEach(() => {
             wrapper = getWrapper();
             instance = wrapper.instance();
             instance.setState = jest.fn();
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:133262,https://github.com/mozilla/addons-frontend/blob/d91ecb6a8af2925ee9adb226ed4a1d255c8caa3c/tests/unit/core/sagas/test_languageTools.js#L21-L32,"beforeEach(() => {
     errorHandler = createStubErrorHandler();
     mockApi = sinon.mock(api);
@@ -1215,19 +1215,19 @@ C:javascript:133262,https://github.com/mozilla/addons-frontend/blob/d91ecb6a8af2
       },
     });
     sagaTester.start(languageToolsSaga);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:120518,https://github.com/uber/react-digraph/blob/107778be7f3f108903b96e327f8f007bbbc4662b/__tests__/components/graph-view.test.js#L271-L277,"beforeEach(() => {
       jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => {
         cb();
 
         return true;
       });
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:191409,https://github.com/bbc/simorgh/blob/36724738e62da5bc1dfef2aab399641d5727edbc/src/app/containers/ConsentBanner/CanonicalLogic/setCookieOven.test.js#L32-L36,"beforeEach(() => {
       error = new Error('An error');
       fetchResponse = Promise.reject(error);
       global.console = { error: jest.fn() };
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:182130,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341ce2e0b2650389569fba64/static/__tests__/popups/window/Correlations-test.jsx#L28-L76,"beforeAll(() => {
     Object.defineProperty(HTMLElement.prototype, ""offsetHeight"", {
       configurable: true,
@@ -1276,11 +1276,11 @@ C:javascript:182130,https://github.com/man-group/dtale/blob/1e7cf374ab265b44341c
     jest.mock(""chartjs-chart-box-and-violin-plot/build/Chart.BoxPlot.js"", () => ({}));
     Correlations = require(""../../../popups/Correlations"").Correlations;
     ChartsBody = require(""../../../popups/charts/ChartsBody"").default;
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 C:javascript:112733,https://github.com/highcharts/highcharts-react/blob/5f804968f3d010d485745b7bd485f11410159bf8/tests/__tests__/component/addModule.test.js#L15-L18,"beforeEach(() => {
     jest.spyOn(console, 'error');
     console.error.mockImplementation(() => {});
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:112123,https://github.com/hyperledger-archives/composer/blob/12800550440030d253a9e73be8650d331b14597f/packages/composer-runtime/test/networkmanager.js#L57-L92,"beforeEach(() => {
         mockSerializer = sinon.createStubInstance(Serializer);
         mockApi = sinon.createStubInstance(Api);
@@ -1316,7 +1316,7 @@ C:javascript:112123,https://github.com/hyperledger-archives/composer/blob/128005
 
 
         sandbox = sinon.sandbox.create();
-    })",has_mock=True (num_mocks=10),,,,
+    })",has_mock=True (num_mocks=10),,
 C:javascript:119565,https://github.com/react-bootstrap-table/react-bootstrap-table2/blob/b2695fd9f40718d6b0310caed68426ad602f71ca/packages/react-bootstrap-table2-paginator/test/state-context.test.js#L241-L251,"beforeEach(() => {
         onPageChange.mockClear();
         wrapper = shallow(shallowContext({
@@ -1327,10 +1327,10 @@ C:javascript:119565,https://github.com/react-bootstrap-table/react-bootstrap-tab
         setRemotePaginationEmitter(instance);
         jest.spyOn(instance, 'forceUpdate');
         instance.handleChangePage(newPage);
-      })",has_mock=True (num_mocks=1),,,,
+      })",has_mock=True (num_mocks=1),,
 C:javascript:111125,https://github.com/ks888/lambstatus/blob/7aa975d7d60a6aed0a8e852f4aff44a61540d669/packages/lambda/test/api/cognitoCreateUserPool/index.js#L10-L12,"beforeEach(() => {
     sendStub = sinon.stub(Response, 'sendSuccess')
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:115290,https://github.com/attackxiaojinjin/reactexplain/blob/b9b2602d0c0a3b44f6293e5c2152227d5b642f56/react16.8.6/packages/react-events/src/dom/__tests__/Hover-test.internal.js#L91-L100,"beforeEach(() => {
       onHoverStart = jest.fn();
       ref = React.createRef();
@@ -1340,10 +1340,10 @@ C:javascript:115290,https://github.com/attackxiaojinjin/reactexplain/blob/b9b260
         </Hover>
       );
       ReactDOM.render(element, container);
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:javascript:186000,https://github.com/jaegertracing/jaeger-ui/blob/551db4cec5ea460d7356e7c448610535ad15860e/packages/jaeger-ui/src/components/DeepDependencies/index.test.js#L187-L189,"beforeAll(() => {
           trackClearOperationSpy = jest.spyOn(track, 'trackClearOperation');
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:124420,https://github.com/hyperledger/fabric-sdk-node/blob/4750be6aab2e839edba8b97a18d7e2f8c1ee04fe/fabric-common/test/Eventer.js#L27-L47,"beforeEach(async () => {
 		eventer = new EventerRewire('myeventer', client, 'msp1');
 		endpoint = client.newEndpoint({url: 'grpc://host:2700'});
@@ -1364,7 +1364,7 @@ C:javascript:124420,https://github.com/hyperledger/fabric-sdk-node/blob/4750be6a
 		sinon.addBehavior('setsConnected', (fake, n) => {
 			eventer.connected = n;
 		});
-	})",has_mock=True (num_mocks=10),,,,
+	})",has_mock=True (num_mocks=10),,
 C:javascript:115700,https://github.com/rclone/rclone-webui-react/blob/79b7935025123a75c50a7afe9f70bb34467b9d8b/src/views/Base/NewFolder/NewFolder.test.js#L18-L32,"beforeEach(() => {
             const props = {
                 isVisible: true,
@@ -1379,10 +1379,10 @@ C:javascript:115700,https://github.com/rclone/rclone-webui-react/blob/79b7935025
                 }
             };
             wrapper = setUp(initialState, props)
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:javascript:129488,https://github.com/tektoncd/dashboard/blob/bdc1f8c697add484d5d4d68d7dd4e2a1869299ae/src/containers/PipelinesDropdown/PipelinesDropdown.test.js#L119-L121,"beforeEach(() => {
     jest.spyOn(API, 'getPipelines').mockImplementation(() => pipelinesById);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:184763,https://github.com/tankerhq/sdk-js/blob/ba55895497537fdd7baa417f14fc3b0a4a706510/packages/core/src/DataProtection/__tests__/DecryptionStream.spec.js#L33-L41,"beforeEach(() => {
     key = random(tcrypto.SYMMETRIC_KEY_SIZE);
     resourceId = random(16);
@@ -1391,7 +1391,7 @@ C:javascript:184763,https://github.com/tankerhq/sdk-js/blob/ba55895497537fdd7baa
     mapper = { findKey: sinon.fake(() => Promise.resolve(key)) };
     stream = new DecryptionStream(mapper);
     sync = watchStream(stream);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:126924,https://github.com/neroneroffy/react-source-code-debug/blob/3d4affc6be6e7024cd925418a0a2bd1aa3dff4e4/src/react/v17/scheduler/src/__tests__/Scheduler-test.js#L26-L43,"beforeEach(() => {
     jest.resetModules();
     jest.mock('scheduler', () => require('scheduler/unstable_mock'));
@@ -1409,7 +1409,7 @@ C:javascript:126924,https://github.com/neroneroffy/react-source-code-debug/blob/
     wrapCallback = Scheduler.unstable_wrapCallback;
     getCurrentPriorityLevel = Scheduler.unstable_getCurrentPriorityLevel;
     shouldYield = Scheduler.unstable_shouldYield;
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:130067,https://github.com/datadog/dd-trace-js/blob/bc87e0dd13de5a3c7f815f4ce70ca01bb82c6e2d/packages/dd-trace/test/scope/async_hooks.spec.js#L17-L28,"beforeEach(() => {
     metrics = platform.metrics()
 
@@ -1421,7 +1421,7 @@ C:javascript:130067,https://github.com/datadog/dd-trace-js/blob/bc87e0dd13de5a3c
     })
 
     span = new Span()
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:javascript:111613,https://github.com/hyperledger-archives/composer/blob/12800550440030d253a9e73be8650d331b14597f/packages/composer-client/test/businessnetworkconnection.js#L58-L154,"beforeEach(async () => {
         sandbox = sinon.sandbox.create();
         clock = sinon.useFakeTimers();
@@ -1518,11 +1518,11 @@ C:javascript:111613,https://github.com/hyperledger-archives/composer/blob/128005
         businessNetworkConnection.securityContext = mockSecurityContext;
         mockParticipantRegistry = sinon.createStubInstance(ParticipantRegistry);
         delete process.env.COMPOSER_CONFIG;
-    })",has_mock=True (num_mocks=3),,,,
+    })",has_mock=True (num_mocks=3),,
 C:javascript:184744,https://github.com/priceline/design-system/blob/b661954fd76583a91f1f26e8baa422c93cbd4f3f/packages/core/src/ToggleBadge/ToggleBadge.spec.js#L6-L9,"beforeEach(() => {
     consoleError = console.error
     console.error = jest.fn()
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:javascript:32834,https://github.com/Team-Commonly/commonly/blob/9b604fcb160c5dee2152d7c0ea59d8c7fa84eb75/backend/__tests__/unit/routes/agentsRuntime.propose-action.test.js#L75-L87,"beforeEach(() => {
     jest.clearAllMocks();
     mockInstallFindOne.mockResolvedValue({ _id: 'inst-1', status: 'active', installedBy: HUMAN });
@@ -1535,19 +1535,19 @@ A:javascript:32834,https://github.com/Team-Commonly/commonly/blob/9b604fcb160c5d
       save: jest.fn().mockResolvedValue(undefined),
     }));
     mockPostMessage.mockResolvedValue({ success: true, message: { _id: 'msg-1' } });
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:110201,https://github.com/facebookarchive/atom-ide-ui/blob/aa681233c3df90fc68b36aed2bd16aac9661a9c2/modules/nuclide-commons-atom/__atom_tests__/text-event-test.js#L28-L32,"beforeEach(() => {
     jest.restoreAllMocks();
     textCallbackContainer = new __TEST__.TextCallbackContainer();
     callback = jest.fn();
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:javascript:184282,https://github.com/ealush/vest/blob/b8746f98ac1bd479c746eb86cd1b1fb95ad7e231/packages/vest/src/core/test/lib/__tests__/VestTest.test.js#L9-L15,"beforeEach(() => {
     testObject = new VestTest({
       fieldName,
       statement,
       testFn: jest.fn(),
     });
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:python:12259,https://github.com/pytroll/satpy/blob/33c3c8d0aad5feb747edc4f07153b3cf6ffb6a87/satpy/tests/reader_tests/test_nucaps.py#L359-L367,"def setUp(self):
         """"""Wrap NetCDF4 file handler with our own fake handler.""""""
         from satpy.config import config_search_paths
@@ -1556,7 +1556,7 @@ C:python:12259,https://github.com/pytroll/satpy/blob/33c3c8d0aad5feb747edc4f0715
         # http://stackoverflow.com/questions/12219967/how-to-mock-a-base-class-with-python-mock-library
         self.p = mock.patch.object(NUCAPSFileHandler, '__bases__', (FakeNetCDF4FileHandler2,))
         self.fake_handler = self.p.start()
-        self.p.is_local = True",has_mock=True (num_mocks=1),,,,
+        self.p.is_local = True",has_mock=True (num_mocks=1),,
 C:python:20053,https://github.com/hacs/integration/blob/19068381bb026effc565b60477c755060d320872/tests/conftest.py#L61-L84,"def hass(event_loop, tmpdir):
     """"""Fixture to provide a test instance of Home Assistant.""""""
 
@@ -1580,7 +1580,7 @@ C:python:20053,https://github.com/hacs/integration/blob/19068381bb026effc565b604
     for ex in exceptions:
         if isinstance(ex, (ServiceNotFound, FileExistsError)):
             continue
-        raise ex",has_mock=True (num_mocks=1),,,,
+        raise ex",has_mock=True (num_mocks=1),,
 C:python:35205,https://github.com/demisto/content/blob/70c9da05f520680b4b8246a1c6554a5558168fbb/Packs/CrowdStrikeFalcon/Integrations/CrowdStrikeFalcon/CrowdStrikeFalcon_test.py#L2174-L2187,"def set_up_mocks(self, requests_mock, mocker):
         """""" Sets up the mocks for the fetch.
         """"""
@@ -1594,16 +1594,16 @@ C:python:35205,https://github.com/demisto/content/blob/70c9da05f520680b4b8246a1c
                                                 'created_timestamp': '2020-09-04T09:20:11Z',
                                                 'max_severity_displayname': 'Low'}]})
         requests_mock.get(f'{SERVER_URL}/incidents/queries/incidents/v1', json={})
-        requests_mock.post(f'{SERVER_URL}/incidents/entities/incidents/GET/v1', json={})",has_mock=True (num_mocks=1),,,,
+        requests_mock.post(f'{SERVER_URL}/incidents/entities/incidents/GET/v1', json={})",has_mock=True (num_mocks=1),,
 A:python:18914,https://github.com/zurdi15/romm/blob/f22aadf77a833dff437806b4d6348a128ad45b11/backend/tests/endpoints/sockets/test_scan.py#L481-L484,"def rom(self) -> Rom:
         rom: Rom = Mock(spec=Rom)
         rom.id = 1
-        return rom",has_mock=True (num_mocks=1),,,,
+        return rom",has_mock=True (num_mocks=1),,
 A:python:6208,https://github.com/debpalash/OmniVoice-Studio/blob/022a3bd6b972d72309c7ac3d0d326baaa0bf939a/tests/test_sherpa_dictation.py#L120-L124,"def no_download(monkeypatch):
     """"""Make _resolve_model_dir return a fake dir without touching HF.""""""
     from services import sherpa_dictation as sd
     monkeypatch.setattr(sd, ""_resolve_model_dir"", lambda spec, download=True: ""/fake/model/dir"")
-    return sd",has_mock=True (num_mocks=1),,,,
+    return sd",has_mock=True (num_mocks=1),,
 A:python:2383,https://github.com/NousResearch/hermes-agent/blob/5c4c0e9d9b87ed6745e9c62e14ccc39a6962a720/tests/test_onepassword_secrets.py#L37-L44,"def _clean_op_env(monkeypatch):
     """"""Start every test from a known 1Password auth state.""""""
     for key in list(os.environ):
@@ -1611,7 +1611,7 @@ A:python:2383,https://github.com/NousResearch/hermes-agent/blob/5c4c0e9d9b87ed67
             monkeypatch.delenv(key, raising=False)
     monkeypatch.delenv(""OP_SERVICE_ACCOUNT_TOKEN"", raising=False)
     monkeypatch.delenv(""OP_ACCOUNT"", raising=False)
-    yield",has_mock=True (num_mocks=3),,,,
+    yield",has_mock=True (num_mocks=3),,
 A:python:907,https://github.com/LifeArchiveProject/WeChatDataAnalysis/blob/ae1dd8dc627c4661bd3ace1d354c65d725e98220/tests/test_cdn_account_service.py#L82-L111,"def worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> FakeWorker:
     fake = FakeWorker()
     wxid_dir = tmp_path / ""wechat"" / WXID
@@ -1641,9 +1641,9 @@ A:python:907,https://github.com/LifeArchiveProject/WeChatDataAnalysis/blob/ae1dd
         ""_make_async_client"",
         lambda **kw: httpx.AsyncClient(transport=httpx.MockTransport(_yielding_handler), **kw),
     )
-    return fake",has_mock=True (num_mocks=8),,,,
+    return fake",has_mock=True (num_mocks=8),,
 C:python:21535,https://github.com/faust-streaming/faust/blob/e23953473e3aca2c56f77963926ceec49aba1e57/tests/unit/transport/test_consumer.py#L1185-L1186,"def partitions_assigned_callback(self):
-        return Mock(name=""partitions_assigned_callback"")",has_mock=True (num_mocks=1),,,,
+        return Mock(name=""partitions_assigned_callback"")",has_mock=True (num_mocks=1),,
 A:python:2463,https://github.com/TracecatHQ/tracecat/blob/9ebb8462c78dad7b905edaeb26439e3804bd3083/tests/registry/test_core_cases.py#L1488-L1504,"def mock_tag():
     """"""Create a mock tag for testing.""""""
     tag = MagicMock()
@@ -1660,7 +1660,7 @@ A:python:2463,https://github.com/TracecatHQ/tracecat/blob/9ebb8462c78dad7b905eda
         ""color"": tag.color,
     }
 
-    return tag",has_mock=True (num_mocks=1),,,,
+    return tag",has_mock=True (num_mocks=1),,
 C:python:14075,https://github.com/nccgroup/scoutsuite/blob/8a43c3002f427cd9b0a0651964a8cd4c6b342db2/tests/test_main.py#L11-L31,"def setUp(self):
         self.constructor = {}
         self.mocked_provider = MagicMock()
@@ -1681,21 +1681,21 @@ C:python:14075,https://github.com/nccgroup/scoutsuite/blob/8a43c3002f427cd9b0a06
             constructor_obj = patch(""ScoutSuite.__main__.%s"" % import_name, return_value=mocked_object).start()
             self.constructor[mocked_object] = constructor_obj
 
-        self.mocked_report.save = MagicMock(return_value=""dummyfile"")",has_mock=True (num_mocks=8),,,,
+        self.mocked_report.save = MagicMock(return_value=""dummyfile"")",has_mock=True (num_mocks=8),,
 C:python:90735,https://github.com/flink-extended/dl-on-flink/blob/035f234500640eaa0d4d96a5c23c6c91fe18fbbb/flink-ai-flow/lib/airflow/tests/contrib/hooks/test_gcp_function_hook.py#L127-L130,"def setUp(self):
         with mock.patch('airflow.contrib.hooks.gcp_api_base_hook.GoogleCloudBaseHook.__init__',
                         new=mock_base_gcp_hook_default_project_id):
-            self.gcf_function_hook = GcfHook(gcp_conn_id='test', api_version='v1')",has_mock=True (num_mocks=1),,,,
+            self.gcf_function_hook = GcfHook(gcp_conn_id='test', api_version='v1')",has_mock=True (num_mocks=1),,
 A:python:1628,https://github.com/Osmantic/ODS/blob/3d2201b37eaaa2499a705ce0d3efd31d0ad86817/ods/extensions/services/dashboard-api/tests/test_model_activate.py#L39-L40,"def _isolate_opencode_config(monkeypatch, tmp_path):
-    monkeypatch.setenv(""OPENCODE_CONFIG_DIR"", str(tmp_path / ""opencode-config""))",has_mock=True (num_mocks=1),,,,
+    monkeypatch.setenv(""OPENCODE_CONFIG_DIR"", str(tmp_path / ""opencode-config""))",has_mock=True (num_mocks=1),,
 C:python:4653,https://github.com/robinhood/faust/blob/b5e159f1d104ad4a6aa674d14b6ba0be19b5f9f5/t/unit/sensors/test_statsd.py#L42-L43,"def req(self):
-        return Mock(name='request', autospec=web.Request)",has_mock=True (num_mocks=1),,,,
+        return Mock(name='request', autospec=web.Request)",has_mock=True (num_mocks=1),,
 A:python:6177,https://github.com/debpalash/OmniVoice-Studio/blob/acb7c900831c50a85ed86d6c417b10a79a62092e/tests/test_compile_thread_affinity.py#L26-L31,"def engine_env(monkeypatch):
     """"""The *live* services.engine_env, with the session flag isolated
     (same rationale as tests/test_compile_fallback.py).""""""
     mod = importlib.import_module(""services.engine_env"")
     monkeypatch.setattr(mod, ""_compile_runtime_failure"", None)
-    return mod",has_mock=True (num_mocks=1),,,,
+    return mod",has_mock=True (num_mocks=1),,
 A:python:4782,https://github.com/dataelement/bisheng/blob/1142d6094348c439503e3f0684831f1edecbf78c/src/backend/test/conftest.py#L18-L31,"def mock_settings(monkeypatch):
     """"""Mock the global settings object with controllable multi_tenant config.
 
@@ -1709,7 +1709,7 @@ A:python:4782,https://github.com/dataelement/bisheng/blob/1142d6094348c439503e3f
     mock.cookie_conf.jwt_iss = 'bisheng'
 
     monkeypatch.setattr('bisheng.common.services.config_service.settings', mock)
-    return mock",has_mock=True (num_mocks=3),,,,
+    return mock",has_mock=True (num_mocks=3),,
 A:python:1070,https://github.com/HKUDS/LightRAG/blob/ad68624d02d5cd76286e4e156862bd0efc311c2d/tests/test_postgres_migration.py#L17-L27,"def mock_pg_db():
     """"""Mock PostgreSQL database connection""""""
     db = AsyncMock()
@@ -1720,7 +1720,7 @@ A:python:1070,https://github.com/HKUDS/LightRAG/blob/ad68624d02d5cd76286e4e15686
     db.execute = AsyncMock()
     db.fetch = AsyncMock(return_value=[])
 
-    return db",has_mock=True (num_mocks=4),,,,
+    return db",has_mock=True (num_mocks=4),,
 A:python:6969,https://github.com/future-agi/future-agi/blob/3081296f502ac99831682a2a2d3baa913d28fd43/futureagi/ee/usage/tests/test_boolean_feature_enforcement.py#L10-L23,"def _bypass_validated_request_serializer():
     # ``@validated_request`` captures its ``request_serializer`` at import
     # time, so view-module-level patches don't reach it. In these unit
@@ -1734,20 +1734,20 @@ A:python:6969,https://github.com/future-agi/future-agi/blob/3081296f502ac9983168
         return serializer, {}, True
 
     with patch(""tfc.utils.api_contracts._validate_serializer"", _passthrough):
-        yield",has_mock=True (num_mocks=2),,,,
+        yield",has_mock=True (num_mocks=2),,
 A:python:2683,https://github.com/YoungCan-Wang/WyckoffTradingAgent/blob/a7acc3dd7f245d6407c77d5753f165b1828bfaed/tests/workflows/test_risk_on_reblocked.py#L28-L31,"def _prod_env(monkeypatch):
     """"""复现生产 env，而非代码默认值。""""""
     monkeypatch.setenv(""STEP4_BUY_BLOCK_REGIMES"", PROD_BLOCK)
-    monkeypatch.setenv(""STEP4_BUY_ALLOW_REGIMES"", PROD_ALLOW)",has_mock=True (num_mocks=2),,,,
+    monkeypatch.setenv(""STEP4_BUY_ALLOW_REGIMES"", PROD_ALLOW)",has_mock=True (num_mocks=2),,
 A:python:18126,https://github.com/topoteretes/cognee/blob/d70093255f301aef7f1a10f7c95dde0b8610a86b/cognee/tests/unit/api/v1/recall/test_recall_tools.py#L26-L28,"def no_remote_client(monkeypatch):
     serve_state = importlib.import_module(""cognee.api.v1.serve.state"")
-    monkeypatch.setattr(serve_state, ""get_remote_client"", lambda: None)",has_mock=True (num_mocks=1),,,,
+    monkeypatch.setattr(serve_state, ""get_remote_client"", lambda: None)",has_mock=True (num_mocks=1),,
 C:python:7570,https://github.com/facebookincubator/onlineschemachange/blob/c93b1e3c365f761f11716f1ad0f8d95939fafcd2/core/tests/online_payload.py#L24-L29,"def setUp(self):
         db_lib.MySQLSocketConnection = MagicMock(
             side_effect=MySQLdb.OperationalError(2013, 'mock unconnectable'))
         self._payload = DirectPayload()
         self._payload.read_ddl_files = MagicMock()
-        super(DirectPayloadDeadMySQL, self).setUp()",has_mock=True (num_mocks=2),,,,
+        super(DirectPayloadDeadMySQL, self).setUp()",has_mock=True (num_mocks=2),,
 A:python:2370,https://github.com/NousResearch/hermes-agent/blob/940237c6fd83de3848e429c78094d9682c691805/tests/tools/test_clipboard.py#L939-L952,"def cli(self):
         from cli import HermesCLI
         cli_obj = HermesCLI.__new__(HermesCLI)
@@ -1761,7 +1761,7 @@ A:python:2370,https://github.com/NousResearch/hermes-agent/blob/940237c6fd83de38
         cli_obj._voice_recorder = MagicMock()
         cli_obj._voice_recorder.stop.return_value = ""/tmp/fake.wav""
         cli_obj._app = None
-        return cli_obj",has_mock=True (num_mocks=2),,,,
+        return cli_obj",has_mock=True (num_mocks=2),,
 A:python:18576,https://github.com/teng-lin/notebooklm-py/blob/9738e51d2b838e2d0ef11be42ce6b456e7c1a671/tests/unit/cli/test_generate.py#L20-L29,"def mock_auth():
     with patch(""notebooklm.cli.helpers.load_auth_from_storage"") as mock:
         mock.return_value = {
@@ -1771,16 +1771,16 @@ A:python:18576,https://github.com/teng-lin/notebooklm-py/blob/9738e51d2b838e2d0e
             ""APISID"": ""test"",
             ""SAPISID"": ""test"",
         }
-        yield mock",has_mock=True (num_mocks=1),,,,
+        yield mock",has_mock=True (num_mocks=1),,
 C:python:19397,https://github.com/fkie-cad/fact_core/blob/3ae514a21a67bdcc57c2eb4718e5d22c13e60a3b/src/plugins/analysis/qemu_exec/test/test_plugin_qemu_exec.py#L95-L96,"def docker_is_not_running(monkeypatch):
-    monkeypatch.setattr(qemu_exec, 'execute_shell_command_get_return_code', lambda _: (None, 1))",has_mock=True (num_mocks=1),,,,
+    monkeypatch.setattr(qemu_exec, 'execute_shell_command_get_return_code', lambda _: (None, 1))",has_mock=True (num_mocks=1),,
 A:python:57090,https://github.com/puppyone-ai/puppyone/blob/d65f95b9ddaa52b831429593238d08fa63a9583e/backend/tests/mut_engine/test_engine_resolve.py#L85-L91,"def conflict_table(monkeypatch) -> _FakeConflictTable:
     table = _FakeConflictTable()
     monkeypatch.setattr(engine_mod, ""_load_pending_conflict_row"",
                         lambda pid, pcid: table.load(pid, pcid))
     monkeypatch.setattr(engine_mod, ""_mark_pending_conflict_row"", table.mark)
     monkeypatch.setattr(engine_mod, ""_close_pending_conflict_row"", table.close)
-    return table",has_mock=True (num_mocks=3),,,,
+    return table",has_mock=True (num_mocks=3),,
 C:python:26464,https://github.com/aws/aws-sam-cli/blob/a4344d0cc8258d561ac06450e31348a9df5e707c/tests/unit/commands/local/lib/test_local_lambda.py#L339-L354,"def setUp(self):
         self.runtime_mock = Mock()
         self.function_provider_mock = Mock()
@@ -1796,9 +1796,9 @@ C:python:26464,https://github.com/aws/aws-sam-cli/blob/a4344d0cc8258d561ac06450e
             self.cwd,
             env_vars_values=self.env_vars_values,
             debug_context=self.debug_context,
-        )",has_mock=True (num_mocks=2),,,,
+        )",has_mock=True (num_mocks=2),,
 C:python:21430,https://github.com/faust-streaming/faust/blob/e23953473e3aca2c56f77963926ceec49aba1e57/tests/unit/sensors/test_monitor.py#L30-L31,"def stream(self):
-        return Mock(name=""stream"", autospec=Stream)",has_mock=True (num_mocks=1),,,,
+        return Mock(name=""stream"", autospec=Stream)",has_mock=True (num_mocks=1),,
 A:python:15891,https://github.com/rocketride-org/rocketride-server/blob/361b87323731d6b47d2a90bf91d0e5038d3472d3/nodes/test/test_extract_data.py#L86-L145,"def extract_data_module(monkeypatch, request):
     """"""Import the node with temporary dependencies and restore interpreter state.""""""
     original_path = list(sys.path)
@@ -1858,16 +1858,16 @@ A:python:15891,https://github.com/rocketride-org/rocketride-server/blob/361b8732
         # importlib is used so we get the *module* (the package __init__ rebinds
         # `IInstance` to the class, which shadows the submodule for `import ... as`).
         patch.syspath_prepend(str(_NODE_ROOT))
-        yield importlib.import_module('extract_data.IInstance')",has_mock=True (num_mocks=5),,,,
+        yield importlib.import_module('extract_data.IInstance')",has_mock=True (num_mocks=5),,
 A:python:8102,https://github.com/jlowin/fastmcp/blob/6d033eeaf11bcc278f75925d0f49d764a328b63c/tests/server/middleware/test_timing.py#L25-L27,"def mock_call_next():
     """"""Create a mock call_next function.""""""
-    return AsyncMock(return_value=""test_result"")",has_mock=True (num_mocks=1),,,,
+    return AsyncMock(return_value=""test_result"")",has_mock=True (num_mocks=1),,
 C:python:41070,https://github.com/google-deepmind/dm_control/blob/d522fc327f9a6b280030ea2733c386a5d7f8fa1f/dm_control/viewer/views_test.py#L88-L93,"def setUp(self):
     super().setUp()
     self.layout = views.ViewportLayout()
 
     self.context = mock.MagicMock()
-    self.viewport = mock.MagicMock()",has_mock=True (num_mocks=2),,,,
+    self.viewport = mock.MagicMock()",has_mock=True (num_mocks=2),,
 A:python:2577,https://github.com/Zipstack/unstract/blob/b4e3c3f6dd47a93ff12b013bdf5b19d44595a7a2/prompt-service/src/unstract/prompt_service/tests/unit/test_retriever_llm.py#L27-L38,"def mock_sdk1_llm():
     """"""Create a mock SDK1 LLM instance with adapter attributes.""""""
     llm = MagicMock(spec=LLM)
@@ -1879,7 +1879,7 @@ A:python:2577,https://github.com/Zipstack/unstract/blob/b4e3c3f6dd47a93ff12b013b
     llm._capture_metrics = False
     llm.get_model_name.return_value = ""gpt-4""
     llm.platform_kwargs = {""run_id"": ""test-run""}
-    return llm",has_mock=True (num_mocks=2),,,,
+    return llm",has_mock=True (num_mocks=2),,
 A:python:15411,https://github.com/prefecthq/prefect/blob/7cb2d55fa851d1597702cad07e9632ef1ec1d9db/tests/cli/test_transfer.py#L118-L128,"def mock_dag():
     """"""Mock TransferDAG for execution testing.""""""
     dag = MagicMock()
@@ -1890,13 +1890,13 @@ A:python:15411,https://github.com/prefecthq/prefect/blob/7cb2d55fa851d1597702cad
         ""has_cycles"": False,
     }
     dag.execute_concurrent = AsyncMock(return_value={})
-    return dag",has_mock=True (num_mocks=2),,,,
+    return dag",has_mock=True (num_mocks=2),,
 A:python:12908,https://github.com/lablup/backend.ai/blob/67de09534f7fe4f9ef5bb7f5a6e64b37eb6f6aff/tests/unit/manager/sokovan/deployment/route/test_coordinator_history.py#L64-L69,"def mock_deployment_repository() -> AsyncMock:
     """"""Mock DeploymentRepository with minimal implementation.""""""
     mock = AsyncMock(spec=DeploymentRepository)
     mock.get_routes_by_statuses = AsyncMock(return_value=[])
     mock.update_route_status_bulk_with_history = AsyncMock(return_value=0)
-    return mock",has_mock=True (num_mocks=3),,,,
+    return mock",has_mock=True (num_mocks=3),,
 A:python:11300,https://github.com/microsoft/agent-framework/blob/2f06fe557a2d5c2a5076fea439e9c47ed6ae57ec/python/packages/ollama/tests/test_ollama_chat_client.py#L56-L63,"def mock_streaming_chat_completion_response_reasoning() -> AsyncStream[OllamaChatResponse]:
     response = OllamaChatResponse(
         message=OllamaMessage(thinking=""test"", role=""assistant""),
@@ -1904,7 +1904,7 @@ A:python:11300,https://github.com/microsoft/agent-framework/blob/2f06fe557a2d5c2
     )
     stream = MagicMock(spec=AsyncStream)
     stream.__aiter__.return_value = [response]
-    return stream",has_mock=True (num_mocks=1),,,,
+    return stream",has_mock=True (num_mocks=1),,
 C:python:12207,https://github.com/pytroll/satpy/blob/33c3c8d0aad5feb747edc4f07153b3cf6ffb6a87/satpy/tests/reader_tests/test_fci_l1c_fdhsi.py#L236-L246,"def fake_handler(self):
         """"""Wrap NetCDF4 FileHandler with our own fake handler.""""""
         # implementation strongly inspired by test_viirs_l1b.py
@@ -1915,34 +1915,34 @@ C:python:12207,https://github.com/pytroll/satpy/blob/33c3c8d0aad5feb747edc4f0715
                 (self._alt_handler,))
         with p:
             p.is_local = True
-            yield p",has_mock=True (num_mocks=1),,,,
+            yield p",has_mock=True (num_mocks=1),,
 C:python:27143,https://github.com/home-assistant/supervisor/blob/97c35de49a55a59ae193442a8d4e6faf64cb8e9f/tests/conftest.py#L182-L186,"def store_manager(coresys: CoreSys):
     """"""Fixture for the store manager.""""""
     sm_obj = coresys.store
     with patch(""supervisor.store.data.StoreData.update"", return_value=MagicMock()):
-        yield sm_obj",has_mock=True (num_mocks=2),,,,
+        yield sm_obj",has_mock=True (num_mocks=2),,
 C:python:31998,https://github.com/ansible/awx/blob/b857fb507409199b6a596a3cd63c1bae439f8826/awx/main/tests/functional/conftest.py#L816-L818,"def disable_database_settings(mocker):
     m = mocker.patch('awx.conf.settings.SettingsWrapper.all_supported_settings', new_callable=PropertyMock)
-    m.return_value = []",has_mock=True (num_mocks=1),,,,
+    m.return_value = []",has_mock=True (num_mocks=1),,
 A:python:18012,https://github.com/vstorm-co/full-stack-fastapi-nextjs-llm-template/blob/dfa1e463d6c7971615c5ed94f900d8cad77bbbce/template/{{cookiecutter.project_slug}}/backend/tests/test_rbac_teams.py#L231-L232,"def mock_db(self):
-        return MagicMock()",has_mock=True (num_mocks=1),,,,
+        return MagicMock()",has_mock=True (num_mocks=1),,
 A:python:13627,https://github.com/lablup/backend.ai/blob/29a5dffebb6d2e5684fe73a44cb89461e44e00aa/tests/unit/manager/api/gql/rbac/test_bulk_role_resolvers.py#L36-L38,"def _bypass_admin_check(self) -> Generator[None]:
         with patch(""ai.backend.manager.api.gql.rbac.resolver.role.check_admin_only""):
-            yield",has_mock=True (num_mocks=1),,,,
+            yield",has_mock=True (num_mocks=1),,
 C:python:14059,https://github.com/mirumee/ariadne/blob/937d3f91e73ab7432f284d09b1c9f8f47380305c/tests/tracing/test_apollotracing.py#L18-L21,"def freeze_microtime(mocker):
     mocker.patch(
         ""ariadne.contrib.tracing.apollotracing.perf_counter_ns"", return_value=2
-    )",has_mock=True (num_mocks=1),,,,
+    )",has_mock=True (num_mocks=1),,
 A:python:938,https://github.com/Mibayy/token-savior/blob/2c9b85643d76653aa37ea24d4e714e52615a06bb/tests/test_ledger_hook_entrypoint.py#L11-L15,"def isolated_db(monkeypatch, tmp_path):
     db_path = tmp_path / ""m.sqlite""
     monkeypatch.setattr(db_core, ""MEMORY_DB_PATH"", db_path)
     db_core.run_migrations(db_path)
-    yield db_path",has_mock=True (num_mocks=1),,,,
+    yield db_path",has_mock=True (num_mocks=1),,
 C:python:38469,https://github.com/kedro-org/kedro/blob/83ef80a39d8d25cd29d234bf008e851cf759fd59/tests/framework/cli/test_pipeline.py#L110-L111,"def yaml_dump_mock(mocker):
-    return mocker.patch(""yaml.dump"", return_value=""Result YAML"")",has_mock=True (num_mocks=1),,,,
+    return mocker.patch(""yaml.dump"", return_value=""Result YAML"")",has_mock=True (num_mocks=1),,
 C:python:14865,https://github.com/samr1/fittrackee/blob/2819d55b0e5e049ae2c1d885f134a57118f2f192/fittrackee/tests/conftest.py#L64-L66,"def app_ssl(monkeypatch):
     monkeypatch.setenv('EMAIL_URL', 'smtp://none:none@0.0.0.0:1025?ssl=True')
-    yield from get_app(with_config=True)",has_mock=True (num_mocks=1),,,,
+    yield from get_app(with_config=True)",has_mock=True (num_mocks=1),,
 C:python:5200,https://github.com/powerfulseal/powerfulseal/blob/5aedb54fcda110166d73f1868565a6d837e31100/tests/clouddrivers/test_openstack.py#L14-L26,"def example_servers():
     server1 = MagicMock()
     server1.addresses = dict(
@@ -1955,14 +1955,14 @@ C:python:5200,https://github.com/powerfulseal/powerfulseal/blob/5aedb54fcda11016
     server1.availability_zone = ""DC1""
     server1.name = ""random server""
     server1.status = ""ACTIVE""
-    return [server1]",has_mock=True (num_mocks=1),,,,
+    return [server1]",has_mock=True (num_mocks=1),,
 A:python:17680,https://github.com/utensils/mcp-nixos/blob/c68ce33df95e81bc86b6227ad5820f7e3f922e86/tests/fixtures/server_fixtures.py#L27-L33,"def mock_darwin_context():
     """"""Create a mock Darwin context for testing.""""""
     mock = MagicMock()
     mock.startup = AsyncMock()
     mock.shutdown = AsyncMock()
     mock.status = ""ready""
-    return mock",has_mock=True (num_mocks=3),,,,
+    return mock",has_mock=True (num_mocks=3),,
 A:python:15938,https://github.com/samugit83/redamon/blob/8bed3edd5b798a6e6ffba58b22952024673627b6/agentic/tests/test_executor_workspace_wiring.py#L64-L90,"def setUp(self):
         self.tmp = tempfile.mkdtemp(prefix=""redamon-exec-"")
         # Point all workspace modules at the temp root.
@@ -1989,13 +1989,13 @@ A:python:15938,https://github.com/samugit83/redamon/blob/8bed3edd5b798a6e6ffba58
         self.executor = tools_module.PhaseAwareToolExecutor(
             mcp_manager=MagicMock(),
             graph_tool=None,
-        )",has_mock=True (num_mocks=1),,,,
+        )",has_mock=True (num_mocks=1),,
 C:python:20928,https://github.com/open-telemetry/opentelemetry-python/blob/41953604180695852223805efe1e1b0d7372de3d/opentelemetry-api/tests/context/test_threadlocal_context.py#L24-L29,"def setUp(self) -> None:
         super(TestThreadLocalContext, self).setUp()
         self.mock_runtime = patch.object(
             context, ""_RUNTIME_CONTEXT"", ThreadLocalRuntimeContext(),
         )
-        self.mock_runtime.start()",has_mock=True (num_mocks=1),,,,
+        self.mock_runtime.start()",has_mock=True (num_mocks=1),,
 A:python:1149,https://github.com/HKUDS/LightRAG/blob/07c733bb52b7425d6bcbb48a314fe7152ae9430f/tests/api/test_api_docs_toggle.py#L43-L59,"def _isolate_env(monkeypatch):
     """"""Keep tests hermetic from developer-local .env and global config state.""""""
     for var in _ENV_VARS_TO_ISOLATE:
@@ -2012,19 +2012,19 @@ A:python:1149,https://github.com/HKUDS/LightRAG/blob/07c733bb52b7425d6bcbb48a314
     config._initialized = False
     yield
     config._global_args = None
-    config._initialized = False",has_mock=True (num_mocks=6),,,,
+    config._initialized = False",has_mock=True (num_mocks=6),,
 C:python:28552,https://github.com/mycroftai/mycroft-core/blob/f1d7141bf2b2269ac8e273b030e7c5bf6a403c6d/test/unittests/skills/test_settings.py#L167-L173,"def setUp(self):
         super().setUp()
         self.settings_path = self.temp_dir.joinpath('settings.json')
         self.downloader = SkillSettingsDownloader(self.message_bus_mock)
         self.downloader.api = Mock()
         self.is_paired_mock = self._mock_is_paired()
-        self.timer_mock = self._mock_timer()",has_mock=True (num_mocks=1),,,,
+        self.timer_mock = self._mock_timer()",has_mock=True (num_mocks=1),,
 C:python:9468,https://github.com/taverntesting/tavern/blob/3ed825f3600870a2d41bd4a8522d3c631f57150d/tests/unit/test_call_run.py#L10-L14,"def patch_pytest():
     with patch(""tavern.core.pytest.main"") as fake_main:
         yield
 
-    assert fake_main.called",has_mock=True (num_mocks=1),,,,
+    assert fake_main.called",has_mock=True (num_mocks=1),,
 A:python:3983,https://github.com/cloud-cv/evalai/blob/7183c0b0a8d3e38860a9b64ac9937978b7cab1e0/tests/unit/challenges/test_aws_utils.py#L8443-L8452,"def setUp(self):
         self.challenge = MagicMock()
         self.challenge.pk = 1
@@ -2034,7 +2034,7 @@ A:python:3983,https://github.com/cloud-cv/evalai/blob/7183c0b0a8d3e38860a9b64ac9
         self.cluster.name = ""test-cluster""
         self.cluster.nodegroup_name = ""test-nodegroup""
 
-        self.client = MagicMock()",has_mock=True (num_mocks=3),,,,
+        self.client = MagicMock()",has_mock=True (num_mocks=3),,
 A:python:11619,https://github.com/home-assistant/core/blob/db76773727fc53fa15bb56c04c6ece9a3a9d3af6/tests/components/isy994/conftest.py#L31-L55,"def mock_isy():
     """"""Return a mock ISY object.""""""
     mock = MagicMock()
@@ -2059,7 +2059,7 @@ A:python:11619,https://github.com/home-assistant/core/blob/db76773727fc53fa15bb5
     mock.uuid = MOCK_UUID
     mock.conn.url = ""http://1.1.1.1:80""
     mock.initialize = AsyncMock()
-    return mock",has_mock=True (num_mocks=9),,,,
+    return mock",has_mock=True (num_mocks=9),,
 A:python:9723,https://github.com/meizhong986/WhisperJAV/blob/eb8010528030ff697b77411e785c2942c7c0a248/tests/test_gui_settings.py#L52-L60,"def _isolate_settings(tmp_path, monkeypatch):
     """"""Redirect get_gui_settings_path() to a temp directory for every test.""""""
     settings_file = tmp_path / ""WhisperJAV"" / ""gui_settings.json""
@@ -2068,12 +2068,12 @@ A:python:9723,https://github.com/meizhong986/WhisperJAV/blob/eb8010528030ff697b7
         ""whisperjav.settings.gui_settings.get_gui_settings_path"",
         lambda: settings_file,
     )
-    return settings_file",has_mock=True (num_mocks=1),,,,
+    return settings_file",has_mock=True (num_mocks=1),,
 A:python:8874,https://github.com/langchain-ai/open-swe/blob/f539962c732cea7c0c53e8833edc7d6be7c5f098/tests/test_team_credentials.py#L37-L41,"def fake_store(monkeypatch: pytest.MonkeyPatch) -> _FakeStore:
     store = _FakeStore()
     monkeypatch.setattr(tc, ""_client"", lambda: _FakeClient(store))
     monkeypatch.setenv(""TOKEN_ENCRYPTION_KEY"", Fernet.generate_key().decode())
-    return store",has_mock=True (num_mocks=2),,,,
+    return store",has_mock=True (num_mocks=2),,
 A:python:18092,https://github.com/topoteretes/cognee/blob/73619f93270e8f4ed195d775f18267d3bcca2cb0/cognee/tests/integration/infrastructure/session/test_tapes_cache_adapter.py#L8-L25,"def tapes_adapter():
     """"""TapesCacheAdapter rooted in a temp cache directory.""""""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -2091,7 +2091,7 @@ A:python:18092,https://github.com/topoteretes/cognee/blob/73619f93270e8f4ed195d7
                 tapes_model=""unit-model"",
             )
             yield inst
-            inst.cache.close()",has_mock=True (num_mocks=1),,,,
+            inst.cache.close()",has_mock=True (num_mocks=1),,
 A:python:14935,https://github.com/reflex-dev/reflex/blob/85fc55e9e551025817a6856d8e899dba52098c74/tests/units/reflex_release/test_commands.py#L705-L726,"def dispatched(
     config: Config, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> pytest.MonkeyPatch:
@@ -2113,18 +2113,18 @@ A:python:14935,https://github.com/reflex-dev/reflex/blob/85fc55e9e551025817a6856
     monkeypatch.setattr(commands, ""git_push"", lambda *args, **kwargs: None)
     monkeypatch.setattr(commands, ""gh_run"", lambda *args, **kwargs: 0)
     monkeypatch.setattr(commands, ""remote_branch_exists"", lambda *args: False)
-    return monkeypatch",has_mock=True (num_mocks=6),,,,
+    return monkeypatch",has_mock=True (num_mocks=6),,
 A:python:14320,https://github.com/lablup/backend.ai/blob/a111366531e4a94c428920b85bd2c324f3b57fc5/tests/unit/client_v2/test_app_config_fragment.py#L61-L65,"def mock_response() -> AsyncMock:
     """"""The HTTP response the mocked session hands back; each test sets its ``json``.""""""
     response = AsyncMock()
     response.status = 200
-    return response",has_mock=True (num_mocks=1),,,,
+    return response",has_mock=True (num_mocks=1),,
 A:python:13404,https://github.com/lablup/backend.ai/blob/61251e7a7ae4a0e787d0f83bd0e3427b14853d2c/tests/unit/manager/services/etcd_config/test_etcd_config_service.py#L41-L42,"def mock_etcd(self) -> AsyncMock:
-        return AsyncMock(spec=AsyncEtcd)",has_mock=True (num_mocks=1),,,,
+        return AsyncMock(spec=AsyncEtcd)",has_mock=True (num_mocks=1),,
 A:python:13152,https://github.com/lablup/backend.ai/blob/0213571c9a2cf636937b4bb1f6d82817159a94e5/tests/unit/manager/services/model_serving/actions/test_search_services.py#L62-L63,"def mock_storage_manager(self) -> MagicMock:
-        return MagicMock(spec=StorageSessionManager)",has_mock=True (num_mocks=1),,,,
+        return MagicMock(spec=StorageSessionManager)",has_mock=True (num_mocks=1),,
 C:python:42301,https://github.com/intel/ai-reference-models/blob/77c8ff642e5db53fff874651bb18513101047d28/tests/unit/test_launch_benchmark.py#L63-L64,"def mock_popen(patch):
-    return patch(""subprocess.Popen"")",has_mock=True (num_mocks=1),,,,
+    return patch(""subprocess.Popen"")",has_mock=True (num_mocks=1),,
 C:python:155949,https://github.com/boardgameio/boardgame.io/blob/2118162799d3fc1d8d2406a1a71d4246c382c1d9/python/test_boardgameio.py#L28-L43,"def setUp(self):
         self.game_state = {'_stateID': 1234, 'G': {}, 'ctx': {
             'actionPlayers': ['1'],
@@ -2140,7 +2140,7 @@ C:python:155949,https://github.com/boardgameio/boardgame.io/blob/2118162799d3fc1
         self.sockmock = mock.Mock(spec=io.SocketIO)()
         # instantiate SUT
         self.sut = Namespace(self.sockmock, 'default').set_bot_info(self.botmock)
-        self.sut.emit = mock.MagicMock(name='emit')",has_mock=True (num_mocks=3),,,,
+        self.sut.emit = mock.MagicMock(name='emit')",has_mock=True (num_mocks=3),,
 C:python:28035,https://github.com/zulip/zulip-terminal/blob/7800d049aa83ad30127c04ad33fc5d4120a1a35d/tests/ui_tools/test_popups.py#L123-L137,"def mock_external_classes(self, mocker):
         self.controller = mocker.Mock()
         mocker.patch.object(self.controller, 'maximum_popup_dimensions',
@@ -2155,7 +2155,7 @@ C:python:28035,https://github.com/zulip/zulip-terminal/blob/7800d049aa83ad30127c
                                     theme_name='zt_dark',
                                     color_depth=256,
                                     autohide_enabled=False,
-                                    footlink_enabled=True)",has_mock=True (num_mocks=2),,,,
+                                    footlink_enabled=True)",has_mock=True (num_mocks=2),,
 C:python:25539,https://github.com/aws/sagemaker-python-sdk/blob/7a4dc0b2188f4d9186bc79a972f7a098568f5902/tests/unit/test_tuner.py#L38-L48,"def sagemaker_session():
     boto_mock = Mock(name=""boto_session"", region_name=REGION)
     sms = Mock(name=""sagemaker_session"", boto_session=boto_mock, s3_client=None, s3_resource=None)
@@ -2166,10 +2166,10 @@ C:python:25539,https://github.com/aws/sagemaker-python-sdk/blob/7a4dc0b2188f4d91
     sms.sagemaker_client.describe_endpoint = Mock(return_value=ENDPOINT_DESC)
     sms.sagemaker_client.describe_endpoint_config = Mock(return_value=ENDPOINT_CONFIG_DESC)
 
-    return sms",has_mock=True (num_mocks=5),,,,
+    return sms",has_mock=True (num_mocks=5),,
 C:python:4587,https://github.com/robinhood/faust/blob/b5e159f1d104ad4a6aa674d14b6ba0be19b5f9f5/t/unit/app/test_router.py#L12-L14,"def assignor(self, *, app):
         assignor = app.assignor = Mock(name='assignor')
-        return assignor",has_mock=True (num_mocks=1),,,,
+        return assignor",has_mock=True (num_mocks=1),,
 A:python:3980,https://github.com/cloud-cv/evalai/blob/7183c0b0a8d3e38860a9b64ac9937978b7cab1e0/tests/unit/challenges/test_aws_utils.py#L8119-L8138,"def setUp(self):
         self.challenge = MagicMock()
         self.challenge.pk = 1
@@ -2189,11 +2189,11 @@ A:python:3980,https://github.com/cloud-cv/evalai/blob/7183c0b0a8d3e38860a9b64ac9
         self.ec2_client = MagicMock()
         self.ec2_client.describe_instance_type_offerings.return_value = {
             ""InstanceTypeOfferings"": [{""InstanceType"": ""g5.xlarge""}]
-        }",has_mock=True (num_mocks=3),,,,
+        }",has_mock=True (num_mocks=3),,
 A:python:11401,https://github.com/home-assistant/core/blob/86dc453c5564a4519c258a439df333d84367f90c/tests/components/irm_kmi/conftest.py#L36-L39,"def mock_setup_entry() -> Generator[None]:
     """"""Mock setting up a config entry.""""""
     with patch(""homeassistant.components.irm_kmi.async_setup_entry"", return_value=True):
-        yield",has_mock=True (num_mocks=1),,,,
+        yield",has_mock=True (num_mocks=1),,
 A:python:19912,https://github.com/rush86999/atom/blob/f0144f7e6ce1b5965753a990523505846ff4ad82/backend/tests/failure_modes/conftest.py#L487-L517,"def provider_cascade_scenario():
     """"""
     Simulate all providers failing sequentially.
@@ -2224,7 +2224,7 @@ A:python:19912,https://github.com/rush86999/atom/blob/f0144f7e6ce1b5965753a99052
             with patch(""core.llm.byok_handler.BYOKHandler.async_clients"", mocks):
                 yield
 
-    return _context",has_mock=True (num_mocks=4),,,,
+    return _context",has_mock=True (num_mocks=4),,
 A:python:19950,https://github.com/rush86999/atom/blob/88ff809de1794fc4303ac39a45225f3e74cb4612/backend/tests/test_api_integration_fixtures.py#L117-L201,"def mock_agent_resolver(db_session: Session):
     """"""
     Mock AgentContextResolver for testing.
@@ -2309,7 +2309,7 @@ A:python:19950,https://github.com/rush86999/atom/blob/88ff809de1794fc4303ac39a45
 
     resolver_mock.resolve_agent_for_request = mock_resolve
 
-    return resolver_mock",has_mock=True (num_mocks=1),,,,
+    return resolver_mock",has_mock=True (num_mocks=1),,
 A:python:6268,https://github.com/debpalash/OmniVoice-Studio/blob/1a4b95890a1fa7a5d695f96c8a667822dcc9009c/tests/test_lmstudio_model_discovery.py#L39-L48,"def _no_env_or_store(monkeypatch, llm):
     """"""A clean slate: no env pins, and a settings store that answers empty.
 
@@ -2319,11 +2319,11 @@ A:python:6268,https://github.com/debpalash/OmniVoice-Studio/blob/1a4b95890a1fa7a
     for var in (""LMSTUDIO_MODEL"", ""LMSTUDIO_BASE_URL"", ""OLLAMA_MODEL""):
         monkeypatch.delenv(var, raising=False)
     import services.settings_store as store
-    monkeypatch.setattr(store, ""get_text"", lambda *a, **k: """")",has_mock=True (num_mocks=2),,,,
+    monkeypatch.setattr(store, ""get_text"", lambda *a, **k: """")",has_mock=True (num_mocks=2),,
 A:python:8785,https://github.com/jgravelle/jcodemunch-mcp/blob/c769f257c6474ca733cc2772cd44b9aba5d994fd/tests/test_v1_108_206.py#L126-L129,"def counting_index(monkeypatch):
     _CountingCalleeIndex.builds = 0
     monkeypatch.setattr(_call_graph, ""_CalleeNameIndex"", _CountingCalleeIndex)
-    return _CountingCalleeIndex",has_mock=True (num_mocks=1),,,,
+    return _CountingCalleeIndex",has_mock=True (num_mocks=1),,
 A:python:12656,https://github.com/openakita/openakita/blob/5ebb0bc1cd426078d5fcf397ffd0187880bd922d/tests/integration/test_setup_flow.py#L27-L39,"def app(monkeypatch, tmp_path):
     """"""Build a fresh app instance with an isolated data dir per-test.
 
@@ -2336,7 +2336,7 @@ A:python:12656,https://github.com/openakita/openakita/blob/5ebb0bc1cd426078d5fcf
     monkeypatch.setattr(settings, ""project_root"", tmp_path)
     monkeypatch.delenv(""OPENAKITA_WEB_PASSWORD"", raising=False)
     monkeypatch.delenv(""TRUST_PROXY"", raising=False)
-    return create_app()",has_mock=True (num_mocks=3),,,,
+    return create_app()",has_mock=True (num_mocks=3),,
 A:python:6197,https://github.com/debpalash/OmniVoice-Studio/blob/66f2ea7e501030ac7a3edcb6ea3572fe40620e52/tests/test_profile_unification.py#L48-L56,"def fake_render(monkeypatch):
     """"""Stub the design sample renderer — CI has no TTS engine.""""""
     async def _fake(a, out_path):
@@ -2345,7 +2345,7 @@ A:python:6197,https://github.com/debpalash/OmniVoice-Studio/blob/66f2ea7e501030a
 
     from api.routers import archetypes as _arch
     monkeypatch.setattr(_arch, ""_render_archetype_wav"", _fake)
-    return _fake",has_mock=True (num_mocks=1),,,,
+    return _fake",has_mock=True (num_mocks=1),,
 A:python:13469,https://github.com/lablup/backend.ai/blob/db6c906cb3c93e2734e7fdaeb185b86b771d187b/tests/unit/manager/services/vfolder/test_vfolder_file_service.py#L55-L92,"def mock_storage_manager() -> MagicMock:
     manager = MagicMock()
     manager.get_proxy_and_volume.return_value = (""proxy1"", ""volume1"")
@@ -2383,19 +2383,19 @@ A:python:13469,https://github.com/lablup/backend.ai/blob/db6c906cb3c93e2734e7fda
     manager.get_client_api_url.return_value = MagicMock(
         __truediv__=lambda self, path: f""http://storage:6021/{path}""
     )
-    return manager",has_mock=True (num_mocks=11),,,,
+    return manager",has_mock=True (num_mocks=11),,
 C:python:30007,https://github.com/ansible-collections/community.general/blob/6c88b69d6fc32c1b1e8917fa71819cab588033cd/tests/unit/plugins/modules/remote_management/dellemc/test_ome_device_info.py#L42-L44,"def response_mock(self, mocker):
         response_class_mock = mocker.patch('ansible_collections.community.general.plugins.module_utils.remote_management.dellemc.ome.OpenURLResponse')
-        return response_class_mock",has_mock=True (num_mocks=1),,,,
+        return response_class_mock",has_mock=True (num_mocks=1),,
 C:python:25422,https://github.com/aws/sagemaker-python-sdk/blob/7a4dc0b2188f4d9186bc79a972f7a098568f5902/tests/unit/sagemaker/tensorflow/test_estimator_init.py#L25-L26,"def sagemaker_session():
-    return Mock(name=""sagemaker_session"", boto_region_name=REGION)",has_mock=True (num_mocks=1),,,,
+    return Mock(name=""sagemaker_session"", boto_region_name=REGION)",has_mock=True (num_mocks=1),,
 A:python:20245,https://github.com/rush86999/atom/blob/341c4e7c2f0bf49cc5931ff7c0be1a429100c25d/backend/tests/tools/test_browser_tool_coverage.py#L107-L113,"def mock_playwright_context(mock_playwright_browser, mock_playwright_page):
     """"""Mock Playwright BrowserContext object.""""""
     context = MagicMock()
     context.new_page = AsyncMock(return_value=mock_playwright_page)
     context.close = AsyncMock()
     context.cookies = AsyncMock(return_value=[])
-    return context",has_mock=True (num_mocks=4),,,,
+    return context",has_mock=True (num_mocks=4),,
 A:python:753,https://github.com/LC044/TrailSnap/blob/53086d3ff520bcdad5a759d2e82757c6c23ded76/package/ai/tests/test_nightly_unified_model_manager_gaps_20260829.py#L29-L64,"def manager(tmp_path, monkeypatch):
     catalog = {
         ""version"": 1,
@@ -2431,7 +2431,7 @@ A:python:753,https://github.com/LC044/TrailSnap/blob/53086d3ff520bcdad5a759d2e82
         ""app.services.unified_model_manager.settings.MODEL_PATH"",
         str(tmp_path / ""models""),
     )
-    return UnifiedModelManager()",has_mock=True (num_mocks=3),,,,
+    return UnifiedModelManager()",has_mock=True (num_mocks=3),,
 A:python:12326,https://github.com/pocketpaw/pocketpaw/blob/8d0151dce52f10eb644f541535007f4f42b3d0ea/tests/test_deep_work_api.py#L34-L51,"def test_app(temp_store_path, monkeypatch):
     """"""Create a test FastAPI app with Mission Control router.""""""
     reset_mission_control_store()
@@ -2449,7 +2449,7 @@ A:python:12326,https://github.com/pocketpaw/pocketpaw/blob/8d0151dce52f10eb644f5
     app = FastAPI()
     app.include_router(router, prefix=""/api/mission-control"")
 
-    return app",has_mock=True (num_mocks=2),,,,
+    return app",has_mock=True (num_mocks=2),,
 C:python:25493,https://github.com/aws/sagemaker-python-sdk/blob/7a4dc0b2188f4d9186bc79a972f7a098568f5902/tests/unit/test_pipeline_model.py#L58-L70,"def sagemaker_session():
     boto_mock = Mock(name=""boto_session"", region_name=REGION)
     sms = Mock(
@@ -2462,17 +2462,17 @@ C:python:25493,https://github.com/aws/sagemaker-python-sdk/blob/7a4dc0b2188f4d91
         s3_resource=None,
     )
     sms.default_bucket = Mock(name=""default_bucket"", return_value=BUCKET_NAME)
-    return sms",has_mock=True (num_mocks=3),,,,
+    return sms",has_mock=True (num_mocks=3),,
 A:python:2291,https://github.com/Significant-Gravitas/Auto-GPT/blob/c3c2737c42270a5434073617e7f9521fd66ff439/autogpt_platform/backend/backend/copilot/bot/threads_test.py#L11-L16,"def redis_mock():
     mock = AsyncMock()
     mock.get = AsyncMock()
     mock.set = AsyncMock()
     with patch(""backend.copilot.bot.threads.get_redis_async"", return_value=mock):
-        yield mock",has_mock=True (num_mocks=4),,,,
+        yield mock",has_mock=True (num_mocks=4),,
 C:python:120598,https://github.com/monzo/response/blob/3d666651e5dadc43e2e94f5e083050b2a75d3bd1/tests/slack/test_client.py#L12-L15,"def slack_api_mock(monkeypatch):
     client_mock = mock.Mock(spec=slackclient.SlackClient)
     monkeypatch.setattr(settings.SLACK_CLIENT, ""client"", client_mock)
-    return client_mock",has_mock=True (num_mocks=2),,,,
+    return client_mock",has_mock=True (num_mocks=2),,
 A:python:3760,https://github.com/bethington/ghidra-mcp/blob/62b77fb4c0d0477d82b588cbfc7b707e0436ec4b/tests/benchmark_e2e/conftest.py#L229-L243,"def fundoc_sandbox(tmp_path: Path, monkeypatch) -> Path:
     """"""Redirect every fun-doc state write into tmp_path.
 
@@ -2487,18 +2487,18 @@ A:python:3760,https://github.com/bethington/ghidra-mcp/blob/62b77fb4c0d0477d82b5
     monkeypatch.setenv(""FUNDOC_DASHBOARD"", ""false"")
     monkeypatch.delenv(""RE_KB_ARCHIVE_URL"", raising=False)
     monkeypatch.delenv(""GHIDRA_MCP_ARCHIVE_URL"", raising=False)
-    return root",has_mock=True (num_mocks=4),,,,
+    return root",has_mock=True (num_mocks=4),,
 A:python:13821,https://github.com/lablup/backend.ai/blob/4469b9ba85a59c920e787db225bf414387c89fa1/tests/unit/manager/services/vfolder/test_vfolder_search_service.py#L35-L36,"def mock_vfolder_repository(self) -> MagicMock:
-        return MagicMock(spec=VfolderRepository)",has_mock=True (num_mocks=1),,,,
+        return MagicMock(spec=VfolderRepository)",has_mock=True (num_mocks=1),,
 A:python:3003,https://github.com/ag-ui-protocol/ag-ui/blob/32f0e4d37f66875c601052d89a76665d24189d35/integrations/adk-middleware/python/tests/test_context_handling.py#L280-L284,"def mock_agent(self):
         """"""Create a mock ADK agent.""""""
         agent = Mock(spec=Agent)
         agent.name = ""test_agent""
-        return agent",has_mock=True (num_mocks=1),,,,
+        return agent",has_mock=True (num_mocks=1),,
 A:python:11737,https://github.com/home-assistant/core/blob/2c626fa8f0487a3e56d27bf6906b643f0ed78995/tests/components/rabbitair/test_init.py#L44-L47,"def rabbitair_connect() -> Generator[None]:
     """"""Mock connection.""""""
     with patch(""rabbitair.UdpClient.get_state"", return_value=get_mock_state()):
-        yield",has_mock=True (num_mocks=1),,,,
+        yield",has_mock=True (num_mocks=1),,
 A:python:5852,https://github.com/e2b-dev/e2b/blob/0b0c728fe8a6b3d72a89ad8e9739c6951fba2a29/packages/python-sdk/tests/async/volume_async/test_volume_content.py#L23-L37,"def volume(monkeypatch) -> AsyncVolume:
     real_get_api_client = volume_async_mod.get_volume_api_client
 
@@ -2513,17 +2513,17 @@ A:python:5852,https://github.com/e2b-dev/e2b/blob/0b0c728fe8a6b3d72a89ad8e9739c6
         return client
 
     monkeypatch.setattr(volume_async_mod, ""get_volume_api_client"", mock_get_api_client)
-    return AsyncVolume(volume_id=""vol-1"", name=""test-volume"", token=""vol-token"")",has_mock=True (num_mocks=1),,,,
+    return AsyncVolume(volume_id=""vol-1"", name=""test-volume"", token=""vol-token"")",has_mock=True (num_mocks=1),,
 A:python:13549,https://github.com/lablup/backend.ai/blob/26da0255d976695bb7dfc264dd1b0add2fa61cc9/tests/unit/manager/services/permission_controller/test_permission_controller_service.py#L872-L875,"def mock_repository(self) -> MagicMock:
         repository = MagicMock()
         repository.update_role_permissions = AsyncMock()
-        return repository",has_mock=True (num_mocks=2),,,,
+        return repository",has_mock=True (num_mocks=2),,
 A:python:2394,https://github.com/NousResearch/hermes-agent/blob/66fc2e2a92f53a826d836c167fc13bc68c5030c1/tests/gateway/test_buzz_adapter.py#L48-L53,"def _clean_env(monkeypatch, tmp_path):
     """"""Keep tests hermetic: no ambient Buzz env vars or real credentials.""""""
     for var in _ENV_VARS:
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setattr(_buzz_mod, ""_DEFAULT_CREDENTIALS_DIR"", tmp_path / ""no-creds"")
-    yield",has_mock=True (num_mocks=2),,,,
+    yield",has_mock=True (num_mocks=2),,
 A:python:12234,https://github.com/opencti-platform/connectors/blob/783fbc73420542f900753573ea7e3d182b4de852/stream/jira/tests/test_main.py#L10-L20,"def mock_opencti_connector_helper(monkeypatch):
     """"""Mock all heavy dependencies of OpenCTIConnectorHelper, typically API calls to OpenCTI.""""""
 
@@ -2534,15 +2534,15 @@ A:python:12234,https://github.com/opencti-platform/connectors/blob/783fbc7342054
     monkeypatch.setattr(f""{module_import_path}.OpenCTIApiClient"", MagicMock())
     monkeypatch.setattr(f""{module_import_path}.OpenCTIConnector"", MagicMock())
     monkeypatch.setattr(f""{module_import_path}.OpenCTIMetricHandler"", MagicMock())
-    monkeypatch.setattr(f""{module_import_path}.PingAlive"", MagicMock())",has_mock=True (num_mocks=14),,,,
+    monkeypatch.setattr(f""{module_import_path}.PingAlive"", MagicMock())",has_mock=True (num_mocks=14),,
 C:python:21410,https://github.com/faust-streaming/faust/blob/e23953473e3aca2c56f77963926ceec49aba1e57/tests/unit/sensors/test_base.py#L35-L36,"def table():
-    return Mock(name=""table"", autospec=Table)",has_mock=True (num_mocks=1),,,,
+    return Mock(name=""table"", autospec=Table)",has_mock=True (num_mocks=1),,
 A:python:8514,https://github.com/jhd3197/ServerKit/blob/8fe469e1fe7e9d5399f498e98a18ae40d52b2c1c/backend/tests/test_connect_storage.py#L48-L53,"def storage_file(tmp_path, monkeypatch):
     """"""storage.json in a temp dir; every test starts with no destination.""""""
     monkeypatch.setattr(StorageProviderService, 'CONFIG_FILE',
                         str(tmp_path / 'storage.json'))
     connect_commands.NONCES._seen.clear()
-    return tmp_path",has_mock=True (num_mocks=1),,,,
+    return tmp_path",has_mock=True (num_mocks=1),,
 A:python:3261,https://github.com/awslabs/aidlc-workflows/blob/93758f47b2e0a983ae7b276eb042c83431977348/scripts/aidlc-designreview/tests/unit1_foundation/test_logger.py#L216-L234,"def setup_method(self):
         """"""Reset singleton and initialize.""""""
         Logger._instance = None
@@ -2561,13 +2561,13 @@ A:python:3261,https://github.com/awslabs/aidlc-workflows/blob/93758f47b2e0a983ae
                 log_level=""INFO"",
             )
 
-        self.logger = Logger.get_instance()",has_mock=True (num_mocks=3),,,,
+        self.logger = Logger.get_instance()",has_mock=True (num_mocks=3),,
 A:python:8584,https://github.com/kennethreitz/pytheory/blob/af14599fe8c3c45a9fffc5da12e254b2407ca319/tests/test_metronome.py#L29-L34,"def fake_sd(monkeypatch):
     _FakeStream.written = []
     mod = types.ModuleType(""sounddevice"")
     mod.OutputStream = _FakeStream
     monkeypatch.setitem(sys.modules, ""sounddevice"", mod)
-    return _FakeStream",has_mock=True (num_mocks=1),,,,
+    return _FakeStream",has_mock=True (num_mocks=1),,
 A:python:16151,https://github.com/shotgun-sh/shotgun/blob/177c65d2dbd329fd982840b3bc276c6d18f6af63/test/unit/agents/test_sub_agent_streaming.py#L26-L38,"def agent_manager():
     """"""Create a minimal AgentManager for testing sub-agent message persistence.""""""
     deps = MagicMock(spec=AgentDeps)
@@ -2580,17 +2580,17 @@ A:python:16151,https://github.com/shotgun-sh/shotgun/blob/177c65d2dbd329fd982840
 
     manager = AgentManager(deps=deps, initial_type=AgentType.ROUTER)
     manager._current_agent_type = AgentType.ROUTER
-    return manager",has_mock=True (num_mocks=1),,,,
+    return manager",has_mock=True (num_mocks=1),,
 C:python:30014,https://github.com/ansible-collections/community.general/blob/6c88b69d6fc32c1b1e8917fa71819cab588033cd/tests/unit/plugins/modules/remote_management/oneview/conftest.py#L22-L27,"def mock_ansible_module():
     patcher_ansible = patch(ONEVIEW_MODULE_UTILS_PATH + '.AnsibleModule')
     patcher_ansible = patcher_ansible.start()
     ansible_module = Mock()
     patcher_ansible.return_value = ansible_module
-    return ansible_module",has_mock=True (num_mocks=1),,,,
+    return ansible_module",has_mock=True (num_mocks=1),,
 A:python:933,https://github.com/Mibayy/token-savior/blob/19a77470a4e10fbf6760e659ad5241054bcd0690/tests/test_memory_auto_extract.py#L26-L29,"def _memory_tmpdb(tmp_path: Path):
     db_path = tmp_path / ""memory.db""
     with patch.object(memory_db, ""MEMORY_DB_PATH"", db_path):
-        yield db_path",has_mock=True (num_mocks=1),,,,
+        yield db_path",has_mock=True (num_mocks=1),,
 A:python:19395,https://github.com/rush86999/atom/blob/30cfb37639b563de6522d71834959bd6169207e7/backend/tests/unit/test_workflow_template_system.py#L106-L115,"def template_manager(temp_template_dir):
     """"""Create a WorkflowTemplateManager instance with temp directory""""""
     with patch('core.workflow_template_system.Path'):
@@ -2600,7 +2600,7 @@ A:python:19395,https://github.com/rush86999/atom/blob/30cfb37639b563de6522d71834
         manager.templates = {}
         manager.marketplace = TemplateMarketplace()
         manager.template_files = {}
-        yield manager",has_mock=True (num_mocks=1),,,,
+        yield manager",has_mock=True (num_mocks=1),,
 A:python:14545,https://github.com/phidatahq/phidata/blob/eaef22f31835cdd0544b3332dee1dcb72dba5f45/libs/agno/tests/unit/os/routers/test_schedules_router.py#L45-L56,"def mock_db():
     """"""Create a mock DB with schedule methods.""""""
     db = MagicMock()
@@ -2612,14 +2612,14 @@ A:python:14545,https://github.com/phidatahq/phidata/blob/eaef22f31835cdd0544b333
     db.delete_schedule = MagicMock(return_value=True)
     db.get_schedule_runs = MagicMock(return_value=[])
     db.get_schedule_run = MagicMock(return_value=None)
-    return db",has_mock=True (num_mocks=9),,,,
+    return db",has_mock=True (num_mocks=9),,
 C:python:38595,https://github.com/kedro-org/kedro/blob/83ef80a39d8d25cd29d234bf008e851cf759fd59/tests/versioning/test_journal.py#L64-L65,"def fake_git_sha(mocker):
-    return mocker.patch(""kedro.versioning.journal._git_sha"", return_value=""git_sha"")",has_mock=True (num_mocks=1),,,,
+    return mocker.patch(""kedro.versioning.journal._git_sha"", return_value=""git_sha"")",has_mock=True (num_mocks=1),,
 A:python:20156,https://github.com/rush86999/atom/blob/ff7c8e6735782ab75345db586f983c355a6eabec/backend/tests/boundary_conditions/test_integration_boundaries.py#L28-L30,"def mock_db(self):
         """"""Mock database session""""""
-        return MagicMock()",has_mock=True (num_mocks=1),,,,
+        return MagicMock()",has_mock=True (num_mocks=1),,
 C:python:23475,https://github.com/spotify/klio/blob/9884d6a0b57ece99b4296023e98f50bed999f3b1/lib/tests/unit/message/test_serializer.py#L57-L58,"def logger(mocker):
-    return mocker.Mock()",has_mock=True (num_mocks=1),,,,
+    return mocker.Mock()",has_mock=True (num_mocks=1),,
 C:python:34873,https://github.com/azure/azure-cli/blob/269954fdbb197cd349b3f5c21ff8ea443cb467fe/src/azure-cli/azure/cli/command_modules/dls/tests/latest/test_dls_commands.py#L123-L135,"def setUp(self):
         try:
             import unittest.mock as mock
@@ -2632,7 +2632,7 @@ C:python:34873,https://github.com/azure/azure-cli/blob/269954fdbb197cd349b3f5c21
 
         self.mp = mock.patch('uuid.uuid4', const_uuid)
         self.mp.__enter__()
-        super(DataLakeStoreFileScenarioTest, self).setUp()",has_mock=True (num_mocks=1),,,,
+        super(DataLakeStoreFileScenarioTest, self).setUp()",has_mock=True (num_mocks=1),,
 A:python:18628,https://github.com/teng-lin/notebooklm-py/blob/b22bfeb036994eb44b87b8f14258a89ee53e4c16/tests/integration/test_cli_session_local.py#L38-L48,"def isolated_home(tmp_path: Path, monkeypatch) -> Path:
     """"""Redirect NOTEBOOKLM_HOME into ``tmp_path`` so tests touch no real state.
 
@@ -2643,7 +2643,7 @@ A:python:18628,https://github.com/teng-lin/notebooklm-py/blob/b22bfeb036994eb44b
     monkeypatch.setenv(""NOTEBOOKLM_HOME"", str(tmp_path))
     monkeypatch.delenv(""NOTEBOOKLM_PROFILE"", raising=False)
     monkeypatch.delenv(""NOTEBOOKLM_AUTH_JSON"", raising=False)
-    return tmp_path",has_mock=True (num_mocks=3),,,,
+    return tmp_path",has_mock=True (num_mocks=3),,
 C:python:26538,https://github.com/aws/aws-sam-cli/blob/a4344d0cc8258d561ac06450e31348a9df5e707c/tests/unit/lib/telemetry/test_telemetry.py#L12-L27,"def setUp(self):
         self.test_session_id = ""TestSessionId""
         self.test_installation_id = ""TestInstallationId""
@@ -2659,7 +2659,7 @@ C:python:26538,https://github.com/aws/aws-sam-cli/blob/a4344d0cc8258d561ac06450e
         self.context_patcher.start()
 
         self.context_mock.get_current_context.return_value.session_id = self.test_session_id
-        self.gc_mock.return_value.installation_id = self.test_installation_id",has_mock=True (num_mocks=4),,,,
+        self.gc_mock.return_value.installation_id = self.test_installation_id",has_mock=True (num_mocks=4),,
 C:python:23116,https://github.com/anchore/anchore-engine/blob/4edf808a29ba5f6c44a62fba3c2c8cde61d90807/tests/unit/anchore_engine/services/policy_engine/policy/gates/test_retrieved_files.py#L14-L22,"def image(monkeypatch):
     monkeypatch.setattr(
         Image, ""analysis_artifacts"", MockAnalysisArtifacts(), raising=True
@@ -2668,7 +2668,7 @@ C:python:23116,https://github.com/anchore/anchore-engine/blob/4edf808a29ba5f6c44
     return Image(
         id=image_id,
         user_id=user,
-    )",has_mock=True (num_mocks=1),,,,
+    )",has_mock=True (num_mocks=1),,
 A:python:14614,https://github.com/polarsource/polar/blob/e541adee7cda3d575436fca9576047954835768e/server/tests/worker/test_debounce.py#L16-L23,"def redis() -> AsyncMock:
     pipe = AsyncMock()
     pipe.__aenter__ = AsyncMock(return_value=pipe)
@@ -2676,7 +2676,7 @@ A:python:14614,https://github.com/polarsource/polar/blob/e541adee7cda3d575436fca
 
     mock = AsyncMock()
     mock.pipeline = MagicMock(return_value=pipe)
-    return mock",has_mock=True (num_mocks=5),,,,
+    return mock",has_mock=True (num_mocks=5),,
 C:python:82049,https://github.com/pytorch/serve/blob/c889f5bdd296f09ce248acdc58ceb69796bf033b/ts/tests/unit_tests/test_model_loader.py#L55-L63,"def patches(self, mocker):
         Patches = namedtuple('Patches', ['mock_open', 'os_path', ""is_file"", ""open_signature""])
         patches = Patches(
@@ -2685,7 +2685,7 @@ C:python:82049,https://github.com/pytorch/serve/blob/c889f5bdd296f09ce248acdc58c
             mocker.patch('os.path.isfile'),
             mocker.patch('ts.model_service.model_service.open')
         )
-        return patches",has_mock=True (num_mocks=4),,,,
+        return patches",has_mock=True (num_mocks=4),,
 A:python:19636,https://github.com/rush86999/atom/blob/4dbbb4a970ad44b131597b4163740c09c7da1ec4/backend/tests/test_package_api_integration.py#L38-L49,"def mock_governance():
     """"""Mock package governance service.""""""
     with patch('api.package_routes.PackageGovernanceService') as mock:
@@ -2697,7 +2697,7 @@ A:python:19636,https://github.com/rush86999/atom/blob/4dbbb4a970ad44b131597b4163
         }
         instance.list_packages.return_value = []
         instance.get_cache_stats.return_value = {""hit_rate"": 95.0}
-        yield instance",has_mock=True (num_mocks=1),,,,
+        yield instance",has_mock=True (num_mocks=1),,
 A:python:2984,https://github.com/ag-ui-protocol/ag-ui/blob/790606fba05a46951096fcc23c08d83715343722/integrations/adk-middleware/python/tests/test_message_history.py#L529-L539,"def real_agent(self):
         """"""Create a real ADKAgent for integration testing.""""""
         mock_adk = MagicMock()
@@ -2708,14 +2708,14 @@ A:python:2984,https://github.com/ag-ui-protocol/ag-ui/blob/790606fba05a46951096f
             app_name=""integration_test"",
             user_id=""test_user""
         )
-        return agent",has_mock=True (num_mocks=1),,,,
+        return agent",has_mock=True (num_mocks=1),,
 C:python:23324,https://github.com/spotify/klio/blob/9884d6a0b57ece99b4296023e98f50bed999f3b1/cli/tests/commands/job/test_run.py#L78-L84,"def mock_docker_client(mocker):
     mock_client = mocker.Mock()
     mock_container = mocker.Mock()
     mock_container.wait.return_value = {""StatusCode"": 0}
     mock_container.logs.return_value = [b""a log line\n"", b""another log line\n""]
     mock_client.containers.run.return_value = mock_container
-    return mock_client",has_mock=True (num_mocks=2),,,,
+    return mock_client",has_mock=True (num_mocks=2),,
 A:python:8049,https://github.com/homeassistant-ai/ha-mcp/blob/607642e21be926d1b8a4185f4ca0135a0a05abfc/tests/src/unit/test_bm25_search.py#L243-L250,"def smart_tools(self):
         from unittest.mock import AsyncMock
 
@@ -2723,7 +2723,7 @@ A:python:8049,https://github.com/homeassistant-ai/ha-mcp/blob/607642e21be926d1b8
 
         mock_client = AsyncMock()
         mock_client.get_states = AsyncMock(return_value=[])
-        return SmartSearchTools(client=mock_client, fuzzy_threshold=60)",has_mock=True (num_mocks=2),,,,
+        return SmartSearchTools(client=mock_client, fuzzy_threshold=60)",has_mock=True (num_mocks=2),,
 A:python:41152,https://github.com/durable-streams/durable-streams/blob/c217443b6d2591d308ace9abac168ba25cdf6e55/packages/client-py/tests/test_one_shot.py#L15-L28,"def mock_response(self) -> MagicMock:
         """"""Create a mock httpx Response.""""""
         response = MagicMock()
@@ -2737,7 +2737,7 @@ A:python:41152,https://github.com/durable-streams/durable-streams/blob/c217443b6
         response.iter_bytes.return_value = iter([b'[{""id"": 1}]'])
         response.read.return_value = b'[{""id"": 1}]'
         response.close.return_value = None
-        return response",has_mock=True (num_mocks=1),,,,
+        return response",has_mock=True (num_mocks=1),,
 A:python:14604,https://github.com/phidatahq/phidata/blob/daebf37d4a31b7789e80680a0cb17748339a29df/libs/agno/tests/unit/db/test_postgres_component_reactivation.py#L13-L41,"def postgres_components_db(tmp_path):
     """"""Run the generic SQLAlchemy component lifecycle without a live PostgreSQL service.""""""
     engine = create_engine(f""sqlite:///{tmp_path / 'components.db'}"")
@@ -2766,11 +2766,11 @@ A:python:14604,https://github.com/phidatahq/phidata/blob/daebf37d4a31b7789e80680
         yield db
 
     db.Session.remove()
-    engine.dispose()",has_mock=True (num_mocks=1),,,,
+    engine.dispose()",has_mock=True (num_mocks=1),,
 C:python:19947,https://github.com/robocorp/rpaframework/blob/b86e6e348f1d69fe54c1349e01312f55e357a799/packages/main/tests/python/test_secrets.py#L47-L48,"def mock_env_default(monkeypatch):
-    monkeypatch.delenv(""RPA_SECRET_MANAGER"", raising=False)",has_mock=True (num_mocks=1),,,,
+    monkeypatch.delenv(""RPA_SECRET_MANAGER"", raising=False)",has_mock=True (num_mocks=1),,
 A:python:18036,https://github.com/vstorm-co/full-stack-fastapi-nextjs-llm-template/blob/dfa1e463d6c7971615c5ed94f900d8cad77bbbce/template/{{cookiecutter.project_slug}}/backend/tests/test_stripe_seats.py#L174-L175,"def mock_db(self):
-        return MagicMock()",has_mock=True (num_mocks=1),,,,
+        return MagicMock()",has_mock=True (num_mocks=1),,
 A:python:14880,https://github.com/quay/quay/blob/72314fcd1891867a2323c3a25b3cbed3b6cd4b95/data/logs_model/test/test_splunk_field_mapper.py#L54-L65,"def mock_model():
     """"""Mock the data.model module.""""""
     model = Mock(
@@ -2782,7 +2782,7 @@ A:python:14880,https://github.com/quay/quay/blob/72314fcd1891867a2323c3a25b3cbed
         repository=Mock(get_repository=lambda _ns, _name: Mock(id=1) if _name == ""repo1"" else None),
     )
     with patch(""data.logs_model.splunk_field_mapper.model"", model):
-        yield model",has_mock=True (num_mocks=7),,,,
+        yield model",has_mock=True (num_mocks=7),,
 A:python:13185,https://github.com/lablup/backend.ai/blob/76c2e9aa8c6c1174ecde0736f9d492d57e058107/tests/unit/manager/api/image/test_handler.py#L366-L373,"def mock_alias_result(self) -> MagicMock:
         """"""Mock alias image action result.""""""
         result = MagicMock()
@@ -2790,7 +2790,7 @@ A:python:13185,https://github.com/lablup/backend.ai/blob/76c2e9aa8c6c1174ecde073
         result.image_alias = MagicMock()
         result.image_alias.id = uuid4()
         result.image_alias.alias = ""python3""
-        return result",has_mock=True (num_mocks=2),,,,
+        return result",has_mock=True (num_mocks=2),,
 A:python:8859,https://github.com/llmsresearch/paperbanana/blob/e3d975a37c6f7000dcefdef745a09d05010efce7/tests/test_providers/test_gemini_thinking.py#L151-L196,"def _mock_genai_none_response(self, monkeypatch):
         """"""Mock Gemini to return None text.""""""
         import types as builtin_types
@@ -2836,14 +2836,14 @@ A:python:8859,https://github.com/llmsresearch/paperbanana/blob/e3d975a37c6f7000d
         monkeypatch.setitem(sys.modules, ""google.genai"", mock_genai)
         monkeypatch.setitem(sys.modules, ""google.genai.types"", mock_types)
 
-        return _FakeClient",has_mock=True (num_mocks=6),,,,
+        return _FakeClient",has_mock=True (num_mocks=6),,
 A:python:15215,https://github.com/microsoft/apm/blob/1e67882117a3d6e72cf331090b24c7d4f0bfb828/tests/unit/marketplace/test_marketplace_commands_surface.py#L47-L53,"def _isolate_config(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """"""Isolate filesystem writes for every test.""""""
     config_dir = str(tmp_path / "".apm"")
     monkeypatch.setattr(""apm_cli.config.CONFIG_DIR"", config_dir)
     monkeypatch.setattr(""apm_cli.config.CONFIG_FILE"", str(tmp_path / "".apm"" / ""config.json""))
     monkeypatch.setattr(""apm_cli.config._config_cache"", None)
-    monkeypatch.setattr(""apm_cli.marketplace.registry._registry_cache"", None)",has_mock=True (num_mocks=4),,,,
+    monkeypatch.setattr(""apm_cli.marketplace.registry._registry_cache"", None)",has_mock=True (num_mocks=4),,
 A:python:2670,https://github.com/YoungCan-Wang/WyckoffTradingAgent/blob/779fb47eee7f5f1b972c05442c33e9495ab1fa11/tests/integrations/test_app_browser.py#L19-L49,"def connected(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
     """"""假装运行在桌面应用里，并记录发出的请求。""""""
     monkeypatch.setenv(ab.ENV_URL, ""http://127.0.0.1:9999"")
@@ -2874,7 +2874,7 @@ A:python:2670,https://github.com/YoungCan-Wang/WyckoffTradingAgent/blob/779fb47e
         return FakeResponse({""ok"": True, ""result"": {""done"": action}})
 
     monkeypatch.setattr(ab.urllib.request, ""urlopen"", fake_urlopen)
-    return sent",has_mock=True (num_mocks=3),,,,
+    return sent",has_mock=True (num_mocks=3),,
 A:python:6202,https://github.com/debpalash/OmniVoice-Studio/blob/1650a121db1ef430872f5ebf6c4ec6b1ac3accb7/tests/test_dub_multispeaker_voice_486.py#L128-L184,"def patched_generate(monkeypatch, tmp_path):
     import api.routers.dub_generate as dg
 
@@ -2931,36 +2931,36 @@ A:python:6202,https://github.com/debpalash/OmniVoice-Studio/blob/1650a121db1ef43
         asyncio.run(dg.dub_generate(""jobX"", req))
         return model
 
-    return run",has_mock=True (num_mocks=12),,,,
+    return run",has_mock=True (num_mocks=12),,
 A:python:8041,https://github.com/homeassistant-ai/ha-mcp/blob/806e64ec7ab7f8db3ef1f62fa1e65d3f1d139f39/tests/src/unit/test_tools_entities.py#L1115-L1119,"def mock_client(self):
         """"""Create a mock Home Assistant client.""""""
         client = MagicMock()
         client.send_websocket_message = AsyncMock()
-        return client",has_mock=True (num_mocks=2),,,,
+        return client",has_mock=True (num_mocks=2),,
 A:python:1608,https://github.com/Osmantic/ODS/blob/1f9e6dae1a91ff274dac2f580996ae9f8d60f414/resources/dev/extensions-library/services/bark/test_server.py#L60-L64,"def mock_soundfile_read():
     """"""Mock soundfile.read for stream endpoint.""""""
     with patch(""extensions.services.bark.server.sf.read"") as mock:
         mock.return_value = (np.array([0.1] * 24000, dtype=np.float32), 24000)
-        yield mock",has_mock=True (num_mocks=1),,,,
+        yield mock",has_mock=True (num_mocks=1),,
 A:python:11648,https://github.com/home-assistant/core/blob/6edcf5722eb319d7e2805fa61c45f755e60b3d71/tests/components/data_grand_lyon/conftest.py#L46-L51,"def mock_setup_entry() -> Generator[AsyncMock]:
     """"""Override async_setup_entry.""""""
     with patch(
         ""homeassistant.components.data_grand_lyon.async_setup_entry"", return_value=True
     ) as mock_setup_entry:
-        yield mock_setup_entry",has_mock=True (num_mocks=1),,,,
+        yield mock_setup_entry",has_mock=True (num_mocks=1),,
 A:python:11539,https://github.com/home-assistant/core/blob/51acdeb5635688ea6cb6a248e9a7acdd0e7cfe45/tests/components/orvibo/conftest.py#L49-L54,"def mock_setup_entry():
     """"""Override async_setup_entry so config flow tests don't try to setup the integration.""""""
     with patch(
         ""homeassistant.components.orvibo.async_setup_entry"", return_value=True
     ) as mock_setup:
-        yield mock_setup",has_mock=True (num_mocks=1),,,,
+        yield mock_setup",has_mock=True (num_mocks=1),,
 A:python:11693,https://github.com/home-assistant/core/blob/ad139b259b4df3a60c83aeecb4f6bfc8e98e6d07/tests/components/system_bridge/test_notify.py#L27-L33,"def notify_only() -> Generator[None]:
     """"""Enable only the notify platform.""""""
     with patch(
         ""homeassistant.components.system_bridge.PLATFORMS"",
         [Platform.NOTIFY],
     ):
-        yield",has_mock=True (num_mocks=1),,,,
+        yield",has_mock=True (num_mocks=1),,
 A:python:266,https://github.com/Comfy-Org/comfy-cli/blob/e36fdd33e48e9b46fa12c06feaba307234a7652a/tests/comfy_cli/cql/test_annotations_source.py#L26-L34,"def _isolate_cache(tmp_path, monkeypatch):
     """"""Point the cache at a temp dir and default to network-off for safety.
 
@@ -2969,7 +2969,7 @@ A:python:266,https://github.com/Comfy-Org/comfy-cli/blob/e36fdd33e48e9b46fa12c06
     """"""
     monkeypatch.setattr(src, ""_cache_dir"", lambda: tmp_path / ""comfy-complete"")
     monkeypatch.setenv(""COMFY_CLI_NO_REMOTE_REFRESH"", ""1"")
-    yield",has_mock=True (num_mocks=2),,,,
+    yield",has_mock=True (num_mocks=2),,
 A:python:264,https://github.com/Comfy-Org/comfy-cli/blob/04d2c96961be8373a2332ce4edd45571c81d363e/tests/comfy_cli/command/test_node_deps.py#L42-L49,"def _isolated_registry_cache(tmp_path, monkeypatch):
     """"""Point the shared ``outdated.json`` registry cache at a throwaway dir.
 
@@ -2977,7 +2977,7 @@ A:python:264,https://github.com/Comfy-Org/comfy-cli/blob/04d2c96961be8373a2332ce
     from ``XDG_CACHE_HOME`` at call time — without this, a test run would read
     and rewrite the developer's real cache.
     """"""
-    monkeypatch.setenv(""XDG_CACHE_HOME"", str(tmp_path / ""cache""))",has_mock=True (num_mocks=1),,,,
+    monkeypatch.setenv(""XDG_CACHE_HOME"", str(tmp_path / ""cache""))",has_mock=True (num_mocks=1),,
 A:python:20681,https://github.com/rush86999/atom/blob/aebd64ba007bd098789028cfc435395b867a7f1a/backend/tests/core/episode/test_episode_service.py#L320-L330,"def service(mock_db, mock_embedding_service, mock_lancedb_service, mock_activity_publisher):
     """"""Create EpisodeService instance with all dependencies mocked""""""
     with patch('core.episode_service.LanceDBService', return_value=mock_lancedb_service):
@@ -2988,11 +2988,11 @@ A:python:20681,https://github.com/rush86999/atom/blob/aebd64ba007bd098789028cfc4
             embedding_service=mock_embedding_service
         )
         svc.lancedb = mock_lancedb_service
-        return svc",has_mock=True (num_mocks=1),,,,
+        return svc",has_mock=True (num_mocks=1),,
 A:python:20605,https://github.com/rush86999/atom/blob/fe49463426adff0dc14be125e7a605149f6e3827/backend/tests/test_graduation_exam.py#L378-L381,"def mock_db(self):
         """"""Mock database session.""""""
         db = Mock(spec=Session)
-        return db",has_mock=True (num_mocks=1),,,,
+        return db",has_mock=True (num_mocks=1),,
 A:python:1120,https://github.com/HKUDS/LightRAG/blob/1348348318f42f50526e0563858056ba320a7f27/tests/api/auth/test_shared_credential_check.py#L37-L47,"def patterns(monkeypatch):
     def _set(entries):
         compiled = []
@@ -3003,12 +3003,12 @@ A:python:1120,https://github.com/HKUDS/LightRAG/blob/1348348318f42f50526e0563858
                 compiled.append((entry, False))
         monkeypatch.setattr(_utils_api, ""whitelist_patterns"", compiled)
 
-    return _set",has_mock=True (num_mocks=1),,,,
+    return _set",has_mock=True (num_mocks=1),,
 A:python:11103,https://github.com/nvidia/nemo/blob/e0a196acfd6f5b0b867b78e299a20773d20f2467/tests/collections/llm/gpt/data/test_mlperf_govreport.py#L37-L41,"def mock_trainer():
     trainer = MagicMock()
     trainer.global_step = 0
     trainer.max_steps = 1000
-    return trainer",has_mock=True (num_mocks=1),,,,
+    return trainer",has_mock=True (num_mocks=1),,
 A:python:1936,https://github.com/Pipelex/pipelex/blob/75782475514c79ab33ed0089698888540f548bde/tests/unit/pipelex/cli/test_migrate_cmd_gitignore.py#L50-L61,"def blocked_machine(tmp_path: Path, mocker: MockerFixture) -> Path:
     """"""One configuration directory the ledger cannot act on at all.
 
@@ -3020,9 +3020,9 @@ A:python:1936,https://github.com/Pipelex/pipelex/blob/75782475514c79ab33ed008969
     config_dir.mkdir()
     (config_dir / ""telemetry.toml"").write_text(""this is = = not toml\n"", encoding=""utf-8"")
     mocker.patch.object(migrate_cmd_module, ""config_directories_to_migrate"", return_value=[config_dir])
-    return config_dir",has_mock=True (num_mocks=1),,,,
+    return config_dir",has_mock=True (num_mocks=1),,
 A:python:17423,https://github.com/sipyourdrink-ltd/bernstein/blob/6dbec494955544eb40f0a0df219b0099fa6dd559/tests/unit/test_task_server_url_resolution.py#L18-L19,"def _no_ambient_server_url(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(""BERNSTEIN_SERVER_URL"", raising=False)",has_mock=True (num_mocks=1),,,,
+    monkeypatch.delenv(""BERNSTEIN_SERVER_URL"", raising=False)",has_mock=True (num_mocks=1),,
 C:python:26647,https://github.com/bytedance/fedlearner/blob/e2f004d9e2a68fd681d47287145ffccbaefa2337/web_console_v2/api/test/fedlearner_webconsole/rpc/client_test.py#L90-L105,"def setUp(self):
         self._client_execution_thread_pool = logging_pool.pool(1)
 
@@ -3038,11 +3038,11 @@ C:python:26647,https://github.com/bytedance/fedlearner/blob/e2f004d9e2a68fd681d4
             self._project_config, self._participant)
 
         self._mock_build_channel.assert_called_once_with(
-            self._TEST_URL, self._TEST_AUTHORITY)",has_mock=True (num_mocks=1),,,,
+            self._TEST_URL, self._TEST_AUTHORITY)",has_mock=True (num_mocks=1),,
 A:python:188,https://github.com/CelestoAI/SmolVM/blob/6b6d86efbd03df8296046f3af2cb9fa3e35d9e17/tests/test_network.py#L26-L29,"def _disable_native_extension():
     """"""Force subprocess path in all network tests (native extension may be present on Linux CI).""""""
     with patch(""smolvm.network._HAS_NATIVE"", False):
-        yield",has_mock=True (num_mocks=1),,,,
+        yield",has_mock=True (num_mocks=1),,
 A:python:19625,https://github.com/rush86999/atom/blob/78911efddec83d17b841a03f8638f12e16c27616/backend/tests/property_tests/llm/test_byok_handler_provider_invariants.py#L38-L53,"def mock_byok_manager():
     """"""Mock BYOKManager for provider key management""""""
     manager = MagicMock()
@@ -3058,11 +3058,11 @@ A:python:19625,https://github.com/rush86999/atom/blob/78911efddec83d17b841a03f86
         ""mistral"": ""sk-mistral-test-key"",
     }.get(provider_id))
     manager.get_tenant_api_key = manager.get_api_key
-    return manager",has_mock=True (num_mocks=3),,,,
+    return manager",has_mock=True (num_mocks=3),,
 A:python:11442,https://github.com/home-assistant/core/blob/c67247bf320265182970a1763655d95919837e42/tests/components/vivotek/conftest.py#L44-L47,"def mock_setup_entry() -> Generator[None]:
     """"""Mock setting up a config entry.""""""
     with patch(""homeassistant.components.vivotek.async_setup_entry"", return_value=True):
-        yield",has_mock=True (num_mocks=1),,,,
+        yield",has_mock=True (num_mocks=1),,
 A:python:7195,https://github.com/fim-ai/fim-one/blob/d77b1ae16b98cf729b9d6af23b59e38d91569f8f/tests/test_org_exit_reclaim.py#L33-L40,"def _cred_key(monkeypatch: pytest.MonkeyPatch) -> Any:
     import fim_one.core.security.encryption as enc
 
@@ -3070,12 +3070,12 @@ A:python:7195,https://github.com/fim-ai/fim-one/blob/d77b1ae16b98cf729b9d6af23b5
     enc._CREDENTIAL_KEY_RAW = ""test-reclaim-key-1234567890""
     enc._cred_fernet_instance = None
     yield
-    enc._cred_fernet_instance = None",has_mock=True (num_mocks=1),,,,
+    enc._cred_fernet_instance = None",has_mock=True (num_mocks=1),,
 A:python:29410,https://github.com/AgentWorkforce/relay/blob/1bc054580b91fe644c731ec39e6d4de4d35fde51/packages/sdk-py/tests/communicate/adapters/test_swarms.py#L33-L37,"def mock_agent():
     agent = MagicMock()
     agent.tools = []
     agent.receive_message = MagicMock()
-    return agent",has_mock=True (num_mocks=2),,,,
+    return agent",has_mock=True (num_mocks=2),,
 A:python:13450,https://github.com/lablup/backend.ai/blob/4da12877346e2139d0aa7e17eb0a5151317d8afe/tests/unit/manager/services/model_serving/actions/test_model_serving_crud_actions.py#L310-L320,"def mock_get_endpoint_access_validation_data(
         self, mocker: Any, mock_repositories: Any
     ) -> AsyncMock:
@@ -3086,7 +3086,7 @@ A:python:13450,https://github.com/lablup/backend.ai/blob/4da12877346e2139d0aa7e1
                 ""get_endpoint_access_validation_data"",
                 new_callable=AsyncMock,
             ),
-        )",has_mock=True (num_mocks=1),,,,
+        )",has_mock=True (num_mocks=1),,
 A:python:3299,https://github.com/awslabs/aidlc-workflows/blob/93758f47b2e0a983ae7b276eb042c83431977348/scripts/aidlc-designreview/tests/unit5_cli/test_application.py#L84-L101,"def mock_all_deps():
     """"""Patch ConfigManager and all lazily-imported dependencies. Returns dict of mocks.""""""
     mocks = {}
@@ -3104,7 +3104,7 @@ A:python:3299,https://github.com/awslabs/aidlc-workflows/blob/93758f47b2e0a983ae
             name = path.rsplit(""."", 1)[-1]
             mocks[name] = stack.enter_context(patch(path))
 
-        yield mocks",has_mock=True (num_mocks=2),,,,
+        yield mocks",has_mock=True (num_mocks=2),,
 A:python:3794,https://github.com/apache/airflow/blob/6b0ccd384171fa9d662b13d429f180d78487b538/airflow-core/tests/unit/serialization/test_deadline_reference_registry.py#L50-L58,"def fake_plugin_registry(monkeypatch):
     """"""Stub `get_deadline_references_plugins` to advertise a single registered class.""""""
     registered = {_IMPORTABLE: _RegisteredCustomReference}
@@ -3113,7 +3113,7 @@ A:python:3794,https://github.com/apache/airflow/blob/6b0ccd384171fa9d662b13d429f
         ""get_deadline_references_plugins"",
         lambda: registered,
     )
-    return registered",has_mock=True (num_mocks=1),,,,
+    return registered",has_mock=True (num_mocks=1),,
 A:python:16961,https://github.com/trailofbits/algo/blob/b821080ebad55ed26e8e2e20f541ada7cd9d74e1/tests/unit/test_lightsail_boto3_fix.py#L21-L35,"def setUp(self):
         """"""Set up test fixtures.""""""
         # Mock the ansible module_utils since we're testing outside of Ansible
@@ -3128,7 +3128,7 @@ A:python:16961,https://github.com/trailofbits/algo/blob/b821080ebad55ed26e8e2e20
         for module_name, mock_module in self.mock_modules.items():
             patcher = patch.dict('sys.modules', {module_name: mock_module})
             patcher.start()
-            self.patches.append(patcher)",has_mock=True (num_mocks=3),,,,
+            self.patches.append(patcher)",has_mock=True (num_mocks=3),,
 A:python:20008,https://github.com/rush86999/atom/blob/a440c8556091633634801b121edaccc84079e311/backend/tests/critical_error_paths/conftest.py#L91-L134,"def mock_connection_failure():
     """"""
     Patch engine.connect to raise OperationalError (connection failure).
@@ -3172,7 +3172,7 @@ A:python:20008,https://github.com/rush86999/atom/blob/a440c8556091633634801b121e
         with patch(""core.database.engine.connect"", side_effect=side_effect):
             yield
 
-    return _patch",has_mock=True (num_mocks=3),,,,
+    return _patch",has_mock=True (num_mocks=3),,
 A:python:8790,https://github.com/jgravelle/jcodemunch-mcp/blob/75eab1acf251b1c16da89457b0678b37ca3dfb6e/tests/test_v1_108_208.py#L47-L66,"def _r208_env(tmp_path, monkeypatch):
     """"""A two-symbol indexed repo plus the live server, on a private index store.""""""
     monkeypatch.setenv(""CODE_INDEX_PATH"", str(tmp_path / ""idx""))
@@ -3192,7 +3192,7 @@ A:python:8790,https://github.com/jgravelle/jcodemunch-mcp/blob/75eab1acf251b1c16
     _r208_receipts.clear_receipts()
     indexed = _r208_call(server, ""index_folder"", {""path"": str(proj)})
     yield server, indexed[""repo""]
-    _r208_receipts.clear_receipts()",has_mock=True (num_mocks=1),,,,
+    _r208_receipts.clear_receipts()",has_mock=True (num_mocks=1),,
 A:python:8318,https://github.com/jhd3197/ServerKit/blob/6f5f2b10470a8b71fa2058432f375c8e3f4387f2/backend/tests/test_registry.py#L23-L30,"def plugin_dirs(tmp_path, monkeypatch):
     backend = tmp_path / 'b'
     frontend = tmp_path / 'f'
@@ -3200,7 +3200,7 @@ A:python:8318,https://github.com/jhd3197/ServerKit/blob/6f5f2b10470a8b71fa205843
         d.mkdir()
     monkeypatch.setattr(plugin_service, 'BACKEND_PLUGINS_DIR', str(backend))
     monkeypatch.setattr(plugin_service, 'FRONTEND_PLUGINS_DIR', str(frontend))
-    return {'backend': backend, 'frontend': frontend}",has_mock=True (num_mocks=2),,,,
+    return {'backend': backend, 'frontend': frontend}",has_mock=True (num_mocks=2),,
 C:python:43689,https://github.com/fivetran/great_expectations/blob/ec6729edb9df93b95206ce6d4bdeec0d4d3a2c44/tests/data_context/conftest.py#L28-L43,"def data_context_with_variables_in_config(tmp_path_factory, monkeypatch):
     monkeypatch.setenv(""FOO"", ""BAR"")
     monkeypatch.setenv(""REPLACE_ME_ESCAPED_ENV"", ""ive_been_$--replaced"")
@@ -3216,24 +3216,24 @@ C:python:43689,https://github.com/fivetran/great_expectations/blob/ec6729edb9df9
         config_variables_fixture_filename=""config_variables.yml"",
     )
 
-    return ge.data_context.DataContext(context_path)",has_mock=True (num_mocks=2),,,,
+    return ge.data_context.DataContext(context_path)",has_mock=True (num_mocks=2),,
 A:python:11116,https://github.com/nvidia/nemo/blob/e0a196acfd6f5b0b867b78e299a20773d20f2467/tests/collections/llm/gpt/data/test_squad.py#L28-L33,"def mock_tokenizer():
     tokenizer = MagicMock()
     tokenizer.text_to_ids.side_effect = lambda text: [ord(c) for c in text]  # Mock character-based token IDs
     tokenizer.bos_id = 1
     tokenizer.eos_id = 2
-    return tokenizer",has_mock=True (num_mocks=1),,,,
+    return tokenizer",has_mock=True (num_mocks=1),,
 A:python:10408,https://github.com/newfuture/ddns/blob/93d4698ff7000b7c585e248ad9746743f00c7a6c/tests/test_provider_west.py#L324-L328,"def setUp(self):
         """"""测试初始化""""""
         super(TestWestProviderTryUpdate, self).setUp()
         self.provider = WestProvider(self.id, self.token)
-        self.provider.logger = MagicMock()",has_mock=True (num_mocks=1),,,,
+        self.provider.logger = MagicMock()",has_mock=True (num_mocks=1),,
 A:python:1725,https://github.com/SafeRL-Lab/cheetahclaws/blob/c12a1356791992c5938389cb0cea9ae866b2cb1f/tests/test_kernel_fetch_streaming.py#L83-L88,"def kernel_for_local(monkeypatch):
     monkeypatch.setattr(
         ""cc_kernel.tools.fetch_tool._is_private_ip"",
         lambda ip: False,
     )
-    return _AllowAllKernel()",has_mock=True (num_mocks=1),,,,
+    return _AllowAllKernel()",has_mock=True (num_mocks=1),,
 C:typescript:170678,https://github.com/firebase/firebase-js-sdk/blob/487f8e1d2c6bd1a54305f2b0f148b4985f3cea8e/packages-exp/auth-exp/src/core/util/validate_origin.test.ts#L38-L51,"beforeEach(async () => {
     authorizedDomains = [];
     currentUrl = '';
@@ -3247,19 +3247,19 @@ C:typescript:170678,https://github.com/firebase/firebase-js-sdk/blob/487f8e1d2c6
     });
 
     sinon.stub(location, '_getCurrentUrl').callsFake(() => currentUrl);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:147602,https://github.com/microsoft/ocr-form-tools/blob/ae4ce9a1229f18df74298577f7f1e956d4a32235/src/react/components/pages/connections/connectionsPage.test.tsx#L45-L49,"beforeAll(() => {
         registerProviders();
         toast.success = jest.fn(() => 2);
         toast.info = jest.fn(() => 2);
-    })",has_mock=True (num_mocks=2),,,,
+    })",has_mock=True (num_mocks=2),,
 A:typescript:51312,https://github.com/langwatch/langwatch/blob/970ae68dcf934a00d4647db52287acd9e74a9d2a/typescript-sdk/src/cli/commands/tag/__tests__/list.unit.test.ts#L24-L30,"beforeEach(() => {
     vi.clearAllMocks();
     mockListTags = vi.fn();
     vi.mocked(PromptsApiService).mockImplementation(
       () => ({ listTags: mockListTags }) as unknown as InstanceType<typeof PromptsApiService>,
     );
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:36021,https://github.com/bgauryy/octocode-mcp/blob/173f382e9f7fcc33883d57c51ab47c4b2dd8c316/packages/octocode-mcp/tests/tools/github_search_code.tool.test.ts#L41-L56,"beforeEach(() => {
     mockServer = createMockMcpServer();
 
@@ -3275,12 +3275,12 @@ A:typescript:36021,https://github.com/bgauryy/octocode-mcp/blob/173f382e9f7fcc33
     registerGitHubSearchCodeTool(mockServer.server);
     vi.clearAllMocks();
     mockGetProvider.mockReturnValue(mockProvider);
-  })",has_mock=True (num_mocks=5),,,,
+  })",has_mock=True (num_mocks=5),,
 C:typescript:151842,https://github.com/liskhq/lisk-sdk/blob/498013319f16a52d38fe0bfdf4ecced1a1ac62d2/elements/lisk-p2p/test/unit/peer_pool.ts#L456-L460,"beforeEach(() => {
 			hasPeerStub = jest.spyOn(peerPool, 'hasPeer').mockReturnValue(true);
 
 			getPeersStub = jest.spyOn(peerPool, 'getPeers').mockReturnValue([] as Peer[]);
-		})",has_mock=True (num_mocks=2),,,,
+		})",has_mock=True (num_mocks=2),,
 A:typescript:51123,https://github.com/mathuo/dockview/blob/163f19a852218c906c48c70f7beeff28f486f227/packages/dockview-core/src/__tests__/dockview/dockviewShell.spec.ts#L806-L832,"beforeEach(() => {
             observerCallbacks = [];
             rAFCallbacks = [];
@@ -3307,14 +3307,14 @@ A:typescript:51123,https://github.com/mathuo/dockview/blob/163f19a852218c906c48c
                     return rAFCallbacks.length;
                 }
             );
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:typescript:168691,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/spo/commands/term/term-add.spec.ts#L18-L24,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => {});
     sinon.stub(command as any, 'getRequestDigest').callsFake(() => Promise.resolve({ FormDigestValue: 'ABC' }));
     auth.service.connected = true;
     auth.service.spoUrl = 'https://contoso.sharepoint.com';
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 A:typescript:64036,https://github.com/udecode/plate/blob/699e57fc0818e4da1c24127360a41c0de782fcc4/packages/core/src/lib/static/internal/getPlainText.spec.ts#L5-L22,"beforeEach(() => {
     (global as any).getComputedStyle = jest.fn((element: HTMLElement) => ({
       getPropertyValue: (prop: string) => {
@@ -3332,7 +3332,7 @@ A:typescript:64036,https://github.com/udecode/plate/blob/699e57fc0818e4da1c24127
         return '';
       },
     }));
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:60671,https://github.com/ruvnet/agentic-flow/blob/bd272b8542dadda10edb2a8f2eed6ef67dc8a307/tests/jest.setup.ts#L81-L94,"beforeAll(() => {
   // Suppress console output in tests unless DEBUG is set
   if (!process.env.DEBUG) {
@@ -3346,7 +3346,7 @@ A:typescript:60671,https://github.com/ruvnet/agentic-flow/blob/bd272b8542dadda10
       error: console.error
     };
   }
-})",has_mock=True (num_mocks=4),,,,
+})",has_mock=True (num_mocks=4),,
 C:typescript:156283,https://github.com/comunica/comunica/blob/64b57f0a3ffe0a46004a5d4a1cdd990b6e156ec4/packages/actor-rdf-parse-html-rdfa/test/ActorRdfParseHtmlRdfa-test.ts#L51-L68,"beforeEach(() => {
         baseIRI = 'http://example.org/';
         headers = {
@@ -3364,7 +3364,7 @@ C:typescript:156283,https://github.com/comunica/comunica/blob/64b57f0a3ffe0a4600
         error = jest.fn();
         end = jest.fn();
         action = { baseIRI, headers, emit, error, end };
-      })",has_mock=True (num_mocks=3),,,,
+      })",has_mock=True (num_mocks=3),,
 A:typescript:38743,https://github.com/automattic/wp-calypso/blob/9c6a3fa7753abf2b2d91870b48c52d308909ff66/client/landing/stepper/declarative-flow/flows/write-on/test/write-on.test.ts#L63-L72,"beforeEach( () => {
 		jest.clearAllMocks();
 		mockIsEnabled.mockImplementation( ( flag: string ) => flag === 'calypso/write-on-flow' );
@@ -3374,7 +3374,7 @@ A:typescript:38743,https://github.com/automattic/wp-calypso/blob/9c6a3fa7753abf2
 			writable: true,
 			configurable: true,
 		} );
-	} )",has_mock=True (num_mocks=2),,,,
+	} )",has_mock=True (num_mocks=2),,
 C:typescript:174164,https://github.com/lensapp/lens/blob/b8752f712745a5ea7b8a4f942e98200c65b5580e/src/main/__test__/cluster.test.ts#L54-L87,"beforeEach(() => {
     const mockOpts = {
       ""minikube-config.yml"": JSON.stringify({
@@ -3408,7 +3408,7 @@ C:typescript:174164,https://github.com/lensapp/lens/blob/b8752f712745a5ea7b8a4f9
       kubeConfigPath: ""minikube-config.yml"",
       workspace: workspaceStore.currentWorkspaceId
     });
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:167191,https://github.com/chainsafe/lodestar/blob/8cd778433a1608785cab705abb011305cf8d3529/packages/lodestar/test/unit/network/tasks/checkPeerAliveTask.test.ts#L19-L36,"beforeEach(async () => {
     networkStub = sinon.createStubInstance(Libp2pNetwork);
     reqRespStub = sinon.createStubInstance(ReqResp);
@@ -3426,7 +3426,7 @@ C:typescript:167191,https://github.com/chainsafe/lodestar/blob/8cd778433a1608785
     };
     peerId = await PeerId.create();
     networkStub.getPeers.returns([{id: peerId} as LibP2p.Peer]);
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 A:typescript:30672,https://github.com/Comfy-Org/ComfyUI_frontend/blob/194201e871ee15b99e004f1f3c1744de2628ef21/tests-ui/tests/litegraph/subgraph/SubgraphSlotVisualFeedback.test.ts#L13-L46,"beforeEach(() => {
     // Clear the array before each test
     globalAlphaValues = []
@@ -3460,14 +3460,14 @@ A:typescript:30672,https://github.com/Comfy-Org/ComfyUI_frontend/blob/194201e871
       getConnectedColor: vi.fn().mockReturnValue('#0000FF'),
       getDisconnectedColor: vi.fn().mockReturnValue('#AAAAAA')
     }
-  })",has_mock=True (num_mocks=8),,,,
+  })",has_mock=True (num_mocks=8),,
 A:typescript:53148,https://github.com/netlify/cli/blob/b5a44dbe6e830af88c786e3cdd05857ce59ff8ca/tests/unit/commands/login/login-check.test.ts#L33-L39,"beforeEach(() => {
     stdoutOutput = []
     process.stdout.write = vi.fn((chunk: string) => {
       stdoutOutput.push(chunk)
       return true
     }) as typeof process.stdout.write
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:158870,https://github.com/palantir/blueprint/blob/15057034fcbddd5241b1078e698e19d4489d9901/packages/datetime/test/dateRangeInputTests.tsx#L869-L885,"beforeEach(() => {
                 onChange = sinon.spy();
                 onError = sinon.spy();
@@ -3484,7 +3484,7 @@ C:typescript:158870,https://github.com/palantir/blueprint/blob/15057034fcbddd524
                     />,
                 );
                 root = result.root;
-            })",has_mock=True (num_mocks=2),,,,
+            })",has_mock=True (num_mocks=2),,
 C:typescript:151031,https://github.com/microsoft/webtemplatestudio/blob/61f095f852912a57775f68e2d44f27d0179c7340/src/client/src/components/RightSidebar/SelectPages/SelectPages.test.tsx#L19-L29,"beforeEach(() => {
       //jest.spyOn(ReactRedux, 'useDispatch').mockReturnValue(mockDispatch);
       store = mockStore(getInitialState());
@@ -3495,7 +3495,7 @@ C:typescript:151031,https://github.com/microsoft/webtemplatestudio/blob/61f095f8
           </ReactRedux.Provider>
         </IntlProvider>
       );
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:165543,https://github.com/expo/expo-cli/blob/5be54c6f75a168cf8be43842c774b21f35499a43/packages/package-manager/src/utils/__tests__/shouldUseYarn-test.ts#L3-L14,"beforeAll(() => {
   jest.mock('child_process', () => {
     return {
@@ -3507,7 +3507,7 @@ C:typescript:165543,https://github.com/expo/expo-cli/blob/5be54c6f75a168cf8be438
       },
     };
   });
-})",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=1),,
 C:typescript:187014,https://github.com/reimagined/resolve/blob/f5c3ce37a31b71d0ea4fb729d3885754ae8d3027/packages/core/resolve-command/test/index.test.ts#L26-L90,"beforeEach(() => {
   events = []
   snapshots = new Map()
@@ -3572,7 +3572,7 @@ C:typescript:187014,https://github.com/reimagined/resolve/blob/f5c3ce37a31b71d0e
     addError,
     close,
   }
-})",has_mock=True (num_mocks=12),,,,
+})",has_mock=True (num_mocks=12),,
 C:typescript:168167,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/spo/commands/hubsite/hubsite-rights-revoke.spec.ts#L29-L49,"beforeEach(() => {
     log = [];
     logger = {
@@ -3593,7 +3593,7 @@ C:typescript:168167,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
       cb({ continue: false });
     });
     promptOptions = undefined;
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 A:typescript:38994,https://github.com/clerkinc/javascript/blob/c722955d0ce5a6aee21c50ba4ff4b08de1171fab/packages/headless/src/hooks/use-transition.test.ts#L12-L23,"beforeEach(() => {
     rafCallbacks = [];
     originalRaf = globalThis.requestAnimationFrame;
@@ -3605,7 +3605,7 @@ A:typescript:38994,https://github.com/clerkinc/javascript/blob/c722955d0ce5a6aee
     globalThis.cancelAnimationFrame = vi.fn(id => {
       rafCallbacks[id - 1] = () => {};
     });
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:188520,https://github.com/stryker-mutator/stryker-js/blob/9a442dabf168746bf8f5298b4465183bd6934d2b/packages/jest-runner/test/unit/jest-test-runner.spec.ts#L29-L46,"beforeEach(() => {
     options = testInjector.options as JestRunnerOptionsWithStrykerOptions;
     jestTestAdapterMock = { run: sinon.stub() };
@@ -3623,7 +3623,7 @@ C:typescript:188520,https://github.com/stryker-mutator/stryker-js/blob/9a442dabf
     processEnvMock = {
       NODE_ENV: undefined,
     };
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:166995,https://github.com/microsoft/rushstack/blob/25b667b066d813651d2b7cb5d1b40d8a5de4620f/libraries/heft-config-file/src/test/ConfigurationFile.test.ts#L21-L30,"beforeEach(() => {
     const projectRoot: string = nodeJsPath.resolve(__dirname, '..', '..');
     const formatPathForLogging: (path: string) => string = (path: string) =>
@@ -3633,7 +3633,7 @@ C:typescript:166995,https://github.com/microsoft/rushstack/blob/25b667b066d81365
 
     terminalProvider = new StringBufferTerminalProvider(false);
     terminal = new Terminal(terminalProvider);
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 A:typescript:47118,https://github.com/ifandelse/machina.js/blob/1c3dde06aeb3e3c41f58c1bd19c1285d4f494d1f/examples/job-queue/src/fsm.test.ts#L206-L219,"beforeEach(() => {
                 // Return 0 to force failure (0 < FAILURE_CHANCE = 0.15)
                 const mockRandom = jest.spyOn(Math, ""random"");
@@ -3647,7 +3647,7 @@ A:typescript:47118,https://github.com/ifandelse/machina.js/blob/1c3dde06aeb3e3c4
                 // Return 0.9 so subsequent ticks don't fail (0.9 >= FAILURE_CHANCE)
                 mockRandom.mockReturnValue(0.9);
                 fsm.handle(job, ""retry"");
-            })",has_mock=True (num_mocks=1),,,,
+            })",has_mock=True (num_mocks=1),,
 A:typescript:54693,https://github.com/oneuptime/oneuptime/blob/a24074231bacf857fdbab55853d0bdcbc031a366/Common/Tests/App/Dashboard/InvestigationArtifacts.test.tsx#L143-L195,"beforeEach(() => {
   histogramMock.mockReset();
   patternsMock.mockReset();
@@ -3700,14 +3700,14 @@ A:typescript:54693,https://github.com/oneuptime/oneuptime/blob/a24074231bacf857f
   }) => {
     return Promise.resolve(input.model);
   }) as never);
-})",has_mock=True (num_mocks=3),,,,
+})",has_mock=True (num_mocks=3),,
 C:typescript:162578,https://github.com/elastic/eui/blob/4976217cbefd398a9b6135fc715fd0f096e57d05/src/components/accessibility/keyboard_accessible.test.tsx#L37-L43,"beforeEach(() => {
       // We don't use jest.spyOn() here, because EUI's tests apply a global
       // console.error() override that throws an exception. For these
       // tests, we just want to know if console.error() was called.
 
       console.error = consoleStub = jest.fn();
-    })",has_mock=True (num_mocks=2),,,,
+    })",has_mock=True (num_mocks=2),,
 C:typescript:195385,https://github.com/iTwin/itwinjs-core/blob/069d1f851badc2d39b86c1cebb1d8d326dbe24b1/presentation/backend/src/test/PresentationRpcImpl.test.ts#L71-L94,"beforeEach(() => {
       rulesetsMock.reset();
       variablesMock.reset();
@@ -3731,7 +3731,7 @@ C:typescript:195385,https://github.com/iTwin/itwinjs-core/blob/069d1f851badc2d39
       impl = new PresentationRpcImpl();
       const requestContext = new ClientRequestContext();
       requestContext.enter();
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:160014,https://github.com/org-formation/org-formation-cli/blob/bfd63495f92d4523b5e7fd8cd9c60fc893dccba9/test/integration-tests/create-buckets.test.ts#L13-L28,"beforeAll(async () => {
 
         context = await baseBeforeAll();
@@ -3747,19 +3747,19 @@ C:typescript:160014,https://github.com/org-formation/org-formation-cli/blob/bfd6
         await DeleteStacksCommand.Perform(command);
         await DescribeStacksCommand.Perform(command);
         describeStacksAfterDelete = consoleOutMock.mock.calls[1][0] as string;
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 A:typescript:62930,https://github.com/team-mirai-volunteer/marumie/blob/54c2f37f0d17ba5178679543afadf7d6b0cae897/admin/tests/server/contexts/shared/application/usecases/clear-webapp-cache-usecase.test.ts#L7-L11,"beforeEach(() => {
     mockCacheInvalidator = {
       invalidateWebappCache: jest.fn(),
     };
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:171445,https://github.com/nestjs/nest/blob/a1c76b4a7ea624ea55265b9ed627ffec068a78ea/packages/microservices/test/server/server-mqtt.spec.ts#L144-L150,"beforeEach(() => {
       publisherSpy = sinon.spy();
       pub = {
         publish: publisherSpy,
       };
       publisher = server.getPublisher(pub, pattern, id);
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:183377,https://github.com/amplication/amplication/blob/447a5a4d043f9646eb56a74118bfd1a2c98773bc/packages/amplication-server/src/core/action/action.service.spec.ts#L42-L74,"beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -3792,7 +3792,7 @@ C:typescript:183377,https://github.com/amplication/amplication/blob/447a5a4d043f
     }).compile();
 
     service = module.get<ActionService>(ActionService);
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 A:typescript:49459,https://github.com/lizhiyao/sentry-miniapp/blob/e0d4e013440fadf651745790432f9345e7e8dd33/test/minigame.test.ts#L22-L48,"beforeEach(() => {
     jest.clearAllMocks();
     rafCallback = null;
@@ -3819,7 +3819,7 @@ A:typescript:49459,https://github.com/lizhiyao/sentry-miniapp/blob/e0d4e013440fa
       offShow: jest.fn(),
       offHide: jest.fn(),
     } as any);
-  })",has_mock=True (num_mocks=8),,,,
+  })",has_mock=True (num_mocks=8),,
 A:typescript:54679,https://github.com/oneuptime/oneuptime/blob/990b1c886b5f208b24b083550c7d4023b6a31460/App/Tests/Workers/Jobs/EnterpriseLicense/ReportUserCount.test.ts#L231-L255,"beforeEach(() => {
     jest.clearAllMocks();
 
@@ -3844,11 +3844,11 @@ A:typescript:54679,https://github.com/oneuptime/oneuptime/blob/990b1c886b5f208b2
     apiPost = jest.spyOn(API, ""post"") as unknown as SpiedApi;
 
     respondWith(serverBody());
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:54966,https://github.com/metamask/metamask-mobile/blob/c981a7412e903af1bff8f7453ef2b69d841fdbb4/app/selectors/featureFlagController/crossmintApplePayCheckout/index.test.ts#L15-L18,"beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(hasMinimumRequiredVersion).mockReturnValue(true);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:148667,https://github.com/auth0/auth0-spa-js/blob/f7bab4c5a269d54617ea2cf64c3ccaaef6f6e14e/__tests__/Auth0Client/handleRedirectCallback.test.ts#L49-L78,"beforeEach(() => {
     // https://www.benmvp.com/blog/mocking-window-location-methods-jest-jsdom/
     delete window.location;
@@ -3878,10 +3878,10 @@ C:typescript:148667,https://github.com/auth0/auth0-spa-js/blob/f7bab4c5a269d5461
     mockWindow.Worker = {};
     jest.spyOn(scope, 'getUniqueScopes');
     sessionStorage.clear();
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 C:typescript:166234,https://github.com/shopify/quilt/blob/561d74159dc8cbab8557ba477c4cf9f11c05ef44/packages/react-i18n/src/test/i18n.test.ts#L902-L904,"beforeEach(() => {
         formatCurrency = jest.spyOn(I18n.prototype, 'formatCurrency');
-      })",has_mock=True (num_mocks=1),,,,
+      })",has_mock=True (num_mocks=1),,
 A:typescript:56275,https://github.com/pedramamini/Maestro/blob/d7ddbab52c9dee6d870f71dfd37aa0ce3ba2d0a0/src/__tests__/renderer/components/LeaderboardRegistrationModal.test.tsx#L75-L91,"beforeEach(() => {
     theme = createTheme();
     autoRunStats = createAutoRunStats();
@@ -3898,7 +3898,7 @@ A:typescript:56275,https://github.com/pedramamini/Maestro/blob/d7ddbab52c9dee6d8
     // Reset layer stack mocks
     mockRegisterLayer.mockClear().mockReturnValue('layer-leaderboard-123');
     mockUnregisterLayer.mockClear();
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:188509,https://github.com/stryker-mutator/stryker-js/blob/9a442dabf168746bf8f5298b4465183bd6934d2b/packages/jasmine-runner/test/unit/jasmine-test-runner.spec.ts#L22-L35,"beforeEach(() => {
     jasmineStub = sinon.createStubInstance(Jasmine);
     jasmineEnvStub = createEnvStub();
@@ -3912,7 +3912,7 @@ C:typescript:188509,https://github.com/stryker-mutator/stryker-js/blob/9a442dabf
       .provideValue(pluginTokens.directoryRequireCache, directoryRequireCacheMock)
       .provideValue(pluginTokens.globalNamespace, '__stryker2__' as const)
       .injectClass(JasmineTestRunner);
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 A:typescript:52940,https://github.com/mnfst/manifest/blob/4d1a28b2c280c21958bca624d49c05bd2da9942d/packages/manifest/backend/src/node/schema/schema.controller.spec.ts#L28-L49,"beforeEach(async () => {
     mockService = {
       getNodeSchema: jest.fn(),
@@ -3934,13 +3934,13 @@ A:typescript:52940,https://github.com/mnfst/manifest/blob/4d1a28b2c280c21958bca6
     }).compile();
 
     controller = module.get<SchemaController>(SchemaController);
-  })",has_mock=True (num_mocks=6),,,,
+  })",has_mock=True (num_mocks=6),,
 C:typescript:181156,https://github.com/nrwl/nx/blob/cd21e09357c3260a9f2e447859d7fbb639777216/packages/react/src/utils/ast-utils.spec.ts#L229-L234,"beforeEach(() => {
     context = {
       warn: jest.fn(),
     };
     tree = Tree.empty();
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:159336,https://github.com/smapiot/piral/blob/313b7b955d33e549b9b016c98690f1363689869b/src/framework/piral-base/src/fetch.test.ts#L6-L17,"beforeEach(() => {
     window.fetch = jest.fn((_, options) =>
       Promise.resolve({
@@ -3952,24 +3952,24 @@ C:typescript:159336,https://github.com/smapiot/piral/blob/313b7b955d33e549b9b016
         },
       }),
     ) as any;
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:182266,https://github.com/renovatebot/renovate/blob/e072f9632dcf4bcb2e21a339ee6de530feb6dcab/lib/manager/helm-requirements/extract.spec.ts#L8-L11,"beforeEach(() => {
       jest.resetAllMocks();
       fs.readLocalFile = jest.fn();
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:167758,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/skype/commands/report/report-activityuserdetail.spec.ts#L16-L20,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:120931,https://github.com/belaplatform/bela/blob/8cb25e9df2255275155287f3463edabf7c67936f/IDE/test/ProcessManager.spec.ts#L308-L310,"beforeEach(function(){
 				broadcast_stub = sinon.stub(socket_manager, 'broadcast');
-			})",has_mock=True (num_mocks=1),,,,
+			})",has_mock=True (num_mocks=1),,
 C:typescript:167366,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/aad/commands/groupsetting/groupsetting-list.spec.ts#L17-L21,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => {});
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 A:typescript:52917,https://github.com/mnfst/manifest/blob/4d1a28b2c280c21958bca624d49c05bd2da9942d/packages/manifest/backend/src/chat/chat.service.spec.ts#L39-L68,"beforeEach(async () => {
     mockFlowRepository = createMockFlowRepository();
     mockMcpToolService = {
@@ -3999,10 +3999,10 @@ A:typescript:52917,https://github.com/mnfst/manifest/blob/4d1a28b2c280c21958bca6
     }).compile();
 
     service = module.get<ChatService>(ChatService);
-  })",has_mock=True (num_mocks=3),,,,
+  })",has_mock=True (num_mocks=3),,
 C:typescript:195521,https://github.com/iTwin/itwinjs-core/blob/069d1f851badc2d39b86c1cebb1d8d326dbe24b1/presentation/frontend/src/test/favorite-properties/FavoritePropertiesStorage.test.ts#L408-L410,"beforeEach(() => {
         sinon.stub(connectivityInfo, ""status"").get(() => InternetConnectivityStatus.Online);
-      })",has_mock=True (num_mocks=1),,,,
+      })",has_mock=True (num_mocks=1),,
 C:typescript:178686,https://github.com/microsoft/azuredatastudio/blob/30054e632c75f8df0ea351f2c51b8ec7d5fa5be5/extensions/azurecore/src/test/azureResource/tree/accountTreeNode.test.ts#L91-L110,"beforeEach(() => {
 		mockExtensionContext = TypeMoq.Mock.ofType<vscode.ExtensionContext>();
 		mockCacheService = TypeMoq.Mock.ofType<IAzureResourceCacheService>();
@@ -4022,7 +4022,7 @@ C:typescript:178686,https://github.com/microsoft/azuredatastudio/blob/30054e632c
 		mockCacheService.setup((o) => o.generateKey(TypeMoq.It.isAnyString())).returns(() => generateGuid());
 		mockCacheService.setup((o) => o.get(TypeMoq.It.isAnyString())).returns(() => mockSubscriptionCache);
 		mockCacheService.setup((o) => o.update(TypeMoq.It.isAnyString(), TypeMoq.It.isAny())).returns(() => mockSubscriptionCache = mockSubscriptions);
-	})",has_mock=True (num_mocks=1),,,,
+	})",has_mock=True (num_mocks=1),,
 A:typescript:65895,https://github.com/wireapp/wire-webapp/blob/e82f6fca457b894fbd4dd2b7a9bdfd95df16d5a3/libraries/api-client/src/utils/BackFromSleepHandler/BackFromSleepHandler.test.ts#L32-L41,"beforeEach(() => {
     originalDateNow = Date.now;
     now = Date.now();
@@ -4032,15 +4032,15 @@ A:typescript:65895,https://github.com/wireapp/wire-webapp/blob/e82f6fca457b894fb
           getTime: () => now,
         }) as unknown as Date,
     );
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:63450,https://github.com/tegnike/aituber-kit/blob/0a8233928bc5b89f1ef4fc10832731e48c77b79e/src/__tests__/lib/logger.server.test.ts#L11-L13,"beforeEach(() => {
     logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:167414,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/aad/commands/o365group/o365group-report-activitydetail.spec.ts#L16-L20,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 A:typescript:56295,https://github.com/pedramamini/Maestro/blob/23a8aa18e6aee2417957ad227e2f621ce469f238/src/__tests__/main/ipc/handlers/agents.test.ts#L932-L944,"beforeEach(() => {
 				mockSettingsStore = {
 					get: vi.fn().mockReturnValue([]),
@@ -4053,17 +4053,17 @@ A:typescript:56295,https://github.com/pedramamini/Maestro/blob/23a8aa18e6aee2417
 					...deps,
 					settingsStore: mockSettingsStore as any,
 				});
-			})",has_mock=True (num_mocks=2),,,,
+			})",has_mock=True (num_mocks=2),,
 C:typescript:168963,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/teams/commands/user/user-app-list.spec.ts#L17-L21,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:168384,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/spo/commands/page/page-control-set.spec.ts#L18-L22,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:142215,https://github.com/onivim/oni/blob/17ceaa45311964a5509f5f4db8a330429d4ac0d7/browser/test/Services/Explorer/ExplorerStoreTests.ts#L246-L254,"beforeEach(() => {
             notifications = sinon.createStubInstance(Notifications)
             notification = sinon.createStubInstance(Notification)
@@ -4072,7 +4072,7 @@ C:typescript:142215,https://github.com/onivim/oni/blob/17ceaa45311964a5509f5f4db
                 ...ExplorerState.DefaultExplorerState,
                 rootFolder: { type: ""folder"", fullPath: rootPath },
             })
-        })",has_mock=True (num_mocks=2),,,,
+        })",has_mock=True (num_mocks=2),,
 C:typescript:152434,https://github.com/graphql-compose/graphql-compose-mongoose/blob/831c55fa85b0b60de019931181101efe08f07965/src/resolvers/helpers/__tests__/projection-test.ts#L8-L15,"beforeEach(() => {
       spyFn = jest.fn();
       resolveParams = {
@@ -4080,10 +4080,10 @@ C:typescript:152434,https://github.com/graphql-compose/graphql-compose-mongoose/
           select: spyFn,
         },
       };
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:170136,https://github.com/brainjs/brain.js/blob/56fd5887f76aa15078d88451683b6a29317e4b61/__tests__/recurrent_deprecated/rnn-time-step.ts#L14-L16,"beforeEach(() => {
         fromJSONSpy = jest.spyOn(RNNTimeStep.prototype, 'fromJSON');
-      })",has_mock=True (num_mocks=1),,,,
+      })",has_mock=True (num_mocks=1),,
 A:typescript:47250,https://github.com/imbhargav5/rooks/blob/d344ed8fdeb63ee949cdeb6845c76b828396e482/packages/rooks/src/__tests__/useNotification.spec.tsx#L13-L29,"beforeEach(() => {
     mockNotification = jest.fn() as any;
     mockRequestPermission = jest.fn();
@@ -4100,11 +4100,11 @@ A:typescript:47250,https://github.com/imbhargav5/rooks/blob/d344ed8fdeb63ee949cd
 
     consoleWarnSpy = jest.spyOn(console, ""warn"").mockImplementation();
     consoleErrorSpy = jest.spyOn(console, ""error"").mockImplementation();
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 C:typescript:188825,https://github.com/cloud-carbon-footprint/cloud-carbon-footprint/blob/8635efebad0681560e5c55dd0a5907d42af4d750/server/test/integration/csv.test.ts#L58-L61,"beforeEach(() => {
     jest.spyOn(Date, 'now').mockImplementation(() => 1596660091000)
     outputFilePath = path.join(process.cwd(), 'results-2020-08-05-20:41:31.csv')
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:64043,https://github.com/udecode/plate/blob/13dbdcdeaa49518aa82d94acf1ba4cfc87965f24/packages/core/src/lib/static/plugins/CopyPlugin.spec.ts#L41-L77,"beforeEach(() => {
       const value = (
         <editor>
@@ -4141,19 +4141,19 @@ A:typescript:64043,https://github.com/udecode/plate/blob/13dbdcdeaa49518aa82d94a
       mockFragment = {
         querySelectorAll: jest.fn(),
       };
-    })",has_mock=True (num_mocks=4),,,,
+    })",has_mock=True (num_mocks=4),,
 C:typescript:170590,https://github.com/firebase/firebase-js-sdk/blob/487f8e1d2c6bd1a54305f2b0f148b4985f3cea8e/packages-exp/auth-exp/src/core/auth/auth_impl.test.ts#L430-L432,"beforeEach(async () => {
       sinon.stub(reload, '_reloadWithoutSaving').returns(Promise.resolve());
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:112335,https://github.com/hyperledger-archives/composer/blob/12800550440030d253a9e73be8650d331b14597f/packages/composer-playground/src/app/deploy/deploy.component.spec.ts#L183-L185,"beforeEach(() => {
             selectNetworkStub = sinon.stub(component, 'selectNetwork');
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 A:typescript:58667,https://github.com/promptfoo/promptfoo/blob/ebd5ae1df2e10e8d1d7fb7831709aaa14e27c7fc/test/redteam/plugins/shellInjection.test.ts#L11-L16,"beforeEach(() => {
     mockProvider = {
       id: 'test-provider',
       callApi: jest.fn(),
     } as unknown as ApiProvider;
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:168964,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/teams/commands/user/user-app-list.spec.ts#L23-L38,"beforeEach(() => {
     log = [];
     logger = {
@@ -4169,10 +4169,10 @@ C:typescript:168964,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
     };
     loggerLogSpy = sinon.spy(logger, 'log');
     (command as any).items = [];
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:49493,https://github.com/lane711/sonicjs/blob/0894e3b6e1ae47bf1f59cc9bfbfa9374035c67ca/packages/core/src/__tests__/middleware/auth.test.ts#L503-L505,"beforeEach(() => {
     mockNext = vi.fn()
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:28173,https://github.com/4gray/iptvnator/blob/30d76a3a46459315fb94ea1996975de3bbf291ce/libs/workspace/shell/feature/src/lib/workspace-shell/services/workspace-shell-search-sync.service.spec.ts#L48-L130,"beforeEach(() => {
         jest.useFakeTimers();
         events = new Subject<NavigationEnd>();
@@ -4255,24 +4255,24 @@ A:typescript:28173,https://github.com/4gray/iptvnator/blob/30d76a3a46459315fb94e
         routeState = TestBed.inject(WorkspaceShellRouteStateService);
         service = TestBed.inject(WorkspaceShellSearchSyncService);
         searchService = TestBed.inject(WorkspaceShellSearchService);
-    })",has_mock=True (num_mocks=12),,,,
+    })",has_mock=True (num_mocks=12),,
 A:typescript:62052,https://github.com/six7/figma-tokens/blob/8a9c5e0e7497605377b6dea62b8ddb12574c84e6/packages/tokens-studio-for-figma/src/app/services/TokenRefreshManager.test.ts#L32-L37,"beforeEach(() => {
     jest.clearAllMocks();
     TokenRefreshManager.reset();
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:168923,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/teams/commands/tab/tab-list.spec.ts#L17-L21,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 A:typescript:67848,https://github.com/vm0-ai/vm0/blob/dd10489cf3d4053c560f66180ff0f4b6550c67b8/turbo/apps/api/app/api/webhooks/agent/proxy/__tests__/route.test.ts#L410-L415,"beforeEach(async () => {
       // Setup valid token (JWT)
       mockHeaders.mockResolvedValue({
         get: vi.fn().mockReturnValue(`Bearer ${testToken}`),
       } as unknown as Headers);
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 A:typescript:40808,https://github.com/dineug/erd-editor/blob/a1e826f59bc571d2653d3db94125f8e87513178b/packages/app/src/services/collaborative/host.test.ts#L66-L89,"beforeEach(async () => {
     key = await generateKey();
     secretKey = (await exportKey(key)).k!;
@@ -4296,7 +4296,7 @@ A:typescript:40808,https://github.com/dineug/erd-editor/blob/a1e826f59bc571d2653
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     service = new CollaborativeHostService();
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:143942,https://github.com/wasdk/webassemblystudio/blob/54cb1c93d95912fac6ef7f38faa024b40e345389/tests/services/ServiceWorker.spec.ts#L13-L29,"beforeAll(() => {
     (global as any).Worker = jest.fn(() => {
       const listners = [];
@@ -4313,17 +4313,17 @@ C:typescript:143942,https://github.com/wasdk/webassemblystudio/blob/54cb1c93d959
         })
       };
     });
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:31604,https://github.com/CherryHQ/cherry-studio/blob/4abf143fc77036017f8b6d7cf0f7a16860bfb1a6/src/main/data/migration/v2/migrators/__tests__/McpServerMigrator.test.ts#L75-L78,"beforeEach(() => {
     migrator = new McpServerMigrator()
     migrator.setProgressCallback(vi.fn())
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:171380,https://github.com/nestjs/nest/blob/a1c76b4a7ea624ea55265b9ed627ffec068a78ea/packages/microservices/test/client/client-rmq.spec.ts#L305-L310,"beforeEach(() => {
       channelCloseSpy = sinon.spy();
       clientCloseSpy = sinon.spy();
       (client as any).channel = { close: channelCloseSpy };
       (client as any).client = { close: clientCloseSpy };
-    })",has_mock=True (num_mocks=2),,,,
+    })",has_mock=True (num_mocks=2),,
 C:typescript:147225,https://github.com/open-source-labs/chronos/blob/e71bc8979d0f4934e72fb62b505ef4a81eacde7d/__tests__/app/modals/AddModal.test.tsx#L9-L20,"beforeAll(() => {
     const setOpen = jest.fn();
     const addApp = jest.fn();
@@ -4335,7 +4335,7 @@ C:typescript:147225,https://github.com/open-source-labs/chronos/blob/e71bc8979d0
     );
 
     wrapper = mount(mockAddModal);
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:168816,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/teams/commands/channel/channel-add.spec.ts#L25-L41,"beforeEach(() => {
     log = [];
     logger = {
@@ -4352,12 +4352,12 @@ C:typescript:168816,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
     loggerLogSpy = sinon.spy(logger, 'log');
     loggerLogToStderrSpy = sinon.spy(logger, 'logToStderr');
     (command as any).items = [];
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:167656,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/onedrive/commands/report/report-usagefilecounts.spec.ts#L16-L20,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:150331,https://github.com/relay-tools/relay-hooks/blob/2719aeba25a9d83b6c5e9872d2672e6bef94c363/__tests__/ReactRelayPaginationContainer-test.tsx#L1327-L1343,"beforeEach(() => {
             references = [];
             environment.retain = () => {
@@ -4374,7 +4374,7 @@ C:typescript:150331,https://github.com/relay-tools/relay-hooks/blob/2719aeba25a9
                     <TestContainer user={userPointer} />
                 </ContextSetter>,
             );
-        })",has_mock=True (num_mocks=1),,,,
+        })",has_mock=True (num_mocks=1),,
 C:typescript:167495,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/aad/commands/user/user-get.spec.ts#L23-L38,"beforeEach(() => {
     log = [];
     logger = {
@@ -4390,7 +4390,7 @@ C:typescript:167495,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
     };
     loggerLogSpy = sinon.spy(logger, 'log');
     (command as any).items = [];
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:51543,https://github.com/medplum/medplum/blob/fd72f52268cc64c201968a8f3db70055963fbccf/packages/react/src/QuestionnaireForm/AIRealTimeQuestionnaireForm.test.tsx#L137-L151,"beforeEach(() => {
     jest.useFakeTimers();
     startMock = jest.fn().mockResolvedValue(undefined);
@@ -4405,12 +4405,12 @@ A:typescript:51543,https://github.com/medplum/medplum/blob/fd72f52268cc64c201968
       };
       return { status, start: startMock, stop: stopMock, error: undefined, transcripts: [], isListening: false };
     });
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:193913,https://github.com/element-plus/element-plus/blob/6dedd12a179c82433b99166e6bd226a742d6a34f/packages/notification/__tests__/notification.spec.ts#L79-L82,"beforeEach(() => {
       onMock = jest.spyOn(domExports, 'on').mockReset()
       offMock = jest.spyOn(domExports, 'off').mockReset()
-    })",has_mock=True (num_mocks=2),,,,
-A:typescript:58955,https://github.com/razorpay/blade/blob/203456462714dde1e3c84fb4ed5d3cf7ee16449b/packages/blade/src/components/Dropdown/__tests__/FilterChipSelectInput.native.test.tsx#L8-L8,"beforeAll(() => jest.spyOn(console, 'error').mockImplementation())",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=2),,
+A:typescript:58955,https://github.com/razorpay/blade/blob/203456462714dde1e3c84fb4ed5d3cf7ee16449b/packages/blade/src/components/Dropdown/__tests__/FilterChipSelectInput.native.test.tsx#L8-L8,"beforeAll(() => jest.spyOn(console, 'error').mockImplementation())",has_mock=True (num_mocks=1),,
 A:typescript:48863,https://github.com/khan/perseus/blob/e1f9a0d2a1b5538650e9d6b2fac3fa219dab0577/packages/perseus/src/widgets/radio/__tests__/multiple-choice-widget.test.tsx#L105-L112,"beforeEach(() => {
         jest.spyOn(Dependencies, ""getDependencies"").mockReturnValue(
             testDependencies,
@@ -4418,7 +4418,7 @@ A:typescript:48863,https://github.com/khan/perseus/blob/e1f9a0d2a1b5538650e9d6b2
         userEvent = userEventLib.setup({
             advanceTimers: jest.advanceTimersByTime,
         });
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 A:typescript:29894,https://github.com/ComposioHQ/agent-orchestrator/blob/651ffa592e571141227fafc0dd0993e980207532/packages/web/src/components/__tests__/Dashboard.doneBar.test.tsx#L11-L24,"beforeEach(() => {
   const eventSourceMock = {
     onmessage: null,
@@ -4432,7 +4432,7 @@ A:typescript:29894,https://github.com/ComposioHQ/agent-orchestrator/blob/651ffa5
     CLOSED: 2,
   }) as unknown as typeof EventSource;
   global.fetch = vi.fn();
-})",has_mock=True (num_mocks=3),,,,
+})",has_mock=True (num_mocks=3),,
 A:typescript:30352,https://github.com/InsForge/InsForge/blob/168d45085ce036f29fbcb34a9c17fedc8a34eeaa/backend/tests/unit/s3-provider-proxy-mode.test.ts#L52-L61,"beforeEach(() => {
     for (const k of ENV_KEYS) {
       savedEnv[k] = process.env[k];
@@ -4442,7 +4442,7 @@ A:typescript:30352,https://github.com/InsForge/InsForge/blob/168d45085ce036f29fb
     vi.spyOn(S3Client.prototype, 'send').mockImplementation(
       sendMock as unknown as typeof S3Client.prototype.send
     );
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:164525,https://github.com/erxes/erxes/blob/6cd4b6869c50a3754c9aa6e56e83d692dbd7de73/integrations/src/__tests__/nylasLoginMiddleware.test.ts#L57-L68,"beforeEach(() => {
     process.env.DOMAIN = 'http://localhost:3400';
     process.env.MAIN_APP_DOMAIN = 'http://localhost:3400';
@@ -4454,12 +4454,12 @@ C:typescript:164525,https://github.com/erxes/erxes/blob/6cd4b6869c50a3754c9aa6e5
     debugRequestMock = sinon.stub(debuggers, 'debugRequest').callsFake(() => {
       return 'debugRequest';
     });
-  })",has_mock=True (num_mocks=4),,,,
+  })",has_mock=True (num_mocks=4),,
 C:typescript:149420,https://github.com/electron/fiddle/blob/2b9882ac07bfec8a486b408ce01cd8b97a5af98e/tests/renderer/state-spec.ts#L75-L79,"beforeEach(() => {
     appState = new AppState();
     appState.updateDownloadedVersionState = jest.fn();
     ipcRendererManager.removeAllListeners();
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:168609,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/spo/commands/sitedesign/sitedesign-task-list.spec.ts#L23-L37,"beforeEach(() => {
     log = [];
     logger = {
@@ -4474,7 +4474,7 @@ C:typescript:168609,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
       }
     };
     loggerLogSpy = sinon.spy(logger, 'log');
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:63262,https://github.com/tambo-ai/tambo/blob/e80b99d3db9fda166e49dcb83274c898efa8cdae/apps/api/src/v1/__tests__/v1-suggestions.test.ts#L37-L44,"beforeEach(() => {
     mockDb = {} as jest.Mocked<HydraDatabase>;
     mockThreadsService = {
@@ -4482,12 +4482,12 @@ A:typescript:63262,https://github.com/tambo-ai/tambo/blob/e80b99d3db9fda166e49dc
     } as unknown as jest.Mocked<ThreadsService>;
 
     service = new V1Service(mockDb, mockThreadsService);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:167502,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/base/DateAndPeriodBasedReport.spec.ts#L33-L37,"before(() => {
     sinon.stub(auth, 'restoreAuth').callsFake(() => Promise.resolve());
     sinon.stub(appInsights, 'trackEvent').callsFake(() => { });
     auth.service.connected = true;
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:143813,https://github.com/microsoft/vott/blob/a603a2743fad4fa093f28488473154b4e904770c/src/react/components/pages/export/exportForm.test.tsx#L21-L28,"beforeAll(() => {
         Object.defineProperty(ExportProviderFactory, ""providers"", {
             get: jest.fn(() => exportProviderRegistrations),
@@ -4495,7 +4495,7 @@ C:typescript:143813,https://github.com/microsoft/vott/blob/a603a2743fad4fa093f28
         Object.defineProperty(ExportProviderFactory, ""defaultProvider"", {
             get: jest.fn(() => exportProviderRegistrations[0]),
         });
-    })",has_mock=True (num_mocks=2),,,,
+    })",has_mock=True (num_mocks=2),,
 A:typescript:67836,https://github.com/vm0-ai/vm0/blob/dd10489cf3d4053c560f66180ff0f4b6550c67b8/turbo/apps/api/app/api/webhooks/agent/events/__tests__/route.test.ts#L61-L114,"beforeEach(async () => {
     // Clear all mocks
     vi.clearAllMocks();
@@ -4549,24 +4549,24 @@ A:typescript:67836,https://github.com/vm0-ai/vm0/blob/dd10489cf3d4053c560f66180f
     mockAuth.mockResolvedValue({ userId: null } as unknown as Awaited<
       ReturnType<typeof auth>
     >);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:193631,https://github.com/listr2/listr2/blob/d4b91493fa381496ba9e1bc818dea88071aa7ec9/tests/change-title.e2e-spec.ts#L7-L9,"beforeEach(async () => {
     info = jest.spyOn(console, 'info').mockImplementation()
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:171238,https://github.com/nestjs/nest/blob/a1c76b4a7ea624ea55265b9ed627ffec068a78ea/packages/core/test/injector/injector.spec.ts#L251-L254,"beforeEach(() => {
       loadInstance = sinon.spy();
       injector.loadInstance = loadInstance;
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:145705,https://github.com/alex3165/react-mapbox-gl/blob/85b953e91cb94cd0de2ff3d895283ec54f826b28/src/__tests__/map.test.tsx#L27-L30,"beforeEach(() => {
     mockfitBounds = jest.fn();
     mockon = jest.fn();
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:160757,https://github.com/github/vscode-codeql/blob/5824e3607af17658685d6c788ff48ac16b6129ce/extensions/ql-vscode/src/vscode-tests/no-workspace/contextual/queryResolver.test.ts#L22-L27,"beforeEach(() => {
     mockCli = {
       resolveQueriesInSuite: sinon.stub()
     };
     module = createModule();
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:168119,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/spo/commands/hidedefaultthemes/hidedefaultthemes-get.spec.ts#L24-L38,"beforeEach(() => {
     log = [];
     logger = {
@@ -4581,7 +4581,7 @@ C:typescript:168119,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
       }
     };
     loggerLogSpy = sinon.spy(logger, 'log');
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:2339,https://github.com/Significant-Gravitas/Auto-GPT/blob/e0f9146d542a9d7f49123f76466ace8953cf5374/autogpt_platform/frontend/src/services/push-notifications/__tests__/helpers.test.ts#L33-L58,"beforeEach(() => {
   vi.clearAllMocks();
   Object.defineProperty(globalThis, ""Notification"", {
@@ -4607,7 +4607,7 @@ A:typescript:2339,https://github.com/Significant-Gravitas/Auto-GPT/blob/e0f9146d
   mockUnsubscribeFromPush.mockResolvedValue(true);
   mockRemoveSubscriptionFromServer.mockResolvedValue(true);
   delete process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-})",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=1),,
 C:typescript:197023,https://github.com/graphql-hive/graphql-inspector/blob/2d463cc2fa68a63ab3280716c4765d1ded715044/packages/commands/introspect/__tests__/introspect-command.spec.ts#L45-L54,"beforeEach(() => {
     yargs.reset();
 
@@ -4617,17 +4617,17 @@ C:typescript:197023,https://github.com/graphql-hive/graphql-inspector/blob/2d463
 
     spyReporter = jest.fn();
     mockLogger(spyReporter as any);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 C:typescript:191713,https://github.com/changesets/changesets/blob/162290ddf9bb32faa5c3028c62b6fa5581d9fb85/packages/logger/src/index.test.ts#L26-L28,"beforeEach(() => {
       console.error = jest.fn();
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:180943,https://github.com/jdalrymple/gitbeaker/blob/ad8845d06d18c39f8d035686b1fa0a5c44263578/packages/gitbeaker-core/test/unit/services/EpicNotes.ts#L7-L13,"beforeEach(() => {
   service = new EpicNotes({
     requesterFn: jest.fn(),
     token: 'abcdefg',
     requestTimeout: 3000,
   });
-})",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=1),,
 C:typescript:168688,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b34163c421338c6b2c04b3a89c/src/m365/spo/commands/tenant/tenant-settings-set.spec.ts#L42-L57,"beforeEach(() => {
     log = [];
     logger = {
@@ -4643,7 +4643,7 @@ C:typescript:168688,https://github.com/pnp/cli-microsoft365/blob/eeae46bfb16dc1b
     };
     loggerLogSpy = sinon.spy(logger, 'log');
     loggerLogToStderrSpy = sinon.spy(logger, 'logToStderr');
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:178975,https://github.com/prymitive/karma/blob/bbdcb3ecd6a27cdfab3308997811bbb8ea59587a/ui/src/Components/SilenceModal/SilenceForm.test.tsx#L18-L42,"beforeEach(() => {
   jest.spyOn(React, ""useContext"").mockImplementation(() => MockThemeContext);
 
@@ -4668,11 +4668,11 @@ C:typescript:178975,https://github.com/prymitive/karma/blob/bbdcb3ecd6a27cdfab33
       clusterMembers: [""am1""],
     },
   ]);
-})",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=1),,
 C:typescript:193641,https://github.com/listr2/listr2/blob/d4b91493fa381496ba9e1bc818dea88071aa7ec9/tests/inject-context.e2e-spec.ts#L8-L11,"beforeEach(async () => {
     info = jest.spyOn(console, 'info').mockImplementation()
     log = jest.spyOn(console, 'log').mockImplementation()
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 C:typescript:160216,https://github.com/org-formation/org-formation-cli/blob/bfd63495f92d4523b5e7fd8cd9c60fc893dccba9/test/unit-tests/plugin/impl/sls-build-task-plugin.test.ts#L267-L299,"beforeEach(() => {
         template = TestTemplates.createBasicTemplate();
         state = TestTemplates.createState(template);
@@ -4705,13 +4705,13 @@ C:typescript:160216,https://github.com/org-formation/org-formation-cli/blob/bfd6
             previousBindingLocalHash: 'abcdef'
         };
         binder = new PluginBinder<ISlsTask>(task, 'default', undefined, state, template, undefined, plugin);
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 C:typescript:177603,https://github.com/dotansimha/graphql-code-generator/blob/bd4bf7cfa5bf2a6eac3c5473538b535dafd000ac/packages/graphql-codegen-cli/tests/cli-error.spec.ts#L7-L12,"beforeEach(() => {
     spyProcessExit = jest.spyOn(process, 'exit');
     spyProcessExit.mockImplementation();
     spyConsoleError = jest.spyOn(console, 'error');
     spyConsoleError.mockImplementation();
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
 A:typescript:45523,https://github.com/hackerai-tech/hackerai/blob/7ea45b5ca5b9dc789c9e589732ec2d88a0befd1d/convex/__tests__/fraudTracking.test.ts#L102-L111,"beforeEach(async () => {
   jest.clearAllMocks();
   jest.spyOn(console, ""log"").mockImplementation(() => {});
@@ -4721,29 +4721,29 @@ A:typescript:45523,https://github.com/hackerai-tech/hackerai/blob/7ea45b5ca5b9dc
   recordPaymentFailure = mod.recordPaymentFailure;
   isCustomerSuspicious = mod.isCustomerSuspicious;
   markCustomerAutoBlocked = mod.markCustomerAutoBlocked;
-})",has_mock=True (num_mocks=2),,,,
-C:typescript:148529,https://github.com/marp-team/marp-cli/blob/270e2147001f203d3c0e6ff4875ee1c29908129c/test/cli.ts#L31-L31,"beforeEach(() => (spy = jest.spyOn(console, 'warn').mockImplementation()))",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=2),,
+C:typescript:148529,https://github.com/marp-team/marp-cli/blob/270e2147001f203d3c0e6ff4875ee1c29908129c/test/cli.ts#L31-L31,"beforeEach(() => (spy = jest.spyOn(console, 'warn').mockImplementation()))",has_mock=True (num_mocks=1),,
 C:typescript:180942,https://github.com/jdalrymple/gitbeaker/blob/ad8845d06d18c39f8d035686b1fa0a5c44263578/packages/gitbeaker-core/test/unit/services/EpicIssues.ts#L8-L14,"beforeEach(() => {
   service = new EpicIssues({
     requesterFn: jest.fn(),
     token: 'abcdefg',
     requestTimeout: 3000,
   });
-})",has_mock=True (num_mocks=1),,,,
+})",has_mock=True (num_mocks=1),,
 C:typescript:157067,https://github.com/serverless-nextjs/serverless-next.js/blob/6adaf00bb12464c67fb26156cc0a10fcf9dbb816/packages/libs/s3-static-assets/tests/delete-old-static-assets.test.ts#L36-L38,"beforeEach(() => {
       consoleWarnSpy = jest.spyOn(console, ""warn"").mockReturnValue();
-    })",has_mock=True (num_mocks=1),,,,
+    })",has_mock=True (num_mocks=1),,
 A:typescript:53970,https://github.com/nrwl/nx/blob/f9c427a80b88413238454c5d4563cc8be5f7f9b9/packages/webpack/src/plugins/nx-webpack-plugin/lib/utils.spec.ts#L5-L7,"beforeEach(() => {
     jest.spyOn(logger, 'warn').mockImplementation(() => {});
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:58670,https://github.com/promptfoo/promptfoo/blob/9b65868b8f4a0538b00ef6a6476506eeac4dfbeb/test/guardrails.test.ts#L27-L30,"beforeEach(() => {
     jest.clearAllMocks();
     jest.mocked(fetchWithCache).mockResolvedValue(mockFetchResponse);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:56018,https://github.com/openfrontio/OpenFrontIO/blob/5abc51960ab38c03a5254b6ee967d15e61720420/tests/client/LocalServer.test.ts#L92-L95,"beforeEach(() => {
     fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
     vi.stubGlobal(""fetch"", fetchMock);
-  })",has_mock=True (num_mocks=1),,,,
+  })",has_mock=True (num_mocks=1),,
 A:typescript:29871,https://github.com/ComposioHQ/agent-orchestrator/blob/2bdc6bb59c25cbce90a84f6c540c45126ad87afa/packages/core/src/__tests__/session-manager.test.ts#L234-L259,"beforeEach(() => {
       mockCodexAgent = {
         name: ""codex"",
@@ -4769,7 +4769,7 @@ A:typescript:29871,https://github.com/ComposioHQ/agent-orchestrator/blob/2bdc6bb
           return null;
         }),
       };
-    })",has_mock=True (num_mocks=7),,,,
+    })",has_mock=True (num_mocks=7),,
 C:typescript:172354,https://github.com/forcedotcom/salesforcedx-vscode/blob/b70bc864107fab296da7e769d3621294db7b9713/packages/salesforcedx-apex-debugger/test/unit/adapter/apexDebug.test.ts#L892-L914,"beforeEach(() => {
       adapter = new ApexDebugForTest(new RequestService());
       breakpointGetSpy = sinon.spy(
@@ -4792,8 +4792,8 @@ C:typescript:172354,https://github.com/forcedotcom/salesforcedx-vscode/blob/b70b
         .stub(SessionService.prototype, 'getSessionId')
         .returns('07aFAKE');
       lockSpy = sinon.spy(AsyncLock.prototype, 'acquire');
-    })",has_mock=True (num_mocks=5),,,,
+    })",has_mock=True (num_mocks=5),,
 C:typescript:188483,https://github.com/stryker-mutator/stryker-js/blob/9a442dabf168746bf8f5298b4465183bd6934d2b/packages/instrumenter/test/unit/mutant-placers/index.spec.ts#L13-L16,"beforeEach(() => {
     mutantPlacers = [sinon.stub(), sinon.stub()];
     path = findNodePath(parseJS('f = 0'), (p) => p.isProgram());
-  })",has_mock=True (num_mocks=2),,,,
+  })",has_mock=True (num_mocks=2),,
