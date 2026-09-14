@@ -452,22 +452,103 @@ def _classify_mock_category(text: str) -> str:
     return "mock"
 
 
-def _extract_mocks(node, src_bytes: bytes) -> list[MockResult]:
+def _mask_comment_spans(node, src_bytes: bytes, language: str) -> str:
+    """`node`'s own source text (same content `_source(node, src_bytes)`
+    returns), with every comment node's span blanked out to spaces of the
+    same *character* length -- so match/slice positions computed against
+    the result line up exactly with positions in the real, unmasked text.
+
+    Why this exists: `_extract_mocks()` below runs its MOCK_PATTERNS
+    regexes and `_classify_mock_category()`'s keyword scan directly over
+    the fixture's flat source text, with no notion that a substring inside
+    a `//`/`#`/`/* */` comment isn't real code -- unlike fixture detection
+    and `classify_pytest_fixture_kind()` (detector_python.py), which only
+    ever walk actual tree-sitter node *types* (a comment is its own
+    distinct node type there, never mistaken for a real `call`/`yield`
+    node). Found via manual validation sampling: a fixture whose only
+    `jest.spyOn(...)` call was commented out still got `has_mock=True`,
+    because regex has no concept of "this text is inside a comment token".
+    Masking reuses `COMMENT_NODE_TYPES` -- the exact same per-language
+    comment node names `_count_comment_lines()` already relies on for
+    `num_comment_lines` -- rather than a hand-rolled comment/string
+    stripper (regex-based lexing of 4 different comment grammars is easy
+    to get subtly wrong, e.g. on nested quotes; tree-sitter has already
+    done that work correctly).
+
+    Character offsets, not byte offsets: tree-sitter's `node.start_byte`/
+    `end_byte` are byte positions into `src_bytes`, but `_source()` decodes
+    to a `str`, and `str` indexing is by character -- multi-byte UTF-8
+    content (e.g. a non-English comment) means byte and character offsets
+    diverge. Decoding the *prefix* up to each comment boundary (from the
+    same fixture-relative byte origin `_source()` uses) converts each
+    boundary to the matching character offset, so the masked-out span's
+    length exactly matches how many characters that comment decodes to --
+    not how many bytes it occupies -- keeping every position after it
+    aligned with the real (unmasked) text. Blanking with plain spaces
+    (not newlines) is safe here: MOCK_PATTERNS/MOCK_INTERACTION_PATTERN
+    only ever require `\\s*`/word-boundary gaps, never care whether a gap
+    was originally a space or a newline.
+
+    Only comments are masked, not string literals -- e.g. a mock call
+    quoted inside a docstring example is a separate, distinct false-
+    positive class not covered by this fix.
+
+    `language` not in COMMENT_NODE_TYPES returns the text unchanged
+    (same safe-no-op convention as `_count_comment_lines()`)."""
     text = _source(node, src_bytes)
-    category = _classify_mock_category(text)
+    comment_types = COMMENT_NODE_TYPES.get(language)
+    if not comment_types:
+        return text
+
+    spans: list[tuple[int, int]] = []
+
+    def visit(n) -> None:
+        if n.type in comment_types:
+            char_start = len(
+                src_bytes[node.start_byte : n.start_byte].decode("utf-8", errors="replace")
+            )
+            char_end = len(
+                src_bytes[node.start_byte : n.end_byte].decode("utf-8", errors="replace")
+            )
+            spans.append((char_start, char_end))
+            return  # comment nodes are leaves -- nothing to descend into
+        for child in n.children:
+            visit(child)
+
+    visit(node)
+    if not spans:
+        return text
+
+    masked = list(text)
+    for start, end in spans:
+        for i in range(start, min(end, len(masked))):
+            masked[i] = " "
+    return "".join(masked)
+
+
+def _extract_mocks(node, src_bytes: bytes, language: str) -> list[MockResult]:
+    text = _source(node, src_bytes)
+    masked_text = _mask_comment_spans(node, src_bytes, language)
+    category = _classify_mock_category(masked_text)
     found = []
     for pattern, framework in MOCK_PATTERNS:
-        for m in re.finditer(pattern, text):
+        for m in re.finditer(pattern, masked_text):
             target = m.group(1) if m.lastindex and m.lastindex >= 1 else ""
             snippet_start = max(m.start() - SNIPPET_CONTEXT_BEFORE, 0)
             snippet_end = min(m.end() + SNIPPET_CONTEXT_AFTER, len(text))
+            # Sliced from the real (unmasked) text -- a reviewer reading
+            # raw_snippet should see the actual surrounding code, comments
+            # included; masking only ever decides *whether* something
+            # counts as a match, never what gets shown for one that does.
             snippet = text[snippet_start:snippet_end].replace("\n", " ")
 
-            # Count .return_value / .side_effect / when(...).thenReturn style
+            # Count .return_value / .side_effect / when(...).thenReturn
+            # style, from masked_text too -- a comment mentioning one of
+            # these near a real match shouldn't inflate the count either.
             interactions = len(
                 re.findall(
                     MOCK_INTERACTION_PATTERN,
-                    text[m.start() : m.end() + 200],
+                    masked_text[m.start() : m.end() + 200],
                 )
             )
 
@@ -577,7 +658,7 @@ def _build_result(
         num_parameters=metrics.get("num_parameters", 0),
         has_teardown_pair=0,  # Calculated in post-processing
         raw_source=src_text,
-        mocks=_extract_mocks(func_node, src_bytes),
+        mocks=_extract_mocks(func_node, src_bytes, language),
         container_id=container_id,
     )
 
