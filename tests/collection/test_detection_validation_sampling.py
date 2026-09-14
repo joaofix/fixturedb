@@ -1,13 +1,17 @@
 """Tests for collection/detection_validation_sampling.py.
 
 Builds tiny synthetic db/{a,c}.db files under tmp_path (via the real
-schema, initialise_db()) and checks the three DB queries' row shape, the
+schema, initialise_db()) and checks the two DB queries' row shape, the
 CSV writer's fixed schema, and run_detection_validation_sampling()'s
 end-to-end wiring (population/sample counts, strata metadata, files
 written). The Cochran sample-size math and stratified allocation
 themselves are already covered by tests/collection/test_validation_
 sampling.py -- these tests only check this module's own job: the SQL
 queries and CSV/metadata output.
+
+Mock-type (dummy/stub/spy/fake/mock category) classification was dropped
+from manual validation entirely (2026-09) -- there is deliberately no
+TestFetchMockTypeRows here anymore.
 """
 
 from __future__ import annotations
@@ -20,14 +24,12 @@ from collection.db import (
     db_session,
     initialise_db,
     insert_fixture,
-    insert_mock_usage,
     upsert_repository,
     upsert_test_file,
 )
 from collection.detection_validation_sampling import (
     CSV_FIELDNAMES,
     _fetch_mock_detection_rows,
-    _fetch_mock_type_rows,
     _fetch_pytest_lifecycle_rows,
     run_detection_validation_sampling,
 )
@@ -35,8 +37,8 @@ from collection.detection_validation_sampling import (
 
 def _make_db(db_file, repos: list[dict]) -> None:
     """One repo per entry: {"language": str, "fixtures": [{"overrides":
-    dict, "mocks": [mock_dict, ...]}]}. Mirrors the _make_db pattern used
-    across tests/collection/test_rq*.py."""
+    dict}]}. Mirrors the _make_db pattern used across tests/collection/
+    test_rq*.py."""
     initialise_db(db_file)
     with db_session(db_file) as conn:
         for repo_idx, repo_spec in enumerate(repos):
@@ -86,22 +88,7 @@ def _make_db(db_file, repos: list[dict]) -> None:
                     "commit_sha": "abc123def456",
                 }
                 base.update(fixture_spec.get("overrides", {}))
-                fixture_id = insert_fixture(conn, base)
-                for mock in fixture_spec.get("mocks", []):
-                    insert_mock_usage(
-                        conn,
-                        {
-                            "fixture_id": fixture_id,
-                            "repo_id": repo_id,
-                            "framework": mock.get("framework", "unittest_mock"),
-                            "category": mock.get("category", "mock"),
-                            "target_identifier": mock.get("target_identifier", ""),
-                            "num_interactions_configured": mock.get(
-                                "num_interactions_configured", 0
-                            ),
-                            "raw_snippet": mock.get("raw_snippet", ""),
-                        },
-                    )
+                insert_fixture(conn, base)
 
 
 class TestFetchMockDetectionRows:
@@ -143,91 +130,6 @@ class TestFetchMockDetectionRows:
         assert rows_c[0]["id"] == "C:java:1"
 
 
-class TestFetchMockTypeRows:
-    def test_snippet_includes_both_the_call_and_the_full_owning_fixture_body(self, tmp_path):
-        """_classify_mock_category() scans the *whole fixture body*, not a
-        window around the call (see that function's docstring) -- so the
-        sample must show both, not just the matched call, or a rater has
-        no way to see the actual evidence a category was derived from."""
-        db_file = tmp_path / "a.db"
-        _make_db(
-            db_file,
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {
-                            "overrides": {
-                                "num_mocks": 1,
-                                "raw_source": "def dummy_client():\n    return monkeypatch.setattr(...)",
-                            },
-                            "mocks": [
-                                {
-                                    "category": "stub",
-                                    "raw_snippet": "monkeypatch.setattr(...)",
-                                    "framework": "pytest_monkeypatch",
-                                }
-                            ],
-                        }
-                    ],
-                }
-            ],
-        )
-        with sqlite3.connect(db_file) as conn:
-            rows = _fetch_mock_type_rows(conn, "A")
-        assert len(rows) == 1
-        assert rows[0]["category"] == "stub"
-        assert "monkeypatch.setattr(...)" in rows[0]["raw_snippet"]
-        assert "def dummy_client():" in rows[0]["raw_snippet"]
-        assert rows[0]["detected_label"] == "category=stub (framework=pytest_monkeypatch)"
-
-    def test_mocks_without_a_category_are_excluded(self, tmp_path):
-        db_file = tmp_path / "a.db"
-        _make_db(
-            db_file,
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {
-                            "overrides": {"num_mocks": 1},
-                            "mocks": [{"category": "", "raw_snippet": "x"}],
-                        }
-                    ],
-                }
-            ],
-        )
-        with sqlite3.connect(db_file) as conn:
-            rows = _fetch_mock_type_rows(conn, "A")
-        assert rows == []
-
-    def test_falls_back_to_target_identifier_when_raw_snippet_empty(self, tmp_path):
-        db_file = tmp_path / "a.db"
-        _make_db(
-            db_file,
-            [
-                {
-                    "language": "java",
-                    "fixtures": [
-                        {
-                            "overrides": {"num_mocks": 1},
-                            "mocks": [
-                                {
-                                    "category": "mock",
-                                    "raw_snippet": "",
-                                    "target_identifier": "com.example.Client",
-                                }
-                            ],
-                        }
-                    ],
-                }
-            ],
-        )
-        with sqlite3.connect(db_file) as conn:
-            rows = _fetch_mock_type_rows(conn, "A")
-        assert "com.example.Client" in rows[0]["raw_snippet"]
-
-
 class TestFetchPytestLifecycleRows:
     def test_only_pytest_decorator_with_lifecycle_kind_included(self, tmp_path):
         db_file = tmp_path / "a.db"
@@ -267,10 +169,10 @@ class TestFetchPytestLifecycleRows:
 
 
 class TestRunDetectionValidationSampling:
-    def test_end_to_end_writes_three_csvs_and_metadata(self, tmp_path):
+    def test_end_to_end_writes_two_csvs_and_metadata(self, tmp_path):
         db_a = tmp_path / "a.db"
         db_c = tmp_path / "c.db"
-        for db_file, tag in ((db_a, "a"), (db_c, "c")):
+        for db_file in (db_a, db_c):
             _make_db(
                 db_file,
                 [
@@ -283,7 +185,6 @@ class TestRunDetectionValidationSampling:
                                     "fixture_type": "pytest_decorator",
                                     "fixture_type_kind": "setup",
                                 },
-                                "mocks": [{"category": "mock", "raw_snippet": f"Mock() # {tag}"}],
                             },
                             {
                                 "overrides": {
@@ -301,7 +202,7 @@ class TestRunDetectionValidationSampling:
             db_a=db_a, db_c=db_c, seed=42, output_root=output_root
         )
 
-        assert {r.step for r in results} == {"mock-detection", "mock-type", "pytest-lifecycle"}
+        assert {r.step for r in results} == {"mock-detection", "pytest-lifecycle"}
         for r in results:
             assert r.output_file.exists()
             with r.output_file.open(newline="", encoding="utf-8") as fh:
@@ -324,9 +225,12 @@ class TestRunDetectionValidationSampling:
         assert metadata["seed"] == 42
         assert metadata["confidence_level"] == 0.95
         assert metadata["margin_of_error"] == 0.05
-        assert len(metadata["results"]) == 3
+        assert len(metadata["results"]) == 2
 
         assert (output_root / "README_detection_validation.md").exists()
+        readme_text = (output_root / "README_detection_validation.md").read_text()
+        assert "mock-type" not in readme_text
+        assert "mock_type" not in readme_text
 
     def test_same_seed_reproduces_same_sample(self, tmp_path):
         db_a = tmp_path / "a.db"
