@@ -1,0 +1,242 @@
+{
+  "confidence_level": 0.95,
+  "margin_of_error": 0.05,
+  "proportion": 0.5,
+  "seed": 42,
+  "timestamp": "20260914_115321",
+  "results": [
+    {
+      "step": "mock-detection",
+      "output_file": "/home/joao/fixturedb/validation-samples/mock-detection/mock_detection_sample.csv",
+      "population_size": 17318,
+      "sample_size": 376,
+      "strata": [
+        {
+          "key": {
+            "language": "java"
+          },
+          "population_size": 2046,
+          "sample_size": 44
+        },
+        {
+          "key": {
+            "language": "javascript"
+          },
+          "population_size": 3062,
+          "sample_size": 67
+        },
+        {
+          "key": {
+            "language": "python"
+          },
+          "population_size": 6925,
+          "sample_size": 150
+        },
+        {
+          "key": {
+            "language": "typescript"
+          },
+          "population_size": 5285,
+          "sample_size": 115
+        }
+      ]
+    },
+    {
+      "step": "mock-type",
+      "output_file": "/home/joao/fixturedb/validation-samples/mock-type/mock_type_sample.csv",
+      "population_size": 39861,
+      "sample_size": 381,
+      "strata": [
+        {
+          "key": {
+            "language": "java",
+            "category": "dummy"
+          },
+          "population_size": 78,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "java",
+            "category": "fake"
+          },
+          "population_size": 88,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "java",
+            "category": "mock"
+          },
+          "population_size": 3817,
+          "sample_size": 37
+        },
+        {
+          "key": {
+            "language": "java",
+            "category": "spy"
+          },
+          "population_size": 668,
+          "sample_size": 6
+        },
+        {
+          "key": {
+            "language": "java",
+            "category": "stub"
+          },
+          "population_size": 219,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "category": "dummy"
+          },
+          "population_size": 10,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "category": "fake"
+          },
+          "population_size": 157,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "category": "mock"
+          },
+          "population_size": 3261,
+          "sample_size": 31
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "category": "spy"
+          },
+          "population_size": 1333,
+          "sample_size": 13
+        },
+        {
+          "key": {
+            "language": "javascript",
+            "category": "stub"
+          },
+          "population_size": 2345,
+          "sample_size": 22
+        },
+        {
+          "key": {
+            "language": "python",
+            "category": "dummy"
+          },
+          "population_size": 155,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "language": "python",
+            "category": "fake"
+          },
+          "population_size": 1233,
+          "sample_size": 12
+        },
+        {
+          "key": {
+            "language": "python",
+            "category": "mock"
+          },
+          "population_size": 13085,
+          "sample_size": 125
+        },
+        {
+          "key": {
+            "language": "python",
+            "category": "spy"
+          },
+          "population_size": 41,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "python",
+            "category": "stub"
+          },
+          "population_size": 1026,
+          "sample_size": 10
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "category": "dummy"
+          },
+          "population_size": 28,
+          "sample_size": 0
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "category": "fake"
+          },
+          "population_size": 317,
+          "sample_size": 3
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "category": "mock"
+          },
+          "population_size": 5717,
+          "sample_size": 55
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "category": "spy"
+          },
+          "population_size": 2858,
+          "sample_size": 27
+        },
+        {
+          "key": {
+            "language": "typescript",
+            "category": "stub"
+          },
+          "population_size": 3425,
+          "sample_size": 33
+        }
+      ]
+    },
+    {
+      "step": "pytest-lifecycle",
+      "output_file": "/home/joao/fixturedb/validation-samples/pytest-lifecycle/pytest_lifecycle_sample.csv",
+      "population_size": 33029,
+      "sample_size": 380,
+      "strata": [
+        {
+          "key": {
+            "lifecycle_kind": "setup"
+          },
+          "population_size": 26031,
+          "sample_size": 300
+        },
+        {
+          "key": {
+            "lifecycle_kind": "setup_and_teardown"
+          },
+          "population_size": 6807,
+          "sample_size": 78
+        },
+        {
+          "key": {
+            "lifecycle_kind": "teardown"
+          },
+          "population_size": 191,
+          "sample_size": 2
+        }
+      ]
+    }
+  ]
+}
