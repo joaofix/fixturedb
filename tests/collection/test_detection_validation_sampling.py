@@ -144,7 +144,11 @@ class TestFetchMockDetectionRows:
 
 
 class TestFetchMockTypeRows:
-    def test_uses_mock_raw_snippet_not_fixture_body(self, tmp_path):
+    def test_snippet_includes_both_the_call_and_the_full_owning_fixture_body(self, tmp_path):
+        """_classify_mock_category() scans the *whole fixture body*, not a
+        window around the call (see that function's docstring) -- so the
+        sample must show both, not just the matched call, or a rater has
+        no way to see the actual evidence a category was derived from."""
         db_file = tmp_path / "a.db"
         _make_db(
             db_file,
@@ -153,7 +157,10 @@ class TestFetchMockTypeRows:
                     "language": "python",
                     "fixtures": [
                         {
-                            "overrides": {"num_mocks": 1, "raw_source": "def f():\n    pass"},
+                            "overrides": {
+                                "num_mocks": 1,
+                                "raw_source": "def dummy_client():\n    return monkeypatch.setattr(...)",
+                            },
                             "mocks": [
                                 {
                                     "category": "stub",
@@ -170,7 +177,8 @@ class TestFetchMockTypeRows:
             rows = _fetch_mock_type_rows(conn, "A")
         assert len(rows) == 1
         assert rows[0]["category"] == "stub"
-        assert rows[0]["raw_snippet"] == "monkeypatch.setattr(...)"
+        assert "monkeypatch.setattr(...)" in rows[0]["raw_snippet"]
+        assert "def dummy_client():" in rows[0]["raw_snippet"]
         assert rows[0]["detected_label"] == "category=stub (framework=pytest_monkeypatch)"
 
     def test_mocks_without_a_category_are_excluded(self, tmp_path):
@@ -217,7 +225,7 @@ class TestFetchMockTypeRows:
         )
         with sqlite3.connect(db_file) as conn:
             rows = _fetch_mock_type_rows(conn, "A")
-        assert rows[0]["raw_snippet"] == "com.example.Client"
+        assert "com.example.Client" in rows[0]["raw_snippet"]
 
 
 class TestFetchPytestLifecycleRows:

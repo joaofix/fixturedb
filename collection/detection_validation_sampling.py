@@ -158,16 +158,25 @@ def _fetch_mock_detection_rows(conn: sqlite3.Connection, dataset: str) -> list[d
 def _fetch_mock_type_rows(conn: sqlite3.Connection, dataset: str) -> list[dict[str, Any]]:
     """One row per mock_usages row with a non-empty category, for the
     mock-*type* classification precision check: is the assigned
-    dummy/stub/spy/fake/mock category correct? `raw_snippet` is the
-    specific mock call (mock_usages.raw_snippet), not the whole fixture --
-    that's the actual text the category was derived from. source_url
-    still links to the owning fixture's file/line range (mock_usages
-    doesn't carry its own line numbers)."""
+    dummy/stub/spy/fake/mock category correct?
+
+    `raw_snippet` shows the specific mock call (mock_usages.raw_snippet)
+    followed by the *whole owning fixture's* body (fixtures.raw_source) --
+    not just the call on its own. _classify_mock_category() in
+    detector_shared.py scans the whole fixture body for a keyword match,
+    deliberately not a small window around the call site (its own
+    docstring: "a mock is frequently created and named several lines away
+    from where it's instantiated"), so the call snippet alone is often
+    missing the actual evidence the category was derived from -- a rater
+    shown only the call could easily (and wrongly) mark a correct
+    category as FP just because the keyword isn't visible in that
+    fragment. source_url still links to the owning fixture's file/line
+    range (mock_usages doesn't carry its own line numbers)."""
     rows = conn.execute(
         """
         SELECT m.id, tf.language, r.full_name, f.commit_sha, tf.relative_path,
                f.start_line, f.end_line, m.raw_snippet, m.target_identifier,
-               m.category, m.framework
+               m.category, m.framework, f.raw_source
         FROM mock_usages m
         JOIN fixtures f ON m.fixture_id = f.id
         JOIN test_files tf ON f.file_id = tf.id
@@ -175,31 +184,36 @@ def _fetch_mock_type_rows(conn: sqlite3.Connection, dataset: str) -> list[dict[s
         WHERE m.category IS NOT NULL AND m.category != ''
         """
     ).fetchall()
-    return [
-        {
-            "id": f"{dataset}:{language}:{mock_id}",
-            "language": language,
-            "category": category,
-            "source_url": _build_github_url(
-                repo_name, commit_sha or "", relative_path or "", start_line or 0, end_line or 0
-            ),
-            "raw_snippet": raw_snippet or target_identifier or "",
-            "detected_label": f"category={category} (framework={framework})",
-        }
-        for (
-            mock_id,
-            language,
-            repo_name,
-            commit_sha,
-            relative_path,
-            start_line,
-            end_line,
-            raw_snippet,
-            target_identifier,
-            category,
-            framework,
-        ) in rows
-    ]
+    result = []
+    for (
+        mock_id,
+        language,
+        repo_name,
+        commit_sha,
+        relative_path,
+        start_line,
+        end_line,
+        raw_snippet,
+        target_identifier,
+        category,
+        framework,
+        fixture_raw_source,
+    ) in rows:
+        call_text = raw_snippet or target_identifier or ""
+        snippet = f"# matched call: {call_text}\n\n# owning fixture (full body, this is what the category was classified against):\n{fixture_raw_source or ''}"
+        result.append(
+            {
+                "id": f"{dataset}:{language}:{mock_id}",
+                "language": language,
+                "category": category,
+                "source_url": _build_github_url(
+                    repo_name, commit_sha or "", relative_path or "", start_line or 0, end_line or 0
+                ),
+                "raw_snippet": snippet,
+                "detected_label": f"category={category} (framework={framework})",
+            }
+        )
+    return result
 
 
 def _fetch_pytest_lifecycle_rows(conn: sqlite3.Connection, dataset: str) -> list[dict[str, Any]]:
