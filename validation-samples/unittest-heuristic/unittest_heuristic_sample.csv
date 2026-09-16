@@ -247,7 +247,7 @@ def setUp(self):
         """"""测试初始化""""""
         super(TestWestProviderTryUpdate, self).setUp()
         self.provider = WestProvider(self.id, self.token)
-        self.provider.logger = MagicMock()",setUp,TP,BaseProviderTestCase(unittest.TestCase) -- confirmed directly in this repo's own tests/base_test.py.
+        self.provider.logger = MagicMock()",setUp,TP,
 A:python:18301,https://github.com/yourlabs/django-autocomplete-light/blob/95de194cb514f99c2a3f27859baa241b73797e02/test_project/alight_rename_forward/test_functional.py#L18-L25,"class AdminRenameForwardTest(
     AlightStory,
     case.AdminMixin,
@@ -262,7 +262,7 @@ def setUp(self):
             self.fixtures = OwnedFixtures()
             self.fixtures.install_fixtures(self.model)
 
-        self.get(url=self.get_modeladmin_url('add'))",setUp,Unsure,"Base classes (AlightStory, case.AdminMixin, case.OptionMixin, case.AutocompleteTestCase) are this repo's own custom test mixins; did not chase their own definitions further."
+        self.get(url=self.get_modeladmin_url('add'))",setUp,Unsure,
 A:python:8970,https://github.com/getsentry/sentry/blob/e3afc2a5c20d908d156aeb3eae7a821af5737885/tests/apidocs/endpoints/releases/test_project_releases.py#L8-L17,"class ProjectReleasesDocsTest(APIDocsTestCase):
     ...
 def setUp(self) -> None:
@@ -274,7 +274,7 @@ def setUp(self) -> None:
                 ""project_id_or_slug"": self.project.slug,
             },
         )
-        self.login_as(user=self.user)",setUp,TP,"APIDocsTestCase(APITestCase) -- Sentry's own internal APITestCase base, which extends Django's TestCase (unittest.TestCase); confirmed the APIDocsTestCase hop directly, did not re-fetch Sentry's own APITestCase definition."
+        self.login_as(user=self.user)",setUp,TP,
 A:python:15032,https://github.com/microsoft/apm/blob/3a20dd93d0f5e944bbc76c9d7d6db2683f437373/tests/unit/test_symlink_containment.py#L130-L131,"class TestBaseIntegratorSymlinkContainment(unittest.TestCase):
     ...
 def tearDown(self):
@@ -387,7 +387,7 @@ def setUp(self):
         )
         self.corpus = Corpus.objects.create(
             title=""Test Corpus"", creator=self.owner, is_public=False
-        )",setUp,TP,DocumentFolderServiceTestBase(TransactionTestCase) -- TransactionTestCase (Django) already confirmed elsewhere to extend unittest.TestCase.
+        )",setUp,TP,
 C:python:36325,https://github.com/inventree/inventree/blob/d38d9b21a9f3f44c6dfb0811d1f4f5b304712433/InvenTree/InvenTree/test_api.py#L27-L30,"class APITests(APITestCase):
     ...
 def setUp(self):
@@ -406,7 +406,7 @@ def tearDown(self):
         # restore the main loop
         asyncio.set_event_loop(self._main_loop)
         self.loop = None
-        self._main_loop = None",tearDown,TP,"TracerTestCase(TestSpanContainer, BaseTestCase(SubprocessTestCase(unittest.TestCase))) -- 3-hop chain confirmed by fetching dd-trace-py's tests/utils.py and tests/subprocesstest.py."
+        self._main_loop = None",tearDown,TP,
 C:python:35058,https://github.com/babybuddy/babybuddy/blob/3f1a7d9a9dc99b00e83524f5319e45cd28f3e735/core/tests/tests_models.py#L11-L12,"class ChildTestCase(TestCase):
     ...
 def setUp(self):
@@ -424,7 +424,7 @@ def setUp(self):
         if ""b"" in self.WRITEMODE:
             data = data.encode(""ascii"")
         with self.open(support.TESTFN, self.WRITEMODE) as fp:
-            fp.write(data)",setUp,TP,"class TestGenericUnivNewlines has no base of its own -- a mixin, meant to be combined with unittest.TestCase via multiple inheritance elsewhere in the same CPython test suite (confirmed pattern, see also C:python:4292/33933/24373/34057)."
+            fp.write(data)",setUp,TP,
 C:python:72896,https://github.com/openapitools/openapi-generator/blob/566e7ef5832706e0404ccbde87128d17aeb4a42e/samples/openapi3/client/petstore/python-legacy/test/test_cat.py#L28-L29,"class TestCat(unittest.TestCase):
     ...
 def tearDown(self):
@@ -443,16 +443,16 @@ def setUpClass(cls):
 C:python:4292,https://github.com/bhoov/exbert/blob/dcbfc6e159c5bb419c9b913d126821dd56b98abf/server/transformers/tests/test_tokenization_common.py#L57-L58,"class TokenizerTesterMixin:
     ...
 def tearDown(self):
-        shutil.rmtree(self.tmpdirname)",tearDown,TP,TokenizerTesterMixin has no base -- same mixin-for-multiple-inheritance pattern.
+        shutil.rmtree(self.tmpdirname)",tearDown,TP,
 C:python:4461,https://github.com/airtestproject/poco/blob/39e1d97be023377338cf39e40255ea4dfc152f5e/poco/drivers/unity3d/test/test.py#L16-L18,"class TestU3dDriverAndroid(TestStandardFunction):
     ...
 def setUpClass(cls):
         connect_device('Android:///')
-        cls.poco = UnityPoco()",setUpClass,Unsure,TestStandardFunction imported from poco.drivers.std.test.simple; not verified further.
+        cls.poco = UnityPoco()",setUpClass,Unsure,
 C:python:11056,https://github.com/tarrysingh/artificial-intelligence-deep-learning-machine-learning-tutorials/blob/5a815b1429c9b3be3c4e192239488c141deeb00f/java/java2py/antlr-3.1.3/runtime/Python/tests/t050decorate.py#L6-L7,"class t013parser(testbase.ANTLRTest):
     ...
 def setUp(self):
-        self.compileGrammar()",setUp,TP,ANTLRTest(unittest.TestCase) -- confirmed directly in this repo's own tests/testbase.py.
+        self.compileGrammar()",setUp,TP,
 C:python:28722,https://github.com/pyomo/pyomo/blob/6eef67d398a161c04c33a1f17278db433ca8b1a7/pyomo/core/tests/unit/test_sets.py#L527-L563,"class TestRangeSet2(TestRangeSet):
     ...
 def setUp(self):
@@ -491,7 +491,7 @@ def setUp(self):
         self.e3=3
         self.e4=4
         self.e5=5
-        self.e6=6",setUp,Unsure,TestRangeSet's own base (SimpleSetA) found locally but not chased further.
+        self.e6=6",setUp,Unsure,
 C:python:15225,https://github.com/piccolo-orm/piccolo/blob/71a6190bd9bcbbce732ddcdf20964885577bea97/tests/columns/test_date.py#L21-L22,"class TestDate(TestCase):
     ...
 def tearDown(self):
@@ -559,13 +559,13 @@ def setUp(self):
 
         # This is necessary because various subclasses pull from different
         # data sources (e.g. tzdata, V1 files, etc).
-        self.klass.clear_cache()",setUp,TP,TzPathUserMixin has no base of its own -- same CPython mixin-for-multiple-inheritance pattern confirmed repeatedly elsewhere in this sample (e.g. C:python:24621).
+        self.klass.clear_cache()",setUp,TP,
 C:python:959,https://github.com/rndusr/stig/blob/a059b0b9837484f66a362d4ba60a2aab5dd69e90/tests/commands_test/torrent_cmds_test.py#L364-L367,"class TestMoveTorrentsCmd(CommandTestCase):
     ...
 def setUp(self):
         super().setUp()
         self.patch('stig.objects',
-                   cfg=self.cfg)",setUp,Unsure,CommandTestCase imported from a local `resources_cmd` module; not verified further.
+                   cfg=self.cfg)",setUp,Unsure,
 C:python:33933,https://github.com/python/cpython/blob/9655434cca5dfbea97bf6d355aec028e840b289c/Lib/test/test_asyncio/test_sendfile.py#L111-L116,"class SendfileBase:
 
       # 128 KiB plus small unaligned to buffer chunk
@@ -575,7 +575,7 @@ def setUp(self):
         self.addCleanup(self.file.close)
         self.loop = self.create_event_loop()
         self.set_event_loop(self.loop)
-        super().setUp()",setUp,TP,"SendfileBase has no base of its own, but its setUp body calls self.addCleanup() -- a real unittest.TestCase API only meaningful once mixed into an actual TestCase subclass elsewhere, confirming the mixin pattern."
+        super().setUp()",setUp,TP,
 C:python:9031,https://github.com/google/deepvariant/blob/4bc518efe05a5cf4232ce2685cbe6867e64aa1ee/third_party/nucleus/io/python/vcf_reader_wrap_test.py#L156-L163,"class WrapVcfReaderTests(absltest.TestCase):
     ...
 def setUp(self):
@@ -591,7 +591,7 @@ C:python:12203,https://github.com/pytroll/satpy/blob/33c3c8d0aad5feb747edc4f0715
 def tearDown(self):
         """"""Tear down the tests.""""""
         with suppress(OSError):
-            os.remove(self.filename)",tearDown,TP,BaseTestCaseEPSL1B(TestCase) where TestCase is `from unittest import TestCase` -- confirmed directly in satpy's own test file.
+            os.remove(self.filename)",tearDown,TP,
 C:python:6047,https://github.com/ironlanguages/ironpython2/blob/31ff66ace8d5a55c0cb6be91359a6e2c6da835de/Tests/test_namebinding.py#L222-L227,"class NameBindingTest(IronPythonTestCase):
     ...
 def setUp(self):
@@ -599,7 +599,7 @@ def setUp(self):
         # this is a hack to get scoping requirements for testing correct
         # python treats scope differently if you are nested inside of a class
         global selph
-        selph = self",setUp,Unsure,IronPythonTestCase imported from ironpython2's own `iptest` package; could not locate the actual class definition to confirm its base.
+        selph = self",setUp,Unsure,
 C:python:12397,https://github.com/awslabs/aws-config-rules/blob/d741a1ad9cb2a310b24b6b2becd94eb70a6e0702/python/AMI_OUTDATED_CHECK/AMI_OUTDATED_CHECK_test.py#L70-L79,"class ComplianceTest(unittest.TestCase):
 
     #rule_parameters = '{""SomeParameterKey"":""SomeParameterValue"",""SomeParameterKey2"":""SomeParameterValue2""}'
@@ -618,7 +618,7 @@ C:python:21732,https://github.com/datadog/dd-trace-py/blob/f84b46d29811f70ffcc0b
     ...
 def tearDown(self):
         super(PynamodbTest, self).tearDown()
-        unpatch()",tearDown,TP,"Same TracerTestCase chain, dd-trace-py."
+        unpatch()",tearDown,TP,
 C:python:12752,https://github.com/nesdis/djongo/blob/334e3cf84f17a1b8ff9a4f5ad4d376c045e2b018/tests/django_tests/tests/v22/tests/admin_scripts/tests.py#L788-L789,"class ManageFullPathDefaultSettings(AdminScriptTestCase):
     ...
 def tearDown(self):
@@ -691,7 +691,7 @@ C:python:17176,https://github.com/aiidateam/aiida-core/blob/32c3228b5965a4f903b2
     ...
 def setUp(self):
         self.cli_runner = CliRunner()
-        self.node = orm.Data().store()",setUp,TP,AiidaTestCase(unittest.TestCase) -- confirmed directly in aiida-core's aiida/backends/testbase.py.
+        self.node = orm.Data().store()",setUp,TP,
 C:python:3990,https://github.com/vinta/fuck-coding-interviews/blob/915ff55963430e81134a35f65f511e5684c52f11/problems/tests/test_remove_nth_node_from_end_of_list.py#L11-L12,"class TestCase(unittest.TestCase):
     ...
 def setUp(self):
@@ -747,12 +747,12 @@ def tearDown(self):
         ft_utils.delete_foregin_table(self.server, self.db_name,
                                       self.schema_name, self.ft_name)
 
-        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,BaseTestGenerator(unittest.TestCase) -- confirmed directly in pgadmin4's pgadmin/utils/route.py.
+        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,
 C:python:21702,https://github.com/datadog/dd-trace-py/blob/f84b46d29811f70ffcc0b166f0d5ae792470e082/tests/contrib/molten/test_molten.py#L36-L38,"class TestMolten(TracerTestCase):
     ...
 def tearDown(self):
         super(TestMolten, self).setUp()
-        unpatch()",tearDown,TP,"Same TracerTestCase chain, dd-trace-py."
+        unpatch()",tearDown,TP,
 C:python:33793,https://github.com/python/cpython/blob/9655434cca5dfbea97bf6d355aec028e840b289c/Lib/sqlite3/test/factory.py#L268-L269,"class TextFactoryTests(unittest.TestCase):
     ...
 def tearDown(self):
@@ -782,7 +782,7 @@ def tearDown(self):
         if os.path.isdir(os_helper.TESTFN):
             os.rmdir(os_helper.TESTFN)
         elif os.path.isfile(os_helper.TESTFN):
-            os.unlink(os_helper.TESTFN)",tearDown,TP,BaseTest(unittest.TestCase) -- confirmed directly in cpython's Lib/test/test_optparse.py.
+            os.unlink(os_helper.TESTFN)",tearDown,TP,
 C:python:19024,https://github.com/mljar/mljar-supervised/blob/db658a27246e677698a50ad99f10bf2d1f4d756e/tests/tests_automl/test_stack_models_constraints.py#L17-L18,"class AutoMLStackModelsConstraintsTest(unittest.TestCase):
     ...
 def tearDown(self):
@@ -790,7 +790,7 @@ def tearDown(self):
 C:python:21759,https://github.com/datadog/dd-trace-py/blob/f84b46d29811f70ffcc0b166f0d5ae792470e082/tests/contrib/sqlalchemy/test_sqlite.py#L16-L17,"class SQLiteTestCase(SQLAlchemyTestMixin, TracerTestCase):
     ...
 def setUp(self):
-        super(SQLiteTestCase, self).setUp()",setUp,TP,"SQLAlchemyTestMixin, TracerTestCase -- TracerTestCase alone already confirms this via the same dd-trace-py chain."
+        super(SQLiteTestCase, self).setUp()",setUp,TP,
 C:python:13927,https://github.com/nvidia/hpc-container-maker/blob/f89cb67113bec36bd23896b35c562da600ea9ea9/test/test_sed.py#L28-L30,"class Test_sed(unittest.TestCase):
     ...
 def setUp(self):
@@ -845,7 +845,7 @@ C:python:40163,https://github.com/pgadmin-org/pgadmin4/blob/6fce58f2ad4de729a000
     ...
 def tearDown(self):
         # Disconnect the database
-        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,"Same BaseTestGenerator(unittest.TestCase), pgadmin4."
+        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,
 C:python:6195,https://github.com/moderngl/moderngl/blob/ba0a6a2988744eb75039339508f963096e1c6a82/tests/test_uniform.py#L11-L12,"class TestCase(unittest.TestCase):
     ...
 def setUpClass(cls):
@@ -884,7 +884,7 @@ def setUp(self):
             ""max"": 5,  # Max sum of newlines in relevant messages
             ""max_consecutive"": 3,  # Max newlines in one group, in one message
             ""interval"": 10,
-        }",setUp,TP,"RuleTest(unittest.IsolatedAsyncioTestCase, metaclass=ABCMeta) -- confirmed directly."
+        }",setUp,TP,
 C:python:31494,https://github.com/tensorflow/models/blob/718fb2c0d478ab6c9906a3dbf44099942a2c6426/official/vision/image_classification/classifier_trainer_test.py#L118-L120,"class ClassifierTest(tf.test.TestCase, parameterized.TestCase):
     ...
 def tearDown(self):
@@ -1013,7 +1013,7 @@ def setUp(self):
 C:python:29813,https://github.com/qiskit/qiskit/blob/bd3b3600a97f44f351bec7258b5d8f966b8f92d9/test/python/test_user_config.py#L25-L26,"class TestUserConfig(QiskitTestCase):
     ...
 def setUpClass(cls):
-        cls.file_path = 'temp.txt'",setUpClass,TP,QiskitTestCase(BaseQiskitTestCase(BaseTestCase(unittest.TestCase))) -- 3-hop chain confirmed by fetching qiskit's own test/base.py.
+        cls.file_path = 'temp.txt'",setUpClass,TP,
 C:python:23621,https://github.com/oracle/graalpython/blob/c415af6fdfe261989126fc22481bf8d911c96162/graalpython/lib-python/3/idlelib/idle_test/test_config.py#L33-L35,"def tearDownModule():
     idleConf.userCfg = usercfg
     idlelib.testing = False",tearDownModule,TP,
@@ -1041,7 +1041,7 @@ def setUp(self):
             'name_spaced': orm.Str('underscored').store(),
             'boolean': orm.Bool(True).store(),
             'metadata': {}
-        }",setUp,TP,"Same AiidaTestCase(unittest.TestCase), aiida-core."
+        }",setUp,TP,
 C:python:11659,https://github.com/modeloriented/dalex/blob/4b6339cd69515a1f86b790c5376cfbee1963e371/python/dalex/test/test_shap_wrapper.py#L15-L43,"class TestShapWrapperMLPRegressorTitanicFullDataset(unittest.TestCase):
     ...
 def setUp(self):
@@ -1215,7 +1215,7 @@ def setUp(self):
         super().setUp()
         self.provider = FakeProvider()
         self.backend = self.provider.get_backend('fake_ourense')
-        self.properties = self.backend.properties()",setUp,TP,"Same QiskitTestCase chain, qiskit/qiskit."
+        self.properties = self.backend.properties()",setUp,TP,
 C:python:7874,https://github.com/facebookresearch/pytorch-biggraph/blob/dfd307bbcff19b5ac11125aa4a7ee23caa394c8d/test/test_functional.py#L205-L215,"class TestFunctional(TestCase):
     ...
 def setUp(self) -> None:
@@ -1234,7 +1234,7 @@ C:python:40307,https://github.com/pgadmin-org/pgadmin4/blob/6fce58f2ad4de729a000
 def tearDown(self):
         # Disconnect the database
 
-        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,"Same BaseTestGenerator(unittest.TestCase), pgadmin4."
+        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,
 C:python:453,https://github.com/academysoftwarefoundation/opencue/blob/f160bfd9f867788e66c8d6ebc5442d89af586a92/pyoutline/tests/depend_test.py#L32-L33,"class DependTest(unittest.TestCase):
     ...
 def setUp(self):
@@ -1289,13 +1289,13 @@ C:python:36713,https://github.com/aws-cloudformation/cfn-lint/blob/24bc4cf104300
 def tearDown(self):
         """"""Setup""""""
         for handler in LOGGER.handlers:
-            LOGGER.removeHandler(handler)",tearDown,TP,BaseTestCase(TestCase) where TestCase is  -- confirmed directly in cfn-lint's test/testlib/testcase.py.
+            LOGGER.removeHandler(handler)",tearDown,TP,
 C:python:36765,https://github.com/aws-cloudformation/cfn-lint/blob/24bc4cf1043007156a1cf3abfe0c57bfdefa2bea/test/unit/rules/mappings/test_limitname.py#L12-L15,"class TestParameterLimitNumber(BaseRuleTestCase):
     ...
 def setUp(self):
         """"""Setup""""""
         super(TestParameterLimitNumber, self).setUp()
-        self.collection.register(LimitName())",setUp,TP,"BaseRuleTestCase(BaseTestCase) -- cfn-lint's own BaseTestCase, already confirmed elsewhere in this sample to be unittest.TestCase."
+        self.collection.register(LimitName())",setUp,TP,
 C:python:12761,https://github.com/nesdis/djongo/blob/334e3cf84f17a1b8ff9a4f5ad4d376c045e2b018/tests/django_tests/tests/v22/tests/admin_scripts/tests.py#L1287-L1293,"class ManageRunserver(AdminScriptTestCase):
     ...
 def setUp(self):
@@ -1326,14 +1326,14 @@ C:python:30462,https://github.com/localstack/localstack/blob/d8779fa3d6c7dd221ca
 def setUpClass(cls):
         cls.lambda_client = aws_stack.connect_to_service('lambda')
         cls.zip_file_content2 = load_file(TEST_LAMBDA_DOTNETCORE2, mode='rb')
-        cls.zip_file_content31 = load_file(TEST_LAMBDA_DOTNETCORE31, mode='rb')",setUpClass,TP,LambdaTestBase(unittest.TestCase) -- confirmed directly in localstack's test_lambda.py.
+        cls.zip_file_content31 = load_file(TEST_LAMBDA_DOTNETCORE31, mode='rb')",setUpClass,TP,
 C:python:10780,https://github.com/xilinx/vitis-ai/blob/eeafe77e2112cdd91531d5d39cd42a3e0a444ff6/tools/Vitis-AI-Quantizer/vai_q_tensorflow1.x/tensorflow/python/distribute/collective_all_reduce_strategy_test.py#L456-L459,"class DistributedCollectiveAllReduceStrategyTestWithChief(
     CollectiveAllReduceStrategyTestBase, parameterized.TestCase):
     ...
 def setUpClass(cls):
     """"""Create a local cluster with 3 workers and 1 chief.""""""
     cls._cluster_spec = multi_worker_test_base.create_in_process_cluster(
-        num_workers=3, num_ps=0, has_chief=True)",setUpClass,TP,"DistributedCollectiveAllReduceStrategyTestWithChief(CollectiveAllReduceStrategyTestBase, parameterized.TestCase) -- parameterized.TestCase (absl) already confirms this."
+        num_workers=3, num_ps=0, has_chief=True)",setUpClass,TP,
 C:python:9895,https://github.com/uma-pi1/kge/blob/194ff969f0073d4b853193cb8c37a9a8757a02ad/tests/test_model.py#L19-L27,"class BaseTestModel:
     ...
 def setUp(self):
@@ -1344,7 +1344,7 @@ def setUp(self):
         self.dataset = Dataset.create(
             self.config, folder=get_dataset_folder(self.dataset_name)
         )
-        self.model = KgeModel.create(self.config, self.dataset)",setUp,Unsure,"BaseTestModel has no base classes of its own and no unittest-specific API (e.g. addCleanup) visible in the shown method body, unlike the confirmed CPython mixin-pattern cases -- can't confirm this is really combined with TestCase elsewhere."
+        self.model = KgeModel.create(self.config, self.dataset)",setUp,Unsure,
 C:python:22110,https://github.com/aws/serverless-application-model/blob/c7521045ad55e7847f9f71624fd8fd6cd3048ddd/tests/test_model.py#L194-L195,"class TestSamResourceReferableProperties(TestCase):
     ...
 def setUp(self):
@@ -1372,7 +1372,7 @@ def setUp(self):
 C:python:29864,https://github.com/huggingface/transformers/blob/ae333d04b29a25be1a70eaccd6260c294c243c5b/examples/seq2seq/test_seq2seq_examples_multi_gpu.py#L27-L28,"class TestSummarizationDistillerMultiGPU(TestCasePlus):
     ...
 def setUpClass(cls):
-        return cls",setUpClass,TP,TestCasePlus is Hugging Face transformers' own well-documented unittest.TestCase subclass (transformers.testing_utils.TestCasePlus).
+        return cls",setUpClass,TP,
 C:python:6012,https://github.com/ironlanguages/ironpython2/blob/31ff66ace8d5a55c0cb6be91359a6e2c6da835de/Src/StdLib/Lib/unittest/test/test_setups.py#L406-L407,"class Test(unittest.TestCase):
     ...
 def setUpClass(cls):
@@ -1380,7 +1380,7 @@ def setUpClass(cls):
 C:python:11048,https://github.com/tarrysingh/artificial-intelligence-deep-learning-machine-learning-tutorials/blob/5a815b1429c9b3be3c4e192239488c141deeb00f/java/java2py/antlr-3.1.3/runtime/Python/tests/t039labels.py#L7-L8,"class t039labels(testbase.ANTLRTest):
     ...
 def setUp(self):
-        self.compileGrammar()",setUp,TP,Same ANTLRTest(unittest.TestCase) chain.
+        self.compileGrammar()",setUp,TP,
 C:python:8851,https://github.com/asyml/texar-pytorch/blob/787311e1b51462fada6dc7359868b6c976dad502/tests/utils/rnn_test.py#L275-L285,"class BidirectionalDynamicRNNTest(unittest.TestCase):
     ...
 def setUp(self):
@@ -1415,7 +1415,7 @@ C:python:15954,https://github.com/tortoise/tortoise-orm/blob/d018d5dfdb4d25d862a
     ...
 async def setUp(self) -> None:
         self.model = SourceFields  # type: ignore
-        self.instance = await self.model.create(chars=""Test"")",setUp,TP,TestOnlyStraight(test.TestCase) -- Tortoise ORM's own async-aware TestCase wrapper; not independently re-fetched for this exact commit.
+        self.instance = await self.model.create(chars=""Test"")",setUp,TP,
 C:python:12768,https://github.com/nesdis/djongo/blob/334e3cf84f17a1b8ff9a4f5ad4d376c045e2b018/tests/django_tests/tests/v22/tests/admin_scripts/tests.py#L1898-L1900,"class ArgumentOrder(AdminScriptTestCase):
     ...
 def tearDown(self):
@@ -1433,7 +1433,7 @@ def setUpClass(cls):
         cls.sns_client = aws_stack.connect_to_service('sns')
 
         Util.create_function(TEST_LAMBDA_PYTHON, TEST_LAMBDA_NAME_PY,
-                             runtime=LAMBDA_RUNTIME_PYTHON27, libs=TEST_LAMBDA_LIBS)",setUpClass,TP,"Same LambdaTestBase(unittest.TestCase), localstack."
+                             runtime=LAMBDA_RUNTIME_PYTHON27, libs=TEST_LAMBDA_LIBS)",setUpClass,TP,
 C:python:15647,https://github.com/open-telemetry/opentelemetry-python-contrib/blob/df79be6ea935073ba94c80f19ecd4360565ef36b/exporter/opentelemetry-exporter-prometheus-remote-write/tests/test_prometheus_remote_write_exporter.py#L135-L138,"class TestConversion(unittest.TestCase):
     # Initializes test data that is reused across tests
     ...
@@ -1456,7 +1456,7 @@ def setUp(self):
             port=MYSQL_PORT,
             database=MYSQL_DB_NAME,
         )
-        self._cursor = self._connection.cursor()",setUp,TP,"TestBase imported `from opentelemetry.test.test_base import TestBase` -- OpenTelemetry's official test-utils package, documented to wrap unittest.TestCase; could not fetch the exact file to re-confirm this specific commit."
+        self._cursor = self._connection.cursor()",setUp,TP,
 C:python:7854,https://github.com/opendevops-cn/opendevops/blob/c79f8d7a2cc4c72fbf3b251b6e91398b4e33f3ff/scripts/tornado_source_code/tornado/test/tcpclient_test.py#L213-L218,"class ConnectorTest(AsyncTestCase):
     ...
 def tearDown(self):
@@ -1469,7 +1469,7 @@ C:python:29767,https://github.com/qiskit/qiskit/blob/bd3b3600a97f44f351bec7258b5
     ...
 def setUp(self):
         super().setUp()
-        self.backend = FakeParis()",setUp,TP,"Same QiskitTestCase chain, qiskit/qiskit."
+        self.backend = FakeParis()",setUp,TP,
 C:python:5843,https://github.com/ironlanguages/ironpython2/blob/31ff66ace8d5a55c0cb6be91359a6e2c6da835de/Src/StdLib/Lib/test/test_strptime.py#L203-L205,"class StrptimeTests(unittest.TestCase):
     ...
 def setUp(self):
@@ -1546,7 +1546,7 @@ C:python:8160,https://github.com/magicstack/asyncpg/blob/c443374e8b30dd6ae027b52
     ...
 def setUp(self):
         super().setUp()
-        self.loop.run_until_complete(self._add_custom_codec(self.con))",setUp,TP,"ConnectedTestCase is asyncpg's own test-base helper (asyncpg._testbase), documented to wrap unittest.TestCase; not independently re-fetched for this exact commit."
+        self.loop.run_until_complete(self._add_custom_codec(self.con))",setUp,TP,
 C:python:39599,https://github.com/tencentblueking/bk-sops/blob/2c67e13f6279890e290db1829e6e788188379703/gcloud/tests/periodictask/models/test_periodic_task.py#L48-L81,"class PeriodicTaskTestCase(TestCase):
     ...
 def setUp(self):
@@ -1594,7 +1594,7 @@ def tearDownClass(cls) -> None:
 C:python:12128,https://github.com/sukeesh/jarvis/blob/8f70eefe355fda667a49154e7c36045483b5006a/jarviscli/tests/test_football.py#L21-L22,"class FootballTest(PluginTest):
     ...
 def setUp(self):
-        self.test = self.load_plugin(Football)",setUp,TP,PluginTest(unittest.TestCase) -- confirmed directly in jarvis's tests/__init__.py.
+        self.test = self.load_plugin(Football)",setUp,TP,
 C:python:72958,https://github.com/openapitools/openapi-generator/blob/566e7ef5832706e0404ccbde87128d17aeb4a42e/samples/openapi3/client/petstore/python-legacy/test/test_model_return.py#L28-L29,"class TestModelReturn(unittest.TestCase):
     ...
 def tearDown(self):
@@ -1630,7 +1630,7 @@ def setUp(self):
             'SOCIAL_AUTH_{0}_FORM_URL'.format(self.name):
                 self.strategy.build_absolute_uri('/login/{0}'.format(
                     self.backend.name))
-        })",setUp,Unsure,BaseBackendTest imported from a local `.base` module; not verified further.
+        })",setUp,Unsure,
 C:python:1592,https://github.com/cedricguillemet/imogen/blob/ee417b42747ed5b46cb11b02ef0c3630000085b3/bin/Lib/unittest/test/test_setups.py#L228-L229,"class Test3(unittest.TestCase):
     ...
 def setUpClass(cls):
@@ -1668,7 +1668,7 @@ def setUp(self):
 C:python:11530,https://github.com/azure/azure-devops-cli-extension/blob/fefcc470ff7fadf1cc47e106a51d6ca0cf6c68ad/azure-devops/azext_devops/test/team/test_configure.py#L30-L31,"class TestConfigureMethods(AuthenticatedTests):
     ...
 def tearDown(self):
-        patch.stopall()",tearDown,Unsure,AuthenticatedTests imported from a local module; not verified further.
+        patch.stopall()",tearDown,Unsure,
 C:python:18683,https://github.com/tensorflow/agents/blob/b2ed02d20c43a4b789a4711f4653e8421f8ba526/tf_agents/environments/dm_control_wrapper_test.py#L29-L32,"class DmControlWrapperTest(test_utils.TestCase):
     ...
 def setUp(self):
@@ -1701,7 +1701,7 @@ def setUp(self):
         if drive:
             os.chdir(drive)
         with open(self.source_path, 'w') as file:
-            file.write('x = 123\n')",setUp,TP,PyCompileTestsBase has no base -- same CPython mixin-for-multiple-inheritance pattern as its siblings in this sample.
+            file.write('x = 123\n')",setUp,TP,
 C:python:14206,https://github.com/bugy/script-server/blob/20cf080be609df19d30d3400c80c08c1e7876660/src/tests/auth/test_auth_abstract_oauth.py#L27-L31,"class _OauthTestCase(AsyncTestCase):
     ...
 def setUp(self) -> None:
@@ -1951,7 +1951,7 @@ C:python:36720,https://github.com/aws-cloudformation/cfn-lint/blob/24bc4cf104300
 def tearDown(self):
         """"""Tear Down""""""
         # Reset the Spec override to prevent other tests to fail
-        cfnlint.helpers.initialize_specs()",tearDown,TP,"Same BaseTestCase(unittest.TestCase) chain, cfn-lint."
+        cfnlint.helpers.initialize_specs()",tearDown,TP,
 C:python:8038,https://github.com/delta-ml/delta/blob/cad2fe74b5767fa39f843d87508cbe546c6d0929/delta/utils/solver/raw_cls_solver_test.py#L33-L39,"class RawClassSolverTest(tf.test.TestCase):
     ...
 def setUp(self):
@@ -1996,7 +1996,7 @@ C:python:17245,https://github.com/aiidateam/aiida-core/blob/32c3228b5965a4f903b2
     ...
 def tearDown(self):
         super().tearDown()
-        self.assertIsNone(Process.current())",tearDown,TP,"Same AiidaTestCase(unittest.TestCase), aiida-core."
+        self.assertIsNone(Process.current())",tearDown,TP,
 C:python:11940,https://github.com/kellyjonbrazil/jc/blob/5e6bfa681aff03fbd683f81a9f4daa56b49d1344/tests/test_cksum.py#L11-L36,"class MyTests(unittest.TestCase):
     ...
 def setUp(self):
@@ -2039,7 +2039,7 @@ def setUp(self):
         self.finder = finders.FileSystemFinder()
         test_file_path = os.path.join(TEST_ROOT, 'project', 'documents', 'test', 'file.txt')
         self.find_first = (os.path.join('test', 'file.txt'), test_file_path)
-        self.find_all = (os.path.join('test', 'file.txt'), [test_file_path])",setUp,TP,"TestFinders(TestFinders, StaticFilesTestCase) -- StaticFilesTestCase is Django's own; embedded in djongo's vendored copy of Django's own test suite."
+        self.find_all = (os.path.join('test', 'file.txt'), [test_file_path])",setUp,TP,
 C:python:27545,https://github.com/tensorflow/lingvo/blob/6ca74d5b320d19d93e89540a91f31e90978e0af8/lingvo/core/conformer_layer_test.py#L120-L126,"class ConformerLayerTest(test_utils.TestCase, parameterized.TestCase):
     ...
 def setUp(self):
@@ -2217,7 +2217,7 @@ C:python:17267,https://github.com/aiidateam/aiida-core/blob/32c3228b5965a4f903b2
     ...
 def setUp(self):
         super().setUp()
-        self.assertIsNone(Process.current())",setUp,TP,"Same AiidaTestCase(unittest.TestCase), aiida-core."
+        self.assertIsNone(Process.current())",setUp,TP,
 C:python:41134,https://github.com/facebook/Ax/blob/a3d1ae801a9019c854d49f7e7a83c05a3f57f537/ax/models/tests/test_sobol.py#L15-L17,"class SobolGeneratorTest(TestCase):
     ...
 def setUp(self):
@@ -2245,7 +2245,7 @@ def setUp(self):
         options = [make_option(""-v"", ""--verbose"", action=""count"",
                                dest=""verbose"", help=""increment verbosity"")]
         self.parser = InterceptingOptionParser(usage=SUPPRESS_USAGE,
-                                               option_list=options)",setUp,TP,"Same BaseTest(unittest.TestCase), cpython test_optparse.py."
+                                               option_list=options)",setUp,TP,
 C:python:18084,https://github.com/google/clusterfuzz/blob/c577db03861511540fab3093d66efdc0a4409847/src/python/tests/core/google_cloud_utils/big_query_test.py#L29-L36,"class InitTest(unittest.TestCase):
     ...
 def setUp(self):
@@ -2274,7 +2274,7 @@ C:python:20490,https://github.com/cloud-custodian/cloud-custodian/blob/61fee1ea7
     ...
 def setUp(self):
         super(StorageContainerTest, self).setUp()
-        StorageUtilities.get_storage_primary_key.cache_clear()",setUp,Unsure,BaseTest imported from ..azure_common; could not fetch that file to confirm its own base.
+        StorageUtilities.get_storage_primary_key.cache_clear()",setUp,Unsure,
 C:python:32907,https://github.com/googlecloudplatform/professional-services/blob/c6299d996b1e807b407ec9faa21a4add3e9b4f56/examples/cloud-composer-examples/tests/test_cloud_composer_examples.py#L26-L27,"class ComposerDataflowTests(unittest.TestCase):
     ...
 def setUp(self):
@@ -2293,7 +2293,7 @@ def setUp(self) -> None:
             FakeLintSuccessReport,
             LintFailureReportBase,
             extra={""global_list"": self.global_list},
-        )",setUp,TP,"UnitTest is libcst.testing.utils.UnitTest, a documented thin wrapper around unittest.TestCase; not independently re-fetched for this exact commit."
+        )",setUp,TP,
 C:python:91061,https://github.com/flink-extended/dl-on-flink/blob/035f234500640eaa0d4d96a5c23c6c91fe18fbbb/flink-ai-flow/lib/airflow/tests/www/test_views.py#L805-L806,"class TestGanttView(unittest.TestCase):
     ...
 def setUpClass(cls):
@@ -2312,12 +2312,12 @@ C:python:10918,https://github.com/xilinx/vitis-ai/blob/eeafe77e2112cdd91531d5d39
     ...
 def setUp(self):
     super(TFRecordWriterCloseAndFlushGzipTests,
-          self).setUp(TFRecordCompressionType.GZIP)",setUp,TP,"TFRecordWriterCloseAndFlushTests(test.TestCase) -- TensorFlow's own test.TestCase family, embedded in xilinx/vitis-ai's vendored TF copy."
+          self).setUp(TFRecordCompressionType.GZIP)",setUp,TP,
 C:python:17124,https://github.com/aiidateam/aiida-core/blob/32c3228b5965a4f903b230cbc51254715b86e905/tests/cmdline/commands/test_calcjob.py#L101-L103,"class TestVerdiCalculation(AiidaTestCase):
     ...
 def setUp(self):
         super().setUp()
-        self.cli_runner = CliRunner()",setUp,TP,"Same AiidaTestCase(unittest.TestCase), aiida-core."
+        self.cli_runner = CliRunner()",setUp,TP,
 C:python:27834,https://github.com/pymedusa/medusa/blob/90e831b632d05aedfec125e091e445736a912198/ext/tornado/test/tcpclient_test.py#L200-L205,"class ConnectorTest(AsyncTestCase):
     ...
 def setUp(self):
@@ -2334,7 +2334,7 @@ def setUp(self):
         self.db_backend_interface = BackEndDbInterface(self.config)
         self.test_fw = create_test_firmware(device_name='test_fw')
         self.test_fw.release_date = '2001-02-03'
-        self.db_backend_interface.add_firmware(self.test_fw)",setUp,TP,TestAcceptanceBase(unittest.TestCase) -- confirmed directly in fact_core.
+        self.db_backend_interface.add_firmware(self.test_fw)",setUp,TP,
 C:python:37797,https://github.com/google/google-ctf/blob/2d2e64a98ff6b8041caedb6962a898c0ac0d15f0/third_party/edk2/AppPkg/Applications/Python/Python-2.7.2/Lib/test/test_mhlib.py#L143-L144,"class MhlibTests(unittest.TestCase):
     ...
 def tearDown(self):
@@ -2388,7 +2388,7 @@ def setUp(self):
 C:python:12144,https://github.com/sukeesh/jarvis/blob/8f70eefe355fda667a49154e7c36045483b5006a/jarviscli/tests/test_wiki.py#L9-L10,"class WikiTest(PluginTest):
     ...
 def setUp(self):
-        self.wiki = self.load_plugin(wiki.Wiki)",setUp,TP,"Same PluginTest(unittest.TestCase), jarvis."
+        self.wiki = self.load_plugin(wiki.Wiki)",setUp,TP,
 C:python:1072,https://github.com/tensorflow/ranking/blob/552ad7784921d1af7597aace0e9dfd5df3b535a1/tensorflow_ranking/extension/tfrbert_test.py#L377-L381,"class TFRBertRankingPipelineIntegrationTest(tf.test.TestCase):
     ...
 def tearDown(self):
@@ -2444,7 +2444,7 @@ def setUp(self):
         # ""Py_Initialize: Unable to get the locale encoding
         # LookupError: no codec search functions registered: can't find encoding""
         self.oldcwd = os.getcwd()
-        os.chdir(basepath)",setUp,TP,EmbeddingTestsMixin has no base -- same mixin pattern (name says it directly).
+        os.chdir(basepath)",setUp,TP,
 C:python:6913,https://github.com/cloud-cv/fabrik/blob/665443317e1e0a08de9d45b4593c6c11705a347a/tests/unit/keras_app/test_views.py#L845-L846,"class TanHExportTest(unittest.TestCase):
     ...
 def setUp(self):
@@ -2493,7 +2493,7 @@ def setUp(self):
                                ""--quiet"",
                                action=""store_false"",
                                dest=""verbose"")]
-        self.parser = OptionParser(option_list = options)",setUp,TP,"Same BaseTest(unittest.TestCase), cpython test_optparse.py."
+        self.parser = OptionParser(option_list = options)",setUp,TP,
 C:python:20062,https://github.com/google/tf-quant-finance/blob/bb81963fe427394b9e42edae92331f2920b38765/tf_quant_finance/experimental/local_volatility/local_volatility_model_test.py#L62-L79,"class LocalVolatilityTest(tf.test.TestCase, parameterized.TestCase):
     ...
 def setUp(self):
@@ -2601,12 +2601,12 @@ C:python:2426,https://github.com/jython/jython/blob/83c405ec0b394f304c86c82bac6b
     ...
 def setUp(self):
         super(ExecfileTracebackTestCase, self).setUp()
-        write(self.filename1, CODE2)",setUp,TP,BaseChdirTestCase(unittest.TestCase) -- confirmed directly in jython's own source.
+        write(self.filename1, CODE2)",setUp,TP,
 C:python:21617,https://github.com/datadog/dd-trace-py/blob/f84b46d29811f70ffcc0b166f0d5ae792470e082/tests/contrib/asyncio/test_patch.py#L17-L19,"class TestAsyncioPatch(AsyncioTestCase):
     ...
 def tearDown(self):
         unpatch()
-        super(TestAsyncioPatch, self).tearDown()",tearDown,Unsure,AsyncioTestCase imported from dd-trace-py's own `.utils`; not verified further.
+        super(TestAsyncioPatch, self).tearDown()",tearDown,Unsure,
 C:python:19497,https://github.com/fkie-cad/fact_core/blob/3ae514a21a67bdcc57c2eb4718e5d22c13e60a3b/src/test/integration/storage/test_db_interface_frontend.py#L34-L36,"class TestStorageDbInterfaceFrontend(unittest.TestCase):
     ...
 def tearDownClass(cls):
@@ -2635,7 +2635,7 @@ def setUp(self):
         self.text = '''\
 Did you say ""supercalifragilisticexpialidocious?""
 How *do* you spell that odd word, anyways?
-'''",setUp,TP,BaseTestCase(unittest.TestCase) -- confirmed directly.
+'''",setUp,TP,
 C:python:3913,https://github.com/vinta/fuck-coding-interviews/blob/915ff55963430e81134a35f65f511e5684c52f11/data_structures/sets/tests/test_hash_map_based_set.py#L9-L14,"class TestCase(unittest.TestCase):
     ...
 def setUp(self):
@@ -2650,7 +2650,7 @@ def setUp(self):
         super(PropagationTestCase, self).setUp()
 
         # instrument ``concurrent``
-        patch()",setUp,TP,"Same TracerTestCase chain, dd-trace-py."
+        patch()",setUp,TP,
 C:python:1578,https://github.com/cedricguillemet/imogen/blob/ee417b42747ed5b46cb11b02ef0c3630000085b3/bin/Lib/unittest/test/test_setups.py#L120-L122,"class Test(unittest.TestCase):
     ...
 def tearDownClass(cls):
@@ -2838,7 +2838,7 @@ def setUp(self):
         self.query4 = ""tags:~tag1|tag2,tags:tag3""
         self.query5 = ""name:%foo%,description:~bal%""
         self.query6 = ""foobar:2012-12-12..2042-12-12""
-        self.query7 = ""metrics.loss:nil, status:~nil""",setUp,Unsure,BaseTestQuery imported from tests.test_query.base; not verified further.
+        self.query7 = ""metrics.loss:nil, status:~nil""",setUp,Unsure,
 C:python:28531,https://github.com/mycroftai/mycroft-core/blob/f1d7141bf2b2269ac8e273b030e7c5bf6a403c6d/test/unittests/base.py#L55-L56,"class MycroftUnitTestBase(TestCase):
     ...
 def tearDown(self):
@@ -2858,12 +2858,12 @@ def setUp(self):
         self.parser = InterceptingOptionParser(usage=SUPPRESS_USAGE,
                                                option_class=self.MyOption)
         self.parser.add_option(""-a"", None, type=""string"", dest=""a"")
-        self.parser.add_option(""-f"", ""--file"", type=""file"", dest=""file"")",setUp,TP,"Same BaseTest(unittest.TestCase), cpython test_optparse.py."
+        self.parser.add_option(""-f"", ""--file"", type=""file"", dest=""file"")",setUp,TP,
 C:python:16829,https://github.com/mayan-edms/mayan-edms/blob/f950268cbf6869c25eb04094ec01d2ac85932de2/mayan/apps/storage/tests/test_utils.py#L33-L35,"class PatchFilesTestCase(BaseTestCase):
     ...
 def tearDown(self):
         super(PatchFilesTestCase, self).tearDown()
-        shutil.rmtree(path=self.temporary_directory, ignore_errors=True)",tearDown,TP,"BaseTestCase(BaseTestCaseMixin, TestCase) -- docstring explicitly says ""on top of Django test case class""; Django TestCase already confirmed elsewhere to extend unittest.TestCase."
+        shutil.rmtree(path=self.temporary_directory, ignore_errors=True)",tearDown,TP,
 C:python:2478,https://github.com/jython/jython/blob/83c405ec0b394f304c86c82bac6b003774c6ea35/Lib/test/test_gc_jy.py#L897-L903,"class GCTests_Jy_Weakref(unittest.TestCase):
     ...
 def setUpClass(cls):
@@ -2881,7 +2881,7 @@ C:python:25045,https://github.com/trusted-ai/adversarial-robustness-toolbox/blob
     ...
 def setUp(self):
         master_seed(seed=1234)
-        super().setUp()",setUp,TP,TestBase(unittest.TestCase) -- confirmed directly in this repo's own tests/utils.py.
+        super().setUp()",setUp,TP,
 C:python:7704,https://github.com/neovintageous/neovintageous/blob/e22b6df445d55fff9043c010ad373e4680ab4387/tests/functional/test_g_big_n.py#L23-L26,"class Test_gN(unittest.FunctionalTestCase):
     ...
 def setUp(self):
@@ -2899,7 +2899,7 @@ def setUp(self):
         input_file = self.get_resource_path('sample.exactcover')
         with open(input_file) as file:
             self.list_of_subsets = json.load(file)
-            self.qubit_op, _ = exact_cover.get_operator(self.list_of_subsets)",setUp,Unsure,"QiskitOptimizationTestCase -- same Qiskit-family naming convention as the already-confirmed QiskitTestCase chain (qiskit/qiskit), but this is a different, now-archived repo (qiskit-aqua) and I couldn't locate the actual base-class definition to confirm the same chain applies here."
+            self.qubit_op, _ = exact_cover.get_operator(self.list_of_subsets)",setUp,Unsure,
 C:python:26447,https://github.com/aws/aws-sam-cli/blob/a4344d0cc8258d561ac06450e31348a9df5e707c/tests/unit/commands/deploy/test_guided_config.py#L32-L34,"class TestGuidedConfig(TestCase):
     ...
 def tearDown(self):
@@ -2932,12 +2932,12 @@ def setUp(self):
         self.sync = Sync.objects.create(
             storage=self.storage,
             path='path'
-        )",setUp,TP,"TestViews(TestBase(TestCase)) -- 2-hop chain, TestCase imported `from django.test import TestCase` -- confirmed by fetching both files."
+        )",setUp,TP,
 C:python:15843,https://github.com/open-telemetry/opentelemetry-python-contrib/blob/df79be6ea935073ba94c80f19ecd4360565ef36b/tests/opentelemetry-docker-tests/tests/redis/test_redis_functional.py#L127-L129,"class TestRedisDBIndexInstrument(TestBase):
     ...
 def tearDown(self):
         super().tearDown()
-        RedisInstrumentor().uninstrument()",tearDown,TP,"Same OpenTelemetry TestBase, opentelemetry-python-contrib."
+        RedisInstrumentor().uninstrument()",tearDown,TP,
 C:python:40288,https://github.com/pgadmin-org/pgadmin4/blob/6fce58f2ad4de729a0005c75fb2702913cdd0ead/web/pgadmin/browser/server_groups/servers/databases/schemas/packages/tests/test_package_get.py#L33-L55,"class PackageGetTestCase(BaseTestGenerator):
     ...
 def setUp(self):
@@ -2962,7 +2962,7 @@ def setUp(self):
                                                        self.db_name,
                                                        self.schema_name,
                                                        self.pkg_name,
-                                                       self.proc_name)",setUp,TP,"Same BaseTestGenerator(unittest.TestCase), pgadmin4."
+                                                       self.proc_name)",setUp,TP,
 C:python:41517,https://github.com/oils-for-unix/oils/blob/32436e9ee233fff87e524a25c9eae1ee3598d26b/Python-2.7.13/Lib/distutils/tests/test_dist.py#L47-L50,"class DistributionTestCase(support.TempdirManager,
                            support.LoggingSilencer,
                            support.EnvironGuard,
@@ -2978,7 +2978,7 @@ def setUpClass(cls):
         super().setUpClass()
         cls.rows = 10**6
         cls.columns = 10
-        cls.generated_file = generate_csv(cls.rows, cls.columns)",setUpClass,TP,TestBase(TestCase) where TestCase(unittest.TestCase) is confirmed one hop away in the same repo's sdc/tests/test_base.py.
+        cls.generated_file = generate_csv(cls.rows, cls.columns)",setUpClass,TP,
 C:python:10640,https://github.com/xilinx/vitis-ai/blob/eeafe77e2112cdd91531d5d39cd42a3e0a444ff6/tools/Vitis-AI-Quantizer/vai_q_tensorflow1.x/tensorflow/contrib/metrics/python/ops/metric_ops_test.py#L2586-L2588,"class StreamingSpecificityAtSensitivityTest(test.TestCase):
     ...
 def setUp(self):
@@ -3146,7 +3146,7 @@ def setUp(self):
 
         # Same deal as above but for write modes. Note that writing doesn't support a
         # universal newline mode.
-        self.write_modes = ((""binary"", ""wb""), (""text"", ""w""))",setUp,Unsure,Same IronPythonTestCase/iptest situation as C:python:6047.
+        self.write_modes = ((""binary"", ""wb""), (""text"", ""w""))",setUp,Unsure,
 C:python:35945,https://github.com/amundsen-io/amundsen/blob/318e98d888530423859b7cf1b7b7d3be04e58fc3/frontend/tests/unit/base/test_issue_tracker_client.py#L14-L16,"class IssueTrackerClientTest(unittest.TestCase):
     ...
 def setUp(self) -> None:
@@ -3177,7 +3177,7 @@ def setUp(self):
             project_name=""project-name"",
             run_name=""run-name"",
             run_uuid=""run_uuid"",
-        )",setUp,TP,"BaseTestCase(TestCase) -- did not independently re-fetch which TestCase this imports, but the surrounding SET_AUTH_SETTINGS/SET_CLIENT_SETTINGS naming strongly suggests Django's."
+        )",setUp,TP,
 C:python:5347,https://github.com/ironlanguages/ironpython2/blob/31ff66ace8d5a55c0cb6be91359a6e2c6da835de/Src/StdLib/Lib/distutils/tests/test_file_util.py#L34-L36,"class FileUtilTestCase(support.TempdirManager, unittest.TestCase):
     ...
 def tearDown(self):
@@ -3209,7 +3209,7 @@ def setUp(self):
         self.log_output = ''
         self.root_logger.removeHandler(self.root_logger.handlers[0])
         self.root_logger.addHandler(self.sock_hdlr)
-        self.handled = threading.Event()",setUp,TP,BaseTest(unittest.TestCase) -- confirmed directly in oracle/graalpython's embedded CPython test suite.
+        self.handled = threading.Event()",setUp,TP,
 C:python:34654,https://github.com/python/cpython/blob/9655434cca5dfbea97bf6d355aec028e840b289c/Lib/test/test_xmlrpc.py#L1040-L1043,"class BaseKeepaliveServerTestCase(BaseServerTestCase):
     #a request handler that supports keep-alive and logs requests into a
     #class variable
@@ -3217,7 +3217,7 @@ C:python:34654,https://github.com/python/cpython/blob/9655434cca5dfbea97bf6d355a
 def setUp(self):
         #clear request log
         self.RequestHandler.myRequests = []
-        return BaseServerTestCase.setUp(self)",setUp,TP,BaseServerTestCase(unittest.TestCase) -- confirmed directly.
+        return BaseServerTestCase.setUp(self)",setUp,TP,
 C:python:39666,https://github.com/tencentblueking/bk-sops/blob/2c67e13f6279890e290db1829e6e788188379703/pipeline_plugins/tests/variables/collections/sites/open/cc/test_var_cmdb_attribute_query.py#L22-L50,"class VarCmdbAttributeQueryTestCase(TestCase):
     ...
 def setUp(self):
@@ -3257,7 +3257,7 @@ C:python:15650,https://github.com/open-telemetry/opentelemetry-python-contrib/bl
     ...
 def tearDown(self):
         super().tearDown()
-        AioHttpClientInstrumentor().uninstrument()",tearDown,TP,"Same OpenTelemetry TestBase, opentelemetry-python-contrib."
+        AioHttpClientInstrumentor().uninstrument()",tearDown,TP,
 C:python:1933,https://github.com/microsoft/mmdnn/blob/19562a381c27545984a216eda7591430e274e518/tests/utils.py#L55-L58,"class CorrectnessTest(unittest.TestCase):
     ...
 def setUpClass(cls):
@@ -3300,7 +3300,7 @@ def setUp(self):
         sender = BlenderDesc(load_file=sender_blendfile, wait_for_debugger=False)
         receiver = BlenderDesc(load_file=receiver_blendfile, wait_for_debugger=False)
         blenderdescs = [sender, receiver]
-        super().setUp(blenderdescs=blenderdescs)",setUp,Unsure,BlenderTestCase imported from tests.blender.blender_testcase; not verified further.
+        super().setUp(blenderdescs=blenderdescs)",setUp,Unsure,
 C:python:7156,https://github.com/tensorflow/tensor2tensor/blob/21dba2c1bdcc7ab582a2bfd8c0885c217963bb4f/tensor2tensor/data_generators/transduction_problems_test.py#L37-L40,"class TransductionProblem(parameterized.TestCase):
     ...
 def setUp(self):
@@ -3337,12 +3337,12 @@ def setUpClass(cls):
 C:python:137594,https://github.com/vabene1111/recipes/blob/4ff1a6bc938124c4b153e60a7e13ae26083f825a/cookbook/tests/api/test_api_userpreference.py#L12-L13,"class TestApiUserPreference(TestViews):
     ...
 def setUp(self):
-        super(TestApiUserPreference, self).setUp()",setUp,TP,"Same TestViews chain, vabene1111/recipes."
+        super(TestApiUserPreference, self).setUp()",setUp,TP,
 C:python:10020,https://github.com/tensorlayer/tensorlayer/blob/f00deefb49b6d3bfc9745b84753d276d2d70ba3b/tests/layers/test_layers_activation.py#L19-L21,"class Activation_Layer_Test(CustomTestCase):
     ...
 def setUpClass(cls):
         cls.data = (10 + 10) * np.random.random(size=[10, 5]).astype(np.float32) - 10
-        cls.data2 = (10 + 10) * np.random.random(size=[10, 10, 5]).astype(np.float32) - 10",setUpClass,Unsure,CustomTestCase imported from tests.utils; not verified further (project is TF-adjacent but not confirmed).
+        cls.data2 = (10 + 10) * np.random.random(size=[10, 10, 5]).astype(np.float32) - 10",setUpClass,Unsure,
 C:python:26633,https://github.com/bytedance/fedlearner/blob/e2f004d9e2a68fd681d47287145ffccbaefa2337/test/data_join/test_example_join.py#L40-L74,"class TestExampleJoin(unittest.TestCase):
     ...
 def setUp(self):
@@ -3388,7 +3388,7 @@ C:python:34491,https://github.com/python/cpython/blob/9655434cca5dfbea97bf6d355a
     ...
 def setUp(self):
         self.misc_event = threading.Event()
-        super().setUp()",setUp,TP,"SendrecvmsgBase(ThreadSafeCleanupTestCase) -- ThreadSafeCleanupTestCase is CPython's own test.support helper, itself extending unittest.TestCase."
+        super().setUp()",setUp,TP,
 C:python:17430,https://github.com/triton-inference-server/server/blob/98a4dedddd395209f08ceca47666256cd9fa3a8c/qa/L0_batcher/batcher_test.py#L71-L80,"class BatcherTest(tu.TestResultCollector):
     ...
 def tearDown(self):
@@ -3400,7 +3400,7 @@ def tearDown(self):
             destroy_fun = cudashm.destroy_shared_memory_region
         for precreated_shm_region in self.precreated_shm_regions_:
             destroy_fun(precreated_shm_region)
-        super().tearDown()",tearDown,TP,BatcherTest(tu.TestResultCollector) -- TestResultCollector(unittest.TestCase) confirmed directly in triton's qa/common/test_util.py.
+        super().tearDown()",tearDown,TP,
 C:python:21320,https://github.com/magenta/magenta/blob/ebd95163e19b259da50c04561096deaca9732364/magenta/models/music_vae/data_test.py#L788-L806,"class RollOutputsDrumsConverterTest(BaseDataTest, tf.test.TestCase):
     ...
 def setUp(self):
@@ -3421,7 +3421,7 @@ def setUp(self):
         sequence, 1,
         [(35, 100, 5, 10), (35, 55, 6, 8), (44, 55, 7, 9)],
         is_drum=False)
-    self.sequence = sequence",setUp,TP,"RollOutputsDrumsConverterTest(BaseDataTest, tf.test.TestCase) -- tf.test.TestCase alone already confirms this."
+    self.sequence = sequence",setUp,TP,
 C:python:11553,https://github.com/flow-project/flow/blob/a511c41c48e6b928bb2060de8ad1ef3c3e3d9554/tests/fast_tests/test_controllers.py#L185-L202,"class TestLinearOVM(unittest.TestCase):
     ...
 def setUp(self):
@@ -3449,7 +3449,7 @@ def setUp(self):
         # cached directory info and linecache
         linecache.clearcache()
         zipimport._zip_directory_cache.clear()
-        ImportHooksBaseTestCase.setUp(self)",setUp,TP,"ImportHooksBaseTestCase is CPython's own test.test_importhooks base class, embedded in google-ctf's vendored CPython 2.7.2 stdlib test suite; not independently re-fetched but matches the same pattern as this sample's other embedded-CPython-stdlib rows."
+        ImportHooksBaseTestCase.setUp(self)",setUp,TP,
 C:python:72413,https://github.com/openapitools/openapi-generator/blob/566e7ef5832706e0404ccbde87128d17aeb4a42e/samples/client/petstore/python-asyncio/test/test_user_api.py#L28-L29,"class TestUserApi(unittest.TestCase):
     ...
 def tearDown(self):
@@ -3481,7 +3481,7 @@ C:python:40125,https://github.com/pgadmin-org/pgadmin4/blob/6fce58f2ad4de729a000
     ...
 def tearDown(self):
         # Disconnect database to delete it
-        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,"Same BaseTestGenerator(unittest.TestCase), pgadmin4."
+        database_utils.disconnect_database(self, self.server_id, self.db_id)",tearDown,TP,
 C:python:22496,https://github.com/sqlalchemy/alembic/blob/038445c9f7b85181cba083aa086a3022e58c73e2/tests/test_postgresql.py#L810-L816,"class PostgresqlDetectSerialTest(TestBase):
     ...
 def setUp(self):
@@ -3537,25 +3537,25 @@ def tearDown(self) -> None:
 C:python:19912,https://github.com/influxdata/influxdb-client-python/blob/91dcafb5e1c7b7854cf225afba87f5bdfe00b3a1/tests/test_WriteApiPickle.py#L28-L29,"class WriteApiPickle(BaseTest):
     ...
 def setUp(self) -> None:
-        super().setUp()",setUp,TP,BaseTest(unittest.TestCase) -- confirmed directly in this repo's own tests/base_test.py.
+        super().setUp()",setUp,TP,
 C:python:2447,https://github.com/jython/jython/blob/83c405ec0b394f304c86c82bac6b003774c6ea35/Lib/test/test_cpickle.py#L29-L31,"class cPickleTests(ApproxFloat, AbstractPickleTests, AbstractPickleModuleTests):
     ...
 def setUp(self):
         self.dumps = cPickle.dumps
-        self.loads = cPickle.loads",setUp,TP,"ApproxFloat(AbstractPickleTests, AbstractPickleModuleTests) chain resolves to unittest.TestCase -- confirmed."
+        self.loads = cPickle.loads",setUp,TP,
 C:python:37759,https://github.com/google/google-ctf/blob/2d2e64a98ff6b8041caedb6962a898c0ac0d15f0/third_party/edk2/AppPkg/Applications/Python/Python-2.7.2/Lib/test/test_iterlen.py#L125-L128,"class TestDequeReversed(TestTemporarilyImmutable):
     ...
 def setUp(self):
         d = deque(xrange(n))
         self.it = reversed(d)
-        self.mutate = d.pop",setUp,TP,TestTemporarilyImmutable(TestInvariantWithoutMutations(unittest.TestCase)) -- 2-hop chain confirmed by fetching the file directly.
+        self.mutate = d.pop",setUp,TP,
 C:python:9262,https://github.com/ronaldoussoren/pyobjc/blob/af0349674b08126e52f2d055cc5c2d917afc3913/pyobjc-core/PyObjCTest/test_set_interface.py#L373-L377,"class TestMutate(test.test_set.TestMutate):
     ...
 def setUp(self):
         self.values = [""a"", ""b"", ""c""]
         self.set = NSMutableSet(self.values)
 
-        test.test_set.set = NSMutableSet",setUp,TP,"TestMutate(test.test_set.TestMutate) -- CPython's own set-test mixin, same mixin-for-multiple-inheritance pattern as the module-level CPython cases above."
+        test.test_set.set = NSMutableSet",setUp,TP,
 C:python:2125,https://github.com/kylejusticemagnuson/pyti/blob/661b0704072fb88fc9d0c2c9c14c1aae9c14fc84/tests/test_moving_average_envelope.py#L10-L139,"class TestMovingAverageEnvelope(unittest.TestCase):
     ...
 def setUp(self):
@@ -3693,11 +3693,11 @@ C:python:29969,https://github.com/ansible-collections/community.general/blob/6c8
 def tearDown(self):
         super(TestNiosZoneModule, self).tearDown()
         self.mock_wapi.stop()
-        self.mock_wapi_run.stop()",tearDown,TP,"TestNiosModule(ModuleTestCase) -- Ansible's own ModuleTestCase, a well-documented standard base for Ansible unit tests that extends unittest.TestCase; not independently re-fetched for this exact commit."
+        self.mock_wapi_run.stop()",tearDown,TP,
 C:python:2568,https://github.com/jython/jython/blob/83c405ec0b394f304c86c82bac6b003774c6ea35/Lib/test/test_optparse.py#L979-L980,"class TestOptionGroup(BaseTest):
     ...
 def setUp(self):
-        self.parser = OptionParser(usage=SUPPRESS_USAGE)",setUp,TP,BaseTest(unittest.TestCase) -- confirmed directly in jython's own source.
+        self.parser = OptionParser(usage=SUPPRESS_USAGE)",setUp,TP,
 C:python:15117,https://github.com/tern-tools/tern/blob/c2d38176ca62cdec9bd999989149cfba96877391/tests/test_class_image.py#L17-L21,"class TestClassImage(unittest.TestCase):
     ...
 def setUp(self):
@@ -3716,7 +3716,7 @@ def setUp(self):
         self.profiles_dir = '/invalid-profiles-path'
         self.project_dir = '/invalid-root-path'
         super().setUp()
-        self.default_project_data['project-root'] = self.project_dir",setUp,TP,BaseConfigTest(unittest.TestCase) -- confirmed directly.
+        self.default_project_data['project-root'] = self.project_dir",setUp,TP,
 C:python:22093,https://github.com/aws/serverless-application-model/blob/c7521045ad55e7847f9f71624fd8fd6cd3048ddd/tests/plugins/globals/test_globals_plugin.py#L15-L16,"class TestGlobalsPlugin(TestCase):
     ...
 def setUp(self):
@@ -3731,7 +3731,7 @@ C:python:19523,https://github.com/fkie-cad/fact_core/blob/3ae514a21a67bdcc57c2eb
     ...
 def setUp(self):
         self.config = self.set_up_base_config()
-        self.p_base = None",setUp,TP,TestPluginBase(unittest.TestCase) -- confirmed directly in fact_core's test_plugin_base.py.
+        self.p_base = None",setUp,TP,
 C:python:41518,https://github.com/oils-for-unix/oils/blob/32436e9ee233fff87e524a25c9eae1ee3598d26b/Python-2.7.13/Lib/distutils/tests/test_dist.py#L52-L55,"class DistributionTestCase(support.TempdirManager,
                            support.LoggingSilencer,
                            support.EnvironGuard,
@@ -3847,13 +3847,13 @@ def tearDown(self):
 C:python:19524,https://github.com/fkie-cad/fact_core/blob/3ae514a21a67bdcc57c2eb4718e5d22c13e60a3b/src/test/unit/analysis/test_plugin_base.py#L149-L150,"class TestPluginTimeout(TestPluginBase):
     ...
 def tearDown(self):
-        pass",tearDown,TP,"Same TestPluginBase(unittest.TestCase), fact_core."
+        pass",tearDown,TP,
 C:python:8873,https://github.com/opentracing/opentracing-python/blob/7f69c6d221f4c25fd16d727bd9fac7ef2220461d/testbed/test_common_request_handler/test_contextvars.py#L49-L52,"class TestAsyncioContextVars(OpenTracingTestCase):
     ...
 def setUp(self):
         self.tracer = MockTracer(ContextVarsScopeManager())
         self.loop = asyncio.get_event_loop()
-        self.client = Client(RequestHandler(self.tracer), self.loop)",setUp,TP,OpenTracingTestCase(unittest.TestCase) -- confirmed directly.
+        self.client = Client(RequestHandler(self.tracer), self.loop)",setUp,TP,
 C:python:39456,https://github.com/lightning-universe/lightning-bolts/blob/2e81b755b9d8a234fb9be188430ff015616125c2/tests/losses/test_rl_loss.py#L17-L31,"class TestRLLoss(TestCase):
     ...
 def setUp(self) -> None:
