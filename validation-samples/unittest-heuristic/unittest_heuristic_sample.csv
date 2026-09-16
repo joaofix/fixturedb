@@ -2588,11 +2588,6 @@ C:python:24489,https://github.com/oracle/graalpython/blob/c415af6fdfe261989126fc
 def tearDown(self):
         self.serv.close()
         self.serv = None",tearDown,TP,
-C:python:42196,https://github.com/oils-for-unix/oils/blob/32436e9ee233fff87e524a25c9eae1ee3598d26b/Python-2.7.13/Lib/unittest/test/test_setups.py#L474-L476,"class Module(object):
-    ...
-def setUpModule():
-                if phase == 0:
-                    raise Exception('setUpModule')",setUpModule,FP,"setUpModule/tearDownModule are supposed to be genuine MODULE-level functions (unittest invokes them only at that scope), but here it's nested INSIDE `class Module(object):` in CPython's own Lib/unittest/test/test_setups.py -- a test fixture used to verify unittest's own setUpModule/tearDownModule mechanics, never itself invoked as a real hook. The detector matches by name+node-type only, not by nesting/scope, so it can't tell a nested method from a real module-level function."
 C:python:42004,https://github.com/oils-for-unix/oils/blob/32436e9ee233fff87e524a25c9eae1ee3598d26b/Python-2.7.13/Lib/test/test_shutil.py#L680-L686,"class TestMove(unittest.TestCase):
     ...
 def tearDown(self):
@@ -3496,10 +3491,6 @@ def setUp(self):
             opts={""compare_type"": True, ""compare_server_default"": True},
         )
         self.autogen_context = api.AutogenContext(self.migration_context)",setUp,FP,"TestBase imported `from alembic.testing.fixtures import TestBase`, which itself is `from sqlalchemy.testing.fixtures import TestBase` -- SQLAlchemy's OWN `TestBase` (lib/sqlalchemy/testing/fixtures/base.py) has NO base class at all (`class TestBase:`). SQLAlchemy's test suite runs on its own pytest-native test framework, not unittest.TestCase -- same false-positive pattern as coverage.py's PytestBase (C:python:42810/42807) in this same sample."
-C:python:24847,https://github.com/oracle/graalpython/blob/c415af6fdfe261989126fc22481bf8d911c96162/graalpython/lib-python/3/unittest/test/test_setups.py#L450-L451,"class Module(object):
-    ...
-def tearDownModule():
-                ordering.append('tearDownModule')",tearDownModule,FP,"Same issue as C:python:42196 -- oracle/graalpython embeds the same CPython Lib/unittest/test/test_setups.py file; tearDownModule is a method nested inside `class Module(object):`, not a real module-level hook."
 C:python:141927,https://github.com/tensorflow/tfjs-converter/blob/d15065a9fcf6212c7541f1dd364ab433e69e5b97/tfjs-converter/python/tensorflowjs/converters/keras_tfjs_loader_test.py#L43-L47,"class LoadKerasModelTest(tf.test.TestCase):
     ...
 def tearDown(self):

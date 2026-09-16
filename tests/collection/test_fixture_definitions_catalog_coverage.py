@@ -78,11 +78,22 @@ def fx():
 
 
 def _python_class_body_name_cases(group_key: str):
-    """unittest_setup and pytest_class_method: names are methods inside a class."""
+    """unittest_setup and pytest_class_method: names are methods inside a
+    class -- except setUpModule/tearDownModule (scope "per_module"), which
+    unittest only ever calls as plain module-level functions, never as a
+    class method (see detector_python.py::_is_nested_in_class -- a
+    same-named method nested in a class is a confirmed false positive,
+    not a fixture, and must NOT be generated as a class-wrapped case here)."""
     cases = []
     info = _PYTHON_DEFS[group_key]
     for name, scope in info["names"].items():
-        code = f"""
+        if scope == "per_module":
+            code = f"""
+def {name}():
+    pass
+"""
+        else:
+            code = f"""
 class T:
     def {name}(self):
         pass

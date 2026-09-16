@@ -30,6 +30,17 @@ PYTEST_FIXTURE_DECORATOR_RE = re.compile(_DEFS["pytest_decorator"]["match_patter
 UNITTEST_SETUP_NAMES: dict[str, str] = _DEFS["unittest_setup"]["names"]
 PYTEST_CLASS_METHOD_NAMES: dict[str, str] = _DEFS["pytest_class_method"]["names"]
 
+# setUpModule/tearDownModule are unittest module-level hooks -- unittest
+# only ever calls them when defined as plain module-level functions
+# (https://docs.python.org/3/library/unittest.html#setupmodule-and-teardownmodule-functions).
+# A same-named method nested inside a class is never invoked by unittest as
+# a lifecycle hook; matching it by name alone (like every other name in
+# UNITTEST_SETUP_NAMES) produced a confirmed false positive during manual
+# validation: CPython's own Lib/unittest/test/test_setups.py defines
+# `class Module(object): def setUpModule(self): ...` purely to test
+# unittest's own setUpModule mechanism, not as a real hook.
+_MODULE_LEVEL_ONLY_NAMES = frozenset({"setUpModule", "tearDownModule"})
+
 
 # ---------------------------------------------------------------------------
 # pytest fixture setup/teardown/setup_and_teardown classification
@@ -195,6 +206,17 @@ def classify_pytest_fixture_kind_from_source(raw_source: str) -> str:
     return classify_pytest_fixture_kind(body_node, src_bytes)
 
 
+def _is_nested_in_class(node) -> bool:
+    """True if `node` has a `class_definition` ancestor -- i.e. it's a
+    method, not a module-level statement."""
+    parent = node.parent
+    while parent is not None:
+        if parent.type == "class_definition":
+            return True
+        parent = parent.parent
+    return False
+
+
 def _detect_python(
     tree, src_bytes: bytes, language: str = "python"
 ) -> list[FixtureResult]:
@@ -262,7 +284,9 @@ def _detect_python(
                 name = _source(name_node, src_bytes)
 
                 # unittest-style fixtures: setUp/tearDown/setUpClass/tearDownClass/setUpModule/tearDownModule
-                if name in UNITTEST_SETUP_NAMES:
+                if name in UNITTEST_SETUP_NAMES and not (
+                    name in _MODULE_LEVEL_ONLY_NAMES and _is_nested_in_class(node)
+                ):
                     results.append(
                         _build_result(
                             func_node=node,

@@ -321,6 +321,51 @@ def teardown_package():
         assert_fixture_count(code, "python", 0)
 
 
+class TestUnittestModuleLevelHooks:
+    """setUpModule/tearDownModule are only real unittest hooks when defined
+    as plain module-level functions -- unittest never calls a same-named
+    method nested inside a class. A confirmed false positive from manual
+    validation (CPython's own Lib/unittest/test/test_setups.py defines
+    `class Module(object): def setUpModule(self): ...` purely to test
+    unittest's own mechanism) showed the detector matching these by name
+    alone regardless of nesting; see detector_python.py::_is_nested_in_class."""
+
+    def test_setUpModule_at_module_level_detected(self):
+        code = """
+def setUpModule():
+    global db
+    db = create_database()
+"""
+        assert_fixture_detected(
+            code, "python", "setUpModule", fixture_type="unittest_setup", scope="per_module"
+        )
+
+    def test_tearDownModule_at_module_level_detected(self):
+        code = """
+def tearDownModule():
+    db.close()
+"""
+        assert_fixture_detected(
+            code, "python", "tearDownModule", fixture_type="unittest_setup", scope="per_module"
+        )
+
+    def test_setUpModule_nested_in_class_not_detected(self):
+        code = """
+class Module(object):
+    def setUpModule(self):
+        pass
+"""
+        assert_fixture_count(code, "python", 0)
+
+    def test_tearDownModule_nested_in_class_not_detected(self):
+        code = """
+class Module(object):
+    def tearDownModule(self):
+        pass
+"""
+        assert_fixture_count(code, "python", 0)
+
+
 class TestPytestClassMethodClassScope:
     """pytest-style setup_class()/teardown_class() -- the per_class-scope
     half of pytest_class_method. Only the per_test half (setup_method/
