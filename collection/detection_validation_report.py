@@ -1,11 +1,14 @@
-"""Manual-validation precision report for the two remaining detector
-precision checks: mock detection and the pytest setup/teardown/
-setup_and_teardown lifecycle heuristic.
+"""Manual-validation precision report for the three validated detector
+precision checks: mock detection, the pytest setup/teardown/
+setup_and_teardown lifecycle heuristic, and the unittest name-based
+lifecycle heuristic (setUp/tearDown/setUpClass/tearDownClass/
+setUpModule/tearDownModule).
 
-Reads the two rated CSVs `collection.detection_validation_sampling`
-produces (`rater_label` column: TP/FP/Unsure/404, filled in by a single
-reviewer -- see `validation-samples/README_detection_validation.md`) and
-computes ONE precision number per file, over clearly-labeled items only:
+Reads the rated CSVs `collection.detection_validation_sampling`/
+`collection.unittest_heuristic_validation_sampling` produce (`rater_label`
+column: TP/FP/Unsure/404, filled in by a single reviewer -- see
+`validation-samples/README_detection_validation.md`) and computes ONE
+precision number per file, over clearly-labeled items only:
 
     precision = TP / (TP + FP)
 
@@ -48,14 +51,19 @@ VALID_LABELS = {"TP", "FP", "Unsure", "404"}
 DEFAULT_SAMPLES_ROOT = paths.ROOT_DIR / "validation-samples"
 
 # (table label, paper-text label, CSV path relative to DEFAULT_SAMPLES_ROOT)
-# -- exhaustive: the two remaining validated components. mock-type is
-# gone, deliberately not listed here (see module docstring).
+# -- exhaustive: the three validated components. mock-type is gone,
+# deliberately not listed here (see module docstring).
 COMPONENTS: tuple[tuple[str, str, str], ...] = (
     ("Mock detection", "mock detection", "mock-detection/mock_detection_sample.csv"),
     (
         "Pytest lifecycle heuristic",
         "the pytest lifecycle heuristic",
         "pytest-lifecycle/pytest_lifecycle_sample.csv",
+    ),
+    (
+        "Unittest name-based lifecycle heuristic",
+        "the unittest name-based lifecycle heuristic",
+        "unittest-heuristic/unittest_heuristic_sample.csv",
     ),
 )
 

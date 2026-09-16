@@ -122,32 +122,35 @@ class TestRenderPaperText:
 
 
 class TestGenerateReportAndWriteReport:
-    def _make_sample_csvs(self, tmp_path, mock_labels, lifecycle_labels):
-        mock_dir = tmp_path / "mock-detection"
-        mock_dir.mkdir(parents=True)
-        with (mock_dir / "mock_detection_sample.csv").open("w", newline="", encoding="utf-8") as fh:
+    def _write_csv(self, tmp_path, subdir, filename, prefix, labels):
+        directory = tmp_path / subdir
+        directory.mkdir(parents=True)
+        with (directory / filename).open("w", newline="", encoding="utf-8") as fh:
             writer = csv.DictWriter(fh, fieldnames=["id", "rater_label"])
             writer.writeheader()
-            for i, label in enumerate(mock_labels):
-                writer.writerow({"id": f"m{i}", "rater_label": label})
+            for i, label in enumerate(labels):
+                writer.writerow({"id": f"{prefix}{i}", "rater_label": label})
 
-        lifecycle_dir = tmp_path / "pytest-lifecycle"
-        lifecycle_dir.mkdir(parents=True)
-        with (lifecycle_dir / "pytest_lifecycle_sample.csv").open(
-            "w", newline="", encoding="utf-8"
-        ) as fh:
-            writer = csv.DictWriter(fh, fieldnames=["id", "rater_label"])
-            writer.writeheader()
-            for i, label in enumerate(lifecycle_labels):
-                writer.writerow({"id": f"p{i}", "rater_label": label})
+    def _make_sample_csvs(self, tmp_path, mock_labels, lifecycle_labels, unittest_labels=("TP",)):
+        self._write_csv(tmp_path, "mock-detection", "mock_detection_sample.csv", "m", mock_labels)
+        self._write_csv(
+            tmp_path, "pytest-lifecycle", "pytest_lifecycle_sample.csv", "p", lifecycle_labels
+        )
+        self._write_csv(
+            tmp_path, "unittest-heuristic", "unittest_heuristic_sample.csv", "u", unittest_labels
+        )
 
-    def test_components_is_exactly_two_no_mock_type(self):
-        """mock-type was dropped entirely -- exactly 2 components, and
+    def test_components_is_exactly_three_no_mock_type(self):
+        """mock-type was dropped entirely -- exactly 3 components, and
         neither the sampling module's mock-type step name nor its
         filename appear anywhere in this module's config."""
-        assert len(COMPONENTS) == 2
+        assert len(COMPONENTS) == 3
         labels = {c[0] for c in COMPONENTS}
-        assert labels == {"Mock detection", "Pytest lifecycle heuristic"}
+        assert labels == {
+            "Mock detection",
+            "Pytest lifecycle heuristic",
+            "Unittest name-based lifecycle heuristic",
+        }
         for _, _, relative_path in COMPONENTS:
             assert "mock-type" not in relative_path
             assert "mock_type" not in relative_path
