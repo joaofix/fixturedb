@@ -164,7 +164,7 @@ class StratifiedSampler:
         Args:
             fixtures: List of fixture dicts with stratification column
             target_count: Exact number of fixtures to sample
-            stratify_by: Column name for stratification (fixture_type, scope, etc.)
+            stratify_by: Column name for stratification (e.g. fixture_type)
             tolerance: Distribution tolerance as decimal (0.02 = 2%)
 
         Returns:

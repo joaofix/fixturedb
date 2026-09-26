@@ -610,22 +610,16 @@ class TestQualityControlledInputs:
                     "repo_name": repo_name,
                     "name": "complex_fixture",
                     "fixture_type": "pytest_decorator",
-                    "scope": "per_test",
                     "loc": 10,
                     "language": "python",
                     "file_path": "tests/test_sample.py",
                     "start_line": 1,
                     "end_line": 10,
                     "cyclomatic_complexity": 7,
-                    "max_nesting_depth": 3,
-                    "num_objects_instantiated": 2,
-                    "num_external_calls": 4,
                     "num_comment_lines": 0,
                     "comment_density": 0.0,
                     "num_parameters": 5,
-                    "has_teardown_pair": 1,
                     "raw_source": "def complex_fixture(): pass",
-                    "framework": "pytest",
                     "mocks": [
                         {
                             "framework": "unittest_mock",
@@ -661,11 +655,7 @@ class TestQualityControlledInputs:
 
         assert fixture_row is not None
         assert fixture_row["cyclomatic_complexity"] == 7
-        assert fixture_row["max_nesting_depth"] == 3
-        assert fixture_row["num_objects_instantiated"] == 2
-        assert fixture_row["num_external_calls"] == 4
         assert fixture_row["num_parameters"] == 5
-        assert fixture_row["has_teardown_pair"] == 1
         assert fixture_row["agent_type"] == "claude"
         assert fixture_row["commit_kind"] == "agent"
         assert fixture_row["commit_sha"] == "abc123"

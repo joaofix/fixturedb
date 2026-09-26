@@ -35,8 +35,6 @@ class Test(unittest.TestCase):
 """
         fixture = assert_fixture_detected(code, "python", "setUp")
         assert fixture.name == "setUp"
-        # Should detect num_objects_instantiated > 0
-        assert fixture.num_objects_instantiated >= 1
 
     def test_pytest_mock_fixture(self):
         """pytest-mock mocker fixture should be detected, including the
@@ -84,8 +82,7 @@ def db_mock():
     from unittest.mock import Mock
     return Mock(spec=Database)
 """
-        fixture = assert_fixture_detected(code, "python", "db_mock")
-        assert fixture.num_objects_instantiated >= 1  # Mock() creates an object
+        assert_fixture_detected(code, "python", "db_mock")
 
 
 class TestJavaMockPatterns:
@@ -141,9 +138,8 @@ public class Test extends TestCase {
     }
 }
 """
-        fixture = assert_fixture_detected(code, "java", "setUp")
+        assert_fixture_detected(code, "java", "setUp")
         # Only counts 'new' constructor calls, not method calls like Mockito.spy()
-        assert fixture.num_objects_instantiated == 1
 
 
 class TestJavaScriptMockPatterns:
@@ -273,8 +269,7 @@ def mock_config():
     cfg.timeout = 30
     return cfg
 """
-        fixture = assert_fixture_detected(code, "python", "mock_config")
-        assert fixture.num_objects_instantiated >= 1
+        assert_fixture_detected(code, "python", "mock_config")
 
 
 class TestMockFrameworkDetection:
@@ -288,9 +283,8 @@ from unittest.mock import Mock, patch, MagicMock
 def setUp(self):
     self.mock = Mock()
 """
-        fixture = assert_fixture_detected(code, "python", "setUp")
+        assert_fixture_detected(code, "python", "setUp")
         # Fixture uses Mock objects
-        assert fixture.num_objects_instantiated >= 1
 
     def test_pytest_mock_imports(self):
         """Code using pytest-mock should be distinguishable"""
@@ -317,7 +311,6 @@ def hybrid_mock(mocker: MockerFixture):
 """
         fixture = assert_fixture_detected(code, "python", "hybrid_mock")
         assert fixture.num_parameters >= 1
-        assert fixture.num_objects_instantiated >= 1
 
 
 if __name__ == "__main__":

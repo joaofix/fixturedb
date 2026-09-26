@@ -188,7 +188,6 @@ class TestCSVFixtureExportFormat:
             "start_line": 10,
             "end_line": 20,
             "loc": 11,
-            "framework": "pytest",
             "mocks": [],
         }
 
@@ -209,7 +208,6 @@ class TestCSVFixtureExportFormat:
                 "start_line",
                 "end_line",
                 "loc",
-                "framework",
                 "num_mocks",
             ]
 
@@ -231,7 +229,6 @@ class TestCSVFixtureExportFormat:
             "start_line": 10,
             "end_line": 20,
             "loc": 11,
-            "framework": "pytest",
             "mocks": [],
         }
 
@@ -261,7 +258,6 @@ class TestCSVFixtureExportFormat:
             "start_line": 10,
             "end_line": 20,
             "loc": 11,
-            "framework": "pytest",
             "mocks": [],
         }
 
@@ -288,7 +284,6 @@ class TestCSVFixtureExportFormat:
             "start_line": 10,
             "end_line": 20,
             "loc": 11,
-            "framework": "pytest",
             "mocks": [],
         }
 
@@ -358,7 +353,6 @@ class TestCSVPipelineEndToEnd:
             "start_line": 10,
             "end_line": 20,
             "loc": 11,
-            "framework": "pytest",
             "mocks": [],
         }
 

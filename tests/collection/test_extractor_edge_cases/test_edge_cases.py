@@ -176,8 +176,7 @@ def setUpModule():
     global resource
     resource = create()
 """
-        fixture = assert_fixture_detected(code, "python", "setUpModule")
-        assert fixture.scope == "per_module"
+        assert_fixture_detected(code, "python", "setUpModule")
 
 
 class TestMultipleFixturesInSameClass:

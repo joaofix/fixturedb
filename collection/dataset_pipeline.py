@@ -52,11 +52,10 @@ def _sample_output_path(dataset: str, output_dir: Path | None = None) -> Path:
 
 
 def analyze_database_distribution(db_path: Path) -> dict:
-    """Fixture/repo/test-file counts and fixture_type/scope breakdowns for one DB."""
+    """Fixture/repo/test-file counts and fixture_type breakdown for one DB."""
     stats = {
         "total_fixtures": 0,
         "by_type": {},
-        "by_scope": {},
         "repositories": 0,
         "test_files": 0,
     }
@@ -70,12 +69,6 @@ def analyze_database_distribution(db_path: Path) -> dict:
             "GROUP BY fixture_type ORDER BY count DESC"
         ).fetchall()
         stats["by_type"] = {row["fixture_type"]: row["count"] for row in rows}
-
-        rows = conn.execute(
-            "SELECT scope, COUNT(*) as count FROM fixtures "
-            "GROUP BY scope ORDER BY count DESC"
-        ).fetchall()
-        stats["by_scope"] = {row["scope"]: row["count"] for row in rows}
 
         result = conn.execute("SELECT COUNT(*) as count FROM repositories").fetchone()
         stats["repositories"] = result["count"]
@@ -141,7 +134,7 @@ def sample_dataset(
 
     with db_session(db_path) as conn:
         rows = conn.execute(
-            "SELECT id, fixture_type, scope, loc, name FROM fixtures ORDER BY id"
+            "SELECT id, fixture_type, loc, name FROM fixtures ORDER BY id"
         ).fetchall()
     fixtures = [dict(row) for row in rows]
     if not fixtures:

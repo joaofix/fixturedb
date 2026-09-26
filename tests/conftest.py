@@ -68,7 +68,6 @@ def assert_fixture_detected(
     language: str,
     fixture_name: str,
     fixture_type: str = None,
-    scope: str = None,
 ):
     """Assert that a fixture with given name is detected."""
     fixtures = extract_and_find_fixtures(code, language, fixture_name)
@@ -79,8 +78,6 @@ def assert_fixture_detected(
         assert (
             fixture.fixture_type == fixture_type
         ), f"Expected type {fixture_type}, got {fixture.fixture_type}"
-    if scope:
-        assert fixture.scope == scope, f"Expected scope {scope}, got {fixture.scope}"
     return fixture
 
 
@@ -120,10 +117,6 @@ def assert_fixture_metrics(
     min_complexity: int = None,
     max_complexity: int = None,
     num_parameters: int = None,
-    min_objects_instantiated: int = None,
-    max_objects_instantiated: int = None,
-    min_external_calls: int = None,
-    max_external_calls: int = None,
 ):
     """Assert fixture metrics.
 
@@ -132,10 +125,6 @@ def assert_fixture_metrics(
         min_complexity: Minimum cyclomatic complexity (inclusive)
         max_complexity: Maximum cyclomatic complexity (inclusive)
         num_parameters: Exact number of parameters
-        min_objects_instantiated: Minimum number of object instantiations (inclusive)
-        max_objects_instantiated: Maximum number of object instantiations (inclusive)
-        min_external_calls: Minimum number of external calls (inclusive)
-        max_external_calls: Maximum number of external calls (inclusive)
     """
     if min_complexity is not None:
         assert (
@@ -152,34 +141,12 @@ def assert_fixture_metrics(
             fixture.num_parameters == num_parameters
         ), f"Expected {num_parameters} parameters, got {fixture.num_parameters}"
 
-    if min_objects_instantiated is not None:
-        assert (
-            fixture.num_objects_instantiated >= min_objects_instantiated
-        ), f"Expected objects >= {min_objects_instantiated}, got {fixture.num_objects_instantiated}"
-
-    if max_objects_instantiated is not None:
-        assert (
-            fixture.num_objects_instantiated <= max_objects_instantiated
-        ), f"Expected objects <= {max_objects_instantiated}, got {fixture.num_objects_instantiated}"
-
-    if min_external_calls is not None:
-        assert (
-            fixture.num_external_calls >= min_external_calls
-        ), f"Expected num_external_calls >= {min_external_calls}, got {fixture.num_external_calls}"
-
-    if max_external_calls is not None:
-        assert (
-            fixture.num_external_calls <= max_external_calls
-        ), f"Expected num_external_calls <= {max_external_calls}, got {fixture.num_external_calls}"
-
 
 def assert_fixture_with_type_detected(
     code: str,
     language: str,
     fixture_type: str,
-    scope: str = None,
     count: int = 1,
-    framework: str = None,
 ):
     """Assert that a fixture with given type is detected (useful for anonymous functions).
 
@@ -187,10 +154,7 @@ def assert_fixture_with_type_detected(
         code: Source code string
         language: Language key ('python', 'java', etc.)
         fixture_type: Expected fixture type (e.g., 'before_each', 'mocha_before')
-        scope: Optional expected scope
         count: Expected number of fixtures with this type (default 1)
-        framework: Optional expected framework (e.g. 'testng'; None for
-            frameworks that are deliberately ambiguous, like bare JS hooks)
 
     Returns:
         List of matching FixtureResult objects
@@ -200,18 +164,6 @@ def assert_fixture_with_type_detected(
     assert (
         len(matching) == count
     ), f"Expected {count} fixture(s) with type '{fixture_type}', found {len(matching)}"
-
-    if scope:
-        for fixture in matching:
-            assert (
-                fixture.scope == scope
-            ), f"Expected scope {scope}, got {fixture.scope}"
-
-    if framework is not None:
-        for fixture in matching:
-            assert (
-                fixture.framework == framework
-            ), f"Expected framework {framework!r}, got {fixture.framework!r}"
 
     return matching[0] if count == 1 else matching
 

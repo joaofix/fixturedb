@@ -1,25 +1,24 @@
 """Cross-language plumbing shared by all `detector_<language>.py` modules.
 
 Holds the tree-sitter parser cache, the `FixtureResult`/`MockResult`/
-`ExtractResult` dataclasses, generic AST helpers (source extraction, LOC,
-nesting depth), mock detection (one flat pattern table scanned regardless of
-source language), the shared `_build_result()` fixture builder, and the
-post-processing passes that need to see the whole fixture list at once
-(dependency detection, scope propagation, teardown pairing) —
+`ExtractResult` dataclasses, generic AST helpers (source extraction, LOC),
+mock detection (one flat pattern table scanned regardless of source
+language), the shared `_build_result()` fixture builder, and
+`_classify_fixture_kinds()` -- the one post-processing pass that needs to
+see the whole fixture list at once (setup/teardown/setup_and_teardown/other
+classification, via cross-referencing setup/teardown fixture_type pairs) --
 none of these can live in a single per-language file because they either
 span languages or need the full fixture set as context.
 
-The mock/external-call regex tables and the setup/teardown pairing rules
-are loaded from collection/heuristics/feature_extraction_patterns.yaml
-rather than hardcoded here -- see that file for the full catalog and the
-reasoning behind each pairing. `num_objects_instantiated` is the one
-exception: it's AST-based (tree-sitter node types), not a pattern-table
-lookup -- see `_count_object_instantiations()`.
+The mock pattern table and the setup/teardown pairing rules are loaded from
+collection/heuristics/feature_extraction_patterns.yaml rather than
+hardcoded here -- see that file for the full catalog and the reasoning
+behind each pairing.
 """
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from collection.logging_utils import get_logger
 
@@ -105,34 +104,19 @@ class FixtureResult:
 
     name: str
     fixture_type: str  # see per-language constants below
-    framework: Optional[str]  # testing framework: pytest, unittest, junit, nunit, testify, etc.
-    scope: str  # per_test / per_class / per_module / global
     start_line: int
     end_line: int
     loc: int  # non-blank lines
     cyclomatic_complexity: int
-    max_nesting_depth: int  # maximum block nesting level from Lizard
-    num_objects_instantiated: int
-    num_external_calls: int
     num_comment_lines: int  # comment-only lines within the fixture's own line span
     comment_density: float  # num_comment_lines / loc (0.0 if loc == 0)
     num_parameters: int
-    has_teardown_pair: int = 0  # 1 if teardown/cleanup logic exists, 0 otherwise
     fixture_type_kind: str = "other"  # setup/teardown/setup_and_teardown/other --
     # set by _classify_fixture_kinds() in post-processing (pytest_decorator is the
     # one exception, classified directly in detector_python.py's _detect_python()
     # via body analysis -- see that post-processing pass's docstring above)
-    fixture_dependencies: list[str] = field(
-        default_factory=list
-    )  # list of fixture names this fixture depends on (Phase 4)
     raw_source: str = ""
     mocks: list[MockResult] = field(default_factory=list)
-    container_id: Optional[int] = None  # AST byte-offset of the nearest enclosing
-    # describe()/class_declaration node (None if there isn't one) -- lets
-    # _calculate_teardown_pairs's type-based matching tell apart independent
-    # blocks/classes in the same file. Internal pairing signal only, not
-    # written to fixtures.csv/DB (see fixture_result_to_dict()'s explicit
-    # key allowlist below).
 
 
 @dataclass
@@ -167,163 +151,6 @@ def _count_file_loc(src_bytes: bytes) -> int:
     except (AttributeError, ValueError) as e:
         logger.debug(f"Failed to count LOC: {e}")
         return 0
-
-
-def _compute_nesting_depth(node) -> int:
-    """
-    Compute maximum nesting depth of a function body using Tree-sitter AST.
-
-    Returns the maximum level of nested blocks (if, for, while, try, etc.)
-    within the function. Level 1 = no nesting, Level 2+ = nested blocks.
-
-    This is used because Lizard's max_nesting_depth doesn't work properly
-    for function-level analysis (returns 0).
-    """
-    max_depth = 1
-
-    # Each of these node types is itself the one unit of nesting a control
-    # construct contributes. Their body is a generic wrapper node ("block" in
-    # Python/Java, "def" is just the literal `def` keyword token) that must
-    # NOT also be counted, or every level gets bumped twice: once for e.g.
-    # `if_statement`, again for the `block` node that is that statement's own
-    # body. Likewise `catch_clause`/`finally_clause` are alternate branches of
-    # the *same* `try_statement` nesting level, not an additional level nested
-    # inside it, so they are deliberately excluded too.
-    block_types = {
-        "if_statement",
-        "while_statement",
-        "for_statement",
-        "try_statement",
-        "with_statement",
-        "class_definition",
-        "for_in_statement",
-        "foreach_statement",
-        "enhanced_for_statement",
-        "do_statement",
-    }
-
-    def visit(node, current_depth=1):
-        nonlocal max_depth
-
-        if node.type in block_types:
-            current_depth += 1
-            max_depth = max(max_depth, current_depth)
-
-        for child in node.children:
-            visit(child, current_depth)
-
-    visit(node)
-    return max_depth
-
-
-# ---------------------------------------------------------------------------
-# Helper functions for metrics extraction
-# ---------------------------------------------------------------------------
-
-
-EXTERNAL_CALL_PATTERNS: list[str] = [
-    entry["pattern"] for entry in _PATTERNS["external_call_patterns"]
-]
-
-
-def _count_external_calls(node, src_bytes: bytes) -> int:
-    """
-    Count calls that look like external I/O or system operations.
-
-    This is a custom regex-based assessment since Lizard's fan_out metric
-    measures inter-function calls within the same module, not external I/O.
-
-    Detects patterns like: database, network, file I/O, and subprocess calls.
-    """
-    text = _source(node, src_bytes).lower()
-    return sum(len(re.findall(p, text)) for p in EXTERNAL_CALL_PATTERNS)
-
-
-# ---------------------------------------------------------------------------
-# Object instantiation (AST-based, not regex -- see internal-docs/
-# methodology-improvements/num-objects-instantiated-false-positive-rate.md
-# for the investigation that motivated this)
-# ---------------------------------------------------------------------------
-
-# Tree-sitter node type that unambiguously means "a `new X(...)` object
-# creation" in each language (verified directly against each grammar).
-# Java's `array_creation_expression` (`new int[5]`) is a distinct node type
-# from `object_creation_expression` and deliberately excluded -- primitive/
-# array allocation isn't a constructor call, matching the previous regex's
-# behavior (it required a `(` immediately after the type, which array
-# syntax never has). Python has no entry: it has no dedicated node for
-# "this call is a constructor" at all (`Foo()` and `foo()` are both plain
-# `call` nodes) -- see _python_call_is_capitalized() below instead.
-OBJECT_CREATION_NODE_TYPES: dict[str, set[str]] = {
-    "java": {"object_creation_expression"},
-    "javascript": {"new_expression"},
-    "typescript": {"new_expression"},
-}
-
-
-def _python_call_is_capitalized(call_node, src_bytes: bytes) -> bool:
-    """True if `call_node` (a Python `call` node)'s target -- the bare
-    identifier for `Foo()`, or the rightmost identifier for a dotted/
-    attribute chain like `module.Foo()` or `a.b.c.Qux()` -- starts with an
-    uppercase letter. Same capitalized-name heuristic already used to
-    approximate "is this a constructor" in Python (there's no dedicated
-    AST node for it, unlike Java/JS/TS's `new` keyword), just scoped to a
-    genuine `call` node instead of a text/regex scan -- a tree-sitter
-    `attribute` node's own "attribute" field is always the immediate
-    rightmost identifier regardless of how deep the dotted chain is
-    (verified directly: `a.b.c.Qux()`'s outer `attribute` node's
-    "attribute" field is `Qux`, no manual chain-walking needed)."""
-    target = call_node.child_by_field_name("function")
-    if target is None:
-        return False
-    if target.type == "attribute":
-        target = target.child_by_field_name("attribute")
-    if target is None or target.type != "identifier":
-        return False
-    name = _source(target, src_bytes)
-    return bool(name) and name[0].isupper()
-
-
-def _count_object_instantiations(fixture_node, src_bytes: bytes, language: str) -> int:
-    """AST-based object-instantiation count -- walks fixture_node's own
-    already-parsed subtree (the same tree fixture detection already
-    produced; no re-parsing, no regex over raw_source) and counts:
-      - Java: `object_creation_expression` nodes.
-      - JS/TS: `new_expression` nodes.
-      - Python: `call` nodes whose target is capitalized (see
-        _python_call_is_capitalized()).
-
-    Because these are real AST node types (or, for Python, a real `call`
-    node), a match can only occur in genuine, executing code -- a string
-    literal's contents are never parsed as nested code, so a `new X()` (or
-    a SQL fragment, or generated source) sitting inside a string or
-    comment produces no nested node here at all; a fixture's own
-    `def NAME(...):` line is a `function_definition` node, never a `call`
-    node, so a capitalized fixture name can no longer self-match either.
-    Both are exactly the two false-positive mechanisms found in
-    internal-docs/methodology-improvements/
-    num-objects-instantiated-false-positive-rate.md, fixed structurally
-    rather than by filtering matches after the fact.
-
-    No early return on a match (unlike _count_comment_lines()): a nested
-    instantiation -- `new Foo(new Bar())`, or one inside an anonymous
-    Java class body (`new Runnable() { ... new Baz() ... }`) -- must
-    count every occurrence, not just the outermost one."""
-    target_types = OBJECT_CREATION_NODE_TYPES.get(language)
-    count = 0
-
-    def visit(node) -> None:
-        nonlocal count
-        if language == "python":
-            if node.type == "call" and _python_call_is_capitalized(node, src_bytes):
-                count += 1
-        elif target_types and node.type in target_types:
-            count += 1
-        for child in node.children:
-            visit(child)
-
-    visit(fixture_node)
-    return count
 
 
 # ---------------------------------------------------------------------------
@@ -590,24 +417,20 @@ def _build_result(
     func_node,
     src_bytes: bytes,
     fixture_type: str,
-    scope: str,
-    framework: Optional[str] = None,
     language: str = "python",
-    container_id: Optional[int] = None,
 ) -> FixtureResult:
     """Build a FixtureResult from a single node spanning the whole fixture.
 
-    Every metric (line range, raw_source, external calls, mocks, complexity)
-    is derived from this one node. Python's pytest-decorator
-    detection used to pass a wider `decorated_definition` node for the line
-    range/external-calls/mocks scan while using the bare `function_definition`
-    for raw_source/complexity -- so a fixture's reported line range disagreed
-    with its own raw_source text by exactly the decorator line, and an
-    `open(...)`/`MagicMock()` call sitting in the decorator's own arguments
-    (e.g. `@pytest.fixture(params=[...])`) leaked into that fixture's
-    num_external_calls/mocks even though it isn't part of the fixture body.
-    Callers now always pass the fixture's own function/method node (decorator
-    excluded), never the decorated wrapper.
+    Every metric (line range, raw_source, mocks, complexity) is derived
+    from this one node. Python's pytest-decorator detection used to pass a
+    wider `decorated_definition` node for the line range/mocks scan while
+    using the bare `function_definition` for raw_source/complexity -- so a
+    fixture's reported line range disagreed with its own raw_source text by
+    exactly the decorator line, and a `MagicMock()` call sitting in the
+    decorator's own arguments (e.g. `@pytest.fixture(params=[...])`) leaked
+    into that fixture's mocks even though it isn't part of the fixture
+    body. Callers now always pass the fixture's own function/method node
+    (decorator excluded), never the decorated wrapper.
     """
     src_text = _source(func_node, src_bytes)
     name_node = _find_name_node(func_node)
@@ -629,9 +452,6 @@ def _build_result(
         # override is Python-only.
         metrics["num_parameters"] = len(_extract_parameter_names(func_node, src_bytes))
 
-    # Compute nesting depth from AST (Lizard's max_nesting_depth doesn't work for functions)
-    nesting_depth = _compute_nesting_depth(func_node)
-
     # comment_density depends on loc, so it's computed after loc rather than
     # inline in the FixtureResult(...) call below.
     loc = _count_loc(src_text)  # Custom counting (non-blank lines)
@@ -640,26 +460,15 @@ def _build_result(
     return FixtureResult(
         name=name,
         fixture_type=fixture_type,
-        framework=framework,
-        scope=scope,
         start_line=func_node.start_point[0] + 1,
         end_line=func_node.end_point[0] + 1,
         loc=loc,
         cyclomatic_complexity=metrics.get("cyclomatic_complexity", 1),
-        max_nesting_depth=nesting_depth,
-        num_objects_instantiated=_count_object_instantiations(
-            func_node, src_bytes, language
-        ),  # AST-based (tree-sitter node types), not regex
-        num_external_calls=_count_external_calls(
-            func_node, src_bytes
-        ),  # Custom regex for I/O patterns
         num_comment_lines=num_comment_lines,  # Tree-sitter comment-node walk
         comment_density=_comment_density(num_comment_lines, loc),
         num_parameters=metrics.get("num_parameters", 0),
-        has_teardown_pair=0,  # Calculated in post-processing
         raw_source=src_text,
         mocks=_extract_mocks(func_node, src_bytes, language),
-        container_id=container_id,
     )
 
 
@@ -690,21 +499,15 @@ def fixture_result_to_dict(
     return {
         "name": fixture.name,
         "fixture_type": fixture.fixture_type,
-        "framework": fixture.framework,
-        "scope": fixture.scope,
         "loc": fixture.loc,
         "language": language,
         "file_path": file_path,
         "start_line": fixture.start_line,
         "end_line": fixture.end_line,
         "cyclomatic_complexity": fixture.cyclomatic_complexity,
-        "max_nesting_depth": fixture.max_nesting_depth,
-        "num_objects_instantiated": fixture.num_objects_instantiated,
-        "num_external_calls": fixture.num_external_calls,
         "num_comment_lines": fixture.num_comment_lines,
         "comment_density": fixture.comment_density,
         "num_parameters": fixture.num_parameters,
-        "has_teardown_pair": fixture.has_teardown_pair,
         "fixture_type_kind": fixture.fixture_type_kind,
         "raw_source": fixture.raw_source,
         "mocks": [
@@ -847,211 +650,21 @@ def _extract_parameter_names(func_node, src_bytes: bytes) -> list[str]:
     return names
 
 
-def _detect_fixture_dependencies(fixtures: list[FixtureResult]) -> None:
-    """
-    Detect fixture dependencies for pytest fixtures (Phase 4).
-
-    For pytest fixtures, detects when a fixture takes another fixture as a parameter.
-    Example: @pytest.fixture; def fixture_a(fixture_b): ...
-
-    This enables analysis of:
-    - Fixture dependency graphs
-    - Scope propagation (dependent on higher-level scopes)
-    - Modularity patterns (how fixtures are reused and composed)
-
-    Modifies fixtures in-place, populating fixture_dependencies field.
-    """
-    # Build a name -> fixture mapping for quick lookup
-    fixtures_by_name = {f.name: f for f in fixtures}
-
-    for fixture in fixtures:
-        # Only detect dependencies for pytest fixtures (which have parameters)
-        if fixture.fixture_type != "pytest_decorator":
-            continue
-
-        # raw_source is just this fixture's own "def name(...): ..." text
-        # (the decorator isn't included -- see detector_python.py), so it
-        # re-parses cleanly as a standalone snippet. Parsing it (rather
-        # than regexing the text) is what lets _extract_parameter_names
-        # read each parameter as its own AST node.
-        try:
-            tree = _get_parser("python").parse(fixture.raw_source.encode("utf-8"))
-        except Exception:
-            continue
-        func_node = next(
-            (c for c in tree.root_node.children if c.type == "function_definition"),
-            None,
-        )
-        if func_node is None:
-            continue
-
-        param_names = _extract_parameter_names(
-            func_node, fixture.raw_source.encode("utf-8")
-        )
-
-        # Check which parameters are fixtures (exist in fixtures_by_name)
-        for param_name in param_names:
-            if param_name in fixtures_by_name:
-                fixture.fixture_dependencies.append(param_name)
-
-
-def _propagate_fixture_scopes(fixtures: list[FixtureResult]) -> None:
-    """
-    Propagate scope constraints based on fixture dependencies (Phase 4).
-
-    When fixture A depends on fixture B, the scope of A is constrained by B:
-    - If B is per_test and A is per_module, A must be downgraded to per_test
-    - Scope hierarchy: per_test < per_class < per_module < global
-
-    This prevents impossible configurations (module-scoped fixture depending on test-scoped fixture).
-
-    Modifies fixtures in-place, updating scope field.
-    """
-    scope_order = {
-        "per_test": 0,
-        "per_class": 1,
-        "per_module": 2,
-        "global": 3,
-    }
-
-    # Build name -> fixture map
-    fixtures_by_name = {f.name: f for f in fixtures}
-
-    # Propagate scopes (may need multiple passes for chains of dependencies)
-    max_iterations = len(fixtures)
-    for _iteration in range(max_iterations):
-        changed = False
-
-        for fixture in fixtures:
-            if not fixture.fixture_dependencies:
-                continue
-
-            current_scope_level = scope_order.get(fixture.scope, 0)
-
-            # Find the most restrictive scope among dependencies
-            most_restrictive_level = current_scope_level
-            for dep_name in fixture.fixture_dependencies:
-                dep_fixture = fixtures_by_name.get(dep_name)
-                if dep_fixture:
-                    dep_scope_level = scope_order.get(dep_fixture.scope, 0)
-                    most_restrictive_level = min(
-                        most_restrictive_level, dep_scope_level
-                    )
-
-            # If scope needs to be updated, do it
-            if most_restrictive_level < current_scope_level:
-                # Find the scope name for this level
-                for scope_name, level in scope_order.items():
-                    if level == most_restrictive_level:
-                        fixture.scope = scope_name
-                        changed = True
-                        break
-
-        # If no changes, we're done
-        if not changed:
-            break
-
-
 _TEARDOWN_DETECTION = _PATTERNS["teardown_detection"]
-YIELD_BASED_TEARDOWN_TYPES: set[str] = set(
-    _TEARDOWN_DETECTION["yield_based_fixture_types"]
-)
 NAME_BASED_TEARDOWN_PAIRS: dict[str, dict[str, str]] = _TEARDOWN_DETECTION[
     "name_based_pairs"
 ]
 TYPE_BASED_TEARDOWN_PAIRS: dict[str, str] = _TEARDOWN_DETECTION["type_based_pairs"]
-SELF_REGISTERED_CLEANUP: dict[str, dict[str, list[str]]] = _TEARDOWN_DETECTION.get(
-    "self_registered_cleanup", {}
-)
-ALWAYS_HAS_TEARDOWN_TYPES: set[str] = set(
-    _TEARDOWN_DETECTION.get("always_has_teardown_fixture_types", [])
-)
-
-
-def _calculate_teardown_pairs(fixtures: list[FixtureResult]) -> None:
-    """
-    Post-process fixtures to detect has_teardown_pair: whether a fixture has cleanup logic.
-
-    Five detection mechanisms, all driven by
-    collection/heuristics/feature_extraction_patterns.yaml's
-    teardown_detection table:
-      - always_has_teardown: fixture_types where the mechanism itself
-        guarantees setup+teardown by definition, with no reliable
-        source-level signal to check (junit_rule/junit_class_rule -- the
-        actual before/after logic lives inside the Rule's own class,
-        outside the test file; vitest_around_each/vitest_around_all -- the
-        wrapped callback parameter is developer-named, so no fixed marker
-        like pytest's "yield" exists to look for).
-      - yield_based: pytest fixtures -- checks for a 'yield' statement in the
-        fixture's own body (no pairing against another fixture needed).
-      - name_based: setup and teardown share the same fixture_type and are
-        distinguished only by name (unittest_setup, pytest_class_method)
-        -- paired by exact setup-name -> teardown-name.
-      - self_registered_cleanup: some setup-side fixtures (unittest's setUp/
-        setUpClass) can register their own teardown inline via a cleanup
-        call (self.addCleanup(...), self.enterContext(...), etc.) instead of
-        a separately-named teardown method -- checked as an OR alongside
-        name_based, by substring in the setup fixture's own raw_source.
-      - type_based: setup and teardown are different fixture_types, paired
-        by type + matching scope (e.g. junit5_before_each/junit5_after_each)
-        + matching container_id -- the nearest enclosing describe()/class_
-        declaration node, so two independent describe() blocks (JS) or an
-        outer class and its @Nested inner class (Java) in the same file
-        don't get their hooks cross-paired just for sharing a type+scope.
-
-    Only the setup-side fixture of a pair is flagged (has_teardown_pair=1);
-    the teardown-side fixture itself is not, matching this column's existing
-    semantics. Modifies fixtures in-place.
-    """
-    for fixture in fixtures:
-        has_teardown = False
-
-        if fixture.fixture_type in ALWAYS_HAS_TEARDOWN_TYPES:
-            has_teardown = True
-
-        elif fixture.fixture_type in YIELD_BASED_TEARDOWN_TYPES:
-            has_teardown = "yield" in fixture.raw_source
-
-        elif fixture.fixture_type in NAME_BASED_TEARDOWN_PAIRS:
-            expected_name = NAME_BASED_TEARDOWN_PAIRS[fixture.fixture_type].get(
-                fixture.name
-            )
-            if expected_name:
-                has_teardown = any(
-                    other.fixture_type == fixture.fixture_type
-                    and other.name == expected_name
-                    for other in fixtures
-                )
-
-            cleanup_substrings = SELF_REGISTERED_CLEANUP.get(
-                fixture.fixture_type, {}
-            ).get(fixture.name)
-            if cleanup_substrings and any(
-                substring in fixture.raw_source for substring in cleanup_substrings
-            ):
-                has_teardown = True
-
-        elif fixture.fixture_type in TYPE_BASED_TEARDOWN_PAIRS:
-            expected_type = TYPE_BASED_TEARDOWN_PAIRS[fixture.fixture_type]
-            has_teardown = any(
-                other.fixture_type == expected_type
-                and other.scope == fixture.scope
-                and other.container_id == fixture.container_id
-                for other in fixtures
-            )
-
-        fixture.has_teardown_pair = 1 if has_teardown else 0
 
 
 # ---------------------------------------------------------------------------
 # fixture_type_kind: setup / teardown / setup_and_teardown / other
 # ---------------------------------------------------------------------------
 #
-# A coarser, RQ2-facing classification than has_teardown_pair above -- not
-# "does this fixture have teardown at all" but "is *this* fixture the setup
-# side, the teardown side, both, or neither". Reuses the exact same
-# TYPE_BASED_TEARDOWN_PAIRS/NAME_BASED_TEARDOWN_PAIRS tables has_teardown_pair
-# is computed from, rather than a second, drifting lookup.
+# "setup_and_teardown" only ever arises from the pytest_decorator body-
+# analysis path (classify_pytest_fixture_kind() in detector_python.py) --
+# the type/name-based classification below only ever distinguishes setup
+# from teardown (or falls through to "other"), never both at once.
 #
 # `pytest_decorator` is handled separately, NOT here: type/name alone can't
 # split it (every pytest fixture is just named whatever the developer called

@@ -23,16 +23,10 @@ For each of the supported languages, we define:
 3. **Fixture metrics** — Quantitative properties of the fixture
    - LOC: Lines of code (custom: non-blank line count)
    - Cyclomatic Complexity: Branch count via Lizard library
-   - num_objects_instantiated: Tree-sitter AST node count -- new X(...)'s
-     dedicated node type (Java/JS/TS) or a capitalized-target `call` node
-     (Python, which has no dedicated "constructor" node)
-   - num_external_calls: Custom regex detection of I/O patterns (db, file, http, network)
    - num_comment_lines / comment_density: Tree-sitter comment-node walk over
      the fixture's own AST node; comment_density = num_comment_lines / loc
    - num_parameters: Function signature parameter count via Lizard library,
      with self/cls stripped back out for Python methods
-   - max_nesting_depth: Custom tree-sitter AST traversal (Lizard's nesting
-     metric doesn't work at function granularity)
 
    Cognitive complexity was evaluated and dropped: the only programmatic
    implementation (complexipy) is Python-only, and no equivalent exists for
@@ -44,13 +38,12 @@ MODULE LAYOUT
 
 This is a slim facade over per-language detector modules:
   - detector_shared.py: dataclasses, tree-sitter parser cache, AST helpers,
-    mock detection, the shared fixture builder, and cross-fixture
-    post-processing passes (teardown pairing, dependency detection, scope
-    propagation)
+    mock detection, the shared fixture builder, and the one cross-fixture
+    post-processing pass (fixture_type_kind classification)
   - detector_python.py / detector_java.py / detector_javascript.py: one
     `_detect_<language>()` function per language, each self-contained; their
-    pattern tables (annotation/decorator/name -> fixture_type + scope) are
-    loaded from collection/heuristics/fixture_definitions.yaml rather than
+    pattern tables (annotation/decorator/name -> fixture_type) are loaded
+    from collection/heuristics/fixture_definitions.yaml rather than
     hardcoded -- that file is the operational definition of "fixture" per
     language, including a documented `excluded` list of known boundary cases
 
@@ -63,11 +56,7 @@ either is revived.
 
 The detector delegates metric calculation to industry-standard tools:
 - Lizard: cyclomatic complexity, parameter count
-- Tree-sitter: AST parsing for fixture detection, scope analysis, nesting
-  depth, comment lines, and object instantiation (`new`/`call` node types
-  -- see detector_shared.py::_count_object_instantiations())
-- Regex: I/O pattern detection (external_calls), catalogued in
-  collection/heuristics/feature_extraction_patterns.yaml
+- Tree-sitter: AST parsing for fixture detection and comment lines
 
 See collection/complexity_provider.py for the Lizard integration and
 docs/architecture/metrics-reference.md for full per-metric methodology.
@@ -83,11 +72,9 @@ ExtractResult contains:
   - num_test_functions: int — count of test functions in the file
 
 Each FixtureResult carries all the fields needed to populate the DB tables:
-  fixture_type, scope, start_line, end_line, loc,
-  cyclomatic_complexity, max_nesting_depth,
-  num_objects_instantiated, num_external_calls,
-  num_comment_lines, comment_density, num_parameters,
-  framework (mock framework used, if any), raw_source text
+  fixture_type, fixture_type_kind, start_line, end_line, loc,
+  cyclomatic_complexity, num_comment_lines, comment_density,
+  num_parameters, raw_source text
 """
 
 from pathlib import Path
@@ -104,12 +91,9 @@ from .detector_shared import (
     ExtractResult,
     FixtureResult,
     MockResult,
-    _calculate_teardown_pairs,
     _classify_fixture_kinds,
     _count_file_loc,
-    _detect_fixture_dependencies,
     _get_parser,
-    _propagate_fixture_scopes,
     fixture_result_to_dict,
 )
 
@@ -233,11 +217,6 @@ def extract_fixtures(file_path: Path, language: str) -> ExtractResult:
         fixtures = DETECTORS[language](tree, src_bytes, language)
 
         # Post-process fixtures to calculate metrics that depend on file-wide context
-        _detect_fixture_dependencies(
-            fixtures
-        )  # Phase 4: detect pytest fixture dependencies
-        _propagate_fixture_scopes(fixtures)  # Phase 4: propagate scope constraints
-        _calculate_teardown_pairs(fixtures)
         _classify_fixture_kinds(fixtures)  # setup/teardown/setup_and_teardown/other
 
         # Extraction phase: Use Lizard for file-level metrics instead of manual counting

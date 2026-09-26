@@ -173,52 +173,6 @@ def setup_module():
         assert_fixture_count(code, "python", 0)
 
 
-class TestFixtureScopeDetection:
-    """Validate scope is correctly determined"""
-
-    def test_per_test_scope(self):
-        """Regular setUp should be per_test scope"""
-        code = """
-class Test(unittest.TestCase):
-    def setUp(self):
-        self.x = 1
-"""
-        fixture = assert_fixture_detected(code, "python", "setUp")
-        assert fixture.scope == "per_test"
-
-    def test_per_class_scope(self):
-        """setUpClass should be per_class scope"""
-        code = """
-class Test(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.db = create_db()
-"""
-        fixture = assert_fixture_detected(code, "python", "setUpClass")
-        assert fixture.scope == "per_class"
-
-    def test_per_module_scope(self):
-        """setUpModule should be per_module scope"""
-        code = """
-def setUpModule():
-    global resource
-    resource = create_resource()
-"""
-        fixture = assert_fixture_detected(code, "python", "setUpModule")
-        assert fixture.scope == "per_module"
-
-    def test_pytest_fixture_default_scope(self):
-        """Default pytest fixture should be per_test scope"""
-        code = """
-@pytest.fixture
-def my_fixture():
-    return value
-"""
-        fixture = assert_fixture_detected(code, "python", "my_fixture")
-        # Default pytest scope is function (per_test)
-        assert fixture.scope in ("per_test", "per_function")
-
-
 class TestFixtureMetrics:
     """Validate complexity and code metrics"""
 
@@ -267,31 +221,6 @@ def my_fixture(param1, param2):
         fixture = assert_fixture_detected(code, "python", "my_fixture")
         # Should have 2 parameters
         assert_fixture_metrics(fixture, num_parameters=2)
-
-    def test_fixture_instantiations(self):
-        """Fixture creating objects should track num_objects_instantiated"""
-        code = """
-def setUp(self):
-    self.user = User(name="test")
-    self.db = Database()
-    self.cache = Cache()
-"""
-        fixture = assert_fixture_detected(code, "python", "setUp")
-        # Should detect 3 constructor calls
-        assert fixture.num_objects_instantiated >= 3
-
-    def test_fixture_external_calls(self):
-        """Fixture with external I/O should track num_external_calls"""
-        code = """
-def setUp(self):
-    self.db = open('database.db')
-    self.file = open('data.txt')
-    self.session = requests.Session()
-"""
-        fixture = assert_fixture_detected(code, "python", "setUp")
-        # Should detect external calls (open, requests, etc.)
-        assert fixture.num_external_calls > 0
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

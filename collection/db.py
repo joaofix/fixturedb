@@ -457,7 +457,7 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
     Args:
         conn: Database connection
         fixture: Dict with fixture data. May include:
-            - Standard columns: file_id, repo_id, name, fixture_type, scope, etc.
+            - Standard columns: file_id, repo_id, name, fixture_type, loc, etc.
             - AGENT-specific columns: commit_sha, agent_type, tier, is_complete_addition
 
     Returns:
@@ -469,21 +469,15 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "repo_id",
         "name",
         "fixture_type",
-        "scope",
         "start_line",
         "end_line",
         "loc",
         "cyclomatic_complexity",
-        "max_nesting_depth",
-        "num_objects_instantiated",
-        "num_external_calls",
         "num_comment_lines",
         "comment_density",
         "num_parameters",
-        "has_teardown_pair",
         "fixture_type_kind",
         "raw_source",
-        "framework",
         "num_mocks",
     ]
 

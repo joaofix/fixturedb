@@ -3,32 +3,28 @@ RQ1 -- General Metrics Overview (Quantitative): how do agent-generated and
 human-written fixtures compare across structural metrics?
 
 Computes, per dataset (A/C), summary statistics for the RQ1 metrics (LOC,
-cyclomatic complexity, comment density, nesting depth, num_parameters,
-scope, fixture_type, commit_type), plus an A vs C comparison. Dataset B
-(contemporary within-repo human baseline) is still collected (db/b.db,
+cyclomatic complexity, comment density, num_parameters, fixture_type,
+commit_type), plus an A vs C comparison. Dataset B (contemporary
+within-repo human baseline) is still collected (db/b.db,
 paired_collection.py) but out of scope for this script's reported
 comparisons.
 
-**Two tiers, continuous metrics only** (fixed 2026-08-17): this script
-computes and fully tests more continuous metrics than the paper actually
-reports, and previously didn't distinguish the two in its own output --
-every reader had to already know which of `loc`/`cyclomatic_complexity`/
-`max_nesting_depth` was "the paper's" from context outside this report.
-`PAPER_CONTINUOUS_METRICS` is now the explicit, exhaustive list of the
-three continuous metrics reported in the paper: `loc`,
-`cyclomatic_complexity`, `comment_density`. Every other continuous metric
-(`max_nesting_depth`, `num_parameters`) is still computed with exactly the
-same rigor -- max_nesting_depth gets the identical Mann-Whitney/per-language
-BH-FDR treatment as the paper metrics, nothing here is tested less
-carefully -- but renders under a separate "Other Extracted Features (Not
-in the Paper)" heading in both the per-dataset summary and the A-vs-C
-comparison, so a reader can't mistake "this script reports it" for "the
-paper reports it." This distinction is continuous-metrics-only: the
-categorical metrics (`scope`/`fixture_type`/`commit_type`) already have
-their own, separate, pre-existing paper/non-paper framing (`fixture_type`'s
-fixture-level chi-square explicitly is NOT the paper's result; its
-repo-level companion in "Repo-level aggregates" IS -- see below) and
-aren't part of this tiering.
+**Three paper metrics, final** (as of 2026-09-26): `PAPER_CONTINUOUS_METRICS`
+is the exhaustive list of the continuous metrics reported in the paper --
+`loc`, `cyclomatic_complexity`, `comment_density` -- and, since
+`CONTINUOUS_METRICS` is now exactly that same list, also the only
+continuous metrics this script tests at all. `max_nesting_depth`,
+`num_objects_instantiated`, `num_external_calls`, and `has_teardown_pair`
+used to be computed and stored too (max_nesting_depth even fully
+Mann-Whitney tested, under a separate "Other Extracted Features" heading)
+but were dropped from the extracted metric set entirely -- not reported in
+the paper, and removed from detection/storage/CSV export rather than kept
+as unused columns. `scope` (a categorical metric) was dropped the same
+way. The categorical metrics that remain (`fixture_type`/`commit_type`)
+have their own, separate, pre-existing paper/non-paper framing
+(`fixture_type`'s fixture-level chi-square explicitly is NOT the paper's
+result; its repo-level companion in "Repo-level aggregates" IS -- see
+below).
 
 `comment_density` (added 2026-08-17, the third paper metric) is
 `fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
@@ -50,23 +46,21 @@ params`, deliberately fixture-level -- "what fraction of fixtures sit at
 the floor" is a fixture-level question, no test) in the comparison
 section, so the floor-binding is documented transparently rather than
 silently dropped. `cyclomatic_complexity` also floors heavily (CC=1 is
-the large majority) but is tested anyway, same as `loc`/
-`max_nesting_depth`/`comment_density` -- unlike `num_parameters`, it's
-kept in the primary comparative analysis.
+the large majority) but is tested anyway, same as `loc`/`comment_density`
+-- unlike `num_parameters`, it's kept in the primary comparative analysis.
 
 Java's `@Rule`/`@ClassRule` fixtures (`junit_rule`/`junit_class_rule`) are
-excluded from `loc`/`cyclomatic_complexity`/`max_nesting_depth`/
-`comment_density` entirely (`_shared.py::NO_BODY_FIXTURE_TYPES`) -- they're
-detected on a field declaration, not a function body, so Lizard
-structurally cannot analyze them (verified directly: an empty
-function_list every time, even with branching in the field's initializer)
-and `cyclomatic_complexity`/`num_parameters` silently fall back to
-hardcoded defaults rather than a real measurement. `loc`/
-`max_nesting_depth`/`comment_density` remain genuinely measured (none of
-the three are Lizard-derived) but represent a different kind of code unit
-than every other fixture_type here. Still included in `fixture_type`/
-`scope` categorical distributions, where "this repo declared N JUnit
-Rules" is a meaningful, correctly-measured fact. See internal-docs/
+excluded from `loc`/`cyclomatic_complexity`/`comment_density` entirely
+(`_shared.py::NO_BODY_FIXTURE_TYPES`) -- they're detected on a field
+declaration, not a function body, so Lizard structurally cannot analyze
+them (verified directly: an empty function_list every time, even with
+branching in the field's initializer) and `cyclomatic_complexity`/
+`num_parameters` silently fall back to hardcoded defaults rather than a
+real measurement. `loc`/`comment_density` remain genuinely measured
+(neither is Lizard-derived) but represent a different kind of code unit
+than every other fixture_type here. Still included in the `fixture_type`
+categorical distribution, where "this repo declared N JUnit Rules" is a
+meaningful, correctly-measured fact. See internal-docs/
 methodology-improvements/junit-rule-fixtures.md for the full
 investigation.
 
@@ -75,9 +69,9 @@ _shared.py's render_comparison_table(): one "Overall" row (uncorrected,
 single pooled test) plus, for metrics with a defined per-language family,
 one BH-corrected row per language, corrected independently of every other
 metric and of their own Overall row (see render_comparison_table()'s
-docstring). `loc`/`cyclomatic_complexity`/`comment_density`/
-`max_nesting_depth`/`scope`/`fixture_type` each have a 4-language family;
-`commit_type` doesn't, and renders Overall-only.
+docstring). `loc`/`cyclomatic_complexity`/`comment_density`/`fixture_type`
+each have a 4-language family; `commit_type` doesn't, and renders
+Overall-only.
 
 Continuous metrics are repo-level throughout (one value per repo, per
 language for the per-language rows) -- not the raw per-fixture values --
@@ -152,17 +146,16 @@ logger = get_logger(__name__)
 # illustrative. Order here is this list's own reporting order (both in the
 # per-dataset summary and the A-vs-C comparison's "Paper Metrics" section).
 PAPER_CONTINUOUS_METRICS = ["loc", "cyclomatic_complexity", "comment_density"]
-# Mann-Whitney-tested continuous metrics -- paper metrics plus every other
-# continuous metric this script still fully tests (see this module's
-# docstring for why num_parameters is dropped from this list entirely --
-# still fetched fixture-level for the descriptive table + floor-percentage
-# footnote, just not tested at all, unlike max_nesting_depth which IS
-# tested, just not part of the paper's reported set).
-CONTINUOUS_METRICS = PAPER_CONTINUOUS_METRICS + ["max_nesting_depth"]
-# CONTINUOUS_METRICS minus the paper set -- still fully Mann-Whitney tested,
-# just rendered under "Other Extracted Features (Not in the Paper)" instead
-# of "Paper Metrics". Order preserved from CONTINUOUS_METRICS.
-OTHER_CONTINUOUS_METRICS = [m for m in CONTINUOUS_METRICS if m not in PAPER_CONTINUOUS_METRICS]
+# Mann-Whitney-tested continuous metrics. Used to be paper metrics plus
+# max_nesting_depth (kept fully tested but rendered under a separate
+# "Other Extracted Features (Not in the Paper)" heading) -- max_nesting_depth
+# (along with num_objects_instantiated/num_external_calls/has_teardown_pair)
+# was dropped from the extracted metric set entirely, so CONTINUOUS_METRICS
+# is now exactly the paper set. See this module's docstring for why
+# num_parameters is still dropped from this list (fetched fixture-level for
+# the descriptive table + floor-percentage footnote, never Mann-Whitney
+# tested).
+CONTINUOUS_METRICS = PAPER_CONTINUOUS_METRICS
 # metric -> the value that "floored" means "structurally minimal" for it
 # (0 params: no arguments) -- drives the descriptive floor-percentage
 # footnote only, no comparative test.
@@ -173,12 +166,7 @@ FLOOR_CHECK_METRICS = {"num_parameters": 0}
 # comparison, so dropping num_parameters from CONTINUOUS_METRICS (the
 # Mann-Whitney-tested list) doesn't affect either.
 DESCRIPTIVE_CONTINUOUS_METRICS = CONTINUOUS_METRICS + list(FLOOR_CHECK_METRICS)
-# num_objects_instantiated/num_external_calls are still detected and
-# persisted (fixtures.num_objects_instantiated/num_external_calls) --
-# excluded here entirely (not even in the "other" tier) because they're not
-# part of the paper's reported RQ1 metrics, not because collection stopped
-# computing them.
-CATEGORICAL_METRICS = ["scope", "fixture_type", "commit_type"]
+CATEGORICAL_METRICS = ["fixture_type", "commit_type"]
 
 
 @dataclass
@@ -196,9 +184,6 @@ class DatasetMetrics:
     fixture_type_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     fixture_type_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
     fixture_type_n_by_language: dict[str, int] = field(default_factory=dict)
-    scope_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
-    scope_n_by_language: dict[str, int] = field(default_factory=dict)
-    scope_n: int = 0
     commit_type_n: int = 0
     # metric -> % of fixtures at FLOOR_CHECK_METRICS' floor value (descriptive
     # only -- see this module's docstring).
@@ -224,22 +209,6 @@ def _fetch_fixture_type_by_language(conn: sqlite3.Connection) -> dict[str, dict[
     return by_language
 
 
-def _fetch_scope_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
-    """scope distribution per fixture's own language -- fixture_type
-    analogue, same rationale (see _fetch_fixture_type_by_language()'s
-    docstring), applied to `scope`."""
-    rows = conn.execute(
-        "SELECT tf.language, f.scope, COUNT(*) FROM fixtures f "
-        "JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE f.scope IS NOT NULL "
-        "GROUP BY tf.language, f.scope"
-    ).fetchall()
-    by_language: dict[str, dict[str, int]] = {}
-    for language, scope, count in rows:
-        by_language.setdefault(language, {})[scope] = count
-    return by_language
-
-
 def _fetch_repo_count_by_language(conn: sqlite3.Connection, column: str) -> dict[str, int]:
     """Distinct repo_id count per fixture's own language, for fixtures with
     a non-null `column` -- the per-language n_A/n_C render_comparison_table()
@@ -256,7 +225,7 @@ def _fetch_repo_count_by_language(conn: sqlite3.Connection, column: str) -> dict
 def _fetch_repo_count(conn: sqlite3.Connection, column: str) -> int:
     """Distinct repo_id count for fixtures with a non-null `column`,
     dataset-wide -- the Overall row's n_A/n_C for a metric with no other
-    repo-count source already loaded (scope, commit_type)."""
+    repo-count source already loaded (commit_type)."""
     return conn.execute(
         f"SELECT COUNT(DISTINCT repo_id) FROM fixtures WHERE {column} IS NOT NULL"
     ).fetchone()[0]
@@ -274,9 +243,9 @@ def _fetch_continuous_by_repo_and_language(
 
     Excludes NO_BODY_FIXTURE_TYPES (see _shared.py) -- this function only
     ever serves CONTINUOUS_METRICS (loc/cyclomatic_complexity/
-    comment_density/max_nesting_depth), never num_parameters, so the
-    exclusion applies unconditionally rather than needing an opt-in flag
-    the way fetch_continuous_column_by_repo()'s does."""
+    comment_density), never num_parameters, so the exclusion applies
+    unconditionally rather than needing an opt-in flag the way
+    fetch_continuous_column_by_repo()'s does."""
     columns_sql = ", ".join(f"f.{m}" for m in CONTINUOUS_METRICS)
     placeholders = ", ".join("?" for _ in NO_BODY_FIXTURE_TYPES)
     rows = conn.execute(
@@ -331,9 +300,6 @@ def load_dataset_metrics(
         fixture_type_by_language = _fetch_fixture_type_by_language(conn)
         fixture_type_by_repo = fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type")
         fixture_type_n_by_language = _fetch_repo_count_by_language(conn, "fixture_type")
-        scope_by_language = _fetch_scope_by_language(conn)
-        scope_n_by_language = _fetch_repo_count_by_language(conn, "scope")
-        scope_n = _fetch_repo_count(conn, "scope")
         commit_type_n = _fetch_repo_count(conn, "commit_type")
         language_leakage = compute_language_leakage(conn)
         # Descriptive only, not run through a significance test: agent_type
@@ -358,9 +324,9 @@ def load_dataset_metrics(
         # repo-level throughout, same as the tested metrics, rather than
         # silently reverting to fixture-level for just this one column.
         #
-        # CONTINUOUS_METRICS (loc/cyclomatic_complexity/comment_density/
-        # max_nesting_depth) exclude NO_BODY_FIXTURE_TYPES -- see that
-        # constant's docstring in _shared.py. num_parameters does NOT
+        # CONTINUOUS_METRICS (loc/cyclomatic_complexity/comment_density)
+        # exclude NO_BODY_FIXTURE_TYPES -- see that constant's docstring
+        # in _shared.py. num_parameters does NOT
         # exclude them: 0 is a correct, not-Lizard-derived value for a
         # field's parameter count, unlike CC (which is a meaningless Lizard
         # fallback default for these), so it
@@ -403,9 +369,6 @@ def load_dataset_metrics(
         fixture_type_by_language=fixture_type_by_language,
         fixture_type_by_repo=fixture_type_by_repo,
         fixture_type_n_by_language=fixture_type_n_by_language,
-        scope_by_language=scope_by_language,
-        scope_n_by_language=scope_n_by_language,
-        scope_n=scope_n,
         commit_type_n=commit_type_n,
         floor_pct=floor_pct,
     )
@@ -434,7 +397,7 @@ def compare_datasets_categorical(
     a: DatasetMetrics, other: DatasetMetrics
 ) -> dict[str, BalanceTest]:
     """A vs `other`: pooled fixture-level chi-square per categorical metric
-    (scope, fixture_type, commit_type) -- the Overall row for each metric's
+    (fixture_type, commit_type) -- the Overall row for each metric's
     table."""
     return {
         metric: compute_categorical_balance(
@@ -468,9 +431,10 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     lines = [f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures", ""]
 
     lines.append(_render_continuous_summary_table("Paper", PAPER_CONTINUOUS_METRICS, metrics))
-    other_descriptive = OTHER_CONTINUOUS_METRICS + list(FLOOR_CHECK_METRICS)
     lines.append(
-        _render_continuous_summary_table("Other (not in the paper)", other_descriptive, metrics)
+        _render_continuous_summary_table(
+            "Other (not in the paper)", list(FLOOR_CHECK_METRICS), metrics
+        )
     )
 
     for metric in CATEGORICAL_METRICS:
@@ -573,8 +537,8 @@ def _render_continuous_metric(
     Q3"/"<OTHER> Q3", and "A P90"/"<OTHER> P90" columns (per
     render_comparison_table()'s per_language_medians/per_language_q3/
     per_language_p90) -- set only for the three paper continuous metrics
-    (loc/cyclomatic_complexity/comment_density), not max_nesting_depth, so
-    the paper's per-language comparison tables show the underlying
+    (loc/cyclomatic_complexity/comment_density) -- these are the paper's
+    per-language comparison tables, showing the underlying
     distribution (not just its center) alongside the effect size, without
     changing the "Other" tier's table shape. Q3/P90 exist specifically to
     explain an effect that reaches significance despite identical
@@ -719,39 +683,22 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         )
 
     lines += [
-        f"**Other Extracted Features (Not in the Paper) -- Continuous** "
-        f"{continuous_intro} Computed and tested with the same rigor as the "
-        "paper metrics above -- `max_nesting_depth` gets an identical "
-        "Mann-Whitney/per-language table, `num_parameters` gets a "
-        "descriptive floor-percentage footnote instead (see below for why) "
-        "-- just not part of the paper's reported RQ1 comparison.",
+        "**Other Extracted Features (Not in the Paper)** -- `num_parameters` "
+        "is still collected but dropped from Mann-Whitney testing entirely "
+        "(see this module's docstring for why); shown here only as a "
+        "descriptive floor-percentage footnote, not a comparative test.",
         "",
         _render_floor_percentage_footnote(a, other),
     ]
-    for metric in OTHER_CONTINUOUS_METRICS:
-        lines.append(_render_continuous_metric(metric, a, other, continuous_overall[metric]))
 
     lines += [
         "**Categorical metrics (chi-square)** -- Effect size is Cramer's V "
         "(thresholds: negligible <0.1, small <0.3, medium <0.5, else large). "
         "Same Overall-uncorrected / per-language-family-corrected convention "
-        "as the continuous metrics above. `scope`/`fixture_type` each have a "
-        "per-language family; `commit_type` doesn't (renders Overall-only).",
+        "as the continuous metrics above. `fixture_type` has a per-language "
+        "family; `commit_type` doesn't (renders Overall-only).",
         "",
     ]
-    lines.append(
-        _render_categorical_metric(
-            "scope",
-            a,
-            other,
-            categorical_overall["scope"],
-            NCounts(a.scope_n, other.scope_n),
-            a.scope_by_language,
-            other.scope_by_language,
-            a.scope_n_by_language,
-            other.scope_n_by_language,
-        )
-    )
     lines.append(
         _render_categorical_metric(
             "fixture_type",
@@ -773,8 +720,7 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "Pseudo-Replication](../docs/reference/limitations.md#categorical-"
         "pseudo-replication)). The paper reports the repo-level "
         '`fixture_type` proportion test in "Repo-level aggregates" below '
-        "instead. `scope`/`commit_type` above are unaffected and are used "
-        "as-is.",
+        "instead. `commit_type` above is unaffected and used as-is.",
         "",
     ]
     lines.append(

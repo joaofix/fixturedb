@@ -249,20 +249,14 @@ def _make_fixtures_db(tmp_path, values: list[dict]) -> None:
                 "repo_id": repo_id,
                 "name": f"fixture_{i}",
                 "fixture_type": "pytest_decorator",
-                "scope": "per_test",
                 "start_line": i,
                 "end_line": i + 1,
                 "loc": 5,
                 "cyclomatic_complexity": 1,
-                "max_nesting_depth": 1,
-                "num_objects_instantiated": 0,
-                "num_external_calls": 0,
                 "num_comment_lines": 0,
                 "comment_density": 0.0,
                 "num_parameters": 0,
-                "has_teardown_pair": 0,
                 "raw_source": "",
-                "framework": "pytest",
                 "num_mocks": 0,
             }
             base.update(overrides)
@@ -305,20 +299,14 @@ def _make_multi_repo_fixtures_db(tmp_path, repos: list[list[str]]) -> None:
                         "repo_id": repo_id,
                         "name": f"fixture_{repo_idx}_{i}",
                         "fixture_type": fixture_type,
-                        "scope": "per_test",
                         "start_line": i,
                         "end_line": i + 1,
                         "loc": 5,
                         "cyclomatic_complexity": 1,
-                        "max_nesting_depth": 1,
-                        "num_objects_instantiated": 0,
-                        "num_external_calls": 0,
                         "num_comment_lines": 0,
                         "comment_density": 0.0,
                         "num_parameters": 0,
-                        "has_teardown_pair": 0,
                         "raw_source": "",
-                        "framework": "pytest",
                         "num_mocks": 0,
                     },
                 )
@@ -336,12 +324,17 @@ class TestFetchContinuousColumn:
 class TestFetchCategoricalColumn:
     def test_returns_value_counts(self, tmp_path):
         _make_fixtures_db(
-            tmp_path, [{"scope": "per_test"}, {"scope": "per_test"}, {"scope": "per_class"}]
+            tmp_path,
+            [
+                {"fixture_type": "before_each"},
+                {"fixture_type": "before_each"},
+                {"fixture_type": "after_each"},
+            ],
         )
         db_file = tmp_path / "a.db"
         with db_session(db_file) as conn:
-            dist = fetch_categorical_column(conn, "fixtures", "scope")
-        assert dist == {"per_test": 2, "per_class": 1}
+            dist = fetch_categorical_column(conn, "fixtures", "fixture_type")
+        assert dist == {"before_each": 2, "after_each": 1}
 
 
 class TestFetchContinuousColumnByRepo:

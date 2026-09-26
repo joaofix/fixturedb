@@ -126,7 +126,6 @@ def setUp(self):
     self.magic.method.return_value = 42
 """
         fixture = assert_fixture_detected(code, "python", "setUp")
-        assert fixture.num_objects_instantiated >= 1
         assert any(m.framework == "unittest_mock" for m in fixture.mocks)
 
 
@@ -200,7 +199,6 @@ def setUp(self):
     self.mock = Mock()
 """
         fixture = assert_fixture_detected(code, "python", "setUp")
-        assert fixture.num_objects_instantiated >= 1
         assert fixture.mocks and fixture.mocks[0].framework == "unittest_mock"
 
     def test_pytest_mock_imports(self):

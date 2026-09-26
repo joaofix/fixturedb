@@ -43,7 +43,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.fixture_type == "junit4_before"
-        assert fixture.scope == "per_test"
 
     def test_after_annotation_detected(self):
         """@After annotated method should be detected as fixture"""
@@ -59,7 +58,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDown")
         assert fixture.fixture_type == "junit4_after"
-        assert fixture.scope == "per_test"
 
     def test_before_and_after_together(self):
         """Both @Before and @After should be detected"""
@@ -106,8 +104,6 @@ public class LegacyTest extends TestCase {
         setup = assert_fixture_detected(code, "java", "setUp")
         teardown = assert_fixture_detected(code, "java", "tearDown")
         assert setup.fixture_type == "junit3_setup"
-        assert setup.framework == "junit"
-        assert setup.scope == "per_test"
         assert teardown.fixture_type == "junit3_teardown"
 
     def test_setup_not_extending_test_case_is_not_detected(self):
@@ -180,8 +176,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "junit4_before_class"
-        assert fixture.framework == "junit"
-        assert fixture.scope == "per_class"
         assert fixture.fixture_type_kind == "setup"
 
     def test_beforeclass_with_only_testng_import_resolves_to_testng(self):
@@ -197,8 +191,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "testng_before_class"
-        assert fixture.framework == "testng"
-        assert fixture.scope == "per_class"
         assert fixture.fixture_type_kind == "setup"
 
     def test_beforeclass_with_both_imports_is_ambiguous_but_still_setup(self):
@@ -219,8 +211,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "before_class_ambiguous"
-        assert fixture.framework is None
-        assert fixture.scope == "per_class"
         assert fixture.fixture_type_kind == "setup"
 
     def test_beforeclass_with_no_imports_is_ambiguous_but_still_setup(self):
@@ -238,7 +228,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "before_class_ambiguous"
-        assert fixture.framework is None
         assert fixture.fixture_type_kind == "setup"
 
     def test_afterclass_with_only_junit_import_resolves_to_junit4(self):
@@ -254,8 +243,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "junit4_after_class"
-        assert fixture.framework == "junit"
-        assert fixture.scope == "per_class"
         assert fixture.fixture_type_kind == "teardown"
 
     def test_afterclass_with_only_testng_import_resolves_to_testng(self):
@@ -271,8 +258,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "testng_after_class"
-        assert fixture.framework == "testng"
-        assert fixture.scope == "per_class"
         assert fixture.fixture_type_kind == "teardown"
 
     def test_afterclass_with_both_imports_is_ambiguous_but_still_teardown(self):
@@ -289,7 +274,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "after_class_ambiguous"
-        assert fixture.framework is None
         assert fixture.fixture_type_kind == "teardown"
 
     def test_afterclass_with_no_imports_is_ambiguous_but_still_teardown(self):
@@ -303,7 +287,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "after_class_ambiguous"
-        assert fixture.framework is None
         assert fixture.fixture_type_kind == "teardown"
 
 
@@ -324,8 +307,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.fixture_type == "junit5_before_each"
-        assert fixture.framework == "junit"
-        assert fixture.scope == "per_test"
 
     def test_beforeall_annotation(self):
         """JUnit 5 @BeforeAll should be detected"""
@@ -341,8 +322,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpAll")
         assert fixture.fixture_type == "junit5_before_all"
-        assert fixture.framework == "junit"
-        assert fixture.scope == "per_class"
 
 
 class TestTestNGFixtures:
@@ -362,8 +341,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.fixture_type == "testng_before_method"
-        assert fixture.framework == "testng"
-        assert fixture.scope == "per_test"
 
     def test_aftermethod_annotation(self):
         """TestNG @AfterMethod should be detected"""
@@ -379,8 +356,6 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDown")
         assert fixture.fixture_type == "testng_after_method"
-        assert fixture.framework == "testng"
-        assert fixture.scope == "per_test"
 
     def test_dataprovider_annotation(self):
         """TestNG @DataProvider should be detected as data-driven fixture"""
@@ -399,7 +374,6 @@ public class DataTests {
 """
         fixture = assert_fixture_detected(code, "java", "provideTestData")
         assert fixture.fixture_type == "testng_data_provider"
-        assert fixture.scope == "per_test"
         assert fixture.fixture_type_kind == "other"
 
     def test_dataprovider_with_params(self):
@@ -498,8 +472,6 @@ public class TestExample {{
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.fixture_type == fixture_type
-        assert fixture.framework == "testng"
-        assert fixture.scope == "global"
         assert fixture.fixture_type_kind == "setup"
 
     @pytest.mark.parametrize(
@@ -521,8 +493,6 @@ public class TestExample {{
 """
         fixture = assert_fixture_detected(code, "java", "tearDown")
         assert fixture.fixture_type == fixture_type
-        assert fixture.framework == "testng"
-        assert fixture.scope == "global"
         assert fixture.fixture_type_kind == "teardown"
 
 
@@ -546,7 +516,6 @@ public class FactoryTests {
 """
         fixture = assert_fixture_detected(code, "java", "createInstances")
         assert fixture.fixture_type == "testng_factory"
-        assert fixture.framework == "testng"
         assert fixture.fixture_type_kind == "other"
 
 

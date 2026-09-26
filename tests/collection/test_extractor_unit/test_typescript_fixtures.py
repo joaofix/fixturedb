@@ -44,8 +44,7 @@ beforeEach(async (): Promise<void> => {
     await cache.clear();
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "typescript", "before_each")
-        assert fixture.scope == "per_test"
+        assert_fixture_with_type_detected(code, "typescript", "before_each")
 
 
 class TestTypeScriptMochaHooks:
@@ -80,10 +79,9 @@ aroundEach(async (runTest: () => Promise<void>) => {
     await db.transaction(runTest)
 })
 """
-        fixture = assert_fixture_with_type_detected(
+        assert_fixture_with_type_detected(
             code, "typescript", "vitest_around_each"
         )
-        assert fixture.scope == "per_test"
 
 
 class TestTypeScriptAsyncAwait:

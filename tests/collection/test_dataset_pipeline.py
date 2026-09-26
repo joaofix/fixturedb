@@ -39,16 +39,14 @@ def _build_db(path, n, agent=False):
     )
     file_id = conn.execute("SELECT id FROM test_files").fetchone()[0]
     for i in range(n):
-        scope = "per_test" if i % 2 == 0 else "per_module"
         conn.execute(
             "INSERT INTO fixtures "
-            "(file_id, repo_id, name, fixture_type, scope, raw_source, commit_sha, agent_type) "
-            "VALUES (?, ?, ?, 'pytest_decorator', ?, 'def f(): pass', ?, ?)",
+            "(file_id, repo_id, name, fixture_type, raw_source, commit_sha, agent_type) "
+            "VALUES (?, ?, ?, 'pytest_decorator', 'def f(): pass', ?, ?)",
             (
                 file_id,
                 repo_id,
                 f"fixture_{i}",
-                scope,
                 "sha1" if agent else None,
                 "claude" if agent else None,
             ),

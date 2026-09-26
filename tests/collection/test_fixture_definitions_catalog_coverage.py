@@ -116,11 +116,12 @@ PYTHON_CASES = (
 
 @pytest.mark.parametrize("code,fixture_type,scope,framework", PYTHON_CASES)
 def test_python_catalog_entry_detected(code, fixture_type, scope, framework):
+    # scope/framework are unused here beyond generating the synthetic code
+    # above -- neither is a FixtureResult field anymore (dropped from the
+    # extracted metric set entirely).
     fixtures = _run(code, "python", ".py")
     matching = [f for f in fixtures if f.fixture_type == fixture_type]
     assert matching, f"No fixture of type {fixture_type!r} detected in:\n{code}"
-    assert matching[0].scope == scope
-    assert matching[0].framework == framework
 
 
 def test_python_catalog_case_count_matches_yaml():
@@ -233,11 +234,12 @@ JAVA_METHOD_CASES = (
 
 @pytest.mark.parametrize("code,fixture_type,scope,framework", JAVA_METHOD_CASES)
 def test_java_catalog_entry_detected(code, fixture_type, scope, framework):
+    # scope/framework are unused here beyond selecting which import-
+    # resolution variant to generate above -- neither is a FixtureResult
+    # field anymore (dropped from the extracted metric set entirely).
     fixtures = _run(code, "java", ".java")
     matching = [f for f in fixtures if f.fixture_type == fixture_type]
     assert matching, f"No fixture of type {fixture_type!r} detected in:\n{code}"
-    assert matching[0].scope == scope
-    assert matching[0].framework == framework
 
 
 def test_java_rule_field_declaration_cases():
@@ -255,8 +257,6 @@ public class T {{
         fixtures = _run(code, "java", ".java")
         matching = [f for f in fixtures if f.fixture_type == fields["fixture_type"]]
         assert matching, f"No fixture detected for {ann} field declaration"
-        assert matching[0].scope == fields["scope"]
-        assert matching[0].framework == fields["framework"]
         assert matching[0].name == "resource"
 
 
@@ -297,10 +297,12 @@ JS_CALL_CASES = _js_hook_cases()
 
 @pytest.mark.parametrize("code,fixture_type,scope", JS_CALL_CASES)
 def test_javascript_catalog_entry_detected(code, fixture_type, scope):
+    # scope is unused here beyond parametrizing the case id -- not a
+    # FixtureResult field anymore (dropped from the extracted metric set
+    # entirely).
     fixtures = _run(code, "javascript", ".test.js")
     matching = [f for f in fixtures if f.fixture_type == fixture_type]
     assert matching, f"No fixture of type {fixture_type!r} detected in:\n{code}"
-    assert matching[0].scope == scope
 
 
 def test_javascript_typescript_catalog_case_count_matches_yaml():

@@ -5,7 +5,7 @@ actively-maintained testing frameworks. Other frameworks (nose, Behave) are
 deliberately out of scope; see fixture_definitions.yaml's python.excluded
 list for why.
 
-Pattern tables (scope keyword maps, setup/teardown name -> scope maps) are
+Pattern tables (decorator match pattern, setup/teardown name catalogs) are
 loaded from collection/heuristics/fixture_definitions.yaml rather than
 hardcoded here -- see that file for the full operational definition of
 "fixture" per language, including documented exclusions.
@@ -25,7 +25,6 @@ from .heuristics import load_fixture_definitions
 
 _DEFS = load_fixture_definitions()["python"]
 
-PYTEST_SCOPE_KEYWORD_MAP: dict[str, str] = _DEFS["pytest_decorator"]["scope_keyword_map"]
 PYTEST_FIXTURE_DECORATOR_RE = re.compile(_DEFS["pytest_decorator"]["match_pattern"])
 UNITTEST_SETUP_NAMES: dict[str, str] = _DEFS["unittest_setup"]["names"]
 PYTEST_CLASS_METHOD_NAMES: dict[str, str] = _DEFS["pytest_class_method"]["names"]
@@ -246,19 +245,10 @@ def _detect_python(
 
                 # pytest.fixture decorator
                 if PYTEST_FIXTURE_DECORATOR_RE.search(dec_text):
-                    scope = "per_test"
-                    scope_match = re.search(r'scope\s*=\s*["\'](\w+)["\']', dec_text)
-                    if scope_match:
-                        scope = PYTEST_SCOPE_KEYWORD_MAP.get(
-                            scope_match.group(1), "per_test"
-                        )
-
                     result = _build_result(
                         func_node=func_def,
                         src_bytes=src_bytes,
                         fixture_type="pytest_decorator",
-                        scope=scope,
-                        framework="pytest",
                         language="python",
                     )
                     # Classified directly here, not by detector_shared.py's
@@ -292,8 +282,6 @@ def _detect_python(
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="unittest_setup",
-                            scope=UNITTEST_SETUP_NAMES[name],
-                            framework="unittest",
                             language="python",
                         )
                     )
@@ -305,8 +293,6 @@ def _detect_python(
                             func_node=node,
                             src_bytes=src_bytes,
                             fixture_type="pytest_class_method",
-                            scope=PYTEST_CLASS_METHOD_NAMES[name],
-                            framework="pytest",
                             language="python",
                         )
                     )

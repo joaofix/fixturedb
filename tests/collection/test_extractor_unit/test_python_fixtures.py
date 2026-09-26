@@ -27,7 +27,7 @@ class TestExample(unittest.TestCase):
         self.data = []
 """
         assert_fixture_detected(
-            code, "python", "setUp", fixture_type="unittest_setup", scope="per_test"
+            code, "python", "setUp", fixture_type="unittest_setup"
         )
 
     def test_tearDown_method_detected(self):
@@ -38,7 +38,7 @@ class TestExample(unittest.TestCase):
         self.data.clear()
 """
         assert_fixture_detected(
-            code, "python", "tearDown", fixture_type="unittest_setup", scope="per_test"
+            code, "python", "tearDown", fixture_type="unittest_setup"
         )
 
     def test_setUp_and_tearDown_both_detected(self):
@@ -79,14 +79,12 @@ class TestExample(unittest.IsolatedAsyncioTestCase):
             "python",
             "asyncSetUp",
             fixture_type="unittest_setup",
-            scope="per_test",
         )
         assert_fixture_detected(
             code,
             "python",
             "asyncTearDown",
             fixture_type="unittest_setup",
-            scope="per_test",
         )
 
     def test_setUpClass_method_detected(self):
@@ -97,8 +95,7 @@ class TestExample(unittest.TestCase):
     def setUpClass(cls):
         cls.db = create_db()
 """
-        fixture = assert_fixture_detected(code, "python", "setUpClass")
-        assert fixture.scope == "per_class"
+        assert_fixture_detected(code, "python", "setUpClass")
 
     def test_setUp_with_parameters_not_detected(self):
         """setUp with parameters (not per_test signature) should not be detected as fixture"""
@@ -158,11 +155,9 @@ import pytest
 def sample_data():
     return {"key": "value"}
 """
-        fixture = assert_fixture_detected(
+        assert_fixture_detected(
             code, "python", "sample_data", fixture_type="pytest_decorator"
         )
-        # pytest fixtures are per_test by default
-        assert fixture.scope in ("per_test", "global")
 
     def test_pytest_fixture_with_scope(self):
         """@pytest.fixture with scope parameter should be detected"""
@@ -337,7 +332,7 @@ def setUpModule():
     db = create_database()
 """
         assert_fixture_detected(
-            code, "python", "setUpModule", fixture_type="unittest_setup", scope="per_module"
+            code, "python", "setUpModule", fixture_type="unittest_setup"
         )
 
     def test_tearDownModule_at_module_level_detected(self):
@@ -346,7 +341,7 @@ def tearDownModule():
     db.close()
 """
         assert_fixture_detected(
-            code, "python", "tearDownModule", fixture_type="unittest_setup", scope="per_module"
+            code, "python", "tearDownModule", fixture_type="unittest_setup"
         )
 
     def test_setUpModule_nested_in_class_not_detected(self):
@@ -379,8 +374,6 @@ class TestSuite:
 """
         fixture = assert_fixture_detected(code, "python", "setup_class")
         assert fixture.fixture_type == "pytest_class_method"
-        assert fixture.framework == "pytest"
-        assert fixture.scope == "per_class"
 
     def test_teardown_class_detected(self):
         code = """
@@ -390,8 +383,6 @@ class TestSuite:
 """
         fixture = assert_fixture_detected(code, "python", "teardown_class")
         assert fixture.fixture_type == "pytest_class_method"
-        assert fixture.framework == "pytest"
-        assert fixture.scope == "per_class"
 
 
 class TestPytestClassMethodNotDoubleCountedWithDecorator:
@@ -412,7 +403,6 @@ class TestSuite:
         assert_fixture_count(code, "python", 1)
         fixture = extract_and_find_fixtures(code, "python")[0]
         assert fixture.fixture_type == "pytest_decorator"
-        assert fixture.framework == "pytest"
 
     def test_undecorated_setup_method_still_detected(self):
         """Without a pytest.fixture decorator, name-based detection must
@@ -524,7 +514,6 @@ async def async_database():
             "python",
             "async_database",
             fixture_type="pytest_decorator",
-            scope="per_test",
         )
         assert fixture.name == "async_database"
 
@@ -542,7 +531,6 @@ async def async_service():
             "python",
             "async_service",
             fixture_type="pytest_decorator",
-            scope="per_module",
         )
         assert fixture.name == "async_service"
 
@@ -560,7 +548,6 @@ async def async_configured_db(request):
             "python",
             "async_configured_db",
             fixture_type="pytest_decorator",
-            scope="per_test",
         )
         assert fixture.name == "async_configured_db"
 
@@ -650,10 +637,10 @@ class TestAsync(unittest.TestCase):
 """
         assert_fixture_count(code, "python", 2)
         assert_fixture_detected(
-            code, "python", "setUp", fixture_type="unittest_setup", scope="per_test"
+            code, "python", "setUp", fixture_type="unittest_setup"
         )
         assert_fixture_detected(
-            code, "python", "tearDown", fixture_type="unittest_setup", scope="per_test"
+            code, "python", "tearDown", fixture_type="unittest_setup"
         )
 
     def test_async_setUpClass_detected(self):
@@ -669,7 +656,6 @@ class TestWithAsyncClass(unittest.TestCase):
             "python",
             "setUpClass",
             fixture_type="unittest_setup",
-            scope="per_class",
         )
 
     def test_async_setup_method_pytest_style(self):
@@ -684,7 +670,6 @@ class TestClass:
             "python",
             "setup_method",
             fixture_type="pytest_class_method",
-            scope="per_test",
         )
 
     def test_pytest_asyncio_fixture_decorator_detected(self):
@@ -704,7 +689,6 @@ async def async_client():
             "python",
             "async_client",
             fixture_type="pytest_decorator",
-            scope="per_test",
         )
         assert fixture.name == "async_client"
 
@@ -723,7 +707,6 @@ async def async_engine():
             "python",
             "async_engine",
             fixture_type="pytest_decorator",
-            scope="global",
         )
 
     def test_pytest_asyncio_and_pytest_fixture_share_fixture_type(self):

@@ -95,7 +95,6 @@ public class Test extends TestCase {
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         # Only counts 'new' constructor calls, not method calls like Mockito.spy()
-        assert fixture.num_objects_instantiated == 1
         assert len(fixture.mocks) == 1
         assert fixture.mocks[0].framework == "mockito"
         assert fixture.mocks[0].category == "spy"

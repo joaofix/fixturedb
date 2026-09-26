@@ -25,27 +25,9 @@ from .heuristics import load_fixture_definitions
 
 _DEFS = load_fixture_definitions()["javascript_typescript"]
 
-JS_FIXTURE_CALLS: dict[str, tuple[str, str]] = {
-    name: (fields["fixture_type"], fields["scope"])
-    for name, fields in _DEFS["hooks"].items()
+JS_FIXTURE_CALLS: dict[str, str] = {
+    name: fields["fixture_type"] for name, fields in _DEFS["hooks"].items()
 }
-
-
-def _enclosing_describe_id(node, src_bytes: bytes) -> "int | None":
-    """Walk up from a hook's call_expression node to the nearest enclosing
-    describe(...) call and return its AST byte-offset as a stable identity
-    for teardown pairing -- distinguishes independent describe() blocks in
-    the same file (a beforeEach in one block must not pair with an afterEach
-    in an unrelated sibling block just for sharing a type+scope). None if
-    the hook isn't wrapped in any describe() (e.g. a bare top-level hook)."""
-    current = node.parent
-    while current is not None:
-        if current.type == "call_expression":
-            func_node = current.child_by_field_name("function")
-            if func_node is not None and _source(func_node, src_bytes).strip() == "describe":
-                return current.start_byte
-        current = current.parent
-    return None
 
 
 def _detect_js(
@@ -67,18 +49,16 @@ def _detect_js(
             if func_node:
                 name = _source(func_node, src_bytes).strip()
 
-                # Check standard hooks (Jest/Mocha/Vitest) - ambiguous, so framework=None
+                # Check standard hooks (Jest/Mocha/Vitest) -- ambiguous which
+                # of the three a bare hook name belongs to, so no framework
+                # is recorded.
                 if name in JS_FIXTURE_CALLS:
-                    fixture_type, scope = JS_FIXTURE_CALLS[name]
                     results.append(
                         _build_result(
                             func_node=target,
                             src_bytes=src_bytes,
-                            fixture_type=fixture_type,
-                            scope=scope,
-                            framework=None,  # Ambiguous: could be Jest, Mocha, or Vitest
+                            fixture_type=JS_FIXTURE_CALLS[name],
                             language=language,
-                            container_id=_enclosing_describe_id(target, src_bytes),
                         )
                     )
 

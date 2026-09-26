@@ -348,21 +348,16 @@ Contains fixture definitions.
 | repo_id | INTEGER | Foreign key to repositories |
 | name | TEXT | Fixture name |
 | fixture_type | TEXT | pytest/unittest/other |
-| scope | TEXT | function/class/module/session |
 | start_line | INTEGER | Start line in file |
 | end_line | INTEGER | End line in file |
 | loc | INTEGER | Lines of code |
 | cyclomatic_complexity | INTEGER | McCabe complexity |
-| max_nesting_depth | INTEGER | Maximum nesting depth |
-| num_objects_instantiated | INTEGER | Objects created |
-| num_external_calls | INTEGER | External function calls |
 | num_comment_lines | INTEGER | Comment-only lines within the fixture |
 | comment_density | REAL | num_comment_lines / loc (0.0 if loc is 0) |
 | num_parameters | INTEGER | Number of parameters |
-| has_teardown_pair | BOOLEAN | Has teardown/cleanup |
+| fixture_type_kind | TEXT | setup/teardown/setup_and_teardown/other |
 | raw_source | TEXT | Complete fixture source code |
 | category | TEXT | RQ1 taxonomy category |
-| framework | TEXT | Mock framework used (if any) |
 | num_mocks | INTEGER | Number of mocks configured |
 
 ## mock_usages

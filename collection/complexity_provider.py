@@ -22,17 +22,12 @@ BENEFITS of using Lizard:
 - Better cross-language consistency
 - Academic credibility for published research
 
-Object instantiation (`num_objects_instantiated`) used to be computed here
-too, as a regex-filtered post-processing pass over Lizard's own
-external_call_count. It's been moved to detector_shared.py's
-`_count_object_instantiations()` -- a proper tree-sitter AST walk (`new
-X(...)`'s dedicated node type in Java/JS/TS; a capitalized-target `call`
-node in Python) run against the fixture's already-parsed node, not a
-second regex pass over its raw text. See internal-docs/methodology-
-improvements/num-objects-instantiated-false-positive-rate.md for why:
-the regex approach counted matches inside string literals/comments (e.g.
-SQL embedded in a fixture body, or a fixture's own capitalized name
-self-matching its `def NAME(...):` line) as if they were real code.
+`num_objects_instantiated` used to be computed here too, then moved to a
+dedicated tree-sitter AST walk in detector_shared.py (see internal-docs/
+methodology-improvements/num-objects-instantiated-false-positive-rate.md
+for that investigation) -- since removed from the extracted metric set
+entirely, along with `num_external_calls`, `max_nesting_depth`, and
+`has_teardown_pair` (not reported in the paper).
 """
 
 from pathlib import Path
@@ -97,11 +92,10 @@ def analyze_function_complexity(
         LOC is not included because our definition (non-blank lines) differs from
         Lizard's definition (total lines spanning the function).
 
-        num_objects_instantiated is NOT computed here -- see this module's
-        docstring for why (it's an AST walk in detector_shared.py now, not
-        a Lizard-adjacent metric). Lizard's own external_call_count isn't
-        returned either: it was only ever read here to validate/cap the
-        old regex-based object-instantiation count, which no longer exists.
+        num_objects_instantiated is not computed here -- see this module's
+        docstring. Lizard's own external_call_count isn't returned either:
+        it was only ever read here to validate/cap the old regex-based
+        object-instantiation count, which no longer exists.
 
     Example:
         >>> code = "def fixture(x):\\n    if x:\\n        return db.query()"

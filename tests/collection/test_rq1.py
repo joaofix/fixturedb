@@ -22,7 +22,6 @@ from collection.db import (
 from collection.research_questions._shared import format_p_value
 from collection.research_questions.rq1 import (
     CONTINUOUS_METRICS,
-    OTHER_CONTINUOUS_METRICS,
     PAPER_CONTINUOUS_METRICS,
     DatasetMetrics,
     _floor_percentage,
@@ -71,20 +70,14 @@ def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
                         "repo_id": repo_id,
                         "name": f"fixture_{repo_idx}_{i}",
                         "fixture_type": "pytest_decorator",
-                        "scope": "per_test",
                         "start_line": i,
                         "end_line": i + 1,
                         "loc": loc,
                         "cyclomatic_complexity": 1,
-                        "max_nesting_depth": 1,
-                        "num_objects_instantiated": 0,
-                        "num_external_calls": 0,
                         "num_comment_lines": 0,
                         "comment_density": 0.0,
                         "num_parameters": 0,
-                        "has_teardown_pair": 0,
                         "raw_source": "",
-                        "framework": "pytest",
                         "num_mocks": 0,
                     },
                 )
@@ -130,20 +123,14 @@ def _make_multi_repo_fixture_type_db(root, dataset: str, repos: list[list[str]])
                         "repo_id": repo_id,
                         "name": f"fixture_{repo_idx}_{i}",
                         "fixture_type": fixture_type,
-                        "scope": "per_test",
                         "start_line": i,
                         "end_line": i + 1,
                         "loc": 5,
                         "cyclomatic_complexity": 1,
-                        "max_nesting_depth": 1,
-                        "num_objects_instantiated": 0,
-                        "num_external_calls": 0,
                         "num_comment_lines": 0,
                         "comment_density": 0.0,
                         "num_parameters": 0,
-                        "has_teardown_pair": 0,
                         "raw_source": "",
-                        "framework": "pytest",
                         "num_mocks": 0,
                     },
                 )
@@ -187,20 +174,14 @@ def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
                 "repo_id": repo_id,
                 "name": f"fixture_{i}",
                 "fixture_type": "pytest_decorator",
-                "scope": "per_test",
                 "start_line": i,
                 "end_line": i + 1,
                 "loc": 5,
                 "cyclomatic_complexity": 1,
-                "max_nesting_depth": 1,
-                "num_objects_instantiated": 0,
-                "num_external_calls": 0,
                 "num_comment_lines": 0,
                 "comment_density": 0.0,
                 "num_parameters": 0,
-                "has_teardown_pair": 0,
                 "raw_source": "",
-                "framework": "pytest",
                 "num_mocks": 0,
             }
             base.update(overrides)
@@ -248,20 +229,14 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                     "repo_id": repo_id,
                     "name": f"fixture_{file_idx}_{i}",
                     "fixture_type": "pytest_decorator",
-                    "scope": "per_test",
                     "start_line": i,
                     "end_line": i + 1,
                     "loc": 5,
                     "cyclomatic_complexity": 1,
-                    "max_nesting_depth": 1,
-                    "num_objects_instantiated": 0,
-                    "num_external_calls": 0,
                     "num_comment_lines": 0,
                     "comment_density": 0.0,
                     "num_parameters": 0,
-                    "has_teardown_pair": 0,
                     "raw_source": "",
-                    "framework": "pytest",
                     "num_mocks": 0,
                 }
                 base.update(overrides)
@@ -269,25 +244,18 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
 
 
 class TestPaperMetricsTiering:
-    """PAPER_CONTINUOUS_METRICS is the exhaustive, paper-approved continuous
-    set (2026-08-17) -- exactly loc/cyclomatic_complexity/comment_density.
-    max_nesting_depth is fully Mann-Whitney tested (same as the paper
-    metrics) but deliberately NOT in this set -- see this module's
-    docstring for why."""
+    """PAPER_CONTINUOUS_METRICS is the exhaustive, final continuous set --
+    exactly loc/cyclomatic_complexity/comment_density. max_nesting_depth
+    (which used to be Mann-Whitney tested but rendered under a separate
+    "Other Extracted Features" tier) was dropped from the extracted metric
+    set entirely, so CONTINUOUS_METRICS is now identical to it -- there is
+    no more "other" continuous tier."""
 
     def test_paper_continuous_metrics_is_exactly_three(self):
         assert PAPER_CONTINUOUS_METRICS == ["loc", "cyclomatic_complexity", "comment_density"]
 
-    def test_max_nesting_depth_is_tested_but_not_a_paper_metric(self):
-        assert "max_nesting_depth" in CONTINUOUS_METRICS  # still Mann-Whitney tested
-        assert "max_nesting_depth" in OTHER_CONTINUOUS_METRICS
-        assert "max_nesting_depth" not in PAPER_CONTINUOUS_METRICS
-
-    def test_other_continuous_metrics_is_continuous_minus_paper(self):
-        assert OTHER_CONTINUOUS_METRICS == [
-            m for m in CONTINUOUS_METRICS if m not in PAPER_CONTINUOUS_METRICS
-        ]
-        assert set(OTHER_CONTINUOUS_METRICS) & set(PAPER_CONTINUOUS_METRICS) == set()
+    def test_continuous_metrics_equals_paper_metrics(self):
+        assert CONTINUOUS_METRICS == PAPER_CONTINUOUS_METRICS
 
 
 class TestFloorPercentage:
@@ -310,16 +278,15 @@ class TestLoadDatasetMetrics:
             tmp_path,
             "a",
             [
-                {"loc": 3, "scope": "per_test", "fixture_type": "before_each"},
-                {"loc": 7, "scope": "per_test", "fixture_type": "before_each"},
-                {"loc": 5, "scope": "per_class", "fixture_type": "after_each"},
+                {"loc": 3, "fixture_type": "before_each"},
+                {"loc": 7, "fixture_type": "before_each"},
+                {"loc": 5, "fixture_type": "after_each"},
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert isinstance(metrics, DatasetMetrics)
         assert metrics.n_fixtures == 3
         assert sorted(metrics.continuous_raw["loc"]) == [3, 5, 7]
-        assert metrics.categorical["scope"] == {"per_test": 2, "per_class": 1}
         assert metrics.categorical["fixture_type"] == {"before_each": 2, "after_each": 1}
 
     def test_loads_agent_type_distribution(self, tmp_path):
@@ -388,25 +355,9 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.fixture_type_n_by_language == {"python": 1}
 
-    def test_scope_by_language_groups_by_fixtures_own_language(self, tmp_path):
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {"language": "python", "fixtures": [{"scope": "per_test"}, {"scope": "per_test"}]},
-                {"language": "typescript", "fixtures": [{"scope": "per_class"}]},
-            ],
-        )
+    def test_commit_type_n_counts_distinct_repos_with_non_null_value(self, tmp_path):
+        _make_db(tmp_path, "a", [{"commit_type": None}, {"commit_type": "feat"}])
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.scope_by_language == {
-            "python": {"per_test": 2},
-            "typescript": {"per_class": 1},
-        }
-
-    def test_scope_n_and_commit_type_n_count_distinct_repos_with_non_null_value(self, tmp_path):
-        _make_db(tmp_path, "a", [{"scope": "per_test"}, {"scope": None}, {"commit_type": "feat"}])
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.scope_n == 1  # one repo, has >=1 non-null scope fixture
         assert metrics.commit_type_n == 1
 
     def test_repo_level_continuous_by_language_is_one_mean_per_repo_per_language(self, tmp_path):
@@ -421,14 +372,13 @@ class TestLoadDatasetMetrics:
 
     def test_no_body_fixture_types_excluded_from_continuous_metrics_only(self, tmp_path):
         """junit_rule/junit_class_rule (NO_BODY_FIXTURE_TYPES) must not
-        contribute to loc/cyclomatic_complexity/max_nesting_depth/
-        comment_density's repo-level means (Lizard can't analyze a field
-        declaration -- see _shared.py::NO_BODY_FIXTURE_TYPES; comment_density
-        is loc-derived and excluded for the same "different kind of code
-        unit" reasoning, not because of Lizard specifically), but
-        num_parameters (0 is a genuinely correct value for a field, not a
-        Lizard fallback) and the fixture_type categorical distribution must
-        still include them."""
+        contribute to loc/cyclomatic_complexity/comment_density's repo-level
+        means (Lizard can't analyze a field declaration -- see
+        _shared.py::NO_BODY_FIXTURE_TYPES; comment_density is loc-derived
+        and excluded for the same "different kind of code unit" reasoning,
+        not because of Lizard specifically), but num_parameters (0 is a
+        genuinely correct value for a field, not a Lizard fallback) and the
+        fixture_type categorical distribution must still include them."""
         _make_multi_language_db(
             tmp_path,
             "a",
@@ -440,7 +390,6 @@ class TestLoadDatasetMetrics:
                             "fixture_type": "junit_rule",
                             "loc": 2,
                             "cyclomatic_complexity": 1,
-                            "max_nesting_depth": 1,
                             "num_parameters": 0,
                             "comment_density": 0.9,
                         },
@@ -448,7 +397,6 @@ class TestLoadDatasetMetrics:
                             "fixture_type": "junit4_before",
                             "loc": 10,
                             "cyclomatic_complexity": 3,
-                            "max_nesting_depth": 2,
                             "num_parameters": 2,
                             "comment_density": 0.2,
                         },
@@ -456,7 +404,6 @@ class TestLoadDatasetMetrics:
                             "fixture_type": "junit4_before",
                             "loc": 10,
                             "cyclomatic_complexity": 3,
-                            "max_nesting_depth": 2,
                             "num_parameters": 2,
                             "comment_density": 0.2,
                         },
@@ -466,13 +413,12 @@ class TestLoadDatasetMetrics:
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
 
-        # One repo -- its loc/cc/nesting/comment_density means exclude the
+        # One repo -- its loc/cc/comment_density means exclude the
         # junit_rule fixture entirely (mean of the two junit4_before
         # fixtures only: loc 10.0, not (2+10+10)/3=7.33; cc 3.0, not 1.67;
-        # nesting 2.0, not 1.67; comment_density 0.2, not (0.9+0.2+0.2)/3=0.433).
+        # comment_density 0.2, not (0.9+0.2+0.2)/3=0.433).
         assert metrics.repo_level_continuous["loc"] == [10.0]
         assert metrics.repo_level_continuous["cyclomatic_complexity"] == [3.0]
-        assert metrics.repo_level_continuous["max_nesting_depth"] == [2.0]
         assert metrics.repo_level_continuous["comment_density"] == [0.2]
         assert metrics.repo_level_continuous_by_language["loc"] == {"java": [10.0]}
 
@@ -600,20 +546,6 @@ class TestGenerateReport:
             "| python | 4 | 4 | 2.50 | 25.00 | 3.25 | 32.50 | 3.70 | 37.00 |" in python_line
         )
 
-    def test_other_tier_continuous_table_has_no_median_columns(self, tmp_path):
-        """max_nesting_depth (OTHER_CONTINUOUS_METRICS) keeps its original
-        8-column table -- median/Q3/P90 columns are opt-in per call site,
-        not a blanket render_comparison_table() change."""
-        _make_db(tmp_path, "a", [{"max_nesting_depth": v} for v in [1, 2, 3]])
-        _make_db(tmp_path, "c", [{"max_nesting_depth": v} for v in [1, 2]])
-        report = generate_report(db_root=tmp_path)
-        section = report.split("### max_nesting_depth")[1].split("**Categorical metrics")[0]
-        header = next(line for line in section.splitlines() if line.startswith("| Language"))
-        assert "median" not in header.lower()
-        assert "Q3" not in header
-        assert "P90" not in header
-        assert header.count("|") == 9  # unchanged 8-column table
-
     def test_categorical_insufficient_data_when_column_all_null(self, tmp_path):
         # commit_type is never set here -> both sides empty -> insufficient data.
         _make_db(tmp_path, "a", [{"loc": 1}])
@@ -626,13 +558,15 @@ class TestGenerateReport:
         assert "_insufficient data_" in overall_line
 
     def test_categorical_comparison_renders_effect_size(self, tmp_path):
-        # A is all per_test scope, C is all per_class -> maximal association.
-        _make_db(tmp_path, "a", [{"loc": 1, "scope": "per_test"}] * 10)
-        _make_db(tmp_path, "c", [{"loc": 1, "scope": "per_class"}] * 10)
+        # A is all before_each, C is all after_each -> maximal association.
+        _make_db(tmp_path, "a", [{"loc": 1, "fixture_type": "before_each"}] * 10)
+        _make_db(tmp_path, "c", [{"loc": 1, "fixture_type": "after_each"}] * 10)
         report = generate_report(db_root=tmp_path)
-        scope_section = report.split("### scope")[1].split("### fixture_type")[0]
+        fixture_type_section = report.split("### fixture_type")[1].split(
+            "not used in the paper"
+        )[0]
         overall_line = next(
-            line for line in scope_section.splitlines() if line.startswith("| Overall |")
+            line for line in fixture_type_section.splitlines() if line.startswith("| Overall |")
         )
         assert "large" in overall_line
 
@@ -784,9 +718,8 @@ class TestGenerateReport:
         """Regression: cyclomatic_complexity was dropped from testing, then
         restored -- must have a real Overall row again, same shape as
         loc/comment_density, not just a floor-percentage footnote entry.
-        Boundary is "### comment_density" (the next Paper Metric), not
-        "### max_nesting_depth" -- max_nesting_depth moved to the "Other"
-        tier and no longer immediately follows cyclomatic_complexity."""
+        Boundary is "### comment_density", the next (and last) Paper
+        Metric."""
         _make_db(tmp_path, "a", [{"cyclomatic_complexity": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
         _make_db(tmp_path, "c", [{"cyclomatic_complexity": v} for v in [5, 6, 5, 5, 6, 5, 6, 5, 6, 5]])
         report = generate_report(db_root=tmp_path)
@@ -817,12 +750,12 @@ class TestGenerateReport:
         )
         report = generate_report(db_root=tmp_path)
         assert "Floor-binding check (descriptive only" in report
-        # The footnote now renders in the "Other Extracted Features" tier,
+        # The footnote renders in the "Other Extracted Features" section,
         # after the Paper Metrics section (loc/cyclomatic_complexity/
-        # comment_density) -- boundary is "### max_nesting_depth" (the
+        # comment_density) -- boundary is "**Categorical metrics" (the
         # next heading), not "### loc" (which now precedes the footnote).
         footnote_section = report.split("Floor-binding check (descriptive only")[1].split(
-            "### max_nesting_depth"
+            "**Categorical metrics"
         )[0]
         params_line = next(
             line for line in footnote_section.splitlines()
@@ -862,28 +795,14 @@ class TestGenerateReport:
         assert "| 1 | 1 |" in overall_line  # one repo per side
         assert "large | 1.000" in overall_line
 
-    def test_max_nesting_depth_renders_under_other_not_paper(self, tmp_path):
-        """max_nesting_depth keeps its full Mann-Whitney table (same rigor
-        as the paper metrics) but must render after "Other Extracted
-        Features", not inside "Paper Metrics"."""
-        _make_db(tmp_path, "a", [{"loc": 1}])
-        _make_db(tmp_path, "c", [{"loc": 1}])
-        report = generate_report(db_root=tmp_path)
-        assert "### max_nesting_depth" in report
-        paper_section = report.split("**Paper Metrics")[1].split("**Other Extracted Features")[0]
-        other_section = report.split("**Other Extracted Features")[1].split(
-            "**Categorical metrics"
-        )[0]
-        assert "### max_nesting_depth" not in paper_section
-        assert "### max_nesting_depth" in other_section
-
     def test_paper_and_other_continuous_summary_tables_split_in_per_dataset_section(
         self, tmp_path
     ):
         """The per-dataset "Continuous metrics" table (median/mean/etc.) is
         split into a "Paper" table (loc/cyclomatic_complexity/
         comment_density) and an "Other (not in the paper)" table
-        (max_nesting_depth/num_parameters), not one combined table."""
+        (num_parameters only, now that max_nesting_depth has been dropped
+        entirely), not one combined table."""
         _make_db(tmp_path, "a", [{"loc": 5}])
         report = generate_report(db_root=tmp_path)
         summary = report.split("### Dataset A")[1].split("###")[0]
@@ -896,8 +815,6 @@ class TestGenerateReport:
         assert "| loc |" in paper_table
         assert "| cyclomatic_complexity |" in paper_table
         assert "| comment_density |" in paper_table
-        assert "| max_nesting_depth |" not in paper_table
-        assert "| max_nesting_depth |" in other_table
         assert "| num_parameters |" in other_table
         assert "| loc |" not in other_table
 

@@ -62,8 +62,6 @@ class TestFreshnessResultCondition:
         fixture = fixtures[0]
         assert fixture.name == "setup_method"
         assert fixture.fixture_type == "pytest_decorator"
-        assert fixture.framework == "pytest"
-        assert fixture.scope == "per_test"
         assert "DagsterInstance.ephemeral()" in fixture.raw_source
         assert "yield" in fixture.raw_source
 
@@ -87,8 +85,6 @@ public class TranslatedViewCreationTest {
         fixture = fixtures[0]
         assert fixture.name == "tearDown"
         assert fixture.fixture_type == "junit4_after"
-        assert fixture.framework == "junit"
-        assert fixture.scope == "per_test"
         assert 'System.setProperty(propName, "")' in fixture.raw_source
 
 
@@ -123,7 +119,6 @@ describe('Utility', () => {
         )
         types = sorted(f.fixture_type for f in fixtures)
         assert types == sorted(["mocha_before", "mocha_after"] * 4)
-        assert all(f.scope == "per_test" for f in fixtures)
         # Each of the 4 line-pairs' before/after must carry distinct
         # raw_source (the specific global being stubbed) -- collapsing to
         # 4 identical-looking fixtures would be the regression this case
@@ -155,5 +150,4 @@ describe('FooterComponent', () => {
         assert len(fixtures) == 1, f"Expected exactly 1 fixture, got {len(fixtures)}"
         fixture = fixtures[0]
         assert fixture.fixture_type == "before_each"
-        assert fixture.scope == "per_test"
         assert "TestBed.configureTestingModule" in fixture.raw_source

@@ -130,12 +130,11 @@ new language or framework can introduce its own unclassifiable fixture
 types), not just once at paper-writing time -- hence a permanent report
 section rather than a one-off query.
 
-**`has_teardown_pair`**: no separate analysis of this fixtures-table
-column exists in this script (it never has -- `fixture_type_kind` above is
-computed by its own, independent teardown-detection pass at extraction
-time, built from the same lookup tables `has_teardown_pair` itself is
-computed from, not derived from that column). Nothing to relabel as
-supplementary here.
+`has_teardown_pair` (a separate fixtures-table column that used to exist
+alongside `fixture_type_kind`) was never analyzed by this script -- it has
+since been dropped from the extracted metric set entirely (not reported in
+the paper). `fixture_type_kind` above is unaffected: it's computed by its
+own, independent teardown-detection pass at extraction time.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.

@@ -1,7 +1,12 @@
 """
-Tests for fixture type and scope classification.
+Tests for fixture type classification.
 
-Validates that fixtures are correctly classified by type and scope.
+Validates that fixtures are correctly classified by fixture_type. `scope`
+was dropped from FixtureResult entirely (not part of the extracted metric
+set reported in the paper) -- this file used to also validate scope
+classification; those assertions and the classes that existed purely for
+scope (TestPytestFixtureScopes, TestScopeMapping, TestAbsentScopeFallbacks)
+were removed rather than left checking a field that no longer exists.
 """
 
 import pytest
@@ -24,7 +29,6 @@ class TestExample(unittest.TestCase):
 """
         fixture = assert_fixture_detected(code, "python", "setUp")
         assert fixture.fixture_type == "unittest_setup"
-        assert fixture.scope == "per_test"
 
     def test_tearDown_is_classified_correctly(self):
         """tearDown method should be type='unittest_setup'"""
@@ -35,7 +39,6 @@ class TestExample(unittest.TestCase):
 """
         fixture = assert_fixture_detected(code, "python", "tearDown")
         assert fixture.fixture_type == "unittest_setup"
-        assert fixture.scope == "per_test"
 
     def test_setUpClass_is_classified_correctly(self):
         """setUpClass should be type='unittest_setup'"""
@@ -47,7 +50,6 @@ class TestExample(unittest.TestCase):
 """
         fixture = assert_fixture_detected(code, "python", "setUpClass")
         assert fixture.fixture_type == "unittest_setup"
-        assert fixture.scope == "per_class"
 
     def test_tearDownClass_is_classified_correctly(self):
         """tearDownClass should be type='unittest_setup'"""
@@ -59,7 +61,6 @@ class TestExample(unittest.TestCase):
 """
         fixture = assert_fixture_detected(code, "python", "tearDownClass")
         assert fixture.fixture_type == "unittest_setup"
-        assert fixture.scope == "per_class"
 
 
 class TestPytestFixtureTypes:
@@ -84,10 +85,9 @@ def my_fixture():
 """
         fixture = assert_fixture_detected(code, "python", "my_fixture")
         assert fixture.fixture_type == "pytest_decorator"
-        assert fixture.scope == "per_test"  # function scope = per test
 
     def test_pytest_fixture_with_scope_class(self):
-        """@pytest.fixture(scope='class') should have per_class scope"""
+        """@pytest.fixture(scope='class') should still be type='pytest_decorator'"""
         code = """
 @pytest.fixture(scope='class')
 def my_fixture():
@@ -95,10 +95,9 @@ def my_fixture():
 """
         fixture = assert_fixture_detected(code, "python", "my_fixture")
         assert fixture.fixture_type == "pytest_decorator"
-        assert fixture.scope == "per_class"
 
     def test_pytest_fixture_with_scope_module(self):
-        """@pytest.fixture(scope='module') should have per_module scope"""
+        """@pytest.fixture(scope='module') should still be type='pytest_decorator'"""
         code = """
 @pytest.fixture(scope='module')
 def my_fixture():
@@ -106,10 +105,9 @@ def my_fixture():
 """
         fixture = assert_fixture_detected(code, "python", "my_fixture")
         assert fixture.fixture_type == "pytest_decorator"
-        assert fixture.scope == "per_module"
 
     def test_pytest_fixture_with_scope_session(self):
-        """@pytest.fixture(scope='session') should have per_session scope"""
+        """@pytest.fixture(scope='session') should still be type='pytest_decorator'"""
         code = """
 @pytest.fixture(scope='session')
 def my_fixture():
@@ -117,7 +115,6 @@ def my_fixture():
 """
         fixture = assert_fixture_detected(code, "python", "my_fixture")
         assert fixture.fixture_type == "pytest_decorator"
-        assert fixture.scope == "global"
 
 
 class TestModuleLevelFixtures:
@@ -148,112 +145,6 @@ def setup_package():
     resource = initialize()
 """
         assert_fixture_count(code, "python", 0)
-
-
-class TestPytestFixtureScopes:
-    """Validate scope detection in pytest fixtures"""
-
-    def test_default_fixture_scope_is_function(self):
-        """Fixture without explicit scope should default to per_test (function)"""
-        code = """
-@pytest.fixture
-def simple_fixture():
-    return 42
-"""
-        fixture = assert_fixture_detected(code, "python", "simple_fixture")
-        # Default pytest scope is 'function' which maps to per_test
-        assert fixture.scope in ("per_test", "per_function", "function")
-
-    def test_fixture_scope_extraction_from_decorator_kwargs(self):
-        """Scope should be extracted from @pytest.fixture(scope='...')"""
-        test_cases = [
-            ("@pytest.fixture(scope='function')", "per_test"),
-            ("@pytest.fixture(scope='class')", "per_class"),
-            ("@pytest.fixture(scope='module')", "per_module"),
-            ("@pytest.fixture(scope='session')", "global"),
-        ]
-
-        for decorator, expected_scope in test_cases:
-            code = f"""
-{decorator}
-def my_fixture():
-    return value
-"""
-            fixture = assert_fixture_detected(code, "python", "my_fixture")
-            # Normalize scope names
-            actual_scope = fixture.scope.replace("per_", "").replace("_", "")
-            expected_normalized = expected_scope.replace("per_", "").replace("_", "")
-            assert (
-                actual_scope == expected_normalized or fixture.scope == expected_scope
-            )
-
-
-class TestScopeMapping:
-    """Validate consistent scope naming across frameworks"""
-
-    def test_per_test_scope_consistency(self):
-        """All per-test fixtures should have consistent scope naming"""
-        unittest_code = """
-class Test(unittest.TestCase):
-    def setUp(self):
-        self.x = 1
-"""
-        pytest_code = """
-@pytest.fixture
-def my_fixture():
-    return 1
-"""
-
-        unittest_fixture = assert_fixture_detected(unittest_code, "python", "setUp")
-        pytest_fixture = assert_fixture_detected(pytest_code, "python", "my_fixture")
-
-        # Both should map to per_test scope
-        assert (
-            unittest_fixture.scope == pytest_fixture.scope
-            or unittest_fixture.scope in ("per_test", "per_function")
-            and pytest_fixture.scope in ("per_test", "per_function")
-        )
-
-    def test_per_class_scope_consistency(self):
-        """All per-class fixtures should have consistent scope naming"""
-        unittest_code = """
-class Test(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.db = create()
-"""
-        pytest_code = """
-@pytest.fixture(scope='class')
-def my_fixture():
-    return create()
-"""
-
-        unittest_fixture = assert_fixture_detected(
-            unittest_code, "python", "setUpClass"
-        )
-        pytest_fixture = assert_fixture_detected(pytest_code, "python", "my_fixture")
-
-        # Both should map to per_class
-        assert unittest_fixture.scope == pytest_fixture.scope or (
-            unittest_fixture.scope == "per_class"
-            and pytest_fixture.scope == "per_class"
-        )
-
-
-class TestAbsentScopeFallbacks:
-    """Validate sensible defaults when scope cannot be determined"""
-
-    def test_unknown_fixture_type_defaults_to_function_scope(self):
-        """Unknown fixture types should default to per_test/function scope"""
-        code = """
-@pytest.fixture  # scope not specified
-def custom_fixture():
-    return setup()
-"""
-        fixture = assert_fixture_detected(code, "python", "custom_fixture")
-        # Should have some scope, likely per_test/function
-        assert fixture.scope is not None
-        assert fixture.scope != ""
 
 
 class TestFixtureTypeFromDecorators:
@@ -306,7 +197,6 @@ class Test(unittest.TestCase):
 """
         fixture = assert_fixture_detected(code, "python", "setUpClass")
         assert fixture.fixture_type == "unittest_setup"
-        assert fixture.scope == "per_class"
 
 
 if __name__ == "__main__":

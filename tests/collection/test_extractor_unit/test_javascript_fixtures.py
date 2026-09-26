@@ -28,8 +28,7 @@ describe('Suite', () => {
     });
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "mocha_before")
-        assert fixture.scope == "per_test"
+        assert_fixture_with_type_detected(code, "javascript", "mocha_before")
 
     def test_after_hook_detected(self):
         """Mocha after() hook should be detected"""
@@ -40,8 +39,7 @@ describe('Suite', () => {
     });
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "mocha_after")
-        assert fixture.scope == "per_test"
+        assert_fixture_with_type_detected(code, "javascript", "mocha_after")
 
     def test_beforeeach_hook_detected(self):
         """Mocha beforeEach() hook should be detected"""
@@ -52,8 +50,7 @@ describe('Tests', () => {
     });
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
-        assert fixture.scope == "per_test"
+        assert_fixture_with_type_detected(code, "javascript", "before_each")
 
     def test_aftereach_hook_detected(self):
         """Mocha afterEach() hook should be detected"""
@@ -64,8 +61,7 @@ describe('Tests', () => {
     });
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "after_each")
-        assert fixture.scope == "per_test"
+        assert_fixture_with_type_detected(code, "javascript", "after_each")
 
 
 class TestVitestAroundHooks:
@@ -81,10 +77,9 @@ aroundEach(async (runTest) => {
     await db.transaction(runTest)
 })
 """
-        fixture = assert_fixture_with_type_detected(
+        assert_fixture_with_type_detected(
             code, "javascript", "vitest_around_each"
         )
-        assert fixture.scope == "per_test"
 
     def test_around_all_detected(self):
         code = """
@@ -94,10 +89,9 @@ aroundAll(async (runSuite) => {
     await tracer.trace('test-suite', runSuite)
 })
 """
-        fixture = assert_fixture_with_type_detected(
+        assert_fixture_with_type_detected(
             code, "javascript", "vitest_around_all"
         )
-        assert fixture.scope == "per_class"
 
 
 class TestJestHooks:
@@ -112,8 +106,7 @@ describe('Module', () => {
     });
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "before_all")
-        assert fixture.scope == "per_class"
+        assert_fixture_with_type_detected(code, "javascript", "before_all")
 
     def test_jest_afterall_detected(self):
         """Jest afterAll() should be detected"""
@@ -122,8 +115,7 @@ afterAll(async () => {
     await db.close();
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "after_all")
-        assert fixture.scope == "per_class"
+        assert_fixture_with_type_detected(code, "javascript", "after_all")
 
     def test_jest_beforeeach_detected(self):
         """Jest beforeEach() should be detected"""
@@ -132,8 +124,7 @@ beforeEach(() => {
     jest.clearAllMocks();
 });
 """
-        fixture = assert_fixture_with_type_detected(code, "javascript", "before_each")
-        assert fixture.scope == "per_test"
+        assert_fixture_with_type_detected(code, "javascript", "before_each")
 
 
 class TestAsyncJavaScriptFixtures:

@@ -243,15 +243,14 @@ describe('Test suite', () => {
 
         result = extract_fixtures(ts_file, "typescript")
 
-        # beforeEach should be detected as per_test fixture
+        # beforeEach should still be detected despite the decorator metadata
         if len(result.fixtures) > 0:
             before_each = [
                 f
                 for f in result.fixtures
                 if "beforeEach" in f.name or "before" in f.fixture_type.lower()
             ]
-            if before_each:
-                assert before_each[0].scope == "per_test"
+            assert before_each
 
 class TestDetectorBoundaryConditions:
     """Test boundary conditions and limits."""
