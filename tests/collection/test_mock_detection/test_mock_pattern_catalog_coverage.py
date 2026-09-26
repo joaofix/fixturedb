@@ -20,9 +20,12 @@ can't, by construction:
    to test) and any unexpected extra match fails the test. This is what
    caught two real bugs during this file's own construction: the bare
    Mock()/MagicMock()/AsyncMock() pattern matched as a substring inside
-   Java's EasyMock.createMock(...), and the MockK mock(X.class) pattern
-   matched as a substring inside Mockito.mock(X.class) -- both fixed with
-   word-boundary/negative-lookbehind additions in the YAML, verified here.
+   Java's EasyMock.createMock(...), and Mockito's static-import bare
+   mock(X.class) pattern (labeled "mockk" at the time -- see
+   feature_extraction_patterns.yaml's comment on that pattern for why
+   that label was retracted) matched as a substring inside
+   Mockito.mock(X.class) -- both fixed with word-boundary/negative-
+   lookbehind additions in the YAML, verified here.
 """
 
 from __future__ import annotations
