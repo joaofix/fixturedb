@@ -92,7 +92,6 @@ class MockResult:
 
     framework: str
     target_identifier: str
-    num_interactions_configured: int
     raw_snippet: str
     category: str = ""  # test-double taxonomy: dummy/stub/spy/mock/fake -- see
     # feature_extraction_patterns.yaml's "Test-double category classification"
@@ -242,8 +241,6 @@ MOCK_PATTERNS: list[tuple[str, str]] = [
     (entry["pattern"], entry["framework"]) for entry in _PATTERNS["mock_patterns"]
 ]
 
-MOCK_INTERACTION_PATTERN = "|".join(_PATTERNS["mock_interaction_keywords"])
-
 # (category, [terms]) in priority order -- first term found wins. See
 # feature_extraction_patterns.yaml's "Test-double category classification"
 # for the method and rationale (matches the identifier-keyword approach
@@ -312,9 +309,9 @@ def _mask_comment_spans(node, src_bytes: bytes, language: str) -> str:
     length exactly matches how many characters that comment decodes to --
     not how many bytes it occupies -- keeping every position after it
     aligned with the real (unmasked) text. Blanking with plain spaces
-    (not newlines) is safe here: MOCK_PATTERNS/MOCK_INTERACTION_PATTERN
-    only ever require `\\s*`/word-boundary gaps, never care whether a gap
-    was originally a space or a newline.
+    (not newlines) is safe here: MOCK_PATTERNS only ever requires `\\s*`/
+    word-boundary gaps, never cares whether a gap was originally a space
+    or a newline.
 
     Only comments are masked, not string literals -- e.g. a mock call
     quoted inside a docstring example is a separate, distinct false-
@@ -369,21 +366,10 @@ def _extract_mocks(node, src_bytes: bytes, language: str) -> list[MockResult]:
             # counts as a match, never what gets shown for one that does.
             snippet = text[snippet_start:snippet_end].replace("\n", " ")
 
-            # Count .return_value / .side_effect / when(...).thenReturn
-            # style, from masked_text too -- a comment mentioning one of
-            # these near a real match shouldn't inflate the count either.
-            interactions = len(
-                re.findall(
-                    MOCK_INTERACTION_PATTERN,
-                    masked_text[m.start() : m.end() + 200],
-                )
-            )
-
             found.append(
                 MockResult(
                     framework=framework,
                     target_identifier=target,
-                    num_interactions_configured=interactions,
                     raw_snippet=snippet,
                     category=category,
                 )
@@ -515,7 +501,6 @@ def fixture_result_to_dict(
                 "framework": m.framework,
                 "category": m.category,
                 "target_identifier": m.target_identifier,
-                "num_interactions_configured": m.num_interactions_configured,
                 "raw_snippet": m.raw_snippet,
             }
             for m in fixture.mocks

@@ -624,7 +624,6 @@ class TestQualityControlledInputs:
                         {
                             "framework": "unittest_mock",
                             "target_identifier": "requests.get",
-                            "num_interactions_configured": 2,
                             "raw_snippet": "mock.patch('requests.get')",
                         }
                     ],

@@ -112,7 +112,6 @@ def test_db_helpers_end_to_end(tmp_path):
             "framework": "unittest_mock",
             "category": "mock",
             "target_identifier": "module.Client",
-            "num_interactions_configured": 1,
             "raw_snippet": "mock.call()",
         }
         insert_mock_usage(conn, mock)

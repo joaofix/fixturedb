@@ -585,10 +585,10 @@ def insert_mock_usage(conn: sqlite3.Connection, mock: dict) -> None:
             """
             INSERT INTO mock_usages (
                 fixture_id, repo_id, framework, category, target_identifier,
-                num_interactions_configured, raw_snippet
+                raw_snippet
             ) VALUES (
                 :fixture_id, :repo_id, :framework, :category, :target_identifier,
-                :num_interactions_configured, :raw_snippet
+                :raw_snippet
             )
         """,
             mock,

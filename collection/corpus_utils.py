@@ -392,9 +392,6 @@ def persist_repository_and_fixtures(
                                     "target_identifier": mock.get(
                                         "target_identifier", ""
                                     ),
-                                    "num_interactions_configured": mock.get(
-                                        "num_interactions_configured", 0
-                                    ),
                                     "raw_snippet": mock.get("raw_snippet", ""),
                                 },
                             )

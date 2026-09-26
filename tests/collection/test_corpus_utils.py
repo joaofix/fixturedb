@@ -722,7 +722,6 @@ class TestPersistRepositoryAndFixtures:
                         "framework": "unittest_mock",
                         "category": "mock",
                         "target_identifier": "module.Client",
-                        "num_interactions_configured": 0,
                         "raw_snippet": "mock.Mock()",
                     }
                 ],

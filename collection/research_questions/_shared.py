@@ -469,7 +469,7 @@ def render_comparison_table(
     row per language (sorted alphabetically), each with its own raw + BH-
     adjusted p. If `per_language` is None, the table is Overall-only (this
     metric has no per-language family defined for it -- e.g. RQ1's
-    commit_type, RQ3's num_mocks/num_interactions_configured).
+    commit_type, RQ3's num_mocks).
 
     `per_language_medians`/`per_language_q3`/`per_language_p90`, each
     independently optional, are {language: (a_value, other_value)} --
@@ -548,8 +548,8 @@ def render_comparison_table(
 
 def fetch_continuous_column(conn: sqlite3.Connection, table: str, column: str) -> list[float]:
     """All non-null values of `column` in `table` -- e.g. fixtures.loc,
-    mock_usages.num_interactions_configured. `table`/`column` are always
-    developer-supplied constants, never user input."""
+    fixtures.num_mocks. `table`/`column` are always developer-supplied
+    constants, never user input."""
     rows = conn.execute(f"SELECT {column} FROM {table} WHERE {column} IS NOT NULL").fetchall()
     return [row[0] for row in rows]
 

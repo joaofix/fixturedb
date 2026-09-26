@@ -157,7 +157,6 @@ def _make_db(root, dataset: str, files: list[dict]) -> None:
                         "framework": "unittest_mock",
                         "category": "mock",
                         "target_identifier": "",
-                        "num_interactions_configured": 0,
                         "raw_snippet": "",
                     }
                     mock.update(mock_overrides)
@@ -428,26 +427,6 @@ class TestLoadDatasetMetrics:
         assert python_counts == {"stub": 1}
         assert java_counts == {"spy": 1}
 
-    def test_interaction_depth(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {
-                            "overrides": {"num_mocks": 1},
-                            "mocks": [{"num_interactions_configured": 3}],
-                        }
-                    ],
-                }
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.num_interactions_raw == [3]
-
-
 class TestGenerateReport:
     def test_missing_all_dbs_notes_unavailable_without_crashing(self, tmp_path):
         report = generate_report(db_root=tmp_path)
@@ -503,7 +482,7 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        num_mocks_section = report.split("### num_mocks")[1].split("### num_interactions_configured")[0]
+        num_mocks_section = report.split("### num_mocks")[1].split("### Mocking Coverage and Intensity")[0]
         fixture_level_section = num_mocks_section.split("**Repo-level**")[0]
         overall_line = next(
             line for line in fixture_level_section.splitlines() if line.startswith("| Overall |")
@@ -568,7 +547,7 @@ class TestGenerateReport:
         # num_mocks" section (its "**Repo-level**" subsection), not a
         # separate "## Repo-level aggregates" table.
         report = generate_report(db_root=tmp_path)
-        num_mocks_section = report.split("### num_mocks")[1].split("### num_interactions_configured")[0]
+        num_mocks_section = report.split("### num_mocks")[1].split("### Mocking Coverage and Intensity")[0]
         repo_level_section = num_mocks_section.split("**Repo-level**")[1]
         overall_line = next(
             line for line in repo_level_section.splitlines() if line.startswith("| Overall |")

@@ -372,7 +372,6 @@ Contains mock framework usage.
 | framework | TEXT | Mock framework (unittest.mock, pytest-mock, etc.) |
 | category | TEXT | Test-double taxonomy: dummy/stub/spy/mock/fake (Meszaros) -- see collection/heuristics/feature_extraction_patterns.yaml |
 | target_identifier | TEXT | What is being mocked |
-| num_interactions_configured | INTEGER | Number of interactions/assertions |
 | raw_snippet | TEXT | Mock configuration code |
 """
 

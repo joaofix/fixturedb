@@ -381,7 +381,6 @@ def _make_db_with_mock_usage_rows(db_file, fixtures: list[dict]) -> None:
                         "framework": mock.get("framework", "unittest_mock"),
                         "category": mock["category"],
                         "target_identifier": mock.get("target_identifier", f"target_{j}"),
-                        "num_interactions_configured": 0,
                         "raw_snippet": mock.get("raw_snippet", ""),
                     },
                 )

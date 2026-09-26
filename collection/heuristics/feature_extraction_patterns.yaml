@@ -157,8 +157,8 @@ mock_patterns_excluded:
     reason: >
       Not in the mock_patterns table -- a niche/legacy framework for
       mocking static methods and final classes, deliberately out of scope.
-      A fixture using only PowerMock APIs will have has_teardown_pair and
-      other structural metrics computed normally, but num_mocks=0.
+      A fixture using only PowerMock APIs will have its other structural
+      metrics computed normally, but num_mocks=0.
   - case: "jest.mock('./module') at its conventional call site (module top level, auto-hoisted by babel-jest), rather than inside a beforeEach/test body"
     reason: >
       Mock detection scans only the fixture's own AST node text, not
@@ -169,15 +169,6 @@ mock_patterns_excluded:
       fixture-scoped scanning, not specific to Jest: any mock setup placed
       outside the fixture body (module level, a shared helper function,
       etc.) is invisible to this detector for every language/framework.
-
-# Substrings counted (near a mock_patterns match) to estimate how many
-# interactions/assertions were configured on that mock.
-mock_interaction_keywords:
-  - return_value
-  - side_effect
-  - thenReturn
-  - thenThrow
-  - doReturn
 
 # Patterns counted as "external calls" (I/O / system operations), matched
 # case-insensitively against the fixture's own source text. This is a

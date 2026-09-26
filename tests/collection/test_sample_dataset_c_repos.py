@@ -137,7 +137,6 @@ def _make_repo_db(path, repos: list[dict]) -> None:
                         "framework": "unittest_mock",
                         "category": "mock",
                         "target_identifier": "foo",
-                        "num_interactions_configured": 1,
                         "raw_snippet": "Mock()",
                     },
                 )

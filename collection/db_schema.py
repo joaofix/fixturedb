@@ -143,7 +143,6 @@ CREATE TABLE IF NOT EXISTS mock_usages (
     category                    TEXT,   -- test-double taxonomy: dummy/stub/spy/mock/fake
                                         -- (see feature_extraction_patterns.yaml)
     target_identifier           TEXT,   -- the string passed to mock (e.g. "mymodule.Client")
-    num_interactions_configured INTEGER DEFAULT 0,
     raw_snippet                 TEXT    -- the mock call source text
 );
 

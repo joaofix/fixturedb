@@ -148,8 +148,6 @@ def user_service(mocker):
         assert fixture.mocks[0].framework == "pytest_mock"
         assert fixture.mocks[0].category == "mock"
         assert fixture.mocks[0].target_identifier == "service"
-        # return_value= is one configured interaction
-        assert fixture.mocks[0].num_interactions_configured >= 1
 
     def test_pytest_mock_patch_string_target(self):
         """mocker.patch('dotted.path') should be detected as pytest_mock."""

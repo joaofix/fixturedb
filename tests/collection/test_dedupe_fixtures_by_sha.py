@@ -121,7 +121,6 @@ def _seed_db(db_path: Path, *, repo_name: str, github_id: int, stars: int, num_f
                 "framework": "unittest_mock",
                 "category": "mock",
                 "target_identifier": "x",
-                "num_interactions_configured": 0,
                 "raw_snippet": "",
             },
         )

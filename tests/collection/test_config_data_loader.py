@@ -151,16 +151,16 @@ def _all_known_fixture_types() -> set[str]:
 
 
 def test_feature_extraction_patterns_has_expected_top_level_sections():
-    """object_instantiation_patterns is deliberately NOT in this set --
-    num_objects_instantiated moved to an AST-based tree-sitter walk
-    (detector_shared.py::_count_object_instantiations()), not a pattern
-    table, see that file's removal comment."""
+    """object_instantiation_patterns/mock_interaction_keywords are
+    deliberately NOT in this set -- num_objects_instantiated/
+    num_interactions_configured were both removed from the extracted
+    metric set entirely (their own pattern tables removed along with
+    them), not just relocated elsewhere."""
     patterns = load_feature_extraction_patterns()
     assert set(patterns) == {
         "mock_patterns",
         "mock_patterns_excluded",
         "mock_category_keywords",
-        "mock_interaction_keywords",
         "external_call_patterns",
         "teardown_detection",
     }
@@ -240,13 +240,6 @@ def test_external_call_patterns_are_valid_regex():
     for entry in load_feature_extraction_patterns()["external_call_patterns"]:
         re.compile(entry["pattern"])
         assert entry["matches"].strip()
-
-
-def test_mock_interaction_keywords_are_non_empty_strings():
-    keywords = load_feature_extraction_patterns()["mock_interaction_keywords"]
-    assert keywords
-    for kw in keywords:
-        assert isinstance(kw, str) and kw.strip()
 
 
 def test_teardown_detection_pairs_reference_only_real_fixture_types():

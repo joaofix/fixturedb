@@ -90,30 +90,6 @@ def fixture_setup():
         # comment text (not blanked-out spaces) survives into raw_snippet.
         assert "client" in fixture.mocks[0].raw_snippet
 
-    def test_interaction_count_ignores_a_comment_only_mention(self):
-        code = """
-@pytest.fixture
-def fixture_setup():
-    m = Mock()
-    # m.return_value could be configured here later
-    return m
-"""
-        fixture = extract_and_find_fixtures(code, "python", "fixture_setup")[0]
-        assert len(fixture.mocks) == 1
-        assert fixture.mocks[0].num_interactions_configured == 0
-
-    def test_interaction_count_still_counts_a_real_one(self):
-        code = """
-@pytest.fixture
-def fixture_setup():
-    m = Mock()
-    m.return_value = 42
-    return m
-"""
-        fixture = extract_and_find_fixtures(code, "python", "fixture_setup")[0]
-        assert len(fixture.mocks) == 1
-        assert fixture.mocks[0].num_interactions_configured == 1
-
 
 class TestNonAsciiCommentOffsetAlignment:
     """The character-vs-byte offset conversion this fix relies on: a

@@ -82,12 +82,18 @@ This table replaces three previously-reported tables:
   the per-language repo-level-proportion test and the pooled descriptive
   table are gone from the report.
 
-`num_mocks`/`num_interactions_configured`'s existing continuous Mann-
-Whitney tables (fixture-level and repo-level, Overall-only) are
-**unchanged** -- not one of the three tables named for replacement, and
-conceptually distinct from Coverage/Intensity above (a repo-level *mean*
-across every fixture including non-mocking ones, vs Intensity's *median
-among mocking fixtures only*).
+`num_mocks`'s existing continuous Mann-Whitney tables (fixture-level and
+repo-level, Overall-only) are **unchanged** -- not one of the three tables
+named for replacement, and conceptually distinct from Coverage/Intensity
+above (a repo-level *mean* across every fixture including non-mocking
+ones, vs Intensity's *median among mocking fixtures only*).
+
+`num_interactions_configured` (a separate `mock_usages` column estimating
+how many interactions were configured on a mock, e.g. `.return_value`/
+`.side_effect`/`thenReturn`) was removed entirely (2026-09-26) -- it was
+never one of the paper's reported metrics (the paper review only named
+`num_mocks`), so its own continuous Mann-Whitney table (the counterpart to
+`num_mocks`'s above) is simply gone, not moved to a legacy section.
 
 **Mock Fixture Counts by Language** (`_render_mock_counts_table()`): an
 additional, purely descriptive table (no statistics), rendered right
@@ -152,7 +158,7 @@ from ._shared import (
 
 logger = get_logger(__name__)
 
-CONTINUOUS_METRICS = ["num_mocks", "num_interactions_configured"]
+CONTINUOUS_METRICS = ["num_mocks"]
 # All 3 are shown descriptively per dataset (_render_dataset_summary());
 # only has_mock also gets an A-vs-C chi-square test (TESTED_CATEGORICAL_
 # METRICS below) -- framework/category's pooled treatment was removed
@@ -175,7 +181,6 @@ class DatasetMetrics:
     n_fixtures: int
     n_mock_usages: int
     num_mocks_raw: list[float] = field(default_factory=list)
-    num_interactions_raw: list[float] = field(default_factory=list)
     has_mock_dist: dict[str, int] = field(default_factory=dict)
     framework_dist: dict[str, int] = field(default_factory=dict)
     category_dist: dict[str, int] = field(default_factory=dict)
@@ -209,17 +214,14 @@ class DatasetMetrics:
 def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
     return {
         "num_mocks": metrics.num_mocks_raw,
-        "num_interactions_configured": metrics.num_interactions_raw,
     }[metric]
 
 
 # Which table each continuous metric's repo_id column lives on -- num_mocks
-# is a fixtures column, num_interactions_configured a mock_usages one
-# (several mocks per fixture, several fixtures per repo); both tables carry
-# their own repo_id, so fetch_continuous_column_by_repo() works for either.
+# is a fixtures column; fetch_continuous_column_by_repo() works for any
+# table as long as it carries its own repo_id.
 _CONTINUOUS_METRIC_TABLES = {
     "num_mocks": "fixtures",
-    "num_interactions_configured": "mock_usages",
 }
 
 
@@ -378,9 +380,6 @@ def load_dataset_metrics(
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
         n_mock_usages = conn.execute("SELECT COUNT(*) FROM mock_usages").fetchone()[0]
         num_mocks_raw = fetch_continuous_column(conn, "fixtures", "num_mocks")
-        num_interactions_raw = fetch_continuous_column(
-            conn, "mock_usages", "num_interactions_configured"
-        )
         framework_dist = fetch_categorical_column(conn, "mock_usages", "framework")
         category_dist = fetch_categorical_column(conn, "mock_usages", "category")
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
@@ -436,7 +435,6 @@ def load_dataset_metrics(
         n_fixtures=n_fixtures,
         n_mock_usages=n_mock_usages,
         num_mocks_raw=num_mocks_raw,
-        num_interactions_raw=num_interactions_raw,
         has_mock_dist=has_mock_dist,
         has_mock_dist_by_language=has_mock_dist_by_language,
         has_mock_n_by_language=has_mock_n_by_language,
@@ -475,8 +473,8 @@ def compare_datasets_repo_level(
     a: DatasetMetrics, other: DatasetMetrics
 ) -> dict[str, BalanceTest]:
     """A vs `other`, one mean value per repo instead of one value per
-    fixture/mock -- num_mocks/num_interactions_configured only (no
-    per-language family; see this module's docstring)."""
+    fixture -- num_mocks only (no per-language family; see this module's
+    docstring)."""
     return {
         metric: compute_continuous_balance(
             human_values=other.repo_level_continuous[metric],
@@ -490,9 +488,9 @@ def compare_datasets_repo_level(
 def compare_datasets_fixture_level(
     a: DatasetMetrics, other: DatasetMetrics
 ) -> dict[str, BalanceTest]:
-    """A vs `other`, raw per-fixture/mock values -- num_mocks/
-    num_interactions_configured's fixture-level Overall row (kept
-    alongside the repo-level one; no per-language family for either)."""
+    """A vs `other`, raw per-fixture values -- num_mocks's fixture-level
+    Overall row (kept alongside the repo-level one; no per-language
+    family)."""
     return {
         metric: compute_continuous_balance(
             human_values=_continuous_values(other, metric),
@@ -790,8 +788,7 @@ def _render_continuous_metric(
     repo_level: BalanceTest,
 ) -> str:
     """Overall-only, both bases shown (no per-language family for
-    num_mocks/num_interactions_configured -- see this module's
-    docstring)."""
+    num_mocks -- see this module's docstring)."""
     fixture_n = NCounts(
         len(_continuous_values(a, metric)), len(_continuous_values(other, metric))
     )
@@ -833,11 +830,11 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
 
     lines += [
-        "**Continuous metrics (Mann-Whitney U, two-sided)** -- num_mocks/ "
-        "num_interactions_configured have no per-language family (not one "
-        "of the metrics the paper review named), so both render Overall-only, "
-        "shown at both the fixture-level (every fixture/mock as an "
-        "observation) and repo-level (one mean value per repo) basis. "
+        "**Continuous metrics (Mann-Whitney U, two-sided)** -- num_mocks "
+        "has no per-language family (not one of the metrics the paper "
+        "review named), so it renders Overall-only, shown at both the "
+        "fixture-level (every fixture as an observation) and repo-level "
+        "(one mean value per repo) basis. "
         "Effect size is Cliff's delta (thresholds: negligible <0.147, small "
         "<0.33, medium <0.474, else large).",
         "",
