@@ -245,6 +245,137 @@ beforeEach(() => {
             assert fixture.num_comment_lines == 3
             assert fixture.comment_density == fixture.num_comment_lines / fixture.loc
 
+    def test_python_docstring_not_counted_as_comment(self):
+        """A docstring is a string-literal expression_statement in
+        tree-sitter-python's grammar, never a `comment` node -- excluded
+        from num_comment_lines structurally (there is no deliberate
+        "skip docstrings" filter anywhere in the code; tree-sitter simply
+        never classifies one as a comment in the first place)."""
+        code = '''
+@pytest.fixture
+def fixture_with_docstring():
+    """Sets up the fixture.
+
+    Plays the same documentation role a Java Javadoc or JS/TS JSDoc
+    block comment would.
+    """
+    # a real comment
+    x = 1
+    return x
+'''
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "python")
+            fixture = next(f for f in result.fixtures if f.name == "fixture_with_docstring")
+            assert fixture.num_comment_lines == 1
+            assert fixture.comment_density == fixture.num_comment_lines / fixture.loc
+
+    def test_java_javadoc_preceding_method_not_counted(self):
+        """A Javadoc block comment immediately preceding the method it
+        documents is a sibling of method_declaration inside the
+        enclosing class_body in tree-sitter-java's grammar, never a
+        descendant of the method itself -- so it falls outside the
+        fixture's own node span and _count_comment_lines()'s descendant
+        walk never reaches it. Different mechanism than Python's
+        docstring exclusion (sibling position vs. node type), same
+        result: fixture-level documentation is never counted as an
+        implementation comment."""
+        code = """
+public class ServiceTest {
+    /**
+     * Sets up the test.
+     * Plays the same documentation role a Python docstring would.
+     */
+    @Before
+    public void setUp() {
+        // a real comment
+        int x = 1;
+    }
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            setup = next(f for f in result.fixtures if f.name == "setUp")
+            assert setup.num_comment_lines == 1
+            assert setup.comment_density == setup.num_comment_lines / setup.loc
+
+    def test_java_javadoc_preceding_rule_field_not_counted(self):
+        """Same exclusion for a field-level fixture (@Rule): the Javadoc
+        is a sibling of field_declaration at the class_body level, not
+        one of its descendants."""
+        code = """
+public class ServiceTest {
+    /** The rule under test. */
+    @Rule
+    public TestName name = new TestName();
+}
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".java", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "java")
+            fixture = result.fixtures[0]
+            assert fixture.num_comment_lines == 0
+
+    def test_javascript_jsdoc_preceding_hook_not_counted(self):
+        """A JSDoc block comment immediately preceding beforeEach(...) is
+        a sibling within the enclosing block, not a descendant of the
+        hook's own callback body -- same sibling-position exclusion as
+        Java's Javadoc above."""
+        code = """
+describe('suite', () => {
+    /**
+     * Sets up the test.
+     */
+    beforeEach(() => {
+        // a real comment
+        const x = 1;
+    });
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.js", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "javascript")
+            fixture = result.fixtures[0]
+            assert fixture.num_comment_lines == 1
+            assert fixture.comment_density == fixture.num_comment_lines / fixture.loc
+
+    def test_typescript_jsdoc_preceding_hook_not_counted(self):
+        """Same exclusion in TypeScript's grammar as the JavaScript test
+        above."""
+        code = """
+describe('suite', () => {
+    /**
+     * Sets up the test.
+     */
+    beforeEach(() => {
+        // a real comment
+        const x: number = 1;
+    });
+});
+"""
+        from tempfile import NamedTemporaryFile
+
+        with NamedTemporaryFile(mode="w", suffix=".test.ts", delete=False) as f:
+            f.write(code)
+            f.flush()
+            result = extract_fixtures(Path(f.name), "typescript")
+            fixture = result.fixtures[0]
+            assert fixture.num_comment_lines == 1
+            assert fixture.comment_density == fixture.num_comment_lines / fixture.loc
+
     def test_zero_comments_gives_zero_density(self):
         code = """
 @pytest.fixture
