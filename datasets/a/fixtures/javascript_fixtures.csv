@@ -1,4 +1,4 @@
-repo_name,language,commit_sha,file_path,fixture_name,fixture_type,start_line,end_line,loc,num_mocks,cyclomatic_complexity,num_parameters,num_comment_lines,comment_density,fixture_type_kind,github_url,agent_type,commit_kind,commit_type,raw_source,commit_date,repo_age_at_commit_years,is_complete_addition
+repo_name,language,commit_sha,file_path,fixture_name,fixture_type,start_line,end_line,loc,num_mocks,cyclomatic_complexity,num_parameters,num_comment_lines,comment_density,fixture_role,github_url,agent_type,commit_kind,commit_type,raw_source,commit_date,repo_age_at_commit_years,is_complete_addition
 Scottcjn/Rustchain,javascript,85738d824699877b152c3e12bab67a1a587af498,contracts/erc20/test/WRTC.test.js,<anonymous>_12,before_each,13,22,8,0,1,0,1,0.125,setup,https://github.com/Scottcjn/Rustchain/blob/85738d824699877b152c3e12bab67a1a587af498/contracts/erc20/test/WRTC.test.js#L13-L22,qwen_coder,agent,feat,"beforeEach(async function () {
     [owner, addr1, addr2, bridgeOperator] = await ethers.getSigners();
 

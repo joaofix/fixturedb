@@ -420,7 +420,7 @@ class TestCompareCategoricalRepoLevel:
     def test_one_balance_test_per_category_seen_on_either_side(self):
         a_by_repo = {1: {"setup": 5, "teardown": 5}}
         other_by_repo = {2: {"setup": 3, "other": 7}}
-        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         assert set(results.keys()) == {"setup", "teardown", "other"}
 
     def test_declusters_a_prolific_repo(self):
@@ -432,7 +432,7 @@ class TestCompareCategoricalRepoLevel:
             2: {"setup": 1, "teardown": 9},  # 0.1
         }
         other_by_repo = {3: {"setup": 5, "teardown": 5}, 4: {"setup": 4, "teardown": 6}}  # 0.5, 0.4
-        result = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        result = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         t = result["setup"]
         # A's per-repo proportions [0.9, 0.1] (median 0.5) vs other's
         # [0.5, 0.4] (median 0.45) -- close, not a stark difference, unlike
@@ -440,7 +440,7 @@ class TestCompareCategoricalRepoLevel:
         assert t.is_balanced
 
     def test_empty_input_returns_empty_dict(self):
-        assert compare_categorical_repo_level({}, {}, "fixture_type_kind") == {}
+        assert compare_categorical_repo_level({}, {}, "fixture_role") == {}
 
 
 class TestRepoLevelCategoryNCounts:
@@ -458,7 +458,7 @@ class TestRenderCategoricalRepoLevelTable:
     def test_renders_one_row_per_category(self):
         a_by_repo = {1: {"setup": 9, "teardown": 1}}
         other_by_repo = {2: {"setup": 1, "teardown": 9}}
-        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         n = repo_level_category_n_counts(a_by_repo, other_by_repo)
         rendered = render_categorical_repo_level_table(results, "c", n)
         assert "| setup |" in rendered
@@ -467,7 +467,7 @@ class TestRenderCategoricalRepoLevelTable:
     def test_n_column_shown_for_every_row(self):
         a_by_repo = {1: {"setup": 9, "teardown": 1}}
         other_by_repo = {2: {"setup": 1, "teardown": 9}, 3: {"setup": 2, "teardown": 8}}
-        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         n = repo_level_category_n_counts(a_by_repo, other_by_repo)
         rendered = render_categorical_repo_level_table(results, "c", n)
         setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
@@ -476,7 +476,7 @@ class TestRenderCategoricalRepoLevelTable:
     def test_proportions_rendered_as_percentages(self):
         a_by_repo = {1: {"setup": 3, "teardown": 1}}  # 75%
         other_by_repo = {2: {"setup": 1, "teardown": 3}}  # 25%
-        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         n = repo_level_category_n_counts(a_by_repo, other_by_repo)
         rendered = render_categorical_repo_level_table(results, "c", n)
         setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))
@@ -486,7 +486,7 @@ class TestRenderCategoricalRepoLevelTable:
     def test_p_values_rendered_exactly_not_as_significant_yes_no(self):
         a_by_repo = {1: {"setup": 9, "teardown": 1}}
         other_by_repo = {2: {"setup": 1, "teardown": 9}}
-        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         n = repo_level_category_n_counts(a_by_repo, other_by_repo)
         rendered = render_categorical_repo_level_table(results, "c", n)
         assert "significant (p<0.05)" not in rendered
@@ -502,7 +502,7 @@ class TestRenderCategoricalRepoLevelTable:
         # -> compute_continuous_balance()'s insufficient_data path.
         a_by_repo = {1: {"setup": 5}}
         other_by_repo = {2: {}}
-        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_type_kind")
+        results = compare_categorical_repo_level(a_by_repo, other_by_repo, "fixture_role")
         n = repo_level_category_n_counts(a_by_repo, other_by_repo)
         rendered = render_categorical_repo_level_table(results, "c", n)
         setup_line = next(line for line in rendered.splitlines() if line.startswith("| setup |"))

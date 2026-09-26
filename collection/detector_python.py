@@ -172,10 +172,10 @@ def classify_pytest_fixture_kind_from_source(raw_source: str) -> str:
     Not on the extraction hot path -- `_detect_python()` classifies
     pytest_decorator fixtures directly from the tree-sitter body node it
     already has, at detection time (see its own comment), and persists the
-    result as fixtures.fixture_type_kind. This standalone, raw_source-string
+    result as fixtures.fixture_role. This standalone, raw_source-string
     entry point exists for anything working from already-persisted
     raw_source text instead of a live AST node -- ad-hoc analysis, or
-    backfilling fixture_type_kind into a database collected before that
+    backfilling fixture_role into a database collected before that
     column existed.
 
     Returns 'other' if `raw_source` doesn't parse into a recognizable
@@ -260,7 +260,7 @@ def _detect_python(
                     # (no need to re-parse raw_source later).
                     body_node = func_def.child_by_field_name("body")
                     if body_node is not None:
-                        result.fixture_type_kind = classify_pytest_fixture_kind(
+                        result.fixture_role = classify_pytest_fixture_kind(
                             body_node, src_bytes
                         )
                     results.append(result)

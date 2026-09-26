@@ -111,7 +111,7 @@ class FixtureResult:
     num_comment_lines: int  # comment-only lines within the fixture's own line span
     comment_density: float  # num_comment_lines / loc (0.0 if loc == 0)
     num_parameters: int
-    fixture_type_kind: str = "other"  # setup/teardown/setup_and_teardown/other --
+    fixture_role: str = "other"  # setup/teardown/setup_and_teardown/other --
     # set by _classify_fixture_kinds() in post-processing (pytest_decorator is the
     # one exception, classified directly in detector_python.py's _detect_python()
     # via body analysis -- see that post-processing pass's docstring above)
@@ -508,7 +508,7 @@ def fixture_result_to_dict(
         "num_comment_lines": fixture.num_comment_lines,
         "comment_density": fixture.comment_density,
         "num_parameters": fixture.num_parameters,
-        "fixture_type_kind": fixture.fixture_type_kind,
+        "fixture_role": fixture.fixture_role,
         "raw_source": fixture.raw_source,
         "mocks": [
             {
@@ -658,7 +658,7 @@ TYPE_BASED_TEARDOWN_PAIRS: dict[str, str] = _TEARDOWN_DETECTION["type_based_pair
 
 
 # ---------------------------------------------------------------------------
-# fixture_type_kind: setup / teardown / setup_and_teardown / other
+# fixture_role: setup / teardown / setup_and_teardown / other
 # ---------------------------------------------------------------------------
 #
 # "setup_and_teardown" only ever arises from the pytest_decorator body-
@@ -702,13 +702,13 @@ def _classify_fixture_kind(fixture_type: str, name: str) -> str:
 
 
 def _classify_fixture_kinds(fixtures: list[FixtureResult]) -> None:
-    """Post-process fixtures to set fixture_type_kind for every fixture
+    """Post-process fixtures to set fixture_role for every fixture
     except pytest_decorator, which detector_python.py's _detect_python()
     already classified directly (body analysis, not type/name) at
     detection time. Modifies fixtures in-place."""
     for fixture in fixtures:
         if fixture.fixture_type == "pytest_decorator":
             continue
-        fixture.fixture_type_kind = _classify_fixture_kind(
+        fixture.fixture_role = _classify_fixture_kind(
             fixture.fixture_type, fixture.name
         )

@@ -172,23 +172,23 @@ def _fetch_pytest_lifecycle_rows(conn: sqlite3.Connection, dataset: str) -> list
     rows = conn.execute(
         """
         SELECT f.id, r.full_name, f.commit_sha, tf.relative_path,
-               f.start_line, f.end_line, f.raw_source, f.fixture_type_kind
+               f.start_line, f.end_line, f.raw_source, f.fixture_role
         FROM fixtures f
         JOIN test_files tf ON f.file_id = tf.id
         JOIN repositories r ON f.repo_id = r.id
         WHERE f.fixture_type = 'pytest_decorator'
-          AND f.fixture_type_kind IN ('setup', 'teardown', 'setup_and_teardown')
+          AND f.fixture_role IN ('setup', 'teardown', 'setup_and_teardown')
         """
     ).fetchall()
     return [
         {
             "id": f"{dataset}:python:{fixture_id}",
-            "lifecycle_kind": fixture_type_kind,
+            "lifecycle_kind": fixture_role,
             "source_url": _build_github_url(
                 repo_name, commit_sha or "", relative_path or "", start_line or 0, end_line or 0
             ),
             "raw_snippet": raw_source or "",
-            "detected_label": fixture_type_kind,
+            "detected_label": fixture_role,
         }
         for (
             fixture_id,
@@ -198,7 +198,7 @@ def _fetch_pytest_lifecycle_rows(conn: sqlite3.Connection, dataset: str) -> list
             start_line,
             end_line,
             raw_source,
-            fixture_type_kind,
+            fixture_role,
         ) in rows
     ]
 

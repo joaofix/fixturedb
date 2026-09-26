@@ -271,7 +271,7 @@ teardown_detection:
   # @BeforeClass/@AfterClass JUnit4/TestNG name collision -- see
   # detector_java.py's _detect_test_framework_imports()/
   # JUNIT_TESTNG_AMBIGUOUS and fixture_definitions.yaml's
-  # java.known_imprecisions. All three are listed here so fixture_type_kind
+  # java.known_imprecisions. All three are listed here so fixture_role
   # (setup vs teardown) is always correctly derived regardless of which one
   # a given file resolves to -- framework-label ambiguity must never block
   # setup/teardown classification.

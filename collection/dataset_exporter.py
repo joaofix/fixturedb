@@ -355,7 +355,7 @@ Contains fixture definitions.
 | num_comment_lines | INTEGER | Comment-only lines within the fixture |
 | comment_density | REAL | num_comment_lines / loc (0.0 if loc is 0) |
 | num_parameters | INTEGER | Number of parameters |
-| fixture_type_kind | TEXT | setup/teardown/setup_and_teardown/other |
+| fixture_role | TEXT | setup/teardown/setup_and_teardown/other |
 | raw_source | TEXT | Complete fixture source code |
 | category | TEXT | RQ1 taxonomy category |
 | num_mocks | INTEGER | Number of mocks configured |

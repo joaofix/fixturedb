@@ -228,7 +228,7 @@ def test_something(value):
 
 
 class TestPytestFixtureTypeKindWiring:
-    """End-to-end check that fixture_type_kind is set on real extracted
+    """End-to-end check that fixture_role is set on real extracted
     pytest_decorator fixtures -- detector_python.py's _detect_python()
     classifies these directly via classify_pytest_fixture_kind() (body
     analysis) at detection time, not detector_shared.py's generic
@@ -245,7 +245,7 @@ def config():
     return {"debug": True}
 """
         fixture = assert_fixture_detected(code, "python", "config")
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     def test_yield_after_setup_is_setup_and_teardown(self):
         code = """
@@ -256,7 +256,7 @@ def db():
     conn.close()
 """
         fixture = assert_fixture_detected(code, "python", "db")
-        assert fixture.fixture_type_kind == "setup_and_teardown"
+        assert fixture.fixture_role == "setup_and_teardown"
 
     def test_bare_first_yield_is_teardown(self):
         code = """
@@ -266,7 +266,7 @@ def cleanup_only():
     remove_temp_files()
 """
         fixture = assert_fixture_detected(code, "python", "cleanup_only")
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
     def test_addfinalizer_is_setup_and_teardown(self):
         code = """
@@ -277,7 +277,7 @@ def db(request):
     return conn
 """
         fixture = assert_fixture_detected(code, "python", "db")
-        assert fixture.fixture_type_kind == "setup_and_teardown"
+        assert fixture.fixture_role == "setup_and_teardown"
 
 
 class TestModuleLevelFixtures:

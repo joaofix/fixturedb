@@ -76,7 +76,7 @@ def _make_db(db_file, language: str, fixtures: list[dict]) -> None:
                 "comment_density": 0.0,
                 "num_parameters": 0,
                 "has_teardown_pair": 0,
-                "fixture_type_kind": "setup",
+                "fixture_role": "setup",
                 "raw_source": "def setUp(self):\n    pass",
                 "framework": "unittest",
                 "num_mocks": 0,

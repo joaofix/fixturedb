@@ -144,7 +144,7 @@ java:
     "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4, framework: junit}
   # @Factory supplies test-class instances (data-driven class
   # instantiation), the same "supplies inputs rather than doing setup/
-  # teardown" role @DataProvider plays -- fixture_type_kind classification
+  # teardown" role @DataProvider plays -- fixture_role classification
   # (detector_shared.py) falls through to 'other' for both by construction
   # (neither is in feature_extraction_patterns.yaml's type_based_pairs),
   # same scope value (per_test) for consistency, not because either
@@ -156,7 +156,7 @@ java:
   # @AfterClass; the detector resolves it per-file by checking which of
   # org.junit.*/org.testng.* is imported (detector_java.py's
   # _detect_test_framework_imports()) -- see ambiguous_annotations below
-  # for the three possible outcomes. fixture_type_kind (setup/teardown) is
+  # for the three possible outcomes. fixture_role (setup/teardown) is
   # unaffected either way: all three possible fixture_type values below
   # are wired into feature_extraction_patterns.yaml's type_based_pairs, so
   # framework ambiguity never blocks correct setup/teardown classification,
@@ -182,7 +182,7 @@ java:
       exact name, or a file mixing both frameworks. Measured (2026-09-06)
       against known-TestNG-adjacent Java files: ~0% of Dataset A's sample,
       ~5% of Dataset C's sample fall into this dual-or-neither-import
-      case. fixture_type_kind is still correctly setup/teardown in every
+      case. fixture_role is still correctly setup/teardown in every
       case (see the comment above ambiguous_annotations) -- only the
       framework-specific fixture_type/framework fields are affected.
     - >

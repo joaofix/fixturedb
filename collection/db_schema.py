@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS fixtures (
     num_comment_lines       INTEGER DEFAULT 0,      -- comment-only lines within the fixture's own line span
     comment_density         REAL DEFAULT 0.0,        -- num_comment_lines / loc (0.0 if loc is 0)
     num_parameters          INTEGER DEFAULT 0,
-    fixture_type_kind       TEXT DEFAULT 'other',   -- setup/teardown/setup_and_teardown/other;
+    fixture_role            TEXT DEFAULT 'other',   -- setup/teardown/setup_and_teardown/other;
                                     -- computed at extraction time (detector_shared.py's
                                     -- _classify_fixture_kinds(), or detector_python.py's
                                     -- body-analysis classification for pytest_decorator)

@@ -3,13 +3,13 @@
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks per-repo/per-language repo-count
 bookkeeping and report rendering -- never touching the real db/ or
-research_questions/ directories. rq2.py no longer classifies fixture_type_kind
+research_questions/ directories. rq2.py no longer classifies fixture_role
 itself (that now happens at extraction time -- see detector_shared.py's
 _classify_fixture_kinds() and detector_python.py's pytest body-analysis
 classification, both covered by their own test files:
 test_fixture_kind_classification.py and test_classify_pytest_fixture_kind.py),
-so these fixture-dict literals set fixture_type_kind directly via
-_default_fixture_type_kind() below -- a thin test-only wrapper around those
+so these fixture-dict literals set fixture_role directly via
+_default_fixture_role() below -- a thin test-only wrapper around those
 same two real functions, not a reimplementation, so this file's synthetic
 data stays in sync with production classification automatically. The
 Mann-Whitney U math itself (including compute_continuous_balance()'s mean/
@@ -43,12 +43,12 @@ from collection.research_questions.rq2 import (
 )
 
 
-def _default_fixture_type_kind(fixture_type: str, name: str, raw_source: str) -> str:
-    """What extraction would have set fixture_type_kind to, given only
+def _default_fixture_role(fixture_type: str, name: str, raw_source: str) -> str:
+    """What extraction would have set fixture_role to, given only
     fixture_type/name/raw_source -- delegates to the same two real
     functions detector_shared._classify_fixture_kinds()/detector_python's
     _detect_python() call in production, so _make_db()/_make_multi_language_db()
-    callers below can omit fixture_type_kind and still get a realistic
+    callers below can omit fixture_role and still get a realistic
     default instead of every fixture literal in this file needing one."""
     if fixture_type == "pytest_decorator":
         return classify_pytest_fixture_kind_from_source(raw_source or "")
@@ -110,8 +110,8 @@ def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
                 }
                 base.update(overrides)
                 base.setdefault(
-                    "fixture_type_kind",
-                    _default_fixture_type_kind(
+                    "fixture_role",
+                    _default_fixture_role(
                         base["fixture_type"], base.get("name", ""), base.get("raw_source", "")
                     ),
                 )
@@ -177,8 +177,8 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                 }
                 base.update(overrides)
                 base.setdefault(
-                    "fixture_type_kind",
-                    _default_fixture_type_kind(
+                    "fixture_role",
+                    _default_fixture_role(
                         base["fixture_type"], base.get("name", ""), base.get("raw_source", "")
                     ),
                 )

@@ -39,7 +39,7 @@ MODULE LAYOUT
 This is a slim facade over per-language detector modules:
   - detector_shared.py: dataclasses, tree-sitter parser cache, AST helpers,
     mock detection, the shared fixture builder, and the one cross-fixture
-    post-processing pass (fixture_type_kind classification)
+    post-processing pass (fixture_role classification)
   - detector_python.py / detector_java.py / detector_javascript.py: one
     `_detect_<language>()` function per language, each self-contained; their
     pattern tables (annotation/decorator/name -> fixture_type) are loaded
@@ -72,7 +72,7 @@ ExtractResult contains:
   - num_test_functions: int — count of test functions in the file
 
 Each FixtureResult carries all the fields needed to populate the DB tables:
-  fixture_type, fixture_type_kind, start_line, end_line, loc,
+  fixture_type, fixture_role, start_line, end_line, loc,
   cyclomatic_complexity, num_comment_lines, comment_density,
   num_parameters, raw_source text
 """

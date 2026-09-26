@@ -10,7 +10,7 @@ Tests positive and negative detection of Java fixtures using:
 @BeforeClass/@AfterClass collide with JUnit4's own annotations of the same
 name -- TestClassLevelFrameworkResolution below covers all three possible
 per-file import-based resolutions (junit-only/testng-only/ambiguous), and
-confirms fixture_type_kind (setup/teardown) is correct in every case
+confirms fixture_role (setup/teardown) is correct in every case
 regardless of whether the specific framework could be resolved -- see
 detector_java.py's JUNIT_TESTNG_AMBIGUOUS and fixture_definitions.yaml's
 java.known_imprecisions.
@@ -158,7 +158,7 @@ class TestClassLevelFrameworkResolution:
     """@BeforeClass/@AfterClass collide with JUnit4's own annotations of
     the same name -- resolved per-file via the file's own imports
     (detector_java.py's _detect_test_framework_imports()), not a fixed
-    default. fixture_type_kind (setup/teardown) must be correct in EVERY
+    default. fixture_role (setup/teardown) must be correct in EVERY
     case below regardless of whether the specific framework could be
     resolved -- that's the actual paper-relevant guarantee; the
     framework-specific fixture_type/framework fields are best-effort only."""
@@ -176,7 +176,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "junit4_before_class"
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     def test_beforeclass_with_only_testng_import_resolves_to_testng(self):
         code = """
@@ -191,12 +191,12 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "testng_before_class"
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     def test_beforeclass_with_both_imports_is_ambiguous_but_still_setup(self):
         """A file mixing both frameworks' imports can't be disambiguated --
         framework is left unresolved (None), NOT guessed -- but
-        fixture_type_kind must still be correctly 'setup', unaffected by
+        fixture_role must still be correctly 'setup', unaffected by
         the framework ambiguity."""
         code = """
 import org.junit.BeforeClass;
@@ -211,7 +211,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "before_class_ambiguous"
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     def test_beforeclass_with_no_imports_is_ambiguous_but_still_setup(self):
         """No imports at all (e.g. same-package classes, wildcard imports
@@ -228,7 +228,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "setUpClass")
         assert fixture.fixture_type == "before_class_ambiguous"
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     def test_afterclass_with_only_junit_import_resolves_to_junit4(self):
         code = """
@@ -243,7 +243,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "junit4_after_class"
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
     def test_afterclass_with_only_testng_import_resolves_to_testng(self):
         code = """
@@ -258,7 +258,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "testng_after_class"
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
     def test_afterclass_with_both_imports_is_ambiguous_but_still_teardown(self):
         code = """
@@ -274,7 +274,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "after_class_ambiguous"
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
     def test_afterclass_with_no_imports_is_ambiguous_but_still_teardown(self):
         code = """
@@ -287,7 +287,7 @@ public class TestExample {
 """
         fixture = assert_fixture_detected(code, "java", "tearDownClass")
         assert fixture.fixture_type == "after_class_ambiguous"
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
 
 class TestJUnit5LifecycleMethods:
@@ -374,7 +374,7 @@ public class DataTests {
 """
         fixture = assert_fixture_detected(code, "java", "provideTestData")
         assert fixture.fixture_type == "testng_data_provider"
-        assert fixture.fixture_type_kind == "other"
+        assert fixture.fixture_role == "other"
 
     def test_dataprovider_with_params(self):
         """DataProvider with method parameters"""
@@ -417,7 +417,7 @@ public class TestExample {{
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.fixture_type == "testng_before_method"
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     @pytest.mark.parametrize(
         "signature",
@@ -443,7 +443,7 @@ public class TestExample {{
 """
         fixture = assert_fixture_detected(code, "java", "tearDown")
         assert fixture.fixture_type == "testng_after_method"
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
 
 class TestTestNGSuiteAndGroupLifecycle:
@@ -472,7 +472,7 @@ public class TestExample {{
 """
         fixture = assert_fixture_detected(code, "java", "setUp")
         assert fixture.fixture_type == fixture_type
-        assert fixture.fixture_type_kind == "setup"
+        assert fixture.fixture_role == "setup"
 
     @pytest.mark.parametrize(
         "annotation,fixture_type",
@@ -493,13 +493,13 @@ public class TestExample {{
 """
         fixture = assert_fixture_detected(code, "java", "tearDown")
         assert fixture.fixture_type == fixture_type
-        assert fixture.fixture_type_kind == "teardown"
+        assert fixture.fixture_role == "teardown"
 
 
 class TestTestNGFactory:
     """@Factory supplies test-class instances (data-driven class
     instantiation) -- same role as @DataProvider, so it's classified the
-    same way: detected, but fixture_type_kind='other' (neither setup nor
+    same way: detected, but fixture_role='other' (neither setup nor
     teardown), matching @DataProvider's existing treatment. No JUnit
     collision risk for this name, so no import-based resolution needed."""
 
@@ -516,7 +516,7 @@ public class FactoryTests {
 """
         fixture = assert_fixture_detected(code, "java", "createInstances")
         assert fixture.fixture_type == "testng_factory"
-        assert fixture.fixture_type_kind == "other"
+        assert fixture.fixture_role == "other"
 
 
 class TestTestNGListenersOutOfScope:

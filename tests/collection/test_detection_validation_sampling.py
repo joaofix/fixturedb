@@ -81,7 +81,7 @@ def _make_db(db_file, repos: list[dict]) -> None:
                     "comment_density": 0.0,
                     "num_parameters": 0,
                     "has_teardown_pair": 0,
-                    "fixture_type_kind": "setup",
+                    "fixture_role": "setup",
                     "raw_source": "def f(): pass",
                     "framework": "pytest",
                     "num_mocks": 0,
@@ -142,18 +142,18 @@ class TestFetchPytestLifecycleRows:
                         {
                             "overrides": {
                                 "fixture_type": "pytest_decorator",
-                                "fixture_type_kind": "teardown",
+                                "fixture_role": "teardown",
                                 "raw_source": "def f():\n    yield",
                             }
                         },
                         # Not pytest_decorator -- excluded regardless of kind.
-                        {"overrides": {"fixture_type": "unittest_setup", "fixture_type_kind": "setup"}},
+                        {"overrides": {"fixture_type": "unittest_setup", "fixture_role": "setup"}},
                         # pytest_decorator but 'other' -- excluded (not a
                         # real lifecycle outcome, see this function's docstring).
                         {
                             "overrides": {
                                 "fixture_type": "pytest_decorator",
-                                "fixture_type_kind": "other",
+                                "fixture_role": "other",
                             }
                         },
                     ],
@@ -183,13 +183,13 @@ class TestRunDetectionValidationSampling:
                                 "overrides": {
                                     "num_mocks": 1,
                                     "fixture_type": "pytest_decorator",
-                                    "fixture_type_kind": "setup",
+                                    "fixture_role": "setup",
                                 },
                             },
                             {
                                 "overrides": {
                                     "fixture_type": "pytest_decorator",
-                                    "fixture_type_kind": "teardown",
+                                    "fixture_role": "teardown",
                                 }
                             },
                         ],

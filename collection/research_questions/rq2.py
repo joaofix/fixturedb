@@ -3,7 +3,7 @@ RQ2 -- Setup and Teardown Characterization (Quantitative): how do
 agent-generated fixtures compare to human-written ones in setup and
 teardown provision?
 
-Two paper tables, both keyed on **fixtures.fixture_type_kind** -- setup /
+Two paper tables, both keyed on **fixtures.fixture_role** -- setup /
 teardown / setup_and_teardown / other. This is a persisted DB column, set
 once at *extraction* time (not computed here) by
 `detector_shared._classify_fixture_kinds()` for every fixture type except
@@ -14,7 +14,7 @@ needs its own mechanism (type/name alone can't split it: every pytest
 fixture is just named whatever the developer called it; see
 internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md).
 This module just reads the column and renders it -- no classification logic
-lives here, so a dataset's `fixture_type_kind` numbers are identical
+lives here, so a dataset's `fixture_role` numbers are identical
 regardless of when its RQ2 report is (re)generated relative to extraction.
 
 Table 1's Setup/Teardown columns and Table 2's teardown-coverage indicator
@@ -131,9 +131,9 @@ types), not just once at paper-writing time -- hence a permanent report
 section rather than a one-off query.
 
 `has_teardown_pair` (a separate fixtures-table column that used to exist
-alongside `fixture_type_kind`) was never analyzed by this script -- it has
+alongside `fixture_role`) was never analyzed by this script -- it has
 since been dropped from the extracted metric set entirely (not reported in
-the paper). `fixture_type_kind` above is unaffected: it's computed by its
+the paper). `fixture_role` above is unaffected: it's computed by its
 own, independent teardown-detection pass at extraction time.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
@@ -237,7 +237,7 @@ def _fetch_kinds_and_repo_counts(
     """Single pass over every fixture: dataset-level kind distribution
     (descriptive only), per-repo {setup/teardown/setup_and_teardown/other:
     count} (Overall), and the same per-repo counts bucketed by each
-    fixture's own language too -- reading fixtures.fixture_type_kind
+    fixture's own language too -- reading fixtures.fixture_role
     directly, already classified once at extraction time (see this
     module's docstring), so this is a straight read, not a
     re-classification.
@@ -256,7 +256,7 @@ def _fetch_kinds_and_repo_counts(
     kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = {}
 
     rows = conn.execute(
-        "SELECT f.repo_id, f.fixture_type_kind, tf.language FROM fixtures f "
+        "SELECT f.repo_id, f.fixture_role, tf.language FROM fixtures f "
         "JOIN test_files tf ON f.file_id = tf.id WHERE f.fixture_type IS NOT NULL"
     ).fetchall()
     for repo_id, kind, language in rows:
@@ -699,7 +699,7 @@ def _render_kind_classification_coverage_table(a: DatasetMetrics, other: Dataset
     lines = [
         "### Fixture Kind Classification Coverage by Language",
         "",
-        "Per-language, per-dataset breakdown of `fixture_type_kind` "
+        "Per-language, per-dataset breakdown of `fixture_role` "
         "(setup / teardown / setup_and_teardown / other) -- the same "
         "counts behind Table 1 above and the pooled dataset-wide `other` "
         "% in `Per-dataset summary`, just split out per language instead "

@@ -15,7 +15,7 @@ of org.junit.*/org.testng.* is imported), falling back to an
 "ambiguous"-labeled fixture_type (framework left unresolved) only when both
 or neither import is present -- see fixture_definitions.yaml's
 java.known_imprecisions for measured prevalence of that fallback case.
-fixture_type_kind (setup/teardown) is correct regardless of which of the
+fixture_role (setup/teardown) is correct regardless of which of the
 three fixture_type outcomes is chosen -- see JUNIT_TESTNG_AMBIGUOUS's
 docstring.
 """
@@ -39,7 +39,7 @@ JUNIT_FIXTURE_ANNOTATIONS: dict[str, str] = {
 #
 # All three possible fixture_type outcomes (junit4_/testng_/ambiguous) are
 # wired into feature_extraction_patterns.yaml's teardown_detection.
-# type_based_pairs, so fixture_type_kind (setup vs teardown) is always
+# type_based_pairs, so fixture_role (setup vs teardown) is always
 # correctly derived downstream regardless of which one gets chosen --
 # framework ambiguity affects only the fixture_type label, never the
 # setup/teardown classification.
@@ -125,7 +125,7 @@ def _detect_java(tree, src_bytes: bytes, language: str = "java") -> list[Fixture
 
                 # Handle ambiguous annotations (same name in JUnit4 and TestNG) --
                 # resolved via the file's own imports, computed once above.
-                # fixture_type_kind is unaffected by which branch fires here
+                # fixture_role is unaffected by which branch fires here
                 # (see JUNIT_TESTNG_AMBIGUOUS's docstring) -- only the
                 # fixture_type label itself changes.
                 if ann_key in JUNIT_TESTNG_AMBIGUOUS:

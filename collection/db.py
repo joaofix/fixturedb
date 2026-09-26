@@ -199,14 +199,41 @@ _COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     # comment_density can be trusted or reported on.
     ("fixtures", "num_comment_lines", "INTEGER DEFAULT 0"),
     ("fixtures", "comment_density", "REAL DEFAULT 0.0"),
-    # fixture_type_kind (setup/teardown/setup_and_teardown/other, added
-    # 2026-08-30): same self-heals-schema-only caveat as num_comment_lines/
-    # comment_density above -- a row on a not-yet-migrated file lands at
-    # this DEFAULT ('other') after migration, indistinguishable from a
+    # fixture_role (setup/teardown/setup_and_teardown/other, added
+    # 2026-08-30 under the original name fixture_type_kind -- see
+    # _COLUMN_RENAMES below): same self-heals-schema-only caveat as
+    # num_comment_lines/comment_density above -- a row on a DB file that
+    # predates *both* the rename and the original column lands at this
+    # DEFAULT ('other') after migration, indistinguishable from a
     # genuinely-other-classified fixture until a full re-extraction backs
     # it with a real value.
-    ("fixtures", "fixture_type_kind", "TEXT DEFAULT 'other'"),
+    ("fixtures", "fixture_role", "TEXT DEFAULT 'other'"),
 ]
+
+# Columns renamed after being added via _COLUMN_MIGRATIONS/CREATE TABLE.
+# RENAME COLUMN (not the ADD-COLUMN-with-DEFAULT approach above) so real
+# values already collected under the old name survive on existing DB files
+# instead of being silently reset to a default.
+_COLUMN_RENAMES: list[tuple[str, str, str]] = [
+    # fixture_type_kind -> fixture_role (renamed 2026-09-26): the original
+    # name read too similarly to fixture_type for a column with a very
+    # different meaning (setup/teardown/other role vs. the specific
+    # pytest_fixture/junit_before_each/... type).
+    ("fixtures", "fixture_type_kind", "fixture_role"),
+]
+
+
+def _apply_column_renames(conn: sqlite3.Connection) -> None:
+    """Idempotently rename columns per _COLUMN_RENAMES. A no-op once a given
+    DB file has already been renamed (old column no longer exists), and a
+    no-op on a DB file that predates the old column entirely (the
+    ADD-COLUMN fallback in _COLUMN_MIGRATIONS covers that case instead)."""
+    for table, old, new in _COLUMN_RENAMES:
+        try:
+            conn.execute(f"ALTER TABLE {table} RENAME COLUMN {old} TO {new}")
+            logger.info(f"Migrated {table}: renamed {old} to {new}")
+        except sqlite3.OperationalError:
+            pass  # already renamed, or old column never existed
 
 
 def _apply_column_migrations(conn: sqlite3.Connection) -> None:
@@ -227,11 +254,14 @@ def _apply_column_migrations(conn: sqlite3.Connection) -> None:
 def initialise_db(db_path: Path = DB_PATH) -> None:
     """
     Create all tables and indexes if they do not already exist, then apply
-    any pending column migrations (see _COLUMN_MIGRATIONS). Safe to call
+    any pending column renames and migrations (see _COLUMN_RENAMES/
+    _COLUMN_MIGRATIONS -- renames run first since a rename's "old" name may
+    be a migration's column name on a not-yet-migrated file). Safe to call
     multiple times — never drops or truncates existing data.
     """
     with db_session(db_path) as conn:
         conn.executescript(SCHEMA)
+        _apply_column_renames(conn)
         _apply_column_migrations(conn)
     print(f"[db] Initialised database at {db_path}")
 
@@ -476,7 +506,7 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "num_comment_lines",
         "comment_density",
         "num_parameters",
-        "fixture_type_kind",
+        "fixture_role",
         "raw_source",
         "num_mocks",
     ]
@@ -506,12 +536,12 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         columns.append("commit_sha")
         fixture = {**fixture, "commit_sha": fixture.get("commit_sha") or ""}
 
-    # fixture_type_kind is in the unconditional `columns` list above (real
+    # fixture_role is in the unconditional `columns` list above (real
     # extraction always sets it via fixture_result_to_dict()), but plenty of
     # callers -- tests, and any hand-built fixture dict -- don't supply it
     # (or supply it as None). Default it here rather than requiring every
     # one of them to, same reasoning as commit_sha above.
-    fixture = {**fixture, "fixture_type_kind": fixture.get("fixture_type_kind") or "other"}
+    fixture = {**fixture, "fixture_role": fixture.get("fixture_role") or "other"}
 
     # Build the INSERT statement
     cols_str = ", ".join(columns)
