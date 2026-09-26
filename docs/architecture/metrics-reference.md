@@ -10,16 +10,23 @@ fixture is found in the first place), see [detection.md](detection.md).
 |--------|--------------|-----------------|-----------|
 | `cyclomatic_complexity` | Lizard | `complexity_provider.py::analyze_function_complexity()` | all |
 | `num_parameters` | Lizard, self/cls stripped for Python | `complexity_provider.py` + `detector_shared.py::_build_result()` | all |
-| `max_nesting_depth` | Custom tree-sitter traversal | `detector_shared.py::_compute_nesting_depth()` | all |
 | `loc` | Non-blank line count | `detector_shared.py::_count_loc()` | all |
-| `num_objects_instantiated` | Tree-sitter AST node type (`new`/`call` nodes) | `detector_shared.py::_count_object_instantiations()` | all |
-| `num_external_calls` | Regex (I/O patterns) | `detector_shared.py::_count_external_calls()` | all |
 | `num_comment_lines`, `comment_density` | Tree-sitter comment-node walk | `detector_shared.py::_count_comment_lines()` | all |
-| `fixture_type`, `framework`, `scope` | AST pattern match vs. `fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` | all |
-| `has_teardown_pair` | Post-processing, paired against sibling fixtures | `detector_shared.py::_calculate_teardown_pairs()` | all |
-| `fixture_dependencies` | Post-processing, parameter-injection matching | `detector_shared.py::_detect_fixture_dependencies()` | Python/pytest only |
+| `fixture_type` | AST pattern match vs. `fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` | all |
+| `fixture_type_kind` | Post-processing, paired against sibling fixtures | `detector_shared.py::_classify_fixture_kinds()` | all |
 | `num_mocks`, `mocks` | Regex (mock-framework patterns) | `detector_shared.py::_extract_mocks()` | all |
 | `raw_source`, `start_line`, `end_line` | Verbatim text/location of the fixture's own node | `detector_shared.py::_build_result()` | all |
+
+`scope`, `framework`, `max_nesting_depth`, `num_objects_instantiated`,
+`num_external_calls`, `has_teardown_pair`, and `fixture_dependencies` were
+removed from the extracted metric set entirely (not just stopped from
+being read): `scope`/`framework` were fully redundant with `fixture_type`
+(verified 1:1 mapping across every fixture_type value in the collected
+data), and the other four simply aren't part of the paper's reported
+metrics. `fixture_dependencies` and `container_id` were purely internal
+signals (dependency propagation for `scope`, and teardown pairing for
+`has_teardown_pair`) that had nothing left to serve once those two were
+gone, so they were removed along with the code that only ever fed them.
 
 All regex catalogs (I/O patterns, constructor patterns, mock patterns, teardown-pairing rules) live in
 [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml), not
@@ -42,8 +49,8 @@ isn't a function at all) without crashing.
 
 ### Tree-sitter
 
-Parses every file into an AST once; fixture detection, scope classification, and `max_nesting_depth`
-are all derived from that same tree. The whole pipeline reads source as bytes and only decodes
+Parses every file into an AST once; fixture detection and every custom (non-Lizard) metric are
+derived from that same tree. The whole pipeline reads source as bytes and only decodes
 per-fixture slices at the end (UTF-8, `errors="replace"`) — verified that multi-byte UTF-8 content
 elsewhere in the file does not shift line numbers or fixture boundaries; non-UTF-8 files degrade
 gracefully (structural detection stays correct, non-ASCII text inside comments/strings is replaced).
@@ -53,64 +60,6 @@ syntax error elsewhere in a file does not prevent detection of an otherwise well
 ---
 
 ## Custom Metrics
-
-### max_nesting_depth
-
-Maximum nesting level of control structures (if/for/while/try) inside the fixture's own body, via a
-tree-sitter traversal that increments a counter at each control-construct node type
-(`if_statement`, `while_statement`, `for_statement`, `try_statement`, `with_statement`, etc.).
-
-The compound statement's own body-wrapper node (`"block"` in Python/Java's tree-sitter grammars) and
-Java's `catch_clause`/`finally_clause` are not counted as their own extra level — only the enclosing
-statement is. A flat function reports 1, one level of `if` reports 2. Regression tests with exact
-(not lower-bound) assertions: `tests/collection/test_extractor_metadata/test_new_metrics.py::TestMaxNestingDepth`.
-
-### num_objects_instantiated
-
-Tree-sitter AST node count, not regex (changed 2026-08-16 -- see below). Walks the fixture's own
-already-parsed node (`_count_object_instantiations()`) and counts:
-
-- **Java**: `object_creation_expression` nodes -- `new ClassName(...)`, generics (`new
-  ArrayList<Foo>()`), dotted/namespaced types (`new java.util.ArrayList()`), and anonymous class
-  bodies (`new Runnable() { ... }`, including any further instantiation nested inside that body).
-  Java's `array_creation_expression` (`new int[5]`) is a distinct node type and deliberately
-  excluded -- array allocation isn't a constructor call.
-- **JS/TS**: `new_expression` nodes -- `new ClassName(...)`, `new mod.Bar(...)`, `new Foo<T>()`.
-- **Python**: `call` nodes whose target -- the bare identifier for `Foo()`, or the rightmost
-  identifier for a dotted/attribute chain like `a.b.Foo()` -- starts with an uppercase letter.
-  Python has no dedicated "this is a constructor" AST node (`Foo()` and `foo()` are both plain
-  `call` nodes), so this is still the same capitalized-name heuristic as before -- just scoped to
-  a genuine call site instead of a text/regex scan.
-
-**Previously** (before 2026-08-16) this was a regex scan over the fixture's raw source text (Java/
-JS/TS: `` \bnew\s+[\w.]+\s*(?:<.+?>)?\s*\( ``; Python: `` \b[A-Z][A-Za-z0-9_]*\s*\( ``), capped
-against Lizard's own external-call count as a sanity ceiling. That approach counted matches
-wherever the pattern's *text* appeared, regardless of whether it was real code -- see
-[internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md](../../internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md)
-for the investigation that found two concrete false-positive mechanisms this AST-based rewrite
-fixes structurally (a match can never occur inside a string/comment, or against a fixture's own
-`def NAME(...):` line, because neither is ever a `call`/`object_creation_expression`/
-`new_expression` node): text embedded in a string literal or comment (SQL fragments, generated
-source being fed to a compiler test, commented-out code) being read as if it were real code; and a
-Python fixture whose own capitalized name (e.g. `TEST_ADDRESS`, `Popen`) self-matched its own
-signature line, unrelated to anything its body did.
-
-**Known limitation (Python only):** the capitalized-name heuristic can still miss a lowercase-named
-factory function, or count a capitalized function that isn't actually a constructor -- this is a
-genuine language-level ambiguity Python's grammar can't resolve (no `new` keyword, no dedicated
-node), not something AST-based detection can fully close. A 46-match manual review across all four
-languages (see the investigation doc above) found no case of this in practice, but it isn't ruled
-out by construction the way Java/JS/TS's `new`-anchored node types are.
-
-### num_external_calls
-
-Regex count of I/O/system-operation markers (file: `open(`, `Path(`; database: `query(`, `.connect()`;
-HTTP: `requests.`, `.get()`; subprocess/network/environment variables). This is deliberately narrower
-than Lizard's own external-call count, which counts every inter-function call regardless of whether
-it's I/O.
-
-**Known limitation:** regex-based, so it can miss uncommon I/O idioms (custom DB wrappers) or
-false-positive on a string literal that happens to contain a matched substring.
 
 ### num_comment_lines, comment_density
 
@@ -131,48 +80,22 @@ equivalent Java/JS fixture (neither of which has an implicit first parameter). F
 `num_parameters` is computed by reading each parameter's own AST node directly
 (`_extract_parameter_names()`) and excluding `self`/`cls`, instead of using Lizard's raw count.
 
-### fixture_type, framework, scope
+### fixture_type
 
 Deterministic AST pattern matching against `fixture_definitions.yaml`'s per-language tables — same
-source always produces the same classification, no heuristics involved. `scope` is one of `per_test`,
-`per_class`, `per_module` (Python-only), `global`, mapped from explicit framework syntax (pytest's
-`scope=` keyword, Java/JS's annotation or hook name). Full per-framework mapping and known ambiguities
-(e.g. `@BeforeClass` is shared syntax between JUnit4 and TestNG — scope is correct regardless, but the
-two frameworks can't always be told apart from the annotation alone): [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md).
+source always produces the same classification, no heuristics involved. Full per-framework mapping
+and known ambiguities (e.g. `@BeforeClass` is shared syntax between JUnit4 and TestNG and the two
+frameworks can't always be told apart from the annotation alone): [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md).
 
-### has_teardown_pair
+### fixture_type_kind
 
-Binary indicator that a fixture has a paired cleanup counterpart, computed in a post-processing pass
-over the whole fixture list (`_calculate_teardown_pairs()`) via five mechanisms: always-true for
-fixture_types where the mechanism itself guarantees teardown with no checkable source signal
-(`@Rule`/`@ClassRule`, Vitest `aroundEach`/`aroundAll`); a `yield` in the fixture's own body (pytest);
-same fixture_type distinguished by name (`setUp`/`tearDown`), including self-registered cleanup calls
-(`addCleanup(`/`enterContext(`); or a different fixture_type at matching scope (`@BeforeEach`/
-`@AfterEach`, `beforeAll`/`afterAll`, etc.). Only the setup-side fixture is flagged; the teardown
-fixture itself is not. Pairing rules: `feature_extraction_patterns.yaml`'s `teardown_detection`.
-
-**Known limitations:** checks that cleanup logic is *present*, not that it's *correct*; implicit cleanup
-(e.g. automatic connection pooling) isn't detected. Pairing is intra-file only — a setup fixture's
-teardown counterpart defined in a different file (e.g. inherited from a Java base test class) is not
-detected.
-
-**Reporting caveat:** the always-true fixture_types (`@Rule`/`@ClassRule`, `aroundEach`/`aroundAll`) are
-set to 1 with no source-level check, by construction — the mechanism itself guarantees teardown, so
-there's nothing to verify. These rows carry no agent-vs-human signal. If a paper reports an aggregate
-`has_teardown_pair` rate, exclude them or break the rate out per fixture_type instead, the way RQ2 already
-does.
-
-### fixture_dependencies (Python/pytest only)
-
-A fixture's own parameter names are cross-referenced against every other fixture name detected in the
-same file; a match means "this fixture depends on that one." Implemented by re-parsing each pytest
-fixture's `raw_source` and reading each parameter as its own AST node
-(`_extract_parameter_names()`) rather than regex-splitting the parameter list text — a naive
-`[^)]*` regex truncates at the first `)`, silently losing any parameter after a default value like
-`items=list()`. Regression-tested: `tests/collection/test_extractor_metadata/test_fixture_dependencies.py`.
-
-**Known limitation:** pytest-specific (no equivalent for Java/JS fixtures); transitive/indirect
-dependencies are not tracked beyond one hop.
+setup/teardown/setup_and_teardown/other, computed in a post-processing pass over the whole fixture
+list (`_classify_fixture_kinds()`) by cross-referencing each fixture_type against
+`feature_extraction_patterns.yaml`'s `teardown_detection` tables: same fixture_type distinguished by
+name (`setUp`/`tearDown`), or a different fixture_type at the matching position (`@BeforeEach`/
+`@AfterEach`, `beforeAll`/`afterAll`, etc.). `pytest_decorator` is the one exception, classified
+directly from body analysis (presence/position of `yield`) at detection time instead, since every
+pytest fixture is just named whatever the developer called it.
 
 ### num_mocks (and the `mock_usages` table)
 
@@ -211,7 +134,7 @@ alone. If per-language reuse analysis is needed later, it should be a new, expli
 
 ## Using These Metrics in Research
 
-**Safe:** complexity/size distributions, structural patterns (scope, parameters, nesting) within a
+**Safe:** complexity/size distributions, structural patterns (fixture_type, parameters) within a
 language, framework adoption analysis.
 
 **Use with caution:** cross-language comparisons of any custom (non-Lizard) metric — detection

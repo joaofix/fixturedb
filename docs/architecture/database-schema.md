@@ -76,21 +76,15 @@ Individual fixture definitions and their quantitative metrics.
 | `repo_id` | INTEGER | Foreign key to `repositories.id` |
 | `name` | TEXT | Fixture name or method name |
 | `fixture_type` | TEXT | Detected fixture pattern such as `pytest_decorator`, `unittest_setup`, or `before_each` |
-| `scope` | TEXT | Execution scope such as `per_test`, `per_class`, `per_module`, or `global` |
 | `start_line` | INTEGER | 1-based start line |
 | `end_line` | INTEGER | 1-based end line |
 | `loc` | INTEGER | Non-blank lines of code in the fixture |
 | `cyclomatic_complexity` | INTEGER | McCabe cyclomatic complexity |
-| `max_nesting_depth` | INTEGER | Maximum block nesting depth |
-| `num_objects_instantiated` | INTEGER | Estimated object creations inside the fixture |
-| `num_external_calls` | INTEGER | Estimated I/O or external calls inside the fixture |
 | `num_comment_lines` | INTEGER | Comment-only lines within the fixture's own line span (tree-sitter comment-node walk) |
 | `comment_density` | REAL | `num_comment_lines / loc`, or `0.0` if `loc` is 0 |
 | `num_parameters` | INTEGER | Number of fixture parameters |
-| `has_teardown_pair` | INTEGER | Binary indicator for teardown or cleanup logic |
 | `fixture_type_kind` | TEXT | `setup`/`teardown`/`setup_and_teardown`/`other`, set at extraction time -- see `collection/detector_shared.py`'s `_classify_fixture_kinds()` and `collection/detector_python.py`'s `classify_pytest_fixture_kind()` docstrings for the per-fixture-type rules |
 | `raw_source` | TEXT | Original source text for the fixture |
-| `framework` | TEXT | Detected framework such as `pytest`, `unittest`, `junit`, `jest`, or `mocha` |
 | `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
 | **Dataset Labeling** |
 | `commit_sha` | TEXT | Commit that introduced this fixture; in `db/c.db` this is the repo's pinned cutoff commit (one per repo, shared by every fixture in it), not a per-fixture commit |
@@ -231,7 +225,7 @@ print(mock_categories)
 
 ## Data quality guarantees
 
-The schema is append-safe and re-runnable — existing records are not duplicated during collection. Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C), and quantitative fields such as LOC, complexity, counts, and scope are derived deterministically from analyzed source code.
+The schema is append-safe and re-runnable — existing records are not duplicated during collection. Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C), and quantitative fields such as LOC, complexity, and comment counts are derived deterministically from analyzed source code.
 
 ## Accessing the database
 

@@ -18,7 +18,7 @@ A-vs-B alone can't distinguish "agents write fixtures differently" from "any com
 
 ## What the pipeline produces
 
-Each dataset gets its own database (`db/a.db`, `db/b.db`, `db/c.db` — see [Database Schema](../architecture/database-schema.md)). Dataset A's fixtures are tagged `commit_kind='agent'` plus `agent_type`; Dataset B's are tagged `commit_kind='human'`; Dataset C has no commit-level tagging (see the schema doc for why). Control variables are computed at each dataset's own temporal snapshot (2025-01-01 for A/B, 2020-12-31 for C), alongside fixture metrics for type, scope, complexity, dependencies, and mocks.
+Each dataset gets its own database (`db/a.db`, `db/b.db`, `db/c.db` — see [Database Schema](../architecture/database-schema.md)). Dataset A's fixtures are tagged `commit_kind='agent'` plus `agent_type`; Dataset B's are tagged `commit_kind='human'`; Dataset C has no commit-level tagging (see the schema doc for why). Control variables are computed at each dataset's own temporal snapshot (2025-01-01 for A/B, 2020-12-31 for C), alongside fixture metrics for type, complexity, and mocks.
 
 A collection summary (`datasets/{dataset}/summary.yaml`, via `python -m collection summarize --dataset {a,b,c}`) reports repository statistics (languages, domains, contributor counts), fixture statistics (extraction rates by language, fixture type distributions), and, for Datasets A/B, the purity-gate acceptance rate.
 

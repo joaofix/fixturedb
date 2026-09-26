@@ -45,21 +45,18 @@ Python Fixtures
 ### pytest Fixtures
 
 **Pattern:** `@pytest.fixture` decorator  
-**Scope:** Configurable via `scope="function|class|module|session"` — but the
-declared scope isn't always the final one: if a fixture depends on another
-(narrower-scoped) fixture as a parameter, its own scope is automatically
-downgraded to match (an impossible configuration otherwise). See
-[Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)
-for the detection mechanism and its limits (pytest-only, single-hop). This
-computed dependency list itself is not persisted in the database or CSV
-exports — only its effect on the final `scope` value is.
+**Scope:** Configurable via `scope="function|class|module|session"` — not
+persisted as a database column (`scope` was removed from the extracted
+metric set entirely, along with the pytest-only fixture-dependency
+detection and scope-downgrade propagation that used to feed it; see
+[Metrics Reference](../architecture/metrics-reference.md)).
 
 ### unittest Fixtures
 
 **Pattern:** Method names: `setUp()`, `tearDown()`, `setUpClass()`, `tearDownClass()`, `setUpModule()`, `tearDownModule()`, `asyncSetUp()`, `asyncTearDown()` (the last two are `IsolatedAsyncioTestCase`'s own hooks, called in addition to `setUp()`/`tearDown()`, not a replacement for them)
 **Scope:** Determined by method name and class context
 
-**Teardown pairing (`has_teardown_pair`):** in addition to a same-scope, separately-named teardown method (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`), a `setUp()`/`setUpClass()` fixture is also flagged as having a teardown pair if its own body registers cleanup inline via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class) — the modern, docs-recommended alternative to a separate teardown method. See `collection/heuristics/feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table.
+**Teardown pairing:** `fixture_type_kind` (setup/teardown/other) is set by name (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`). The separate `has_teardown_pair` binary indicator -- which additionally recognized inline self-registered cleanup via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class), the modern docs-recommended alternative to a separate teardown method -- was removed from the extracted metric set entirely; `feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table is no longer read by any code, though it's still present in the YAML.
 
 ---
 
@@ -349,7 +346,7 @@ Every pattern above is what the detector matches; just as important is what it d
 - **Cucumber (all annotations, e.g. `@Given`, `@When`, `@Then`, `@And`, `@But`, `@Attachment`)** — same scope decision as Spring: Cucumber is a BDD framework, not JUnit or TestNG.
 
 Two known imprecisions (detected, but not perfectly attributed) are also worth calling out:
-- `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector always attributes them to TestNG (both `fixture_type` and `framework`) rather than inspecting imports to disambiguate.
+- `@BeforeClass`/`@AfterClass` are ambiguous between JUnit4 and TestNG; the detector resolves this per-file by checking which of `org.junit.*`/`org.testng.*` is imported (`detector_java.py::_detect_test_framework_imports()`), falling back to an `ambiguous`-labeled `fixture_type` only when both or neither import is present.
 - Fixture scope is inferred from annotation type (`@BeforeAll` → `per_class`, `@BeforeEach` → `per_test`). JUnit 5's instance lifecycle annotation (`@TestInstance(Lifecycle.PER_CLASS)`), which can modify the effective scope of `@BeforeAll` (allowing it to be a non-static, per-instance method shared across the class's tests instead of a true static per-class hook), is not currently accounted for.
 
 ### JavaScript/TypeScript

@@ -37,7 +37,7 @@ summary = pd.read_sql("""
         COUNT(DISTINCT f.id) as fixture_count,
         ROUND(AVG(f.loc), 2) as avg_loc,
         ROUND(AVG(f.cyclomatic_complexity), 2) as avg_complexity,
-        ROUND(AVG(f.max_nesting_depth), 2) as avg_nesting,
+        ROUND(AVG(f.comment_density), 3) as avg_comment_density,
         ROUND(AVG(f.num_parameters), 2) as avg_parameters
     FROM fixtures f
 """, conn)
@@ -59,8 +59,9 @@ agent_breakdown = pd.read_sql("""
         COUNT(DISTINCT f.commit_sha) as commits,
         COUNT(DISTINCT f.id) as fixtures,
         ROUND(AVG(f.loc), 2) as avg_loc,
-        ROUND(SUM(CASE WHEN f.has_teardown_pair = 1 THEN 1 ELSE 0 END) * 100.0
-              / COUNT(DISTINCT f.id), 1) as teardown_adoption_pct
+        ROUND(SUM(CASE WHEN f.fixture_type_kind IN ('teardown', 'setup_and_teardown')
+                        THEN 1 ELSE 0 END) * 100.0
+              / COUNT(DISTINCT f.id), 1) as teardown_kind_pct
     FROM fixtures f
     WHERE f.agent_type IS NOT NULL
     GROUP BY f.agent_type
@@ -70,7 +71,7 @@ agent_breakdown = pd.read_sql("""
 print(agent_breakdown)
 ```
 
-### Framework adoption within a dataset
+### fixture_type adoption within a dataset
 
 ```python
 import sqlite3
@@ -78,18 +79,18 @@ import pandas as pd
 
 conn = sqlite3.connect("db/a.db")
 
-framework_adoption = pd.read_sql("""
+fixture_type_adoption = pd.read_sql("""
     SELECT
-        f.framework,
+        f.fixture_type,
         COUNT(*) as fixture_count,
         ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) as pct
     FROM fixtures f
-    WHERE f.framework IS NOT NULL
-    GROUP BY f.framework
+    WHERE f.fixture_type IS NOT NULL
+    GROUP BY f.fixture_type
     ORDER BY fixture_count DESC
 """, conn)
 
-print(framework_adoption)
+print(fixture_type_adoption)
 ```
 
 ---

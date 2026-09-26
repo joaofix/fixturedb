@@ -62,15 +62,13 @@ All metrics are collected from test files only.
 |----------|------------|------|
 | `loc` | Non-blank lines of code | Tree-sitter |
 | `cyclomatic_complexity` | McCabe complexity | Lizard |
-| `max_nesting_depth` | Maximum control-flow nesting | Tree-sitter |
 | `num_parameters` | Formal parameter count from AST | Tree-sitter / Lizard |
-| `num_objects_instantiated` | Constructor-like expressions | Tree-sitter AST node type |
-| `num_external_calls` | I/O and external operation calls | Regex |
-| `framework` | Testing framework family | AST traversal |
-| `scope` | Execution scope (per_test, per_class, per_module, global) | AST traversal |
-| `fixture_dependencies` | Other fixtures this fixture depends on (pytest only) | AST traversal |
-| `has_teardown_pair` | Presence of associated cleanup | AST + heuristic pairing rules |
+| `num_comment_lines` / `comment_density` | Comment-only lines within the fixture, and their ratio to `loc` | Tree-sitter |
+| `fixture_type` | Detected fixture pattern (e.g. `pytest_decorator`, `unittest_setup`) | AST pattern match |
+| `fixture_type_kind` | setup/teardown/setup_and_teardown/other | AST + pairing rules |
 | `num_mocks` / `mock_framework` / `category` | Mock usage, test-double taxonomy | Regex |
+
+`scope`, `framework`, `max_nesting_depth`, `num_objects_instantiated`, `num_external_calls`, `has_teardown_pair` (a binary, distinct from `fixture_type_kind`), and `fixture_dependencies` were removed from the extracted metric set entirely — `scope`/`framework` were fully redundant with `fixture_type` (1:1 mapping verified across the collected data), and the other four simply aren't part of this study's reported metrics.
 
 ### Control variables
 
@@ -148,8 +146,8 @@ A/B/C are three separate databases, not paired observations within one table, so
 
 | Variable type | Test |
 |----------|--------------|
-| Continuous (`loc`, `cyclomatic_complexity`, `max_nesting_depth`, `num_parameters`, `num_objects_instantiated`, `num_external_calls`) | Mann-Whitney U |
-| Categorical (`framework`, `scope`, `has_teardown_pair`, `fixture_type`, mock `category`) | Chi-square |
+| Continuous (`loc`, `cyclomatic_complexity`, `comment_density`) | Mann-Whitney U |
+| Categorical (`fixture_type`, mock `category`) | Chi-square |
 
 Every test also reports an effect size — Cliff's delta for Mann-Whitney, Cramér's V for chi-square — since p-values alone conflate statistical significance with sample size; at this corpus's scale (tens of thousands of fixtures), p-values are near-zero for almost any nonzero difference, meaningful or not. Continuous metrics are additionally re-tested at repo level (one mean-per-repo value instead of one value per fixture — see RQ1/RQ3's "Repo-level aggregates" section) to guard against pseudo-replication, since fixtures cluster within repos and testing raw fixture values as independent observations can inflate apparent significance.
 
@@ -171,7 +169,7 @@ See [Limitations and Threats to Validity](../reference/limitations.md) for the f
 
 ### Internal validity
 
-Tier 1 agent detection under-reports agent contributions by design (precision over recall) — commits without agent trailers or identity signals are classified as human. This creates a differential false-negative risk between Datasets B and C: Dataset B's repos are agent-adopting by construction, so an untrailed, informally-agent-assisted commit is more likely there than in Dataset C's pool. B and C are not interchangeable human baselines; treat A-vs-B and A-vs-C as related but distinct comparisons. A further, unmeasured threat is differential recall across authorship groups — the same AST detector is applied to agent and human code alike, but recall could differ if agent code follows canonical framework idioms more consistently than human code. Finally, some metrics are heuristic: `num_external_calls` is regex-based and may miss indirect I/O, and `has_teardown_pair` may miss implicit cleanup such as connection pooling.
+Tier 1 agent detection under-reports agent contributions by design (precision over recall) — commits without agent trailers or identity signals are classified as human. This creates a differential false-negative risk between Datasets B and C: Dataset B's repos are agent-adopting by construction, so an untrailed, informally-agent-assisted commit is more likely there than in Dataset C's pool. B and C are not interchangeable human baselines; treat A-vs-B and A-vs-C as related but distinct comparisons. A further, unmeasured threat is differential recall across authorship groups — the same AST detector is applied to agent and human code alike, but recall could differ if agent code follows canonical framework idioms more consistently than human code.
 
 ### Construct validity
 

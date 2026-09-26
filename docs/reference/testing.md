@@ -30,9 +30,7 @@ tests/
     ├── test_extractor_metadata/     # Category 2: metadata accuracy
     │   ├── test_line_numbers.py
     │   ├── test_fixture_types_and_scopes.py
-    │   ├── test_fixture_dependencies.py
-    │   ├── test_new_metrics.py
-    │   └── test_object_instantiations.py
+    │   └── test_new_metrics.py
     ├── test_extractor_edge_cases/   # Category 3: edge-case robustness
     │   └── test_edge_cases.py
     ├── test_mock_detection/         # Category 4: mock framework patterns
@@ -54,8 +52,8 @@ tests/
 
 ## Test Categories
 
-1. **Unit tests** — small code snippets (1–10 lines), validating fixture detection and scope classification across all languages.
-2. **Metadata tests** — line numbers, LOC, fixture type, scope, complexity metrics (cyclomatic, cognitive), code metrics (parameters, objects instantiated, I/O calls), fixture dependency detection, and scope propagation (pytest only — see [Metrics Reference § fixture_dependencies](../architecture/metrics-reference.md#fixture_dependencies-pythonpytest-only)).
+1. **Unit tests** — small code snippets (1–10 lines), validating fixture detection and `fixture_type` classification across all languages.
+2. **Metadata tests** — line numbers, LOC, fixture type, `fixture_type_kind` classification, cyclomatic complexity, comment density/parameter counts.
 3. **Edge cases** — large fixtures (100+ lines), deep nesting, false positive prevention, unicode, special characters, indentation variations, empty fixtures, malformed code.
 4. **Mock detection** — mock framework identification and test-double category classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across languages. See [Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection) for the full methodology and [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml) for the exact pattern/framework/category catalog (27 patterns, 9 frameworks). Coverage: Python (`unittest.mock`'s `patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`; `pytest-mock`'s `mocker.patch`/`mocker.patch.object`; pytest's built-in `monkeypatch`), Java (Mockito, EasyMock, MockK — not PowerMock, a documented exclusion), JavaScript (Jest's `fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`, Sinon's `stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`), TypeScript (same Jest/Sinon patterns, plus Vitest's `vi.fn`/`vi.mock`). Every test in this category asserts on `fixture.mocks` directly (framework, category, target_identifier) rather than just that the surrounding fixture was extracted — a fixture can be detected correctly while its mock usage inside is silently missed, which is how several real gaps were originally found (see `mock_patterns_excluded` in the YAML catalog for what's still knowingly unhandled).
 5. **Integration tests** — realistic, multi-language test code: Django TestCase hierarchy (Python), JUnit 5 with nested classes (Java), Jest with beforeAll/afterAll (JavaScript), type-annotated Jest (TypeScript), implicit vs. explicit setup patterns, complex fixture dependencies, large test modules with many fixtures.
@@ -99,7 +97,7 @@ class Test(unittest.TestCase):
         self.x = 1
 """
     fixture = assert_fixture_detected(code, 'python', 'setUp')
-    assert fixture.scope == 'per_test'
+    assert fixture.fixture_type == 'unittest_setup'
     assert_loc(fixture, 1)
 ```
 
