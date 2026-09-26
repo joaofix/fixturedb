@@ -59,7 +59,7 @@ agent_breakdown = pd.read_sql("""
         COUNT(DISTINCT f.commit_sha) as commits,
         COUNT(DISTINCT f.id) as fixtures,
         ROUND(AVG(f.loc), 2) as avg_loc,
-        ROUND(SUM(CASE WHEN f.fixture_type_kind IN ('teardown', 'setup_and_teardown')
+        ROUND(SUM(CASE WHEN f.fixture_role IN ('teardown', 'setup_and_teardown')
                         THEN 1 ELSE 0 END) * 100.0
               / COUNT(DISTINCT f.id), 1) as teardown_kind_pct
     FROM fixtures f

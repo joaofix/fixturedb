@@ -56,7 +56,7 @@ detection and scope-downgrade propagation that used to feed it; see
 **Pattern:** Method names: `setUp()`, `tearDown()`, `setUpClass()`, `tearDownClass()`, `setUpModule()`, `tearDownModule()`, `asyncSetUp()`, `asyncTearDown()` (the last two are `IsolatedAsyncioTestCase`'s own hooks, called in addition to `setUp()`/`tearDown()`, not a replacement for them)
 **Scope:** Determined by method name and class context
 
-**Teardown pairing:** `fixture_type_kind` (setup/teardown/other) is set by name (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`). The separate `has_teardown_pair` binary indicator -- which additionally recognized inline self-registered cleanup via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class), the modern docs-recommended alternative to a separate teardown method -- was removed from the extracted metric set entirely; `feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table is no longer read by any code, though it's still present in the YAML.
+**Teardown pairing:** `fixture_role` (setup/teardown/other) is set by name (`setUp`→`tearDown`, `setUpClass`→`tearDownClass`). The separate `has_teardown_pair` binary indicator -- which additionally recognized inline self-registered cleanup via `self.addCleanup(...)`/`self.enterContext(...)` (per-test) or `cls.addClassCleanup(...)`/`cls.enterClassContext(...)` (per-class), the modern docs-recommended alternative to a separate teardown method -- was removed from the extracted metric set entirely; `feature_extraction_patterns.yaml`'s `teardown_detection.self_registered_cleanup` table is no longer read by any code, though it's still present in the YAML.
 
 ---
 

@@ -1,6 +1,6 @@
 # Fixture Detection Logic
 
-FixtureDB detects test fixture definitions across Python, Java, JavaScript, and TypeScript in two phases. First, detection: Tree-sitter parses each file into an AST, and language-specific pattern tables identify which nodes are fixture definitions (decorators, annotations, method names) and classify their `fixture_type`. Second, metrics and post-processing: each detected fixture gets a fixed set of quantitative metrics (§ Fixture Metrics), then a second pass over the whole fixture list classifies each fixture's `fixture_type_kind` (setup/teardown/setup_and_teardown/other) by cross-referencing it against its paired counterpart.
+FixtureDB detects test fixture definitions across Python, Java, JavaScript, and TypeScript in two phases. First, detection: Tree-sitter parses each file into an AST, and language-specific pattern tables identify which nodes are fixture definitions (decorators, annotations, method names) and classify their `fixture_type`. Second, metrics and post-processing: each detected fixture gets a fixed set of quantitative metrics (§ Fixture Metrics), then a second pass over the whole fixture list classifies each fixture's `fixture_role` (setup/teardown/setup_and_teardown/other) by cross-referencing it against its paired counterpart.
 
 See the [Appendix](#appendix-mermaid-diagram-source) for a diagram of the pipeline.
 
@@ -40,7 +40,7 @@ Each detected fixture carries these fields (`collection/detector_shared.py::Fixt
 | `loc` | Non-blank line count of the fixture's own text | `_count_loc()` |
 | `cyclomatic_complexity`, `num_parameters` | Lizard, run on the fixture's isolated source | `complexity_provider.py` |
 | `num_comment_lines`, `comment_density` | Tree-sitter comment-node walk | `_count_comment_lines()` |
-| `fixture_type_kind` | Post-processing, paired against other fixtures in the file (`pytest_decorator` classified directly from body analysis instead) | `_classify_fixture_kinds()` |
+| `fixture_role` | Post-processing, paired against other fixtures in the file (`pytest_decorator` classified directly from body analysis instead) | `_classify_fixture_kinds()` |
 | `mocks` | Regex over mock-framework patterns | `_extract_mocks()` |
 | `raw_source`, `start_line`, `end_line` | Verbatim fixture text and location, for manual audit | — |
 
@@ -52,7 +52,7 @@ Full per-metric methodology and known limitations for what remains: [metrics-ref
 
 Cognitive complexity was evaluated and dropped entirely (not shipped as a Python-only or formula-approximated metric): its only programmatic implementation (`complexipy`) is Python-specific, and no equivalent exists for Java/JS/TS.
 
-`cyclomatic_complexity`/`num_parameters`/`comment_density` are regression-tested in `tests/collection/test_extractor_metadata/test_new_metrics.py`; `fixture_type_kind` classification in `tests/collection/test_fixture_kind_classification.py`.
+`cyclomatic_complexity`/`num_parameters`/`comment_density` are regression-tested in `tests/collection/test_extractor_metadata/test_new_metrics.py`; `fixture_role` classification in `tests/collection/test_fixture_kind_classification.py`.
 
 ---
 
@@ -70,7 +70,7 @@ Pattern/framework tables live in [feature_extraction_patterns.yaml](../../collec
 
 Run once per file, after every fixture in it has been detected:
 
-- **`fixture_type_kind` classification** (`_classify_fixture_kinds`) labels every fixture except `pytest_decorator` as `setup`, `teardown`, or `other`, by cross-referencing its `fixture_type` against `feature_extraction_patterns.yaml`'s `teardown_detection` tables: the same fixture type distinguished by name (`setUp`/`tearDown`), or a different fixture type at the matching position (`@BeforeEach`/`@AfterEach`, `beforeAll`/`afterAll`, etc.). `pytest_decorator` is classified separately, directly from body analysis (presence/position of `yield`) at detection time, since every pytest fixture is just named whatever the developer called it -- this is also the one path that can produce `setup_and_teardown`, which the type/name-based classification above never does.
+- **`fixture_role` classification** (`_classify_fixture_kinds`) labels every fixture except `pytest_decorator` as `setup`, `teardown`, or `other`, by cross-referencing its `fixture_type` against `feature_extraction_patterns.yaml`'s `teardown_detection` tables: the same fixture type distinguished by name (`setUp`/`tearDown`), or a different fixture type at the matching position (`@BeforeEach`/`@AfterEach`, `beforeAll`/`afterAll`, etc.). `pytest_decorator` is classified separately, directly from body analysis (presence/position of `yield`) at detection time, since every pytest fixture is just named whatever the developer called it -- this is also the one path that can produce `setup_and_teardown`, which the type/name-based classification above never does.
 
 Two other cross-fixture passes -- a binary `has_teardown_pair` indicator, and pytest fixture-dependency/scope-propagation tracking -- were removed entirely along with the fields they only ever fed (see [metrics-reference.md](metrics-reference.md)). `reuse_count` (test functions using a fixture) was removed earlier, for a different reason (a fabricated metric, not an unused one) — see [metrics-reference.md § reuse_count — removed](metrics-reference.md#reuse_count-removed).
 
@@ -92,7 +92,7 @@ See also: [configuration.md](configuration.md), [metrics-reference.md](metrics-r
 flowchart TB
     A["Source Code<br>(Python, Java,<br>JS, TS)"] --> B["Phase 1:<br>Parse &amp; Identify Fixtures<br>(Tree-sitter AST)"]
     B --> C["Phase 2:<br>Compute Metrics<br>(Complexity &amp; Structure)"]
-    C --> D["Post-Process:<br>Classify Setup/Teardown<br>(fixture_type_kind)"]
+    C --> D["Post-Process:<br>Classify Setup/Teardown<br>(fixture_role)"]
     D --> E["Export<br>(SQLite + CSV)"]
     B1["- Parse code into AST<br>- Detect fixture patterns<br>- Identify annotations,<br>  decorators, method names"] -.- B
     C1["- Measure cyclomatic<br>  complexity<br>- Count code structure<br>  (LOC, parameters,<br>  comments)"] -.- C

@@ -25,7 +25,7 @@ Generating the findings: `python -m collection.research_questions.rq1` computes 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown
 > provision?
 
-What it covers: setup and teardown are detected as separate `fixture_type` values — `junit5_before_each` vs `junit5_after_each`, `before_each` vs `after_each` — and classified into a `fixture_type_kind` (setup/teardown/other) via the same type/name lookup tables (see `rq2.py`'s module docstring). `has_teardown_pair`, a separate binary indicator that used to exist alongside `fixture_type_kind`, was removed from the extracted metric set entirely.
+What it covers: setup and teardown are detected as separate `fixture_type` values — `junit5_before_each` vs `junit5_after_each`, `before_each` vs `after_each` — and classified into a `fixture_role` (setup/teardown/other) via the same type/name lookup tables (see `rq2.py`'s module docstring). `has_teardown_pair`, a separate binary indicator that used to exist alongside `fixture_role`, was removed from the extracted metric set entirely.
 
 Two reported tables (A vs C), replacing an earlier single median-proportion table:
 - **Table 1 (fixture counts)**: purely descriptive, no statistics — the raw count of setup-classified and teardown-classified fixtures per language and Total ("other"-classified fixtures excluded from both columns).
@@ -60,7 +60,7 @@ What it covers: an open-coding taxonomy, positioned last so it synthesizes the p
 | RQ | Question | Type | Key Metrics | Datasets |
 |----|----------|------|--------------|----------|
 | RQ1 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | Paper: `loc`, `cyclomatic_complexity`, `comment_density`. Also reported (not in paper): `num_parameters`, `fixture_type`, `commit_type` | A vs C |
-| RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_type_kind` (setup/teardown/other): absolute fixture counts by type, per-repo teardown coverage rate | A vs C |
+| RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_role` (setup/teardown/other): absolute fixture counts by type, per-repo teardown coverage rate | A vs C |
 | RQ3 | How do agent and human fixtures differ in mock usage? | Quantitative | Mocking coverage (% repos with any mock) and intensity (median mock calls per mocking fixture), `num_interactions_configured` | A vs C |
 | RQ4 | What operations do fixtures perform, and do agents cover the full range of human fixture responsibilities? | Mixed | `category` (manual label), `fixture_type` | A vs C |
 

@@ -13,7 +13,7 @@ fixture is found in the first place), see [detection.md](detection.md).
 | `loc` | Non-blank line count | `detector_shared.py::_count_loc()` | all |
 | `num_comment_lines`, `comment_density` | Tree-sitter comment-node walk | `detector_shared.py::_count_comment_lines()` | all |
 | `fixture_type` | AST pattern match vs. `fixture_definitions.yaml` | `detector_python.py` / `detector_java.py` / `detector_javascript.py` | all |
-| `fixture_type_kind` | Post-processing, paired against sibling fixtures | `detector_shared.py::_classify_fixture_kinds()` | all |
+| `fixture_role` | Post-processing, paired against sibling fixtures | `detector_shared.py::_classify_fixture_kinds()` | all |
 | `num_mocks`, `mocks` | Regex (mock-framework patterns) | `detector_shared.py::_extract_mocks()` | all |
 | `raw_source`, `start_line`, `end_line` | Verbatim text/location of the fixture's own node | `detector_shared.py::_build_result()` | all |
 
@@ -87,7 +87,7 @@ source always produces the same classification, no heuristics involved. Full per
 and known ambiguities (e.g. `@BeforeClass` is shared syntax between JUnit4 and TestNG and the two
 frameworks can't always be told apart from the annotation alone): [fixture-patterns-reference.md](../usage/fixture-patterns-reference.md).
 
-### fixture_type_kind
+### fixture_role
 
 setup/teardown/setup_and_teardown/other, computed in a post-processing pass over the whole fixture
 list (`_classify_fixture_kinds()`) by cross-referencing each fixture_type against

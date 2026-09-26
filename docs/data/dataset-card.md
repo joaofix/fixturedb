@@ -65,10 +65,10 @@ All metrics are collected from test files only.
 | `num_parameters` | Formal parameter count from AST | Tree-sitter / Lizard |
 | `num_comment_lines` / `comment_density` | Comment-only lines within the fixture, and their ratio to `loc` | Tree-sitter |
 | `fixture_type` | Detected fixture pattern (e.g. `pytest_decorator`, `unittest_setup`) | AST pattern match |
-| `fixture_type_kind` | setup/teardown/setup_and_teardown/other | AST + pairing rules |
+| `fixture_role` | setup/teardown/setup_and_teardown/other | AST + pairing rules |
 | `num_mocks` / `mock_framework` / `category` | Mock usage, test-double taxonomy | Regex |
 
-`scope`, `framework`, `max_nesting_depth`, `num_objects_instantiated`, `num_external_calls`, `has_teardown_pair` (a binary, distinct from `fixture_type_kind`), and `fixture_dependencies` were removed from the extracted metric set entirely — `scope`/`framework` were fully redundant with `fixture_type` (1:1 mapping verified across the collected data), and the other four simply aren't part of this study's reported metrics.
+`scope`, `framework`, `max_nesting_depth`, `num_objects_instantiated`, `num_external_calls`, `has_teardown_pair` (a binary, distinct from `fixture_role`), and `fixture_dependencies` were removed from the extracted metric set entirely — `scope`/`framework` were fully redundant with `fixture_type` (1:1 mapping verified across the collected data), and the other four simply aren't part of this study's reported metrics.
 
 ### Control variables
 
