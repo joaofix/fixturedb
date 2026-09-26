@@ -40,7 +40,7 @@ Supplementary (not part of either table, rendered in its own "Supplementary Anal
 > How do agent-generated and human-written fixtures differ in mock usage — coverage
 > and intensity?
 
-What it covers: `num_mocks` (mock calls per fixture) and `num_interactions_configured` (continuous, unchanged), plus one paper table combining two repo-level metrics derived from `num_mocks`: **mocking coverage** (does a repo have >=1 fixture with a mock at all?) and **mocking intensity** (among repos that do mock, the median mock-call count across that repo's own mocking fixtures). This RQ is purely quantitative — the old RQ3's qualitative `target_identifier`-based target-layer coding (boundary/internal/infrastructure) has been dropped rather than reduced to a keyword heuristic.
+What it covers: `num_mocks` (mock calls per fixture), plus one paper table combining two repo-level metrics derived from it: **mocking coverage** (does a repo have >=1 fixture with a mock at all?) and **mocking intensity** (among repos that do mock, the median mock-call count across that repo's own mocking fixtures). This RQ is purely quantitative — the old RQ3's qualitative `target_identifier`-based target-layer coding (boundary/internal/infrastructure) has been dropped rather than reduced to a keyword heuristic. `num_interactions_configured` (a separate `mock_usages` column estimating how many interactions were configured on a mock) was never one of the paper's reported metrics and was removed from the extracted metric set entirely (2026-09-26).
 
 The reported comparison asks whether repos mock at all more or less often since the pre-LLM era (Coverage, A vs C), and, among repos that do mock, how heavily (Intensity, A vs C).
 
@@ -61,7 +61,7 @@ What it covers: an open-coding taxonomy, positioned last so it synthesizes the p
 |----|----------|------|--------------|----------|
 | RQ1 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | Paper: `loc`, `cyclomatic_complexity`, `comment_density`. Also reported (not in paper): `num_parameters`, `fixture_type`, `commit_type` | A vs C |
 | RQ2 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_role` (setup/teardown/other): absolute fixture counts by type, per-repo teardown coverage rate | A vs C |
-| RQ3 | How do agent and human fixtures differ in mock usage? | Quantitative | Mocking coverage (% repos with any mock) and intensity (median mock calls per mocking fixture), `num_interactions_configured` | A vs C |
+| RQ3 | How do agent and human fixtures differ in mock usage? | Quantitative | Mocking coverage (% repos with any mock) and intensity (median mock calls per mocking fixture) | A vs C |
 | RQ4 | What operations do fixtures perform, and do agents cover the full range of human fixture responsibilities? | Mixed | `category` (manual label), `fixture_type` | A vs C |
 
 ---
