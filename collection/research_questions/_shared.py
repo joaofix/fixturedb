@@ -405,8 +405,8 @@ def render_comparison_table(
     else (not the Overall row, not other variables' tests) -- and adds one
     row per language (sorted alphabetically), each with its own raw + BH-
     adjusted p. If `per_language` is None, the table is Overall-only (this
-    metric has no per-language family defined for it -- e.g. RQ1's
-    commit_type, RQ3's num_mocks).
+    metric has no per-language family defined for it -- e.g. RQ3's
+    num_mocks).
 
     `per_language_medians`/`per_language_q3`/`per_language_p90`, each
     independently optional, are {language: (a_value, other_value)} --

@@ -518,7 +518,6 @@ def insert_fixture(conn: sqlite3.Connection, fixture: dict) -> int:
         "agent_type",
         "commit_kind",
         "is_complete_addition",
-        "commit_type",
         "repo_age_at_commit_years",
     ]
     for col in agent_columns:

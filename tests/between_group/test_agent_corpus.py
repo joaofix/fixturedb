@@ -861,20 +861,11 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
     row_empty = conn.execute(
         "SELECT * FROM repositories WHERE full_name = ?", ("owner/empty-repo",)
     ).fetchone()
-    # The only fixture came from the "test: add test_bar" commit, which
-    # is Conventional-Commits-shaped with type "test".
-    fixture_row = conn.execute(
-        "SELECT commit_type FROM fixtures WHERE name = 'bar'"
-    ).fetchone()
     conn.close()
-
-    assert fixture_row is not None
-    assert fixture_row["commit_type"] == "test"
 
     with fixtures_csv_path.open("r", encoding="utf-8", newline="") as fh:
         fixture_rows = list(csv.DictReader(fh))
     assert len(fixture_rows) == 1
-    assert fixture_rows[0]["commit_type"] == "test"
 
     assert row_main is not None
     assert row_main["agent_commits_touching_tests"] == 2

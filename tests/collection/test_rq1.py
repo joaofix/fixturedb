@@ -140,7 +140,7 @@ def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
     """Create db/{dataset}.db under `root` with one repo/file and `fixtures` rows.
 
     Each dict in `fixtures` may override any of the base columns below
-    (loc, cyclomatic_complexity, scope, fixture_type, commit_type, ...).
+    (loc, cyclomatic_complexity, fixture_type, ...).
 
     Dataset "c" writes to c_sampled.db instead of the full c.db --
     research_questions/ reads Dataset C's fixture-level sample-down, see
@@ -302,13 +302,6 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.agent_type_distribution == {"claude": 2, "copilot": 1}
 
-    def test_null_commit_type_excluded_from_categorical_distribution(self, tmp_path):
-        """Dataset C fixtures never set commit_type -- must come back as an
-        empty dict, not a fake {'None': n} bucket."""
-        _make_db(tmp_path, "c", [{}, {}])
-        metrics = load_dataset_metrics("c", db_root=tmp_path)
-        assert metrics.categorical["commit_type"] == {}
-
     def test_fixture_type_by_language_groups_by_fixtures_own_language(self, tmp_path):
         """Grouped by test_files.language (the fixture's own file), not the
         repo's tagged language -- same distinction compute_language_leakage()
@@ -354,11 +347,6 @@ class TestLoadDatasetMetrics:
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.fixture_type_n_by_language == {"python": 1}
-
-    def test_commit_type_n_counts_distinct_repos_with_non_null_value(self, tmp_path):
-        _make_db(tmp_path, "a", [{"commit_type": None}, {"commit_type": "feat"}])
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.commit_type_n == 1
 
     def test_repo_level_continuous_by_language_is_one_mean_per_repo_per_language(self, tmp_path):
         _make_multi_language_db(
@@ -545,17 +533,6 @@ class TestGenerateReport:
         assert (
             "| python | 4 | 4 | 2.50 | 25.00 | 3.25 | 32.50 | 3.70 | 37.00 |" in python_line
         )
-
-    def test_categorical_insufficient_data_when_column_all_null(self, tmp_path):
-        # commit_type is never set here -> both sides empty -> insufficient data.
-        _make_db(tmp_path, "a", [{"loc": 1}])
-        _make_db(tmp_path, "c", [{"loc": 1}])
-        report = generate_report(db_root=tmp_path)
-        commit_type_section = report.split("### commit_type")[1].split("## Repo-level")[0]
-        overall_line = next(
-            line for line in commit_type_section.splitlines() if line.startswith("| Overall |")
-        )
-        assert "_insufficient data_" in overall_line
 
     def test_categorical_comparison_renders_effect_size(self, tmp_path):
         # A is all before_each, C is all after_each -> maximal association.

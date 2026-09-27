@@ -88,8 +88,6 @@ CREATE TABLE IF NOT EXISTS fixtures (
     agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/other
     commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
-    commit_type             TEXT DEFAULT NULL,      -- Conventional Commits type of the originating commit
-                                    -- (agent or human: feat/fix/docs/refactor/test/chore/style/other/none)
     repo_age_at_commit_years REAL DEFAULT NULL,     -- repo age (created_at -> commit_date), always
                                     -- defined (a commit can't precede its own repo's creation) --
                                     -- unlike repositories.repo_age_years, which is NULL for repos

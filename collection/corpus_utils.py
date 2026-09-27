@@ -203,7 +203,6 @@ def write_fixture_csv_row(
         "github_url",
         "agent_type",
         "commit_kind",
-        "commit_type",
         "raw_source",
         "commit_date",
         "repo_age_at_commit_years",
@@ -251,7 +250,6 @@ def write_fixture_csv_row(
             ),
             "agent_type": fixture.get("agent_type", ""),
             "commit_kind": fixture.get("commit_kind", "unknown"),
-            "commit_type": fixture.get("commit_type", ""),
             "raw_source": fixture.get("raw_source", ""),
             "commit_date": fixture.get("commit_date", ""),
             "repo_age_at_commit_years": fixture.get("repo_age_at_commit_years"),
@@ -367,7 +365,6 @@ def persist_repository_and_fixtures(
                 "commit_kind": fixture.get("commit_kind", "unknown"),
                 "agent_type": fixture.get("agent_type"),
                 "is_complete_addition": 1,
-                "commit_type": fixture.get("commit_type"),
                 "repo_age_at_commit_years": fixture.get("repo_age_at_commit_years"),
             }
 

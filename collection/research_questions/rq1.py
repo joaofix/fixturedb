@@ -3,8 +3,8 @@ RQ1 -- General Metrics Overview (Quantitative): how do agent-generated and
 human-written fixtures compare across structural metrics?
 
 Computes, per dataset (A/C), summary statistics for the RQ1 metrics (LOC,
-cyclomatic complexity, comment density, num_parameters, fixture_type,
-commit_type), plus an A vs C comparison. Dataset B (contemporary
+cyclomatic complexity, comment density, num_parameters, fixture_type),
+plus an A vs C comparison. Dataset B (contemporary
 within-repo human baseline) is still collected (db/b.db,
 paired_collection.py) but out of scope for this script's reported
 comparisons.
@@ -20,11 +20,14 @@ Mann-Whitney tested, under a separate "Other Extracted Features" heading)
 but were dropped from the extracted metric set entirely -- not reported in
 the paper, and removed from detection/storage/CSV export rather than kept
 as unused columns. `scope` (a categorical metric) was dropped the same
-way. The categorical metrics that remain (`fixture_type`/`commit_type`)
-have their own, separate, pre-existing paper/non-paper framing
-(`fixture_type`'s fixture-level chi-square explicitly is NOT the paper's
-result; its repo-level companion in "Repo-level aggregates" IS -- see
-below).
+way, and so was `commit_type` (2026-09-27) -- a Conventional Commits
+classification of the originating commit's message, computed for both
+Dataset A and B and never used in any reported RQ; its whole
+`conventional_commits.py` module was removed along with it. The one
+categorical metric that remains (`fixture_type`) has its own,
+separate, pre-existing paper/non-paper framing (its fixture-level
+chi-square explicitly is NOT the paper's result; its repo-level
+companion in "Repo-level aggregates" IS -- see below).
 
 `comment_density` (added 2026-08-17, the third paper metric) is
 `fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
@@ -70,8 +73,7 @@ single pooled test) plus, for metrics with a defined per-language family,
 one BH-corrected row per language, corrected independently of every other
 metric and of their own Overall row (see render_comparison_table()'s
 docstring). `loc`/`cyclomatic_complexity`/`comment_density`/`fixture_type`
-each have a 4-language family; `commit_type` doesn't, and renders
-Overall-only.
+each have a 4-language family.
 
 Continuous metrics are repo-level throughout (one value per repo, per
 language for the per-language rows) -- not the raw per-fixture values --
@@ -166,7 +168,7 @@ FLOOR_CHECK_METRICS = {"num_parameters": 0}
 # comparison, so dropping num_parameters from CONTINUOUS_METRICS (the
 # Mann-Whitney-tested list) doesn't affect either.
 DESCRIPTIVE_CONTINUOUS_METRICS = CONTINUOUS_METRICS + list(FLOOR_CHECK_METRICS)
-CATEGORICAL_METRICS = ["fixture_type", "commit_type"]
+CATEGORICAL_METRICS = ["fixture_type"]
 
 
 @dataclass
@@ -184,7 +186,6 @@ class DatasetMetrics:
     fixture_type_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     fixture_type_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
     fixture_type_n_by_language: dict[str, int] = field(default_factory=dict)
-    commit_type_n: int = 0
     # metric -> % of fixtures at FLOOR_CHECK_METRICS' floor value (descriptive
     # only -- see this module's docstring).
     floor_pct: dict[str, float] = field(default_factory=dict)
@@ -220,15 +221,6 @@ def _fetch_repo_count_by_language(conn: sqlite3.Connection, column: str) -> dict
         f"WHERE f.{column} IS NOT NULL GROUP BY tf.language"
     ).fetchall()
     return dict(rows)
-
-
-def _fetch_repo_count(conn: sqlite3.Connection, column: str) -> int:
-    """Distinct repo_id count for fixtures with a non-null `column`,
-    dataset-wide -- the Overall row's n_A/n_C for a metric with no other
-    repo-count source already loaded (commit_type)."""
-    return conn.execute(
-        f"SELECT COUNT(DISTINCT repo_id) FROM fixtures WHERE {column} IS NOT NULL"
-    ).fetchone()[0]
 
 
 def _fetch_continuous_by_repo_and_language(
@@ -300,7 +292,6 @@ def load_dataset_metrics(
         fixture_type_by_language = _fetch_fixture_type_by_language(conn)
         fixture_type_by_repo = fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type")
         fixture_type_n_by_language = _fetch_repo_count_by_language(conn, "fixture_type")
-        commit_type_n = _fetch_repo_count(conn, "commit_type")
         language_leakage = compute_language_leakage(conn)
         # Descriptive only, not run through a significance test: agent_type
         # is the group-defining variable for Dataset A (which agent
@@ -369,7 +360,6 @@ def load_dataset_metrics(
         fixture_type_by_language=fixture_type_by_language,
         fixture_type_by_repo=fixture_type_by_repo,
         fixture_type_n_by_language=fixture_type_n_by_language,
-        commit_type_n=commit_type_n,
         floor_pct=floor_pct,
     )
 
@@ -397,8 +387,7 @@ def compare_datasets_categorical(
     a: DatasetMetrics, other: DatasetMetrics
 ) -> dict[str, BalanceTest]:
     """A vs `other`: pooled fixture-level chi-square per categorical metric
-    (fixture_type, commit_type) -- the Overall row for each metric's
-    table."""
+    (fixture_type) -- the Overall row for each metric's table."""
     return {
         metric: compute_categorical_balance(
             human_dist=other.categorical[metric],
@@ -596,8 +585,8 @@ def _render_categorical_metric(
     other_n_by_language: dict[str, int],
 ) -> str:
     """One categorical metric's table -- Overall-only if `a_by_language`/
-    `other_by_language` is None (no family defined for this metric, e.g.
-    commit_type), else Overall + per-language family rows."""
+    `other_by_language` is None (no family defined for this metric),
+    else Overall + per-language family rows."""
     per_language = None
     per_language_n = None
     if a_by_language is not None and other_by_language is not None:
@@ -696,7 +685,7 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "(thresholds: negligible <0.1, small <0.3, medium <0.5, else large). "
         "Same Overall-uncorrected / per-language-family-corrected convention "
         "as the continuous metrics above. `fixture_type` has a per-language "
-        "family; `commit_type` doesn't (renders Overall-only).",
+        "family.",
         "",
     ]
     lines.append(
@@ -720,22 +709,9 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "Pseudo-Replication](../docs/reference/limitations.md#categorical-"
         "pseudo-replication)). The paper reports the repo-level "
         '`fixture_type` proportion test in "Repo-level aggregates" below '
-        "instead. `commit_type` above is unaffected and used as-is.",
+        "instead.",
         "",
     ]
-    lines.append(
-        _render_categorical_metric(
-            "commit_type",
-            a,
-            other,
-            categorical_overall["commit_type"],
-            NCounts(a.commit_type_n, other.commit_type_n),
-            None,
-            None,
-            {},
-            {},
-        )
-    )
 
     return "\n".join(lines)
 

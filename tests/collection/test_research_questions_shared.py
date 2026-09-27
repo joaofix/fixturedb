@@ -693,7 +693,7 @@ class TestRenderComparisonTable:
         assert data_rows[0].rstrip("|").rsplit("|", 1)[-1].strip() == "--"
 
     def test_overall_only_when_no_family_given(self):
-        overall = BalanceTest(variable="commit_type", test_type="chi-square", p_value=0.5, is_balanced=True)
+        overall = BalanceTest(variable="some_metric", test_type="chi-square", p_value=0.5, is_balanced=True)
         rendered = render_comparison_table(overall, NCounts(3, 3), None, None, other_dataset="c")
         data_rows = [
             line
