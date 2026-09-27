@@ -107,7 +107,6 @@ Agent detection — file scanning, commit-trailer/author-identity matching, fixt
 
 - `test_agent_detection_logic.py` — agent config file scanning, GitHub API file-listing helper (retry/rate-limit handling)
 - `test_agent_patterns_thorough.py`, `test_agent_patterns_extra.py` — agent signature catalog matching (author identity, trailers)
-- `test_conventional_commits.py` — commit-trailer parsing
 - `test_end_to_end_collection.py` — collector initialization, DB persistence, concurrency, error handling for both Dataset A and B collectors
 - `tests/between_group/test_agent_corpus.py` — Dataset A's collector, using real git repositories in `tmp_path` with `Co-authored-by` trailers
 
