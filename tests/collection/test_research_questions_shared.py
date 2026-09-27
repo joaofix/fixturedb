@@ -30,7 +30,6 @@ from collection.research_questions._shared import (
     format_p_value,
     pct,
     percentile,
-    render_ascii_histogram,
     render_categorical_repo_level_table,
     render_comparison_table,
     render_language_leakage_table,
@@ -38,7 +37,6 @@ from collection.research_questions._shared import (
     repo_level_category_proportions,
     repo_level_means,
     require_db_or_none,
-    run_dip_test,
     summarize_continuous,
     write_markdown_report,
 )
@@ -101,86 +99,6 @@ class TestPercentile:
     def test_50th_percentile_matches_median(self):
         values = [3.0, 1.0, 4.0, 1.0, 5.0, 9.0, 2.0, 6.0]
         assert percentile(values, 50) == summarize_continuous(values)["median"]
-
-
-class TestRunDipTest:
-    # Uniform 0.30..0.70 -- the dip test's own p-value is calibrated
-    # against the uniform distribution as the unimodal reference case, so
-    # this is the strongest, least-arbitrary "should not reject
-    # unimodality" fixture available, and needs no RNG to be deterministic.
-    UNIMODAL_VALUES = [i / 100 for i in range(30, 71)]
-    # Two tight, far-separated clusters (0.000-0.020 and 0.980-1.000) --
-    # an extreme, unambiguous bimodal shape, also RNG-free.
-    BIMODAL_VALUES = [i / 1000 for i in range(0, 21)] + [1 - i / 1000 for i in range(0, 21)]
-
-    def test_fewer_than_four_values_returns_none(self):
-        assert run_dip_test([]) is None
-        assert run_dip_test([0.5]) is None
-        assert run_dip_test([0.1, 0.2, 0.3]) is None
-
-    def test_exactly_four_values_does_not_crash(self):
-        result = run_dip_test([0.1, 0.2, 0.3, 0.4])
-        assert result is not None
-        assert result["n"] == 4
-
-    def test_uniform_distribution_not_significant(self):
-        result = run_dip_test(self.UNIMODAL_VALUES)
-        assert result["n"] == len(self.UNIMODAL_VALUES)
-        assert result["p_value"] > 0.05
-
-    def test_bimodal_distribution_significant(self):
-        result = run_dip_test(self.BIMODAL_VALUES)
-        assert result["n"] == len(self.BIMODAL_VALUES)
-        assert result["p_value"] < 0.05
-        # The bimodal split's dip statistic should exceed the uniform
-        # case's -- confirms the two calls aren't returning the same
-        # constant regardless of input.
-        uniform_result = run_dip_test(self.UNIMODAL_VALUES)
-        assert result["dip_statistic"] > uniform_result["dip_statistic"]
-
-    def test_deterministic_no_seed_needed(self):
-        """Two calls on the same data must agree exactly -- the default
-        tabulated-critical-values p-value (not the optional bootstrap
-        mode) is used specifically so this holds without a seed."""
-        first = run_dip_test(self.BIMODAL_VALUES)
-        second = run_dip_test(self.BIMODAL_VALUES)
-        assert first == second
-
-
-class TestRenderAsciiHistogram:
-    def test_empty_values_renders_no_data(self):
-        assert render_ascii_histogram([]) == "_(no data)_"
-
-    def test_renders_fenced_code_block_with_all_bins(self):
-        text = render_ascii_histogram([0.05, 0.05, 0.95], n_bins=10)
-        lines = text.splitlines()
-        assert lines[0] == "```"
-        assert lines[-1] == "```"
-        # 10 bins + 2 fence lines
-        assert len(lines) == 12
-
-    def test_bin_counts_match_input(self):
-        text = render_ascii_histogram([0.05, 0.05, 0.95], n_bins=10)
-        # bin 0 (0.00-0.10) gets the two 0.05s, bin 9 (0.90-1.00) gets the 0.95
-        assert "0.00- 0.10 | " in text or "0.00-0.10" in text
-        assert "(2)" in text
-        assert "(1)" in text
-
-    def test_value_at_exact_upper_edge_clamps_into_last_bin(self):
-        """A value == value_range's upper bound (1.0 for the default 0..1
-        range) must land in the last bin, not be dropped or overflow into
-        a nonexistent 11th bin -- exercises the `v < hi` boundary check."""
-        text = render_ascii_histogram([1.0], n_bins=4)
-        assert "(1)" in text
-        # Only 4 bins + 2 fence lines -- no extra bin created for the edge value.
-        assert len(text.splitlines()) == 6
-
-    def test_out_of_range_value_clamps_instead_of_dropped(self):
-        text = render_ascii_histogram([-5.0, 5.0], n_bins=4)
-        # Both values must still be counted somewhere (clamped to the
-        # nearest edge bin), not silently discarded.
-        total_counted = sum(int(line.rsplit("(", 1)[1].rstrip(")")) for line in text.splitlines()[1:-1])
-        assert total_counted == 2
 
 
 class TestFmt:

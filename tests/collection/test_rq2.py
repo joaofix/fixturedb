@@ -33,10 +33,7 @@ from collection.research_questions.rq2 import (
     DatasetMetrics,
     _answerable_total,
     _pct_cell,
-    _python_teardown_proportions,
     _render_kind_classification_coverage_table,
-    _render_setup_coverage_table,
-    _render_teardown_dip_test,
     generate_report,
     load_dataset_metrics,
     write_report,
@@ -648,208 +645,6 @@ class TestGenerateReport:
         assert "| java | 0 | 0 | -- | -- | -- | -- |" == java_line
 
 
-class TestPythonTeardownProportions:
-    def test_returns_one_proportion_per_python_repo(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                # repo 0: 2 setUp, 0 tearDown -> 0.0
-                [
-                    {"fixture_type": "unittest_setup", "name": "setUp"},
-                    {"fixture_type": "unittest_setup", "name": "setUp"},
-                ],
-                # repo 1: 1 setUp, 1 tearDown -> 0.5
-                [
-                    {"fixture_type": "unittest_setup", "name": "setUp"},
-                    {"fixture_type": "unittest_setup", "name": "tearDown"},
-                ],
-                # repo 2: 0 setUp, 2 tearDown -> 1.0
-                [
-                    {"fixture_type": "unittest_setup", "name": "tearDown"},
-                    {"fixture_type": "unittest_setup", "name": "tearDown"},
-                ],
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        proportions = _python_teardown_proportions(metrics)
-        assert sorted(proportions) == [0.0, 0.5, 1.0]
-
-    def test_repo_with_only_other_kind_fixtures_contributes_zero_not_excluded(self, tmp_path):
-        """A repo whose only Python fixtures are pytest_decorator with no
-        raw_source to analyze ('other' -- see
-        test_classify_pytest_fixture_kind.py::TestClassifyFromSource.
-        test_empty_string_returns_other) is NOT skipped -- its "other"
-        fixture still counts toward the
-        total-classified denominator (1), so it contributes a real
-        teardown_pct of 0/1 = 0.0, same as a repo with a genuine setup-only
-        fixture. Historical note: before classify_pytest_fixture_kind_
-        from_source() existed, this was true for *every* pytest_decorator
-        fixture regardless of its actual source -- see
-        pytest-yield-teardown-vs-fixture-kind.md. Now it's only true when
-        there's no raw_source to classify from; see
-        test_pytest_decorator_teardown_is_counted below for the real,
-        source-analyzed case."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [{"fixture_type": "unittest_setup", "name": "setUp"}],
-                [{"fixture_type": "pytest_decorator"}],
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        proportions = _python_teardown_proportions(metrics)
-        assert proportions == [0.0, 0.0]
-
-    def test_pytest_decorator_teardown_is_counted(self, tmp_path):
-        """A pytest_decorator fixture with real yield-after-setup
-        raw_source is classified 'setup_and_teardown' and counts toward
-        the teardown_pct numerator -- the gap the previous test's
-        docstring and pytest-yield-teardown-vs-fixture-kind.md describe is
-        now closed for fixtures with real source to analyze."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [
-                    {
-                        "fixture_type": "pytest_decorator",
-                        "raw_source": (
-                            "def db():\n    conn = connect()\n"
-                            "    yield conn\n    conn.close()\n"
-                        ),
-                    }
-                ],
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.kind_distribution["setup_and_teardown"] == 1
-        proportions = _python_teardown_proportions(metrics)
-        assert proportions == [1.0]
-
-    def test_no_python_fixtures_returns_empty_list(self, tmp_path):
-        _make_multi_language_db(
-            tmp_path, "a", [{"language": "typescript", "fixtures": [{"fixture_type": "before_each"}]}]
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert _python_teardown_proportions(metrics) == []
-
-
-class TestRenderSetupCoverageTable:
-    """Setup analogue of Table 2's teardown-coverage tests above -- same
-    scenarios, mirrored for `has_setup` instead of `has_teardown`, minus
-    the effect-size column this table doesn't render."""
-
-    def test_header_and_section_title_present(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_setup_coverage_table(a_metrics, c_metrics)
-        assert "### Setup Coverage by Repository" in report
-        assert (
-            "| Language | n_A | n_C | Setup Coverage A (%) | "
-            "Setup Coverage C (%) | p (BH) |" in report
-        )
-
-    def test_setup_coverage_renders_percentages_no_effect_size_column(self, tmp_path):
-        """A has 1 of 2 repos with any setup (50%); C has 2 of 2 (100%) --
-        same fixture layout as the teardown-coverage table's analogous
-        test, just with setup/teardown swapped."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
-                [{"fixture_type": "after_each"}],
-            ],
-        )
-        _make_db(
-            tmp_path,
-            "c",
-            [
-                [{"fixture_type": "before_each"}],
-                [{"fixture_type": "before_each"}],
-            ],
-        )
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_setup_coverage_table(a_metrics, c_metrics)
-        overall_line = next(
-            line for line in report.splitlines() if line.startswith("| Overall |")
-        )
-        assert "| 2 | 2 |" in overall_line
-        assert "50.0% | 100.0%" in overall_line
-        # No effect-size column -- 6 fields / 7 pipes, unlike Table 2's
-        # 7-field / 8-pipe layout.
-        assert overall_line.count("|") == 7
-
-    def test_repo_with_only_teardown_counts_as_zero_setup_coverage(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "after_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_setup_coverage_table(a_metrics, c_metrics)
-        overall_line = next(
-            line for line in report.splitlines() if line.startswith("| Overall |")
-        )
-        assert "0.0% | 100.0%" in overall_line
-
-    def test_setup_and_teardown_classified_repo_counts_as_setup_covered(self, tmp_path):
-        """A repo whose only classified fixture is a pytest_decorator
-        classified 'setup_and_teardown' counts as setup-covered (1), same
-        as Table 2's mirror test for teardown coverage."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [
-                    {
-                        "fixture_type": "pytest_decorator",
-                        "raw_source": (
-                            "def db():\n    conn = connect()\n"
-                            "    yield conn\n    conn.close()\n"
-                        ),
-                    }
-                ]
-            ],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_setup_coverage_table(a_metrics, c_metrics)
-        overall_line = next(
-            line for line in report.splitlines() if line.startswith("| Overall |")
-        )
-        assert "100.0% | 0.0%" in overall_line
-
-    def test_language_absent_from_both_sides_shows_insufficient_data(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_setup_coverage_table(a_metrics, c_metrics)
-        java_line = next(line for line in report.splitlines() if line.startswith("| java |"))
-        assert "| java | 0 | 0 | -- | -- | -- |" == java_line
-
-    def test_generate_report_includes_setup_coverage_section(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        report = generate_report(db_root=tmp_path)
-        assert "### Setup Coverage by Repository" in report
-        # Under Supplementary Analyses, before the other supplementary
-        # sections (generate_report() renders this one first).
-        assert (
-            report.index("## Supplementary Analyses")
-            < report.index("### Setup Coverage by Repository")
-            < report.index("### Fixture Kind Classification Coverage by Language")
-            < report.index("### Unimodality Check: Python Teardown Proportion (Dip Test)")
-        )
-        # Does not touch Table 2's own section or numbers.
-        assert "### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)" in report
-
-
 class TestRenderKindClassificationCoverageTable:
     def test_header_and_section_title_present(self, tmp_path):
         _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
@@ -941,64 +736,15 @@ class TestRenderKindClassificationCoverageTable:
         report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
         assert "| A | java | 4 | 3 | 0 | 0 | 1 | 25.0% |" in report.splitlines()
 
-
-class TestRenderTeardownDipTest:
-    def test_insufficient_data_renders_dashes_not_a_crash(self, tmp_path):
-        """Fewer than 4 Python repos on either side -- run_dip_test()
-        returns None, and the table must degrade to '--' cells, not
-        raise."""
-        _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_teardown_dip_test(a_metrics, c_metrics)
-        assert "### Unimodality Check: Python Teardown Proportion (Dip Test)" in report
-        assert "| Dataset A | 1 | -- | -- |" in report
-        assert "| Dataset C | 1 | -- | -- |" in report
-
-    def test_sufficient_data_renders_real_statistic_and_p_value(self, tmp_path):
-        # 5 repos, teardown_pct = [0, 0, 0, 1, 1] -- >3 repos, so
-        # run_dip_test() returns a real result instead of None.
-        repos = [
-            [{"fixture_type": "unittest_setup", "name": "setUp"}],
-            [{"fixture_type": "unittest_setup", "name": "setUp"}],
-            [{"fixture_type": "unittest_setup", "name": "setUp"}],
-            [{"fixture_type": "unittest_setup", "name": "tearDown"}],
-            [{"fixture_type": "unittest_setup", "name": "tearDown"}],
-        ]
-        _make_db(tmp_path, "a", repos)
-        _make_db(tmp_path, "c", repos)
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_teardown_dip_test(a_metrics, c_metrics)
-
-        lines = report.splitlines()
-        a_row = next(line for line in lines if line.startswith("| Dataset A |"))
-        assert "| Dataset A | 5 |" in a_row
-        assert "--" not in a_row  # a real dip statistic/p-value rendered, not a fallback
-        assert "```" in report  # the ASCII histogram's fenced code block
-
-    def test_generate_report_includes_dip_test_section(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
-        report = generate_report(db_root=tmp_path)
-        assert "## Supplementary Analyses" in report
-        assert "### Unimodality Check: Python Teardown Proportion (Dip Test)" in report
-        # Supplementary section comes after both main tables' comparison
-        # section, not interleaved with it.
-        assert report.index("## Supplementary Analyses") > report.index("## A vs C:")
-
     def test_generate_report_includes_kind_classification_coverage_section(self, tmp_path):
         _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
         _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
         report = generate_report(db_root=tmp_path)
         assert "### Fixture Kind Classification Coverage by Language" in report
-        # Under Supplementary Analyses, before the dip test section (both
-        # comparisons render in the same order generate_report() calls them).
+        # Under Supplementary Analyses.
         assert (
             report.index("## Supplementary Analyses")
             < report.index("### Fixture Kind Classification Coverage by Language")
-            < report.index("### Unimodality Check: Python Teardown Proportion (Dip Test)")
         )
 
 

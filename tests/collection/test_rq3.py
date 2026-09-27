@@ -245,9 +245,7 @@ class TestLoadDatasetMetrics:
         in two separate language buckets, each keyed by that same repo_id
         -- the paper table's per-language Coverage column
         (_mocking_coverage_indicators()) needs this nesting to never mix
-        one language's has_mock counts into another's, mirroring
-        test_category_by_repo_and_language_nests_by_language_then_repo()
-        above."""
+        one language's has_mock counts into another's."""
         _make_db(
             tmp_path,
             "a",
@@ -356,31 +354,6 @@ class TestLoadDatasetMetrics:
             "java": {"mockito": 1},
         }
 
-    def test_category_by_language(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "stub"}]}
-                    ],
-                },
-                {
-                    "language": "java",
-                    "fixtures": [
-                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "spy"}]}
-                    ],
-                },
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.category_by_language == {
-            "python": {"stub": 1},
-            "java": {"spy": 1},
-        }
-
     def test_has_mock_n_by_language_counts_every_repo_with_a_fixture(self, tmp_path):
         """Every repo with a fixture of that language counts, even ones
         with zero mocks -- has_mock's per-language chi-square tests
@@ -393,39 +366,6 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.has_mock_n_by_language == {"python": 1}
 
-    def test_category_by_repo_and_language_nests_by_language_then_repo(self, tmp_path):
-        """A single repo contributing mocks in two languages must land in
-        two separate language buckets, each keyed by that same repo_id --
-        no rendered table reads this anymore (the per-language category
-        comparison was removed from the report), but the raw data is kept
-        accessible on DatasetMetrics, so this nesting still needs to never
-        mix one language's category mix into another's."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "stub"}]}
-                    ],
-                },
-                {
-                    "language": "java",
-                    "fixtures": [
-                        {"overrides": {"num_mocks": 1}, "mocks": [{"category": "spy"}]}
-                    ],
-                },
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert set(metrics.category_by_repo_and_language) == {"python", "java"}
-        # _make_db puts every language's fixtures under the same one repo.
-        (python_repo_id, python_counts), = metrics.category_by_repo_and_language["python"].items()
-        (java_repo_id, java_counts), = metrics.category_by_repo_and_language["java"].items()
-        assert python_repo_id == java_repo_id
-        assert python_counts == {"stub": 1}
-        assert java_counts == {"spy": 1}
 
 class TestGenerateReport:
     def test_missing_all_dbs_notes_unavailable_without_crashing(self, tmp_path):

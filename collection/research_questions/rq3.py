@@ -76,11 +76,15 @@ This table replaces three previously-reported tables:
   above -- only the A-vs-C table is gone.
 - **Test-double category distribution** -- same treatment: removed from
   the report entirely (category naming conventions are also
-  language/ecosystem-specific -- same 2026-08-12 fix). `category_dist`/
-  `category_by_language`/`category_by_repo_and_language` fetches/fields
-  are UNCHANGED and still populate the per-dataset summary above -- both
-  the per-language repo-level-proportion test and the pooled descriptive
-  table are gone from the report.
+  language/ecosystem-specific -- same 2026-08-12 fix). `category_dist`'s
+  fetch/field is UNCHANGED and still populates the per-dataset summary
+  above -- the per-language repo-level-proportion test and the pooled
+  descriptive table are gone from the report. `category_by_language`/
+  `category_by_repo_and_language` (the fetches that fed those two removed
+  tables) were themselves removed entirely (2026-09-27) after auditing
+  found them genuinely dead -- fetched and stored on `DatasetMetrics` but
+  never read by anything, not even the per-dataset summary the comment
+  above once claimed.
 
 `num_mocks`'s existing continuous Mann-Whitney tables (fixture-level and
 repo-level, Overall-only) are **unchanged** -- not one of the three tables
@@ -186,10 +190,6 @@ class DatasetMetrics:
     category_dist: dict[str, int] = field(default_factory=dict)
     mock_rate_by_language: dict[str, dict] = field(default_factory=dict)
     framework_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
-    category_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
-    category_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
-        default_factory=dict
-    )
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     has_mock_n_by_language: dict[str, int] = field(default_factory=dict)
@@ -263,53 +263,12 @@ def _fetch_framework_by_language(conn: sqlite3.Connection) -> dict[str, dict[str
     return result
 
 
-def _fetch_category_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
-    """category distribution per fixture's own language -- framework
-    analogue (see _fetch_framework_by_language()'s docstring), applied to
-    `mock_usages.category`. Feeds only the per-dataset descriptive summary
-    now (_render_dataset_summary()) -- the A-vs-C comparison uses
-    _fetch_category_by_repo_and_language() below instead."""
-    rows = conn.execute(
-        "SELECT tf.language, mu.category, COUNT(*) FROM mock_usages mu "
-        "JOIN fixtures f ON mu.fixture_id = f.id "
-        "JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE mu.category IS NOT NULL "
-        "GROUP BY tf.language, mu.category"
-    ).fetchall()
-    result: dict[str, dict[str, int]] = {}
-    for language, category, count in rows:
-        result.setdefault(language, {})[category] = count
-    return result
-
-
-def _fetch_category_by_repo_and_language(
-    conn: sqlite3.Connection,
-) -> dict[str, dict[int, dict[str, int]]]:
-    """{language: {repo_id: {category: count}}} -- per-(repo,language)
-    category counts. No longer feeds a rendered table (the per-language
-    category comparison was removed from the report -- see this module's
-    docstring), kept as "raw data accessible" per that removal's own
-    terms; still populates `category_by_repo_and_language` on
-    DatasetMetrics for programmatic use."""
-    rows = conn.execute(
-        "SELECT tf.language, mu.repo_id, mu.category, COUNT(*) FROM mock_usages mu "
-        "JOIN fixtures f ON mu.fixture_id = f.id "
-        "JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE mu.category IS NOT NULL "
-        "GROUP BY tf.language, mu.repo_id, mu.category"
-    ).fetchall()
-    result: dict[str, dict[int, dict[str, int]]] = {}
-    for language, repo_id, category, count in rows:
-        result.setdefault(language, {}).setdefault(repo_id, {})[category] = count
-    return result
-
-
 def _fetch_has_mock_by_repo_and_language(
     conn: sqlite3.Connection,
 ) -> dict[str, dict[int, dict[str, int]]]:
     """{language: {repo_id: {"has_mock": n, "no_mock": n}}} -- has_mock's
-    per-(language, repo) analogue of _fetch_category_by_repo_and_language().
-    Feeds two things: the legacy per-language chi-square family
+    per-(language, repo) breakdown. Feeds two things: the legacy
+    per-language chi-square family
     (`has_mock_dist_by_language` is a different, pooled fetch -- see
     below), and, via `_mocking_coverage_indicators()`, the paper table's
     Coverage column (each repo's own has_mock/no_mock counts collapse to
@@ -384,8 +343,6 @@ def load_dataset_metrics(
         category_dist = fetch_categorical_column(conn, "mock_usages", "category")
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
         framework_by_language = _fetch_framework_by_language(conn)
-        category_by_language = _fetch_category_by_language(conn)
-        category_by_repo_and_language = _fetch_category_by_repo_and_language(conn)
         has_mock_by_repo_and_language = _fetch_has_mock_by_repo_and_language(conn)
         num_mocks_by_repo_and_language = _fetch_num_mocks_by_repo_and_language(conn)
         has_mock_n_by_language = _fetch_fixture_repo_count_by_language(conn)
@@ -442,8 +399,6 @@ def load_dataset_metrics(
         category_dist=category_dist,
         mock_rate_by_language=mock_rate_by_language,
         framework_by_language=framework_by_language,
-        category_by_language=category_by_language,
-        category_by_repo_and_language=category_by_repo_and_language,
         language_leakage=language_leakage,
         repo_level_continuous=repo_level_continuous,
         has_mock_by_repo=has_mock_by_repo,
