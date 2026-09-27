@@ -17,7 +17,6 @@ from scipy.stats import false_discovery_control
 
 from ..between_group_comparison import (
     BalanceTest,
-    compute_categorical_balance,
     compute_continuous_balance,
 )
 from ..config import ROOT_DIR
@@ -228,46 +227,21 @@ def fdr_cell(t: BalanceTest) -> str:
     return f"{adj_p:.4g} ({sig})"
 
 
-def compute_stratified_categorical_balance(
-    a_dist_by_language: dict[str, dict[str, int]],
-    other_dist_by_language: dict[str, dict[str, int]],
-    variable: str,
-) -> dict[str, BalanceTest]:
-    """Per-language chi-square balance test, restricted to languages with
-    data on both sides.
-
-    Why this matters: an aggregate (dataset-wide) categorical comparison
-    can look "significant" purely because the two datasets have different
-    language mixes -- e.g. Dataset B is far more python-heavy than Dataset
-    A, and python fixtures behave differently from java/js/ts ones on
-    several RQ2/RQ3 metrics regardless of authorship. Stratifying by
-    language isolates whether a difference holds *within* a language, not
-    just in the aggregate. See docs/research-questions.md and the
-    2026-07-31 RQ1-3 findings review in this session's history for the
-    concrete cases this caught (RQ2 teardown-kind distribution, RQ3 mock
-    prevalence).
-    """
-    results: dict[str, BalanceTest] = {}
-    for language in sorted(set(a_dist_by_language) & set(other_dist_by_language)):
-        results[language] = compute_categorical_balance(
-            human_dist=other_dist_by_language[language],
-            agent_dist=a_dist_by_language[language],
-            variable=f"{variable}_{language}",
-        )
-    return results
-
-
 def compute_stratified_continuous_balance(
     a_values_by_language: dict[str, list[float]],
     other_values_by_language: dict[str, list[float]],
     variable: str,
 ) -> dict[str, BalanceTest]:
     """Per-language Mann-Whitney U + Cliff's delta, restricted to languages
-    with data on both sides -- continuous analogue of
-    compute_stratified_categorical_balance() above (same rationale: a
-    pooled comparison can look significant purely because the two datasets
-    have different language mixes; this checks whether the difference
-    holds *within* a language). `a_values_by_language`/
+    with data on both sides. RQ1's only remaining per-language stratified
+    test as of 2026-09-27 -- the categorical analogue,
+    compute_stratified_categorical_balance(), was removed the same day
+    once its last two consumers (RQ1's fixture_type fixture-level
+    chi-square, RQ3's Legacy has_mock chi-square) were both gone (same
+    rationale as this function: a pooled comparison can look significant
+    purely because the two datasets have different language mixes; this
+    checks whether the difference holds *within* a language).
+    `a_values_by_language`/
     `other_values_by_language` are typically repo-level (one value per
     repo per language, e.g. from repo_level_means() grouped by language)
     rather than raw per-fixture values, so this doesn't reintroduce the

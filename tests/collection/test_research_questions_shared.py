@@ -19,7 +19,6 @@ from collection.research_questions._shared import (
     apply_fdr_correction,
     compare_categorical_repo_level,
     compute_language_leakage,
-    compute_stratified_categorical_balance,
     compute_stratified_continuous_balance,
     fdr_cell,
     fetch_categorical_column,
@@ -639,26 +638,6 @@ class TestFdrCell:
             details={"adjusted_p_value": 0.045, "significant_after_correction": True},
         )
         assert fdr_cell(t) == "0.045 (yes)"
-
-
-class TestComputeStratifiedCategoricalBalance:
-    def test_only_shared_languages_are_compared(self):
-        a_dist = {"python": {"has_mock": 5, "no_mock": 5}, "java": {"has_mock": 1, "no_mock": 1}}
-        other_dist = {"python": {"has_mock": 2, "no_mock": 8}, "javascript": {"has_mock": 1, "no_mock": 1}}
-        results = compute_stratified_categorical_balance(a_dist, other_dist, "has_mock")
-        assert set(results.keys()) == {"python"}
-
-    def test_no_shared_languages_returns_empty_dict(self):
-        a_dist = {"python": {"has_mock": 5, "no_mock": 5}}
-        other_dist = {"java": {"has_mock": 5, "no_mock": 5}}
-        assert compute_stratified_categorical_balance(a_dist, other_dist, "has_mock") == {}
-
-    def test_computes_real_chi_square_per_language(self):
-        # Sharply different has_mock rates for python -> should be significant.
-        a_dist = {"python": {"has_mock": 90, "no_mock": 10}}
-        other_dist = {"python": {"has_mock": 10, "no_mock": 90}}
-        results = compute_stratified_categorical_balance(a_dist, other_dist, "has_mock")
-        assert results["python"].p_value < 0.05
 
 
 class TestComputeStratifiedContinuousBalance:

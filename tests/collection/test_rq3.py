@@ -10,7 +10,6 @@ is already covered by tests/between_group/test_between_group_comparison.py.
 from __future__ import annotations
 
 from collection import paths
-from collection.between_group_comparison import compute_continuous_balance
 from collection.db import (
     db_session,
     initialise_db,
@@ -19,11 +18,9 @@ from collection.db import (
     upsert_repository,
     upsert_test_file,
 )
-from collection.research_questions._shared import apply_fdr_correction, format_p_value
 from collection.research_questions.rq3 import (
     DatasetMetrics,
     _mocking_coverage_indicators,
-    _mocking_intensities_by_repo,
     _render_mock_counts_table,
     _render_mocking_summary_table,
     compare_datasets_repo_level,
@@ -277,35 +274,6 @@ class TestLoadDatasetMetrics:
         assert len(metrics.num_mocks_by_repo) == 2
         assert sorted(metrics.num_mocks_by_repo.values()) == [[3.0, 0.0], [5.0]]
 
-    def test_num_mocks_by_repo_and_language_nests_by_language_then_repo(self, tmp_path):
-        """Same nesting requirement as has_mock_by_repo_and_language above,
-        for the paper table's Intensity column
-        (_mocking_intensities_by_repo())."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {"overrides": {"num_mocks": 3}},
-                        {"overrides": {"num_mocks": 0}},
-                    ],
-                },
-                {
-                    "language": "java",
-                    "fixtures": [{"overrides": {"num_mocks": 7}}],
-                },
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert set(metrics.num_mocks_by_repo_and_language) == {"python", "java"}
-        (python_repo_id, python_values), = metrics.num_mocks_by_repo_and_language["python"].items()
-        (java_repo_id, java_values), = metrics.num_mocks_by_repo_and_language["java"].items()
-        assert python_repo_id == java_repo_id
-        assert sorted(python_values) == [0, 3]
-        assert java_values == [7]
-
     def test_framework_and_category_distribution(self, tmp_path):
         _make_db(
             tmp_path,
@@ -409,7 +377,7 @@ class TestGenerateReport:
             ],
         )
         report = generate_report(db_root=tmp_path)
-        num_mocks_section = report.split("### num_mocks")[1].split("### Mocking Coverage and Intensity")[0]
+        num_mocks_section = report.split("### num_mocks")[1].split("### Mocking Coverage (paper table)")[0]
         fixture_level_section = num_mocks_section.split("**Repo-level**")[0]
         overall_line = next(
             line for line in fixture_level_section.splitlines() if line.startswith("| Overall |")
@@ -445,7 +413,7 @@ class TestGenerateReport:
         # num_mocks" section (its "**Repo-level**" subsection), not a
         # separate "## Repo-level aggregates" table.
         report = generate_report(db_root=tmp_path)
-        num_mocks_section = report.split("### num_mocks")[1].split("### Mocking Coverage and Intensity")[0]
+        num_mocks_section = report.split("### num_mocks")[1].split("### Mocking Coverage (paper table)")[0]
         repo_level_section = num_mocks_section.split("**Repo-level**")[1]
         overall_line = next(
             line for line in repo_level_section.splitlines() if line.startswith("| Overall |")
@@ -464,7 +432,7 @@ class TestGenerateReport:
             [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}],
         )
         report = generate_report(db_root=tmp_path)
-        assert "### Mocking Coverage and Intensity (paper table)" in report
+        assert "### Mocking Coverage (paper table)" in report
         # Removed entirely -- not moved anywhere.
         assert "## Legacy: Fixture-Level Mock Prevalence" not in report
         assert "### has_mock" not in report
@@ -493,7 +461,7 @@ class TestGenerateReport:
         assert "### Mock Fixture Counts by Language" in report
         assert "| Language | Mock A (n) | Mock A (%) | Mock C (n) | Mock C (%) |" in report
         assert (
-            report.index("### Mocking Coverage and Intensity (paper table)")
+            report.index("### Mocking Coverage (paper table)")
             < report.index("### Mock Fixture Counts by Language")
         )
         counts_section = report.split("### Mock Fixture Counts by Language")[1]
@@ -517,13 +485,13 @@ class TestGenerateReport:
             [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}],
         )
         report = generate_report(db_root=tmp_path)
-        paper_table_section = report.split("### Mocking Coverage and Intensity (paper table)")[1]
+        paper_table_section = report.split("### Mocking Coverage (paper table)")[1]
         for language in ("java", "javascript", "python", "typescript"):
             assert f"| {language} |" in paper_table_section
         java_line = next(
             line for line in paper_table_section.splitlines() if line.startswith("| java |")
         )
-        assert "| java | 0 | 0 | -- | -- | -- | -- | -- | -- | -- | -- |" == java_line
+        assert "| java | 0 | 0 | -- | -- |" == java_line
 
 
 class TestMockingCoverageIndicators:
@@ -536,23 +504,6 @@ class TestMockingCoverageIndicators:
 
     def test_empty_dict_returns_empty_list(self):
         assert _mocking_coverage_indicators({}) == []
-
-
-class TestMockingIntensitiesByRepo:
-    def test_median_computed_over_mocking_fixtures_only(self):
-        """Repo 1's zero-mock fixtures must not pull its median toward 0
-        -- only the num_mocks > 0 values feed the median."""
-        by_repo = {1: [0, 0, 4, 6]}  # mocking values: [4, 6] -> median 5.0
-        assert _mocking_intensities_by_repo(by_repo) == [5.0]
-
-    def test_repo_with_no_mocking_fixtures_excluded_entirely(self):
-        """A repo whose fixtures are all num_mocks == 0 contributes
-        nothing -- not a 0.0 intensity value."""
-        by_repo = {1: [0, 0, 0], 2: [3, 5]}
-        assert _mocking_intensities_by_repo(by_repo) == [4.0]
-
-    def test_empty_dict_returns_empty_list(self):
-        assert _mocking_intensities_by_repo({}) == []
 
 
 class TestRenderMockCountsTable:
@@ -627,13 +578,13 @@ class TestRenderMockCountsTable:
 
 class TestRenderMockingSummaryTable:
     """Direct DatasetMetrics construction (bypassing the DB) for precise
-    statistical-correctness checks."""
+    rendering checks. Purely descriptive as of 2026-09-27 -- no
+    statistical test, no effect size, no BH-FDR (see rq3.py's module
+    docstring) -- so these just check the percentage arithmetic and
+    column layout, not any Mann-Whitney/correction behavior."""
 
-    def test_renders_real_coverage_and_intensity_numbers(self):
-        """A: 4/5 python repos mock (80%), the 4 mocking repos' num_mocks
-        medians are [5, 3, 7, 5] -> intensity median 5.0. C: 1/5 mocks
-        (20%), that one repo's median is 1.0. Fully separated in both
-        metrics -> "large" Cliff's delta for both."""
+    def test_renders_real_coverage_numbers(self):
+        """A: 4/5 python repos mock (80%). C: 1/5 mocks (20%)."""
         a = DatasetMetrics(
             dataset="a",
             n_fixtures=0,
@@ -646,9 +597,6 @@ class TestRenderMockingSummaryTable:
                     3: {"has_mock": 1, "no_mock": 0},
                     4: {"has_mock": 0, "no_mock": 2},
                 }
-            },
-            num_mocks_by_repo_and_language={
-                "python": {0: [5], 1: [3], 2: [7], 3: [5], 4: [0, 0]}
             },
         )
         other = DatasetMetrics(
@@ -664,9 +612,6 @@ class TestRenderMockingSummaryTable:
                     14: {"has_mock": 0, "no_mock": 3},
                 }
             },
-            num_mocks_by_repo_and_language={
-                "python": {10: [1], 11: [0], 12: [0], 13: [0], 14: [0]}
-            },
         )
         rendered = _render_mocking_summary_table(a, other)
         python_line = next(
@@ -674,8 +619,8 @@ class TestRenderMockingSummaryTable:
         )
         assert "| 5 | 5 |" in python_line  # n_A | n_C
         assert "80.0% | 20.0%" in python_line  # Coverage A | Coverage C
-        assert "5.00 | 1.00" in python_line  # Intensity A | Intensity C
-        assert "large" in python_line
+        # No statistic/effect-size/p-value columns at all.
+        assert python_line.count("|") == 6
 
     def test_overall_row_pools_every_language(self):
         a = DatasetMetrics(
@@ -683,14 +628,12 @@ class TestRenderMockingSummaryTable:
             n_fixtures=0,
             n_mock_usages=0,
             has_mock_by_repo=({1: {"has_mock": 1, "no_mock": 0}, 2: {"has_mock": 0, "no_mock": 1}}),
-            num_mocks_by_repo={1: [4], 2: [0]},
         )
         other = DatasetMetrics(
             dataset="c",
             n_fixtures=0,
             n_mock_usages=0,
             has_mock_by_repo={10: {"has_mock": 0, "no_mock": 1}},
-            num_mocks_by_repo={10: [0]},
         )
         rendered = _render_mocking_summary_table(a, other)
         overall_line = next(
@@ -699,154 +642,31 @@ class TestRenderMockingSummaryTable:
         assert "| 2 | 1 |" in overall_line
         assert "50.0% | 0.0%" in overall_line
 
-    def test_coverage_and_intensity_insufficient_data_are_independent(self):
-        """python has real coverage data (some repos mock, some don't) but
-        NO repo has any mocking fixture on the C side with a nonzero
-        num_mocks captured for intensity -- so Coverage renders real
-        numbers while Intensity independently degrades to dashes, one
-        column pair unaffected by the other's data availability."""
+    def test_language_absent_from_both_sides_shows_empty_population(self):
         a = DatasetMetrics(
             dataset="a",
             n_fixtures=0,
             n_mock_usages=0,
-            has_mock_by_repo_and_language={
-                "python": {1: {"has_mock": 1, "no_mock": 0}, 2: {"has_mock": 0, "no_mock": 1}}
-            },
-            num_mocks_by_repo_and_language={"python": {1: [0, 0], 2: [0]}},
+            has_mock_by_repo_and_language={"python": {1: {"has_mock": 1, "no_mock": 0}}},
         )
         other = DatasetMetrics(
             dataset="c",
             n_fixtures=0,
             n_mock_usages=0,
-            has_mock_by_repo_and_language={
-                "python": {10: {"has_mock": 1, "no_mock": 0}, 11: {"has_mock": 0, "no_mock": 1}}
-            },
-            num_mocks_by_repo_and_language={"python": {10: [0], 11: [0]}},
+            has_mock_by_repo_and_language={"python": {10: {"has_mock": 1, "no_mock": 0}}},
         )
         rendered = _render_mocking_summary_table(a, other)
-        python_line = next(
-            line for line in rendered.splitlines() if line.startswith("| python |")
-        )
-        # Coverage: real numbers (50%/50%, though not a significant
-        # difference -- not the point of this test).
-        assert "50.0% | 50.0%" in python_line
-        # Intensity: no repo anywhere actually has a num_mocks > 0 fixture
-        # (has_mock's counts don't have to agree with num_mocks_by_repo_
-        # and_language in this synthetic fixture -- they're independent
-        # fields), so _mocking_intensities_by_repo() returns [] on both
-        # sides -> insufficient_data -> dashes.
-        assert "-- | -- | -- | --" in python_line
-
-    def test_n_a_n_c_is_coverage_population_not_intensity_subset(self):
-        """5 python repos on each side all have >=1 fixture (n_A/n_C = 5),
-        but only 1 repo per side actually mocks -- intensity's true
-        population (1 vs 1) is smaller than the row's stated n_A/n_C,
-        exactly the documented asymmetry."""
-        by_repo_a = {i: {"has_mock": 1 if i == 0 else 0, "no_mock": 0 if i == 0 else 1} for i in range(5)}
-        by_repo_c = {i: {"has_mock": 1 if i == 0 else 0, "no_mock": 0 if i == 0 else 1} for i in range(5, 10)}
-        a = DatasetMetrics(
-            dataset="a", n_fixtures=0, n_mock_usages=0,
-            has_mock_by_repo_and_language={"python": by_repo_a},
-            num_mocks_by_repo_and_language={"python": {i: [5] if i == 0 else [0] for i in range(5)}},
-        )
-        other = DatasetMetrics(
-            dataset="c", n_fixtures=0, n_mock_usages=0,
-            has_mock_by_repo_and_language={"python": by_repo_c},
-            num_mocks_by_repo_and_language={"python": {i: [3] if i == 5 else [0] for i in range(5, 10)}},
-        )
-        rendered = _render_mocking_summary_table(a, other)
-        python_line = next(
-            line for line in rendered.splitlines() if line.startswith("| python |")
-        )
-        assert "| 5 | 5 |" in python_line
-
-    def test_bh_fdr_applied_across_both_metrics_combined_not_two_separate_families(self):
-        """Explicit request: coverage's 4 per-language tests and
-        intensity's 4 per-language tests must be BH-FDR corrected TOGETHER
-        as one 8-test family, not as two independent 4-test families.
-        Verified by recomputing the same compute_continuous_balance()
-        calls independently here, combining all testable ones (python/java
-        coverage + python/java intensity -- javascript/typescript have no
-        data on either side, so both their tests are insufficient_data and
-        excluded from either family regardless) into one dict the same way
-        _render_mocking_summary_table() does, and checking the rendered
-        adjusted p-values match apply_fdr_correction() run on that combined
-        4-testable-entry family -- not on two separate 2-testable-entry
-        families, which would produce different numbers for this fixture
-        (more than one testable entry per metric)."""
-        has_mock_python_a = {i: {"has_mock": 1, "no_mock": 0} for i in range(4)} | {
-            4: {"has_mock": 0, "no_mock": 2}
-        }
-        has_mock_python_c = {i: {"has_mock": 0, "no_mock": 1} for i in range(4)} | {
-            4: {"has_mock": 1, "no_mock": 0}
-        }
-        has_mock_java_a = {i: {"has_mock": 0, "no_mock": 2} for i in range(4)} | {
-            4: {"has_mock": 1, "no_mock": 0}
-        }
-        has_mock_java_c = {i: {"has_mock": 1, "no_mock": 0} for i in range(4)} | {
-            4: {"has_mock": 0, "no_mock": 1}
-        }
-        num_mocks_python_a = {i: [5] for i in range(4)} | {4: [0, 0]}
-        num_mocks_python_c = {i: [0] for i in range(4)} | {4: [1]}
-        num_mocks_java_a = {i: [0, 0] for i in range(4)} | {4: [9]}
-        num_mocks_java_c = {i: [1] for i in range(4)} | {4: [0, 0]}
-
-        a = DatasetMetrics(
-            dataset="a", n_fixtures=0, n_mock_usages=0,
-            has_mock_by_repo_and_language={"python": has_mock_python_a, "java": has_mock_java_a},
-            num_mocks_by_repo_and_language={"python": num_mocks_python_a, "java": num_mocks_java_a},
-        )
-        other = DatasetMetrics(
-            dataset="c", n_fixtures=0, n_mock_usages=0,
-            has_mock_by_repo_and_language={"python": has_mock_python_c, "java": has_mock_java_c},
-            num_mocks_by_repo_and_language={"python": num_mocks_python_c, "java": num_mocks_java_c},
-        )
-
-        # Independently recompute the same 4 testable BalanceTests and
-        # correct them together as one family -- this is what the
-        # implementation is REQUIRED to match.
-        expected = apply_fdr_correction(
-            {
-                "python__coverage": compute_continuous_balance(
-                    human_values=_mocking_coverage_indicators(has_mock_python_c),
-                    agent_values=_mocking_coverage_indicators(has_mock_python_a),
-                    variable="x",
-                ),
-                "java__coverage": compute_continuous_balance(
-                    human_values=_mocking_coverage_indicators(has_mock_java_c),
-                    agent_values=_mocking_coverage_indicators(has_mock_java_a),
-                    variable="x",
-                ),
-                "python__intensity": compute_continuous_balance(
-                    human_values=_mocking_intensities_by_repo(num_mocks_python_c),
-                    agent_values=_mocking_intensities_by_repo(num_mocks_python_a),
-                    variable="x",
-                ),
-                "java__intensity": compute_continuous_balance(
-                    human_values=_mocking_intensities_by_repo(num_mocks_java_c),
-                    agent_values=_mocking_intensities_by_repo(num_mocks_java_a),
-                    variable="x",
-                ),
-            }
-        )
-
-        rendered = _render_mocking_summary_table(a, other)
-        python_line = next(
-            line for line in rendered.splitlines() if line.startswith("| python |")
-        )
         java_line = next(line for line in rendered.splitlines() if line.startswith("| java |"))
+        assert "| java | 0 | 0 | -- | -- |" == java_line
 
-        def _p_cells(line: str) -> list[str]:
-            cells = [c.strip() for c in line.strip("|").split("|")]
-            return [cells[6], cells[10]]  # p_cov, p_int (0-indexed: Language,n_A,n_C,CovA,CovC,δcov,pcov,IntA,IntC,δint,pint)
-
-        expected_python_p_cov = format_p_value(expected["python__coverage"].details["adjusted_p_value"])
-        expected_python_p_int = format_p_value(expected["python__intensity"].details["adjusted_p_value"])
-        expected_java_p_cov = format_p_value(expected["java__coverage"].details["adjusted_p_value"])
-        expected_java_p_int = format_p_value(expected["java__intensity"].details["adjusted_p_value"])
-
-        assert _p_cells(python_line) == [expected_python_p_cov, expected_python_p_int]
-        assert _p_cells(java_line) == [expected_java_p_cov, expected_java_p_int]
+    def test_header_has_no_statistic_columns(self):
+        a = DatasetMetrics(dataset="a", n_fixtures=0, n_mock_usages=0)
+        other = DatasetMetrics(dataset="c", n_fixtures=0, n_mock_usages=0)
+        rendered = _render_mocking_summary_table(a, other)
+        assert "| Language | n_A | n_C | Coverage A (%) | Coverage C (%) |" in rendered
+        assert "delta" not in rendered
+        assert "p_cov" not in rendered
+        assert "Intensity" not in rendered
 
 
 class TestWriteReport:

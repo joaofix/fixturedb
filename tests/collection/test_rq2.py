@@ -11,10 +11,11 @@ test_fixture_kind_classification.py and test_classify_pytest_fixture_kind.py),
 so these fixture-dict literals set fixture_role directly via
 _default_fixture_role() below -- a thin test-only wrapper around those
 same two real functions, not a reimplementation, so this file's synthetic
-data stays in sync with production classification automatically. The
-Mann-Whitney U math itself (including compute_continuous_balance()'s mean/
-median/Cliff's-delta computation) is already covered by tests/between_group/
-test_between_group_comparison.py and tests/collection/test_research_questions_shared.py.
+data stays in sync with production classification automatically. Neither
+table in this script runs a statistical test anymore (removed
+2026-09-27, see rq2.py's module docstring) -- both are purely
+descriptive, so there's no Mann-Whitney/BH-FDR machinery left here to
+test at all.
 """
 
 from __future__ import annotations
@@ -513,9 +514,10 @@ class TestGenerateReport:
         assert "| Total | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
         assert "| rust |" not in comparison_section
 
-    def test_teardown_coverage_table_renders_percentages_and_effect_size(self, tmp_path):
+    def test_teardown_coverage_table_renders_percentages_no_statistical_test(self, tmp_path):
         """Table 2: A has 1 of 2 repos with any teardown (50%); C has 2 of
-        2 (100%) -- maximally separated, so Cliff's delta is "large"."""
+        2 (100%). Purely descriptive -- no statistic/effect-size/p-value
+        columns at all (removed 2026-09-27)."""
         _make_db(
             tmp_path,
             "a",
@@ -535,7 +537,7 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)" in report
         assert (
-            "| Language | n_A | n_C | Coverage A (%) | Coverage C (%) | delta | p (BH) |"
+            "| Language | n_A | n_C | Coverage A (%) | Coverage C (%) |"
             in report
         )
         # "python" also appears as a row label in Table 1 (counts), above
@@ -551,7 +553,10 @@ class TestGenerateReport:
         for line in (overall_line, python_line):
             assert "| 2 | 2 |" in line
             assert "50.0% | 100.0%" in line  # Coverage A (%) | Coverage C (%)
-            assert "large" in line
+            # No statistic/effect-size/p-value columns at all.
+            assert line.count("|") == 6
+        assert "delta" not in report
+        assert "p (BH)" not in report
         assert "significant (p<0.05)" not in report
 
     def test_teardown_coverage_repo_with_only_setup_counts_as_zero_coverage(self, tmp_path):
@@ -629,7 +634,7 @@ class TestGenerateReport:
         # nowhere near a ~1%-teardown fixture-weighted figure.
         assert "50.0% | 50.0%" in overall_line
 
-    def test_teardown_coverage_language_absent_from_both_sides_shows_insufficient_data(
+    def test_teardown_coverage_language_absent_from_both_sides_shows_empty_population(
         self, tmp_path
     ):
         """java/javascript/typescript have zero repos on either side (both
@@ -642,7 +647,7 @@ class TestGenerateReport:
         java_line = next(
             line for line in coverage_section.splitlines() if line.startswith("| java |")
         )
-        assert "| java | 0 | 0 | -- | -- | -- | -- |" == java_line
+        assert "| java | 0 | 0 | -- | -- |" == java_line
 
 
 class TestRenderKindClassificationCoverageTable:

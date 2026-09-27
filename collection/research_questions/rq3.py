@@ -3,51 +3,36 @@ RQ3 -- Mocking (Quantitative): how do agent-generated and human-written
 fixtures differ in mock usage?
 
 One paper table (`_render_mocking_summary_table()`), per language and
-Overall: two repo-level metrics, both A vs C via Mann-Whitney U + Cliff's
-delta (`compute_continuous_balance()`), both reusing the existing mock
-detection logic completely unchanged (`fixtures.num_mocks`, already
-computed and unmodified by this change):
+Overall: **Coverage** -- for each repo, a binary indicator -- does it
+have >=1 fixture with a mock at all (`num_mocks > 0`)? Population: every
+repo with >=1 fixture (of that language, for the per-language rows; any
+language, for Overall) -- reuses `has_mock_by_repo`/`has_mock_by_repo_
+and_language`, already fetched by the pre-existing has_mock detection
+query. "Coverage A/C (%)" is the share of that population with the
+indicator at 1 -- just the mean of that 0/1 list per side. **Purely
+descriptive -- no statistical test** (removed 2026-09-27, alongside
+RQ2's Table 2: the paper's RQ2/RQ3 coverage tables report plain
+percentages, no p-value, no effect size, no BH-FDR family. RQ1 is now
+the only script in this package that performs BH-FDR correction at all
+-- see
+[internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md)
+for the full before/after inventory).
 
-- **Coverage**: for each repo, a binary indicator -- does it have >=1
-  fixture with a mock at all (`num_mocks > 0`)? Population: every repo
-  with >=1 fixture (of that language, for the per-language rows; any
-  language, for Overall) -- reuses `has_mock_by_repo`/`has_mock_by_repo_
-  and_language`, already fetched by the pre-existing has_mock detection
-  query. "Coverage A/C (%)" is the share of that population with the
-  indicator at 1 -- the mean of a 0/1 list *is* that percentage, so
-  `compute_continuous_balance()`'s `agent_mean`/`human_mean` double as the
-  column directly (same trick rq2.py's teardown-coverage table uses).
-- **Intensity**: among repos WITH >=1 mocking fixture only (coverage=1;
-  non-mocking repos are excluded from this metric entirely, not counted
-  as 0), the median `fixtures.num_mocks` across that repo's own mocking
-  fixtures (`num_mocks > 0` fixtures only within the repo -- its
-  non-mocking fixtures don't pull the median toward 0). "Intensity A/C" is
-  the median of those per-repo medians (`agent_median`/`human_median`
-  from the same `compute_continuous_balance()` call the test itself uses).
-  Fetched via a new `_fetch_num_mocks_by_repo_and_language()` (raw
-  per-fixture `num_mocks`, grouped by repo and each fixture's own
-  language) -- `_mocking_intensities_by_repo()` does the per-repo
-  filter+median.
+**Intensity** (median `num_mocks` across a repo's own mocking fixtures,
+among repos where Coverage=1) was removed entirely the same day -- no
+longer one of the paper's reported metrics. Its whole computation
+(`_mocking_intensities_by_repo()`, `_fetch_num_mocks_by_repo_and_
+language()`, the `num_mocks_by_repo_and_language` field, and the
+combined 8-test BH-FDR family that used to merge it with Coverage) is
+gone, not just its rendering. `num_mocks_by_repo` (Overall-only, no
+per-language breakdown) stays on `DatasetMetrics` -- it's also what
+`has_mock_by_repo` is derived from (the `num_mocks > 0` threshold), an
+independent use that predates and outlives Intensity.
 
-**n_A/n_C is coverage's own population size** (every repo with >=1
-fixture, of that language/Overall) -- intensity's population is a strict
-subset of this (mocking repos only), so intensity's true n can be smaller
-than the row's stated n_A/n_C. One n column pair per row, not one per
-metric; the table's intro text states this explicitly rather than leaving
-it implicit.
-
-Overall is one pooled, uncorrected test per metric (2 tests total:
-coverage, intensity). **Both metrics' per-language tests are BH-FDR
-corrected together as one combined 8-test family** (4 languages x 2
-metrics), not two separate 4-test families -- both are RQ3 metrics
-reported in the same table, so they share one family the same way this
-whole package always treats "everything reported in one table" as one
-correction family. Fixed four-language row order (java, javascript,
-python, typescript) rather than a "languages present on both sides"
-intersection convention -- see rq2.py's module docstring for the
-identical simplification and why it doesn't change real output
-(`compute_continuous_balance()` already degrades a missing-on-one-side
-language to `insufficient_data` on its own).
+Fixed four-language row order (java, javascript, python, typescript)
+rather than a "languages present on both sides" intersection convention
+-- a deliberate simplification matching the paper's table spec,
+predating the statistical-test removal above and unaffected by it.
 
 This table replaces three previously-reported tables:
 
@@ -62,13 +47,14 @@ This table replaces three previously-reported tables:
   `has_mock_n_by_language`/`_fetch_fixture_repo_count_by_language()` had
   no other consumer once it was gone. The *repo-level* has_mock test that
   WAS reported in the paper (formerly "## Repo-level aggregates") is
-  fully superseded by this table's Coverage column -- same statistic
-  (per-repo has_mock indicator, Mann-Whitney + Cliff's delta), same
-  population, now computed via `compute_continuous_balance()` directly
-  instead of `compare_categorical_repo_level()` (a two-category
-  proportion test on a binary variable is mathematically the
-  mean-of-the-0/1-indicator test this table uses -- same number, cleaner
-  path there).
+  fully superseded by this table's Coverage column -- same population,
+  same underlying per-repo has_mock indicator. At the time of this
+  removal Coverage was still its own Mann-Whitney + Cliff's delta test
+  (computed via `compute_continuous_balance()` directly instead of
+  `compare_categorical_repo_level()` -- a two-category proportion test
+  on a binary variable is mathematically the mean-of-the-0/1-indicator
+  test that call runs, same number, cleaner path there); Coverage's own
+  test was itself removed the same day, see above.
 - **Framework distribution** -- removed from the report entirely (not
   moved to legacy, per request: framework names are language-specific by
   construction, `unittest.mock` Python-only / Sinon JS-only / Mockito
@@ -90,10 +76,9 @@ This table replaces three previously-reported tables:
   above once claimed.
 
 `num_mocks`'s existing continuous Mann-Whitney tables (fixture-level and
-repo-level, Overall-only) are **unchanged** -- not one of the three tables
-named for replacement, and conceptually distinct from Coverage/Intensity
-above (a repo-level *mean* across every fixture including non-mocking
-ones, vs Intensity's *median among mocking fixtures only*).
+repo-level, Overall-only) are **unchanged** -- not one of the three
+tables named for replacement, and never had a per-language family or
+BH-FDR correction to begin with (Overall-only, a single pooled test).
 
 `num_interactions_configured` (a separate `mock_usages` column estimating
 how many interactions were configured on a mock, e.g. `.return_value`/
@@ -104,7 +89,7 @@ never one of the paper's reported metrics (the paper review only named
 
 **Mock Fixture Counts by Language** (`_render_mock_counts_table()`): an
 additional, purely descriptive table (no statistics), rendered right
-after the Coverage/Intensity paper table -- NOT a replacement for it.
+after the Coverage paper table -- NOT a replacement for it.
 The RQ2-counts-table analogue for mocking: raw count + percentage of
 `has_mock` fixtures per language, both datasets side by side, denominator
 is simply that language's total fixture count (no 'other'
@@ -126,7 +111,6 @@ python -m collection.research_questions.rq3
 from __future__ import annotations
 
 import sqlite3
-import statistics
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -144,14 +128,11 @@ from ._shared import (
     OUTPUT_DIR,
     LanguageLeakage,
     NCounts,
-    apply_fdr_correction,
     compute_language_leakage,
-    continuous_effect_size_cell,
     fetch_categorical_column,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
-    format_p_value,
     pct,
     render_comparison_table,
     render_language_leakage_table,
@@ -196,17 +177,12 @@ class DatasetMetrics:
     has_mock_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
         default_factory=dict
     )
-    # Raw per-fixture num_mocks, grouped by repo (Overall) / (language,
-    # repo) (per-language rows) -- feeds _mocking_intensities_by_repo()'s
-    # per-repo median-among-mocking-fixtures computation for the paper
-    # table's Intensity column. num_mocks_by_repo is exactly continuous_
+    # Raw per-fixture num_mocks, grouped by repo -- feeds has_mock_by_repo's
+    # derivation below (num_mocks > 0 threshold). Exactly continuous_
     # by_repo["num_mocks"] from load_dataset_metrics() below, just also
     # kept on the dataclass instead of only its per-repo *mean*
     # (repo_level_continuous["num_mocks"]).
     num_mocks_by_repo: dict[int, list[float]] = field(default_factory=dict)
-    num_mocks_by_repo_and_language: dict[str, dict[int, list[float]]] = field(
-        default_factory=dict
-    )
 
 
 def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
@@ -290,28 +266,6 @@ def _fetch_has_mock_by_repo_and_language(
     return result
 
 
-def _fetch_num_mocks_by_repo_and_language(
-    conn: sqlite3.Connection,
-) -> dict[str, dict[int, list[float]]]:
-    """{language: {repo_id: [num_mocks, ...]}} -- every fixture's own raw
-    `fixtures.num_mocks` (zero included), grouped by repo and each
-    fixture's own language (test_files.language), not the repo's tag --
-    same per-language convention as _fetch_has_mock_by_repo_and_language().
-    Feeds the paper table's Intensity column
-    (`_mocking_intensities_by_repo()` does the per-repo filter-to-mocking-
-    fixtures-only + median downstream of this -- this fetch itself doesn't
-    filter, so the same raw list could in principle feed a different
-    per-repo aggregation later without a second query)."""
-    rows = conn.execute(
-        "SELECT tf.language, f.repo_id, f.num_mocks FROM fixtures f "
-        "JOIN test_files tf ON f.file_id = tf.id WHERE f.num_mocks IS NOT NULL"
-    ).fetchall()
-    result: dict[str, dict[int, list[float]]] = {}
-    for language, repo_id, num_mocks in rows:
-        result.setdefault(language, {}).setdefault(repo_id, []).append(num_mocks)
-    return result
-
-
 def load_dataset_metrics(
     dataset: str, *, db_root: Path = paths.DB_ROOT
 ) -> DatasetMetrics | None:
@@ -329,7 +283,6 @@ def load_dataset_metrics(
         mock_rate_by_language = _fetch_mock_rate_by_language(conn)
         framework_by_language = _fetch_framework_by_language(conn)
         has_mock_by_repo_and_language = _fetch_has_mock_by_repo_and_language(conn)
-        num_mocks_by_repo_and_language = _fetch_num_mocks_by_repo_and_language(conn)
         language_leakage = compute_language_leakage(conn)
         # continuous_by_repo's "num_mocks" entry is reused below (as
         # num_mocks_by_repo) to derive has_mock_by_repo's per-repo
@@ -359,10 +312,8 @@ def load_dataset_metrics(
         for repo_id, vals in num_mocks_by_repo.items()
     }
     # Derived from mock_rate_by_language (total/with_mocks per language),
-    # no separate query needed -- this is what
-    # compute_stratified_categorical_balance() needs to check whether an
-    # A-vs-C mock-prevalence difference holds within a language, not just
-    # in the aggregate across each dataset's different language mix.
+    # no separate query needed -- feeds the "Mock prevalence by language"
+    # descriptive table in _render_dataset_summary().
     has_mock_dist_by_language = {
         language: {
             "has_mock": entry["with_mocks"],
@@ -387,7 +338,6 @@ def load_dataset_metrics(
         has_mock_by_repo=has_mock_by_repo,
         has_mock_by_repo_and_language=has_mock_by_repo_and_language,
         num_mocks_by_repo=num_mocks_by_repo,
-        num_mocks_by_repo_and_language=num_mocks_by_repo_and_language,
     )
 
 
@@ -424,8 +374,8 @@ def compare_datasets_fixture_level(
 
 
 # ---------------------------------------------------------------------------
-# Paper table: mocking coverage + intensity -- see this module's docstring
-# for the full methodology.
+# Paper table: mocking coverage -- see this module's docstring for the
+# full methodology.
 # ---------------------------------------------------------------------------
 
 
@@ -439,148 +389,62 @@ def _mocking_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[flo
     return [1.0 if counts.get("has_mock", 0) > 0 else 0.0 for counts in by_repo.values()]
 
 
-def _mocking_intensities_by_repo(num_mocks_by_repo: dict[int, list[float]]) -> list[float]:
-    """Per-repo mocking intensity: median num_mocks among that repo's own
-    mocking fixtures only (num_mocks > 0) -- repos with no mocking
-    fixtures at all are excluded entirely (not a 0), matching Coverage's
-    has_mocking=1 population restriction for this metric. `num_mocks_by_
-    repo` is num_mocks_by_repo(_and_language)'s shape ({repo_id:
-    [num_mocks, ...]}, every fixture's own value, zeros included --
-    filtering to mocking fixtures only happens here, per repo)."""
-    intensities = []
-    for values in num_mocks_by_repo.values():
-        mocking_values = [v for v in values if v > 0]
-        if mocking_values:
-            intensities.append(statistics.median(mocking_values))
-    return intensities
+def _render_mocking_row(label: str, n_a: int, n_c: int, pct_a: float | None, pct_c: float | None) -> str:
+    """One row: Coverage A/C (%) is just the mean of the 0/1
+    has-any-mock indicator per side. Purely descriptive -- no statistical
+    test (removed 2026-09-27, see this module's docstring)."""
+    if pct_a is None and pct_c is None:
+        return f"| {label} | {n_a} | {n_c} | -- | -- |"
+    return f"| {label} | {n_a} | {n_c} | {pct(pct_a)} | {pct(pct_c)} |"
 
 
-def _render_mocking_row(
-    label: str,
-    coverage_test: BalanceTest,
-    intensity_test: BalanceTest,
-    n: NCounts,
-    *,
-    corrected: bool,
-) -> str:
-    """One row: Coverage A/C (%) from coverage_test's agent_mean/human_mean
-    (mean of a 0/1 list = that percentage), Intensity A/C from
-    intensity_test's agent_median/human_median. `corrected` selects
-    between each test's own raw p (Overall, single pooled tests) and its
-    BH-adjusted p (per-language rows -- both metrics' tests already
-    corrected together as one combined family before this is called, see
-    _render_mocking_summary_table())."""
-
-    def _p_cell(test: BalanceTest) -> str:
-        d = test.details
-        if corrected:
-            return format_p_value(d["adjusted_p_value"])
-        return format_p_value(test.p_value)
-
-    cov_d = coverage_test.details
-    if cov_d.get("reason") == "insufficient_data" or "error" in cov_d:
-        coverage_cells = "-- | -- | -- | --"
-    else:
-        coverage_cells = (
-            f"{pct(cov_d.get('agent_mean'))} | {pct(cov_d.get('human_mean'))} | "
-            f"{continuous_effect_size_cell(coverage_test)} | {_p_cell(coverage_test)}"
-        )
-
-    int_d = intensity_test.details
-    if int_d.get("reason") == "insufficient_data" or "error" in int_d:
-        intensity_cells = "-- | -- | -- | --"
-    else:
-        intensity_cells = (
-            f"{fmt(int_d.get('agent_median'))} | {fmt(int_d.get('human_median'))} | "
-            f"{continuous_effect_size_cell(intensity_test)} | {_p_cell(intensity_test)}"
-        )
-
-    return f"| {label} | {n.n_a} | {n.n_c} | {coverage_cells} | {intensity_cells} |"
+def _coverage_pct(indicators: list[float]) -> float | None:
+    """Mean of a 0/1 indicator list as a 0..1 proportion (pct()'s own
+    expected input -- it multiplies by 100 itself), or None if the
+    population is empty."""
+    return sum(indicators) / len(indicators) if indicators else None
 
 
 def _render_mocking_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """The paper table: per-language + Overall mocking coverage (%) and
-    mocking intensity (median mock calls per mocking fixture), each its
-    own Mann-Whitney U + Cliff's delta test. See this module's docstring
-    for the full methodology, including the combined 8-test BH-FDR
-    family and the n_A/n_C-is-coverage's-population caveat."""
+    """The paper table: per-language + Overall mocking coverage (%).
+    Purely descriptive -- no statistical test (removed 2026-09-27, see
+    this module's docstring for why RQ3 no longer reports one, and for
+    Intensity's complete removal)."""
     other_label = other.dataset.upper()
     lines = [
         "**Coverage** = % of repos with >=1 fixture containing a mock at "
         "all (population: every repo with >=1 fixture, of that language "
-        "for the per-language rows). **Intensity** = median `num_mocks` "
-        "across a repo's own mocking fixtures (`num_mocks > 0` only), "
-        "then the median of those per-repo values across repos -- "
-        "**computed only over repos where Coverage = 1**; non-mocking "
-        "repos are excluded from Intensity entirely, not counted as 0. "
-        "n_A/n_C is Coverage's population size for that row -- Intensity's "
-        "true n can be smaller, since it's a strict subset (mocking repos "
-        "only); this table has one n column pair per row, not one per "
-        "metric. Both effect sizes are Cliff's delta from a Mann-Whitney U "
-        "test on the underlying per-repo values (binary for coverage, the "
-        "per-repo median for intensity). Overall is two single pooled "
-        "tests (raw p, never BH-corrected). Each language's coverage AND "
-        "intensity tests (8 tests: 4 languages x 2 metrics) are BH-FDR "
-        "corrected together as one combined family, not two separate "
-        "4-test families -- both are RQ3 metrics reported in this same "
-        "table.",
+        "for the per-language rows). Purely descriptive -- no statistical "
+        "test.",
         "",
-        f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) | "
-        f"δ_cov | p_cov | Intensity A | Intensity {other_label} | δ_int | p_int |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) |",
+        "|---|---|---|---|---|",
     ]
 
-    overall_coverage = compute_continuous_balance(
-        human_values=_mocking_coverage_indicators(other.has_mock_by_repo),
-        agent_values=_mocking_coverage_indicators(a.has_mock_by_repo),
-        variable="mocking_coverage_overall",
-    )
-    overall_intensity = compute_continuous_balance(
-        human_values=_mocking_intensities_by_repo(other.num_mocks_by_repo),
-        agent_values=_mocking_intensities_by_repo(a.num_mocks_by_repo),
-        variable="mocking_intensity_overall",
-    )
-    overall_n = NCounts(len(a.has_mock_by_repo), len(other.has_mock_by_repo))
+    a_overall = _mocking_coverage_indicators(a.has_mock_by_repo)
+    other_overall = _mocking_coverage_indicators(other.has_mock_by_repo)
     lines.append(
-        _render_mocking_row("Overall", overall_coverage, overall_intensity, overall_n, corrected=False)
+        _render_mocking_row(
+            "Overall",
+            len(a_overall),
+            len(other_overall),
+            _coverage_pct(a_overall),
+            _coverage_pct(other_overall),
+        )
     )
 
-    coverage_tests: dict[str, BalanceTest] = {}
-    intensity_tests: dict[str, BalanceTest] = {}
-    per_language_n: dict[str, NCounts] = {}
     for language in RQ3_LANGUAGES:
-        a_cov_by_repo = a.has_mock_by_repo_and_language.get(language, {})
-        other_cov_by_repo = other.has_mock_by_repo_and_language.get(language, {})
-        coverage_tests[language] = compute_continuous_balance(
-            human_values=_mocking_coverage_indicators(other_cov_by_repo),
-            agent_values=_mocking_coverage_indicators(a_cov_by_repo),
-            variable=f"mocking_coverage_{language}",
+        a_by_repo = _mocking_coverage_indicators(a.has_mock_by_repo_and_language.get(language, {}))
+        other_by_repo = _mocking_coverage_indicators(
+            other.has_mock_by_repo_and_language.get(language, {})
         )
-        a_num_mocks_by_repo = a.num_mocks_by_repo_and_language.get(language, {})
-        other_num_mocks_by_repo = other.num_mocks_by_repo_and_language.get(language, {})
-        intensity_tests[language] = compute_continuous_balance(
-            human_values=_mocking_intensities_by_repo(other_num_mocks_by_repo),
-            agent_values=_mocking_intensities_by_repo(a_num_mocks_by_repo),
-            variable=f"mocking_intensity_{language}",
-        )
-        per_language_n[language] = NCounts(len(a_cov_by_repo), len(other_cov_by_repo))
-
-    # Explicit request: both metrics' 4 per-language tests share ONE
-    # combined 8-test BH-FDR family, not two separate 4-test families.
-    combined = {f"{language}__coverage": coverage_tests[language] for language in RQ3_LANGUAGES}
-    combined.update(
-        {f"{language}__intensity": intensity_tests[language] for language in RQ3_LANGUAGES}
-    )
-    corrected = apply_fdr_correction(combined)
-
-    for language in RQ3_LANGUAGES:
         lines.append(
             _render_mocking_row(
                 language,
-                corrected[f"{language}__coverage"],
-                corrected[f"{language}__intensity"],
-                per_language_n[language],
-                corrected=True,
+                len(a_by_repo),
+                len(other_by_repo),
+                _coverage_pct(a_by_repo),
+                _coverage_pct(other_by_repo),
             )
         )
 
@@ -592,9 +456,10 @@ def _render_mock_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Fixture-level mock counts by language -- the RQ3 analogue of
     rq2.py's Table 1 (tab:rq2-counts): raw count and percentage of
     fixtures with >=1 mock (`has_mock`), per language, both datasets side
-    by side. Purely descriptive, no statistics -- the paper's actual
-    mocking comparison is the repo-level Coverage/Intensity table above
-    (Mann-Whitney U + Cliff's delta). Simpler than RQ2's counts table
+    by side. Purely descriptive, no statistics -- neither is the paper's
+    actual mocking comparison, the repo-level Coverage table above (also
+    purely descriptive, see this module's docstring). Simpler than RQ2's
+    counts table
     besides: `has_mock` is a clean binary (a fixture either has >=1 mock
     or it doesn't), so there's no 'other' category to exclude from the
     denominator and no double-counting concern the way RQ2's
@@ -617,8 +482,8 @@ def _render_mock_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
         "count for that language/dataset -- no exclusions. Total is the "
         "dataset-wide sum across every language present, not just the "
         "four rows below. Purely descriptive -- no significance test "
-        "(see the Coverage/Intensity table above for the paper's actual, "
-        "repo-level mocking comparison).",
+        "(see the Coverage table above for the paper's actual, repo-level "
+        "mocking comparison).",
         "",
         f"| Language | Mock A (n) | Mock A (%) | Mock {other_label} (n) | Mock {other_label} (%) |",
         "|---|---|---|---|---|",
@@ -746,7 +611,7 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
             _render_continuous_metric(metric, a, other, fixture_level[metric], repo_level[metric])
         )
 
-    lines += ["### Mocking Coverage and Intensity (paper table)", ""]
+    lines += ["### Mocking Coverage (paper table)", ""]
     lines.append(_render_mocking_summary_table(a, other))
 
     lines.append(_render_mock_counts_table(a, other))
@@ -762,7 +627,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "# RQ3 -- Mocking",
         "",
         "> How do agent-generated and human-written fixtures differ in mock "
-        "usage -- coverage and intensity?",
+        "usage -- coverage?",
         "",
         f"Generated: {generated_at}",
         "",

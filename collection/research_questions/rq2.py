@@ -37,40 +37,39 @@ were classified one way or the other). Total is the dataset-wide sum
 across every language present, not just the four rows shown.
 
 **Table 2 (tab:rq2-coverage) -- teardown coverage**
-(`_render_teardown_coverage_table()`): the inferential table. For each
-repo, a binary indicator -- does it have >=1 teardown-classified fixture
-at all (1) or none (0)? Compared between datasets via Mann-Whitney U +
-Cliff's delta (`compute_continuous_balance()` on the 0/1 values directly
--- the mean of a 0/1 list *is* "% of repos with >=1 teardown fixture", so
-`agent_mean`/`human_mean` from the same call double as the "Coverage A/C
-(%)" columns, no separate aggregation needed). Population (and n_A/n_C):
-repos with >=1 setup/teardown/other-classified fixture -- the same
-"denominator" convention `repo_level_category_proportions()` uses
-elsewhere in this package (a repo with zero classified fixtures is
-skipped, not counted as 0-coverage). Overall is one pooled, uncorrected
-test; each language's p is BH-FDR-corrected against the other 3
-languages' tests only (this variable's own family -- see
-`apply_fdr_correction()`'s docstring).
+(`_render_teardown_coverage_table()`): for each repo, a binary indicator
+-- does it have >=1 teardown-classified fixture at all (1) or none (0)?
+"Coverage A/C (%)" is just the mean of that 0/1 list per side, per
+language and Overall. Population (and n_A/n_C): repos with >=1
+setup/teardown/other-classified fixture -- the same "denominator"
+convention `repo_level_category_proportions()` uses elsewhere in this
+package (a repo with zero classified fixtures is skipped, not counted as
+0-coverage). **Purely descriptive -- no statistical test** (removed
+2026-09-27, alongside RQ3's Coverage/Intensity test and Intensity metric
+entirely: the paper's RQ2/RQ3 coverage tables report plain percentages,
+no p-value, no effect size, no BH-FDR family. RQ1 is now the only script
+in this package that performs BH-FDR correction at all -- see
+[internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md)
+for the full before/after inventory).
 
 Both tables render a fixed four-language row order (java, javascript,
 python, typescript) rather than this package's usual "intersection of
 languages present on both sides" convention (`compute_stratified_*_
 balance()`) -- a deliberate simplification matching the paper's table
-spec; `compute_continuous_balance()` already degrades a missing-on-one-
-side language to its existing `insufficient_data` fallback, so this only
-changes behavior for a language genuinely absent from one side (both real
-A/C collections have fixtures in all four).
+spec, predating the statistical-test removal above and unaffected by it.
 
 These two tables replace the single, previously-reported repo-level
 median setup_pct/teardown_pct/other_pct proportion table (Mann-Whitney U
 + Cliff's delta on per-repo *proportions*, "V" labeled for paper-column
-consistency though the number was Cliff's delta) -- the paper settled on
-two narrower tables (one purely descriptive, one inferential-but-simpler:
-a binary coverage rate instead of a continuous proportion) instead of one
-combined table. `compare_categorical_repo_level()`/
+consistency though the number was Cliff's delta) -- the paper first
+settled on two narrower tables (one purely descriptive, one
+inferential-but-simpler: a binary coverage rate instead of a continuous
+proportion), then dropped the inferential half of Table 2 too (see
+above). `compare_categorical_repo_level()`/
 `repo_level_category_proportions()` (`_shared.py`) are still used
-elsewhere in this package (rq1.py/rq3.py) -- only rq2.py's own use of them
-for that removed table is gone.
+elsewhere in this package (rq1.py) -- rq2.py never used them for Table 2
+in the first place (a plain per-repo mean needs no repo-declustering
+machinery of its own).
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
@@ -134,7 +133,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
-from ..between_group_comparison import BalanceTest, compute_continuous_balance
 from ..db import db_session
 from ..logging_utils import get_logger
 from ._shared import (
@@ -142,14 +140,9 @@ from ._shared import (
     DATASET_LABELS,
     OUTPUT_DIR,
     LanguageLeakage,
-    NCounts,
-    apply_fdr_correction,
     compute_language_leakage,
-    continuous_effect_size_cell,
-    format_p_value,
     pct,
     render_language_leakage_table,
-    repo_level_category_n_counts,
     require_db_or_none,
     write_markdown_report,
 )
@@ -225,14 +218,13 @@ def _fetch_kinds_and_repo_counts(
     re-classification.
 
     `kind_counts_by_repo` feeds Table 2's Overall row (via
-    _teardown_coverage_indicators() + compute_continuous_balance());
-    `kind_counts_by_repo_and_language` feeds both tables' per-language rows
-    -- Table 1's raw counts (_language_kind_totals(), summed across repos)
-    and Table 2's per-language coverage test -- grouped by each fixture's
-    own language (test_files.language), not the repo's tag, so a repo with
+    _teardown_coverage_indicators()); `kind_counts_by_repo_and_language`
+    feeds both tables' per-language rows -- Table 1's raw counts
+    (_language_kind_totals(), summed across repos) and Table 2's
+    per-language coverage percentage -- grouped by each fixture's own
+    language (test_files.language), not the repo's tag, so a repo with
     fixtures in more than one language contributes to each language
-    separately. Both also feed repo_level_category_n_counts() for Table
-    2's n_A/n_C columns."""
+    separately."""
     kind_distribution = _empty_kind_counts()
     kind_counts_by_repo: dict[int, dict[str, int]] = {}
     kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = {}
@@ -404,10 +396,9 @@ def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[fl
     >=1 classified (setup/teardown/setup_and_teardown/other) fixture -- a
     repo with none is skipped, not counted as 0-coverage, matching
     repo_level_category_proportions()'s convention elsewhere in this
-    package. Feeds compute_continuous_balance() directly: the mean of
-    these 0/1 values *is* "% of repos with >=1 teardown fixture", so that
-    call's agent_mean/human_mean double as Table 2's Coverage A/C (%)
-    columns."""
+    package. `_coverage_pct()` takes the mean of these 0/1 values
+    directly -- that mean *is* "% of repos with >=1 teardown fixture",
+    Table 2's Coverage A/C (%) columns."""
     return [
         1.0 if _effective_teardown_count(counts) > 0 else 0.0
         for counts in by_repo.values()
@@ -416,70 +407,66 @@ def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[fl
 
 
 def _render_teardown_coverage_row(
-    label: str, test: BalanceTest, n: NCounts, *, corrected: bool
+    label: str, n_a: int, n_c: int, pct_a: float | None, pct_c: float | None
 ) -> str:
-    """One row of Table 2 -- coverage percentages come from the same
-    compute_continuous_balance() call's agent_mean/human_mean (see
-    _teardown_coverage_indicators()'s docstring), delta from Cliff's delta.
-    `corrected` selects between `test`'s raw p (Overall, a single pooled
-    test) and its BH-adjusted p (per-language rows, already computed by
-    apply_fdr_correction() before this is called)."""
-    d = test.details
-    if d.get("reason") == "insufficient_data" or "error" in d:
-        return f"| {label} | {n.n_a} | {n.n_c} | -- | -- | -- | -- |"
-    p_cell = format_p_value(d["adjusted_p_value"]) if corrected else format_p_value(test.p_value)
-    return (
-        f"| {label} | {n.n_a} | {n.n_c} | "
-        f"{pct(d.get('agent_mean'))} | {pct(d.get('human_mean'))} | "
-        f"{continuous_effect_size_cell(test)} | {p_cell} |"
-    )
+    """One row of Table 2 -- purely descriptive (no statistical test, see
+    this module's docstring): `pct_a`/`pct_c` are just the mean of each
+    side's 0/1 coverage indicator list, `None` when that side's population
+    is empty."""
+    if pct_a is None and pct_c is None:
+        return f"| {label} | {n_a} | {n_c} | -- | -- |"
+    return f"| {label} | {n_a} | {n_c} | {pct(pct_a)} | {pct(pct_c)} |"
+
+
+def _coverage_pct(indicators: list[float]) -> float | None:
+    """Mean of a 0/1 indicator list as a 0..1 proportion (pct()'s own
+    expected input -- it multiplies by 100 itself), or None if the
+    population (the list itself) is empty -- shared by Table 2's Overall
+    and per-language rows."""
+    return sum(indicators) / len(indicators) if indicators else None
 
 
 def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Table 2 (tab:rq2-coverage): % of repos with >=1 teardown-classified
-    fixture, Mann-Whitney U + Cliff's delta on the per-repo binary
-    indicator, BH-FDR-corrected across the four-language family. See this
-    module's docstring for the full methodology."""
+    fixture, per language and Overall. Purely descriptive -- no
+    statistical test (removed 2026-09-27, see this module's docstring for
+    why RQ2 no longer reports one)."""
     other_label = other.dataset.upper()
     lines = [
         "Per-repository binary coverage: 1 if a repo has >=1 teardown-"
         "classified fixture, else 0 (population: repos with >=1 setup/"
         'teardown/other-classified fixture). "Coverage A/C (%)" is the '
-        'share of that population with the indicator at 1. "delta" is '
-        "Cliff's delta from a Mann-Whitney U test on the indicator between "
-        "datasets. Overall is a single pooled test (raw p, never "
-        "BH-corrected); each language's p is BH-FDR-corrected against the "
-        "other 3 languages' tests only.",
+        "share of that population with the indicator at 1. Purely "
+        "descriptive -- no statistical test.",
         "",
-        f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) | delta | p (BH) |",
-        "|---|---|---|---|---|---|---|",
+        f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) |",
+        "|---|---|---|---|---|",
     ]
 
-    overall_test = compute_continuous_balance(
-        human_values=_teardown_coverage_indicators(other.kind_counts_by_repo),
-        agent_values=_teardown_coverage_indicators(a.kind_counts_by_repo),
-        variable="teardown_coverage_overall",
-    )
-    overall_n = repo_level_category_n_counts(a.kind_counts_by_repo, other.kind_counts_by_repo)
-    lines.append(_render_teardown_coverage_row("Overall", overall_test, overall_n, corrected=False))
-
-    per_language_tests: dict[str, BalanceTest] = {}
-    per_language_n: dict[str, NCounts] = {}
-    for language in RQ2_LANGUAGES:
-        a_by_repo = a.kind_counts_by_repo_and_language.get(language, {})
-        other_by_repo = other.kind_counts_by_repo_and_language.get(language, {})
-        per_language_tests[language] = compute_continuous_balance(
-            human_values=_teardown_coverage_indicators(other_by_repo),
-            agent_values=_teardown_coverage_indicators(a_by_repo),
-            variable=f"teardown_coverage_{language}",
+    a_overall = _teardown_coverage_indicators(a.kind_counts_by_repo)
+    other_overall = _teardown_coverage_indicators(other.kind_counts_by_repo)
+    lines.append(
+        _render_teardown_coverage_row(
+            "Overall",
+            len(a_overall),
+            len(other_overall),
+            _coverage_pct(a_overall),
+            _coverage_pct(other_overall),
         )
-        per_language_n[language] = repo_level_category_n_counts(a_by_repo, other_by_repo)
+    )
 
-    corrected_tests = apply_fdr_correction(per_language_tests)
     for language in RQ2_LANGUAGES:
+        a_by_repo = _teardown_coverage_indicators(a.kind_counts_by_repo_and_language.get(language, {}))
+        other_by_repo = _teardown_coverage_indicators(
+            other.kind_counts_by_repo_and_language.get(language, {})
+        )
         lines.append(
             _render_teardown_coverage_row(
-                language, corrected_tests[language], per_language_n[language], corrected=True
+                language,
+                len(a_by_repo),
+                len(other_by_repo),
+                _coverage_pct(a_by_repo),
+                _coverage_pct(other_by_repo),
             )
         )
 
