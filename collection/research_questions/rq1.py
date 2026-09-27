@@ -23,11 +23,19 @@ as unused columns. `scope` (a categorical metric) was dropped the same
 way, and so was `commit_type` (2026-09-27) -- a Conventional Commits
 classification of the originating commit's message, computed for both
 Dataset A and B and never used in any reported RQ; its whole
-`conventional_commits.py` module was removed along with it. The one
-categorical metric that remains (`fixture_type`) has its own,
-separate, pre-existing paper/non-paper framing (its fixture-level
-chi-square explicitly is NOT the paper's result; its repo-level
-companion in "Repo-level aggregates" IS -- see below).
+`conventional_commits.py` module was removed along with it.
+
+`fixture_type`'s fixture-level chi-square (Overall + per-language) was
+itself removed the same day (2026-09-27) -- it was never the paper's
+result (see the repo-level note below) and had no other consumer once
+gone, so `compare_datasets_categorical()`/`_render_categorical_metric()`/
+`_fetch_fixture_type_by_language()`/`_fetch_repo_count_by_language()`
+went with it. `fixture_type`'s per-dataset *descriptive* distribution
+(no test, just counts -- `CATEGORICAL_METRICS`/`categorical` on
+`DatasetMetrics`) is UNCHANGED and still rendered in each dataset's
+summary section. The repo-level proportion test in "Repo-level
+aggregates" -- the one the paper actually cites -- is also UNCHANGED;
+see `_render_repo_level_comparison()` below.
 
 `comment_density` (added 2026-08-17, the third paper metric) is
 `fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
@@ -109,7 +117,6 @@ from pathlib import Path
 from .. import paths
 from ..between_group_comparison import (
     BalanceTest,
-    compute_categorical_balance,
     compute_continuous_balance,
 )
 from ..db import db_session
@@ -123,7 +130,6 @@ from ._shared import (
     NCounts,
     compare_categorical_repo_level,
     compute_language_leakage,
-    compute_stratified_categorical_balance,
     compute_stratified_continuous_balance,
     fetch_categorical_column,
     fetch_categorical_column_by_repo,
@@ -183,44 +189,10 @@ class DatasetMetrics:
     repo_level_continuous_by_language: dict[str, dict[str, list[float]]] = field(
         default_factory=dict
     )
-    fixture_type_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     fixture_type_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
-    fixture_type_n_by_language: dict[str, int] = field(default_factory=dict)
     # metric -> % of fixtures at FLOOR_CHECK_METRICS' floor value (descriptive
     # only -- see this module's docstring).
     floor_pct: dict[str, float] = field(default_factory=dict)
-
-
-def _fetch_fixture_type_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
-    """fixture_type distribution per fixture's own language (test_files.language,
-    not repositories.language -- see compute_language_leakage()'s docstring for
-    why those two can differ). compute_stratified_categorical_balance() needs
-    this to check whether the pooled fixture_type difference (see this
-    module's docstring) holds within a language, not just because the two
-    datasets have different language mixes."""
-    rows = conn.execute(
-        "SELECT tf.language, f.fixture_type, COUNT(*) FROM fixtures f "
-        "JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE f.fixture_type IS NOT NULL "
-        "GROUP BY tf.language, f.fixture_type"
-    ).fetchall()
-    by_language: dict[str, dict[str, int]] = {}
-    for language, fixture_type, count in rows:
-        by_language.setdefault(language, {})[fixture_type] = count
-    return by_language
-
-
-def _fetch_repo_count_by_language(conn: sqlite3.Connection, column: str) -> dict[str, int]:
-    """Distinct repo_id count per fixture's own language, for fixtures with
-    a non-null `column` -- the per-language n_A/n_C render_comparison_table()
-    needs: how many repos actually contributed to *this* variable's test in
-    that language, independent of how many fixtures they contributed."""
-    rows = conn.execute(
-        f"SELECT tf.language, COUNT(DISTINCT f.repo_id) FROM fixtures f "
-        f"JOIN test_files tf ON f.file_id = tf.id "
-        f"WHERE f.{column} IS NOT NULL GROUP BY tf.language"
-    ).fetchall()
-    return dict(rows)
 
 
 def _fetch_continuous_by_repo_and_language(
@@ -289,9 +261,7 @@ def load_dataset_metrics(
             m: fetch_continuous_column(conn, "fixtures", m) for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }
         categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
-        fixture_type_by_language = _fetch_fixture_type_by_language(conn)
         fixture_type_by_repo = fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type")
-        fixture_type_n_by_language = _fetch_repo_count_by_language(conn, "fixture_type")
         language_leakage = compute_language_leakage(conn)
         # Descriptive only, not run through a significance test: agent_type
         # is the group-defining variable for Dataset A (which agent
@@ -357,9 +327,7 @@ def load_dataset_metrics(
         agent_type_distribution=agent_type_distribution,
         repo_level_continuous=repo_level_continuous,
         repo_level_continuous_by_language=repo_level_continuous_by_language,
-        fixture_type_by_language=fixture_type_by_language,
         fixture_type_by_repo=fixture_type_by_repo,
-        fixture_type_n_by_language=fixture_type_n_by_language,
         floor_pct=floor_pct,
     )
 
@@ -380,21 +348,6 @@ def compare_datasets_repo_level(
             variable=metric,
         )
         for metric in CONTINUOUS_METRICS
-    }
-
-
-def compare_datasets_categorical(
-    a: DatasetMetrics, other: DatasetMetrics
-) -> dict[str, BalanceTest]:
-    """A vs `other`: pooled fixture-level chi-square per categorical metric
-    (fixture_type) -- the Overall row for each metric's table."""
-    return {
-        metric: compute_categorical_balance(
-            human_dist=other.categorical[metric],
-            agent_dist=a.categorical[metric],
-            variable=metric,
-        )
-        for metric in CATEGORICAL_METRICS
     }
 
 
@@ -573,41 +526,6 @@ def _render_continuous_metric(
     return "\n".join(lines)
 
 
-def _render_categorical_metric(
-    metric: str,
-    a: DatasetMetrics,
-    other: DatasetMetrics,
-    overall: BalanceTest,
-    overall_n: NCounts,
-    a_by_language: dict[str, dict[str, int]] | None,
-    other_by_language: dict[str, dict[str, int]] | None,
-    a_n_by_language: dict[str, int],
-    other_n_by_language: dict[str, int],
-) -> str:
-    """One categorical metric's table -- Overall-only if `a_by_language`/
-    `other_by_language` is None (no family defined for this metric),
-    else Overall + per-language family rows."""
-    per_language = None
-    per_language_n = None
-    if a_by_language is not None and other_by_language is not None:
-        per_language = compute_stratified_categorical_balance(
-            a_by_language, other_by_language, metric
-        )
-        per_language_n = {
-            language: NCounts(
-                a_n_by_language.get(language, 0), other_n_by_language.get(language, 0)
-            )
-            for language in per_language
-        }
-    lines = [f"### {metric}", ""]
-    lines.append(
-        render_comparison_table(
-            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
-        )
-    )
-    return "\n".join(lines)
-
-
 def _render_floor_percentage_footnote(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Descriptive-only footnote for num_parameters, replacing its old
     Mann-Whitney section -- see this module's docstring for why it was
@@ -634,7 +552,6 @@ def _render_floor_percentage_footnote(a: DatasetMetrics, other: DatasetMetrics) 
 
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
     continuous_overall = compare_datasets_repo_level(a, other)
-    categorical_overall = compare_datasets_categorical(a, other)
     lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
 
     continuous_intro = (
@@ -678,39 +595,6 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "descriptive floor-percentage footnote, not a comparative test.",
         "",
         _render_floor_percentage_footnote(a, other),
-    ]
-
-    lines += [
-        "**Categorical metrics (chi-square)** -- Effect size is Cramer's V "
-        "(thresholds: negligible <0.1, small <0.3, medium <0.5, else large). "
-        "Same Overall-uncorrected / per-language-family-corrected convention "
-        "as the continuous metrics above. `fixture_type` has a per-language "
-        "family.",
-        "",
-    ]
-    lines.append(
-        _render_categorical_metric(
-            "fixture_type",
-            a,
-            other,
-            categorical_overall["fixture_type"],
-            NCounts(len(a.fixture_type_by_repo), len(other.fixture_type_by_repo)),
-            a.fixture_type_by_language,
-            other.fixture_type_by_language,
-            a.fixture_type_n_by_language,
-            other.fixture_type_n_by_language,
-        )
-    )
-    lines += [
-        "> **`fixture_type`'s result above is not used in the paper.** It's "
-        "a pooled/per-language fixture-level chi-square, which treats "
-        "fixtures clustered within a repo as independent observations and "
-        "inflates both chi2 and Cramer's V (see [Limitations § Categorical "
-        "Pseudo-Replication](../docs/reference/limitations.md#categorical-"
-        "pseudo-replication)). The paper reports the repo-level "
-        '`fixture_type` proportion test in "Repo-level aggregates" below '
-        "instead.",
-        "",
     ]
 
     return "\n".join(lines)

@@ -43,29 +43,32 @@ metrics), not two separate 4-test families -- both are RQ3 metrics
 reported in the same table, so they share one family the same way this
 whole package always treats "everything reported in one table" as one
 correction family. Fixed four-language row order (java, javascript,
-python, typescript) rather than the "languages present on both sides"
-intersection convention some of this script's legacy tables (below) use
--- see rq2.py's module docstring for the identical simplification and why
-it doesn't change real output (`compute_continuous_balance()` already
-degrades a missing-on-one-side language to `insufficient_data` on its
-own).
+python, typescript) rather than a "languages present on both sides"
+intersection convention -- see rq2.py's module docstring for the
+identical simplification and why it doesn't change real output
+(`compute_continuous_balance()` already degrades a missing-on-one-side
+language to `insufficient_data` on its own).
 
 This table replaces three previously-reported tables:
 
 - **Mock prevalence** (fixture-level `has_mock` chi-square, pooled + per
-  language) -- kept, computed identically (mock detection logic
-  untouched), moved to "## Legacy: Fixture-Level Mock Prevalence (Not
-  Used in the Paper)" below the main comparison (it was already marked
-  "not used in the paper" before this change -- fixture-level
-  pseudo-replication, see docs/reference/limitations.md's "Categorical
-  Pseudo-Replication"). The *repo-level* has_mock test that WAS reported
-  in the paper (formerly "## Repo-level aggregates") is fully superseded
-  by this table's Coverage column -- same statistic (per-repo has_mock
-  indicator, Mann-Whitney + Cliff's delta), same population, now computed
-  via `compute_continuous_balance()` directly instead of
-  `compare_categorical_repo_level()` (a two-category proportion test on a
-  binary variable is mathematically the mean-of-the-0/1-indicator test
-  this table uses -- same number, cleaner path there).
+  language) -- initially kept (computed identically, mock detection
+  logic untouched) in a "## Legacy: Fixture-Level Mock Prevalence (Not
+  Used in the Paper)" section below the main comparison, since it was
+  already marked "not used in the paper" before this change -- fixture-
+  level pseudo-replication, see docs/reference/limitations.md's
+  "Categorical Pseudo-Replication". Removed entirely (2026-09-27): never
+  cited, and `compare_datasets_categorical()`/`_render_has_mock()`/
+  `has_mock_n_by_language`/`_fetch_fixture_repo_count_by_language()` had
+  no other consumer once it was gone. The *repo-level* has_mock test that
+  WAS reported in the paper (formerly "## Repo-level aggregates") is
+  fully superseded by this table's Coverage column -- same statistic
+  (per-repo has_mock indicator, Mann-Whitney + Cliff's delta), same
+  population, now computed via `compute_continuous_balance()` directly
+  instead of `compare_categorical_repo_level()` (a two-category
+  proportion test on a binary variable is mathematically the
+  mean-of-the-0/1-indicator test this table uses -- same number, cleaner
+  path there).
 - **Framework distribution** -- removed from the report entirely (not
   moved to legacy, per request: framework names are language-specific by
   construction, `unittest.mock` Python-only / Sinon JS-only / Mockito
@@ -131,7 +134,6 @@ from pathlib import Path
 from .. import paths
 from ..between_group_comparison import (
     BalanceTest,
-    compute_categorical_balance,
     compute_continuous_balance,
 )
 from ..db import db_session
@@ -144,7 +146,6 @@ from ._shared import (
     NCounts,
     apply_fdr_correction,
     compute_language_leakage,
-    compute_stratified_categorical_balance,
     continuous_effect_size_cell,
     fetch_categorical_column,
     fetch_continuous_column,
@@ -163,19 +164,17 @@ from ._shared import (
 logger = get_logger(__name__)
 
 CONTINUOUS_METRICS = ["num_mocks"]
-# All 3 are shown descriptively per dataset (_render_dataset_summary());
-# only has_mock also gets an A-vs-C chi-square test (TESTED_CATEGORICAL_
-# METRICS below) -- framework/category's pooled treatment was removed
-# 2026-08-12 (see module docstring). has_mock's chi-square is itself now
-# legacy-only (see _render_legacy_mock_prevalence()) -- the paper table's
-# Coverage column supersedes it.
+# All 3 are shown descriptively per dataset (_render_dataset_summary())
+# only -- none gets an A-vs-C statistical test here. has_mock's own
+# fixture-level chi-square (Overall + per-language) and framework/
+# category's pooled treatment were both removed entirely (2026-08-12 for
+# framework/category, 2026-09-27 for has_mock) -- the paper table's
+# Coverage column is has_mock's repo-level result and supersedes it.
 CATEGORICAL_METRICS = ["has_mock", "framework", "category"]
-TESTED_CATEGORICAL_METRICS = ["has_mock"]
 
 # Fixed row order for the paper table -- see the module docstring for why
-# this is a fixed list rather than the "languages present on both sides"
-# intersection convention some of this script's other (legacy) tables use.
-# Matches rq2.py's RQ2_LANGUAGES.
+# this is a fixed list rather than a "languages present on both sides"
+# intersection convention. Matches rq2.py's RQ2_LANGUAGES.
 RQ3_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
 
 
@@ -192,7 +191,6 @@ class DatasetMetrics:
     framework_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
     language_leakage: list[LanguageLeakage] = field(default_factory=list)
     has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
-    has_mock_n_by_language: dict[str, int] = field(default_factory=dict)
     repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
     has_mock_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
     has_mock_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
@@ -267,12 +265,10 @@ def _fetch_has_mock_by_repo_and_language(
     conn: sqlite3.Connection,
 ) -> dict[str, dict[int, dict[str, int]]]:
     """{language: {repo_id: {"has_mock": n, "no_mock": n}}} -- has_mock's
-    per-(language, repo) breakdown. Feeds two things: the legacy
-    per-language chi-square family
-    (`has_mock_dist_by_language` is a different, pooled fetch -- see
-    below), and, via `_mocking_coverage_indicators()`, the paper table's
-    Coverage column (each repo's own has_mock/no_mock counts collapse to
-    a single 0/1 "has any mock at all" indicator there). Grouped by each
+    per-(language, repo) breakdown. Feeds, via
+    `_mocking_coverage_indicators()`, the paper table's Coverage column
+    (each repo's own has_mock/no_mock counts collapse to a single 0/1
+    "has any mock at all" indicator there). Grouped by each
     fixture's own language (test_files.language), not the repo's tag --
     same convention every other per-language grouping in this script
     uses -- so a repo with fixtures in more than one language contributes
@@ -316,17 +312,6 @@ def _fetch_num_mocks_by_repo_and_language(
     return result
 
 
-def _fetch_fixture_repo_count_by_language(conn: sqlite3.Connection) -> dict[str, int]:
-    """Distinct repo count per language, among ALL fixtures -- the n_A/n_C
-    denominator for has_mock's legacy per-language chi-square rows: every
-    repo with a fixture of that language, not just ones with a mock."""
-    rows = conn.execute(
-        "SELECT tf.language, COUNT(DISTINCT f.repo_id) FROM fixtures f "
-        "JOIN test_files tf ON f.file_id = tf.id GROUP BY tf.language"
-    ).fetchall()
-    return dict(rows)
-
-
 def load_dataset_metrics(
     dataset: str, *, db_root: Path = paths.DB_ROOT
 ) -> DatasetMetrics | None:
@@ -345,7 +330,6 @@ def load_dataset_metrics(
         framework_by_language = _fetch_framework_by_language(conn)
         has_mock_by_repo_and_language = _fetch_has_mock_by_repo_and_language(conn)
         num_mocks_by_repo_and_language = _fetch_num_mocks_by_repo_and_language(conn)
-        has_mock_n_by_language = _fetch_fixture_repo_count_by_language(conn)
         language_leakage = compute_language_leakage(conn)
         # continuous_by_repo's "num_mocks" entry is reused below (as
         # num_mocks_by_repo) to derive has_mock_by_repo's per-repo
@@ -394,7 +378,6 @@ def load_dataset_metrics(
         num_mocks_raw=num_mocks_raw,
         has_mock_dist=has_mock_dist,
         has_mock_dist_by_language=has_mock_dist_by_language,
-        has_mock_n_by_language=has_mock_n_by_language,
         framework_dist=framework_dist,
         category_dist=category_dist,
         mock_rate_by_language=mock_rate_by_language,
@@ -406,22 +389,6 @@ def load_dataset_metrics(
         num_mocks_by_repo=num_mocks_by_repo,
         num_mocks_by_repo_and_language=num_mocks_by_repo_and_language,
     )
-
-
-def compare_datasets_categorical(
-    a: DatasetMetrics, other: DatasetMetrics
-) -> dict[str, BalanceTest]:
-    """A vs `other`: pooled fixture-level chi-square, has_mock only --
-    the Overall row for has_mock's table. framework/category no longer
-    get a pooled chi-square test at all (see this module's docstring)."""
-    return {
-        metric: compute_categorical_balance(
-            human_dist=_categorical_values(other, metric),
-            agent_dist=_categorical_values(a, metric),
-            variable=metric,
-        )
-        for metric in TESTED_CATEGORICAL_METRICS
-    }
 
 
 def compare_datasets_repo_level(
@@ -759,26 +726,6 @@ def _render_continuous_metric(
     return "\n".join(lines)
 
 
-def _render_has_mock(a: DatasetMetrics, other: DatasetMetrics, overall: BalanceTest) -> str:
-    per_language = compute_stratified_categorical_balance(
-        a.has_mock_dist_by_language, other.has_mock_dist_by_language, "has_mock"
-    )
-    per_language_n = {
-        language: NCounts(
-            a.has_mock_n_by_language.get(language, 0), other.has_mock_n_by_language.get(language, 0)
-        )
-        for language in per_language
-    }
-    overall_n = NCounts(len(a.has_mock_by_repo), len(other.has_mock_by_repo))
-    lines = ["### has_mock", ""]
-    lines.append(
-        render_comparison_table(
-            overall, overall_n, per_language, per_language_n, other_dataset=other.dataset
-        )
-    )
-    return "\n".join(lines)
-
-
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
     fixture_level = compare_datasets_fixture_level(a, other)
     repo_level = compare_datasets_repo_level(a, other)
@@ -804,32 +751,6 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
 
     lines.append(_render_mock_counts_table(a, other))
 
-    return "\n".join(lines)
-
-
-def _render_legacy_mock_prevalence(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """Fixture-level has_mock chi-square (pooled + per language) -- kept
-    for transparency/comparison only, not one of RQ3's reported tables.
-    Already fixture-level pseudo-replicated (every fixture treated as an
-    independent observation, though fixtures cluster within repos) before
-    this table existed -- see this module's docstring and
-    [Limitations § Categorical Pseudo-Replication](../docs/reference/
-    limitations.md#categorical-pseudo-replication). The repo-level
-    `has_mock` result that WAS reported in the paper is superseded by
-    _render_mocking_summary_table()'s Coverage column above, not shown
-    here."""
-    categorical_overall = compare_datasets_categorical(a, other)
-    lines = [
-        f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
-        "",
-        '**has_mock (chi-square)** -- an "Overall" row (single pooled '
-        "test, not BH-corrected) plus one BH-corrected row per language "
-        "(one family, 4 languages -- see render_comparison_table()'s "
-        "docstring in _shared.py). Effect size is Cramer's V (thresholds: "
-        "negligible <0.1, small <0.3, medium <0.5, else large).",
-        "",
-    ]
-    lines.append(_render_has_mock(a, other, categorical_overall["has_mock"]))
     return "\n".join(lines)
 
 
@@ -874,35 +795,6 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
-
-    lines += [
-        "## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)",
-        "",
-        "Kept for transparency/comparison only -- not one of RQ3's "
-        "reported tables. Pooled + per-language fixture-level `has_mock` "
-        "chi-square, already flagged as repo-level pseudo-replication "
-        "(every fixture treated as an independent observation, though "
-        "fixtures cluster within repos) before the table above existed "
-        "-- see [Limitations § Categorical Pseudo-Replication](../docs/"
-        "reference/limitations.md#categorical-pseudo-replication). The "
-        "paper's actual mocking-coverage result is the Coverage column in "
-        "the main table above, computed at the repo level directly.",
-        "",
-    ]
-    if a_metrics is None:
-        lines.append("_Dataset A not available -- no legacy comparisons computed._")
-    else:
-        for other_ds, label in COMPARISONS:
-            other_metrics = loaded[other_ds]
-            if other_metrics is None:
-                lines += [
-                    f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other_ds]}",
-                    "",
-                    "_Not available -- db not collected yet._",
-                    "",
-                ]
-            else:
-                lines.append(_render_legacy_mock_prevalence(label, a_metrics, other_metrics))
 
     return "\n".join(lines)
 

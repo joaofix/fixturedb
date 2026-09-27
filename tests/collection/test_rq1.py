@@ -302,33 +302,6 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.agent_type_distribution == {"claude": 2, "copilot": 1}
 
-    def test_fixture_type_by_language_groups_by_fixtures_own_language(self, tmp_path):
-        """Grouped by test_files.language (the fixture's own file), not the
-        repo's tagged language -- same distinction compute_language_leakage()
-        relies on."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {"fixture_type": "pytest_decorator"},
-                        {"fixture_type": "pytest_decorator"},
-                    ],
-                },
-                {
-                    "language": "typescript",
-                    "fixtures": [{"fixture_type": "before_each"}],
-                },
-            ],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.fixture_type_by_language == {
-            "python": {"pytest_decorator": 2},
-            "typescript": {"before_each": 1},
-        }
-
     def test_fixture_type_by_repo_groups_by_repo_id(self, tmp_path):
         _make_multi_repo_db(tmp_path, "a", [[100.0] * 2, [1.0]])
         metrics = load_dataset_metrics("a", db_root=tmp_path)
@@ -336,17 +309,6 @@ class TestLoadDatasetMetrics:
         assert len(metrics.fixture_type_by_repo) == 2
         assert {"pytest_decorator": 2} in metrics.fixture_type_by_repo.values()
         assert {"pytest_decorator": 1} in metrics.fixture_type_by_repo.values()
-
-    def test_fixture_type_n_by_language_counts_distinct_repos(self, tmp_path):
-        """Two repos both contributing python fixtures -> n=2 for python,
-        not the fixture count (3)."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [{"language": "python", "fixtures": [{"fixture_type": "pytest_decorator"}] * 2}],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.fixture_type_n_by_language == {"python": 1}
 
     def test_repo_level_continuous_by_language_is_one_mean_per_repo_per_language(self, tmp_path):
         _make_multi_language_db(
@@ -416,7 +378,6 @@ class TestLoadDatasetMetrics:
         # fixture_type categorical distribution still counts junit_rule.
         assert metrics.categorical["fixture_type"]["junit_rule"] == 1
         assert metrics.categorical["fixture_type"]["junit4_before"] == 2
-        assert metrics.fixture_type_by_language["java"]["junit_rule"] == 1
 
     def test_floor_pct_computed_for_num_parameters_only(self, tmp_path):
         _make_db(
@@ -533,61 +494,6 @@ class TestGenerateReport:
         assert (
             "| python | 4 | 4 | 2.50 | 25.00 | 3.25 | 32.50 | 3.70 | 37.00 |" in python_line
         )
-
-    def test_categorical_comparison_renders_effect_size(self, tmp_path):
-        # A is all before_each, C is all after_each -> maximal association.
-        _make_db(tmp_path, "a", [{"loc": 1, "fixture_type": "before_each"}] * 10)
-        _make_db(tmp_path, "c", [{"loc": 1, "fixture_type": "after_each"}] * 10)
-        report = generate_report(db_root=tmp_path)
-        fixture_type_section = report.split("### fixture_type")[1].split(
-            "not used in the paper"
-        )[0]
-        overall_line = next(
-            line for line in fixture_type_section.splitlines() if line.startswith("| Overall |")
-        )
-        assert "large" in overall_line
-
-    def test_fixture_type_per_language_family_renders(self, tmp_path):
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [{"language": "python", "fixtures": [{"fixture_type": "pytest_decorator"}] * 5}],
-        )
-        _make_multi_language_db(
-            tmp_path,
-            "c",
-            [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
-        )
-        report = generate_report(db_root=tmp_path)
-        fixture_type_section = report.split("### fixture_type")[1].split(
-            "not used in the paper"
-        )[0]
-        assert "| python |" in fixture_type_section
-        assert "| Overall |" in fixture_type_section
-
-    def test_fixture_type_per_language_excludes_language_not_shared(self, tmp_path):
-        """A has python + java fixtures, C has python only -- java has no
-        C-side data to compare against, so compute_stratified_categorical_
-        balance() must drop it rather than testing against an empty dist."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {"language": "python", "fixtures": [{"fixture_type": "pytest_decorator"}] * 5},
-                {"language": "java", "fixtures": [{"fixture_type": "junit5_before_each"}] * 5},
-            ],
-        )
-        _make_multi_language_db(
-            tmp_path,
-            "c",
-            [{"language": "python", "fixtures": [{"fixture_type": "before_each"}] * 5}],
-        )
-        report = generate_report(db_root=tmp_path)
-        fixture_type_section = report.split("### fixture_type")[1].split(
-            "not used in the paper"
-        )[0]
-        assert "| python |" in fixture_type_section
-        assert "| java |" not in fixture_type_section
 
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """The core value proposition: a single repo contributing many

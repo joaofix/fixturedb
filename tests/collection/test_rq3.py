@@ -354,19 +354,6 @@ class TestLoadDatasetMetrics:
             "java": {"mockito": 1},
         }
 
-    def test_has_mock_n_by_language_counts_every_repo_with_a_fixture(self, tmp_path):
-        """Every repo with a fixture of that language counts, even ones
-        with zero mocks -- has_mock's per-language chi-square tests
-        has_mock vs no_mock across ALL fixtures, not just mocked ones."""
-        _make_db(
-            tmp_path,
-            "a",
-            [{"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}]}],
-        )
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.has_mock_n_by_language == {"python": 1}
-
-
 class TestGenerateReport:
     def test_missing_all_dbs_notes_unavailable_without_crashing(self, tmp_path):
         report = generate_report(db_root=tmp_path)
@@ -382,8 +369,8 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 1 fixtures, 1 mock usages" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # C summary, A-vs-C main comparison, A-vs-C legacy mock-prevalence: 3 total.
-        assert report.count("Not available -- db not collected yet.") == 3
+        # C summary, A-vs-C main comparison: 2 total.
+        assert report.count("Not available -- db not collected yet.") == 2
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         _make_db(
@@ -431,35 +418,6 @@ class TestGenerateReport:
         # a large practical effect, negative (A's values exceed C's).
         assert "-1.000 | large" in overall_line
 
-    def test_legacy_mock_prevalence_includes_stratified_has_mock(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                {"language": "python", "fixtures": [{"overrides": {"num_mocks": 1}}] * 9 + [{"overrides": {"num_mocks": 0}}]},
-                {"language": "java", "fixtures": [{"overrides": {"num_mocks": 0}}]},
-            ],
-        )
-        _make_db(
-            tmp_path,
-            "c",
-            [
-                {"language": "python", "fixtures": [{"overrides": {"num_mocks": 0}}] * 9 + [{"overrides": {"num_mocks": 1}}]},
-            ],
-        )
-        report = generate_report(db_root=tmp_path)
-        assert "## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)" in report
-        assert "### has_mock" in report
-        legacy_section = report.split("## Legacy: Fixture-Level Mock Prevalence")[1]
-        has_mock_section = legacy_section.split("### has_mock")[1]
-        # python is shared by both A and C -> a real row; java only exists
-        # in A, so it must not appear at all (no data to compare against) --
-        # this legacy table still uses the intersection convention
-        # (compute_stratified_categorical_balance()), unlike the new paper
-        # table's fixed four-language rows below.
-        assert "| python |" in has_mock_section
-        assert "| java |" not in has_mock_section
-
     def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
         """One repo contributing many high-num_mocks fixtures must not
         dominate the comparison -- see the analogous rq1.py test for the
@@ -494,7 +452,7 @@ class TestGenerateReport:
         )
         assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
 
-    def test_paper_table_and_legacy_sections_present_removed_sections_gone(self, tmp_path):
+    def test_paper_table_present_removed_sections_gone(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
@@ -507,8 +465,9 @@ class TestGenerateReport:
         )
         report = generate_report(db_root=tmp_path)
         assert "### Mocking Coverage and Intensity (paper table)" in report
-        assert "## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)" in report
         # Removed entirely -- not moved anywhere.
+        assert "## Legacy: Fixture-Level Mock Prevalence" not in report
+        assert "### has_mock" not in report
         assert "## Repo-level aggregates" not in report
         assert "**Mocking framework distribution" not in report
         assert "**Test-double category distribution" not in report
@@ -537,17 +496,13 @@ class TestGenerateReport:
             report.index("### Mocking Coverage and Intensity (paper table)")
             < report.index("### Mock Fixture Counts by Language")
         )
-        # Untouched pre-existing sections still present.
-        assert "## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)" in report
-        counts_section = report.split("### Mock Fixture Counts by Language")[1].split(
-            "## Legacy:"
-        )[0]
+        counts_section = report.split("### Mock Fixture Counts by Language")[1]
         assert "| Overall | 1 | 100.0% | 0 | 0.0% |" in counts_section
         assert "| python | 1 | 100.0% | 0 | 0.0% |" in counts_section
 
     def test_paper_table_shows_fixed_four_language_rows_including_absent_ones(self, tmp_path):
-        """Unlike the legacy has_mock table's intersection convention,
-        the paper table always shows all four canonical language rows --
+        """The paper table always shows all four canonical language rows,
+        not an intersection of languages present on both sides --
         java/javascript/typescript here have no data on either side at
         all, and must still render (as insufficient-data dashes, not be
         omitted)."""
