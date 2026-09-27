@@ -21,6 +21,21 @@ fixture-level chi-square, RQ3's Legacy `has_mock` chi-square -- also had
 their own families). All of that is gone now, along with RQ3's Intensity
 metric entirely (removed, not just its test).
 
+**Update, same day**: `fixture_type`'s repo-level category-proportion
+test ("Repo-level aggregates," a 35-member by-category family) has also
+been removed entirely, along with every `_shared.py` helper that existed
+solely to support it (`fetch_categorical_column_by_repo`,
+`repo_level_category_proportions`, `compare_categorical_repo_level`,
+`repo_level_category_n_counts`, `render_categorical_repo_level_table`).
+It had been mistakenly documented in an earlier revision of this file as
+"the paper's actual `fixture_type` result" -- that framing was never
+actually verified against the paper and directly contradicted this
+project's own summary table, which already listed `fixture_type` as "not
+in paper." `fixture_type` now has no A-vs-C comparison of any kind,
+fixture-level or repo-level; only its per-dataset descriptive
+distribution remains, as a support column for `fixture_role`
+classification. The inventory and family count below reflect this.
+
 ---
 
 ## What problem BH-FDR solves
@@ -77,29 +92,14 @@ rows form a "family."
 | RQ1 | `loc` | 4 languages | 4 |
 | RQ1 | `cyclomatic_complexity` | 4 languages | 4 |
 | RQ1 | `comment_density` | 4 languages | 4 |
-| RQ1 | `fixture_type` (Repo-level aggregates -- the paper's actual result) | fixture_type categories (union observed in `db/a.db`+`db/c.db`) | 35 |
 | `balance.py` | Control-variable balance (A vs C) | `language`, `domain`, `repo_age_years` | 3 |
 
-That's it -- 5 families total, all in RQ1 or the non-RQ `balance.py`
-validity check. RQ2 and RQ3 compute zero BH-FDR families.
-
-## RQ1's `fixture_type` family is a different *kind*, not just a different size
-
-The three continuous metrics above are **by-language** families: the
-same statistical question asked once per language, always exactly 4
-members, via the shared `render_comparison_table()`.
-
-`fixture_type`'s repo-level test is a **by-category** family instead:
-the same question asked once per *value* of the variable itself --
-`pytest_decorator` vs `unittest_setup` vs `junit5_before_each`, etc. --
-via a different function, `compare_categorical_repo_level()`/
-`render_categorical_repo_level_table()`. Its family size is **not
-fixed** -- it's the union of distinct `fixture_type` values observed on
-either side, confirmed against the real data to currently be **35**,
-not 4. A 35-test family behaves very differently under BH-FDR than a
-4-test one (the correction is much less punishing per-test as the
-family grows), worth being explicit about if this number ever gets
-cited in the paper's methodology.
+That's it -- 4 families total, all **by-language** (the same statistical
+question asked once per language, always exactly 4 members, via the
+shared `render_comparison_table()`), split across RQ1's 3 continuous
+metrics and the non-RQ `balance.py` validity check. RQ2 and RQ3 compute
+zero BH-FDR families, and RQ1 no longer has any by-category family either
+-- `fixture_type` has no statistical test of any kind left.
 
 ## RQ2 and RQ3's coverage tables: plain percentages, no test
 
