@@ -83,59 +83,6 @@ def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
                 )
 
 
-def _make_multi_repo_fixture_type_db(root, dataset: str, repos: list[list[str]]) -> None:
-    """Create db/{dataset}.db with one repo per entry in `repos`, each
-    entry a list of `fixture_type` values for that repo's fixtures --
-    fixture_type analogue of _make_multi_repo_db() above (which varies
-    `loc` instead), for testing fixture_type_by_repo's repo-declustering.
-
-    Dataset "c" writes to c_sampled.db instead of the full c.db --
-    research_questions/ reads Dataset C's fixture-level sample-down, see
-    _shared.py::require_db_or_none()'s docstring."""
-    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
-    initialise_db(db_file)
-    with db_session(db_file) as conn:
-        for repo_idx, fixture_types in enumerate(repos):
-            repo_id, _ = upsert_repository(
-                conn,
-                {
-                    "github_id": repo_idx + 1,
-                    "full_name": f"owner/repo{repo_idx}",
-                    "language": "python",
-                    "stars": 1,
-                    "forks": 0,
-                    "description": "",
-                    "topics": "[]",
-                    "created_at": "2019-01-01T00:00:00Z",
-                    "pushed_at": "2020-01-01T00:00:00Z",
-                    "clone_url": f"https://github.com/owner/repo{repo_idx}.git",
-                    "num_contributors": 1,
-                    "domain": None,
-                    "repo_age_years": None,
-                },
-            )
-            file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
-            for i, fixture_type in enumerate(fixture_types):
-                insert_fixture(
-                    conn,
-                    {
-                        "file_id": file_id,
-                        "repo_id": repo_id,
-                        "name": f"fixture_{repo_idx}_{i}",
-                        "fixture_type": fixture_type,
-                        "start_line": i,
-                        "end_line": i + 1,
-                        "loc": 5,
-                        "cyclomatic_complexity": 1,
-                        "num_comment_lines": 0,
-                        "comment_density": 0.0,
-                        "num_parameters": 0,
-                        "raw_source": "",
-                        "num_mocks": 0,
-                    },
-                )
-
-
 def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
     """Create db/{dataset}.db under `root` with one repo/file and `fixtures` rows.
 
@@ -302,14 +249,6 @@ class TestLoadDatasetMetrics:
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert metrics.agent_type_distribution == {"claude": 2, "copilot": 1}
 
-    def test_fixture_type_by_repo_groups_by_repo_id(self, tmp_path):
-        _make_multi_repo_db(tmp_path, "a", [[100.0] * 2, [1.0]])
-        metrics = load_dataset_metrics("a", db_root=tmp_path)
-        # _make_multi_repo_db's fixtures are all fixture_type="pytest_decorator".
-        assert len(metrics.fixture_type_by_repo) == 2
-        assert {"pytest_decorator": 2} in metrics.fixture_type_by_repo.values()
-        assert {"pytest_decorator": 1} in metrics.fixture_type_by_repo.values()
-
     def test_repo_level_continuous_by_language_is_one_mean_per_repo_per_language(self, tmp_path):
         _make_multi_language_db(
             tmp_path,
@@ -408,8 +347,8 @@ class TestGenerateReport:
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # C summary, A-vs-C comparison, A-vs-C repo-level: 3 total.
-        assert report.count("Not available -- db not collected yet.") == 3
+        # C summary, A-vs-C comparison: 2 total.
+        assert report.count("Not available -- db not collected yet.") == 2
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
         """_make_db's repo and its one test_file both use "python", so this
@@ -552,44 +491,6 @@ class TestGenerateReport:
         )
         assert "| loc | 2 | 50.50 | 50.50 | 1 | 100 |" in loc_line
         assert "100.00" not in loc_line  # the fixture-level median/mean
-
-    def test_repo_level_fixture_type_proportion_table_declusters_a_prolific_repo(
-        self, tmp_path
-    ):
-        """fixture_type's repo-level companion to the chi-square table:
-        Dataset A is one repo with 100 pytest_decorator fixtures plus one
-        repo with a single before_each fixture -- fixture-level, A looks
-        ~99% pytest_decorator (dominated by the prolific repo). Per-repo,
-        A is split 50/50 (1 of its 2 repos is pytest_decorator-only, the
-        other before_each-only) -- much closer to C's per-repo mix."""
-        _make_multi_repo_fixture_type_db(
-            tmp_path, "a", [["pytest_decorator"] * 100, ["before_each"]]
-        )
-        _make_multi_repo_fixture_type_db(
-            tmp_path, "c", [["pytest_decorator"], ["before_each"]]
-        )
-
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert len(a_metrics.fixture_type_by_repo) == 2
-        assert {"pytest_decorator": 100} in a_metrics.fixture_type_by_repo.values()
-        assert {"before_each": 1} in a_metrics.fixture_type_by_repo.values()
-
-        fixture_level = a_metrics.categorical["fixture_type"]
-        pooled_pytest_decorator_pct = 100 * fixture_level["pytest_decorator"] / sum(
-            fixture_level.values()
-        )
-        assert pooled_pytest_decorator_pct > 95  # dominated by the prolific repo
-
-        report = generate_report(db_root=tmp_path)
-        assert "fixture_type, repo-level" in report
-        repo_section = report.split("## Repo-level aggregates")[1]
-        section = repo_section.split("fixture_type, repo-level")[1]
-        pytest_decorator_line = next(
-            line for line in section.splitlines() if line.startswith("| pytest_decorator |")
-        )
-        # Per-repo, A is 1 of 2 repos pytest_decorator-only (50%), matching
-        # C's identical 1-of-2 split -- nowhere near the 99% pooled figure.
-        assert "| 50.0% | 50.0% | 50.0% | 50.0% |" in pytest_decorator_line
 
     def test_num_parameters_has_no_mann_whitney_section(self, tmp_path):
         _make_db(tmp_path, "a", [{"loc": 1}])

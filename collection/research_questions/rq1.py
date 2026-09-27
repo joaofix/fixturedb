@@ -3,8 +3,10 @@ RQ1 -- General Metrics Overview (Quantitative): how do agent-generated and
 human-written fixtures compare across structural metrics?
 
 Computes, per dataset (A/C), summary statistics for the RQ1 metrics (LOC,
-cyclomatic complexity, comment density, num_parameters, fixture_type),
-plus an A vs C comparison. Dataset B (contemporary
+cyclomatic complexity, comment density, num_parameters), plus an A vs C
+comparison. `fixture_type` is shown per-dataset descriptively (a plain
+distribution, no test -- see below) but is not itself compared A vs C in
+any form anymore. Dataset B (contemporary
 within-repo human baseline) is still collected (db/b.db,
 paired_collection.py) but out of scope for this script's reported
 comparisons.
@@ -25,17 +27,28 @@ classification of the originating commit's message, computed for both
 Dataset A and B and never used in any reported RQ; its whole
 `conventional_commits.py` module was removed along with it.
 
-`fixture_type`'s fixture-level chi-square (Overall + per-language) was
-itself removed the same day (2026-09-27) -- it was never the paper's
-result (see the repo-level note below) and had no other consumer once
-gone, so `compare_datasets_categorical()`/`_render_categorical_metric()`/
-`_fetch_fixture_type_by_language()`/`_fetch_repo_count_by_language()`
-went with it. `fixture_type`'s per-dataset *descriptive* distribution
-(no test, just counts -- `CATEGORICAL_METRICS`/`categorical` on
-`DatasetMetrics`) is UNCHANGED and still rendered in each dataset's
-summary section. The repo-level proportion test in "Repo-level
-aggregates" -- the one the paper actually cites -- is also UNCHANGED;
-see `_render_repo_level_comparison()` below.
+`fixture_type` has no A vs C comparison of any kind anymore, fixture-level
+or repo-level. Its fixture-level chi-square (Overall + per-language) was
+removed 2026-09-27 -- it was never the paper's result, and had no other
+consumer once gone, so `compare_datasets_categorical()`/
+`_render_categorical_metric()`/`_fetch_fixture_type_by_language()`/
+`_fetch_repo_count_by_language()` went with it. Its repo-level proportion
+test (formerly "## Repo-level aggregates", `_render_repo_level_
+comparison()`) was removed the same day, once it turned out that test's
+"paper's actual result" framing -- inherited from this module's own
+pre-existing docstring -- had never actually been confirmed against the
+paper (`fixture_type` is, and always was, a support column that feeds
+`fixture_role`'s derivation, not a metric the paper itself reports; see
+docs/reference/limitations.md's Categorical Pseudo-Replication section
+for the full history of both removals). `compare_categorical_repo_level()`/
+`repo_level_category_proportions()`/`repo_level_category_n_counts()`/
+`render_categorical_repo_level_table()`/`fetch_categorical_column_by_repo()`
+in `_shared.py` were all removed as part of this -- `fixture_type` was
+their only caller anywhere in this package. `fixture_type`'s per-dataset
+*descriptive* distribution (no test, just counts --
+`CATEGORICAL_METRICS`/`categorical` on `DatasetMetrics`) is UNCHANGED and
+still rendered in each dataset's summary section -- that's now the only
+place `fixture_type` appears in this report at all.
 
 `comment_density` (added 2026-08-17, the third paper metric) is
 `fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
@@ -75,30 +88,24 @@ meaningful, correctly-measured fact. See internal-docs/
 methodology-improvements/junit-rule-fixtures.md for the full
 investigation.
 
-Every remaining continuous/categorical comparison renders through
-_shared.py's render_comparison_table(): one "Overall" row (uncorrected,
-single pooled test) plus, for metrics with a defined per-language family,
-one BH-corrected row per language, corrected independently of every other
-metric and of their own Overall row (see render_comparison_table()'s
-docstring). `loc`/`cyclomatic_complexity`/`comment_density`/`fixture_type`
-each have a 4-language family.
+Every remaining comparison (the three continuous metrics -- there is no
+longer a categorical one) renders through _shared.py's
+render_comparison_table(): one "Overall" row (uncorrected, single pooled
+test) plus one BH-corrected row per language, corrected independently of
+every other metric and of their own Overall row (see
+render_comparison_table()'s docstring). `loc`/`cyclomatic_complexity`/
+`comment_density` each have their own 4-language family -- the only
+BH-FDR families this script (or, as of 2026-09-27, this whole package
+outside `balance.py`) computes.
 
 Continuous metrics are repo-level throughout (one value per repo, per
 language for the per-language rows) -- not the raw per-fixture values --
-so this doesn't reintroduce the fixture-clustering pseudo-replication the
-categorical repo-level proportion fix (see below) exists to correct. This
+so fixtures clustering within a repo can't inflate the result. This
 includes `_render_dataset_summary()`'s per-dataset "Continuous metrics"
 tables (median/mean/min/max/stdev, `n` = repo count): they read from the
 same repo-level-means data the comparison tests use, not the raw
 per-fixture values, so a single prolific repo can't skew the descriptive
 numbers any more than it can skew the tests themselves.
-fixture_type's Overall/per-language rows stay fixture-level chi-square
-(pseudo-replicated, like every per-language categorical test here --
-that's a known, documented limitation, not fixed by this table) --
-`fixture_type` is also re-tested in "Repo-level aggregates" with per-repo
-category proportions (Mann-Whitney U + Cliff's delta), which IS the
-repo-declustered version and the one reported in the paper; see
-compare_categorical_repo_level()'s docstring in _shared.py.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet -- lets this run against whatever subset of A/C has been collected so
@@ -128,20 +135,16 @@ from ._shared import (
     OUTPUT_DIR,
     LanguageLeakage,
     NCounts,
-    compare_categorical_repo_level,
     compute_language_leakage,
     compute_stratified_continuous_balance,
     fetch_categorical_column,
-    fetch_categorical_column_by_repo,
     fetch_continuous_column,
     fetch_continuous_column_by_repo,
     fmt,
     pct,
     percentile,
-    render_categorical_repo_level_table,
     render_comparison_table,
     render_language_leakage_table,
-    repo_level_category_n_counts,
     repo_level_means,
     require_db_or_none,
     summarize_continuous,
@@ -189,7 +192,6 @@ class DatasetMetrics:
     repo_level_continuous_by_language: dict[str, dict[str, list[float]]] = field(
         default_factory=dict
     )
-    fixture_type_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
     # metric -> % of fixtures at FLOOR_CHECK_METRICS' floor value (descriptive
     # only -- see this module's docstring).
     floor_pct: dict[str, float] = field(default_factory=dict)
@@ -261,7 +263,6 @@ def load_dataset_metrics(
             m: fetch_continuous_column(conn, "fixtures", m) for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }
         categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
-        fixture_type_by_repo = fetch_categorical_column_by_repo(conn, "fixtures", "fixture_type")
         language_leakage = compute_language_leakage(conn)
         # Descriptive only, not run through a significance test: agent_type
         # is the group-defining variable for Dataset A (which agent
@@ -327,7 +328,6 @@ def load_dataset_metrics(
         agent_type_distribution=agent_type_distribution,
         repo_level_continuous=repo_level_continuous,
         repo_level_continuous_by_language=repo_level_continuous_by_language,
-        fixture_type_by_repo=fixture_type_by_repo,
         floor_pct=floor_pct,
     )
 
@@ -600,30 +600,6 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
     return "\n".join(lines)
 
 
-def _render_repo_level_comparison(
-    label: str, a: DatasetMetrics, other: DatasetMetrics
-) -> str:
-    lines = [
-        f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
-        "",
-        "**fixture_type, repo-level (Mann-Whitney U on per-repo category "
-        "proportions, two-sided)** -- the fixture_type chi-square table "
-        "above treats every fixture as an independent observation, but "
-        "fixtures cluster within repos (shared framework choice, project "
-        "convention), which inflates chi2 and partially corrupts Cramer's "
-        "V. This instead compares, per repo, what fraction of its "
-        "fixtures are each fixture_type -- so each repo counts once "
-        "regardless of how many fixtures it contributed. **This is the "
-        "`fixture_type` result reported in the paper.**",
-        "",
-    ]
-    fixture_type_repo_level = compare_categorical_repo_level(
-        a.fixture_type_by_repo, other.fixture_type_by_repo, "fixture_type"
-    )
-    n = repo_level_category_n_counts(a.fixture_type_by_repo, other.fixture_type_by_repo)
-    lines.append(render_categorical_repo_level_table(fixture_type_repo_level, other.dataset, n))
-
-    return "\n".join(lines)
 
 
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
@@ -667,33 +643,6 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
-
-    lines += [
-        "## Repo-level aggregates",
-        "",
-        "fixture_type re-tested with one *proportion-per-repo* value per "
-        "category instead of pooled/per-language fixture-level chi-square, "
-        "so each repo counts once regardless of how many fixtures it "
-        "contributed -- see compare_categorical_repo_level()'s docstring in "
-        "_shared.py. (The continuous metrics above are already repo-level "
-        "throughout, including their per-language rows, so they don't need "
-        "a separate view here.)",
-        "",
-    ]
-    if a_metrics is None:
-        lines.append("_Dataset A not available -- no repo-level comparisons computed._")
-    else:
-        for other_ds, label in COMPARISONS:
-            other_metrics = loaded[other_ds]
-            if other_metrics is None:
-                lines += [
-                    f"### {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other_ds]}",
-                    "",
-                    "_Not available -- db not collected yet._",
-                    "",
-                ]
-            else:
-                lines.append(_render_repo_level_comparison(label, a_metrics, other_metrics))
 
     return "\n".join(lines)
 

@@ -41,10 +41,9 @@ across every language present, not just the four rows shown.
 -- does it have >=1 teardown-classified fixture at all (1) or none (0)?
 "Coverage A/C (%)" is just the mean of that 0/1 list per side, per
 language and Overall. Population (and n_A/n_C): repos with >=1
-setup/teardown/other-classified fixture -- the same "denominator"
-convention `repo_level_category_proportions()` uses elsewhere in this
-package (a repo with zero classified fixtures is skipped, not counted as
-0-coverage). **Purely descriptive -- no statistical test** (removed
+setup/teardown/other-classified fixture (a repo with zero classified
+fixtures is skipped, not counted as 0-coverage). **Purely descriptive --
+no statistical test** (removed
 2026-09-27, alongside RQ3's Coverage/Intensity test and Intensity metric
 entirely: the paper's RQ2/RQ3 coverage tables report plain percentages,
 no p-value, no effect size, no BH-FDR family. RQ1 is now the only script
@@ -66,10 +65,12 @@ settled on two narrower tables (one purely descriptive, one
 inferential-but-simpler: a binary coverage rate instead of a continuous
 proportion), then dropped the inferential half of Table 2 too (see
 above). `compare_categorical_repo_level()`/
-`repo_level_category_proportions()` (`_shared.py`) are still used
-elsewhere in this package (rq1.py) -- rq2.py never used them for Table 2
-in the first place (a plain per-repo mean needs no repo-declustering
-machinery of its own).
+`repo_level_category_proportions()` (formerly in `_shared.py`) were
+never used by rq2.py's own Table 2 (a plain per-repo mean needs no
+repo-declustering machinery of its own) -- both were removed from the
+package entirely on 2026-09-27, once rq1.py's `fixture_type` repo-level
+test (their only remaining caller anywhere) was also removed; see
+rq1.py's module docstring for that removal's full rationale.
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
@@ -394,10 +395,9 @@ def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[fl
     providing fixture (classified 'teardown' or 'setup_and_teardown' --
     see _effective_teardown_count()), else 0.0. Population is repos with
     >=1 classified (setup/teardown/setup_and_teardown/other) fixture -- a
-    repo with none is skipped, not counted as 0-coverage, matching
-    repo_level_category_proportions()'s convention elsewhere in this
-    package. `_coverage_pct()` takes the mean of these 0/1 values
-    directly -- that mean *is* "% of repos with >=1 teardown fixture",
+    repo with none is skipped, not counted as 0-coverage. `_coverage_pct()`
+    takes the mean of these 0/1 values directly -- that mean *is* "% of
+    repos with >=1 teardown fixture",
     Table 2's Coverage A/C (%) columns."""
     return [
         1.0 if _effective_teardown_count(counts) > 0 else 0.0
