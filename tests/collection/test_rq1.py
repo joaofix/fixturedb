@@ -26,6 +26,7 @@ from collection.research_questions.rq1 import (
     DatasetMetrics,
     _floor_percentage,
     compare_datasets_repo_level,
+    compare_datasets_repo_level_median_diagnostic,
     generate_report,
     load_dataset_metrics,
     write_report,
@@ -314,6 +315,17 @@ class TestLoadDatasetMetrics:
         # num_parameters is NOT excluded -- mean includes all 3 fixtures.
         assert round(metrics.repo_level_continuous["num_parameters"][0], 4) == round(4 / 3, 4)
 
+        # Diagnostic-only median-per-repo view (NOT the paper's methodology
+        # -- see this module's docstring): restricted to CONTINUOUS_METRICS,
+        # so it exists for loc/cc/comment_density but not num_parameters.
+        # Same exclusion applies -- junit_rule is still dropped, and the
+        # remaining two junit4_before fixtures are identical, so the median
+        # equals the mean here too (loc 10.0, cc 3.0, comment_density 0.2).
+        assert metrics.repo_level_continuous_median_diagnostic["loc"] == [10.0]
+        assert metrics.repo_level_continuous_median_diagnostic["cyclomatic_complexity"] == [3.0]
+        assert metrics.repo_level_continuous_median_diagnostic["comment_density"] == [0.2]
+        assert "num_parameters" not in metrics.repo_level_continuous_median_diagnostic
+
         # fixture_type categorical distribution still counts junit_rule.
         assert metrics.categorical["fixture_type"]["junit_rule"] == 1
         assert metrics.categorical["fixture_type"]["junit4_before"] == 2
@@ -469,6 +481,54 @@ class TestGenerateReport:
         )
         assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
         assert format_p_value(t.p_value) in overall_line
+
+    def test_median_diagnostic_uses_per_repo_median_not_mean(self, tmp_path):
+        """compare_datasets_repo_level_median_diagnostic() must aggregate
+        each repo by its own MEDIAN fixture, not its mean -- the whole
+        point of keeping this diagnostic-only view separate from the
+        paper's actual compare_datasets_repo_level(). A's one repo has loc
+        values [1, 2, 100]: mean 34.33 (pulled toward the 100 outlier),
+        median 2. C's one repo is a single loc=2 fixture. Under the
+        paper's mean-per-repo methodology the two datasets look very
+        different (34.33 vs 2); under the diagnostic median-per-repo view
+        they look identical (2 vs 2) -- exactly the kind of information
+        loss this module's docstring warns the diagnostic view can
+        introduce, which is why it's presented as unusable rather than a
+        competing result."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [1, 2, 100]])
+        _make_db(tmp_path, "c", [{"loc": 2}])
+
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+
+        assert round(a_metrics.repo_level_continuous["loc"][0], 4) == round(103 / 3, 4)
+        assert a_metrics.repo_level_continuous_median_diagnostic["loc"] == [2.0]
+        assert c_metrics.repo_level_continuous["loc"] == [2.0]
+        assert c_metrics.repo_level_continuous_median_diagnostic["loc"] == [2.0]
+
+        diagnostic = compare_datasets_repo_level_median_diagnostic(a_metrics, c_metrics)
+        assert diagnostic["loc"].is_balanced  # identical once median-aggregated
+        assert diagnostic["loc"].variable == "loc_median_diagnostic"
+
+    def test_report_includes_median_diagnostic_section_with_disclaimer(self, tmp_path):
+        """The report must render the diagnostic median-per-repo section,
+        clearly separated from and after the paper's actual Paper Metrics
+        section, with a disclaimer that it is not a result to cite."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [1, 2, 100]])
+        _make_db(tmp_path, "c", [{"loc": 2}])
+        report = generate_report(db_root=tmp_path)
+
+        assert "## Diagnostic: median-per-repo aggregation (NOT used in the paper)" in report
+        assert report.index("**Paper Metrics -- Continuous**") < report.index(
+            "## Diagnostic: median-per-repo aggregation"
+        )
+        disclaimer_section = report.split(
+            "## Diagnostic: median-per-repo aggregation (NOT used in the paper)"
+        )[1]
+        assert "not results, do not cite them" in disclaimer_section
+        assert "### loc" in disclaimer_section
+        assert "### cyclomatic_complexity" in disclaimer_section
+        assert "### comment_density" in disclaimer_section
 
     def test_dataset_summary_continuous_table_is_repo_level_not_fixture_level(
         self, tmp_path

@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-09-08 01:16:48 UTC
+Generated: 2026-09-28 04:52:46 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 
@@ -22,17 +22,7 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| max_nesting_depth | 1,687 | 1.07 | 1.19 | 1 | 4 | 0.31 |
 | num_parameters | 1,687 | 0.00 | 0.18 | 0 | 4 | 0.38 |
-
-**scope distribution**
-
-| Value | Count | % |
-|---|---|---|
-| per_test | 61,439 | 87.0% |
-| per_class | 7,557 | 10.7% |
-| per_module | 1,169 | 1.7% |
-| global | 458 | 0.6% |
 
 **fixture_type distribution**
 
@@ -64,20 +54,6 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 | testng_data_provider | 9 | 0.0% |
 | testng_before_test | 2 | 0.0% |
 | junit3_setup | 1 | 0.0% |
-
-**commit_type distribution**
-
-| Value | Count | % |
-|---|---|---|
-| feat | 30,566 | 43.3% |
-| none | 17,780 | 25.2% |
-| fix | 11,398 | 16.1% |
-| test | 7,853 | 11.1% |
-| refactor | 1,186 | 1.7% |
-| chore | 1,034 | 1.5% |
-| other | 656 | 0.9% |
-| docs | 148 | 0.2% |
-| style | 2 | 0.0% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
@@ -128,39 +104,29 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 2,483 | 5.88 | 7.87 | 1 | 230 | 9.48 |
-| cyclomatic_complexity | 2,483 | 1.00 | 1.19 | 1 | 17 | 0.57 |
-| comment_density | 2,483 | 0.00 | 0.02 | 0 | 1 | 0.05 |
+| loc | 2,495 | 5.87 | 7.95 | 1 | 180 | 9.19 |
+| cyclomatic_complexity | 2,495 | 1.00 | 1.19 | 1 | 14 | 0.54 |
+| comment_density | 2,495 | 0.00 | 0.02 | 0 | 1 | 0.05 |
 
 **Continuous metrics -- Other (not in the paper)** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| max_nesting_depth | 2,483 | 1.00 | 1.15 | 1 | 5 | 0.31 |
-| num_parameters | 2,494 | 0.00 | 0.14 | 0 | 3 | 0.36 |
-
-**scope distribution**
-
-| Value | Count | % |
-|---|---|---|
-| per_test | 60,427 | 85.6% |
-| per_class | 8,125 | 11.5% |
-| per_module | 1,388 | 2.0% |
-| global | 683 | 1.0% |
+| num_parameters | 2,506 | 0.00 | 0.15 | 0 | 3 | 0.36 |
 
 **fixture_type distribution**
 
 | Value | Count | % |
 |---|---|---|
-| before_each | 26,363 | 37.3% |
-| unittest_setup | 12,465 | 17.7% |
-| pytest_decorator | 7,747 | 11.0% |
-| after_each | 7,724 | 10.9% |
-| mocha_before | 5,185 | 7.3% |
-| before_all | 3,642 | 5.2% |
-| mocha_after | 2,672 | 3.8% |
-| after_all | 2,092 | 3.0% |
-| pytest_class_method | 472 | 0.7% |
+| before_each | 26,343 | 37.3% |
+| unittest_setup | 12,450 | 17.6% |
+| after_each | 7,732 | 10.9% |
+| pytest_decorator | 7,732 | 10.9% |
+| mocha_before | 5,198 | 7.4% |
+| before_all | 3,633 | 5.1% |
+| mocha_after | 2,670 | 3.8% |
+| after_all | 2,102 | 3.0% |
+| pytest_class_method | 502 | 0.7% |
 | junit4_before | 457 | 0.6% |
 | testng_data_provider | 275 | 0.4% |
 | junit_rule | 249 | 0.4% |
@@ -187,22 +153,16 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 | testng_after_suite | 2 | 0.0% |
 | testng_after_groups | 1 | 0.0% |
 
-**commit_type distribution**
-
-| Value | Count | % |
-|---|---|---|
-| _(no data)_ | -- | -- |
-
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-6,355/70,623 fixtures (9.00%) leaked.
+6,376/70,623 fixtures (9.03%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 4,156 | 1,935 | 46.56% | typescript=990, python=865, javascript=80 |
-| javascript | 5,602 | 2,118 | 37.81% | typescript=1,797, python=306, java=15 |
-| python | 20,380 | 1,013 | 4.97% | typescript=837, javascript=162, java=14 |
-| typescript | 40,485 | 1,289 | 3.18% | javascript=1,132, python=146, java=11 |
+| java | 4,157 | 1,936 | 46.57% | typescript=990, python=866, javascript=80 |
+| javascript | 5,610 | 2,126 | 37.90% | typescript=1,797, python=314, java=15 |
+| python | 20,359 | 1,013 | 4.98% | typescript=837, javascript=162, java=14 |
+| typescript | 40,497 | 1,301 | 3.21% | javascript=1,132, python=158, java=11 |
 
 **agent_type distribution** (descriptive only, not compared against other datasets -- see load_dataset_metrics()'s docstring for why)
 
@@ -212,127 +172,76 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
-**Paper Metrics -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). These three (`loc`, `cyclomatic_complexity`, `comment_density`) are the only continuous metrics reported in the paper -- see this module's docstring. Each per-language row also reports `A median`/`C median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` (90th percentile) -- the same per-repo mean values the Mann-Whitney test itself runs on, alongside (not a replacement for) the effect size and p-value. Q3/P90 exist to explain an effect that reaches significance despite identical medians -- a real difference concentrated in the upper tail, invisible to the median alone.
+**Paper Metrics -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). These three (`loc`, `cyclomatic_complexity`, `comment_density`) are the only continuous metrics reported in the paper -- see this module's docstring. Each per-language row also reports `A median`/`C median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` (90th percentile) -- the median/Q3/P90 of the same per-repo mean values the Mann-Whitney test itself runs on, alongside (not a replacement for) the effect size and p-value. Q3/P90 exist to explain an effect that reaches significance despite identical medians -- a real difference concentrated in the upper tail, invisible to the median alone.
 
 ### loc
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2483 | -- | -- | -- | -- | -- | -- | U=1944283.0 | -0.072 | negligible | <.001 | -- |
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=1971070.0 | -0.063 | negligible | <.001 | -- |
 | java | 125 | 312 | 8.00 | 6.50 | 10.25 | 9.40 | 13.80 | 15.00 | U=16227.0 | -0.168 | small | 0.006 | 0.012 |
 | javascript | 143 | 563 | 5.13 | 4.80 | 8.00 | 7.96 | 12.93 | 12.96 | U=37493.5 | -0.069 | negligible | 0.204 | 0.204 |
-| python | 678 | 1040 | 8.00 | 6.31 | 11.20 | 9.61 | 16.00 | 15.28 | U=287867.5 | -0.183 | small | <.001 | <.001 |
-| typescript | 948 | 758 | 5.33 | 5.65 | 7.24 | 7.81 | 10.33 | 11.42 | U=375687.5 | 0.046 | negligible | 0.105 | 0.140 |
+| python | 678 | 1059 | 8.00 | 6.39 | 11.20 | 9.79 | 16.00 | 16.04 | U=299669.0 | -0.165 | small | <.001 | <.001 |
+| typescript | 948 | 753 | 5.33 | 5.67 | 7.24 | 7.83 | 10.33 | 11.43 | U=374407.0 | 0.049 | negligible | 0.082 | 0.110 |
 
 ### cyclomatic_complexity
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2483 | -- | -- | -- | -- | -- | -- | U=1792069.5 | -0.144 | negligible | <.001 | -- |
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=1806030.0 | -0.142 | negligible | <.001 | -- |
 | java | 125 | 312 | 1.07 | 1.00 | 1.33 | 1.13 | 1.72 | 1.50 | U=14963.5 | -0.233 | small | <.001 | <.001 |
 | javascript | 143 | 563 | 1.00 | 1.00 | 1.33 | 1.00 | 1.67 | 1.21 | U=29511.0 | -0.267 | small | <.001 | <.001 |
-| python | 678 | 1040 | 1.08 | 1.08 | 1.34 | 1.36 | 1.75 | 1.89 | U=352334.0 | -0.001 | negligible | 0.981 | 0.981 |
-| typescript | 948 | 758 | 1.02 | 1.00 | 1.20 | 1.04 | 1.43 | 1.20 | U=282545.5 | -0.214 | small | <.001 | <.001 |
+| python | 678 | 1059 | 1.08 | 1.08 | 1.34 | 1.38 | 1.75 | 1.89 | U=359194.5 | 0.001 | negligible | 0.984 | 0.984 |
+| typescript | 948 | 753 | 1.02 | 1.00 | 1.20 | 1.04 | 1.43 | 1.20 | U=280652.5 | -0.214 | small | <.001 | <.001 |
 
 ### comment_density
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2483 | -- | -- | -- | -- | -- | -- | U=1833084.0 | -0.125 | negligible | <.001 | -- |
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=1826610.0 | -0.132 | negligible | <.001 | -- |
 | java | 125 | 312 | 0.00 | 0.00 | 0.04 | 0.00 | 0.08 | 0.05 | U=14481.0 | -0.257 | small | <.001 | <.001 |
 | javascript | 143 | 563 | 0.00 | 0.00 | 0.03 | 0.00 | 0.10 | 0.04 | U=30357.0 | -0.246 | small | <.001 | <.001 |
-| python | 678 | 1040 | 0.01 | 0.00 | 0.03 | 0.03 | 0.06 | 0.09 | U=349337.5 | -0.009 | negligible | 0.736 | 0.736 |
-| typescript | 948 | 758 | 0.01 | 0.00 | 0.02 | 0.01 | 0.05 | 0.05 | U=319504.5 | -0.111 | negligible | <.001 | <.001 |
+| python | 678 | 1059 | 0.01 | 0.00 | 0.03 | 0.03 | 0.06 | 0.08 | U=351310.0 | -0.021 | negligible | 0.427 | 0.427 |
+| typescript | 948 | 753 | 0.01 | 0.00 | 0.02 | 0.01 | 0.05 | 0.04 | U=314766.5 | -0.118 | negligible | <.001 | <.001 |
 
-**Other Extracted Features (Not in the Paper) -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). Computed and tested with the same rigor as the paper metrics above -- `max_nesting_depth` gets an identical Mann-Whitney/per-language table, `num_parameters` gets a descriptive floor-percentage footnote instead (see below for why) -- just not part of the paper's reported RQ1 comparison.
+**Other Extracted Features (Not in the Paper)** -- `num_parameters` is still collected but dropped from Mann-Whitney testing entirely (see this module's docstring for why); shown here only as a descriptive floor-percentage footnote, not a comparative test.
 
 **Floor-binding check (descriptive only -- not a comparative test)** -- `num_parameters` was dropped from Mann-Whitney testing (see this module's docstring) because it floors heavily in both datasets; this documents exactly how heavily, transparently, instead of silently omitting it.
 
 | Metric | Floor value | Dataset A (agent-authored) at floor | Dataset C (human-authored, pre-LLM) at floor |
 |---|---|---|---|
-| num_parameters | 0 | 88.4% | 92.7% |
+| num_parameters | 0 | 88.4% | 92.9% |
 
-### max_nesting_depth
+## Diagnostic: median-per-repo aggregation (NOT used in the paper)
 
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2483 | U=1749273.0 | -0.165 | small | <.001 | -- |
-| java | 125 | 312 | U=15429.5 | -0.209 | small | <.001 | <.001 |
-| javascript | 143 | 563 | U=28794.5 | -0.285 | small | <.001 | <.001 |
-| python | 678 | 1040 | U=325881.5 | -0.076 | negligible | 0.006 | 0.006 |
-| typescript | 948 | 758 | U=271615.5 | -0.244 | small | <.001 | <.001 |
+**This section is presented for transparency only -- these are not results, do not cite them.** The paper's own methodology (above) takes each repo's *mean* fixture value, then reports the median across repos. This section instead takes each repo's own *median* fixture value first. That interacts badly with `cyclomatic_complexity`/`comment_density`'s heavy floor-binding (CC=1, comment_density=0 for most fixtures -- see this module's docstring): most repos' own median collapses to that exact floor value, producing near-universal ties across repos and starving Mann-Whitney of power. The per-language pattern below can and does diverge substantially from the paper's actual table above -- that divergence is the point of keeping this section, as a record of how sensitive the comparison is to this choice, not a competing result.
 
-**Categorical metrics (chi-square)** -- Effect size is Cramer's V (thresholds: negligible <0.1, small <0.3, medium <0.5, else large). Same Overall-uncorrected / per-language-family-corrected convention as the continuous metrics above. `scope`/`fixture_type` each have a per-language family; `commit_type` doesn't (renders Overall-only).
+### loc
 
-### scope
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=2018087.0 | -0.041 | negligible | 0.023 | -- |
+| java | 125 | 312 | 6.00 | 5.50 | 8.00 | 8.00 | 13.00 | 12.45 | U=17026.5 | -0.127 | negligible | 0.036 | 0.049 |
+| javascript | 143 | 563 | 4.00 | 4.00 | 7.00 | 6.00 | 11.00 | 10.50 | U=37602.5 | -0.066 | negligible | 0.216 | 0.216 |
+| python | 678 | 1059 | 6.00 | 5.00 | 8.50 | 7.00 | 13.00 | 12.00 | U=291072.0 | -0.189 | small | <.001 | <.001 |
+| typescript | 948 | 753 | 4.00 | 4.00 | 5.00 | 6.00 | 7.00 | 8.00 | U=378603.5 | 0.061 | negligible | 0.028 | 0.049 |
 
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2494 | chi2=92.1 (df=3) | 0.026 | negligible | <.001 | -- |
-| java | 127 | 325 | chi2=63.1 (df=2) | 0.118 | small | <.001 | <.001 |
-| javascript | 143 | 563 | chi2=143.0 (df=1) | 0.121 | small | <.001 | <.001 |
-| python | 678 | 1040 | chi2=910.8 (df=3) | 0.148 | small | <.001 | <.001 |
-| typescript | 948 | 758 | chi2=144.8 (df=1) | 0.041 | negligible | <.001 | <.001 |
+### cyclomatic_complexity
 
-### fixture_type
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=2116082.5 | 0.005 | negligible | 0.514 | -- |
+| java | 125 | 312 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.50 | U=19162.0 | -0.017 | negligible | 0.602 | 0.602 |
+| javascript | 143 | 563 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.00 | U=37173.0 | -0.077 | negligible | <.001 | 0.002 |
+| python | 678 | 1059 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | U=370789.5 | 0.033 | negligible | 0.039 | 0.051 |
+| typescript | 948 | 753 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | U=346496.0 | -0.029 | negligible | 0.003 | 0.006 |
 
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2494 | chi2=18664.1 (df=33) | 0.364 | medium | <.001 | -- |
-| java | 127 | 325 | chi2=1897.1 (df=24) | 0.648 | large | <.001 | <.001 |
-| javascript | 143 | 563 | chi2=275.7 (df=5) | 0.168 | small | <.001 | <.001 |
-| python | 678 | 1040 | chi2=9473.7 (df=2) | 0.479 | medium | <.001 | <.001 |
-| typescript | 948 | 758 | chi2=8279.8 (df=5) | 0.311 | medium | <.001 | <.001 |
+### comment_density
 
-> **`fixture_type`'s result above is not used in the paper.** It's a pooled/per-language fixture-level chi-square, which treats fixtures clustered within a repo as independent observations and inflates both chi2 and Cramer's V (see [Limitations § Categorical Pseudo-Replication](../docs/reference/limitations.md#categorical-pseudo-replication)). The paper reports the repo-level `fixture_type` proportion test in "Repo-level aggregates" below instead. `scope`/`commit_type` above are unaffected and are used as-is.
-
-### commit_type
-
-| Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 0 | -- | -- | _insufficient data_ | -- | -- |
-
-## Repo-level aggregates
-
-fixture_type re-tested with one *proportion-per-repo* value per category instead of pooled/per-language fixture-level chi-square, so each repo counts once regardless of how many fixtures it contributed -- see compare_categorical_repo_level()'s docstring in _shared.py. (The continuous metrics above are already repo-level throughout, including their per-language rows, so they don't need a separate view here.)
-
-### A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
-
-**fixture_type, repo-level (Mann-Whitney U on per-repo category proportions, two-sided)** -- the fixture_type chi-square table above treats every fixture as an independent observation, but fixtures cluster within repos (shared framework choice, project convention), which inflates chi2 and partially corrupts Cramer's V. This instead compares, per repo, what fraction of its fixtures are each fixture_type -- so each repo counts once regardless of how many fixtures it contributed. **This is the `fixture_type` result reported in the paper.**
-
-| Category | A median | A mean | C median | C mean | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
-|---|---|---|---|---|---|---|---|---|---|---|
-| after_all | 0.0% | 3.0% | 0.0% | 2.7% | 1687 | 2494 | U=1930063.0 | -0.083 | negligible | <.001 | <.001 |
-| after_class_ambiguous | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2104532.5 | 0.000 | negligible | 0.411 | 0.418 |
-| after_each | 0.0% | 18.4% | 0.0% | 8.6% | 1687 | 2494 | U=1587247.0 | -0.245 | small | <.001 | <.001 |
-| before_all | 0.0% | 4.8% | 0.0% | 5.2% | 1687 | 2494 | U=1955760.5 | -0.070 | negligible | <.001 | <.001 |
-| before_class_ambiguous | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2104532.5 | 0.000 | negligible | 0.411 | 0.418 |
-| before_each | 12.5% | 28.1% | 0.0% | 24.7% | 1687 | 2494 | U=1898619.5 | -0.097 | negligible | <.001 | <.001 |
-| junit3_setup | 0.0% | 0.1% | 0.0% | 0.1% | 1687 | 2494 | U=2107500.5 | 0.002 | negligible | 0.160 | 0.201 |
-| junit3_teardown | 0.0% | 0.0% | 0.0% | 0.2% | 1687 | 2494 | U=2110437.0 | 0.003 | negligible | 0.020 | 0.036 |
-| junit4_after | 0.0% | 0.3% | 0.0% | 1.6% | 1687 | 2494 | U=2158692.5 | 0.026 | negligible | <.001 | <.001 |
-| junit4_after_class | 0.0% | 0.0% | 0.0% | 0.4% | 1687 | 2494 | U=2137089.0 | 0.016 | negligible | <.001 | <.001 |
-| junit4_before | 0.0% | 0.8% | 0.0% | 3.9% | 1687 | 2494 | U=2208954.0 | 0.050 | negligible | <.001 | <.001 |
-| junit4_before_class | 0.0% | 0.2% | 0.0% | 1.1% | 1687 | 2494 | U=2143574.5 | 0.019 | negligible | <.001 | <.001 |
-| junit5_after_all | 0.0% | 0.3% | 0.0% | 0.2% | 1687 | 2494 | U=2079889.0 | -0.011 | negligible | <.001 | 0.001 |
-| junit5_after_each | 0.0% | 1.0% | 0.0% | 0.6% | 1687 | 2494 | U=2059118.5 | -0.021 | negligible | <.001 | <.001 |
-| junit5_before_all | 0.0% | 0.5% | 0.0% | 0.5% | 1687 | 2494 | U=2078405.5 | -0.012 | negligible | 0.002 | 0.004 |
-| junit5_before_each | 0.0% | 2.8% | 0.0% | 1.2% | 1687 | 2494 | U=2042873.0 | -0.029 | negligible | <.001 | <.001 |
-| junit_class_rule | 0.0% | 0.0% | 0.0% | 0.1% | 1687 | 2494 | U=2111771.5 | 0.004 | negligible | 0.056 | 0.090 |
-| junit_rule | 0.0% | 0.1% | 0.0% | 1.3% | 1687 | 2494 | U=2151019.5 | 0.022 | negligible | <.001 | <.001 |
-| mocha_after | 0.0% | 1.1% | 0.0% | 2.1% | 1687 | 2494 | U=2187373.0 | 0.040 | negligible | <.001 | <.001 |
-| mocha_before | 0.0% | 1.3% | 0.0% | 4.4% | 1687 | 2494 | U=2242290.0 | 0.066 | negligible | <.001 | <.001 |
-| pytest_class_method | 0.0% | 1.4% | 0.0% | 1.3% | 1687 | 2494 | U=2024475.5 | -0.038 | negligible | <.001 | <.001 |
-| pytest_decorator | 0.0% | 29.0% | 0.0% | 18.2% | 1687 | 2494 | U=1843786.5 | -0.124 | negligible | <.001 | <.001 |
-| testng_after_class | 0.0% | 0.0% | 0.0% | 0.1% | 1687 | 2494 | U=2112636.5 | 0.004 | negligible | 0.068 | 0.105 |
-| testng_after_groups | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2104532.5 | 0.000 | negligible | 0.411 | 0.418 |
-| testng_after_method | 0.0% | 0.1% | 0.0% | 0.0% | 1687 | 2494 | U=2109645.5 | 0.003 | negligible | 0.158 | 0.201 |
-| testng_after_suite | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2105376.0 | 0.001 | negligible | 0.245 | 0.297 |
-| testng_after_test | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2107063.0 | 0.002 | negligible | 0.100 | 0.148 |
-| testng_before_class | 0.0% | 0.1% | 0.0% | 0.2% | 1687 | 2494 | U=2108863.0 | 0.002 | negligible | 0.270 | 0.316 |
-| testng_before_method | 0.0% | 0.2% | 0.0% | 0.1% | 1687 | 2494 | U=2107577.5 | 0.002 | negligible | 0.418 | 0.418 |
-| testng_before_suite | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2104532.5 | 0.000 | negligible | 0.411 | 0.418 |
-| testng_before_test | 0.0% | 0.0% | 0.0% | 0.1% | 1687 | 2494 | U=2108791.0 | 0.002 | negligible | 0.133 | 0.189 |
-| testng_data_provider | 0.0% | 0.1% | 0.0% | 0.3% | 1687 | 2494 | U=2113042.5 | 0.004 | negligible | 0.046 | 0.078 |
-| testng_factory | 0.0% | 0.0% | 0.0% | 0.0% | 1687 | 2494 | U=2106219.5 | 0.001 | negligible | 0.154 | 0.201 |
-| unittest_setup | 0.0% | 6.4% | 0.0% | 20.9% | 1687 | 2494 | U=2412608.0 | 0.147 | negligible | <.001 | <.001 |
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=2117002.0 | 0.006 | negligible | 0.462 | -- |
+| java | 125 | 312 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=19475.5 | -0.001 | negligible | 0.967 | 0.967 |
+| javascript | 143 | 563 | 0.00 | 0.00 | 0.00 | 0.00 | 0.08 | 0.00 | U=36429.0 | -0.095 | negligible | <.001 | 0.001 |
+| python | 678 | 1059 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.02 | U=367795.5 | 0.024 | negligible | 0.086 | 0.173 |
+| typescript | 948 | 753 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=351975.5 | -0.014 | negligible | 0.195 | 0.261 |

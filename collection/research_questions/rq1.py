@@ -100,12 +100,35 @@ outside `balance.py`) computes.
 
 Continuous metrics are repo-level throughout (one value per repo, per
 language for the per-language rows) -- not the raw per-fixture values --
-so fixtures clustering within a repo can't inflate the result. This
-includes `_render_dataset_summary()`'s per-dataset "Continuous metrics"
-tables (median/mean/min/max/stdev, `n` = repo count): they read from the
-same repo-level-means data the comparison tests use, not the raw
-per-fixture values, so a single prolific repo can't skew the descriptive
-numbers any more than it can skew the tests themselves.
+so fixtures clustering within a repo can't inflate the result. Each
+repo's contributed value is that repo's own **mean** fixture -- the
+paper's intended methodology, restored 2026-09-28 (see
+`repo_level_means()`'s docstring in `_shared.py`). This includes
+`_render_dataset_summary()`'s per-dataset "Continuous metrics" tables
+(median/mean/min/max/stdev, `n` = repo count): they read from the same
+repo-level-means data the comparison tests use, not the raw per-fixture
+values, so a single prolific repo can't skew the descriptive numbers any
+more than it can skew the tests themselves.
+
+**Median-per-repo was tried and reverted, same day.** A repo's *median*
+fixture (rather than its mean) was briefly the primary aggregation,
+reasoned as immune to that repo's own outlier fixtures -- but it
+interacts badly with `cyclomatic_complexity`/`comment_density`'s heavy
+floor-binding (see two paragraphs up): a repo's median CC/comment_density
+collapses to the exact floor value for most repos, producing
+near-universal ties across repos and collapsing two of the three
+paper metrics' Overall-row significance (p<.001 under mean-per-repo to
+p>0.4 under median-per-repo, on the real corpus) purely as an artifact
+of the aggregation choice, not a real change in the underlying data.
+Rather than silently discard that finding, `_render_comparison()` also
+renders a second, clearly-labeled "Diagnostic: median-per-repo
+aggregation (NOT used in the paper)" section with the same three
+metrics computed the median-per-repo way (`repo_level_continuous_
+median_diagnostic`/`repo_level_continuous_by_language_median_
+diagnostic` on `DatasetMetrics`, `repo_level_medians()` in `_shared.py`,
+`compare_datasets_repo_level_median_diagnostic()`) -- kept as a record of
+how sensitive this comparison is to the aggregation choice, explicitly
+not a competing result to cite.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet -- lets this run against whatever subset of A/C has been collected so
@@ -146,6 +169,7 @@ from ._shared import (
     render_comparison_table,
     render_language_leakage_table,
     repo_level_means,
+    repo_level_medians,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -192,6 +216,15 @@ class DatasetMetrics:
     repo_level_continuous_by_language: dict[str, dict[str, list[float]]] = field(
         default_factory=dict
     )
+    # Diagnostic-only companion to the two fields above: same repo-level
+    # declustering, but each repo contributes its own MEDIAN fixture
+    # instead of its mean. Restricted to CONTINUOUS_METRICS (the 3 paper
+    # metrics) -- not part of the paper's methodology, never cited as a
+    # result, see this module's docstring for why it's kept at all.
+    repo_level_continuous_median_diagnostic: dict[str, list[float]] = field(default_factory=dict)
+    repo_level_continuous_by_language_median_diagnostic: dict[str, dict[str, list[float]]] = field(
+        default_factory=dict
+    )
     # metric -> % of fixtures at FLOOR_CHECK_METRICS' floor value (descriptive
     # only -- see this module's docstring).
     floor_pct: dict[str, float] = field(default_factory=dict)
@@ -201,11 +234,13 @@ def _fetch_continuous_by_repo_and_language(
     conn: sqlite3.Connection,
 ) -> dict[str, dict[str, dict[int, list[float]]]]:
     """{metric: {language: {repo_id: [values]}}} for every CONTINUOUS_METRICS
-    column, one query pass over fixtures joined to test_files -- feeds
-    repo_level_means() per (metric, language) for the per-language
-    continuous family tests, the same repo-declustering repo_level_continuous
-    already applies pooled (see compute_stratified_continuous_balance()'s
-    docstring in _shared.py for why per-language stays repo-level too).
+    column, one query pass over fixtures joined to test_files -- feeds both
+    repo_level_means() (primary) and repo_level_medians() (diagnostic-only,
+    see this module's docstring) per (metric, language) for the
+    per-language continuous family tests, the same repo-declustering
+    repo_level_continuous already applies pooled (see
+    compute_stratified_continuous_balance()'s docstring in _shared.py for
+    why per-language stays repo-level too).
 
     Excludes NO_BODY_FIXTURE_TYPES (see _shared.py) -- this function only
     ever serves CONTINUOUS_METRICS (loc/cyclomatic_complexity/
@@ -293,23 +328,43 @@ def load_dataset_metrics(
         # field's parameter count, unlike CC (which is a meaningless Lizard
         # fallback default for these), so it
         # has no equivalent reason to drop them.
-        repo_level_continuous = {
-            m: repo_level_means(
-                fetch_continuous_column_by_repo(
-                    conn,
-                    "fixtures",
-                    m,
-                    exclude_fixture_types=(
-                        NO_BODY_FIXTURE_TYPES if m in CONTINUOUS_METRICS else None
-                    ),
-                )
+        #
+        # _by_repo_per_metric is also reused below for
+        # repo_level_continuous_median_diagnostic, so each metric's
+        # per-repo fixture lists are only fetched once regardless of how
+        # many aggregations (mean, median) run over them.
+        _by_repo_per_metric = {
+            m: fetch_continuous_column_by_repo(
+                conn,
+                "fixtures",
+                m,
+                exclude_fixture_types=(
+                    NO_BODY_FIXTURE_TYPES if m in CONTINUOUS_METRICS else None
+                ),
             )
             for m in DESCRIPTIVE_CONTINUOUS_METRICS
+        }
+        repo_level_continuous = {
+            m: repo_level_means(by_repo) for m, by_repo in _by_repo_per_metric.items()
+        }
+        # Diagnostic-only, NOT the paper's methodology -- see this module's
+        # docstring's "Median-per-repo was tried and reverted" section.
+        # Restricted to CONTINUOUS_METRICS: num_parameters is never
+        # Mann-Whitney tested either way, so it has no diagnostic
+        # counterpart to compute.
+        repo_level_continuous_median_diagnostic = {
+            m: repo_level_medians(_by_repo_per_metric[m]) for m in CONTINUOUS_METRICS
         }
         continuous_by_repo_and_language = _fetch_continuous_by_repo_and_language(conn)
         repo_level_continuous_by_language = {
             metric: {
                 language: repo_level_means(by_repo) for language, by_repo in by_language.items()
+            }
+            for metric, by_language in continuous_by_repo_and_language.items()
+        }
+        repo_level_continuous_by_language_median_diagnostic = {
+            metric: {
+                language: repo_level_medians(by_repo) for language, by_repo in by_language.items()
             }
             for metric, by_language in continuous_by_repo_and_language.items()
         }
@@ -328,6 +383,10 @@ def load_dataset_metrics(
         agent_type_distribution=agent_type_distribution,
         repo_level_continuous=repo_level_continuous,
         repo_level_continuous_by_language=repo_level_continuous_by_language,
+        repo_level_continuous_median_diagnostic=repo_level_continuous_median_diagnostic,
+        repo_level_continuous_by_language_median_diagnostic=(
+            repo_level_continuous_by_language_median_diagnostic
+        ),
         floor_pct=floor_pct,
     )
 
@@ -340,12 +399,34 @@ def compare_datasets_repo_level(
     Repo-level throughout: the per-language rows (compute_stratified_
     continuous_balance() on repo_level_continuous_by_language) use the
     same one-value-per-repo basis, so a continuous metric's whole table is
-    never fixture-level -- see this module's docstring."""
+    never fixture-level -- see this module's docstring. This is the
+    paper's actual methodology -- see compare_datasets_repo_level_median_
+    diagnostic() below for the diagnostic-only median-per-repo variant."""
     return {
         metric: compute_continuous_balance(
             human_values=other.repo_level_continuous[metric],
             agent_values=a.repo_level_continuous[metric],
             variable=metric,
+        )
+        for metric in CONTINUOUS_METRICS
+    }
+
+
+def compare_datasets_repo_level_median_diagnostic(
+    a: DatasetMetrics, other: DatasetMetrics
+) -> dict[str, BalanceTest]:
+    """Diagnostic-only sibling of compare_datasets_repo_level() -- same
+    shape, but each repo contributes its own median fixture value instead
+    of its mean (repo_level_continuous_median_diagnostic). NOT the paper's
+    methodology and never cited as a result -- kept to make visible how
+    much a repo's median CC/comment_density collapsing to the metric's
+    floor value changes the comparison, purely as an artifact of the
+    aggregation choice. See this module's docstring."""
+    return {
+        metric: compute_continuous_balance(
+            human_values=other.repo_level_continuous_median_diagnostic[metric],
+            agent_values=a.repo_level_continuous_median_diagnostic[metric],
+            variable=f"{metric}_median_diagnostic",
         )
         for metric in CONTINUOUS_METRICS
     }
@@ -412,53 +493,47 @@ def _render_dataset_summary(metrics: DatasetMetrics) -> str:
 
 
 def _per_language_medians(
-    metric: str, a: DatasetMetrics, other: DatasetMetrics
+    a_by_language: dict[str, list[float]], other_by_language: dict[str, list[float]]
 ) -> dict[str, tuple[float | None, float | None]]:
-    """{language: (A median, other median)} of the exact same per-repo mean
-    values compute_stratified_continuous_balance() tests for this metric
-    (repo_level_continuous_by_language) -- summarize_continuous()'s own
-    median, the same aggregation _render_continuous_summary_table() uses
-    for the dataset-wide descriptive tables, not a new computation. Only
-    languages present on both sides get a real per-language *test* row
-    (render_comparison_table()'s `per_language` is already restricted to
-    that intersection), so computing this over the union of languages
-    present on either side is harmless -- entries for a language missing
-    on one side simply never get looked up as a table row."""
-    languages = set(a.repo_level_continuous_by_language[metric]) | set(
-        other.repo_level_continuous_by_language[metric]
-    )
+    """{language: (A median, other median)} of the exact same per-repo
+    values compute_stratified_continuous_balance() tests for this metric --
+    summarize_continuous()'s own median, the same aggregation
+    _render_continuous_summary_table() uses for the dataset-wide
+    descriptive tables, not a new computation. Only languages present on
+    both sides get a real per-language *test* row (render_comparison_
+    table()'s `per_language` is already restricted to that intersection),
+    so computing this over the union of languages present on either side
+    is harmless -- entries for a language missing on one side simply never
+    get looked up as a table row. Takes the two by-language dicts directly
+    (not a metric name + DatasetMetrics) so it works for either the
+    primary (mean-per-repo) or diagnostic (median-per-repo) view -- see
+    _render_continuous_metric()'s callers."""
+    languages = set(a_by_language) | set(other_by_language)
     return {
         language: (
-            summarize_continuous(
-                a.repo_level_continuous_by_language[metric].get(language, [])
-            )["median"],
-            summarize_continuous(
-                other.repo_level_continuous_by_language[metric].get(language, [])
-            )["median"],
+            summarize_continuous(a_by_language.get(language, []))["median"],
+            summarize_continuous(other_by_language.get(language, []))["median"],
         )
         for language in languages
     }
 
 
 def _per_language_percentile(
-    metric: str, a: DatasetMetrics, other: DatasetMetrics, q: float
+    a_by_language: dict[str, list[float]], other_by_language: dict[str, list[float]], q: float
 ) -> dict[str, tuple[float | None, float | None]]:
     """{language: (A value, other value)} of the qth percentile (0-100) of
-    the exact same per-repo mean values compute_stratified_continuous_
-    balance() tests for this metric (repo_level_continuous_by_language) --
-    _shared.py's percentile(), not a new aggregation. Sibling of
-    _per_language_medians() above (which stays on statistics.median() via
-    summarize_continuous() rather than being rewritten to call
-    percentile(values, 50) -- no behavior change for the already-shipped
-    median columns). Same union-of-languages reasoning as
-    _per_language_medians()'s docstring."""
-    languages = set(a.repo_level_continuous_by_language[metric]) | set(
-        other.repo_level_continuous_by_language[metric]
-    )
+    the exact same per-repo values compute_stratified_continuous_
+    balance() tests for this metric -- _shared.py's percentile(), not a
+    new aggregation. Sibling of _per_language_medians() above (which stays
+    on statistics.median() via summarize_continuous() rather than being
+    rewritten to call percentile(values, 50) -- no behavior change for the
+    already-shipped median columns). Same by-language-dicts-directly and
+    union-of-languages reasoning as _per_language_medians()'s docstring."""
+    languages = set(a_by_language) | set(other_by_language)
     return {
         language: (
-            percentile(a.repo_level_continuous_by_language[metric].get(language, []), q),
-            percentile(other.repo_level_continuous_by_language[metric].get(language, []), q),
+            percentile(a_by_language.get(language, []), q),
+            percentile(other_by_language.get(language, []), q),
         )
         for language in languages
     }
@@ -466,14 +541,21 @@ def _per_language_percentile(
 
 def _render_continuous_metric(
     metric: str,
-    a: DatasetMetrics,
-    other: DatasetMetrics,
+    a_overall: list[float],
+    other_overall: list[float],
+    a_by_language: dict[str, list[float]],
+    other_by_language: dict[str, list[float]],
     overall: BalanceTest,
+    other_dataset: str,
     *,
     include_percentile_columns: bool = False,
 ) -> str:
     """One metric's full table (Overall + per-language family rows),
     repo-level throughout -- see compare_datasets_repo_level()'s docstring.
+    Takes the repo-level values directly (not a DatasetMetrics pair) so
+    the same renderer serves both the paper's primary (mean-per-repo) view
+    and the diagnostic (median-per-repo) view -- see _render_comparison()'s
+    two call sites.
 
     `include_percentile_columns`: adds "A median"/"<OTHER> median", "A
     Q3"/"<OTHER> Q3", and "A P90"/"<OTHER> P90" columns (per
@@ -486,29 +568,31 @@ def _render_continuous_metric(
     explain an effect that reaches significance despite identical
     medians -- a real difference concentrated in the upper tail of one
     distribution, invisible to the median alone."""
-    overall_n = NCounts(
-        len(a.repo_level_continuous[metric]), len(other.repo_level_continuous[metric])
-    )
+    overall_n = NCounts(len(a_overall), len(other_overall))
     per_language = compute_stratified_continuous_balance(
-        a.repo_level_continuous_by_language[metric],
-        other.repo_level_continuous_by_language[metric],
-        metric,
+        a_by_language, other_by_language, metric
     )
     per_language_n = {
         language: NCounts(
-            len(a.repo_level_continuous_by_language[metric].get(language, [])),
-            len(other.repo_level_continuous_by_language[metric].get(language, [])),
+            len(a_by_language.get(language, [])),
+            len(other_by_language.get(language, [])),
         )
         for language in per_language
     }
     per_language_medians = (
-        _per_language_medians(metric, a, other) if include_percentile_columns else None
+        _per_language_medians(a_by_language, other_by_language)
+        if include_percentile_columns
+        else None
     )
     per_language_q3 = (
-        _per_language_percentile(metric, a, other, 75) if include_percentile_columns else None
+        _per_language_percentile(a_by_language, other_by_language, 75)
+        if include_percentile_columns
+        else None
     )
     per_language_p90 = (
-        _per_language_percentile(metric, a, other, 90) if include_percentile_columns else None
+        _per_language_percentile(a_by_language, other_by_language, 90)
+        if include_percentile_columns
+        else None
     )
     lines = [f"### {metric}", ""]
     lines.append(
@@ -517,7 +601,7 @@ def _render_continuous_metric(
             overall_n,
             per_language,
             per_language_n,
-            other_dataset=other.dataset,
+            other_dataset=other_dataset,
             per_language_medians=per_language_medians,
             per_language_q3=per_language_q3,
             per_language_p90=per_language_p90,
@@ -573,18 +657,25 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "continuous metrics reported in the paper -- see this module's "
         "docstring. Each per-language row also reports `A median`/`C "
         "median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` "
-        "(90th percentile) -- the same per-repo mean values the "
-        "Mann-Whitney test itself runs on, alongside (not a replacement "
-        "for) the effect size and p-value. Q3/P90 exist to explain an "
-        "effect that reaches significance despite identical medians -- a "
-        "real difference concentrated in the upper tail, invisible to the "
-        "median alone.",
+        "(90th percentile) -- the median/Q3/P90 of the same per-repo mean "
+        "values the Mann-Whitney test itself runs on, alongside (not a "
+        "replacement for) the effect size and p-value. Q3/P90 exist to "
+        "explain an effect that reaches significance despite identical "
+        "medians -- a real difference concentrated in the upper tail, "
+        "invisible to the median alone.",
         "",
     ]
     for metric in PAPER_CONTINUOUS_METRICS:
         lines.append(
             _render_continuous_metric(
-                metric, a, other, continuous_overall[metric], include_percentile_columns=True
+                metric,
+                a.repo_level_continuous[metric],
+                other.repo_level_continuous[metric],
+                a.repo_level_continuous_by_language[metric],
+                other.repo_level_continuous_by_language[metric],
+                continuous_overall[metric],
+                other.dataset,
+                include_percentile_columns=True,
             )
         )
 
@@ -596,6 +687,40 @@ def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> 
         "",
         _render_floor_percentage_footnote(a, other),
     ]
+
+    median_diagnostic_overall = compare_datasets_repo_level_median_diagnostic(a, other)
+    lines += [
+        "## Diagnostic: median-per-repo aggregation (NOT used in the paper)",
+        "",
+        "**This section is presented for transparency only -- these are "
+        "not results, do not cite them.** The paper's own methodology "
+        "(above) takes each repo's *mean* fixture value, then reports the "
+        "median across repos. This section instead takes each repo's "
+        "own *median* fixture value first. That interacts badly with "
+        "`cyclomatic_complexity`/`comment_density`'s heavy floor-binding "
+        "(CC=1, comment_density=0 for most fixtures -- see this module's "
+        "docstring): most repos' own median collapses to that exact floor "
+        "value, producing near-universal ties across repos and starving "
+        "Mann-Whitney of power. The per-language pattern below can and "
+        "does diverge substantially from the paper's actual table above "
+        "-- that divergence is the point of keeping this section, as a "
+        "record of how sensitive the comparison is to this choice, not a "
+        "competing result.",
+        "",
+    ]
+    for metric in PAPER_CONTINUOUS_METRICS:
+        lines.append(
+            _render_continuous_metric(
+                metric,
+                a.repo_level_continuous_median_diagnostic[metric],
+                other.repo_level_continuous_median_diagnostic[metric],
+                a.repo_level_continuous_by_language_median_diagnostic[metric],
+                other.repo_level_continuous_by_language_median_diagnostic[metric],
+                median_diagnostic_overall[metric],
+                other.dataset,
+                include_percentile_columns=True,
+            )
+        )
 
     return "\n".join(lines)
 

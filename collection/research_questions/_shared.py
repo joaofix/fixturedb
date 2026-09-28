@@ -526,6 +526,24 @@ def repo_level_means(by_repo: dict[int, list[float]]) -> list[float]:
     return [sum(vals) / len(vals) for vals in by_repo.values() if vals]
 
 
+def repo_level_medians(by_repo: dict[int, list[float]]) -> list[float]:
+    """One median value per repo, from fetch_continuous_column_by_repo()'s
+    output -- the same repo-declustering repo_level_means() does (one
+    observation per repo, not per fixture), except each repo contributes
+    its own *median* fixture value rather than its mean.
+
+    Why median, not mean: a repo's mean is pulled toward its own outliers
+    (e.g. one unusually large fixture inflates that repo's contributed
+    value before the cross-repo comparison even starts), which quietly
+    reintroduces a milder version of the same distortion repo-level
+    aggregation exists to remove. The median of a repo's own fixtures is
+    what "the typical fixture in this repo looks like," which is the
+    question RQ1's cross-repo median/Q3/P90 comparison is actually asking
+    -- see rq1.py's module docstring.
+    """
+    return [statistics.median(vals) for vals in by_repo.values() if vals]
+
+
 @dataclass
 class LanguageLeakage:
     """One repo-tagged language's cross-language fixture leakage: how many

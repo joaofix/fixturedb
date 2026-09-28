@@ -30,6 +30,7 @@ from collection.research_questions._shared import (
     render_comparison_table,
     render_language_leakage_table,
     repo_level_means,
+    repo_level_medians,
     require_db_or_none,
     summarize_continuous,
     write_markdown_report,
@@ -225,6 +226,32 @@ class TestRepoLevelMeans:
         the raw fixture-level list fetch_continuous_column() returns."""
         by_repo = {1: [5.0] * 1000, 2: [10.0]}
         result = repo_level_means(by_repo)
+        assert len(result) == 2
+
+
+class TestRepoLevelMedians:
+    def test_one_median_per_repo(self):
+        by_repo = {1: [10.0, 20.0], 2: [5.0], 3: [1.0, 2.0, 100.0]}
+        assert sorted(repo_level_medians(by_repo)) == [2.0, 5.0, 15.0]
+
+    def test_empty_input_returns_empty_list(self):
+        assert repo_level_medians({}) == []
+
+    def test_median_is_not_mean_for_a_skewed_repo(self):
+        """The whole point of using the median instead of the mean: a
+        repo's own outlier fixture must not pull that repo's contributed
+        value away from what a typical fixture in it looks like. Mean of
+        [1, 2, 100] is 34.33; median is 2 -- if this returned the mean,
+        this test would fail."""
+        by_repo = {1: [1.0, 2.0, 100.0]}
+        assert repo_level_medians(by_repo) == [2.0]
+
+    def test_a_repo_with_many_fixtures_still_contributes_one_value(self):
+        """The whole point: a repo with 1000 fixtures must count once in
+        the output, not 1000 times -- that's what distinguishes this from
+        the raw fixture-level list fetch_continuous_column() returns."""
+        by_repo = {1: [5.0] * 1000, 2: [10.0]}
+        result = repo_level_medians(by_repo)
         assert len(result) == 2
 
 
