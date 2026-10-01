@@ -285,6 +285,19 @@ javascript_typescript:
         nose/Behave/Spring/Cucumber, already excluded for Python/Java for
         the same reason: once one non-dominant framework's own conventions
         are in scope, there's no principled place to stop.
+    - case: "QUnit (hooks.beforeEach/hooks.afterEach inside QUnit.module(...), or beforeEach/afterEach/setup/teardown properties in a module options object)"
+      reason: >
+        Same scope decision as AVA above: only Jest, Mocha, and Vitest are
+        covered. Also structural, independent of scope: QUnit's modern
+        hooks are always qualified off a `hooks` parameter
+        (`hooks.beforeEach(...)`), not a bare `beforeEach(...)` call, so
+        they wouldn't match this table's bare hook names even if QUnit
+        were brought into scope; and both the modern options-object style
+        (`{ beforeEach: fn }`) and QUnit's older pre-hooks API
+        (`{ setup: fn, teardown: fn }`) are object properties assigned as
+        `QUnit.module(name, {...})`'s second argument, not call
+        expressions -- there is no call-expression node for this detector
+        to match regardless of name.
     - case: "TypeScript decorator-style hooks (@Before/@After/@BeforeEach/@AfterEach/@BeforeAll/@AfterAll on class methods)"
       reason: >
         Removed after verifying no currently real, actively-used package
