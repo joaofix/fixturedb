@@ -2,7 +2,7 @@
 
 > How do agent-generated and human-written fixtures differ in mock usage -- coverage and intensity?
 
-Generated: 2026-09-08 01:16:51 UTC
+Generated: 2026-09-16 02:21:42 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ3 definition.
 
@@ -84,44 +84,44 @@ Mock prevalence: 7,032/70,623 fixtures (10.0%)
 | python | 21,078 | 1,253 | 5.94% | typescript=950, javascript=160, java=143 |
 | typescript | 43,305 | 2,627 | 6.07% | javascript=1,932, python=603, java=92 |
 
-### Dataset C (human-authored, pre-LLM) -- 70,623 fixtures, 8,576 mock usages
+### Dataset C (human-authored, pre-LLM) -- 70,623 fixtures, 8,590 mock usages
 
-Mock prevalence: 4,228/70,623 fixtures (6.0%)
+Mock prevalence: 4,215/70,623 fixtures (6.0%)
 
 **Continuous metrics**
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
 | num_mocks | 70,623 | 0.00 | 0.12 | 0 | 31 | 0.69 |
-| num_interactions_configured | 8,576 | 0.00 | 0.13 | 0 | 5 | 0.47 |
+| num_interactions_configured | 8,590 | 0.00 | 0.14 | 0 | 5 | 0.49 |
 
 **has_mock distribution**
 
 | Value | Count | % |
 |---|---|---|
-| no_mock | 66,395 | 94.0% |
-| has_mock | 4,228 | 6.0% |
+| no_mock | 66,408 | 94.0% |
+| has_mock | 4,215 | 6.0% |
 
 **framework distribution**
 
 | Value | Count | % |
 |---|---|---|
-| jest | 3,225 | 37.6% |
-| sinon | 3,072 | 35.8% |
-| unittest_mock | 1,690 | 19.7% |
-| pytest_monkeypatch | 243 | 2.8% |
-| pytest_mock | 203 | 2.4% |
+| jest | 3,225 | 37.5% |
+| sinon | 3,002 | 34.9% |
+| unittest_mock | 1,795 | 20.9% |
+| pytest_monkeypatch | 252 | 2.9% |
+| pytest_mock | 173 | 2.0% |
 | mockito | 143 | 1.7% |
 
 **category distribution**
 
 | Value | Count | % |
 |---|---|---|
-| mock | 3,818 | 44.5% |
-| stub | 2,790 | 32.5% |
-| spy | 1,727 | 20.1% |
-| fake | 187 | 2.2% |
-| dummy | 54 | 0.6% |
+| mock | 3,855 | 44.9% |
+| stub | 2,773 | 32.3% |
+| spy | 1,669 | 19.4% |
+| fake | 233 | 2.7% |
+| dummy | 60 | 0.7% |
 
 **Mock prevalence by language**
 
@@ -129,8 +129,8 @@ Mock prevalence: 4,228/70,623 fixtures (6.0%)
 |---|---|---|---|
 | java | 2,261 | 62 | 2.7% |
 | javascript | 4,858 | 319 | 6.6% |
-| python | 20,684 | 1,101 | 5.3% |
-| typescript | 42,820 | 2,746 | 6.4% |
+| python | 20,684 | 1,098 | 5.3% |
+| typescript | 42,820 | 2,736 | 6.4% |
 
 **Framework distribution by language**
 
@@ -140,23 +140,23 @@ Mock prevalence: 4,228/70,623 fixtures (6.0%)
 | javascript | jest | 377 |
 | javascript | sinon | 262 |
 | javascript | unittest_mock | 1 |
-| python | unittest_mock | 1,685 |
-| python | pytest_monkeypatch | 243 |
-| python | pytest_mock | 203 |
+| python | unittest_mock | 1,790 |
+| python | pytest_monkeypatch | 252 |
+| python | pytest_mock | 173 |
 | typescript | jest | 2,848 |
-| typescript | sinon | 2,810 |
+| typescript | sinon | 2,740 |
 | typescript | unittest_mock | 4 |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-6,355/70,623 fixtures (9.00%) leaked.
+6,376/70,623 fixtures (9.03%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 4,156 | 1,935 | 46.56% | typescript=990, python=865, javascript=80 |
-| javascript | 5,602 | 2,118 | 37.81% | typescript=1,797, python=306, java=15 |
-| python | 20,380 | 1,013 | 4.97% | typescript=837, javascript=162, java=14 |
-| typescript | 40,485 | 1,289 | 3.18% | javascript=1,132, python=146, java=11 |
+| java | 4,157 | 1,936 | 46.57% | typescript=990, python=866, javascript=80 |
+| javascript | 5,610 | 2,126 | 37.90% | typescript=1,797, python=314, java=15 |
+| python | 20,359 | 1,013 | 4.98% | typescript=837, javascript=162, java=14 |
+| typescript | 40,497 | 1,301 | 3.21% | javascript=1,132, python=158, java=11 |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
@@ -168,13 +168,13 @@ Mock prevalence: 4,228/70,623 fixtures (6.0%)
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 70623 | 70623 | U=2393890588.0 | -0.040 | negligible | <.001 | -- |
+| Overall | 70623 | 70623 | U=2393479441.5 | -0.040 | negligible | <.001 | -- |
 
 **Repo-level** (one mean value per repo)
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2494 | U=1629509.0 | -0.225 | small | <.001 | -- |
+| Overall | 1687 | 2506 | U=1632601.0 | -0.228 | small | <.001 | -- |
 
 ### num_interactions_configured
 
@@ -182,13 +182,13 @@ Mock prevalence: 4,228/70,623 fixtures (6.0%)
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 17725 | 8576 | U=64528568.5 | -0.151 | small | <.001 | -- |
+| Overall | 17725 | 8590 | U=65202631.5 | -0.144 | negligible | <.001 | -- |
 
 **Repo-level** (one mean value per repo)
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 752 | 594 | U=208383.0 | -0.067 | negligible | 0.007 | -- |
+| Overall | 752 | 592 | U=209862.5 | -0.057 | negligible | 0.021 | -- |
 
 ### Mocking Coverage and Intensity (paper table)
 
@@ -196,11 +196,11 @@ Mock prevalence: 4,228/70,623 fixtures (6.0%)
 
 | Language | n_A | n_C | Coverage A (%) | Coverage C (%) | δ_cov | p_cov | Intensity A | Intensity C | δ_int | p_int |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2494 | 44.6% | 23.8% | -0.208 (small) | <.001 | 1.50 | 1.00 | -0.133 (negligible) | <.001 |
+| Overall | 1687 | 2506 | 44.6% | 23.6% | -0.210 (small) | <.001 | 1.50 | 1.00 | -0.129 (negligible) | <.001 |
 | java | 127 | 325 | 29.9% | 10.2% | -0.198 (small) | <.001 | 1.50 | 2.00 | 0.185 (small) | 0.219 |
 | javascript | 143 | 563 | 22.4% | 18.1% | -0.043 (negligible) | 0.282 | 1.00 | 1.00 | -0.156 (small) | 0.219 |
-| python | 678 | 1040 | 59.3% | 21.6% | -0.377 (medium) | <.001 | 1.50 | 1.00 | -0.113 (negligible) | 0.020 |
-| typescript | 948 | 758 | 34.5% | 33.6% | -0.009 (negligible) | 0.712 | 1.00 | 1.00 | -0.166 (small) | <.001 |
+| python | 678 | 1059 | 59.3% | 21.7% | -0.376 (medium) | <.001 | 1.50 | 1.00 | -0.086 (negligible) | 0.096 |
+| typescript | 948 | 753 | 34.5% | 33.2% | -0.013 (negligible) | 0.576 | 1.00 | 1.00 | -0.174 (small) | <.001 |
 
 ### Mock Fixture Counts by Language
 
@@ -208,11 +208,11 @@ Raw count of fixtures with >=1 mock (`has_mock`), per language, each also shown 
 
 | Language | Mock A (n) | Mock A (%) | Mock C (n) | Mock C (%) |
 |---|---|---|---|---|
-| Overall | 7,032 | 10.0% | 4,228 | 6.0% |
+| Overall | 7,032 | 10.0% | 4,215 | 6.0% |
 | java | 180 | 8.0% | 62 | 2.7% |
 | javascript | 189 | 3.9% | 319 | 6.6% |
-| python | 4,630 | 22.4% | 1,101 | 5.3% |
-| typescript | 2,033 | 4.7% | 2,746 | 6.4% |
+| python | 4,630 | 22.4% | 1,098 | 5.3% |
+| typescript | 2,033 | 4.7% | 2,736 | 6.4% |
 
 ## Legacy: Fixture-Level Mock Prevalence (Not Used in the Paper)
 
@@ -226,8 +226,8 @@ Kept for transparency/comparison only -- not one of RQ3's reported tables. Poole
 
 | Language | n_A | n_C | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|
-| Overall | 1687 | 2494 | chi2=758.2 (df=1) | 0.073 | negligible | <.001 | -- |
+| Overall | 1687 | 2506 | chi2=766.1 (df=1) | 0.074 | negligible | <.001 | -- |
 | java | 127 | 325 | chi2=59.8 (df=1) | 0.115 | small | <.001 | <.001 |
 | javascript | 143 | 563 | chi2=34.6 (df=1) | 0.060 | negligible | <.001 | <.001 |
-| python | 678 | 1040 | chi2=2521.1 (df=1) | 0.247 | small | <.001 | <.001 |
-| typescript | 948 | 758 | chi2=112.3 (df=1) | 0.036 | negligible | <.001 | <.001 |
+| python | 678 | 1059 | chi2=2526.5 (df=1) | 0.247 | small | <.001 | <.001 |
+| typescript | 948 | 753 | chi2=109.4 (df=1) | 0.036 | negligible | <.001 | <.001 |

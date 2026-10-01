@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-09-08 01:16:33 UTC
+Generated: 2026-09-16 02:21:46 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -102,8 +102,8 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 |---|---|---|---|---|---|
 | Candidate repos | 3,786 | 5,448 | 8,622 | 6,893 | 24,749 |
 | Created within 2016-2020 | 1,398 | 1,916 | 2,738 | 2,107 | 8,159 |
-| With any fixtures | 317 | 406 | 980 | 791 | 2,494 |
-| With any mocks | 37 | 73 | 219 | 265 | 594 |
+| With any fixtures | 317 | 408 | 993 | 788 | 2,506 |
+| With any mocks | 36 | 75 | 219 | 262 | 592 |
 
 ## Fixture Counts by Language
 
@@ -116,16 +116,16 @@ Total extracted fixtures per language, per dataset, counted by each fixture's ow
 
 ## Dataset C: Sampling-Down Summary
 
-Matched against Dataset a: 70,623/70,623 fixtures, 2,494 repos, seed=42.
+Matched against Dataset a: 70,623/70,623 fixtures, 2,506 repos, seed=42.
 
 A language whose "Repos sampled" hits its full available count took everything Dataset C had for it and still fell short of the target mix -- the shortfall was redistributed to the other languages, not discarded (see `_allocate_quotas_with_shortfall_reallocation()` in `dataset_sampler.py`).
 
 | Language | Dataset C's own mix | Target (a's mix) | Sampled mix | Repos sampled | Fixtures sampled |
 |---|---|---|---|---|---|
-| Java | 31.3% | 3.2% | 3.2% | 325/629 | 2,261/62,084 |
+| Java | 31.4% | 3.2% | 3.2% | 325/629 | 2,261/62,084 |
 | JavaScript | 20.7% | 6.9% | 6.9% | 563/812 | 4,858/40,968 |
-| Python | 22.1% | 29.3% | 29.3% | 1,040/1,125 | 20,684/43,852 |
-| TypeScript | 25.9% | 60.6% | 60.6% | 758/766 | 42,820/51,203 |
+| Python | 22.1% | 29.3% | 29.3% | 1,059/1,125 | 20,684/43,694 |
+| TypeScript | 25.9% | 60.6% | 60.6% | 753/766 | 42,820/51,203 |
 
 ## JUnit 3 Fallback Detection (Java)
 
@@ -143,7 +143,7 @@ Side note, not a comparison: exact re-check, not a sample, of whether each `befo
 | Dataset | before_each/after_each | Nested construct | Re-checked | Mismatched | Mismatch rate |
 |---|---|---|---|---|---|
 | Dataset A | 39,767 | 4,021 | 3,325 | 676 | 20.33% |
-| Dataset C | 34,087 | 4,015 | 3,039 | 304 | 10.00% |
+| Dataset C | 34,075 | 4,034 | 3,045 | 300 | 9.85% |
 
 ## Mocha Bare `before()`/`after()` Detection (Regression Guard)
 
@@ -152,7 +152,7 @@ Side note, not a comparison, and not a live risk estimate -- count of `mocha_bef
 | Dataset | mocha_before/mocha_after | Non-bare-call shape |
 |---|---|---|
 | Dataset A | 1,343 | 0 |
-| Dataset C | 7,857 | 0 |
+| Dataset C | 7,868 | 0 |
 
 ## Aliased Mock Import Detection (Python)
 
@@ -172,7 +172,7 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 | Dataset | category='mock' rows | Positive match | Fallback (no keyword) | Positive % / Fallback % |
 |---|---|---|---|---|
 | Dataset A | 13,733 | 11,235 | 2,498 | 81.8% / 18.2% |
-| Dataset C | 3,818 | 2,922 | 896 | 76.5% / 23.5% |
+| Dataset C | 3,855 | 2,915 | 940 | 75.6% / 24.4% |
 
 ### Positive matches split further: framework API name vs. naming-only
 
@@ -181,7 +181,7 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 | Dataset | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
 | Dataset A | 13,733 | 8,930 (65.0%) | 2,305 (16.8%) | 2,498 (18.2%) |
-| Dataset C | 3,818 | 2,304 (60.3%) | 618 (16.2%) | 896 (23.5%) |
+| Dataset C | 3,855 | 2,334 (60.5%) | 581 (15.1%) | 940 (24.4%) |
 
 ### Per language
 
@@ -203,5 +203,5 @@ checking per language matters here specifically because it does:
 |---|---|---|---|---|
 | java | 123 | 123 (100.0%) | 0 (0.0%) | 0 (0.0%) |
 | javascript | 277 | 90 (32.5%) | 68 (24.5%) | 119 (43.0%) |
-| python | 1,943 | 1,663 (85.6%) | 155 (8.0%) | 125 (6.4%) |
-| typescript | 1,475 | 428 (29.0%) | 395 (26.8%) | 652 (44.2%) |
+| python | 1,981 | 1,702 (85.9%) | 127 (6.4%) | 152 (7.7%) |
+| typescript | 1,474 | 419 (28.4%) | 386 (26.2%) | 669 (45.4%) |

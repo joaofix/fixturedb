@@ -4,7 +4,7 @@
 
 Dataset C is checked against its fixture-level sample-down (`db/c_sampled.db`), not the full `db/c.db` -- see this module's docstring.
 
-Generated: 2026-09-09 00:46:51 UTC
+Generated: 2026-09-16 02:22:07 UTC
 
 ### Dataset A (agent-authored)
 
@@ -23,11 +23,11 @@ Generated: 2026-09-09 00:46:51 UTC
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-6,355/70,623 fixtures (9.00%) leaked.
+6,376/70,623 fixtures (9.03%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 4,156 | 1,935 | 46.56% | typescript=990, python=865, javascript=80 |
-| javascript | 5,602 | 2,118 | 37.81% | typescript=1,797, python=306, java=15 |
-| python | 20,380 | 1,013 | 4.97% | typescript=837, javascript=162, java=14 |
-| typescript | 40,485 | 1,289 | 3.18% | javascript=1,132, python=146, java=11 |
+| java | 4,157 | 1,936 | 46.57% | typescript=990, python=866, javascript=80 |
+| javascript | 5,610 | 2,126 | 37.90% | typescript=1,797, python=314, java=15 |
+| python | 20,359 | 1,013 | 4.98% | typescript=837, javascript=162, java=14 |
+| typescript | 40,497 | 1,301 | 3.21% | javascript=1,132, python=158, java=11 |
