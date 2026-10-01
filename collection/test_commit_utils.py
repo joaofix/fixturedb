@@ -139,6 +139,20 @@ def collect_test_files_for_commit(
     return test_files
 
 
+def _build_commit_github_url(repo_name: str, commit_sha: str) -> str:
+    """Build a GitHub URL pointing at the commit itself (not a specific
+    file) -- a test-commit row covers potentially several files
+    (test_file_paths), so a single-file blob link (corpus_utils.py's
+    _build_github_url(), used for individual fixtures) doesn't apply
+    here."""
+    if not repo_name or not commit_sha:
+        return ""
+    sha = commit_sha.strip()
+    if not sha:
+        return ""
+    return f"https://github.com/{repo_name}/commit/{sha}"
+
+
 def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
     """Write test commit records to CSV for standalone runs."""
     adapter = get_adapter()
@@ -148,6 +162,9 @@ def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
         tf = row.get("test_file_paths", [])
         if not isinstance(tf, str):
             row["test_file_paths"] = json.dumps(tf, ensure_ascii=False)
+        row["github_url"] = _build_commit_github_url(
+            row.get("repo_name", ""), row.get("commit_sha", "")
+        )
 
     fieldnames = [
         "repo_name",
@@ -158,6 +175,7 @@ def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
         "commit_date",
         "test_file_count",
         "test_file_paths",
+        "github_url",
     ]
 
     return adapter.write_dicts(Path(output_path), rows, fieldnames)

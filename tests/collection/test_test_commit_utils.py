@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import csv
 import subprocess
 from pathlib import Path
 
 from collection.test_commit_utils import (
     collect_test_files_for_commit,
     is_test_file_path,
+    write_test_commits_csv,
 )
 
 
@@ -132,3 +134,50 @@ def test_collect_test_files_for_commit_survives_modified_files_diff_failure(
 
     test_files = collect_test_files_for_commit(repo, commit_sha, "python")
     assert test_files == []
+
+
+def test_write_test_commits_csv_builds_commit_github_url(tmp_path: Path) -> None:
+    out_path = tmp_path / "python_test_commit.csv"
+    records = [
+        {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "commit_sha": "abc123",
+            "commit_role": "agent",
+            "agent_type": "claude",
+            "commit_date": "2026-01-01",
+            "test_file_count": 1,
+            "test_file_paths": ["tests/test_a.py"],
+        }
+    ]
+    write_test_commits_csv(records, out_path)
+
+    with out_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert rows[0]["github_url"] == "https://github.com/owner/repo/commit/abc123"
+
+
+def test_write_test_commits_csv_blank_url_for_missing_sha(tmp_path: Path) -> None:
+    """A row missing commit_sha (or repo_name) must get an empty github_url
+    rather than a malformed link -- same defensive convention as
+    corpus_utils.py's _build_github_url()."""
+    out_path = tmp_path / "python_test_commit.csv"
+    records = [
+        {
+            "repo_name": "owner/repo",
+            "language": "python",
+            "commit_sha": "",
+            "commit_role": "agent",
+            "agent_type": "claude",
+            "commit_date": "2026-01-01",
+            "test_file_count": 0,
+            "test_file_paths": [],
+        }
+    ]
+    write_test_commits_csv(records, out_path)
+
+    with out_path.open("r", encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+
+    assert rows[0]["github_url"] == ""
