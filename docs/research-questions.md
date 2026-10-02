@@ -12,13 +12,34 @@ isn't part of these scripts' reported output. See
 
 ## RQ1 — Fixture Prevalence (Quantitative)
 
-> How common is test fixture usage at all in agent-authored vs. human-authored test
-> commits/files?
+> How common are tests, fixtures, setup, and teardown across the raw repo universe,
+> independent of Dataset A/B/C's own filtering?
 
-Not yet implemented -- the metric design and computation are still to be decided.
-`collection/research_questions/rq1.py` exists as a placeholder that writes a stub
-`research_questions/rq1.md` noting this, so the numbering below is reflected in the
-file layout ahead of the actual implementation.
+Unlike RQ2-4, this is not an A-vs-C comparison -- it characterizes the full raw
+population (`github-search-raw/*.csv.gz`, ~24.7k repos minus known duplicates) that
+A/B/C are each filtered subsets of. A dedicated collection stage,
+`collection/rq1_prevalence_scan.py`, clones every repo (pinned to a fixed cutoff date
+matching A/C's own collection date, not current HEAD) and persists per-repo counts to
+`db/rq1_prevalence.db` -- deliberately not a 4th dataset, kept structurally separate
+from `datasets/{a,b,c}/` and `db/{a,b,c}.db` (see that module's own docstring for the
+full naming scheme and the production incidents its retry/timeout/auth logic exists
+to handle).
+
+`rq1.py` is the pure reader over that db, rendering two tables, each in two variants
+(no quality floor, and `study_parameters.yaml`'s `min_test_files` floor applied -- no
+second scan needed for the floor variant, see `rq1_prevalence_scan.py`'s docstring):
+
+- **Table 1** (`tab:rq1-prevalence`): per language and "All" (pooled), how many repos
+  have >=1 test file, how many of those have >=1 fixture, and within the
+  fixture-having subset, what % have >=1 setup-classified / teardown-classified
+  fixture.
+- **Table 2** (`tab:rq1-prevalence-median`): per language and "All" (one pooled
+  median, not an average of four per-language medians), the median fixture/setup/
+  teardown count per repo among repos with >=1 fixture.
+
+A repo whose clone failed, or that had no commit at or before the cutoff date, is
+excluded from every count in both tables -- "unknown," never counted as "confirmed no
+tests."
 
 ## RQ2 — General Metrics Overview (Quantitative)
 
@@ -71,7 +92,7 @@ file layout ahead of the actual implementation.
 
 | RQ | Question | Type | Key Metrics | Datasets |
 |----|----------|------|--------------|----------|
-| RQ1 | How common is fixture usage at all in agent vs. human test commits/files? | Quantitative | Not yet implemented | A vs C (planned) |
+| RQ1 | How common are tests/fixtures/setup/teardown across the raw repo universe? | Quantitative | Repo counts with tests/fixtures/setup/teardown (%), median fixtures/setup/teardown per repo | Raw universe (not A/B/C) |
 | RQ2 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | Paper: `loc`, `cyclomatic_complexity`, `comment_density`. Also reported (not in paper): `num_parameters`, `fixture_type` | A vs C |
 | RQ3 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_role` (setup/teardown/other): absolute fixture counts by type, per-repo teardown coverage rate | A vs C |
 | RQ4 | How do agent and human fixtures differ in mock usage? | Quantitative | Mocking coverage (% repos with any mock) | A vs C |
@@ -89,7 +110,7 @@ not yet collected is skipped rather than erroring). Each is standalone:
 
 | Script | Answers | Reads | Writes |
 |---|---|---|---|
-| `rq1.py` | RQ1 — fixture prevalence (not yet implemented, writes a stub report) | N/A | `research_questions/rq1.md` |
+| `rq1.py` | RQ1 — fixture/setup/teardown prevalence and per-repo medians, each in a no-floor and a `min_test_files`-floor variant | `db/rq1_prevalence.db` (written by `collection/rq1_prevalence_scan.py`, not `db/{a,b,c}.db`) | `research_questions/rq1.md` |
 | `rq2.py` | RQ2 — per-dataset structural-metric summaries, plus an A vs C comparison (Mann-Whitney U / chi-square) | `db/a.db`, `db/c.db` | `research_questions/rq2.md` |
 | `rq3.py` | RQ3 — per-dataset `fixture_type` kind (setup/teardown/other) distribution, plus two A vs C tables: absolute setup/teardown fixture counts by language, and per-repo teardown coverage rate by language (both purely descriptive) | `db/a.db`, `db/c.db` | `research_questions/rq3.md` |
 | `rq4.py` | RQ4 — per-dataset mocking summary, plus one A vs C paper table (mocking coverage %, per language, purely descriptive) | `db/a.db`, `db/c.db` | `research_questions/rq4.md` |
