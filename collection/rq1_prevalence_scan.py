@@ -64,6 +64,7 @@ python -m collection.rq1_prevalence_scan
 
 from __future__ import annotations
 
+import argparse
 import csv
 import gzip
 import json
@@ -107,6 +108,7 @@ DUPLICATES_PATH = paths.RAW_SEARCH_DIR / "duplicate_repos_by_current_commit.csv"
 PROGRESS_PATH = paths.DB_ROOT / "rq1_prevalence_progress.json"
 PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq1_prevalence.log"
+DEFAULT_WORKERS = 12
 
 # Same ntfy.sh topic internal-docs/RUN_COMMANDS.md's own curl -d pushes use
 # between separate CLI invocations -- here it's one push per language chunk
@@ -541,7 +543,7 @@ def run_scan(
     clones_dir: Path = CLONES_DIR,
     db_path: Path = DB_PATH,
     progress_path: Path = PROGRESS_PATH,
-    workers: int = 12,
+    workers: int = DEFAULT_WORKERS,
     cutoff_date: str = RQ1_CUTOFF_DATE,
     shallow_since: str = RQ1_SHALLOW_SINCE,
     log_every: int = PROGRESS_LOG_EVERY,
@@ -679,9 +681,21 @@ def add_file_logging(log_path: Path = LOG_PATH) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="RQ1 fixture-prevalence scan over the raw repo universe "
+        "(github-search-raw/*.csv.gz), independent of Dataset A/B/C."
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=DEFAULT_WORKERS,
+        help=f"Concurrent clone workers (default: {DEFAULT_WORKERS})",
+    )
+    args = parser.parse_args()
+
     configure_logging()
     add_file_logging()
-    counts = run_scan()
+    counts = run_scan(workers=args.workers)
     write_csv_outputs()
     print(f"[RQ1 scan] done: {counts}")
 

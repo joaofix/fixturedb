@@ -19,6 +19,7 @@ import logging
 import os
 import sqlite3
 import subprocess
+import sys
 from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -34,6 +35,7 @@ from collection.rq1_prevalence_scan import (
     load_duplicate_repo_names,
     load_raw_universe,
     load_scanned_repo_names,
+    main,
     persist_result,
     process_repo,
     run_scan,
@@ -844,3 +846,28 @@ class TestRunScanNotifications:
             )
 
         notify_mock.assert_not_called()
+
+
+class TestMainCli:
+    """main()'s --workers flag -- never actually runs a scan (run_scan()/
+    write_csv_outputs()/logging setup are all mocked out), just checks the
+    parsed value is threaded through correctly."""
+
+    def _run_main_with_argv(self, argv):
+        with (
+            patch.object(sys, "argv", ["rq1_prevalence_scan.py", *argv]),
+            patch("collection.rq1_prevalence_scan.configure_logging"),
+            patch("collection.rq1_prevalence_scan.add_file_logging"),
+            patch("collection.rq1_prevalence_scan.write_csv_outputs"),
+            patch("collection.rq1_prevalence_scan.run_scan", return_value={}) as run_scan_mock,
+        ):
+            main()
+        return run_scan_mock
+
+    def test_defaults_to_twelve_workers(self):
+        run_scan_mock = self._run_main_with_argv([])
+        assert run_scan_mock.call_args.kwargs["workers"] == 12
+
+    def test_workers_flag_is_threaded_through(self):
+        run_scan_mock = self._run_main_with_argv(["--workers", "16"])
+        assert run_scan_mock.call_args.kwargs["workers"] == 16
