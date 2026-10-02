@@ -67,6 +67,7 @@ from __future__ import annotations
 import csv
 import gzip
 import json
+import logging
 import shutil
 import subprocess
 from datetime import datetime, timezone
@@ -105,6 +106,7 @@ CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq1-prevalence"
 DUPLICATES_PATH = paths.RAW_SEARCH_DIR / "duplicate_repos_by_current_commit.csv"
 PROGRESS_PATH = paths.DB_ROOT / "rq1_prevalence_progress.json"
 PROGRESS_LOG_EVERY = 50
+LOG_PATH = paths.DB_ROOT / "rq1_prevalence.log"
 
 TABLE_NAME = "repo_prevalence"
 
@@ -597,8 +599,30 @@ def run_scan(
     return {"total": len(universe), "already_done": len(already_done), "scanned_this_run": len(pending)}
 
 
+def add_file_logging(log_path: Path = LOG_PATH) -> None:
+    """Attach a durable file handler on top of `configure_logging()`'s
+    console-only handler -- this scan can run for hours, and a plain
+    terminal session (no nohup/tmux) dying would otherwise take every log
+    line with it, leaving only `db_path`/`progress_path`'s point-in-time
+    snapshots. Appends (the default `logging.FileHandler` mode) rather
+    than truncating, so a resumed run's log history survives a restart,
+    same "never wipe prior progress" principle `db_path`/`progress_path`
+    already follow.
+
+    This durable log is still not a substitute for running the scan
+    itself under `nohup .../tmux`/`screen` -- a killed *process* loses
+    all logging regardless of where it's written; this only protects
+    against losing output that the process DID produce.
+    """
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    handler = logging.FileHandler(log_path)
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+    logging.getLogger().addHandler(handler)
+
+
 def main() -> None:
     configure_logging()
+    add_file_logging()
     counts = run_scan()
     write_csv_outputs()
     print(f"[RQ1 scan] done: {counts}")

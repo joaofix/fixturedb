@@ -15,6 +15,7 @@ from __future__ import annotations
 import csv
 import gzip
 import json
+import logging
 import os
 import sqlite3
 import subprocess
@@ -22,6 +23,7 @@ from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from collection import rq1_prevalence_scan as rq1scan
 from collection.rq1_prevalence_scan import (
     RQ1_LANGUAGES,
     _clone_with_shallow_fallback,
@@ -360,6 +362,57 @@ class TestWriteCsvOutputs:
         with written["javascript"].open() as fh:
             rows = list(csv.DictReader(fh))
         assert rows == []
+
+
+class TestAddFileLogging:
+    """A plain terminal session (no nohup/tmux) dying mid-run would
+    otherwise take every log line with it -- configure_logging() alone
+    only attaches a console handler. add_file_logging() must make log
+    output land durably on disk too."""
+
+    def test_log_messages_land_in_the_file(self, tmp_path):
+        log_path = tmp_path / "rq1.log"
+        root = logging.getLogger()
+        before_handlers = list(root.handlers)
+        before_level = root.level
+        try:
+            root.setLevel(logging.INFO)
+            rq1scan.add_file_logging(log_path)
+            rq1scan.logger.info("hello from the test")
+            for handler in root.handlers:
+                handler.flush()
+            assert "hello from the test" in log_path.read_text()
+        finally:
+            for handler in root.handlers:
+                if handler not in before_handlers:
+                    handler.close()
+            root.handlers = before_handlers
+            root.setLevel(before_level)
+
+    def test_appends_rather_than_truncates_on_a_second_call(self, tmp_path):
+        """A resumed run's log history must survive a restart -- same
+        'never wipe prior progress' principle db_path/progress_path
+        already follow."""
+        log_path = tmp_path / "rq1.log"
+        log_path.write_text("earlier run's log line\n")
+        root = logging.getLogger()
+        before_handlers = list(root.handlers)
+        before_level = root.level
+        try:
+            root.setLevel(logging.INFO)
+            rq1scan.add_file_logging(log_path)
+            rq1scan.logger.info("this run's log line")
+            for handler in root.handlers:
+                handler.flush()
+            content = log_path.read_text()
+            assert "earlier run's log line" in content
+            assert "this run's log line" in content
+        finally:
+            for handler in root.handlers:
+                if handler not in before_handlers:
+                    handler.close()
+            root.handlers = before_handlers
+            root.setLevel(before_level)
 
 
 class TestFullCloneWithTimeout:
