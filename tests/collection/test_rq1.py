@@ -54,6 +54,17 @@ def _make_db(db_root, rows):
 
 
 class TestLoadRows:
+    def test_reads_the_exact_file_the_scan_module_writes(self, tmp_path):
+        """Regression guard: this module's db filename is derived from
+        rq1_prevalence_scan.DB_PATH, not a second hardcoded literal, so a
+        rename there can't silently desync into "always reports not
+        available" here."""
+        from collection.rq1_prevalence_scan import DB_PATH
+
+        _make_db(tmp_path, [{"language": "python", "clone_ok": True, "num_test_files": 1}])
+        assert (tmp_path / DB_PATH.name).exists()
+        assert load_rows(tmp_path) is not None
+
     def test_missing_db_returns_none(self, tmp_path):
         assert load_rows(tmp_path) is None
 
@@ -112,6 +123,82 @@ class TestComputePrevalence:
         assert result["all"].n_with_tests == 2
         assert result["all"].n_with_fixtures == 2
         assert sorted(result["all"].fixtures_per_repo) == [2, 4]
+
+    def test_pooled_all_percentage_is_weighted_not_averaged(self, tmp_path):
+        """Statistical correctness guard: with asymmetric group sizes,
+        averaging the two languages' own percentages gives a DIFFERENT
+        (wrong) answer than pooling the raw counts first. Python: 50/100
+        = 50%. Java: 9/10 = 90%. Naive average of percentages: 70%.
+        True pooled: (50+9)/(100+10) = 53.6% -- what the paper's "All"
+        row must report, since it's one population, not two percentages
+        averaged."""
+        rows = []
+        for i in range(100):
+            rows.append({"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1 if i < 50 else 0})
+        for i in range(10):
+            rows.append({"language": "java", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1 if i < 9 else 0})
+        db_rows = self._rows(tmp_path, rows)
+        result = compute_prevalence(db_rows)
+
+        assert result["all"].n_with_tests == 110
+        assert result["all"].n_with_fixtures == 59
+        table = render_table1(result)
+        all_line = next(l for l in table.splitlines() if l.startswith("| All"))
+        assert "53.6%" in all_line
+        assert "70.0%" not in all_line  # the wrong, naively-averaged answer
+
+    def test_pooled_all_median_is_over_the_combined_list_not_averaged(self, tmp_path):
+        """Same statistical guard, for Table 2's median: Python's 5 repos
+        median to 10, Java's 1 repo medians to 1. Naive average of the
+        two medians: 5.5. True pooled median of the combined 6 values
+        ([1,10,10,10,10,100] sorted): 10.0 -- what "All" must report."""
+        rows = [
+            {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 10},
+            {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 10},
+            {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 10},
+            {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 10},
+            {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 100},
+            {"language": "java", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1},
+        ]
+        db_rows = self._rows(tmp_path, rows)
+        result = compute_prevalence(db_rows)
+
+        table = render_table2(result)
+        all_line = next(l for l in table.splitlines() if l.startswith("| All"))
+        assert "| All | 10.0 |" in all_line
+        assert "5.5" not in all_line  # the wrong, naively-averaged answer
+
+    def test_other_only_fixture_counts_toward_fixtures_but_not_setup_or_teardown(self, tmp_path):
+        """A repo whose fixtures are all fixture_role='other' (no setup,
+        no teardown) must still count toward n_with_fixtures/
+        fixtures_per_repo, but NOT toward n_with_setup/n_with_teardown."""
+        rows = self._rows(
+            tmp_path,
+            [{"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 3, "num_setup": 0, "num_teardown": 0}],
+        )
+        result = compute_prevalence(rows)
+        py = result["python"]
+        assert py.n_with_fixtures == 1
+        assert py.fixtures_per_repo == [3]
+        assert py.n_with_setup == 0
+        assert py.n_with_teardown == 0
+
+    def test_fixtures_per_repo_length_always_matches_n_with_fixtures(self, tmp_path):
+        """Invariant Table 1's "#" column and Table 2's whole population
+        both silently depend on: these must never drift apart."""
+        rows = self._rows(
+            tmp_path,
+            [
+                {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 5},
+                {"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 0},
+                {"language": "java", "clone_ok": True, "num_test_files": 1, "num_fixtures": 2},
+            ],
+        )
+        result = compute_prevalence(rows)
+        for entry in result.values():
+            assert len(entry.fixtures_per_repo) == entry.n_with_fixtures
+            assert len(entry.setup_per_repo) == entry.n_with_fixtures
+            assert len(entry.teardown_per_repo) == entry.n_with_fixtures
 
     def test_no_floor_variant_includes_everything(self, tmp_path):
         rows = self._rows(

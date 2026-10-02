@@ -52,6 +52,7 @@ from pathlib import Path
 from .. import paths
 from ..config import MIN_TEST_FILES
 from ..db import db_session
+from ..rq1_prevalence_scan import DB_PATH as _SCAN_DB_PATH
 from ._shared import OUTPUT_DIR, fmt, pct, write_markdown_report
 
 # Paper's own row order for both tables -- deliberately NOT
@@ -65,7 +66,12 @@ DISPLAY_LABELS: dict[str, str] = {
     "typescript": "TypeScript",
 }
 
-_DB_FILENAME = "rq1_prevalence.db"
+# Derived from rq1_prevalence_scan.DB_PATH rather than a second hardcoded
+# "rq1_prevalence.db" literal -- a filename change there must not be able
+# to silently desync from what this module reads, which would otherwise
+# just report "not available" (load_rows() returning None) instead of
+# erroring loudly.
+_DB_FILENAME = _SCAN_DB_PATH.name
 
 
 @dataclass
