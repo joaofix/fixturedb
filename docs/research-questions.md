@@ -78,13 +78,38 @@ Generating the findings: `python -m collection.research_questions.rq4` computes 
 
 ## RQ5 — Agent Configuration Files (Mixed — Qualitative + Quantitative)
 
-> What instructions, if any, do humans give coding agents about test fixtures via
-> agent configuration files (e.g. CLAUDE.md, .cursor/rules, AGENTS.md)?
+> How often do root-level agent configuration files (AGENTS.md, CLAUDE.md) mention
+> test-related and fixture-related guidance?
 
-Not yet implemented -- the coding scheme and computation are still to be decided.
-`collection/research_questions/rq5.py` exists as a placeholder that writes a stub
-`research_questions/rq5.md` noting this, so the numbering below is reflected in the
-file layout ahead of the actual implementation.
+A keyword-based scan over the same raw ~24.7k-repo universe RQ1 measures
+(`github-search-raw/*.csv.gz`), independent of Dataset A/B/C's own filtering, pinned
+to the same snapshot date as RQ1 (`collection/rq5_agent_file_scan.py`'s
+`RQ5_CUTOFF_DATE`, reused directly from `rq1_prevalence_scan.RQ1_CUTOFF_DATE`). For
+each repo, the scan clones (shallow, with a full-clone fallback), finds the commit
+at or before the snapshot date, and — without checking out a working tree — reads
+whichever of `AGENTS.md`/`CLAUDE.md` (case-insensitive, catalog-driven) exist at the
+repository root at that commit (`git ls-tree`/`git show` directly against the git
+object store; a symlinked agent file is searched as its own literal content, never
+resolved to whatever it points to). Every occurrence of a catalog keyword is
+keyword-matched (case-insensitive, word-boundary-respecting, multi-word terms
+tolerant of a space/hyphen/no separator), tagged with its line, surrounding context,
+and whether it falls inside a fenced code block, for later manual review. Test
+keywords and fixture keywords are two separate, versioned lists in
+`collection/heuristics/rq5_agent_file_keywords.yaml`, editable independently of the
+scan's code. Statistics are computed at the **repository** level, not the file
+level: a repo counts as having test (or fixture) guidance if ANY of its root
+agent files matches >=1 test (or fixture) keyword, and the denominator throughout
+is "repositories with >=1 root agent file" (not "repositories analyzed" — most
+analyzed repos have none). Reported: overall, by repository language, and per
+individual keyword (how many repositories contain it), plus the share of
+test-guidance repos that also have fixture guidance. `agent_files.csv` (the
+scan's own CSV) stays file-level raw data for manual review — no file-level
+percentages are computed anywhere in the report.
+
+Collection: `python -m collection.rq5_agent_file_scan` writes `db/rq5_agent_files.db`
+(three tables: `repo_scan`, `agent_files`, `agent_file_matches`) and
+`rq5-agent-files/*.csv`. Reporting: `python -m collection.research_questions.rq5`
+reads that db and writes `research_questions/rq5.md`.
 
 ---
 
@@ -96,7 +121,7 @@ file layout ahead of the actual implementation.
 | RQ2 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | Paper: `loc`, `cyclomatic_complexity`, `comment_density`. Also reported (not in paper): `num_parameters`, `fixture_type` | A vs C |
 | RQ3 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_role` (setup/teardown/other): absolute fixture counts by type, per-repo teardown coverage rate | A vs C |
 | RQ4 | How do agent and human fixtures differ in mock usage? | Quantitative | Mocking coverage (% repos with any mock) | A vs C |
-| RQ5 | What instructions do humans give agents about test fixtures via agent configuration files? | Mixed | Not yet implemented | N/A (planned) |
+| RQ5 | How often do agent configuration files mention test/fixture guidance? | Mixed | % of repos (with >=1 root AGENTS.md/CLAUDE.md) with >=1 test keyword / >=1 fixture keyword, per keyword repo-count | Raw universe (not A/B/C) |
 
 ---
 
@@ -114,7 +139,7 @@ not yet collected is skipped rather than erroring). Each is standalone:
 | `rq2.py` | RQ2 — per-dataset structural-metric summaries, plus an A vs C comparison (Mann-Whitney U / chi-square) | `db/a.db`, `db/c.db` | `research_questions/rq2.md` |
 | `rq3.py` | RQ3 — per-dataset `fixture_type` kind (setup/teardown/other) distribution, plus two A vs C tables: absolute setup/teardown fixture counts by language, and per-repo teardown coverage rate by language (both purely descriptive) | `db/a.db`, `db/c.db` | `research_questions/rq3.md` |
 | `rq4.py` | RQ4 — per-dataset mocking summary, plus one A vs C paper table (mocking coverage %, per language, purely descriptive) | `db/a.db`, `db/c.db` | `research_questions/rq4.md` |
-| `rq5.py` | RQ5 — agent configuration files (not yet implemented, writes a stub report) | N/A | `research_questions/rq5.md` |
+| `rq5.py` | RQ5 — agent-config-file test/fixture keyword prevalence, repo-level (a repo counts if ANY of its root agent files matches): overall, by repo language, and per keyword | `db/rq5_agent_files.db` (written by `collection/rq5_agent_file_scan.py`, not `db/{a,b,c}.db`) | `research_questions/rq5.md` |
 | `language_contamination.py` | Data-quality check (not tied to one RQ) — for each per-language fixture CSV, what fraction of rows carry a mismatched `language` value | `datasets/{a,c}/fixtures*/*.csv` | `research_questions/language_contamination.md` |
 
 Dataset B (contemporary within-repo human baseline) is still collected (`db/b.db`, `paired_collection.py`) but is not part of any RQ2-4 script's reported output above.

@@ -65,6 +65,8 @@ collection/          # Main pipeline code (the "library")
   heuristics/fixture_definitions.yaml  # Operational definition of "fixture" per language -- edit here to update a detector pattern; also documents per-language `excluded` boundary cases the fixture detectors deliberately don't catch (reviewer audit trail)
   heuristics/exclusion_keywords.yaml  # Repo name/description keywords that signal a boilerplate/toy repo
   heuristics/feature_extraction_patterns.yaml  # Mock-framework/external-call/object-instantiation regex tables + setup/teardown pairing rules
+  heuristics/rq5_agent_file_keywords.yaml  # RQ5's own catalog (not fed into the loaders above): target agent-config
+                     # file names + versioned test/fixture keyword lists, consumed directly by rq5_agent_file_scan.py
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a
@@ -89,11 +91,22 @@ collection/          # Main pipeline code (the "library")
   corpus_utils.py    # Shared repo/fixture persistence helpers
   between_group_comparison.py  # Statistical-test primitives (effect sizes etc.) used by research_questions/ below.
                      # BetweenGroupComparator in here is dead/orphaned -- don't use it
-  research_questions/  # Answers the paper's RQs from db/{a,b,c}.db, writes research_questions/*.md (committed):
-                     # rq1.py (fixture prevalence, not yet implemented), rq2/rq3/rq4.py (structural/
-                     # teardown/mocking), rq5.py (agent config files, not yet implemented),
-                     # balance.py (control-variable check), dataset_findings.py (non-RQ descriptive
-                     # findings), language_contamination.py, _shared.py
+  rq1_prevalence_scan.py  # RQ1's own collection, independent of --dataset {a,b,c}: scans the raw
+                     # github-search-raw/ universe for test/fixture/setup/teardown prevalence,
+                     # writes db/rq1_prevalence.db + rq1-prevalence/*.csv. Run directly:
+                     # `python -m collection.rq1_prevalence_scan`
+  rq5_agent_file_scan.py  # RQ5's own collection, same raw universe + snapshot as RQ1: keyword-
+                     # scans root-level AGENTS.md/CLAUDE.md for test/fixture guidance, writes
+                     # db/rq5_agent_files.db + rq5-agent-files/*.csv. Keyword/target-file catalog:
+                     # heuristics/rq5_agent_file_keywords.yaml. Run directly:
+                     # `python -m collection.rq5_agent_file_scan`
+  research_questions/  # Answers the paper's RQs, writes research_questions/*.md (committed):
+                     # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,b,c}.db),
+                     # rq2/rq3/rq4.py (structural/teardown/mocking, read db/{a,c}.db), rq5.py
+                     # (agent config file test/fixture keyword prevalence, reads
+                     # db/rq5_agent_files.db -- not db/{a,b,c}.db), balance.py (control-variable
+                     # check), dataset_findings.py (non-RQ descriptive findings),
+                     # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
 tests/               # pytest suite
 eda/                 # Exploratory data analysis notebooks

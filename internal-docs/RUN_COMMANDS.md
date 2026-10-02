@@ -237,6 +237,31 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   are skipped, not redone (see each collector's `is_global_checkpoint_completed`
   usage in `collection/db.py`).
 
+### RQ1 / RQ5: raw-universe scans (independent of `--dataset {a,b,c}`)
+
+Not part of the `--dataset {a,b,c}` pipeline above -- these two scan the full raw
+`github-search-raw/*.csv.gz` universe directly, each into its own db
+(`db/rq1_prevalence.db` / `db/rq5_agent_files.db`, never `db/{a,b,c}.db`), pinned to
+the same snapshot date Dataset A/C were collected at. Both are resumable (already-
+scanned repos are skipped on a re-run -- the db's own rows are the checkpoint, no
+separate checkpoint file), log to `db/rq1_prevalence.log` / `db/rq5_agent_files.log`,
+write a `db/*_progress.json` for monitoring, and push one ntfy.sh notification per
+language chunk plus one final push. `--workers` defaults to 12 (RQ1) -- pass a higher
+value on a many-core server (see each module's own docstring for operational history).
+Requires `GITHUB_TOKEN` in `.env` for a sustained high-volume run -- see
+`rq1_prevalence_scan.github_auth_env()`'s docstring for why an unauthenticated run
+risks GitHub rate-limiting.
+
+```bash
+python -m collection.rq1_prevalence_scan --workers 12
+  && curl -d "RQ1 scan finished" ntfy.sh/joaofix_fixturedb
+python -m collection.research_questions.rq1   # writes research_questions/rq1.md
+
+python -m collection.rq5_agent_file_scan --workers 12
+  && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
+python -m collection.research_questions.rq5   # writes research_questions/rq5.md
+```
+
 ### After collection
 
 Not part of "running" a dataset, but the usual next steps once a dataset's

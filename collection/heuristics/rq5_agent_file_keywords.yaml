@@ -1,0 +1,75 @@
+# RQ5 (Agent Configuration Files) keyword catalog -- test-related and
+# fixture-related terms searched for inside root-level agent configuration
+# files (AGENTS.md, CLAUDE.md, ...). Not consumed by the main agent/fixture
+# detection pipeline (collection/heuristics/__init__.py's loaders) -- this is
+# RQ5's own, independent catalog, loaded directly by
+# collection/rq5_agent_file_scan.py::load_rq5_keyword_catalog(). Kept here,
+# alongside the project's other detection-heuristic catalogs, purely by
+# convention (same "pattern/keyword table drives a classification decision"
+# shape), not because it feeds the same loader.
+#
+# `version` bumps on any edit to `target_files`/`test_keywords`/
+# `fixture_keywords` below, so the paper can cite exactly which catalog
+# version produced a given collection run (also persisted per-repo as
+# `catalog_version` in db/rq5_agent_files.db's `repo_scan` table).
+#
+# Matching rules (collection/rq5_agent_file_scan.py::_build_keyword_pattern()):
+#   - Case-insensitive, word-boundary-respecting (e.g. "test" never matches
+#     "latest"/"contest"/"attestation").
+#   - A multi-word term (keyword containing a literal space) accepts a
+#     space, a hyphen, or no separator between its words -- e.g. "before
+#     each" also matches "before-each"/"beforeeach". This is deliberately
+#     NOT extended to camelCase terms (e.g. "beforeEach" is its own, separate
+#     entry below, matched literally) -- camelCase and spaced-phrase forms
+#     are both listed explicitly rather than derived from one another.
+#   - No wildcards. Every term that should match is listed explicitly.
+#
+# The bare word "setup" is deliberately never used alone -- it matches
+# generic environment-setup instructions having nothing to do with test
+# fixtures. It only appears inside a phrase ("test setup", "setup and
+# teardown").
+version: 1
+
+# Matched against each repo's root-level tree entries only (no
+# subdirectories), case-insensitively -- see find_target_files_at_commit().
+target_files:
+  - AGENTS.md
+  - CLAUDE.md
+
+test_keywords:
+  - test
+  - tests
+  - testing
+  - unit test
+  - integration test
+  - functional test
+  - acceptance test
+  - end-to-end test
+  - e2e test
+  - test suite
+  - test case
+  - test file
+  - pytest
+  - unittest
+  - jest
+  - vitest
+  - mocha
+  - jasmine
+  - junit
+  - testng
+
+fixture_keywords:
+  - fixture
+  - fixtures
+  - conftest
+  - teardown
+  - test setup
+  - setup and teardown
+  - before each
+  - after each
+  - before all
+  - after all
+  - beforeEach
+  - afterEach
+  - beforeAll
+  - afterAll
