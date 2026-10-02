@@ -79,6 +79,57 @@ class TestRunGitNoPrompt:
         assert captured["kwargs"]["timeout"] == 10
         assert captured["kwargs"]["capture_output"] is True
 
+    def test_merges_extra_env_on_top_of_no_prompt_env(self, monkeypatch):
+        captured = {}
+
+        def fake_run(args, **kwargs):
+            captured["kwargs"] = kwargs
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        run_git_no_prompt(
+            ["git", "clone", "url", "dest"],
+            timeout=10,
+            extra_env={"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "http.extraHeader"},
+        )
+
+        env = captured["kwargs"]["env"]
+        assert env["GIT_TERMINAL_PROMPT"] == "0"  # _no_prompt_env()'s own defaults survive
+        assert env["GIT_CONFIG_COUNT"] == "1"
+        assert env["GIT_CONFIG_KEY_0"] == "http.extraHeader"
+
+    def test_extra_env_value_never_appears_in_argv(self, monkeypatch):
+        """Why env vars, not a -c flag or a token embedded in the URL: argv
+        is visible to any user on a shared server via a plain `ps aux` --
+        a secret must only ever reach the subprocess via its environment."""
+        captured = {}
+
+        def fake_run(args, **kwargs):
+            captured["args"] = args
+            captured["kwargs"] = kwargs
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        run_git_no_prompt(
+            ["git", "clone", "https://github.com/o/r.git", "dest"],
+            extra_env={"GIT_CONFIG_VALUE_0": "Authorization: Bearer super-secret-token"},
+        )
+
+        assert "super-secret-token" not in " ".join(captured["args"])
+        assert captured["kwargs"]["env"]["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer super-secret-token"
+
+    def test_no_extra_env_behaves_exactly_as_before(self, monkeypatch):
+        captured = {}
+
+        def fake_run(args, **kwargs):
+            captured["kwargs"] = kwargs
+            return _fake_result(0)
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        run_git_no_prompt(["git", "clone", "url", "dest"])
+
+        assert "GIT_CONFIG_COUNT" not in captured["kwargs"]["env"]
+
 
 class TestCloneToTempdir:
     def test_success_on_first_attempt(self, tmp_path, monkeypatch):
@@ -400,6 +451,54 @@ class TestCloneRepoForCommitScanShallowSince:
         # _shallow_clone_is_truncated is only consulted when shallow_since is set,
         # so the fallback (full) clone must not re-trigger it.
         assert truncation_calls["n"] == 1
+
+    def test_forwards_extra_env_to_git(self, tmp_path, monkeypatch):
+        captured_kwargs = []
+
+        def fake_run(args, **kwargs):
+            captured_kwargs.append(kwargs)
+            target_dir = Path(args[-1])
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / "marker").write_text("x")
+            return Mock(returncode=0, stderr="")
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        clone_repo_for_commit_scan(
+            "https://example.com/o/r.git",
+            tmp_path / "repo",
+            extra_env={"GIT_CONFIG_VALUE_0": "Authorization: Bearer x"},
+        )
+        assert captured_kwargs[0]["env"]["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer x"
+
+    def test_propagates_extra_env_to_the_truncation_retry(self, tmp_path, monkeypatch):
+        captured_kwargs = []
+
+        def fake_run(args, **kwargs):
+            captured_kwargs.append(kwargs)
+            target_dir = Path(args[-1])
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / "marker").write_text("x")
+            return Mock(returncode=0, stderr="")
+
+        truncation_calls = {"n": 0}
+
+        def fake_is_truncated(*a, **k):
+            truncation_calls["n"] += 1
+            return truncation_calls["n"] == 1
+
+        monkeypatch.setattr("subprocess.run", fake_run)
+        monkeypatch.setattr(
+            "collection.clone_primitives._shallow_clone_is_truncated", fake_is_truncated
+        )
+        clone_repo_for_commit_scan(
+            "https://example.com/o/r.git",
+            tmp_path / "repo",
+            shallow_since="2025-01-01",
+            extra_env={"GIT_CONFIG_VALUE_0": "Authorization: Bearer x"},
+        )
+        assert len(captured_kwargs) == 2
+        assert captured_kwargs[0]["env"]["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer x"
+        assert captured_kwargs[1]["env"]["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer x"
 
 
 class TestCloneToTempdirNoPromptEnv:

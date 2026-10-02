@@ -82,7 +82,9 @@ def _no_prompt_env() -> dict[str, str]:
     return {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"}
 
 
-def run_git_no_prompt(args: list[str], **kwargs) -> subprocess.CompletedProcess:
+def run_git_no_prompt(
+    args: list[str], *, extra_env: dict[str, str] | None = None, **kwargs
+) -> subprocess.CompletedProcess:
     """subprocess.run() for a git command that touches a remote (clone/
     fetch/ls-remote) -- never blocks on a credential prompt. `stdin=DEVNULL`
     is belt-and-suspenders alongside `_no_prompt_env()`'s env vars: even if
@@ -90,10 +92,20 @@ def run_git_no_prompt(args: list[str], **kwargs) -> subprocess.CompletedProcess:
     forwards timeout=/cwd=/capture_output=/text=/check= as each call site
     already passes them. Local-only git commands (cat-file, rev-list, plain
     checkout) never contact a remote and don't need this -- only
-    clone/fetch/ls-remote do."""
-    return subprocess.run(
-        args, env=_no_prompt_env(), stdin=subprocess.DEVNULL, **kwargs
-    )
+    clone/fetch/ls-remote do.
+
+    `extra_env`, when given, is merged on top of `_no_prompt_env()` --
+    e.g. an authenticated caller's `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/
+    `GIT_CONFIG_VALUE_0` trio injecting an `Authorization` header (see
+    `rq1_prevalence_scan.py`'s `_github_auth_env()`). Deliberately an env
+    var, not a `-c http.extraHeader=...` CLI flag or a token embedded in
+    the URL -- either of those would land in this process's argv, visible
+    to any other user on a shared server via a plain `ps aux`/`ps -ef`;
+    environment variables aren't."""
+    env = _no_prompt_env()
+    if extra_env:
+        env.update(extra_env)
+    return subprocess.run(args, env=env, stdin=subprocess.DEVNULL, **kwargs)
 
 
 def clone_to_tempdir(
@@ -257,7 +269,11 @@ def _shallow_clone_is_truncated(target_dir: Path, since_date: str) -> bool:
 
 
 def clone_repo_for_commit_scan(
-    clone_url: str, target_dir: Path, *, shallow_since: str | None = None
+    clone_url: str,
+    target_dir: Path,
+    *,
+    shallow_since: str | None = None,
+    extra_env: dict[str, str] | None = None,
 ) -> bool:
     """
     Clone a repository with commit history but without downloading large blobs.
@@ -271,6 +287,11 @@ def clone_repo_for_commit_scan(
     `_shallow_clone_is_truncated`). If it did, the clone is discarded and
     retried once with full history (`shallow_since=None`) -- callers always
     get a correct clone, just faster when it's safe to be.
+
+    `extra_env` is forwarded to `run_git_no_prompt()` (and to the internal
+    truncation retry, unchanged) -- see that function's docstring for why
+    an authenticated caller passes credentials this way rather than via
+    the URL or a `-c` flag.
     """
     try:
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -285,7 +306,7 @@ def clone_repo_for_commit_scan(
             args.append(f"--shallow-since={shallow_since}")
         args += [clone_url, str(target_dir)]
 
-        result = run_git_no_prompt(args, capture_output=True, text=True, timeout=300)
+        result = run_git_no_prompt(args, capture_output=True, text=True, timeout=300, extra_env=extra_env)
         if _output_requests_credentials(result.stderr):
             return False
         ok = bool(
@@ -295,7 +316,9 @@ def clone_repo_for_commit_scan(
         )
         if ok and shallow_since is not None and _shallow_clone_is_truncated(target_dir, shallow_since):
             shutil.rmtree(target_dir, ignore_errors=True)
-            return clone_repo_for_commit_scan(clone_url, target_dir, shallow_since=None)
+            return clone_repo_for_commit_scan(
+                clone_url, target_dir, shallow_since=None, extra_env=extra_env
+            )
         return ok
     except subprocess.TimeoutExpired:
         return False
