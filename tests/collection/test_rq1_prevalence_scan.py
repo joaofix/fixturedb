@@ -20,6 +20,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+import threading
 from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -418,6 +419,60 @@ class TestAddFileLogging:
             root.setLevel(before_level)
 
 
+class TestGithubAuthEnv:
+    """github_auth_env(): the Authorization-header env vars that
+    authenticate every clone against GitHub. Never put the token in a
+    URL or a -c flag -- both would land in this process's own argv,
+    visible to any other user on a shared server via a plain
+    `ps aux`/`ps -ef`."""
+
+    def test_no_token_returns_empty_dict(self):
+        assert rq1scan.github_auth_env("") == {}
+
+    def test_token_produces_the_expected_env_vars(self):
+        env = rq1scan.github_auth_env("my-token-value")
+        assert env["GIT_CONFIG_COUNT"] == "1"
+        assert env["GIT_CONFIG_KEY_0"] == "http.extraHeader"
+        assert env["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer my-token-value"
+
+
+class TestRunWithDeadline:
+    """run_with_deadline(): the watchdog that bounds a per-repo call's
+    overall wall-clock time, even when the underlying work has no timeout
+    of its own (regression coverage for the 2026-10-02 production freeze
+    -- see the function's own docstring for the full incident)."""
+
+    def test_returns_true_and_the_result_when_fn_finishes_in_time(self):
+        ok, result = rq1scan.run_with_deadline(lambda x: {"value": x}, 5, timeout_seconds=5)
+        assert ok is True
+        assert result == {"value": 5}
+
+    def test_returns_false_and_none_when_fn_exceeds_the_deadline(self):
+        def _slow(*, stop_event):
+            stop_event.wait(5)  # far longer than the deadline below
+            return {"should": "never be returned"}
+
+        stop_event = threading.Event()
+        try:
+            ok, result = rq1scan.run_with_deadline(_slow, stop_event=stop_event, timeout_seconds=0.05)
+            assert ok is False
+            assert result is None
+        finally:
+            stop_event.set()  # let the orphaned thread exit instead of leaking into other tests
+
+    def test_forwards_args_and_kwargs(self):
+        calls = []
+
+        def _fn(a, b, *, c):
+            calls.append((a, b, c))
+            return "done"
+
+        ok, result = rq1scan.run_with_deadline(_fn, 1, 2, c=3, timeout_seconds=5)
+        assert ok is True
+        assert result == "done"
+        assert calls == [(1, 2, 3)]
+
+
 class TestFullCloneWithTimeout:
     """_full_clone_with_timeout(): the tightly-bounded fallback clone --
     deliberately NOT clone_repo_for_commit_scan(shallow_since=None), whose
@@ -470,6 +525,19 @@ class TestFullCloneWithTimeout:
 
         assert seen_kwargs["timeout"] == 42
 
+    def test_passes_through_extra_env(self, tmp_path):
+        seen_kwargs = {}
+
+        def _fake_run(args, **kwargs):
+            seen_kwargs.update(kwargs)
+            return SimpleNamespace(returncode=1, stdout="", stderr="")
+
+        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Bearer x"}
+        with patch("collection.rq1_prevalence_scan.run_git_no_prompt", side_effect=_fake_run):
+            _full_clone_with_timeout("url", tmp_path / "repo", extra_env=auth)
+
+        assert seen_kwargs["extra_env"] == auth
+
 
 class TestCloneWithShallowFallback:
     """Regression coverage for the real bug a 30-repo random toy run
@@ -484,7 +552,9 @@ class TestCloneWithShallowFallback:
         ):
             assert _clone_with_shallow_fallback("url", tmp_path / "repo", shallow_since="2026-07-01") is True
 
-        shallow_mock.assert_called_once_with("url", tmp_path / "repo", shallow_since="2026-07-01")
+        shallow_mock.assert_called_once_with(
+            "url", tmp_path / "repo", shallow_since="2026-07-01", extra_env=None
+        )
         fallback_mock.assert_not_called()
 
     def test_falls_back_to_full_clone_when_shallow_clone_fails_outright(self, tmp_path):
@@ -492,7 +562,7 @@ class TestCloneWithShallowFallback:
         target.mkdir()
         (target / "partial.txt").write_text("leftover from the failed attempt")
 
-        def _fake_fallback(url, this_target):
+        def _fake_fallback(url, this_target, extra_env=None):
             # Fallback must run against a cleaned-up target -- the
             # partial shallow attempt's leftover must be gone first.
             assert not this_target.exists()
@@ -505,7 +575,20 @@ class TestCloneWithShallowFallback:
             result = _clone_with_shallow_fallback("url", target, shallow_since="2026-07-01")
 
         assert result is True
-        fallback_mock.assert_called_once_with("url", target)
+        fallback_mock.assert_called_once_with("url", target, extra_env=None)
+
+    def test_forwards_extra_env_to_both_shallow_and_fallback_attempts(self, tmp_path):
+        target = tmp_path / "repo"
+        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Bearer x"}
+
+        with (
+            patch("collection.rq1_prevalence_scan.clone_repo_for_commit_scan", return_value=False) as shallow_mock,
+            patch("collection.rq1_prevalence_scan._full_clone_with_timeout", return_value=True) as fallback_mock,
+        ):
+            _clone_with_shallow_fallback("url", target, shallow_since="2026-07-01", extra_env=auth)
+
+        shallow_mock.assert_called_once_with("url", target, shallow_since="2026-07-01", extra_env=auth)
+        fallback_mock.assert_called_once_with("url", target, extra_env=auth)
 
     def test_returns_false_when_both_shallow_and_full_clone_fail(self, tmp_path):
         with (
@@ -707,6 +790,73 @@ class TestRunScan:
         assert counts == {"total": 2, "already_done": 1, "scanned_this_run": 1}
         assert load_scanned_repo_names(db_path) == {"org/already", "org/new"}
 
+    def test_run_scan_records_a_timeout_instead_of_hanging(self, tmp_path):
+        """Regression coverage for the 2026-10-02 production freeze: a
+        repo whose processing never returns must not block the scan --
+        it gets recorded as a timeout and the run continues."""
+        db_path = tmp_path / "rq1.db"
+        stop_event = threading.Event()
+        universe = [
+            {"repo_name": "org/stuck", "language": "python", "clone_url": "x"},
+            {"repo_name": "org/fine", "language": "python", "clone_url": "y"},
+        ]
+
+        def _fake_process_repo(repo, clones_dir, **kwargs):
+            if repo["repo_name"] == "org/stuck":
+                stop_event.wait(5)  # far longer than process_repo_timeout_seconds below
+                return _result_row(repo["repo_name"], repo["language"], "never", clone_ok=True)
+            return _result_row(repo["repo_name"], repo["language"], "t", clone_ok=True)
+
+        try:
+            with (
+                patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+                patch("collection.rq1_prevalence_scan.process_repo", side_effect=_fake_process_repo),
+            ):
+                counts = run_scan(
+                    db_path=db_path,
+                    workers=2,
+                    clones_dir=tmp_path / "clones",
+                    progress_path=tmp_path / "progress.json",
+                    notify=False,
+                    process_repo_timeout_seconds=0.05,
+                )
+        finally:
+            stop_event.set()  # let the orphaned thread exit instead of leaking into other tests
+
+        assert counts == {"total": 2, "already_done": 0, "scanned_this_run": 2}
+        rows = {
+            row[0]: (row[1], row[2])
+            for row in sqlite3.connect(db_path).execute(
+                "SELECT repo_name, clone_ok, error_reason FROM repo_prevalence"
+            )
+        }
+        assert rows["org/stuck"] == (0, "timeout")
+        assert rows["org/fine"] == (1, None)
+
+    def test_run_scan_threads_extra_env_through_to_process_repo(self, tmp_path):
+        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Bearer x"}
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "x"}]
+        seen_kwargs = {}
+
+        def _fake_process_repo(repo, clones_dir, **kwargs):
+            seen_kwargs.update(kwargs)
+            return _result_row(repo["repo_name"], repo["language"], "t", clone_ok=True)
+
+        with (
+            patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq1_prevalence_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            run_scan(
+                db_path=tmp_path / "rq1.db",
+                workers=1,
+                clones_dir=tmp_path / "clones",
+                progress_path=tmp_path / "progress.json",
+                notify=False,
+                extra_env=auth,
+            )
+
+        assert seen_kwargs["extra_env"] == auth
+
     def test_run_scan_writes_progress_file_with_correct_tallies(self, tmp_path):
         """The progress file (not resume -- db_path's own rows already
         handle that, see test_run_scan_skips_already_scanned_repos) is
@@ -849,16 +999,19 @@ class TestRunScanNotifications:
 
 
 class TestMainCli:
-    """main()'s --workers flag -- never actually runs a scan (run_scan()/
-    write_csv_outputs()/logging setup are all mocked out), just checks the
-    parsed value is threaded through correctly."""
+    """main()'s --workers flag and auth wiring -- never actually runs a
+    scan (run_scan()/write_csv_outputs()/logging setup are all mocked
+    out), and github_auth_env() is mocked too so these never depend on
+    whatever real GITHUB_TOKEN this environment happens to have -- just
+    checks the parsed/computed values are threaded through correctly."""
 
-    def _run_main_with_argv(self, argv):
+    def _run_main_with_argv(self, argv, *, auth_env=None):
         with (
             patch.object(sys, "argv", ["rq1_prevalence_scan.py", *argv]),
             patch("collection.rq1_prevalence_scan.configure_logging"),
             patch("collection.rq1_prevalence_scan.add_file_logging"),
             patch("collection.rq1_prevalence_scan.write_csv_outputs"),
+            patch("collection.rq1_prevalence_scan.github_auth_env", return_value=auth_env or {}),
             patch("collection.rq1_prevalence_scan.run_scan", return_value={}) as run_scan_mock,
         ):
             main()
@@ -871,3 +1024,12 @@ class TestMainCli:
     def test_workers_flag_is_threaded_through(self):
         run_scan_mock = self._run_main_with_argv(["--workers", "16"])
         assert run_scan_mock.call_args.kwargs["workers"] == 16
+
+    def test_passes_github_auth_env_to_run_scan(self):
+        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Bearer x"}
+        run_scan_mock = self._run_main_with_argv([], auth_env=auth)
+        assert run_scan_mock.call_args.kwargs["extra_env"] == auth
+
+    def test_runs_unauthenticated_when_no_token_is_available(self):
+        run_scan_mock = self._run_main_with_argv([], auth_env={})
+        assert run_scan_mock.call_args.kwargs["extra_env"] == {}

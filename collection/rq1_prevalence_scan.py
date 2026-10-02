@@ -71,9 +71,10 @@ import json
 import logging
 import shutil
 import subprocess
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from . import paths
 from .clone_primitives import (
@@ -81,7 +82,7 @@ from .clone_primitives import (
     clone_repo_for_commit_scan,
     run_git_no_prompt,
 )
-from .config import CLONES_DIR
+from .config import CLONES_DIR, GITHUB_TOKEN
 from .dataset_c import find_cutoff_commit, find_test_files_at_commit
 from .db import db_session
 from .ephemeral_clone import clone_with_function
@@ -109,6 +110,17 @@ PROGRESS_PATH = paths.DB_ROOT / "rq1_prevalence_progress.json"
 PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq1_prevalence.log"
 DEFAULT_WORKERS = 12
+
+# Hard wall-clock budget for one repo's entire process_repo() call (clone +
+# checkout + find_cutoff_commit + scan_working_tree). See
+# run_with_deadline()'s docstring for the production incident (2026-10-02)
+# that made this necessary: every individual git subprocess call already
+# has its own timeout, but find_cutoff_commit()'s PyDriller traversal and
+# scan_working_tree()'s tree-sitter parsing had none -- a single repo stuck
+# in either eventually exhausts run_parallel_per_repo()'s entire fixed-size
+# worker pool over a long enough run. Generous relative to every real
+# timing observed in testing (worst real case: ~180s for a large repo).
+PROCESS_REPO_TIMEOUT_SECONDS = 600
 
 # Same ntfy.sh topic internal-docs/RUN_COMMANDS.md's own curl -d pushes use
 # between separate CLI invocations -- here it's one push per language chunk
@@ -298,7 +310,46 @@ def _result_row(
     }
 
 
-def _full_clone_with_timeout(clone_url: str, target_dir: Path, *, timeout: int = FALLBACK_CLONE_TIMEOUT_SECONDS) -> bool:
+def github_auth_env(token: str = GITHUB_TOKEN) -> dict[str, str]:
+    """Extra env vars authenticating every git clone in this scan against
+    GitHub, when a token is available -- `{}` (unauthenticated, same as
+    before) otherwise.
+
+    Production incident (2026-10-02): running unauthenticated at
+    `--workers 16` for ~2 hours, the java chunk succeeded at ~97%, but the
+    following javascript chunk collapsed to ~10% -- GitHub throttling
+    sustained high-volume unauthenticated clone traffic from one IP.
+    Repos that failed on the server cloned instantly from an unrelated
+    machine with the exact same command, confirming it was IP-level
+    throttling, not the repos.
+
+    Injects `Authorization: Bearer <token>` via the
+    `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0` env-var
+    mechanism (git >= 2.31) rather than a `-c http.extraHeader=...` flag
+    or embedding the token in the clone URL -- either of those would put
+    the token in this process's own argv, visible to any other user on a
+    shared server via a plain `ps aux`/`ps -ef`. An environment variable
+    isn't (same reasoning `run_git_no_prompt()`'s `extra_env` parameter
+    documents). The token is read once from `config.GITHUB_TOKEN` (loaded
+    from `.env` by `config.py` itself) and never logged, printed, or
+    persisted anywhere in this module.
+    """
+    if not token:
+        return {}
+    return {
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "http.extraHeader",
+        "GIT_CONFIG_VALUE_0": f"Authorization: Bearer {token}",
+    }
+
+
+def _full_clone_with_timeout(
+    clone_url: str,
+    target_dir: Path,
+    *,
+    timeout: int = FALLBACK_CLONE_TIMEOUT_SECONDS,
+    extra_env: dict[str, str] | None = None,
+) -> bool:
     """A plain (non-shallow) clone with an explicit, tight timeout -- used
     only as `_clone_with_shallow_fallback()`'s own second attempt, never
     as a general-purpose clone primitive.
@@ -331,7 +382,9 @@ def _full_clone_with_timeout(clone_url: str, target_dir: Path, *, timeout: int =
             clone_url,
             str(target_dir),
         ]
-        result = run_git_no_prompt(args, capture_output=True, text=True, timeout=timeout)
+        result = run_git_no_prompt(
+            args, capture_output=True, text=True, timeout=timeout, extra_env=extra_env
+        )
         if _output_requests_credentials(result.stderr):
             return False
         return bool(
@@ -345,7 +398,13 @@ def _full_clone_with_timeout(clone_url: str, target_dir: Path, *, timeout: int =
         return False
 
 
-def _clone_with_shallow_fallback(clone_url: str, target_dir: Path, *, shallow_since: str) -> bool:
+def _clone_with_shallow_fallback(
+    clone_url: str,
+    target_dir: Path,
+    *,
+    shallow_since: str,
+    extra_env: dict[str, str] | None = None,
+) -> bool:
     """Try a `--shallow-since` clone first (cheap for repos with recent
     activity); if it fails outright, fall back to one tightly-timed-out
     full clone attempt (`_full_clone_with_timeout()`).
@@ -365,11 +424,13 @@ def _clone_with_shallow_fallback(clone_url: str, target_dir: Path, *, shallow_si
     bounded, acceptable cost for a rare case, not a reason to skip the
     fallback for the common one.
     """
-    if clone_repo_for_commit_scan(clone_url, target_dir, shallow_since=shallow_since):
+    if clone_repo_for_commit_scan(
+        clone_url, target_dir, shallow_since=shallow_since, extra_env=extra_env
+    ):
         return True
     if target_dir.exists():
         shutil.rmtree(target_dir, ignore_errors=True)
-    return _full_clone_with_timeout(clone_url, target_dir)
+    return _full_clone_with_timeout(clone_url, target_dir, extra_env=extra_env)
 
 
 def process_repo(
@@ -378,6 +439,7 @@ def process_repo(
     *,
     cutoff_date: str = RQ1_CUTOFF_DATE,
     shallow_since: str = RQ1_SHALLOW_SINCE,
+    extra_env: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Clone (shallow-since, pinned to `cutoff_date`), checkout, and scan
     one repo. Never raises -- any failure (clone/no-history-at-cutoff/
@@ -385,6 +447,9 @@ def process_repo(
     `error_reason` set, so one bad repo can never crash a ~24.7k-repo run.
     Runs in a worker thread when called via `run_parallel_per_repo()` --
     touches no shared DB connection or other non-thread-safe resource.
+
+    `extra_env` authenticates the clone (see `github_auth_env()`) -- `None`
+    (the default) clones unauthenticated, same as before.
     """
     repo_name = repo["repo_name"]
     language = repo["language"]
@@ -393,7 +458,7 @@ def process_repo(
     scanned_at = datetime.now(timezone.utc).isoformat()
 
     def _clone_fn(url: str, target: Path) -> bool:
-        return _clone_with_shallow_fallback(url, target, shallow_since=shallow_since)
+        return _clone_with_shallow_fallback(url, target, shallow_since=shallow_since, extra_env=extra_env)
 
     with clone_with_function(_clone_fn, clone_url, repo_path) as managed_path:
         if managed_path is None:
@@ -537,6 +602,48 @@ def _notify(message: str, *, topic: str = NTFY_TOPIC) -> None:
         logger.debug("[RQ1 scan] ntfy notification failed, continuing", exc_info=True)
 
 
+def run_with_deadline(
+    fn: Callable[..., dict[str, Any]], *args: Any, timeout_seconds: float, **kwargs: Any
+) -> tuple[bool, dict[str, Any] | None]:
+    """Run `fn(*args, **kwargs)` with a hard wall-clock deadline. Returns
+    `(True, result)` if it finished in time, `(False, None)` if not.
+
+    Production incident (2026-10-02): `process_repo()`'s git/network steps
+    are all individually timeout-bound (clone, checkout), but
+    `find_cutoff_commit()`'s PyDriller commit-history walk and
+    `scan_working_tree()`'s tree-sitter parsing are pure in-process Python/
+    C-extension work with no timeout at all. A real run froze for 6+ hours
+    on exactly this: the process stayed alive and CPU-bound, but with zero
+    git subprocess running and zero progress, because one repo's extraction
+    step never returned. Worse than just one stuck repo: `run_parallel_per_
+    repo()`'s `ThreadPoolExecutor` has a *fixed* worker count -- a thread
+    that never returns permanently removes one worker from the pool, so
+    over enough repos this eventually exhausts every worker and the whole
+    scan stalls forever, exactly as happened.
+
+    This runs `fn` in a daemon thread and only waits up to `timeout_seconds`
+    for it. If it doesn't finish in time, this function gives up and
+    returns immediately -- the underlying call, if genuinely stuck in
+    code that can't be interrupted (a C extension not checking for Python
+    signals), keeps running orphaned in the background rather than being
+    forcibly killed (Python cannot safely kill a thread), but it can no
+    longer block anything: the caller's own worker thread/slot is freed
+    the moment this function returns, so a stuck repo costs one wasted
+    thread, not the entire pipeline.
+    """
+    box: dict[str, Any] = {}
+
+    def _target() -> None:
+        box["result"] = fn(*args, **kwargs)
+
+    thread = threading.Thread(target=_target, daemon=True)
+    thread.start()
+    thread.join(timeout_seconds)
+    if thread.is_alive():
+        return False, None
+    return True, box.get("result")
+
+
 def run_scan(
     raw_dir: Path = paths.RAW_SEARCH_DIR,
     duplicates_path: Path = DUPLICATES_PATH,
@@ -548,6 +655,8 @@ def run_scan(
     shallow_since: str = RQ1_SHALLOW_SINCE,
     log_every: int = PROGRESS_LOG_EVERY,
     notify: bool = True,
+    process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
+    extra_env: dict[str, str] | None = None,
 ) -> dict[str, int]:
     """Scan every not-yet-scanned repo in the raw universe, persisting each
     result immediately. Resumable by construction (see
@@ -566,6 +675,10 @@ def run_scan(
     `internal-docs/RUN_COMMANDS.md`'s existing per-step notification
     convention. Set `notify=False` for tests/local runs that shouldn't
     hit the network.
+
+    `extra_env` defaults to `None` here (not `github_auth_env()`) so a
+    test calling `run_scan()` directly never implicitly authenticates --
+    `main()` is the one real entrypoint that opts in explicitly.
     """
     initialise_rq1_db(db_path)
     universe = load_raw_universe(raw_dir, duplicates_path)
@@ -583,7 +696,31 @@ def run_scan(
     counters = {"completed": 0, "clone_ok": 0, "clone_failed": 0}
 
     def _compute(repo: dict) -> dict:
-        return process_repo(repo, clones_dir, cutoff_date=cutoff_date, shallow_since=shallow_since)
+        ok, result = run_with_deadline(
+            process_repo,
+            repo,
+            clones_dir,
+            cutoff_date=cutoff_date,
+            shallow_since=shallow_since,
+            extra_env=extra_env,
+            timeout_seconds=process_repo_timeout_seconds,
+        )
+        if ok:
+            return result
+        logger.warning(
+            "[RQ1 scan] %s exceeded the %ds per-repo deadline -- abandoning "
+            "(the underlying work keeps running orphaned, but no longer "
+            "blocks the scan)",
+            repo["repo_name"],
+            process_repo_timeout_seconds,
+        )
+        return _result_row(
+            repo["repo_name"],
+            repo["language"],
+            datetime.now(timezone.utc).isoformat(),
+            clone_ok=False,
+            error_reason="timeout",
+        )
 
     def _persist(result: dict) -> None:
         persist_result(result, db_path)
@@ -695,7 +832,15 @@ def main() -> None:
 
     configure_logging()
     add_file_logging()
-    counts = run_scan(workers=args.workers)
+    extra_env = github_auth_env()
+    if not extra_env:
+        logger.warning(
+            "[RQ1 scan] No GITHUB_TOKEN found -- cloning unauthenticated. "
+            "A sustained high-volume run is likely to hit GitHub's abuse "
+            "rate limiting (see github_auth_env()'s docstring for the "
+            "2026-10-02 incident this caused)."
+        )
+    counts = run_scan(workers=args.workers, extra_env=extra_env)
     write_csv_outputs()
     print(f"[RQ1 scan] done: {counts}")
 
