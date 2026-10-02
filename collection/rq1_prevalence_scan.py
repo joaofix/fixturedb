@@ -108,6 +108,11 @@ PROGRESS_PATH = paths.DB_ROOT / "rq1_prevalence_progress.json"
 PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq1_prevalence.log"
 
+# Same ntfy.sh topic internal-docs/RUN_COMMANDS.md's own curl -d pushes use
+# between separate CLI invocations -- here it's one push per language chunk
+# (plus one final push) from inside this single long-running script instead.
+NTFY_TOPIC = "joaofix_fixturedb"
+
 TABLE_NAME = "repo_prevalence"
 
 SCHEMA = f"""
@@ -513,6 +518,23 @@ def _write_progress(progress_path: Path, state: dict[str, Any]) -> None:
         fh.flush()
 
 
+def _notify(message: str, *, topic: str = NTFY_TOPIC) -> None:
+    """Best-effort ntfy.sh push -- same `curl -d ... ntfy.sh/joaofix_fixturedb`
+    convention `internal-docs/RUN_COMMANDS.md` already uses between separate
+    CLI invocations, just issued from inside this one long-running script.
+    A notification failure (ntfy.sh down, no network) must never interrupt
+    or fail a multi-hour scan -- every error is swallowed, logged at DEBUG
+    only."""
+    try:
+        subprocess.run(
+            ["curl", "-s", "-d", message, f"ntfy.sh/{topic}"],
+            capture_output=True,
+            timeout=15,
+        )
+    except Exception:
+        logger.debug("[RQ1 scan] ntfy notification failed, continuing", exc_info=True)
+
+
 def run_scan(
     raw_dir: Path = paths.RAW_SEARCH_DIR,
     duplicates_path: Path = DUPLICATES_PATH,
@@ -523,14 +545,25 @@ def run_scan(
     cutoff_date: str = RQ1_CUTOFF_DATE,
     shallow_since: str = RQ1_SHALLOW_SINCE,
     log_every: int = PROGRESS_LOG_EVERY,
+    notify: bool = True,
 ) -> dict[str, int]:
     """Scan every not-yet-scanned repo in the raw universe, persisting each
     result immediately. Resumable by construction (see
     `load_scanned_repo_names()`'s and `_write_progress()`'s docstrings for
     why no separate checkpoint file is needed for correctness -- `db_path`
     itself is the checkpoint). Logs a progress line and refreshes
-    `progress_path` every `log_every` completions and once more at the
-    end, so a multi-hour run can be monitored without querying the DB.
+    `progress_path` every `log_every` completions (see `_persist()` below).
+
+    Processes one `RQ1_LANGUAGES` chunk at a time (workers still fully
+    parallelized *within* each chunk -- every chunk vastly outnumbers
+    `workers`, so this costs nothing in practice) rather than one single
+    pass over every language interleaved, purely so `notify` (when True)
+    can push one ntfy.sh notification per language finished, plus one
+    final push -- a natural, cheap way to split a multi-hour run into a
+    handful of "still alive, here's where it's at" pings, matching
+    `internal-docs/RUN_COMMANDS.md`'s existing per-step notification
+    convention. Set `notify=False` for tests/local runs that shouldn't
+    hit the network.
     """
     initialise_rq1_db(db_path)
     universe = load_raw_universe(raw_dir, duplicates_path)
@@ -594,7 +627,32 @@ def run_scan(
             },
         )
 
-    run_parallel_per_repo(pending, _compute, _persist, workers, desc="[RQ1 scan]")
+    pending_by_language: dict[str, list[dict]] = {}
+    for repo in pending:
+        pending_by_language.setdefault(repo["language"], []).append(repo)
+
+    for idx, language in enumerate(RQ1_LANGUAGES, start=1):
+        chunk = pending_by_language.get(language, [])
+        logger.info(
+            "[RQ1 scan] language %d/%d: %s (%d repos pending in this chunk)",
+            idx,
+            len(RQ1_LANGUAGES),
+            language,
+            len(chunk),
+        )
+        run_parallel_per_repo(chunk, _compute, _persist, workers, desc=f"[RQ1 scan {language}]")
+        if notify:
+            _notify(
+                f"RQ1 scan {idx}/{len(RQ1_LANGUAGES)}: {language} done -- "
+                f"{counters['completed']}/{len(pending)} total "
+                f"({counters['clone_ok']} clone_ok, {counters['clone_failed']} clone_failed)"
+            )
+
+    if notify:
+        _notify(
+            f"RQ1 scan: all done -- {counters['completed']}/{len(pending)} total "
+            f"({counters['clone_ok']} clone_ok, {counters['clone_failed']} clone_failed)"
+        )
 
     return {"total": len(universe), "already_done": len(already_done), "scanned_this_run": len(pending)}
 

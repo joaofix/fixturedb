@@ -28,6 +28,7 @@ from collection.rq1_prevalence_scan import (
     RQ1_LANGUAGES,
     _clone_with_shallow_fallback,
     _full_clone_with_timeout,
+    _notify,
     _result_row,
     initialise_rq1_db,
     load_duplicate_repo_names,
@@ -697,6 +698,7 @@ class TestRunScan:
                 workers=1,
                 clones_dir=tmp_path / "clones",
                 progress_path=tmp_path / "progress.json",
+                notify=False,
             )
 
         assert processed == ["org/new"]
@@ -729,6 +731,7 @@ class TestRunScan:
                 clones_dir=tmp_path / "clones",
                 progress_path=progress_path,
                 log_every=1,
+                notify=False,
             )
 
         assert progress_path.exists()
@@ -758,6 +761,86 @@ class TestRunScan:
                 clones_dir=tmp_path / "clones",
                 progress_path=progress_path,
                 log_every=0,
+                notify=False,
             )
 
         assert not progress_path.exists()
+
+
+class TestNotify:
+    """_notify(): the ntfy.sh push itself, in isolation -- never hits the
+    real network in tests, and a failure here must never raise (a
+    multi-hour scan can't die over a notification)."""
+
+    def test_calls_curl_with_the_message_and_topic(self):
+        with patch("collection.rq1_prevalence_scan.subprocess.run") as run_mock:
+            _notify("hello", topic="my_topic")
+
+        args = run_mock.call_args[0][0]
+        assert args[:2] == ["curl", "-s"]
+        assert "hello" in args
+        assert "ntfy.sh/my_topic" in args
+
+    def test_swallows_any_exception(self):
+        with patch("collection.rq1_prevalence_scan.subprocess.run", side_effect=OSError("no network")):
+            _notify("hello")  # must not raise
+
+
+class TestRunScanNotifications:
+    """run_scan()'s per-language + final ntfy.sh pushes -- mocking _notify
+    directly (its own curl-call shape is covered by TestNotify above) so
+    this just checks run_scan() calls it the right number of times, with
+    no real network in either case."""
+
+    def _fake_process_repo(self, repo, clones_dir, **kwargs):
+        return _result_row(repo["repo_name"], repo["language"], "t", clone_ok=True)
+
+    def test_notifies_once_per_language_plus_one_final_push(self, tmp_path):
+        universe = [
+            {"repo_name": "org/py", "language": "python", "clone_url": "x"},
+            {"repo_name": "org/js", "language": "javascript", "clone_url": "y"},
+            # java/typescript deliberately have zero pending repos --
+            # must still get a push, not be skipped.
+        ]
+        notify_calls = []
+
+        with (
+            patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq1_prevalence_scan.process_repo", side_effect=self._fake_process_repo),
+            patch("collection.rq1_prevalence_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
+        ):
+            run_scan(
+                db_path=tmp_path / "rq1.db",
+                workers=1,
+                clones_dir=tmp_path / "clones",
+                progress_path=tmp_path / "progress.json",
+                notify=True,
+            )
+
+        # One push per RQ1_LANGUAGES entry (4, in RQ1_LANGUAGES's own
+        # order: java/javascript/python/typescript), plus one final push.
+        assert len(notify_calls) == len(RQ1_LANGUAGES) + 1
+        assert "java done" in notify_calls[0]
+        assert "javascript done" in notify_calls[1]
+        assert "python done" in notify_calls[2]
+        assert "typescript done" in notify_calls[3]
+        assert "all done" in notify_calls[-1]
+        assert "2/2 total" in notify_calls[-1]
+
+    def test_no_notifications_when_notify_is_false(self, tmp_path):
+        universe = [{"repo_name": "org/py", "language": "python", "clone_url": "x"}]
+
+        with (
+            patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq1_prevalence_scan.process_repo", side_effect=self._fake_process_repo),
+            patch("collection.rq1_prevalence_scan._notify") as notify_mock,
+        ):
+            run_scan(
+                db_path=tmp_path / "rq1.db",
+                workers=1,
+                clones_dir=tmp_path / "clones",
+                progress_path=tmp_path / "progress.json",
+                notify=False,
+            )
+
+        notify_mock.assert_not_called()
