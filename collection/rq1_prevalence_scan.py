@@ -65,6 +65,7 @@ python -m collection.rq1_prevalence_scan
 from __future__ import annotations
 
 import argparse
+import base64
 import csv
 import gzip
 import json
@@ -315,7 +316,7 @@ def github_auth_env(token: str = GITHUB_TOKEN) -> dict[str, str]:
     GitHub, when a token is available -- `{}` (unauthenticated, same as
     before) otherwise.
 
-    Production incident (2026-10-02): running unauthenticated at
+    Production incident (2026-10-02, part 1): running unauthenticated at
     `--workers 16` for ~2 hours, the java chunk succeeded at ~97%, but the
     following javascript chunk collapsed to ~10% -- GitHub throttling
     sustained high-volume unauthenticated clone traffic from one IP.
@@ -323,23 +324,42 @@ def github_auth_env(token: str = GITHUB_TOKEN) -> dict[str, str]:
     machine with the exact same command, confirming it was IP-level
     throttling, not the repos.
 
-    Injects `Authorization: Bearer <token>` via the
-    `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/`GIT_CONFIG_VALUE_0` env-var
-    mechanism (git >= 2.31) rather than a `-c http.extraHeader=...` flag
-    or embedding the token in the clone URL -- either of those would put
-    the token in this process's own argv, visible to any other user on a
-    shared server via a plain `ps aux`/`ps -ef`. An environment variable
-    isn't (same reasoning `run_git_no_prompt()`'s `extra_env` parameter
-    documents). The token is read once from `config.GITHUB_TOKEN` (loaded
-    from `.env` by `config.py` itself) and never logged, printed, or
-    persisted anywhere in this module.
+    Production incident (2026-10-02, part 2 -- the first fix was itself
+    wrong): the first version of this function sent `Authorization:
+    Bearer <token>`, which works for GitHub's REST API but is REJECTED by
+    GitHub's git-over-HTTPS smart-HTTP endpoint with `remote: invalid
+    credentials` / `fatal: Authentication failed` -- confirmed directly.
+    That made every authenticated clone attempt fail instantly rather
+    than slowly, which is exactly how an entire resumed run (java already
+    done, the rest of javascript plus all of python and typescript)
+    finished in ~13 minutes with 100% failures instead of the many hours
+    it should have taken -- a worse outcome than being unauthenticated,
+    confirmed by directly reproducing both the broken `Bearer` scheme and
+    the correct one against a real clone. GitHub's git HTTP auth wants
+    HTTP Basic, not Bearer: `Authorization: Basic
+    base64("x-access-token:<token>")` -- any non-empty username works,
+    `x-access-token` matches GitHub's own documented convention for
+    token-based git auth. Confirmed working directly (real clone, exit 0)
+    before trusting this a second time.
+
+    Injects the header via the `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/
+    `GIT_CONFIG_VALUE_0` env-var mechanism (git >= 2.31) rather than a
+    `-c http.extraHeader=...` flag or embedding the token in the clone
+    URL -- either of those would put the token in this process's own
+    argv, visible to any other user on a shared server via a plain
+    `ps aux`/`ps -ef`. An environment variable isn't (same reasoning
+    `run_git_no_prompt()`'s `extra_env` parameter documents). The token
+    is read once from `config.GITHUB_TOKEN` (loaded from `.env` by
+    `config.py` itself) and never logged, printed, or persisted anywhere
+    in this module.
     """
     if not token:
         return {}
+    basic = base64.b64encode(f"x-access-token:{token}".encode()).decode()
     return {
         "GIT_CONFIG_COUNT": "1",
         "GIT_CONFIG_KEY_0": "http.extraHeader",
-        "GIT_CONFIG_VALUE_0": f"Authorization: Bearer {token}",
+        "GIT_CONFIG_VALUE_0": f"Authorization: Basic {basic}",
     }
 
 

@@ -15,6 +15,7 @@ from __future__ import annotations
 import csv
 import gzip
 import json
+import base64
 import logging
 import os
 import sqlite3
@@ -424,16 +425,29 @@ class TestGithubAuthEnv:
     authenticate every clone against GitHub. Never put the token in a
     URL or a -c flag -- both would land in this process's own argv,
     visible to any other user on a shared server via a plain
-    `ps aux`/`ps -ef`."""
+    `ps aux`/`ps -ef`.
+
+    Regression coverage for the 2026-10-02 incident, part 2: the first
+    version of this function sent `Authorization: Bearer <token>`, which
+    GitHub's git-over-HTTPS endpoint rejects outright (`remote: invalid
+    credentials`) -- confirmed directly against a real clone, both the
+    broken Bearer scheme and the fix. GitHub's git HTTP auth wants Basic,
+    not Bearer: `Authorization: Basic base64("x-access-token:<token>")`.
+    """
 
     def test_no_token_returns_empty_dict(self):
         assert rq1scan.github_auth_env("") == {}
 
-    def test_token_produces_the_expected_env_vars(self):
+    def test_token_produces_a_basic_auth_header_not_bearer(self):
         env = rq1scan.github_auth_env("my-token-value")
         assert env["GIT_CONFIG_COUNT"] == "1"
         assert env["GIT_CONFIG_KEY_0"] == "http.extraHeader"
-        assert env["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer my-token-value"
+
+        assert env["GIT_CONFIG_VALUE_0"].startswith("Authorization: ")
+        auth_value = env["GIT_CONFIG_VALUE_0"].split("Authorization: ", 1)[1]
+        assert auth_value.startswith("Basic ")  # not "Bearer" -- see class docstring
+        decoded = base64.b64decode(auth_value.removeprefix("Basic ")).decode()
+        assert decoded == "x-access-token:my-token-value"
 
 
 class TestRunWithDeadline:
