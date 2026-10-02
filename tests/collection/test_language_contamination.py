@@ -14,7 +14,7 @@ tautology (both values are derived from the exact same source field with
 the exact same fallback, so they can never disagree under the current
 pipeline) and always read 0.00% regardless of how much real contamination
 existed. It now reuses the same repo-tag-vs-fixture's-own-language
-computation RQ1/RQ3's "Cross-language fixture leakage" table already
+computation RQ2/RQ4's "Cross-language fixture leakage" table already
 uses, which is the real signal.
 """
 

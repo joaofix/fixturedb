@@ -90,8 +90,10 @@ collection/          # Main pipeline code (the "library")
   between_group_comparison.py  # Statistical-test primitives (effect sizes etc.) used by research_questions/ below.
                      # BetweenGroupComparator in here is dead/orphaned -- don't use it
   research_questions/  # Answers the paper's RQs from db/{a,b,c}.db, writes research_questions/*.md (committed):
-                     # rq1/rq2/rq3.py (structural/teardown/mocking), balance.py (control-variable check),
-                     # dataset_findings.py (non-RQ descriptive findings), language_contamination.py, _shared.py
+                     # rq1.py (fixture prevalence, not yet implemented), rq2/rq3/rq4.py (structural/
+                     # teardown/mocking), rq5.py (agent config files, not yet implemented),
+                     # balance.py (control-variable check), dataset_findings.py (non-RQ descriptive
+                     # findings), language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
 tests/               # pytest suite
 eda/                 # Exploratory data analysis notebooks

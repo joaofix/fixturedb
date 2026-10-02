@@ -1,5 +1,5 @@
-"""Tests for collection/research_questions/_shared.py -- the helpers rq1.py,
-rq2.py, rq3.py, and language_contamination.py all import instead of each
+"""Tests for collection/research_questions/_shared.py -- the helpers rq2.py,
+rq3.py, rq4.py, and language_contamination.py all import instead of each
 redefining their own copy.
 """
 
@@ -407,9 +407,9 @@ class TestApplyFdrCorrection:
         shortcut) is a real, complete result (p_value=1.0, real medians),
         not a non-result the way insufficient_data is -- it must still
         get adjusted_p_value, or every _row()-style renderer's `corrected`
-        branch across rq1-3/balance.py (which only guards against
+        branch across rq2-4/balance.py (which only guards against
         insufficient_data/error, not this reason) hits a KeyError reading
-        it. Real regression: reproduced via rq2.py's
+        it. Real regression: reproduced via rq3.py's
         TestRenderTeardownDipTest before this fix."""
         tests = {
             "real": BalanceTest(variable="real", test_type="mann-whitney-u", p_value=0.01, is_balanced=False),
@@ -580,8 +580,8 @@ class TestRenderComparisonTable:
 
     def test_no_per_language_medians_means_no_median_columns(self):
         """The default (per_language_medians=None) renders the original
-        8-column table, byte-for-byte -- every existing caller (rq2.py/
-        rq3.py, RQ1's own categorical tables) doesn't pass this arg."""
+        8-column table, byte-for-byte -- every existing caller (rq3.py/
+        rq4.py, RQ2's own categorical tables) doesn't pass this arg."""
         overall = BalanceTest(variable="loc", test_type="mann-whitney-u", p_value=0.5, is_balanced=True)
         rendered = render_comparison_table(overall, NCounts(5, 5), None, None, other_dataset="c")
         header = rendered.splitlines()[0]
@@ -746,14 +746,14 @@ class TestWriteMarkdownReport:
     def test_second_write_fully_replaces_the_first(self, tmp_path):
         """A dataset shrinking between runs (e.g. a retroactive dedup fix)
         must never leave stale content from a larger, older report behind."""
-        path = write_markdown_report(tmp_path, "rq1.md", "# old report\n" * 50)
+        path = write_markdown_report(tmp_path, "rq2.md", "# old report\n" * 50)
         assert len(path.read_text()) > len("# new report\n")
 
-        path = write_markdown_report(tmp_path, "rq1.md", "# new report\n")
+        path = write_markdown_report(tmp_path, "rq2.md", "# new report\n")
         assert path.read_text() == "# new report\n"
 
     def test_creates_output_dir_if_missing(self, tmp_path):
         out_dir = tmp_path / "does" / "not" / "exist"
-        path = write_markdown_report(out_dir, "rq1.md", "content")
-        assert path == out_dir / "rq1.md"
+        path = write_markdown_report(out_dir, "rq2.md", "content")
+        assert path == out_dir / "rq2.md"
         assert path.read_text() == "content"

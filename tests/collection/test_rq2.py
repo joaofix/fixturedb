@@ -1,21 +1,12 @@
 """Tests for collection/research_questions/rq2.py.
 
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
-schema, initialise_db()) and checks per-repo/per-language repo-count
-bookkeeping and report rendering -- never touching the real db/ or
-research_questions/ directories. rq2.py no longer classifies fixture_role
-itself (that now happens at extraction time -- see detector_shared.py's
-_classify_fixture_kinds() and detector_python.py's pytest body-analysis
-classification, both covered by their own test files:
-test_fixture_kind_classification.py and test_classify_pytest_fixture_kind.py),
-so these fixture-dict literals set fixture_role directly via
-_default_fixture_role() below -- a thin test-only wrapper around those
-same two real functions, not a reimplementation, so this file's synthetic
-data stays in sync with production classification automatically. Neither
-table in this script runs a statistical test anymore (removed
-2026-09-27, see rq2.py's module docstring) -- both are purely
-descriptive, so there's no Mann-Whitney/BH-FDR machinery left here to
-test at all.
+schema, initialise_db()) and checks the loading, summary-statistics, and
+report-rendering logic -- never touching the real db/ or research_questions/
+directories. The Mann-Whitney U / chi-square math itself is already covered
+by tests/between_group/test_between_group_comparison.py; these tests focus
+on rq2.py's own wiring: SQL aggregation, missing-db handling, and markdown
+rendering (including the "insufficient data" fallback path).
 """
 
 from __future__ import annotations
@@ -28,43 +19,31 @@ from collection.db import (
     upsert_repository,
     upsert_test_file,
 )
-from collection.detector_python import classify_pytest_fixture_kind_from_source
-from collection.detector_shared import _classify_fixture_kind
+from collection.research_questions._shared import format_p_value
 from collection.research_questions.rq2 import (
+    CONTINUOUS_METRICS,
+    PAPER_CONTINUOUS_METRICS,
     DatasetMetrics,
-    _answerable_total,
-    _pct_cell,
-    _render_kind_classification_coverage_table,
+    _floor_percentage,
+    compare_datasets_repo_level,
+    compare_datasets_repo_level_median_diagnostic,
     generate_report,
     load_dataset_metrics,
     write_report,
 )
 
 
-def _default_fixture_role(fixture_type: str, name: str, raw_source: str) -> str:
-    """What extraction would have set fixture_role to, given only
-    fixture_type/name/raw_source -- delegates to the same two real
-    functions detector_shared._classify_fixture_kinds()/detector_python's
-    _detect_python() call in production, so _make_db()/_make_multi_language_db()
-    callers below can omit fixture_role and still get a realistic
-    default instead of every fixture literal in this file needing one."""
-    if fixture_type == "pytest_decorator":
-        return classify_pytest_fixture_kind_from_source(raw_source or "")
-    return _classify_fixture_kind(fixture_type, name or "")
-
-
-def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
-    """Create db/{dataset}.db under `root` with one repo per entry in `repos`,
-    each populated with the given list of fixture-field overrides.
+def _make_multi_repo_db(root, dataset: str, repos: list[list[float]]) -> None:
+    """Create db/{dataset}.db with one repo per entry in `repos`, each
+    entry a list of `loc` values for that repo's fixtures.
 
     Dataset "c" writes to c_sampled.db instead of the full c.db --
     research_questions/ reads Dataset C's fixture-level sample-down, see
-    _shared.py::require_db_or_none()'s docstring.
-    """
+    _shared.py::require_db_or_none()'s docstring."""
     db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
     initialise_db(db_file)
     with db_session(db_file) as conn:
-        for repo_idx, fixtures in enumerate(repos):
+        for repo_idx, loc_values in enumerate(repos):
             repo_id, _ = upsert_repository(
                 conn,
                 {
@@ -84,43 +63,84 @@ def _make_db(root, dataset: str, repos: list[list[dict]]) -> None:
                 },
             )
             file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
-            for i, overrides in enumerate(fixtures):
-                base = {
-                    "file_id": file_id,
-                    "repo_id": repo_id,
-                    "name": f"fixture_{repo_idx}_{i}",
-                    "fixture_type": "before_each",
-                    "scope": "per_test",
-                    "start_line": i,
-                    "end_line": i + 1,
-                    "loc": 5,
-                    "cyclomatic_complexity": 1,
-                    "max_nesting_depth": 1,
-                    "num_objects_instantiated": 0,
-                    "num_external_calls": 0,
-                    "num_comment_lines": 0,
-                    "comment_density": 0.0,
-                    "num_parameters": 0,
-                    "has_teardown_pair": 0,
-                    "raw_source": "",
-                    "framework": "pytest",
-                    "num_mocks": 0,
-                }
-                base.update(overrides)
-                base.setdefault(
-                    "fixture_role",
-                    _default_fixture_role(
-                        base["fixture_type"], base.get("name", ""), base.get("raw_source", "")
-                    ),
+            for i, loc in enumerate(loc_values):
+                insert_fixture(
+                    conn,
+                    {
+                        "file_id": file_id,
+                        "repo_id": repo_id,
+                        "name": f"fixture_{repo_idx}_{i}",
+                        "fixture_type": "pytest_decorator",
+                        "start_line": i,
+                        "end_line": i + 1,
+                        "loc": loc,
+                        "cyclomatic_complexity": 1,
+                        "num_comment_lines": 0,
+                        "comment_density": 0.0,
+                        "num_parameters": 0,
+                        "raw_source": "",
+                        "num_mocks": 0,
+                    },
                 )
-                insert_fixture(conn, base)
+
+
+def _make_db(root, dataset: str, fixtures: list[dict]) -> None:
+    """Create db/{dataset}.db under `root` with one repo/file and `fixtures` rows.
+
+    Each dict in `fixtures` may override any of the base columns below
+    (loc, cyclomatic_complexity, fixture_type, ...).
+
+    Dataset "c" writes to c_sampled.db instead of the full c.db --
+    research_questions/ reads Dataset C's fixture-level sample-down, see
+    _shared.py::require_db_or_none()'s docstring.
+    """
+    db_file = (root / "c_sampled.db") if dataset == "c" else paths.db_path(dataset, root=root)
+    initialise_db(db_file)
+    with db_session(db_file) as conn:
+        repo_id, _ = upsert_repository(
+            conn,
+            {
+                "github_id": 1,
+                "full_name": "owner/repo",
+                "language": "python",
+                "stars": 1,
+                "forks": 0,
+                "description": "",
+                "topics": "[]",
+                "created_at": "2019-01-01T00:00:00Z",
+                "pushed_at": "2020-01-01T00:00:00Z",
+                "clone_url": "https://github.com/owner/repo.git",
+                "num_contributors": 1,
+                "domain": None,
+                "repo_age_years": None,
+            },
+        )
+        file_id = upsert_test_file(conn, repo_id, "tests/test_foo.py", "python")
+        for i, overrides in enumerate(fixtures):
+            base = {
+                "file_id": file_id,
+                "repo_id": repo_id,
+                "name": f"fixture_{i}",
+                "fixture_type": "pytest_decorator",
+                "start_line": i,
+                "end_line": i + 1,
+                "loc": 5,
+                "cyclomatic_complexity": 1,
+                "num_comment_lines": 0,
+                "comment_density": 0.0,
+                "num_parameters": 0,
+                "raw_source": "",
+                "num_mocks": 0,
+            }
+            base.update(overrides)
+            insert_fixture(conn, base)
 
 
 def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
     """Create db/{dataset}.db with one repo and one test_file per `files`
     entry -- each entry: {"language": str, "fixtures": [fixture_dict, ...]}.
     Lets a single repo contribute fixtures in more than one language, for
-    testing language-stratified aggregation (kind_counts_by_repo_and_language).
+    testing language-stratified aggregation (fixture_type_by_language).
 
     Dataset "c" writes to c_sampled.db instead of the full c.db --
     research_questions/ reads Dataset C's fixture-level sample-down, see
@@ -156,187 +176,176 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
                     "file_id": file_id,
                     "repo_id": repo_id,
                     "name": f"fixture_{file_idx}_{i}",
-                    "fixture_type": "before_each",
-                    "scope": "per_test",
+                    "fixture_type": "pytest_decorator",
                     "start_line": i,
                     "end_line": i + 1,
                     "loc": 5,
                     "cyclomatic_complexity": 1,
-                    "max_nesting_depth": 1,
-                    "num_objects_instantiated": 0,
-                    "num_external_calls": 0,
                     "num_comment_lines": 0,
                     "comment_density": 0.0,
                     "num_parameters": 0,
-                    "has_teardown_pair": 0,
                     "raw_source": "",
-                    "framework": "pytest",
                     "num_mocks": 0,
                 }
                 base.update(overrides)
-                base.setdefault(
-                    "fixture_role",
-                    _default_fixture_role(
-                        base["fixture_type"], base.get("name", ""), base.get("raw_source", "")
-                    ),
-                )
                 insert_fixture(conn, base)
 
 
-class TestAnswerableTotal:
-    def test_excludes_other_from_the_sum(self):
-        assert _answerable_total({"setup": 3, "teardown": 2, "setup_and_teardown": 1, "other": 10}) == 6
+class TestPaperMetricsTiering:
+    """PAPER_CONTINUOUS_METRICS is the exhaustive, final continuous set --
+    exactly loc/cyclomatic_complexity/comment_density. max_nesting_depth
+    (which used to be Mann-Whitney tested but rendered under a separate
+    "Other Extracted Features" tier) was dropped from the extracted metric
+    set entirely, so CONTINUOUS_METRICS is now identical to it -- there is
+    no more "other" continuous tier."""
 
-    def test_missing_keys_default_to_zero(self):
-        assert _answerable_total({}) == 0
-        assert _answerable_total({"other": 5}) == 0
+    def test_paper_continuous_metrics_is_exactly_three(self):
+        assert PAPER_CONTINUOUS_METRICS == ["loc", "cyclomatic_complexity", "comment_density"]
 
-    def test_setup_and_teardown_counted_once_not_double_counted(self):
-        """_answerable_total is a single sum over the three kinds, unlike
-        _effective_setup_count/_effective_teardown_count which each add
-        setup_and_teardown separately -- it must not be double-counted
-        here just because it feeds both effective counts elsewhere."""
-        assert _answerable_total({"setup": 1, "teardown": 1, "setup_and_teardown": 1}) == 3
+    def test_continuous_metrics_equals_paper_metrics(self):
+        assert CONTINUOUS_METRICS == PAPER_CONTINUOUS_METRICS
 
 
-class TestPctCell:
-    def test_known_percentage_rounds_to_one_decimal(self):
-        assert _pct_cell(3, 5) == "3 (60.0%)"
+class TestFloorPercentage:
+    def test_computes_fraction_at_floor(self):
+        assert _floor_percentage([1, 1, 2, 3], 1) == 0.5
 
-    def test_zero_total_renders_bare_count_no_percentage(self):
-        """Avoids a ZeroDivisionError for a language absent from a
-        dataset -- the zero-filled-row case elsewhere in this table."""
-        assert _pct_cell(0, 0) == "0"
+    def test_none_at_floor_returns_zero_not_none(self):
+        assert _floor_percentage([2, 3, 4], 1) == 0.0
 
-    def test_count_can_exceed_total_for_setup_and_teardown_double_counting(self):
-        """Not a real total>100% bug -- a setup_and_teardown fixture
-        legitimately counts toward both the setup and teardown numerators
-        against the same denominator, so a single-kind total (e.g. every
-        fixture is setup_and_teardown) renders exactly 100%, not capped
-        or an error."""
-        assert _pct_cell(4, 4) == "4 (100.0%)"
-
-    def test_large_counts_keep_thousands_separator(self):
-        assert _pct_cell(18619, 20148) == "18,619 (92.4%)"
+    def test_empty_returns_none(self):
+        assert _floor_percentage([], 1) is None
 
 
 class TestLoadDatasetMetrics:
     def test_missing_db_returns_none(self, tmp_path):
         assert load_dataset_metrics("a", db_root=tmp_path) is None
 
-    def test_kind_distribution(self, tmp_path):
+    def test_loads_continuous_and_categorical_values(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
             [
-                [
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "after_each"},
-                    {"fixture_type": "pytest_decorator"},
-                ]
+                {"loc": 3, "fixture_type": "before_each"},
+                {"loc": 7, "fixture_type": "before_each"},
+                {"loc": 5, "fixture_type": "after_each"},
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
         assert isinstance(metrics, DatasetMetrics)
-        assert metrics.n_fixtures == 4
-        assert metrics.kind_distribution == {
-            "setup": 2,
-            "teardown": 1,
-            "setup_and_teardown": 0,
-            "other": 1,
-        }
+        assert metrics.n_fixtures == 3
+        assert sorted(metrics.continuous_raw["loc"]) == [3, 5, 7]
+        assert metrics.categorical["fixture_type"] == {"before_each": 2, "after_each": 1}
 
-    def test_kind_distribution_splits_name_based_types(self, tmp_path):
-        """unittest_setup/pytest_class_method rows must be classified by
-        name, not dumped wholesale into 'other' -- the fix this test file
-        exists to cover."""
+    def test_loads_agent_type_distribution(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
             [
-                [
-                    {"fixture_type": "unittest_setup", "name": "setUp"},
-                    {"fixture_type": "unittest_setup", "name": "tearDown"},
-                    {"fixture_type": "pytest_class_method", "name": "setup_method"},
-                    {"fixture_type": "junit_rule", "name": "tempFolder"},
-                ]
+                {"loc": 1, "agent_type": "claude"},
+                {"loc": 1, "agent_type": "claude"},
+                {"loc": 1, "agent_type": "copilot"},
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert metrics.kind_distribution == {
-            "setup": 2,
-            "teardown": 1,
-            "setup_and_teardown": 0,
-            "other": 1,
-        }
+        assert metrics.agent_type_distribution == {"claude": 2, "copilot": 1}
 
-    def test_kind_counts_by_repo_groups_all_three_kinds_by_repo_id(self, tmp_path):
-        _make_db(
+    def test_repo_level_continuous_by_language_is_one_mean_per_repo_per_language(self, tmp_path):
+        _make_multi_language_db(
             tmp_path,
             "a",
-            [
-                # repo 0: 2 setup, 1 teardown, 1 other
-                [
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "before_each"},
-                    {"fixture_type": "after_each"},
-                    {"fixture_type": "pytest_decorator"},
-                ],
-                # repo 1: 1 setup only
-                [{"fixture_type": "before_each"}],
-            ],
+            [{"language": "python", "fixtures": [{"loc": 10}, {"loc": 20}]}],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        assert len(metrics.kind_counts_by_repo) == 2
-        assert {
-            "setup": 2,
-            "teardown": 1,
-            "setup_and_teardown": 0,
-            "other": 1,
-        } in metrics.kind_counts_by_repo.values()
-        assert {
-            "setup": 1,
-            "teardown": 0,
-            "setup_and_teardown": 0,
-            "other": 0,
-        } in metrics.kind_counts_by_repo.values()
+        # One repo contributing 2 python fixtures -> one repo-level mean (15.0).
+        assert metrics.repo_level_continuous_by_language["loc"] == {"python": [15.0]}
 
-    def test_kind_counts_by_repo_and_language_splits_by_fixtures_own_language(self, tmp_path):
-        """One repo contributing fixtures in two languages must get its own
-        {setup/teardown/setup_and_teardown/other: count} entry under EACH
-        language, keyed by that fixture's own test_files.language (not the
-        repo's tag) -- the per-language rows' population."""
+    def test_no_body_fixture_types_excluded_from_continuous_metrics_only(self, tmp_path):
+        """junit_rule/junit_class_rule (NO_BODY_FIXTURE_TYPES) must not
+        contribute to loc/cyclomatic_complexity/comment_density's repo-level
+        means (Lizard can't analyze a field declaration -- see
+        _shared.py::NO_BODY_FIXTURE_TYPES; comment_density is loc-derived
+        and excluded for the same "different kind of code unit" reasoning,
+        not because of Lizard specifically), but num_parameters (0 is a
+        genuinely correct value for a field, not a Lizard fallback) and the
+        fixture_type categorical distribution must still include them."""
         _make_multi_language_db(
             tmp_path,
             "a",
             [
                 {
-                    "language": "python",
-                    "fixtures": [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
-                },
-                {"language": "typescript", "fixtures": [{"fixture_type": "before_each"}]},
+                    "language": "java",
+                    "fixtures": [
+                        {
+                            "fixture_type": "junit_rule",
+                            "loc": 2,
+                            "cyclomatic_complexity": 1,
+                            "num_parameters": 0,
+                            "comment_density": 0.9,
+                        },
+                        {
+                            "fixture_type": "junit4_before",
+                            "loc": 10,
+                            "cyclomatic_complexity": 3,
+                            "num_parameters": 2,
+                            "comment_density": 0.2,
+                        },
+                        {
+                            "fixture_type": "junit4_before",
+                            "loc": 10,
+                            "cyclomatic_complexity": 3,
+                            "num_parameters": 2,
+                            "comment_density": 0.2,
+                        },
+                    ],
+                }
             ],
         )
         metrics = load_dataset_metrics("a", db_root=tmp_path)
-        by_lang = metrics.kind_counts_by_repo_and_language
-        assert set(by_lang) == {"python", "typescript"}
-        # Same repo_id under both languages (one repo, two languages).
-        python_repo_id = next(iter(by_lang["python"]))
-        typescript_repo_id = next(iter(by_lang["typescript"]))
-        assert python_repo_id == typescript_repo_id
-        assert by_lang["python"][python_repo_id] == {
-            "setup": 1,
-            "teardown": 1,
-            "setup_and_teardown": 0,
-            "other": 0,
-        }
-        assert by_lang["typescript"][typescript_repo_id] == {
-            "setup": 1,
-            "teardown": 0,
-            "setup_and_teardown": 0,
-            "other": 0,
-        }
+
+        # One repo -- its loc/cc/comment_density means exclude the
+        # junit_rule fixture entirely (mean of the two junit4_before
+        # fixtures only: loc 10.0, not (2+10+10)/3=7.33; cc 3.0, not 1.67;
+        # comment_density 0.2, not (0.9+0.2+0.2)/3=0.433).
+        assert metrics.repo_level_continuous["loc"] == [10.0]
+        assert metrics.repo_level_continuous["cyclomatic_complexity"] == [3.0]
+        assert metrics.repo_level_continuous["comment_density"] == [0.2]
+        assert metrics.repo_level_continuous_by_language["loc"] == {"java": [10.0]}
+
+        # num_parameters is NOT excluded -- mean includes all 3 fixtures.
+        assert round(metrics.repo_level_continuous["num_parameters"][0], 4) == round(4 / 3, 4)
+
+        # Diagnostic-only median-per-repo view (NOT the paper's methodology
+        # -- see this module's docstring): restricted to CONTINUOUS_METRICS,
+        # so it exists for loc/cc/comment_density but not num_parameters.
+        # Same exclusion applies -- junit_rule is still dropped, and the
+        # remaining two junit4_before fixtures are identical, so the median
+        # equals the mean here too (loc 10.0, cc 3.0, comment_density 0.2).
+        assert metrics.repo_level_continuous_median_diagnostic["loc"] == [10.0]
+        assert metrics.repo_level_continuous_median_diagnostic["cyclomatic_complexity"] == [3.0]
+        assert metrics.repo_level_continuous_median_diagnostic["comment_density"] == [0.2]
+        assert "num_parameters" not in metrics.repo_level_continuous_median_diagnostic
+
+        # fixture_type categorical distribution still counts junit_rule.
+        assert metrics.categorical["fixture_type"]["junit_rule"] == 1
+        assert metrics.categorical["fixture_type"]["junit4_before"] == 2
+
+    def test_floor_pct_computed_for_num_parameters_only(self, tmp_path):
+        _make_db(
+            tmp_path,
+            "a",
+            [
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+                {"cyclomatic_complexity": 1, "num_parameters": 2},
+                {"cyclomatic_complexity": 3, "num_parameters": 0},
+                {"cyclomatic_complexity": 3, "num_parameters": 0},
+            ],
+        )
+        metrics = load_dataset_metrics("a", db_root=tmp_path)
+        assert metrics.floor_pct["num_parameters"] == 0.75  # 3 of 4 at 0 params
+        # cyclomatic_complexity moved back to a tested metric -- no floor_pct
+        # entry for it anymore.
+        assert "cyclomatic_complexity" not in metrics.floor_pct
 
 
 class TestGenerateReport:
@@ -346,12 +355,11 @@ class TestGenerateReport:
         assert "Not available -- db not collected yet." in report
 
     def test_dataset_a_only_renders_summary_and_skips_comparisons(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}, {"fixture_type": "after_each"}]])
+        _make_db(tmp_path, "a", [{"loc": 3}, {"loc": 7}])
         report = generate_report(db_root=tmp_path)
         assert "Dataset A (agent-authored) -- 2 fixtures" in report
         assert "## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)" in report
-        # C summary, A-vs-C comparison: 2 total (no separate repo-level
-        # section anymore -- the one table below IS the repo-level result).
+        # C summary, A-vs-C comparison: 2 total.
         assert report.count("Not available -- db not collected yet.") == 2
 
     def test_dataset_summary_includes_language_leakage_table(self, tmp_path):
@@ -359,403 +367,305 @@ class TestGenerateReport:
         is a no-leakage wiring check -- compute_language_leakage() itself is
         covered against real leaked data in
         test_research_questions_shared.py."""
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
+        _make_db(tmp_path, "a", [{"loc": 3}])
         report = generate_report(db_root=tmp_path)
         assert "Cross-language fixture leakage" in report
         assert "0/1 fixtures (0.00%) leaked." in report
 
-    def test_removed_metrics_no_longer_appear(self, tmp_path):
-        """Ratio/no-teardown-rate/teardown-pair-rate/median-proportion
-        table were dropped from the paper's reported output entirely --
-        not just de-pooled."""
+    def test_dataset_summary_includes_agent_type_distribution(self, tmp_path):
         _make_db(
-            tmp_path,
-            "a",
-            [[{"fixture_type": "before_each"}, {"fixture_type": "before_each"}]],
-        )
-        _make_db(
-            tmp_path,
-            "c",
-            [[{"fixture_type": "before_each"}, {"fixture_type": "after_each"}]],
+            tmp_path, "a", [{"loc": 1, "agent_type": "claude"}, {"loc": 1, "agent_type": "copilot"}]
         )
         report = generate_report(db_root=tmp_path)
-        assert "setup_to_teardown_ratio" not in report
-        assert "repo_zero_teardown_rate" not in report
-        assert "has_teardown_pair rate by fixture_type" not in report
-        assert "## Repo-level aggregates" not in report
-        assert "ratio undefined" not in report
-        # The old median setup_pct/teardown_pct proportion table -- fully
-        # replaced by Table 1 (counts) + Table 2 (coverage).
-        assert "V (A↔C)" not in report
-        assert "Setup A (%) | Setup C (%)" not in report
+        assert "**agent_type distribution**" in report
+        assert "| claude | 1 | 50.0% |" in report
+        assert "| copilot | 1 | 50.0% |" in report
 
-    def test_kind_counts_table_renders_absolute_counts_per_language(self, tmp_path):
-        """Table 1: purely descriptive setup/teardown counts, "other"
-        excluded, fixed four-language row order with zero-filled rows for
-        languages absent from the data."""
-        _make_db(
-            tmp_path,
-            "a",
-            [[{"fixture_type": "before_each"}] * 3 + [{"fixture_type": "after_each"}] * 2],
-        )
-        _make_db(
-            tmp_path,
-            "c",
-            [[{"fixture_type": "before_each"}] + [{"fixture_type": "after_each"}] * 4],
-        )
+    def test_a_vs_c_comparison_renders_significant_difference(self, tmp_path):
+        """Sharply different LOC distributions -> Mann-Whitney's Overall
+        row (repo-level, per the last task) should show a large effect and
+        a small exact p-value. This db has one repo per side (_make_db),
+        so the repo-level Overall row collapses to n=1 vs n=1 -- always
+        p=1.000 (an n=1-vs-n=1 Mann-Whitney can never reject), so this
+        checks the effect-size/formatting machinery, not significance."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
+        _make_db(tmp_path, "c", [{"loc": v} for v in [50, 60, 55, 58, 62, 57, 59, 61, 56, 54]])
         report = generate_report(db_root=tmp_path)
-        assert "### Table 1: Fixture Counts by Type (tab:rq2-counts)" in report
-        assert "| Language | Setup A | Setup C | Teardown A | Teardown C |" in report
-        comparison_section = report.split("## A vs C:")[1]
-        # A: 3 setup + 2 teardown = 5 total -> 60.0%/40.0%.
-        # C: 1 setup + 4 teardown = 5 total -> 20.0%/80.0%.
-        assert "| Total | 3 (60.0%) | 1 (20.0%) | 2 (40.0%) | 4 (80.0%) |" in comparison_section
-        assert "| python | 3 (60.0%) | 1 (20.0%) | 2 (40.0%) | 4 (80.0%) |" in comparison_section
-        # java/javascript/typescript have no data on either side -- zero,
-        # not omitted, and no percentage (would be a division by zero).
-        assert "| java | 0 | 0 | 0 | 0 |" in comparison_section
-        assert "| javascript | 0 | 0 | 0 | 0 |" in comparison_section
-        assert "| typescript | 0 | 0 | 0 | 0 |" in comparison_section
-
-    def test_kind_counts_table_excludes_other_classified_fixtures(self, tmp_path):
-        _make_db(
-            tmp_path,
-            "a",
-            [[{"fixture_type": "before_each"}, {"fixture_type": "pytest_decorator"}]],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
-        report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
-        # A: 1 setup + 1 other -- the "other" fixture is excluded from
-        # BOTH the counts AND the percentage denominator (answerable
-        # total = 1, the "other" fixture doesn't count) -> setup
-        # 1/1=100.0%, teardown 0/1=0.0%.
-        # C: 1 teardown = 1 answerable total -> setup 0/1=0.0%,
-        # teardown 1/1=100.0%.
-        assert "| Total | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
-
-    def test_kind_counts_table_other_fixtures_dont_dilute_the_percentage_denominator(
-        self, tmp_path
-    ):
-        """A language with a large 'other' share must not show a lower
-        Setup%/Teardown% purely because of how much of it is
-        unclassifiable -- the denominator is the *answerable* count only
-        (setup+teardown+setup_and_teardown), not the whole classified
-        count including 'other'. 3 setup + 6 other (junit_rule) -> without
-        this behavior the naive whole-count denominator (9) would report
-        setup at 33.3%; the correct answerable denominator (3) reports
-        100.0%."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "java",
-                    "fixtures": (
-                        [{"fixture_type": "before_each"}] * 3
-                        + [{"fixture_type": "junit_rule", "name": "tempFolder"}] * 6
-                    ),
-                }
-            ],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
-        report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
-        java_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| java |")
-        )
-        # C's fixture is "python" (the _make_db default language), so C's
-        # java row is entirely zero-filled -- "0" not "0 (0.0%)".
-        assert "| java | 3 (100.0%) | 0 | 0 (0.0%) | 0 |" == java_line
-
-    def test_kind_counts_table_counts_setup_and_teardown_fixture_in_both_columns(
-        self, tmp_path
-    ):
-        """A pytest_decorator fixture classified 'setup_and_teardown'
-        (real yield-after-setup raw_source) is not "other" -- it counts
-        toward both the Setup and Teardown columns, since it genuinely
-        provides both."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [
-                    {
-                        "fixture_type": "pytest_decorator",
-                        "raw_source": (
-                            "def db():\n    conn = connect()\n"
-                            "    yield conn\n    conn.close()\n"
-                        ),
-                    }
-                ]
-            ],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
-        report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
-        # Setup A=1, Setup C=0, Teardown A=1, Teardown C=1 -- the single A
-        # fixture counted in both the Setup and Teardown A columns, each
-        # against a 1-fixture total -> 100.0% in both A columns (percentages
-        # summing past 100% is expected here, see this table's docstring).
-        assert "| Total | 1 (100.0%) | 0 (0.0%) | 1 (100.0%) | 1 (100.0%) |" in comparison_section
-
-    def test_kind_counts_table_total_includes_languages_outside_the_fixed_four(self, tmp_path):
-        """The Total row is the dataset-wide sum across every language
-        present, not just the four canonical rows shown -- a 5th language
-        still counts toward Total even though it gets no row of its own."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [{"language": "rust", "fixtures": [{"fixture_type": "before_each"}]}],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
-        report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
-        assert "| Total | 1 (100.0%) | 0 (0.0%) | 0 (0.0%) | 1 (100.0%) |" in comparison_section
-        assert "| rust |" not in comparison_section
-
-    def test_teardown_coverage_table_renders_percentages_no_statistical_test(self, tmp_path):
-        """Table 2: A has 1 of 2 repos with any teardown (50%); C has 2 of
-        2 (100%). Purely descriptive -- no statistic/effect-size/p-value
-        columns at all (removed 2026-09-27)."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [{"fixture_type": "before_each"}, {"fixture_type": "after_each"}],
-                [{"fixture_type": "before_each"}],
-            ],
-        )
-        _make_db(
-            tmp_path,
-            "c",
-            [
-                [{"fixture_type": "after_each"}],
-                [{"fixture_type": "after_each"}],
-            ],
-        )
-        report = generate_report(db_root=tmp_path)
-        assert "### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)" in report
-        assert (
-            "| Language | n_A | n_C | Coverage A (%) | Coverage C (%) |"
-            in report
-        )
-        # "python" also appears as a row label in Table 1 (counts), above
-        # Table 2 in the same comparison section -- scope past the Table 2
-        # heading so we don't match that row instead.
-        coverage_section = report.split("### Table 2: Teardown Coverage by Repository")[1]
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
         overall_line = next(
-            line for line in coverage_section.splitlines() if line.startswith("| Overall |")
+            line for line in loc_section.splitlines() if line.startswith("| Overall |")
         )
+        assert "| 1 | 1 |" in overall_line  # one repo per side
+        assert "large | 1.000" in overall_line
+        assert overall_line.rstrip("|").rsplit("|", 1)[-1].strip() == "--"  # never BH-corrected
+
+    def test_paper_continuous_tables_report_per_language_medians(self, tmp_path):
+        """loc/cyclomatic_complexity/comment_density's per-language rows
+        get "A median"/"C median" columns -- the median of the same
+        per-repo mean values the Mann-Whitney test itself runs on. One
+        repo per side (_make_db), so the per-repo mean *is* the "median"
+        here (a 1-element list's median is that element)."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [2, 4, 6]])  # mean 4.0
+        _make_db(tmp_path, "c", [{"loc": v} for v in [10, 20]])  # mean 15.0
+        report = generate_report(db_root=tmp_path)
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        header = next(line for line in loc_section.splitlines() if line.startswith("| Language"))
+        assert "A median" in header
+        assert "C median" in header
         python_line = next(
-            line for line in coverage_section.splitlines() if line.startswith("| python |")
+            line for line in loc_section.splitlines() if line.startswith("| python |")
         )
-        for line in (overall_line, python_line):
-            assert "| 2 | 2 |" in line
-            assert "50.0% | 100.0%" in line  # Coverage A (%) | Coverage C (%)
-            # No statistic/effect-size/p-value columns at all.
-            assert line.count("|") == 6
-        assert "delta" not in report
-        assert "p (BH)" not in report
-        assert "significant (p<0.05)" not in report
+        assert "| python | 1 | 1 | 4.00 | 15.00 |" in python_line
 
-    def test_teardown_coverage_repo_with_only_setup_counts_as_zero_coverage(self, tmp_path):
-        """A repo whose only classified fixtures are setup (no teardown at
-        all) contributes 0 to the coverage indicator -- not skipped, not
-        1."""
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+    def test_paper_continuous_overall_row_has_dashed_medians(self, tmp_path):
+        _make_db(tmp_path, "a", [{"loc": v} for v in [2, 4, 6]])
+        _make_db(tmp_path, "c", [{"loc": v} for v in [10, 20]])
         report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
         overall_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+            line for line in loc_section.splitlines() if line.startswith("| Overall |")
         )
-        assert "0.0% | 100.0%" in overall_line
+        assert "| Overall | 1 | 1 | -- | -- | -- | -- | -- | -- |" in overall_line
 
-    def test_teardown_coverage_counts_setup_and_teardown_classified_repo_as_covered(
+    def test_paper_continuous_tables_report_per_language_q3_and_p90(self, tmp_path):
+        """Q3/P90 use the exact same per-repo means the median column and
+        the Mann-Whitney test itself use -- multiple repos per side here
+        (unlike the median test above) so Q3/P90 actually differ from the
+        median, proving they're real percentiles, not just an alias for
+        it."""
+        _make_multi_repo_db(tmp_path, "a", [[1], [2], [3], [4]])  # repo means 1,2,3,4
+        _make_multi_repo_db(tmp_path, "c", [[10], [20], [30], [40]])  # repo means 10,20,30,40
+        report = generate_report(db_root=tmp_path)
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        header = next(line for line in loc_section.splitlines() if line.startswith("| Language"))
+        assert header.index("A median") < header.index("A Q3") < header.index("A P90")
+        python_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| python |")
+        )
+        assert (
+            "| python | 4 | 4 | 2.50 | 25.00 | 3.25 | 32.50 | 3.70 | 37.00 |" in python_line
+        )
+
+    def test_repo_level_aggregate_declusters_a_prolific_repo(self, tmp_path):
+        """The core value proposition: a single repo contributing many
+        fixtures must not be allowed to dominate the comparison. Dataset A
+        here is one repo with 100 fixtures at loc=100 plus one repo with a
+        single loc=1 fixture -- fixture-level, the mean is ~99 (dominated
+        by the prolific repo). Dataset C is two repos each with one
+        loc=50 fixture. Repo-level, A's per-repo means are [100.0, 1.0]
+        (mean 50.5) -- much closer to C's 50 than the fixture-level view
+        would suggest, and NOT a significant Mann-Whitney difference,
+        unlike the fixture-level comparison over the same data."""
+        _make_multi_repo_db(tmp_path, "a", [[100.0] * 100, [1.0]])
+        _make_multi_repo_db(tmp_path, "c", [[50.0], [50.0]])
+
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+
+        assert sorted(a_metrics.repo_level_continuous["loc"]) == [1.0, 100.0]
+
+        fixture_level = a_metrics.continuous_raw["loc"]
+        assert sum(fixture_level) / len(fixture_level) > 95  # dominated by the prolific repo
+
+        repo_level_result = compare_datasets_repo_level(a_metrics, c_metrics)
+        t = repo_level_result["loc"]
+        assert t.is_balanced  # not significant once each repo counts once
+
+        # loc's Overall row (main "### loc" section) IS the repo-level test
+        # now -- there's no separate fixture-level continuous table left to
+        # be misled by, and no separate repo-level-only section either.
+        report = generate_report(db_root=tmp_path)
+        loc_section = report.split("### loc")[1].split("### cyclomatic_complexity")[0]
+        overall_line = next(
+            line for line in loc_section.splitlines() if line.startswith("| Overall |")
+        )
+        assert "| 2 | 2 |" in overall_line  # 2 repos per side, not 101 fixtures
+        assert format_p_value(t.p_value) in overall_line
+
+    def test_median_diagnostic_uses_per_repo_median_not_mean(self, tmp_path):
+        """compare_datasets_repo_level_median_diagnostic() must aggregate
+        each repo by its own MEDIAN fixture, not its mean -- the whole
+        point of keeping this diagnostic-only view separate from the
+        paper's actual compare_datasets_repo_level(). A's one repo has loc
+        values [1, 2, 100]: mean 34.33 (pulled toward the 100 outlier),
+        median 2. C's one repo is a single loc=2 fixture. Under the
+        paper's mean-per-repo methodology the two datasets look very
+        different (34.33 vs 2); under the diagnostic median-per-repo view
+        they look identical (2 vs 2) -- exactly the kind of information
+        loss this module's docstring warns the diagnostic view can
+        introduce, which is why it's presented as unusable rather than a
+        competing result."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [1, 2, 100]])
+        _make_db(tmp_path, "c", [{"loc": 2}])
+
+        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
+        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
+
+        assert round(a_metrics.repo_level_continuous["loc"][0], 4) == round(103 / 3, 4)
+        assert a_metrics.repo_level_continuous_median_diagnostic["loc"] == [2.0]
+        assert c_metrics.repo_level_continuous["loc"] == [2.0]
+        assert c_metrics.repo_level_continuous_median_diagnostic["loc"] == [2.0]
+
+        diagnostic = compare_datasets_repo_level_median_diagnostic(a_metrics, c_metrics)
+        assert diagnostic["loc"].is_balanced  # identical once median-aggregated
+        assert diagnostic["loc"].variable == "loc_median_diagnostic"
+
+    def test_report_includes_median_diagnostic_section_with_disclaimer(self, tmp_path):
+        """The report must render the diagnostic median-per-repo section,
+        clearly separated from and after the paper's actual Paper Metrics
+        section, with a disclaimer that it is not a result to cite."""
+        _make_db(tmp_path, "a", [{"loc": v} for v in [1, 2, 100]])
+        _make_db(tmp_path, "c", [{"loc": 2}])
+        report = generate_report(db_root=tmp_path)
+
+        assert "## Diagnostic: median-per-repo aggregation (NOT used in the paper)" in report
+        assert report.index("**Paper Metrics -- Continuous**") < report.index(
+            "## Diagnostic: median-per-repo aggregation"
+        )
+        disclaimer_section = report.split(
+            "## Diagnostic: median-per-repo aggregation (NOT used in the paper)"
+        )[1]
+        assert "not results, do not cite them" in disclaimer_section
+        assert "### loc" in disclaimer_section
+        assert "### cyclomatic_complexity" in disclaimer_section
+        assert "### comment_density" in disclaimer_section
+
+    def test_dataset_summary_continuous_table_is_repo_level_not_fixture_level(
         self, tmp_path
     ):
-        """A repo whose only classified fixture is a pytest_decorator
-        classified 'setup_and_teardown' (real yield-after-setup
-        raw_source) counts as covered (1), the same as a repo with a
-        plain 'teardown'-classified fixture."""
-        _make_db(
-            tmp_path,
-            "a",
-            [
-                [
-                    {
-                        "fixture_type": "pytest_decorator",
-                        "raw_source": (
-                            "def db():\n    conn = connect()\n"
-                            "    yield conn\n    conn.close()\n"
-                        ),
-                    }
-                ]
-            ],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
-        overall_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
-        )
-        assert "100.0% | 0.0%" in overall_line
+        """The per-dataset "Continuous metrics" table (_render_dataset_summary())
+        must read the same repo-level-means data the comparison tests use,
+        not the raw per-fixture values -- same prolific-repo setup as
+        test_repo_level_aggregate_declusters_a_prolific_repo above: one repo
+        with 100 loc=100 fixtures plus one repo with a single loc=1 fixture.
+        Fixture-level, the median is 100 (dominated by the prolific repo's
+        100 identical values). Repo-level, the two repos' own means are
+        [100.0, 1.0] -- median 50.50, nothing close to the fixture-level
+        figure."""
+        _make_multi_repo_db(tmp_path, "a", [[100.0] * 100, [1.0]])
 
-    def test_teardown_coverage_declusters_a_prolific_repo(self, tmp_path):
-        """A is one repo with 100 setup-only fixtures (0 teardown ->
-        coverage 0) plus one repo with a single teardown-only fixture
-        (coverage 1) -- fixture-weighted, "teardown coverage" would look
-        ~1% (1 of 101 fixtures). Per-repo (what's actually reported), A is
-        50% (1 of 2 repos has any teardown at all), same as C's much
-        smaller but proportionally identical repos."""
+        report = generate_report(db_root=tmp_path)
+        summary = report.split("### Dataset A")[1].split("###")[0]
+        loc_line = next(
+            line for line in summary.splitlines() if line.startswith("| loc |")
+        )
+        assert "| loc | 2 | 50.50 | 50.50 | 1 | 100 |" in loc_line
+        assert "100.00" not in loc_line  # the fixture-level median/mean
+
+    def test_num_parameters_has_no_mann_whitney_section(self, tmp_path):
+        _make_db(tmp_path, "a", [{"loc": 1}])
+        _make_db(tmp_path, "c", [{"loc": 1}])
+        report = generate_report(db_root=tmp_path)
+        assert "### num_parameters" not in report
+
+    def test_cyclomatic_complexity_has_a_mann_whitney_section(self, tmp_path):
+        """Regression: cyclomatic_complexity was dropped from testing, then
+        restored -- must have a real Overall row again, same shape as
+        loc/comment_density, not just a floor-percentage footnote entry.
+        Boundary is "### comment_density", the next (and last) Paper
+        Metric."""
+        _make_db(tmp_path, "a", [{"cyclomatic_complexity": v} for v in [1, 1, 2, 1, 2, 1, 2, 1, 2, 1]])
+        _make_db(tmp_path, "c", [{"cyclomatic_complexity": v} for v in [5, 6, 5, 5, 6, 5, 6, 5, 6, 5]])
+        report = generate_report(db_root=tmp_path)
+        assert "### cyclomatic_complexity" in report
+        cc_section = report.split("### cyclomatic_complexity")[1].split("### comment_density")[0]
+        overall_line = next(
+            line for line in cc_section.splitlines() if line.startswith("| Overall |")
+        )
+        assert "| 1 | 1 |" in overall_line  # one repo per side
+        assert "large | 1.000" in overall_line
+
+    def test_floor_percentage_footnote_renders(self, tmp_path):
         _make_db(
             tmp_path,
             "a",
             [
-                [{"fixture_type": "before_each"}] * 100,
-                [{"fixture_type": "after_each"}],
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+                {"cyclomatic_complexity": 3, "num_parameters": 2},
             ],
         )
         _make_db(
             tmp_path,
             "c",
             [
-                [{"fixture_type": "before_each"}],
-                [{"fixture_type": "after_each"}],
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
+                {"cyclomatic_complexity": 1, "num_parameters": 0},
             ],
         )
         report = generate_report(db_root=tmp_path)
-        comparison_section = report.split("## A vs C:")[1]
+        assert "Floor-binding check (descriptive only" in report
+        # The footnote renders in the "Other Extracted Features" section,
+        # after the Paper Metrics section (loc/cyclomatic_complexity/
+        # comment_density) -- boundary is "**Categorical metrics" (the
+        # next heading), not "### loc" (which now precedes the footnote).
+        footnote_section = report.split("Floor-binding check (descriptive only")[1].split(
+            "**Categorical metrics"
+        )[0]
+        params_line = next(
+            line for line in footnote_section.splitlines()
+            if line.startswith("| num_parameters |")
+        )
+        assert "| num_parameters | 0 | 50.0% | 100.0% |" in params_line
+        # cyclomatic_complexity moved back to a tested metric -- no footnote
+        # row for it anymore.
+        assert not any(
+            line.startswith("| cyclomatic_complexity |")
+            for line in footnote_section.splitlines()
+        )
+
+    def test_comment_density_has_a_mann_whitney_section_in_paper_metrics(self, tmp_path):
+        """comment_density is the third paper metric (2026-08-17) -- must
+        render a real Overall row, positioned inside "Paper Metrics"
+        (before "Other Extracted Features"), not just be a descriptive-only
+        column."""
+        _make_db(
+            tmp_path, "a",
+            [{"comment_density": v} for v in [0.1, 0.1, 0.2, 0.1, 0.2, 0.1, 0.2, 0.1, 0.2, 0.1]],
+        )
+        _make_db(
+            tmp_path, "c",
+            [{"comment_density": v} for v in [0.8, 0.9, 0.8, 0.8, 0.9, 0.8, 0.9, 0.8, 0.9, 0.8]],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "### comment_density" in report
+        assert report.index("**Paper Metrics") < report.index("### comment_density")
+        assert report.index("### comment_density") < report.index("**Other Extracted Features")
+        cd_section = report.split("### comment_density")[1].split(
+            "**Other Extracted Features"
+        )[0]
         overall_line = next(
-            line for line in comparison_section.splitlines() if line.startswith("| Overall |")
+            line for line in cd_section.splitlines() if line.startswith("| Overall |")
         )
-        # Per-repo, both A and C are 1-of-2 repos with any teardown (50%) --
-        # nowhere near a ~1%-teardown fixture-weighted figure.
-        assert "50.0% | 50.0%" in overall_line
+        assert "| 1 | 1 |" in overall_line  # one repo per side
+        assert "large | 1.000" in overall_line
 
-    def test_teardown_coverage_language_absent_from_both_sides_shows_empty_population(
+    def test_paper_and_other_continuous_summary_tables_split_in_per_dataset_section(
         self, tmp_path
     ):
-        """java/javascript/typescript have zero repos on either side (both
-        _make_db calls default to "python" test files) -- must degrade to
-        '--' cells, not crash or divide by zero."""
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "after_each"}]])
+        """The per-dataset "Continuous metrics" table (median/mean/etc.) is
+        split into a "Paper" table (loc/cyclomatic_complexity/
+        comment_density) and an "Other (not in the paper)" table
+        (num_parameters only, now that max_nesting_depth has been dropped
+        entirely), not one combined table."""
+        _make_db(tmp_path, "a", [{"loc": 5}])
         report = generate_report(db_root=tmp_path)
-        coverage_section = report.split("### Table 2: Teardown Coverage by Repository")[1]
-        java_line = next(
-            line for line in coverage_section.splitlines() if line.startswith("| java |")
-        )
-        assert "| java | 0 | 0 | -- | -- |" == java_line
-
-
-class TestRenderKindClassificationCoverageTable:
-    def test_header_and_section_title_present(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
-        assert "### Fixture Kind Classification Coverage by Language" in report
-        assert (
-            "| Dataset | Language | Total fixtures | setup | teardown | "
-            "setup_and_teardown | other (count) | other (%) |" in report
-        )
-
-    def test_renders_one_row_per_language_per_dataset_with_zero_filled_absent_languages(
-        self, tmp_path
-    ):
-        """Every RQ2_LANGUAGES row must render for both datasets, even a
-        language with zero fixtures on one side -- 0 rows, not omitted,
-        matching Table 1's own zero-filled-row convention."""
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [{"language": "java", "fixtures": [{"fixture_type": "junit_rule", "name": "tempFolder"}]}],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
-        lines = report.splitlines()
-
-        # java is 100% "other" in A (junit_rule) -- a real java row, not
-        # omitted just because setup/teardown are both 0.
-        assert "| A | java | 1 | 0 | 0 | 0 | 1 | 100.0% |" in lines
-        # javascript has zero fixtures in A at all -- still a zero-filled
-        # row, not omitted, and no ZeroDivisionError.
-        assert "| A | javascript | 0 | 0 | 0 | 0 | 0 | 0.0% |" in lines
-        # python is the only language populated in C, all "setup"
-        # (before_each), 0% other.
-        assert "| C | python | 1 | 1 | 0 | 0 | 0 | 0.0% |" in lines
-        assert "| C | java | 0 | 0 | 0 | 0 | 0 | 0.0% |" in lines
-
-    def test_setup_and_teardown_counted_in_its_own_column_not_folded_into_setup_or_teardown(
-        self, tmp_path
-    ):
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "python",
-                    "fixtures": [
-                        {
-                            "fixture_type": "pytest_decorator",
-                            "raw_source": (
-                                "def db():\n    conn = connect()\n"
-                                "    yield conn\n    conn.close()\n"
-                            ),
-                        }
-                    ],
-                }
-            ],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
-        assert "| A | python | 1 | 0 | 0 | 1 | 0 | 0.0% |" in report.splitlines()
-
-    def test_other_percentage_matches_hand_computed_value(self, tmp_path):
-        # java: 3 setup, 1 other -> other% = 1/4 = 25.0%
-        _make_multi_language_db(
-            tmp_path,
-            "a",
-            [
-                {
-                    "language": "java",
-                    "fixtures": [
-                        {"fixture_type": "before_each"},
-                        {"fixture_type": "before_each"},
-                        {"fixture_type": "before_each"},
-                        {"fixture_type": "junit_rule", "name": "tempFolder"},
-                    ],
-                }
-            ],
-        )
-        _make_db(tmp_path, "c", [[{"fixture_type": "before_each"}]])
-        a_metrics = load_dataset_metrics("a", db_root=tmp_path)
-        c_metrics = load_dataset_metrics("c", db_root=tmp_path)
-        report = _render_kind_classification_coverage_table(a_metrics, c_metrics)
-        assert "| A | java | 4 | 3 | 0 | 0 | 1 | 25.0% |" in report.splitlines()
-
-    def test_generate_report_includes_kind_classification_coverage_section(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
-        _make_db(tmp_path, "c", [[{"fixture_type": "unittest_setup", "name": "setUp"}]])
-        report = generate_report(db_root=tmp_path)
-        assert "### Fixture Kind Classification Coverage by Language" in report
-        # Under Supplementary Analyses.
-        assert (
-            report.index("## Supplementary Analyses")
-            < report.index("### Fixture Kind Classification Coverage by Language")
-        )
+        summary = report.split("### Dataset A")[1].split("###")[0]
+        assert "**Continuous metrics -- Paper**" in summary
+        assert "**Continuous metrics -- Other (not in the paper)**" in summary
+        paper_table = summary.split("**Continuous metrics -- Paper**")[1].split(
+            "**Continuous metrics -- Other"
+        )[0]
+        other_table = summary.split("**Continuous metrics -- Other")[1]
+        assert "| loc |" in paper_table
+        assert "| cyclomatic_complexity |" in paper_table
+        assert "| comment_density |" in paper_table
+        assert "| num_parameters |" in other_table
+        assert "| loc |" not in other_table
 
 
 class TestWriteReport:
     def test_writes_file_matching_generate_report(self, tmp_path):
-        _make_db(tmp_path, "a", [[{"fixture_type": "before_each"}]])
+        _make_db(tmp_path, "a", [{"loc": 4}])
         out_dir = tmp_path / "out"
         path = write_report(out_dir, db_root=tmp_path)
         assert path == out_dir / "rq2.md"

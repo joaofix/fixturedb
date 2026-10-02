@@ -42,7 +42,7 @@ The unit of analysis is the **fixture**: an individual test setup/teardown defin
 
 ## Research Objectives
 
-See [Research Questions](../research-questions.md) for the full RQ1–RQ4 definitions and how the three-dataset comparison applies to each.
+See [Research Questions](../research-questions.md) for the full RQ1–RQ5 definitions and how the three-dataset comparison applies to each.
 
 ---
 
@@ -149,7 +149,7 @@ A/B/C are three separate databases, not paired observations within one table, so
 | Continuous (`loc`, `cyclomatic_complexity`, `comment_density`) | Mann-Whitney U |
 | Categorical (`fixture_type`, mock `category`) | Chi-square |
 
-Every test also reports an effect size — Cliff's delta for Mann-Whitney, Cramér's V for chi-square — since p-values alone conflate statistical significance with sample size; at this corpus's scale (tens of thousands of fixtures), p-values are near-zero for almost any nonzero difference, meaningful or not. Continuous metrics are additionally re-tested at repo level (one mean-per-repo value instead of one value per fixture — see RQ1/RQ3's "Repo-level aggregates" section) to guard against pseudo-replication, since fixtures cluster within repos and testing raw fixture values as independent observations can inflate apparent significance.
+Every test also reports an effect size — Cliff's delta for Mann-Whitney, Cramér's V for chi-square — since p-values alone conflate statistical significance with sample size; at this corpus's scale (tens of thousands of fixtures), p-values are near-zero for almost any nonzero difference, meaningful or not. Continuous metrics are additionally re-tested at repo level (one mean-per-repo value instead of one value per fixture — see RQ2/RQ4's "Repo-level aggregates" section) to guard against pseudo-replication, since fixtures cluster within repos and testing raw fixture values as independent observations can inflate apparent significance.
 
 See [Analyzing the Datasets](../usage/usage.md) for the concrete query/test pattern: load each dataset separately, tag with a `dataset` column, concatenate.
 

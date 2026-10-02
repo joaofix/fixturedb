@@ -1,127 +1,138 @@
 """
-RQ2 -- Setup and Teardown Characterization (Quantitative): how do
-agent-generated fixtures compare to human-written ones in setup and
-teardown provision?
+RQ2 -- General Metrics Overview (Quantitative): how do agent-generated and
+human-written fixtures compare across structural metrics?
 
-Two paper tables, both keyed on **fixtures.fixture_role** -- setup /
-teardown / setup_and_teardown / other. This is a persisted DB column, set
-once at *extraction* time (not computed here) by
-`detector_shared._classify_fixture_kinds()` for every fixture type except
-`pytest_decorator`, plus `detector_python._detect_python()`'s own direct
-body-analysis classification for `pytest_decorator` -- see those two
-functions' docstrings for the exact per-type rules and why `pytest_decorator`
-needs its own mechanism (type/name alone can't split it: every pytest
-fixture is just named whatever the developer called it; see
-internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md).
-This module just reads the column and renders it -- no classification logic
-lives here, so a dataset's `fixture_role` numbers are identical
-regardless of when its RQ2 report is (re)generated relative to extraction.
+Computes, per dataset (A/C), summary statistics for the RQ2 metrics (LOC,
+cyclomatic complexity, comment density, num_parameters), plus an A vs C
+comparison. `fixture_type` is shown per-dataset descriptively (a plain
+distribution, no test -- see below) but is not itself compared A vs C in
+any form anymore. Dataset B (contemporary
+within-repo human baseline) is still collected (db/b.db,
+paired_collection.py) but out of scope for this script's reported
+comparisons.
 
-Table 1's Setup/Teardown columns and Table 2's teardown-coverage indicator
-both treat a `setup_and_teardown`-classified fixture as counting toward
-*both* setup and teardown -- it genuinely provides both, so excluding it
-from either column would undercount that dataset's real setup/teardown
-provision.
+**Three paper metrics, final** (as of 2026-09-26): `PAPER_CONTINUOUS_METRICS`
+is the exhaustive list of the continuous metrics reported in the paper --
+`loc`, `cyclomatic_complexity`, `comment_density` -- and, since
+`CONTINUOUS_METRICS` is now exactly that same list, also the only
+continuous metrics this script tests at all. `max_nesting_depth`,
+`num_objects_instantiated`, `num_external_calls`, and `has_teardown_pair`
+used to be computed and stored too (max_nesting_depth even fully
+Mann-Whitney tested, under a separate "Other Extracted Features" heading)
+but were dropped from the extracted metric set entirely -- not reported in
+the paper, and removed from detection/storage/CSV export rather than kept
+as unused columns. `scope` (a categorical metric) was dropped the same
+way, and so was `commit_type` (2026-09-27) -- a Conventional Commits
+classification of the originating commit's message, computed for both
+Dataset A and B and never used in any reported RQ; its whole
+`conventional_commits.py` module was removed along with it.
 
-**Table 1 (tab:rq2-counts) -- absolute fixture counts**
-(`_render_kind_counts_table()`): purely descriptive, no statistics. For
-each language and a Total row, the raw count of setup-classified and
-teardown-classified fixtures in each dataset, each also shown as a
-percentage of that language's *answerable* fixture count -- setup +
-teardown + setup_and_teardown, excluding 'other' entirely from both the
-counts and the percentage denominator (see `_answerable_total()`'s
-docstring for why: an 'other'-classified fixture, e.g. a JUnit `@Rule` or
-a TestNG `@DataProvider`, was never a setup/teardown candidate to begin
-with, so it shouldn't dilute the rate at which the *answerable* fixtures
-were classified one way or the other). Total is the dataset-wide sum
-across every language present, not just the four rows shown.
+`fixture_type` has no A vs C comparison of any kind anymore, fixture-level
+or repo-level. Its fixture-level chi-square (Overall + per-language) was
+removed 2026-09-27 -- it was never the paper's result, and had no other
+consumer once gone, so `compare_datasets_categorical()`/
+`_render_categorical_metric()`/`_fetch_fixture_type_by_language()`/
+`_fetch_repo_count_by_language()` went with it. Its repo-level proportion
+test (formerly "## Repo-level aggregates", `_render_repo_level_
+comparison()`) was removed the same day, once it turned out that test's
+"paper's actual result" framing -- inherited from this module's own
+pre-existing docstring -- had never actually been confirmed against the
+paper (`fixture_type` is, and always was, a support column that feeds
+`fixture_role`'s derivation, not a metric the paper itself reports; see
+docs/reference/limitations.md's Categorical Pseudo-Replication section
+for the full history of both removals). `compare_categorical_repo_level()`/
+`repo_level_category_proportions()`/`repo_level_category_n_counts()`/
+`render_categorical_repo_level_table()`/`fetch_categorical_column_by_repo()`
+in `_shared.py` were all removed as part of this -- `fixture_type` was
+their only caller anywhere in this package. `fixture_type`'s per-dataset
+*descriptive* distribution (no test, just counts --
+`CATEGORICAL_METRICS`/`categorical` on `DatasetMetrics`) is UNCHANGED and
+still rendered in each dataset's summary section -- that's now the only
+place `fixture_type` appears in this report at all.
 
-**Table 2 (tab:rq2-coverage) -- teardown coverage**
-(`_render_teardown_coverage_table()`): for each repo, a binary indicator
--- does it have >=1 teardown-classified fixture at all (1) or none (0)?
-"Coverage A/C (%)" is just the mean of that 0/1 list per side, per
-language and Overall. Population (and n_A/n_C): repos with >=1
-setup/teardown/other-classified fixture (a repo with zero classified
-fixtures is skipped, not counted as 0-coverage). **Purely descriptive --
-no statistical test** (removed
-2026-09-27, alongside RQ3's Coverage/Intensity test and Intensity metric
-entirely: the paper's RQ2/RQ3 coverage tables report plain percentages,
-no p-value, no effect size, no BH-FDR family. RQ1 is now the only script
-in this package that performs BH-FDR correction at all -- see
-[internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md)
-for the full before/after inventory).
+`comment_density` (added 2026-08-17, the third paper metric) is
+`fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
+-- see docs/architecture/metrics-reference.md. It's included in
+CONTINUOUS_METRICS like any other metric, so it automatically inherits
+the exact same NO_BODY_FIXTURE_TYPES exclusion loc/cyclomatic_complexity
+already get (see the next paragraph) purely by list membership -- no
+special-casing needed, since it's loc-derived and the same "different
+kind of code unit" reasoning applies.
 
-Both tables render a fixed four-language row order (java, javascript,
-python, typescript) rather than this package's usual "intersection of
-languages present on both sides" convention (`compute_stratified_*_
-balance()`) -- a deliberate simplification matching the paper's table
-spec, predating the statistical-test removal above and unaffected by it.
+`num_parameters` is dropped from the comparative (Mann-Whitney) analysis
+entirely (not just demoted to the other tier): 0 params is the
+overwhelming majority in both datasets (most fixtures take no arguments),
+which makes a distributional test not very informative. Still shown
+per-dataset descriptively (`_render_dataset_summary()`'s "Other" Continuous
+metrics table, repo-level like every other metric in that table -- see
+below) plus a dedicated floor-percentage footnote (`% of fixtures at 0
+params`, deliberately fixture-level -- "what fraction of fixtures sit at
+the floor" is a fixture-level question, no test) in the comparison
+section, so the floor-binding is documented transparently rather than
+silently dropped. `cyclomatic_complexity` also floors heavily (CC=1 is
+the large majority) but is tested anyway, same as `loc`/`comment_density`
+-- unlike `num_parameters`, it's kept in the primary comparative analysis.
 
-These two tables replace the single, previously-reported repo-level
-median setup_pct/teardown_pct/other_pct proportion table (Mann-Whitney U
-+ Cliff's delta on per-repo *proportions*, "V" labeled for paper-column
-consistency though the number was Cliff's delta) -- the paper first
-settled on two narrower tables (one purely descriptive, one
-inferential-but-simpler: a binary coverage rate instead of a continuous
-proportion), then dropped the inferential half of Table 2 too (see
-above). `compare_categorical_repo_level()`/
-`repo_level_category_proportions()` (formerly in `_shared.py`) were
-never used by rq2.py's own Table 2 (a plain per-repo mean needs no
-repo-declustering machinery of its own) -- both were removed from the
-package entirely on 2026-09-27, once rq1.py's `fixture_type` repo-level
-test (their only remaining caller anywhere) was also removed; see
-rq1.py's module docstring for that removal's full rationale.
+Java's `@Rule`/`@ClassRule` fixtures (`junit_rule`/`junit_class_rule`) are
+excluded from `loc`/`cyclomatic_complexity`/`comment_density` entirely
+(`_shared.py::NO_BODY_FIXTURE_TYPES`) -- they're detected on a field
+declaration, not a function body, so Lizard structurally cannot analyze
+them (verified directly: an empty function_list every time, even with
+branching in the field's initializer) and `cyclomatic_complexity`/
+`num_parameters` silently fall back to hardcoded defaults rather than a
+real measurement. `loc`/`comment_density` remain genuinely measured
+(neither is Lizard-derived) but represent a different kind of code unit
+than every other fixture_type here. Still included in the `fixture_type`
+categorical distribution, where "this repo declared N JUnit Rules" is a
+meaningful, correctly-measured fact. See internal-docs/
+methodology-improvements/junit-rule-fixtures.md for the full
+investigation.
 
-A vs C only -- Dataset B (contemporary within-repo human baseline) is still
-collected (db/b.db) but out of scope for this script's reported
-comparisons; see rq1.py's module docstring.
+Every remaining comparison (the three continuous metrics -- there is no
+longer a categorical one) renders through _shared.py's
+render_comparison_table(): one "Overall" row (uncorrected, single pooled
+test) plus one BH-corrected row per language, corrected independently of
+every other metric and of their own Overall row (see
+render_comparison_table()'s docstring). `loc`/`cyclomatic_complexity`/
+`comment_density` each have their own 4-language family -- the only
+BH-FDR families this script (or, as of 2026-09-27, this whole package
+outside `balance.py`) computes.
 
-## Supplementary analyses (not part of either main table)
+Continuous metrics are repo-level throughout (one value per repo, per
+language for the per-language rows) -- not the raw per-fixture values --
+so fixtures clustering within a repo can't inflate the result. Each
+repo's contributed value is that repo's own **mean** fixture -- the
+paper's intended methodology, restored 2026-09-28 (see
+`repo_level_means()`'s docstring in `_shared.py`). This includes
+`_render_dataset_summary()`'s per-dataset "Continuous metrics" tables
+(median/mean/min/max/stdev, `n` = repo count): they read from the same
+repo-level-means data the comparison tests use, not the raw per-fixture
+values, so a single prolific repo can't skew the descriptive numbers any
+more than it can skew the tests themselves.
 
-**Setup coverage by repository and the unimodality check were both
-removed entirely (2026-09-27)**, after a review of which computed
-tables/tests actually feed the paper concluded neither did: setup
-coverage was already documented as "not one of the two paper tables"
-(it sat near-ceiling for 3 of 4 languages, so it never carried the kind
-of cross-language story Table 2 does -- the one real finding it turned
-up, a significant java gap (94.5% A vs 84.0% H, BH-corrected p=0.012),
-is recorded here rather than in a table: if this needs re-deriving,
-`_effective_setup_count()`/`_setup_coverage_indicators()`-shaped logic
-is what produced it, mirroring `_render_teardown_coverage_table()`
-exactly but for setup instead of teardown). The dip test's own docstring
-already flagged it as "not an A vs C comparison test" and kept only in
-case it "may still be cited in prose" -- removed once that never
-happened. Removing both also drops the `diptest` package as a project
-dependency (see `_shared.py`'s `run_dip_test()`, now itself removed) and
-one BH-FDR correction family per table (setup coverage's own
-Overall+4-language family) that this report no longer needs to compute.
-
-**Fixture kind classification coverage by language**
-(`_render_kind_classification_coverage_table()`): breaks Table 1's pooled,
-dataset-wide `other` percentage (see "Per-dataset summary" above) out per
-language instead, since `other` is not spread evenly -- e.g. `junit_rule`/
-`junit_class_rule`/`testng_data_provider` (java-only fixture types that
-aren't inherently setup or teardown) make java's `other` share far higher
-than javascript/typescript's (near 0%) or python's (negligible). Table 1
-excludes 'other' from its own denominator entirely (see
-`_answerable_total()`'s docstring), so this table isn't explaining a
-dilution of Table 1's percentages -- it's showing how much of each
-language's fixture population Table 1 is silently *not describing at
-all*: a language with a high `other` share has that much smaller a slice
-of its real setup/teardown-relevant fixtures represented anywhere in
-Table 1's counts. Worth checking on every future dataset extraction (a
-new language or framework can introduce its own unclassifiable fixture
-types), not just once at paper-writing time -- hence a permanent report
-section rather than a one-off query.
-
-`has_teardown_pair` (a separate fixtures-table column that used to exist
-alongside `fixture_role`) was never analyzed by this script -- it has
-since been dropped from the extracted metric set entirely (not reported in
-the paper). `fixture_role` above is unaffected: it's computed by its
-own, independent teardown-detection pass at extraction time.
+**Median-per-repo was tried and reverted, same day.** A repo's *median*
+fixture (rather than its mean) was briefly the primary aggregation,
+reasoned as immune to that repo's own outlier fixtures -- but it
+interacts badly with `cyclomatic_complexity`/`comment_density`'s heavy
+floor-binding (see two paragraphs up): a repo's median CC/comment_density
+collapses to the exact floor value for most repos, producing
+near-universal ties across repos and collapsing two of the three
+paper metrics' Overall-row significance (p<.001 under mean-per-repo to
+p>0.4 under median-per-repo, on the real corpus) purely as an artifact
+of the aggregation choice, not a real change in the underlying data.
+Rather than silently discard that finding, `_render_comparison()` also
+renders a second, clearly-labeled "Diagnostic: median-per-repo
+aggregation (NOT used in the paper)" section with the same three
+metrics computed the median-per-repo way (`repo_level_continuous_
+median_diagnostic`/`repo_level_continuous_by_language_median_
+diagnostic` on `DatasetMetrics`, `repo_level_medians()` in `_shared.py`,
+`compare_datasets_repo_level_median_diagnostic()`) -- kept as a record of
+how sensitive this comparison is to the aggregation choice, explicitly
+not a competing result to cite.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
-yet.
+yet -- lets this run against whatever subset of A/C has been collected so
+far.
 
 python -m collection.research_questions.rq2
 """
@@ -134,38 +145,136 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
+from ..between_group_comparison import (
+    BalanceTest,
+    compute_continuous_balance,
+)
 from ..db import db_session
 from ..logging_utils import get_logger
 from ._shared import (
     COMPARISONS,
     DATASET_LABELS,
+    NO_BODY_FIXTURE_TYPES,
     OUTPUT_DIR,
     LanguageLeakage,
+    NCounts,
     compute_language_leakage,
+    compute_stratified_continuous_balance,
+    fetch_categorical_column,
+    fetch_continuous_column,
+    fetch_continuous_column_by_repo,
+    fmt,
     pct,
+    percentile,
+    render_comparison_table,
     render_language_leakage_table,
+    repo_level_means,
+    repo_level_medians,
     require_db_or_none,
+    summarize_continuous,
     write_markdown_report,
 )
 
 logger = get_logger(__name__)
 
-# Fixed row order for both paper tables -- see the module docstring for why
-# this is a fixed list rather than the "languages present on both sides"
-# intersection convention used elsewhere in this package.
-RQ2_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
+# The three continuous metrics reported in the paper -- exhaustive, not
+# illustrative. Order here is this list's own reporting order (both in the
+# per-dataset summary and the A-vs-C comparison's "Paper Metrics" section).
+PAPER_CONTINUOUS_METRICS = ["loc", "cyclomatic_complexity", "comment_density"]
+# Mann-Whitney-tested continuous metrics. Used to be paper metrics plus
+# max_nesting_depth (kept fully tested but rendered under a separate
+# "Other Extracted Features (Not in the Paper)" heading) -- max_nesting_depth
+# (along with num_objects_instantiated/num_external_calls/has_teardown_pair)
+# was dropped from the extracted metric set entirely, so CONTINUOUS_METRICS
+# is now exactly the paper set. See this module's docstring for why
+# num_parameters is still dropped from this list (fetched fixture-level for
+# the descriptive table + floor-percentage footnote, never Mann-Whitney
+# tested).
+CONTINUOUS_METRICS = PAPER_CONTINUOUS_METRICS
+# metric -> the value that "floored" means "structurally minimal" for it
+# (0 params: no arguments) -- drives the descriptive floor-percentage
+# footnote only, no comparative test.
+FLOOR_CHECK_METRICS = {"num_parameters": 0}
+# The per-dataset descriptive "Continuous metrics" tables in
+# _render_dataset_summary() (repo-level) and the floor-percentage footnote
+# (deliberately fixture-level) still show/use all of these -- neither is a
+# comparison, so dropping num_parameters from CONTINUOUS_METRICS (the
+# Mann-Whitney-tested list) doesn't affect either.
+DESCRIPTIVE_CONTINUOUS_METRICS = CONTINUOUS_METRICS + list(FLOOR_CHECK_METRICS)
+CATEGORICAL_METRICS = ["fixture_type"]
 
 
 @dataclass
 class DatasetMetrics:
     dataset: str
     n_fixtures: int
-    kind_distribution: dict[str, int] = field(default_factory=dict)
-    kind_counts_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
-    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
+    continuous_raw: dict[str, list[float]] = field(default_factory=dict)
+    categorical: dict[str, dict[str, int]] = field(default_factory=dict)
+    language_leakage: list[LanguageLeakage] = field(default_factory=list)
+    agent_type_distribution: dict[str, int] = field(default_factory=dict)
+    repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
+    repo_level_continuous_by_language: dict[str, dict[str, list[float]]] = field(
         default_factory=dict
     )
-    language_leakage: list[LanguageLeakage] = field(default_factory=list)
+    # Diagnostic-only companion to the two fields above: same repo-level
+    # declustering, but each repo contributes its own MEDIAN fixture
+    # instead of its mean. Restricted to CONTINUOUS_METRICS (the 3 paper
+    # metrics) -- not part of the paper's methodology, never cited as a
+    # result, see this module's docstring for why it's kept at all.
+    repo_level_continuous_median_diagnostic: dict[str, list[float]] = field(default_factory=dict)
+    repo_level_continuous_by_language_median_diagnostic: dict[str, dict[str, list[float]]] = field(
+        default_factory=dict
+    )
+    # metric -> % of fixtures at FLOOR_CHECK_METRICS' floor value (descriptive
+    # only -- see this module's docstring).
+    floor_pct: dict[str, float] = field(default_factory=dict)
+
+
+def _fetch_continuous_by_repo_and_language(
+    conn: sqlite3.Connection,
+) -> dict[str, dict[str, dict[int, list[float]]]]:
+    """{metric: {language: {repo_id: [values]}}} for every CONTINUOUS_METRICS
+    column, one query pass over fixtures joined to test_files -- feeds both
+    repo_level_means() (primary) and repo_level_medians() (diagnostic-only,
+    see this module's docstring) per (metric, language) for the
+    per-language continuous family tests, the same repo-declustering
+    repo_level_continuous already applies pooled (see
+    compute_stratified_continuous_balance()'s docstring in _shared.py for
+    why per-language stays repo-level too).
+
+    Excludes NO_BODY_FIXTURE_TYPES (see _shared.py) -- this function only
+    ever serves CONTINUOUS_METRICS (loc/cyclomatic_complexity/
+    comment_density), never num_parameters, so the exclusion applies
+    unconditionally rather than needing an opt-in flag the way
+    fetch_continuous_column_by_repo()'s does."""
+    columns_sql = ", ".join(f"f.{m}" for m in CONTINUOUS_METRICS)
+    placeholders = ", ".join("?" for _ in NO_BODY_FIXTURE_TYPES)
+    rows = conn.execute(
+        f"SELECT f.repo_id, tf.language, {columns_sql} FROM fixtures f "
+        "JOIN test_files tf ON f.file_id = tf.id "
+        f"WHERE f.fixture_type NOT IN ({placeholders})",
+        tuple(NO_BODY_FIXTURE_TYPES),
+    ).fetchall()
+    result: dict[str, dict[str, dict[int, list[float]]]] = {m: {} for m in CONTINUOUS_METRICS}
+    for row in rows:
+        repo_id, language = row[0], row[1]
+        for metric, value in zip(CONTINUOUS_METRICS, row[2:]):
+            if value is None:
+                continue
+            result[metric].setdefault(language, {}).setdefault(repo_id, []).append(value)
+    return result
+
+
+def _floor_percentage(values: list[float], floor: float) -> float | None:
+    """Fraction (0..1) of `values` sitting exactly at `floor` -- documents
+    the floor-binding FLOOR_CHECK_METRICS' metrics show (0 params)
+    instead of silently dropping them from the report. `None` (not 0.0)
+    for no data, so callers can render "no data" rather than a misleading
+    "0% at floor". A 0..1 fraction (not already a 0-100 percentage) to
+    match pct()'s convention -- see _shared.py."""
+    if not values:
+        return None
+    return sum(1 for v in values if v == floor) / len(values)
 
 
 def load_dataset_metrics(
@@ -178,374 +287,444 @@ def load_dataset_metrics(
 
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        (
-            kind_distribution,
-            kind_counts_by_repo,
-            kind_counts_by_repo_and_language,
-        ) = _fetch_kinds_and_repo_counts(conn)
+        # DESCRIPTIVE_CONTINUOUS_METRICS (5), not CONTINUOUS_METRICS (4) --
+        # num_parameters is still fetched fixture-level for the
+        # floor-percentage footnote (a fixture-level question: what fraction
+        # of *fixtures* sit at the floor), even though it's no longer
+        # Mann-Whitney tested and no longer what the per-dataset descriptive
+        # table displays (see module docstring and repo_level_continuous
+        # below).
+        continuous_raw = {
+            m: fetch_continuous_column(conn, "fixtures", m) for m in DESCRIPTIVE_CONTINUOUS_METRICS
+        }
+        categorical = {m: fetch_categorical_column(conn, "fixtures", m) for m in CATEGORICAL_METRICS}
         language_leakage = compute_language_leakage(conn)
+        # Descriptive only, not run through a significance test: agent_type
+        # is the group-defining variable for Dataset A (which agent
+        # authored this fixture), not a content metric to test A-vs-C on --
+        # comparing it against C's constant "human_pre2022" value would be
+        # tautological (echoing commit_kind), not a real finding. Still
+        # shown for C too (and for B, if this loader is called on it
+        # directly -- it's dataset-letter-agnostic) since it doubles as a
+        # sanity check that those corpora really are cleanly non-agent.
+        agent_type_distribution = fetch_categorical_column(conn, "fixtures", "agent_type")
+        # One mean-per-repo value per continuous metric -- see
+        # repo_level_means()'s docstring for why this exists: pseudo-
+        # replication (fixtures cluster within repos), fixed by testing one
+        # value per repo instead of every fixture as an independent
+        # observation. repo_level_continuous_by_language is the same idea,
+        # bucketed by each fixture's own language too, for the per-language
+        # family tests. Covers DESCRIPTIVE_CONTINUOUS_METRICS (5), not just
+        # CONTINUOUS_METRICS (4) -- num_parameters isn't Mann-Whitney tested,
+        # but _render_dataset_summary()'s descriptive table reads every
+        # metric's median/mean/min/max/stdev from here too, so it stays
+        # repo-level throughout, same as the tested metrics, rather than
+        # silently reverting to fixture-level for just this one column.
+        #
+        # CONTINUOUS_METRICS (loc/cyclomatic_complexity/comment_density)
+        # exclude NO_BODY_FIXTURE_TYPES -- see that constant's docstring
+        # in _shared.py. num_parameters does NOT
+        # exclude them: 0 is a correct, not-Lizard-derived value for a
+        # field's parameter count, unlike CC (which is a meaningless Lizard
+        # fallback default for these), so it
+        # has no equivalent reason to drop them.
+        #
+        # _by_repo_per_metric is also reused below for
+        # repo_level_continuous_median_diagnostic, so each metric's
+        # per-repo fixture lists are only fetched once regardless of how
+        # many aggregations (mean, median) run over them.
+        _by_repo_per_metric = {
+            m: fetch_continuous_column_by_repo(
+                conn,
+                "fixtures",
+                m,
+                exclude_fixture_types=(
+                    NO_BODY_FIXTURE_TYPES if m in CONTINUOUS_METRICS else None
+                ),
+            )
+            for m in DESCRIPTIVE_CONTINUOUS_METRICS
+        }
+        repo_level_continuous = {
+            m: repo_level_means(by_repo) for m, by_repo in _by_repo_per_metric.items()
+        }
+        # Diagnostic-only, NOT the paper's methodology -- see this module's
+        # docstring's "Median-per-repo was tried and reverted" section.
+        # Restricted to CONTINUOUS_METRICS: num_parameters is never
+        # Mann-Whitney tested either way, so it has no diagnostic
+        # counterpart to compute.
+        repo_level_continuous_median_diagnostic = {
+            m: repo_level_medians(_by_repo_per_metric[m]) for m in CONTINUOUS_METRICS
+        }
+        continuous_by_repo_and_language = _fetch_continuous_by_repo_and_language(conn)
+        repo_level_continuous_by_language = {
+            metric: {
+                language: repo_level_means(by_repo) for language, by_repo in by_language.items()
+            }
+            for metric, by_language in continuous_by_repo_and_language.items()
+        }
+        repo_level_continuous_by_language_median_diagnostic = {
+            metric: {
+                language: repo_level_medians(by_repo) for language, by_repo in by_language.items()
+            }
+            for metric, by_language in continuous_by_repo_and_language.items()
+        }
+
+    floor_pct = {
+        metric: _floor_percentage(continuous_raw[metric], floor)
+        for metric, floor in FLOOR_CHECK_METRICS.items()
+    }
 
     return DatasetMetrics(
         dataset=dataset,
         n_fixtures=n_fixtures,
-        kind_distribution=kind_distribution,
-        kind_counts_by_repo=kind_counts_by_repo,
-        kind_counts_by_repo_and_language=kind_counts_by_repo_and_language,
+        continuous_raw=continuous_raw,
+        categorical=categorical,
         language_leakage=language_leakage,
+        agent_type_distribution=agent_type_distribution,
+        repo_level_continuous=repo_level_continuous,
+        repo_level_continuous_by_language=repo_level_continuous_by_language,
+        repo_level_continuous_median_diagnostic=repo_level_continuous_median_diagnostic,
+        repo_level_continuous_by_language_median_diagnostic=(
+            repo_level_continuous_by_language_median_diagnostic
+        ),
+        floor_pct=floor_pct,
     )
 
 
-def _empty_kind_counts() -> dict[str, int]:
-    """A fresh {setup/teardown/setup_and_teardown/other: 0} dict -- the one
-    place that dict literal is spelled out, so every kind_distribution/
-    kind_counts_by_repo(_and_language) entry stays in sync if a kind is
-    ever added or renamed."""
-    return dict.fromkeys(("setup", "teardown", "setup_and_teardown", "other"), 0)
-
-
-def _fetch_kinds_and_repo_counts(
-    conn: sqlite3.Connection,
-) -> tuple[
-    dict[str, int],
-    dict[int, dict[str, int]],
-    dict[str, dict[int, dict[str, int]]],
-]:
-    """Single pass over every fixture: dataset-level kind distribution
-    (descriptive only), per-repo {setup/teardown/setup_and_teardown/other:
-    count} (Overall), and the same per-repo counts bucketed by each
-    fixture's own language too -- reading fixtures.fixture_role
-    directly, already classified once at extraction time (see this
-    module's docstring), so this is a straight read, not a
-    re-classification.
-
-    `kind_counts_by_repo` feeds Table 2's Overall row (via
-    _teardown_coverage_indicators()); `kind_counts_by_repo_and_language`
-    feeds both tables' per-language rows -- Table 1's raw counts
-    (_language_kind_totals(), summed across repos) and Table 2's
-    per-language coverage percentage -- grouped by each fixture's own
-    language (test_files.language), not the repo's tag, so a repo with
-    fixtures in more than one language contributes to each language
-    separately."""
-    kind_distribution = _empty_kind_counts()
-    kind_counts_by_repo: dict[int, dict[str, int]] = {}
-    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = {}
-
-    rows = conn.execute(
-        "SELECT f.repo_id, f.fixture_role, tf.language FROM fixtures f "
-        "JOIN test_files tf ON f.file_id = tf.id WHERE f.fixture_type IS NOT NULL"
-    ).fetchall()
-    for repo_id, kind, language in rows:
-        kind_distribution[kind] += 1
-
-        repo_kind_counts = kind_counts_by_repo.setdefault(
-            repo_id, _empty_kind_counts()
+def compare_datasets_repo_level(
+    a: DatasetMetrics, other: DatasetMetrics
+) -> dict[str, BalanceTest]:
+    """A vs `other`, one mean value per repo instead of one value per
+    fixture -- the Overall row for each continuous metric's family table.
+    Repo-level throughout: the per-language rows (compute_stratified_
+    continuous_balance() on repo_level_continuous_by_language) use the
+    same one-value-per-repo basis, so a continuous metric's whole table is
+    never fixture-level -- see this module's docstring. This is the
+    paper's actual methodology -- see compare_datasets_repo_level_median_
+    diagnostic() below for the diagnostic-only median-per-repo variant."""
+    return {
+        metric: compute_continuous_balance(
+            human_values=other.repo_level_continuous[metric],
+            agent_values=a.repo_level_continuous[metric],
+            variable=metric,
         )
-        repo_kind_counts[kind] += 1
+        for metric in CONTINUOUS_METRICS
+    }
 
-        lang_repo_counts = kind_counts_by_repo_and_language.setdefault(
-            language, {}
-        ).setdefault(repo_id, _empty_kind_counts())
-        lang_repo_counts[kind] += 1
 
-    return kind_distribution, kind_counts_by_repo, kind_counts_by_repo_and_language
+def compare_datasets_repo_level_median_diagnostic(
+    a: DatasetMetrics, other: DatasetMetrics
+) -> dict[str, BalanceTest]:
+    """Diagnostic-only sibling of compare_datasets_repo_level() -- same
+    shape, but each repo contributes its own median fixture value instead
+    of its mean (repo_level_continuous_median_diagnostic). NOT the paper's
+    methodology and never cited as a result -- kept to make visible how
+    much a repo's median CC/comment_density collapsing to the metric's
+    floor value changes the comparison, purely as an artifact of the
+    aggregation choice. See this module's docstring."""
+    return {
+        metric: compute_continuous_balance(
+            human_values=other.repo_level_continuous_median_diagnostic[metric],
+            agent_values=a.repo_level_continuous_median_diagnostic[metric],
+            variable=f"{metric}_median_diagnostic",
+        )
+        for metric in CONTINUOUS_METRICS
+    }
+
+
+def _render_continuous_summary_table(label: str, metric_list: list[str], metrics: DatasetMetrics) -> str:
+    """One repo-level descriptive table (median/mean/min/max/stdev, `n` =
+    repo count) for `metric_list` -- shared by both tiers of
+    _render_dataset_summary()'s continuous-metrics section (Paper /
+    Other), so the two tables stay identically formatted."""
+    lines = [f"**Continuous metrics -- {label}** (repo-level: one mean per repo, not one value per fixture)",
+             "", "| Metric | n | median | mean | min | max | stdev |",
+             "|---|---|---|---|---|---|---|"]
+    for metric in metric_list:
+        s = summarize_continuous(metrics.repo_level_continuous[metric])
+        lines.append(
+            f"| {metric} | {s['n']:,} | {fmt(s['median'])} | {fmt(s['mean'])} | "
+            f"{fmt(s['min'], 0)} | {fmt(s['max'], 0)} | {fmt(s['stdev'])} |"
+        )
+    lines.append("")
+    return "\n".join(lines)
 
 
 def _render_dataset_summary(metrics: DatasetMetrics) -> str:
     lines = [f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures", ""]
 
-    total_kind = sum(metrics.kind_distribution.values())
-    lines += ["**fixture_type kind distribution**", "", "| Kind | Count | % |", "|---|---|---|"]
-    for kind in ("setup", "teardown", "setup_and_teardown", "other"):
-        count = metrics.kind_distribution.get(kind, 0)
-        kind_pct = 100 * count / total_kind if total_kind else 0.0
-        lines.append(f"| {kind} | {count:,} | {kind_pct:.1f}% |")
-    lines.append("")
+    lines.append(_render_continuous_summary_table("Paper", PAPER_CONTINUOUS_METRICS, metrics))
+    lines.append(
+        _render_continuous_summary_table(
+            "Other (not in the paper)", list(FLOOR_CHECK_METRICS), metrics
+        )
+    )
+
+    for metric in CATEGORICAL_METRICS:
+        dist = metrics.categorical[metric]
+        total = sum(dist.values())
+        lines += [f"**{metric} distribution**", "", "| Value | Count | % |", "|---|---|---|"]
+        if total == 0:
+            lines.append("| _(no data)_ | -- | -- |")
+        else:
+            for value, count in sorted(dist.items(), key=lambda kv: -kv[1]):
+                lines.append(f"| {value} | {count:,} | {100 * count / total:.1f}% |")
+        lines.append("")
 
     lines.append(render_language_leakage_table(metrics.language_leakage))
 
-    return "\n".join(lines)
-
-
-def _language_kind_totals(
-    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]],
-) -> dict[str, dict[str, int]]:
-    """{language: {setup/teardown/setup_and_teardown/other: total count
-    across every repo}} -- Table 1's per-language raw counts, summed from
-    the same per-repo counts Table 2 and the dip test draw their per-repo
-    populations/proportions from (no separate fetch/classification pass)."""
-    totals: dict[str, dict[str, int]] = {}
-    for language, by_repo in kind_counts_by_repo_and_language.items():
-        lang_totals = totals.setdefault(language, _empty_kind_counts())
-        for repo_counts in by_repo.values():
-            for kind, count in repo_counts.items():
-                lang_totals[kind] += count
-    return totals
-
-
-def _effective_setup_count(kind_counts: dict[str, int]) -> int:
-    """Setup-providing fixture count: 'setup' plus 'setup_and_teardown' --
-    the latter genuinely provides setup too, so excluding it here would
-    undercount."""
-    return kind_counts.get("setup", 0) + kind_counts.get("setup_and_teardown", 0)
-
-
-def _effective_teardown_count(kind_counts: dict[str, int]) -> int:
-    """Teardown-providing fixture count: 'teardown' plus
-    'setup_and_teardown', for the same reason as _effective_setup_count()."""
-    return kind_counts.get("teardown", 0) + kind_counts.get("setup_and_teardown", 0)
-
-
-def _answerable_total(kind_counts: dict[str, int]) -> int:
-    """Denominator for Table 1's Setup%/Teardown% cells: setup + teardown +
-    setup_and_teardown, excluding 'other'. A fixture classified 'other'
-    (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider`
-    -- see _render_kind_classification_coverage_table()'s docstring) was
-    never a candidate to be setup or teardown in the first place (no
-    setup/teardown pairing mechanism applies to it, and unlike
-    pytest_decorator there's no body-analysis fallback either), so it
-    shouldn't dilute the percentage of the fixtures that WERE classified
-    one way or the other -- a language with a large 'other' share (java,
-    see the coverage table below) would otherwise report artificially low
-    Setup%/Teardown% purely because of how many of its fixtures could not
-    be classified at all, not because of its actual setup/teardown
-    provision."""
-    return kind_counts.get("setup", 0) + kind_counts.get("teardown", 0) + kind_counts.get(
-        "setup_and_teardown", 0
-    )
-
-
-def _pct_cell(count: int, total: int) -> str:
-    """`count` formatted as "N (P%)", P = count/total*100 to one decimal
-    place -- just "N" (no percentage) if total is 0, the zero-filled-row
-    case for a language absent from this dataset (see
-    _render_kind_counts_table()'s "zero, not omitted" convention), which
-    would otherwise divide by zero. `total` is always the language's (or,
-    for the Total row, the dataset's) *answerable* fixture count -- setup +
-    teardown + setup_and_teardown, excluding 'other' (see
-    _answerable_total()'s docstring for why) -- not the raw setup/teardown
-    sum, since a setup_and_teardown fixture is in both; see
-    _render_kind_counts_table()'s docstring for how that denominator keeps
-    Setup%/Teardown% consistent with each other."""
+    dist = metrics.agent_type_distribution
+    total = sum(dist.values())
+    lines += [
+        "**agent_type distribution** (descriptive only, not compared against "
+        "other datasets -- see load_dataset_metrics()'s docstring for why)",
+        "",
+        "| Value | Count | % |",
+        "|---|---|---|",
+    ]
     if total == 0:
-        return f"{count:,}"
-    return f"{count:,} ({100 * count / total:.1f}%)"
-
-
-def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """Table 1 (tab:rq2-counts): absolute setup/teardown fixture counts per
-    language, each also shown as a percentage of that language's
-    *answerable* fixture count (setup + teardown + setup_and_teardown,
-    excluding 'other' -- see _answerable_total()'s docstring for why, not
-    just the raw setup/teardown counts). Purely descriptive -- no
-    statistics. "other"-classified fixtures are excluded from both the
-    counts themselves and the percentage denominator -- they were never a
-    setup/teardown candidate to begin with. A 'setup_and_teardown'-
-    classified fixture (pytest_decorator only -- see this module's
-    docstring) counts toward *both* columns, since it genuinely provides
-    both -- so the two columns are not mutually exclusive and
-    Setup+Teardown (and Setup%+Teardown%) can exceed the dataset's
-    answerable fixture count (100%)."""
-    other_label = other.dataset.upper()
-    lines = [
-        "Raw counts of setup-classified and teardown-classified fixtures, "
-        "each also shown as a percentage of that language's *answerable* "
-        "fixture count (setup + teardown + setup_and_teardown -- "
-        '"other"-classified fixtures, e.g. a JUnit `@Rule` or a TestNG '
-        "`@DataProvider` (see the Fixture Kind Classification Coverage by "
-        "Language table below), are excluded from both the counts "
-        "themselves and this percentage denominator, since they were "
-        "never a setup/teardown candidate in the first place; a fixture "
-        "classified as providing both -- e.g. a pytest fixture with setup "
-        "code before its `yield` -- is counted in both columns, so they "
-        "are not mutually exclusive and the two percentages can sum past "
-        "100%). Total is the dataset-wide sum across every language "
-        "present, not just the four rows below. Purely descriptive -- no "
-        "significance test.",
-        "",
-        f"| Language | Setup A | Setup {other_label} | Teardown A | Teardown {other_label} |",
-        "|---|---|---|---|---|",
-        (
-            f"| Total | {_pct_cell(_effective_setup_count(a.kind_distribution), _answerable_total(a.kind_distribution))} | "
-            f"{_pct_cell(_effective_setup_count(other.kind_distribution), _answerable_total(other.kind_distribution))} | "
-            f"{_pct_cell(_effective_teardown_count(a.kind_distribution), _answerable_total(a.kind_distribution))} | "
-            f"{_pct_cell(_effective_teardown_count(other.kind_distribution), _answerable_total(other.kind_distribution))} |"
-        ),
-    ]
-
-    a_totals = _language_kind_totals(a.kind_counts_by_repo_and_language)
-    other_totals = _language_kind_totals(other.kind_counts_by_repo_and_language)
-    for language in RQ2_LANGUAGES:
-        a_kind = a_totals.get(language, {})
-        other_kind = other_totals.get(language, {})
-        a_total = _answerable_total(a_kind)
-        other_total = _answerable_total(other_kind)
-        lines.append(
-            f"| {language} | {_pct_cell(_effective_setup_count(a_kind), a_total)} | "
-            f"{_pct_cell(_effective_setup_count(other_kind), other_total)} | "
-            f"{_pct_cell(_effective_teardown_count(a_kind), a_total)} | "
-            f"{_pct_cell(_effective_teardown_count(other_kind), other_total)} |"
-        )
-
+        lines.append("| _(no data)_ | -- | -- |")
+    else:
+        for value, count in sorted(dist.items(), key=lambda kv: -kv[1]):
+            lines.append(f"| {value} | {count:,} | {100 * count / total:.1f}% |")
     lines.append("")
+
     return "\n".join(lines)
 
 
-def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[float]:
-    """Per-repo binary indicator: 1.0 if that repo has >=1 teardown-
-    providing fixture (classified 'teardown' or 'setup_and_teardown' --
-    see _effective_teardown_count()), else 0.0. Population is repos with
-    >=1 classified (setup/teardown/setup_and_teardown/other) fixture -- a
-    repo with none is skipped, not counted as 0-coverage. `_coverage_pct()`
-    takes the mean of these 0/1 values directly -- that mean *is* "% of
-    repos with >=1 teardown fixture",
-    Table 2's Coverage A/C (%) columns."""
-    return [
-        1.0 if _effective_teardown_count(counts) > 0 else 0.0
-        for counts in by_repo.values()
-        if sum(counts.values())
-    ]
+def _per_language_medians(
+    a_by_language: dict[str, list[float]], other_by_language: dict[str, list[float]]
+) -> dict[str, tuple[float | None, float | None]]:
+    """{language: (A median, other median)} of the exact same per-repo
+    values compute_stratified_continuous_balance() tests for this metric --
+    summarize_continuous()'s own median, the same aggregation
+    _render_continuous_summary_table() uses for the dataset-wide
+    descriptive tables, not a new computation. Only languages present on
+    both sides get a real per-language *test* row (render_comparison_
+    table()'s `per_language` is already restricted to that intersection),
+    so computing this over the union of languages present on either side
+    is harmless -- entries for a language missing on one side simply never
+    get looked up as a table row. Takes the two by-language dicts directly
+    (not a metric name + DatasetMetrics) so it works for either the
+    primary (mean-per-repo) or diagnostic (median-per-repo) view -- see
+    _render_continuous_metric()'s callers."""
+    languages = set(a_by_language) | set(other_by_language)
+    return {
+        language: (
+            summarize_continuous(a_by_language.get(language, []))["median"],
+            summarize_continuous(other_by_language.get(language, []))["median"],
+        )
+        for language in languages
+    }
 
 
-def _render_teardown_coverage_row(
-    label: str, n_a: int, n_c: int, pct_a: float | None, pct_c: float | None
+def _per_language_percentile(
+    a_by_language: dict[str, list[float]], other_by_language: dict[str, list[float]], q: float
+) -> dict[str, tuple[float | None, float | None]]:
+    """{language: (A value, other value)} of the qth percentile (0-100) of
+    the exact same per-repo values compute_stratified_continuous_
+    balance() tests for this metric -- _shared.py's percentile(), not a
+    new aggregation. Sibling of _per_language_medians() above (which stays
+    on statistics.median() via summarize_continuous() rather than being
+    rewritten to call percentile(values, 50) -- no behavior change for the
+    already-shipped median columns). Same by-language-dicts-directly and
+    union-of-languages reasoning as _per_language_medians()'s docstring."""
+    languages = set(a_by_language) | set(other_by_language)
+    return {
+        language: (
+            percentile(a_by_language.get(language, []), q),
+            percentile(other_by_language.get(language, []), q),
+        )
+        for language in languages
+    }
+
+
+def _render_continuous_metric(
+    metric: str,
+    a_overall: list[float],
+    other_overall: list[float],
+    a_by_language: dict[str, list[float]],
+    other_by_language: dict[str, list[float]],
+    overall: BalanceTest,
+    other_dataset: str,
+    *,
+    include_percentile_columns: bool = False,
 ) -> str:
-    """One row of Table 2 -- purely descriptive (no statistical test, see
-    this module's docstring): `pct_a`/`pct_c` are just the mean of each
-    side's 0/1 coverage indicator list, `None` when that side's population
-    is empty."""
-    if pct_a is None and pct_c is None:
-        return f"| {label} | {n_a} | {n_c} | -- | -- |"
-    return f"| {label} | {n_a} | {n_c} | {pct(pct_a)} | {pct(pct_c)} |"
+    """One metric's full table (Overall + per-language family rows),
+    repo-level throughout -- see compare_datasets_repo_level()'s docstring.
+    Takes the repo-level values directly (not a DatasetMetrics pair) so
+    the same renderer serves both the paper's primary (mean-per-repo) view
+    and the diagnostic (median-per-repo) view -- see _render_comparison()'s
+    two call sites.
 
-
-def _coverage_pct(indicators: list[float]) -> float | None:
-    """Mean of a 0/1 indicator list as a 0..1 proportion (pct()'s own
-    expected input -- it multiplies by 100 itself), or None if the
-    population (the list itself) is empty -- shared by Table 2's Overall
-    and per-language rows."""
-    return sum(indicators) / len(indicators) if indicators else None
-
-
-def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """Table 2 (tab:rq2-coverage): % of repos with >=1 teardown-classified
-    fixture, per language and Overall. Purely descriptive -- no
-    statistical test (removed 2026-09-27, see this module's docstring for
-    why RQ2 no longer reports one)."""
-    other_label = other.dataset.upper()
-    lines = [
-        "Per-repository binary coverage: 1 if a repo has >=1 teardown-"
-        "classified fixture, else 0 (population: repos with >=1 setup/"
-        'teardown/other-classified fixture). "Coverage A/C (%)" is the '
-        "share of that population with the indicator at 1. Purely "
-        "descriptive -- no statistical test.",
-        "",
-        f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) |",
-        "|---|---|---|---|---|",
-    ]
-
-    a_overall = _teardown_coverage_indicators(a.kind_counts_by_repo)
-    other_overall = _teardown_coverage_indicators(other.kind_counts_by_repo)
+    `include_percentile_columns`: adds "A median"/"<OTHER> median", "A
+    Q3"/"<OTHER> Q3", and "A P90"/"<OTHER> P90" columns (per
+    render_comparison_table()'s per_language_medians/per_language_q3/
+    per_language_p90) -- set only for the three paper continuous metrics
+    (loc/cyclomatic_complexity/comment_density) -- these are the paper's
+    per-language comparison tables, showing the underlying
+    distribution (not just its center) alongside the effect size, without
+    changing the "Other" tier's table shape. Q3/P90 exist specifically to
+    explain an effect that reaches significance despite identical
+    medians -- a real difference concentrated in the upper tail of one
+    distribution, invisible to the median alone."""
+    overall_n = NCounts(len(a_overall), len(other_overall))
+    per_language = compute_stratified_continuous_balance(
+        a_by_language, other_by_language, metric
+    )
+    per_language_n = {
+        language: NCounts(
+            len(a_by_language.get(language, [])),
+            len(other_by_language.get(language, [])),
+        )
+        for language in per_language
+    }
+    per_language_medians = (
+        _per_language_medians(a_by_language, other_by_language)
+        if include_percentile_columns
+        else None
+    )
+    per_language_q3 = (
+        _per_language_percentile(a_by_language, other_by_language, 75)
+        if include_percentile_columns
+        else None
+    )
+    per_language_p90 = (
+        _per_language_percentile(a_by_language, other_by_language, 90)
+        if include_percentile_columns
+        else None
+    )
+    lines = [f"### {metric}", ""]
     lines.append(
-        _render_teardown_coverage_row(
-            "Overall",
-            len(a_overall),
-            len(other_overall),
-            _coverage_pct(a_overall),
-            _coverage_pct(other_overall),
+        render_comparison_table(
+            overall,
+            overall_n,
+            per_language,
+            per_language_n,
+            other_dataset=other_dataset,
+            per_language_medians=per_language_medians,
+            per_language_q3=per_language_q3,
+            per_language_p90=per_language_p90,
         )
     )
-
-    for language in RQ2_LANGUAGES:
-        a_by_repo = _teardown_coverage_indicators(a.kind_counts_by_repo_and_language.get(language, {}))
-        other_by_repo = _teardown_coverage_indicators(
-            other.kind_counts_by_repo_and_language.get(language, {})
-        )
-        lines.append(
-            _render_teardown_coverage_row(
-                language,
-                len(a_by_repo),
-                len(other_by_repo),
-                _coverage_pct(a_by_repo),
-                _coverage_pct(other_by_repo),
-            )
-        )
-
-    lines.append("")
     return "\n".join(lines)
 
 
-def _render_kind_classification_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """### Fixture Kind Classification Coverage by Language.
-
-    Supplementary -- not part of either main paper table (tab:rq2-counts,
-    tab:rq2-coverage), rendered under generate_report()'s "## Supplementary
-    Analyses" section. Table 1 above excludes 'other' entirely from its
-    own denominator (see _answerable_total()'s docstring) and never shows
-    the 'other' slice on its own; this table does, broken out per language
-    instead of pooled dataset-wide (the "Per-dataset summary" section's
-    kind distribution) -- 'other' fixtures (e.g. a JUnit `@Rule`/
-    `@ClassRule` field, or a TestNG `@DataProvider`) aren't spread evenly
-    across languages, so a language with a high 'other' share has that
-    much smaller a slice of its fixtures represented anywhere in Table 1's
-    counts at all (not a diluted rate -- an outright absence). Reuses
-    _language_kind_totals() -- the same per-language totals Table 1 itself
-    renders from -- so this is a different view of the identical numbers,
-    not a separate computation."""
-    other_label = other.dataset.upper()
+def _render_floor_percentage_footnote(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Descriptive-only footnote for num_parameters, replacing its old
+    Mann-Whitney section -- see this module's docstring for why it was
+    dropped from comparative testing."""
     lines = [
-        "### Fixture Kind Classification Coverage by Language",
+        "**Floor-binding check (descriptive only -- not a comparative "
+        "test)** -- `num_parameters` was dropped from Mann-Whitney testing "
+        "(see this module's docstring) because it floors heavily in both "
+        "datasets; this documents exactly how heavily, transparently, "
+        "instead of silently omitting it.",
         "",
-        "Per-language, per-dataset breakdown of `fixture_role` "
-        "(setup / teardown / setup_and_teardown / other) -- the same "
-        "counts behind Table 1 above and the pooled dataset-wide `other` "
-        "% in `Per-dataset summary`, just split out per language instead "
-        "of pooled. Table 1 excludes `other` entirely from its own "
-        "percentage denominator, so it never shows this slice; `other` "
-        "fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG "
-        "`@DataProvider` -- neither is inherently setup or teardown) are "
-        "not spread evenly across languages, so a language with a high "
-        "`other` % has that much smaller a share of its fixtures "
-        "represented in Table 1's counts at all. Worth re-checking "
-        "whenever a new dataset is extracted -- a new language or "
-        "framework can introduce its own unclassifiable fixture types.",
-        "",
-        "| Dataset | Language | Total fixtures | setup | teardown | "
-        "setup_and_teardown | other (count) | other (%) |",
-        "|---|---|---|---|---|---|---|---|",
+        f"| Metric | Floor value | {DATASET_LABELS['a']} at floor | "
+        f"{DATASET_LABELS[other.dataset]} at floor |",
+        "|---|---|---|---|",
     ]
-
-    a_totals = _language_kind_totals(a.kind_counts_by_repo_and_language)
-    other_totals = _language_kind_totals(other.kind_counts_by_repo_and_language)
-    for label, totals in (("A", a_totals), (other_label, other_totals)):
-        for language in RQ2_LANGUAGES:
-            kind_counts = totals.get(language, {})
-            total = sum(kind_counts.values())
-            other_count = kind_counts.get("other", 0)
-            other_pct = 100 * other_count / total if total else 0.0
-            lines.append(
-                f"| {label} | {language} | {total:,} | "
-                f"{kind_counts.get('setup', 0):,} | "
-                f"{kind_counts.get('teardown', 0):,} | "
-                f"{kind_counts.get('setup_and_teardown', 0):,} | "
-                f"{other_count:,} | {other_pct:.1f}% |"
-            )
-
+    for metric, floor in FLOOR_CHECK_METRICS.items():
+        lines.append(
+            f"| {metric} | {floor} | {pct(a.floor_pct.get(metric))} | "
+            f"{pct(other.floor_pct.get(metric))} |"
+        )
     lines.append("")
     return "\n".join(lines)
 
 
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
-    lines = [
-        f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
+    continuous_overall = compare_datasets_repo_level(a, other)
+    lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
+
+    continuous_intro = (
+        "(Mann-Whitney U on repo-level values, two-sided) -- one mean value "
+        "per repo (per language, for the per-language rows), not per "
+        "fixture, so fixtures clustering within a repo can't inflate the "
+        "result. Effect size is Cliff's delta (thresholds: negligible "
+        "<0.147, small <0.33, medium <0.474, else large; positive means the "
+        "comparison dataset tends to have larger values than A, negative "
+        "means A tends to have larger values). The Overall row is a single "
+        "pooled test, not BH-corrected; each metric's per-language rows are "
+        "BH-FDR corrected against each other only (one family per metric, "
+        "4 languages)."
+    )
+
+    lines += [
+        f"**Paper Metrics -- Continuous** {continuous_intro} These three "
+        "(`loc`, `cyclomatic_complexity`, `comment_density`) are the only "
+        "continuous metrics reported in the paper -- see this module's "
+        "docstring. Each per-language row also reports `A median`/`C "
+        "median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` "
+        "(90th percentile) -- the median/Q3/P90 of the same per-repo mean "
+        "values the Mann-Whitney test itself runs on, alongside (not a "
+        "replacement for) the effect size and p-value. Q3/P90 exist to "
+        "explain an effect that reaches significance despite identical "
+        "medians -- a real difference concentrated in the upper tail, "
+        "invisible to the median alone.",
         "",
-        "### Table 1: Fixture Counts by Type (tab:rq2-counts)",
-        "",
-        _render_kind_counts_table(a, other),
-        "### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)",
-        "",
-        _render_teardown_coverage_table(a, other),
     ]
+    for metric in PAPER_CONTINUOUS_METRICS:
+        lines.append(
+            _render_continuous_metric(
+                metric,
+                a.repo_level_continuous[metric],
+                other.repo_level_continuous[metric],
+                a.repo_level_continuous_by_language[metric],
+                other.repo_level_continuous_by_language[metric],
+                continuous_overall[metric],
+                other.dataset,
+                include_percentile_columns=True,
+            )
+        )
+
+    lines += [
+        "**Other Extracted Features (Not in the Paper)** -- `num_parameters` "
+        "is still collected but dropped from Mann-Whitney testing entirely "
+        "(see this module's docstring for why); shown here only as a "
+        "descriptive floor-percentage footnote, not a comparative test.",
+        "",
+        _render_floor_percentage_footnote(a, other),
+    ]
+
+    median_diagnostic_overall = compare_datasets_repo_level_median_diagnostic(a, other)
+    lines += [
+        "## Diagnostic: median-per-repo aggregation (NOT used in the paper)",
+        "",
+        "**This section is presented for transparency only -- these are "
+        "not results, do not cite them.** The paper's own methodology "
+        "(above) takes each repo's *mean* fixture value, then reports the "
+        "median across repos. This section instead takes each repo's "
+        "own *median* fixture value first. That interacts badly with "
+        "`cyclomatic_complexity`/`comment_density`'s heavy floor-binding "
+        "(CC=1, comment_density=0 for most fixtures -- see this module's "
+        "docstring): most repos' own median collapses to that exact floor "
+        "value, producing near-universal ties across repos and starving "
+        "Mann-Whitney of power. The per-language pattern below can and "
+        "does diverge substantially from the paper's actual table above "
+        "-- that divergence is the point of keeping this section, as a "
+        "record of how sensitive the comparison is to this choice, not a "
+        "competing result.",
+        "",
+    ]
+    for metric in PAPER_CONTINUOUS_METRICS:
+        lines.append(
+            _render_continuous_metric(
+                metric,
+                a.repo_level_continuous_median_diagnostic[metric],
+                other.repo_level_continuous_median_diagnostic[metric],
+                a.repo_level_continuous_by_language_median_diagnostic[metric],
+                other.repo_level_continuous_by_language_median_diagnostic[metric],
+                median_diagnostic_overall[metric],
+                other.dataset,
+                include_percentile_columns=True,
+            )
+        )
+
     return "\n".join(lines)
+
+
 
 
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
@@ -553,10 +732,10 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = [
-        "# RQ2 -- Setup and Teardown Characterization",
+        "# RQ2 -- General Metrics Overview",
         "",
-        "> How do agent-generated fixtures compare to human-written ones in setup "
-        "and teardown provision?",
+        "> How do agent-generated and human-written fixtures compare across "
+        "structural metrics?",
         "",
         f"Generated: {generated_at}",
         "",
@@ -589,19 +768,6 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
-
-        lines += [
-            "## Supplementary Analyses",
-            "",
-            "Analyses below are not part of either main paper table "
-            "(tab:rq2-counts, tab:rq2-coverage) but are kept and computed "
-            "since they may still be referenced in prose.",
-            "",
-        ]
-        for other_ds, _label in COMPARISONS:
-            other_metrics = loaded[other_ds]
-            if other_metrics is not None:
-                lines.append(_render_kind_classification_coverage_table(a_metrics, other_metrics))
 
     return "\n".join(lines)
 

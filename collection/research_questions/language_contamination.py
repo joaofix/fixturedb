@@ -10,9 +10,9 @@ script uses for dataset "c", see `require_db_or_none()`'s docstring.
 
 Reuses `_shared.py`'s `compute_language_leakage()`/
 `render_language_leakage_table()` -- the exact same computation already
-driving RQ1/RQ3's "Cross-language fixture leakage" table -- rather than
+driving RQ2/RQ4's "Cross-language fixture leakage" table -- rather than
 recomputing it a second way. This file exists as a dedicated, standalone
-place to check contamination on its own (not buried inside RQ1's larger
+place to check contamination on its own (not buried inside RQ2's larger
 structural-metrics report), not to define a second notion of it.
 
 Previous version of this check (before this rewrite) compared a fixture's

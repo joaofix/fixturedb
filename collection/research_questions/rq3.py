@@ -1,106 +1,124 @@
 """
-RQ3 -- Mocking (Quantitative): how do agent-generated and human-written
-fixtures differ in mock usage?
+RQ3 -- Setup and Teardown Characterization (Quantitative): how do
+agent-generated fixtures compare to human-written ones in setup and
+teardown provision?
 
-One paper table (`_render_mocking_summary_table()`), per language and
-Overall: **Coverage** -- for each repo, a binary indicator -- does it
-have >=1 fixture with a mock at all (`num_mocks > 0`)? Population: every
-repo with >=1 fixture (of that language, for the per-language rows; any
-language, for Overall) -- reuses `has_mock_by_repo`/`has_mock_by_repo_
-and_language`, already fetched by the pre-existing has_mock detection
-query. "Coverage A/C (%)" is the share of that population with the
-indicator at 1 -- just the mean of that 0/1 list per side. **Purely
-descriptive -- no statistical test** (removed 2026-09-27, alongside
-RQ2's Table 2: the paper's RQ2/RQ3 coverage tables report plain
-percentages, no p-value, no effect size, no BH-FDR family. RQ1 is now
-the only script in this package that performs BH-FDR correction at all
--- see
+Two paper tables, both keyed on **fixtures.fixture_role** -- setup /
+teardown / setup_and_teardown / other. This is a persisted DB column, set
+once at *extraction* time (not computed here) by
+`detector_shared._classify_fixture_kinds()` for every fixture type except
+`pytest_decorator`, plus `detector_python._detect_python()`'s own direct
+body-analysis classification for `pytest_decorator` -- see those two
+functions' docstrings for the exact per-type rules and why `pytest_decorator`
+needs its own mechanism (type/name alone can't split it: every pytest
+fixture is just named whatever the developer called it; see
+internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md).
+This module just reads the column and renders it -- no classification logic
+lives here, so a dataset's `fixture_role` numbers are identical
+regardless of when its RQ3 report is (re)generated relative to extraction.
+
+Table 1's Setup/Teardown columns and Table 2's teardown-coverage indicator
+both treat a `setup_and_teardown`-classified fixture as counting toward
+*both* setup and teardown -- it genuinely provides both, so excluding it
+from either column would undercount that dataset's real setup/teardown
+provision.
+
+**Table 1 (tab:rq3-counts) -- absolute fixture counts**
+(`_render_kind_counts_table()`): purely descriptive, no statistics. For
+each language and a Total row, the raw count of setup-classified and
+teardown-classified fixtures in each dataset, each also shown as a
+percentage of that language's *answerable* fixture count -- setup +
+teardown + setup_and_teardown, excluding 'other' entirely from both the
+counts and the percentage denominator (see `_answerable_total()`'s
+docstring for why: an 'other'-classified fixture, e.g. a JUnit `@Rule` or
+a TestNG `@DataProvider`, was never a setup/teardown candidate to begin
+with, so it shouldn't dilute the rate at which the *answerable* fixtures
+were classified one way or the other). Total is the dataset-wide sum
+across every language present, not just the four rows shown.
+
+**Table 2 (tab:rq3-coverage) -- teardown coverage**
+(`_render_teardown_coverage_table()`): for each repo, a binary indicator
+-- does it have >=1 teardown-classified fixture at all (1) or none (0)?
+"Coverage A/C (%)" is just the mean of that 0/1 list per side, per
+language and Overall. Population (and n_A/n_C): repos with >=1
+setup/teardown/other-classified fixture (a repo with zero classified
+fixtures is skipped, not counted as 0-coverage). **Purely descriptive --
+no statistical test** (removed
+2026-09-27, alongside RQ4's Coverage/Intensity test and Intensity metric
+entirely: the paper's RQ3/RQ4 coverage tables report plain percentages,
+no p-value, no effect size, no BH-FDR family. RQ2 is now the only script
+in this package that performs BH-FDR correction at all -- see
 [internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md)
 for the full before/after inventory).
 
-**Intensity** (median `num_mocks` across a repo's own mocking fixtures,
-among repos where Coverage=1) was removed entirely the same day -- no
-longer one of the paper's reported metrics. Its whole computation
-(`_mocking_intensities_by_repo()`, `_fetch_num_mocks_by_repo_and_
-language()`, the `num_mocks_by_repo_and_language` field, and the
-combined 8-test BH-FDR family that used to merge it with Coverage) is
-gone, not just its rendering. `num_mocks_by_repo` (Overall-only, no
-per-language breakdown) stays on `DatasetMetrics` -- it's also what
-`has_mock_by_repo` is derived from (the `num_mocks > 0` threshold), an
-independent use that predates and outlives Intensity.
+Both tables render a fixed four-language row order (java, javascript,
+python, typescript) rather than this package's usual "intersection of
+languages present on both sides" convention (`compute_stratified_*_
+balance()`) -- a deliberate simplification matching the paper's table
+spec, predating the statistical-test removal above and unaffected by it.
 
-Fixed four-language row order (java, javascript, python, typescript)
-rather than a "languages present on both sides" intersection convention
--- a deliberate simplification matching the paper's table spec,
-predating the statistical-test removal above and unaffected by it.
-
-This table replaces three previously-reported tables:
-
-- **Mock prevalence** (fixture-level `has_mock` chi-square, pooled + per
-  language) -- initially kept (computed identically, mock detection
-  logic untouched) in a "## Legacy: Fixture-Level Mock Prevalence (Not
-  Used in the Paper)" section below the main comparison, since it was
-  already marked "not used in the paper" before this change -- fixture-
-  level pseudo-replication, see docs/reference/limitations.md's
-  "Categorical Pseudo-Replication". Removed entirely (2026-09-27): never
-  cited, and `compare_datasets_categorical()`/`_render_has_mock()`/
-  `has_mock_n_by_language`/`_fetch_fixture_repo_count_by_language()` had
-  no other consumer once it was gone. The *repo-level* has_mock test that
-  WAS reported in the paper (formerly "## Repo-level aggregates") is
-  fully superseded by this table's Coverage column -- same population,
-  same underlying per-repo has_mock indicator. At the time of this
-  removal Coverage was still its own Mann-Whitney + Cliff's delta test
-  (computed via `compute_continuous_balance()` directly instead of
-  `compare_categorical_repo_level()` -- a two-category proportion test
-  on a binary variable is mathematically the mean-of-the-0/1-indicator
-  test that call runs, same number, cleaner path there); Coverage's own
-  test was itself removed the same day, see above.
-- **Framework distribution** -- removed from the report entirely (not
-  moved to legacy, per request: framework names are language-specific by
-  construction, `unittest.mock` Python-only / Sinon JS-only / Mockito
-  Java-only, so a pooled A-vs-C view was already confounded by language
-  mix -- 2026-08-12, see docs/reference/limitations.md). `mock_usages.
-  framework`'s fetch/fields (`framework_dist`, `framework_by_language`)
-  are UNCHANGED and still populate each dataset's own descriptive summary
-  above -- only the A-vs-C table is gone.
-- **Test-double category distribution** -- same treatment: removed from
-  the report entirely (category naming conventions are also
-  language/ecosystem-specific -- same 2026-08-12 fix). `category_dist`'s
-  fetch/field is UNCHANGED and still populates the per-dataset summary
-  above -- the per-language repo-level-proportion test and the pooled
-  descriptive table are gone from the report. `category_by_language`/
-  `category_by_repo_and_language` (the fetches that fed those two removed
-  tables) were themselves removed entirely (2026-09-27) after auditing
-  found them genuinely dead -- fetched and stored on `DatasetMetrics` but
-  never read by anything, not even the per-dataset summary the comment
-  above once claimed.
-
-`num_mocks`'s existing continuous Mann-Whitney tables (fixture-level and
-repo-level, Overall-only) are **unchanged** -- not one of the three
-tables named for replacement, and never had a per-language family or
-BH-FDR correction to begin with (Overall-only, a single pooled test).
-
-`num_interactions_configured` (a separate `mock_usages` column estimating
-how many interactions were configured on a mock, e.g. `.return_value`/
-`.side_effect`/`thenReturn`) was removed entirely (2026-09-26) -- it was
-never one of the paper's reported metrics (the paper review only named
-`num_mocks`), so its own continuous Mann-Whitney table (the counterpart to
-`num_mocks`'s above) is simply gone, not moved to a legacy section.
-
-**Mock Fixture Counts by Language** (`_render_mock_counts_table()`): an
-additional, purely descriptive table (no statistics), rendered right
-after the Coverage paper table -- NOT a replacement for it.
-The RQ2-counts-table analogue for mocking: raw count + percentage of
-`has_mock` fixtures per language, both datasets side by side, denominator
-is simply that language's total fixture count (no 'other'
-category/double-counting complication the way RQ2's setup/teardown kind
-has -- has_mock is a clean binary). Reuses has_mock_dist/has_mock_dist_
-by_language, the same counts already backing "Mock prevalence"/"Mock
-prevalence by language" in the per-dataset summary above.
+These two tables replace the single, previously-reported repo-level
+median setup_pct/teardown_pct/other_pct proportion table (Mann-Whitney U
++ Cliff's delta on per-repo *proportions*, "V" labeled for paper-column
+consistency though the number was Cliff's delta) -- the paper first
+settled on two narrower tables (one purely descriptive, one
+inferential-but-simpler: a binary coverage rate instead of a continuous
+proportion), then dropped the inferential half of Table 2 too (see
+above). `compare_categorical_repo_level()`/
+`repo_level_category_proportions()` (formerly in `_shared.py`) were
+never used by rq3.py's own Table 2 (a plain per-repo mean needs no
+repo-declustering machinery of its own) -- both were removed from the
+package entirely on 2026-09-27, once rq2.py's `fixture_type` repo-level
+test (their only remaining caller anywhere) was also removed; see
+rq2.py's module docstring for that removal's full rationale.
 
 A vs C only -- Dataset B (contemporary within-repo human baseline) is still
 collected (db/b.db) but out of scope for this script's reported
-comparisons; see rq1.py's module docstring.
+comparisons; see rq2.py's module docstring.
+
+## Supplementary analyses (not part of either main table)
+
+**Setup coverage by repository and the unimodality check were both
+removed entirely (2026-09-27)**, after a review of which computed
+tables/tests actually feed the paper concluded neither did: setup
+coverage was already documented as "not one of the two paper tables"
+(it sat near-ceiling for 3 of 4 languages, so it never carried the kind
+of cross-language story Table 2 does -- the one real finding it turned
+up, a significant java gap (94.5% A vs 84.0% H, BH-corrected p=0.012),
+is recorded here rather than in a table: if this needs re-deriving,
+`_effective_setup_count()`/`_setup_coverage_indicators()`-shaped logic
+is what produced it, mirroring `_render_teardown_coverage_table()`
+exactly but for setup instead of teardown). The dip test's own docstring
+already flagged it as "not an A vs C comparison test" and kept only in
+case it "may still be cited in prose" -- removed once that never
+happened. Removing both also drops the `diptest` package as a project
+dependency (see `_shared.py`'s `run_dip_test()`, now itself removed) and
+one BH-FDR correction family per table (setup coverage's own
+Overall+4-language family) that this report no longer needs to compute.
+
+**Fixture kind classification coverage by language**
+(`_render_kind_classification_coverage_table()`): breaks Table 1's pooled,
+dataset-wide `other` percentage (see "Per-dataset summary" above) out per
+language instead, since `other` is not spread evenly -- e.g. `junit_rule`/
+`junit_class_rule`/`testng_data_provider` (java-only fixture types that
+aren't inherently setup or teardown) make java's `other` share far higher
+than javascript/typescript's (near 0%) or python's (negligible). Table 1
+excludes 'other' from its own denominator entirely (see
+`_answerable_total()`'s docstring), so this table isn't explaining a
+dilution of Table 1's percentages -- it's showing how much of each
+language's fixture population Table 1 is silently *not describing at
+all*: a language with a high `other` share has that much smaller a slice
+of its real setup/teardown-relevant fixtures represented anywhere in
+Table 1's counts. Worth checking on every future dataset extraction (a
+new language or framework can introduce its own unclassifiable fixture
+types), not just once at paper-writing time -- hence a permanent report
+section rather than a one-off query.
+
+`has_teardown_pair` (a separate fixtures-table column that used to exist
+alongside `fixture_role`) was never analyzed by this script -- it has
+since been dropped from the extracted metric set entirely (not reported in
+the paper). `fixture_role` above is unaffected: it's computed by its
+own, independent teardown-detection pass at extraction time.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.
@@ -116,10 +134,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
-from ..between_group_comparison import (
-    BalanceTest,
-    compute_continuous_balance,
-)
 from ..db import db_session
 from ..logging_utils import get_logger
 from ._shared import (
@@ -127,35 +141,18 @@ from ._shared import (
     DATASET_LABELS,
     OUTPUT_DIR,
     LanguageLeakage,
-    NCounts,
     compute_language_leakage,
-    fetch_categorical_column,
-    fetch_continuous_column,
-    fetch_continuous_column_by_repo,
-    fmt,
     pct,
-    render_comparison_table,
     render_language_leakage_table,
-    repo_level_means,
     require_db_or_none,
-    summarize_continuous,
     write_markdown_report,
 )
 
 logger = get_logger(__name__)
 
-CONTINUOUS_METRICS = ["num_mocks"]
-# All 3 are shown descriptively per dataset (_render_dataset_summary())
-# only -- none gets an A-vs-C statistical test here. has_mock's own
-# fixture-level chi-square (Overall + per-language) and framework/
-# category's pooled treatment were both removed entirely (2026-08-12 for
-# framework/category, 2026-09-27 for has_mock) -- the paper table's
-# Coverage column is has_mock's repo-level result and supersedes it.
-CATEGORICAL_METRICS = ["has_mock", "framework", "category"]
-
-# Fixed row order for the paper table -- see the module docstring for why
-# this is a fixed list rather than a "languages present on both sides"
-# intersection convention. Matches rq2.py's RQ2_LANGUAGES.
+# Fixed row order for both paper tables -- see the module docstring for why
+# this is a fixed list rather than the "languages present on both sides"
+# intersection convention used elsewhere in this package.
 RQ3_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
 
 
@@ -163,107 +160,12 @@ RQ3_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
 class DatasetMetrics:
     dataset: str
     n_fixtures: int
-    n_mock_usages: int
-    num_mocks_raw: list[float] = field(default_factory=list)
-    has_mock_dist: dict[str, int] = field(default_factory=dict)
-    framework_dist: dict[str, int] = field(default_factory=dict)
-    category_dist: dict[str, int] = field(default_factory=dict)
-    mock_rate_by_language: dict[str, dict] = field(default_factory=dict)
-    framework_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
-    language_leakage: list[LanguageLeakage] = field(default_factory=list)
-    has_mock_dist_by_language: dict[str, dict[str, int]] = field(default_factory=dict)
-    repo_level_continuous: dict[str, list[float]] = field(default_factory=dict)
-    has_mock_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
-    has_mock_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
+    kind_distribution: dict[str, int] = field(default_factory=dict)
+    kind_counts_by_repo: dict[int, dict[str, int]] = field(default_factory=dict)
+    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = field(
         default_factory=dict
     )
-    # Raw per-fixture num_mocks, grouped by repo -- feeds has_mock_by_repo's
-    # derivation below (num_mocks > 0 threshold). Exactly continuous_
-    # by_repo["num_mocks"] from load_dataset_metrics() below, just also
-    # kept on the dataclass instead of only its per-repo *mean*
-    # (repo_level_continuous["num_mocks"]).
-    num_mocks_by_repo: dict[int, list[float]] = field(default_factory=dict)
-
-
-def _continuous_values(metrics: DatasetMetrics, metric: str) -> list[float]:
-    return {
-        "num_mocks": metrics.num_mocks_raw,
-    }[metric]
-
-
-# Which table each continuous metric's repo_id column lives on -- num_mocks
-# is a fixtures column; fetch_continuous_column_by_repo() works for any
-# table as long as it carries its own repo_id.
-_CONTINUOUS_METRIC_TABLES = {
-    "num_mocks": "fixtures",
-}
-
-
-def _categorical_values(metrics: DatasetMetrics, metric: str) -> dict[str, int]:
-    return {
-        "has_mock": metrics.has_mock_dist,
-        "framework": metrics.framework_dist,
-        "category": metrics.category_dist,
-    }[metric]
-
-
-def _fetch_mock_rate_by_language(conn: sqlite3.Connection) -> dict[str, dict]:
-    rows = conn.execute(
-        "SELECT tf.language, COUNT(*), SUM(CASE WHEN f.num_mocks > 0 THEN 1 ELSE 0 END) "
-        "FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
-        "GROUP BY tf.language"
-    ).fetchall()
-    return {
-        language: {
-            "total": total,
-            "with_mocks": with_mocks,
-            "rate": 100 * with_mocks / total if total else 0.0,
-        }
-        for language, total, with_mocks in rows
-    }
-
-
-def _fetch_framework_by_language(conn: sqlite3.Connection) -> dict[str, dict[str, int]]:
-    rows = conn.execute(
-        "SELECT tf.language, mu.framework, COUNT(*) FROM mock_usages mu "
-        "JOIN fixtures f ON mu.fixture_id = f.id "
-        "JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE mu.framework IS NOT NULL "
-        "GROUP BY tf.language, mu.framework"
-    ).fetchall()
-    result: dict[str, dict[str, int]] = {}
-    for language, framework, count in rows:
-        result.setdefault(language, {})[framework] = count
-    return result
-
-
-def _fetch_has_mock_by_repo_and_language(
-    conn: sqlite3.Connection,
-) -> dict[str, dict[int, dict[str, int]]]:
-    """{language: {repo_id: {"has_mock": n, "no_mock": n}}} -- has_mock's
-    per-(language, repo) breakdown. Feeds, via
-    `_mocking_coverage_indicators()`, the paper table's Coverage column
-    (each repo's own has_mock/no_mock counts collapse to a single 0/1
-    "has any mock at all" indicator there). Grouped by each
-    fixture's own language (test_files.language), not the repo's tag --
-    same convention every other per-language grouping in this script
-    uses -- so a repo with fixtures in more than one language contributes
-    to each language's own rows separately, never mixed together. Same
-    has_mock/no_mock threshold (`num_mocks > 0`) as has_mock_dist/
-    has_mock_by_repo elsewhere in this module, just grouped by language
-    too."""
-    rows = conn.execute(
-        "SELECT tf.language, f.repo_id, "
-        "SUM(CASE WHEN f.num_mocks > 0 THEN 1 ELSE 0 END), "
-        "SUM(CASE WHEN f.num_mocks = 0 THEN 1 ELSE 0 END) "
-        "FROM fixtures f JOIN test_files tf ON f.file_id = tf.id "
-        "WHERE f.num_mocks IS NOT NULL "
-        "GROUP BY tf.language, f.repo_id"
-    ).fetchall()
-    result: dict[str, dict[int, dict[str, int]]] = {}
-    for language, repo_id, has_mock, no_mock in rows:
-        result.setdefault(language, {})[repo_id] = {"has_mock": has_mock, "no_mock": no_mock}
-    return result
+    language_leakage: list[LanguageLeakage] = field(default_factory=list)
 
 
 def load_dataset_metrics(
@@ -276,123 +178,241 @@ def load_dataset_metrics(
 
     with db_session(db_file) as conn:
         n_fixtures = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-        n_mock_usages = conn.execute("SELECT COUNT(*) FROM mock_usages").fetchone()[0]
-        num_mocks_raw = fetch_continuous_column(conn, "fixtures", "num_mocks")
-        framework_dist = fetch_categorical_column(conn, "mock_usages", "framework")
-        category_dist = fetch_categorical_column(conn, "mock_usages", "category")
-        mock_rate_by_language = _fetch_mock_rate_by_language(conn)
-        framework_by_language = _fetch_framework_by_language(conn)
-        has_mock_by_repo_and_language = _fetch_has_mock_by_repo_and_language(conn)
+        (
+            kind_distribution,
+            kind_counts_by_repo,
+            kind_counts_by_repo_and_language,
+        ) = _fetch_kinds_and_repo_counts(conn)
         language_leakage = compute_language_leakage(conn)
-        # continuous_by_repo's "num_mocks" entry is reused below (as
-        # num_mocks_by_repo) to derive has_mock_by_repo's per-repo
-        # has_mock/no_mock counts -- no second query needed.
-        continuous_by_repo = {
-            m: fetch_continuous_column_by_repo(conn, table, m)
-            for m, table in _CONTINUOUS_METRIC_TABLES.items()
-        }
-        repo_level_continuous = {
-            m: repo_level_means(by_repo) for m, by_repo in continuous_by_repo.items()
-        }
-        num_mocks_by_repo = continuous_by_repo["num_mocks"]
-
-    has_mock_dist = {
-        "has_mock": sum(1 for n in num_mocks_raw if n > 0),
-        "no_mock": sum(1 for n in num_mocks_raw if n == 0),
-    }
-    # Derived from num_mocks_by_repo (fixtures.num_mocks > 0), same
-    # threshold has_mock_dist above uses, just grouped by repo instead of
-    # pooled -- what _mocking_coverage_indicators() needs for the paper
-    # table's Coverage column (Overall row).
-    has_mock_by_repo = {
-        repo_id: {
-            "has_mock": sum(1 for n in vals if n > 0),
-            "no_mock": sum(1 for n in vals if n == 0),
-        }
-        for repo_id, vals in num_mocks_by_repo.items()
-    }
-    # Derived from mock_rate_by_language (total/with_mocks per language),
-    # no separate query needed -- feeds the "Mock prevalence by language"
-    # descriptive table in _render_dataset_summary().
-    has_mock_dist_by_language = {
-        language: {
-            "has_mock": entry["with_mocks"],
-            "no_mock": entry["total"] - entry["with_mocks"],
-        }
-        for language, entry in mock_rate_by_language.items()
-    }
 
     return DatasetMetrics(
         dataset=dataset,
         n_fixtures=n_fixtures,
-        n_mock_usages=n_mock_usages,
-        num_mocks_raw=num_mocks_raw,
-        has_mock_dist=has_mock_dist,
-        has_mock_dist_by_language=has_mock_dist_by_language,
-        framework_dist=framework_dist,
-        category_dist=category_dist,
-        mock_rate_by_language=mock_rate_by_language,
-        framework_by_language=framework_by_language,
+        kind_distribution=kind_distribution,
+        kind_counts_by_repo=kind_counts_by_repo,
+        kind_counts_by_repo_and_language=kind_counts_by_repo_and_language,
         language_leakage=language_leakage,
-        repo_level_continuous=repo_level_continuous,
-        has_mock_by_repo=has_mock_by_repo,
-        has_mock_by_repo_and_language=has_mock_by_repo_and_language,
-        num_mocks_by_repo=num_mocks_by_repo,
     )
 
 
-def compare_datasets_repo_level(
-    a: DatasetMetrics, other: DatasetMetrics
-) -> dict[str, BalanceTest]:
-    """A vs `other`, one mean value per repo instead of one value per
-    fixture -- num_mocks only (no per-language family; see this module's
-    docstring)."""
-    return {
-        metric: compute_continuous_balance(
-            human_values=other.repo_level_continuous[metric],
-            agent_values=a.repo_level_continuous[metric],
-            variable=metric,
+def _empty_kind_counts() -> dict[str, int]:
+    """A fresh {setup/teardown/setup_and_teardown/other: 0} dict -- the one
+    place that dict literal is spelled out, so every kind_distribution/
+    kind_counts_by_repo(_and_language) entry stays in sync if a kind is
+    ever added or renamed."""
+    return dict.fromkeys(("setup", "teardown", "setup_and_teardown", "other"), 0)
+
+
+def _fetch_kinds_and_repo_counts(
+    conn: sqlite3.Connection,
+) -> tuple[
+    dict[str, int],
+    dict[int, dict[str, int]],
+    dict[str, dict[int, dict[str, int]]],
+]:
+    """Single pass over every fixture: dataset-level kind distribution
+    (descriptive only), per-repo {setup/teardown/setup_and_teardown/other:
+    count} (Overall), and the same per-repo counts bucketed by each
+    fixture's own language too -- reading fixtures.fixture_role
+    directly, already classified once at extraction time (see this
+    module's docstring), so this is a straight read, not a
+    re-classification.
+
+    `kind_counts_by_repo` feeds Table 2's Overall row (via
+    _teardown_coverage_indicators()); `kind_counts_by_repo_and_language`
+    feeds both tables' per-language rows -- Table 1's raw counts
+    (_language_kind_totals(), summed across repos) and Table 2's
+    per-language coverage percentage -- grouped by each fixture's own
+    language (test_files.language), not the repo's tag, so a repo with
+    fixtures in more than one language contributes to each language
+    separately."""
+    kind_distribution = _empty_kind_counts()
+    kind_counts_by_repo: dict[int, dict[str, int]] = {}
+    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]] = {}
+
+    rows = conn.execute(
+        "SELECT f.repo_id, f.fixture_role, tf.language FROM fixtures f "
+        "JOIN test_files tf ON f.file_id = tf.id WHERE f.fixture_type IS NOT NULL"
+    ).fetchall()
+    for repo_id, kind, language in rows:
+        kind_distribution[kind] += 1
+
+        repo_kind_counts = kind_counts_by_repo.setdefault(
+            repo_id, _empty_kind_counts()
         )
-        for metric in CONTINUOUS_METRICS
-    }
+        repo_kind_counts[kind] += 1
+
+        lang_repo_counts = kind_counts_by_repo_and_language.setdefault(
+            language, {}
+        ).setdefault(repo_id, _empty_kind_counts())
+        lang_repo_counts[kind] += 1
+
+    return kind_distribution, kind_counts_by_repo, kind_counts_by_repo_and_language
 
 
-def compare_datasets_fixture_level(
-    a: DatasetMetrics, other: DatasetMetrics
-) -> dict[str, BalanceTest]:
-    """A vs `other`, raw per-fixture values -- num_mocks's fixture-level
-    Overall row (kept alongside the repo-level one; no per-language
-    family)."""
-    return {
-        metric: compute_continuous_balance(
-            human_values=_continuous_values(other, metric),
-            agent_values=_continuous_values(a, metric),
-            variable=metric,
+def _render_dataset_summary(metrics: DatasetMetrics) -> str:
+    lines = [f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures", ""]
+
+    total_kind = sum(metrics.kind_distribution.values())
+    lines += ["**fixture_type kind distribution**", "", "| Kind | Count | % |", "|---|---|---|"]
+    for kind in ("setup", "teardown", "setup_and_teardown", "other"):
+        count = metrics.kind_distribution.get(kind, 0)
+        kind_pct = 100 * count / total_kind if total_kind else 0.0
+        lines.append(f"| {kind} | {count:,} | {kind_pct:.1f}% |")
+    lines.append("")
+
+    lines.append(render_language_leakage_table(metrics.language_leakage))
+
+    return "\n".join(lines)
+
+
+def _language_kind_totals(
+    kind_counts_by_repo_and_language: dict[str, dict[int, dict[str, int]]],
+) -> dict[str, dict[str, int]]:
+    """{language: {setup/teardown/setup_and_teardown/other: total count
+    across every repo}} -- Table 1's per-language raw counts, summed from
+    the same per-repo counts Table 2 and the dip test draw their per-repo
+    populations/proportions from (no separate fetch/classification pass)."""
+    totals: dict[str, dict[str, int]] = {}
+    for language, by_repo in kind_counts_by_repo_and_language.items():
+        lang_totals = totals.setdefault(language, _empty_kind_counts())
+        for repo_counts in by_repo.values():
+            for kind, count in repo_counts.items():
+                lang_totals[kind] += count
+    return totals
+
+
+def _effective_setup_count(kind_counts: dict[str, int]) -> int:
+    """Setup-providing fixture count: 'setup' plus 'setup_and_teardown' --
+    the latter genuinely provides setup too, so excluding it here would
+    undercount."""
+    return kind_counts.get("setup", 0) + kind_counts.get("setup_and_teardown", 0)
+
+
+def _effective_teardown_count(kind_counts: dict[str, int]) -> int:
+    """Teardown-providing fixture count: 'teardown' plus
+    'setup_and_teardown', for the same reason as _effective_setup_count()."""
+    return kind_counts.get("teardown", 0) + kind_counts.get("setup_and_teardown", 0)
+
+
+def _answerable_total(kind_counts: dict[str, int]) -> int:
+    """Denominator for Table 1's Setup%/Teardown% cells: setup + teardown +
+    setup_and_teardown, excluding 'other'. A fixture classified 'other'
+    (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider`
+    -- see _render_kind_classification_coverage_table()'s docstring) was
+    never a candidate to be setup or teardown in the first place (no
+    setup/teardown pairing mechanism applies to it, and unlike
+    pytest_decorator there's no body-analysis fallback either), so it
+    shouldn't dilute the percentage of the fixtures that WERE classified
+    one way or the other -- a language with a large 'other' share (java,
+    see the coverage table below) would otherwise report artificially low
+    Setup%/Teardown% purely because of how many of its fixtures could not
+    be classified at all, not because of its actual setup/teardown
+    provision."""
+    return kind_counts.get("setup", 0) + kind_counts.get("teardown", 0) + kind_counts.get(
+        "setup_and_teardown", 0
+    )
+
+
+def _pct_cell(count: int, total: int) -> str:
+    """`count` formatted as "N (P%)", P = count/total*100 to one decimal
+    place -- just "N" (no percentage) if total is 0, the zero-filled-row
+    case for a language absent from this dataset (see
+    _render_kind_counts_table()'s "zero, not omitted" convention), which
+    would otherwise divide by zero. `total` is always the language's (or,
+    for the Total row, the dataset's) *answerable* fixture count -- setup +
+    teardown + setup_and_teardown, excluding 'other' (see
+    _answerable_total()'s docstring for why) -- not the raw setup/teardown
+    sum, since a setup_and_teardown fixture is in both; see
+    _render_kind_counts_table()'s docstring for how that denominator keeps
+    Setup%/Teardown% consistent with each other."""
+    if total == 0:
+        return f"{count:,}"
+    return f"{count:,} ({100 * count / total:.1f}%)"
+
+
+def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Table 1 (tab:rq3-counts): absolute setup/teardown fixture counts per
+    language, each also shown as a percentage of that language's
+    *answerable* fixture count (setup + teardown + setup_and_teardown,
+    excluding 'other' -- see _answerable_total()'s docstring for why, not
+    just the raw setup/teardown counts). Purely descriptive -- no
+    statistics. "other"-classified fixtures are excluded from both the
+    counts themselves and the percentage denominator -- they were never a
+    setup/teardown candidate to begin with. A 'setup_and_teardown'-
+    classified fixture (pytest_decorator only -- see this module's
+    docstring) counts toward *both* columns, since it genuinely provides
+    both -- so the two columns are not mutually exclusive and
+    Setup+Teardown (and Setup%+Teardown%) can exceed the dataset's
+    answerable fixture count (100%)."""
+    other_label = other.dataset.upper()
+    lines = [
+        "Raw counts of setup-classified and teardown-classified fixtures, "
+        "each also shown as a percentage of that language's *answerable* "
+        "fixture count (setup + teardown + setup_and_teardown -- "
+        '"other"-classified fixtures, e.g. a JUnit `@Rule` or a TestNG '
+        "`@DataProvider` (see the Fixture Kind Classification Coverage by "
+        "Language table below), are excluded from both the counts "
+        "themselves and this percentage denominator, since they were "
+        "never a setup/teardown candidate in the first place; a fixture "
+        "classified as providing both -- e.g. a pytest fixture with setup "
+        "code before its `yield` -- is counted in both columns, so they "
+        "are not mutually exclusive and the two percentages can sum past "
+        "100%). Total is the dataset-wide sum across every language "
+        "present, not just the four rows below. Purely descriptive -- no "
+        "significance test.",
+        "",
+        f"| Language | Setup A | Setup {other_label} | Teardown A | Teardown {other_label} |",
+        "|---|---|---|---|---|",
+        (
+            f"| Total | {_pct_cell(_effective_setup_count(a.kind_distribution), _answerable_total(a.kind_distribution))} | "
+            f"{_pct_cell(_effective_setup_count(other.kind_distribution), _answerable_total(other.kind_distribution))} | "
+            f"{_pct_cell(_effective_teardown_count(a.kind_distribution), _answerable_total(a.kind_distribution))} | "
+            f"{_pct_cell(_effective_teardown_count(other.kind_distribution), _answerable_total(other.kind_distribution))} |"
+        ),
+    ]
+
+    a_totals = _language_kind_totals(a.kind_counts_by_repo_and_language)
+    other_totals = _language_kind_totals(other.kind_counts_by_repo_and_language)
+    for language in RQ3_LANGUAGES:
+        a_kind = a_totals.get(language, {})
+        other_kind = other_totals.get(language, {})
+        a_total = _answerable_total(a_kind)
+        other_total = _answerable_total(other_kind)
+        lines.append(
+            f"| {language} | {_pct_cell(_effective_setup_count(a_kind), a_total)} | "
+            f"{_pct_cell(_effective_setup_count(other_kind), other_total)} | "
+            f"{_pct_cell(_effective_teardown_count(a_kind), a_total)} | "
+            f"{_pct_cell(_effective_teardown_count(other_kind), other_total)} |"
         )
-        for metric in CONTINUOUS_METRICS
-    }
+
+    lines.append("")
+    return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Paper table: mocking coverage -- see this module's docstring for the
-# full methodology.
-# ---------------------------------------------------------------------------
+def _teardown_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[float]:
+    """Per-repo binary indicator: 1.0 if that repo has >=1 teardown-
+    providing fixture (classified 'teardown' or 'setup_and_teardown' --
+    see _effective_teardown_count()), else 0.0. Population is repos with
+    >=1 classified (setup/teardown/setup_and_teardown/other) fixture -- a
+    repo with none is skipped, not counted as 0-coverage. `_coverage_pct()`
+    takes the mean of these 0/1 values directly -- that mean *is* "% of
+    repos with >=1 teardown fixture",
+    Table 2's Coverage A/C (%) columns."""
+    return [
+        1.0 if _effective_teardown_count(counts) > 0 else 0.0
+        for counts in by_repo.values()
+        if sum(counts.values())
+    ]
 
 
-def _mocking_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[float]:
-    """Per-repo binary indicator: 1.0 if that repo has >=1 fixture with a
-    mock (has_mocking), else 0.0. `by_repo` is has_mock_by_repo(_and_
-    language)'s shape ({repo_id: {"has_mock": n, "no_mock": n}}) -- every
-    entry already represents a repo with >=1 fixture (built from fixtures
-    with num_mocks IS NOT NULL), so no extra zero-total filter is needed
-    here the way rq2.py's teardown-coverage indicator needs one."""
-    return [1.0 if counts.get("has_mock", 0) > 0 else 0.0 for counts in by_repo.values()]
-
-
-def _render_mocking_row(label: str, n_a: int, n_c: int, pct_a: float | None, pct_c: float | None) -> str:
-    """One row: Coverage A/C (%) is just the mean of the 0/1
-    has-any-mock indicator per side. Purely descriptive -- no statistical
-    test (removed 2026-09-27, see this module's docstring)."""
+def _render_teardown_coverage_row(
+    label: str, n_a: int, n_c: int, pct_a: float | None, pct_c: float | None
+) -> str:
+    """One row of Table 2 -- purely descriptive (no statistical test, see
+    this module's docstring): `pct_a`/`pct_c` are just the mean of each
+    side's 0/1 coverage indicator list, `None` when that side's population
+    is empty."""
     if pct_a is None and pct_c is None:
         return f"| {label} | {n_a} | {n_c} | -- | -- |"
     return f"| {label} | {n_a} | {n_c} | {pct(pct_a)} | {pct(pct_c)} |"
@@ -401,30 +421,32 @@ def _render_mocking_row(label: str, n_a: int, n_c: int, pct_a: float | None, pct
 def _coverage_pct(indicators: list[float]) -> float | None:
     """Mean of a 0/1 indicator list as a 0..1 proportion (pct()'s own
     expected input -- it multiplies by 100 itself), or None if the
-    population is empty."""
+    population (the list itself) is empty -- shared by Table 2's Overall
+    and per-language rows."""
     return sum(indicators) / len(indicators) if indicators else None
 
 
-def _render_mocking_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """The paper table: per-language + Overall mocking coverage (%).
-    Purely descriptive -- no statistical test (removed 2026-09-27, see
-    this module's docstring for why RQ3 no longer reports one, and for
-    Intensity's complete removal)."""
+def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """Table 2 (tab:rq3-coverage): % of repos with >=1 teardown-classified
+    fixture, per language and Overall. Purely descriptive -- no
+    statistical test (removed 2026-09-27, see this module's docstring for
+    why RQ3 no longer reports one)."""
     other_label = other.dataset.upper()
     lines = [
-        "**Coverage** = % of repos with >=1 fixture containing a mock at "
-        "all (population: every repo with >=1 fixture, of that language "
-        "for the per-language rows). Purely descriptive -- no statistical "
-        "test.",
+        "Per-repository binary coverage: 1 if a repo has >=1 teardown-"
+        "classified fixture, else 0 (population: repos with >=1 setup/"
+        'teardown/other-classified fixture). "Coverage A/C (%)" is the '
+        "share of that population with the indicator at 1. Purely "
+        "descriptive -- no statistical test.",
         "",
         f"| Language | n_A | n_{other_label} | Coverage A (%) | Coverage {other_label} (%) |",
         "|---|---|---|---|---|",
     ]
 
-    a_overall = _mocking_coverage_indicators(a.has_mock_by_repo)
-    other_overall = _mocking_coverage_indicators(other.has_mock_by_repo)
+    a_overall = _teardown_coverage_indicators(a.kind_counts_by_repo)
+    other_overall = _teardown_coverage_indicators(other.kind_counts_by_repo)
     lines.append(
-        _render_mocking_row(
+        _render_teardown_coverage_row(
             "Overall",
             len(a_overall),
             len(other_overall),
@@ -434,12 +456,12 @@ def _render_mocking_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> s
     )
 
     for language in RQ3_LANGUAGES:
-        a_by_repo = _mocking_coverage_indicators(a.has_mock_by_repo_and_language.get(language, {}))
-        other_by_repo = _mocking_coverage_indicators(
-            other.has_mock_by_repo_and_language.get(language, {})
+        a_by_repo = _teardown_coverage_indicators(a.kind_counts_by_repo_and_language.get(language, {}))
+        other_by_repo = _teardown_coverage_indicators(
+            other.kind_counts_by_repo_and_language.get(language, {})
         )
         lines.append(
-            _render_mocking_row(
+            _render_teardown_coverage_row(
                 language,
                 len(a_by_repo),
                 len(other_by_repo),
@@ -452,170 +474,77 @@ def _render_mocking_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> s
     return "\n".join(lines)
 
 
-def _render_mock_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
-    """Fixture-level mock counts by language -- the RQ3 analogue of
-    rq2.py's Table 1 (tab:rq2-counts): raw count and percentage of
-    fixtures with >=1 mock (`has_mock`), per language, both datasets side
-    by side. Purely descriptive, no statistics -- neither is the paper's
-    actual mocking comparison, the repo-level Coverage table above (also
-    purely descriptive, see this module's docstring). Simpler than RQ2's
-    counts table
-    besides: `has_mock` is a clean binary (a fixture either has >=1 mock
-    or it doesn't), so there's no 'other' category to exclude from the
-    denominator and no double-counting concern the way RQ2's
-    setup_and_teardown kind creates -- the denominator for every row here
-    is simply that language's (or, for Overall, the dataset's) total
-    fixture count, no exclusions needed. Reuses has_mock_dist/has_mock_
-    dist_by_language -- the exact counts already backing 'Mock
-    prevalence'/'Mock prevalence by language' in the per-dataset summary
-    above -- so this is a different view of identical numbers, not a
-    separate computation."""
+def _render_kind_classification_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
+    """### Fixture Kind Classification Coverage by Language.
+
+    Supplementary -- not part of either main paper table (tab:rq3-counts,
+    tab:rq3-coverage), rendered under generate_report()'s "## Supplementary
+    Analyses" section. Table 1 above excludes 'other' entirely from its
+    own denominator (see _answerable_total()'s docstring) and never shows
+    the 'other' slice on its own; this table does, broken out per language
+    instead of pooled dataset-wide (the "Per-dataset summary" section's
+    kind distribution) -- 'other' fixtures (e.g. a JUnit `@Rule`/
+    `@ClassRule` field, or a TestNG `@DataProvider`) aren't spread evenly
+    across languages, so a language with a high 'other' share has that
+    much smaller a slice of its fixtures represented anywhere in Table 1's
+    counts at all (not a diluted rate -- an outright absence). Reuses
+    _language_kind_totals() -- the same per-language totals Table 1 itself
+    renders from -- so this is a different view of the identical numbers,
+    not a separate computation."""
     other_label = other.dataset.upper()
     lines = [
-        "### Mock Fixture Counts by Language",
+        "### Fixture Kind Classification Coverage by Language",
         "",
-        "Raw count of fixtures with >=1 mock (`has_mock`), per language, "
-        "each also shown as a percentage of that language's total fixture "
-        "count. Unlike RQ2's setup/teardown counts table, `has_mock` is a "
-        "clean binary with no 'other' category and no double-counting "
-        "concern, so the denominator here is simply the total fixture "
-        "count for that language/dataset -- no exclusions. Total is the "
-        "dataset-wide sum across every language present, not just the "
-        "four rows below. Purely descriptive -- no significance test "
-        "(see the Coverage table above for the paper's actual, repo-level "
-        "mocking comparison).",
+        "Per-language, per-dataset breakdown of `fixture_role` "
+        "(setup / teardown / setup_and_teardown / other) -- the same "
+        "counts behind Table 1 above and the pooled dataset-wide `other` "
+        "% in `Per-dataset summary`, just split out per language instead "
+        "of pooled. Table 1 excludes `other` entirely from its own "
+        "percentage denominator, so it never shows this slice; `other` "
+        "fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG "
+        "`@DataProvider` -- neither is inherently setup or teardown) are "
+        "not spread evenly across languages, so a language with a high "
+        "`other` % has that much smaller a share of its fixtures "
+        "represented in Table 1's counts at all. Worth re-checking "
+        "whenever a new dataset is extracted -- a new language or "
+        "framework can introduce its own unclassifiable fixture types.",
         "",
-        f"| Language | Mock A (n) | Mock A (%) | Mock {other_label} (n) | Mock {other_label} (%) |",
-        "|---|---|---|---|---|",
+        "| Dataset | Language | Total fixtures | setup | teardown | "
+        "setup_and_teardown | other (count) | other (%) |",
+        "|---|---|---|---|---|---|---|---|",
     ]
 
-    def _row(label: str, a_dist: dict[str, int], other_dist: dict[str, int]) -> str:
-        a_total = sum(a_dist.values())
-        other_total = sum(other_dist.values())
-        a_mock = a_dist.get("has_mock", 0)
-        other_mock = other_dist.get("has_mock", 0)
-        a_pct = 100 * a_mock / a_total if a_total else 0.0
-        other_pct = 100 * other_mock / other_total if other_total else 0.0
-        return f"| {label} | {a_mock:,} | {a_pct:.1f}% | {other_mock:,} | {other_pct:.1f}% |"
-
-    lines.append(_row("Overall", a.has_mock_dist, other.has_mock_dist))
-    for language in RQ3_LANGUAGES:
-        lines.append(
-            _row(
-                language,
-                a.has_mock_dist_by_language.get(language, {}),
-                other.has_mock_dist_by_language.get(language, {}),
+    a_totals = _language_kind_totals(a.kind_counts_by_repo_and_language)
+    other_totals = _language_kind_totals(other.kind_counts_by_repo_and_language)
+    for label, totals in (("A", a_totals), (other_label, other_totals)):
+        for language in RQ3_LANGUAGES:
+            kind_counts = totals.get(language, {})
+            total = sum(kind_counts.values())
+            other_count = kind_counts.get("other", 0)
+            other_pct = 100 * other_count / total if total else 0.0
+            lines.append(
+                f"| {label} | {language} | {total:,} | "
+                f"{kind_counts.get('setup', 0):,} | "
+                f"{kind_counts.get('teardown', 0):,} | "
+                f"{kind_counts.get('setup_and_teardown', 0):,} | "
+                f"{other_count:,} | {other_pct:.1f}% |"
             )
-        )
 
     lines.append("")
-    return "\n".join(lines)
-
-
-def _render_dataset_summary(metrics: DatasetMetrics) -> str:
-    lines = [
-        f"### {DATASET_LABELS[metrics.dataset]} -- {metrics.n_fixtures:,} fixtures, "
-        f"{metrics.n_mock_usages:,} mock usages",
-        "",
-    ]
-
-    total_mock = sum(metrics.has_mock_dist.values())
-    mock_pct = 100 * metrics.has_mock_dist.get("has_mock", 0) / total_mock if total_mock else 0.0
-    lines.append(f"Mock prevalence: {metrics.has_mock_dist.get('has_mock', 0):,}/{total_mock:,} fixtures ({mock_pct:.1f}%)")
-    lines.append("")
-
-    lines += ["**Continuous metrics**", "", "| Metric | n | median | mean | min | max | stdev |",
-              "|---|---|---|---|---|---|---|"]
-    for metric in CONTINUOUS_METRICS:
-        s = summarize_continuous(_continuous_values(metrics, metric))
-        lines.append(
-            f"| {metric} | {s['n']:,} | {fmt(s['median'])} | {fmt(s['mean'])} | "
-            f"{fmt(s['min'], 0)} | {fmt(s['max'], 0)} | {fmt(s['stdev'])} |"
-        )
-    lines.append("")
-
-    for metric in CATEGORICAL_METRICS:
-        dist = _categorical_values(metrics, metric)
-        total = sum(dist.values())
-        lines += [f"**{metric} distribution**", "", "| Value | Count | % |", "|---|---|---|"]
-        if total == 0:
-            lines.append("| _(no data)_ | -- | -- |")
-        else:
-            for value, count in sorted(dist.items(), key=lambda kv: -kv[1]):
-                lines.append(f"| {value} | {count:,} | {100 * count / total:.1f}% |")
-        lines.append("")
-
-    lines += ["**Mock prevalence by language**", "", "| Language | Fixtures | With >=1 mock | Rate |",
-              "|---|---|---|---|"]
-    for language, entry in sorted(metrics.mock_rate_by_language.items()):
-        lines.append(
-            f"| {language} | {entry['total']:,} | {entry['with_mocks']:,} | {entry['rate']:.1f}% |"
-        )
-    lines.append("")
-
-    lines += ["**Framework distribution by language**", "", "| Language | Framework | Count |",
-              "|---|---|---|"]
-    for language in sorted(metrics.framework_by_language):
-        for framework, count in sorted(
-            metrics.framework_by_language[language].items(), key=lambda kv: -kv[1]
-        ):
-            lines.append(f"| {language} | {framework} | {count:,} |")
-    lines.append("")
-
-    lines.append(render_language_leakage_table(metrics.language_leakage))
-
-    return "\n".join(lines)
-
-
-def _render_continuous_metric(
-    metric: str,
-    a: DatasetMetrics,
-    other: DatasetMetrics,
-    fixture_level: BalanceTest,
-    repo_level: BalanceTest,
-) -> str:
-    """Overall-only, both bases shown (no per-language family for
-    num_mocks -- see this module's docstring)."""
-    fixture_n = NCounts(
-        len(_continuous_values(a, metric)), len(_continuous_values(other, metric))
-    )
-    repo_n = NCounts(len(a.repo_level_continuous[metric]), len(other.repo_level_continuous[metric]))
-    lines = [f"### {metric}", "", "**Fixture-level**", ""]
-    lines.append(
-        render_comparison_table(fixture_level, fixture_n, None, None, other_dataset=other.dataset)
-    )
-    lines += ["**Repo-level** (one mean value per repo)", ""]
-    lines.append(
-        render_comparison_table(repo_level, repo_n, None, None, other_dataset=other.dataset)
-    )
     return "\n".join(lines)
 
 
 def _render_comparison(label: str, a: DatasetMetrics, other: DatasetMetrics) -> str:
-    fixture_level = compare_datasets_fixture_level(a, other)
-    repo_level = compare_datasets_repo_level(a, other)
-    lines = [f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}", ""]
-
-    lines += [
-        "**Continuous metrics (Mann-Whitney U, two-sided)** -- num_mocks "
-        "has no per-language family (not one of the metrics the paper "
-        "review named), so it renders Overall-only, shown at both the "
-        "fixture-level (every fixture as an observation) and repo-level "
-        "(one mean value per repo) basis. "
-        "Effect size is Cliff's delta (thresholds: negligible <0.147, small "
-        "<0.33, medium <0.474, else large).",
+    lines = [
+        f"## {label}: {DATASET_LABELS['a']} vs {DATASET_LABELS[other.dataset]}",
         "",
+        "### Table 1: Fixture Counts by Type (tab:rq3-counts)",
+        "",
+        _render_kind_counts_table(a, other),
+        "### Table 2: Teardown Coverage by Repository (tab:rq3-coverage)",
+        "",
+        _render_teardown_coverage_table(a, other),
     ]
-    for metric in CONTINUOUS_METRICS:
-        lines.append(
-            _render_continuous_metric(metric, a, other, fixture_level[metric], repo_level[metric])
-        )
-
-    lines += ["### Mocking Coverage (paper table)", ""]
-    lines.append(_render_mocking_summary_table(a, other))
-
-    lines.append(_render_mock_counts_table(a, other))
-
     return "\n".join(lines)
 
 
@@ -624,10 +553,10 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines = [
-        "# RQ3 -- Mocking",
+        "# RQ3 -- Setup and Teardown Characterization",
         "",
-        "> How do agent-generated and human-written fixtures differ in mock "
-        "usage -- coverage?",
+        "> How do agent-generated fixtures compare to human-written ones in setup "
+        "and teardown provision?",
         "",
         f"Generated: {generated_at}",
         "",
@@ -660,6 +589,19 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
                 ]
             else:
                 lines.append(_render_comparison(label, a_metrics, other_metrics))
+
+        lines += [
+            "## Supplementary Analyses",
+            "",
+            "Analyses below are not part of either main paper table "
+            "(tab:rq3-counts, tab:rq3-coverage) but are kept and computed "
+            "since they may still be referenced in prose.",
+            "",
+        ]
+        for other_ds, _label in COMPARISONS:
+            other_metrics = loaded[other_ds]
+            if other_metrics is not None:
+                lines.append(_render_kind_classification_coverage_table(a_metrics, other_metrics))
 
     return "\n".join(lines)
 

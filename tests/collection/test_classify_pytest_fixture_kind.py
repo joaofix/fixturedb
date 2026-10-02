@@ -209,7 +209,7 @@ def cleanup_only():
 
 class TestClassifyFromSource:
     """classify_pytest_fixture_kind_from_source() -- the raw_source-string
-    entry point rq2.py's _kind() actually calls, including its own
+    entry point rq3.py's _kind() actually calls, including its own
     parse-failure/no-function-found fallback (distinct from
     classify_pytest_fixture_kind()'s 'setup' answer for a genuinely empty
     *but valid* body)."""

@@ -1,5 +1,5 @@
-"""Helpers shared across collection/research_questions/ scripts (rq1.py,
-rq2.py, rq3.py, language_contamination.py) -- kept here once instead of
+"""Helpers shared across collection/research_questions/ scripts (rq2.py,
+rq3.py, rq4.py, language_contamination.py) -- kept here once instead of
 duplicated per-script, per this package's convention: leverage
 already-collected data first, import logic from collection/ second, write
 new logic only as a last resort (and then, only once).
@@ -52,7 +52,7 @@ COMPARISONS = [("c", "A vs C")]
 # different code unit (a field, not a function body) than every other
 # fixture_type in any language this project extracts from -- pooling them
 # into the same LOC/CC/nesting_depth comparison mixes two different kinds of
-# "fixture." rq1.py excludes this set from those three continuous-metric
+# "fixture." rq2.py excludes this set from those three continuous-metric
 # comparisons (repo-level and per-language) while keeping it in
 # fixture_type/scope categorical distributions, where "this repo declared N
 # JUnit Rules" is still a meaningful, correctly-measured fact. A single
@@ -133,7 +133,7 @@ def format_p_value(p: float) -> str:
     (matches conventional reporting style: below the display precision, an
     exact figure like "0.0003" implies false precision), else 3 decimals
     (e.g. "0.031"). Replaces every "significant (p<0.05)" yes/no column
-    and every f"{p:.4g}"-style call across rq1.py/rq2.py/rq3.py -- a paper
+    and every f"{p:.4g}"-style call across rq2.py/rq3.py/rq4.py -- a paper
     reviewer wants the actual p-value, not just a pass/fail against an
     arbitrary alpha."""
     return "<.001" if p < 0.001 else f"{p:.3f}"
@@ -155,10 +155,10 @@ class NCounts:
 
 def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest]:
     """Benjamini-Hochberg FDR correction across `tests` -- one "family" of
-    related hypotheses tested together (e.g. every RQ1 metric in one A-vs-B
+    related hypotheses tested together (e.g. every RQ2 metric in one A-vs-B
     comparison, or every language in one stratified breakdown).
 
-    Why this exists: each RQ script runs many hypothesis tests (RQ1 alone
+    Why this exists: each RQ script runs many hypothesis tests (RQ2 alone
     is 9 per comparison -- 6 continuous + 3 categorical -- times 2
     comparisons, before today's per-language stratification multiplied
     that further). At uncorrected alpha=0.05, some fraction of "significant"
@@ -177,7 +177,7 @@ def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest
     both the raw and corrected verdicts stay visible.
 
     A test excluded here (no `adjusted_p_value` added) must be one every
-    `_row()`-style renderer across rq1-3/balance.py already treats as
+    `_row()`-style renderer across rq2-4/balance.py already treats as
     "not really tested" and skips before reading `adjusted_p_value` --
     currently `reason="insufficient_data"` (compute_continuous_balance()/
     compute_categorical_balance() when one side has no data at all -- a
@@ -233,11 +233,11 @@ def compute_stratified_continuous_balance(
     variable: str,
 ) -> dict[str, BalanceTest]:
     """Per-language Mann-Whitney U + Cliff's delta, restricted to languages
-    with data on both sides. RQ1's only remaining per-language stratified
+    with data on both sides. RQ2's only remaining per-language stratified
     test as of 2026-09-27 -- the categorical analogue,
     compute_stratified_categorical_balance(), was removed the same day
-    once its last two consumers (RQ1's fixture_type fixture-level
-    chi-square, RQ3's Legacy has_mock chi-square) were both gone (same
+    once its last two consumers (RQ2's fixture_type fixture-level
+    chi-square, RQ4's Legacy has_mock chi-square) were both gone (same
     rationale as this function: a pooled comparison can look significant
     purely because the two datasets have different language mixes; this
     checks whether the difference holds *within* a language).
@@ -366,7 +366,7 @@ def render_comparison_table(
     per_language_q3: dict[str, tuple[float | None, float | None]] | None = None,
     per_language_p90: dict[str, tuple[float | None, float | None]] | None = None,
 ) -> str:
-    """The one table every A-vs-C comparison in rq1.py/rq2.py/rq3.py
+    """The one table every A-vs-C comparison in rq2.py/rq3.py/rq4.py
     renders through: `| Language | n_A | n_<other> | Statistic | Effect
     size value | Magnitude | p (raw) | p (BH-adj) |`.
 
@@ -379,7 +379,7 @@ def render_comparison_table(
     else (not the Overall row, not other variables' tests) -- and adds one
     row per language (sorted alphabetically), each with its own raw + BH-
     adjusted p. If `per_language` is None, the table is Overall-only (this
-    metric has no per-language family defined for it -- e.g. RQ3's
+    metric has no per-language family defined for it -- e.g. RQ4's
     num_mocks).
 
     `per_language_medians`/`per_language_q3`/`per_language_p90`, each
@@ -395,7 +395,7 @@ def render_comparison_table(
     when they're all built from the same language set, but not relied
     upon) renders "--" for that pair's two cells, rather than a ragged
     row. Each opt-in parameter defaults to None -- every existing caller's
-    table is byte-for-byte unchanged; currently only rq1.py's three paper
+    table is byte-for-byte unchanged; currently only rq2.py's three paper
     continuous metrics (loc/cyclomatic_complexity/comment_density) pass
     any of these.
 
@@ -486,7 +486,7 @@ def fetch_continuous_column_by_repo(
     exclude_fixture_types, when given, adds `fixture_type NOT IN (...)` to
     the query -- `table` must have a fixture_type column (i.e. be
     "fixtures") when this is passed; callers against other tables (e.g.
-    rq3.py's mock_usages calls) must leave it None. Exists for
+    rq4.py's mock_usages calls) must leave it None. Exists for
     NO_BODY_FIXTURE_TYPES (see its own docstring) -- a general opt-in filter
     rather than something baked into the query unconditionally, since most
     callers/columns have no reason to exclude anything.
@@ -538,8 +538,8 @@ def repo_level_medians(by_repo: dict[int, list[float]]) -> list[float]:
     reintroduces a milder version of the same distortion repo-level
     aggregation exists to remove. The median of a repo's own fixtures is
     what "the typical fixture in this repo looks like," which is the
-    question RQ1's cross-repo median/Q3/P90 comparison is actually asking
-    -- see rq1.py's module docstring.
+    question RQ2's cross-repo median/Q3/P90 comparison is actually asking
+    -- see rq2.py's module docstring.
     """
     return [statistics.median(vals) for vals in by_repo.values() if vals]
 

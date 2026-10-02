@@ -26,7 +26,7 @@ means it can be (re)generated without ever touching those two files.
 
 Population: `db/a.db` + `db/c.db`, both full (not `db/c_sampled.db` --
 see `detection_validation_sampling.py`'s module docstring for why: that's
-a fixture-count-matched sample-down for RQ1-3's paper statistics, not the
+a fixture-count-matched sample-down for RQ2-4's paper statistics, not the
 broadest population for a detector-precision check), Python fixtures only,
 `fixture_type='unittest_setup'` restricted to exactly the six name-based
 methods listed above -- `asyncSetUp`/`asyncTearDown` (also matched by

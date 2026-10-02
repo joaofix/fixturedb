@@ -29,7 +29,7 @@ separate language column.
 
 Population source: `db/a.db` (Dataset A, full) and `db/c.db` (Dataset C,
 full -- NOT `db/c_sampled.db`, which is a fixture-count-matched
-sample-down built specifically for RQ1-3's A-vs-C paper statistics, not
+sample-down built specifically for RQ2-4's A-vs-C paper statistics, not
 the broadest available population for a detector-precision check).
 
 Precision-only, matching validation_sampling.py's own convention: these

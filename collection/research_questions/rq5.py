@@ -1,18 +1,19 @@
 """
-RQ1 -- Fixture Prevalence (Quantitative): how common is test fixture usage
-at all in agent-authored vs. human-authored test commits/files?
+RQ5 -- Agent Configuration Files (Mixed -- Qualitative + Quantitative): what
+instructions, if any, do humans give coding agents about test fixtures via
+agent configuration files (e.g. CLAUDE.md, .cursor/rules, AGENTS.md)?
 
 Not yet implemented. This module exists as a placeholder so the package's
 RQ numbering (RQ1 fixture prevalence, RQ2 general metrics, RQ3 setup/
 teardown, RQ4 mocking, RQ5 agent configuration files) is reflected in the
-file layout ahead of the actual metric design and computation -- see
+file layout ahead of the actual coding scheme and computation -- see
 docs/research-questions.md for the current definition of each RQ.
-`write_report()` writes a stub `research_questions/rq1.md` noting this,
+`write_report()` writes a stub `research_questions/rq5.md` noting this,
 rather than erroring, so the rest of the research_questions/ pipeline
 (e.g. any script that regenerates every report in one pass) doesn't need
 to special-case an unimplemented RQ.
 
-python -m collection.research_questions.rq1
+python -m collection.research_questions.rq5
 """
 
 from __future__ import annotations
@@ -29,10 +30,10 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     return "\n".join(
         [
-            "# RQ1 -- Fixture Prevalence",
+            "# RQ5 -- Agent Configuration Files",
             "",
-            "> How common is test fixture usage in agent-authored vs. "
-            "human-authored test commits/files?",
+            "> What instructions, if any, do humans give coding agents "
+            "about test fixtures via agent configuration files?",
             "",
             f"Generated: {generated_at}",
             "",
@@ -46,12 +47,12 @@ def write_report(
     output_dir: Path = OUTPUT_DIR, *, db_root: Path = paths.DB_ROOT
 ) -> Path:
     report = generate_report(db_root=db_root)
-    return write_markdown_report(output_dir, "rq1.md", report)
+    return write_markdown_report(output_dir, "rq5.md", report)
 
 
 def main() -> None:
     path = write_report()
-    print(f"RQ1 report written to {path}")
+    print(f"RQ5 report written to {path}")
 
 
 if __name__ == "__main__":

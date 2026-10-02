@@ -1,7 +1,7 @@
 """
 Control-variable balance check: language, domain, repo_age_years -- are the
 repo samples behind Dataset A and Dataset C actually comparable before
-attributing an RQ1-3 metric difference to era (A vs C)?
+attributing an RQ2-4 metric difference to era (A vs C)?
 
 This exists because the methodology described in docs/data/dataset-card.md's
 "Balance Tests" section and docs/reference/limitations.md's "Control
@@ -18,7 +18,7 @@ Run for real (2026-07-31, when this script still also checked A vs B)
 against the current corpora: domain and repo_age_years were NOT balanced,
 neither A vs B nor A vs C (all four p < 1e-7). This script now reports A vs
 C only -- Dataset B is still collected but out of scope for its output; see
-this module's generate_report() output for current numbers -- every RQ1-3
+this module's generate_report() output for current numbers -- every RQ2-4
 comparison should be read with this in mind until it's addressed (stratify,
 regression-adjust, or at minimum explicitly disclose the confound).
 
@@ -29,7 +29,7 @@ counted repos this way too -- despite their names, they never counted
 "fixtures", the query has no GROUP BY that would double-count a repo with
 many fixtures). Fixture-weighting would conflate "are the repo samples
 comparable" with "did some repos happen to yield more fixtures than
-others", which is a different question RQ1-3's own fixture-level tests
+others", which is a different question RQ2-4's own fixture-level tests
 already cover.
 
 python -m collection.research_questions.balance
@@ -214,7 +214,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "# Control-Variable Balance Check",
         "",
         "> Are the repo samples behind two datasets comparable on language, "
-        "domain, and repo age -- before attributing an RQ1-3 fixture-metric "
+        "domain, and repo age -- before attributing an RQ2-4 fixture-metric "
         "difference to authorship or era? See this module's docstring for why "
         "this check didn't previously run against the current data.",
         "",

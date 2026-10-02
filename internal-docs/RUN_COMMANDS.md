@@ -255,8 +255,8 @@ since its whole job is comparing two already-extracted datasets.
 
 ### Dataset C sampling: required before running `research_questions/` scripts
 
-Every `research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/
-`balance.py`/`language_contamination.py`/`dataset_findings.py`) reads
+Every `research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/`rq4.py`/
+`rq5.py`/`balance.py`/`language_contamination.py`/`dataset_findings.py`) reads
 Dataset C's fixture-level sample-down (`db/c_sampled.db` +
 `datasets/c/fixtures-sampled/`), not the full `db/c.db` +
 `datasets/c/fixtures/` -- see
@@ -284,7 +284,7 @@ only ever land close to a target, never on it, since a repo is an
 indivisible chunk of fixtures).
 
 **Known limitation**: because a repo's fixtures can now be only partially
-represented, every `research_questions/` repo-level statistic (e.g. RQ2's
+represented, every `research_questions/` repo-level statistic (e.g. RQ3's
 per-repo setup/teardown proportions, or any other rqN.py/balance.py
 comparison -- they all aggregate one value per repo) can be computed from
 an incomplete per-repo fixture set for Dataset C. Sampling is

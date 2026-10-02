@@ -52,8 +52,8 @@ _MODULE_LEVEL_ONLY_NAMES = frozenset({"setUpModule", "tearDownModule"})
 # `@pytest.fixture` function is just whatever the developer named it, with an
 # *optional* teardown phase expressed as code after a `yield`. The functions
 # below classify that by reading the fixture's own body instead, and are
-# consumed at RQ2 report-generation time by
-# `research_questions/rq2.py::_kind()` (there's no persisted DB column for
+# consumed at RQ3 report-generation time by
+# `research_questions/rq3.py::_kind()` (there's no persisted DB column for
 # this -- see that module's docstring).
 
 

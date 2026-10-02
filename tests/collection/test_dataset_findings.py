@@ -200,7 +200,7 @@ def _make_db_with_multi_language_files(
     exactly one test_file at the repo's own language. Used by the
     "Fixture Counts by Language" tests, which must prove the count is
     grouped by each fixture's own language, not its repo's tag -- mirrors
-    test_rq1.py::_make_multi_language_db()'s shape (kept local rather than
+    test_rq2.py::_make_multi_language_db()'s shape (kept local rather than
     imported cross-file, matching this suite's existing convention of each
     test file owning its own DB-building helpers)."""
     initialise_db(db_file)

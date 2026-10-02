@@ -506,7 +506,7 @@ def sample_dataset_c_repos(
     of the sample, maximizing the number of distinct repos represented
     (breadth) over keeping any one sampled repo "whole".
 
-    **Known limitation for repo-level statistics** (e.g. RQ2's per-repo
+    **Known limitation for repo-level statistics** (e.g. RQ3's per-repo
     setup/teardown proportions, or any other rqN.py/balance.py comparison
     -- they all aggregate one value per repo): every research_questions/
     script now reads this sampled DB for dataset "c"

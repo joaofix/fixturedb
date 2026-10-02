@@ -43,7 +43,7 @@ def sample_fixtures_by_language(
     docstring for why (this maximizes the number of distinct repos
     represented in the sample, at the cost of no longer guaranteeing a
     sampled repo's fixtures are all present together -- repo-level
-    metrics like RQ2's setup/teardown pairing must not be computed
+    metrics like RQ3's setup/teardown pairing must not be computed
     against a sample built this way).
 
     Args:

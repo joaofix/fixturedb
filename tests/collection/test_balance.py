@@ -114,7 +114,7 @@ class TestLoadRepoControlVariables:
         """A repo with many fixtures must still count once, not once per
         fixture -- this is what distinguishes a control-variable balance
         check (are the repo SAMPLES comparable) from a fixture-level metric
-        test (RQ1-3's own job)."""
+        test (RQ2-4's own job)."""
         db_file = paths.db_path("a", root=tmp_path)
         initialise_db(db_file)
         with db_session(db_file) as conn:

@@ -1,13 +1,13 @@
 """
 Dataset findings that support paper claims but don't belong to any single
-RQ1-3 comparison -- they don't pit Dataset A against B/C, they describe a
+RQ2-4 comparison -- they don't pit Dataset A against B/C, they describe a
 dataset's own collection process or composition. New findings of this kind
 get their own `##` section and render function in this file rather than a
-new script per finding (unlike rq1.py/rq2.py/rq3.py/balance.py/
+new script per finding (unlike rq2.py/rq3.py/rq4.py/balance.py/
 language_contamination.py, which each answer one specific, separately-named
 question). See docs/data/dataset-card.md's "About the datasets" section for
 how these are meant to be cited -- as caveats/characterisation alongside the
-RQ1-3 comparisons, not folded into any RQ's own statistical tests.
+RQ2-4 comparisons, not folded into any RQ's own statistical tests.
 
 Every section here reads data collection already computes and persists --
 `db/*.db`, or (for the newest section below) the raw SEART export and
@@ -102,7 +102,7 @@ Currently covers:
 - **Fixture counts by language**: total extracted fixtures per language,
   per dataset (A and C), straight from `db/*.db`, grouped by each
   fixture's own detected language (`test_files.language`) rather than its
-  repo's tagged language. Deliberately a different grouping from rq1.py's
+  repo's tagged language. Deliberately a different grouping from rq2.py's
   "Cross-language fixture leakage" table, which groups by repo language
   instead -- that table's per-language totals include leaked fixtures
   written in a different language than their repo's tag, so it isn't a
@@ -659,7 +659,7 @@ def _fetch_fixture_counts_by_own_language(conn: sqlite3.Connection) -> dict[str,
     """Total fixture count grouped by each fixture's OWN detected language
     (`test_files.language`) -- not its repo's tagged language
     (`repositories.language`). Deliberately a different grouping than
-    rq1.py's "Cross-language fixture leakage" table, which groups by repo
+    rq2.py's "Cross-language fixture leakage" table, which groups by repo
     language: there, a repo tagged `python` with some leaked JavaScript
     test files still has all of those fixtures counted under `python`'s
     "Total fixtures" row, since that table is about *how much* leakage a
@@ -819,7 +819,7 @@ def _render_fixture_counts_by_language_summary(
     language, per dataset, from `db/a.db`/`db/c.db` directly. Counts each
     fixture under its own detected language
     (`_fetch_fixture_counts_by_own_language()`), not its repo's tagged
-    language -- a different grouping than rq1.py's "Cross-language
+    language -- a different grouping than rq2.py's "Cross-language
     fixture leakage" table, whose "Total fixtures" column groups by repo
     language instead (so that table's per-language totals include leaked
     fixtures written in a different language). Each dataset degrades to
@@ -843,7 +843,7 @@ def _render_fixture_counts_by_language_summary(
         "Total extracted fixtures per language, per dataset, counted by "
         "each fixture's own detected language -- not its repo's tagged "
         "language. This is a different grouping than the "
-        '"Cross-language fixture leakage" table in rq1.md\'s per-dataset '
+        '"Cross-language fixture leakage" table in rq2.md\'s per-dataset '
         "summaries, which groups by repo language instead, so a repo's "
         "language bucket there includes any fixtures written in a "
         "different language that were found inside it. The numbers here "
@@ -1492,11 +1492,11 @@ def generate_report(
 ) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = [
-        "# Dataset Findings (outside RQ1-3)",
+        "# Dataset Findings (outside RQ2-4)",
         "",
         "> Descriptive statistics about the datasets themselves -- collection "
         "process, composition -- that support paper claims but don't belong "
-        "to any single RQ1-3 comparison. See this module's docstring for what "
+        "to any single RQ2-4 comparison. See this module's docstring for what "
         "each section below covers and why it lives here instead of its own "
         "script.",
         "",
