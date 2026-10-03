@@ -31,6 +31,7 @@ from collection.rq5_agent_file_scan import (
     REPAIRABLE_ERROR_REASONS,
     RQ5_LANGUAGES,
     TARGET_REQUESTS_PER_HOUR,
+    V1_TO_V2_REMOVED_FIXTURE_KEYWORDS,
     RateLimitExhausted,
     _api_get,
     _build_keyword_pattern,
@@ -51,6 +52,7 @@ from collection.rq5_agent_file_scan import (
     main,
     persist_result,
     process_repo,
+    prune_removed_keywords,
     read_blob_via_api,
     retry_failed_repos,
     run_scan,
@@ -118,7 +120,7 @@ _TEST_CATALOG = {
     "version": 1,
     "target_files": ["AGENTS.md", "CLAUDE.md"],
     "test_keywords": ["test", "pytest"],
-    "fixture_keywords": ["fixture", "fixtures", "teardown", "before each", "beforeEach"],
+    "fixture_keywords": ["fixture", "fixtures", "teardown", "test setup", "beforeEach"],
 }
 
 
@@ -135,6 +137,24 @@ class TestLoadRq5KeywordCatalog:
         assert "setup" not in catalog["test_keywords"]
         assert "setup" not in catalog["fixture_keywords"]
 
+    def test_removed_v1_keywords_never_reappear(self):
+        """Regression guard for the catalog v1 -> v2 removal (see that
+        YAML's own changelog comment): these four collided heavily with
+        ordinary English ("before each commit", "after each fix") having
+        nothing to do with test lifecycle hooks -- confirmed on real
+        collected data, not a hypothetical. Must never be re-added."""
+        catalog = load_rq5_keyword_catalog()
+        for removed in V1_TO_V2_REMOVED_FIXTURE_KEYWORDS:
+            assert removed not in catalog["fixture_keywords"]
+        # The unambiguous camelCase forms must still be there -- they're
+        # the only way these four hooks are caught now.
+        for kept in ("beforeEach", "afterEach", "beforeAll", "afterAll"):
+            assert kept in catalog["fixture_keywords"]
+
+    def test_real_catalog_is_at_least_version_2(self):
+        catalog = load_rq5_keyword_catalog()
+        assert catalog["version"] >= 2
+
 
 class TestBuildKeywordPattern:
     def test_single_word_respects_word_boundaries(self):
@@ -149,16 +169,16 @@ class TestBuildKeywordPattern:
         assert pattern.search("This is a TEST.")
 
     def test_multi_word_accepts_space_hyphen_or_no_separator(self):
-        pattern = _build_keyword_pattern("before each")
-        assert pattern.search("before each")
-        assert pattern.search("before-each")
-        assert pattern.search("beforeeach")
-        assert pattern.search("BEFOREEACH")
+        pattern = _build_keyword_pattern("test setup")
+        assert pattern.search("test setup")
+        assert pattern.search("test-setup")
+        assert pattern.search("testsetup")
+        assert pattern.search("TESTSETUP")
 
     def test_multi_word_still_respects_outer_word_boundaries(self):
-        pattern = _build_keyword_pattern("before each")
-        assert not pattern.search("beforeeachx")
-        assert not pattern.search("xbeforeeach")
+        pattern = _build_keyword_pattern("test setup")
+        assert not pattern.search("testsetupx")
+        assert not pattern.search("xtestsetup")
 
     def test_camel_case_keyword_matched_literally(self):
         pattern = _build_keyword_pattern("beforeEach")
@@ -575,10 +595,8 @@ class TestProcessRepo:
         assert file_row["has_test"] is True
         assert file_row["has_fixture"] is True
         assert file_row["test_match_count"] == 1  # "pytest" only
-        # "fixture" (line 1) + "beforeEach" and "before each" (both fire on the same
-        # text -- a camelCase keyword and a spaced keyword are independent catalog
-        # entries) + "fixtures" (line 2).
-        assert file_row["fixture_match_count"] == 4
+        # "fixture" (line 1) + "beforeEach" + "fixtures" (line 2).
+        assert file_row["fixture_match_count"] == 3
         assert "pytest" in file_row["matched_test_keywords"]
         assert file_row["github_url"] == "https://github.com/owner/repo/blob/sha1/AGENTS.md"
 
@@ -1004,6 +1022,189 @@ class TestWriteCsvOutputs:
         rows = (out_dir / "agent_file_matches.csv").read_text().splitlines()
         assert rows[0] == ",".join(_MATCH_CSV_FIELDNAMES)
         assert rows[1].endswith("https://github.com/o/a/blob/sha1/AGENTS.md#L42")
+
+
+class TestPruneRemovedKeywords:
+    """Coverage for the catalog v1 -> v2 migration (see that YAML's own
+    changelog): removing a keyword can only shrink an already-collected
+    match set, never grow it, so this must be correct with zero access
+    to the original file content -- these tests build exactly that
+    "already collected under the bigger catalog" state and check the
+    recomputation matches what a from-scratch v2 scan would have found.
+    """
+
+    def _make_file_and_matches(self, repo_name, file_name, matches):
+        """`matches`: list of (keyword, line_number) tuples, all
+        keyword_list="fixture", used to build both the file row's
+        starting (pre-prune) flags/counts and the match rows."""
+        keywords = sorted({kw for kw, _ in matches})
+        file_row = {
+            "repo_name": repo_name,
+            "file_name": file_name,
+            "file_type": file_name,
+            "language": "python",
+            "commit_sha": "sha1",
+            "has_test": False,
+            "has_fixture": bool(matches),
+            "test_match_count": 0,
+            "fixture_match_count": len(matches),
+            "matched_test_keywords": "",
+            "matched_fixture_keywords": ",".join(keywords),
+            "github_url": f"https://github.com/{repo_name}/blob/sha1/{file_name}",
+        }
+        match_rows = [
+            {
+                "repo_name": repo_name,
+                "file_name": file_name,
+                "keyword_list": "fixture",
+                "keyword": kw,
+                "line_number": line,
+                "line_context": f"context for {kw}",
+                "in_code_block": False,
+            }
+            for kw, line in matches
+        ]
+        return file_row, match_rows
+
+    def test_deletes_matches_for_the_removed_keywords_only(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        file_row, matches = self._make_file_and_matches(
+            "o/a", "AGENTS.md", [("before each", 1), ("conftest", 2)]
+        )
+        persist_result(
+            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
+            db_path,
+        )
+
+        counts = prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
+
+        assert counts["matches_deleted"] == 1
+        with sqlite3.connect(db_path) as conn:
+            remaining = conn.execute("SELECT keyword FROM agent_file_matches WHERE repo_name='o/a'").fetchall()
+        assert remaining == [("conftest",)]
+
+    def test_file_with_only_removed_keywords_flips_has_fixture_to_false(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        file_row, matches = self._make_file_and_matches(
+            "o/a", "AGENTS.md", [("before each", 1), ("after all", 2)]
+        )
+        persist_result(
+            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
+            db_path,
+        )
+
+        counts = prune_removed_keywords(("before each", "after all"), keyword_list="fixture", db_path=db_path)
+
+        assert counts["files_flag_changed"] == 1
+        with sqlite3.connect(db_path) as conn:
+            row = conn.execute(
+                "SELECT has_fixture, fixture_match_count, matched_fixture_keywords FROM agent_files WHERE repo_name='o/a'"
+            ).fetchone()
+        assert row == (0, 0, "")
+
+    def test_file_with_a_surviving_keyword_keeps_has_fixture_true(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        file_row, matches = self._make_file_and_matches(
+            "o/a", "AGENTS.md", [("before each", 1), ("conftest", 2), ("conftest", 3)]
+        )
+        persist_result(
+            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
+            db_path,
+        )
+
+        counts = prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
+
+        assert counts["files_flag_changed"] == 0  # has_fixture was already True, stays True
+        with sqlite3.connect(db_path) as conn:
+            row = conn.execute(
+                "SELECT has_fixture, fixture_match_count, matched_fixture_keywords FROM agent_files WHERE repo_name='o/a'"
+            ).fetchone()
+        assert row == (1, 2, "conftest")
+
+    def test_unaffected_files_are_left_exactly_as_they_were(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        file_row, matches = self._make_file_and_matches("o/a", "AGENTS.md", [("conftest", 1)])
+        persist_result(
+            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
+            db_path,
+        )
+
+        counts = prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
+
+        assert counts == {"matches_deleted": 0, "files_examined": 1, "files_flag_changed": 0}
+
+    def test_stamps_catalog_version_when_given(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("o/b", "python", "t", 2, fetch_ok=True)), db_path)
+
+        prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path, new_catalog_version=2)
+
+        with sqlite3.connect(db_path) as conn:
+            versions = {v for (v,) in conn.execute("SELECT catalog_version FROM repo_scan")}
+        assert versions == {2}
+
+    def test_omitting_new_catalog_version_leaves_it_untouched(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
+
+        prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
+
+        with sqlite3.connect(db_path) as conn:
+            version = conn.execute("SELECT catalog_version FROM repo_scan WHERE repo_name='o/a'").fetchone()[0]
+        assert version == 1
+
+    def test_also_works_on_the_test_keyword_list(self, tmp_path):
+        """keyword_list is a parameter, not hardcoded to "fixture" --
+        this module doesn't currently need to prune a test keyword, but
+        the function must handle it correctly if it ever does."""
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        file_row = {
+            "repo_name": "o/a",
+            "file_name": "AGENTS.md",
+            "file_type": "AGENTS.md",
+            "language": "python",
+            "commit_sha": "sha1",
+            "has_test": True,
+            "has_fixture": False,
+            "test_match_count": 1,
+            "fixture_match_count": 0,
+            "matched_test_keywords": "bogus_test_kw",
+            "matched_fixture_keywords": "",
+            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
+        }
+        match = {
+            "repo_name": "o/a",
+            "file_name": "AGENTS.md",
+            "keyword_list": "test",
+            "keyword": "bogus_test_kw",
+            "line_number": 1,
+            "line_context": "x",
+            "in_code_block": False,
+        }
+        persist_result(
+            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=[match]),
+            db_path,
+        )
+
+        counts = prune_removed_keywords(("bogus_test_kw",), keyword_list="test", db_path=db_path)
+
+        assert counts["files_flag_changed"] == 1
+        with sqlite3.connect(db_path) as conn:
+            row = conn.execute(
+                "SELECT has_test, test_match_count, matched_test_keywords FROM agent_files WHERE repo_name='o/a'"
+            ).fetchone()
+        assert row == (0, 0, "")
+
+    def test_default_removed_keywords_constant_matches_the_catalog_changelog(self):
+        assert V1_TO_V2_REMOVED_FIXTURE_KEYWORDS == ("before each", "after each", "before all", "after all")
 
 
 class TestRunScan:

@@ -17,8 +17,8 @@
 #   - Case-insensitive, word-boundary-respecting (e.g. "test" never matches
 #     "latest"/"contest"/"attestation").
 #   - A multi-word term (keyword containing a literal space) accepts a
-#     space, a hyphen, or no separator between its words -- e.g. "before
-#     each" also matches "before-each"/"beforeeach". This is deliberately
+#     space, a hyphen, or no separator between its words -- e.g. "test
+#     setup" also matches "test-setup"/"testsetup". This is deliberately
 #     NOT extended to camelCase terms (e.g. "beforeEach" is its own, separate
 #     entry below, matched literally) -- camelCase and spaced-phrase forms
 #     are both listed explicitly rather than derived from one another.
@@ -28,7 +28,27 @@
 # generic environment-setup instructions having nothing to do with test
 # fixtures. It only appears inside a phrase ("test setup", "setup and
 # teardown").
-version: 1
+#
+# **v1 -> v2 (2026-10-03): removed "before each"/"after each"/"before
+# all"/"after all".** Auditing the real collection's matches (manual
+# review -- exactly what this catalog's own match-level persistence
+# exists for) found these four spaced phrases collide heavily with
+# ordinary English having nothing to do with test lifecycle hooks --
+# "before each commit", "after each fix", "before each model request",
+# "after each interaction" all matched and were not test-related.
+# Measured false-positive rate on real samples: roughly 17-50% across
+# the four. The camelCase forms (beforeEach/afterEach/beforeAll/afterAll,
+# still below) don't have this problem at all -- they're unambiguous
+# identifiers that don't occur in natural prose, so they're kept as the
+# only way to catch these four hooks. A hyphenated prose mention
+# ("before-each") is lost by this removal, but that's a much rarer
+# documentation style than either camelCase or plain English spacing, so
+# a clearly worthwhile precision trade. See `prune_removed_keywords()`
+# in rq5_agent_file_scan.py for how this was retroactively applied to
+# the already-collected db without a from-scratch re-run (removing a
+# keyword only ever shrinks a match set, never grows it, so no
+# re-fetch from GitHub was needed).
+version: 2
 
 # Matched against each repo's root-level tree entries only (no
 # subdirectories), case-insensitively -- see find_target_files_at_commit().
@@ -65,10 +85,6 @@ fixture_keywords:
   - teardown
   - test setup
   - setup and teardown
-  - before each
-  - after each
-  - before all
-  - after all
   - beforeEach
   - afterEach
   - beforeAll

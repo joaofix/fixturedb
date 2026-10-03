@@ -320,12 +320,21 @@ def load_rq5_keyword_catalog(path: Path = CATALOG_PATH) -> dict[str, Any]:
 
 def _build_keyword_pattern(keyword: str) -> re.Pattern:
     """Case-insensitive, word-boundary-respecting regex for one catalog
-    keyword. A keyword containing a literal space (e.g. "before each") is
+    keyword. A keyword containing a literal space (e.g. "test setup") is
     split on spaces and re-joined with an optional space-or-hyphen between
-    each pair of words, so "before each"/"before-each"/"beforeeach" all
+    each pair of words, so "test setup"/"test-setup"/"testsetup" all
     match the same catalog entry -- a single-token keyword (including a
     camelCase one like "beforeEach") is matched literally instead, since
     it isn't a "multi-word term" in the catalog's own representation.
+
+    Use this tolerance carefully: it was dropped entirely for "before
+    each"/"after each"/"before all"/"after all" (catalog v2, see that
+    file's own changelog) because allowing the bare-space form made them
+    collide with ordinary English ("before each commit", "after each
+    fix") having nothing to do with the test lifecycle hooks they were
+    meant to catch -- a multi-word catalog entry is only safe when the
+    plain-English phrasing itself is already unlikely outside this
+    context (e.g. "test setup" rarely means anything else).
 
     `\\b` at both ends is what keeps "test" from matching inside "latest"/
     "contest"/"attestation" -- every catalog keyword starts and ends with
@@ -939,6 +948,85 @@ def write_csv_outputs(db_path: Path = DB_PATH, output_dir: Path = CSV_OUTPUT_DIR
             writer.writerows(match_rows)
         written[MATCH_TABLE_NAME] = match_path
     return written
+
+
+# The catalog v1 -> v2 removal (see rq5_agent_file_keywords.yaml's own
+# changelog comment for why) -- named here so prune_removed_keywords()'s
+# real call site and this module's own tests share one source instead
+# of two copies of the same four strings.
+V1_TO_V2_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("before each", "after each", "before all", "after all")
+
+
+def prune_removed_keywords(
+    removed_keywords: tuple[str, ...],
+    *,
+    keyword_list: str = "fixture",
+    new_catalog_version: int | None = None,
+    db_path: Path = DB_PATH,
+) -> dict[str, int]:
+    """Retroactively remove `removed_keywords` (all from the same
+    `keyword_list`, `"test"` or `"fixture"`) from an already-collected
+    db, with no re-fetch from GitHub at all.
+
+    This is correct, not an approximation: removing a keyword from the
+    catalog can only ever shrink a match set, never grow it -- the file
+    content itself didn't change, only which of its already-found
+    occurrences still count. So "what `agent_files`/`agent_file_matches`
+    would look like under the smaller catalog" is exactly "what they
+    already look like, minus every match of the removed keywords" --
+    nothing here needs the raw file text, which isn't even stored.
+
+    Deletes the affected `agent_file_matches` rows, then recomputes
+    `agent_files.has_<keyword_list>`/`<keyword_list>_match_count`/
+    `matched_<keyword_list>_keywords` for every file from whatever
+    matches remain. Pass `new_catalog_version` to also stamp every
+    `repo_scan` row with it, documenting that the stored results are now
+    consistent with that (smaller) catalog version -- correct to do
+    unconditionally, since every repo's results shrink identically.
+
+    Used once for catalog v1 -> v2 (see that YAML's own changelog
+    comment for why "before each"/"after each"/"before all"/"after all"
+    were removed) -- kept as a real, tested function rather than a
+    throwaway script, so the same correction is available again if a
+    future audit finds another keyword worth dropping.
+    """
+    has_col = f"has_{keyword_list}"
+    count_col = f"{keyword_list}_match_count"
+    matched_col = f"matched_{keyword_list}_keywords"
+
+    with db_session(db_path) as conn:
+        placeholders = ", ".join("?" for _ in removed_keywords)
+        matches_deleted = conn.execute(
+            f"DELETE FROM {MATCH_TABLE_NAME} WHERE keyword_list = ? AND keyword IN ({placeholders})",
+            (keyword_list, *removed_keywords),
+        ).rowcount
+
+        file_rows = conn.execute(f"SELECT repo_name, file_name, {has_col} FROM {FILE_TABLE_NAME}").fetchall()
+        files_changed = 0
+        for repo_name, file_name, old_has_flag in file_rows:
+            remaining = conn.execute(
+                f"SELECT keyword FROM {MATCH_TABLE_NAME} "
+                f"WHERE repo_name = ? AND file_name = ? AND keyword_list = ?",
+                (repo_name, file_name, keyword_list),
+            ).fetchall()
+            keywords = sorted({k[0] for k in remaining})
+            new_has_flag = 1 if keywords else 0
+            if new_has_flag != old_has_flag:
+                files_changed += 1
+            conn.execute(
+                f"UPDATE {FILE_TABLE_NAME} SET {has_col} = ?, {count_col} = ?, {matched_col} = ? "
+                f"WHERE repo_name = ? AND file_name = ?",
+                (new_has_flag, len(remaining), ",".join(keywords), repo_name, file_name),
+            )
+
+        if new_catalog_version is not None:
+            conn.execute(f"UPDATE {REPO_TABLE_NAME} SET catalog_version = ?", (new_catalog_version,))
+
+    return {
+        "matches_deleted": matches_deleted,
+        "files_examined": len(file_rows),
+        "files_flag_changed": files_changed,
+    }
 
 
 def run_scan(
