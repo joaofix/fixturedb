@@ -956,6 +956,30 @@ def write_csv_outputs(db_path: Path = DB_PATH, output_dir: Path = CSV_OUTPUT_DIR
 # of two copies of the same four strings.
 V1_TO_V2_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("before each", "after each", "before all", "after all")
 
+# The catalog v2 -> v3 removal (see rq5_agent_file_keywords.yaml's own
+# changelog comment for why: the bare word "teardown" has the exact same
+# defect "setup" was already excluded for -- it matches generic
+# resource/UI/infra cleanup prose having nothing to do with tests).
+V2_TO_V3_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("teardown",)
+
+# **Not a removal -- a reporting caveat, see collection/research_questions/
+# rq5.py's conservative-subset metric.** Unlike every keyword above/removed
+# so far, "fixture"/"fixtures" are not a false-positive-prone pattern match:
+# they correctly find the literal word "fixture". The problem is semantic,
+# not lexical, and the catalog can't fix it by word choice -- "fixture"
+# genuinely has two senses in agent-config prose, and this study's object
+# is only one of them. Manual sampling of 60 real matches (2026-10-03)
+# found roughly a third were fixture-as-code ("functions decorated with
+# @pytest.fixture", shared conftest.py fixtures) and over half were
+# fixture-as-test-data-file ("tests/fixtures/*.json", "fixture.json",
+# snapshot fixtures, Docker-based fixtures) -- the latter sense is
+# explicitly out of scope for this study (fixtures-as-code only). Kept in
+# the catalog regardless, since dropping them would also lose every real
+# code-sense match, undercounting rather than fixing anything -- this
+# constant exists purely so the report can additionally show a stricter,
+# code-only-keyword count alongside the inclusive one.
+AMBIGUOUS_FIXTURE_KEYWORDS: tuple[str, ...] = ("fixture", "fixtures")
+
 
 def prune_removed_keywords(
     removed_keywords: tuple[str, ...],

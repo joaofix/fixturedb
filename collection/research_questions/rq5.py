@@ -51,9 +51,13 @@ from pathlib import Path
 
 from .. import paths
 from ..db import db_session
+from ..rq5_agent_file_scan import (
+    AMBIGUOUS_FIXTURE_KEYWORDS,
+    RQ5_CUTOFF_DATE,
+    load_rq5_keyword_catalog,
+)
 from ..rq5_agent_file_scan import CATALOG_PATH as _CATALOG_PATH
 from ..rq5_agent_file_scan import DB_PATH as _SCAN_DB_PATH
-from ..rq5_agent_file_scan import RQ5_CUTOFF_DATE, load_rq5_keyword_catalog
 from ._shared import OUTPUT_DIR, pct, write_markdown_report
 
 # Derived from rq5_agent_file_scan.DB_PATH rather than a second hardcoded
@@ -99,6 +103,7 @@ class RepoGroupStats:
     n: int = 0
     n_test: int = 0
     n_fixture: int = 0
+    n_fixture_unambiguous: int = 0
     n_test_and_fixture: int = 0
 
 
@@ -124,11 +129,31 @@ def aggregate_repo_guidance(rows: list[sqlite3.Row]) -> dict[str, RepoGuidance]:
     return by_repo
 
 
+def _has_unambiguous_fixture_keyword(guidance: RepoGuidance) -> bool:
+    """True if `guidance` has >=1 fixture keyword match outside
+    `AMBIGUOUS_FIXTURE_KEYWORDS` -- see that constant's own docstring
+    (rq5_agent_file_scan.py) for why bare "fixture"/"fixtures" are kept
+    in the catalog but excluded from this stricter count: they're
+    majority test-data-file-sense in manual sampling, not the fixture-
+    as-code sense this study targets, and the catalog has no lexical fix
+    for a semantic ambiguity. This is a reporting-only distinction, not
+    a keyword removal -- `guidance.has_fixture` (the inclusive flag) is
+    unaffected."""
+    return bool(guidance.fixture_keywords - set(AMBIGUOUS_FIXTURE_KEYWORDS))
+
+
 def _repo_group_stats(guidances: list[RepoGuidance]) -> RepoGroupStats:
     n_test = sum(1 for g in guidances if g.has_test)
     n_fixture = sum(1 for g in guidances if g.has_fixture)
+    n_fixture_unambiguous = sum(1 for g in guidances if _has_unambiguous_fixture_keyword(g))
     n_both = sum(1 for g in guidances if g.has_test and g.has_fixture)
-    return RepoGroupStats(n=len(guidances), n_test=n_test, n_fixture=n_fixture, n_test_and_fixture=n_both)
+    return RepoGroupStats(
+        n=len(guidances),
+        n_test=n_test,
+        n_fixture=n_fixture,
+        n_fixture_unambiguous=n_fixture_unambiguous,
+        n_test_and_fixture=n_both,
+    )
 
 
 def _pct_or_none(numerator: int, denominator: int) -> float | None:
@@ -189,7 +214,10 @@ def render_overall_table(guidances: list[RepoGuidance]) -> str:
         "|---|---|",
         f"| Repositories with >=1 root agent file | {stats.n:,} |",
         f"| ... with >=1 test keyword | {stats.n_test:,} ({pct(_pct_or_none(stats.n_test, stats.n))}) |",
-        f"| ... with >=1 fixture keyword | {stats.n_fixture:,} ({pct(_pct_or_none(stats.n_fixture, stats.n))}) |",
+        f"| ... with >=1 fixture keyword (inclusive) | {stats.n_fixture:,} "
+        f"({pct(_pct_or_none(stats.n_fixture, stats.n))}) |",
+        f"| ... with >=1 *unambiguous* fixture keyword | {stats.n_fixture_unambiguous:,} "
+        f"({pct(_pct_or_none(stats.n_fixture_unambiguous, stats.n))}) |",
         f"| Test-guidance repos that also have fixture guidance | {stats.n_test_and_fixture:,} ({secondary}) |",
     ]
     return "\n".join(lines)
@@ -197,14 +225,16 @@ def render_overall_table(guidances: list[RepoGuidance]) -> str:
 
 def render_by_language_table(guidances: list[RepoGuidance]) -> str:
     lines = [
-        "| Language | Repositories with >=1 agent file | Test keyword (%) | Fixture keyword (%) |",
-        "|---|---|---|---|",
+        "| Language | Repositories with >=1 agent file | Test keyword (%) | Fixture keyword, inclusive (%) | "
+        "Fixture keyword, unambiguous (%) |",
+        "|---|---|---|---|---|",
     ]
     for language in DISPLAY_LANGUAGES:
         group = _repo_group_stats([g for g in guidances if g.language == language])
         lines.append(
             f"| {DISPLAY_LABELS[language]} | {group.n:,} | {pct(_pct_or_none(group.n_test, group.n))} | "
-            f"{pct(_pct_or_none(group.n_fixture, group.n))} |"
+            f"{pct(_pct_or_none(group.n_fixture, group.n))} | "
+            f"{pct(_pct_or_none(group.n_fixture_unambiguous, group.n))} |"
         )
     return "\n".join(lines)
 
@@ -255,6 +285,19 @@ def generate_report(*, db_root: Path = paths.DB_ROOT, catalog_path: Path = _CATA
         "matches >=1 test (or fixture) keyword. The denominator throughout is "
         '"repositories with >=1 root agent file", not "repositories '
         'analyzed" (most analyzed repos have none).',
+        "",
+        '**Inclusive vs. unambiguous fixture guidance:** "fixture"/"fixtures" '
+        "are kept in the catalog (dropping them would also lose every real "
+        "fixture-as-code match), but manual sampling of real matches found "
+        "they are majority fixture-as-test-data-file (e.g. `tests/fixtures/"
+        "*.json`), not fixture-as-code (e.g. `@pytest.fixture`) -- a sense "
+        "outside this study's scope. "
+        '"Inclusive" below counts a repo if ANY '
+        "fixture keyword matches (what every prior RQ5 report showed); "
+        '"unambiguous" additionally requires >=1 match from a keyword other '
+        'than "fixture"/"fixtures" (`conftest`, `beforeEach`/`afterEach`/'
+        "`beforeAll`/`afterAll`, `test setup`, `setup and teardown`) -- a "
+        "stricter floor, not a replacement metric.",
         "",
     ]
 

@@ -118,6 +118,21 @@ test-guidance repos that also have fixture guidance. `agent_files.csv` (the
 scan's own CSV) stays file-level raw data for manual review — no file-level
 percentages are computed anywhere in the report.
 
+**Fixture guidance is reported two ways, inclusive and unambiguous.** Unlike
+every other keyword in the catalog, bare "fixture"/"fixtures" are a correct
+lexical match with an ambiguous *sense*: manual sampling of real matches found
+they're majority fixture-as-test-data-file (`tests/fixtures/*.json`), not
+fixture-as-code (`@pytest.fixture`) — the sense this study is actually about.
+They stay in the catalog (dropping them would also lose every real
+fixture-as-code match, undercounting rather than fixing anything), but
+`research_questions/rq5.py` additionally reports a stricter "unambiguous" count
+restricted to repos with >=1 match from a keyword other than those two
+(`conftest`, `beforeEach`/`afterEach`/`beforeAll`/`afterAll`, `test setup`,
+`setup and teardown`) — a precision floor alongside the inclusive number, not a
+replacement for it. The bare word "teardown" was removed from the catalog
+entirely (v2 → v3) for the same reason "setup" was already excluded: it matches
+generic resource/UI/infrastructure cleanup prose with no test relevance.
+
 Collection: `python -m collection.rq5_agent_file_scan` writes `db/rq5_agent_files.db`
 (three tables: `repo_scan`, `agent_files`, `agent_file_matches`) and
 `rq5-agent-files/*.csv`. Reporting: `python -m collection.research_questions.rq5`

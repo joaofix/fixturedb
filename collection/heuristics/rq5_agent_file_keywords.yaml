@@ -24,10 +24,13 @@
 #     are both listed explicitly rather than derived from one another.
 #   - No wildcards. Every term that should match is listed explicitly.
 #
-# The bare word "setup" is deliberately never used alone -- it matches
-# generic environment-setup instructions having nothing to do with test
-# fixtures. It only appears inside a phrase ("test setup", "setup and
-# teardown").
+# The bare words "setup" and "teardown" are deliberately never used
+# alone -- both match generic, non-test-related prose having nothing to
+# do with test fixtures ("setup" catches environment-setup instructions;
+# "teardown" catches DOM/UI teardown, infra/container teardown, async
+# resource cleanup -- see v2 -> v3 changelog below for the concrete
+# evidence on "teardown"). They only appear inside a phrase ("test
+# setup", "setup and teardown").
 #
 # **v1 -> v2 (2026-10-03): removed "before each"/"after each"/"before
 # all"/"after all".** Auditing the real collection's matches (manual
@@ -48,7 +51,20 @@
 # the already-collected db without a from-scratch re-run (removing a
 # keyword only ever shrinks a match set, never grows it, so no
 # re-fetch from GitHub was needed).
-version: 2
+#
+# **v2 -> v3 (2026-10-03): removed the bare word "teardown".** Same
+# defect class as "setup" (already excluded above for exactly this
+# reason), caught by the same kind of real-sample audit as the v1 -> v2
+# removal above: a 20-match sample found the clear majority describing
+# generic resource/UI/infrastructure cleanup with no test relevance at
+# all -- e.g. "./scripts/dev.sh teardown # also remove Postgres volume",
+# "clear callbacks on teardown" (UI lifecycle), "leaves DOM teardown to
+# the caller". A genuine mention of a test's `tearDown()` method is lost
+# by this removal unless it also hits "setup and teardown" -- the same
+# kind of accepted precision/recall trade as v1 -> v2's hyphenated
+# "before-each" loss above. Applied retroactively via
+# `prune_removed_keywords()`, same mechanism as v1 -> v2.
+version: 3
 
 # Matched against each repo's root-level tree entries only (no
 # subdirectories), case-insensitively -- see find_target_files_at_commit().
@@ -82,7 +98,6 @@ fixture_keywords:
   - fixture
   - fixtures
   - conftest
-  - teardown
   - test setup
   - setup and teardown
   - beforeEach

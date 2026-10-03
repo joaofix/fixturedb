@@ -18,6 +18,7 @@ from collection.research_questions.rq5 import (
     DISPLAY_LANGUAGES,
     RepoGroupStats,
     RepoGuidance,
+    _has_unambiguous_fixture_keyword,
     _keyword_repo_counts,
     _repo_group_stats,
     aggregate_repo_guidance,
@@ -184,19 +185,44 @@ class TestAggregateRepoGuidance:
         assert by_repo["o/b"].language == "java"
 
 
+class TestHasUnambiguousFixtureKeyword:
+    def test_false_when_only_ambiguous_keywords_matched(self):
+        """"fixture"/"fixtures" alone -- majority test-data-file-sense in
+        manual sampling, not the fixture-as-code this stricter count
+        targets. See AMBIGUOUS_FIXTURE_KEYWORDS's own docstring."""
+        guidance = RepoGuidance(language="python", has_fixture=True, fixture_keywords={"fixture", "fixtures"})
+        assert _has_unambiguous_fixture_keyword(guidance) is False
+
+    def test_true_when_an_unambiguous_keyword_is_also_present(self):
+        guidance = RepoGuidance(language="python", has_fixture=True, fixture_keywords={"fixture", "conftest"})
+        assert _has_unambiguous_fixture_keyword(guidance) is True
+
+    def test_true_for_a_purely_unambiguous_match(self):
+        guidance = RepoGuidance(language="python", has_fixture=True, fixture_keywords={"beforeEach"})
+        assert _has_unambiguous_fixture_keyword(guidance) is True
+
+    def test_false_when_no_fixture_keywords_at_all(self):
+        guidance = RepoGuidance(language="python", has_fixture=False)
+        assert _has_unambiguous_fixture_keyword(guidance) is False
+
+
 class TestRepoGroupStats:
     def test_counts_test_fixture_and_both(self):
         guidances = [
             RepoGuidance(language="python", has_test=True, has_fixture=False),
-            RepoGuidance(language="python", has_test=False, has_fixture=True),
-            RepoGuidance(language="python", has_test=True, has_fixture=True),
+            RepoGuidance(language="python", has_test=False, has_fixture=True, fixture_keywords={"fixture"}),
+            RepoGuidance(language="python", has_test=True, has_fixture=True, fixture_keywords={"conftest"}),
             RepoGuidance(language="python", has_test=False, has_fixture=False),
         ]
         stats = _repo_group_stats(guidances)
-        assert stats == RepoGroupStats(n=4, n_test=2, n_fixture=2, n_test_and_fixture=1)
+        assert stats == RepoGroupStats(
+            n=4, n_test=2, n_fixture=2, n_fixture_unambiguous=1, n_test_and_fixture=1
+        )
 
     def test_empty_group_is_all_zero(self):
-        assert _repo_group_stats([]) == RepoGroupStats(n=0, n_test=0, n_fixture=0, n_test_and_fixture=0)
+        assert _repo_group_stats([]) == RepoGroupStats(
+            n=0, n_test=0, n_fixture=0, n_fixture_unambiguous=0, n_test_and_fixture=0
+        )
 
 
 class TestKeywordRepoCounts:
@@ -243,6 +269,19 @@ class TestRenderOverallTable:
         # 1 of the 2 test-guidance repos also has fixture guidance -> 50%, not 1/3.
         assert "1 (50.0%)" in line
 
+    def test_unambiguous_row_excludes_bare_fixture_fixtures_only_repos(self):
+        guidances = [
+            RepoGuidance(language="python", has_fixture=True, fixture_keywords={"fixture"}),
+            RepoGuidance(language="python", has_fixture=True, fixture_keywords={"fixtures"}),
+            RepoGuidance(language="python", has_fixture=True, fixture_keywords={"conftest"}),
+            RepoGuidance(language="python", has_fixture=False),
+        ]
+        table = render_overall_table(guidances)
+        inclusive_line = next(row for row in table.splitlines() if "fixture keyword (inclusive)" in row)
+        unambiguous_line = next(row for row in table.splitlines() if "unambiguous* fixture keyword" in row)
+        assert "3 (75.0%)" in inclusive_line
+        assert "1 (25.0%)" in unambiguous_line
+
 
 class TestRenderByLanguageTable:
     def test_each_language_computed_only_from_its_own_repos(self):
@@ -258,9 +297,19 @@ class TestRenderByLanguageTable:
         python_line = next(row for row in table.splitlines() if row.startswith("| Python"))
         java_line = next(row for row in table.splitlines() if row.startswith("| Java"))
         assert "| 10 |" in python_line
-        assert "10.0%" in python_line.split("|")[-2]
+        assert "10.0%" in python_line.split("|")[-3]  # inclusive fixture-keyword column
         assert "| 1 |" in java_line
-        assert "100.0%" in java_line.split("|")[-2]
+        assert "100.0%" in java_line.split("|")[-3]
+
+    def test_unambiguous_column_excludes_bare_fixture_fixtures(self):
+        guidances = [
+            RepoGuidance(language="python", has_fixture=True, fixture_keywords={"fixture"}),
+            RepoGuidance(language="python", has_fixture=True, fixture_keywords={"conftest"}),
+        ]
+        table = render_by_language_table(guidances)
+        python_line = next(row for row in table.splitlines() if row.startswith("| Python"))
+        assert "100.0%" in python_line.split("|")[-3]  # inclusive: both repos
+        assert "50.0%" in python_line.split("|")[-2]  # unambiguous: only the conftest one
 
     def test_renders_every_display_language_in_order(self):
         table = render_by_language_table([])

@@ -54,7 +54,7 @@ opentripplanner/opentripplanner,CLAUDE.md,1,0,"junit,test,testing,tests,unit tes
 spring-projects/spring-integration,AGENTS.md,0,0,,,https://github.com/spring-projects/spring-integration/blob/b8d3194eb3d50e12d08ced8bcd078c9199f72020/AGENTS.md
 spring-projects/spring-integration,CLAUDE.md,0,0,,,https://github.com/spring-projects/spring-integration/blob/b8d3194eb3d50e12d08ced8bcd078c9199f72020/CLAUDE.md
 apache/kafka,AGENTS.md,1,0,"integration test,test,tests,unit test,unittest",,https://github.com/apache/kafka/blob/8f7674d3825b68b2dd8408080b79e5b83de54774/AGENTS.md
-jshiell/checkstyle-idea,AGENTS.md,1,1,"integration test,junit,test,tests","fixture,teardown",https://github.com/jshiell/checkstyle-idea/blob/2c50827dcabefb7eade3658db1fe57a23606c5df/AGENTS.md
+jshiell/checkstyle-idea,AGENTS.md,1,1,"integration test,junit,test,tests",fixture,https://github.com/jshiell/checkstyle-idea/blob/2c50827dcabefb7eade3658db1fe57a23606c5df/AGENTS.md
 restfb/restfb,AGENTS.md,1,1,"integration test,junit,test,testing,tests",fixtures,https://github.com/restfb/restfb/blob/8c8c152b3f914764978c439e1fa3e080cff85892/AGENTS.md
 jetbrains/mps,AGENTS.md,1,0,"integration test,test,test suite,testing,tests",,https://github.com/jetbrains/mps/blob/d2589ed55bbc9445b660769fcc17da97e8e395a6/AGENTS.md
 jetbrains/mps,CLAUDE.md,1,0,"integration test,test,test suite,testing,tests",,https://github.com/jetbrains/mps/blob/d2589ed55bbc9445b660769fcc17da97e8e395a6/CLAUDE.md
@@ -147,7 +147,7 @@ apache/struts,CLAUDE.md,1,0,"junit,test,test case,testing,tests",,https://github
 glowroot/glowroot,CLAUDE.md,1,0,"integration test,junit,test,testing,tests",,https://github.com/glowroot/glowroot/blob/456b1910bbeeb152efd78103043d71c08b183975/CLAUDE.md
 bramp/ffmpeg-cli-wrapper,AGENTS.md,1,0,testing,,https://github.com/bramp/ffmpeg-cli-wrapper/blob/e46c986ac52fc5165262bfbcc856e6ee2877ca00/AGENTS.md
 apache/cxf,AGENTS.md,0,0,,,https://github.com/apache/cxf/blob/b7d1fb98ea256274c848ad872b5182262ae86961/AGENTS.md
-jabref/jabref,AGENTS.md,1,1,"junit,test,testing,tests","afterEach,teardown",https://github.com/jabref/jabref/blob/3740ff6e722daa27e42a3a1e4f023fff9c6e627b/AGENTS.md
+jabref/jabref,AGENTS.md,1,1,"junit,test,testing,tests",afterEach,https://github.com/jabref/jabref/blob/3740ff6e722daa27e42a3a1e4f023fff9c6e627b/AGENTS.md
 domaframework/doma,AGENTS.md,1,0,"integration test,test,testing,tests",,https://github.com/domaframework/doma/blob/bc1e48f1a223ebe7b8e92e0d15acc27d4494d006/AGENTS.md
 domaframework/doma,CLAUDE.md,0,0,,,https://github.com/domaframework/doma/blob/bc1e48f1a223ebe7b8e92e0d15acc27d4494d006/CLAUDE.md
 bisq-network/bisq,AGENTS.md,1,0,testing,,https://github.com/bisq-network/bisq/blob/5a1e7631fb3e432c3b042808456afa6ea2ad6d8e/AGENTS.md
@@ -172,10 +172,10 @@ apache/calcite,CLAUDE.md,0,0,,,https://github.com/apache/calcite/blob/194ce54513
 apache/ranger,AGENTS.md,0,0,,,https://github.com/apache/ranger/blob/2ad565fe65aa2321ab2bf2c13d7c5efa99c75a8a/AGENTS.md
 iluwatar/java-design-patterns,AGENTS.md,1,0,"junit,test,testing,tests",,https://github.com/iluwatar/java-design-patterns/blob/41625d8d354cdf6b6f10a82e29c2392b3efd5d20/AGENTS.md
 apache/hadoop,AGENTS.md,0,0,,,https://github.com/apache/hadoop/blob/40433c51b4826127535c76035a970ba688cac82b/AGENTS.md
-cundong/zhihupaper,AGENTS.md,1,1,"test,tests",teardown,https://github.com/cundong/zhihupaper/blob/e3e818faf47daab9cbad3479e67a8447c7dfeaa7/AGENTS.md
+cundong/zhihupaper,AGENTS.md,1,0,"test,tests",,https://github.com/cundong/zhihupaper/blob/e3e818faf47daab9cbad3479e67a8447c7dfeaa7/AGENTS.md
 btraceio/btrace,AGENTS.md,1,0,"test,tests",,https://github.com/btraceio/btrace/blob/9f3c9c7f24dd526a869f7d20707b8e5534038e8e/AGENTS.md
 btraceio/btrace,CLAUDE.md,1,0,"test,tests",,https://github.com/btraceio/btrace/blob/9f3c9c7f24dd526a869f7d20707b8e5534038e8e/CLAUDE.md
-greenmail-mail-test/greenmail,AGENTS.md,1,1,"test,test case,testing,tests","fixture,teardown",https://github.com/greenmail-mail-test/greenmail/blob/eeb1b2f6d15ae52ef6b93144dfd0e2020f0d2af6/AGENTS.md
+greenmail-mail-test/greenmail,AGENTS.md,1,1,"test,test case,testing,tests",fixture,https://github.com/greenmail-mail-test/greenmail/blob/eeb1b2f6d15ae52ef6b93144dfd0e2020f0d2af6/AGENTS.md
 digitalpetri/modbus,AGENTS.md,1,0,"test,testing,tests",,https://github.com/digitalpetri/modbus/blob/c07c67b9369870c6e65e209e0f153c18a6cc41ac/AGENTS.md
 digitalpetri/modbus,CLAUDE.md,0,0,,,https://github.com/digitalpetri/modbus/blob/c07c67b9369870c6e65e209e0f153c18a6cc41ac/CLAUDE.md
 openhft/chronicle-wire,AGENTS.md,1,0,"test,tests",,https://github.com/openhft/chronicle-wire/blob/dc11bd3c748cf7a1552d499eb99b159f22f4d008/AGENTS.md
@@ -730,7 +730,7 @@ cloudinary/cloudinary_npm,CLAUDE.md,0,0,,,https://github.com/cloudinary/cloudina
 mattiasw/exifreader,AGENTS.md,1,1,"mocha,test,testing,tests,unit test","afterEach,fixture,fixtures",https://github.com/mattiasw/exifreader/blob/ac1f33cf7648b7f6e0aca4c382d7aba331c28e7b/AGENTS.md
 mattiasw/exifreader,CLAUDE.md,0,0,,,https://github.com/mattiasw/exifreader/blob/ac1f33cf7648b7f6e0aca4c382d7aba331c28e7b/CLAUDE.md
 angular-ui/ui-grid,AGENTS.md,1,1,"test,testing,tests,vitest",test setup,https://github.com/angular-ui/ui-grid/blob/94953bc9b497ad05a74877ab57de2957416ebee0/AGENTS.md
-sidorares/node-x11,AGENTS.md,1,1,"mocha,test,testing,tests",teardown,https://github.com/sidorares/node-x11/blob/48587e335aba9604ee44456bea9b42f64ce4824e/AGENTS.md
+sidorares/node-x11,AGENTS.md,1,0,"mocha,test,testing,tests",,https://github.com/sidorares/node-x11/blob/48587e335aba9604ee44456bea9b42f64ce4824e/AGENTS.md
 rubyjs/mini_racer,AGENTS.md,1,0,"test,testing,tests",,https://github.com/rubyjs/mini_racer/blob/413b11963457f176a62c6ea240d7edaf01214e76/AGENTS.md
 docmirror/dev-sidecar,CLAUDE.md,1,0,"mocha,test,test file,testing,tests",,https://github.com/docmirror/dev-sidecar/blob/20201f2dfb3d469292588814719e59a6937f67e1/CLAUDE.md
 bottelet/daybydaycrm,AGENTS.md,1,0,"test,test case,test suite,testing,tests,unit test",,https://github.com/bottelet/daybydaycrm/blob/2199c1ed06623b11b9e1842c70a9fae81d4c7083/AGENTS.md
@@ -754,12 +754,12 @@ inavflight/inav-configurator,CLAUDE.md,0,0,,,https://github.com/inavflight/inav-
 moleculerjs/moleculer,CLAUDE.md,1,0,"jest,test,test suite,testing,tests",,https://github.com/moleculerjs/moleculer/blob/008129c32eebc1911b640b40e2da86e5c0bd936a/CLAUDE.md
 wheresrhys/fetch-mock,CLAUDE.md,1,0,"jest,junit,test,test file,tests,vitest",,https://github.com/wheresrhys/fetch-mock/blob/1a60086dded48de731bf3ac397669279777f89fd/CLAUDE.md
 jeremydaly/lambda-api,AGENTS.md,1,0,"jest,test,test file,testing,tests",,https://github.com/jeremydaly/lambda-api/blob/37fa53ef9e9d626cad7b87174520a21ae96b90c4/AGENTS.md
-adguardteam/adguardforsafari,AGENTS.md,1,1,"jest,test,testing,tests",teardown,https://github.com/adguardteam/adguardforsafari/blob/d6ee8474735f2714f9ceba0234d216a3aaf43e53/AGENTS.md
+adguardteam/adguardforsafari,AGENTS.md,1,0,"jest,test,testing,tests",,https://github.com/adguardteam/adguardforsafari/blob/d6ee8474735f2714f9ceba0234d216a3aaf43e53/AGENTS.md
 zhblue/hustoj,AGENTS.md,1,0,"test,unit test",,https://github.com/zhblue/hustoj/blob/6d4309bb64eb03843a6b2e30216ec3738cdf8673/AGENTS.md
 didi/mpx,AGENTS.md,1,0,jest,,https://github.com/didi/mpx/blob/889173dc47ed0423246a60a065a0b2dcefdaee0d/AGENTS.md
 didi/mpx,CLAUDE.md,0,0,,,https://github.com/didi/mpx/blob/889173dc47ed0423246a60a065a0b2dcefdaee0d/CLAUDE.md
 nodemailer/wildduck,CLAUDE.md,1,1,"mocha,test,testing,tests",fixtures,https://github.com/nodemailer/wildduck/blob/4e88b7239cfed3346a0b61e94b820d36c0710512/CLAUDE.md
-rstudio/shiny-server,CLAUDE.md,1,1,"mocha,test,test file,testing,tests",teardown,https://github.com/rstudio/shiny-server/blob/ae268b685b234b3a97a33bf6caa28e6d395cb232/CLAUDE.md
+rstudio/shiny-server,CLAUDE.md,1,0,"mocha,test,test file,testing,tests",,https://github.com/rstudio/shiny-server/blob/ae268b685b234b3a97a33bf6caa28e6d395cb232/CLAUDE.md
 zhennann/cabloy,CLAUDE.md,1,1,"end-to-end test,test,tests",fixtures,https://github.com/zhennann/cabloy/blob/d1aa927067bd1d8a142b1113cba79fb9249a6762/CLAUDE.md
 imaegoo/twikoo,CLAUDE.md,0,0,,,https://github.com/imaegoo/twikoo/blob/bf7e9e9700862f01779ca939323d89a54f708944/CLAUDE.md
 olifolkerd/tabulator,CLAUDE.md,1,0,"jest,test,testing,tests,unit test",,https://github.com/olifolkerd/tabulator/blob/1b1ebdd08a3b8c1ad4adc2f2470361ce61a11cb4/CLAUDE.md
@@ -805,7 +805,7 @@ nextcloud/calendar,AGENTS.md,1,1,"test,test file,testing,tests",fixtures,https:/
 zapier/zapier-platform,CLAUDE.md,1,0,testing,,https://github.com/zapier/zapier-platform/blob/57828d9517d790043d29b68eea9e5867cc4b7414/CLAUDE.md
 validatorjs/validator.js,AGENTS.md,1,0,"mocha,test,test suite,tests",,https://github.com/validatorjs/validator.js/blob/a79ff980ab14257e795332989e497bdff3218e87/AGENTS.md
 jonobr1/two.js,CLAUDE.md,1,1,"test,testing,tests",fixture,https://github.com/jonobr1/two.js/blob/4bf164e2c1e6c661b8757efc3ea487a176801f57/CLAUDE.md
-dherault/serverless-offline,CLAUDE.md,1,1,"mocha,test,test file,test suite,tests","fixture,fixtures,teardown",https://github.com/dherault/serverless-offline/blob/cd36ff85e61c95dfced3b56790ac889c1a38a924/CLAUDE.md
+dherault/serverless-offline,CLAUDE.md,1,1,"mocha,test,test file,test suite,tests","fixture,fixtures",https://github.com/dherault/serverless-offline/blob/cd36ff85e61c95dfced3b56790ac889c1a38a924/CLAUDE.md
 htmlhint/htmlhint,AGENTS.md,1,0,tests,,https://github.com/htmlhint/htmlhint/blob/59eeb6deac814141987eb2d834163764fed5f479/AGENTS.md
 remotestorage/remotestorage.js,AGENTS.md,1,0,"mocha,test,test suite,testing,tests",,https://github.com/remotestorage/remotestorage.js/blob/d899b5aee41849fc94c45470cfad08a7363780b6/AGENTS.md
 floccusaddon/floccus,AGENTS.md,1,0,"mocha,test,tests",,https://github.com/floccusaddon/floccus/blob/9e2cf20e3c6ccfc93d01d8bbe25f7eb369142554/AGENTS.md
@@ -830,7 +830,7 @@ rollbar/rollbar.js,AGENTS.md,1,1,"mocha,test,testing,tests",fixtures,https://git
 rollbar/rollbar.js,CLAUDE.md,1,1,"mocha,test,testing,tests",fixtures,https://github.com/rollbar/rollbar.js/blob/0b44c41b3abc432af136ea1f07be475497b15bd9/CLAUDE.md
 datadog/dd-trace-js,AGENTS.md,1,0,"integration test,mocha,test,testing,tests",,https://github.com/datadog/dd-trace-js/blob/6143de9e91e79a09b95491ae6bc22ae231948a2d/AGENTS.md
 datadog/dd-trace-js,CLAUDE.md,0,0,,,https://github.com/datadog/dd-trace-js/blob/6143de9e91e79a09b95491ae6bc22ae231948a2d/CLAUDE.md
-ibma/equal-access,AGENTS.md,1,1,test,"afterEach,teardown",https://github.com/ibma/equal-access/blob/1f95a712afa74dfdb0df578305ed557236b8328f/AGENTS.md
+ibma/equal-access,AGENTS.md,1,1,test,afterEach,https://github.com/ibma/equal-access/blob/1f95a712afa74dfdb0df578305ed557236b8328f/AGENTS.md
 gchq/cyberchef,AGENTS.md,1,0,"test,test suite,testing,tests",,https://github.com/gchq/cyberchef/blob/d69ebb7bf322ff9327c12d9b3e18881770d0eab9/AGENTS.md
 conversejs/converse.js,AGENTS.md,1,0,"jasmine,test,test suite,testing,tests,vitest",,https://github.com/conversejs/converse.js/blob/c7c96ff86af5848c39a7339e28f5729e8622a1de/AGENTS.md
 conversejs/converse.js,CLAUDE.md,0,0,,,https://github.com/conversejs/converse.js/blob/c7c96ff86af5848c39a7339e28f5729e8622a1de/CLAUDE.md
@@ -881,7 +881,7 @@ google/shaka-player,AGENTS.md,1,0,"jasmine,test,tests",,https://github.com/googl
 gladysassistant/gladys,AGENTS.md,1,0,"mocha,test,tests,unit test",,https://github.com/gladysassistant/gladys/blob/8d8d02f163219c78f1c151447c206873f5e6c892/AGENTS.md
 neomjs/neo,AGENTS.md,1,0,"test,testing,tests",,https://github.com/neomjs/neo/blob/335b2ca43a5ec54c823563745c276c3881e05416/AGENTS.md
 betaflight/betaflight-configurator,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/betaflight/betaflight-configurator/blob/a9eb419f8b70cec062a65340800a135dfee115e3/AGENTS.md
-formio/formio.js,CLAUDE.md,1,1,"mocha,test,test suite,tests,unit test","fixtures,teardown",https://github.com/formio/formio.js/blob/2b5ae83c05a194f9307a0795fe1caf7b118302fa/CLAUDE.md
+formio/formio.js,CLAUDE.md,1,1,"mocha,test,test suite,tests,unit test",fixtures,https://github.com/formio/formio.js/blob/2b5ae83c05a194f9307a0795fe1caf7b118302fa/CLAUDE.md
 salesforce/cloudsplaining,CLAUDE.md,1,1,"mocha,pytest,test,testing,tests",fixtures,https://github.com/salesforce/cloudsplaining/blob/7b5f776b21f9d14e31839bb10a191fae00820c60/CLAUDE.md
 salesforce/lwc,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/salesforce/lwc/blob/00d574e015a8d8673135c18e4cff7aabb534a98d/CLAUDE.md
 google/site-kit-wp,AGENTS.md,1,0,"jest,test,test case,test suite,testing,tests",,https://github.com/google/site-kit-wp/blob/8f151e2bfb0e0f738f67777595b364c984f6e075/AGENTS.md
@@ -898,7 +898,7 @@ datadog/documentation,CLAUDE.md,1,0,"jest,test,testing,tests",,https://github.co
 asyncapi/generator,AGENTS.md,1,1,"integration test,jest,test,tests","fixture,fixtures",https://github.com/asyncapi/generator/blob/73cbe9274996a60ac0df160d3e3a1d4a93690a32/AGENTS.md
 asyncapi/generator,CLAUDE.md,0,0,,,https://github.com/asyncapi/generator/blob/73cbe9274996a60ac0df160d3e3a1d4a93690a32/CLAUDE.md
 countly/countly-server,CLAUDE.md,1,0,"test,test suite,testing,tests",,https://github.com/countly/countly-server/blob/31cb199f117369220b81ec712737951d1d9e9665/CLAUDE.md
-serverless/serverless,AGENTS.md,1,1,"jest,test,test file,testing,tests","fixture,fixtures,teardown",https://github.com/serverless/serverless/blob/ba115d94522255274b7a3d0662353849c6783c93/AGENTS.md
+serverless/serverless,AGENTS.md,1,1,"jest,test,test file,testing,tests","fixture,fixtures",https://github.com/serverless/serverless/blob/ba115d94522255274b7a3d0662353849c6783c93/AGENTS.md
 vercel/next.js,AGENTS.md,1,1,"test,test file,test suite,testing,tests","beforeAll,fixture,fixtures",https://github.com/vercel/next.js/blob/e953bdaaaa2990168f8dd53a58cfdfa8db65fcd9/AGENTS.md
 vercel/next.js,CLAUDE.md,0,0,,,https://github.com/vercel/next.js/blob/e953bdaaaa2990168f8dd53a58cfdfa8db65fcd9/CLAUDE.md
 mozilla/pdf.js,AGENTS.md,1,0,"integration test,jasmine,test,test file,testing,tests,unit test,unittest",,https://github.com/mozilla/pdf.js/blob/12e7b53f8717af35872f8e5e275dea385ecaef29/AGENTS.md
@@ -989,7 +989,7 @@ phcode-dev/phoenix,CLAUDE.md,1,1,"jasmine,test,test suite,testing,tests",fixture
 xianfei/sysmocap,CLAUDE.md,1,0,"test,tests",,https://github.com/xianfei/sysmocap/blob/1472b082ad034cde6351c629cabad0f6020eaf7a/CLAUDE.md
 guidone/node-red-contrib-chatbot,CLAUDE.md,1,0,"jest,test,test suite,testing,tests",,https://github.com/guidone/node-red-contrib-chatbot/blob/2ba688458d1effdb8c2b93f610f4828583bd99b6/CLAUDE.md
 illixion/vscode-vibrancy-continued,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/illixion/vscode-vibrancy-continued/blob/08068850c9bf4b8af0ebf7223364ce2016bc5b22/AGENTS.md
-add2cal/add-to-calendar-button,AGENTS.md,1,1,"test,tests",teardown,https://github.com/add2cal/add-to-calendar-button/blob/df67ffc5aefec09726339d535a81b1c592f0dbff/AGENTS.md
+add2cal/add-to-calendar-button,AGENTS.md,1,0,"test,tests",,https://github.com/add2cal/add-to-calendar-button/blob/df67ffc5aefec09726339d535a81b1c592f0dbff/AGENTS.md
 add2cal/add-to-calendar-button,CLAUDE.md,0,0,,,https://github.com/add2cal/add-to-calendar-button/blob/df67ffc5aefec09726339d535a81b1c592f0dbff/CLAUDE.md
 gamer-ai/eletypes-frontend,CLAUDE.md,1,0,"jest,test,tests,vitest",,https://github.com/gamer-ai/eletypes-frontend/blob/31015e175284f2c1f0b3d465c1cedc26bc0d497d/CLAUDE.md
 paralleldrive/riteway,AGENTS.md,0,0,,,https://github.com/paralleldrive/riteway/blob/b9eb0c8b2b9168d5ecfdb39cde919c91341c060c/AGENTS.md
@@ -1015,7 +1015,7 @@ casbin/casibase,CLAUDE.md,1,0,"test,tests",,https://github.com/casbin/casibase/b
 xenova/transformers.js,AGENTS.md,0,0,,,https://github.com/xenova/transformers.js/blob/dce094eebf1675281a6f15bf0bc52b0c4c5c6210/AGENTS.md
 xenova/transformers.js,CLAUDE.md,0,0,,,https://github.com/xenova/transformers.js/blob/dce094eebf1675281a6f15bf0bc52b0c4c5c6210/CLAUDE.md
 reactjs/zh-hans.react.dev,CLAUDE.md,0,0,,,https://github.com/reactjs/zh-hans.react.dev/blob/3d05e4fc8bb918cb99437636747fe254a1ff51e9/CLAUDE.md
-whiskeysockets/baileys,AGENTS.md,1,1,"e2e test,integration test,jest,test,testing,tests,unit test","fixture,teardown",https://github.com/whiskeysockets/baileys/blob/0af2386292907f7d9742d8d41f830d8c48208fa1/AGENTS.md
+whiskeysockets/baileys,AGENTS.md,1,1,"e2e test,integration test,jest,test,testing,tests,unit test",fixture,https://github.com/whiskeysockets/baileys/blob/0af2386292907f7d9742d8d41f830d8c48208fa1/AGENTS.md
 whiskeysockets/baileys,CLAUDE.md,0,0,,,https://github.com/whiskeysockets/baileys/blob/0af2386292907f7d9742d8d41f830d8c48208fa1/CLAUDE.md
 reactjs/react.dev,CLAUDE.md,0,0,,,https://github.com/reactjs/react.dev/blob/000686165c14291f48bca1008f3a9ac6303aae14/CLAUDE.md
 bestofjs/bestofjs,CLAUDE.md,1,0,"test,tests,vitest",,https://github.com/bestofjs/bestofjs/blob/ca46959798087f88cf04de3a8bb793724f196d2e/CLAUDE.md
@@ -1147,7 +1147,7 @@ vercel-labs/agent-skills,CLAUDE.md,0,0,,,https://github.com/vercel-labs/agent-sk
 tractorjuice/arc-kit,AGENTS.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/tractorjuice/arc-kit/blob/06e6be276d6ecf6175bfb66f056e1a6552124435/AGENTS.md
 tractorjuice/arc-kit,CLAUDE.md,1,1,"test,tests",fixture,https://github.com/tractorjuice/arc-kit/blob/06e6be276d6ecf6175bfb66f056e1a6552124435/CLAUDE.md
 pbakaus/impeccable,AGENTS.md,1,1,"test,test suite,testing,tests","fixture,fixtures",https://github.com/pbakaus/impeccable/blob/73a6f51a540bc3938a2c40677d074c70b81fa5a0/AGENTS.md
-pbakaus/impeccable,CLAUDE.md,1,1,"test,test file,testing,tests","fixture,fixtures,teardown",https://github.com/pbakaus/impeccable/blob/73a6f51a540bc3938a2c40677d074c70b81fa5a0/CLAUDE.md
+pbakaus/impeccable,CLAUDE.md,1,1,"test,test file,testing,tests","fixture,fixtures",https://github.com/pbakaus/impeccable/blob/73a6f51a540bc3938a2c40677d074c70b81fa5a0/CLAUDE.md
 datawhalechina/easy-vibe,AGENTS.md,1,0,"test,testing",,https://github.com/datawhalechina/easy-vibe/blob/130e9b75b28b524e8cc74e615fd9733a4e2b330d/AGENTS.md
 datawhalechina/easy-vibe,CLAUDE.md,1,0,test,,https://github.com/datawhalechina/easy-vibe/blob/130e9b75b28b524e8cc74e615fd9733a4e2b330d/CLAUDE.md
 apconw/Aix-DB,CLAUDE.md,1,0,"pytest,tests",,https://github.com/apconw/Aix-DB/blob/27aab1ecc2e28f482be6a2f6069a12c44acbebb6/CLAUDE.md
@@ -1193,7 +1193,7 @@ AnInsomniacy/motrix-next,AGENTS.md,1,0,"test,testing,tests,vitest",,https://gith
 SecOps-7/MikroDash,CLAUDE.md,1,1,"test,testing,tests","fixture,fixtures",https://github.com/SecOps-7/MikroDash/blob/1780338bba6ef41c62d3f3bba1ccf1766c1de6ff/CLAUDE.md
 xuanyustudio/LocalMiniDrama,AGENTS.md,1,0,"test,testing,tests",,https://github.com/xuanyustudio/LocalMiniDrama/blob/7b6c1a748e9e3013b88a902cfbfd31ec283da0d1/AGENTS.md
 silships/figma-cli,CLAUDE.md,1,0,test,,https://github.com/silships/figma-cli/blob/2b1c22aaf8ff0ceeb7c08fcbaf553d6c1f963b5b/CLAUDE.md
-wasmerio/edgejs,AGENTS.md,1,1,"test,testing,tests",teardown,https://github.com/wasmerio/edgejs/blob/3f1aaa0e5cf36350a3d8f149811d991455290874/AGENTS.md
+wasmerio/edgejs,AGENTS.md,1,0,"test,testing,tests",,https://github.com/wasmerio/edgejs/blob/3f1aaa0e5cf36350a3d8f149811d991455290874/AGENTS.md
 yunus-0x/meridian,CLAUDE.md,1,0,"test,tests",,https://github.com/yunus-0x/meridian/blob/5ab14b476e4e8d25c58f989c77b161721e1a505f/CLAUDE.md
 mohitagw15856/pm-claude-skills,AGENTS.md,0,0,,,https://github.com/mohitagw15856/pm-claude-skills/blob/f67821d42c8c6db20752030e12ded030a623bee3/AGENTS.md
 outsourc-e/hermes-workspace,AGENTS.md,1,0,test,,https://github.com/outsourc-e/hermes-workspace/blob/c631425d8baa933f8c61d8447040f4ec8b5f571c/AGENTS.md
@@ -1270,12 +1270,12 @@ crossbario/autobahn-testsuite,CLAUDE.md,0,0,,,https://github.com/crossbario/auto
 sixty-north/cosmic-ray,AGENTS.md,1,1,"pytest,test,testing,tests","conftest,fixtures",https://github.com/sixty-north/cosmic-ray/blob/caf9a3193606ddd90cc37126b7fa95acefc47695/AGENTS.md
 videoflow/videoflow,CLAUDE.md,1,1,"acceptance test,end-to-end test,pytest,test,tests",fixtures,https://github.com/videoflow/videoflow/blob/1f88ff759dd9392cd6bfb0269f8e2953483074a6/CLAUDE.md
 kengz/slm-lab,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/kengz/slm-lab/blob/474c734e39b44a2eef0e76807b003a7b139e251a/CLAUDE.md
-kvesteri/sqlalchemy-continuum,CLAUDE.md,1,1,"pytest,test,test case,tests","conftest,teardown",https://github.com/kvesteri/sqlalchemy-continuum/blob/560369ae380f31faffba35807c0ca00e77d2ce55/CLAUDE.md
+kvesteri/sqlalchemy-continuum,CLAUDE.md,1,1,"pytest,test,test case,tests",conftest,https://github.com/kvesteri/sqlalchemy-continuum/blob/560369ae380f31faffba35807c0ca00e77d2ce55/CLAUDE.md
 derek73/python-nameparser,AGENTS.md,1,1,"pytest,test,test case,test file,tests,unit test,unittest","conftest,fixture",https://github.com/derek73/python-nameparser/blob/a0b93f06dde4ca1f935aae1bc0c3fc11e05a5dd3/AGENTS.md
-nerevu/riko,CLAUDE.md,1,1,"pytest,test,tests","fixture,teardown",https://github.com/nerevu/riko/blob/dcfa9f2bd4ba0c6da5646cd9842d9e2d3630eb8f/CLAUDE.md
+nerevu/riko,CLAUDE.md,1,1,"pytest,test,tests",fixture,https://github.com/nerevu/riko/blob/dcfa9f2bd4ba0c6da5646cd9842d9e2d3630eb8f/CLAUDE.md
 genotrance/px,AGENTS.md,1,1,"test,test suite,testing,tests",fixtures,https://github.com/genotrance/px/blob/6c1232161dcbc33d5c61d1b836c3908f1ed6726a/AGENTS.md
 trustedsec/hate_crack,CLAUDE.md,1,1,"pytest,test,test suite,testing,tests","conftest,fixture,fixtures",https://github.com/trustedsec/hate_crack/blob/b64db807f0624e8366d7975551f84c1aed4cc561/CLAUDE.md
-datafolklabs/cement,AGENTS.md,1,1,"pytest,test,test suite,testing,tests",teardown,https://github.com/datafolklabs/cement/blob/363cc9ed871169c879c1e74398239f01a0b14bef/AGENTS.md
+datafolklabs/cement,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/datafolklabs/cement/blob/363cc9ed871169c879c1e74398239f01a0b14bef/AGENTS.md
 datafolklabs/cement,CLAUDE.md,0,0,,,https://github.com/datafolklabs/cement/blob/363cc9ed871169c879c1e74398239f01a0b14bef/CLAUDE.md
 wolph/python-progressbar,AGENTS.md,1,0,test,,https://github.com/wolph/python-progressbar/blob/a2c09de8aa8ff72d15c1ebe281b610b49dc7d03e/AGENTS.md
 bgmi/bgmi,AGENTS.md,1,1,"pytest,test,test suite,testing,tests","conftest,fixtures",https://github.com/bgmi/bgmi/blob/dae6bd0e95baf6eb7cdf5d20558f8b6195073e9a/AGENTS.md
@@ -1339,7 +1339,7 @@ alberanid/imdbpy,CLAUDE.md,0,0,,,https://github.com/alberanid/imdbpy/blob/d925b7
 digitalbazaar/pyld,AGENTS.md,1,0,"e2e test,pytest,test,testing,tests",,https://github.com/digitalbazaar/pyld/blob/517894bfc9c57901aae14d01c1b780abb8b3a136/AGENTS.md
 digitalbazaar/pyld,CLAUDE.md,0,0,,,https://github.com/digitalbazaar/pyld/blob/517894bfc9c57901aae14d01c1b780abb8b3a136/CLAUDE.md
 stratosphereips/stratospherelinuxips,AGENTS.md,1,0,"pytest,test,testing,tests,unit test",,https://github.com/stratosphereips/stratospherelinuxips/blob/d0858cf17a2de0908ff612ae897ccd85ab8da0f2/AGENTS.md
-fgmacedo/python-statemachine,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests,unit test","conftest,fixture,fixtures,teardown",https://github.com/fgmacedo/python-statemachine/blob/78e2b4c919faa2ac1c5196cb6ad5245fe4de7ee5/AGENTS.md
+fgmacedo/python-statemachine,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests,unit test","conftest,fixture,fixtures",https://github.com/fgmacedo/python-statemachine/blob/78e2b4c919faa2ac1c5196cb6ad5245fe4de7ee5/AGENTS.md
 fgmacedo/python-statemachine,CLAUDE.md,0,0,,,https://github.com/fgmacedo/python-statemachine/blob/78e2b4c919faa2ac1c5196cb6ad5245fe4de7ee5/CLAUDE.md
 andymccurdy/redis-py,AGENTS.md,1,1,"pytest,test,test suite,testing,tests",conftest,https://github.com/andymccurdy/redis-py/blob/e7ac8be260036bd868e8783a00129b332684a8e4/AGENTS.md
 andymccurdy/redis-py,CLAUDE.md,0,0,,,https://github.com/andymccurdy/redis-py/blob/e7ac8be260036bd868e8783a00129b332684a8e4/CLAUDE.md
@@ -1386,7 +1386,7 @@ darknessomi/musicbox,AGENTS.md,1,0,"pytest,test",,https://github.com/darknessomi
 pylops/pylops,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/pylops/pylops/blob/07e2034e5c9a7737696ffffcf2169abd329b787d/AGENTS.md
 pylops/pylops,CLAUDE.md,1,0,"pytest,test,tests",,https://github.com/pylops/pylops/blob/07e2034e5c9a7737696ffffcf2169abd329b787d/CLAUDE.md
 simplejson/simplejson,AGENTS.md,1,0,"test,test file,test suite,testing,tests,unit test,unittest",,https://github.com/simplejson/simplejson/blob/fbc057f87cc0aade75752acbc1a6713fb18199c0/AGENTS.md
-mushorg/conpot,AGENTS.md,1,1,"pytest,test,test case,testing,tests,unit test,unittest","fixtures,teardown",https://github.com/mushorg/conpot/blob/809a6403516dba4e1c9c41e8e6ca6c37cdb280aa/AGENTS.md
+mushorg/conpot,AGENTS.md,1,1,"pytest,test,test case,testing,tests,unit test,unittest",fixtures,https://github.com/mushorg/conpot/blob/809a6403516dba4e1c9c41e8e6ca6c37cdb280aa/AGENTS.md
 taverntesting/tavern,AGENTS.md,1,1,"integration test,pytest,test,testing,tests",fixtures,https://github.com/taverntesting/tavern/blob/dfaebb7666a7593db466efb40e04cd9824686bf6/AGENTS.md
 agronholm/anyio,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/agronholm/anyio/blob/51725067e46f39cced7686bc670997ba8b5a7fa9/AGENTS.md
 agronholm/anyio,CLAUDE.md,0,0,,,https://github.com/agronholm/anyio/blob/51725067e46f39cced7686bc670997ba8b5a7fa9/CLAUDE.md
@@ -1416,7 +1416,7 @@ fossasia/visdom,AGENTS.md,1,0,"pytest,test,test file,testing,tests",,https://git
 fossasia/visdom,CLAUDE.md,0,0,,,https://github.com/fossasia/visdom/blob/690da1111069a7ad330867ef6110bac577f93304/CLAUDE.md
 pycqa/pylint,AGENTS.md,0,0,,,https://github.com/pycqa/pylint/blob/68f02810f61f79a1342b0286be804514706259ea/AGENTS.md
 crossbario/autobahn-python,CLAUDE.md,0,0,,,https://github.com/crossbario/autobahn-python/blob/22055b5a3b0e92307e348010260d775dec05be8c/CLAUDE.md
-conda/conda,AGENTS.md,1,1,"pytest,test,testing,tests,unit test,unittest","conftest,fixture,fixtures,teardown",https://github.com/conda/conda/blob/8804861a94bb2c964bc406f503cb067bf8049900/AGENTS.md
+conda/conda,AGENTS.md,1,1,"pytest,test,testing,tests,unit test,unittest","conftest,fixture,fixtures",https://github.com/conda/conda/blob/8804861a94bb2c964bc406f503cb067bf8049900/AGENTS.md
 conda/conda,CLAUDE.md,0,0,,,https://github.com/conda/conda/blob/8804861a94bb2c964bc406f503cb067bf8049900/CLAUDE.md
 pypa/setuptools,AGENTS.md,1,0,testing,,https://github.com/pypa/setuptools/blob/4e612f9e44ecfad130d0b2a27a2dce0740599b4b/AGENTS.md
 quantecon/quantecon.py,AGENTS.md,1,0,"pytest,tests",,https://github.com/quantecon/quantecon.py/blob/481947de0ff51a3d60a4be3ee3ad181d92c0a0cd/AGENTS.md
@@ -1470,7 +1470,7 @@ falconry/falcon,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/fa
 falconry/falcon,CLAUDE.md,0,0,,,https://github.com/falconry/falcon/blob/966bf9c5bf6c5691f42da5b3b59c52e9952c599f/CLAUDE.md
 pyca/cryptography,AGENTS.md,1,0,"test,tests",,https://github.com/pyca/cryptography/blob/80eecfb4cfa94a044b4a8c9bc73c687610ef8063/AGENTS.md
 pyca/cryptography,CLAUDE.md,0,0,,,https://github.com/pyca/cryptography/blob/80eecfb4cfa94a044b4a8c9bc73c687610ef8063/CLAUDE.md
-slackapi/python-slack-sdk,AGENTS.md,1,1,"pytest,test,test case,testing,tests,unit test,unittest","fixture,fixtures,teardown",https://github.com/slackapi/python-slack-sdk/blob/c30a05d693aab43027c09206aa9771f4ae285fd1/AGENTS.md
+slackapi/python-slack-sdk,AGENTS.md,1,1,"pytest,test,test case,testing,tests,unit test,unittest","fixture,fixtures",https://github.com/slackapi/python-slack-sdk/blob/c30a05d693aab43027c09206aa9771f4ae285fd1/AGENTS.md
 tomerfiliba/plumbum,AGENTS.md,1,1,"pytest,test,testing,tests",conftest,https://github.com/tomerfiliba/plumbum/blob/1829ffb0f29de0328ced31d96270afa7f85bdce7/AGENTS.md
 django-import-export/django-import-export,CLAUDE.md,1,0,"test,test suite,testing,tests",,https://github.com/django-import-export/django-import-export/blob/9f9c9563b816cd878675d7bbe5e389cddb7a0fcd/CLAUDE.md
 tmux-python/tmuxp,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/tmux-python/tmuxp/blob/618b398acc05506d3c682906c36cdeb29dcfa1ff/AGENTS.md
@@ -1507,7 +1507,7 @@ lightly-ai/lightly,CLAUDE.md,1,1,"pytest,test,test suite,testing,tests,unit test
 man-group/notebooker,CLAUDE.md,1,1,"jest,junit,pytest,test,test suite,testing,tests",fixtures,https://github.com/man-group/notebooker/blob/0342c46acde0758389a952973c7dd0ae86b7841d/CLAUDE.md
 gijzelaerr/python-snap7,AGENTS.md,1,0,testing,,https://github.com/gijzelaerr/python-snap7/blob/383852f3eb6465c92aebd7d3457c14e7d6f4f92a/AGENTS.md
 gijzelaerr/python-snap7,CLAUDE.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/gijzelaerr/python-snap7/blob/383852f3eb6465c92aebd7d3457c14e7d6f4f92a/CLAUDE.md
-aiidateam/aiida-core,AGENTS.md,1,1,"pytest,test,tests","fixtures,teardown",https://github.com/aiidateam/aiida-core/blob/8cad70e2d235f54093406d8af06359450209f49e/AGENTS.md
+aiidateam/aiida-core,AGENTS.md,1,1,"pytest,test,tests",fixtures,https://github.com/aiidateam/aiida-core/blob/8cad70e2d235f54093406d8af06359450209f49e/AGENTS.md
 aiidateam/aiida-core,CLAUDE.md,0,0,,,https://github.com/aiidateam/aiida-core/blob/8cad70e2d235f54093406d8af06359450209f49e/CLAUDE.md
 open-catalyst-project/ocp,CLAUDE.md,1,1,"pytest,test,testing,tests","conftest,fixtures",https://github.com/open-catalyst-project/ocp/blob/afba9d8a885c0de0b27fc8b20957c660d82458ca/CLAUDE.md
 bram2w/baserow,AGENTS.md,1,0,"pytest,test,testing,tests,unit test,vitest",,https://github.com/bram2w/baserow/blob/cabb46d9fc5144b2515273a8b483272de73c5444/AGENTS.md
@@ -1548,7 +1548,7 @@ google/clusterfuzz,AGENTS.md,1,0,"test,test file,testing,tests",,https://github.
 crossbario/crossbar,CLAUDE.md,0,0,,,https://github.com/crossbario/crossbar/blob/29b797cf4da46b77a971cd7f7f0846995f547d6c/CLAUDE.md
 fishtown-analytics/dbt,AGENTS.md,1,0,test,,https://github.com/fishtown-analytics/dbt/blob/e7a6f0a1b5c3d07c186bc0d26d87e06efc78d035/AGENTS.md
 fishtown-analytics/dbt,CLAUDE.md,0,0,,,https://github.com/fishtown-analytics/dbt/blob/e7a6f0a1b5c3d07c186bc0d26d87e06efc78d035/CLAUDE.md
-elastic/rally,AGENTS.md,1,1,test,teardown,https://github.com/elastic/rally/blob/5401d96f458ecbce348e4a6913915b8510da3f5a/AGENTS.md
+elastic/rally,AGENTS.md,1,0,test,,https://github.com/elastic/rally/blob/5401d96f458ecbce348e4a6913915b8510da3f5a/AGENTS.md
 elastic/rally,CLAUDE.md,0,0,,,https://github.com/elastic/rally/blob/5401d96f458ecbce348e4a6913915b8510da3f5a/CLAUDE.md
 databiosphere/toil,CLAUDE.md,0,0,,,https://github.com/databiosphere/toil/blob/a9681fe077c15fff10f583478a8cb7ecf444c278/CLAUDE.md
 crytic/slither,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/crytic/slither/blob/eef5df948b8992eff85786b6b0bb4a193933e2c9/CLAUDE.md
@@ -1597,7 +1597,7 @@ cdgriffith/fastflix,CLAUDE.md,1,0,"pytest,test,test file,tests",,https://github.
 locustio/locust,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests,unit test,unittest",fixtures,https://github.com/locustio/locust/blob/68bd2241f748ff9ceb23b2cd9a5e9bf2d847cdf5/AGENTS.md
 pulp/pulpcore,AGENTS.md,0,0,,,https://github.com/pulp/pulpcore/blob/ace2d6e3cf02296d68ae1cb81ffe3f42f6b8fd07/AGENTS.md
 pulp/pulpcore,CLAUDE.md,1,0,"test,tests",,https://github.com/pulp/pulpcore/blob/ace2d6e3cf02296d68ae1cb81ffe3f42f6b8fd07/CLAUDE.md
-mirumee/saleor,AGENTS.md,1,1,"pytest,test,test file,testing,tests","fixture,fixtures,setup and teardown,teardown",https://github.com/mirumee/saleor/blob/75226b584dee0150e35f0a8f573c5f4063d7e341/AGENTS.md
+mirumee/saleor,AGENTS.md,1,1,"pytest,test,test file,testing,tests","fixture,fixtures,setup and teardown",https://github.com/mirumee/saleor/blob/75226b584dee0150e35f0a8f573c5f4063d7e341/AGENTS.md
 mirumee/saleor,CLAUDE.md,0,0,,,https://github.com/mirumee/saleor/blob/75226b584dee0150e35f0a8f573c5f4063d7e341/CLAUDE.md
 alicevision/meshroom,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/alicevision/meshroom/blob/ca1a2e435b851cb3149d16ea3be2253afb77d11c/AGENTS.md
 alicevision/meshroom,CLAUDE.md,0,0,,,https://github.com/alicevision/meshroom/blob/ca1a2e435b851cb3149d16ea3be2253afb77d11c/CLAUDE.md
@@ -1677,7 +1677,7 @@ microsoft/playwright-python,CLAUDE.md,1,0,"pytest,test,tests",,https://github.co
 mindsdb/mindsdb,CLAUDE.md,1,0,test,,https://github.com/mindsdb/mindsdb/blob/ff891bd8af16dbcc35219ef3e5c4278fb91e5d07/CLAUDE.md
 posthog/posthog,AGENTS.md,1,1,"jest,pytest,test,testing,tests","fixture,fixtures",https://github.com/posthog/posthog/blob/00a08ee0bdd4673efdb13aeafe98c6c6890e96bf/AGENTS.md
 posthog/posthog,CLAUDE.md,0,0,,,https://github.com/posthog/posthog/blob/00a08ee0bdd4673efdb13aeafe98c6c6890e96bf/CLAUDE.md
-freenas/freenas,CLAUDE.md,1,1,"pytest,test,test file,test suite,tests,unit test","fixture,teardown,test setup",https://github.com/freenas/freenas/blob/327e01d5acdf117c7e124c1aa078a4d6d861db8c/CLAUDE.md
+freenas/freenas,CLAUDE.md,1,1,"pytest,test,test file,test suite,tests,unit test","fixture,test setup",https://github.com/freenas/freenas/blob/327e01d5acdf117c7e124c1aa078a4d6d861db8c/CLAUDE.md
 python/typeshed,AGENTS.md,1,0,"testing,tests",,https://github.com/python/typeshed/blob/789085994257266b5a8642bc061c9f142d85748c/AGENTS.md
 python/typeshed,CLAUDE.md,0,0,,,https://github.com/python/typeshed/blob/789085994257266b5a8642bc061c9f142d85748c/CLAUDE.md
 jesse-ai/jesse,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/jesse-ai/jesse/blob/44a0ed432fd74133edaf273f3b56100042f564b3/AGENTS.md
@@ -1722,12 +1722,12 @@ kubeflow/pipelines,AGENTS.md,1,0,testing,,https://github.com/kubeflow/pipelines/
 kubeflow/pipelines,CLAUDE.md,0,0,,,https://github.com/kubeflow/pipelines/blob/813f4727411b1406899b7152a5930617eca01fff/CLAUDE.md
 openstack/neutron,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,https://github.com/openstack/neutron/blob/feb9d09fd769d118e19b4f988d95a713bfaa1b6b/AGENTS.md
 scons/scons,AGENTS.md,1,0,"e2e test,test,test case,test suite,testing,tests,unit test,unittest",,https://github.com/scons/scons/blob/7afde3bd9f9930a10468f4199ecb86e686c45d3c/AGENTS.md
-rotki/rotki,AGENTS.md,1,1,"pytest,test,test file,testing,tests,unit test,vitest","afterEach,fixture,fixtures,teardown,test setup",https://github.com/rotki/rotki/blob/d5925914b97acaddfb06a63f85f69920ea3294a4/AGENTS.md
-rotki/rotki,CLAUDE.md,1,1,"pytest,test,test file,testing,tests,unit test,vitest","afterEach,fixture,fixtures,teardown,test setup",https://github.com/rotki/rotki/blob/d5925914b97acaddfb06a63f85f69920ea3294a4/CLAUDE.md
+rotki/rotki,AGENTS.md,1,1,"pytest,test,test file,testing,tests,unit test,vitest","afterEach,fixture,fixtures,test setup",https://github.com/rotki/rotki/blob/d5925914b97acaddfb06a63f85f69920ea3294a4/AGENTS.md
+rotki/rotki,CLAUDE.md,1,1,"pytest,test,test file,testing,tests,unit test,vitest","afterEach,fixture,fixtures,test setup",https://github.com/rotki/rotki/blob/d5925914b97acaddfb06a63f85f69920ea3294a4/CLAUDE.md
 chia-network/chia-blockchain,AGENTS.md,1,0,test,,https://github.com/chia-network/chia-blockchain/blob/af3d2429870e5eade0ceb89c440394a1e192daee/AGENTS.md
 ansible-collections/community.general,AGENTS.md,1,1,"pytest,test,test suite,testing,tests,unit test,unittest",fixtures,https://github.com/ansible-collections/community.general/blob/0fc8031507f5e3bf874cc4d05250d6183b7f8f2d/AGENTS.md
 python/cpython,AGENTS.md,1,0,tests,,https://github.com/python/cpython/blob/2ddc218b20625ef4a6293aee3696e605c6bac5b9/AGENTS.md
-localstack/localstack,AGENTS.md,1,1,"pytest,test,test file,testing,tests","conftest,fixture,fixtures,teardown",https://github.com/localstack/localstack/blob/8b9a79f05846835cf4dff63ab7eefdde9df83783/AGENTS.md
+localstack/localstack,AGENTS.md,1,1,"pytest,test,test file,testing,tests","conftest,fixture,fixtures",https://github.com/localstack/localstack/blob/8b9a79f05846835cf4dff63ab7eefdde9df83783/AGENTS.md
 samuelclay/newsblur,AGENTS.md,1,0,"test,testing,tests",,https://github.com/samuelclay/newsblur/blob/b27954ffb94bdeab3898d1031abc490256eed56e/AGENTS.md
 samuelclay/newsblur,CLAUDE.md,0,0,,,https://github.com/samuelclay/newsblur/blob/b27954ffb94bdeab3898d1031abc490256eed56e/CLAUDE.md
 asahilinux/m1n1,AGENTS.md,0,0,,,https://github.com/asahilinux/m1n1/blob/940439b9a407fbfc499bea933269219f3f62d4c7/AGENTS.md
@@ -1772,7 +1772,7 @@ whitphx/streamlit-webrtc,CLAUDE.md,0,0,,,https://github.com/whitphx/streamlit-we
 google/osv,AGENTS.md,1,0,"test,testing,tests,unit test,unittest",,https://github.com/google/osv/blob/540faf3f0652b8e6a1be70db7cddb00de9893249/AGENTS.md
 google/osv,CLAUDE.md,0,0,,,https://github.com/google/osv/blob/540faf3f0652b8e6a1be70db7cddb00de9893249/CLAUDE.md
 jrmeier/fast-trade,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,https://github.com/jrmeier/fast-trade/blob/41caca435311d17a09656b003d0be1e84409b1e4/AGENTS.md
-truenas/freenas,CLAUDE.md,1,1,"pytest,test,test file,test suite,tests,unit test","fixture,teardown,test setup",https://github.com/truenas/freenas/blob/327e01d5acdf117c7e124c1aa078a4d6d861db8c/CLAUDE.md
+truenas/freenas,CLAUDE.md,1,1,"pytest,test,test file,test suite,tests,unit test","fixture,test setup",https://github.com/truenas/freenas/blob/327e01d5acdf117c7e124c1aa078a4d6d861db8c/CLAUDE.md
 meisnate12/plex-meta-manager,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/meisnate12/plex-meta-manager/blob/156e77a9ceb7f3b8ea7d84fb52924513fa277782/AGENTS.md
 meisnate12/plex-meta-manager,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/meisnate12/plex-meta-manager/blob/156e77a9ceb7f3b8ea7d84fb52924513fa277782/CLAUDE.md
 lumiwealth/lumibot,AGENTS.md,1,0,"pytest,test,test file,testing,tests,unit test",,https://github.com/lumiwealth/lumibot/blob/77268323d43963a700976ab62a2c0fc14cea96bc/AGENTS.md
@@ -1783,9 +1783,9 @@ cmu-db/dbdb.io,CLAUDE.md,1,0,"test,tests",,https://github.com/cmu-db/dbdb.io/blo
 hay-kot/mealie,AGENTS.md,1,1,"pytest,test,testing,tests,vitest","conftest,fixture,fixtures",https://github.com/hay-kot/mealie/blob/7083998807081fc31c57984e54df0425268398af/AGENTS.md
 hay-kot/mealie,CLAUDE.md,0,0,,,https://github.com/hay-kot/mealie/blob/7083998807081fc31c57984e54df0425268398af/CLAUDE.md
 opendronemap/webodm,AGENTS.md,0,0,,,https://github.com/opendronemap/webodm/blob/fe591a5ccf3ff0adfe5097ee44c23d080304029f/AGENTS.md
-openwisp/openwisp-controller,AGENTS.md,1,1,"test,test suite,testing,tests","setup and teardown,teardown",https://github.com/openwisp/openwisp-controller/blob/2912b572043086163bb8e1e301c55c5dba32004e/AGENTS.md
+openwisp/openwisp-controller,AGENTS.md,1,1,"test,test suite,testing,tests",setup and teardown,https://github.com/openwisp/openwisp-controller/blob/2912b572043086163bb8e1e301c55c5dba32004e/AGENTS.md
 abrignoni/aleapp,CLAUDE.md,0,0,,,https://github.com/abrignoni/aleapp/blob/a0c64395e36bf9c8dcc9f61c048b5e6813a1930a/CLAUDE.md
-truenas/middleware,CLAUDE.md,1,1,"pytest,test,test file,test suite,tests,unit test","fixture,teardown,test setup",https://github.com/truenas/middleware/blob/327e01d5acdf117c7e124c1aa078a4d6d861db8c/CLAUDE.md
+truenas/middleware,CLAUDE.md,1,1,"pytest,test,test file,test suite,tests,unit test","fixture,test setup",https://github.com/truenas/middleware/blob/327e01d5acdf117c7e124c1aa078a4d6d861db8c/CLAUDE.md
 diyhue/diyhue,AGENTS.md,0,0,,,https://github.com/diyhue/diyhue/blob/ebd0eaf493e1054515a5d996bcb3fea36a154c0f/AGENTS.md
 diyhue/diyhue,CLAUDE.md,0,0,,,https://github.com/diyhue/diyhue/blob/ebd0eaf493e1054515a5d996bcb3fea36a154c0f/CLAUDE.md
 mozilla/fx-private-relay,AGENTS.md,0,0,,,https://github.com/mozilla/fx-private-relay/blob/4e8687905a32792b7c1fd7e86fba7e99367204f3/AGENTS.md
@@ -1869,10 +1869,10 @@ stuffanthings/qbit_manage,CLAUDE.md,0,0,,,https://github.com/stuffanthings/qbit_
 microsoft/torchgeo,AGENTS.md,1,1,"pytest,test,testing,tests",fixture,https://github.com/microsoft/torchgeo/blob/65d0d5b129ddb1c63bfb6bea0d1c24642073d84e/AGENTS.md
 bbilly1/tubearchivist,AGENTS.md,0,0,,,https://github.com/bbilly1/tubearchivist/blob/920b550ef8aa0606682d4fd8a216c44c5bd60c8e/AGENTS.md
 bbilly1/tubearchivist,CLAUDE.md,0,0,,,https://github.com/bbilly1/tubearchivist/blob/920b550ef8aa0606682d4fd8a216c44c5bd60c8e/CLAUDE.md
-termux/proot-distro,CLAUDE.md,1,1,test,teardown,https://github.com/termux/proot-distro/blob/f832a56f2e8aab659a915600598b5321996aad78/CLAUDE.md
+termux/proot-distro,CLAUDE.md,1,0,test,,https://github.com/termux/proot-distro/blob/f832a56f2e8aab659a915600598b5321996aad78/CLAUDE.md
 martinet101/wingetui,AGENTS.md,1,0,"test,tests",,https://github.com/martinet101/wingetui/blob/f49ae07612c9241fde744343621c3dd905222efa/AGENTS.md
 martinet101/wingetui,CLAUDE.md,0,0,,,https://github.com/martinet101/wingetui/blob/f49ae07612c9241fde744343621c3dd905222efa/CLAUDE.md
-saleor/saleor,AGENTS.md,1,1,"pytest,test,test file,testing,tests","fixture,fixtures,setup and teardown,teardown",https://github.com/saleor/saleor/blob/75226b584dee0150e35f0a8f573c5f4063d7e341/AGENTS.md
+saleor/saleor,AGENTS.md,1,1,"pytest,test,test file,testing,tests","fixture,fixtures,setup and teardown",https://github.com/saleor/saleor/blob/75226b584dee0150e35f0a8f573c5f4063d7e341/AGENTS.md
 saleor/saleor,CLAUDE.md,0,0,,,https://github.com/saleor/saleor/blob/75226b584dee0150e35f0a8f573c5f4063d7e341/CLAUDE.md
 zauberzeug/nicegui,AGENTS.md,1,0,"test,tests",,https://github.com/zauberzeug/nicegui/blob/969af1bccee1982be83c302562af3aa0a2e1f3d1/AGENTS.md
 zauberzeug/nicegui,CLAUDE.md,0,0,,,https://github.com/zauberzeug/nicegui/blob/969af1bccee1982be83c302562af3aa0a2e1f3d1/CLAUDE.md
@@ -1997,14 +1997,14 @@ stravalib/stravalib,CLAUDE.md,1,1,"pytest,test,test file,testing,tests","conftes
 widgetti/solara,AGENTS.md,0,0,,,https://github.com/widgetti/solara/blob/6d1ef47a7b96c220aebfc9717644e94060a0f853/AGENTS.md
 widgetti/solara,CLAUDE.md,1,0,"pytest,test,test file,test suite,testing,tests,unit test,unittest",,https://github.com/widgetti/solara/blob/6d1ef47a7b96c220aebfc9717644e94060a0f853/CLAUDE.md
 johnmarktaylor91/torchlens,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/johnmarktaylor91/torchlens/blob/2afa8f72ef1de12f987bdb2f99f9f6fcee0de40a/AGENTS.md
-johnmarktaylor91/torchlens,CLAUDE.md,1,1,"pytest,test,testing,tests","fixture,teardown",https://github.com/johnmarktaylor91/torchlens/blob/2afa8f72ef1de12f987bdb2f99f9f6fcee0de40a/CLAUDE.md
+johnmarktaylor91/torchlens,CLAUDE.md,1,1,"pytest,test,testing,tests",fixture,https://github.com/johnmarktaylor91/torchlens/blob/2afa8f72ef1de12f987bdb2f99f9f6fcee0de40a/CLAUDE.md
 binsync/binsync,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/binsync/binsync/blob/07a2ce87638b25728564cbc5198e1bd945d4d70c/CLAUDE.md
 python-zeroconf/python-zeroconf,CLAUDE.md,1,0,"pytest,test,tests",,https://github.com/python-zeroconf/python-zeroconf/blob/7bc352c42e54d470ba696cbc1b6f6ee7622bad5b/CLAUDE.md
 roboflow/roboflow-python,CLAUDE.md,1,0,"test,testing,tests,unit test,unittest",,https://github.com/roboflow/roboflow-python/blob/6c5c04c6979d85929c89102f7cf3a1b77cd4ad43/CLAUDE.md
 opengvlab/internvideo,CLAUDE.md,0,0,,,https://github.com/opengvlab/internvideo/blob/3965eef16e2dadd0ea6c8d0cc29c8a3039df52e3/CLAUDE.md
 jazzband/django-oauth-toolkit,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/jazzband/django-oauth-toolkit/blob/628fa883a17e54d75833b9f576a38ffdb24c4900/AGENTS.md
 dbt-checkpoint/dbt-checkpoint,CLAUDE.md,1,1,"pytest,test,test file,testing,tests","conftest,fixtures",https://github.com/dbt-checkpoint/dbt-checkpoint/blob/efa28928407da65d1f9e33dca3fa541eee528035/CLAUDE.md
-pymc-labs/causalpy,AGENTS.md,1,1,"pytest,test,test suite,testing,tests,unit test,unittest","fixtures,teardown",https://github.com/pymc-labs/causalpy/blob/f94d7aff4ca0332cec5a5edaeba9baee563d5f03/AGENTS.md
+pymc-labs/causalpy,AGENTS.md,1,1,"pytest,test,test suite,testing,tests,unit test,unittest",fixtures,https://github.com/pymc-labs/causalpy/blob/f94d7aff4ca0332cec5a5edaeba9baee563d5f03/AGENTS.md
 mindspore-lab/mindnlp,AGENTS.md,1,0,"pytest,tests",,https://github.com/mindspore-lab/mindnlp/blob/5e6483c1a052b4c7c3b45d324c8f23646fb9e274/AGENTS.md
 mindspore-lab/mindnlp,CLAUDE.md,1,0,"pytest,testing,tests",,https://github.com/mindspore-lab/mindnlp/blob/5e6483c1a052b4c7c3b45d324c8f23646fb9e274/CLAUDE.md
 jaxgaussianprocesses/gpjax,CLAUDE.md,1,1,"pytest,test,test file,testing,tests",conftest,https://github.com/jaxgaussianprocesses/gpjax/blob/71b69c8a9da451c792730ab5eaad3ff863326339/CLAUDE.md
@@ -2139,8 +2139,8 @@ LorenEteval/Furious,AGENTS.md,1,0,"test,tests",,https://github.com/LorenEteval/F
 OpenAccess-AI-Collective/axolotl,AGENTS.md,1,0,"pytest,tests",,https://github.com/OpenAccess-AI-Collective/axolotl/blob/d3b1fbb41713052f9a0425ec4f2f20da81d6a090/AGENTS.md
 OpenAccess-AI-Collective/axolotl,CLAUDE.md,0,0,,,https://github.com/OpenAccess-AI-Collective/axolotl/blob/d3b1fbb41713052f9a0425ec4f2f20da81d6a090/CLAUDE.md
 moggieuk/Happy-Hare,CLAUDE.md,1,0,"test,testing,tests,unit test,unittest",,https://github.com/moggieuk/Happy-Hare/blob/ef8431c420231ca52e0ee3c9d8dfafaa7af544ea/CLAUDE.md
-SpecterOps/Nemesis,AGENTS.md,1,1,"pytest,test,test file,testing,tests",teardown,https://github.com/SpecterOps/Nemesis/blob/3734b9042afdf0d0988f2a23024ddfc5d48f8891/AGENTS.md
-SpecterOps/Nemesis,CLAUDE.md,1,1,"pytest,test,test file,testing,tests",teardown,https://github.com/SpecterOps/Nemesis/blob/3734b9042afdf0d0988f2a23024ddfc5d48f8891/CLAUDE.md
+SpecterOps/Nemesis,AGENTS.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/SpecterOps/Nemesis/blob/3734b9042afdf0d0988f2a23024ddfc5d48f8891/AGENTS.md
+SpecterOps/Nemesis,CLAUDE.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/SpecterOps/Nemesis/blob/3734b9042afdf0d0988f2a23024ddfc5d48f8891/CLAUDE.md
 mealie-recipes/mealie,AGENTS.md,1,1,"pytest,test,testing,tests,vitest","conftest,fixture,fixtures",https://github.com/mealie-recipes/mealie/blob/7083998807081fc31c57984e54df0425268398af/AGENTS.md
 mealie-recipes/mealie,CLAUDE.md,0,0,,,https://github.com/mealie-recipes/mealie/blob/7083998807081fc31c57984e54df0425268398af/CLAUDE.md
 KillianLucas/open-interpreter,AGENTS.md,1,1,"integration test,test,test file,test suite,testing,tests","fixture,fixtures",https://github.com/KillianLucas/open-interpreter/blob/67299aeb7c1089be425cb7809169747af1e61af5/AGENTS.md
@@ -2152,14 +2152,14 @@ apache/airflow,AGENTS.md,1,1,"pytest,test,test case,test file,test suite,testing
 apache/airflow,CLAUDE.md,0,0,,,https://github.com/apache/airflow/blob/2e61fa116deee6d8dd3e5a380c1d6fa7d7cfae41/CLAUDE.md
 huggingface/trl,AGENTS.md,0,0,,,https://github.com/huggingface/trl/blob/b614ee800b9486598304ee0f5d5ff2e9c295c2d7/AGENTS.md
 huggingface/trl,CLAUDE.md,0,0,,,https://github.com/huggingface/trl/blob/b614ee800b9486598304ee0f5d5ff2e9c295c2d7/CLAUDE.md
-wandb/weave,AGENTS.md,1,1,"integration test,jest,pytest,test,test file,testing,tests","conftest,fixture,fixtures,teardown",https://github.com/wandb/weave/blob/2d6adb7ab16e6e86c29dd74336ca3a2e5ed0462c/AGENTS.md
+wandb/weave,AGENTS.md,1,1,"integration test,jest,pytest,test,test file,testing,tests","conftest,fixture,fixtures",https://github.com/wandb/weave/blob/2d6adb7ab16e6e86c29dd74336ca3a2e5ed0462c/AGENTS.md
 wandb/weave,CLAUDE.md,0,0,,,https://github.com/wandb/weave/blob/2d6adb7ab16e6e86c29dd74336ca3a2e5ed0462c/CLAUDE.md
 home-assistant/core,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/home-assistant/core/blob/ec4406798b387a6b2ed85f2bd35835d55dc4d484/AGENTS.md
 home-assistant/core,CLAUDE.md,0,0,,,https://github.com/home-assistant/core/blob/ec4406798b387a6b2ed85f2bd35835d55dc4d484/CLAUDE.md
 plbrault/youre-the-os,AGENTS.md,1,0,"pytest,testing,tests",,https://github.com/plbrault/youre-the-os/blob/96034d79feef3934b0bffa9040fbfa254c3c5422/AGENTS.md
 roboflow/inference,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/roboflow/inference/blob/580467befc5423acd53a1f20ecb9624e2a07887b/AGENTS.md
 jxnl/instructor,CLAUDE.md,1,1,"integration test,pytest,test,test suite,testing,tests","conftest,fixtures",https://github.com/jxnl/instructor/blob/5ea35cdb1860842622a670360d690d603cc04f36/CLAUDE.md
-Amm1rr/WebAI-to-API,AGENTS.md,1,1,"pytest,tests",teardown,https://github.com/Amm1rr/WebAI-to-API/blob/5caeefdc3c5143fa13d813dec0574e45095f23de/AGENTS.md
+Amm1rr/WebAI-to-API,AGENTS.md,1,0,"pytest,tests",,https://github.com/Amm1rr/WebAI-to-API/blob/5caeefdc3c5143fa13d813dec0574e45095f23de/AGENTS.md
 dbrattli/Expression,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/dbrattli/Expression/blob/2ed296f06d9dc41f8958c6f46d329a8f6f36730a/AGENTS.md
 PharMolix/OpenBioMed,CLAUDE.md,1,0,"test,testing",,https://github.com/PharMolix/OpenBioMed/blob/5ddc32de1849b3e8c41dd69c71761afc27899480/CLAUDE.md
 marimo-team/marimo,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/marimo-team/marimo/blob/b84f140a63d9ba05a82afd6ee9ba58e6c82f78f5/AGENTS.md
@@ -2229,7 +2229,7 @@ abi/screenshot-to-code,AGENTS.md,1,0,"pytest,testing,tests",,https://github.com/
 abi/screenshot-to-code,CLAUDE.md,0,0,,,https://github.com/abi/screenshot-to-code/blob/d026163f586dfa8c5c10d28c36edd59a9d3b0e88/CLAUDE.md
 jekalmin/extended_openai_conversation,CLAUDE.md,1,1,"pytest,test,test file,tests","conftest,fixtures",https://github.com/jekalmin/extended_openai_conversation/blob/8118d9e0457ea1540fe8d14989ec9fa27327f773/CLAUDE.md
 topoteretes/cognee,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,https://github.com/topoteretes/cognee/blob/e324aa79de4fcf4f1dc5c9170adbd41fecb61b56/AGENTS.md
-topoteretes/cognee,CLAUDE.md,1,1,"pytest,test,test file,testing,tests",teardown,https://github.com/topoteretes/cognee/blob/e324aa79de4fcf4f1dc5c9170adbd41fecb61b56/CLAUDE.md
+topoteretes/cognee,CLAUDE.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/topoteretes/cognee/blob/e324aa79de4fcf4f1dc5c9170adbd41fecb61b56/CLAUDE.md
 Johnserf-Seed/f2,AGENTS.md,1,0,"pytest,testing",,https://github.com/Johnserf-Seed/f2/blob/1d9f3747610d09c0a32122f2ffefa2b4bc56f011/AGENTS.md
 Acly/krita-ai-diffusion,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/Acly/krita-ai-diffusion/blob/dda58d1c63e361207ccec085efbc34dbd32f1654/AGENTS.md
 langchain-ai/langgraph,AGENTS.md,1,0,"pytest,test,test file,test suite",,https://github.com/langchain-ai/langgraph/blob/0199b519e1f98bd9a108b91fc5ea3a489a728d9f/AGENTS.md
@@ -2279,13 +2279,13 @@ Skyvern-AI/skyvern,AGENTS.md,1,0,tests,,https://github.com/Skyvern-AI/skyvern/bl
 Skyvern-AI/skyvern,CLAUDE.md,1,0,"pytest,testing,tests",,https://github.com/Skyvern-AI/skyvern/blob/1c978f3380f723681382d832504922e4408c8a6e/CLAUDE.md
 ETS2LA/Euro-Truck-Simulator-2-Lane-Assist,AGENTS.md,0,0,,,https://github.com/ETS2LA/Euro-Truck-Simulator-2-Lane-Assist/blob/c953d18425643b22e90936d54715b91eb54f60b4/AGENTS.md
 ETS2LA/Euro-Truck-Simulator-2-Lane-Assist,CLAUDE.md,0,0,,,https://github.com/ETS2LA/Euro-Truck-Simulator-2-Lane-Assist/blob/c953d18425643b22e90936d54715b91eb54f60b4/CLAUDE.md
-marketcalls/openalgo,CLAUDE.md,1,1,"pytest,test,testing,tests",teardown,https://github.com/marketcalls/openalgo/blob/9117eb9cd0bf9d310df11d23a584fc1d69b8efe8/CLAUDE.md
+marketcalls/openalgo,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/marketcalls/openalgo/blob/9117eb9cd0bf9d310df11d23a584fc1d69b8efe8/CLAUDE.md
 paveldedik/ludic,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/paveldedik/ludic/blob/73aba6a4186e01d7774b09724eb35be48745a464/AGENTS.md
 paveldedik/ludic,CLAUDE.md,0,0,,,https://github.com/paveldedik/ludic/blob/73aba6a4186e01d7774b09724eb35be48745a464/CLAUDE.md
 TracecatHQ/tracecat,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,https://github.com/TracecatHQ/tracecat/blob/0e78de80fd8e8ab2bdd43a92bc292f8a9ae49a69/AGENTS.md
 TracecatHQ/tracecat,CLAUDE.md,0,0,,,https://github.com/TracecatHQ/tracecat/blob/0e78de80fd8e8ab2bdd43a92bc292f8a9ae49a69/CLAUDE.md
 run-llama/create-llama,CLAUDE.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/run-llama/create-llama/blob/97a7d9bc2560943ca6bca1ac41d2f84c1b7e6224/CLAUDE.md
-OpenDevin/OpenDevin,AGENTS.md,1,1,"e2e test,end-to-end test,test,test file,testing,tests,vitest","afterEach,fixture,fixtures,teardown",https://github.com/OpenDevin/OpenDevin/blob/c9b6ceac969573d9cd0ef8a8e61ddb3680679671/AGENTS.md
+OpenDevin/OpenDevin,AGENTS.md,1,1,"e2e test,end-to-end test,test,test file,testing,tests,vitest","afterEach,fixture,fixtures",https://github.com/OpenDevin/OpenDevin/blob/c9b6ceac969573d9cd0ef8a8e61ddb3680679671/AGENTS.md
 Ostorlab/oxo,AGENTS.md,1,1,"pytest,test,test file,testing,tests","conftest,fixtures",https://github.com/Ostorlab/oxo/blob/88ec7b82016eb9359e0c48115c9f6566dc7a5a97/AGENTS.md
 singer-yang/DeepLens,AGENTS.md,1,0,"pytest,test,test suite,tests",,https://github.com/singer-yang/DeepLens/blob/0f9f75621ca735c51d807cc6f341ae3b26cacca8/AGENTS.md
 allenai/reward-bench,CLAUDE.md,1,0,"pytest,test,test file,tests",,https://github.com/allenai/reward-bench/blob/05a9005efb607249822c193590c8ecab87c77052/CLAUDE.md
@@ -2355,7 +2355,7 @@ microsoft/semantic-link-labs,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,
 microsoft/semantic-link-labs,CLAUDE.md,0,0,,,https://github.com/microsoft/semantic-link-labs/blob/a5e52375eb1190114ee66bc2388d7ed9cb428d29/CLAUDE.md
 robusta-dev/holmesgpt,AGENTS.md,0,0,,,https://github.com/robusta-dev/holmesgpt/blob/5e983c17f30e93099c7d775167266d4cd1d586c4/AGENTS.md
 robusta-dev/holmesgpt,CLAUDE.md,1,1,"pytest,test,test suite,testing,tests","conftest,fixture,fixtures,test setup",https://github.com/robusta-dev/holmesgpt/blob/5e983c17f30e93099c7d775167266d4cd1d586c4/CLAUDE.md
-opsmill/infrahub,AGENTS.md,1,1,"pytest,test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/opsmill/infrahub/blob/727c342173c403c7615a04002b89fe24721868a3/AGENTS.md
+opsmill/infrahub,AGENTS.md,1,1,"pytest,test,testing,tests,vitest","fixture,fixtures",https://github.com/opsmill/infrahub/blob/727c342173c403c7615a04002b89fe24721868a3/AGENTS.md
 opsmill/infrahub,CLAUDE.md,0,0,,,https://github.com/opsmill/infrahub/blob/727c342173c403c7615a04002b89fe24721868a3/CLAUDE.md
 isaac-sim/IsaacLab,AGENTS.md,1,0,"test,test case,test file,testing,tests",,https://github.com/isaac-sim/IsaacLab/blob/cdaefc505308d97b5fd2289d8c997e4f307dd8b4/AGENTS.md
 isaac-sim/IsaacLab,CLAUDE.md,0,0,,,https://github.com/isaac-sim/IsaacLab/blob/cdaefc505308d97b5fd2289d8c997e4f307dd8b4/CLAUDE.md
@@ -2413,7 +2413,7 @@ filipstrand/mflux,AGENTS.md,0,0,,,https://github.com/filipstrand/mflux/blob/051b
 RobotecAI/rai,AGENTS.md,1,0,"pytest,test,test suite,testing,tests",,https://github.com/RobotecAI/rai/blob/6802d4073e8caa2ab72c5509fa1eeeb659663f64/AGENTS.md
 lexiforest/curl_cffi,AGENTS.md,1,0,"pytest,test,testing,tests,unit test,unittest",,https://github.com/lexiforest/curl_cffi/blob/571560b562fe2d379a5fd9bcb3cdf032383d1e3f/AGENTS.md
 BrainBlend-AI/atomic-agents,AGENTS.md,1,0,"pytest,testing",,https://github.com/BrainBlend-AI/atomic-agents/blob/33d2ec94f42d4a65393a336e35edf21ee5700303/AGENTS.md
-All-Hands-AI/OpenHands,AGENTS.md,1,1,"e2e test,end-to-end test,test,test file,testing,tests,vitest","afterEach,fixture,fixtures,teardown",https://github.com/All-Hands-AI/OpenHands/blob/c9b6ceac969573d9cd0ef8a8e61ddb3680679671/AGENTS.md
+All-Hands-AI/OpenHands,AGENTS.md,1,1,"e2e test,end-to-end test,test,test file,testing,tests,vitest","afterEach,fixture,fixtures",https://github.com/All-Hands-AI/OpenHands/blob/c9b6ceac969573d9cd0ef8a8e61ddb3680679671/AGENTS.md
 KroMiose/nekro-agent,AGENTS.md,0,0,,,https://github.com/KroMiose/nekro-agent/blob/8df1eced67cc9d6d4a98515ec98f3dbe8deda480/AGENTS.md
 KroMiose/nekro-agent,CLAUDE.md,0,0,,,https://github.com/KroMiose/nekro-agent/blob/8df1eced67cc9d6d4a98515ec98f3dbe8deda480/CLAUDE.md
 huggingface/speech-to-speech,AGENTS.md,0,0,,,https://github.com/huggingface/speech-to-speech/blob/f819fe47b8f62543272f7c853ea5bf9cdc74ac85/AGENTS.md
@@ -2471,7 +2471,7 @@ volcengine/verl,CLAUDE.md,0,0,,,https://github.com/volcengine/verl/blob/7cb65014
 askui/vision-agent,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/askui/vision-agent/blob/20d1d81c44224694158bfb71416b9b58a3e2ebc6/CLAUDE.md
 Kiln-AI/Kiln,AGENTS.md,1,0,"pytest,testing,tests",,https://github.com/Kiln-AI/Kiln/blob/e63c3b30f697eb18682453c06ef334db84537970/AGENTS.md
 letta-ai/letta,AGENTS.md,1,0,testing,,https://github.com/letta-ai/letta/blob/4511fa0bc91f68fbab32b91f694617271ea9012b/AGENTS.md
-gregpr07/browser-use,AGENTS.md,1,1,"test,test suite",teardown,https://github.com/gregpr07/browser-use/blob/2b1f9d377999a59fe7627c1a5aa88c12aa42e11f/AGENTS.md
+gregpr07/browser-use,AGENTS.md,1,0,"test,test suite",,https://github.com/gregpr07/browser-use/blob/2b1f9d377999a59fe7627c1a5aa88c12aa42e11f/AGENTS.md
 gregpr07/browser-use,CLAUDE.md,1,1,"pytest,test,testing,tests","conftest,fixture,fixtures",https://github.com/gregpr07/browser-use/blob/2b1f9d377999a59fe7627c1a5aa88c12aa42e11f/CLAUDE.md
 Screenly/Anthias,CLAUDE.md,1,1,"pytest,test,testing,tests",conftest,https://github.com/Screenly/Anthias/blob/d5058f37d4931c727a1360195cfe27b7235be692/CLAUDE.md
 NVIDIA/kvpress,AGENTS.md,1,0,"test,tests",,https://github.com/NVIDIA/kvpress/blob/71640b4f9061054a7630c5049bb9ee659a01523c/AGENTS.md
@@ -2502,7 +2502,7 @@ hao-ai-lab/FastVideo,CLAUDE.md,0,0,,,https://github.com/hao-ai-lab/FastVideo/blo
 Genesis-Embodied-AI/Genesis,CLAUDE.md,1,1,"pytest,test,testing,tests,unit test","conftest,fixture,fixtures",https://github.com/Genesis-Embodied-AI/Genesis/blob/0ce793b42c945b6848aad624501b2ca756d3e244/CLAUDE.md
 heurist-network/heurist-agent-framework,AGENTS.md,1,0,"test,test file,testing,tests",,https://github.com/heurist-network/heurist-agent-framework/blob/d3d83cbfcfc266b5b6820fd3e76571c4ed7bf750/AGENTS.md
 heurist-network/heurist-agent-framework,CLAUDE.md,1,0,"test,test file,testing,tests",,https://github.com/heurist-network/heurist-agent-framework/blob/d3d83cbfcfc266b5b6820fd3e76571c4ed7bf750/CLAUDE.md
-browser-use/browser-use,AGENTS.md,1,1,"test,test suite",teardown,https://github.com/browser-use/browser-use/blob/2b1f9d377999a59fe7627c1a5aa88c12aa42e11f/AGENTS.md
+browser-use/browser-use,AGENTS.md,1,0,"test,test suite",,https://github.com/browser-use/browser-use/blob/2b1f9d377999a59fe7627c1a5aa88c12aa42e11f/AGENTS.md
 browser-use/browser-use,CLAUDE.md,1,1,"pytest,test,testing,tests","conftest,fixture,fixtures",https://github.com/browser-use/browser-use/blob/2b1f9d377999a59fe7627c1a5aa88c12aa42e11f/CLAUDE.md
 huggingface/smolagents,AGENTS.md,1,0,tests,,https://github.com/huggingface/smolagents/blob/30bb1161095dbae2271e6bc3cc4c219cc3897a57/AGENTS.md
 fla-org/flash-linear-attention,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/fla-org/flash-linear-attention/blob/c51953382397da5c3b7b8a41e568915b703e2934/AGENTS.md
@@ -2519,7 +2519,7 @@ speaches-ai/speaches,CLAUDE.md,0,0,,,https://github.com/speaches-ai/speaches/blo
 Quantweb3-com/NexusTrader,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/Quantweb3-com/NexusTrader/blob/b5ed599cfbb62b443a55fa37241cd2fab499a28a/CLAUDE.md
 Olshansk/rss-feeds,AGENTS.md,1,0,"test,tests",,https://github.com/Olshansk/rss-feeds/blob/1366b0c66969a72cda3a696ba0583132695563bd/AGENTS.md
 Olshansk/rss-feeds,CLAUDE.md,0,0,,,https://github.com/Olshansk/rss-feeds/blob/1366b0c66969a72cda3a696ba0583132695563bd/CLAUDE.md
-OpenBMB/UltraRAG,AGENTS.md,1,1,"pytest,test",teardown,https://github.com/OpenBMB/UltraRAG/blob/0ba52ed6b961cc5f8fc42b5930bc8c7692f4bd3f/AGENTS.md
+OpenBMB/UltraRAG,AGENTS.md,1,0,"pytest,test",,https://github.com/OpenBMB/UltraRAG/blob/0ba52ed6b961cc5f8fc42b5930bc8c7692f4bd3f/AGENTS.md
 OpenBMB/UltraRAG,CLAUDE.md,0,0,,,https://github.com/OpenBMB/UltraRAG/blob/0ba52ed6b961cc5f8fc42b5930bc8c7692f4bd3f/CLAUDE.md
 Open-LLM-VTuber/Open-LLM-VTuber,CLAUDE.md,1,0,testing,,https://github.com/Open-LLM-VTuber/Open-LLM-VTuber/blob/992309c0aa19845960228f880013d4685fde93b5/CLAUDE.md
 HarleyCoops/Math-To-Manim,AGENTS.md,1,0,"pytest,test,test suite,tests",,https://github.com/HarleyCoops/Math-To-Manim/blob/0df6aa9d92b18d76862776a0425fda4d9f5cc023/AGENTS.md
@@ -2558,7 +2558,7 @@ birdnet-team/BirdNET-Analyzer,AGENTS.md,1,0,"pytest,test,tests",,https://github.
 birdnet-team/BirdNET-Analyzer,CLAUDE.md,0,0,,,https://github.com/birdnet-team/BirdNET-Analyzer/blob/df2ad1ce40415721397586832e04b6cb7d51079f/CLAUDE.md
 yakhyo/uniface,AGENTS.md,0,0,,,https://github.com/yakhyo/uniface/blob/df87c6531f4d1bdad665882d42d658590e724ea4/AGENTS.md
 yakhyo/uniface,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/yakhyo/uniface/blob/df87c6531f4d1bdad665882d42d658590e724ea4/CLAUDE.md
-openai/openai-agents-python,AGENTS.md,1,1,"test,test suite,testing,tests","fixtures,teardown",https://github.com/openai/openai-agents-python/blob/544b8b03b8cf95e62c7f5ebb89adfc4bd66c9d1f/AGENTS.md
+openai/openai-agents-python,AGENTS.md,1,1,"test,test suite,testing,tests",fixtures,https://github.com/openai/openai-agents-python/blob/544b8b03b8cf95e62c7f5ebb89adfc4bd66c9d1f/AGENTS.md
 openai/openai-agents-python,CLAUDE.md,0,0,,,https://github.com/openai/openai-agents-python/blob/544b8b03b8cf95e62c7f5ebb89adfc4bd66c9d1f/CLAUDE.md
 basicmachines-co/basic-memory,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/basicmachines-co/basic-memory/blob/3452c821d76c083823d020984d71e06904a1ff1e/AGENTS.md
 basicmachines-co/basic-memory,CLAUDE.md,0,0,,,https://github.com/basicmachines-co/basic-memory/blob/3452c821d76c083823d020984d71e06904a1ff1e/CLAUDE.md
@@ -2608,7 +2608,7 @@ oraios/serena,AGENTS.md,0,0,,,https://github.com/oraios/serena/blob/701e7c843f46
 oraios/serena,CLAUDE.md,0,0,,,https://github.com/oraios/serena/blob/701e7c843f46c6a649203a488cece1bf19f1df90/CLAUDE.md
 1517005260/graph-rag-agent,AGENTS.md,1,0,"test,testing,tests,unit test,unittest",,https://github.com/1517005260/graph-rag-agent/blob/4296b7c66307a856d0467c6ca635534c447c976b/AGENTS.md
 1517005260/graph-rag-agent,CLAUDE.md,1,0,"test,testing",,https://github.com/1517005260/graph-rag-agent/blob/4296b7c66307a856d0467c6ca635534c447c976b/CLAUDE.md
-RoboVerseOrg/RoboVerse,AGENTS.md,1,1,"pytest,test,testing,tests",teardown,https://github.com/RoboVerseOrg/RoboVerse/blob/5f3ec0185d2d3bcb59d53b0bd1f5b0f8a6f2ce14/AGENTS.md
+RoboVerseOrg/RoboVerse,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/RoboVerseOrg/RoboVerse/blob/5f3ec0185d2d3bcb59d53b0bd1f5b0f8a6f2ce14/AGENTS.md
 RoboVerseOrg/RoboVerse,CLAUDE.md,0,0,,,https://github.com/RoboVerseOrg/RoboVerse/blob/5f3ec0185d2d3bcb59d53b0bd1f5b0f8a6f2ce14/CLAUDE.md
 roboflow/trackers,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/roboflow/trackers/blob/c25b23472acc71bea37d2e5849199e06a225e9c0/AGENTS.md
 mozilla-ai/any-agent,AGENTS.md,1,1,"pytest,test,test file,testing,tests","conftest,fixtures",https://github.com/mozilla-ai/any-agent/blob/3e248d1c5a04d43f00589596d3fc580dbec64194/AGENTS.md
@@ -2804,11 +2804,11 @@ wshobson/maverick-mcp,CLAUDE.md,0,0,,,https://github.com/wshobson/maverick-mcp/b
 NVIDIA-NeMo/NeMo,AGENTS.md,1,0,"pytest,test,test case,testing,tests,unit test",,https://github.com/NVIDIA-NeMo/NeMo/blob/6ad981f26ec1e7156a73fad78b1b9c9c7ec0f463/AGENTS.md
 NVIDIA-NeMo/NeMo,CLAUDE.md,0,0,,,https://github.com/NVIDIA-NeMo/NeMo/blob/6ad981f26ec1e7156a73fad78b1b9c9c7ec0f463/CLAUDE.md
 TencentCloudADP/youtu-agent,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/TencentCloudADP/youtu-agent/blob/c2caa539f4c95ae1c39ed24dc8a99cb3651e1d5d/AGENTS.md
-github/spec-kit,AGENTS.md,1,1,"pytest,test,test file,tests",teardown,https://github.com/github/spec-kit/blob/0c8e31ff0a98c362696c2edb6a1bb25a37f68544/AGENTS.md
+github/spec-kit,AGENTS.md,1,0,"pytest,test,test file,tests",,https://github.com/github/spec-kit/blob/0c8e31ff0a98c362696c2edb6a1bb25a37f68544/AGENTS.md
 promptdriven/pdd,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,https://github.com/promptdriven/pdd/blob/00baafdcddc8fe9e1067e42151b01928baabbb6e/AGENTS.md
 promptdriven/pdd,CLAUDE.md,1,0,"pytest,test,test file,tests",,https://github.com/promptdriven/pdd/blob/00baafdcddc8fe9e1067e42151b01928baabbb6e/CLAUDE.md
 goodroot/hyprwhspr,AGENTS.md,1,0,"pytest,test,tests,unit test,unittest",,https://github.com/goodroot/hyprwhspr/blob/f6707764a55d6c60b26a2b3da5338a05005f392d/AGENTS.md
-sqlalchemy-continuum/sqlalchemy-continuum,CLAUDE.md,1,1,"pytest,test,test case,tests","conftest,teardown",https://github.com/sqlalchemy-continuum/sqlalchemy-continuum/blob/560369ae380f31faffba35807c0ca00e77d2ce55/CLAUDE.md
+sqlalchemy-continuum/sqlalchemy-continuum,CLAUDE.md,1,1,"pytest,test,test case,tests",conftest,https://github.com/sqlalchemy-continuum/sqlalchemy-continuum/blob/560369ae380f31faffba35807c0ca00e77d2ce55/CLAUDE.md
 Kludex/starlette,AGENTS.md,0,0,,,https://github.com/Kludex/starlette/blob/f03f65c2f98c592773d691b4d309c68b83e568ef/AGENTS.md
 modelscope/ReMe,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/modelscope/ReMe/blob/1f67a6ce2938810be364a7305729d56ceabba38d/AGENTS.md
 modelscope/ReMe,CLAUDE.md,0,0,,,https://github.com/modelscope/ReMe/blob/1f67a6ce2938810be364a7305729d56ceabba38d/CLAUDE.md
@@ -2854,7 +2854,7 @@ openonion/connectonion,AGENTS.md,1,0,"pytest,test,test file,testing,tests",,http
 openonion/connectonion,CLAUDE.md,1,1,"pytest,test,test file,testing,tests,unit test","conftest,fixtures",https://github.com/openonion/connectonion/blob/5651380bd7cb69eab4338e681aa16923e0a3918f/CLAUDE.md
 cuga-project/cuga-agent,AGENTS.md,1,0,"pytest,test,tests,unit test",,https://github.com/cuga-project/cuga-agent/blob/8252c59bf50be117529b4e29c2692f046eaf229f/AGENTS.md
 cuga-project/cuga-agent,CLAUDE.md,0,0,,,https://github.com/cuga-project/cuga-agent/blob/8252c59bf50be117529b4e29c2692f046eaf229f/CLAUDE.md
-henrydaum/second-brain,CLAUDE.md,1,1,"pytest,test,testing,tests,unit test",teardown,https://github.com/henrydaum/second-brain/blob/730f68c7232cf758fec190add7c2f01a4814a7c1/CLAUDE.md
+henrydaum/second-brain,CLAUDE.md,1,0,"pytest,test,testing,tests,unit test",,https://github.com/henrydaum/second-brain/blob/730f68c7232cf758fec190add7c2f01a4814a7c1/CLAUDE.md
 FujiwaraChoki/supoclip,AGENTS.md,1,0,"test,test suite,testing,tests",,https://github.com/FujiwaraChoki/supoclip/blob/c8af9eae1ffe1b02a0d7da405a66186dc28f7708/AGENTS.md
 FujiwaraChoki/supoclip,CLAUDE.md,1,0,"test,tests",,https://github.com/FujiwaraChoki/supoclip/blob/c8af9eae1ffe1b02a0d7da405a66186dc28f7708/CLAUDE.md
 microsoft/typeagent-py,AGENTS.md,1,1,"pytest,test,test suite,tests","fixture,fixtures",https://github.com/microsoft/typeagent-py/blob/9b7cbc0518251f74d85171103949e4a3b12489c4/AGENTS.md
@@ -2864,7 +2864,7 @@ alexzhang13/rlm,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/al
 magicyuan876/mineru-tianshu,CLAUDE.md,1,0,"test,test suite",,https://github.com/magicyuan876/mineru-tianshu/blob/c13aab199cbe528ed3dbcd1759bfde15b1433d18/CLAUDE.md
 wshobson/agents,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/wshobson/agents/blob/a30778f8c4e6b0a87567941b7cca4f534bf642b6/AGENTS.md
 wshobson/agents,CLAUDE.md,0,0,,,https://github.com/wshobson/agents/blob/a30778f8c4e6b0a87567941b7cca4f534bf642b6/CLAUDE.md
-pollen-robotics/reachy_mini,AGENTS.md,1,1,"test,testing",teardown,https://github.com/pollen-robotics/reachy_mini/blob/e942a4c070dc579504bc7aeee7b66dd1299c0b25/AGENTS.md
+pollen-robotics/reachy_mini,AGENTS.md,1,0,"test,testing",,https://github.com/pollen-robotics/reachy_mini/blob/e942a4c070dc579504bc7aeee7b66dd1299c0b25/AGENTS.md
 pollen-robotics/reachy_mini,CLAUDE.md,0,0,,,https://github.com/pollen-robotics/reachy_mini/blob/e942a4c070dc579504bc7aeee7b66dd1299c0b25/CLAUDE.md
 meta-pytorch/OpenEnv,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/meta-pytorch/OpenEnv/blob/ced9d73c6c245291679507cc59a96b73b13598ae/AGENTS.md
 meta-pytorch/OpenEnv,CLAUDE.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/meta-pytorch/OpenEnv/blob/ced9d73c6c245291679507cc59a96b73b13598ae/CLAUDE.md
@@ -2874,7 +2874,7 @@ yusufkaraaslan/Skill_Seekers,AGENTS.md,1,1,"pytest,test,test suite,testing,tests
 yusufkaraaslan/Skill_Seekers,CLAUDE.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/yusufkaraaslan/Skill_Seekers/blob/b0e837c3d21693e0f21819b651e12dfe564e6d94/CLAUDE.md
 baserow/baserow,AGENTS.md,1,0,"pytest,test,testing,tests,unit test,vitest",,https://github.com/baserow/baserow/blob/cabb46d9fc5144b2515273a8b483272de73c5444/AGENTS.md
 baserow/baserow,CLAUDE.md,0,0,,,https://github.com/baserow/baserow/blob/cabb46d9fc5144b2515273a8b483272de73c5444/CLAUDE.md
-alirezarezvani/claude-skills,CLAUDE.md,1,1,"pytest,test,test suite,tests","fixtures,teardown",https://github.com/alirezarezvani/claude-skills/blob/19392f7a08264ed00486a251f5b2098321771f94/CLAUDE.md
+alirezarezvani/claude-skills,CLAUDE.md,1,1,"pytest,test,test suite,tests",fixtures,https://github.com/alirezarezvani/claude-skills/blob/19392f7a08264ed00486a251f5b2098321771f94/CLAUDE.md
 jeremylongshore/claude-code-plugins-plus,AGENTS.md,1,0,"test,tests",,https://github.com/jeremylongshore/claude-code-plugins-plus/blob/ee900d9824fe87ea3bc6b841168260b88a71f0b1/AGENTS.md
 jeremylongshore/claude-code-plugins-plus,CLAUDE.md,1,0,"test,tests,unit test,unittest",,https://github.com/jeremylongshore/claude-code-plugins-plus/blob/ee900d9824fe87ea3bc6b841168260b88a71f0b1/CLAUDE.md
 simonw/research,AGENTS.md,0,0,,,https://github.com/simonw/research/blob/afe0b8ac093d1a1f85483135361a7e60af2fa7a8/AGENTS.md
@@ -2899,7 +2899,7 @@ laude-institute/harbor,CLAUDE.md,0,0,,,https://github.com/laude-institute/harbor
 EasyLive2D/live2d-py,CLAUDE.md,1,0,test,,https://github.com/EasyLive2D/live2d-py/blob/0e6e48f83a53033db095399dc655f7b8f7f7b2eb/CLAUDE.md
 K-Dense-AI/claude-scientific-writer,AGENTS.md,0,0,,,https://github.com/K-Dense-AI/claude-scientific-writer/blob/0c7260603be3de4dd5161565ab92e85b31c45eb5/AGENTS.md
 K-Dense-AI/claude-scientific-writer,CLAUDE.md,0,0,,,https://github.com/K-Dense-AI/claude-scientific-writer/blob/0c7260603be3de4dd5161565ab92e85b31c45eb5/CLAUDE.md
-Priivacy-ai/spec-kitty,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests","conftest,fixture,teardown",https://github.com/Priivacy-ai/spec-kitty/blob/f2be03af4889c89184fdb3a4aeb90fc3f90b3a87/AGENTS.md
+Priivacy-ai/spec-kitty,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests","conftest,fixture",https://github.com/Priivacy-ai/spec-kitty/blob/f2be03af4889c89184fdb3a4aeb90fc3f90b3a87/AGENTS.md
 Priivacy-ai/spec-kitty,CLAUDE.md,0,0,,,https://github.com/Priivacy-ai/spec-kitty/blob/f2be03af4889c89184fdb3a4aeb90fc3f90b3a87/CLAUDE.md
 i-am-bee/agentstack,CLAUDE.md,1,0,"test,testing",,https://github.com/i-am-bee/agentstack/blob/79c786049d39684841d77fef9abfd8457a58b0bf/CLAUDE.md
 algorithmicsuperintelligence/openevolve,CLAUDE.md,1,0,"test,testing,tests,unit test,unittest",,https://github.com/algorithmicsuperintelligence/openevolve/blob/411fb59c886c18704caaffb611e17cf9e7d824d2/CLAUDE.md
@@ -2933,7 +2933,7 @@ radixark/miles,AGENTS.md,0,0,,,https://github.com/radixark/miles/blob/7d31a5ff1c
 HolmesGPT/holmesgpt,AGENTS.md,0,0,,,https://github.com/HolmesGPT/holmesgpt/blob/5e983c17f30e93099c7d775167266d4cd1d586c4/AGENTS.md
 HolmesGPT/holmesgpt,CLAUDE.md,1,1,"pytest,test,test suite,testing,tests","conftest,fixture,fixtures,test setup",https://github.com/HolmesGPT/holmesgpt/blob/5e983c17f30e93099c7d775167266d4cd1d586c4/CLAUDE.md
 GetBindu/Bindu,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/GetBindu/Bindu/blob/d4efe4816cbe48423e7e7fb707824a71344ca234/AGENTS.md
-GetBindu/Bindu,CLAUDE.md,1,1,"jest,pytest,test,testing,tests","conftest,fixtures,teardown",https://github.com/GetBindu/Bindu/blob/d4efe4816cbe48423e7e7fb707824a71344ca234/CLAUDE.md
+GetBindu/Bindu,CLAUDE.md,1,1,"jest,pytest,test,testing,tests","conftest,fixtures",https://github.com/GetBindu/Bindu/blob/d4efe4816cbe48423e7e7fb707824a71344ca234/CLAUDE.md
 NVIDIA-NeMo/DataDesigner,AGENTS.md,1,0,"test,testing,tests",,https://github.com/NVIDIA-NeMo/DataDesigner/blob/a223800b180dc3a428f342bd383611cab27f532a/AGENTS.md
 NVIDIA-NeMo/DataDesigner,CLAUDE.md,0,0,,,https://github.com/NVIDIA-NeMo/DataDesigner/blob/a223800b180dc3a428f342bd383611cab27f532a/CLAUDE.md
 vibrantlabsai/ragas,CLAUDE.md,1,0,"pytest,test,testing,tests",,https://github.com/vibrantlabsai/ragas/blob/298b68274234c060deacab3cf5fb52aa3a20e885/CLAUDE.md
@@ -3064,7 +3064,7 @@ samugit83/redamon,AGENTS.md,1,1,"pytest,test,test file,testing,tests,vitest","co
 samugit83/redamon,CLAUDE.md,0,0,,,https://github.com/samugit83/redamon/blob/aecef4464f974cbd15ed293056356f749585a7d9/CLAUDE.md
 cat-xierluo/legal-skills,AGENTS.md,1,0,test,,https://github.com/cat-xierluo/legal-skills/blob/bfae89873696ef8f5d7e2eb0e8af0fe964b948d3/AGENTS.md
 cat-xierluo/legal-skills,CLAUDE.md,0,0,,,https://github.com/cat-xierluo/legal-skills/blob/bfae89873696ef8f5d7e2eb0e8af0fe964b948d3/CLAUDE.md
-Cranot/roam-code,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests","fixture,fixtures,teardown",https://github.com/Cranot/roam-code/blob/6feecbd602677f8ddad3a1156714adf5970c8145/AGENTS.md
+Cranot/roam-code,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests","fixture,fixtures",https://github.com/Cranot/roam-code/blob/6feecbd602677f8ddad3a1156714adf5970c8145/AGENTS.md
 viser-project/viser,CLAUDE.md,1,0,"pytest,tests,vitest",,https://github.com/viser-project/viser/blob/d29eede8d85cdd6e48cb663509c1bd2456de0e1e/CLAUDE.md
 django-commons/django-unicorn,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/django-commons/django-unicorn/blob/63043f40424455e189bd4d094beeeb1f3f2008bd/AGENTS.md
 AgriciDaniel/claude-ads,AGENTS.md,1,1,tests,fixtures,https://github.com/AgriciDaniel/claude-ads/blob/119a9fcb672f6016764fa7a224de7141d4761238/AGENTS.md
@@ -3356,7 +3356,7 @@ data-privacy-stack/presidio,AGENTS.md,1,0,"pytest,test",,https://github.com/data
 data-privacy-stack/presidio,CLAUDE.md,0,0,,,https://github.com/data-privacy-stack/presidio/blob/a7b17c75f3098b92b369f0b01855519f1cd5e8cc/CLAUDE.md
 EverMind-AI/Raven,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/EverMind-AI/Raven/blob/a82b2784ac15c2f55dc88b538d17714f08ef3b5b/AGENTS.md
 EverMind-AI/Raven,CLAUDE.md,0,0,,,https://github.com/EverMind-AI/Raven/blob/a82b2784ac15c2f55dc88b538d17714f08ef3b5b/CLAUDE.md
-nominal-io/instro,AGENTS.md,1,1,"pytest,test,tests",teardown,https://github.com/nominal-io/instro/blob/5505749e2e989fbdba8c0176a6bb73387da5035d/AGENTS.md
+nominal-io/instro,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/nominal-io/instro/blob/5505749e2e989fbdba8c0176a6bb73387da5035d/AGENTS.md
 nominal-io/instro,CLAUDE.md,0,0,,,https://github.com/nominal-io/instro/blob/5505749e2e989fbdba8c0176a6bb73387da5035d/CLAUDE.md
 Alpha-Dojo/DojoAgents,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/Alpha-Dojo/DojoAgents/blob/4b87733d38a460fa8930f84714535f2e104894eb/AGENTS.md
 Graphify-Labs/graphify,AGENTS.md,0,0,,,https://github.com/Graphify-Labs/graphify/blob/67f99bd0059dd1bac9e44382907ef9f10098b39f/AGENTS.md
@@ -3366,8 +3366,8 @@ omnigent-ai/omnigent,AGENTS.md,1,0,test,,https://github.com/omnigent-ai/omnigent
 omnigent-ai/omnigent,CLAUDE.md,0,0,,,https://github.com/omnigent-ai/omnigent/blob/faddb906eb6c1e2b7f4d7d250a443e70deca12b0/CLAUDE.md
 sickn33/agentic-awesome-skills,AGENTS.md,1,0,"test,test suite,testing,tests,unit test,unittest",,https://github.com/sickn33/agentic-awesome-skills/blob/78acbe3f333315cfdd887c81a11aa1ffe42f8e64/AGENTS.md
 SmileLikeYe/agent-chief,CLAUDE.md,1,1,"pytest,test,test suite,tests","fixture,fixtures",https://github.com/SmileLikeYe/agent-chief/blob/d46072a804ff16aa7ce87751b82178f13fb973be/CLAUDE.md
-JailbrokenAI/wallbreaker,AGENTS.md,1,1,"pytest,test,test file,tests,unit test",teardown,https://github.com/JailbrokenAI/wallbreaker/blob/8b85e768efa69028b4af9f3d1c9c079178aa8a53/AGENTS.md
-JailbrokenAI/wallbreaker,CLAUDE.md,1,1,"pytest,test,test file,testing,tests,unit test",teardown,https://github.com/JailbrokenAI/wallbreaker/blob/8b85e768efa69028b4af9f3d1c9c079178aa8a53/CLAUDE.md
+JailbrokenAI/wallbreaker,AGENTS.md,1,0,"pytest,test,test file,tests,unit test",,https://github.com/JailbrokenAI/wallbreaker/blob/8b85e768efa69028b4af9f3d1c9c079178aa8a53/AGENTS.md
+JailbrokenAI/wallbreaker,CLAUDE.md,1,0,"pytest,test,test file,testing,tests,unit test",,https://github.com/JailbrokenAI/wallbreaker/blob/8b85e768efa69028b4af9f3d1c9c079178aa8a53/CLAUDE.md
 study8677/repobrain,AGENTS.md,0,0,,,https://github.com/study8677/repobrain/blob/bd04295c11f6dcf2a2501c4d5c576c1b8262f004/AGENTS.md
 study8677/repobrain,CLAUDE.md,0,0,,,https://github.com/study8677/repobrain/blob/bd04295c11f6dcf2a2501c4d5c576c1b8262f004/CLAUDE.md
 MiroShark/MiroShark,CLAUDE.md,1,0,"pytest,test,tests,unit test",,https://github.com/MiroShark/MiroShark/blob/359633fa1dee1a363b2f756a4e8c6e6f8040f8d4/CLAUDE.md
@@ -3444,7 +3444,7 @@ bearer/pizzly,AGENTS.md,1,0,testing,,https://github.com/bearer/pizzly/blob/c043f
 bearer/pizzly,CLAUDE.md,0,0,,,https://github.com/bearer/pizzly/blob/c043f09997fc6943ea5cca715cc502e6e6ce9bf4/CLAUDE.md
 reaviz/reaviz,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/reaviz/reaviz/blob/9a0db375afa05b50c83f3d145969e47ba17b5b44/CLAUDE.md
 denolehov/obsidian-git,AGENTS.md,1,0,"test,test file,test suite,testing,tests,vitest",,https://github.com/denolehov/obsidian-git/blob/bac5123f20f43f99d6d714cd461f434fd24362cc/AGENTS.md
-thefrontside/effection,AGENTS.md,0,1,,teardown,https://github.com/thefrontside/effection/blob/a1466dc63c4da0ba6ca120775bb19aeda9ea766b/AGENTS.md
+thefrontside/effection,AGENTS.md,0,0,,,https://github.com/thefrontside/effection/blob/a1466dc63c4da0ba6ca120775bb19aeda9ea766b/AGENTS.md
 picgo/picgo-core,AGENTS.md,1,0,test,,https://github.com/picgo/picgo-core/blob/f71008327101d8c3232191871f196b979dff662f/AGENTS.md
 picgo/picgo-core,CLAUDE.md,0,0,,,https://github.com/picgo/picgo-core/blob/f71008327101d8c3232191871f196b979dff662f/CLAUDE.md
 lizhiyao/sentry-miniapp,AGENTS.md,1,0,"test,vitest",,https://github.com/lizhiyao/sentry-miniapp/blob/bea1d883cd0d816e597756c0f115610539704999/AGENTS.md
@@ -3457,7 +3457,7 @@ didi/logicflow,AGENTS.md,1,0,"test,tests",,https://github.com/didi/logicflow/blo
 sindresorhus/type-fest,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/sindresorhus/type-fest/blob/313e04e894d882c044c6de28f69cfde87fff0947/CLAUDE.md
 microsoft/vscode-eslint,AGENTS.md,1,0,testing,,https://github.com/microsoft/vscode-eslint/blob/23a05df7043e4da97761239858447f1d5a462b19/agents.md
 crowi/crowi,AGENTS.md,0,0,,,https://github.com/crowi/crowi/blob/9d1f810acb08d944acb617a22b1004e020387f2a/AGENTS.md
-crowi/crowi,CLAUDE.md,1,1,"jest,test,tests",teardown,https://github.com/crowi/crowi/blob/9d1f810acb08d944acb617a22b1004e020387f2a/CLAUDE.md
+crowi/crowi,CLAUDE.md,1,0,"jest,test,tests",,https://github.com/crowi/crowi/blob/9d1f810acb08d944acb617a22b1004e020387f2a/CLAUDE.md
 jcmais/node-libcurl,CLAUDE.md,1,0,test,,https://github.com/jcmais/node-libcurl/blob/332acfd65220553412194c8552bd965611dc41b1/CLAUDE.md
 yaozeyuan/zhihuhelp,AGENTS.md,0,1,,fixture,https://github.com/yaozeyuan/zhihuhelp/blob/d04113148ba9288b9b1280f2948258aaf541c5ba/AGENTS.md
 persian-tools/persian-tools,AGENTS.md,1,0,"test,test case,testing,tests",,https://github.com/persian-tools/persian-tools/blob/2ed0797ba54543035433995ef3ddccb458bfc5fb/AGENTS.md
@@ -3500,7 +3500,7 @@ quran/quran.com-frontend-next,AGENTS.md,0,0,,,https://github.com/quran/quran.com
 quran/quran.com-frontend-next,CLAUDE.md,0,0,,,https://github.com/quran/quran.com-frontend-next/blob/aff1a035b09b66f28047b3216edcae4c5c949a49/CLAUDE.md
 amannn/next-intl,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/amannn/next-intl/blob/3259beb76120614af8b48e814c56324ad71ccb61/AGENTS.md
 amannn/next-intl,CLAUDE.md,0,0,,,https://github.com/amannn/next-intl/blob/3259beb76120614af8b48e814c56324ad71ccb61/CLAUDE.md
-luin/ioredis,AGENTS.md,1,1,"mocha,test,test file,testing,tests",teardown,https://github.com/luin/ioredis/blob/7479cabf7538d3d1db25ddb8a81041e74d69627e/AGENTS.md
+luin/ioredis,AGENTS.md,1,0,"mocha,test,test file,testing,tests",,https://github.com/luin/ioredis/blob/7479cabf7538d3d1db25ddb8a81041e74d69627e/AGENTS.md
 luin/ioredis,CLAUDE.md,0,0,,,https://github.com/luin/ioredis/blob/7479cabf7538d3d1db25ddb8a81041e74d69627e/CLAUDE.md
 umijs/qiankun,AGENTS.md,1,1,"test,tests,vitest","fixture,fixtures",https://github.com/umijs/qiankun/blob/187287e86d548ee3da9c0f123c9cd7b5b0b230db/AGENTS.md
 umijs/qiankun,CLAUDE.md,0,0,,,https://github.com/umijs/qiankun/blob/187287e86d548ee3da9c0f123c9cd7b5b0b230db/CLAUDE.md
@@ -3523,7 +3523,7 @@ ride-the-lightning/rtl,CLAUDE.md,1,1,"jasmine,test,testing,tests",fixture,https:
 revolist/revogrid,AGENTS.md,1,0,"test,testing,tests",,https://github.com/revolist/revogrid/blob/68c2c0e50f0fd254e0a5a8af619630fd38ad969a/AGENTS.md
 airtasker/spot,AGENTS.md,1,1,"jest,test,testing,tests",fixtures,https://github.com/airtasker/spot/blob/2233b6dd47c519ccc417f1d4dc6c463a954ba9be/AGENTS.md
 airtasker/spot,CLAUDE.md,0,0,,,https://github.com/airtasker/spot/blob/2233b6dd47c519ccc417f1d4dc6c463a954ba9be/CLAUDE.md
-reactivex/rxjs,AGENTS.md,1,1,"test,tests,unit test",teardown,https://github.com/reactivex/rxjs/blob/54796b38a57e6309f9861e174737479bb3f63f61/AGENTS.md
+reactivex/rxjs,AGENTS.md,1,0,"test,tests,unit test",,https://github.com/reactivex/rxjs/blob/54796b38a57e6309f9861e174737479bb3f63f61/AGENTS.md
 pmndrs/react-spring,CLAUDE.md,1,1,"test,test file,test suite,testing,tests,unit test,vitest","beforeEach,fixture",https://github.com/pmndrs/react-spring/blob/4be40b8b590238dc80872a48b91a42d92201d895/CLAUDE.md
 ant-design/ant-design-pro,AGENTS.md,0,0,,,https://github.com/ant-design/ant-design-pro/blob/adfd44085738ca953573a13322c1ba84aca8b9e3/AGENTS.md
 ant-design/ant-design-pro,CLAUDE.md,1,0,"jest,test,tests",,https://github.com/ant-design/ant-design-pro/blob/adfd44085738ca953573a13322c1ba84aca8b9e3/CLAUDE.md
@@ -3546,8 +3546,8 @@ getstream/stream-chat-react-native,AGENTS.md,1,1,"jest,test,test file,testing,te
 getstream/stream-chat-react-native,CLAUDE.md,0,0,,,https://github.com/getstream/stream-chat-react-native/blob/cb145c70e652e10816bde777c673600a8e96b6cc/CLAUDE.md
 bennycode/trading-signals,CLAUDE.md,0,0,,,https://github.com/bennycode/trading-signals/blob/fc625a369546261dd4ef2c2af1b735e29cecaad4/CLAUDE.md
 homebridge/homebridge,CLAUDE.md,1,0,"test,test file,tests,vitest",,https://github.com/homebridge/homebridge/blob/edf54930340d67cade23d01abd41b03cd9621e8b/CLAUDE.md
-4gray/iptvnator,AGENTS.md,1,1,"test,tests","fixture,fixtures,teardown",https://github.com/4gray/iptvnator/blob/bad8a0991ea4a5c26441d4b504d561820a22cda7/AGENTS.md
-4gray/iptvnator,CLAUDE.md,1,1,"jest,test,testing,tests","fixture,fixtures,teardown",https://github.com/4gray/iptvnator/blob/bad8a0991ea4a5c26441d4b504d561820a22cda7/CLAUDE.md
+4gray/iptvnator,AGENTS.md,1,1,"test,tests","fixture,fixtures",https://github.com/4gray/iptvnator/blob/bad8a0991ea4a5c26441d4b504d561820a22cda7/AGENTS.md
+4gray/iptvnator,CLAUDE.md,1,1,"jest,test,testing,tests","fixture,fixtures",https://github.com/4gray/iptvnator/blob/bad8a0991ea4a5c26441d4b504d561820a22cda7/CLAUDE.md
 abagames/crisp-game-lib,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/abagames/crisp-game-lib/blob/4df7621bdacd97e6f66ce481902d2188d02b9930/AGENTS.md
 abagames/crisp-game-lib,CLAUDE.md,0,0,,,https://github.com/abagames/crisp-game-lib/blob/4df7621bdacd97e6f66ce481902d2188d02b9930/CLAUDE.md
 caprover/caprover,AGENTS.md,1,0,"jest,test,tests",,https://github.com/caprover/caprover/blob/468e925eac2f4db29af07d999ba61c640fa32132/AGENTS.md
@@ -3571,7 +3571,7 @@ walletconnect/walletconnect-monorepo,CLAUDE.md,0,0,,,https://github.com/walletco
 openzeppelin/openzeppelin-upgrades,AGENTS.md,1,0,test,,https://github.com/openzeppelin/openzeppelin-upgrades/blob/3aa87ac7a2e6915b9ebd1102cbfe38b49793e81f/AGENTS.md
 paraswap/paraswap-sdk,CLAUDE.md,1,0,"jest,test,test file,tests",,https://github.com/paraswap/paraswap-sdk/blob/0a6368a0f3ccc22ee9ce7160d9d41d2dbb3321ca/CLAUDE.md
 javascript-obfuscator/javascript-obfuscator,CLAUDE.md,1,0,"mocha,test,test file,test suite,testing,tests,unit test",,https://github.com/javascript-obfuscator/javascript-obfuscator/blob/b35280d2397c999ee9f31fe26233a9a4e85e173f/CLAUDE.md
-the1812/bilibili-evolved,AGENTS.md,1,1,"test,testing",teardown,https://github.com/the1812/bilibili-evolved/blob/1a2ab751dfa3ac5007b8994f61d31102003b764d/AGENTS.md
+the1812/bilibili-evolved,AGENTS.md,1,0,"test,testing",,https://github.com/the1812/bilibili-evolved/blob/1a2ab751dfa3ac5007b8994f61d31102003b764d/AGENTS.md
 sindresorhus/refined-github,CLAUDE.md,0,0,,,https://github.com/sindresorhus/refined-github/blob/9e86fd7f0bb36e2bb41170d7da332017f9b571dd/CLAUDE.md
 sindresorhus/refined-github,AGENTS.md,0,0,,,https://github.com/sindresorhus/refined-github/blob/9e86fd7f0bb36e2bb41170d7da332017f9b571dd/agents.md
 imolorhe/altair,AGENTS.md,1,1,"test,test file,test suite,testing,tests,vitest",beforeEach,https://github.com/imolorhe/altair/blob/3c0eb65aed3db5473767f56cc57412ea26f4dbee/AGENTS.md
@@ -3637,7 +3637,7 @@ edrlab/thorium-reader,AGENTS.md,0,0,,,https://github.com/edrlab/thorium-reader/b
 projen/projen,AGENTS.md,1,0,"jest,test,test file,tests",,https://github.com/projen/projen/blob/43487039a51fa7cb726e43ccdc2a70b15a365caa/AGENTS.md
 projen/projen,CLAUDE.md,1,0,"jest,test,test file,tests",,https://github.com/projen/projen/blob/43487039a51fa7cb726e43ccdc2a70b15a365caa/CLAUDE.md
 garden-io/garden,CLAUDE.md,1,1,"mocha,test,testing,tests",conftest,https://github.com/garden-io/garden/blob/4e7128de8dfb5f38f76a5d005a65a78110be7553/CLAUDE.md
-snyk/snyk,AGENTS.md,1,1,"integration test,jest,test,test file,testing,tests,unit test",teardown,https://github.com/snyk/snyk/blob/27e959314bfa7db21ee9a26eb40b71b6840aa7f4/AGENTS.md
+snyk/snyk,AGENTS.md,1,0,"integration test,jest,test,test file,testing,tests,unit test",,https://github.com/snyk/snyk/blob/27e959314bfa7db21ee9a26eb40b71b6840aa7f4/AGENTS.md
 snyk/snyk,CLAUDE.md,0,0,,,https://github.com/snyk/snyk/blob/27e959314bfa7db21ee9a26eb40b71b6840aa7f4/CLAUDE.md
 elastic/eui,AGENTS.md,1,0,"testing,tests",,https://github.com/elastic/eui/blob/b970f096341e8212775730495eab12bc5ee156f7/AGENTS.md
 elastic/eui,CLAUDE.md,0,0,,,https://github.com/elastic/eui/blob/b970f096341e8212775730495eab12bc5ee156f7/CLAUDE.md
@@ -3875,7 +3875,7 @@ argos-ci/argos,AGENTS.md,1,1,"test,testing,tests,unit test,vitest",fixtures,http
 argos-ci/argos,CLAUDE.md,0,0,,,https://github.com/argos-ci/argos/blob/b1a66f5b9154fabcc4bf3ea92a0e42a0f84525a0/CLAUDE.md
 yagop/node-telegram-bot-api,AGENTS.md,0,0,,,https://github.com/yagop/node-telegram-bot-api/blob/16a41153a422395de1381da3410dbc3ec6bd61de/AGENTS.md
 yagop/node-telegram-bot-api,CLAUDE.md,1,1,"test,testing,tests,unit test",fixture,https://github.com/yagop/node-telegram-bot-api/blob/16a41153a422395de1381da3410dbc3ec6bd61de/CLAUDE.md
-sadeghhayeri/greentunnel,CLAUDE.md,1,1,"integration test,test,tests,vitest",teardown,https://github.com/sadeghhayeri/greentunnel/blob/8278c2953e396c07af5ee4c1474fc183398e87a1/CLAUDE.md
+sadeghhayeri/greentunnel,CLAUDE.md,1,0,"integration test,test,tests,vitest",,https://github.com/sadeghhayeri/greentunnel/blob/8278c2953e396c07af5ee4c1474fc183398e87a1/CLAUDE.md
 gisto/gisto,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/gisto/gisto/blob/1cc672be9c680b084c830493634f631a68269b1b/AGENTS.md
 tympanix/electorrent,AGENTS.md,1,0,"test,test case,testing,tests",,https://github.com/tympanix/electorrent/blob/dd476ffc9b4c4b4c0e06ecdc2042a2368775ed6d/AGENTS.md
 whiteminds/liveautorecord,CLAUDE.md,1,0,test,,https://github.com/whiteminds/liveautorecord/blob/b68a5e5e9bab9125f7750f5aca8e42028fe6c1fb/CLAUDE.md
@@ -3918,7 +3918,7 @@ callstack/react-native-testing-library,CLAUDE.md,0,0,,,https://github.com/callst
 dyc3/opentogethertube,AGENTS.md,1,0,"jest,test,test file,testing,tests,vitest",,https://github.com/dyc3/opentogethertube/blob/4ea9029429a98561ba7c213c54c55ef0f0c56800/AGENTS.md
 dyc3/opentogethertube,CLAUDE.md,0,0,,,https://github.com/dyc3/opentogethertube/blob/4ea9029429a98561ba7c213c54c55ef0f0c56800/CLAUDE.md
 efoxteam/emp,AGENTS.md,0,0,,,https://github.com/efoxteam/emp/blob/eb451180bc1df6ce82616276b79ba484562bca58/AGENTS.md
-styled-components/styled-components,AGENTS.md,1,1,"jest,test,test file,testing,tests","fixture,teardown",https://github.com/styled-components/styled-components/blob/38b2e164ee8cff33ea76b92c17e8da550644ab5b/AGENTS.md
+styled-components/styled-components,AGENTS.md,1,1,"jest,test,test file,testing,tests",fixture,https://github.com/styled-components/styled-components/blob/38b2e164ee8cff33ea76b92c17e8da550644ab5b/AGENTS.md
 styled-components/styled-components,CLAUDE.md,0,0,,,https://github.com/styled-components/styled-components/blob/38b2e164ee8cff33ea76b92c17e8da550644ab5b/CLAUDE.md
 supabase/supabase-js,AGENTS.md,1,0,testing,,https://github.com/supabase/supabase-js/blob/e5785d9b95ecec620d0ba7b98eecb11505fae333/AGENTS.md
 elastic/elasticsearch-js,AGENTS.md,1,0,"test,test suite,testing,tests",,https://github.com/elastic/elasticsearch-js/blob/c757bfcc34ff6ac71ce7d49c94c96d6260a3d53e/AGENTS.md
@@ -3960,7 +3960,7 @@ chrisleekr/binance-trading-bot,CLAUDE.md,0,0,,,https://github.com/chrisleekr/bin
 lerna/lerna,AGENTS.md,1,0,"test,tests",,https://github.com/lerna/lerna/blob/0be4313641e4757b1b68fe8ac178187d131a9bc4/AGENTS.md
 lerna/lerna,CLAUDE.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/lerna/lerna/blob/0be4313641e4757b1b68fe8ac178187d131a9bc4/CLAUDE.md
 higurashi-kagome/wereader,CLAUDE.md,1,0,test,,https://github.com/higurashi-kagome/wereader/blob/a27b604dd7753734a27a47f341dbebbc6aef8917/CLAUDE.md
-katspaugh/wavesurfer.js,AGENTS.md,1,1,"jest,test,test file,tests,unit test",teardown,https://github.com/katspaugh/wavesurfer.js/blob/8ca86930bcc55c3707486a6e98fba33ba8bc71b0/AGENTS.md
+katspaugh/wavesurfer.js,AGENTS.md,1,0,"jest,test,test file,tests,unit test",,https://github.com/katspaugh/wavesurfer.js/blob/8ca86930bcc55c3707486a6e98fba33ba8bc71b0/AGENTS.md
 jbetancur/react-data-table-component,CLAUDE.md,1,0,"test,tests,vitest",,https://github.com/jbetancur/react-data-table-component/blob/30afe83386721b037652e87cd2ee9c34d0d43603/CLAUDE.md
 srod/node-minify,AGENTS.md,1,1,"test,test file,testing,tests,vitest",fixtures,https://github.com/srod/node-minify/blob/21dc506e0a9c21c07b1930ea98eff3cdfbe58d0d/AGENTS.md
 unlock-protocol/unlock,CLAUDE.md,1,1,"mocha,test,testing,tests,vitest",test setup,https://github.com/unlock-protocol/unlock/blob/e887789c433879649c81045423b5291c7796eba0/CLAUDE.md
@@ -3971,7 +3971,7 @@ oxygem/kanmail,CLAUDE.md,0,0,,,https://github.com/oxygem/kanmail/blob/4d1051115d
 amruthpillai/reactive-resume,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/amruthpillai/reactive-resume/blob/6416da28a4db7833a80b5d19b30c9b28d7df1807/AGENTS.md
 amruthpillai/reactive-resume,CLAUDE.md,0,0,,,https://github.com/amruthpillai/reactive-resume/blob/6416da28a4db7833a80b5d19b30c9b28d7df1807/CLAUDE.md
 sidorares/node-mysql2,AGENTS.md,0,0,,,https://github.com/sidorares/node-mysql2/blob/9b1777b7d8a7c8e28daf1b0c954a055ec92f4839/AGENTS.md
-sidorares/node-mysql2,CLAUDE.md,1,1,"test,test file,tests",teardown,https://github.com/sidorares/node-mysql2/blob/9b1777b7d8a7c8e28daf1b0c954a055ec92f4839/CLAUDE.md
+sidorares/node-mysql2,CLAUDE.md,1,0,"test,test file,tests",,https://github.com/sidorares/node-mysql2/blob/9b1777b7d8a7c8e28daf1b0c954a055ec92f4839/CLAUDE.md
 playcanvas/pcui,AGENTS.md,1,0,"test,tests",,https://github.com/playcanvas/pcui/blob/de849c35e722c7a3ab4eb41dcfc42ffb6f7f62a4/AGENTS.md
 playcanvas/pcui,CLAUDE.md,0,0,,,https://github.com/playcanvas/pcui/blob/de849c35e722c7a3ab4eb41dcfc42ffb6f7f62a4/CLAUDE.md
 poooi/poi,AGENTS.md,1,1,"jest,test,test file,testing,tests","fixture,fixtures",https://github.com/poooi/poi/blob/46050ea5e58baf7fc27e3bf8519228afc8860026/AGENTS.md
@@ -4011,7 +4011,7 @@ epam/ketcher,CLAUDE.md,1,0,"jest,test,testing,tests",,https://github.com/epam/ke
 posthog/posthog.com,AGENTS.md,1,0,"test,testing",,https://github.com/posthog/posthog.com/blob/a5d10b652f959f8e962dc09451df799423b9b4f0/AGENTS.md
 posthog/posthog.com,CLAUDE.md,0,0,,,https://github.com/posthog/posthog.com/blob/a5d10b652f959f8e962dc09451df799423b9b4f0/CLAUDE.md
 supabase/postgres-meta,CLAUDE.md,1,0,"test,test case,testing,tests,vitest",,https://github.com/supabase/postgres-meta/blob/f380cc5be21edef4e77d9838c732d1f20af0b3c0/CLAUDE.md
-felixmosh/bull-board,CLAUDE.md,1,1,"jest,test,tests","beforeAll,fixture,teardown",https://github.com/felixmosh/bull-board/blob/0793eb9318a0f71f21b898005b2cea2068246d8b/CLAUDE.md
+felixmosh/bull-board,CLAUDE.md,1,1,"jest,test,tests","beforeAll,fixture",https://github.com/felixmosh/bull-board/blob/0793eb9318a0f71f21b898005b2cea2068246d8b/CLAUDE.md
 samchon/nestia,AGENTS.md,1,1,"testing,tests",fixture,https://github.com/samchon/nestia/blob/8ad203669c3b9088c9df211a0aeb9fc4be12c068/AGENTS.md
 samchon/nestia,CLAUDE.md,0,0,,,https://github.com/samchon/nestia/blob/8ad203669c3b9088c9df211a0aeb9fc4be12c068/CLAUDE.md
 portainer/portainer,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/portainer/portainer/blob/4d3b5ceb99068d18ef43902cbe8e59954128315f/CLAUDE.md
@@ -4106,7 +4106,7 @@ koskimas/kysely,CLAUDE.md,0,0,,,https://github.com/koskimas/kysely/blob/b9674df6
 unjs/h3,AGENTS.md,1,1,"integration test,test,test suite,testing,tests,vitest","afterEach,beforeEach,fixture,fixtures",https://github.com/unjs/h3/blob/aa50e96a4a3da1732aa54542c498b37e0f8e3508/AGENTS.md
 unjs/h3,CLAUDE.md,0,0,,,https://github.com/unjs/h3/blob/aa50e96a4a3da1732aa54542c498b37e0f8e3508/CLAUDE.md
 johnlindquist/kit,AGENTS.md,1,0,"test,testing,tests",,https://github.com/johnlindquist/kit/blob/e82e7846392ba7ec8dac252a12af317d14486579/AGENTS.md
-johnlindquist/kit,CLAUDE.md,1,1,"test,test file,testing,tests","afterEach,beforeEach,teardown",https://github.com/johnlindquist/kit/blob/e82e7846392ba7ec8dac252a12af317d14486579/CLAUDE.md
+johnlindquist/kit,CLAUDE.md,1,1,"test,test file,testing,tests","afterEach,beforeEach",https://github.com/johnlindquist/kit/blob/e82e7846392ba7ec8dac252a12af317d14486579/CLAUDE.md
 misskey-dev/misskey,AGENTS.md,1,0,"e2e test,test,unit test",,https://github.com/misskey-dev/misskey/blob/b3ce198f4c55ace4daeba4cb1858b3a85bc9529b/AGENTS.md
 misskey-dev/misskey,CLAUDE.md,0,0,,,https://github.com/misskey-dev/misskey/blob/b3ce198f4c55ace4daeba4cb1858b3a85bc9529b/CLAUDE.md
 vslinko/obsidian-outliner,AGENTS.md,1,0,"integration test,jest,test,test case,test file,tests",,https://github.com/vslinko/obsidian-outliner/blob/b51918d4eaa75223780a404c40f2d9406df6a3c0/AGENTS.md
@@ -4115,7 +4115,7 @@ scriptscat/scriptcat,CLAUDE.md,0,0,,,https://github.com/scriptscat/scriptcat/blo
 locutusjs/locutus,AGENTS.md,0,0,,,https://github.com/locutusjs/locutus/blob/0f8ed0e29dd1d8073a718d4c2226a330eb9c4e46/AGENTS.md
 saltbo/zpan,AGENTS.md,0,0,,,https://github.com/saltbo/zpan/blob/d0ddce8bb7e0ec6745fb6bf8141c25afd1c5ebf5/AGENTS.md
 saltbo/zpan,CLAUDE.md,1,0,"test,tests",,https://github.com/saltbo/zpan/blob/d0ddce8bb7e0ec6745fb6bf8141c25afd1c5ebf5/CLAUDE.md
-supabase/cli,AGENTS.md,1,1,"e2e test,integration test,test,testing,tests,unit test,vitest",teardown,https://github.com/supabase/cli/blob/eb74e513d2c8be9908e86f25257f077a4865a23b/AGENTS.md
+supabase/cli,AGENTS.md,1,0,"e2e test,integration test,test,testing,tests,unit test,vitest",,https://github.com/supabase/cli/blob/eb74e513d2c8be9908e86f25257f077a4865a23b/AGENTS.md
 supabase/cli,CLAUDE.md,0,0,,,https://github.com/supabase/cli/blob/eb74e513d2c8be9908e86f25257f077a4865a23b/CLAUDE.md
 hexlet-basics/hexlet-basics,AGENTS.md,1,1,"test,tests",fixtures,https://github.com/hexlet-basics/hexlet-basics/blob/61a98af6475467d2253492d0da9b742848aaf8fe/AGENTS.md
 hexlet-basics/hexlet-basics,CLAUDE.md,0,0,,,https://github.com/hexlet-basics/hexlet-basics/blob/61a98af6475467d2253492d0da9b742848aaf8fe/CLAUDE.md
@@ -4126,7 +4126,7 @@ invertase/docs.page,AGENTS.md,0,0,,,https://github.com/invertase/docs.page/blob/
 trungk18/angular-spotify,CLAUDE.md,1,0,tests,,https://github.com/trungk18/angular-spotify/blob/bb21f83b12ae2ce866977efb5bf8da17e5572aee/CLAUDE.md
 nocobase/nocobase,AGENTS.md,1,0,"test,test file,testing,tests",,https://github.com/nocobase/nocobase/blob/0b63c6c3c8aa81976d464f99c6b453b353ec6cd6/AGENTS.md
 nocobase/nocobase,CLAUDE.md,0,0,,,https://github.com/nocobase/nocobase/blob/0b63c6c3c8aa81976d464f99c6b453b353ec6cd6/CLAUDE.md
-zsviczian/obsidian-excalidraw-plugin,AGENTS.md,1,1,"integration test,test,test suite,testing,tests,unit test","fixtures,teardown",https://github.com/zsviczian/obsidian-excalidraw-plugin/blob/a601c3f470bf9dc5273cf1af074338f4ef265349/AGENTS.md
+zsviczian/obsidian-excalidraw-plugin,AGENTS.md,1,1,"integration test,test,test suite,testing,tests,unit test",fixtures,https://github.com/zsviczian/obsidian-excalidraw-plugin/blob/a601c3f470bf9dc5273cf1af074338f4ef265349/AGENTS.md
 opensearch-project/opensearch-dashboards,CLAUDE.md,1,0,"functional test,jest,junit,test,test file,testing,tests,unit test",,https://github.com/opensearch-project/opensearch-dashboards/blob/28ff8744a88cd40f9d0844f4e3217619e21cec48/CLAUDE.md
 kingstinct/react-native-healthkit,AGENTS.md,0,0,,,https://github.com/kingstinct/react-native-healthkit/blob/b78bdb322cb85823a3a303b95beb2d456016e001/AGENTS.md
 kingstinct/react-native-healthkit,CLAUDE.md,0,0,,,https://github.com/kingstinct/react-native-healthkit/blob/b78bdb322cb85823a3a303b95beb2d456016e001/CLAUDE.md
@@ -4184,7 +4184,7 @@ backstage/backstage,AGENTS.md,1,0,"test,testing,tests",,https://github.com/backs
 hemmeligorg/hemmelig.app,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/hemmeligorg/hemmelig.app/blob/bfa1936152dd982e0069f23cd2ac5c26af6d2ba0/CLAUDE.md
 gridaco/grida,AGENTS.md,1,0,"test,testing,tests",,https://github.com/gridaco/grida/blob/f6110ab6921fe50c1471cf8e077cb353c5569ad9/AGENTS.md
 gridaco/grida,CLAUDE.md,0,0,,,https://github.com/gridaco/grida/blob/f6110ab6921fe50c1471cf8e077cb353c5569ad9/CLAUDE.md
-chhoumann/quickadd,AGENTS.md,1,1,"test,testing,tests,vitest",teardown,https://github.com/chhoumann/quickadd/blob/02ea5ccac209304b8474ee531782398fc9898d6f/AGENTS.md
+chhoumann/quickadd,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/chhoumann/quickadd/blob/02ea5ccac209304b8474ee531782398fc9898d6f/AGENTS.md
 snowpackjs/astro,AGENTS.md,1,0,"test,test file,test suite,testing,tests",,https://github.com/snowpackjs/astro/blob/e294953aa8aadd98d5be92e60a03037b05dbdfd4/AGENTS.md
 skepticmystic/breadcrumbs,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/skepticmystic/breadcrumbs/blob/38a7bee90cdbd1df5f6576123944e4c4a1c055b1/AGENTS.md
 skepticmystic/breadcrumbs,CLAUDE.md,1,1,"test,tests","fixture,fixtures",https://github.com/skepticmystic/breadcrumbs/blob/38a7bee90cdbd1df5f6576123944e4c4a1c055b1/CLAUDE.md
@@ -4276,7 +4276,7 @@ tanstack/tanstack.com,AGENTS.md,0,0,,,https://github.com/tanstack/tanstack.com/b
 tanstack/tanstack.com,CLAUDE.md,0,0,,,https://github.com/tanstack/tanstack.com/blob/1a879e69dd56bcb74d57b11fcd96848390a15d6d/CLAUDE.md
 gitkraken/vscode-gitlens,AGENTS.md,1,0,"e2e test,test,testing,tests,unit test",,https://github.com/gitkraken/vscode-gitlens/blob/a20855dbdc3ba6a30c004456a8d041992e28ee9e/AGENTS.md
 gitkraken/vscode-gitlens,CLAUDE.md,0,0,,,https://github.com/gitkraken/vscode-gitlens/blob/a20855dbdc3ba6a30c004456a8d041992e28ee9e/CLAUDE.md
-tldraw/tldraw,AGENTS.md,1,1,"test,testing,tests,vitest",teardown,https://github.com/tldraw/tldraw/blob/e3b6f8377796b612369a0edf163677b13048dde3/AGENTS.md
+tldraw/tldraw,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/tldraw/tldraw/blob/e3b6f8377796b612369a0edf163677b13048dde3/AGENTS.md
 tldraw/tldraw,CLAUDE.md,0,0,,,https://github.com/tldraw/tldraw/blob/e3b6f8377796b612369a0edf163677b13048dde3/CLAUDE.md
 cpvalente/ontime,AGENTS.md,1,0,"testing,tests",,https://github.com/cpvalente/ontime/blob/1175b3c641d35142bf6899fd10235677778ca4f1/AGENTS.md
 nota-lang/nota,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/nota-lang/nota/blob/aa5b96c0a9a37874ed7c7a580f8c78cb72babb96/AGENTS.md
@@ -4300,7 +4300,7 @@ openai/openai-node,AGENTS.md,1,1,"test,tests","fixture,fixtures",https://github.
 vuejs/router,CLAUDE.md,0,0,,,https://github.com/vuejs/router/blob/511a7f435358f43f520d7c1a2d007f6724d860b1/CLAUDE.md
 tinyplex/tinybase,AGENTS.md,1,0,"test,test suite,testing,tests,vitest",,https://github.com/tinyplex/tinybase/blob/f09e5a3b74ea16b6fac93439be34cc3f954f1e7c/agents.md
 tom-james-watson/wikitrivia,AGENTS.md,0,0,,,https://github.com/tom-james-watson/wikitrivia/blob/18d12eb3e305ecce56bac5d8b3cc5939f70d7856/AGENTS.md
-invertase/react-native-google-mobile-ads,AGENTS.md,1,1,"jest,testing,tests",teardown,https://github.com/invertase/react-native-google-mobile-ads/blob/9b945755e1446059b76ac71ab503a3a72d65760f/AGENTS.md
+invertase/react-native-google-mobile-ads,AGENTS.md,1,0,"jest,testing,tests",,https://github.com/invertase/react-native-google-mobile-ads/blob/9b945755e1446059b76ac71ab503a3a72d65760f/AGENTS.md
 404-novel-project/novel-downloader,CLAUDE.md,0,0,,,https://github.com/404-novel-project/novel-downloader/blob/0b0f67c394ee5026d17440009a03810d294f2d74/CLAUDE.md
 coddingtonbear/obsidian-local-rest-api,AGENTS.md,1,0,"integration test,test,test file,test suite,tests,unit test",,https://github.com/coddingtonbear/obsidian-local-rest-api/blob/209eff08154374bbec02142ab8e763e68fb0d13b/AGENTS.md
 coddingtonbear/obsidian-local-rest-api,CLAUDE.md,0,0,,,https://github.com/coddingtonbear/obsidian-local-rest-api/blob/209eff08154374bbec02142ab8e763e68fb0d13b/CLAUDE.md
@@ -4310,7 +4310,7 @@ tencent/tmagic-editor,AGENTS.md,1,0,"test,vitest",,https://github.com/tencent/tm
 joe-bell/cva,AGENTS.md,1,1,"test,test case,testing,tests,unit test,vitest",fixtures,https://github.com/joe-bell/cva/blob/37358ba3ac2ad8680b8b37592e13f220033e94af/AGENTS.md
 joe-bell/cva,CLAUDE.md,0,0,,,https://github.com/joe-bell/cva/blob/37358ba3ac2ad8680b8b37592e13f220033e94af/CLAUDE.md
 hikerpig/pintora,AGENTS.md,1,0,"jest,test,test suite",,https://github.com/hikerpig/pintora/blob/695eb2ed22460bd083808b88b3fdd8fbd03c02df/AGENTS.md
-etro-js/etro,AGENTS.md,1,1,"jasmine,test,test suite,tests","fixtures,teardown",https://github.com/etro-js/etro/blob/8c4d205620c258db4f1b2a01d615c2531322e5b0/AGENTS.md
+etro-js/etro,AGENTS.md,1,1,"jasmine,test,test suite,tests",fixtures,https://github.com/etro-js/etro/blob/8c4d205620c258db4f1b2a01d615c2531322e5b0/AGENTS.md
 awslabs/aws-lambda-powertools-typescript,AGENTS.md,1,0,tests,,https://github.com/awslabs/aws-lambda-powertools-typescript/blob/e133a45cd29136414ade523ae5eb5fb35cac4e0a/AGENTS.md
 vantage-sh/ec2instances.info,CLAUDE.md,1,0,"jest,test,testing,tests,vitest",,https://github.com/vantage-sh/ec2instances.info/blob/1df636b476733b4e15c7639506f7909d9e66498c/CLAUDE.md
 tolgee/tolgee-platform,AGENTS.md,1,1,"e2e test,test,test suite,testing,tests","afterEach,beforeEach,test setup",https://github.com/tolgee/tolgee-platform/blob/af1a5e978e6bcba3e6eb275730a5bf92c291c7f9/AGENTS.md
@@ -4378,7 +4378,7 @@ zhaohongxuan/obsidian-weread-plugin,AGENTS.md,1,0,"test,tests",,https://github.c
 zhaohongxuan/obsidian-weread-plugin,CLAUDE.md,1,0,testing,,https://github.com/zhaohongxuan/obsidian-weread-plugin/blob/b1210ca2740d85e4e3164766ae0c75080ead236d/CLAUDE.md
 remix-run/remix,AGENTS.md,1,1,"test,test file,tests","fixture,fixtures",https://github.com/remix-run/remix/blob/fc4ab3985d0e3b023cbb2aae106b578be6dbebab/AGENTS.md
 remix-run/remix,CLAUDE.md,0,0,,,https://github.com/remix-run/remix/blob/fc4ab3985d0e3b023cbb2aae106b578be6dbebab/CLAUDE.md
-snyk/cli,AGENTS.md,1,1,"integration test,jest,test,test file,testing,tests,unit test",teardown,https://github.com/snyk/cli/blob/27e959314bfa7db21ee9a26eb40b71b6840aa7f4/AGENTS.md
+snyk/cli,AGENTS.md,1,0,"integration test,jest,test,test file,testing,tests,unit test",,https://github.com/snyk/cli/blob/27e959314bfa7db21ee9a26eb40b71b6840aa7f4/AGENTS.md
 snyk/cli,CLAUDE.md,0,0,,,https://github.com/snyk/cli/blob/27e959314bfa7db21ee9a26eb40b71b6840aa7f4/CLAUDE.md
 redocly/redocly-cli,AGENTS.md,1,0,"test,test file,test suite,testing,tests",,https://github.com/redocly/redocly-cli/blob/56a32704562d9da5cf9124c84085ef3043f6624e/AGENTS.md
 redocly/redocly-cli,CLAUDE.md,0,0,,,https://github.com/redocly/redocly-cli/blob/56a32704562d9da5cf9124c84085ef3043f6624e/CLAUDE.md
@@ -4451,7 +4451,7 @@ vexip-ui/vexip-ui,AGENTS.md,1,0,"test,tests",,https://github.com/vexip-ui/vexip-
 alineacms/alinea,AGENTS.md,1,0,"test,test suite",,https://github.com/alineacms/alinea/blob/bcd8bdb87c4cbdbaaf4f6275fb9503855b7d53ba/agents.md
 dust-tt/dust,AGENTS.md,1,0,tests,,https://github.com/dust-tt/dust/blob/d5c462974a6b0b854b4219d62eace2e796b7b9ff/AGENTS.md
 dust-tt/dust,CLAUDE.md,0,0,,,https://github.com/dust-tt/dust/blob/d5c462974a6b0b854b4219d62eace2e796b7b9ff/CLAUDE.md
-electric-sql/electric,AGENTS.md,1,1,"test,testing,tests",teardown,https://github.com/electric-sql/electric/blob/ff9d22154cbebe7949d8d6ef188f18264f3c740b/AGENTS.md
+electric-sql/electric,AGENTS.md,1,0,"test,testing,tests",,https://github.com/electric-sql/electric/blob/ff9d22154cbebe7949d8d6ef188f18264f3c740b/AGENTS.md
 electric-sql/electric,CLAUDE.md,0,0,,,https://github.com/electric-sql/electric/blob/ff9d22154cbebe7949d8d6ef188f18264f3c740b/CLAUDE.md
 ts-safeql/safeql,AGENTS.md,1,0,"test,tests",,https://github.com/ts-safeql/safeql/blob/7338ad1cc63dc84affabef19ae4069ecf3cc4387/AGENTS.md
 ts-safeql/safeql,CLAUDE.md,0,0,,,https://github.com/ts-safeql/safeql/blob/7338ad1cc63dc84affabef19ae4069ecf3cc4387/CLAUDE.md
@@ -4582,7 +4582,7 @@ enricoros/big-agi,AGENTS.md,0,0,,,https://github.com/enricoros/big-agi/blob/00b1
 enricoros/big-agi,CLAUDE.md,1,0,testing,,https://github.com/enricoros/big-agi/blob/00b1509e3944a299ced9e10a67ff72d303649be6/CLAUDE.md
 fontsource/fontsource,AGENTS.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/fontsource/fontsource/blob/464268d08552c13de6e432f1279a0b889d1b0c80/AGENTS.md
 mx-space/core,CLAUDE.md,1,0,"e2e test,test,testing,vitest",,https://github.com/mx-space/core/blob/12daab31dc0c8f698a05e4e0509b85a0db420516/CLAUDE.md
-redis/ioredis,AGENTS.md,1,1,"mocha,test,test file,testing,tests",teardown,https://github.com/redis/ioredis/blob/7479cabf7538d3d1db25ddb8a81041e74d69627e/AGENTS.md
+redis/ioredis,AGENTS.md,1,0,"mocha,test,test file,testing,tests",,https://github.com/redis/ioredis/blob/7479cabf7538d3d1db25ddb8a81041e74d69627e/AGENTS.md
 redis/ioredis,CLAUDE.md,0,0,,,https://github.com/redis/ioredis/blob/7479cabf7538d3d1db25ddb8a81041e74d69627e/CLAUDE.md
 start9labs/start-os,AGENTS.md,1,0,"test,tests",,https://github.com/start9labs/start-os/blob/f7dcde71be804af424350b48c8b73aba03f41321/AGENTS.md
 start9labs/start-os,CLAUDE.md,0,0,,,https://github.com/start9labs/start-os/blob/f7dcde71be804af424350b48c8b73aba03f41321/CLAUDE.md
@@ -4620,7 +4620,7 @@ shortlink-org/shortlink,AGENTS.md,1,0,"test,tests",,https://github.com/shortlink
 jaredwray/cacheable,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/jaredwray/cacheable/blob/42671588ccd90d1c109d257c7bdc6fc69ef5f076/AGENTS.md
 jaredwray/cacheable,CLAUDE.md,0,0,,,https://github.com/jaredwray/cacheable/blob/42671588ccd90d1c109d257c7bdc6fc69ef5f076/CLAUDE.md
 419Labs/starknet-ecosystem.com,CLAUDE.md,1,0,"jest,test,testing,tests",,https://github.com/419Labs/starknet-ecosystem.com/blob/eb35cf12281577e9678bc6969853c587f94cc161/CLAUDE.md
-obsidianmd/obsidian-importer,CLAUDE.md,1,1,"test,test suite,tests","fixture,fixtures,teardown",https://github.com/obsidianmd/obsidian-importer/blob/8a5cfd0dd047cdefc962201fe1b03e29921ae8af/CLAUDE.md
+obsidianmd/obsidian-importer,CLAUDE.md,1,1,"test,test suite,tests","fixture,fixtures",https://github.com/obsidianmd/obsidian-importer/blob/8a5cfd0dd047cdefc962201fe1b03e29921ae8af/CLAUDE.md
 marklawlor/nativewind,CLAUDE.md,1,0,testing,,https://github.com/marklawlor/nativewind/blob/da9e3f174dbffca54de030a9c82520d553a24222/CLAUDE.md
 lobehub/lobe-chat,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/lobehub/lobe-chat/blob/633ea4c279471a78f1f79fff51d6d7cc7e3bf97c/AGENTS.md
 lobehub/lobe-chat,CLAUDE.md,0,0,,,https://github.com/lobehub/lobe-chat/blob/633ea4c279471a78f1f79fff51d6d7cc7e3bf97c/CLAUDE.md
@@ -4636,7 +4636,7 @@ chakra-ui/panda,CLAUDE.md,0,0,,,https://github.com/chakra-ui/panda/blob/69930b42
 run-llama/LlamaIndexTS,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/run-llama/LlamaIndexTS/blob/ba24377def1b056f7eae066247e9ae1230509164/CLAUDE.md
 module-federation/universe,AGENTS.md,1,0,"test,tests",,https://github.com/module-federation/universe/blob/c38c4c0e4b2b3f861ea8602078ffbb97b8fd7e59/AGENTS.md
 module-federation/universe,CLAUDE.md,1,0,"jest,test,test suite,testing,tests",,https://github.com/module-federation/universe/blob/c38c4c0e4b2b3f861ea8602078ffbb97b8fd7e59/CLAUDE.md
-dxos/dxos,AGENTS.md,1,1,"test,testing,tests,vitest",teardown,https://github.com/dxos/dxos/blob/88acb0b331176d4d03fc911abbb2534c471c7dbe/AGENTS.md
+dxos/dxos,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/dxos/dxos/blob/88acb0b331176d4d03fc911abbb2534c471c7dbe/AGENTS.md
 dxos/dxos,CLAUDE.md,0,0,,,https://github.com/dxos/dxos/blob/88acb0b331176d4d03fc911abbb2534c471c7dbe/CLAUDE.md
 civitai/civitai,CLAUDE.md,1,1,"test,test file,test suite,testing,tests,vitest",fixture,https://github.com/civitai/civitai/blob/c54b98103a6edc933f0b9c473e0132ad7d711a3f/CLAUDE.md
 tokens-studio/figma-plugin,CLAUDE.md,1,0,"jest,test,testing,tests",,https://github.com/tokens-studio/figma-plugin/blob/da5151c98d3fd1e1a8be60310f650c2cc6da2f6a/CLAUDE.md
@@ -4673,7 +4673,7 @@ VisActor/VChart,AGENTS.md,0,0,,,https://github.com/VisActor/VChart/blob/cfbd61c1
 radix-ui/themes,AGENTS.md,1,0,"test,testing,tests",,https://github.com/radix-ui/themes/blob/1faff10ac26ae17f09944d418c6949b93fc6b566/AGENTS.md
 radix-ui/themes,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/radix-ui/themes/blob/1faff10ac26ae17f09944d418c6949b93fc6b566/CLAUDE.md
 hasura/graphql-engine,CLAUDE.md,1,0,tests,,https://github.com/hasura/graphql-engine/blob/f820318f7441fcf614cd8561b4c74d4d389cff73/CLAUDE.md
-makeplane/plane,AGENTS.md,1,1,"pytest,test,testing,tests","fixtures,teardown",https://github.com/makeplane/plane/blob/1fec307f91003df96351557af32ce87891a3678a/AGENTS.md
+makeplane/plane,AGENTS.md,1,1,"pytest,test,testing,tests",fixtures,https://github.com/makeplane/plane/blob/1fec307f91003df96351557af32ce87891a3678a/AGENTS.md
 web-infra-dev/modern.js,AGENTS.md,1,0,"test,tests",,https://github.com/web-infra-dev/modern.js/blob/b6f7840959947411e6f309d207e5572f907bccc0/AGENTS.md
 web-infra-dev/modern.js,CLAUDE.md,0,0,,,https://github.com/web-infra-dev/modern.js/blob/b6f7840959947411e6f309d207e5572f907bccc0/CLAUDE.md
 formbricks/formbricks,AGENTS.md,1,1,"e2e test,integration test,test,test file,testing,tests,unit test,vitest",fixtures,https://github.com/formbricks/formbricks/blob/5582eeaea9af167dc4aa05f2e90ea780630c423d/AGENTS.md
@@ -4711,7 +4711,7 @@ taiga-family/taiga-ui,AGENTS.md,1,0,"test,tests",,https://github.com/taiga-famil
 taiga-family/taiga-ui,CLAUDE.md,0,0,,,https://github.com/taiga-family/taiga-ui/blob/0a07bcdea9297438f460a9dd90bbc1b01d28d01c/CLAUDE.md
 hwchase17/langchainjs,AGENTS.md,1,0,"test,test file,test suite,testing,tests,vitest",,https://github.com/hwchase17/langchainjs/blob/6bd3a182a4dc558f3a5d3c87da69f17d9a35f934/AGENTS.md
 fern-api/fern,CLAUDE.md,1,1,"jest,test,testing,tests,vitest","fixture,fixtures",https://github.com/fern-api/fern/blob/ed9cd91f85cf111ac9c1c76237f026c7e905f913/CLAUDE.md
-ViewTube/viewtube,CLAUDE.md,1,1,tests,teardown,https://github.com/ViewTube/viewtube/blob/6bda9edcebebd3ea15f66237a88e3c857dcfcb4d/CLAUDE.md
+ViewTube/viewtube,CLAUDE.md,1,0,tests,,https://github.com/ViewTube/viewtube/blob/6bda9edcebebd3ea15f66237a88e3c857dcfcb4d/CLAUDE.md
 anyproto/anytype-ts,AGENTS.md,1,0,"test,testing,tests",,https://github.com/anyproto/anytype-ts/blob/c503c834a32bbffa4a9269e87272f89742ff6353/AGENTS.md
 anyproto/anytype-ts,CLAUDE.md,1,0,"e2e test,test,test suite,testing,tests",,https://github.com/anyproto/anytype-ts/blob/c503c834a32bbffa4a9269e87272f89742ff6353/CLAUDE.md
 meshery/meshery,AGENTS.md,1,1,"test,testing,tests","fixture,fixtures,test setup",https://github.com/meshery/meshery/blob/fccb51333e7f06848713d3957627df15335696af/AGENTS.md
@@ -4909,7 +4909,7 @@ lodev09/react-native-true-sheet,AGENTS.md,1,0,"jest,testing,tests",,https://gith
 lodev09/react-native-true-sheet,CLAUDE.md,0,0,,,https://github.com/lodev09/react-native-true-sheet/blob/83156fc0df9d6c9ad6553ac7959eca49758118a3/CLAUDE.md
 universal-future/vxrn,AGENTS.md,1,0,"test,test suite,tests",,https://github.com/universal-future/vxrn/blob/1beb608a94549ae0d85fc504b7f5c0c39f92d475/AGENTS.md
 universal-future/vxrn,CLAUDE.md,0,0,,,https://github.com/universal-future/vxrn/blob/1beb608a94549ae0d85fc504b7f5c0c39f92d475/CLAUDE.md
-jina-ai/reader,CLAUDE.md,1,1,"jest,test,tests,vitest",teardown,https://github.com/jina-ai/reader/blob/1574bfd380d249c86c82db4dace0d9c8fe17e2b1/CLAUDE.md
+jina-ai/reader,CLAUDE.md,1,0,"jest,test,tests,vitest",,https://github.com/jina-ai/reader/blob/1574bfd380d249c86c82db4dace0d9c8fe17e2b1/CLAUDE.md
 Dhravya/supermemory,CLAUDE.md,0,0,,,https://github.com/Dhravya/supermemory/blob/5258cb74c895c5297fbfff594935741aeb14a915/CLAUDE.md
 kubb-labs/kubb,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/kubb-labs/kubb/blob/63df5177637c41fd5a545c4df9a82bd6471f812f/AGENTS.md
 kubb-labs/kubb,CLAUDE.md,0,0,,,https://github.com/kubb-labs/kubb/blob/63df5177637c41fd5a545c4df9a82bd6471f812f/CLAUDE.md
@@ -5005,7 +5005,7 @@ kunkunsh/kunkun,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/kunkunsh/
 Railly/tinte,CLAUDE.md,1,0,"test,testing",,https://github.com/Railly/tinte/blob/7905be3e62819faa4db312d2cbcd0e2991326d0a/CLAUDE.md
 Floorp-Projects/Floorp,AGENTS.md,1,0,"test,test case,testing,tests",,https://github.com/Floorp-Projects/Floorp/blob/f76a7872ebf69220bf895c175dba4c4ac7b21e9a/AGENTS.md
 Floorp-Projects/Floorp,CLAUDE.md,1,0,"test,test case,testing,tests",,https://github.com/Floorp-Projects/Floorp/blob/f76a7872ebf69220bf895c175dba4c4ac7b21e9a/CLAUDE.md
-threepointone/partyserver,AGENTS.md,1,1,"test,test file,testing,tests,vitest","afterAll,afterEach,beforeAll,beforeEach,fixtures,teardown",https://github.com/threepointone/partyserver/blob/f0a2e97d233f24545b2648aec2ed6a191e11074e/AGENTS.md
+threepointone/partyserver,AGENTS.md,1,1,"test,test file,testing,tests,vitest","afterAll,afterEach,beforeAll,beforeEach,fixtures",https://github.com/threepointone/partyserver/blob/f0a2e97d233f24545b2648aec2ed6a191e11074e/AGENTS.md
 Nutlope/llamacoder,AGENTS.md,0,0,,,https://github.com/Nutlope/llamacoder/blob/4e2ee75147a6834d3d5d035dec023b311abb4836/AGENTS.md
 Nutlope/llamacoder,CLAUDE.md,0,0,,,https://github.com/Nutlope/llamacoder/blob/4e2ee75147a6834d3d5d035dec023b311abb4836/CLAUDE.md
 yournextstore/yournextstore,AGENTS.md,1,0,"test,tests,unit test",,https://github.com/yournextstore/yournextstore/blob/3eaa69fe3099daec71bdd9e78f20fc5304c174a0/AGENTS.md
@@ -5105,8 +5105,8 @@ getwud/wud,AGENTS.md,1,0,"jest,test,tests",,https://github.com/getwud/wud/blob/3
 getwud/wud,CLAUDE.md,1,0,"test,tests",,https://github.com/getwud/wud/blob/3c6087080b90e8d889111caa2ea12572c9301ed2/CLAUDE.md
 whale4113/cloud-document-converter,AGENTS.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/whale4113/cloud-document-converter/blob/ff52e8cc8266cd74cee9631885c554b24d45a028/AGENTS.md
 99percentpeople/weblink,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/99percentpeople/weblink/blob/385df660b37f735a2fd0d5891e7b663613bf87a2/AGENTS.md
-ai16z/eliza,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/ai16z/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/AGENTS.md
-ai16z/eliza,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/ai16z/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/CLAUDE.md
+ai16z/eliza,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/ai16z/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/AGENTS.md
+ai16z/eliza,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/ai16z/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/CLAUDE.md
 lfnovo/open-notebook,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/lfnovo/open-notebook/blob/2d2df8a3cbb098776e56ca5ee77b9832f848228e/AGENTS.md
 lfnovo/open-notebook,CLAUDE.md,0,0,,,https://github.com/lfnovo/open-notebook/blob/2d2df8a3cbb098776e56ca5ee77b9832f848228e/CLAUDE.md
 browserbase/stagehand,AGENTS.md,0,0,,,https://github.com/browserbase/stagehand/blob/d4f16a98a5061279bed997b98fd3f0c17334eedb/AGENTS.md
@@ -5165,7 +5165,7 @@ aidenybai/bippy,CLAUDE.md,0,0,,,https://github.com/aidenybai/bippy/blob/0ac832d6
 unovue/motion-vue,CLAUDE.md,1,1,"test,testing,tests",test setup,https://github.com/unovue/motion-vue/blob/4b0d3e25191ba1fe820a155945eb19e647873c10/CLAUDE.md
 QuantGeekDev/mcp-framework,CLAUDE.md,1,0,"jest,test,testing,tests",,https://github.com/QuantGeekDev/mcp-framework/blob/ead9c4bbcd5fd098e80ccf64758bd6bf43234f90/CLAUDE.md
 zevnda/steam-game-idler,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/zevnda/steam-game-idler/blob/690c555456f66b478be914fd06964765203b230e/CLAUDE.md
-neondatabase/mcp-server-neon,AGENTS.md,1,1,"e2e test,test,test suite,testing,tests,vitest","afterAll,fixture,fixtures,teardown",https://github.com/neondatabase/mcp-server-neon/blob/be54e78dc25d6a109ba186e84651910e0f64707a/AGENTS.md
+neondatabase/mcp-server-neon,AGENTS.md,1,1,"e2e test,test,test suite,testing,tests,vitest","afterAll,fixture,fixtures",https://github.com/neondatabase/mcp-server-neon/blob/be54e78dc25d6a109ba186e84651910e0f64707a/AGENTS.md
 neondatabase/mcp-server-neon,CLAUDE.md,0,0,,,https://github.com/neondatabase/mcp-server-neon/blob/be54e78dc25d6a109ba186e84651910e0f64707a/CLAUDE.md
 sendaifun/solana-agent-kit,CLAUDE.md,1,0,"test,tests",,https://github.com/sendaifun/solana-agent-kit/blob/1254fe550872ee48d42f168fc8ca854c87ab6eff/CLAUDE.md
 goatplatform/goatdb,AGENTS.md,1,0,"test,tests",,https://github.com/goatplatform/goatdb/blob/8fdf7373b9260cf3010996f7a49a93c73e4bb566/AGENTS.md
@@ -5175,8 +5175,8 @@ moeru-ai/airi,CLAUDE.md,0,0,,,https://github.com/moeru-ai/airi/blob/097202cd38ec
 yenche123/liubai,AGENTS.md,0,0,,,https://github.com/yenche123/liubai/blob/dc6c044dc15d1f129a239f72f852b1760a4cd86a/AGENTS.md
 BigSweetPotatoStudio/HyperChat,CLAUDE.md,0,0,,,https://github.com/BigSweetPotatoStudio/HyperChat/blob/3f9cf0341c44621a7282c0ca6203ae5849313701/CLAUDE.md
 ahmedkhaleel2004/gitdiagram,CLAUDE.md,1,0,"test,test file,testing,tests,vitest",,https://github.com/ahmedkhaleel2004/gitdiagram/blob/2e3cc25ab280d6cb42a918bfa6ad47380e8f9fe9/CLAUDE.md
-elizaOS/eliza,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/elizaOS/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/AGENTS.md
-elizaOS/eliza,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/elizaOS/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/CLAUDE.md
+elizaOS/eliza,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/elizaOS/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/AGENTS.md
+elizaOS/eliza,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/elizaOS/eliza/blob/b807aeb72d100db8c4f185269ce0f990bcb87035/CLAUDE.md
 safe-global/safe-wallet-monorepo,AGENTS.md,1,1,"test,testing,tests,unit test",fixtures,https://github.com/safe-global/safe-wallet-monorepo/blob/5ef5da423d4bad14285422d0c8c42dba053091ce/AGENTS.md
 safe-global/safe-wallet-monorepo,CLAUDE.md,0,0,,,https://github.com/safe-global/safe-wallet-monorepo/blob/5ef5da423d4bad14285422d0c8c42dba053091ce/CLAUDE.md
 Flux159/mcp-server-kubernetes,AGENTS.md,0,0,,,https://github.com/Flux159/mcp-server-kubernetes/blob/daf01de72a9c6ad5bf48a75b7295868fdf32e9fa/AGENTS.md
@@ -5194,7 +5194,7 @@ taishikato/supavec,CLAUDE.md,1,0,"test,testing",,https://github.com/taishikato/s
 liam-hq/liam,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/liam-hq/liam/blob/c89f31d455cd8a5518e3920d8ada6605544cce31/AGENTS.md
 liam-hq/liam,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/liam-hq/liam/blob/c89f31d455cd8a5518e3920d8ada6605544cce31/CLAUDE.md
 Viren070/AIOStreams,CLAUDE.md,1,0,"test,test file,vitest",,https://github.com/Viren070/AIOStreams/blob/58000e86c959a3ab31c687c903fa09873ea7d808/CLAUDE.md
-throwaway31265/free-sleep,AGENTS.md,1,1,tests,teardown,https://github.com/throwaway31265/free-sleep/blob/dc0c710f2800a7b6c0e3356abd5c5c166e0a36e1/AGENTS.md
+throwaway31265/free-sleep,AGENTS.md,1,0,tests,,https://github.com/throwaway31265/free-sleep/blob/dc0c710f2800a7b6c0e3356abd5c5c166e0a36e1/AGENTS.md
 colanode/colanode,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/colanode/colanode/blob/d649523637f0f059c936418488165d4a689da27c/AGENTS.md
 colanode/colanode,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/colanode/colanode/blob/d649523637f0f059c936418488165d4a689da27c/CLAUDE.md
 nanobrowser/nanobrowser,AGENTS.md,0,0,,,https://github.com/nanobrowser/nanobrowser/blob/24a14b76e14a9c30fd84878ca7985049d1e7d064/AGENTS.md
@@ -5205,7 +5205,7 @@ aaddrick/claude-desktop-debian,AGENTS.md,1,1,"test,testing",fixtures,https://git
 aaddrick/claude-desktop-debian,CLAUDE.md,1,1,"test,testing",fixtures,https://github.com/aaddrick/claude-desktop-debian/blob/85ec59064e2a3e6c25c39d581c55b107e3d0e6ca/CLAUDE.md
 smithery-ai/cli,AGENTS.md,1,0,"test,testing",,https://github.com/smithery-ai/cli/blob/407ac3b33944a585357379bc213fdf1ee55464d7/AGENTS.md
 smithery-ai/cli,CLAUDE.md,1,0,test,,https://github.com/smithery-ai/cli/blob/407ac3b33944a585357379bc213fdf1ee55464d7/CLAUDE.md
-daydreamsai/daydreams,CLAUDE.md,1,1,"test,testing,tests,vitest",teardown,https://github.com/daydreamsai/daydreams/blob/e3231c3de1082114162a7432aa1a468bcbc04c7e/CLAUDE.md
+daydreamsai/daydreams,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/daydreamsai/daydreams/blob/e3231c3de1082114162a7432aa1a468bcbc04c7e/CLAUDE.md
 assistant-ui/assistant-ui,AGENTS.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/assistant-ui/assistant-ui/blob/9b9d5e936395ce878464c9c50a75e8344aaeb067/AGENTS.md
 assistant-ui/assistant-ui,CLAUDE.md,0,0,,,https://github.com/assistant-ui/assistant-ui/blob/9b9d5e936395ce878464c9c50a75e8344aaeb067/CLAUDE.md
 antfu/node-modules-inspector,AGENTS.md,1,0,"test,vitest",,https://github.com/antfu/node-modules-inspector/blob/f5d3d6f458bf42d29cdc6d1c42958cb28a04b551/AGENTS.md
@@ -5398,7 +5398,7 @@ iduspara/shadcn-builder,AGENTS.md,1,0,"test,testing,tests",,https://github.com/i
 a-bonus/google-docs-mcp,CLAUDE.md,0,0,,,https://github.com/a-bonus/google-docs-mcp/blob/f2475b9b0c4af760655b635a3d612f3b6bd32303/claude.md
 Doist/todoist-mcp,AGENTS.md,1,0,"test,test file,test suite,testing,tests",,https://github.com/Doist/todoist-mcp/blob/e21c19c017d59ac1a881f2bad59ff6a08dab4681/AGENTS.md
 Doist/todoist-mcp,CLAUDE.md,1,0,"test,test suite,testing,tests",,https://github.com/Doist/todoist-mcp/blob/e21c19c017d59ac1a881f2bad59ff6a08dab4681/CLAUDE.md
-cloudflare/partykit,AGENTS.md,1,1,"test,test file,testing,tests,vitest","afterAll,afterEach,beforeAll,beforeEach,fixtures,teardown",https://github.com/cloudflare/partykit/blob/f0a2e97d233f24545b2648aec2ed6a191e11074e/AGENTS.md
+cloudflare/partykit,AGENTS.md,1,1,"test,test file,testing,tests,vitest","afterAll,afterEach,beforeAll,beforeEach,fixtures",https://github.com/cloudflare/partykit/blob/f0a2e97d233f24545b2648aec2ed6a191e11074e/AGENTS.md
 wenyuanw/quick-prompt,AGENTS.md,1,0,"test,testing",,https://github.com/wenyuanw/quick-prompt/blob/016aeb5ad63c595be483de275bbde4291806376d/AGENTS.md
 wenyuanw/quick-prompt,CLAUDE.md,0,0,,,https://github.com/wenyuanw/quick-prompt/blob/016aeb5ad63c595be483de275bbde4291806376d/CLAUDE.md
 blinkospace/blinko,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/blinkospace/blinko/blob/b2586d03fddb796252f050a96922879bf4a41fad/CLAUDE.md
@@ -5455,13 +5455,13 @@ eastlondoner/vibe-tools,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/e
 badlogic/lemmy,CLAUDE.md,0,0,,,https://github.com/badlogic/lemmy/blob/92e4ba60328bb9e6d756f18bd5c1e2f166768a61/CLAUDE.md
 TriliumNext/trilium,CLAUDE.md,1,1,"test,test case,test suite,testing,tests,vitest",fixture,https://github.com/TriliumNext/trilium/blob/b2cae0f53b5b3ee247fa9bd3ff63bad965b43a16/CLAUDE.md
 ceedaragents/cyrus,AGENTS.md,0,0,,,https://github.com/ceedaragents/cyrus/blob/1e02590f795a519d0c5c5433e5d5c60235353593/AGENTS.md
-ceedaragents/cyrus,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,teardown",https://github.com/ceedaragents/cyrus/blob/1e02590f795a519d0c5c5433e5d5c60235353593/CLAUDE.md
+ceedaragents/cyrus,CLAUDE.md,1,1,"test,testing,tests,vitest",fixture,https://github.com/ceedaragents/cyrus/blob/1e02590f795a519d0c5c5433e5d5c60235353593/CLAUDE.md
 amatya-aditya/obsidian-rss-dashboard,AGENTS.md,1,0,"test,testing,tests",,https://github.com/amatya-aditya/obsidian-rss-dashboard/blob/9228a7dc2c6042ab79eb57db0978a158d29d74eb/AGENTS.md
 AI-QL/tuui,AGENTS.md,1,0,"test,test suite",,https://github.com/AI-QL/tuui/blob/0be513448dc674c76581e84bb1ff0a3a0be104c7/AGENTS.md
 callumalpass/tasknotes,AGENTS.md,1,0,"jest,test,tests",,https://github.com/callumalpass/tasknotes/blob/8a41f5b3e42a3c94f34c0944bfa6aa248e72120f/AGENTS.md
 wannabespace/conar,AGENTS.md,1,0,test,,https://github.com/wannabespace/conar/blob/e83eb60dc53786da8b362228d08841bd1f51956e/AGENTS.md
 wannabespace/conar,CLAUDE.md,0,0,,,https://github.com/wannabespace/conar/blob/e83eb60dc53786da8b362228d08841bd1f51956e/CLAUDE.md
-openai/openai-agents-js,AGENTS.md,1,1,"test,testing,tests,vitest",teardown,https://github.com/openai/openai-agents-js/blob/78b67df64a8486215e5a86bd610f7ff23b57cc6a/AGENTS.md
+openai/openai-agents-js,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/openai/openai-agents-js/blob/78b67df64a8486215e5a86bd610f7ff23b57cc6a/AGENTS.md
 openai/openai-agents-js,CLAUDE.md,0,0,,,https://github.com/openai/openai-agents-js/blob/78b67df64a8486215e5a86bd610f7ff23b57cc6a/CLAUDE.md
 kbwo/ccmanager,AGENTS.md,0,0,,,https://github.com/kbwo/ccmanager/blob/8bcf1e003195caea281671fb4c734e3d1e0b5297/AGENTS.md
 kbwo/ccmanager,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/kbwo/ccmanager/blob/8bcf1e003195caea281671fb4c734e3d1e0b5297/CLAUDE.md
@@ -5619,9 +5619,9 @@ apify/apify-mcp-server,CLAUDE.md,0,0,,,https://github.com/apify/apify-mcp-server
 argotorg/sourcify,CLAUDE.md,1,0,"test,test suite,testing,tests",,https://github.com/argotorg/sourcify/blob/a8dee1d27e444950271c50ca8a296d68ec7a4ddb/CLAUDE.md
 milisp/codexia,AGENTS.md,1,0,test,,https://github.com/milisp/codexia/blob/b74d21e63d8fa61ca68e8a3af61d32c110d99502/AGENTS.md
 milisp/codexia,CLAUDE.md,0,0,,,https://github.com/milisp/codexia/blob/b74d21e63d8fa61ca68e8a3af61d32c110d99502/CLAUDE.md
-AIPexStudio/AIPex,AGENTS.md,1,1,"test,test file,testing,tests,vitest","afterEach,beforeEach,teardown",https://github.com/AIPexStudio/AIPex/blob/4173fa865fed46aa4dd7af19f39a2ecace634116/AGENTS.md
+AIPexStudio/AIPex,AGENTS.md,1,1,"test,test file,testing,tests,vitest","afterEach,beforeEach",https://github.com/AIPexStudio/AIPex/blob/4173fa865fed46aa4dd7af19f39a2ecace634116/AGENTS.md
 AIPexStudio/AIPex,CLAUDE.md,0,0,,,https://github.com/AIPexStudio/AIPex/blob/4173fa865fed46aa4dd7af19f39a2ecace634116/CLAUDE.md
-remorses/holocron,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/remorses/holocron/blob/6414def95bbd1c3f1acaa7f4e067a919bbdd03e3/AGENTS.md
+remorses/holocron,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/remorses/holocron/blob/6414def95bbd1c3f1acaa7f4e067a919bbdd03e3/AGENTS.md
 QiaoKes/fntv-electron,AGENTS.md,0,0,,,https://github.com/QiaoKes/fntv-electron/blob/bb30d12820b1d2500d39e9feeb6548432e485783/AGENTS.md
 warp-drive-data/warp-drive,AGENTS.md,1,0,test,,https://github.com/warp-drive-data/warp-drive/blob/1b3b798a2a5834baaf06d0aa0f8cb59945b9881c/AGENTS.md
 warp-drive-data/warp-drive,CLAUDE.md,0,0,,,https://github.com/warp-drive-data/warp-drive/blob/1b3b798a2a5834baaf06d0aa0f8cb59945b9881c/CLAUDE.md
@@ -5658,7 +5658,7 @@ epicenter-md/epicenter,AGENTS.md,1,0,"test,testing,tests",,https://github.com/ep
 epicenter-md/epicenter,CLAUDE.md,1,0,testing,,https://github.com/epicenter-md/epicenter/blob/ecba0242f6fadec4a69e0be0ff66a245b117cdb7/CLAUDE.md
 rivet-dev/rivetkit,AGENTS.md,0,0,,,https://github.com/rivet-dev/rivetkit/blob/65dc5e67642dab8beb90363044effd8aa6b97755/AGENTS.md
 rivet-dev/rivetkit,CLAUDE.md,1,1,"test,tests",fixture,https://github.com/rivet-dev/rivetkit/blob/65dc5e67642dab8beb90363044effd8aa6b97755/CLAUDE.md
-generalaction/emdash,AGENTS.md,1,1,"test,testing,tests,vitest","fixtures,teardown",https://github.com/generalaction/emdash/blob/8d2d96bd85856aaac3106010710dc2ce66cf7bd2/AGENTS.md
+generalaction/emdash,AGENTS.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/generalaction/emdash/blob/8d2d96bd85856aaac3106010710dc2ce66cf7bd2/AGENTS.md
 generalaction/emdash,CLAUDE.md,0,0,,,https://github.com/generalaction/emdash/blob/8d2d96bd85856aaac3106010710dc2ce66cf7bd2/CLAUDE.md
 Comcast/react-data-grid,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/Comcast/react-data-grid/blob/bd0fda68982ff7af2c8e09d04bcba7ea7f12b166/AGENTS.md
 Comcast/react-data-grid,CLAUDE.md,0,0,,,https://github.com/Comcast/react-data-grid/blob/bd0fda68982ff7af2c8e09d04bcba7ea7f12b166/CLAUDE.md
@@ -5680,7 +5680,7 @@ eclaire-labs/eclaire,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.c
 qixing-jk/all-api-hub,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/qixing-jk/all-api-hub/blob/02e88a52482cbdb90a48e2771543370dd4760d18/AGENTS.md
 qixing-jk/all-api-hub,CLAUDE.md,0,0,,,https://github.com/qixing-jk/all-api-hub/blob/02e88a52482cbdb90a48e2771543370dd4760d18/CLAUDE.md
 callstackincubator/rock,AGENTS.md,1,0,test,,https://github.com/callstackincubator/rock/blob/dce336d73e90c71308f68fb1d5a449dc77368b91/AGENTS.md
-alchemy-run/alchemy,AGENTS.md,1,1,"test,test case,test file,test suite,testing,tests,vitest","afterAll,beforeAll,fixture,fixtures,teardown",https://github.com/alchemy-run/alchemy/blob/b979ffc6afd740e81a3630efb29bf8f824a95a58/AGENTS.md
+alchemy-run/alchemy,AGENTS.md,1,1,"test,test case,test file,test suite,testing,tests,vitest","afterAll,beforeAll,fixture,fixtures",https://github.com/alchemy-run/alchemy/blob/b979ffc6afd740e81a3630efb29bf8f824a95a58/AGENTS.md
 alchemy-run/alchemy,CLAUDE.md,0,0,,,https://github.com/alchemy-run/alchemy/blob/b979ffc6afd740e81a3630efb29bf8f824a95a58/CLAUDE.md
 team-mirai-volunteer/marumie,CLAUDE.md,0,0,,,https://github.com/team-mirai-volunteer/marumie/blob/b9f89242592532b50d528ca41745d1ab393e81d3/CLAUDE.md
 AudiusProject/apps,CLAUDE.md,1,0,"jest,test,testing,tests,vitest",,https://github.com/AudiusProject/apps/blob/4483ff1311a0aaf41bf2c4c9448475bafae62718/CLAUDE.md
@@ -5693,7 +5693,7 @@ ruvnet/agentic-flow,CLAUDE.md,1,0,"test,tests",,https://github.com/ruvnet/agenti
 bbplayer-app/BBPlayer,AGENTS.md,0,0,,,https://github.com/bbplayer-app/BBPlayer/blob/defd836b1f5a00d66a01481e9575bbc1c7f9ecb0/AGENTS.md
 vybestack/llxprt-code,AGENTS.md,1,0,test,,https://github.com/vybestack/llxprt-code/blob/8717108ed2eecfb76141bc792516b3602171fd49/AGENTS.md
 remorses/critique,AGENTS.md,1,0,test,,https://github.com/remorses/critique/blob/27298b2bf561cb012ecf04b7010ff67410354076/AGENTS.md
-Nagi-ovo/gemini-voyager,AGENTS.md,1,1,"test,tests",teardown,https://github.com/Nagi-ovo/gemini-voyager/blob/91bc20761282f4120e0aa80a4a56ecbe527bddab/AGENTS.md
+Nagi-ovo/gemini-voyager,AGENTS.md,1,0,"test,tests",,https://github.com/Nagi-ovo/gemini-voyager/blob/91bc20761282f4120e0aa80a4a56ecbe527bddab/AGENTS.md
 Nagi-ovo/gemini-voyager,CLAUDE.md,0,0,,,https://github.com/Nagi-ovo/gemini-voyager/blob/91bc20761282f4120e0aa80a4a56ecbe527bddab/CLAUDE.md
 router-for-me/Cli-Proxy-API-Management-Center,AGENTS.md,1,1,"test,testing,tests",fixtures,https://github.com/router-for-me/Cli-Proxy-API-Management-Center/blob/ed5f1c48e11ba7335f1e8f676f228c280196af85/AGENTS.md
 RAIT-09/obsidian-agent-client,AGENTS.md,0,0,,,https://github.com/RAIT-09/obsidian-agent-client/blob/cc103e24f717e26e1ab66fb2e355beb5df105809/AGENTS.md
@@ -5717,10 +5717,10 @@ SamuelZ12/tldw,CLAUDE.md,0,0,,,https://github.com/SamuelZ12/tldw/blob/c80c874b84
 Maintainerr/Maintainerr,AGENTS.md,1,0,"jest,test,testing,tests,vitest",,https://github.com/Maintainerr/Maintainerr/blob/4174a0ee2ee654c9d520225a90ea8375851830fb/AGENTS.md
 PaulJPhilp/EffectPatterns,AGENTS.md,1,0,testing,,https://github.com/PaulJPhilp/EffectPatterns/blob/f3a0da2299717cf31d31313c5661cebd2446d5a3/AGENTS.md
 PaulJPhilp/EffectPatterns,CLAUDE.md,0,0,,,https://github.com/PaulJPhilp/EffectPatterns/blob/f3a0da2299717cf31d31313c5661cebd2446d5a3/CLAUDE.md
-OpenHands/OpenHands,AGENTS.md,1,1,"e2e test,end-to-end test,test,test file,testing,tests,vitest","afterEach,fixture,fixtures,teardown",https://github.com/OpenHands/OpenHands/blob/c9b6ceac969573d9cd0ef8a8e61ddb3680679671/AGENTS.md
+OpenHands/OpenHands,AGENTS.md,1,1,"e2e test,end-to-end test,test,test file,testing,tests,vitest","afterEach,fixture,fixtures",https://github.com/OpenHands/OpenHands/blob/c9b6ceac969573d9cd0ef8a8e61ddb3680679671/AGENTS.md
 Zarestia-Dev/rclone-manager,AGENTS.md,1,0,"test,testing,tests,unit test",,https://github.com/Zarestia-Dev/rclone-manager/blob/760f2f8528ba843209302cd0aca6ef4c4885894b/AGENTS.md
-aidenybai/react-grab,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,setup and teardown,teardown",https://github.com/aidenybai/react-grab/blob/ea4bbec9e80f4802e8ae19ad18431edb9ddbb670/AGENTS.md
-open-mercato/open-mercato,AGENTS.md,1,1,"jest,test,testing,tests","fixtures,teardown,test setup",https://github.com/open-mercato/open-mercato/blob/00d03918478edf498053d96375819136c547f0a8/AGENTS.md
+aidenybai/react-grab,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,setup and teardown",https://github.com/aidenybai/react-grab/blob/ea4bbec9e80f4802e8ae19ad18431edb9ddbb670/AGENTS.md
+open-mercato/open-mercato,AGENTS.md,1,1,"jest,test,testing,tests","fixtures,test setup",https://github.com/open-mercato/open-mercato/blob/00d03918478edf498053d96375819136c547f0a8/AGENTS.md
 open-mercato/open-mercato,CLAUDE.md,0,0,,,https://github.com/open-mercato/open-mercato/blob/00d03918478edf498053d96375819136c547f0a8/CLAUDE.md
 ding113/claude-code-hub,AGENTS.md,0,0,,,https://github.com/ding113/claude-code-hub/blob/13649bb990fe01e5dcc75e4e80d2f7d3fef0fd9d/AGENTS.md
 ding113/claude-code-hub,CLAUDE.md,1,0,"test,test file,testing,tests,unit test,vitest",,https://github.com/ding113/claude-code-hub/blob/13649bb990fe01e5dcc75e4e80d2f7d3fef0fd9d/CLAUDE.md
@@ -5731,7 +5731,7 @@ wecode-ai/Wegent,CLAUDE.md,0,0,,,https://github.com/wecode-ai/Wegent/blob/bd3596
 alibaba/page-agent,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/alibaba/page-agent/blob/9eb6b6646500264d9034dd466a4270cb9fc1ef1e/AGENTS.md
 alibaba/page-agent,CLAUDE.md,0,0,,,https://github.com/alibaba/page-agent/blob/9eb6b6646500264d9034dd466a4270cb9fc1ef1e/CLAUDE.md
 nexmoe/VidBee,AGENTS.md,1,0,"test,testing,tests",,https://github.com/nexmoe/VidBee/blob/99677838699b2e5035ff75b3f53f12bdbda1d404/AGENTS.md
-vercel/workflow,AGENTS.md,1,1,"test,test suite,testing,tests,unit test,vitest",teardown,https://github.com/vercel/workflow/blob/8a91d18d0dfdb142c68b0635bc7e5446a5b08403/AGENTS.md
+vercel/workflow,AGENTS.md,1,0,"test,test suite,testing,tests,unit test,vitest",,https://github.com/vercel/workflow/blob/8a91d18d0dfdb142c68b0635bc7e5446a5b08403/AGENTS.md
 vercel/workflow,CLAUDE.md,0,0,,,https://github.com/vercel/workflow/blob/8a91d18d0dfdb142c68b0635bc7e5446a5b08403/CLAUDE.md
 lingdojo/kana-dojo,AGENTS.md,1,0,"test,testing,vitest",,https://github.com/lingdojo/kana-dojo/blob/7db84be7ebc496a489817715937949b493332905/AGENTS.md
 lingdojo/kana-dojo,CLAUDE.md,1,0,"test,testing,vitest",,https://github.com/lingdojo/kana-dojo/blob/7db84be7ebc496a489817715937949b493332905/CLAUDE.md
@@ -5748,7 +5748,7 @@ videojs/v10,CLAUDE.md,0,0,,,https://github.com/videojs/v10/blob/a86f3d735973e476
 Devin-AXIS/A2V,AGENTS.md,1,0,tests,,https://github.com/Devin-AXIS/A2V/blob/e3dc323d3e65a82088612f9b761abae8393534c9/AGENTS.md
 23blocks-OS/ai-maestro,CLAUDE.md,1,0,"integration test,test,test suite,testing,tests,vitest",,https://github.com/23blocks-OS/ai-maestro/blob/732d6d0cc211d2455b2cd79c82915804410dbe4e/CLAUDE.md
 shareAI-lab/Kode-cli,AGENTS.md,1,0,"test,tests",,https://github.com/shareAI-lab/Kode-cli/blob/c7f6fccf7ec4b171a40bfe4967fc3dbbe3723d51/AGENTS.md
-alchemy-run/alchemy-effect,AGENTS.md,1,1,"test,test case,test file,test suite,testing,tests,vitest","afterAll,beforeAll,fixture,fixtures,teardown",https://github.com/alchemy-run/alchemy-effect/blob/b979ffc6afd740e81a3630efb29bf8f824a95a58/AGENTS.md
+alchemy-run/alchemy-effect,AGENTS.md,1,1,"test,test case,test file,test suite,testing,tests,vitest","afterAll,beforeAll,fixture,fixtures",https://github.com/alchemy-run/alchemy-effect/blob/b979ffc6afd740e81a3630efb29bf8f824a95a58/AGENTS.md
 alchemy-run/alchemy-effect,CLAUDE.md,0,0,,,https://github.com/alchemy-run/alchemy-effect/blob/b979ffc6afd740e81a3630efb29bf8f824a95a58/CLAUDE.md
 deepnote/deepnote,AGENTS.md,1,1,"test,test file,testing,tests,vitest","fixture,fixtures",https://github.com/deepnote/deepnote/blob/9d6fb3bee0c4006fbd13c755f04717cecca75a4d/AGENTS.md
 deepnote/deepnote,CLAUDE.md,0,0,,,https://github.com/deepnote/deepnote/blob/9d6fb3bee0c4006fbd13c755f04717cecca75a4d/CLAUDE.md
@@ -5891,7 +5891,7 @@ RackulaLives/Rackula,AGENTS.md,0,0,,,https://github.com/RackulaLives/Rackula/blo
 RackulaLives/Rackula,CLAUDE.md,1,1,"test,test file,testing,tests,unit test,vitest","fixture,fixtures",https://github.com/RackulaLives/Rackula/blob/2d7f152bf3a324a0c245c31eedc0164cb33e446a/CLAUDE.md
 chengzuopeng/stock-sdk,AGENTS.md,1,0,"test,vitest",,https://github.com/chengzuopeng/stock-sdk/blob/e0c23994910286e717939d9ac616f72c769da21e/AGENTS.md
 AnmolSaini16/mapcn,AGENTS.md,0,0,,,https://github.com/AnmolSaini16/mapcn/blob/d160bd767bc6388618720c6038a4dd9948c97362/AGENTS.md
-backnotprop/plannotator,AGENTS.md,1,1,"test,test file,test suite,testing,tests","afterEach,fixture,fixtures,teardown",https://github.com/backnotprop/plannotator/blob/9c85310151feb335cb8a8e74beae79349873382d/AGENTS.md
+backnotprop/plannotator,AGENTS.md,1,1,"test,test file,test suite,testing,tests","afterEach,fixture,fixtures",https://github.com/backnotprop/plannotator/blob/9c85310151feb335cb8a8e74beae79349873382d/AGENTS.md
 backnotprop/plannotator,CLAUDE.md,0,0,,,https://github.com/backnotprop/plannotator/blob/9c85310151feb335cb8a8e74beae79349873382d/CLAUDE.md
 team-mirai/marumie,CLAUDE.md,0,0,,,https://github.com/team-mirai/marumie/blob/b9f89242592532b50d528ca41745d1ab393e81d3/CLAUDE.md
 Draculabo/AntigravityManager,AGENTS.md,1,1,"test,testing,tests",fixtures,https://github.com/Draculabo/AntigravityManager/blob/8e95ed65e644b8c2710b394b5f900fcaf584156d/AGENTS.md
@@ -5948,7 +5948,7 @@ Yeachan-Heo/oh-my-claude-sisyphus,CLAUDE.md,1,0,"test,tests",,https://github.com
 alvinunreal/oh-my-opencode-slim,AGENTS.md,1,0,"test,tests",,https://github.com/alvinunreal/oh-my-opencode-slim/blob/75cf76e59e2ab33d6a0b08487ec464e15c77443e/AGENTS.md
 anomalyco/opencode,AGENTS.md,1,0,"test,testing,tests",,https://github.com/anomalyco/opencode/blob/dff8fbc149fb7492e4f07b713ac31ea70d9a541c/AGENTS.md
 vercel-labs/json-render,AGENTS.md,1,0,tests,,https://github.com/vercel-labs/json-render/blob/6c7164342a37fab055907f1666658e1333e2cb86/AGENTS.md
-different-ai/openwork,AGENTS.md,1,1,"test,tests","fixture,teardown",https://github.com/different-ai/openwork/blob/314adea7957c79abae165e9ccb3cf6bde72be08d/AGENTS.md
+different-ai/openwork,AGENTS.md,1,1,"test,tests",fixture,https://github.com/different-ai/openwork/blob/314adea7957c79abae165e9ccb3cf6bde72be08d/AGENTS.md
 callstackincubator/voltra,AGENTS.md,1,0,tests,,https://github.com/callstackincubator/voltra/blob/7f84f4d3f431d69ffe2e0e16ef6c9c397092b6a2/AGENTS.md
 callstackincubator/voltra,CLAUDE.md,0,0,,,https://github.com/callstackincubator/voltra/blob/7f84f4d3f431d69ffe2e0e16ef6c9c397092b6a2/CLAUDE.md
 tickernelz/opencode-mem,AGENTS.md,0,0,,,https://github.com/tickernelz/opencode-mem/blob/0c8ed7d54382d9225def8484d691182d46e8552d/AGENTS.md
@@ -6128,7 +6128,7 @@ RhysSullivan/executor,CLAUDE.md,0,0,,,https://github.com/RhysSullivan/executor/b
 SuperCmdLabs/SuperCmd,CLAUDE.md,1,0,"test,test suite,testing,tests",,https://github.com/SuperCmdLabs/SuperCmd/blob/2da7b9e5dec0199a972a59cece402c85f729d5d7/CLAUDE.md
 IgorShadurin/app.yumcut.com,AGENTS.md,1,0,"test,tests",,https://github.com/IgorShadurin/app.yumcut.com/blob/7e07eb356393c20014ab6badcf6e27c61a740781/AGENTS.md
 getpaseo/paseo,AGENTS.md,0,0,,,https://github.com/getpaseo/paseo/blob/da8c1b5c94e752b01d451645e5fa52aba2c1b2f0/AGENTS.md
-getpaseo/paseo,CLAUDE.md,1,1,"test,test file,test suite,testing,tests,vitest",teardown,https://github.com/getpaseo/paseo/blob/da8c1b5c94e752b01d451645e5fa52aba2c1b2f0/CLAUDE.md
+getpaseo/paseo,CLAUDE.md,1,0,"test,test file,test suite,testing,tests,vitest",,https://github.com/getpaseo/paseo/blob/da8c1b5c94e752b01d451645e5fa52aba2c1b2f0/CLAUDE.md
 johannesjo/parallel-code,CLAUDE.md,0,0,,,https://github.com/johannesjo/parallel-code/blob/076eac82e16795683270aec7b6bc139876f3031c/CLAUDE.md
 netease-youdao/LobsterAI,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/netease-youdao/LobsterAI/blob/a6331ee024ee2665044a1d99372cae90ae99b22d/AGENTS.md
 netease-youdao/LobsterAI,CLAUDE.md,0,0,,,https://github.com/netease-youdao/LobsterAI/blob/a6331ee024ee2665044a1d99372cae90ae99b22d/CLAUDE.md
@@ -6143,7 +6143,7 @@ yousifamanuel/terraink,CLAUDE.md,0,0,,,https://github.com/yousifamanuel/terraink
 pablodelucca/pixel-agents,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures,test setup",https://github.com/pablodelucca/pixel-agents/blob/3537e140c2094761beae748592aeb92ece8edfdd/CLAUDE.md
 Martian-Engineering/lossless-claw,AGENTS.md,1,0,test,,https://github.com/Martian-Engineering/lossless-claw/blob/c6d06e528867004c85ae84897019d94f0cdbea50/AGENTS.md
 diegosouzapw/OmniRoute,AGENTS.md,1,0,"integration test,test,test file,testing,tests,vitest",,https://github.com/diegosouzapw/OmniRoute/blob/ba597b631d22d85e56db6982f24b7d1ebe238df9/AGENTS.md
-diegosouzapw/OmniRoute,CLAUDE.md,1,1,testing,teardown,https://github.com/diegosouzapw/OmniRoute/blob/ba597b631d22d85e56db6982f24b7d1ebe238df9/CLAUDE.md
+diegosouzapw/OmniRoute,CLAUDE.md,1,0,testing,,https://github.com/diegosouzapw/OmniRoute/blob/ba597b631d22d85e56db6982f24b7d1ebe238df9/CLAUDE.md
 zerebos/ghostty-config,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/zerebos/ghostty-config/blob/0f51dceafa3e74cd7a24fecc471fd2354f6a0ea6/AGENTS.md
 vercel-labs/knowledge-agent-template,AGENTS.md,1,0,"test,tests",,https://github.com/vercel-labs/knowledge-agent-template/blob/ab721a67b9f37bd98ae758ae0913ff43a9c2c97a/AGENTS.md
 pingdotgg/lawn,AGENTS.md,1,0,testing,,https://github.com/pingdotgg/lawn/blob/90cb126159ee87f63a3dbded16b2143470299b49/AGENTS.md
@@ -6157,7 +6157,7 @@ WW-AI-Lab/openclaw-office,AGENTS.md,1,0,"test,testing,tests,vitest",,https://git
 WW-AI-Lab/openclaw-office,CLAUDE.md,0,0,,,https://github.com/WW-AI-Lab/openclaw-office/blob/def631a4533df2b0c8bb6aa19ef3e07c81f4fbc6/CLAUDE.md
 openclaw/acpx,AGENTS.md,1,0,"test,test suite,testing,tests,vitest",,https://github.com/openclaw/acpx/blob/8100a58788884f050f07a32fa4d8b2215334950a/AGENTS.md
 Makisuo/maple,AGENTS.md,0,0,,,https://github.com/Makisuo/maple/blob/fcf492cc9e221921f68c346ef3334f2f6c91b705/AGENTS.md
-Makisuo/maple,CLAUDE.md,1,1,"test,tests,vitest","fixtures,teardown",https://github.com/Makisuo/maple/blob/fcf492cc9e221921f68c346ef3334f2f6c91b705/CLAUDE.md
+Makisuo/maple,CLAUDE.md,1,1,"test,tests,vitest",fixtures,https://github.com/Makisuo/maple/blob/fcf492cc9e221921f68c346ef3334f2f6c91b705/CLAUDE.md
 AVIDS2/memorix,CLAUDE.md,1,0,test,,https://github.com/AVIDS2/memorix/blob/13cf29fb4fed0ebf74b21e174840e04c65b79596/CLAUDE.md
 FranciscoMoretti/chat-js,AGENTS.md,1,0,"test,testing,tests",,https://github.com/FranciscoMoretti/chat-js/blob/ea555cf61bb9541aa71e96c8f6a5f4d9357de08a/AGENTS.md
 FranciscoMoretti/chat-js,CLAUDE.md,1,0,test,,https://github.com/FranciscoMoretti/chat-js/blob/ea555cf61bb9541aa71e96c8f6a5f4d9357de08a/CLAUDE.md
@@ -6206,7 +6206,7 @@ ufira-ai/Vibma,CLAUDE.md,0,0,,,https://github.com/ufira-ai/Vibma/blob/cdadc72805
 icebear0828/codex-proxy,AGENTS.md,0,0,,,https://github.com/icebear0828/codex-proxy/blob/952d045bb9d75a1e601fe58f51b1484f65fd4219/AGENTS.md
 k1LoW/mo,CLAUDE.md,1,1,"test,tests,vitest",fixture,https://github.com/k1LoW/mo/blob/8fbe8e84e1bc09af82d3fbec53f0c9d7b826c564/CLAUDE.md
 Ark0N/Codeman,AGENTS.md,1,0,"test,testing,tests",,https://github.com/Ark0N/Codeman/blob/5130ca66331d6c8f423f77848787b81a398d39df/AGENTS.md
-Ark0N/Codeman,CLAUDE.md,1,1,"integration test,test,test file,test suite,testing,tests,vitest","fixture,teardown",https://github.com/Ark0N/Codeman/blob/5130ca66331d6c8f423f77848787b81a398d39df/CLAUDE.md
+Ark0N/Codeman,CLAUDE.md,1,1,"integration test,test,test file,test suite,testing,tests,vitest",fixture,https://github.com/Ark0N/Codeman/blob/5130ca66331d6c8f423f77848787b81a398d39df/CLAUDE.md
 ExplosiveCoderflome/AI-Novel-Writing-Assistant,AGENTS.md,1,0,"test,test suite,testing,tests",,https://github.com/ExplosiveCoderflome/AI-Novel-Writing-Assistant/blob/25db3223709dec7f892cfc7b0ba82742636644c6/AGENTS.md
 openchamber/openchamber,AGENTS.md,1,0,"test,tests",,https://github.com/openchamber/openchamber/blob/1c1221a0a9ac0065c76288984e0b9199ea6bceb1/AGENTS.md
 openchamber/openchamber,CLAUDE.md,0,0,,,https://github.com/openchamber/openchamber/blob/1c1221a0a9ac0065c76288984e0b9199ea6bceb1/CLAUDE.md
@@ -6221,7 +6221,7 @@ code-yeongyu/oh-my-openagent,AGENTS.md,1,1,"test,test suite,testing,tests,vitest
 code-yeongyu/oh-my-openagent,CLAUDE.md,0,0,,,https://github.com/code-yeongyu/oh-my-openagent/blob/9a0375d7d98c69c417dd5e2100539307abc29169/CLAUDE.md
 CopilotKit/OpenGenerativeUI,CLAUDE.md,0,0,,,https://github.com/CopilotKit/OpenGenerativeUI/blob/457e60cdf7f63fb78004486e1dc7ba753194696d/CLAUDE.md
 DeadWaveWave/opencove,AGENTS.md,1,0,"test,testing,tests",,https://github.com/DeadWaveWave/opencove/blob/55fcd9391e1118a933f393be05bb0e98497fc629/AGENTS.md
-silvertakana/worldwideview,AGENTS.md,1,1,"test,testing,tests,vitest","fixtures,teardown",https://github.com/silvertakana/worldwideview/blob/954444f199d4d9e2c0aef5ec4c8d5522007e4684/AGENTS.md
+silvertakana/worldwideview,AGENTS.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/silvertakana/worldwideview/blob/954444f199d4d9e2c0aef5ec4c8d5522007e4684/AGENTS.md
 silvertakana/worldwideview,CLAUDE.md,0,0,,,https://github.com/silvertakana/worldwideview/blob/954444f199d4d9e2c0aef5ec4c8d5522007e4684/CLAUDE.md
 linuxfoundation/crowd.dev,CLAUDE.md,1,0,test,,https://github.com/linuxfoundation/crowd.dev/blob/525a48fab58f6a524436ccca431c83e013ffe4ef/CLAUDE.md
 getpaykit/paykit,AGENTS.md,1,0,test,,https://github.com/getpaykit/paykit/blob/43c5f0f3f6ca9881c41f0ff27997ba3d537ee9cb/AGENTS.md
@@ -6307,7 +6307,7 @@ mem9-ai/mem9,AGENTS.md,1,0,"test,tests",,https://github.com/mem9-ai/mem9/blob/5a
 mem9-ai/mem9,CLAUDE.md,0,0,,,https://github.com/mem9-ai/mem9/blob/5af03a68c072651e9c64d1b8b1265e36b7354671/CLAUDE.md
 redwoodjs/agent-ci,AGENTS.md,0,0,,,https://github.com/redwoodjs/agent-ci/blob/a8db59493b883d642c07c89be537c7572d3ff965/AGENTS.md
 redwoodjs/agent-ci,CLAUDE.md,0,0,,,https://github.com/redwoodjs/agent-ci/blob/a8db59493b883d642c07c89be537c7572d3ff965/CLAUDE.md
-chenglou/pretext,AGENTS.md,1,1,"test,tests","fixtures,teardown",https://github.com/chenglou/pretext/blob/a28b5428912d1a8f23ad105b550148ea4b921f2f/AGENTS.md
+chenglou/pretext,AGENTS.md,1,1,"test,tests",fixtures,https://github.com/chenglou/pretext/blob/a28b5428912d1a8f23ad105b550148ea4b921f2f/AGENTS.md
 chenglou/pretext,CLAUDE.md,0,0,,,https://github.com/chenglou/pretext/blob/a28b5428912d1a8f23ad105b550148ea4b921f2f/CLAUDE.md
 ResearAI/DeepScientist,AGENTS.md,1,0,"pytest,test,tests",,https://github.com/ResearAI/DeepScientist/blob/b36624417f0c6b8238ec02db37b94d6db2faa5b0/AGENTS.md
 ResearAI/DeepScientist,CLAUDE.md,1,0,"pytest,test,test file,testing,tests",,https://github.com/ResearAI/DeepScientist/blob/b36624417f0c6b8238ec02db37b94d6db2faa5b0/CLAUDE.md
@@ -6320,8 +6320,8 @@ Huxpro/vue-lynx,CLAUDE.md,0,0,,,https://github.com/Huxpro/vue-lynx/blob/4e75e3ef
 Prismer-AI/PrismerCloud,CLAUDE.md,1,0,"pytest,test,tests,vitest",,https://github.com/Prismer-AI/PrismerCloud/blob/e263666c231c8782fee9e3cc561a1c6a06b384d3/CLAUDE.md
 chrisryugj/kordoc,CLAUDE.md,1,0,"test,tests",,https://github.com/chrisryugj/kordoc/blob/dd4a08b77784abd0a2f1c37e7a8141b1cc522525/CLAUDE.md
 Lum1104/Understand-Anything,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/Lum1104/Understand-Anything/blob/5feed1f2ce4f9c368d860f4c0ebc36d98a4693fc/CLAUDE.md
-elirantutia/vibeyard,CLAUDE.md,1,1,"test,testing,tests,vitest",teardown,https://github.com/elirantutia/vibeyard/blob/19bc19f0fac04f11e7d9e5cf68ed75ac7d291566/CLAUDE.md
-nexu-io/nexu,AGENTS.md,1,1,"test,test suite,testing,tests,vitest",teardown,https://github.com/nexu-io/nexu/blob/dadfb1c8085bfaf500440cd86a66c7e5b3961a1b/AGENTS.md
+elirantutia/vibeyard,CLAUDE.md,1,0,"test,testing,tests,vitest",,https://github.com/elirantutia/vibeyard/blob/19bc19f0fac04f11e7d9e5cf68ed75ac7d291566/CLAUDE.md
+nexu-io/nexu,AGENTS.md,1,0,"test,test suite,testing,tests,vitest",,https://github.com/nexu-io/nexu/blob/dadfb1c8085bfaf500440cd86a66c7e5b3961a1b/AGENTS.md
 nexu-io/nexu,CLAUDE.md,0,0,,,https://github.com/nexu-io/nexu/blob/dadfb1c8085bfaf500440cd86a66c7e5b3961a1b/CLAUDE.md
 spool-lab/spool,AGENTS.md,1,0,tests,,https://github.com/spool-lab/spool/blob/4c94d68d9ba00b01053250393fd0eb2e1342f50d/AGENTS.md
 spool-lab/spool,CLAUDE.md,1,1,"test,tests,vitest",fixture,https://github.com/spool-lab/spool/blob/4c94d68d9ba00b01053250393fd0eb2e1342f50d/CLAUDE.md
@@ -6336,7 +6336,7 @@ foldkit/foldkit,CLAUDE.md,0,0,,,https://github.com/foldkit/foldkit/blob/2fe15254
 deepcoldy/botmux,AGENTS.md,0,0,,,https://github.com/deepcoldy/botmux/blob/7d83eabdccc78b891b7b2b3b9e84590c26e140d5/AGENTS.md
 deepcoldy/botmux,CLAUDE.md,1,0,"test,vitest",,https://github.com/deepcoldy/botmux/blob/7d83eabdccc78b891b7b2b3b9e84590c26e140d5/CLAUDE.md
 jonwiggins/optio,AGENTS.md,0,0,,,https://github.com/jonwiggins/optio/blob/6d287d37ee9effb9781b24d17f4267e738075e3e/AGENTS.md
-jonwiggins/optio,CLAUDE.md,1,1,"test,test file,testing,tests,vitest","fixtures,teardown",https://github.com/jonwiggins/optio/blob/6d287d37ee9effb9781b24d17f4267e738075e3e/CLAUDE.md
+jonwiggins/optio,CLAUDE.md,1,1,"test,test file,testing,tests,vitest",fixtures,https://github.com/jonwiggins/optio/blob/6d287d37ee9effb9781b24d17f4267e738075e3e/CLAUDE.md
 cline/kanban,AGENTS.md,1,0,"test,tests",,https://github.com/cline/kanban/blob/abd4912c27ce6b7f18b5a8106c145fd838e90cc4/AGENTS.md
 cline/kanban,CLAUDE.md,0,0,,,https://github.com/cline/kanban/blob/abd4912c27ce6b7f18b5a8106c145fd838e90cc4/CLAUDE.md
 modem-dev/hunk,AGENTS.md,1,1,"test,testing,tests,unit test","fixture,fixtures",https://github.com/modem-dev/hunk/blob/586f9388aaa75c8617115ae048e3a8d7fe36c24e/AGENTS.md
@@ -6466,7 +6466,7 @@ guokaigdg/animal-island-ui,AGENTS.md,1,0,"test,testing,tests,vitest",,https://gi
 guokaigdg/animal-island-ui,CLAUDE.md,0,0,,,https://github.com/guokaigdg/animal-island-ui/blob/a4f78396b6e9e80dc244b6c7e8bf0dc4c6f2b528/CLAUDE.md
 jal-co/shieldcn,AGENTS.md,1,0,test,,https://github.com/jal-co/shieldcn/blob/dd6f2f6b58be49207bb095d8c6a5ab6586e1ed34/AGENTS.md
 cyrusagents/cyrus,AGENTS.md,0,0,,,https://github.com/cyrusagents/cyrus/blob/1e02590f795a519d0c5c5433e5d5c60235353593/AGENTS.md
-cyrusagents/cyrus,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,teardown",https://github.com/cyrusagents/cyrus/blob/1e02590f795a519d0c5c5433e5d5c60235353593/CLAUDE.md
+cyrusagents/cyrus,CLAUDE.md,1,1,"test,testing,tests,vitest",fixture,https://github.com/cyrusagents/cyrus/blob/1e02590f795a519d0c5c5433e5d5c60235353593/CLAUDE.md
 raroque/boop-agent,AGENTS.md,0,0,,,https://github.com/raroque/boop-agent/blob/31979130b1371acd9defbea115279a06c63c1fb4/AGENTS.md
 raroque/boop-agent,CLAUDE.md,1,1,test,fixtures,https://github.com/raroque/boop-agent/blob/31979130b1371acd9defbea115279a06c63c1fb4/CLAUDE.md
 zhu1090093659/deepseek-pp,AGENTS.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/zhu1090093659/deepseek-pp/blob/0a02c72b135bf2936e11aa78fd6136931ed65908/AGENTS.md
@@ -6507,13 +6507,13 @@ evolution-foundation/evolution-api,CLAUDE.md,1,0,"test,test suite,testing,tests,
 sno-ai/mda,CLAUDE.md,1,0,"test,tests",,https://github.com/sno-ai/mda/blob/03a0f4126bf1ca0f9428618865c9b9dd65fada40/CLAUDE.md
 hexabot-ai/Hexabot,AGENTS.md,1,0,"test,tests",,https://github.com/hexabot-ai/Hexabot/blob/3c5473d1f0a3c99f47a2c88cb6e8bd1e9b2e9e5e/AGENTS.md
 ruzin/stenoai,AGENTS.md,1,0,"test,unit test",,https://github.com/ruzin/stenoai/blob/25a13e53affd12f409236136588b9b4b3fbedf56/AGENTS.md
-ruzin/stenoai,CLAUDE.md,1,1,"test,testing,tests,unit test,unittest","fixture,fixtures,teardown",https://github.com/ruzin/stenoai/blob/25a13e53affd12f409236136588b9b4b3fbedf56/CLAUDE.md
+ruzin/stenoai,CLAUDE.md,1,1,"test,testing,tests,unit test,unittest","fixture,fixtures",https://github.com/ruzin/stenoai/blob/25a13e53affd12f409236136588b9b4b3fbedf56/CLAUDE.md
 Enderfga/claw-orchestrator,CLAUDE.md,1,0,"integration test,test,testing,tests,vitest",,https://github.com/Enderfga/claw-orchestrator/blob/07a632b5c580d76776dc097ee8def7d7e9f126df/CLAUDE.md
 strukto-ai/mirage,AGENTS.md,0,0,,,https://github.com/strukto-ai/mirage/blob/715aa028063d17a24c61c901b73140cef7d2ac59/AGENTS.md
-strukto-ai/mirage,CLAUDE.md,1,1,"pytest,test,testing,tests,unit test",teardown,https://github.com/strukto-ai/mirage/blob/715aa028063d17a24c61c901b73140cef7d2ac59/CLAUDE.md
+strukto-ai/mirage,CLAUDE.md,1,0,"pytest,test,testing,tests,unit test",,https://github.com/strukto-ai/mirage/blob/715aa028063d17a24c61c901b73140cef7d2ac59/CLAUDE.md
 hexclave/stack-auth,AGENTS.md,1,1,"test,testing,tests,vitest",fixtures,https://github.com/hexclave/stack-auth/blob/48141234d3375120afd68cc7aa73c6e1d1185993/AGENTS.md
 hexclave/stack-auth,CLAUDE.md,0,0,,,https://github.com/hexclave/stack-auth/blob/48141234d3375120afd68cc7aa73c6e1d1185993/CLAUDE.md
-ChatbotXIO/ChatbotX,AGENTS.md,1,1,"test,tests,vitest",teardown,https://github.com/ChatbotXIO/ChatbotX/blob/b6ed384bee8fdc36a788e79be484eba903f3e773/AGENTS.md
+ChatbotXIO/ChatbotX,AGENTS.md,1,0,"test,tests,vitest",,https://github.com/ChatbotXIO/ChatbotX/blob/b6ed384bee8fdc36a788e79be484eba903f3e773/AGENTS.md
 ChatbotXIO/ChatbotX,CLAUDE.md,1,0,"testing,tests",,https://github.com/ChatbotXIO/ChatbotX/blob/b6ed384bee8fdc36a788e79be484eba903f3e773/CLAUDE.md
 1weiho/open-slide,AGENTS.md,1,0,"test,vitest",,https://github.com/1weiho/open-slide/blob/8904b0b6b3646ad493d11989fce10ade43f69b8a/AGENTS.md
 1weiho/open-slide,CLAUDE.md,0,0,,,https://github.com/1weiho/open-slide/blob/8904b0b6b3646ad493d11989fce10ade43f69b8a/CLAUDE.md
@@ -6542,11 +6542,11 @@ Sayhi-bzb/Agent-HTML,AGENTS.md,0,0,,,https://github.com/Sayhi-bzb/Agent-HTML/blo
 Sayhi-bzb/Agent-HTML,CLAUDE.md,0,0,,,https://github.com/Sayhi-bzb/Agent-HTML/blob/05a16a91448e0da8ccef571ca6b0ad2c56a69181/CLAUDE.md
 crynta/terax-ai,AGENTS.md,0,0,,,https://github.com/crynta/terax-ai/blob/c510c96c08bd57dad78acfb6b078137b24f5b7c2/AGENTS.md
 crynta/terax-ai,CLAUDE.md,0,0,,,https://github.com/crynta/terax-ai/blob/c510c96c08bd57dad78acfb6b078137b24f5b7c2/CLAUDE.md
-LayoutitStudio/polycss,AGENTS.md,1,1,"test,tests,vitest","fixture,fixtures,teardown",https://github.com/LayoutitStudio/polycss/blob/04a1b663046fe25b5bec5bc656a466ed87890b1a/AGENTS.md
+LayoutitStudio/polycss,AGENTS.md,1,1,"test,tests,vitest","fixture,fixtures",https://github.com/LayoutitStudio/polycss/blob/04a1b663046fe25b5bec5bc656a466ed87890b1a/AGENTS.md
 LayoutitStudio/polycss,CLAUDE.md,0,0,,,https://github.com/LayoutitStudio/polycss/blob/04a1b663046fe25b5bec5bc656a466ed87890b1a/CLAUDE.md
 nyakang/nyaterm,AGENTS.md,0,0,,,https://github.com/nyakang/nyaterm/blob/afb610af2db17a7185699f989fb68f760847fed9/AGENTS.md
 nyakang/nyaterm,CLAUDE.md,1,0,"test,tests,unit test",,https://github.com/nyakang/nyaterm/blob/afb610af2db17a7185699f989fb68f760847fed9/CLAUDE.md
-AtomicBot-ai/atomic-agent,AGENTS.md,1,1,"end-to-end test,test,test suite,testing,tests,vitest","fixtures,teardown",https://github.com/AtomicBot-ai/atomic-agent/blob/1bee406df64016c83f8c95736fe42750fe6d31d6/AGENTS.md
+AtomicBot-ai/atomic-agent,AGENTS.md,1,1,"end-to-end test,test,test suite,testing,tests,vitest",fixtures,https://github.com/AtomicBot-ai/atomic-agent/blob/1bee406df64016c83f8c95736fe42750fe6d31d6/AGENTS.md
 sybil-solutions/vllm-studio,AGENTS.md,1,0,"test,tests",,https://github.com/sybil-solutions/vllm-studio/blob/9bf7b3424c3e3f62b4cffb265c7e6bf5f637d9be/AGENTS.md
 gaozhangmin/boxplayer,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/gaozhangmin/boxplayer/blob/f65fae62e9a3a594d90ba00c931f0f52ddc00277/AGENTS.md
 gaozhangmin/boxplayer,CLAUDE.md,1,0,"test,tests,vitest",,https://github.com/gaozhangmin/boxplayer/blob/f65fae62e9a3a594d90ba00c931f0f52ddc00277/CLAUDE.md
@@ -6588,7 +6588,7 @@ manycoretech/aholo-viewer,AGENTS.md,0,0,,,https://github.com/manycoretech/aholo-
 jdevalk/specification.website,CLAUDE.md,1,0,test,,https://github.com/jdevalk/specification.website/blob/51bbaa008bc5c6d58e37be0f6190bc01863f45cc/CLAUDE.md
 paperboytm/spool,AGENTS.md,1,0,tests,,https://github.com/paperboytm/spool/blob/4c94d68d9ba00b01053250393fd0eb2e1342f50d/AGENTS.md
 paperboytm/spool,CLAUDE.md,1,1,"test,tests,vitest",fixture,https://github.com/paperboytm/spool/blob/4c94d68d9ba00b01053250393fd0eb2e1342f50d/CLAUDE.md
-unicity-sphere/sphere-sdk,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures,teardown",https://github.com/unicity-sphere/sphere-sdk/blob/bdebdfc2df16cd01b230e9e5b100ea165d9db9c9/CLAUDE.md
+unicity-sphere/sphere-sdk,CLAUDE.md,1,1,"test,testing,tests,vitest","fixture,fixtures",https://github.com/unicity-sphere/sphere-sdk/blob/bdebdfc2df16cd01b230e9e5b100ea165d9db9c9/CLAUDE.md
 proma-ai/Proma,AGENTS.md,1,0,test,,https://github.com/proma-ai/Proma/blob/b7bf78ab74b1552c92fc98c7db9a8a8d92c631df/AGENTS.md
 lexmin0412/dify-app-hub,AGENTS.md,0,0,,,https://github.com/lexmin0412/dify-app-hub/blob/e62c2b3b861da86ab6f4ab159c2bc09d74e90c0a/AGENTS.md
 Yeachan-Heo/gajae-code,AGENTS.md,1,1,"test,testing,tests",fixtures,https://github.com/Yeachan-Heo/gajae-code/blob/411b7f3809cec3949edeb6a60a767495c5639a96/AGENTS.md
@@ -6687,7 +6687,7 @@ gkurt/tegaki,CLAUDE.md,0,0,,,https://github.com/gkurt/tegaki/blob/e8556fe90e8b03
 justjavac/awesome-wechat-weapp,AGENTS.md,1,0,test,,https://github.com/justjavac/awesome-wechat-weapp/blob/02a010ecea0320b7aa975bb62a5dde271ae630c9/AGENTS.md
 dramaclaw/dramaclaw,AGENTS.md,1,1,"pytest,test,test file,test suite,testing,tests","conftest,fixtures",https://github.com/dramaclaw/dramaclaw/blob/2467871c9524154c8c373c0ee6a88ef80f64d96b/AGENTS.md
 MapleTechLabs/maple,AGENTS.md,0,0,,,https://github.com/MapleTechLabs/maple/blob/fcf492cc9e221921f68c346ef3334f2f6c91b705/AGENTS.md
-MapleTechLabs/maple,CLAUDE.md,1,1,"test,tests,vitest","fixtures,teardown",https://github.com/MapleTechLabs/maple/blob/fcf492cc9e221921f68c346ef3334f2f6c91b705/CLAUDE.md
+MapleTechLabs/maple,CLAUDE.md,1,1,"test,tests,vitest",fixtures,https://github.com/MapleTechLabs/maple/blob/fcf492cc9e221921f68c346ef3334f2f6c91b705/CLAUDE.md
 langchain-ai/openwiki,AGENTS.md,1,0,"testing,tests",,https://github.com/langchain-ai/openwiki/blob/3e180e9b7d3eb98390e5f63c97a7fe256708b7d8/AGENTS.md
 langchain-ai/openwiki,CLAUDE.md,1,0,testing,,https://github.com/langchain-ai/openwiki/blob/3e180e9b7d3eb98390e5f63c97a7fe256708b7d8/CLAUDE.md
 inkeep/open-knowledge,AGENTS.md,1,1,"test,tests,vitest",fixture,https://github.com/inkeep/open-knowledge/blob/9ca54c41e763e04cb341d3ba42b9584121975641/AGENTS.md
@@ -6703,7 +6703,7 @@ cabinetai/cabinet,CLAUDE.md,0,0,,,https://github.com/cabinetai/cabinet/blob/92ed
 u14app/neo-chat,AGENTS.md,1,0,"test,testing,tests,vitest",,https://github.com/u14app/neo-chat/blob/d6a39761cba5583f50d97b143ea621268a728877/AGENTS.md
 synthetic-sciences/openscience,AGENTS.md,1,1,"test,tests",fixtures,https://github.com/synthetic-sciences/openscience/blob/33a1df37f7b5d68abfd23105326a3a0139898519/AGENTS.md
 synthetic-sciences/openscience,CLAUDE.md,1,1,test,fixtures,https://github.com/synthetic-sciences/openscience/blob/33a1df37f7b5d68abfd23105326a3a0139898519/CLAUDE.md
-layoutit/polycss,AGENTS.md,1,1,"test,tests,vitest","fixture,fixtures,teardown",https://github.com/layoutit/polycss/blob/04a1b663046fe25b5bec5bc656a466ed87890b1a/AGENTS.md
+layoutit/polycss,AGENTS.md,1,1,"test,tests,vitest","fixture,fixtures",https://github.com/layoutit/polycss/blob/04a1b663046fe25b5bec5bc656a466ed87890b1a/AGENTS.md
 layoutit/polycss,CLAUDE.md,0,0,,,https://github.com/layoutit/polycss/blob/04a1b663046fe25b5bec5bc656a466ed87890b1a/CLAUDE.md
 justjavac/wechat-miniapp-radar,AGENTS.md,1,0,test,,https://github.com/justjavac/wechat-miniapp-radar/blob/02a010ecea0320b7aa975bb62a5dde271ae630c9/AGENTS.md
 tianma-if/edgeever,AGENTS.md,0,0,,,https://github.com/tianma-if/edgeever/blob/fde369b59ca858b3cff54b528469a3035aea1d1a/AGENTS.md
@@ -6737,7 +6737,7 @@ diwenne/openreply,CLAUDE.md,0,0,,,https://github.com/diwenne/openreply/blob/267a
 deepagent-ltd/deepagent-code,AGENTS.md,1,0,"test,testing,tests",,https://github.com/deepagent-ltd/deepagent-code/blob/1c3f92020a736f8d32b51b8a08a1aa79ca96f320/AGENTS.md
 alchemy-run/alchemy-async,AGENTS.md,1,0,"test,test case,test suite,testing,tests,vitest",,https://github.com/alchemy-run/alchemy-async/blob/ae168f2e206fc14e1f37fef3925ce2644bbf5014/AGENTS.md
 alchemy-run/alchemy-async,CLAUDE.md,0,0,,,https://github.com/alchemy-run/alchemy-async/blob/ae168f2e206fc14e1f37fef3925ce2644bbf5014/CLAUDE.md
-Nagi-ovo/voyager,AGENTS.md,1,1,"test,tests",teardown,https://github.com/Nagi-ovo/voyager/blob/91bc20761282f4120e0aa80a4a56ecbe527bddab/AGENTS.md
+Nagi-ovo/voyager,AGENTS.md,1,0,"test,tests",,https://github.com/Nagi-ovo/voyager/blob/91bc20761282f4120e0aa80a4a56ecbe527bddab/AGENTS.md
 Nagi-ovo/voyager,CLAUDE.md,0,0,,,https://github.com/Nagi-ovo/voyager/blob/91bc20761282f4120e0aa80a4a56ecbe527bddab/CLAUDE.md
 michael/editable,AGENTS.md,0,0,,,https://github.com/michael/editable/blob/914fed2ba110247bf92a6430ebcceb1430863acb/AGENTS.md
 michael/editable,CLAUDE.md,0,0,,,https://github.com/michael/editable/blob/914fed2ba110247bf92a6430ebcceb1430863acb/CLAUDE.md
@@ -6751,9 +6751,9 @@ proxysoul/Empryo,CLAUDE.md,0,0,,,https://github.com/proxysoul/Empryo/blob/5e3b87
 NikolayS/PGSimCity,AGENTS.md,1,0,"test,testing",,https://github.com/NikolayS/PGSimCity/blob/bf5786ca9947a1bace4898d796e3d05673ae7033/AGENTS.md
 NikolayS/PGSimCity,CLAUDE.md,1,0,"test,tests,vitest",,https://github.com/NikolayS/PGSimCity/blob/bf5786ca9947a1bace4898d796e3d05673ae7033/CLAUDE.md
 nyblnet/bento,AGENTS.md,1,0,test,,https://github.com/nyblnet/bento/blob/01000838496ec863ba1035eae12a8a4943020cdc/AGENTS.md
-nyblnet/bento,CLAUDE.md,1,1,"test,testing,tests",teardown,https://github.com/nyblnet/bento/blob/01000838496ec863ba1035eae12a8a4943020cdc/CLAUDE.md
+nyblnet/bento,CLAUDE.md,1,0,"test,testing,tests",,https://github.com/nyblnet/bento/blob/01000838496ec863ba1035eae12a8a4943020cdc/CLAUDE.md
 stenolabs/stenoai,AGENTS.md,1,0,"test,unit test",,https://github.com/stenolabs/stenoai/blob/25a13e53affd12f409236136588b9b4b3fbedf56/AGENTS.md
-stenolabs/stenoai,CLAUDE.md,1,1,"test,testing,tests,unit test,unittest","fixture,fixtures,teardown",https://github.com/stenolabs/stenoai/blob/25a13e53affd12f409236136588b9b4b3fbedf56/CLAUDE.md
+stenolabs/stenoai,CLAUDE.md,1,1,"test,testing,tests,unit test,unittest","fixture,fixtures",https://github.com/stenolabs/stenoai/blob/25a13e53affd12f409236136588b9b4b3fbedf56/CLAUDE.md
 dockview/dockview,AGENTS.md,1,0,"jest,test,testing,tests",,https://github.com/dockview/dockview/blob/dbad3043c4efbabb44454b85dd926c356d4f9c58/AGENTS.md
 dockview/dockview,CLAUDE.md,0,0,,,https://github.com/dockview/dockview/blob/dbad3043c4efbabb44454b85dd926c356d4f9c58/CLAUDE.md
 vercel-labs/scriptc,AGENTS.md,1,1,"test,test suite,tests,vitest",fixtures,https://github.com/vercel-labs/scriptc/blob/bf32f155fc3e17353f0769fe7521d083660b18c3/AGENTS.md
@@ -6784,7 +6784,7 @@ centminmod/my-claude-code-setup,CLAUDE.md,1,0,test,,https://github.com/centminmo
 borski/travel-hacking-toolkit,AGENTS.md,0,0,,,https://github.com/borski/travel-hacking-toolkit/blob/7faf7867a07799e9f070213199058e33a8208fbc/AGENTS.md
 borski/travel-hacking-toolkit,CLAUDE.md,1,0,test,,https://github.com/borski/travel-hacking-toolkit/blob/7faf7867a07799e9f070213199058e33a8208fbc/CLAUDE.md
 liaohch3/claude-tap,AGENTS.md,1,0,"e2e test,pytest,test,testing,tests",,https://github.com/liaohch3/claude-tap/blob/198ad96e92ce5dbd57b04ef8b95ef72becd22d4a/AGENTS.md
-nesquena/hermes-webui,AGENTS.md,1,1,"pytest,test,testing,tests",teardown,https://github.com/nesquena/hermes-webui/blob/7d56234ea4b72e07dc5f0e8ceb44eccfa603f4c0/AGENTS.md
+nesquena/hermes-webui,AGENTS.md,1,0,"pytest,test,testing,tests",,https://github.com/nesquena/hermes-webui/blob/7d56234ea4b72e07dc5f0e8ceb44eccfa603f4c0/AGENTS.md
 Mibayy/token-savior,AGENTS.md,1,0,tests,,https://github.com/Mibayy/token-savior/blob/73e9c7f56fd7cd40ecc72cdc4b032264018f8b4f/AGENTS.md
 Mibayy/token-savior,CLAUDE.md,0,0,,,https://github.com/Mibayy/token-savior/blob/73e9c7f56fd7cd40ecc72cdc4b032264018f8b4f/CLAUDE.md
 lhfer/claude-howto-zh-cn,CLAUDE.md,1,0,"pytest,tests",,https://github.com/lhfer/claude-howto-zh-cn/blob/f0da0c60e6832de3555c6a3532a4815dfad59dd4/CLAUDE.md

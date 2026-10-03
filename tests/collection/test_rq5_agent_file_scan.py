@@ -28,10 +28,12 @@ import requests
 from collection.rq5_agent_file_scan import (
     _FILE_CSV_FIELDNAMES,
     _MATCH_CSV_FIELDNAMES,
+    AMBIGUOUS_FIXTURE_KEYWORDS,
     REPAIRABLE_ERROR_REASONS,
     RQ5_LANGUAGES,
     TARGET_REQUESTS_PER_HOUR,
     V1_TO_V2_REMOVED_FIXTURE_KEYWORDS,
+    V2_TO_V3_REMOVED_FIXTURE_KEYWORDS,
     RateLimitExhausted,
     _api_get,
     _build_keyword_pattern,
@@ -120,7 +122,7 @@ _TEST_CATALOG = {
     "version": 1,
     "target_files": ["AGENTS.md", "CLAUDE.md"],
     "test_keywords": ["test", "pytest"],
-    "fixture_keywords": ["fixture", "fixtures", "teardown", "test setup", "beforeEach"],
+    "fixture_keywords": ["fixture", "fixtures", "conftest", "test setup", "beforeEach"],
 }
 
 
@@ -137,6 +139,13 @@ class TestLoadRq5KeywordCatalog:
         assert "setup" not in catalog["test_keywords"]
         assert "setup" not in catalog["fixture_keywords"]
 
+    def test_bare_teardown_is_never_a_standalone_keyword(self):
+        """Same defect class as bare "setup" above -- see the catalog's
+        own v2 -> v3 changelog comment: "teardown" alone matches generic
+        resource/UI/infra cleanup prose with no test relevance."""
+        catalog = load_rq5_keyword_catalog()
+        assert "teardown" not in catalog["fixture_keywords"]
+
     def test_removed_v1_keywords_never_reappear(self):
         """Regression guard for the catalog v1 -> v2 removal (see that
         YAML's own changelog comment): these four collided heavily with
@@ -151,9 +160,28 @@ class TestLoadRq5KeywordCatalog:
         for kept in ("beforeEach", "afterEach", "beforeAll", "afterAll"):
             assert kept in catalog["fixture_keywords"]
 
-    def test_real_catalog_is_at_least_version_2(self):
+    def test_removed_v2_keywords_never_reappear(self):
+        """Regression guard for the catalog v2 -> v3 removal -- see that
+        YAML's own changelog comment."""
         catalog = load_rq5_keyword_catalog()
-        assert catalog["version"] >= 2
+        for removed in V2_TO_V3_REMOVED_FIXTURE_KEYWORDS:
+            assert removed not in catalog["fixture_keywords"]
+        # "setup and teardown" is the phrase kept to still catch this
+        # concept without the bare word's false-positive rate.
+        assert "setup and teardown" in catalog["fixture_keywords"]
+
+    def test_real_catalog_is_at_least_version_3(self):
+        catalog = load_rq5_keyword_catalog()
+        assert catalog["version"] >= 3
+
+    def test_ambiguous_fixture_keywords_are_still_in_the_catalog(self):
+        """AMBIGUOUS_FIXTURE_KEYWORDS ("fixture"/"fixtures") are a
+        reporting caveat, not a removal -- see that constant's own
+        docstring for why they're kept despite the measured data-file-
+        sense majority."""
+        catalog = load_rq5_keyword_catalog()
+        for keyword in AMBIGUOUS_FIXTURE_KEYWORDS:
+            assert keyword in catalog["fixture_keywords"]
 
 
 class TestBuildKeywordPattern:
@@ -1205,6 +1233,7 @@ class TestPruneRemovedKeywords:
 
     def test_default_removed_keywords_constant_matches_the_catalog_changelog(self):
         assert V1_TO_V2_REMOVED_FIXTURE_KEYWORDS == ("before each", "after each", "before all", "after all")
+        assert V2_TO_V3_REMOVED_FIXTURE_KEYWORDS == ("teardown",)
 
 
 class TestRunScan:
