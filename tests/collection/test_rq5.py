@@ -72,7 +72,7 @@ def _make_db(tmp_path, repos):
     initialise_rq5_db(db_path)
     for repo_name, language, files in repos:
         row = _repo_row(
-            repo_name, language, "2026-09-08T00:00:00Z", 1, clone_ok=True, num_agent_files=len(files)
+            repo_name, language, "2026-09-08T00:00:00Z", 1, fetch_ok=True, num_agent_files=len(files)
         )
         persist_result(_scan_result(row, files=files), db_path)
     return db_path
@@ -112,12 +112,12 @@ class TestLoadRepoCounts:
     def test_counts_total_analyzed_and_skipped(self, tmp_path):
         db_path = tmp_path / "rq5_agent_files.db"
         initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, clone_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
         persist_result(
-            _scan_result(_repo_row("o/b", "python", "t", 1, clone_ok=False, error_reason="clone_failed")),
+            _scan_result(_repo_row("o/b", "python", "t", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")),
             db_path,
         )
-        persist_result(_scan_result(_repo_row("o/c", "python", "t", 1, clone_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("o/c", "python", "t", 1, fetch_ok=True)), db_path)
 
         counts = load_repo_counts(tmp_path)
         assert counts == {"total": 3, "analyzed": 2, "skipped": 1}
@@ -144,7 +144,7 @@ class TestAggregateRepoGuidance:
 
     def test_a_non_matching_pointer_file_cannot_suppress_a_real_signal(self):
         """A symlinked CLAUDE.md (scanned as its own literal, never-
-        matching content -- see rq5_agent_file_scan.read_file_at_commit())
+        matching content -- see rq5_agent_file_scan.read_blob_via_api())
         contributes has_test=False/has_fixture=False for its own row, but
         must never drag the repo's OR-folded signal back down to False."""
         rows = [
@@ -293,30 +293,33 @@ class TestGenerateReport:
     def test_collected_but_zero_agent_files_reports_that_distinctly(self, tmp_path):
         db_path = tmp_path / "rq5_agent_files.db"
         initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, clone_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
 
         report = generate_report(db_root=tmp_path)
         assert "No agent files found yet" in report
         assert "Repositories analyzed" in report
 
-    def test_repos_with_clone_ok_zero_contribute_no_files_and_are_reported_as_skipped(self, tmp_path):
+    def test_repos_with_fetch_ok_zero_contribute_no_files_and_are_reported_as_skipped(self, tmp_path):
         db_path = tmp_path / "rq5_agent_files.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("o/bad", "python", "t", 1, clone_ok=False, error_reason="clone_failed")),
+            _scan_result(_repo_row("o/bad", "python", "t", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")),
             db_path,
         )
         persist_result(
             _scan_result(
-                _repo_row("o/good", "python", "t", 1, clone_ok=True, num_agent_files=1),
+                _repo_row("o/good", "python", "t", 1, fetch_ok=True, num_agent_files=1),
                 files=[_file_row("o/good", "AGENTS.md", "AGENTS.md", "python", has_test=True)],
             ),
             db_path,
         )
 
         report = generate_report(db_root=tmp_path)
-        assert "Repositories analyzed (clone succeeded, commit found at/before the snapshot date): 1." in report
-        assert "Repositories skipped (clone failed, or no commit at/before the snapshot date): 1." in report
+        assert (
+            "Repositories analyzed (commit found at/before the snapshot date, "
+            "root tree/blob fetch succeeded): 1." in report
+        )
+        assert "Repositories skipped (no commit at/before the snapshot date, or a fetch failed): 1." in report
         assert "| Repositories with >=1 root agent file | 1 |" in report
 
     def test_a_repo_with_two_files_counts_once_in_the_overall_denominator(self, tmp_path):
@@ -327,7 +330,7 @@ class TestGenerateReport:
         initialise_rq5_db(db_path)
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", 1, clone_ok=True, num_agent_files=2),
+                _repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=2),
                 files=[
                     _file_row("o/a", "AGENTS.md", "AGENTS.md", "python", has_test=True),
                     _file_row("o/a", "CLAUDE.md", "CLAUDE.md", "python", has_fixture=True),
@@ -344,7 +347,7 @@ class TestGenerateReport:
         initialise_rq5_db(db_path)
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", 1, clone_ok=True, num_agent_files=1),
+                _repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1),
                 files=[_file_row("o/a", "AGENTS.md", "AGENTS.md", "python", test_keywords=["pytest"])],
             ),
             db_path,
@@ -362,7 +365,7 @@ class TestGenerateReport:
         initialise_rq5_db(db_path)
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", 1, clone_ok=True, num_agent_files=1),
+                _repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1),
                 files=[_file_row("o/a", "AGENTS.md", "AGENTS.md", "python", has_test=True)],
             ),
             db_path,

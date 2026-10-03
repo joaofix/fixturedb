@@ -9,13 +9,13 @@ own output) -- same role `rq1.py` plays for `db/rq1_prevalence.db`. No
 collection logic lives here; this module only aggregates and renders what
 that scan already persisted.
 
-A repo with `clone_ok=0` in `repo_scan` (clone failed, no commit at/before
-the snapshot date, or the root tree couldn't be listed) contributes zero
-rows to `agent_files` by construction (`rq5_agent_file_scan.process_repo()`
-never reaches the file-matching step for such a repo) -- so every count
-below is already implicitly restricted to successfully-analyzed repos,
-with no extra filter needed here. "Repositories skipped" is reported
-separately, for transparency, not folded into any percentage's denominator.
+A repo with `fetch_ok=0` in `repo_scan` (no commit at/before the snapshot
+date, or the root tree/blob fetch failed) contributes zero rows to
+`agent_files` by construction (`rq5_agent_file_scan.process_repo()` never
+reaches the file-matching step for such a repo) -- so every count below is
+already implicitly restricted to successfully-analyzed repos, with no
+extra filter needed here. "Repositories skipped" is reported separately,
+for transparency, not folded into any percentage's denominator.
 
 **Every statistic here is at the repository level, not the file level**
 (2026-10-02 methodology correction -- the first version of this report was
@@ -28,7 +28,7 @@ files matches >=1 test (or fixture) keyword (`RepoGuidance.has_test`/
 `aggregate_repo_guidance()`). A pointer file (e.g. a `CLAUDE.md` that's a
 symlink to `AGENTS.md`) needs no special-casing here: its own blob content
 is the literal link-target text (see `rq5_agent_file_scan.
-read_file_at_commit()`'s docstring), which trivially never contains a
+read_blob_via_api()`'s docstring), which trivially never contains a
 catalog keyword on its own, so it can never manufacture a false guidance
 signal for its repo -- `AGENTS.md`'s own row is what would (correctly)
 carry the real signal.
@@ -153,7 +153,7 @@ def load_agent_files(db_root: Path = paths.DB_ROOT) -> list[sqlite3.Row] | None:
 
 def load_repo_counts(db_root: Path = paths.DB_ROOT) -> dict[str, int] | None:
     """How many repos were attempted vs. successfully analyzed
-    (`clone_ok=1`) vs. skipped (`clone_ok=0`, any reason) -- `None` if the
+    (`fetch_ok=1`) vs. skipped (`fetch_ok=0`, any reason) -- `None` if the
     db doesn't exist yet. Reported for transparency only -- "analyzed"
     includes every successfully-scanned repo regardless of whether it had
     any agent file, so it is NOT the denominator any percentage in this
@@ -163,7 +163,7 @@ def load_repo_counts(db_root: Path = paths.DB_ROOT) -> dict[str, int] | None:
         return None
     with db_session(db_path) as conn:
         total = conn.execute("SELECT COUNT(*) FROM repo_scan").fetchone()[0]
-        analyzed = conn.execute("SELECT COUNT(*) FROM repo_scan WHERE clone_ok = 1").fetchone()[0]
+        analyzed = conn.execute("SELECT COUNT(*) FROM repo_scan WHERE fetch_ok = 1").fetchone()[0]
     return {"total": total, "analyzed": analyzed, "skipped": total - analyzed}
 
 
@@ -246,10 +246,10 @@ def generate_report(*, db_root: Path = paths.DB_ROOT, catalog_path: Path = _CATA
         "`collection/rq5_agent_file_scan.py`'s module docstring).",
         f"Target files searched (repository root only, case-insensitive, catalog "
         f"version {catalog['version']}): {', '.join(catalog['target_files'])}.",
-        f"Repositories analyzed (clone succeeded, commit found at/before the "
-        f"snapshot date): {repo_counts['analyzed']:,}.",
-        f"Repositories skipped (clone failed, or no commit at/before the "
-        f"snapshot date): {repo_counts['skipped']:,}.",
+        f"Repositories analyzed (commit found at/before the "
+        f"snapshot date, root tree/blob fetch succeeded): {repo_counts['analyzed']:,}.",
+        f"Repositories skipped (no commit at/before the snapshot date, or a "
+        f"fetch failed): {repo_counts['skipped']:,}.",
         "Every statistic below is at the repository level -- a repo counts as "
         "having test (or fixture) guidance if ANY of its root agent files "
         "matches >=1 test (or fixture) keyword. The denominator throughout is "

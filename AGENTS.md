@@ -95,9 +95,10 @@ collection/          # Main pipeline code (the "library")
                      # github-search-raw/ universe for test/fixture/setup/teardown prevalence,
                      # writes db/rq1_prevalence.db + rq1-prevalence/*.csv. Run directly:
                      # `python -m collection.rq1_prevalence_scan`
-  rq5_agent_file_scan.py  # RQ5's own collection, same raw universe + snapshot as RQ1: keyword-
-                     # scans root-level AGENTS.md/CLAUDE.md for test/fixture guidance, writes
-                     # db/rq5_agent_files.db + rq5-agent-files/*.csv. Keyword/target-file catalog:
+  rq5_agent_file_scan.py  # RQ5's own collection, same raw universe + snapshot as RQ1 -- but via
+                     # the GitHub REST API, never a clone: keyword-scans root-level AGENTS.md/
+                     # CLAUDE.md for test/fixture guidance, writes db/rq5_agent_files.db +
+                     # rq5-agent-files/*.csv. Keyword/target-file catalog:
                      # heuristics/rq5_agent_file_keywords.yaml. Run directly:
                      # `python -m collection.rq5_agent_file_scan`
   research_questions/  # Answers the paper's RQs, writes research_questions/*.md (committed):

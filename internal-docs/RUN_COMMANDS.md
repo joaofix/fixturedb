@@ -246,18 +246,26 @@ the same snapshot date Dataset A/C were collected at. Both are resumable (alread
 scanned repos are skipped on a re-run -- the db's own rows are the checkpoint, no
 separate checkpoint file), log to `db/rq1_prevalence.log` / `db/rq5_agent_files.log`,
 write a `db/*_progress.json` for monitoring, and push one ntfy.sh notification per
-language chunk plus one final push. `--workers` defaults to 12 (RQ1) -- pass a higher
-value on a many-core server (see each module's own docstring for operational history).
-Requires `GITHUB_TOKEN` in `.env` for a sustained high-volume run -- see
-`rq1_prevalence_scan.github_auth_env()`'s docstring for why an unauthenticated run
-risks GitHub rate-limiting.
+language chunk plus one final push.
+
+RQ1 clones every repo (`--workers` defaults to 12 -- pass a higher value on a
+many-core server; see that module's own docstring for operational history).
+`GITHUB_TOKEN` in `.env` is strongly recommended for a sustained high-volume run --
+see `rq1_prevalence_scan.github_auth_env()`'s docstring for why an unauthenticated
+run risks GitHub rate-limiting.
+
+RQ5 never clones anything -- it reads entirely through GitHub's REST API
+(`--workers` defaults to 20, since there's no disk/subprocess cost per repo
+anymore). `GITHUB_TOKEN` is effectively **required** here, not just recommended:
+the unauthenticated REST rate limit is 60 requests/hour, far too low for ~24.7k
+repos x ~2 requests each (vs. 5,000/hour authenticated).
 
 ```bash
 python -m collection.rq1_prevalence_scan --workers 12
   && curl -d "RQ1 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq1   # writes research_questions/rq1.md
 
-python -m collection.rq5_agent_file_scan --workers 12
+python -m collection.rq5_agent_file_scan --workers 20
   && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq5   # writes research_questions/rq5.md
 ```

@@ -84,13 +84,25 @@ Generating the findings: `python -m collection.research_questions.rq4` computes 
 A keyword-based scan over the same raw ~24.7k-repo universe RQ1 measures
 (`github-search-raw/*.csv.gz`), independent of Dataset A/B/C's own filtering, pinned
 to the same snapshot date as RQ1 (`collection/rq5_agent_file_scan.py`'s
-`RQ5_CUTOFF_DATE`, reused directly from `rq1_prevalence_scan.RQ1_CUTOFF_DATE`). For
-each repo, the scan clones (shallow, with a full-clone fallback), finds the commit
-at or before the snapshot date, and — without checking out a working tree — reads
-whichever of `AGENTS.md`/`CLAUDE.md` (case-insensitive, catalog-driven) exist at the
-repository root at that commit (`git ls-tree`/`git show` directly against the git
-object store; a symlinked agent file is searched as its own literal content, never
-resolved to whatever it points to). Every occurrence of a catalog keyword is
+`RQ5_CUTOFF_DATE`, reused directly from `rq1_prevalence_scan.RQ1_CUTOFF_DATE`).
+Unlike RQ1, this scan never clones anything — it reads entirely through GitHub's
+REST API (the Git Database API specifically): one call finds the commit at or
+before the snapshot date (`GET .../commits?until=<date>T23:59:59Z`), one lists the
+repository root's tree entries non-recursively (`GET .../git/trees/<sha>`), and one
+per matched entry fetches its raw blob content (`GET .../git/blobs/<sha>`) — the
+same two or three calls regardless of repo size, which makes this scan immune to
+the repo-size-driven failures (giant-monorepo clone timeouts, disk space,
+`ENAMETOOLONG`) that RQ1's clone-based approach had to work around. A blob's
+content is returned as-is regardless of what the file represents, so a symlinked
+agent file (confirmed against a real example, `pnpm/pnpm`'s root `CLAUDE.md`) is
+searched as its own literal target text with no special-casing needed. One accepted
+methodology difference from RQ1: the cutoff-commit boundary is evaluated in UTC
+(GitHub's API normalizes every commit timestamp to UTC, with no way to recover a
+commit's original timezone offset), while RQ1's PyDriller-based walk compares each
+commit's date in its own original offset — the two only disagree for a commit
+landing within the \~14-hour window around UTC midnight on the exact cutoff date,
+accepted as immaterial here since root config files change on the order of
+weeks/months, not hours. Every occurrence of a catalog keyword is
 keyword-matched (case-insensitive, word-boundary-respecting, multi-word terms
 tolerant of a space/hyphen/no separator), tagged with its line, surrounding context,
 and whether it falls inside a fenced code block, for later manual review. Test

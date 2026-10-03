@@ -3,91 +3,103 @@
 Same standard as tests/collection/test_rq1_prevalence_scan.py: this scan
 runs exactly once over ~24.7k repos, so every piece of real business logic
 (keyword-pattern construction, per-line matching + code-fence tracking,
-root-only case-insensitive file lookup, symlink-not-followed, DB upsert/
-resume, CSV output) is exercised directly against real git repos/objects
-built in `tmp_path` -- no real cloning or network access anywhere in this
-file. Only `process_repo()`'s `clone_with_function()` call is mocked out,
-handing back an already-built local repo instead of doing a real network
-clone, the same pattern test_rq1_prevalence_scan.py uses.
+case-insensitive root-file matching, API response handling, rate-limit
+retry, DB upsert/resume, CSV output) is exercised directly. Unlike the
+first version of this module (which cloned every repo), there is no git/
+network dependency to work around here at all -- every GitHub REST call
+goes through `requests.get`, which is mocked throughout this file via real
+`requests.Response` objects (so `.json()`/`.status_code`/`.headers` behave
+exactly like the real library, not a hand-rolled approximation of it).
 """
 
 from __future__ import annotations
 
+import base64
 import json
-import os
 import sqlite3
-import subprocess
 import sys
 import threading
-from contextlib import contextmanager
 from unittest.mock import patch
+
+import requests
 
 from collection.rq5_agent_file_scan import (
     RQ5_LANGUAGES,
+    _api_get,
     _build_keyword_pattern,
     _build_patterns,
     _repo_row,
     _scan_result,
+    find_cutoff_commit_via_api,
     find_keyword_matches,
     find_target_files_at_commit,
     initialise_rq5_db,
-    list_root_tree_entries,
+    list_root_tree_via_api,
     load_rq5_keyword_catalog,
     load_scanned_repo_names,
     main,
     persist_result,
     process_repo,
-    read_file_at_commit,
+    read_blob_via_api,
     run_scan,
     scan_file_content,
     write_csv_outputs,
 )
 
 
-def _git(repo_path, *args, env=None):
-    subprocess.run(
-        ["git", "-C", str(repo_path), *args],
-        check=True,
-        capture_output=True,
-        text=True,
-        env=env,
-    )
+def _fake_response(status_code, json_data=None, headers=None):
+    """A real requests.Response with the given status/json/headers --
+    .json()/.status_code/.headers all behave exactly like the real
+    library would, so tests exercise the actual parsing code, not a
+    stand-in for it."""
+    resp = requests.Response()
+    resp.status_code = status_code
+    resp._content = json.dumps(json_data).encode("utf-8") if json_data is not None else b""
+    resp.headers = requests.structures.CaseInsensitiveDict(headers or {})
+    return resp
 
 
-def _make_git_repo(tmp_path, name="repo"):
-    repo_path = tmp_path / name
-    repo_path.mkdir()
-    _git(repo_path, "init", "-b", "main")
-    _git(repo_path, "config", "user.email", "test@example.com")
-    _git(repo_path, "config", "user.name", "Test")
-    return repo_path
+def _commit_json(sha, date="2026-09-08T12:00:00Z"):
+    return {"sha": sha, "commit": {"author": {"date": date}, "committer": {"date": date}}}
 
 
-def _commit(repo_path, filename, content, date, message="commit"):
-    (repo_path / filename).write_text(content)
-    _git(repo_path, "add", filename)
-    env = dict(os.environ)
-    env["GIT_AUTHOR_DATE"] = date
-    env["GIT_COMMITTER_DATE"] = date
-    _git(repo_path, "commit", "-m", message, env=env)
+def _blob_json(content_str, encoding="base64"):
+    return {
+        "content": base64.b64encode(content_str.encode("utf-8")).decode("ascii"),
+        "encoding": encoding,
+    }
 
 
-def _head_sha(repo_path):
-    result = subprocess.run(
-        ["git", "-C", str(repo_path), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    return result.stdout.strip()
+def _tree_entry(path, sha, type_="blob", mode="100644"):
+    return {"path": path, "type": type_, "sha": sha, "mode": mode}
 
 
-@contextmanager
-def _fake_clone_result(path_or_none):
-    """Stand-in for clone_with_function -- yields an already-built local
-    repo (or None, for a simulated clone failure) instead of a real
-    network clone."""
-    yield path_or_none
+def _route(*, commits=None, trees=None, blobs=None):
+    """requests.get side_effect routing by URL shape:
+    .../commits           -> `commits` (a list of commit dicts; None means empty result)
+    .../git/trees/<sha>   -> `trees[sha]` (a list of tree entries)
+    .../git/blobs/<sha>   -> `blobs[sha]` (a blob dict)
+    Any sha not present in `trees`/`blobs` is treated as a 404.
+    """
+    trees = trees or {}
+    blobs = blobs or {}
+
+    def _get(url, headers=None, params=None, timeout=None):
+        if url.endswith("/commits"):
+            return _fake_response(200, commits if commits is not None else [])
+        if "/git/trees/" in url:
+            sha = url.rsplit("/", 1)[-1]
+            if sha not in trees:
+                return _fake_response(404, {"message": "Not Found"})
+            return _fake_response(200, {"sha": sha, "tree": trees[sha], "truncated": False})
+        if "/git/blobs/" in url:
+            sha = url.rsplit("/", 1)[-1]
+            if sha not in blobs:
+                return _fake_response(404, {"message": "Not Found"})
+            return _fake_response(200, blobs[sha])
+        raise AssertionError(f"unexpected URL in test: {url}")
+
+    return _get
 
 
 _TEST_CATALOG = {
@@ -107,9 +119,6 @@ class TestLoadRq5KeywordCatalog:
         assert isinstance(catalog["version"], int)
 
     def test_bare_setup_is_never_a_standalone_keyword(self):
-        """Explicit project requirement: the bare word "setup" matches
-        generic environment-setup instructions, not fixture setup -- it
-        must only ever appear inside a phrase."""
         catalog = load_rq5_keyword_catalog()
         assert "setup" not in catalog["test_keywords"]
         assert "setup" not in catalog["fixture_keywords"]
@@ -142,12 +151,9 @@ class TestBuildKeywordPattern:
     def test_camel_case_keyword_matched_literally(self):
         pattern = _build_keyword_pattern("beforeEach")
         assert pattern.search("call beforeEach now")
-        assert pattern.search("BEFOREEACH")  # case-insensitive
+        assert pattern.search("BEFOREEACH")
 
     def test_internal_hyphen_in_a_word_is_preserved_literally(self):
-        """"end-to-end test" -- the hyphen inside "end-to-end" is part of
-        that token, not the variable multi-word separator; only the gap
-        between "end-to-end" and "test" should vary."""
         pattern = _build_keyword_pattern("end-to-end test")
         assert pattern.search("end-to-end test")
         assert pattern.search("end-to-end-test")
@@ -197,11 +203,7 @@ class TestFindKeywordMatches:
 
     def test_two_separate_fenced_blocks_each_toggle_correctly(self):
         patterns = _build_patterns(["teardown"])
-        content = (
-            "```\nfirst teardown\n```\n"
-            "between teardown\n"
-            "```\nsecond teardown\n```"
-        )
+        content = "```\nfirst teardown\n```\nbetween teardown\n```\nsecond teardown\n```"
         matches = find_keyword_matches(content, patterns)
         by_context = {m["line_context"]: m["in_code_block"] for m in matches}
         assert by_context["first teardown"] is True
@@ -220,139 +222,177 @@ class TestScanFileContent:
         assert len(result["fixture_matches"]) == 1
 
 
-class TestListRootTreeEntries:
-    def test_lists_only_root_level_entries(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        (repo_path / "sub").mkdir()
-        (repo_path / "sub" / "AGENTS.md").write_text("nested, must be ignored")
-        _commit(repo_path, "AGENTS.md", "root file", "2026-08-01T00:00:00")
-        _git(repo_path, "add", "sub/AGENTS.md")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:01"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:01"
-        _git(repo_path, "commit", "-m", "add nested", env=env)
+class TestApiGet:
+    def test_returns_response_on_success(self):
+        with patch("requests.get", return_value=_fake_response(200, {"ok": True})):
+            response = _api_get("https://api.github.com/x", token="tok")
+        assert response.status_code == 200
+        assert response.json() == {"ok": True}
 
-        sha = _head_sha(repo_path)
-        entries = list_root_tree_entries(repo_path, sha)
-        names = {name for name, _ in entries}
-        assert "AGENTS.md" in names
-        assert "sub" in names
-        # The nested AGENTS.md must not appear as a root-level entry.
-        assert names == {"AGENTS.md", "sub"}
-
-    def test_distinguishes_blob_from_tree_type(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        (repo_path / "sub").mkdir()
-        (repo_path / "sub" / "x.txt").write_text("x")
-        _commit(repo_path, "AGENTS.md", "root file", "2026-08-01T00:00:00")
-        _git(repo_path, "add", "sub/x.txt")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:01"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:01"
-        _git(repo_path, "commit", "-m", "add sub", env=env)
-
-        sha = _head_sha(repo_path)
-        entries = dict(list_root_tree_entries(repo_path, sha))
-        assert entries["AGENTS.md"] == "blob"
-        assert entries["sub"] == "tree"
-
-    def test_raises_on_git_failure(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
+    def test_returns_response_on_404_without_retrying(self):
+        get_mock = patch("requests.get", return_value=_fake_response(404, {})).start()
         try:
-            list_root_tree_entries(repo_path, "0" * 40)
-        except RuntimeError:
-            pass
-        else:
-            raise AssertionError("expected RuntimeError")
+            response = _api_get("https://api.github.com/x", token="tok")
+        finally:
+            patch.stopall()
+        assert response.status_code == 404
+        assert get_mock.call_count == 1
+
+    def test_retries_on_rate_limit_then_succeeds(self):
+        rate_limited = _fake_response(403, {}, headers={"X-RateLimit-Remaining": "0", "Retry-After": "0"})
+        ok = _fake_response(200, {"ok": True})
+        with (
+            patch("requests.get", side_effect=[rate_limited, ok]),
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+        ):
+            response = _api_get("https://api.github.com/x", token="tok", max_retries=3)
+        assert response.status_code == 200
+
+    def test_exhausts_retries_and_returns_none(self):
+        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
+        with (
+            patch("requests.get", return_value=rate_limited) as get_mock,
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+        ):
+            response = _api_get("https://api.github.com/x", token="tok", max_retries=2)
+        assert response is None
+        assert get_mock.call_count == 3  # initial + 2 retries
+
+    def test_network_exception_returns_none(self):
+        with patch("requests.get", side_effect=requests.ConnectionError("boom")):
+            response = _api_get("https://api.github.com/x", token="tok")
+        assert response is None
+
+    def test_sends_authorization_header_when_token_given(self):
+        with patch("requests.get", return_value=_fake_response(200, {})) as get_mock:
+            _api_get("https://api.github.com/x", token="abc123")
+        assert get_mock.call_args.kwargs["headers"]["Authorization"] == "token abc123"
+
+    def test_omits_authorization_header_when_no_token(self):
+        with patch("requests.get", return_value=_fake_response(200, {})) as get_mock:
+            _api_get("https://api.github.com/x", token="")
+        assert "Authorization" not in get_mock.call_args.kwargs["headers"]
 
 
-class TestReadFileAtCommit:
-    def test_reads_real_content_at_commit(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "hello world", "2026-08-01T00:00:00")
-        sha = _head_sha(repo_path)
-        assert read_file_at_commit(repo_path, sha, "AGENTS.md") == "hello world"
+class TestFindCutoffCommitViaApi:
+    def test_returns_sha_and_date_from_the_first_commit(self):
+        commits = [_commit_json("abc123", date="2026-09-08T16:40:33Z")]
+        with patch("requests.get", side_effect=_route(commits=commits)):
+            result = find_cutoff_commit_via_api("owner/repo", "2026-09-08")
+        assert result == {"sha": "abc123", "date": "2026-09-08"}
 
-    def test_returns_none_for_missing_path(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "hello", "2026-08-01T00:00:00")
-        sha = _head_sha(repo_path)
-        assert read_file_at_commit(repo_path, sha, "DOES_NOT_EXIST.md") is None
+    def test_empty_commit_list_returns_none(self):
+        with patch("requests.get", side_effect=_route(commits=[])):
+            result = find_cutoff_commit_via_api("owner/repo", "2026-09-08")
+        assert result is None
 
-    def test_symlink_returns_its_own_link_text_not_the_target_content(self, tmp_path):
-        """Explicit project requirement: a symlinked agent file is searched
-        as its own file -- its literal blob content (the link-target
-        text), never the content it points to."""
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "real content with a test keyword", "2026-08-01T00:00:00")
-        (repo_path / "CLAUDE.md").symlink_to("AGENTS.md")
-        _git(repo_path, "add", "CLAUDE.md")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:01"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:01"
-        _git(repo_path, "commit", "-m", "symlink", env=env)
-        sha = _head_sha(repo_path)
+    def test_non_200_returns_none(self):
+        with patch("requests.get", return_value=_fake_response(404, {})):
+            result = find_cutoff_commit_via_api("owner/repo", "2026-09-08")
+        assert result is None
 
-        content = read_file_at_commit(repo_path, sha, "CLAUDE.md")
+    def test_uses_until_parameter_bounded_to_end_of_cutoff_day(self):
+        with patch("requests.get", return_value=_fake_response(200, [])) as get_mock:
+            find_cutoff_commit_via_api("owner/repo", "2026-09-08")
+        assert get_mock.call_args.kwargs["params"]["until"] == "2026-09-08T23:59:59Z"
+
+
+class TestListRootTreeViaApi:
+    def test_returns_tree_entries(self):
+        entries = [_tree_entry("AGENTS.md", "sha1")]
+        with patch("requests.get", side_effect=_route(trees={"abc": entries})):
+            result = list_root_tree_via_api("owner/repo", "abc")
+        assert result == entries
+
+    def test_missing_sha_returns_none(self):
+        with patch("requests.get", side_effect=_route(trees={})):
+            result = list_root_tree_via_api("owner/repo", "missing")
+        assert result is None
+
+
+class TestReadBlobViaApi:
+    def test_decodes_base64_content(self):
+        with patch("requests.get", side_effect=_route(blobs={"sha1": _blob_json("hello world")})):
+            content = read_blob_via_api("owner/repo", "sha1")
+        assert content == "hello world"
+
+    def test_symlink_blob_returns_its_literal_target_text(self):
+        """A symlink's blob content IS the literal link-target text --
+        this is exactly why no type-based branching is needed anywhere:
+        the Blobs API returns bytes, not a resolved file."""
+        with patch("requests.get", side_effect=_route(blobs={"sha1": _blob_json("AGENTS.md")})):
+            content = read_blob_via_api("owner/repo", "sha1")
         assert content == "AGENTS.md"
+
+    def test_missing_blob_returns_none(self):
+        with patch("requests.get", side_effect=_route(blobs={})):
+            content = read_blob_via_api("owner/repo", "missing")
+        assert content is None
+
+    def test_non_base64_encoding_returns_none_not_a_crash(self):
+        with patch("requests.get", side_effect=_route(blobs={"sha1": {"content": "x", "encoding": "none"}})):
+            content = read_blob_via_api("owner/repo", "sha1")
+        assert content is None
+
+    def test_malformed_base64_returns_none_not_a_crash(self):
+        with patch(
+            "requests.get",
+            side_effect=_route(blobs={"sha1": {"content": "not-valid-base64!!!", "encoding": "base64"}}),
+        ):
+            content = read_blob_via_api("owner/repo", "sha1")
+        assert content is None
+
+    def test_decodes_permissively_on_invalid_utf8(self):
+        raw = b"\xff\xfe not valid utf-8"
+        blob = {"content": base64.b64encode(raw).decode("ascii"), "encoding": "base64"}
+        with patch("requests.get", side_effect=_route(blobs={"sha1": blob})):
+            content = read_blob_via_api("owner/repo", "sha1")
+        assert content is not None  # decoded with errors="replace", never raised
 
 
 class TestFindTargetFilesAtCommit:
-    def test_matches_case_insensitively(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "agents.md", "content", "2026-08-01T00:00:00")
-        sha = _head_sha(repo_path)
-        found = find_target_files_at_commit(repo_path, sha, ["AGENTS.md", "CLAUDE.md"])
-        assert found == [("agents.md", "AGENTS.md")]
+    def test_matches_case_insensitively(self):
+        entries = [_tree_entry("agents.md", "sha1")]
+        found = find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"])
+        assert found == [("agents.md", "AGENTS.md", "sha1")]
 
-    def test_excludes_a_directory_with_a_matching_name(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        (repo_path / "AGENTS.md").mkdir()
-        (repo_path / "AGENTS.md" / "inner.txt").write_text("x")
-        _git(repo_path, "add", "AGENTS.md/inner.txt")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:00"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:00"
-        _git(repo_path, "commit", "-m", "dir named like a target file", env=env)
-        sha = _head_sha(repo_path)
-        found = find_target_files_at_commit(repo_path, sha, ["AGENTS.md", "CLAUDE.md"])
+    def test_excludes_a_directory_with_a_matching_name(self):
+        entries = [_tree_entry("AGENTS.md", "sha1", type_="tree")]
+        found = find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"])
         assert found == []
 
-    def test_finds_both_target_files_independently(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        (repo_path / "AGENTS.md").write_text("a")
-        (repo_path / "CLAUDE.md").write_text("b")
-        _git(repo_path, "add", "AGENTS.md", "CLAUDE.md")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:00"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:00"
-        _git(repo_path, "commit", "-m", "both", env=env)
-        sha = _head_sha(repo_path)
-        found = sorted(find_target_files_at_commit(repo_path, sha, ["AGENTS.md", "CLAUDE.md"]))
-        assert found == [("AGENTS.md", "AGENTS.md"), ("CLAUDE.md", "CLAUDE.md")]
+    def test_finds_both_target_files_independently(self):
+        entries = [_tree_entry("AGENTS.md", "sha1"), _tree_entry("CLAUDE.md", "sha2")]
+        found = sorted(find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"]))
+        assert found == [("AGENTS.md", "AGENTS.md", "sha1"), ("CLAUDE.md", "CLAUDE.md", "sha2")]
 
-    def test_no_match_returns_empty_list(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "README.md", "content", "2026-08-01T00:00:00")
-        sha = _head_sha(repo_path)
-        assert find_target_files_at_commit(repo_path, sha, ["AGENTS.md", "CLAUDE.md"]) == []
+    def test_no_match_returns_empty_list(self):
+        entries = [_tree_entry("README.md", "sha1")]
+        assert find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"]) == []
+
+    def test_symlink_mode_is_still_a_blob_and_matches(self):
+        """A symlink's tree entry has mode 120000 but type "blob" -- it
+        must still be picked up for reading, same as any other file."""
+        entries = [_tree_entry("CLAUDE.md", "sha1", type_="blob", mode="120000")]
+        found = find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"])
+        assert found == [("CLAUDE.md", "CLAUDE.md", "sha1")]
 
 
 class TestRepoRowAndScanResult:
-    def test_repo_row_coerces_clone_ok_to_int(self):
-        row = _repo_row("o/r", "python", "t", 1, clone_ok=True)
-        assert row["clone_ok"] == 1
-        row = _repo_row("o/r", "python", "t", 1, clone_ok=False)
-        assert row["clone_ok"] == 0
+    def test_repo_row_coerces_fetch_ok_to_int(self):
+        row = _repo_row("o/r", "python", "t", 1, fetch_ok=True)
+        assert row["fetch_ok"] == 1
+        row = _repo_row("o/r", "python", "t", 1, fetch_ok=False)
+        assert row["fetch_ok"] == 0
 
     def test_repo_row_defaults(self):
-        row = _repo_row("o/r", "python", "t", 1, clone_ok=False, error_reason="clone_failed")
+        row = _repo_row("o/r", "python", "t", 1, fetch_ok=False, error_reason="clone_failed")
         assert row["commit_sha"] is None
         assert row["num_agent_files"] == 0
         assert row["error_reason"] == "clone_failed"
 
     def test_scan_result_defaults_files_and_matches_to_empty_lists(self):
-        row = _repo_row("o/r", "python", "t", 1, clone_ok=False)
+        row = _repo_row("o/r", "python", "t", 1, fetch_ok=False)
         result = _scan_result(row)
         assert result == {"repo": row, "files": [], "matches": []}
 
@@ -361,28 +401,22 @@ class TestProcessRepo:
     def _repo_dict(self, name="owner/repo", language="python"):
         return {"repo_name": name, "language": language, "clone_url": "https://example.com/owner/repo.git"}
 
-    def test_successful_scan_with_one_matching_file(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(
-            repo_path,
-            "AGENTS.md",
-            "Run `pytest` and check the fixture setup.\nUse beforeEach for fixtures.",
-            "2026-08-01T00:00:00",
-        )
+    def test_successful_scan_with_one_matching_file(self):
+        commits = [_commit_json("sha1", date="2026-08-01T00:00:00Z")]
+        tree = [_tree_entry("AGENTS.md", "blobsha1")]
+        blob = _blob_json("Run `pytest` and check the fixture setup.\nUse beforeEach for fixtures.")
 
         with patch(
-            "collection.rq5_agent_file_scan.clone_with_function",
-            side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
+            "requests.get",
+            side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob}),
         ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
 
-        assert result["repo"]["clone_ok"] == 1
+        assert result["repo"]["fetch_ok"] == 1
         assert result["repo"]["error_reason"] is None
         assert result["repo"]["num_agent_files"] == 1
         assert result["repo"]["catalog_version"] == 1
-        assert result["repo"]["commit_sha"]
+        assert result["repo"]["commit_sha"] == "sha1"
 
         assert len(result["files"]) == 1
         file_row = result["files"][0]
@@ -390,134 +424,73 @@ class TestProcessRepo:
         assert file_row["file_type"] == "AGENTS.md"
         assert file_row["has_test"] is True
         assert file_row["has_fixture"] is True
-        assert file_row["test_match_count"] == 1  # "pytest" only -- "test" alone doesn't appear
-        # "fixture" (line 1) + "beforeEach" and "before each" (both legitimately fire on
-        # the same text -- a camelCase keyword and a spaced keyword are independent
-        # catalog entries) + "fixtures" (line 2).
+        assert file_row["test_match_count"] == 1  # "pytest" only
+        # "fixture" (line 1) + "beforeEach" and "before each" (both fire on the same
+        # text -- a camelCase keyword and a spaced keyword are independent catalog
+        # entries) + "fixtures" (line 2).
         assert file_row["fixture_match_count"] == 4
         assert "pytest" in file_row["matched_test_keywords"]
-        assert file_row["github_url"] == (
-            f"https://github.com/owner/repo/blob/{result['repo']['commit_sha']}/AGENTS.md"
-        )
+        assert file_row["github_url"] == "https://github.com/owner/repo/blob/sha1/AGENTS.md"
 
         assert len(result["matches"]) == file_row["test_match_count"] + file_row["fixture_match_count"]
         assert all(m["repo_name"] == "owner/repo" for m in result["matches"])
         assert all(m["file_name"] == "AGENTS.md" for m in result["matches"])
 
-    def test_repo_with_no_target_files_is_clone_ok_with_zero_files(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "README.md", "nothing relevant", "2026-08-01T00:00:00")
+    def test_repo_with_no_target_files_is_fetch_ok_with_zero_files(self):
+        commits = [_commit_json("sha1")]
+        tree = [_tree_entry("README.md", "blobsha1")]
 
-        with patch(
-            "collection.rq5_agent_file_scan.clone_with_function",
-            side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
-        ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
+        with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree})):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
 
-        assert result["repo"]["clone_ok"] == 1
+        assert result["repo"]["fetch_ok"] == 1
         assert result["repo"]["error_reason"] is None
         assert result["repo"]["num_agent_files"] == 0
         assert result["files"] == []
         assert result["matches"] == []
 
-    def test_clone_failure_returns_zero_row(self, tmp_path):
-        with patch(
-            "collection.rq5_agent_file_scan.clone_with_function",
-            side_effect=lambda fn, url, path: _fake_clone_result(None),
-        ):
-            result = process_repo(self._repo_dict(), tmp_path, catalog=_TEST_CATALOG)
+    def test_no_commit_before_cutoff_returns_zero_row(self):
+        with patch("requests.get", side_effect=_route(commits=[])):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
 
-        assert result["repo"]["clone_ok"] == 0
-        assert result["repo"]["error_reason"] == "clone_failed"
+        assert result["repo"]["fetch_ok"] == 0
+        assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
         assert result["files"] == []
         assert result["matches"] == []
 
-    def test_no_commit_before_cutoff_returns_zero_row(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "x", "2026-09-10T00:00:00")  # after cutoff
+    def test_tree_fetch_failure_returns_zero_row(self):
+        commits = [_commit_json("sha1")]
+        # trees={} means the Trees API 404s for "sha1" -- simulated failure.
+        with patch("requests.get", side_effect=_route(commits=commits, trees={})):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
 
-        with patch(
-            "collection.rq5_agent_file_scan.clone_with_function",
-            side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
-        ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
+        assert result["repo"]["fetch_ok"] == 0
+        assert result["repo"]["error_reason"] == "tree_fetch_failed"
 
-        assert result["repo"]["clone_ok"] == 0
-        assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
+    def test_one_unreadable_blob_does_not_block_the_other(self):
+        commits = [_commit_json("sha1")]
+        tree = [_tree_entry("AGENTS.md", "blob_missing"), _tree_entry("CLAUDE.md", "blob_present")]
+        blobs = {"blob_present": _blob_json("a fixture file")}  # blob_missing -> 404
 
-    def test_ls_tree_failure_returns_zero_row(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "x", "2026-08-01T00:00:00")
+        with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs=blobs)):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
 
-        with (
-            patch(
-                "collection.rq5_agent_file_scan.clone_with_function",
-                side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
-            ),
-            patch(
-                "collection.rq5_agent_file_scan.find_target_files_at_commit",
-                side_effect=RuntimeError("git ls-tree failed: boom"),
-            ),
-        ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
-
-        assert result["repo"]["clone_ok"] == 0
-        assert result["repo"]["error_reason"].startswith("ls_tree_failed")
-
-    def test_one_unreadable_file_does_not_block_the_other(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        (repo_path / "AGENTS.md").write_text("a test file")
-        (repo_path / "CLAUDE.md").write_text("a fixture file")
-        _git(repo_path, "add", "AGENTS.md", "CLAUDE.md")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:00"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:00"
-        _git(repo_path, "commit", "-m", "both", env=env)
-
-        real_read = read_file_at_commit
-
-        def _flaky_read(repo_path_arg, sha, file_name, **kwargs):
-            if file_name == "AGENTS.md":
-                raise RuntimeError("simulated read failure")
-            return real_read(repo_path_arg, sha, file_name, **kwargs)
-
-        with (
-            patch(
-                "collection.rq5_agent_file_scan.clone_with_function",
-                side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
-            ),
-            patch("collection.rq5_agent_file_scan.read_file_at_commit", side_effect=_flaky_read),
-        ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
-
-        assert result["repo"]["clone_ok"] == 1
+        assert result["repo"]["fetch_ok"] == 1
         assert [f["file_name"] for f in result["files"]] == ["CLAUDE.md"]
 
-    def test_symlinked_claude_md_is_scanned_as_its_own_literal_content(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        (repo_path / "AGENTS.md").write_text("a test mention and a fixture mention")
-        (repo_path / "CLAUDE.md").symlink_to("AGENTS.md")
-        _git(repo_path, "add", "AGENTS.md", "CLAUDE.md")
-        env = dict(os.environ)
-        env["GIT_AUTHOR_DATE"] = "2026-08-01T00:00:00"
-        env["GIT_COMMITTER_DATE"] = "2026-08-01T00:00:00"
-        _git(repo_path, "commit", "-m", "symlink", env=env)
+    def test_symlinked_claude_md_is_scanned_as_its_own_literal_content(self):
+        commits = [_commit_json("sha1")]
+        tree = [
+            _tree_entry("AGENTS.md", "blob_agents"),
+            _tree_entry("CLAUDE.md", "blob_claude_symlink", mode="120000"),
+        ]
+        blobs = {
+            "blob_agents": _blob_json("a test mention and a fixture mention"),
+            "blob_claude_symlink": _blob_json("AGENTS.md"),  # the symlink's own literal target text
+        }
 
-        with patch(
-            "collection.rq5_agent_file_scan.clone_with_function",
-            side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
-        ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
+        with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs=blobs)):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
 
         by_name = {f["file_name"]: f for f in result["files"]}
         assert by_name["AGENTS.md"]["has_test"] is True
@@ -526,46 +499,26 @@ class TestProcessRepo:
         assert by_name["CLAUDE.md"]["has_test"] is False
         assert by_name["CLAUDE.md"]["has_fixture"] is False
 
-    def test_uses_resolve_cutoff_commit_not_the_raw_dataset_c_helper(self, tmp_path):
-        """Regression guard: this scan must go through
-        rq1_prevalence_scan._resolve_cutoff_commit() (the fix for the
-        2026-10-02 "shallow clone hides the true cutoff commit" bug), not
-        call dataset_c.find_cutoff_commit() directly -- a direct call
-        would silently reintroduce that bug here."""
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "x", "2026-08-01T00:00:00")
-        real_sha = _head_sha(repo_path)  # must resolve for real in repo_path, or downstream git calls fail
-
-        with (
-            patch(
-                "collection.rq5_agent_file_scan.clone_with_function",
-                side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
-            ),
-            patch(
-                "collection.rq5_agent_file_scan._resolve_cutoff_commit",
-                return_value={"sha": real_sha, "date": "2026-08-01"},
-            ) as resolve_mock,
-        ):
-            result = process_repo(
-                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
-            )
-
-        resolve_mock.assert_called_once()
-        assert resolve_mock.call_args.args[0] == repo_path
-        assert resolve_mock.call_args.args[2] == "2026-09-08"
-        assert result["repo"]["commit_sha"] == real_sha
-
-    def test_default_catalog_is_loaded_when_none_is_passed(self, tmp_path):
-        repo_path = _make_git_repo(tmp_path)
-        _commit(repo_path, "AGENTS.md", "mentions conftest for fixtures", "2026-08-01T00:00:00")
+    def test_default_catalog_is_loaded_when_none_is_passed(self):
+        commits = [_commit_json("sha1")]
+        tree = [_tree_entry("AGENTS.md", "blobsha1")]
+        blob = _blob_json("mentions conftest for fixtures")
 
         with patch(
-            "collection.rq5_agent_file_scan.clone_with_function",
-            side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
+            "requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob})
         ):
-            result = process_repo(self._repo_dict(), tmp_path, cutoff_date="2026-09-08")
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08")
 
         assert result["files"][0]["has_fixture"] is True
+
+
+class TestProcessRepoRobustness:
+    def test_connection_error_is_treated_as_a_failed_fetch_not_a_crash(self):
+        repo = {"repo_name": "owner/repo", "language": "python", "clone_url": "x"}
+        with patch("requests.get", side_effect=requests.ConnectionError("boom")):
+            result = process_repo(repo, cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+        assert result["repo"]["fetch_ok"] == 0
+        assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
 
 
 class TestLoadScannedRepoNames:
@@ -575,7 +528,7 @@ class TestLoadScannedRepoNames:
     def test_returns_persisted_repo_names(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, clone_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
         assert load_scanned_repo_names(db_path) == {"o/a"}
 
 
@@ -584,18 +537,18 @@ class TestPersistResult:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("o/a", "python", "t1", 1, clone_ok=False, error_reason="clone_failed")),
+            _scan_result(_repo_row("o/a", "python", "t1", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")),
             db_path,
         )
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t2", 1, clone_ok=True, commit_sha="abc", num_agent_files=1)
+                _repo_row("o/a", "python", "t2", 1, fetch_ok=True, commit_sha="abc", num_agent_files=1)
             ),
             db_path,
         )
 
         with sqlite3.connect(db_path) as conn:
-            rows = conn.execute("SELECT clone_ok, commit_sha FROM repo_scan WHERE repo_name='o/a'").fetchall()
+            rows = conn.execute("SELECT fetch_ok, commit_sha FROM repo_scan WHERE repo_name='o/a'").fetchall()
         assert rows == [(1, "abc")]
 
     def test_re_persisting_replaces_file_and_match_rows_not_duplicates_them(self, tmp_path):
@@ -627,17 +580,16 @@ class TestPersistResult:
         }
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t1", 1, clone_ok=True, commit_sha="sha1", num_agent_files=1),
+                _repo_row("o/a", "python", "t1", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
                 files=[file1],
                 matches=[match1, match1],
             ),
             db_path,
         )
 
-        # Re-process the same repo -- now with zero matching files.
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t2", 1, clone_ok=True, commit_sha="sha2", num_agent_files=0)
+                _repo_row("o/a", "python", "t2", 1, fetch_ok=True, commit_sha="sha2", num_agent_files=0)
             ),
             db_path,
         )
@@ -687,7 +639,7 @@ class TestPersistResult:
         }
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", 1, clone_ok=True, commit_sha="sha1", num_agent_files=1),
+                _repo_row("o/a", "python", "t", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
                 files=[file1],
                 matches=[match_test, match_fixture],
             ),
@@ -736,7 +688,7 @@ class TestWriteCsvOutputs:
         }
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", 1, clone_ok=True, commit_sha="sha1", num_agent_files=1),
+                _repo_row("o/a", "python", "t", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
                 files=[file1],
                 matches=[match1],
             ),
@@ -760,9 +712,7 @@ class TestRunScan:
     def test_run_scan_skips_already_scanned_repos(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        persist_result(
-            _scan_result(_repo_row("org/already", "python", "t", 1, clone_ok=True)), db_path
-        )
+        persist_result(_scan_result(_repo_row("org/already", "python", "t", 1, fetch_ok=True)), db_path)
 
         universe = [
             {"repo_name": "org/already", "language": "python", "clone_url": "x"},
@@ -770,9 +720,9 @@ class TestRunScan:
         ]
         processed = []
 
-        def _fake_process_repo(repo, clones_dir, **kwargs):
+        def _fake_process_repo(repo, **kwargs):
             processed.append(repo["repo_name"])
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, clone_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
@@ -781,7 +731,6 @@ class TestRunScan:
             counts = run_scan(
                 db_path=db_path,
                 workers=1,
-                clones_dir=tmp_path / "clones",
                 progress_path=tmp_path / "progress.json",
                 notify=False,
             )
@@ -798,11 +747,11 @@ class TestRunScan:
             {"repo_name": "org/fine", "language": "python", "clone_url": "y"},
         ]
 
-        def _fake_process_repo(repo, clones_dir, **kwargs):
+        def _fake_process_repo(repo, **kwargs):
             if repo["repo_name"] == "org/stuck":
                 stop_event.wait(5)
-                return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", 1, clone_ok=True))
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, clone_ok=True))
+                return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         try:
             with (
@@ -812,7 +761,6 @@ class TestRunScan:
                 counts = run_scan(
                     db_path=db_path,
                     workers=2,
-                    clones_dir=tmp_path / "clones",
                     progress_path=tmp_path / "progress.json",
                     notify=False,
                     process_repo_timeout_seconds=0.05,
@@ -824,20 +772,19 @@ class TestRunScan:
         rows = {
             row[0]: (row[1], row[2])
             for row in sqlite3.connect(db_path).execute(
-                "SELECT repo_name, clone_ok, error_reason FROM repo_scan"
+                "SELECT repo_name, fetch_ok, error_reason FROM repo_scan"
             )
         }
         assert rows["org/stuck"] == (0, "timeout")
         assert rows["org/fine"] == (1, None)
 
-    def test_run_scan_threads_extra_env_through_to_process_repo(self, tmp_path):
-        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Basic x"}
+    def test_run_scan_threads_token_through_to_process_repo(self, tmp_path):
         universe = [{"repo_name": "org/a", "language": "python", "clone_url": "x"}]
         seen_kwargs = {}
 
-        def _fake_process_repo(repo, clones_dir, **kwargs):
+        def _fake_process_repo(repo, **kwargs):
             seen_kwargs.update(kwargs)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, clone_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
@@ -846,13 +793,12 @@ class TestRunScan:
             run_scan(
                 db_path=tmp_path / "rq5.db",
                 workers=1,
-                clones_dir=tmp_path / "clones",
                 progress_path=tmp_path / "progress.json",
                 notify=False,
-                extra_env=auth,
+                token="sometoken",
             )
 
-        assert seen_kwargs["extra_env"] == auth
+        assert seen_kwargs["token"] == "sometoken"
 
     def test_run_scan_passes_the_same_loaded_catalog_to_every_repo(self, tmp_path):
         universe = [
@@ -861,9 +807,9 @@ class TestRunScan:
         ]
         seen_catalogs = []
 
-        def _fake_process_repo(repo, clones_dir, **kwargs):
+        def _fake_process_repo(repo, **kwargs):
             seen_catalogs.append(kwargs["catalog"])
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, clone_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
@@ -872,7 +818,6 @@ class TestRunScan:
             run_scan(
                 db_path=tmp_path / "rq5.db",
                 workers=1,
-                clones_dir=tmp_path / "clones",
                 progress_path=tmp_path / "progress.json",
                 notify=False,
             )
@@ -888,15 +833,15 @@ class TestRunScan:
             {"repo_name": "org/b", "language": "python", "clone_url": "y"},
         ]
 
-        def _fake_process_repo(repo, clones_dir, **kwargs):
+        def _fake_process_repo(repo, **kwargs):
             ok = repo["repo_name"] == "org/a"
             row = _repo_row(
                 repo["repo_name"],
                 repo["language"],
                 "t",
                 1,
-                clone_ok=ok,
-                error_reason=None if ok else "clone_failed",
+                fetch_ok=ok,
+                error_reason=None if ok else "no_commit_at_or_before_cutoff",
                 num_agent_files=1 if ok else 0,
             )
             files = (
@@ -928,7 +873,6 @@ class TestRunScan:
             run_scan(
                 db_path=db_path,
                 workers=1,
-                clones_dir=tmp_path / "clones",
                 progress_path=progress_path,
                 log_every=1,
                 notify=False,
@@ -937,14 +881,14 @@ class TestRunScan:
         state = json.loads(progress_path.read_text())
         assert state["total_repos"] == 2
         assert state["completed_this_run"] == 2
-        assert state["clone_ok"] == 1
-        assert state["clone_failed"] == 1
+        assert state["fetch_ok"] == 1
+        assert state["fetch_failed"] == 1
         assert state["agent_files_found"] == 1
 
 
 class TestRunScanNotifications:
-    def _fake_process_repo(self, repo, clones_dir, **kwargs):
-        return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, clone_ok=True))
+    def _fake_process_repo(self, repo, **kwargs):
+        return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
     def test_notifies_once_per_language_plus_one_final_push(self, tmp_path):
         universe = [
@@ -961,7 +905,6 @@ class TestRunScanNotifications:
             run_scan(
                 db_path=tmp_path / "rq5.db",
                 workers=1,
-                clones_dir=tmp_path / "clones",
                 progress_path=tmp_path / "progress.json",
                 notify=True,
             )
@@ -980,7 +923,6 @@ class TestRunScanNotifications:
             run_scan(
                 db_path=tmp_path / "rq5.db",
                 workers=1,
-                clones_dir=tmp_path / "clones",
                 progress_path=tmp_path / "progress.json",
                 notify=False,
             )
@@ -989,31 +931,34 @@ class TestRunScanNotifications:
 
 
 class TestMainCli:
-    def _run_main_with_argv(self, argv, *, auth_env=None):
+    def _run_main_with_argv(self, argv):
         with (
             patch.object(sys, "argv", ["rq5_agent_file_scan.py", *argv]),
             patch("collection.rq5_agent_file_scan.configure_logging"),
             patch("collection.rq5_agent_file_scan.add_file_logging"),
             patch("collection.rq5_agent_file_scan.write_csv_outputs"),
-            patch("collection.rq5_agent_file_scan.github_auth_env", return_value=auth_env or {}),
             patch("collection.rq5_agent_file_scan.run_scan", return_value={}) as run_scan_mock,
         ):
             main()
         return run_scan_mock
 
-    def test_defaults_to_twelve_workers(self):
+    def test_defaults_to_twenty_workers(self):
         run_scan_mock = self._run_main_with_argv([])
-        assert run_scan_mock.call_args.kwargs["workers"] == 12
+        assert run_scan_mock.call_args.kwargs["workers"] == 20
 
     def test_workers_flag_is_threaded_through(self):
         run_scan_mock = self._run_main_with_argv(["--workers", "16"])
         assert run_scan_mock.call_args.kwargs["workers"] == 16
 
-    def test_passes_github_auth_env_to_run_scan(self):
-        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Basic x"}
-        run_scan_mock = self._run_main_with_argv([], auth_env=auth)
-        assert run_scan_mock.call_args.kwargs["extra_env"] == auth
-
-    def test_runs_unauthenticated_when_no_token_is_available(self):
-        run_scan_mock = self._run_main_with_argv([], auth_env={})
-        assert run_scan_mock.call_args.kwargs["extra_env"] == {}
+    def test_warns_when_no_token_is_available(self):
+        with patch("collection.rq5_agent_file_scan.GITHUB_TOKEN", ""):
+            with (
+                patch.object(sys, "argv", ["rq5_agent_file_scan.py"]),
+                patch("collection.rq5_agent_file_scan.configure_logging"),
+                patch("collection.rq5_agent_file_scan.add_file_logging"),
+                patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+                patch("collection.rq5_agent_file_scan.run_scan", return_value={}),
+                patch("collection.rq5_agent_file_scan.logger") as logger_mock,
+            ):
+                main()
+        logger_mock.warning.assert_called_once()

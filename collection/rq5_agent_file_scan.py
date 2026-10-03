@@ -15,32 +15,72 @@ and its CSV output (`rq5-agent-files/`, a sibling of `datasets/`).
 this db -- it renders RQ5's findings report from it, same role rq1.py plays
 for `db/rq1_prevalence.db`.
 
-**Reuse, not reimplementation, of RQ1's proven collection infra:** this
-scan's corpus (the full raw universe, minus known duplicates), temporal
-pinning (same `RQ1_CUTOFF_DATE`/`RQ1_SHALLOW_SINCE`), cloning (shallow with
-a tightly-timed-out full-clone fallback), cutoff-commit resolution
-(`_resolve_cutoff_commit()`), GitHub authentication, the in-process
-watchdog timeout, and the resumable "db row = checkpoint" pattern are
-*exactly* RQ1's own, already production-hardened through three real
-incidents (see `rq1_prevalence_scan.py`'s module docstring: a 6+ hour
-freeze, a rate-limiting/auth-scheme bug, and a shallow-clone-hides-the-
-true-cutoff-commit bug). Re-deriving any of that here would risk
-reintroducing bugs already fixed once -- notably, this scan never ran for
-real before the third incident was found and fixed in
-`rq1_prevalence_scan.py`, so it inherits that fix from the start rather
-than needing its own retroactive repair pass. This module imports those
-pieces directly from `rq1_prevalence_scan.py` rather than duplicating
-them.
+**Why GitHub's REST API, not a clone (2026-10-03 design change):** the
+first version of this module cloned every repo, reusing RQ1's shallow-
+clone infra, purely out of convenience. That turned out to be far more
+than this RQ actually needs: unlike RQ1 (which tree-sitter-parses
+potentially hundreds of test files, and so genuinely needs a working
+tree), RQ5 only ever needs the content of 0-2 specific root-level files.
+That's a close-to-perfect fit for GitHub's Git Database API, which can
+answer "what's at this commit's root" and "give me this one blob" without
+ever materializing the rest of the repository. Concretely, per repo:
 
-**Lighter per-repo cost than RQ1:** RQ1 needs a full working-tree checkout
-because it tree-sitter-parses every test file. RQ5 only needs the content
-of at most a couple of root-level files at one pinned commit, so it never
-checks out a working tree at all -- `git ls-tree <sha>` (non-recursive,
-satisfying "repository root only, no subdirectories") lists root entries,
-and `git show <sha>:<path>` reads a matched file's blob content directly.
-This also gives "don't follow a symlink" for free: `git show` on a symlink
-blob (mode 120000) returns the literal link-target text, the same as any
-other blob -- never the content of whatever it points to.
+1. `GET /repos/{repo}/commits?until=<cutoff_date>T23:59:59Z&per_page=1`
+   -- the cutoff commit (replaces a clone + PyDriller's commit walk).
+2. `GET /repos/{repo}/git/trees/{sha}` -- root-level tree entries, non-
+   recursive by default (replaces `git ls-tree`; "look only at the
+   repository root" falls out of the API's own default behavior, not
+   something this code has to enforce).
+3. `GET /repos/{repo}/git/blobs/{blob_sha}` for each matched entry
+   (replaces `git show <sha>:<path>`).
+
+This makes the whole scan immune to repo size -- a behemoth like
+`WebKit/WebKit` or `JetBrains/intellij-community` (both of which cost RQ1
+repeated 600s clone timeouts) costs exactly the same handful of small
+JSON responses as a tiny repo, since nothing beyond 2 root files is ever
+fetched. It also eliminates an entire class of problems RQ1's clone-based
+approach fought in production: no disk space, no `ENAMETOOLONG`, no
+shallow-clone-truncation edge cases, no orphaned-clone cleanup.
+
+**Symlinks need no special-casing, confirmed against a real example:** a
+blob's content is just bytes, regardless of what the file represents --
+the Git Blobs API returns a symlink's raw blob content (the literal
+link-target text) exactly like any other blob, with no "type" branching
+needed anywhere in this module. Verified directly against `pnpm/pnpm`'s
+real root `CLAUDE.md`, which is genuinely a symlink to `AGENTS.md`:
+fetching its blob returns the literal string `"AGENTS.md"`, not
+`AGENTS.md`'s own content -- byte-for-byte what the original git-clone
+implementation's `git show` gave for the equivalent local test case. This
+is exactly the desired behavior per the project's own spec: search a
+pointer file as its own file, never resolve it.
+
+**Known, accepted difference from RQ1's cutoff-commit semantics:**
+`find_cutoff_commit_via_api()` filters by UTC-normalized commit
+timestamps (`until=<date>T23:59:59Z`), while RQ1's `dataset_c.
+find_cutoff_commit()` (PyDriller-based) compares each commit's date in
+that commit's own *original* timezone offset. These are not always the
+same commit: confirmed directly against `facebook/react`, where a commit
+timestamped `2026-09-09T00:08:45+01:00` (so a UTC-based comparison
+treats its UTC instant, `2026-09-08T23:08:45Z`, as being within the
+cutoff day) has a local calendar date of `2026-09-09` in its own
+timezone (so PyDriller, which never converts to UTC, correctly excludes
+it instead). GitHub's REST API has no field anywhere that recovers a
+commit's original offset -- confirmed by checking both the commits-list
+and single-commit endpoints -- so exactly replicating PyDriller's
+semantics via the API is not possible without a clone. This only matters
+for a commit landing within the ~14-hour window around UTC midnight on
+the exact cutoff date (the full range of UTC offsets); explicitly
+accepted as immaterial for this RQ (reviewed and agreed 2026-10-03) --
+root agent-config files change on the order of weeks/months, not hours,
+so the rare repo where this shifts the chosen commit by one position is
+essentially certain to still read the identical file content either way.
+
+**Column naming note:** `repo_scan.fetch_ok` (and `_repo_row()`'s/
+`run_scan()`'s `fetch_ok` naming) deliberately does NOT reuse RQ1's
+`clone_ok` name, even though the two tables are structurally similar --
+nothing here is ever cloned, and reusing that name would be actively
+misleading for anyone reading this schema without this module's
+docstring in front of them.
 
 **Why grouping is by the repo's own tagged language:** same reasoning as
 RQ1 -- see that module's docstring. This scan's own `language` column on
@@ -57,40 +97,47 @@ match, not just a tally. Persisted immediately per repo (`agent_files`/
 memory for the whole run, for the same crash-safety reason RQ1 persists
 per-repo rather than per-language-chunk.
 
+**Rate limiting:** GitHub's REST API allows 5,000 authenticated requests/
+hour per token (vs. 60/hour unauthenticated -- far too low for ~24.7k
+repos x ~2 requests each, so a real run requires `GITHUB_TOKEN`). Retry/
+backoff on a 429 or rate-limit-exhausted 403 reuses
+`GitHubAgentFileChecker`'s own static detection/backoff helpers
+(`agent_signal_primitives.py`) -- the same logic Dataset A's own pre-clone
+agent-config check already relies on in production, not a second,
+potentially-drifting copy of it.
+
 python -m collection.rq5_agent_file_scan
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 import csv
 import re
-import subprocess
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import requests
 import yaml
 
 from . import paths
-from .config import CLONES_DIR
+from .agent_signal_primitives import GitHubAgentFileChecker
+from .config import GITHUB_TOKEN
 from .db import db_session
-from .ephemeral_clone import clone_with_function
 from .logging_utils import configure_logging, get_logger
 from .parallel_utils import run_parallel_per_repo
 from .rq1_prevalence_scan import (
     DUPLICATES_PATH,
-    _clone_with_shallow_fallback,
     _notify,
-    _resolve_cutoff_commit,
     _write_progress,
     add_file_logging,
-    github_auth_env,
     load_raw_universe,
     run_with_deadline,
 )
 from .rq1_prevalence_scan import RQ1_CUTOFF_DATE as RQ5_CUTOFF_DATE
-from .rq1_prevalence_scan import RQ1_SHALLOW_SINCE as RQ5_SHALLOW_SINCE
 
 logger = get_logger(__name__)
 
@@ -103,18 +150,27 @@ CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq5-agent-files"
 PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_progress.json"
 PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
-DEFAULT_WORKERS = 12
 
-# Same reasoning as RQ1's PROCESS_REPO_TIMEOUT_SECONDS -- find_cutoff_commit()'s
-# PyDriller traversal is the dominant per-repo cost here too (no tree-sitter
-# parsing step to add on top, unlike RQ1), so the same watchdog is needed,
-# with the same generous budget.
-PROCESS_REPO_TIMEOUT_SECONDS = 600
+# No disk/subprocess overhead per repo anymore (just a couple of small
+# HTTP calls) -- higher than RQ1's clone-bound default is safe. More
+# workers mostly just reduces time spent idle on network round-trips; it
+# doesn't bypass GITHUB_TOKEN's shared 5,000 req/hour ceiling, which
+# `_api_get()`'s rate-limit retry handles reactively regardless of
+# worker count.
+DEFAULT_WORKERS = 20
 
-# Individual `git ls-tree`/`git show` calls against an already-local clone
-# (no network) -- generous, but still bounded so a pathological object
-# store can't hang a worker indefinitely.
-GIT_READ_TIMEOUT_SECONDS = 30
+GITHUB_API_BASE = "https://api.github.com"
+API_TIMEOUT_SECONDS = 15
+API_MAX_RETRIES = 3
+
+# Generous relative to this module's actual worst case (a handful of small
+# JSON calls, each already individually timeout-bound, plus rate-limit
+# backoff) -- see run_with_deadline()'s own docstring (rq1_prevalence_scan.py)
+# for the production incident that makes a watchdog worth keeping even when
+# every individual call already has its own timeout: `requests`' timeout
+# parameter has known edge cases (e.g. DNS resolution) where it doesn't
+# always fire reliably, and this costs nothing when nothing goes wrong.
+PROCESS_REPO_TIMEOUT_SECONDS = 300
 
 NTFY_TOPIC = "joaofix_fixturedb"
 
@@ -126,7 +182,7 @@ SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS {REPO_TABLE_NAME} (
     repo_name        TEXT PRIMARY KEY,
     language         TEXT NOT NULL,
-    clone_ok         INTEGER NOT NULL DEFAULT 0,
+    fetch_ok         INTEGER NOT NULL DEFAULT 0,
     commit_sha       TEXT,
     commit_date      TEXT,
     num_agent_files  INTEGER NOT NULL DEFAULT 0,
@@ -191,7 +247,7 @@ _MATCH_CSV_FIELDNAMES = [
 _REPO_CSV_FIELDNAMES = [
     "repo_name",
     "language",
-    "clone_ok",
+    "fetch_ok",
     "commit_sha",
     "commit_date",
     "num_agent_files",
@@ -270,78 +326,6 @@ def find_keyword_matches(content: str, patterns: dict[str, re.Pattern]) -> list[
     return matches
 
 
-def list_root_tree_entries(
-    repo_path: Path, sha: str, *, timeout: int = GIT_READ_TIMEOUT_SECONDS
-) -> list[tuple[str, str]]:
-    """`(name, type)` for every entry in `sha`'s root tree -- `git ls-tree`
-    (no `-r`) is non-recursive by construction, which is exactly "look only
-    at the repository root, do not search subdirectories." Raises on
-    failure (bad sha, corrupt object, git itself missing) -- the caller
-    turns that into a `clone_ok=0` row, same as any other per-repo failure.
-    """
-    result = subprocess.run(
-        ["git", "-C", str(repo_path), "ls-tree", sha],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"git ls-tree failed: {result.stderr.strip()}")
-    entries: list[tuple[str, str]] = []
-    for line in result.stdout.splitlines():
-        meta, sep, name = line.partition("\t")
-        if not sep:
-            continue
-        meta_parts = meta.split()
-        if len(meta_parts) < 2:
-            continue
-        entries.append((name, meta_parts[1]))
-    return entries
-
-
-def read_file_at_commit(
-    repo_path: Path, sha: str, file_name: str, *, timeout: int = GIT_READ_TIMEOUT_SECONDS
-) -> str | None:
-    """Content of `file_name` as it existed at `sha`, read directly from
-    the git object store (`git show <sha>:<path>`) -- no working-tree
-    checkout involved, and (see module docstring) a symlink's own blob
-    content, not whatever it points to. Decoded permissively
-    (`errors="replace"`) since a malformed/non-UTF-8 agent config file must
-    never crash the scan -- `None` only on a git-level failure (path
-    genuinely absent from that tree), not a decoding issue."""
-    result = subprocess.run(
-        ["git", "-C", str(repo_path), "show", f"{sha}:{file_name}"],
-        capture_output=True,
-        timeout=timeout,
-    )
-    if result.returncode != 0:
-        return None
-    return result.stdout.decode("utf-8", errors="replace")
-
-
-def find_target_files_at_commit(
-    repo_path: Path, sha: str, target_files: list[str]
-) -> list[tuple[str, str]]:
-    """Case-insensitive match of `target_files` against `sha`'s root-level
-    blob entries. Returns `(on_disk_name, canonical_file_type)` pairs --
-    `on_disk_name` preserves whatever case the repo actually used (e.g.
-    "agents.md"), `canonical_file_type` is always the catalog's own
-    spelling (e.g. "AGENTS.md"), matching this module's "file name" (as
-    committed) vs. "file type" (canonical bucket) distinction. A tree
-    entry of type "tree" (a subdirectory literally named e.g. "AGENTS.md")
-    is deliberately excluded -- only a blob is a file to read.
-    """
-    canonical_by_casefold = {name.casefold(): name for name in target_files}
-    found: list[tuple[str, str]] = []
-    for name, obj_type in list_root_tree_entries(repo_path, sha):
-        if obj_type != "blob":
-            continue
-        canonical = canonical_by_casefold.get(name.casefold())
-        if canonical is not None:
-            found.append((name, canonical))
-    return found
-
-
 def scan_file_content(
     content: str,
     *,
@@ -349,12 +333,149 @@ def scan_file_content(
     fixture_patterns: dict[str, re.Pattern],
 ) -> dict[str, list[dict[str, Any]]]:
     """Pure counting/matching logic for one already-fetched file's text --
-    independent of git/network, so it's directly unit-testable without a
-    real clone."""
+    independent of the network, so it's directly unit-testable without a
+    real API call."""
     return {
         "test_matches": find_keyword_matches(content, test_patterns),
         "fixture_matches": find_keyword_matches(content, fixture_patterns),
     }
+
+
+def _api_headers(token: str) -> dict[str, str]:
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    if token:
+        headers["Authorization"] = f"token {token}"
+    return headers
+
+
+def _api_get(
+    url: str,
+    *,
+    token: str,
+    params: dict[str, Any] | None = None,
+    timeout: int = API_TIMEOUT_SECONDS,
+    max_retries: int = API_MAX_RETRIES,
+) -> requests.Response | None:
+    """GET `url`, retrying with backoff on a rate-limited response.
+    Reuses `GitHubAgentFileChecker`'s own rate-limit detection/backoff
+    (`_is_rate_limited`/`_rate_limit_wait_seconds`, both plain
+    `@staticmethod`s that take a `Response` directly, callable without an
+    instance) -- the same logic Dataset A's own pre-clone agent-config
+    check already relies on in production, not a second, potentially-
+    drifting copy of it.
+
+    Returns the raw `Response` for any outcome short of exhausted rate-
+    limit retries or a network-level exception (including a 404 --
+    callers decide what that means for their own endpoint), or `None` in
+    those two cases."""
+    headers = _api_headers(token)
+    for attempt in range(max_retries + 1):
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=timeout)
+        except requests.RequestException as exc:
+            logger.debug("[RQ5 scan] request failed for %s: %s", url, exc)
+            return None
+        if GitHubAgentFileChecker._is_rate_limited(response):
+            if attempt < max_retries:
+                wait_seconds = GitHubAgentFileChecker._rate_limit_wait_seconds(response, attempt)
+                logger.warning(
+                    "[RQ5 scan] rate limited fetching %s (attempt %d/%d); retrying in %.1fs",
+                    url,
+                    attempt + 1,
+                    max_retries + 1,
+                    wait_seconds,
+                )
+                time.sleep(wait_seconds)
+                continue
+            logger.warning("[RQ5 scan] rate limited fetching %s; exhausted retries", url)
+            return None
+        return response
+    return None
+
+
+def find_cutoff_commit_via_api(
+    repo_name: str, cutoff_date: str, *, token: str = GITHUB_TOKEN
+) -> dict[str, str] | None:
+    """The latest commit at or before `cutoff_date` (UTC-normalized --
+    see module docstring's "Known, accepted difference" section), via
+    GitHub's commits-list endpoint. `None` if the repo has no such commit,
+    doesn't exist, or the request ultimately fails."""
+    url = f"{GITHUB_API_BASE}/repos/{repo_name}/commits"
+    params = {"until": f"{cutoff_date}T23:59:59Z", "per_page": 1}
+    response = _api_get(url, token=token, params=params)
+    if response is None or response.status_code != 200:
+        return None
+    data = response.json()
+    if not data:
+        return None
+    commit = data[0]
+    return {"sha": commit["sha"], "date": commit["commit"]["author"]["date"][:10]}
+
+
+def list_root_tree_via_api(
+    repo_name: str, sha: str, *, token: str = GITHUB_TOKEN
+) -> list[dict[str, Any]] | None:
+    """Root-level tree entries at `sha`, via GitHub's Git Trees API --
+    non-recursive by default, which is exactly "look only at the
+    repository root, do not search subdirectories." Each entry has
+    `path`, `mode`, `type` ("blob"/"tree"), and `sha` (the blob's own sha,
+    used directly by `read_blob_via_api()` -- no second, path-based
+    lookup needed to resolve a matched entry to its blob). `None` on
+    failure (bad sha, repo gone, request ultimately fails)."""
+    url = f"{GITHUB_API_BASE}/repos/{repo_name}/git/trees/{sha}"
+    response = _api_get(url, token=token)
+    if response is None or response.status_code != 200:
+        return None
+    return response.json().get("tree", [])
+
+
+def read_blob_via_api(
+    repo_name: str, blob_sha: str, *, token: str = GITHUB_TOKEN
+) -> str | None:
+    """Raw content of a blob, via GitHub's Git Blobs API. A blob's bytes
+    are returned as-is regardless of what the file represents -- see
+    module docstring for why this needs no symlink special-casing,
+    confirmed against a real symlinked file. Decoded permissively
+    (`errors="replace"`) since a malformed/non-UTF-8 file must never
+    crash the scan -- `None` only on a fetch-level failure or an
+    unexpected (non-base64) encoding, never a decoding exception."""
+    url = f"{GITHUB_API_BASE}/repos/{repo_name}/git/blobs/{blob_sha}"
+    response = _api_get(url, token=token)
+    if response is None or response.status_code != 200:
+        return None
+    data = response.json()
+    if data.get("encoding") != "base64":
+        return None
+    try:
+        raw = base64.b64decode(data["content"])
+    except Exception:
+        return None
+    return raw.decode("utf-8", errors="replace")
+
+
+def find_target_files_at_commit(
+    tree_entries: list[dict[str, Any]], target_files: list[str]
+) -> list[tuple[str, str, str]]:
+    """Case-insensitive match of `target_files` against `tree_entries`
+    (as returned by `list_root_tree_via_api()`). Returns
+    `(on_disk_name, canonical_file_type, blob_sha)` triples --
+    `on_disk_name` preserves whatever case the repo actually used (e.g.
+    "agents.md"), `canonical_file_type` is always the catalog's own
+    spelling (e.g. "AGENTS.md"), matching this module's "file name" (as
+    committed) vs. "file type" (canonical bucket) distinction. A "tree"
+    entry (a subdirectory literally named e.g. "AGENTS.md") is
+    deliberately excluded -- only a blob is a file to read.
+    """
+    canonical_by_casefold = {name.casefold(): name for name in target_files}
+    found: list[tuple[str, str, str]] = []
+    for entry in tree_entries:
+        if entry.get("type") != "blob":
+            continue
+        name = entry.get("path", "")
+        canonical = canonical_by_casefold.get(name.casefold())
+        if canonical is not None:
+            found.append((name, canonical, entry["sha"]))
+    return found
 
 
 def _repo_row(
@@ -363,7 +484,7 @@ def _repo_row(
     scanned_at: str,
     catalog_version: int | None,
     *,
-    clone_ok: bool,
+    fetch_ok: bool,
     error_reason: str | None = None,
     commit_sha: str | None = None,
     commit_date: str | None = None,
@@ -372,7 +493,7 @@ def _repo_row(
     return {
         "repo_name": repo_name,
         "language": language,
-        "clone_ok": 1 if clone_ok else 0,
+        "fetch_ok": 1 if fetch_ok else 0,
         "commit_sha": commit_sha,
         "commit_date": commit_date,
         "num_agent_files": num_agent_files,
@@ -392,19 +513,19 @@ def _scan_result(
 
 def process_repo(
     repo: dict,
-    clones_dir: Path,
     *,
     cutoff_date: str = RQ5_CUTOFF_DATE,
-    shallow_since: str = RQ5_SHALLOW_SINCE,
-    extra_env: dict[str, str] | None = None,
+    token: str = GITHUB_TOKEN,
     catalog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Clone (shallow-since, pinned to `cutoff_date` -- identical policy to
-    RQ1's own `process_repo()`), locate `catalog`'s `target_files` at the
-    repo's root as of the cutoff commit, and keyword-scan each one found.
-    Never raises -- any failure is captured as a zero-filled row with
-    `clone_ok=0` and `error_reason` set. Runs in a worker thread when
-    called via `run_parallel_per_repo()`.
+    """Resolve `repo`'s cutoff commit and keyword-scan whichever of
+    `catalog`'s `target_files` exist at the repo's root as of that
+    commit -- entirely via GitHub's REST API, no clone of any kind (see
+    module docstring). Never raises -- any failure is captured as a
+    zero-filled row with `fetch_ok=0` and `error_reason` set, so one bad
+    repo can never crash a ~24.7k-repo run. Runs in a worker thread when
+    called via `run_parallel_per_repo()` -- touches no shared DB
+    connection or other non-thread-safe resource.
 
     `catalog` defaults to loading `CATALOG_PATH` fresh when omitted --
     callers processing many repos in one run (`run_scan()`) should load it
@@ -419,84 +540,71 @@ def process_repo(
 
     repo_name = repo["repo_name"]
     language = repo["language"]
-    clone_url = repo["clone_url"]
-    repo_path = clones_dir / repo_name.replace("/", "__")
     scanned_at = datetime.now(timezone.utc).isoformat()
 
     def _fail(error_reason: str) -> dict[str, Any]:
         return _scan_result(
-            _repo_row(repo_name, language, scanned_at, catalog_version, clone_ok=False, error_reason=error_reason)
+            _repo_row(repo_name, language, scanned_at, catalog_version, fetch_ok=False, error_reason=error_reason)
         )
 
-    def _clone_fn(url: str, target: Path) -> bool:
-        return _clone_with_shallow_fallback(url, target, shallow_since=shallow_since, extra_env=extra_env)
+    cutoff = find_cutoff_commit_via_api(repo_name, cutoff_date, token=token)
+    if cutoff is None:
+        return _fail("no_commit_at_or_before_cutoff")
 
-    with clone_with_function(_clone_fn, clone_url, repo_path) as managed_path:
-        if managed_path is None:
-            return _fail("clone_failed")
+    tree_entries = list_root_tree_via_api(repo_name, cutoff["sha"], token=token)
+    if tree_entries is None:
+        return _fail("tree_fetch_failed")
 
-        cutoff = _resolve_cutoff_commit(managed_path, clone_url, cutoff_date, extra_env=extra_env)
-        if cutoff is None:
-            return _fail("no_commit_at_or_before_cutoff")
+    matched = find_target_files_at_commit(tree_entries, target_files)
 
-        try:
-            matched = find_target_files_at_commit(managed_path, cutoff["sha"], target_files)
-        except Exception as exc:
-            return _fail(f"ls_tree_failed: {exc}")
+    files: list[dict[str, Any]] = []
+    matches: list[dict[str, Any]] = []
+    for on_disk_name, file_type, blob_sha in matched:
+        content = read_blob_via_api(repo_name, blob_sha, token=token)
+        if content is None:
+            logger.debug("[RQ5 scan] failed reading %s in %s", on_disk_name, repo_name)
+            continue
 
-        files: list[dict[str, Any]] = []
-        matches: list[dict[str, Any]] = []
-        for on_disk_name, file_type in matched:
-            try:
-                content = read_file_at_commit(managed_path, cutoff["sha"], on_disk_name)
-            except Exception as exc:
-                logger.debug(
-                    "[RQ5 scan] failed reading %s in %s: %s", on_disk_name, repo_name, exc
-                )
-                continue
-            if content is None:
-                continue
+        scanned = scan_file_content(content, test_patterns=test_patterns, fixture_patterns=fixture_patterns)
+        test_matches = scanned["test_matches"]
+        fixture_matches = scanned["fixture_matches"]
+        matched_test_keywords = sorted({m["keyword"] for m in test_matches})
+        matched_fixture_keywords = sorted({m["keyword"] for m in fixture_matches})
 
-            scanned = scan_file_content(content, test_patterns=test_patterns, fixture_patterns=fixture_patterns)
-            test_matches = scanned["test_matches"]
-            fixture_matches = scanned["fixture_matches"]
-            matched_test_keywords = sorted({m["keyword"] for m in test_matches})
-            matched_fixture_keywords = sorted({m["keyword"] for m in fixture_matches})
-
-            files.append(
-                {
-                    "repo_name": repo_name,
-                    "file_name": on_disk_name,
-                    "file_type": file_type,
-                    "language": language,
-                    "commit_sha": cutoff["sha"],
-                    "has_test": bool(test_matches),
-                    "has_fixture": bool(fixture_matches),
-                    "test_match_count": len(test_matches),
-                    "fixture_match_count": len(fixture_matches),
-                    "matched_test_keywords": ",".join(matched_test_keywords),
-                    "matched_fixture_keywords": ",".join(matched_fixture_keywords),
-                    "github_url": f"https://github.com/{repo_name}/blob/{cutoff['sha']}/{on_disk_name}",
-                }
+        files.append(
+            {
+                "repo_name": repo_name,
+                "file_name": on_disk_name,
+                "file_type": file_type,
+                "language": language,
+                "commit_sha": cutoff["sha"],
+                "has_test": bool(test_matches),
+                "has_fixture": bool(fixture_matches),
+                "test_match_count": len(test_matches),
+                "fixture_match_count": len(fixture_matches),
+                "matched_test_keywords": ",".join(matched_test_keywords),
+                "matched_fixture_keywords": ",".join(matched_fixture_keywords),
+                "github_url": f"https://github.com/{repo_name}/blob/{cutoff['sha']}/{on_disk_name}",
+            }
+        )
+        for match in test_matches:
+            matches.append({"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "test", **match})
+        for match in fixture_matches:
+            matches.append(
+                {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "fixture", **match}
             )
-            for match in test_matches:
-                matches.append({"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "test", **match})
-            for match in fixture_matches:
-                matches.append(
-                    {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "fixture", **match}
-                )
 
-        repo_row = _repo_row(
-            repo_name,
-            language,
-            scanned_at,
-            catalog_version,
-            clone_ok=True,
-            commit_sha=cutoff["sha"],
-            commit_date=cutoff["date"],
-            num_agent_files=len(files),
-        )
-        return _scan_result(repo_row, files, matches)
+    repo_row = _repo_row(
+        repo_name,
+        language,
+        scanned_at,
+        catalog_version,
+        fetch_ok=True,
+        commit_sha=cutoff["sha"],
+        commit_date=cutoff["date"],
+        num_agent_files=len(files),
+    )
+    return _scan_result(repo_row, files, matches)
 
 
 def load_scanned_repo_names(db_path: Path = DB_PATH) -> set[str]:
@@ -526,12 +634,12 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
         conn.execute(
             f"""
             INSERT INTO {REPO_TABLE_NAME}
-                (repo_name, language, clone_ok, commit_sha, commit_date,
+                (repo_name, language, fetch_ok, commit_sha, commit_date,
                  num_agent_files, catalog_version, error_reason, scanned_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(repo_name) DO UPDATE SET
                 language=excluded.language,
-                clone_ok=excluded.clone_ok,
+                fetch_ok=excluded.fetch_ok,
                 commit_sha=excluded.commit_sha,
                 commit_date=excluded.commit_date,
                 num_agent_files=excluded.num_agent_files,
@@ -542,7 +650,7 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
             (
                 repo_row["repo_name"],
                 repo_row["language"],
-                repo_row["clone_ok"],
+                repo_row["fetch_ok"],
                 repo_row["commit_sha"],
                 repo_row["commit_date"],
                 repo_row["num_agent_files"],
@@ -633,16 +741,14 @@ def write_csv_outputs(db_path: Path = DB_PATH, output_dir: Path = CSV_OUTPUT_DIR
 def run_scan(
     raw_dir: Path = paths.RAW_SEARCH_DIR,
     duplicates_path: Path = DUPLICATES_PATH,
-    clones_dir: Path = CLONES_DIR,
     db_path: Path = DB_PATH,
     progress_path: Path = PROGRESS_PATH,
     workers: int = DEFAULT_WORKERS,
     cutoff_date: str = RQ5_CUTOFF_DATE,
-    shallow_since: str = RQ5_SHALLOW_SINCE,
     log_every: int = PROGRESS_LOG_EVERY,
     notify: bool = True,
     process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
-    extra_env: dict[str, str] | None = None,
+    token: str = GITHUB_TOKEN,
     catalog_path: Path = CATALOG_PATH,
 ) -> dict[str, int]:
     """Scan every not-yet-scanned repo in the raw universe, persisting each
@@ -650,18 +756,15 @@ def run_scan(
     are the checkpoint -- see `load_scanned_repo_names()`). Logs a progress
     line and refreshes `progress_path` every `log_every` completions, and
     (when `notify`) pushes one ntfy.sh notification per `RQ5_LANGUAGES`
-    chunk finished plus one final push -- identical operational shape to
+    chunk finished plus one final push -- same operational shape as
     `rq1_prevalence_scan.run_scan()`, for the same reasons (this is an
-    equally long, equally unattended multi-hour run over the same ~24.7k
-    repos).
+    equally long, equally unattended run over the same ~24.7k repos, even
+    though each individual repo is now far cheaper).
 
     The catalog is loaded once here (not once per repo) and threaded
     through every `process_repo()` call, so a run's repos are all measured
     against the exact same keyword/target-file set even if the catalog
-    file is hand-edited between runs (the next run would then see a new
-    `catalog_version` and should be treated as a fresh collection, not
-    resumed, if the edit changes who it was mid-run -- not handled
-    automatically, as it only matters for pre-run human judgement).
+    file is hand-edited between runs.
     """
     initialise_rq5_db(db_path)
     catalog = load_rq5_keyword_catalog(catalog_path)
@@ -677,16 +780,14 @@ def run_scan(
     )
 
     started_at = datetime.now(timezone.utc)
-    counters = {"completed": 0, "clone_ok": 0, "clone_failed": 0, "agent_files_found": 0}
+    counters = {"completed": 0, "fetch_ok": 0, "fetch_failed": 0, "agent_files_found": 0}
 
     def _compute(repo: dict) -> dict:
         ok, result = run_with_deadline(
             process_repo,
             repo,
-            clones_dir,
             cutoff_date=cutoff_date,
-            shallow_since=shallow_since,
-            extra_env=extra_env,
+            token=token,
             catalog=catalog,
             timeout_seconds=process_repo_timeout_seconds,
         )
@@ -703,7 +804,7 @@ def run_scan(
                 repo["language"],
                 datetime.now(timezone.utc).isoformat(),
                 catalog.get("version"),
-                clone_ok=False,
+                fetch_ok=False,
                 error_reason="timeout",
             )
         )
@@ -712,10 +813,10 @@ def run_scan(
         persist_result(result, db_path)
 
         counters["completed"] += 1
-        if result["repo"]["clone_ok"]:
-            counters["clone_ok"] += 1
+        if result["repo"]["fetch_ok"]:
+            counters["fetch_ok"] += 1
         else:
-            counters["clone_failed"] += 1
+            counters["fetch_failed"] += 1
         counters["agent_files_found"] += len(result["files"])
 
         is_last = counters["completed"] == len(pending)
@@ -728,12 +829,12 @@ def run_scan(
         eta_seconds = remaining / rate if rate > 0 else None
 
         logger.info(
-            "[RQ5 scan] %d/%d done (%d clone_ok, %d clone_failed, %d agent files found) -- "
+            "[RQ5 scan] %d/%d done (%d fetch_ok, %d fetch_failed, %d agent files found) -- "
             "%.2f repos/s, ETA %s",
             counters["completed"],
             len(pending),
-            counters["clone_ok"],
-            counters["clone_failed"],
+            counters["fetch_ok"],
+            counters["fetch_failed"],
             counters["agent_files_found"],
             rate,
             f"{eta_seconds / 60:.0f}min" if eta_seconds is not None else "unknown",
@@ -745,8 +846,8 @@ def run_scan(
                 "already_done_at_start": len(already_done),
                 "pending_this_run": len(pending),
                 "completed_this_run": counters["completed"],
-                "clone_ok": counters["clone_ok"],
-                "clone_failed": counters["clone_failed"],
+                "fetch_ok": counters["fetch_ok"],
+                "fetch_failed": counters["fetch_failed"],
                 "agent_files_found": counters["agent_files_found"],
                 "started_at": started_at.isoformat(),
                 "last_updated_at": datetime.now(timezone.utc).isoformat(),
@@ -774,14 +875,14 @@ def run_scan(
             _notify(
                 f"RQ5 scan {idx}/{len(RQ5_LANGUAGES)}: {language} done -- "
                 f"{counters['completed']}/{len(pending)} total "
-                f"({counters['clone_ok']} clone_ok, {counters['clone_failed']} clone_failed, "
+                f"({counters['fetch_ok']} fetch_ok, {counters['fetch_failed']} fetch_failed, "
                 f"{counters['agent_files_found']} agent files found)"
             )
 
     if notify:
         _notify(
             f"RQ5 scan: all done -- {counters['completed']}/{len(pending)} total "
-            f"({counters['clone_ok']} clone_ok, {counters['clone_failed']} clone_failed, "
+            f"({counters['fetch_ok']} fetch_ok, {counters['fetch_failed']} fetch_failed, "
             f"{counters['agent_files_found']} agent files found)"
         )
 
@@ -791,26 +892,27 @@ def run_scan(
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="RQ5 agent-configuration-file keyword scan over the raw repo "
-        "universe (github-search-raw/*.csv.gz), independent of Dataset A/B/C."
+        "universe (github-search-raw/*.csv.gz), independent of Dataset A/B/C. "
+        "Reads entirely via the GitHub REST API -- no cloning."
     )
     parser.add_argument(
         "--workers",
         type=int,
         default=DEFAULT_WORKERS,
-        help=f"Concurrent clone workers (default: {DEFAULT_WORKERS})",
+        help=f"Concurrent workers (default: {DEFAULT_WORKERS})",
     )
     args = parser.parse_args()
 
     configure_logging()
     add_file_logging(LOG_PATH)
-    extra_env = github_auth_env()
-    if not extra_env:
+    if not GITHUB_TOKEN:
         logger.warning(
-            "[RQ5 scan] No GITHUB_TOKEN found -- cloning unauthenticated. See "
-            "rq1_prevalence_scan.github_auth_env()'s docstring for why this "
-            "risks GitHub rate-limiting on a sustained high-volume run."
+            "[RQ5 scan] No GITHUB_TOKEN found -- GitHub's unauthenticated REST "
+            "API rate limit is 60 requests/hour, far too low for ~24.7k repos "
+            "x ~2 requests each. This run will be impractically slow without "
+            "a token in .env."
         )
-    counts = run_scan(workers=args.workers, extra_env=extra_env)
+    counts = run_scan(workers=args.workers)
     write_csv_outputs()
     print(f"[RQ5 scan] done: {counts}")
 
