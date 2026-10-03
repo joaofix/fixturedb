@@ -125,6 +125,7 @@ import argparse
 import base64
 import csv
 import re
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -162,16 +163,51 @@ PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
 
 # No disk/subprocess overhead per repo anymore (just a couple of small
-# HTTP calls) -- higher than RQ1's clone-bound default is safe. More
-# workers mostly just reduces time spent idle on network round-trips; it
-# doesn't bypass GITHUB_TOKEN's shared 5,000 req/hour ceiling, which
-# `_api_get()`'s rate-limit retry handles reactively regardless of
-# worker count.
+# HTTP calls) -- higher than RQ1's clone-bound default is safe. Worker
+# count no longer controls the real request rate at all (see
+# TARGET_REQUESTS_PER_HOUR/_RateLimiter below) -- it only controls how
+# many repos are "in flight" waiting for their paced turn, so there's no
+# rate-limit reason to keep this low.
 DEFAULT_WORKERS = 20
 
 GITHUB_API_BASE = "https://api.github.com"
 API_TIMEOUT_SECONDS = 15
 API_MAX_RETRIES = 3
+
+# **Production incident avoided (2026-10-03, caught in the 100-repo toy
+# run before the real run, not during it):** a plain burst of requests at
+# DEFAULT_WORKERS concurrency measured ~13.7 requests/second -- about 10x
+# GitHub's 5,000/hour authenticated budget's sustainable rate (~1.39/s).
+# Left unthrottled, that burns the entire hourly quota in ~6 minutes, and
+# `_api_get()`'s *reactive* retry (wait, then try again) was never enough
+# to recover from that: GitHub's primary hourly-quota 403 doesn't reliably
+# send `Retry-After` (that header is for the separate secondary/abuse-
+# detection limit) -- it sends `X-RateLimit-Reset` instead, a Unix
+# timestamp for the actual reset, up to an hour away. The original retry
+# logic never read that header, so it fell back to a plain exponential
+# backoff capped at 30s, exhausted `API_MAX_RETRIES` in well under a
+# minute, and gave up -- silently recording the repo as a normal failure
+# (`no_commit_at_or_before_cutoff`/`tree_fetch_failed`), indistinguishable
+# from a genuine negative result. Exactly the same class of bug as RQ1's
+# shallow-clone-hides-the-cutoff-commit incident: a transient/
+# environmental failure conflated with a real one.
+#
+# Fixed with defense in depth, not just a bigger number:
+# 1. `_RateLimiter` proactively paces every request at `_api_get()`'s own
+#    call site to `TARGET_REQUESTS_PER_HOUR` (a deliberate margin below
+#    5,000, not the limit itself -- real request timing has jitter across
+#    worker threads that a target right at the edge would risk tipping
+#    over), so the primary limit should never actually be hit in normal
+#    operation, regardless of worker count.
+# 2. `_retry_wait_seconds()` reads `X-RateLimit-Reset` as a fallback wait
+#    time when `Retry-After` is absent, instead of silently capping at
+#    30s -- defense in depth for the rare case the proactive limiter has a
+#    gap (e.g. a previous run left the quota already low, or another
+#    process shares the same token).
+# 3. A distinct `rate_limited` error_reason (`RateLimitExhausted`) so any
+#    repo that still hits this is cleanly identifiable and retryable
+#    later, never silently mixed into a "confirmed negative" bucket.
+TARGET_REQUESTS_PER_HOUR = 4000.0
 
 # Generous relative to this module's actual worst case (a handful of small
 # JSON calls, each already individually timeout-bound, plus rate-limit
@@ -346,6 +382,76 @@ def scan_file_content(
     }
 
 
+class RateLimitExhausted(Exception):
+    """Raised by `_api_get()` when every retry was consumed by a rate-
+    limited response. Deliberately an exception, not a `None` return --
+    `None` already means "genuinely not found" to every caller
+    (`find_cutoff_commit_via_api()` etc.), and silently reusing that for
+    "couldn't tell, GitHub throttled us" is exactly the bug class this
+    module's rate-limiting fix exists to avoid (see
+    `TARGET_REQUESTS_PER_HOUR`'s docstring). `process_repo()` catches this
+    specifically and records a distinct `rate_limited` error_reason."""
+
+
+class _RateLimiter:
+    """Thread-safe, fixed-interval pacing limiter: blocks each caller just
+    long enough that the long-run average call rate never exceeds
+    `rate_per_second`, no matter how many worker threads call `acquire()`
+    concurrently. Deliberately simple -- no burst allowance. A classic
+    token bucket would let a burst of calls fire back-to-back after an
+    idle period; bursts are exactly what risks tripping GitHub's
+    secondary (abuse-detection) rate limit, a separate, less precisely
+    documented limit from the primary hourly quota this targets. Every
+    `acquire()` call reserves the next evenly-spaced slot instead.
+    """
+
+    def __init__(self, rate_per_second: float) -> None:
+        self._interval = 1.0 / rate_per_second
+        self._lock = threading.Lock()
+        self._next_allowed_at = time.monotonic()
+
+    def acquire(self) -> None:
+        with self._lock:
+            now = time.monotonic()
+            wait = self._next_allowed_at - now
+            self._next_allowed_at = max(now, self._next_allowed_at) + self._interval
+        if wait > 0:
+            time.sleep(wait)
+
+
+def _retry_wait_seconds(response: requests.Response, attempt: int) -> float:
+    """How long to wait before retrying a rate-limited response. Prefers
+    `Retry-After` (seconds -- what GitHub's secondary/abuse-detection
+    limit sends), falls back to `X-RateLimit-Reset` (a Unix timestamp --
+    what the *primary* hourly-quota limit sends instead, up to an hour
+    away) when that header is absent, and only falls back further to a
+    short exponential backoff if neither is present/parseable. See
+    `TARGET_REQUESTS_PER_HOUR`'s docstring for the production incident
+    (caught in a toy run, not a real one) this fixes: the original
+    version of this function (`GitHubAgentFileChecker.
+    _rate_limit_wait_seconds()`, still used as-is by that class's own
+    callers -- this is a separate, local function, not a modification of
+    that shared one) never read `X-RateLimit-Reset` at all, so it
+    silently capped every wait at 30s even when the real reset was much
+    further away.
+    """
+    retry_after = response.headers.get("Retry-After")
+    if retry_after:
+        try:
+            return max(float(retry_after), 0.5)
+        except ValueError:
+            pass
+    reset_at = response.headers.get("X-RateLimit-Reset")
+    if reset_at:
+        try:
+            wait = float(reset_at) - time.time()
+        except ValueError:
+            wait = -1
+        if wait > 0:
+            return wait + 1  # small buffer past the exact reset instant
+    return min(2**attempt, 30)
+
+
 def _api_headers(token: str) -> dict[str, str]:
     headers = {"Accept": "application/vnd.github.v3+json"}
     if token:
@@ -360,21 +466,34 @@ def _api_get(
     params: dict[str, Any] | None = None,
     timeout: int = API_TIMEOUT_SECONDS,
     max_retries: int = API_MAX_RETRIES,
+    rate_limiter: _RateLimiter | None = None,
 ) -> requests.Response | None:
     """GET `url`, retrying with backoff on a rate-limited response.
-    Reuses `GitHubAgentFileChecker`'s own rate-limit detection/backoff
-    (`_is_rate_limited`/`_rate_limit_wait_seconds`, both plain
-    `@staticmethod`s that take a `Response` directly, callable without an
-    instance) -- the same logic Dataset A's own pre-clone agent-config
-    check already relies on in production, not a second, potentially-
-    drifting copy of it.
+    Reuses `GitHubAgentFileChecker`'s own rate-limit *detection*
+    (`_is_rate_limited`, a plain `@staticmethod` that takes a `Response`
+    directly, callable without an instance) -- the same logic Dataset A's
+    own pre-clone agent-config check already relies on in production, not
+    a second, potentially-drifting copy of it. The *wait duration* uses
+    this module's own `_retry_wait_seconds()` instead of that class's
+    `_rate_limit_wait_seconds()` -- see that function's docstring for why.
+
+    When `rate_limiter` is given, every attempt (including retries) calls
+    its `acquire()` first, pacing this call -- and therefore every real
+    caller sharing the same limiter instance -- to a safe target rate.
+    `None` (the default) means unthrottled, which every test in this
+    module relies on; only `run_scan()`'s real entrypoint passes a real
+    one.
 
     Returns the raw `Response` for any outcome short of exhausted rate-
     limit retries or a network-level exception (including a 404 --
-    callers decide what that means for their own endpoint), or `None` in
-    those two cases."""
+    callers decide what that means for their own endpoint). Raises
+    `RateLimitExhausted` if every retry was consumed by a rate-limited
+    response; returns `None` for a network-level exception (a different,
+    not-necessarily-recoverable-by-retrying failure)."""
     headers = _api_headers(token)
     for attempt in range(max_retries + 1):
+        if rate_limiter is not None:
+            rate_limiter.acquire()
         try:
             response = requests.get(url, headers=headers, params=params, timeout=timeout)
         except requests.RequestException as exc:
@@ -382,7 +501,7 @@ def _api_get(
             return None
         if GitHubAgentFileChecker._is_rate_limited(response):
             if attempt < max_retries:
-                wait_seconds = GitHubAgentFileChecker._rate_limit_wait_seconds(response, attempt)
+                wait_seconds = _retry_wait_seconds(response, attempt)
                 logger.warning(
                     "[RQ5 scan] rate limited fetching %s (attempt %d/%d); retrying in %.1fs",
                     url,
@@ -393,21 +512,23 @@ def _api_get(
                 time.sleep(wait_seconds)
                 continue
             logger.warning("[RQ5 scan] rate limited fetching %s; exhausted retries", url)
-            return None
+            raise RateLimitExhausted(url)
         return response
-    return None
+    raise RateLimitExhausted(url)
 
 
 def find_cutoff_commit_via_api(
-    repo_name: str, cutoff_date: str, *, token: str = GITHUB_TOKEN
+    repo_name: str, cutoff_date: str, *, token: str = GITHUB_TOKEN, rate_limiter: _RateLimiter | None = None
 ) -> dict[str, str] | None:
     """The latest commit at or before `cutoff_date` (UTC-normalized --
     see module docstring's "Known, accepted difference" section), via
     GitHub's commits-list endpoint. `None` if the repo has no such commit,
-    doesn't exist, or the request ultimately fails."""
+    doesn't exist, or the request fails for a non-rate-limit reason --
+    raises `RateLimitExhausted` (uncaught here) if it's specifically rate
+    limiting, so `process_repo()` can tell the two apart."""
     url = f"{GITHUB_API_BASE}/repos/{repo_name}/commits"
     params = {"until": f"{cutoff_date}T23:59:59Z", "per_page": 1}
-    response = _api_get(url, token=token, params=params)
+    response = _api_get(url, token=token, params=params, rate_limiter=rate_limiter)
     if response is None or response.status_code != 200:
         return None
     data = response.json()
@@ -418,34 +539,36 @@ def find_cutoff_commit_via_api(
 
 
 def list_root_tree_via_api(
-    repo_name: str, sha: str, *, token: str = GITHUB_TOKEN
+    repo_name: str, sha: str, *, token: str = GITHUB_TOKEN, rate_limiter: _RateLimiter | None = None
 ) -> list[dict[str, Any]] | None:
     """Root-level tree entries at `sha`, via GitHub's Git Trees API --
     non-recursive by default, which is exactly "look only at the
     repository root, do not search subdirectories." Each entry has
     `path`, `mode`, `type` ("blob"/"tree"), and `sha` (the blob's own sha,
     used directly by `read_blob_via_api()` -- no second, path-based
-    lookup needed to resolve a matched entry to its blob). `None` on
-    failure (bad sha, repo gone, request ultimately fails)."""
+    lookup needed to resolve a matched entry to its blob). `None` on a
+    non-rate-limit failure (bad sha, repo gone); see
+    `find_cutoff_commit_via_api()`'s docstring for the rate-limit case."""
     url = f"{GITHUB_API_BASE}/repos/{repo_name}/git/trees/{sha}"
-    response = _api_get(url, token=token)
+    response = _api_get(url, token=token, rate_limiter=rate_limiter)
     if response is None or response.status_code != 200:
         return None
     return response.json().get("tree", [])
 
 
 def read_blob_via_api(
-    repo_name: str, blob_sha: str, *, token: str = GITHUB_TOKEN
+    repo_name: str, blob_sha: str, *, token: str = GITHUB_TOKEN, rate_limiter: _RateLimiter | None = None
 ) -> str | None:
     """Raw content of a blob, via GitHub's Git Blobs API. A blob's bytes
     are returned as-is regardless of what the file represents -- see
     module docstring for why this needs no symlink special-casing,
     confirmed against a real symlinked file. Decoded permissively
     (`errors="replace"`) since a malformed/non-UTF-8 file must never
-    crash the scan -- `None` only on a fetch-level failure or an
-    unexpected (non-base64) encoding, never a decoding exception."""
+    crash the scan -- `None` only on a non-rate-limit fetch failure or an
+    unexpected (non-base64) encoding, never a decoding exception; see
+    `find_cutoff_commit_via_api()`'s docstring for the rate-limit case."""
     url = f"{GITHUB_API_BASE}/repos/{repo_name}/git/blobs/{blob_sha}"
-    response = _api_get(url, token=token)
+    response = _api_get(url, token=token, rate_limiter=rate_limiter)
     if response is None or response.status_code != 200:
         return None
     data = response.json()
@@ -522,6 +645,7 @@ def process_repo(
     cutoff_date: str = RQ5_CUTOFF_DATE,
     token: str = GITHUB_TOKEN,
     catalog: dict[str, Any] | None = None,
+    rate_limiter: _RateLimiter | None = None,
 ) -> dict[str, Any]:
     """Resolve `repo`'s cutoff commit and keyword-scan whichever of
     `catalog`'s `target_files` exist at the repo's root as of that
@@ -536,6 +660,15 @@ def process_repo(
     callers processing many repos in one run (`run_scan()`) should load it
     once and pass it through, both for efficiency and so every repo in one
     run is measured against the exact same catalog contents.
+
+    `rate_limiter`, when given, is forwarded to every API call this repo
+    makes (see `TARGET_REQUESTS_PER_HOUR`'s docstring). If *any* of them
+    exhausts its retries on rate limiting, the whole repo is abandoned
+    with `error_reason="rate_limited"` -- including mid-way through the
+    per-file loop, deliberately discarding whatever files were already
+    read rather than persisting a partial, falsely-confident
+    `fetch_ok=1` row that looks like "this repo has only N agent files"
+    when the truth is "N were read before GitHub cut us off."
     """
     catalog = catalog or load_rq5_keyword_catalog()
     target_files = catalog["target_files"]
@@ -552,52 +685,57 @@ def process_repo(
             _repo_row(repo_name, language, scanned_at, catalog_version, fetch_ok=False, error_reason=error_reason)
         )
 
-    cutoff = find_cutoff_commit_via_api(repo_name, cutoff_date, token=token)
-    if cutoff is None:
-        return _fail("no_commit_at_or_before_cutoff")
+    try:
+        cutoff = find_cutoff_commit_via_api(repo_name, cutoff_date, token=token, rate_limiter=rate_limiter)
+        if cutoff is None:
+            return _fail("no_commit_at_or_before_cutoff")
 
-    tree_entries = list_root_tree_via_api(repo_name, cutoff["sha"], token=token)
-    if tree_entries is None:
-        return _fail("tree_fetch_failed")
+        tree_entries = list_root_tree_via_api(repo_name, cutoff["sha"], token=token, rate_limiter=rate_limiter)
+        if tree_entries is None:
+            return _fail("tree_fetch_failed")
 
-    matched = find_target_files_at_commit(tree_entries, target_files)
+        matched = find_target_files_at_commit(tree_entries, target_files)
 
-    files: list[dict[str, Any]] = []
-    matches: list[dict[str, Any]] = []
-    for on_disk_name, file_type, blob_sha in matched:
-        content = read_blob_via_api(repo_name, blob_sha, token=token)
-        if content is None:
-            logger.debug("[RQ5 scan] failed reading %s in %s", on_disk_name, repo_name)
-            continue
+        files: list[dict[str, Any]] = []
+        matches: list[dict[str, Any]] = []
+        for on_disk_name, file_type, blob_sha in matched:
+            content = read_blob_via_api(repo_name, blob_sha, token=token, rate_limiter=rate_limiter)
+            if content is None:
+                logger.debug("[RQ5 scan] failed reading %s in %s", on_disk_name, repo_name)
+                continue
 
-        scanned = scan_file_content(content, test_patterns=test_patterns, fixture_patterns=fixture_patterns)
-        test_matches = scanned["test_matches"]
-        fixture_matches = scanned["fixture_matches"]
-        matched_test_keywords = sorted({m["keyword"] for m in test_matches})
-        matched_fixture_keywords = sorted({m["keyword"] for m in fixture_matches})
+            scanned = scan_file_content(content, test_patterns=test_patterns, fixture_patterns=fixture_patterns)
+            test_matches = scanned["test_matches"]
+            fixture_matches = scanned["fixture_matches"]
+            matched_test_keywords = sorted({m["keyword"] for m in test_matches})
+            matched_fixture_keywords = sorted({m["keyword"] for m in fixture_matches})
 
-        files.append(
-            {
-                "repo_name": repo_name,
-                "file_name": on_disk_name,
-                "file_type": file_type,
-                "language": language,
-                "commit_sha": cutoff["sha"],
-                "has_test": bool(test_matches),
-                "has_fixture": bool(fixture_matches),
-                "test_match_count": len(test_matches),
-                "fixture_match_count": len(fixture_matches),
-                "matched_test_keywords": ",".join(matched_test_keywords),
-                "matched_fixture_keywords": ",".join(matched_fixture_keywords),
-                "github_url": f"https://github.com/{repo_name}/blob/{cutoff['sha']}/{on_disk_name}",
-            }
-        )
-        for match in test_matches:
-            matches.append({"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "test", **match})
-        for match in fixture_matches:
-            matches.append(
-                {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "fixture", **match}
+            files.append(
+                {
+                    "repo_name": repo_name,
+                    "file_name": on_disk_name,
+                    "file_type": file_type,
+                    "language": language,
+                    "commit_sha": cutoff["sha"],
+                    "has_test": bool(test_matches),
+                    "has_fixture": bool(fixture_matches),
+                    "test_match_count": len(test_matches),
+                    "fixture_match_count": len(fixture_matches),
+                    "matched_test_keywords": ",".join(matched_test_keywords),
+                    "matched_fixture_keywords": ",".join(matched_fixture_keywords),
+                    "github_url": f"https://github.com/{repo_name}/blob/{cutoff['sha']}/{on_disk_name}",
+                }
             )
+            for match in test_matches:
+                matches.append(
+                    {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "test", **match}
+                )
+            for match in fixture_matches:
+                matches.append(
+                    {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "fixture", **match}
+                )
+    except RateLimitExhausted:
+        return _fail("rate_limited")
 
     repo_row = _repo_row(
         repo_name,
@@ -775,6 +913,7 @@ def run_scan(
     process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
     token: str = GITHUB_TOKEN,
     catalog_path: Path = CATALOG_PATH,
+    target_requests_per_hour: float | None = TARGET_REQUESTS_PER_HOUR,
 ) -> dict[str, int]:
     """Scan every not-yet-scanned repo in the raw universe, persisting each
     result immediately. Resumable by construction (`db_path`'s own rows
@@ -790,9 +929,18 @@ def run_scan(
     through every `process_repo()` call, so a run's repos are all measured
     against the exact same keyword/target-file set even if the catalog
     file is hand-edited between runs.
+
+    `target_requests_per_hour` builds one `_RateLimiter` shared by every
+    worker thread for the whole run (see that class's and
+    `TARGET_REQUESTS_PER_HOUR`'s docstrings) -- `None` or `0` disables
+    throttling entirely (every test in this module that calls `run_scan()`
+    mocks `process_repo()` out, so this never actually matters for them;
+    it matters for a real run, where the default keeps the whole run
+    safely under GitHub's primary rate limit regardless of `workers`).
     """
     initialise_rq5_db(db_path)
     catalog = load_rq5_keyword_catalog(catalog_path)
+    rate_limiter = _RateLimiter(target_requests_per_hour / 3600) if target_requests_per_hour else None
     universe = load_raw_universe(raw_dir, duplicates_path)
     already_done = load_scanned_repo_names(db_path)
     pending = [r for r in universe if r["repo_name"] not in already_done]
@@ -814,6 +962,7 @@ def run_scan(
             cutoff_date=cutoff_date,
             token=token,
             catalog=catalog,
+            rate_limiter=rate_limiter,
             timeout_seconds=process_repo_timeout_seconds,
         )
         if ok:
@@ -926,6 +1075,15 @@ def main() -> None:
         default=DEFAULT_WORKERS,
         help=f"Concurrent workers (default: {DEFAULT_WORKERS})",
     )
+    parser.add_argument(
+        "--max-requests-per-hour",
+        type=float,
+        default=TARGET_REQUESTS_PER_HOUR,
+        help=f"Target GitHub API request rate, paced regardless of --workers "
+        f"(default: {TARGET_REQUESTS_PER_HOUR:.0f}, a margin below GitHub's "
+        "5,000/hour authenticated ceiling). Pass 0 to disable throttling "
+        "entirely (not recommended).",
+    )
     args = parser.parse_args()
 
     configure_logging()
@@ -937,7 +1095,7 @@ def main() -> None:
             "x ~2 requests each. This run will be impractically slow without "
             "a token in .env."
         )
-    counts = run_scan(workers=args.workers)
+    counts = run_scan(workers=args.workers, target_requests_per_hour=args.max_requests_per_hour or None)
     write_csv_outputs()
     print(f"[RQ5 scan] done: {counts}")
 

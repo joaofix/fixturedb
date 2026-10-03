@@ -19,18 +19,24 @@ import json
 import sqlite3
 import sys
 import threading
+import time
 from unittest.mock import patch
 
+import pytest
 import requests
 
 from collection.rq5_agent_file_scan import (
     _FILE_CSV_FIELDNAMES,
     _MATCH_CSV_FIELDNAMES,
     RQ5_LANGUAGES,
+    TARGET_REQUESTS_PER_HOUR,
+    RateLimitExhausted,
     _api_get,
     _build_keyword_pattern,
     _build_patterns,
+    _RateLimiter,
     _repo_row,
+    _retry_wait_seconds,
     _scan_result,
     find_cutoff_commit_via_api,
     find_keyword_matches,
@@ -250,14 +256,17 @@ class TestApiGet:
             response = _api_get("https://api.github.com/x", token="tok", max_retries=3)
         assert response.status_code == 200
 
-    def test_exhausts_retries_and_returns_none(self):
+    def test_exhausts_retries_and_raises_rate_limit_exhausted(self):
+        """Exhausted retries on a genuine rate limit must never look like
+        a plain `None` -- that's exactly what a caller already treats as
+        "confirmed not found" (see RateLimitExhausted's own docstring)."""
         rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
         with (
             patch("requests.get", return_value=rate_limited) as get_mock,
             patch("collection.rq5_agent_file_scan.time.sleep"),
         ):
-            response = _api_get("https://api.github.com/x", token="tok", max_retries=2)
-        assert response is None
+            with pytest.raises(RateLimitExhausted):
+                _api_get("https://api.github.com/x", token="tok", max_retries=2)
         assert get_mock.call_count == 3  # initial + 2 retries
 
     def test_network_exception_returns_none(self):
@@ -274,6 +283,80 @@ class TestApiGet:
         with patch("requests.get", return_value=_fake_response(200, {})) as get_mock:
             _api_get("https://api.github.com/x", token="")
         assert "Authorization" not in get_mock.call_args.kwargs["headers"]
+
+    def test_calls_rate_limiter_acquire_once_per_attempt(self):
+        limiter = _RateLimiter(rate_per_second=1000)  # fast, just checking call count
+        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
+        ok = _fake_response(200, {})
+        with (
+            patch("requests.get", side_effect=[rate_limited, ok]),
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+            patch.object(limiter, "acquire", wraps=limiter.acquire) as acquire_mock,
+        ):
+            _api_get("https://api.github.com/x", token="tok", rate_limiter=limiter)
+        assert acquire_mock.call_count == 2  # initial attempt + the one retry
+
+    def test_no_rate_limiter_means_no_pacing(self):
+        with patch("requests.get", return_value=_fake_response(200, {})) as get_mock:
+            _api_get("https://api.github.com/x", token="tok", rate_limiter=None)
+        assert get_mock.call_count == 1  # just confirms this path needs no limiter at all
+
+
+class TestRetryWaitSeconds:
+    def test_prefers_retry_after_header(self):
+        response = _fake_response(429, {}, headers={"Retry-After": "42"})
+        assert _retry_wait_seconds(response, attempt=0) == 42.0
+
+    def test_falls_back_to_rate_limit_reset_when_retry_after_absent(self):
+        reset_at = time.time() + 120
+        response = _fake_response(403, {}, headers={"X-RateLimit-Reset": str(int(reset_at))})
+        wait = _retry_wait_seconds(response, attempt=0)
+        # within a couple seconds of the real 120s gap, accounting for timing jitter + the 1s buffer
+        assert 118 <= wait <= 123
+
+    def test_falls_back_to_exponential_backoff_when_neither_header_present(self):
+        response = _fake_response(429, {}, headers={})
+        assert _retry_wait_seconds(response, attempt=0) == 1
+        assert _retry_wait_seconds(response, attempt=2) == 4
+        assert _retry_wait_seconds(response, attempt=10) == 30  # capped
+
+    def test_ignores_a_reset_timestamp_already_in_the_past(self):
+        """A stale/already-passed reset time must not produce a negative
+        wait -- falls through to the exponential backoff instead."""
+        response = _fake_response(403, {}, headers={"X-RateLimit-Reset": str(int(time.time()) - 100)})
+        assert _retry_wait_seconds(response, attempt=0) == 1
+
+    def test_malformed_headers_fall_back_gracefully(self):
+        response = _fake_response(429, {}, headers={"Retry-After": "not-a-number"})
+        assert _retry_wait_seconds(response, attempt=1) == 2
+
+
+class TestRateLimiter:
+    def test_first_acquire_does_not_block(self):
+        limiter = _RateLimiter(rate_per_second=1)
+        start = time.monotonic()
+        limiter.acquire()
+        assert time.monotonic() - start < 0.1
+
+    def test_paces_consecutive_calls_to_the_target_rate(self):
+        limiter = _RateLimiter(rate_per_second=20)  # 50ms interval
+        start = time.monotonic()
+        for _ in range(3):
+            limiter.acquire()
+        elapsed = time.monotonic() - start
+        # 3 calls at a 50ms interval -> at least ~100ms for the 2nd and 3rd waits
+        assert elapsed >= 0.09
+
+    def test_does_not_accumulate_a_backlog_after_an_idle_period(self):
+        """Idle time between calls must not let a later burst "catch up"
+        -- exactly the burst behavior this limiter deliberately avoids
+        (see its own docstring)."""
+        limiter = _RateLimiter(rate_per_second=10)  # 100ms interval
+        limiter.acquire()
+        time.sleep(0.3)  # idle well past several intervals
+        start = time.monotonic()
+        limiter.acquire()
+        assert time.monotonic() - start < 0.05  # should NOT wait out a backlog
 
 
 class TestFindCutoffCommitViaApi:
@@ -297,6 +380,18 @@ class TestFindCutoffCommitViaApi:
         with patch("requests.get", return_value=_fake_response(200, [])) as get_mock:
             find_cutoff_commit_via_api("owner/repo", "2026-09-08")
         assert get_mock.call_args.kwargs["params"]["until"] == "2026-09-08T23:59:59Z"
+
+    def test_propagates_rate_limit_exhausted_rather_than_returning_none(self):
+        """A caller must be able to tell "genuinely no commit" apart from
+        "couldn't check, GitHub throttled us" -- this does NOT catch
+        RateLimitExhausted itself; process_repo() is what catches it."""
+        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
+        with (
+            patch("requests.get", return_value=rate_limited),
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+        ):
+            with pytest.raises(RateLimitExhausted):
+                find_cutoff_commit_via_api("owner/repo", "2026-09-08", rate_limiter=None)
 
 
 class TestListRootTreeViaApi:
@@ -512,6 +607,83 @@ class TestProcessRepo:
             result = process_repo(self._repo_dict(), cutoff_date="2026-09-08")
 
         assert result["files"][0]["has_fixture"] is True
+
+    def test_rate_limit_exhausted_during_cutoff_lookup_is_recorded_distinctly(self):
+        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
+        with (
+            patch("requests.get", return_value=rate_limited),
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+        ):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+
+        assert result["repo"]["fetch_ok"] == 0
+        assert result["repo"]["error_reason"] == "rate_limited"
+        # Must never be conflated with a genuine negative result:
+        assert result["repo"]["error_reason"] != "no_commit_at_or_before_cutoff"
+
+    def test_rate_limit_exhausted_during_tree_fetch_is_recorded_distinctly(self):
+        commits = [_commit_json("sha1")]
+        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
+
+        def _get(url, headers=None, params=None, timeout=None):
+            if url.endswith("/commits"):
+                return _fake_response(200, commits)
+            return rate_limited  # the /git/trees/ call
+
+        with (
+            patch("requests.get", side_effect=_get),
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+        ):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+
+        assert result["repo"]["fetch_ok"] == 0
+        assert result["repo"]["error_reason"] == "rate_limited"
+
+    def test_rate_limit_exhausted_mid_file_loop_discards_partial_results(self):
+        """One file already read successfully, then the second blob fetch
+        gets rate limited -- the whole repo must fail cleanly with no
+        files/matches at all, never a partial fetch_ok=1 row that looks
+        like "this repo only has 1 agent file" when the truth is unknown."""
+        commits = [_commit_json("sha1")]
+        tree = [_tree_entry("AGENTS.md", "blob_ok"), _tree_entry("CLAUDE.md", "blob_limited")]
+        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
+
+        def _get(url, headers=None, params=None, timeout=None):
+            if url.endswith("/commits"):
+                return _fake_response(200, commits)
+            if url.endswith("/git/trees/sha1"):
+                return _fake_response(200, {"tree": tree})
+            if url.endswith("/blob_ok"):
+                return _fake_response(200, _blob_json("a test file"))
+            return rate_limited  # the blob_limited fetch
+
+        with (
+            patch("requests.get", side_effect=_get),
+            patch("collection.rq5_agent_file_scan.time.sleep"),
+        ):
+            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+
+        assert result["repo"]["fetch_ok"] == 0
+        assert result["repo"]["error_reason"] == "rate_limited"
+        assert result["files"] == []
+        assert result["matches"] == []
+
+    def test_threads_rate_limiter_through_to_every_api_call(self):
+        limiter = _RateLimiter(rate_per_second=1000)
+        commits = [_commit_json("sha1")]
+        tree = [_tree_entry("AGENTS.md", "blobsha1")]
+        blob = _blob_json("a test file")
+
+        with (
+            patch(
+                "requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob})
+            ),
+            patch.object(limiter, "acquire", wraps=limiter.acquire) as acquire_mock,
+        ):
+            process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG, rate_limiter=limiter)
+
+        # commit lookup + tree listing + one blob fetch = 3 calls, each paced.
+        assert acquire_mock.call_count == 3
 
 
 class TestProcessRepoRobustness:
@@ -873,6 +1045,49 @@ class TestRunScan:
 
         assert seen_kwargs["token"] == "sometoken"
 
+    def test_run_scan_builds_and_threads_a_real_rate_limiter_by_default(self, tmp_path):
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "x"}]
+        seen_kwargs = {}
+
+        def _fake_process_repo(repo, **kwargs):
+            seen_kwargs.update(kwargs)
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+
+        with (
+            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            run_scan(
+                db_path=tmp_path / "rq5.db",
+                workers=1,
+                progress_path=tmp_path / "progress.json",
+                notify=False,
+            )
+
+        assert isinstance(seen_kwargs["rate_limiter"], _RateLimiter)
+
+    def test_run_scan_disables_throttling_when_target_is_falsy(self, tmp_path):
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "x"}]
+        seen_kwargs = {}
+
+        def _fake_process_repo(repo, **kwargs):
+            seen_kwargs.update(kwargs)
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+
+        with (
+            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            run_scan(
+                db_path=tmp_path / "rq5.db",
+                workers=1,
+                progress_path=tmp_path / "progress.json",
+                notify=False,
+                target_requests_per_hour=None,
+            )
+
+        assert seen_kwargs["rate_limiter"] is None
+
     def test_run_scan_passes_the_same_loaded_catalog_to_every_repo(self, tmp_path):
         universe = [
             {"repo_name": "org/a", "language": "python", "clone_url": "x"},
@@ -1022,6 +1237,18 @@ class TestMainCli:
     def test_workers_flag_is_threaded_through(self):
         run_scan_mock = self._run_main_with_argv(["--workers", "16"])
         assert run_scan_mock.call_args.kwargs["workers"] == 16
+
+    def test_defaults_to_target_requests_per_hour_constant(self):
+        run_scan_mock = self._run_main_with_argv([])
+        assert run_scan_mock.call_args.kwargs["target_requests_per_hour"] == TARGET_REQUESTS_PER_HOUR
+
+    def test_max_requests_per_hour_flag_is_threaded_through(self):
+        run_scan_mock = self._run_main_with_argv(["--max-requests-per-hour", "2500"])
+        assert run_scan_mock.call_args.kwargs["target_requests_per_hour"] == 2500.0
+
+    def test_zero_max_requests_per_hour_disables_throttling(self):
+        run_scan_mock = self._run_main_with_argv(["--max-requests-per-hour", "0"])
+        assert run_scan_mock.call_args.kwargs["target_requests_per_hour"] is None
 
     def test_warns_when_no_token_is_available(self):
         with patch("collection.rq5_agent_file_scan.GITHUB_TOKEN", ""):
