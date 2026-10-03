@@ -526,6 +526,35 @@ class TestProcessRepo:
         assert by_name["CLAUDE.md"]["has_test"] is False
         assert by_name["CLAUDE.md"]["has_fixture"] is False
 
+    def test_uses_resolve_cutoff_commit_not_the_raw_dataset_c_helper(self, tmp_path):
+        """Regression guard: this scan must go through
+        rq1_prevalence_scan._resolve_cutoff_commit() (the fix for the
+        2026-10-02 "shallow clone hides the true cutoff commit" bug), not
+        call dataset_c.find_cutoff_commit() directly -- a direct call
+        would silently reintroduce that bug here."""
+        repo_path = _make_git_repo(tmp_path)
+        _commit(repo_path, "AGENTS.md", "x", "2026-08-01T00:00:00")
+        real_sha = _head_sha(repo_path)  # must resolve for real in repo_path, or downstream git calls fail
+
+        with (
+            patch(
+                "collection.rq5_agent_file_scan.clone_with_function",
+                side_effect=lambda fn, url, path: _fake_clone_result(repo_path),
+            ),
+            patch(
+                "collection.rq5_agent_file_scan._resolve_cutoff_commit",
+                return_value={"sha": real_sha, "date": "2026-08-01"},
+            ) as resolve_mock,
+        ):
+            result = process_repo(
+                self._repo_dict(), tmp_path, cutoff_date="2026-09-08", catalog=_TEST_CATALOG
+            )
+
+        resolve_mock.assert_called_once()
+        assert resolve_mock.call_args.args[0] == repo_path
+        assert resolve_mock.call_args.args[2] == "2026-09-08"
+        assert result["repo"]["commit_sha"] == real_sha
+
     def test_default_catalog_is_loaded_when_none_is_passed(self, tmp_path):
         repo_path = _make_git_repo(tmp_path)
         _commit(repo_path, "AGENTS.md", "mentions conftest for fixtures", "2026-08-01T00:00:00")

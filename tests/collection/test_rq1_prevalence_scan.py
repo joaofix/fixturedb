@@ -12,10 +12,10 @@ same pattern `tests/collection/test_dataset_c.py` uses for `_process_repo()`.
 
 from __future__ import annotations
 
+import base64
 import csv
 import gzip
 import json
-import base64
 import logging
 import os
 import sqlite3
@@ -27,19 +27,24 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from collection import rq1_prevalence_scan as rq1scan
+from collection.dataset_c import find_cutoff_commit
 from collection.rq1_prevalence_scan import (
+    REPAIRABLE_ERROR_REASONS,
     RQ1_LANGUAGES,
     _clone_with_shallow_fallback,
     _full_clone_with_timeout,
     _notify,
+    _resolve_cutoff_commit,
     _result_row,
     initialise_rq1_db,
     load_duplicate_repo_names,
     load_raw_universe,
+    load_repos_needing_retry,
     load_scanned_repo_names,
     main,
     persist_result,
     process_repo,
+    retry_failed_repos,
     run_scan,
     scan_working_tree,
     write_csv_outputs,
@@ -1012,6 +1017,245 @@ class TestRunScanNotifications:
         notify_mock.assert_not_called()
 
 
+class TestResolveCutoffCommit:
+    """Regression coverage for the 2026-10-02 "part 3" production
+    incident: a repo with zero commits inside [shallow_since,
+    cutoff_date] has every commit visible in its `--shallow-since` clone
+    fall *after* cutoff_date, so a plain `find_cutoff_commit()` call
+    wrongly reports "no commit found" even though the real answer exists
+    just outside the shallow boundary. Uses real local `--shallow-since`
+    clones against a `file://` source (no network) to reproduce git's
+    actual shallow-boundary behavior exactly, not a simulation of it."""
+
+    def _shallow_clone(self, tmp_path, source_path, *, shallow_since, name="target"):
+        target = tmp_path / name
+        _git(tmp_path, "clone", "--quiet", f"--shallow-since={shallow_since}", f"file://{source_path}", str(target))
+        return target
+
+    def test_full_clone_without_shallow_marker_trusts_a_none_result(self, tmp_path):
+        repo_path = _make_git_repo(tmp_path)
+        _commit(repo_path, "a.txt", "x", "2026-09-10T00:00:00")  # only after cutoff
+        assert not (repo_path / ".git" / "shallow").exists()
+
+        result = _resolve_cutoff_commit(repo_path, "https://example.invalid/unreachable.git", "2026-09-08")
+        assert result is None
+
+    def test_shallow_clone_with_a_commit_in_window_is_trusted_without_retry(self, tmp_path):
+        source = _make_git_repo(tmp_path, name="source")
+        _commit(source, "a.txt", "one", "2026-06-16T00:00:00")
+        _commit(source, "b.txt", "two", "2026-08-01T00:00:00")  # inside [shallow_since, cutoff]
+        _commit(source, "c.txt", "three", "2026-09-12T00:00:00")  # after cutoff
+
+        target = self._shallow_clone(tmp_path, source, shallow_since="2026-07-01")
+        assert (target / ".git" / "shallow").exists()
+
+        result = _resolve_cutoff_commit(target, f"file://{source}", "2026-09-08")
+        assert result is not None
+        assert result["date"] == "2026-08-01"
+
+    def test_shallow_clone_missing_the_window_retries_full_and_finds_the_real_answer(self, tmp_path):
+        """The exact bug: the only pre-cutoff commit sits before
+        shallow_since, so the shallow clone's earliest commit is already
+        after cutoff_date. find_cutoff_commit() alone reports None;
+        _resolve_cutoff_commit() must not trust that and must recover the
+        real answer via a full-clone retry."""
+        source = _make_git_repo(tmp_path, name="source")
+        _commit(source, "a.txt", "one", "2026-06-16T00:00:00")  # the true answer
+        _commit(source, "b.txt", "two", "2026-09-12T00:00:00")  # after cutoff; all the shallow clone sees
+
+        target = self._shallow_clone(tmp_path, source, shallow_since="2026-07-01")
+        assert (target / ".git" / "shallow").exists()
+        assert find_cutoff_commit(target, cutoff_date="2026-09-08") is None  # confirms the bug reproduces
+
+        result = _resolve_cutoff_commit(target, f"file://{source}", "2026-09-08")
+        assert result is not None
+        assert result["date"] == "2026-06-16"
+
+    def test_genuinely_no_commit_before_cutoff_is_still_none_after_retry(self, tmp_path):
+        """A repo truly created after the cutoff date -- the full-clone
+        retry must still correctly report no commit, not loop or
+        fabricate an answer."""
+        source = _make_git_repo(tmp_path, name="source")
+        _commit(source, "a.txt", "one", "2026-09-12T00:00:00")  # only commit, after cutoff
+
+        target = self._shallow_clone(tmp_path, source, shallow_since="2026-07-01")
+        result = _resolve_cutoff_commit(target, f"file://{source}", "2026-09-08")
+        assert result is None
+
+    def test_full_clone_retry_failure_degrades_to_none_not_a_crash(self, tmp_path):
+        source = _make_git_repo(tmp_path, name="source")
+        _commit(source, "a.txt", "one", "2026-06-16T00:00:00")
+        _commit(source, "b.txt", "two", "2026-09-12T00:00:00")
+
+        target = self._shallow_clone(tmp_path, source, shallow_since="2026-07-01")
+        assert (target / ".git" / "shallow").exists()
+
+        result = _resolve_cutoff_commit(target, "https://example.invalid/does-not-exist.git", "2026-09-08")
+        assert result is None
+
+
+class TestLoadReposNeedingRetry:
+    def test_missing_db_returns_empty_list(self, tmp_path):
+        assert load_repos_needing_retry(db_path=tmp_path / "missing.db") == []
+
+    def test_selects_only_matching_error_reasons_and_restores_language_and_url(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/a", "python", "t", clone_ok=False, error_reason="clone_failed"), db_path)
+        persist_result(
+            _result_row("org/b", "python", "t", clone_ok=False, error_reason="no_commit_at_or_before_cutoff"),
+            db_path,
+        )
+        persist_result(_result_row("org/c", "python", "t", clone_ok=False, error_reason="scan_failed: boom"), db_path)
+        persist_result(_result_row("org/d", "python", "t", clone_ok=True), db_path)
+
+        universe = [
+            {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
+            {"repo_name": "org/b", "language": "python", "clone_url": "url-b"},
+            {"repo_name": "org/c", "language": "python", "clone_url": "url-c"},
+            {"repo_name": "org/d", "language": "python", "clone_url": "url-d"},
+        ]
+        with patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe):
+            targets = load_repos_needing_retry(db_path=db_path)
+
+        assert {t["repo_name"] for t in targets} == {"org/a", "org/b"}
+        by_name = {t["repo_name"]: t for t in targets}
+        assert by_name["org/a"]["clone_url"] == "url-a"
+
+    def test_no_matching_rows_returns_empty_list(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/a", "python", "t", clone_ok=True), db_path)
+        with patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=[]):
+            assert load_repos_needing_retry(db_path=db_path) == []
+
+    def test_custom_error_reasons_narrows_selection(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/a", "python", "t", clone_ok=False, error_reason="clone_failed"), db_path)
+        persist_result(_result_row("org/b", "python", "t", clone_ok=False, error_reason="timeout"), db_path)
+        universe = [
+            {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
+            {"repo_name": "org/b", "language": "python", "clone_url": "url-b"},
+        ]
+        with patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe):
+            targets = load_repos_needing_retry(error_reasons=("clone_failed",), db_path=db_path)
+        assert {t["repo_name"] for t in targets} == {"org/a"}
+
+
+class TestRetryFailedRepos:
+    def test_retries_only_selected_repos_and_upserts_results(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/a", "python", "t", clone_ok=False, error_reason="clone_failed"), db_path)
+        persist_result(
+            _result_row(
+                "org/untouched",
+                "python",
+                "t",
+                clone_ok=True,
+                counts={"num_test_files": 3, "num_fixtures": 1, "num_setup": 1, "num_teardown": 0},
+            ),
+            db_path,
+        )
+
+        universe = [
+            {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
+            {"repo_name": "org/untouched", "language": "python", "clone_url": "url-u"},
+        ]
+
+        def _fake_process_repo(repo, clones_dir, **kwargs):
+            return _result_row(
+                repo["repo_name"],
+                repo["language"],
+                "t2",
+                clone_ok=True,
+                counts={"num_test_files": 5, "num_fixtures": 2, "num_setup": 2, "num_teardown": 1},
+            )
+
+        with (
+            patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq1_prevalence_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            counts = retry_failed_repos(db_path=db_path, workers=1, notify=False)
+
+        assert counts == {"attempted": 1, "recovered": 1, "still_failed": 0}
+        rows = {
+            r[0]: (r[1], r[2])
+            for r in sqlite3.connect(db_path).execute("SELECT repo_name, clone_ok, num_test_files FROM repo_prevalence")
+        }
+        assert rows["org/a"] == (1, 5)
+        assert rows["org/untouched"] == (1, 3)  # never touched by the retry
+
+    def test_still_failing_repos_are_counted_correctly(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/a", "python", "t", clone_ok=False, error_reason="timeout"), db_path)
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
+
+        def _fake_process_repo(repo, clones_dir, **kwargs):
+            return _result_row(repo["repo_name"], repo["language"], "t2", clone_ok=False, error_reason="clone_failed")
+
+        with (
+            patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq1_prevalence_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            counts = retry_failed_repos(db_path=db_path, workers=1, notify=False)
+
+        assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
+
+    def test_a_stuck_repo_is_recorded_as_timeout_not_hung(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/stuck", "python", "t", clone_ok=False, error_reason="clone_failed"), db_path)
+        universe = [{"repo_name": "org/stuck", "language": "python", "clone_url": "url"}]
+        stop_event = threading.Event()
+
+        def _fake_process_repo(repo, clones_dir, **kwargs):
+            stop_event.wait(5)
+            return _result_row(repo["repo_name"], repo["language"], "never", clone_ok=True)
+
+        try:
+            with (
+                patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+                patch("collection.rq1_prevalence_scan.process_repo", side_effect=_fake_process_repo),
+            ):
+                counts = retry_failed_repos(
+                    db_path=db_path, workers=1, notify=False, process_repo_timeout_seconds=0.05
+                )
+        finally:
+            stop_event.set()
+
+        assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
+        row = sqlite3.connect(db_path).execute(
+            "SELECT clone_ok, error_reason FROM repo_prevalence WHERE repo_name='org/stuck'"
+        ).fetchone()
+        assert row == (0, "timeout")
+
+    def test_notifies_with_a_recovery_summary(self, tmp_path):
+        db_path = tmp_path / "rq1.db"
+        initialise_rq1_db(db_path)
+        persist_result(_result_row("org/a", "python", "t", clone_ok=False, error_reason="clone_failed"), db_path)
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
+
+        def _fake_process_repo(repo, clones_dir, **kwargs):
+            return _result_row(repo["repo_name"], repo["language"], "t2", clone_ok=True)
+
+        notify_calls = []
+        with (
+            patch("collection.rq1_prevalence_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq1_prevalence_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq1_prevalence_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
+        ):
+            retry_failed_repos(db_path=db_path, workers=1, notify=True)
+
+        assert len(notify_calls) == 1
+        assert "1/1 repos recovered" in notify_calls[0]
+
+    def test_default_error_reasons_is_the_repairable_set(self, tmp_path):
+        assert REPAIRABLE_ERROR_REASONS == ("no_commit_at_or_before_cutoff", "clone_failed", "timeout")
+
+
 class TestMainCli:
     """main()'s --workers flag and auth wiring -- never actually runs a
     scan (run_scan()/write_csv_outputs()/logging setup are all mocked
@@ -1047,3 +1291,33 @@ class TestMainCli:
     def test_runs_unauthenticated_when_no_token_is_available(self):
         run_scan_mock = self._run_main_with_argv([], auth_env={})
         assert run_scan_mock.call_args.kwargs["extra_env"] == {}
+
+    def test_retry_failed_flag_calls_retry_failed_repos_instead_of_run_scan(self):
+        with (
+            patch.object(sys, "argv", ["rq1_prevalence_scan.py", "--retry-failed"]),
+            patch("collection.rq1_prevalence_scan.configure_logging"),
+            patch("collection.rq1_prevalence_scan.add_file_logging"),
+            patch("collection.rq1_prevalence_scan.write_csv_outputs"),
+            patch("collection.rq1_prevalence_scan.github_auth_env", return_value={}),
+            patch("collection.rq1_prevalence_scan.run_scan") as run_scan_mock,
+            patch("collection.rq1_prevalence_scan.retry_failed_repos", return_value={}) as retry_mock,
+        ):
+            main()
+
+        retry_mock.assert_called_once()
+        run_scan_mock.assert_not_called()
+
+    def test_retry_failed_threads_workers_and_auth_through(self):
+        auth = {"GIT_CONFIG_VALUE_0": "Authorization: Basic x"}
+        with (
+            patch.object(sys, "argv", ["rq1_prevalence_scan.py", "--retry-failed", "--workers", "16"]),
+            patch("collection.rq1_prevalence_scan.configure_logging"),
+            patch("collection.rq1_prevalence_scan.add_file_logging"),
+            patch("collection.rq1_prevalence_scan.write_csv_outputs"),
+            patch("collection.rq1_prevalence_scan.github_auth_env", return_value=auth),
+            patch("collection.rq1_prevalence_scan.retry_failed_repos", return_value={}) as retry_mock,
+        ):
+            main()
+
+        assert retry_mock.call_args.kwargs["workers"] == 16
+        assert retry_mock.call_args.kwargs["extra_env"] == auth

@@ -18,17 +18,19 @@ for `db/rq1_prevalence.db`.
 **Reuse, not reimplementation, of RQ1's proven collection infra:** this
 scan's corpus (the full raw universe, minus known duplicates), temporal
 pinning (same `RQ1_CUTOFF_DATE`/`RQ1_SHALLOW_SINCE`), cloning (shallow with
-a tightly-timed-out full-clone fallback), GitHub authentication, the
-in-process watchdog timeout, and the resumable "db row = checkpoint"
-pattern are *exactly* RQ1's own, already production-hardened through two
-real incidents (see `rq1_prevalence_scan.py`'s module docstring: a 6+ hour
-freeze, and a rate-limiting/auth-scheme bug). Re-deriving any of that here
-would risk reintroducing bugs already fixed once. This module imports
-those pieces directly from `rq1_prevalence_scan.py` rather than
-duplicating them -- `rq1_prevalence_scan.py` itself is left completely
-unmodified (it may be mid-run on a remote server collecting RQ1's real
-data while this module is written), so this is read-only reuse, never a
-shared refactor of that file.
+a tightly-timed-out full-clone fallback), cutoff-commit resolution
+(`_resolve_cutoff_commit()`), GitHub authentication, the in-process
+watchdog timeout, and the resumable "db row = checkpoint" pattern are
+*exactly* RQ1's own, already production-hardened through three real
+incidents (see `rq1_prevalence_scan.py`'s module docstring: a 6+ hour
+freeze, a rate-limiting/auth-scheme bug, and a shallow-clone-hides-the-
+true-cutoff-commit bug). Re-deriving any of that here would risk
+reintroducing bugs already fixed once -- notably, this scan never ran for
+real before the third incident was found and fixed in
+`rq1_prevalence_scan.py`, so it inherits that fix from the start rather
+than needing its own retroactive repair pass. This module imports those
+pieces directly from `rq1_prevalence_scan.py` rather than duplicating
+them.
 
 **Lighter per-repo cost than RQ1:** RQ1 needs a full working-tree checkout
 because it tree-sitter-parses every test file. RQ5 only needs the content
@@ -72,7 +74,6 @@ import yaml
 
 from . import paths
 from .config import CLONES_DIR
-from .dataset_c import find_cutoff_commit
 from .db import db_session
 from .ephemeral_clone import clone_with_function
 from .logging_utils import configure_logging, get_logger
@@ -81,6 +82,7 @@ from .rq1_prevalence_scan import (
     DUPLICATES_PATH,
     _clone_with_shallow_fallback,
     _notify,
+    _resolve_cutoff_commit,
     _write_progress,
     add_file_logging,
     github_auth_env,
@@ -433,7 +435,7 @@ def process_repo(
         if managed_path is None:
             return _fail("clone_failed")
 
-        cutoff = find_cutoff_commit(managed_path, cutoff_date=cutoff_date)
+        cutoff = _resolve_cutoff_commit(managed_path, clone_url, cutoff_date, extra_env=extra_env)
         if cutoff is None:
             return _fail("no_commit_at_or_before_cutoff")
 

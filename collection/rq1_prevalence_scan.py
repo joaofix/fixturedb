@@ -49,6 +49,36 @@ a different language's bucket. This keeps each language row's denominator
 exactly "repos SEART tagged as that language," with no double-counting
 risk across Table 1/2's four language rows.
 
+**Production incident (2026-10-02, part 3 -- shallow clone hid the true
+cutoff commit for most of the "no commit at or before cutoff" bucket):**
+`RQ1_SHALLOW_SINCE` (2026-07-01) sits over 2 months *before*
+`RQ1_CUTOFF_DATE` (2026-09-08), deliberately, so a truncated-but-trusted
+shallow clone can't accidentally hide a real cutoff candidate close to the
+boundary. But `clone_primitives._shallow_clone_is_truncated()` only
+detects one specific failure mode: a shallow-boundary commit whose true
+parent is *itself inside* the requested window (a graft hiding an
+in-window commit). It does **not** detect a different, and in this run
+far more common, failure mode: a repo with zero commits anywhere in
+`[RQ1_SHALLOW_SINCE, RQ1_CUTOFF_DATE]` at all. For such a repo, the
+`--shallow-since` clone's earliest visible commit is already *after*
+`RQ1_CUTOFF_DATE`, so `find_cutoff_commit()` correctly finds no candidate
+*inside that clone* -- but the real answer (a commit before
+`RQ1_SHALLOW_SINCE`) sits just outside the shallow boundary, never
+fetched at all. Confirmed directly: of 25 repos sampled from this run's
+"no_commit_at_or_before_cutoff" rows, all 25 turned out to have a real
+commit before `RQ1_CUTOFF_DATE` once cloned in full -- this bug, not a
+quiet period, was almost certainly the cause for the overwhelming majority
+of that bucket. `_resolve_cutoff_commit()` closes this: whenever
+`find_cutoff_commit()` finds nothing AND the clone is shallow
+(`.git/shallow` exists), the clone is discarded and redone in full before
+"no commit found" is trusted. Repos that *did* get a cutoff commit from a
+shallow clone were never at risk of a wrong (too-early) answer from this
+bug -- by construction, if the true latest-commit-before-cutoff existed
+inside the shallow window, it would have been found correctly; the bug
+only ever produces a false *negative*, never a false commit SHA. Fixed
+retroactively via `retry_failed_repos()` against the already-collected db
+(see that function's own docstring) rather than a from-scratch re-run.
+
 Deliberately NOT persisting fixture-level rows (raw_source, LOC, cyclomatic
 complexity, mocks, ...) -- RQ1 only needs counts, so storing ~24.7k repos'
 worth of full fixture metrics would be pure waste. `fixture_role` (setup/
@@ -453,6 +483,43 @@ def _clone_with_shallow_fallback(
     return _full_clone_with_timeout(clone_url, target_dir, extra_env=extra_env)
 
 
+def _resolve_cutoff_commit(
+    repo_path: Path,
+    clone_url: str,
+    cutoff_date: str,
+    *,
+    extra_env: dict[str, str] | None = None,
+) -> dict[str, str] | None:
+    """`find_cutoff_commit(repo_path, cutoff_date)`, but never trusts a
+    `None` result coming from a still-shallow clone (`.git/shallow`
+    exists) -- see this module's "Production incident ... part 3"
+    docstring section for the exact failure mode: a repo with zero
+    commits inside `[shallow_since, cutoff_date]` has every commit in its
+    shallow clone falling *after* `cutoff_date`, so `find_cutoff_commit()`
+    correctly finds nothing *in that clone*, while the real
+    latest-commit-before-cutoff sits just outside the shallow boundary,
+    never fetched. On that ambiguous `None`, this discards the shallow
+    clone and redoes it as a full clone before accepting "no commit
+    found" as the real answer. A `None` from an already-full clone
+    (`.git/shallow` absent) is trusted immediately -- that's a genuine
+    answer, not an artifact of the shallow boundary.
+
+    Returns `None` if there is genuinely no commit at or before
+    `cutoff_date` (full history checked), or if the full-clone retry
+    itself fails (network/size/timeout) -- the caller can't distinguish
+    those two in isolation, but both correctly result in `clone_ok=0`.
+    """
+    cutoff = find_cutoff_commit(repo_path, cutoff_date=cutoff_date)
+    if cutoff is not None:
+        return cutoff
+    if not (repo_path / ".git" / "shallow").exists():
+        return None
+    shutil.rmtree(repo_path, ignore_errors=True)
+    if not _full_clone_with_timeout(clone_url, repo_path, extra_env=extra_env):
+        return None
+    return find_cutoff_commit(repo_path, cutoff_date=cutoff_date)
+
+
 def process_repo(
     repo: dict,
     clones_dir: Path,
@@ -484,7 +551,7 @@ def process_repo(
         if managed_path is None:
             return _result_row(repo_name, language, scanned_at, clone_ok=False, error_reason="clone_failed")
 
-        cutoff = find_cutoff_commit(managed_path, cutoff_date=cutoff_date)
+        cutoff = _resolve_cutoff_commit(managed_path, clone_url, cutoff_date, extra_env=extra_env)
         if cutoff is None:
             return _result_row(
                 repo_name, language, scanned_at, clone_ok=False, error_reason="no_commit_at_or_before_cutoff"
@@ -816,6 +883,135 @@ def run_scan(
     return {"total": len(universe), "already_done": len(already_done), "scanned_this_run": len(pending)}
 
 
+# error_reasons worth re-attempting: all three are plausibly an artifact of
+# the clone/network/timing step itself, not a property of the repo's real
+# history -- "no_commit_at_or_before_cutoff" per the module docstring's
+# "part 3" incident (now fixed via _resolve_cutoff_commit()), "clone_failed"/
+# "timeout" as ordinary transient network/contention failures. A
+# "scan_failed: ..." reason (e.g. the ENAMETOOLONG cases seen in the real
+# run) is deliberately excluded here -- that is a deterministic local-
+# filesystem limitation that will fail identically on every retry, not a
+# one-off worth spending a retry attempt on.
+REPAIRABLE_ERROR_REASONS: tuple[str, ...] = (
+    "no_commit_at_or_before_cutoff",
+    "clone_failed",
+    "timeout",
+)
+
+
+def load_repos_needing_retry(
+    error_reasons: tuple[str, ...] = REPAIRABLE_ERROR_REASONS,
+    *,
+    db_path: Path = DB_PATH,
+    raw_dir: Path = paths.RAW_SEARCH_DIR,
+    duplicates_path: Path = DUPLICATES_PATH,
+) -> list[dict]:
+    """Every repo currently persisted with `clone_ok=0` and an
+    `error_reason` in `error_reasons` -- cross-referenced back against the
+    raw universe to recover each one's `language`/`clone_url` (not stored
+    on a failed row, since `_result_row()` zero-fills those on failure).
+    Empty list if the db doesn't exist yet, or nothing matches."""
+    if not db_path.exists():
+        return []
+    with db_session(db_path) as conn:
+        placeholders = ", ".join("?" for _ in error_reasons)
+        rows = conn.execute(
+            f"SELECT repo_name FROM {TABLE_NAME} WHERE clone_ok = 0 AND error_reason IN ({placeholders})",
+            error_reasons,
+        ).fetchall()
+    target_names = {r[0] for r in rows}
+    if not target_names:
+        return []
+    universe = load_raw_universe(raw_dir, duplicates_path)
+    return [repo for repo in universe if repo["repo_name"] in target_names]
+
+
+def retry_failed_repos(
+    error_reasons: tuple[str, ...] = REPAIRABLE_ERROR_REASONS,
+    *,
+    raw_dir: Path = paths.RAW_SEARCH_DIR,
+    duplicates_path: Path = DUPLICATES_PATH,
+    clones_dir: Path = CLONES_DIR,
+    db_path: Path = DB_PATH,
+    workers: int = DEFAULT_WORKERS,
+    cutoff_date: str = RQ1_CUTOFF_DATE,
+    shallow_since: str = RQ1_SHALLOW_SINCE,
+    process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
+    extra_env: dict[str, str] | None = None,
+    notify: bool = True,
+) -> dict[str, int]:
+    """Re-attempt every repo currently recorded with one of `error_reasons`
+    (default: `REPAIRABLE_ERROR_REASONS`) against the *already-collected*
+    db, rather than a from-scratch re-run of all ~24.7k repos -- a cheap,
+    targeted repair pass for the "part 3" incident (see module docstring)
+    plus ordinary transient clone failures/timeouts.
+
+    Each repo is re-run through the exact same `process_repo()` (now using
+    the fixed `_resolve_cutoff_commit()`) and persisted via the same
+    `persist_result()` upsert `run_scan()` uses -- a repo that still fails
+    simply keeps (or gets a fresh) `clone_ok=0` row, identical in shape to
+    a first-pass failure; nothing here can corrupt an already-successful
+    `clone_ok=1` row, since only repos matching `error_reasons` are
+    selected in the first place.
+
+    No per-language chunking (unlike `run_scan()`) -- a repair pass is
+    expected to be a small fraction of the full universe, so one `notify`
+    push at the end is enough.
+    """
+    targets = load_repos_needing_retry(
+        error_reasons, db_path=db_path, raw_dir=raw_dir, duplicates_path=duplicates_path
+    )
+    logger.info(
+        "[RQ1 retry] %d repos selected for retry (reasons: %s)",
+        len(targets),
+        ", ".join(error_reasons),
+    )
+
+    counters = {"attempted": len(targets), "recovered": 0, "still_failed": 0}
+
+    def _compute(repo: dict) -> dict:
+        ok, result = run_with_deadline(
+            process_repo,
+            repo,
+            clones_dir,
+            cutoff_date=cutoff_date,
+            shallow_since=shallow_since,
+            extra_env=extra_env,
+            timeout_seconds=process_repo_timeout_seconds,
+        )
+        if ok:
+            return result
+        logger.warning(
+            "[RQ1 retry] %s exceeded the %ds per-repo deadline -- abandoning",
+            repo["repo_name"],
+            process_repo_timeout_seconds,
+        )
+        return _result_row(
+            repo["repo_name"],
+            repo["language"],
+            datetime.now(timezone.utc).isoformat(),
+            clone_ok=False,
+            error_reason="timeout",
+        )
+
+    def _persist(result: dict) -> None:
+        persist_result(result, db_path)
+        if result["clone_ok"]:
+            counters["recovered"] += 1
+        else:
+            counters["still_failed"] += 1
+
+    run_parallel_per_repo(targets, _compute, _persist, workers, desc="[RQ1 retry]")
+
+    if notify:
+        _notify(
+            f"RQ1 retry: {counters['recovered']}/{counters['attempted']} repos recovered "
+            f"({counters['still_failed']} still failed)"
+        )
+
+    return counters
+
+
 def add_file_logging(log_path: Path = LOG_PATH) -> None:
     """Attach a durable file handler on top of `configure_logging()`'s
     console-only handler -- this scan can run for hours, and a plain
@@ -848,6 +1044,13 @@ def main() -> None:
         default=DEFAULT_WORKERS,
         help=f"Concurrent clone workers (default: {DEFAULT_WORKERS})",
     )
+    parser.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="Re-attempt repos currently recorded as clone_ok=0 for a recoverable "
+        f"reason ({', '.join(REPAIRABLE_ERROR_REASONS)}) against the existing db, "
+        "instead of scanning the full universe.",
+    )
     args = parser.parse_args()
 
     configure_logging()
@@ -860,6 +1063,11 @@ def main() -> None:
             "rate limiting (see github_auth_env()'s docstring for the "
             "2026-10-02 incident this caused)."
         )
+    if args.retry_failed:
+        counts = retry_failed_repos(workers=args.workers, extra_env=extra_env)
+        write_csv_outputs()
+        print(f"[RQ1 retry] done: {counts}")
+        return
     counts = run_scan(workers=args.workers, extra_env=extra_env)
     write_csv_outputs()
     print(f"[RQ1 scan] done: {counts}")
