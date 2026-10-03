@@ -109,12 +109,14 @@ redundant copy of that URL on every match row.
 
 **Rate limiting:** GitHub's REST API allows 5,000 authenticated requests/
 hour per token (vs. 60/hour unauthenticated -- far too low for ~24.7k
-repos x ~2 requests each, so a real run requires `GITHUB_TOKEN`). Retry/
-backoff on a 429 or rate-limit-exhausted 403 reuses
-`GitHubAgentFileChecker`'s own static detection/backoff helpers
-(`agent_signal_primitives.py`) -- the same logic Dataset A's own pre-clone
-agent-config check already relies on in production, not a second,
-potentially-drifting copy of it.
+repos x ~2 requests each, so a real run requires `GITHUB_TOKEN`). Detects
+and retries/backs off on both the primary (hourly quota) and secondary
+(abuse-detection/burst) rate limits -- see `_is_rate_limited()`'s and
+`_retry_wait_seconds()`'s own docstrings for the production incident that
+made the secondary-limit case necessary, found auditing the real run's
+results rather than before it ran. Paced proactively by `_RateLimiter`/
+`TARGET_REQUESTS_PER_HOUR` below regardless, so this retry path should be
+the exception, not the norm, in normal operation.
 
 python -m collection.rq5_agent_file_scan
 """
@@ -135,7 +137,6 @@ import requests
 import yaml
 
 from . import paths
-from .agent_signal_primitives import GitHubAgentFileChecker
 from .config import GITHUB_TOKEN
 from .db import db_session
 from .logging_utils import configure_logging, get_logger
@@ -452,6 +453,47 @@ def _retry_wait_seconds(response: requests.Response, attempt: int) -> float:
     return min(2**attempt, 30)
 
 
+def _is_rate_limited(response: requests.Response | None) -> bool:
+    """True for a 429, or a 403 that is GitHub's rate limiting rather
+    than a genuine permission/not-found 403.
+
+    **Production incident (2026-10-03, found auditing the real run's
+    results, not before it):** the original version of this check
+    (`GitHubAgentFileChecker._is_rate_limited()`, still used as-is by
+    that class's own callers -- this is a separate, local function, not
+    a modification of that shared one) only recognized a 403 when
+    `X-RateLimit-Remaining` was exactly `"0"` -- which is how the
+    *primary* hourly-quota limit presents, but GitHub's own docs are
+    explicit that the *secondary* (abuse-detection) limit does not: "there
+    is no 'remaining' header that shows you your secondary rate limit
+    quota" (only `Retry-After`, sometimes `X-RateLimit-Reset` -- see
+    https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api).
+    Under this scan's sustained 20-worker, 14-hour real run, secondary
+    limiting evidently fired despite the proactive `_RateLimiter` keeping
+    the *primary* budget nowhere near exhausted -- and every one of those
+    403s fell straight through the old check as an ordinary non-200
+    response, silently recorded as `no_commit_at_or_before_cutoff`/
+    `tree_fetch_failed`/a dropped file rather than retried. Confirmed
+    directly: re-querying a random sample of repos recorded as
+    `no_commit_at_or_before_cutoff` found a real commit for ~1 in 3 of
+    them on a plain, low-load re-check.
+
+    A 403 with *neither* `Retry-After` nor a zeroed
+    `X-RateLimit-Remaining` is still treated as NOT rate-limited -- that
+    combination is what a genuine permission-denied response looks like,
+    and must still surface as a real failure, not loop on retries that
+    will never succeed."""
+    if response is None:
+        return False
+    if response.status_code == 429:
+        return True
+    if response.status_code != 403:
+        return False
+    if response.headers.get("X-RateLimit-Remaining") == "0":
+        return True
+    return response.headers.get("Retry-After") is not None
+
+
 def _api_headers(token: str) -> dict[str, str]:
     headers = {"Accept": "application/vnd.github.v3+json"}
     if token:
@@ -468,14 +510,12 @@ def _api_get(
     max_retries: int = API_MAX_RETRIES,
     rate_limiter: _RateLimiter | None = None,
 ) -> requests.Response | None:
-    """GET `url`, retrying with backoff on a rate-limited response.
-    Reuses `GitHubAgentFileChecker`'s own rate-limit *detection*
-    (`_is_rate_limited`, a plain `@staticmethod` that takes a `Response`
-    directly, callable without an instance) -- the same logic Dataset A's
-    own pre-clone agent-config check already relies on in production, not
-    a second, potentially-drifting copy of it. The *wait duration* uses
-    this module's own `_retry_wait_seconds()` instead of that class's
-    `_rate_limit_wait_seconds()` -- see that function's docstring for why.
+    """GET `url`, retrying with backoff on a rate-limited response. Both
+    the *detection* (`_is_rate_limited()`, above) and the *wait duration*
+    (`_retry_wait_seconds()`, above) are this module's own local
+    functions -- see each one's docstring for why neither reuses
+    `GitHubAgentFileChecker`'s equivalents as-is, even though that
+    class's own callers still do.
 
     When `rate_limiter` is given, every attempt (including retries) calls
     its `acquire()` first, pacing this call -- and therefore every real
@@ -499,7 +539,7 @@ def _api_get(
         except requests.RequestException as exc:
             logger.debug("[RQ5 scan] request failed for %s: %s", url, exc)
             return None
-        if GitHubAgentFileChecker._is_rate_limited(response):
+        if _is_rate_limited(response):
             if attempt < max_retries:
                 wait_seconds = _retry_wait_seconds(response, attempt)
                 logger.warning(
@@ -1063,6 +1103,137 @@ def run_scan(
     return {"total": len(universe), "already_done": len(already_done), "scanned_this_run": len(pending)}
 
 
+# error_reasons worth re-attempting -- all four are plausibly an artifact
+# of the fetch step itself (including the rate-limiting incident this
+# module's docstring documents), not a property of the repo's real root
+# contents. Mirrors rq1_prevalence_scan.REPAIRABLE_ERROR_REASONS's own
+# reasoning and naming convention.
+REPAIRABLE_ERROR_REASONS: tuple[str, ...] = (
+    "no_commit_at_or_before_cutoff",
+    "tree_fetch_failed",
+    "timeout",
+    "rate_limited",
+)
+
+
+def load_repos_needing_retry(
+    error_reasons: tuple[str, ...] = REPAIRABLE_ERROR_REASONS,
+    *,
+    db_path: Path = DB_PATH,
+    raw_dir: Path = paths.RAW_SEARCH_DIR,
+    duplicates_path: Path = DUPLICATES_PATH,
+) -> list[dict]:
+    """Every repo currently persisted with `fetch_ok=0` and an
+    `error_reason` in `error_reasons` -- cross-referenced back against the
+    raw universe to recover each one's `language`/`clone_url` (not stored
+    on a failed row). Empty list if the db doesn't exist yet, or nothing
+    matches."""
+    if not db_path.exists():
+        return []
+    with db_session(db_path) as conn:
+        placeholders = ", ".join("?" for _ in error_reasons)
+        rows = conn.execute(
+            f"SELECT repo_name FROM {REPO_TABLE_NAME} WHERE fetch_ok = 0 AND error_reason IN ({placeholders})",
+            error_reasons,
+        ).fetchall()
+    target_names = {r[0] for r in rows}
+    if not target_names:
+        return []
+    universe = load_raw_universe(raw_dir, duplicates_path)
+    return [repo for repo in universe if repo["repo_name"] in target_names]
+
+
+def retry_failed_repos(
+    error_reasons: tuple[str, ...] = REPAIRABLE_ERROR_REASONS,
+    *,
+    raw_dir: Path = paths.RAW_SEARCH_DIR,
+    duplicates_path: Path = DUPLICATES_PATH,
+    db_path: Path = DB_PATH,
+    workers: int = DEFAULT_WORKERS,
+    cutoff_date: str = RQ5_CUTOFF_DATE,
+    process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
+    token: str = GITHUB_TOKEN,
+    catalog_path: Path = CATALOG_PATH,
+    target_requests_per_hour: float | None = TARGET_REQUESTS_PER_HOUR,
+    notify: bool = True,
+) -> dict[str, int]:
+    """Re-attempt every repo currently recorded with one of
+    `error_reasons` (default: `REPAIRABLE_ERROR_REASONS`) against the
+    *already-collected* db, rather than a from-scratch re-run of all
+    ~24.7k repos -- a cheap, targeted repair pass for the rate-limit-
+    detection incident this module's docstring documents.
+
+    Each repo is re-run through the exact same `process_repo()` (now
+    using the fixed `_is_rate_limited()`) and persisted via the same
+    `persist_result()` upsert `run_scan()` uses -- a repo that still
+    fails simply keeps (or gets a fresh) `fetch_ok=0` row, identical in
+    shape to a first-pass failure; nothing here can touch an already-
+    successful `fetch_ok=1` row, since only repos matching
+    `error_reasons` are selected in the first place.
+
+    No per-language chunking (unlike `run_scan()`) -- a repair pass is
+    expected to be a small fraction of the full universe, so one
+    `notify` push at the end is enough.
+    """
+    catalog = load_rq5_keyword_catalog(catalog_path)
+    rate_limiter = _RateLimiter(target_requests_per_hour / 3600) if target_requests_per_hour else None
+    targets = load_repos_needing_retry(
+        error_reasons, db_path=db_path, raw_dir=raw_dir, duplicates_path=duplicates_path
+    )
+    logger.info(
+        "[RQ5 retry] %d repos selected for retry (reasons: %s)",
+        len(targets),
+        ", ".join(error_reasons),
+    )
+
+    counters = {"attempted": len(targets), "recovered": 0, "still_failed": 0}
+
+    def _compute(repo: dict) -> dict:
+        ok, result = run_with_deadline(
+            process_repo,
+            repo,
+            cutoff_date=cutoff_date,
+            token=token,
+            catalog=catalog,
+            rate_limiter=rate_limiter,
+            timeout_seconds=process_repo_timeout_seconds,
+        )
+        if ok:
+            return result
+        logger.warning(
+            "[RQ5 retry] %s exceeded the %ds per-repo deadline -- abandoning",
+            repo["repo_name"],
+            process_repo_timeout_seconds,
+        )
+        return _scan_result(
+            _repo_row(
+                repo["repo_name"],
+                repo["language"],
+                datetime.now(timezone.utc).isoformat(),
+                catalog.get("version"),
+                fetch_ok=False,
+                error_reason="timeout",
+            )
+        )
+
+    def _persist(result: dict) -> None:
+        persist_result(result, db_path)
+        if result["repo"]["fetch_ok"]:
+            counters["recovered"] += 1
+        else:
+            counters["still_failed"] += 1
+
+    run_parallel_per_repo(targets, _compute, _persist, workers, desc="[RQ5 retry]")
+
+    if notify:
+        _notify(
+            f"RQ5 retry: {counters['recovered']}/{counters['attempted']} repos recovered "
+            f"({counters['still_failed']} still failed)"
+        )
+
+    return counters
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="RQ5 agent-configuration-file keyword scan over the raw repo "
@@ -1084,6 +1255,13 @@ def main() -> None:
         "5,000/hour authenticated ceiling). Pass 0 to disable throttling "
         "entirely (not recommended).",
     )
+    parser.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="Re-attempt repos currently recorded as fetch_ok=0 for a recoverable "
+        f"reason ({', '.join(REPAIRABLE_ERROR_REASONS)}) against the existing db, "
+        "instead of scanning the full universe.",
+    )
     args = parser.parse_args()
 
     configure_logging()
@@ -1095,7 +1273,13 @@ def main() -> None:
             "x ~2 requests each. This run will be impractically slow without "
             "a token in .env."
         )
-    counts = run_scan(workers=args.workers, target_requests_per_hour=args.max_requests_per_hour or None)
+    target_rate = args.max_requests_per_hour or None
+    if args.retry_failed:
+        counts = retry_failed_repos(workers=args.workers, target_requests_per_hour=target_rate)
+        write_csv_outputs()
+        print(f"[RQ5 retry] done: {counts}")
+        return
+    counts = run_scan(workers=args.workers, target_requests_per_hour=target_rate)
     write_csv_outputs()
     print(f"[RQ5 scan] done: {counts}")
 

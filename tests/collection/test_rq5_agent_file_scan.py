@@ -28,12 +28,14 @@ import requests
 from collection.rq5_agent_file_scan import (
     _FILE_CSV_FIELDNAMES,
     _MATCH_CSV_FIELDNAMES,
+    REPAIRABLE_ERROR_REASONS,
     RQ5_LANGUAGES,
     TARGET_REQUESTS_PER_HOUR,
     RateLimitExhausted,
     _api_get,
     _build_keyword_pattern,
     _build_patterns,
+    _is_rate_limited,
     _RateLimiter,
     _repo_row,
     _retry_wait_seconds,
@@ -43,12 +45,14 @@ from collection.rq5_agent_file_scan import (
     find_target_files_at_commit,
     initialise_rq5_db,
     list_root_tree_via_api,
+    load_repos_needing_retry,
     load_rq5_keyword_catalog,
     load_scanned_repo_names,
     main,
     persist_result,
     process_repo,
     read_blob_via_api,
+    retry_failed_repos,
     run_scan,
     scan_file_content,
     write_csv_outputs,
@@ -300,6 +304,55 @@ class TestApiGet:
         with patch("requests.get", return_value=_fake_response(200, {})) as get_mock:
             _api_get("https://api.github.com/x", token="tok", rate_limiter=None)
         assert get_mock.call_count == 1  # just confirms this path needs no limiter at all
+
+
+class TestIsRateLimited:
+    """Regression coverage for the 2026-10-03 production incident: GitHub's
+    secondary (abuse-detection) rate limit returns a 403 WITHOUT zeroing
+    X-RateLimit-Remaining -- confirmed against GitHub's own docs ("there is
+    no 'remaining' header that shows you your secondary rate limit quota").
+    The real run's sustained 20-worker load evidently tripped this despite
+    the primary budget never running low, and every one of those 403s fell
+    through the original (too-narrow) check as an ordinary non-200
+    response -- silently recorded as a confirmed negative rather than
+    retried. Confirmed directly: ~1 in 3 repos re-sampled from the
+    "no_commit_at_or_before_cutoff" bucket turned out to have a real commit
+    on a plain, low-load re-check."""
+
+    def test_429_is_always_rate_limited(self):
+        assert _is_rate_limited(_fake_response(429, {})) is True
+
+    def test_403_with_zeroed_remaining_is_rate_limited(self):
+        """The primary hourly-quota exhaustion case -- already handled
+        before this fix, must keep working."""
+        response = _fake_response(403, {}, headers={"X-RateLimit-Remaining": "0"})
+        assert _is_rate_limited(response) is True
+
+    def test_403_with_retry_after_but_nonzero_remaining_is_rate_limited(self):
+        """The secondary/abuse-detection case this fix adds -- exactly
+        what the real run's 403s looked like: throttled, but with plenty
+        of primary quota left."""
+        response = _fake_response(403, {}, headers={"Retry-After": "60", "X-RateLimit-Remaining": "4000"})
+        assert _is_rate_limited(response) is True
+
+    def test_403_with_retry_after_and_no_remaining_header_at_all_is_rate_limited(self):
+        response = _fake_response(403, {}, headers={"Retry-After": "30"})
+        assert _is_rate_limited(response) is True
+
+    def test_plain_403_with_neither_signal_is_not_rate_limited(self):
+        """A genuine permission-denied/blocked-repo 403 must still surface
+        as a real failure, not loop on retries that can never succeed."""
+        response = _fake_response(403, {})
+        assert _is_rate_limited(response) is False
+
+    def test_404_is_never_rate_limited(self):
+        assert _is_rate_limited(_fake_response(404, {})) is False
+
+    def test_200_is_never_rate_limited(self):
+        assert _is_rate_limited(_fake_response(200, {})) is False
+
+    def test_none_response_is_not_rate_limited(self):
+        assert _is_rate_limited(None) is False
 
 
 class TestRetryWaitSeconds:
@@ -1218,6 +1271,214 @@ class TestRunScanNotifications:
         notify_mock.assert_not_called()
 
 
+class TestLoadReposNeedingRetry:
+    def test_missing_db_returns_empty_list(self, tmp_path):
+        assert load_repos_needing_retry(db_path=tmp_path / "missing.db") == []
+
+    def test_selects_only_matching_error_reasons_and_restores_language_and_url(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            db_path,
+        )
+        persist_result(
+            _scan_result(
+                _repo_row("org/b", "python", "t", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
+            ),
+            db_path,
+        )
+        persist_result(
+            _scan_result(_repo_row("org/c", "python", "t", 1, fetch_ok=False, error_reason="some_other_reason")),
+            db_path,
+        )
+        persist_result(_scan_result(_repo_row("org/d", "python", "t", 1, fetch_ok=True)), db_path)
+
+        universe = [
+            {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
+            {"repo_name": "org/b", "language": "python", "clone_url": "url-b"},
+            {"repo_name": "org/c", "language": "python", "clone_url": "url-c"},
+            {"repo_name": "org/d", "language": "python", "clone_url": "url-d"},
+        ]
+        with patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe):
+            targets = load_repos_needing_retry(db_path=db_path)
+
+        assert {t["repo_name"] for t in targets} == {"org/a", "org/b"}
+        by_name = {t["repo_name"]: t for t in targets}
+        assert by_name["org/a"]["clone_url"] == "url-a"
+
+    def test_no_matching_rows_returns_empty_list(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(_scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=True)), db_path)
+        with patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=[]):
+            assert load_repos_needing_retry(db_path=db_path) == []
+
+    def test_custom_error_reasons_narrows_selection(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            db_path,
+        )
+        persist_result(
+            _scan_result(_repo_row("org/b", "python", "t", 1, fetch_ok=False, error_reason="timeout")), db_path
+        )
+        universe = [
+            {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
+            {"repo_name": "org/b", "language": "python", "clone_url": "url-b"},
+        ]
+        with patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe):
+            targets = load_repos_needing_retry(error_reasons=("rate_limited",), db_path=db_path)
+        assert {t["repo_name"] for t in targets} == {"org/a"}
+
+    def test_default_error_reasons_is_the_repairable_set(self):
+        assert REPAIRABLE_ERROR_REASONS == (
+            "no_commit_at_or_before_cutoff",
+            "tree_fetch_failed",
+            "timeout",
+            "rate_limited",
+        )
+
+
+class TestRetryFailedRepos:
+    def test_retries_only_selected_repos_and_upserts_results(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(
+                _repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
+            ),
+            db_path,
+        )
+        persist_result(
+            _scan_result(_repo_row("org/untouched", "python", "t", 1, fetch_ok=True, num_agent_files=1)),
+            db_path,
+        )
+
+        universe = [
+            {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
+            {"repo_name": "org/untouched", "language": "python", "clone_url": "url-u"},
+        ]
+
+        def _fake_process_repo(repo, **kwargs):
+            return _scan_result(
+                _repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True, num_agent_files=2)
+            )
+
+        with (
+            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            counts = retry_failed_repos(db_path=db_path, workers=1, notify=False)
+
+        assert counts == {"attempted": 1, "recovered": 1, "still_failed": 0}
+        rows = {
+            r[0]: (r[1], r[2])
+            for r in sqlite3.connect(db_path).execute("SELECT repo_name, fetch_ok, num_agent_files FROM repo_scan")
+        }
+        assert rows["org/a"] == (1, 2)
+        assert rows["org/untouched"] == (1, 1)  # never touched by the retry
+
+    def test_still_failing_repos_are_counted_correctly(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="timeout")), db_path
+        )
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
+
+        def _fake_process_repo(repo, **kwargs):
+            return _scan_result(
+                _repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=False, error_reason="rate_limited")
+            )
+
+        with (
+            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            counts = retry_failed_repos(db_path=db_path, workers=1, notify=False)
+
+        assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
+
+    def test_a_stuck_repo_is_recorded_as_timeout_not_hung(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(_repo_row("org/stuck", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            db_path,
+        )
+        universe = [{"repo_name": "org/stuck", "language": "python", "clone_url": "url"}]
+        stop_event = threading.Event()
+
+        def _fake_process_repo(repo, **kwargs):
+            stop_event.wait(5)
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", 1, fetch_ok=True))
+
+        try:
+            with (
+                patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+                patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            ):
+                counts = retry_failed_repos(
+                    db_path=db_path, workers=1, notify=False, process_repo_timeout_seconds=0.05
+                )
+        finally:
+            stop_event.set()
+
+        assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
+        row = sqlite3.connect(db_path).execute(
+            "SELECT fetch_ok, error_reason FROM repo_scan WHERE repo_name='org/stuck'"
+        ).fetchone()
+        assert row == (0, "timeout")
+
+    def test_notifies_with_a_recovery_summary(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            db_path,
+        )
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
+
+        def _fake_process_repo(repo, **kwargs):
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
+
+        notify_calls = []
+        with (
+            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
+        ):
+            retry_failed_repos(db_path=db_path, workers=1, notify=True)
+
+        assert len(notify_calls) == 1
+        assert "1/1 repos recovered" in notify_calls[0]
+
+    def test_threads_rate_limiter_and_token_through_to_process_repo(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        persist_result(
+            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            db_path,
+        )
+        universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
+        seen_kwargs = {}
+
+        def _fake_process_repo(repo, **kwargs):
+            seen_kwargs.update(kwargs)
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
+
+        with (
+            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+        ):
+            retry_failed_repos(db_path=db_path, workers=1, notify=False, token="sometoken")
+
+        assert seen_kwargs["token"] == "sometoken"
+        assert isinstance(seen_kwargs["rate_limiter"], _RateLimiter)
+
+
 class TestMainCli:
     def _run_main_with_argv(self, argv):
         with (
@@ -1262,3 +1523,30 @@ class TestMainCli:
             ):
                 main()
         logger_mock.warning.assert_called_once()
+
+    def test_retry_failed_flag_calls_retry_failed_repos_instead_of_run_scan(self):
+        with (
+            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--retry-failed"]),
+            patch("collection.rq5_agent_file_scan.configure_logging"),
+            patch("collection.rq5_agent_file_scan.add_file_logging"),
+            patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+            patch("collection.rq5_agent_file_scan.run_scan") as run_scan_mock,
+            patch("collection.rq5_agent_file_scan.retry_failed_repos", return_value={}) as retry_mock,
+        ):
+            main()
+
+        retry_mock.assert_called_once()
+        run_scan_mock.assert_not_called()
+
+    def test_retry_failed_threads_workers_and_rate_through(self):
+        with (
+            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--retry-failed", "--workers", "16"]),
+            patch("collection.rq5_agent_file_scan.configure_logging"),
+            patch("collection.rq5_agent_file_scan.add_file_logging"),
+            patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+            patch("collection.rq5_agent_file_scan.retry_failed_repos", return_value={}) as retry_mock,
+        ):
+            main()
+
+        assert retry_mock.call_args.kwargs["workers"] == 16
+        assert retry_mock.call_args.kwargs["target_requests_per_hour"] == TARGET_REQUESTS_PER_HOUR
