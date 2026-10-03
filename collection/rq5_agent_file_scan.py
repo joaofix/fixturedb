@@ -97,6 +97,16 @@ match, not just a tally. Persisted immediately per repo (`agent_files`/
 memory for the whole run, for the same crash-safety reason RQ1 persists
 per-repo rather than per-language-chunk.
 
+**CSV shape (2026-10-03):** the db keeps every column for every table, but
+`write_csv_outputs()`'s two manual-review CSVs (`agent_files.csv`,
+`agent_file_matches.csv` -- `repo_scan.csv` isn't a review artifact, so it
+keeps everything) are trimmed to essentials, each carrying a `github_url`
+a reviewer can click straight from the spreadsheet: `agent_files.csv`
+links to the file itself; `agent_file_matches.csv` links to the *exact
+matched line* via a `#L<line_number>` anchor, computed with a join back
+to `agent_files.github_url` at write time rather than stored as a second,
+redundant copy of that URL on every match row.
+
 **Rate limiting:** GitHub's REST API allows 5,000 authenticated requests/
 hour per token (vs. 60/hour unauthenticated -- far too low for ~24.7k
 repos x ~2 requests each, so a real run requires `GITHUB_TOKEN`). Retry/
@@ -221,14 +231,9 @@ CREATE TABLE IF NOT EXISTS {MATCH_TABLE_NAME} (
 
 _FILE_CSV_FIELDNAMES = [
     "repo_name",
-    "file_name",
     "file_type",
-    "language",
-    "commit_sha",
     "has_test",
     "has_fixture",
-    "test_match_count",
-    "fixture_match_count",
     "matched_test_keywords",
     "matched_fixture_keywords",
     "github_url",
@@ -239,9 +244,9 @@ _MATCH_CSV_FIELDNAMES = [
     "file_name",
     "keyword_list",
     "keyword",
-    "line_number",
     "line_context",
     "in_code_block",
+    "github_url",
 ]
 
 _REPO_CSV_FIELDNAMES = [
@@ -717,16 +722,21 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
 def write_csv_outputs(db_path: Path = DB_PATH, output_dir: Path = CSV_OUTPUT_DIR) -> dict[str, Path]:
     """Three CSVs, the "real, reviewable output" counterpart to
     `db/rq5_agent_files.db`: `repo_scan.csv` (every repo attempted, incl.
-    skipped ones and why), `agent_files.csv` (per-file, the user-facing
-    table this RQ is built around), and `agent_file_matches.csv` (per-match
-    detail, for manual review)."""
+    skipped ones and why -- not a manual-review artifact, so it keeps
+    every column) and the two actual manual-review surfaces, each
+    trimmed to essentials with a `github_url` a reviewer can click
+    straight from the spreadsheet: `agent_files.csv` (one row per agent
+    file, linking to the file itself) and `agent_file_matches.csv` (one
+    row per keyword occurrence, linking to the *exact matched line* via
+    a `#L<line_number>` anchor -- computed by joining back to
+    `agent_files.github_url` rather than storing a second, redundant
+    copy of the file's own URL on every match row)."""
     output_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
     with db_session(db_path) as conn:
         for table, fieldnames, filename in (
             (REPO_TABLE_NAME, _REPO_CSV_FIELDNAMES, "repo_scan.csv"),
             (FILE_TABLE_NAME, _FILE_CSV_FIELDNAMES, "agent_files.csv"),
-            (MATCH_TABLE_NAME, _MATCH_CSV_FIELDNAMES, "agent_file_matches.csv"),
         ):
             rows = conn.execute(f"SELECT {', '.join(fieldnames)} FROM {table}").fetchall()
             out_path = output_dir / filename
@@ -735,6 +745,21 @@ def write_csv_outputs(db_path: Path = DB_PATH, output_dir: Path = CSV_OUTPUT_DIR
                 writer.writerow(fieldnames)
                 writer.writerows(rows)
             written[table] = out_path
+
+        match_rows = conn.execute(
+            f"""
+            SELECT m.repo_name, m.file_name, m.keyword_list, m.keyword, m.line_context,
+                   m.in_code_block, f.github_url || '#L' || m.line_number
+            FROM {MATCH_TABLE_NAME} m
+            JOIN {FILE_TABLE_NAME} f ON f.repo_name = m.repo_name AND f.file_name = m.file_name
+            """
+        ).fetchall()
+        match_path = output_dir / "agent_file_matches.csv"
+        with match_path.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(_MATCH_CSV_FIELDNAMES)
+            writer.writerows(match_rows)
+        written[MATCH_TABLE_NAME] = match_path
     return written
 
 

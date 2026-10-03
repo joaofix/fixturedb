@@ -24,6 +24,8 @@ from unittest.mock import patch
 import requests
 
 from collection.rq5_agent_file_scan import (
+    _FILE_CSV_FIELDNAMES,
+    _MATCH_CSV_FIELDNAMES,
     RQ5_LANGUAGES,
     _api_get,
     _build_keyword_pattern,
@@ -706,6 +708,77 @@ class TestWriteCsvOutputs:
         assert "AGENTS.md" in agent_files_csv
         matches_csv = (out_dir / "agent_file_matches.csv").read_text()
         assert "a test" in matches_csv
+
+    def test_agent_files_csv_is_trimmed_to_essentials_for_manual_review(self, tmp_path):
+        """repo_scan.csv keeps every column (not a review artifact), but
+        agent_files.csv is one of the two manual-review surfaces -- no
+        language/commit_sha/match-count columns, since those add nothing
+        a reviewer needs beyond what's already on the row."""
+        assert _FILE_CSV_FIELDNAMES == [
+            "repo_name",
+            "file_type",
+            "has_test",
+            "has_fixture",
+            "matched_test_keywords",
+            "matched_fixture_keywords",
+            "github_url",
+        ]
+
+    def test_agent_file_matches_csv_links_directly_to_the_matched_line(self, tmp_path):
+        """The other manual-review surface: no raw line_number column --
+        it's folded into github_url as a #L<n> anchor instead, so a
+        reviewer can click straight from the spreadsheet to the exact
+        matched line, not just the file."""
+        assert _MATCH_CSV_FIELDNAMES == [
+            "repo_name",
+            "file_name",
+            "keyword_list",
+            "keyword",
+            "line_context",
+            "in_code_block",
+            "github_url",
+        ]
+
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        file1 = {
+            "repo_name": "o/a",
+            "file_name": "AGENTS.md",
+            "file_type": "AGENTS.md",
+            "language": "python",
+            "commit_sha": "sha1",
+            "has_test": True,
+            "has_fixture": False,
+            "test_match_count": 1,
+            "fixture_match_count": 0,
+            "matched_test_keywords": "test",
+            "matched_fixture_keywords": "",
+            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
+        }
+        match1 = {
+            "repo_name": "o/a",
+            "file_name": "AGENTS.md",
+            "keyword_list": "test",
+            "keyword": "test",
+            "line_number": 42,
+            "line_context": "a test",
+            "in_code_block": False,
+        }
+        persist_result(
+            _scan_result(
+                _repo_row("o/a", "python", "t", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
+                files=[file1],
+                matches=[match1],
+            ),
+            db_path,
+        )
+
+        out_dir = tmp_path / "csvs"
+        write_csv_outputs(db_path, out_dir)
+
+        rows = (out_dir / "agent_file_matches.csv").read_text().splitlines()
+        assert rows[0] == ",".join(_MATCH_CSV_FIELDNAMES)
+        assert rows[1].endswith("https://github.com/o/a/blob/sha1/AGENTS.md#L42")
 
 
 class TestRunScan:
