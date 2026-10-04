@@ -4,7 +4,7 @@ repo_name,language,clone_ok,num_test_files,num_fixtures,num_setup,num_teardown,e
 0xGG/crossnote-app,javascript,1,1,0,0,0,,2026-10-02T14:49:17.586941+00:00
 0xfe/vextab,javascript,1,2,0,0,0,,2026-10-02T13:59:47.044302+00:00
 0xgg/crossnote,javascript,1,1,0,0,0,,2026-10-02T13:44:52.411338+00:00
-0xsdeo/AntiDebug_Breaker,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:58:47.188176+00:00
+0xsdeo/AntiDebug_Breaker,javascript,1,0,0,0,0,,2026-10-04T14:45:14.552243+00:00
 10bestdesign/jqvmap,javascript,1,2,0,0,0,,2026-10-02T13:58:39.878727+00:00
 111116/webosu,javascript,1,0,0,0,0,,2026-10-02T14:01:17.886478+00:00
 11ty/buildawesome,javascript,1,627,0,0,0,,2026-10-02T15:06:55.493460+00:00
@@ -32,8 +32,8 @@ repo_name,language,clone_ok,num_test_files,num_fixtures,num_setup,num_teardown,e
 4ian/gdevelop,javascript,1,314,291,188,103,,2026-10-02T13:44:01.267173+00:00
 4ier/neo,javascript,1,0,0,0,0,,2026-10-02T15:03:17.251192+00:00
 501351981/vue-office,javascript,1,1,0,0,0,,2026-10-02T14:46:37.402346+00:00
-5etools-mirror-1/5etools-mirror-1.github.io,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:40:09.107273+00:00
-6dylan6/jdpro,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:42:03.706111+00:00
+5etools-mirror-1/5etools-mirror-1.github.io,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:39:31.600412+00:00
+6dylan6/jdpro,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:41:17.132433+00:00
 6tail/lunar-javascript,javascript,1,23,0,0,0,,2026-10-02T14:03:04.383774+00:00
 7Sageer/sublink-worker,javascript,1,31,4,1,3,,2026-10-02T14:55:09.611982+00:00
 89996462/quantumult-x,javascript,1,0,0,0,0,,2026-10-02T14:46:04.911882+00:00
@@ -53,7 +53,7 @@ AnInsomniacy/motrix-next,javascript,1,73,0,0,0,,2026-10-02T15:03:21.231402+00:00
 Andrews54757/FastStream,javascript,1,0,0,0,0,,2026-10-02T14:50:19.477817+00:00
 Anil-matcha/Open-Generative-AI,javascript,1,4,0,0,0,,2026-10-02T15:05:07.711348+00:00
 Anil-matcha/awesome-generative-ai-apps,javascript,1,4,0,0,0,,2026-10-02T15:06:48.424046+00:00
-ArchGPT/insomnium,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:50:23.891809+00:00
+ArchGPT/insomnium,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:43:07.770889+00:00
 ArchiDreamZ/Living_With_Sister-Monochrome_Fantasy-Android-Chinese_localization,javascript,1,0,0,0,0,,2026-10-02T14:55:50.317832+00:00
 Arvincreator/project-golem,javascript,1,70,58,40,18,,2026-10-02T15:02:29.689199+00:00
 Asher-S-Wu/Vectaix-AI,javascript,1,1,0,0,0,,2026-10-02T15:07:11.546459+00:00
@@ -61,7 +61,7 @@ Beaver-Notes/Beaver-Notes,javascript,1,76,54,33,21,,2026-10-02T14:53:57.017084+0
 BeiDouMS/BeiDou-Server,javascript,1,5,0,0,0,,2026-10-02T14:55:17.598258+00:00
 Bharat2044/100xDevs-Cohort3-WebDev-and-Devops,javascript,1,0,0,0,0,,2026-10-02T14:55:57.060280+00:00
 Blue-B/WhisperSubTranslate,javascript,1,1,0,0,0,,2026-10-02T15:00:11.377463+00:00
-BrowserWorks/Waterfox,javascript,0,0,0,0,0,timeout,2026-10-02T15:05:23.617178+00:00
+BrowserWorks/Waterfox,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:36.720470+00:00
 ByMykel/CSGO-API,javascript,1,0,0,0,0,,2026-10-02T14:49:03.652688+00:00
 CH563/shot-easy-website,javascript,1,0,0,0,0,,2026-10-02T14:51:16.970935+00:00
 CNCKitchen/stlTexturizer,javascript,1,0,0,0,0,,2026-10-02T15:04:02.467563+00:00
@@ -85,7 +85,7 @@ Dev-Kango/Queen-Riam,javascript,1,0,0,0,0,,2026-10-02T14:59:47.499326+00:00
 Dispatcharr/Dispatcharr,javascript,1,390,269,241,28,,2026-10-02T14:57:09.619504+00:00
 DmytroVasin/DrawPen,javascript,1,0,0,0,0,,2026-10-02T14:56:27.677390+00:00
 Doorman11991/smallcode,javascript,1,38,0,0,0,,2026-10-02T15:05:41.336245+00:00
-Dooy/chatgpt-web-midjourney-proxy,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:52:49.000444+00:00
+Dooy/chatgpt-web-midjourney-proxy,javascript,1,0,0,0,0,,2026-10-04T14:44:07.203970+00:00
 DowneyRem/PixivSource,javascript,1,0,0,0,0,,2026-10-02T15:00:40.893703+00:00
 DrEAmSs59/CS2-insight-agent,javascript,1,311,70,61,9,,2026-10-02T15:05:24.295390+00:00
 DumbWareio/DumbAssets,javascript,1,0,0,0,0,,2026-10-02T14:58:17.628898+00:00
@@ -105,14 +105,14 @@ GWUDCAP/cc-sessions,javascript,1,0,0,0,0,,2026-10-02T14:59:14.089172+00:00
 GargantuaX/gemini-watermark-remover,javascript,1,251,0,0,0,,2026-10-02T15:03:16.030579+00:00
 GoogleChrome/samples,javascript,1,0,0,0,0,,2026-10-02T14:59:06.860315+00:00
 GoogleCloudPlatform/cloud-run-mcp,javascript,1,30,27,15,12,,2026-10-02T14:58:01.904584+00:00
-GrabarzUndPartner/nuxt-speedkit,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:51:49.138803+00:00
+GrabarzUndPartner/nuxt-speedkit,javascript,1,47,0,0,0,,2026-10-04T14:43:45.589075+00:00
 Gracker/SmartPerfetto,javascript,1,646,0,0,0,,2026-10-02T15:05:23.617317+00:00
 Guru322/GURU-Ai,javascript,1,0,0,0,0,,2026-10-02T14:54:27.281589+00:00
 Haskell-Things/ImplicitCAD,javascript,1,51,0,0,0,,2026-10-02T14:53:31.522773+00:00
 Hubs-Foundation/Spoke,javascript,1,22,0,0,0,,2026-10-02T14:54:17.007733+00:00
 Hubs-Foundation/hubs,javascript,1,4,0,0,0,,2026-10-02T14:54:16.797015+00:00
-IR-NETLIFY/zeus,javascript,0,0,0,0,0,clone_failed,2026-10-02T15:07:43.957016+00:00
-Itxxwasi/WASI-MD-V2,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:54:00.908954+00:00
+IR-NETLIFY/zeus,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:46:11.134647+00:00
+Itxxwasi/WASI-MD-V2,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:23.107009+00:00
 IvanGlinkin/CCTV,javascript,1,0,0,0,0,,2026-10-02T14:53:51.729853+00:00
 JStone2934/LiveGalGame,javascript,1,1,0,0,0,,2026-10-02T15:00:13.489467+00:00
 Javis603/token-monitor,javascript,1,303,0,0,0,,2026-10-02T15:05:53.166706+00:00
@@ -150,7 +150,7 @@ NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect,javascript,1,12,0,0
 NomaDamas/k-skill,javascript,1,79,2,1,1,,2026-10-02T15:05:08.911506+00:00
 NuvioMedia/NuvioWeb,javascript,1,0,0,0,0,,2026-10-02T15:03:36.340953+00:00
 Nystik-gh/ignis,javascript,1,46,85,39,46,,2026-10-02T15:05:38.136695+00:00
-OfficialKango/KANGO-XMD,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:57:36.601303+00:00
+OfficialKango/KANGO-XMD,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:45:03.003130+00:00
 OhMyGuus/I-Still-Dont-Care-About-Cookies,javascript,1,0,0,0,0,,2026-10-02T14:48:29.852842+00:00
 OpenCCU/OpenCCU,javascript,1,35,0,0,0,,2026-10-02T14:59:23.189832+00:00
 OpenLAIR/dr-claw,javascript,1,41,25,12,13,,2026-10-02T15:03:36.659535+00:00
@@ -187,7 +187,7 @@ Silentely/eSIM-Tools,javascript,1,33,40,27,13,,2026-10-02T15:00:19.341490+00:00
 SillyTavern/SillyTavern,javascript,1,38,33,20,13,,2026-10-02T14:48:46.394444+00:00
 Snowflake-Labs/cocoplus,javascript,1,1,0,0,0,,2026-10-02T15:05:03.532679+00:00
 SplashtopInc/winstall,javascript,1,10,0,0,0,,2026-10-02T15:02:40.090018+00:00
-SteamTracking/SteamTracking,javascript,0,0,0,0,0,clone_failed,2026-10-02T15:03:35.325880+00:00
+SteamTracking/SteamTracking,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:45:44.932820+00:00
 SuperSimpleDev/javascript-course,javascript,1,27,4,4,0,,2026-10-02T14:50:29.075690+00:00
 SwingTheVine/Wplace-BlueMarble,javascript,1,0,0,0,0,,2026-10-02T14:58:53.571150+00:00
 SynkraAI/aios-core,javascript,1,461,829,554,275,,2026-10-02T15:01:56.430312+00:00
@@ -195,7 +195,7 @@ SynkraAI/aiox-core,javascript,1,461,829,554,275,,2026-10-02T15:03:08.980170+00:0
 TakWolf-Deprecated/CNode-Material-Design,javascript,1,2,0,0,0,,2026-10-02T15:01:46.097326+00:00
 TanShilongMario/PromptFill,javascript,1,0,0,0,0,,2026-10-02T15:01:24.913171+00:00
 TavernAI/TavernAI-v1,javascript,1,0,0,0,0,,2026-10-02T15:06:54.477363+00:00
-Team-intN18-SoybeanSeclab/Phantom,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:59:12.618375+00:00
+Team-intN18-SoybeanSeclab/Phantom,javascript,1,0,0,0,0,,2026-10-04T14:45:20.435516+00:00
 TechyCSR/OpenCluely,javascript,1,0,0,0,0,,2026-10-02T14:59:03.868998+00:00
 Tencent/hel,javascript,1,89,0,0,0,,2026-10-02T14:49:56.489981+00:00
 TheKing-OfTime/YandexMusicModClient,javascript,1,3,0,0,0,,2026-10-02T14:58:21.760938+00:00
@@ -205,7 +205,7 @@ UI5/openui5,javascript,1,15657,15,9,6,,2026-10-02T14:58:29.664654+00:00
 V-IOLE-T/tab-harbor,javascript,1,25,0,0,0,,2026-10-02T15:05:02.124607+00:00
 VonChange/utao,javascript,1,1,0,0,0,,2026-10-02T14:56:56.891994+00:00
 WJZ-P/sona,javascript,1,0,0,0,0,,2026-10-02T15:05:19.591071+00:00
-WebKit/WebKit,javascript,0,0,0,0,0,timeout,2026-10-02T15:04:35.467834+00:00
+WebKit/WebKit,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:28.002326+00:00
 Wei-Shaw/claude-relay-service,javascript,1,26,30,18,12,,2026-10-02T14:58:36.407992+00:00
 WenXiaoWendy/cyberboss,javascript,1,16,0,0,0,,2026-10-02T15:04:40.739785+00:00
 WhatDreamsCost/WhatDreamsCost-ComfyUI,javascript,1,0,0,0,0,,2026-10-02T15:03:53.718297+00:00
@@ -250,7 +250,7 @@ adamant-im/adamant,javascript,1,93,164,131,33,,2026-10-02T13:55:44.929450+00:00
 adamant-im/adamant-tradebot,javascript,0,0,0,0,0,scan_failed: [Errno 36] File name too long: '/home/joao_freitas_almeida/fixturedb/clones/adamant-im__adamant-tradebot/tsconfig.json',2026-10-02T14:40:25.773845+00:00
 adamchainz/django-htmx,javascript,1,8,0,0,0,,2026-10-02T13:43:28.205945+00:00
 adamhaile/surplus,javascript,1,14,0,0,0,,2026-10-02T13:58:58.862744+00:00
-adamlui/ai-web-extensions,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:56:16.838557+00:00
+adamlui/ai-web-extensions,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:38.469324+00:00
 adamwdraper/numeral-js,javascript,1,42,78,35,43,,2026-10-02T14:09:22.965475+00:00
 adaptlearning/adapt_authoring,javascript,1,13,17,10,7,,2026-10-02T13:59:47.059617+00:00
 adaptlearning/adapt_framework,javascript,1,11,6,5,1,,2026-10-02T14:21:23.983746+00:00
@@ -321,7 +321,7 @@ akhilrex/podgrab,javascript,1,0,0,0,0,,2026-10-02T14:11:24.112801+00:00
 akira-cn/icg-webgl,javascript,1,0,0,0,0,,2026-10-02T14:02:02.235093+00:00
 akiran/react-slick,javascript,1,20,0,0,0,,2026-10-02T14:10:51.327875+00:00
 akitaonrails/FrankMD,javascript,1,105,141,91,50,,2026-10-02T15:02:27.427363+00:00
-akudamatata/Solara,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T15:00:00.378222+00:00
+akudamatata/Solara,javascript,1,0,0,0,0,,2026-10-04T14:45:25.300821+00:00
 akveo/blur-admin,javascript,1,0,0,0,0,,2026-10-02T13:57:53.716890+00:00
 alabid/flylatex,javascript,1,0,0,0,0,,2026-10-02T13:45:29.887726+00:00
 alainbryden/bitburner-scripts,javascript,1,0,0,0,0,,2026-10-02T14:42:01.621088+00:00
@@ -348,7 +348,7 @@ alexnisnevich/untrusted,javascript,1,32,3,3,0,,2026-10-02T14:06:13.532928+00:00
 alexwolfe/buttons,javascript,1,10,0,0,0,,2026-10-02T13:53:52.371602+00:00
 alfateam/orange-orm,javascript,1,54,91,48,43,,2026-10-02T14:54:12.332873+00:00
 alfateam/rdb,javascript,1,54,91,48,43,,2026-10-02T14:17:59.346414+00:00
-algenty/grafana-flowcharting,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:07:32.528969+00:00
+algenty/grafana-flowcharting,javascript,1,18,0,0,0,,2026-10-04T14:33:30.049543+00:00
 algolia/github-awesome-autocomplete,javascript,1,0,0,0,0,,2026-10-02T13:49:44.554589+00:00
 algolia/shipjs,javascript,1,64,5,4,1,,2026-10-02T14:05:59.634488+00:00
 algolia/vue-instantsearch,javascript,1,54,3,2,1,,2026-10-02T14:02:51.476459+00:00
@@ -386,8 +386,8 @@ alohaeditor/aloha-editor,javascript,1,52,0,0,0,,2026-10-02T13:54:29.481248+00:00
 alongubkin/spider,javascript,1,1,0,0,0,,2026-10-02T13:46:36.016955+00:00
 aloysius-pgast/crypto-exchanges-gateway,javascript,1,25,5,5,0,,2026-10-02T14:01:27.049394+00:00
 alphagov/govuk-frontend,javascript,1,176,241,226,15,,2026-10-02T14:14:52.434759+00:00
-alphardex/kokomi.js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:44:02.232758+00:00
-alphasp/pxview,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:14:54.539537+00:00
+alphardex/kokomi.js,javascript,1,0,0,0,0,,2026-10-04T14:41:44.240547+00:00
+alphasp/pxview,javascript,1,1,0,0,0,,2026-10-04T14:35:30.491152+00:00
 alpine-collective/alpine-magic-helpers,javascript,1,12,24,23,1,,2026-10-02T14:18:56.418821+00:00
 alpinejs/alpine,javascript,1,73,3,2,1,,2026-10-02T14:11:38.160810+00:00
 alshedivat/al-folio,javascript,1,13,0,0,0,,2026-10-02T14:20:59.524269+00:00
@@ -425,7 +425,7 @@ andreaferretti/paths-js,javascript,1,23,0,0,0,,2026-10-02T13:55:51.959812+00:00
 andreasbm/web-skills,javascript,1,0,0,0,0,,2026-10-02T13:58:55.525921+00:00
 andredumas/techan.js,javascript,1,85,169,169,0,,2026-10-02T13:57:02.504469+00:00
 andreknieriem/simplelightbox,javascript,1,0,0,0,0,,2026-10-02T14:01:15.350979+00:00
-andrepimenta/claude-code-chat,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:58:18.911635+00:00
+andrepimenta/claude-code-chat,javascript,1,4,0,0,0,,2026-10-04T14:45:06.113003+00:00
 andrewbelt/hack.chat,javascript,1,0,0,0,0,,2026-10-02T13:47:22.606035+00:00
 andrewelkins/laravel-4-bootstrap-starter-site,javascript,1,15,0,0,0,,2026-10-02T13:46:03.352865+00:00
 andrewitsover/midnight,javascript,1,0,0,0,0,,2026-10-02T14:58:51.461450+00:00
@@ -455,7 +455,7 @@ angular/mobile-toolkit,javascript,1,13,0,0,0,,2026-10-02T13:46:32.782833+00:00
 angular/protractor,javascript,1,142,57,40,17,,2026-10-02T14:02:06.895027+00:00
 angular/router,javascript,1,7,2,2,0,,2026-10-02T13:48:38.736856+00:00
 angularjs-nvd3-directives/angularjs-nvd3-directives,javascript,1,2,1,1,0,,2026-10-02T13:47:39.579838+00:00
-animir/node-rate-limiter-flexible,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:01:52.241797+00:00
+animir/node-rate-limiter-flexible,javascript,1,40,42,25,17,,2026-10-04T14:32:34.978456+00:00
 anji-plus/report,javascript,1,6,0,0,0,,2026-10-02T14:40:24.065750+00:00
 anker1209/scriptable,javascript,1,0,0,0,0,,2026-10-02T14:21:32.736789+00:00
 ankitrohatgi/webplotdigitizer,javascript,1,20,0,0,0,,2026-10-02T14:11:02.689945+00:00
@@ -534,7 +534,7 @@ asabeneh/30-days-of-react,javascript,1,0,0,0,0,,2026-10-02T14:08:12.393675+00:00
 asadahimeka/pixiv-viewer,javascript,1,2,0,0,0,,2026-10-02T14:53:21.293520+00:00
 asamassekou10/ship-safe,javascript,1,102,20,10,10,,2026-10-02T15:02:58.202806+00:00
 asciidoctor/asciidoctor.js,javascript,1,185,14,4,10,,2026-10-02T14:22:59.177702+00:00
-asciidwango/js-primer,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:17:34.257002+00:00
+asciidwango/js-primer,javascript,1,49,0,0,0,,2026-10-04T14:36:09.025997+00:00
 asciimath/asciimathml,javascript,1,1,0,0,0,,2026-10-02T14:09:03.291000+00:00
 asciinema/asciinema-player,javascript,1,35,0,0,0,,2026-10-02T14:41:36.402541+00:00
 asgeirtj/system_prompts_leaks,javascript,1,0,0,0,0,,2026-10-02T14:58:13.108967+00:00
@@ -738,7 +738,7 @@ bitwiseshiftleft/sjcl,javascript,1,62,0,0,0,,2026-10-02T13:58:26.593020+00:00
 biwascheme/biwascheme,javascript,1,20,0,0,0,,2026-10-02T14:09:06.182635+00:00
 bjornd/jvectormap,javascript,1,59,0,0,0,,2026-10-02T13:52:13.262685+00:00
 bjornharrtell/jsts,javascript,1,40,0,0,0,,2026-10-02T13:57:55.937324+00:00
-bkrem/react-d3-tree,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:06:00.945918+00:00
+bkrem/react-d3-tree,javascript,1,6,3,0,3,,2026-10-04T14:33:01.156486+00:00
 blackmatrix7/ios_rule_script,javascript,1,0,0,0,0,,2026-10-02T14:31:16.692665+00:00
 blinkfox/hexo-theme-matery,javascript,1,0,0,0,0,,2026-10-02T14:40:41.510243+00:00
 blinksocks/blinksocks,javascript,1,43,2,1,1,,2026-10-02T13:49:55.553497+00:00
@@ -792,7 +792,7 @@ bower/bower,javascript,1,72,106,58,48,,2026-10-02T14:03:05.390214+00:00
 box/anemometer,javascript,1,5,0,0,0,,2026-10-02T14:00:45.881802+00:00
 box/box-ui-elements,javascript,1,1030,475,366,109,,2026-10-02T14:21:04.739413+00:00
 box/t3js,javascript,1,10,33,22,11,,2026-10-02T13:52:36.272000+00:00
-bpampuch/pdfmake,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:06:50.598841+00:00
+bpampuch/pdfmake,javascript,1,31,15,15,0,,2026-10-04T14:33:23.380699+00:00
 bpaquet/node-logstash,javascript,1,82,0,0,0,,2026-10-02T13:50:08.478613+00:00
 bpking1/embyexternalurl,javascript,1,0,0,0,0,,2026-10-02T14:46:11.502831+00:00
 bpmn-io/bpmn-js,javascript,1,561,522,511,11,,2026-10-02T14:04:58.967750+00:00
@@ -842,7 +842,7 @@ browserstate/history.js,javascript,1,3,0,0,0,,2026-10-02T13:52:41.303679+00:00
 browsersync/browser-sync,javascript,1,239,376,197,179,,2026-10-02T14:04:23.646582+00:00
 brunch/brunch,javascript,1,15,4,2,2,,2026-10-02T13:56:05.502648+00:00
 brunosimon/folio-2019,javascript,1,0,0,0,0,,2026-10-02T14:03:32.210103+00:00
-brunosimon/folio-2025,javascript,0,0,0,0,0,clone_failed,2026-10-02T15:01:27.349607+00:00
+brunosimon/folio-2025,javascript,1,0,0,0,0,,2026-10-04T14:45:28.484312+00:00
 brunosimon/keppler,javascript,1,12,0,0,0,,2026-10-02T14:03:35.420349+00:00
 brunosobrino/themystic-bot-md,javascript,1,1,0,0,0,,2026-10-02T14:44:28.192440+00:00
 bscript/rep,javascript,1,8,4,3,1,,2026-10-02T15:01:12.767677+00:00
@@ -877,7 +877,7 @@ calesthio/Crucix,javascript,1,9,0,0,0,,2026-10-02T15:03:34.955698+00:00
 calmm-js/partial.lenses,javascript,1,8,0,0,0,,2026-10-02T13:52:05.680738+00:00
 calvinmetcalf/catiline,javascript,1,6,0,0,0,,2026-10-02T13:46:09.829781+00:00
 calvinmetcalf/shapefile-js,javascript,1,33,0,0,0,,2026-10-02T13:59:01.221160+00:00
-calzoneman/sync,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:05:23.611793+00:00
+calzoneman/sync,javascript,1,23,18,16,2,,2026-10-04T14:32:52.490508+00:00
 cambecc/earth,javascript,1,0,0,0,0,,2026-10-02T13:57:00.307912+00:00
 camunda/camunda-modeler,javascript,1,388,191,117,74,,2026-10-02T14:23:59.400081+00:00
 canadahonk/porffor,javascript,1,0,0,0,0,,2026-10-02T14:48:09.794707+00:00
@@ -889,8 +889,8 @@ canner/canner-slate-editor,javascript,1,94,0,0,0,,2026-10-02T13:55:01.795182+00:
 canner/cannercms,javascript,1,92,35,29,6,,2026-10-02T14:47:12.928717+00:00
 canonicalltd/react-native,javascript,1,96,44,40,4,,2026-10-02T13:45:59.060586+00:00
 canop/miaou,javascript,1,18,0,0,0,,2026-10-02T13:59:41.957537+00:00
-canove/whaticket,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:11:24.673594+00:00
-canove/whaticket-community,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:45:49.046378+00:00
+canove/whaticket,javascript,1,7,0,0,0,,2026-10-04T14:34:13.945768+00:00
+canove/whaticket-community,javascript,1,7,0,0,0,,2026-10-04T14:42:21.914445+00:00
 cantino/selectorgadget,javascript,1,15,11,10,1,,2026-10-02T14:46:08.699954+00:00
 canwhite/Krebs,javascript,1,2,0,0,0,,2026-10-02T15:06:44.988158+00:00
 caolan/async,javascript,1,54,6,6,0,,2026-10-02T14:00:53.738911+00:00
@@ -906,7 +906,7 @@ carbon-design-system/carbon-components-react,javascript,1,139,71,64,7,,2026-10-0
 carbon-design-system/carbon-components-vue,javascript,1,72,1,1,0,,2026-10-02T14:21:27.815565+00:00
 carboneio/carbone,javascript,1,22,42,16,26,,2026-10-02T14:38:18.257997+00:00
 carcabot/tiktok-signature,javascript,1,1,0,0,0,,2026-10-02T13:58:20.857250+00:00
-carguo/gsygithubapp,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:59:34.143094+00:00
+carguo/gsygithubapp,javascript,1,5,0,0,0,,2026-10-04T14:32:01.424410+00:00
 carguo/gsygithubappweex,javascript,1,4,0,0,0,,2026-10-02T13:55:02.845114+00:00
 carlosmiei/node-binance-api,javascript,1,15,2,2,0,,2026-10-02T14:56:59.049873+00:00
 carteb/carte-blanche,javascript,1,0,0,0,0,,2026-10-02T13:51:51.058347+00:00
@@ -924,7 +924,7 @@ cavincao/mini-blog,javascript,1,0,0,0,0,,2026-10-02T13:56:09.615987+00:00
 cay-zhang/rssbud,javascript,1,0,0,0,0,,2026-10-02T14:18:00.386038+00:00
 cazala/synaptic,javascript,1,3,3,3,0,,2026-10-02T13:56:24.663513+00:00
 cboard-org/cboard,javascript,1,110,19,11,8,,2026-10-02T14:22:04.496050+00:00
-ccallcn/ovsyunlive,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:38:27.023768+00:00
+ccallcn/ovsyunlive,javascript,1,0,0,0,0,,2026-10-04T14:38:34.897140+00:00
 ccampbell/rainbow,javascript,1,20,0,0,0,,2026-10-02T13:58:39.735338+00:00
 ccloli/e-hentai-downloader,javascript,1,0,0,0,0,,2026-10-02T14:21:20.110623+00:00
 ccsimple/vue-plugin-hiprint,javascript,1,0,0,0,0,,2026-10-02T14:42:55.955443+00:00
@@ -956,10 +956,10 @@ chao/restclient,javascript,1,34,0,0,0,,2026-10-02T13:59:34.139566+00:00
 char0n/ramda-adjunct,javascript,1,305,32,32,0,,2026-10-02T14:22:57.579396+00:00
 chartbrew/chartbrew,javascript,1,117,63,47,16,,2026-10-02T14:22:11.695014+00:00
 charted-co/charted,javascript,1,6,0,0,0,,2026-10-02T13:46:34.660241+00:00
-chartjs/chart.js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:34:43.891880+00:00
-chartjs/chartjs-plugin-annotation,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:13:48.837137+00:00
+chartjs/chart.js,javascript,1,637,54,44,10,,2026-10-04T14:37:36.326143+00:00
+chartjs/chartjs-plugin-annotation,javascript,1,248,3,2,1,,2026-10-04T14:35:17.131433+00:00
 chartjs/chartjs-plugin-datalabels,javascript,1,62,7,5,2,,2026-10-02T14:13:43.870354+00:00
-chatopera/cskefu,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:43:00.779593+00:00
+chatopera/cskefu,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:30:07.246400+00:00
 chavyleung/scripts,javascript,1,0,0,0,0,,2026-10-02T14:07:19.080058+00:00
 cheatsheet1999/frontendcollection,javascript,1,0,0,0,0,,2026-10-02T14:40:04.173727+00:00
 cheeaun/mooeditable,javascript,1,0,0,0,0,,2026-10-02T13:46:38.321447+00:00
@@ -989,7 +989,7 @@ christopherbiscardi/gatsby-mdx,javascript,1,4,0,0,0,,2026-10-02T13:51:43.985854+
 christopherbthai/discord-owo-bot,javascript,1,0,0,0,0,,2026-10-02T14:20:15.019291+00:00
 christopherthielen/ui-router-extras,javascript,1,11,31,31,0,,2026-10-02T13:46:33.451540+00:00
 chrisveness/geodesy,javascript,1,12,0,0,0,,2026-10-02T14:12:46.778723+00:00
-chromaui/learnstorybook.com,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:15:29.531585+00:00
+chromaui/learnstorybook.com,javascript,1,0,0,0,0,,2026-10-04T14:35:42.432446+00:00
 chrysb/alphaclaw,javascript,1,104,46,17,29,,2026-10-02T15:03:17.485778+00:00
 chuhegit/1,javascript,1,0,0,0,0,,2026-10-02T14:09:13.941925+00:00
 chuspeeism/dashi-ppt-skill,javascript,1,0,0,0,0,,2026-10-02T15:07:53.830239+00:00
@@ -1000,7 +1000,7 @@ ciaochaos/qrbtf,javascript,1,0,0,0,0,,2026-10-02T14:02:59.355388+00:00
 ciaranj/connect-auth,javascript,1,14,0,0,0,,2026-10-02T13:46:06.700581+00:00
 ciderapp/apple-music-electron,javascript,1,0,0,0,0,,2026-10-02T14:41:44.964974+00:00
 ciderapp/cider,javascript,1,0,0,0,0,,2026-10-02T14:42:03.597842+00:00
-cidrblock/drawthe.net,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:54:30.338461+00:00
+cidrblock/drawthe.net,javascript,1,0,0,0,0,,2026-10-04T14:30:38.557642+00:00
 ciembor/4bit,javascript,1,26,2,2,0,,2026-10-02T13:58:30.032875+00:00
 cilame/v_jstools,javascript,1,0,0,0,0,,2026-10-02T14:41:39.427091+00:00
 cindyjs/cindyjs,javascript,1,16,32,30,2,,2026-10-02T14:20:07.358637+00:00
@@ -1010,8 +1010,8 @@ circuitverse/circuitverse,javascript,1,283,0,0,0,,2026-10-02T14:23:04.161046+00:
 cisagov/decider,javascript,1,0,0,0,0,,2026-10-02T14:49:42.495863+00:00
 cisco/node-jose,javascript,1,42,19,19,0,,2026-10-02T14:04:04.013143+00:00
 citrolabs/ego-lite,javascript,1,34,0,0,0,,2026-10-02T15:06:05.898766+00:00
-city41/breakouts,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:01:32.130434+00:00
-cityofzion/neon-wallet,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:05:24.174249+00:00
+city41/breakouts,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:32:33.839924+00:00
+cityofzion/neon-wallet,javascript,1,33,8,5,3,,2026-10-04T14:32:54.448314+00:00
 civilblur/youlag,javascript,1,0,0,0,0,,2026-10-02T15:02:43.599123+00:00
 cjcliffe/cubicvr.js,javascript,1,8,0,0,0,,2026-10-02T13:50:06.468826+00:00
 cjo4m06/mcp-shrimp-task-manager,javascript,1,15,30,23,7,,2026-10-02T14:57:33.110683+00:00
@@ -1061,7 +1061,7 @@ cocos2d/cocos2d-html5,javascript,1,0,0,0,0,,2026-10-02T13:52:48.711671+00:00
 cod3rcursos/curso-react-native,javascript,1,11,0,0,0,,2026-10-02T14:01:32.411705+00:00
 code-charity/ImprovedTube,javascript,1,27,25,24,1,,2026-10-02T15:02:32.220044+00:00
 code-charity/youtube,javascript,1,27,25,24,1,,2026-10-02T14:46:38.202747+00:00
-code-dot-org/code-dot-org,javascript,0,0,0,0,0,timeout,2026-10-02T14:42:18.199065+00:00
+code-dot-org/code-dot-org,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:37:24.548324+00:00
 code-farmer-i/vue-markdown-editor,javascript,1,0,0,0,0,,2026-10-02T14:07:12.758956+00:00
 code-for-charity/improvedtube-for-youtube,javascript,1,27,25,24,1,,2026-10-02T14:45:57.269329+00:00
 code-for-charity/youtube-extension,javascript,1,27,25,24,1,,2026-10-02T14:42:35.753678+00:00
@@ -1125,7 +1125,7 @@ covibes/zeroshot,javascript,1,271,0,0,0,,2026-10-02T15:01:50.236737+00:00
 covid19india/covid19india-react,javascript,1,4,2,1,1,,2026-10-02T14:06:52.795634+00:00
 covid19india/covid19india.github.io,javascript,1,4,2,1,1,,2026-10-02T15:00:44.550290+00:00
 cowlicks/privacypossum,javascript,1,23,42,41,1,,2026-10-02T14:02:15.832567+00:00
-cozuya/secret-hitler,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:17:47.298281+00:00
+cozuya/secret-hitler,javascript,1,53,6,5,1,,2026-10-04T14:36:11.097003+00:00
 cppcon/cppcon2019,javascript,1,84,0,0,0,,2026-10-02T14:03:37.161104+00:00
 cpsievert/ldavis,javascript,1,0,0,0,0,,2026-10-02T13:56:18.482872+00:00
 craftbeerpi/craftbeerpi,javascript,1,1,2,2,0,,2026-10-02T14:46:10.665357+00:00
@@ -1146,7 +1146,7 @@ crobertsbmw/deckofcards,javascript,1,0,0,0,0,,2026-10-02T14:03:59.552769+00:00
 crocodic-studio/crudbooster,javascript,1,20,0,0,0,,2026-10-02T14:14:27.114611+00:00
 crocodilestick/Calibre-Web-Automated,javascript,1,57,0,0,0,,2026-10-02T14:55:20.442720+00:00
 cronvel/terminal-kit,javascript,1,88,0,0,0,,2026-10-02T14:07:19.097154+00:00
-crossbario/autobahn-js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:59:54.542520+00:00
+crossbario/autobahn-js,javascript,1,43,0,0,0,,2026-10-04T14:32:04.891721+00:00
 crossfilter/crossfilter,javascript,1,8,11,11,0,,2026-10-02T13:59:54.454959+00:00
 cruise-automation/webviz,javascript,1,177,47,27,20,,2026-10-02T14:04:52.968794+00:00
 cryppadotta/dotta-license,javascript,1,17,2,1,1,,2026-10-02T14:01:32.495367+00:00
@@ -1158,14 +1158,14 @@ cs0x7f/cstimer,javascript,1,1,0,0,0,,2026-10-02T14:00:35.573103+00:00
 csailvision/labelmeannotationtool,javascript,1,0,0,0,0,,2026-10-02T13:59:44.718878+00:00
 csev/py4e,javascript,1,18,0,0,0,,2026-10-02T14:47:39.782057+00:00
 cshum/scm-music-player,javascript,1,0,0,0,0,,2026-10-02T13:53:57.766999+00:00
-cskefu/cskefu,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:45:33.492468+00:00
+cskefu/cskefu,javascript,1,4,0,0,0,,2026-10-04T14:42:13.476864+00:00
 csmsapp/csmsapp.github.io,javascript,1,0,0,0,0,,2026-10-02T14:45:06.583163+00:00
 css-doodle/css-doodle,javascript,1,34,3,0,3,,2026-10-02T14:17:26.820875+00:00
 csscomb/csscomb.js,javascript,1,144,0,0,0,,2026-10-02T14:01:12.243992+00:00
 cssinjs/jss,javascript,1,74,295,234,61,,2026-10-02T14:20:20.292891+00:00
 csslint/csslint,javascript,1,54,0,0,0,,2026-10-02T13:54:28.551388+00:00
 cssstats/cssstats,javascript,1,29,0,0,0,,2026-10-02T14:07:48.912364+00:00
-csstree/csstree,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:00:16.518202+00:00
+csstree/csstree,javascript,1,0,0,0,0,,2026-10-04T14:32:15.386788+00:00
 csxiaoyaojianxian/javascriptstudy,javascript,1,169,12,8,4,,2026-10-02T14:01:05.524066+00:00
 cthackers/adm-zip,javascript,1,14,10,5,5,,2026-10-02T14:09:29.818827+00:00
 ctrlplusb/easy-peasy,javascript,1,63,8,4,4,,2026-10-02T14:03:29.365642+00:00
@@ -1229,7 +1229,7 @@ dat-ecosystem-archive/dat-desktop,javascript,1,5,0,0,0,,2026-10-02T14:42:02.0809
 dataarts/dat.gui,javascript,1,2,0,0,0,,2026-10-02T14:03:06.224098+00:00
 datacontract/datacontract-cli,javascript,1,259,0,0,0,,2026-10-02T14:53:42.451224+00:00
 datadog/dd-trace-js,javascript,1,1458,3320,1999,1321,,2026-10-02T14:20:11.731139+00:00
-datadog/documentation,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:29:05.349318+00:00
+datadog/documentation,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:37:19.636033+00:00
 dataease/SQLBot,javascript,1,6,0,0,0,,2026-10-02T14:58:55.810575+00:00
 datafire/datafire,javascript,1,24,16,8,8,,2026-10-02T14:00:56.868338+00:00
 dataliterate/data-populator,javascript,1,0,0,0,0,,2026-10-02T14:42:53.286312+00:00
@@ -1304,7 +1304,7 @@ dexus/pem,javascript,1,53,2,1,1,,2026-10-02T13:57:08.995467+00:00
 dfahlander/dexie.js,javascript,1,137,0,0,0,,2026-10-02T14:14:13.542757+00:00
 dfirkuiper/kuiper,javascript,1,142,0,0,0,,2026-10-02T14:04:56.689040+00:00
 dgrubelic/vue-authenticate,javascript,1,0,0,0,0,,2026-10-02T14:01:19.722321+00:00
-dhairyagothi/100_days_100_web_project,javascript,0,0,0,0,0,clone_failed,2026-10-02T15:06:31.402434+00:00
+dhairyagothi/100_days_100_web_project,javascript,1,4,0,0,0,,2026-10-04T14:46:06.088348+00:00
 dheera/rosboard,javascript,1,0,0,0,0,,2026-10-02T14:38:45.631945+00:00
 dherault/serverless-offline,javascript,1,318,219,123,96,,2026-10-02T14:18:20.292194+00:00
 dhruvaray/backbone-associations,javascript,1,16,0,0,0,,2026-10-02T13:45:50.653749+00:00
@@ -1316,7 +1316,7 @@ didi/chameleon,javascript,1,418,17,17,0,,2026-10-02T14:00:05.984935+00:00
 didi/cube-ui,javascript,1,56,37,0,37,,2026-10-02T14:08:08.513136+00:00
 didi/dimina,javascript,1,343,197,114,83,,2026-10-02T14:58:12.507996+00:00
 didi/mpx,javascript,1,182,53,27,26,,2026-10-02T14:10:29.972313+00:00
-digitalbazaar/forge,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:13:29.416844+00:00
+digitalbazaar/forge,javascript,1,55,2,2,0,,2026-10-04T14:35:01.458082+00:00
 digitalbazaar/jsonld.js,javascript,1,38,2,1,1,,2026-10-02T14:13:36.393404+00:00
 digitalfruit/limejs,javascript,1,55,0,0,0,,2026-10-02T13:46:45.375970+00:00
 digitalocean/action-doctl,javascript,1,0,0,0,0,,2026-10-02T13:58:20.422329+00:00
@@ -1334,7 +1334,7 @@ dirk1983/chatgpt,javascript,1,0,0,0,0,,2026-10-02T14:46:32.382033+00:00
 dirk1983/deepseek,javascript,1,0,0,0,0,,2026-10-02T14:58:37.787299+00:00
 disconnectme/disconnect,javascript,1,0,0,0,0,,2026-10-02T13:50:18.906508+00:00
 discord-akairo/discord-akairo,javascript,1,20,0,0,0,,2026-10-02T14:10:44.232849+00:00
-discord-datamining/discord-datamining,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:37:25.790260+00:00
+discord-datamining/discord-datamining,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:38:10.396598+00:00
 discord-tickets/bot,javascript,1,0,0,0,0,,2026-10-02T14:35:14.848961+00:00
 disease-sh/api,javascript,1,21,1,1,0,,2026-10-02T14:04:30.722277+00:00
 distillpub/template,javascript,1,4,0,0,0,,2026-10-02T13:56:13.064444+00:00
@@ -1342,7 +1342,7 @@ divan/gotrace,javascript,1,0,0,0,0,,2026-10-02T13:50:09.080529+00:00
 diversify-project/amiunique,javascript,1,2,0,0,0,,2026-10-02T13:56:26.546193+00:00
 django-ckeditor/django-ckeditor,javascript,1,16,0,0,0,,2026-10-02T13:57:07.537617+00:00
 djipco/webmidi,javascript,1,14,29,17,12,,2026-10-02T14:00:47.729328+00:00
-djscias/discord-datamining,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:33:15.817879+00:00
+djscias/discord-datamining,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:37:29.043349+00:00
 dleitee/strman,javascript,1,130,0,0,0,,2026-10-02T13:57:59.231631+00:00
 dmester/jdenticon,javascript,1,26,0,0,0,,2026-10-02T13:59:45.365940+00:00
 dmitrybaranovskiy/raphael,javascript,1,2,0,0,0,,2026-10-02T13:58:20.991431+00:00
@@ -1371,7 +1371,7 @@ dolevf/damn-vulnerable-graphql-application,javascript,1,15,0,0,0,,2026-10-02T14:
 dominictarr/crdt,javascript,1,13,0,0,0,,2026-10-02T13:47:59.533170+00:00
 dompling/scriptable,javascript,1,0,0,0,0,,2026-10-02T14:08:28.231769+00:00
 domvm/domvm,javascript,1,36,0,0,0,,2026-10-02T13:53:48.098665+00:00
-doocs/cose,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T15:01:45.149320+00:00
+doocs/cose,javascript,1,1,0,0,0,,2026-10-04T14:45:39.003371+00:00
 doramart/doracms,javascript,1,25,30,21,9,,2026-10-02T14:01:46.148617+00:00
 dosyago/browserbox,javascript,1,0,0,0,0,,2026-10-02T14:46:09.431073+00:00
 dosyago/browserboxpro,javascript,1,0,0,0,0,,2026-10-02T14:47:33.300823+00:00
@@ -1397,7 +1397,7 @@ drawcall/proton,javascript,1,0,0,0,0,,2026-10-02T13:57:51.499125+00:00
 drawdb-io/drawdb,javascript,1,0,0,0,0,,2026-10-02T14:53:23.816227+00:00
 dream-num/luckysheet,javascript,1,0,0,0,0,,2026-10-02T14:45:43.741936+00:00
 dream7180/foobox-cn,javascript,1,0,0,0,0,,2026-10-02T14:00:09.909101+00:00
-dreamnettech/dreamtime,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:05:43.060229+00:00
+dreamnettech/dreamtime,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:33:00.821950+00:00
 dresende/node-orm2,javascript,1,73,429,375,54,,2026-10-02T13:54:35.429546+00:00
 drewdahlman/mason,javascript,1,0,0,0,0,,2026-10-02T13:46:05.464062+00:00
 drichard/mindmaps,javascript,1,64,17,17,0,,2026-10-02T13:49:36.992634+00:00
@@ -1439,7 +1439,7 @@ dustingetz/react-cursor,javascript,1,14,48,24,24,,2026-10-02T13:45:55.521358+00:
 dvgis/dc-sdk,javascript,1,0,0,0,0,,2026-10-02T14:09:15.835750+00:00
 dvmarinoff/Auuki,javascript,1,38,0,0,0,,2026-10-02T14:56:23.835929+00:00
 dvmarinoff/flux,javascript,1,38,0,0,0,,2026-10-02T14:39:35.963550+00:00
-dvt3d/dc-sdk,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:57:16.642669+00:00
+dvt3d/dc-sdk,javascript,1,0,0,0,0,,2026-10-04T14:44:42.900151+00:00
 dwainscheeren/dwains-lovelace-dashboard,javascript,1,0,0,0,0,,2026-10-02T14:04:15.325955+00:00
 dwgx/WindsurfAPI,javascript,1,324,260,122,138,,2026-10-02T15:05:12.586966+00:00
 dwijitsolutions/laraadmin,javascript,1,4,0,0,0,,2026-10-02T13:49:59.551882+00:00
@@ -1483,7 +1483,7 @@ egret-labs/egret-core,javascript,1,0,0,0,0,,2026-10-02T14:09:26.411990+00:00
 egret-labs/egret-game-library,javascript,1,0,0,0,0,,2026-10-02T13:54:34.251102+00:00
 eguadev/egua,javascript,1,1,0,0,0,,2026-10-02T14:57:46.609755+00:00
 eigilnikolajsen/commit-mono,javascript,1,4,0,0,0,,2026-10-02T14:48:07.017044+00:00
-eip-work/kuboard-press,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:08:36.142536+00:00
+eip-work/kuboard-press,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:33:44.736373+00:00
 ejlchina/bean-searcher,javascript,1,47,0,0,0,,2026-10-02T14:40:42.166204+00:00
 ekelokorpi/panda-engine,javascript,1,0,0,0,0,,2026-10-02T13:56:01.407779+00:00
 ekoopmans/html2pdf.js,javascript,1,8,0,0,0,,2026-10-02T13:59:52.660619+00:00
@@ -1517,7 +1517,7 @@ enable3d/enable3d,javascript,1,5,1,1,0,,2026-10-02T13:44:39.571327+00:00
 enatega/food-delivery-multivendor,javascript,1,0,0,0,0,,2026-10-02T14:54:35.144531+00:00
 enatega/food-delivery-singlevendor,javascript,1,0,0,0,0,,2026-10-02T14:55:53.891210+00:00
 ender-js/ender,javascript,1,41,0,0,0,,2026-10-02T13:53:05.781216+00:00
-ender-zhao/clash-for-windows_chinese,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:37:51.999887+00:00
+ender-zhao/clash-for-windows_chinese,javascript,1,0,0,0,0,,2026-10-04T14:38:28.048185+00:00
 endojs/endo,javascript,1,38807,51,3,48,,2026-10-02T14:35:00.791430+00:00
 endrift/gbajs,javascript,1,0,0,0,0,,2026-10-02T13:45:54.833385+00:00
 enilu/guns-lite,javascript,1,25,0,0,0,,2026-10-02T14:03:50.811838+00:00
@@ -1602,7 +1602,7 @@ exceljs/exceljs,javascript,1,268,14,12,2,,2026-10-02T14:22:20.431450+00:00
 exercism/javascript,javascript,1,169,13,11,2,,2026-10-02T14:15:08.963234+00:00
 exokitxr/exokit,javascript,1,22,23,12,11,,2026-10-02T13:53:08.054411+00:00
 expo/ex-navigation,javascript,1,0,0,0,0,,2026-10-02T13:49:32.011960+00:00
-expo/google-fonts,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:06:04.773641+00:00
+expo/google-fonts,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:33:01.586040+00:00
 expo/xde,javascript,1,0,0,0,0,,2026-10-02T13:48:01.011059+00:00
 expressgateway/express-gateway,javascript,1,129,332,192,140,,2026-10-02T14:01:34.653969+00:00
 expressjs/express,javascript,1,101,99,59,40,,2026-10-02T14:06:31.674894+00:00
@@ -1694,7 +1694,7 @@ fex-team/gmu,javascript,1,116,0,0,0,,2026-10-02T13:46:06.640544+00:00
 fex-team/kityminder,javascript,1,41,16,12,4,,2026-10-02T13:50:28.292051+00:00
 fex-team/kityminder-core,javascript,1,0,0,0,0,,2026-10-02T13:54:51.269787+00:00
 fex-team/kityminder-editor,javascript,1,0,0,0,0,,2026-10-02T13:54:50.137933+00:00
-fex-team/ueditor,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:56:44.090542+00:00
+fex-team/ueditor,javascript,1,0,0,0,0,,2026-10-04T14:30:59.407801+00:00
 fex-team/umeditor,javascript,1,0,0,0,0,,2026-10-02T13:48:16.504042+00:00
 fex-team/webuploader,javascript,1,6,0,0,0,,2026-10-02T14:04:58.127214+00:00
 fgl27/smarttwitchtv,javascript,1,1,0,0,0,,2026-10-02T14:34:05.230363+00:00
@@ -1707,7 +1707,7 @@ filamentgroup/politespace,javascript,1,1,0,0,0,,2026-10-02T13:46:19.157257+00:00
 filamentgroup/responsive-carousel,javascript,1,1,0,0,0,,2026-10-02T13:53:57.300180+00:00
 filamentgroup/socialcount,javascript,1,1,0,0,0,,2026-10-02T13:48:48.053543+00:00
 filamentgroup/tablesaw,javascript,1,4,0,0,0,,2026-10-02T13:54:56.600778+00:00
-file-icons/atom,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:08:20.903853+00:00
+file-icons/atom,javascript,1,22,36,27,9,,2026-10-04T14:33:32.767502+00:00
 filecoin-project/slate,javascript,1,1,0,0,0,,2026-10-02T14:28:47.446080+00:00
 filerjs/filer,javascript,1,120,166,84,82,,2026-10-02T13:59:11.624453+00:00
 filipedeschamps/doom-fire-algorithm,javascript,1,3,0,0,0,,2026-10-02T13:59:39.304289+00:00
@@ -1755,7 +1755,7 @@ fmartinou/whats-up-docker,javascript,1,60,0,0,0,,2026-10-02T14:04:44.501115+00:0
 fnndsc/ami,javascript,1,10,11,9,2,,2026-10-02T13:58:58.798935+00:00
 foam-framework/foam,javascript,1,8,0,0,0,,2026-10-02T13:56:49.293452+00:00
 focus-trap/focus-trap,javascript,1,7,3,2,1,,2026-10-02T14:12:50.242492+00:00
-foliojs/fontkit,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:58:00.227102+00:00
+foliojs/fontkit,javascript,1,14,6,4,2,,2026-10-04T14:31:15.978790+00:00
 foliojs/pdfkit,javascript,1,70,30,24,6,,2026-10-02T14:02:36.158939+00:00
 folioreader/folioreader-android,javascript,1,4,0,0,0,,2026-10-02T14:06:38.258198+00:00
 fomantic/fomantic-ui,javascript,1,21,5,3,2,,2026-10-02T14:27:36.631902+00:00
@@ -1768,7 +1768,7 @@ foosoft/yomichan,javascript,1,23,0,0,0,,2026-10-02T14:33:21.259725+00:00
 for-get/http-decision-diagram,javascript,1,0,0,0,0,,2026-10-02T13:46:35.804671+00:00
 forcedotcom/aura,javascript,1,3736,6,6,0,,2026-10-02T13:49:48.886347+00:00
 forestadmin/lumber,javascript,1,36,4,2,2,,2026-10-02T14:20:22.521828+00:00
-forge-ext/forge,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:47:22.156599+00:00
+forge-ext/forge,javascript,1,0,0,0,0,,2026-10-04T14:42:39.902480+00:00
 formidablelabs/radium,javascript,1,19,11,8,3,,2026-10-02T13:59:20.936701+00:00
 formidablelabs/redux-little-router,javascript,1,24,7,6,1,,2026-10-02T13:49:08.432086+00:00
 formio/formio,javascript,1,73,173,125,48,,2026-10-02T14:31:07.972815+00:00
@@ -1864,13 +1864,13 @@ gcanti/tcomb,javascript,1,25,0,0,0,,2026-10-02T13:50:07.220801+00:00
 gchq/cyberchef,javascript,1,231,0,0,0,,2026-10-02T14:20:31.270322+00:00
 gdtool/zhaopp,javascript,1,0,0,0,0,,2026-10-02T14:03:20.015873+00:00
 geddy/geddy,javascript,1,17,0,0,0,,2026-10-02T13:56:47.413222+00:00
-geekyants/nativebase-kitchensink,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:01:47.426231+00:00
+geekyants/nativebase-kitchensink,javascript,1,0,0,0,0,,2026-10-04T14:32:34.659999+00:00
 geekyants/vue-native-core,javascript,1,5,2,1,1,,2026-10-02T14:00:06.146826+00:00
 gemini-testing/gemini,javascript,1,61,156,115,41,,2026-10-02T13:51:51.585364+00:00
 gemini-testing/hermione,javascript,1,248,235,145,90,,2026-10-02T14:07:32.485635+00:00
 generative-design/code-package-p5.js,javascript,1,0,0,0,0,,2026-10-02T13:56:50.584471+00:00
 generative-music/pieces-alex-bainter,javascript,1,4,0,0,0,,2026-10-02T14:17:51.639527+00:00
-genesislab-io/beatai,javascript,0,0,0,0,0,clone_failed,2026-10-02T15:06:08.092921+00:00
+genesislab-io/beatai,javascript,1,14,7,6,1,,2026-10-04T14:46:05.777279+00:00
 geoman-io/leaflet-geoman,javascript,1,3,0,0,0,,2026-10-02T14:14:31.465337+00:00
 geosolutions-it/mapstore2,javascript,1,1271,1744,869,875,,2026-10-02T14:24:39.528572+00:00
 geotiffjs/geotiff.js,javascript,1,11,4,2,2,,2026-10-02T14:10:18.828393+00:00
@@ -1881,7 +1881,7 @@ getify/asynquence,javascript,1,0,0,0,0,,2026-10-02T13:52:42.634371+00:00
 getify/monio,javascript,1,13,0,0,0,,2026-10-02T14:17:59.220080+00:00
 getmeuk/contenttools,javascript,1,20,24,12,12,,2026-10-02T13:52:35.120449+00:00
 getndazn/dazn-lambda-powertools,javascript,1,35,61,38,23,,2026-10-02T13:59:59.248920+00:00
-getprimate/primate,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:44:55.115354+00:00
+getprimate/primate,javascript,1,2,0,0,0,,2026-10-04T14:42:06.555782+00:00
 getpublii/publii,javascript,1,13,0,0,0,,2026-10-02T14:35:15.160550+00:00
 getstream/winds,javascript,1,67,77,59,18,,2026-10-02T14:00:44.529643+00:00
 gfranko/jquery.selectboxit.js,javascript,1,1,13,13,0,,2026-10-02T13:57:14.051622+00:00
@@ -1913,7 +1913,7 @@ gitsquared/edex-ui,javascript,1,0,0,0,0,,2026-10-02T14:05:47.344185+00:00
 gitsummore/nile.js,javascript,1,2,0,0,0,,2026-10-02T13:48:26.178402+00:00
 givanz/vvvebjs,javascript,1,3,0,0,0,,2026-10-02T14:17:21.250450+00:00
 gjtool/pdfh5,javascript,1,2,0,0,0,,2026-10-02T14:07:08.797453+00:00
-gka/chroma.js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:06:33.678611+00:00
+gka/chroma.js,javascript,1,51,0,0,0,,2026-10-04T14:33:17.120174+00:00
 gka/d3-jetpack,javascript,1,12,0,0,0,,2026-10-02T13:58:28.546081+00:00
 gkajs/gka,javascript,1,8,2,1,1,,2026-10-02T14:02:10.606594+00:00
 gkaramanis/tidytuesday,javascript,1,0,0,0,0,,2026-10-02T14:53:21.978667+00:00
@@ -2027,7 +2027,7 @@ greeeen-dev/natsumi-browser,javascript,1,0,0,0,0,,2026-10-02T15:01:40.024645+00:
 greena13/react-hotkeys,javascript,1,67,472,435,37,,2026-10-02T14:10:34.038767+00:00
 greenkeeperio/greenkeeper,javascript,1,70,107,60,47,,2026-10-02T13:54:36.337792+00:00
 greensock/gsap,javascript,1,0,0,0,0,,2026-10-02T14:02:05.033092+00:00
-greggman/twgl.js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:21:20.065135+00:00
+greggman/twgl.js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:36:54.014439+00:00
 gregnb/mui-datatables,javascript,1,21,16,16,0,,2026-10-02T14:08:16.827037+00:00
 greim/hoxy,javascript,1,21,0,0,0,,2026-10-02T13:49:46.569570+00:00
 greymass/anchor,javascript,1,70,6,5,1,,2026-10-02T14:10:18.883256+00:00
@@ -2121,7 +2121,7 @@ hectorm/otpauth,javascript,1,13,0,0,0,,2026-10-02T14:04:19.399337+00:00
 hedilict/quantumultx,javascript,1,1,0,0,0,,2026-10-02T13:56:20.930178+00:00
 hedyorg/hedy,javascript,1,116,33,33,0,,2026-10-02T14:48:18.713192+00:00
 heisir2014/m3u8-downloader,javascript,1,2,0,0,0,,2026-10-02T14:02:33.982501+00:00
-hejialianghe/senior-frontend,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:30:13.383121+00:00
+hejialianghe/senior-frontend,javascript,1,223,33,26,7,,2026-10-04T14:37:20.135273+00:00
 helblazer811/Diffusion-Explorer,javascript,1,4,0,0,0,,2026-10-02T15:01:51.061219+00:00
 hellowind777/helloagents,javascript,1,33,0,0,0,,2026-10-02T15:02:10.618943+00:00
 helloxz/onenav,javascript,1,0,0,0,0,,2026-10-02T14:36:48.998212+00:00
@@ -2189,8 +2189,8 @@ huiyan-fe/mapv,javascript,1,0,0,0,0,,2026-10-02T14:03:07.824565+00:00
 hulkholden/n64js,javascript,1,5,6,6,0,,2026-10-02T13:45:53.246664+00:00
 huluoyang/freecodecamp.cn,javascript,1,2,0,0,0,,2026-10-02T13:48:08.468040+00:00
 humangeo/leaflet-dvf,javascript,1,0,0,0,0,,2026-10-02T13:47:21.289427+00:00
-humanwhocodes/crosspost,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:56:28.785160+00:00
-humanwhocodes/humanfs,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:51:52.998341+00:00
+humanwhocodes/crosspost,javascript,1,17,47,36,11,,2026-10-04T14:44:39.054577+00:00
+humanwhocodes/humanfs,javascript,1,13,37,24,13,,2026-10-04T14:43:49.338961+00:00
 humblesoftware/envisionjs,javascript,1,11,19,11,8,,2026-10-02T13:53:36.041647+00:00
 humblesoftware/flotr2,javascript,1,8,0,0,0,,2026-10-02T13:47:41.900021+00:00
 hundredrabbits/left,javascript,1,0,0,0,0,,2026-10-02T14:05:22.273860+00:00
@@ -2209,7 +2209,7 @@ hyperform/hyperform,javascript,1,33,0,0,0,,2026-10-02T14:00:10.694009+00:00
 hyperledger-archives/composer,javascript,1,478,741,521,220,,2026-10-02T13:52:43.575177+00:00
 hyperledger-caliper/caliper,javascript,1,50,95,55,40,,2026-10-02T14:56:24.083544+00:00
 hyperledger-labs/blockchain-explorer,javascript,1,47,17,7,10,,2026-10-02T14:46:17.393584+00:00
-hyperledger/blockchain-explorer,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:06:59.268729+00:00
+hyperledger/blockchain-explorer,javascript,1,47,17,7,10,,2026-10-04T14:33:29.859960+00:00
 hyperledger/caliper,javascript,1,50,95,55,40,,2026-10-02T14:03:53.288698+00:00
 hyperledger/fabric-sdk-node,javascript,1,153,256,202,54,,2026-10-02T14:14:42.534451+00:00
 hyperstack-org/hyperstack,javascript,1,573,0,0,0,,2026-10-02T14:08:28.095678+00:00
@@ -2246,12 +2246,12 @@ icetee/remote-ftp,javascript,1,1,1,1,0,,2026-10-02T13:56:30.990226+00:00
 icidasset/diffuse,javascript,1,47,0,0,0,,2026-10-02T14:53:38.523754+00:00
 id77/quantumultx,javascript,1,0,0,0,0,,2026-10-02T14:13:09.676201+00:00
 ideablade/breeze,javascript,1,161,33,31,2,,2026-10-02T13:45:17.339420+00:00
-iden3/snarkjs,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:12:52.704650+00:00
+iden3/snarkjs,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:34:49.613731+00:00
 identitymodel/oidc-client-js,javascript,1,42,20,20,0,,2026-10-02T14:20:57.726098+00:00
 idflood/threenodes.js,javascript,1,25,0,0,0,,2026-10-02T13:47:55.849592+00:00
 idurar/erp-crm,javascript,1,0,0,0,0,,2026-10-02T14:42:23.835498+00:00
 idurar/idurar-erp-crm,javascript,1,0,0,0,0,,2026-10-02T14:47:35.043251+00:00
-idyll-lang/idyll,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:22:28.454242+00:00
+idyll-lang/idyll,javascript,1,56,10,9,1,,2026-10-04T14:37:16.007075+00:00
 ifcjs/web-ifc-viewer,javascript,1,0,0,0,0,,2026-10-02T14:38:38.272624+00:00
 igaowei/bigdataview,javascript,1,0,0,0,0,,2026-10-02T14:40:04.233635+00:00
 ignacio-chiazzo/algorithms-leetcode-javascript,javascript,1,83,0,0,0,,2026-10-02T13:58:47.795146+00:00
@@ -2297,7 +2297,7 @@ inkle/inky,javascript,1,1,4,2,2,,2026-10-02T14:23:55.003575+00:00
 inlet/react-pixi,javascript,1,11,0,0,0,,2026-10-02T14:03:19.494353+00:00
 inlife/nexrender,javascript,1,38,12,5,7,,2026-10-02T14:18:45.569089+00:00
 innovateasterisk/browser-phone,javascript,1,0,0,0,0,,2026-10-02T13:56:50.767307+00:00
-inoerp/inoerp,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:35:55.012352+00:00
+inoerp/inoerp,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:37:52.003631+00:00
 insin/control-panel-for-twitter,javascript,1,0,0,0,0,,2026-10-02T14:46:16.807882+00:00
 insin/newforms,javascript,1,24,0,0,0,,2026-10-02T13:46:29.695144+00:00
 insin/nwb,javascript,1,55,38,19,19,,2026-10-02T14:02:37.949847+00:00
@@ -2426,7 +2426,7 @@ jedwatson/sydjs-site,javascript,1,0,0,0,0,,2026-10-02T13:47:38.305239+00:00
 jeeliz/jeelizfacefilter,javascript,1,0,0,0,0,,2026-10-02T14:19:37.232925+00:00
 jeeliz/jeelizweboji,javascript,1,0,0,0,0,,2026-10-02T14:10:39.514921+00:00
 jeffbski/redux-logic,javascript,1,20,235,208,27,,2026-10-02T13:59:06.307410+00:00
-jeffpar/pcjs,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:07:39.070748+00:00
+jeffpar/pcjs,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:33:30.667713+00:00
 jeffreyway/laravel-mix,javascript,1,141,0,0,0,,2026-10-02T14:17:20.276414+00:00
 jeffreyzhao/wind,javascript,1,9,4,2,2,,2026-10-02T13:45:02.631015+00:00
 jejacks0n/mercury,javascript,1,61,0,0,0,,2026-10-02T13:53:52.656866+00:00
@@ -2441,7 +2441,7 @@ jeremydaly/lambda-api,javascript,1,35,9,5,4,,2026-10-02T14:10:08.233854+00:00
 jeremykenedy/laravel-auth,javascript,1,8,0,0,0,,2026-10-02T14:35:58.719762+00:00
 jermolene/tiddlywiki5,javascript,1,341,8,4,4,,2026-10-02T14:16:16.935200+00:00
 jeroenpeeters/docker-ssh,javascript,1,0,0,0,0,,2026-10-02T13:47:23.440632+00:00
-jerry-z-j-r/i-love-you-3-thousand,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:42:09.279169+00:00
+jerry-z-j-r/i-love-you-3-thousand,javascript,1,18,0,0,0,,2026-10-04T14:41:17.864307+00:00
 jerrylizilong/autotest_platform,javascript,1,6,0,0,0,,2026-10-02T13:55:05.351135+00:00
 jetbrains/intellij-plugins,javascript,1,2352,2,2,0,,2026-10-02T13:43:00.760074+00:00
 jetbrains/svg-sprite-loader,javascript,1,18,1,1,0,,2026-10-02T14:04:51.711842+00:00
@@ -2463,8 +2463,8 @@ jiacai2050/gooreplacer,javascript,1,2,0,0,0,,2026-10-02T14:04:11.611689+00:00
 jiangxy/react-antd-admin,javascript,1,0,0,0,0,,2026-10-02T13:46:17.771936+00:00
 jianjianai/newbinggogo-web,javascript,1,0,0,0,0,,2026-10-02T14:47:11.324383+00:00
 jianru-lin/lambda-view,javascript,1,9,0,0,0,,2026-10-02T13:51:47.250413+00:00
-jiawanlong/Cesium-Examples,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:55:40.571566+00:00
-jiggzson/nerdamer,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:22:06.574813+00:00
+jiawanlong/Cesium-Examples,javascript,1,8,0,0,0,,2026-10-04T14:44:37.505864+00:00
+jiggzson/nerdamer,javascript,1,11,0,0,0,,2026-10-04T14:37:11.161658+00:00
 jihong88/suneditor,javascript,1,224,721,521,200,,2026-10-02T14:22:57.806687+00:00
 jiiks/betterdiscordapp,javascript,1,2,0,0,0,,2026-10-02T13:56:18.092093+00:00
 jimhigson/oboe.js,javascript,1,46,17,17,0,,2026-10-02T13:59:43.171218+00:00
@@ -2596,7 +2596,7 @@ justlovemaki/AIClient2API,javascript,1,2,2,1,1,,2026-10-02T15:05:26.556772+00:00
 justpy-org/justpy,javascript,1,30,0,0,0,,2026-10-02T14:45:40.771735+00:00
 jwhitley/requirejs-rails,javascript,1,26,0,0,0,,2026-10-02T13:52:46.371125+00:00
 jwilber/roughviz,javascript,1,6,0,0,0,,2026-10-02T13:59:36.067988+00:00
-jwplayer/jwplayer,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:11:02.034729+00:00
+jwplayer/jwplayer,javascript,1,112,58,32,26,,2026-10-04T14:34:01.486909+00:00
 jxcore/jxcore,javascript,1,17604,2,1,1,,2026-10-02T13:47:58.129847+00:00
 jxlarrea/voice-satellite-card-integration,javascript,1,0,0,0,0,,2026-10-02T15:03:01.331736+00:00
 k-vyn/framer-ios-kit,javascript,1,0,0,0,0,,2026-10-02T13:45:57.845290+00:00
@@ -2609,7 +2609,7 @@ kanishka-linux/reminiscence,javascript,1,5,0,0,0,,2026-10-02T14:14:29.827128+00:
 kanoqwq/UFI-TOOLS,javascript,1,1,0,0,0,,2026-10-02T14:57:40.876486+00:00
 kanso/kanso,javascript,1,58,0,0,0,,2026-10-02T13:47:22.762172+00:00
 kaola-fed/megalo,javascript,1,255,69,44,25,,2026-10-02T13:59:06.651803+00:00
-karasjs/karas,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:11:32.088999+00:00
+karasjs/karas,javascript,1,2085,0,0,0,,2026-10-04T14:34:18.324653+00:00
 karma-runner/karma,javascript,1,123,104,86,18,,2026-10-02T14:15:19.247223+00:00
 karsonzhang/fastadmin,javascript,1,0,0,0,0,,2026-10-02T14:04:33.554457+00:00
 kartik-v/bootstrap-fileinput,javascript,1,0,0,0,0,,2026-10-02T14:19:28.903597+00:00
@@ -2632,7 +2632,7 @@ ken107/read-aloud,javascript,1,0,0,0,0,,2026-10-02T14:03:54.498558+00:00
 kenshin/simpread,javascript,1,0,0,0,0,,2026-10-02T14:16:19.810754+00:00
 kenshin/simptab,javascript,1,0,0,0,0,,2026-10-02T13:56:11.972149+00:00
 kentcdodds/advanced-react-patterns-v2,javascript,1,14,0,0,0,,2026-10-02T14:04:52.674954+00:00
-kentcdodds/old-kentcdodds.com,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:40:25.795074+00:00
+kentcdodds/old-kentcdodds.com,javascript,1,13,4,2,2,,2026-10-04T14:41:16.805664+00:00
 kentcdodds/testing-workshop,javascript,1,62,30,21,9,,2026-10-02T13:56:39.683032+00:00
 keshavgbpecdelhi/web-development,javascript,1,1,0,0,0,,2026-10-02T14:46:05.939383+00:00
 kevinburke/doony,javascript,1,0,0,0,0,,2026-10-02T13:52:34.432707+00:00
@@ -2650,7 +2650,7 @@ khanhas/spicetify-cli,javascript,1,0,0,0,0,,2026-10-02T14:08:12.718727+00:00
 khronosgroup/vulkan-docs,javascript,1,17,0,0,0,,2026-10-02T14:20:59.457220+00:00
 kiarash-z/react-modern-calendar-datepicker,javascript,1,7,3,2,1,,2026-10-02T14:15:44.972595+00:00
 kidkarolis/jetpack,javascript,1,35,0,0,0,,2026-10-02T14:18:37.935822+00:00
-kiesun/awesome-frontend-source-interpretation,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:39:38.339573+00:00
+kiesun/awesome-frontend-source-interpretation,javascript,1,0,0,0,0,,2026-10-04T14:39:22.952712+00:00
 kiesun/react-interpretation,javascript,1,0,0,0,0,,2026-10-02T13:52:03.008911+00:00
 killedbyapixel/littlejs,javascript,1,22,1,1,0,,2026-10-02T14:40:32.302356+00:00
 kimchi-project/kimchi,javascript,1,56,0,0,0,,2026-10-02T13:56:35.300103+00:00
@@ -2664,7 +2664,7 @@ kisslove/web-monitoring,javascript,1,0,0,0,0,,2026-10-02T14:00:49.264456+00:00
 kitware/vtk-js,javascript,1,201,5,4,1,,2026-10-02T14:21:55.632944+00:00
 kiuryy/bookmark_sidebar,javascript,1,0,0,0,0,,2026-10-02T14:17:49.516700+00:00
 kkapsner/canvasblocker,javascript,1,25,0,0,0,,2026-10-02T14:05:10.135215+00:00
-klsdf/GreenResourcesManager,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T15:01:40.184871+00:00
+klsdf/GreenResourcesManager,javascript,1,1,0,0,0,,2026-10-04T14:45:36.382618+00:00
 kmalakoff/knockback,javascript,1,46,0,0,0,,2026-10-02T13:50:04.002882+00:00
 knaxus/problem-solving-javascript,javascript,1,55,29,27,2,,2026-10-02T14:02:03.179848+00:00
 knex/knex,javascript,1,283,364,216,148,,2026-10-02T14:21:14.827292+00:00
@@ -2673,9 +2673,9 @@ knockout/knockout,javascript,1,73,64,53,11,,2026-10-02T14:05:49.391995+00:00
 koajs/koa,javascript,1,73,3,2,1,,2026-10-02T14:04:04.852284+00:00
 koaning/drawdata,javascript,1,1,0,0,0,,2026-10-02T14:36:35.922093+00:00
 koehlma/jaspy,javascript,1,5,0,0,0,,2026-10-02T13:57:49.472593+00:00
-koenbok/framer,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:50:00.638624+00:00
+koenbok/framer,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:30:22.368231+00:00
 kogosoftwarellc/open-api,javascript,1,650,46,43,3,,2026-10-02T14:13:46.840205+00:00
-kohgylw/kiftd,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:55:08.904029+00:00
+kohgylw/kiftd,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:30:51.021609+00:00
 kokohuang/gitter,javascript,1,0,0,0,0,,2026-10-02T14:00:38.159483+00:00
 kolbytn/mindcraft,javascript,1,0,0,0,0,,2026-10-02T14:52:13.596668+00:00
 konstaui/konsta,javascript,1,0,0,0,0,,2026-10-02T14:41:46.710205+00:00
@@ -2686,7 +2686,7 @@ kop-xiao/quantumultx,javascript,1,0,0,0,0,,2026-10-02T14:10:15.917895+00:00
 kovacsv/jsmodeler,javascript,1,56,0,0,0,,2026-10-02T14:02:00.559572+00:00
 kovacsv/online3dviewer,javascript,1,189,0,0,0,,2026-10-02T14:02:03.850943+00:00
 kpdecker/jsdiff,javascript,1,16,2,1,1,,2026-10-02T14:03:26.921994+00:00
-krakenjs/post-robot,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:58:40.301543+00:00
+krakenjs/post-robot,javascript,1,12,1,0,1,,2026-10-04T14:31:50.012523+00:00
 krakenjs/zoid,javascript,1,51,3,2,1,,2026-10-02T14:08:19.363146+00:00
 krasimir/absurd,javascript,1,154,0,0,0,,2026-10-02T13:46:38.038100+00:00
 krasimir/cssx,javascript,1,108,2,2,0,,2026-10-02T13:45:48.680787+00:00
@@ -2708,7 +2708,7 @@ kubetail-org/loadjs,javascript,1,11,4,2,2,,2026-10-02T14:53:31.043697+00:00
 kui123456789/cdk-redeem-only-extension,javascript,1,0,0,0,0,,2026-10-02T15:07:38.516462+00:00
 kuizuo/js-deobfuscator,javascript,1,40,0,0,0,,2026-10-02T14:50:00.556129+00:00
 kunchenguid/lavish-axi,javascript,1,41,0,0,0,,2026-10-02T15:05:31.008649+00:00
-kunjgit/GameZone,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:48:49.981800+00:00
+kunjgit/GameZone,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:42:46.132594+00:00
 kuwala-io/kuwala,javascript,1,2,0,0,0,,2026-10-02T14:36:36.932123+00:00
 kuzzleio/kuzzle,javascript,1,169,530,437,93,,2026-10-02T14:15:36.199114+00:00
 kyleamathews/typography.js,javascript,1,6,1,1,0,,2026-10-02T14:07:47.319906+00:00
@@ -2745,7 +2745,7 @@ layui/layui,javascript,1,9,0,0,0,,2026-10-02T14:44:02.343017+00:00
 lbryio/lbry-desktop,javascript,1,0,0,0,0,,2026-10-02T14:32:57.790815+00:00
 lcg0124/bootdo,javascript,1,29,22,22,0,,2026-10-02T13:50:00.128922+00:00
 ldapjs/node-ldapjs,javascript,1,27,0,0,0,,2026-10-02T14:15:33.773451+00:00
-ldqk/masuit.myblogs,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:44:18.416843+00:00
+ldqk/masuit.myblogs,javascript,1,0,0,0,0,,2026-10-04T14:42:02.250513+00:00
 le-doux/bitsy,javascript,1,0,0,0,0,,2026-10-02T14:00:33.918647+00:00
 leaflet/leaflet,javascript,1,52,114,72,42,,2026-10-02T14:23:07.601099+00:00
 leaflet/leaflet.draw,javascript,1,12,7,7,0,,2026-10-02T13:58:11.290239+00:00
@@ -2792,7 +2792,7 @@ lhz516/react-h5-audio-player,javascript,1,6,5,2,3,,2026-10-02T13:44:30.313247+00
 liabru/matter-js,javascript,1,3,1,0,1,,2026-10-02T14:13:22.298007+00:00
 liamcottle/reticulum-meshchat,javascript,1,0,0,0,0,,2026-10-02T14:54:15.745555+00:00
 liammclennan/javascript-koans,javascript,1,0,0,0,0,,2026-10-02T14:03:18.779864+00:00
-libccy/noname,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:10:17.517385+00:00
+libccy/noname,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:33:50.018046+00:00
 libnoname/noname,javascript,1,1,0,0,0,,2026-10-02T14:56:53.045682+00:00
 libreoffice/online,javascript,1,90,0,0,0,,2026-10-02T14:18:55.088763+00:00
 lichen-community-systems/Flocking,javascript,1,50,0,0,0,,2026-10-02T15:02:18.610716+00:00
@@ -2806,7 +2806,7 @@ liftoff/humaninput,javascript,1,34,5,5,0,,2026-10-02T13:49:35.526715+00:00
 ligershark/side-waffle,javascript,1,8,1,1,0,,2026-10-02T13:53:38.644812+00:00
 lightning-viz/lightning,javascript,1,2,1,1,0,,2026-10-02T13:45:49.120592+00:00
 lightninglabs/lightning-app,javascript,1,35,84,65,19,,2026-10-02T13:56:08.077117+00:00
-liguobao/58housesearch,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:01:20.748335+00:00
+liguobao/58housesearch,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:32:29.407782+00:00
 liguobao/HouseSearch,javascript,1,0,0,0,0,,2026-10-02T14:52:14.567714+00:00
 lihongxun945/jquery-weui,javascript,1,1,0,0,0,,2026-10-02T13:52:05.012563+00:00
 lijinke666/react-music-player,javascript,1,12,0,0,0,,2026-10-02T14:23:04.106938+00:00
@@ -2833,7 +2833,7 @@ lipeiwei-szu/reactnativeone,javascript,1,0,0,0,0,,2026-10-02T13:46:28.197375+00:
 lirantal/npq,javascript,1,52,63,36,27,,2026-10-02T14:00:50.890764+00:00
 liriliri/eruda,javascript,1,12,6,6,0,,2026-10-02T14:08:08.061544+00:00
 liriliri/licia,javascript,1,457,55,33,22,,2026-10-02T14:01:35.997630+00:00
-liskhq/lisk-desktop,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:13:43.732129+00:00
+liskhq/lisk-desktop,javascript,1,494,220,176,44,,2026-10-04T14:35:15.201170+00:00
 lisong/code-push-server,javascript,1,10,12,11,1,,2026-10-02T14:03:18.275382+00:00
 listen1/listen1_chrome_extension,javascript,1,0,0,0,0,,2026-10-02T14:10:25.362148+00:00
 liu-peiyu/geek-framework,javascript,1,1,0,0,0,,2026-10-02T14:03:38.645478+00:00
@@ -2843,7 +2843,7 @@ livebud/bud,javascript,1,0,0,0,0,,2026-10-02T14:44:26.706228+00:00
 livetl/livetl,javascript,1,10,0,0,0,,2026-10-02T14:34:55.228059+00:00
 lixi5338619/lxbook,javascript,1,3,0,0,0,,2026-10-02T14:44:03.952356+00:00
 ljharb/qs,javascript,1,4,0,0,0,,2026-10-02T14:21:43.253453+00:00
-ljharb/tape,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:45:42.504729+00:00
+ljharb/tape,javascript,1,140,0,0,0,,2026-10-04T14:42:17.220082+00:00
 ljianshu/blog,javascript,1,0,0,0,0,,2026-10-02T14:04:58.954749+00:00
 lklynet/aurral,javascript,1,173,0,0,0,,2026-10-02T15:02:05.598941+00:00
 lkmvip/netflix-4k-ddplus,javascript,1,0,0,0,0,,2026-10-02T14:06:31.081846+00:00
@@ -2858,7 +2858,7 @@ lloyd/jsonselect,javascript,1,4,0,0,0,,2026-10-02T13:49:04.213146+00:00
 lmenezes/cerebro,javascript,1,59,33,33,0,,2026-10-02T14:03:28.982351+00:00
 lmenezes/elasticsearch-kopf,javascript,1,39,79,77,2,,2026-10-02T13:51:46.643531+00:00
 ln-zap/zap-desktop,javascript,1,132,13,12,1,,2026-10-02T14:15:34.536284+00:00
-lo-th/3d.city,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:45:41.506973+00:00
+lo-th/3d.city,javascript,1,0,0,0,0,,2026-10-04T14:30:17.802405+00:00
 lo-th/oimo.js,javascript,1,1,0,0,0,,2026-10-02T13:49:14.749211+00:00
 lo-th/phy,javascript,1,5,0,0,0,,2026-10-02T14:38:43.649750+00:00
 lo-th/uil,javascript,1,0,0,0,0,,2026-10-02T13:57:39.909370+00:00
@@ -2913,7 +2913,7 @@ luzhisheng/js_reverse,javascript,1,17,0,0,0,,2026-10-02T14:43:12.612741+00:00
 ly525/luban-h5,javascript,1,7,0,0,0,,2026-10-02T14:21:17.171070+00:00
 lydell/eslint-plugin-simple-import-sort,javascript,1,4,0,0,0,,2026-10-02T14:00:31.273782+00:00
 lyfe00011/levanter,javascript,1,1,0,0,0,,2026-10-02T14:55:54.297774+00:00
-lyfe00011/whatsapp-bot-md,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:44:17.883996+00:00
+lyfe00011/whatsapp-bot-md,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:42:01.439758+00:00
 lynndylanhurley/redux-auth,javascript,1,15,6,3,3,,2026-10-02T13:47:21.279929+00:00
 lzma-js/lzma-js,javascript,1,19,0,0,0,,2026-10-02T13:52:51.377647+00:00
 m0bilesecurity/rms-runtime-mobile-security,javascript,1,0,0,0,0,,2026-10-02T14:00:41.396151+00:00
@@ -3011,12 +3011,12 @@ matthieua/wow,javascript,1,6,7,6,1,,2026-10-02T13:50:35.040471+00:00
 mattiasw/exifreader,javascript,1,79,65,33,32,,2026-10-02T14:06:08.508895+00:00
 mattlewis92/angular-bootstrap-calendar,javascript,1,27,76,65,11,,2026-10-02T13:46:46.636035+00:00
 mattzeunert/fromjs,javascript,1,5,0,0,0,,2026-10-02T14:01:31.577897+00:00
-mauriciopoppe/function-plot,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:44:45.863203+00:00
+mauriciopoppe/function-plot,javascript,1,4,0,0,0,,2026-10-04T14:30:11.037726+00:00
 mavoweb/mavo,javascript,1,0,0,0,0,,2026-10-02T14:20:53.777288+00:00
 maximecb/noisecraft,javascript,1,0,0,0,0,,2026-10-02T14:39:55.654329+00:00
 mayeaux/nodetube,javascript,1,3,0,0,0,,2026-10-02T14:08:53.534943+00:00
-mayswind/ariang,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:19:07.443595+00:00
-mayswind/ariang-native,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:19:13.757437+00:00
+mayswind/ariang,javascript,1,0,0,0,0,,2026-10-04T14:36:28.082794+00:00
+mayswind/ariang-native,javascript,1,0,0,0,0,,2026-10-04T14:36:33.967974+00:00
 mbebenita/lljs,javascript,1,9,0,0,0,,2026-10-02T13:52:49.350915+00:00
 mbenford/ngtagsinput,javascript,1,15,27,24,3,,2026-10-02T13:51:50.880555+00:00
 mbloch/mapshaper,javascript,1,436,9,5,4,,2026-10-02T14:15:28.100670+00:00
@@ -3064,7 +3064,7 @@ mermaidjs/mermaid-live-editor,javascript,1,1,1,1,0,,2026-10-02T13:59:26.743920+0
 merri-ment/lazy-line-painter,javascript,1,0,0,0,0,,2026-10-02T14:49:39.115917+00:00
 mescon/Muximux,javascript,1,2,0,0,0,,2026-10-02T15:02:50.942686+00:00
 meshery/meshery.io,javascript,1,0,0,0,0,,2026-10-02T14:48:49.197543+00:00
-met4citizen/TalkingHead,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:52:09.662523+00:00
+met4citizen/TalkingHead,javascript,1,0,0,0,0,,2026-10-04T14:43:53.006610+00:00
 metacademy/metacademy-application,javascript,1,4,0,0,0,,2026-10-02T13:54:42.161169+00:00
 metafizzy/flickity,javascript,1,24,0,0,0,,2026-10-02T14:01:11.450140+00:00
 metafizzy/packery,javascript,1,23,0,0,0,,2026-10-02T13:52:19.910824+00:00
@@ -3100,7 +3100,7 @@ micotton/dejavue,javascript,1,8,0,0,0,,2026-10-02T13:46:30.241476+00:00
 microapp-store/linjiashop,javascript,1,13,0,0,0,,2026-10-02T14:46:19.993954+00:00
 microjs/microjs.com,javascript,1,0,0,0,0,,2026-10-02T14:04:09.956691+00:00
 microlinkhq/browserless,javascript,1,40,0,0,0,,2026-10-02T14:19:54.009886+00:00
-micromark/micromark,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:16:45.685748+00:00
+micromark/micromark,javascript,1,49,1,1,0,,2026-10-04T14:35:53.274992+00:00
 micromatch/micromatch,javascript,1,37,31,10,21,,2026-10-02T13:55:16.363498+00:00
 micromatch/picomatch,javascript,1,38,0,0,0,,2026-10-02T14:00:32.034861+00:00
 microrealestate/microrealestate,javascript,1,0,0,0,0,,2026-10-02T14:40:25.983378+00:00
@@ -3165,8 +3165,8 @@ mjmlio/mjml,javascript,1,43,0,0,0,,2026-10-02T14:23:10.725653+00:00
 mjmlio/mjml-app,javascript,1,0,0,0,0,,2026-10-02T14:05:30.480590+00:00
 mkkellogg/GaussianSplats3D,javascript,1,0,0,0,0,,2026-10-02T14:49:58.931313+00:00
 mkocansey/bladewind,javascript,1,0,0,0,0,,2026-10-02T14:57:22.277027+00:00
-ml5js/ml5-examples,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:53:11.370696+00:00
-ml5js/ml5-library,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:19:29.154655+00:00
+ml5js/ml5-examples,javascript,1,0,0,0,0,,2026-10-04T14:30:35.885305+00:00
+ml5js/ml5-library,javascript,1,20,17,17,0,,2026-10-04T14:36:46.669608+00:00
 mleibman/slickgrid,javascript,1,3,0,0,0,,2026-10-02T14:07:14.322514+00:00
 mljar/supertree,javascript,1,0,0,0,0,,2026-10-02T14:55:56.733291+00:00
 mlt131220/Astral3DEditor,javascript,1,0,0,0,0,,2026-10-02T14:56:49.835821+00:00
@@ -3232,13 +3232,13 @@ moxiecode/plupload,javascript,1,8,0,0,0,,2026-10-02T13:56:38.107901+00:00
 mozbrick/brick,javascript,1,1,1,1,0,,2026-10-02T13:45:13.458885+00:00
 mozilla-b2g/gaia,javascript,1,3521,91,88,3,,2026-10-02T13:50:13.726122+00:00
 mozilla-comm/ical.js,javascript,1,58,0,0,0,,2026-10-02T14:03:44.012065+00:00
-mozilla-firefox/firefox,javascript,0,0,0,0,0,timeout,2026-10-02T15:07:38.516198+00:00
+mozilla-firefox/firefox,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:45:03.771883+00:00
 mozilla/addons-frontend,javascript,1,221,148,116,32,,2026-10-02T14:21:23.183913+00:00
 mozilla/browserquest,javascript,1,0,0,0,0,,2026-10-02T13:56:34.988342+00:00
 mozilla/chromeless,javascript,1,118,0,0,0,,2026-10-02T13:50:54.285542+00:00
 mozilla/fathom,javascript,1,19,3,1,2,,2026-10-02T14:01:35.252284+00:00
 mozilla/firefox-translations,javascript,1,12,0,0,0,,2026-10-02T14:41:09.261261+00:00
-mozilla/gecko-dev,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:54:31.994121+00:00
+mozilla/gecko-dev,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:25.722120+00:00
 mozilla/hubs,javascript,1,4,0,0,0,,2026-10-02T14:27:53.504926+00:00
 mozilla/lightbeam,javascript,1,2,0,0,0,,2026-10-02T13:46:02.447159+00:00
 mozilla/multi-account-containers,javascript,1,10,28,18,10,,2026-10-02T14:23:49.854531+00:00
@@ -3263,11 +3263,11 @@ mrdoob/frame.js,javascript,1,0,0,0,0,,2026-10-02T14:01:15.187323+00:00
 mrdoob/glsl-sandbox,javascript,1,0,0,0,0,,2026-10-02T14:46:15.754442+00:00
 mrdoob/three.js,javascript,1,278,0,0,0,,2026-10-02T14:34:32.223838+00:00
 mrhm-dev/full-stack-army,javascript,1,16,3,1,2,,2026-10-02T14:43:50.857147+00:00
-mrin9/rapidoc,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:33:26.362985+00:00
+mrin9/rapidoc,javascript,1,36,0,0,0,,2026-10-04T14:37:30.550306+00:00
 mrmlnc/fast-glob,javascript,1,23,0,0,0,,2026-10-02T13:44:50.212285+00:00
 mrnothing/ai-blocks,javascript,1,2,0,0,0,,2026-10-02T14:05:21.914450+00:00
 mrpandey/d3graphtheory,javascript,1,0,0,0,0,,2026-10-02T13:57:59.969597+00:00
-mrrio/jspdf,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:13:15.761865+00:00
+mrrio/jspdf,javascript,1,75,59,57,2,,2026-10-04T14:34:58.495924+00:00
 mrswitch/hello.js,javascript,1,44,26,12,14,,2026-10-02T14:07:16.167781+00:00
 mrtian2016/hass-panel,javascript,1,3,0,0,0,,2026-10-02T14:56:50.210381+00:00
 mruniquehacker/Knightbot-MD,javascript,1,0,0,0,0,,2026-10-02T14:56:56.630972+00:00
@@ -3277,7 +3277,7 @@ mrwill84/DOClever,javascript,1,70,0,0,0,,2026-10-02T15:01:47.879243+00:00
 mrxujiang/h5-dooring,javascript,1,0,0,0,0,,2026-10-02T14:17:30.778727+00:00
 mscdex/node-imap,javascript,1,12,0,0,0,,2026-10-02T13:57:43.390263+00:00
 mscdex/ssh2,javascript,1,85,0,0,0,,2026-10-02T14:10:56.303898+00:00
-mswnlz/edu-knowlege,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:58:18.104442+00:00
+mswnlz/edu-knowlege,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:45:05.422419+00:00
 mtgjson/mtgjson3,javascript,1,0,0,0,0,,2026-10-02T13:48:19.055289+00:00
 mtth/avsc,javascript,1,14,0,0,0,,2026-10-02T14:05:40.902241+00:00
 muaz-khan/chrome-extensions,javascript,1,0,0,0,0,,2026-10-02T13:54:34.291101+00:00
@@ -3294,11 +3294,11 @@ muisedestiny/zotero-style,javascript,1,0,0,0,0,,2026-10-02T14:46:30.470894+00:00
 mulesoft/api-console,javascript,1,12,125,123,2,,2026-10-02T14:09:02.024641+00:00
 mulesoft/api-designer,javascript,1,71,186,164,22,,2026-10-02T14:00:17.043004+00:00
 mumuy/widget,javascript,1,0,0,0,0,,2026-10-02T14:01:03.339545+00:00
-munter/subfont,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:08:59.972597+00:00
+munter/subfont,javascript,1,17,6,4,2,,2026-10-04T14:33:46.990057+00:00
 murdos/musicbrainz-userscripts,javascript,1,12,0,0,0,,2026-10-02T14:06:29.171242+00:00
 musically-ut/lovely-forks,javascript,1,0,0,0,0,,2026-10-02T14:00:51.723269+00:00
 muyoou/st-memory-enhancement,javascript,1,0,0,0,0,,2026-10-02T14:57:01.849975+00:00
-mweagle/sparta,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:04:13.936326+00:00
+mweagle/sparta,javascript,1,13,0,0,0,,2026-10-04T14:32:36.046372+00:00
 mwilliamson/mammoth.js,javascript,1,39,0,0,0,,2026-10-02T14:03:17.352628+00:00
 mwittrien/betterdiscordaddons,javascript,1,0,0,0,0,,2026-10-02T14:30:07.520666+00:00
 mxriverlynn/backbone.modelbinding,javascript,1,23,51,45,6,,2026-10-02T13:45:13.024126+00:00
@@ -3350,7 +3350,7 @@ ncform/ncform,javascript,1,68,41,40,1,,2026-10-02T14:01:59.707017+00:00
 nchaulet/node-geocoder,javascript,1,29,7,6,1,,2026-10-02T14:01:15.169828+00:00
 ndimatteo/hull,javascript,1,0,0,0,0,,2026-10-02T14:02:21.472213+00:00
 nealyang/personalblog,javascript,1,1,0,0,0,,2026-10-02T14:01:03.907847+00:00
-necolas/react-native-web,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:16:59.339725+00:00
+necolas/react-native-web,javascript,1,49,38,26,12,,2026-10-04T14:35:58.904192+00:00
 nectarjs/nectarjs,javascript,1,18,0,0,0,,2026-10-02T14:00:06.856237+00:00
 needim/noty,javascript,1,2,0,0,0,,2026-10-02T14:19:08.610033+00:00
 neetcode-gh/leetcode,javascript,1,0,0,0,0,,2026-10-02T14:41:55.906483+00:00
@@ -3460,7 +3460,7 @@ nodeca/argparse,javascript,1,1,4,2,2,,2026-10-02T14:00:21.577261+00:00
 nodeca/pako,javascript,1,58,0,0,0,,2026-10-02T14:01:45.452252+00:00
 nodegit/nodegit,javascript,1,61,67,51,16,,2026-10-02T13:58:42.409833+00:00
 nodejitsu/jitsu,javascript,1,13,0,0,0,,2026-10-02T13:45:12.140664+00:00
-nodejs-mobile/nodejs-mobile,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:42:32.448253+00:00
+nodejs-mobile/nodejs-mobile,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:41:28.141735+00:00
 nodejs/amaro,javascript,1,16,0,0,0,,2026-10-02T14:54:51.926961+00:00
 nodejs/citgm,javascript,1,37,0,0,0,,2026-10-02T14:03:04.358140+00:00
 nodejs/http2,javascript,1,7978,1,1,0,,2026-10-02T13:46:26.289684+00:00
@@ -3551,7 +3551,7 @@ octolinker/octolinker,javascript,1,38,15,13,2,,2026-10-02T14:18:19.814986+00:00
 odrick/free-tex-packer,javascript,1,0,0,0,0,,2026-10-02T13:57:50.092052+00:00
 offen/offen,javascript,1,44,27,17,10,,2026-10-02T14:16:51.814649+00:00
 officedev/office-add-in-samples,javascript,1,0,0,0,0,,2026-10-02T14:41:48.391575+00:00
-officedev/office-js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:15:49.390956+00:00
+officedev/office-js,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:35:47.319432+00:00
 officert/mongotron,javascript,1,44,179,127,52,,2026-10-02T13:49:59.516622+00:00
 oframe/ogl,javascript,1,0,0,0,0,,2026-10-02T14:13:31.234274+00:00
 ofrohn/d3-celestial,javascript,1,3,0,0,0,,2026-10-02T13:58:07.043315+00:00
@@ -3568,12 +3568,12 @@ oliviertassinari/react-swipeable-views,javascript,1,12,16,10,6,,2026-10-02T14:15
 ollm/opencomic,javascript,1,14,0,0,0,,2026-10-02T14:05:35.465120+00:00
 olov/ng-annotate,javascript,1,21,0,0,0,,2026-10-02T13:52:49.168788+00:00
 olton/Metro-UI-CSS,javascript,1,170,340,174,166,,2026-10-02T14:49:37.032114+00:00
-olton/metroui,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:56:45.491207+00:00
+olton/metroui,javascript,1,170,340,174,166,,2026-10-04T14:44:41.745662+00:00
 omnidb/omnidb,javascript,1,0,0,0,0,,2026-10-02T14:00:45.702857+00:00
 omniscientjs/omniscient,javascript,1,5,5,4,1,,2026-10-02T13:57:35.285594+00:00
 ondras/rot.js,javascript,1,58,6,6,0,,2026-10-02T13:58:03.331068+00:00
 onsenui/onsenui,javascript,1,162,155,108,47,,2026-10-02T14:10:24.596118+00:00
-onury/geolocator,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:59:10.336293+00:00
+onury/geolocator,javascript,1,2,0,0,0,,2026-10-04T14:31:53.107703+00:00
 open-duelyst/duelyst,javascript,1,147,310,188,122,,2026-10-02T14:45:39.045876+00:00
 open-gsd/gsd-core,javascript,1,1004,2611,1303,1308,,2026-10-02T15:06:12.765526+00:00
 open-source-labs/swell,javascript,1,77,110,61,49,,2026-10-02T14:01:40.697455+00:00
@@ -3589,7 +3589,7 @@ openchatai/OpenChat,javascript,1,4,0,0,0,,2026-10-02T14:51:48.832297+00:00
 opencomponents/oc,javascript,1,188,397,344,53,,2026-10-02T14:05:06.615190+00:00
 opencsapp/opencsapp.github.io,javascript,1,0,0,0,0,,2026-10-02T14:47:13.300079+00:00
 opendatacam/opendatacam,javascript,1,10,19,15,4,,2026-10-02T14:08:57.322764+00:00
-opendreamnet/dreamtime,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:44:57.230523+00:00
+opendreamnet/dreamtime,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:42:12.827774+00:00
 openexchangerates/accounting.js,javascript,1,8,0,0,0,,2026-10-02T13:56:54.883985+00:00
 openfl/lime,javascript,1,17,0,0,0,,2026-10-02T14:44:10.575000+00:00
 openintrostat/ims,javascript,1,0,0,0,0,,2026-10-02T14:41:45.391267+00:00
@@ -3662,7 +3662,7 @@ packtpublishing/node.js_design_patterns_second_edition_code,javascript,1,23,0,0,
 pactumjs/pactum,javascript,1,69,100,51,49,,2026-10-02T14:06:11.499064+00:00
 paddlepaddle/paddle.js,javascript,1,26,0,0,0,,2026-10-02T14:07:35.879122+00:00
 padloc/padloc,javascript,1,16,0,0,0,,2026-10-02T13:44:19.767882+00:00
-paed01/bpmn-engine,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:11:16.413158+00:00
+paed01/bpmn-engine,javascript,1,56,8,5,3,,2026-10-04T14:34:08.352440+00:00
 pagekit/vue-resource,javascript,1,8,0,0,0,,2026-10-02T14:00:22.759922+00:00
 palacms/PalaCMS,javascript,1,1,0,0,0,,2026-10-02T14:57:23.038218+00:00
 palalabs/palacms,javascript,1,1,0,0,0,,2026-10-02T14:58:49.138273+00:00
@@ -3678,7 +3678,7 @@ panzerdp/voca,javascript,1,79,0,0,0,,2026-10-02T14:00:14.686853+00:00
 paperjs/paper.js,javascript,1,40,0,0,0,,2026-10-02T13:59:48.803239+00:00
 papersgpt/papersgpt-for-zotero,javascript,1,0,0,0,0,,2026-10-02T14:56:31.219482+00:00
 paperwm/paperwm,javascript,1,0,0,0,0,,2026-10-02T14:05:58.076759+00:00
-parallax/jspdf,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:40:12.100702+00:00
+parallax/jspdf,javascript,1,75,59,57,2,,2026-10-04T14:39:58.096010+00:00
 paralleldrive/riteway,javascript,1,19,3,3,0,,2026-10-02T14:46:07.819379+00:00
 paramquery/grid,javascript,1,0,0,0,0,,2026-10-02T13:52:40.071412+00:00
 parasew/instiki,javascript,1,27,0,0,0,,2026-10-02T13:59:19.152130+00:00
@@ -3697,7 +3697,7 @@ patorjk/figlet.js,javascript,1,3,0,0,0,,2026-10-02T14:01:38.248054+00:00
 patriciogonzalezvivo/glslcanvas,javascript,1,0,0,0,0,,2026-10-02T13:52:00.199481+00:00
 patriciogonzalezvivo/glsleditor,javascript,1,0,0,0,0,,2026-10-02T14:05:23.227395+00:00
 patrick-steele-idem/morphdom,javascript,1,13,3,2,1,,2026-10-02T13:57:59.078959+00:00
-patrickhulce/third-party-web,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:05:26.229290+00:00
+patrickhulce/third-party-web,javascript,1,3,1,1,0,,2026-10-04T14:32:56.068727+00:00
 patrickjs/angular-websocket,javascript,1,1,20,14,6,,2026-10-02T13:47:38.190285+00:00
 patrickkunka/mixitup,javascript,1,24,15,0,15,,2026-10-02T13:56:45.705680+00:00
 patriksimek/vm2,javascript,1,94,25,12,13,,2026-10-02T14:08:51.799140+00:00
@@ -3758,12 +3758,12 @@ phodal/sherlock,javascript,1,3,2,2,0,,2026-10-02T13:46:28.679648+00:00
 phonegap/phonegap-app-developer,javascript,1,88,11,3,8,,2026-10-02T13:58:17.232387+00:00
 photo/frontend,javascript,1,31,0,0,0,,2026-10-02T13:47:47.867749+00:00
 photonstorm/phaser,javascript,1,1102,485,431,54,,2026-10-02T14:22:12.894581+00:00
-photonstorm/phaser-ce,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:59:49.164937+00:00
+photonstorm/phaser-ce,javascript,1,0,0,0,0,,2026-10-04T14:32:03.581113+00:00
 photonstorm/phaser-examples,javascript,1,1,0,0,0,,2026-10-02T13:49:16.688099+00:00
 photonstorm/phaser3-examples,javascript,1,124,0,0,0,,2026-10-02T14:21:01.461471+00:00
 phpservermon/phpservermon,javascript,1,16,0,0,0,,2026-10-02T14:36:48.991814+00:00
 pi-hole/web,javascript,1,0,0,0,0,,2026-10-02T14:51:14.805660+00:00
-pickle-com/glass,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:58:29.168627+00:00
+pickle-com/glass,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:45:13.887482+00:00
 pillarjs/iconv-lite,javascript,1,51,0,0,0,,2026-10-02T14:59:10.878972+00:00
 pilotmoon/popclip-extensions,javascript,1,7,0,0,0,,2026-10-02T13:43:23.039696+00:00
 pim-book/programmers-introduction-to-mathematics,javascript,1,0,0,0,0,,2026-10-02T13:59:31.470289+00:00
@@ -3847,7 +3847,7 @@ postmanlabs/newman,javascript,1,67,58,34,24,,2026-10-02T14:16:19.560184+00:00
 postmanlabs/openapi-to-postman,javascript,1,141,8,6,2,,2026-10-02T14:10:45.880525+00:00
 postmanlabs/postman-code-generators,javascript,1,211,1,1,0,,2026-10-02T14:22:58.854477+00:00
 postwait/node-amqp,javascript,1,58,0,0,0,,2026-10-02T13:47:58.848145+00:00
-potree/potree,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:14:20.487423+00:00
+potree/potree,javascript,1,1,0,0,0,,2026-10-04T14:35:22.390619+00:00
 potree/potreeconverter,javascript,1,1,0,0,0,,2026-10-02T14:05:12.234007+00:00
 pouchdb/pouchdb,javascript,1,141,140,83,57,,2026-10-02T14:13:16.619062+00:00
 pouchdb/pouchdb-server,javascript,1,21,58,30,28,,2026-10-02T13:56:32.270006+00:00
@@ -3899,7 +3899,7 @@ protectwise/troika,javascript,1,11,8,7,1,,2026-10-02T14:28:58.993439+00:00
 protobufjs/bytebuffer.js,javascript,1,2,0,0,0,,2026-10-02T13:55:00.216019+00:00
 protobufjs/protobuf.js,javascript,1,153,0,0,0,,2026-10-02T14:08:38.118463+00:00
 protofire/solhint,javascript,1,88,29,23,6,,2026-10-02T14:00:32.740194+00:00
-protonmail/webclient,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:04:09.192642+00:00
+protonmail/webclient,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:32:35.016964+00:00
 protoqol/prequel,javascript,1,3,0,0,0,,2026-10-02T14:36:46.085783+00:00
 prototypejs/prototype,javascript,1,49,0,0,0,,2026-10-02T14:03:16.077131+00:00
 psb1558/Junicode-font,javascript,1,0,0,0,0,,2026-10-02T15:00:46.423433+00:00
@@ -3939,7 +3939,7 @@ qinhua/halo-theme-joe2.0,javascript,1,0,0,0,0,,2026-10-02T14:41:17.494197+00:00
 qiniu/js-sdk,javascript,1,17,0,0,0,,2026-10-02T14:06:38.894519+00:00
 qiniu/nodejs-sdk,javascript,1,22,35,17,18,,2026-10-02T13:58:58.813341+00:00
 qirenzhidao/tvbox18,javascript,1,0,0,0,0,,2026-10-02T14:49:19.492487+00:00
-qist/tvbox,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:50:43.419291+00:00
+qist/tvbox,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:43:08.473959+00:00
 qist/xray-ui,javascript,1,0,0,0,0,,2026-10-02T14:46:24.787640+00:00
 qiudaoke/flowable-userguide,javascript,1,0,0,0,0,,2026-10-02T14:02:18.103999+00:00
 ql-io/ql.io,javascript,1,315,0,0,0,,2026-10-02T13:45:04.438561+00:00
@@ -3991,7 +3991,7 @@ rantav/flask-restful-swagger,javascript,1,28,0,0,0,,2026-10-02T13:54:38.484339+0
 ranuts/document,javascript,1,106,0,0,0,,2026-10-02T15:00:46.767538+00:00
 raodv/report,javascript,1,6,0,0,0,,2026-10-02T15:01:55.188327+00:00
 raphaelameaume/fragment,javascript,1,0,0,0,0,,2026-10-02T14:45:35.978752+00:00
-rapi-doc/rapidoc,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:44:08.423878+00:00
+rapi-doc/rapidoc,javascript,1,36,0,0,0,,2026-10-04T14:42:01.134850+00:00
 rapidjs/rapid.js,javascript,1,13,0,0,0,,2026-10-02T14:01:23.626817+00:00
 rargames/4gaboards,javascript,1,17,3,2,1,,2026-10-02T14:46:11.448863+00:00
 rascarlito/axios-cache-adapter,javascript,1,12,7,6,1,,2026-10-02T14:07:30.881257+00:00
@@ -4023,7 +4023,7 @@ react/react,javascript,1,2416,523,411,112,,2026-10-02T15:06:33.848272+00:00
 react/react-strict-dom,javascript,1,31,28,14,14,,2026-10-02T15:06:46.757979+00:00
 reactide/reactide,javascript,1,2,0,0,0,,2026-10-02T14:00:59.000959+00:00
 reactioncommerce/example-storefront,javascript,1,14,0,0,0,,2026-10-02T14:18:53.659139+00:00
-reactioncommerce/reaction,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:11:38.167347+00:00
+reactioncommerce/reaction,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:34:35.996408+00:00
 reactive-extensions/rx.angular.js,javascript,1,5,0,0,0,,2026-10-02T13:45:57.504904+00:00
 reactive-extensions/rxjs,javascript,1,400,2,2,0,,2026-10-02T13:47:23.455753+00:00
 reactiveraven/jqbootstrapvalidation,javascript,1,5,0,0,0,,2026-10-02T13:50:41.188677+00:00
@@ -4201,10 +4201,10 @@ saimn/sigal,javascript,1,21,0,0,0,,2026-10-02T14:13:43.016435+00:00
 saiteja-madha/discord-js-bot,javascript,1,85,0,0,0,,2026-10-02T14:39:57.188002+00:00
 salesforce-ux/design-system,javascript,1,115,12,7,5,,2026-10-02T14:08:49.084604+00:00
 salesforce/cloudsplaining,javascript,1,41,8,8,0,,2026-10-02T14:27:53.896700+00:00
-salesforce/design-system-react,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:14:43.635391+00:00
+salesforce/design-system-react,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:35:29.832805+00:00
 salesforce/lwc,javascript,1,3455,335,224,111,,2026-10-02T14:27:58.125883+00:00
 sallowayma-git/IELTS-practice,javascript,1,125,0,0,0,,2026-10-02T15:04:44.225728+00:00
-salmanytofficial/XLICON-V3-MD,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:52:21.775665+00:00
+salmanytofficial/XLICON-V3-MD,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:06.474453+00:00
 saltcorn/saltcorn,javascript,1,146,99,57,42,,2026-10-02T14:32:20.695056+00:00
 saltysimulations/salty-747,javascript,1,0,0,0,0,,2026-10-02T14:16:50.408187+00:00
 samclarke/sceditor,javascript,1,28,0,0,0,,2026-10-02T14:17:51.548362+00:00
@@ -4259,7 +4259,7 @@ scratchfoundation/scratch-gui,javascript,1,86,55,36,19,,2026-10-02T14:47:41.3673
 scratchfoundation/scratch-vm,javascript,1,278,0,0,0,,2026-10-02T14:47:15.724504+00:00
 scratchfoundation/scratch-www,javascript,1,86,87,61,26,,2026-10-02T14:47:31.395272+00:00
 screwdriver-cd/screwdriver,javascript,1,43,278,214,64,,2026-10-02T14:13:39.561185+00:00
-script-hub-org/script-hub,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:48:09.358641+00:00
+script-hub-org/script-hub,javascript,1,0,0,0,0,,2026-10-04T14:42:42.603613+00:00
 scripted-editor/scripted,javascript,1,209,0,0,0,,2026-10-02T13:45:54.407251+00:00
 scriptpilot/app-framework,javascript,1,0,0,0,0,,2026-10-02T13:53:57.722941+00:00
 scrollback/scrollback,javascript,1,100,56,35,21,,2026-10-02T13:45:29.381087+00:00
@@ -4282,9 +4282,9 @@ sehugg/8bitworkshop,javascript,1,391,1,0,1,,2026-10-02T14:04:16.236524+00:00
 seiyria/bootstrap-slider,javascript,1,32,114,69,45,,2026-10-02T14:04:08.700458+00:00
 select2/select2,javascript,1,43,0,0,0,,2026-10-02T14:13:15.432874+00:00
 selectize/selectize.js,javascript,1,10,35,30,5,,2026-10-02T14:10:24.182813+00:00
-selfboot/ai_gallery,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:55:07.880121+00:00
+selfboot/ai_gallery,javascript,1,56,8,8,0,,2026-10-04T14:44:32.456011+00:00
 selfrefactor/rambda,javascript,1,3,0,0,0,,2026-10-02T14:17:42.038021+00:00
-semantic-org/semantic-ui,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:00:21.948829+00:00
+semantic-org/semantic-ui,javascript,1,20,5,3,2,,2026-10-04T14:32:27.044577+00:00
 semantic-org/semantic-ui-react,javascript,1,223,50,28,22,,2026-10-02T14:15:18.002144+00:00
 semantic-release/github,javascript,1,19,0,0,0,,2026-10-02T14:18:00.839258+00:00
 semantic-release/semantic-release,javascript,1,37,0,0,0,,2026-10-02T14:29:41.219344+00:00
@@ -4312,7 +4312,7 @@ serverless/examples,javascript,1,9,0,0,0,,2026-10-02T14:20:31.848145+00:00
 serverless/serverless,javascript,1,672,464,280,184,,2026-10-02T14:30:24.871913+00:00
 serversideup/amplitudejs,javascript,1,32,62,31,31,,2026-10-02T14:19:09.647929+00:00
 service-bot/servicebot,javascript,1,8,1,1,0,,2026-10-02T14:02:29.900151+00:00
-seth-shi/monday-shop,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:35:56.698886+00:00
+seth-shi/monday-shop,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:37:55.697413+00:00
 setube/vue-XiuXianGame,javascript,1,0,0,0,0,,2026-10-02T14:54:29.493172+00:00
 seyz/jsonapi-serializer,javascript,1,3,0,0,0,,2026-10-02T14:12:49.435632+00:00
 sgoudelis/ground-station,javascript,1,117,6,1,5,,2026-10-02T15:02:58.351762+00:00
@@ -4330,10 +4330,10 @@ share/sharedb,javascript,1,36,78,56,22,,2026-10-02T14:20:46.850861+00:00
 sharpai/deepcamera,javascript,1,91,0,0,0,,2026-10-02T13:43:19.741349+00:00
 sharu725/online-cv,javascript,1,0,0,0,0,,2026-10-02T14:55:47.943105+00:00
 shawnbot/aight,javascript,1,2,0,0,0,,2026-10-02T13:45:46.537085+00:00
-sheetjs/sheetjs,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:04:58.052423+00:00
+sheetjs/sheetjs,javascript,1,0,0,0,0,,2026-10-04T14:32:49.488340+00:00
 shekhargulati/52-technologies-in-2016,javascript,1,19,3,3,0,,2026-10-02T13:49:35.785481+00:00
 shelljs/shelljs,javascript,1,57,0,0,0,,2026-10-02T14:17:05.652799+00:00
-shenanigandapp/brightid-discord-bot,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:39:20.383023+00:00
+shenanigandapp/brightid-discord-bot,javascript,1,0,0,0,0,,2026-10-04T14:39:13.091117+00:00
 shenruisi/stay,javascript,1,2,0,0,0,,2026-10-02T14:40:44.773077+00:00
 shentao/vue-multiselect,javascript,1,2,1,1,0,,2026-10-02T14:11:41.903907+00:00
 shibingli/webconsole,javascript,1,0,0,0,0,,2026-10-02T13:52:57.338193+00:00
@@ -4385,7 +4385,7 @@ sintaxi/phonegap,javascript,1,0,0,0,0,,2026-10-02T13:46:31.660085+00:00
 sintaxi/surge,javascript,1,10,7,4,3,,2026-10-02T14:17:32.335856+00:00
 sismics/docs,javascript,1,45,0,0,0,,2026-10-02T14:14:37.673980+00:00
 sitepen/dgrid,javascript,1,56,1,0,1,,2026-10-02T13:56:33.310043+00:00
-siteserver/cms,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:43:08.814954+00:00
+siteserver/cms,javascript,1,28,0,0,0,,2026-10-04T14:30:07.481090+00:00
 sitespeedio/browsertime,javascript,1,74,10,10,0,,2026-10-02T14:21:23.209171+00:00
 sitespeedio/sitespeed.io,javascript,1,24,0,0,0,,2026-10-02T14:19:29.688862+00:00
 sixeyed/diamol,javascript,1,3,0,0,0,,2026-10-02T13:43:03.955984+00:00
@@ -4407,7 +4407,7 @@ slexaxton/require-handlebars-plugin,javascript,1,28,0,0,0,,2026-10-02T13:52:01.3
 slightlyoff/cassowary.js,javascript,1,18,0,0,0,,2026-10-02T13:46:15.897552+00:00
 sliptree/bootstrap-tokenfield,javascript,1,4,123,68,55,,2026-10-02T13:56:57.728668+00:00
 sloisel/numeric,javascript,1,0,0,0,0,,2026-10-02T13:47:59.106286+00:00
-slopsmith/slopsmith,javascript,0,0,0,0,0,clone_failed,2026-10-02T15:06:01.923150+00:00
+slopsmith/slopsmith,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:46:05.499331+00:00
 sls-admin/sls-admin-vue,javascript,1,10,0,0,0,,2026-10-02T13:48:32.328718+00:00
 smallbets/userbase,javascript,1,24,64,63,1,,2026-10-02T14:10:33.342833+00:00
 smallfawn/decode_action,javascript,1,0,0,0,0,,2026-10-02T14:54:27.118615+00:00
@@ -4496,7 +4496,7 @@ squizlabs/html_codesniffer,javascript,1,2,0,0,0,,2026-10-02T14:01:57.421747+00:0
 ssbc/patchwork,javascript,1,0,0,0,0,,2026-10-02T14:12:13.053731+00:00
 ssense/vue-carousel,javascript,1,7,4,4,0,,2026-10-02T13:59:32.523450+00:00
 sstur/draft-js-utils,javascript,1,16,1,1,0,,2026-10-02T13:59:33.359373+00:00
-stackbit/jamstackthemes,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:11:19.320791+00:00
+stackbit/jamstackthemes,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:34:10.202121+00:00
 stackernews/stacker.news,javascript,1,22,31,12,19,,2026-10-02T14:38:37.823138+00:00
 stackgpu/simple-gpu,javascript,1,0,0,0,0,,2026-10-02T14:46:55.834212+00:00
 stacks-network/blockstack-browser,javascript,1,69,133,89,44,,2026-10-02T14:42:24.972179+00:00
@@ -4566,14 +4566,14 @@ stylus/stylus,javascript,1,445,0,0,0,,2026-10-02T14:04:48.036899+00:00
 su37josephxia/wheel-awesome,javascript,1,49,0,0,0,,2026-10-02T14:04:42.913057+00:00
 sub-store-org/sub-store,javascript,1,40,46,26,20,,2026-10-02T14:44:54.825447+00:00
 subash/prepros,javascript,1,0,0,0,0,,2026-10-02T13:49:24.506245+00:00
-substack/tape,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:16:17.563515+00:00
+substack/tape,javascript,1,140,0,0,0,,2026-10-04T14:35:49.854038+00:00
 substance/substance,javascript,1,171,0,0,0,,2026-10-02T13:59:37.409521+00:00
 substance/substance-legacy,javascript,1,27,0,0,0,,2026-10-02T13:45:18.532268+00:00
 substance/texture,javascript,1,47,0,0,0,,2026-10-02T13:52:26.586444+00:00
 sudo-suhas/elastic-builder,javascript,1,159,14,7,7,,2026-10-02T14:02:02.351158+00:00
 sugarlabs/musicblocks,javascript,1,244,987,698,289,,2026-10-02T14:33:39.811846+00:00
 suguru03/neo-async,javascript,1,51,2,1,1,,2026-10-02T13:59:57.160289+00:00
-sukebenet/dreamtime,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:54:22.577343+00:00
+sukebenet/dreamtime,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:44:23.798090+00:00
 summernote/summernote,javascript,1,19,27,27,0,,2026-10-02T14:20:19.626479+00:00
 sun0225sun/awesome-love-code,javascript,1,0,0,0,0,,2026-10-02T14:42:48.454178+00:00
 sunner/ChatALL,javascript,1,0,0,0,0,,2026-10-02T14:48:32.222258+00:00
@@ -4581,10 +4581,10 @@ sunnoy/openclaw-plugin-wecom,javascript,1,31,17,5,12,,2026-10-02T15:02:24.910688
 sunny-117/js-challenges,javascript,1,1,0,0,0,,2026-10-02T14:46:18.188616+00:00
 sunspot/sunspot,javascript,1,133,0,0,0,,2026-10-02T14:14:18.680775+00:00
 sunwu51/notebook,javascript,1,27,30,30,0,,2026-10-02T14:44:13.996363+00:00
-superalgos/superalgos,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:17:54.465310+00:00
+superalgos/superalgos,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:36:16.011922+00:00
 supermap/iclient-javascript,javascript,1,610,1051,538,513,,2026-10-02T14:09:06.583949+00:00
 supermedium/moonrider,javascript,1,0,0,0,0,,2026-10-02T14:07:09.868073+00:00
-supermedium/superframe,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:18:39.654502+00:00
+supermedium/superframe,javascript,1,72,6,4,2,,2026-10-04T14:36:20.327453+00:00
 supermonster003/ant-forest,javascript,1,0,0,0,0,,2026-10-02T14:12:42.531929+00:00
 superscriptjs/superscript,javascript,1,40,21,11,10,,2026-10-02T13:49:48.688305+00:00
 surfbryce/beautiful-lyrics,javascript,1,0,0,0,0,,2026-10-02T14:47:41.999905+00:00
@@ -4653,7 +4653,7 @@ tanstack/react-table,javascript,1,564,0,0,0,,2026-10-02T14:42:30.658032+00:00
 taok/poormanstsqlformatter,javascript,1,0,0,0,0,,2026-10-02T13:56:22.851209+00:00
 taozhi1010/nest-admin,javascript,1,1,0,0,0,,2026-10-02T14:53:53.397320+00:00
 tapaswenipathak/open-source-programs,javascript,1,0,0,0,0,,2026-10-02T14:43:45.728611+00:00
-tape-testing/tape,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:52:11.520750+00:00
+tape-testing/tape,javascript,1,140,0,0,0,,2026-10-04T14:44:00.956544+00:00
 tapjs/node-tap,javascript,1,910,0,0,0,,2026-10-02T14:21:50.082572+00:00
 tapjs/tapjs,javascript,1,910,0,0,0,,2026-10-02T14:48:55.414164+00:00
 taptapship/wiredep,javascript,1,77,6,4,2,,2026-10-02T13:45:57.461064+00:00
@@ -4680,7 +4680,7 @@ techgod143/TECH-GOD-BUG-BOT,javascript,1,0,0,0,0,,2026-10-02T14:54:24.873699+00:
 techjarves/Uncensored-Local-Studio,javascript,1,1,0,0,0,,2026-10-02T15:07:16.583827+00:00
 technomancer702/nodecast-tv,javascript,1,0,0,0,0,,2026-10-02T15:01:50.568100+00:00
 techpines/express.io,javascript,1,170,1,1,0,,2026-10-02T13:51:58.397074+00:00
-tedeh/jayson,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:00:20.324812+00:00
+tedeh/jayson,javascript,1,26,52,34,18,,2026-10-04T14:32:25.064752+00:00
 tediousjs/node-mssql,javascript,1,10,47,21,26,,2026-10-02T14:04:33.062391+00:00
 tektoncd/dashboard,javascript,1,78,16,12,4,,2026-10-02T14:20:09.020237+00:00
 telerik/kendo-ui-core,javascript,1,409,1018,489,529,,2026-10-02T14:21:46.296622+00:00
@@ -4693,7 +4693,7 @@ tencent/nohost,javascript,1,32,0,0,0,,2026-10-02T14:08:27.499007+00:00
 tencent/tdesign-miniprogram-starter-retail,javascript,1,0,0,0,0,,2026-10-02T14:44:00.333393+00:00
 tencent/wepy,javascript,1,112,6,3,3,,2026-10-02T14:08:03.101309+00:00
 tengge1/shadoweditor,javascript,1,4,0,0,0,,2026-10-02T14:05:25.073849+00:00
-tensorflow/tfjs-examples,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:19:28.788378+00:00
+tensorflow/tfjs-examples,javascript,1,24,4,2,2,,2026-10-04T14:36:44.869478+00:00
 tensorspace-team/tensorspace,javascript,1,10,7,5,2,,2026-10-02T13:52:07.654384+00:00
 tentone/nunustudio,javascript,1,0,0,0,0,,2026-10-02T14:05:58.684179+00:00
 ternjs/tern,javascript,1,142,0,0,0,,2026-10-02T14:04:28.799763+00:00
@@ -4705,7 +4705,7 @@ terser/terser,javascript,1,263,3,2,1,,2026-10-02T14:08:10.817356+00:00
 teslamotors/informed,javascript,1,13,2,1,1,,2026-10-02T14:41:54.877944+00:00
 testdouble/testdouble.js,javascript,1,98,5,3,2,,2026-10-02T13:58:35.538669+00:00
 testem/testem,javascript,1,126,189,137,52,,2026-10-02T14:08:15.210532+00:00
-testing-library/dom-testing-library,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:13:30.474474+00:00
+testing-library/dom-testing-library,javascript,1,32,31,15,16,,2026-10-04T14:35:07.624075+00:00
 testing-library/jest-dom,javascript,1,45,20,18,2,,2026-10-02T14:12:40.294217+00:00
 testing-library/testing-playground,javascript,1,8,1,1,0,,2026-10-02T14:07:59.293004+00:00
 tevinli/amwiki,javascript,1,0,0,0,0,,2026-10-02T14:02:12.785109+00:00
@@ -4766,7 +4766,7 @@ tidalcycles/strudel,javascript,1,17,0,0,0,,2026-10-02T14:43:10.763742+00:00
 tiddlywiki/tiddlywikiclassic,javascript,1,45,0,0,0,,2026-10-02T14:47:17.033557+00:00
 tidev/alloy,javascript,1,1491,3,2,1,,2026-10-02T14:43:05.316327+00:00
 tidys/cocoscreatorplugins,javascript,1,15,0,0,0,,2026-10-02T14:04:54.812319+00:00
-tidyverse/datascience-box,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:49:39.527490+00:00
+tidyverse/datascience-box,javascript,1,0,0,0,0,,2026-10-04T14:42:50.395432+00:00
 tiff/wysihtml5,javascript,1,28,0,0,0,,2026-10-02T13:45:30.165648+00:00
 tildeio/htmlbars,javascript,1,32,0,0,0,,2026-10-02T13:49:55.978197+00:00
 tilemill-project/tilemill,javascript,1,13,13,7,6,,2026-10-02T13:50:47.880629+00:00
@@ -4933,7 +4933,7 @@ unpoly/unpoly,javascript,1,212,259,225,34,,2026-10-02T14:39:41.276781+00:00
 unsignedapps/swift-create-xcframework,javascript,1,4,0,0,0,,2026-10-02T13:43:09.815411+00:00
 untu/comedy,javascript,1,15,2,1,1,,2026-10-02T14:09:10.591763+00:00
 up209d/resourcessaverext,javascript,1,0,0,0,0,,2026-10-02T13:57:06.641957+00:00
-urigo/sofa,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:44:56.546235+00:00
+urigo/sofa,javascript,1,9,0,0,0,,2026-10-04T14:30:11.877923+00:00
 usebruno/bruno,javascript,1,1475,314,194,120,,2026-10-02T14:45:52.702757+00:00
 user234683/youtube-local,javascript,1,2,0,0,0,,2026-10-02T13:43:43.790144+00:00
 usmannasir/cyberpanel,javascript,1,76,0,0,0,,2026-10-02T14:24:09.364299+00:00
@@ -4944,7 +4944,7 @@ uxebu/bonsai,javascript,1,77,31,27,4,,2026-10-02T13:46:44.910700+00:00
 uxsolutions/bootstrap-datepicker,javascript,1,23,0,0,0,,2026-10-02T14:04:23.477702+00:00
 vaadin/web-components,javascript,1,1002,3296,2773,523,,2026-10-02T14:35:54.499346+00:00
 vabene1111/recipes,javascript,1,71,0,0,0,,2026-10-02T14:32:17.639362+00:00
-vagran/dxf-viewer,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:39:44.034227+00:00
+vagran/dxf-viewer,javascript,1,0,0,0,0,,2026-10-04T14:39:26.615418+00:00
 vakata/jstree,javascript,1,2,0,0,0,,2026-10-02T14:10:53.332364+00:00
 validatorjs/validator.js,javascript,1,15,0,0,0,,2026-10-02T14:18:07.225656+00:00
 vanjs-org/van,javascript,1,8,0,0,0,,2026-10-02T14:47:57.807745+00:00
@@ -4974,8 +4974,8 @@ vercel/pkg,javascript,1,808,0,0,0,,2026-10-02T14:02:04.274238+00:00
 verekia/initializr,javascript,1,0,0,0,0,,2026-10-02T13:46:19.419336+00:00
 vernesong/openclash,javascript,1,0,0,0,0,,2026-10-02T14:38:14.080823+00:00
 versatica/jssip,javascript,1,11,0,0,0,,2026-10-02T14:05:21.756865+00:00
-vertex-app/vertex,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:46:13.135178+00:00
-vexorian/dizquetv,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:04:56.130399+00:00
+vertex-app/vertex,javascript,1,0,0,0,0,,2026-10-04T14:42:23.719255+00:00
+vexorian/dizquetv,javascript,1,0,0,0,0,,2026-10-04T14:32:39.959832+00:00
 vfat-io/vfat-tools,javascript,1,0,0,0,0,,2026-10-02T14:50:02.071722+00:00
 vfat-tools/vfat-tools,javascript,1,0,0,0,0,,2026-10-02T14:30:17.023890+00:00
 vfleaking/uoj,javascript,1,60,0,0,0,,2026-10-02T13:47:43.151906+00:00
@@ -5013,7 +5013,7 @@ virgilclyne/cloudflare,javascript,1,0,0,0,0,,2026-10-02T14:45:32.948359+00:00
 virgilclyne/getsomefries,javascript,1,1,0,0,0,,2026-10-02T14:42:31.872984+00:00
 viromedia/viro,javascript,1,275,0,0,0,,2026-10-02T14:01:53.199214+00:00
 virtualvivek/react-windows-ui,javascript,1,0,0,0,0,,2026-10-02T14:35:09.820111+00:00
-vishal-raj-1/awesome-javascript-projects,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:35:39.833657+00:00
+vishal-raj-1/awesome-javascript-projects,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:37:40.073238+00:00
 visionmedia/superagent,javascript,1,59,56,46,10,,2026-10-02T14:18:07.807917+00:00
 visjs/vis-network,javascript,1,28,9,4,5,,2026-10-02T14:22:43.801289+00:00
 visjs/vis-timeline,javascript,1,12,14,7,7,,2026-10-02T14:24:02.229974+00:00
@@ -5208,7 +5208,7 @@ wooorm/starry-night,javascript,1,1,0,0,0,,2026-10-02T14:44:25.411003+00:00
 wooorm/xdm,javascript,1,15,0,0,0,,2026-10-02T14:24:48.167456+00:00
 wordpress-mobile/wordpress-editor-ios,javascript,1,0,0,0,0,,2026-10-02T13:46:43.180918+00:00
 wordpress/gutenberg,javascript,1,1689,531,324,207,,2026-10-02T14:30:58.321174+00:00
-wordpress/wordpress-playground,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:47:00.810250+00:00
+wordpress/wordpress-playground,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:42:26.384854+00:00
 workbenchdev/Workbench,javascript,1,4,0,0,0,,2026-10-02T14:50:02.558658+00:00
 working-title-msfs-mods/fspackages,javascript,1,0,0,0,0,,2026-10-02T14:28:10.622165+00:00
 workout-lol/workout-lol,javascript,1,0,0,0,0,,2026-10-02T14:48:13.939073+00:00
@@ -5245,13 +5245,13 @@ xdevplatform/Twitter-API-v2-sample-code,javascript,1,0,0,0,0,,2026-10-02T14:54:1
 xemle/home-gallery,javascript,1,56,0,0,0,,2026-10-02T14:38:03.891319+00:00
 xenova/transformers.js,javascript,1,192,310,182,128,,2026-10-02T14:48:11.922570+00:00
 xeokit/xeokit-bim-viewer,javascript,1,1,0,0,0,,2026-10-02T14:18:04.013285+00:00
-xeokit/xeokit-sdk,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:11:19.082017+00:00
+xeokit/xeokit-sdk,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:34:09.181680+00:00
 xeolabs/scenejs,javascript,1,0,0,0,0,,2026-10-02T13:47:37.905088+00:00
 xeolabs/xeogl,javascript,1,0,0,0,0,,2026-10-02T13:56:35.848588+00:00
 xfffff/gekko-strategies,javascript,1,2,0,0,0,,2026-10-02T13:52:11.236426+00:00
 xfgryujk/blivechat,javascript,1,0,0,0,0,,2026-10-02T14:16:53.746768+00:00
 xgrommx/rx-book,javascript,1,29,1,0,1,,2026-10-02T13:55:25.274376+00:00
-xianfei/sysmocap,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:44:29.311187+00:00
+xianfei/sysmocap,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:42:05.928287+00:00
 xiangyuecn/areacity-jsspider-statsgov,javascript,1,1,0,0,0,,2026-10-02T13:59:52.646000+00:00
 xiangyuecn/recorder,javascript,1,1,0,0,0,,2026-10-02T14:18:27.400471+00:00
 xianyunleo/EServer,javascript,1,0,0,0,0,,2026-10-02T14:50:11.487488+00:00
@@ -5266,7 +5266,7 @@ xinnan-tech/xiaozhi-esp32-server,javascript,1,50,1,1,0,,2026-10-02T14:56:57.1309
 xiongjian83/TvBox,javascript,1,0,0,0,0,,2026-10-02T14:50:06.033150+00:00
 xiongwilee/gracejs,javascript,1,8,6,0,6,,2026-10-02T13:55:46.548476+00:00
 xiu2/userscript,javascript,1,0,0,0,0,,2026-10-02T14:33:15.777242+00:00
-xixu-me/Xget,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:58:19.989404+00:00
+xixu-me/Xget,javascript,1,42,18,7,11,,2026-10-04T14:45:10.433217+00:00
 xiyuesaves/LiteLoaderQQNT-lite_tools,javascript,1,0,0,0,0,,2026-10-02T14:49:17.903290+00:00
 xmppjs/xmpp.js,javascript,1,85,13,7,6,,2026-10-02T14:04:31.370181+00:00
 xnx3/translate,javascript,1,0,0,0,0,,2026-10-02T14:46:17.062436+00:00
@@ -5283,7 +5283,7 @@ xuwujing/springboot-study,javascript,1,21,0,0,0,,2026-10-02T14:35:50.622022+00:0
 xuxuxu-ni/vue-xuadmin,javascript,1,28,0,0,0,,2026-10-02T14:40:09.599368+00:00
 xwiki-labs/cryptpad,javascript,1,18,0,0,0,,2026-10-02T14:23:21.190655+00:00
 xxxily/h5player,javascript,1,74,0,0,0,,2026-10-02T14:07:28.326645+00:00
-xxxily/hello-ai,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:47:07.923099+00:00
+xxxily/hello-ai,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:42:29.780208+00:00
 xyproto/algernon,javascript,1,0,0,0,0,,2026-10-02T14:36:31.183379+00:00
 xzxxn777/Surge,javascript,1,0,0,0,0,,2026-10-02T14:53:51.509429+00:00
 yaacov/node-modbus-serial,javascript,1,20,42,18,24,,2026-10-02T14:03:12.384244+00:00
@@ -5300,7 +5300,7 @@ yannickcr/eslint-plugin-react,javascript,1,140,3,1,2,,2026-10-02T14:25:52.285340
 yanzhezhang/cesium.hpuzyz.demo,javascript,1,0,0,0,0,,2026-10-02T14:07:02.839590+00:00
 yaozeyuan/stablog,javascript,1,0,0,0,0,,2026-10-02T14:36:20.537187+00:00
 yargs/yargs,javascript,1,46,6,3,3,,2026-10-02T14:20:19.832460+00:00
-yarnpkg/yarn,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:16:00.102108+00:00
+yarnpkg/yarn,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:35:49.347823+00:00
 yaronn/gifw00t,javascript,1,28,2,1,1,,2026-10-02T13:45:11.320972+00:00
 yawiii/ComfyUI-Prompt-Assistant,javascript,1,0,0,0,0,,2026-10-02T15:01:46.375234+00:00
 yawiii/comfyui_prompt_assistant,javascript,1,0,0,0,0,,2026-10-02T14:58:20.625215+00:00
@@ -5316,21 +5316,21 @@ yhat/rodeo,javascript,1,48,42,24,18,,2026-10-02T13:47:23.817477+00:00
 yinhangcode/homebridge-mi-aqara,javascript,1,0,0,0,0,,2026-10-02T13:50:26.824037+00:00
 yinjihuan/monkey-api-encrypt,javascript,1,0,0,0,0,,2026-10-02T14:03:43.458557+00:00
 yisainan/vue2,javascript,1,487,53,44,9,,2026-10-02T14:43:38.421664+00:00
-yiwenl/sketches,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:59:57.596625+00:00
+yiwenl/sketches,javascript,0,0,0,0,0,clone_failed,2026-10-04T14:32:15.374318+00:00
 yjs/yjs,javascript,1,18,0,0,0,,2026-10-02T14:16:28.784571+00:00
 ykdojo/claude-code-tips,javascript,1,0,0,0,0,,2026-10-02T15:01:22.164223+00:00
 ykob/sketch-threejs,javascript,1,0,0,0,0,,2026-10-02T14:04:34.602630+00:00
 ymfe/yapi,javascript,1,8,0,0,0,,2026-10-02T14:03:25.620541+00:00
 yoast/wordpress-seo,javascript,1,2605,293,234,59,,2026-10-02T14:37:03.265551+00:00
 yodaos-project/shadownode,javascript,1,3142,0,0,0,,2026-10-02T14:03:21.640422+00:00
-yodasmydad/mvcforum,javascript,0,0,0,0,0,clone_failed,2026-10-02T13:49:30.455959+00:00
+yodasmydad/mvcforum,javascript,1,16,0,0,0,,2026-10-04T14:30:18.952403+00:00
 yoimiya-kokomi/miao-plugin,javascript,1,0,0,0,0,,2026-10-02T14:44:17.392976+00:00
 yoimiya-kokomi/miao-yunzai,javascript,1,1,0,0,0,,2026-10-02T14:47:13.764382+00:00
 yomguithereal/baobab,javascript,1,8,0,0,0,,2026-10-02T14:04:50.617702+00:00
-yomguithereal/mnemonist,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T13:59:12.856754+00:00
+yomguithereal/mnemonist,javascript,1,45,0,0,0,,2026-10-04T14:31:53.157875+00:00
 yomguithereal/talisman,javascript,1,105,0,0,0,,2026-10-02T14:03:45.765776+00:00
-yonggekkk/Cloudflare-vless-trojan,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:58:22.690894+00:00
-yonggekkk/Cloudflare_vless_trojan,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:53:59.930528+00:00
+yonggekkk/Cloudflare-vless-trojan,javascript,1,0,0,0,0,,2026-10-04T14:45:12.493224+00:00
+yonggekkk/Cloudflare_vless_trojan,javascript,1,0,0,0,0,,2026-10-04T14:44:21.015626+00:00
 yostudios/spritemapper,javascript,1,4,0,0,0,,2026-10-02T13:44:58.610980+00:00
 youtransfer/youtransfer,javascript,1,29,49,37,12,,2026-10-02T13:58:29.993736+00:00
 youtube/spfjs,javascript,1,17,23,13,10,,2026-10-02T14:02:09.799180+00:00
@@ -5356,7 +5356,7 @@ yvescoding/vuescroll,javascript,1,13,10,1,9,,2026-10-02T14:01:38.826461+00:00
 ywzhaiqi/userscript,javascript,1,9,0,0,0,,2026-10-02T13:56:16.862476+00:00
 z-------------/cpod,javascript,1,1,0,0,0,,2026-10-02T14:05:30.909217+00:00
 z-9527/react-admin-master,javascript,1,2,0,0,0,,2026-10-02T13:58:12.762747+00:00
-z-siqi/clash-for-windows_chinese,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:47:18.793318+00:00
+z-siqi/clash-for-windows_chinese,javascript,1,0,0,0,0,,2026-10-04T14:42:30.777030+00:00
 z2586300277/three-cesium-examples,javascript,1,2,0,0,0,,2026-10-02T14:54:32.406129+00:00
 z2586300277/three-editor,javascript,1,0,0,0,0,,2026-10-02T14:54:02.863717+00:00
 zaach/jison,javascript,1,25,0,0,0,,2026-10-02T13:58:26.638014+00:00
@@ -5390,7 +5390,7 @@ zhangge6/onnx-modifier,javascript,1,0,0,0,0,,2026-10-02T14:44:32.820638+00:00
 zhangxinxu/mobilebone,javascript,1,21,0,0,0,,2026-10-02T14:06:20.858482+00:00
 zhaoj9014/multi-human-parsing,javascript,1,0,0,0,0,,2026-10-02T13:49:46.817706+00:00
 zhaoml529/springmvc-activiti5.16-shiro,javascript,1,3,0,0,0,,2026-10-02T13:46:48.775294+00:00
-zhaoolee/chinesebqb,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-02T14:10:51.536729+00:00
+zhaoolee/chinesebqb,javascript,0,0,0,0,0,no_commit_at_or_before_cutoff,2026-10-04T14:33:55.271085+00:00
 zhaoolee/chromeappheroes,javascript,1,0,0,0,0,,2026-10-02T14:16:04.459027+00:00
 zhblue/hustoj,javascript,1,0,0,0,0,,2026-10-02T14:10:30.857663+00:00
 zhennann/cabloy,javascript,1,147,0,0,0,,2026-10-02T14:10:48.707797+00:00
@@ -5411,8 +5411,8 @@ zmeyer44/Locker,javascript,1,0,0,0,0,,2026-10-02T15:04:50.305292+00:00
 zmister2016/mrdoc,javascript,1,0,0,0,0,,2026-10-02T14:21:00.015857+00:00
 zodern/meteor-up,javascript,1,50,18,14,4,,2026-10-02T14:08:20.115085+00:00
 zohararad/audio5js,javascript,1,5,0,0,0,,2026-10-02T13:47:20.638472+00:00
-zombiefox/nighttab,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:10:41.767386+00:00
-zombieyang/sd-ppp,javascript,0,0,0,0,0,clone_failed,2026-10-02T14:54:28.097357+00:00
+zombiefox/nighttab,javascript,1,0,0,0,0,,2026-10-04T14:33:50.034547+00:00
+zombieyang/sd-ppp,javascript,1,7,0,0,0,,2026-10-04T14:44:24.454641+00:00
 zone-eu/wildduck,javascript,1,93,60,28,32,,2026-10-02T14:57:09.629078+00:00
 zone-eu/zone-mta,javascript,1,22,0,0,0,,2026-10-02T14:07:33.295753+00:00
 zoneminder/zmninja,javascript,1,15,0,0,0,,2026-10-02T14:38:56.150694+00:00
