@@ -43,7 +43,10 @@ the numbers, then dropped once that check had served its purpose -- see git hist
   common setup/teardown actually is, an almost-tautological reading once you've
   already conditioned on "has a fixture." See `rq1.py`'s `render_table1()` docstring
   for the full account; the dropped raw fixture-having count is unchanged and still
-  available in the report's own "Raw numbers" table).
+  available in the report's own "Raw numbers" table). The table's original,
+  fixture-conditioned definition (Setup/Teardown (%) of the fixture-having subset,
+  near-universal at 95-99%) is kept alongside it, not replaced -- see `rq1.md`'s own
+  "Legacy: Fixture-Conditioned Table 1 (Not Used in the Paper)" section.
 - **Table 2** (`tab:rq1-prevalence-median`): per language and "All" (one pooled
   median, not an average of four per-language medians), the median fixture/setup/
   teardown count per repo among repos with >=1 fixture.

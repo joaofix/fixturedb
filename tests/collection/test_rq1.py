@@ -18,6 +18,7 @@ from collection.research_questions.rq1 import (
     render_median_prose,
     render_raw_numbers,
     render_table1,
+    render_table1_legacy_fixture_conditioned,
     render_table2,
     write_report,
 )
@@ -238,6 +239,26 @@ class TestRenderTable1:
         assert len(DISPLAY_LANGUAGES) == 4
 
 
+class TestRenderTable1LegacyFixtureConditioned:
+    def test_renders_the_original_fixture_conditioned_definition(self):
+        """Kept alongside the paper's Table 1, not instead of it (see
+        generate_report()'s "Legacy" section) -- this is the table's
+        original shape: `#` column present, Setup (%)/Teardown (%)
+        divide by n_with_fixtures (5), not n_with_tests (10): 4/5 = 80%,
+        1/5 = 20%."""
+        entry = LanguagePrevalence(n_with_tests=10, n_with_fixtures=5, n_with_setup=4, n_with_teardown=1)
+        table = render_table1_legacy_fixture_conditioned({"all": entry})
+        lines = table.splitlines()
+        assert lines[0] == "| Language | Repositories with Tests | # | % | Setup (%) | Teardown (%) |"
+        all_line = next(l for l in lines if l.startswith("| All"))
+        assert "| All | 10 | 5 | 50.0% | 80.0% | 20.0% |" == all_line
+
+    def test_zero_denominator_renders_dashes_not_a_crash(self):
+        entry = LanguagePrevalence(n_with_tests=0, n_with_fixtures=0)
+        table = render_table1_legacy_fixture_conditioned({"all": entry})
+        assert "| All | 0 | 0 | -- | -- | -- |" in table
+
+
 class TestRenderTable2:
     def test_renders_medians(self):
         entry = LanguagePrevalence(
@@ -311,6 +332,21 @@ class TestGenerateReport:
         assert "## Quality floor applied" not in report
         assert "## No additional quality floor" not in report
         assert "| All | 1 |" in report
+
+    def test_legacy_fixture_conditioned_table1_is_kept_alongside_the_new_one(self, tmp_path):
+        """The original Table 1 (fixture-conditioned Setup/Teardown %)
+        is kept as a clearly-labeled, not-used-in-the-paper section
+        alongside the new one -- a 2026-10-04 correction after an
+        earlier pass wrongly deleted it outright instead of keeping both
+        side by side."""
+        _make_db(
+            tmp_path,
+            [{"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1, "num_setup": 1}],
+        )
+        report = generate_report(db_root=tmp_path)
+        assert "## Legacy: Fixture-Conditioned Table 1 (Not Used in the Paper)" in report
+        legacy_section = report.split("## Legacy: Fixture-Conditioned Table 1")[1]
+        assert "| Language | Repositories with Tests | # | % | Setup (%) | Teardown (%) |" in legacy_section
 
     def test_renders_display_languages_in_paper_order(self, tmp_path):
         _make_db(tmp_path, [{"language": "python", "clone_ok": True, "num_test_files": 1}])

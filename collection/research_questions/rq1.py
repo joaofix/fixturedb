@@ -35,7 +35,10 @@ teardown-classified fixture. `num_setup`/`num_teardown` are read directly
 off `repo_prevalence` -- the dual-counting of a `setup_and_teardown`
 fixture toward both already happened once, in
 `rq1_prevalence_scan.scan_working_tree()` (matching `research_questions/
-rq3.py`'s own convention), not redone here.
+rq3.py`'s own convention), not redone here. The table's original,
+fixture-conditioned definition is kept alongside it, not replaced --
+see `render_table1_legacy_fixture_conditioned()` and the report's own
+"Legacy" section.
 
 **Table 2** (`tab:rq1-prevalence-median`): for each language (and "All"),
 the median fixtures/setup-fixtures/teardown-fixtures per repo, among
@@ -200,6 +203,32 @@ def render_table1(by_language: dict[str, LanguagePrevalence]) -> str:
     return "\n".join(lines)
 
 
+def render_table1_legacy_fixture_conditioned(by_language: dict[str, LanguagePrevalence]) -> str:
+    """Legacy variant of Table 1, kept for transparency/comparison only --
+    not the paper's table (see `render_table1()`'s own docstring and
+    generate_report()'s "Legacy" section intro for why). Setup (%)/
+    Teardown (%) here divide by `n_with_fixtures` (the fixture-having
+    subset, shown in the `#`/`%` columns), the table's original
+    definition before the 2026-10-04 methodology change -- a much easier
+    bar to clear than "has >=1 test file," which is why these numbers
+    sit up near 95-99% regardless of how common setup/teardown actually
+    is. Kept exactly as it originally rendered, `#` column included, so
+    a reader can directly compare both denominators side by side."""
+    lines = [
+        "| Language | Repositories with Tests | # | % | Setup (%) | Teardown (%) |",
+        "|---|---|---|---|---|---|",
+    ]
+    for label, entry in _ordered_rows(by_language):
+        fixture_pct = pct(_pct_or_none(entry.n_with_fixtures, entry.n_with_tests))
+        setup_pct = pct(_pct_or_none(entry.n_with_setup, entry.n_with_fixtures))
+        teardown_pct = pct(_pct_or_none(entry.n_with_teardown, entry.n_with_fixtures))
+        lines.append(
+            f"| {label} | {entry.n_with_tests:,} | {entry.n_with_fixtures:,} | "
+            f"{fixture_pct} | {setup_pct} | {teardown_pct} |"
+        )
+    return "\n".join(lines)
+
+
 def render_table2(by_language: dict[str, LanguagePrevalence]) -> str:
     """tab:rq1-prevalence-median: Language | Fixture | Setup | Teardown --
     median per repo, among repos with >=1 fixture. "All" is pooled across
@@ -303,6 +332,18 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "### Raw numbers",
         "",
         render_raw_numbers(by_language),
+        "",
+        "## Legacy: Fixture-Conditioned Table 1 (Not Used in the Paper)",
+        "",
+        "Kept for transparency/comparison only -- this is Table 1's original "
+        "Setup (%)/Teardown (%) definition (share of the fixture-having "
+        "subset, `#`/`%` below, rather than of all repos with >=1 test "
+        "file). Near-universal regardless of language (95-99%) since "
+        "clearing \"has >=1 fixture\" is a much easier bar than clearing "
+        "\"has >=1 test file\" -- not the paper's table, which is the "
+        "Table 1 above.",
+        "",
+        render_table1_legacy_fixture_conditioned(by_language),
         "",
     ]
 

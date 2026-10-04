@@ -2,7 +2,7 @@
 
 > How common are tests, fixtures, setup, and teardown across the raw repo universe, independent of Dataset A/B/C's own filtering?
 
-Generated: 2026-10-04 17:44:55 UTC
+Generated: 2026-10-04 17:56:03 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 
@@ -39,3 +39,15 @@ At the median, each repository contains 26.0 test fixtures, including 19.0 setup
 | Java | 3,259 | 2,413 | 2,362 | 1,886 | 421,784 | 244,220 | 112,565 |
 | JavaScript | 4,002 | 1,984 | 1,931 | 1,589 | 183,237 | 127,732 | 55,505 |
 | TypeScript | 5,840 | 4,457 | 4,310 | 3,925 | 740,280 | 463,479 | 276,779 |
+
+## Legacy: Fixture-Conditioned Table 1 (Not Used in the Paper)
+
+Kept for transparency/comparison only -- this is Table 1's original Setup (%)/Teardown (%) definition (share of the fixture-having subset, `#`/`%` below, rather than of all repos with >=1 test file). Near-universal regardless of language (95-99%) since clearing "has >=1 fixture" is a much easier bar than clearing "has >=1 test file" -- not the paper's table, which is the Table 1 above.
+
+| Language | Repositories with Tests | # | % | Setup (%) | Teardown (%) |
+|---|---|---|---|---|---|
+| All | 20,415 | 14,665 | 71.8% | 98.1% | 81.2% |
+| Python | 7,314 | 5,811 | 79.5% | 99.6% | 77.5% |
+| Java | 3,259 | 2,413 | 74.0% | 97.9% | 78.2% |
+| JavaScript | 4,002 | 1,984 | 49.6% | 97.3% | 80.1% |
+| TypeScript | 5,840 | 4,457 | 76.3% | 96.7% | 88.1% |
