@@ -1,8 +1,8 @@
-# RQ2 -- Setup and Teardown Characterization
+# RQ2 -- General Metrics Overview
 
-> How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
+> How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-09-16 02:21:39 UTC
+Generated: 2026-10-04 15:59:11 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
@@ -10,14 +10,50 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 ### Dataset A (agent-authored) -- 70,623 fixtures
 
-**fixture_type kind distribution**
+**Continuous metrics -- Paper** (repo-level: one mean per repo, not one value per fixture)
 
-| Kind | Count | % |
+| Metric | n | median | mean | min | max | stdev |
+|---|---|---|---|---|---|---|
+| loc | 1,687 | 6.32 | 7.62 | 1 | 82 | 5.47 |
+| cyclomatic_complexity | 1,687 | 1.05 | 1.22 | 1 | 6 | 0.42 |
+| comment_density | 1,687 | 0.01 | 0.02 | 0 | 0 | 0.04 |
+
+**Continuous metrics -- Other (not in the paper)** (repo-level: one mean per repo, not one value per fixture)
+
+| Metric | n | median | mean | min | max | stdev |
+|---|---|---|---|---|---|---|
+| num_parameters | 1,687 | 0.00 | 0.18 | 0 | 4 | 0.38 |
+
+**fixture_type distribution**
+
+| Value | Count | % |
 |---|---|---|
-| setup | 45,767 | 64.8% |
-| teardown | 20,587 | 29.2% |
-| setup_and_teardown | 4,072 | 5.8% |
-| other | 197 | 0.3% |
+| before_each | 24,573 | 34.8% |
+| pytest_decorator | 16,706 | 23.7% |
+| after_each | 15,194 | 21.5% |
+| before_all | 3,599 | 5.1% |
+| after_all | 2,969 | 4.2% |
+| unittest_setup | 2,900 | 4.1% |
+| pytest_class_method | 1,078 | 1.5% |
+| junit5_before_each | 788 | 1.1% |
+| mocha_before | 736 | 1.0% |
+| mocha_after | 607 | 0.9% |
+| junit5_after_each | 383 | 0.5% |
+| junit5_before_all | 286 | 0.4% |
+| junit4_before | 204 | 0.3% |
+| junit5_after_all | 154 | 0.2% |
+| junit_rule | 135 | 0.2% |
+| junit4_after | 106 | 0.2% |
+| testng_before_method | 56 | 0.1% |
+| junit4_before_class | 52 | 0.1% |
+| junit_class_rule | 22 | 0.0% |
+| testng_after_method | 21 | 0.0% |
+| testng_before_class | 16 | 0.0% |
+| junit4_after_class | 14 | 0.0% |
+| testng_after_class | 12 | 0.0% |
+| testng_data_provider | 9 | 0.0% |
+| testng_before_test | 2 | 0.0% |
+| junit3_setup | 1 | 0.0% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
@@ -30,16 +66,92 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 | python | 21,078 | 1,253 | 5.94% | typescript=950, javascript=160, java=143 |
 | typescript | 43,305 | 2,627 | 6.07% | javascript=1,932, python=603, java=92 |
 
+**agent_type distribution** (descriptive only, not compared against other datasets -- see load_dataset_metrics()'s docstring for why)
+
+| Value | Count | % |
+|---|---|---|
+| claude | 60,338 | 85.4% |
+| copilot | 4,709 | 6.7% |
+| cursor | 3,046 | 4.3% |
+| devin | 648 | 0.9% |
+| codex | 448 | 0.6% |
+| paperclip | 356 | 0.5% |
+| gemini | 238 | 0.3% |
+| qwen_coder | 225 | 0.3% |
+| letta_code | 169 | 0.2% |
+| gru | 145 | 0.2% |
+| jules | 97 | 0.1% |
+| amp | 91 | 0.1% |
+| langchain_open_swe | 29 | 0.0% |
+| sourcery | 19 | 0.0% |
+| coderabbit | 14 | 0.0% |
+| crush | 12 | 0.0% |
+| aider | 9 | 0.0% |
+| openhands | 8 | 0.0% |
+| mistral_vibe | 4 | 0.0% |
+| codegen | 3 | 0.0% |
+| factory_droid | 3 | 0.0% |
+| junie | 3 | 0.0% |
+| sentry_seer | 3 | 0.0% |
+| windsurf | 3 | 0.0% |
+| generic | 1 | 0.0% |
+| ona | 1 | 0.0% |
+| opencode | 1 | 0.0% |
+
 ### Dataset C (human-authored, pre-LLM) -- 70,623 fixtures
 
-**fixture_type kind distribution**
+**Continuous metrics -- Paper** (repo-level: one mean per repo, not one value per fixture)
 
-| Kind | Count | % |
+| Metric | n | median | mean | min | max | stdev |
+|---|---|---|---|---|---|---|
+| loc | 2,495 | 5.87 | 7.95 | 1 | 180 | 9.19 |
+| cyclomatic_complexity | 2,495 | 1.00 | 1.19 | 1 | 14 | 0.54 |
+| comment_density | 2,495 | 0.00 | 0.02 | 0 | 1 | 0.05 |
+
+**Continuous metrics -- Other (not in the paper)** (repo-level: one mean per repo, not one value per fixture)
+
+| Metric | n | median | mean | min | max | stdev |
+|---|---|---|---|---|---|---|
+| num_parameters | 2,506 | 0.00 | 0.15 | 0 | 3 | 0.36 |
+
+**fixture_type distribution**
+
+| Value | Count | % |
 |---|---|---|
-| setup | 51,985 | 73.6% |
-| teardown | 16,750 | 23.7% |
-| setup_and_teardown | 1,284 | 1.8% |
-| other | 604 | 0.9% |
+| before_each | 26,343 | 37.3% |
+| unittest_setup | 12,450 | 17.6% |
+| after_each | 7,732 | 10.9% |
+| pytest_decorator | 7,732 | 10.9% |
+| mocha_before | 5,198 | 7.4% |
+| before_all | 3,633 | 5.1% |
+| mocha_after | 2,670 | 3.8% |
+| after_all | 2,102 | 3.0% |
+| pytest_class_method | 502 | 0.7% |
+| junit4_before | 457 | 0.6% |
+| testng_data_provider | 275 | 0.4% |
+| junit_rule | 249 | 0.4% |
+| junit4_after | 239 | 0.3% |
+| junit4_before_class | 219 | 0.3% |
+| junit4_after_class | 126 | 0.2% |
+| junit5_before_each | 120 | 0.2% |
+| testng_before_class | 96 | 0.1% |
+| testng_after_class | 61 | 0.1% |
+| testng_before_method | 61 | 0.1% |
+| junit_class_rule | 59 | 0.1% |
+| junit5_after_each | 57 | 0.1% |
+| junit3_setup | 37 | 0.1% |
+| junit5_before_all | 35 | 0.0% |
+| junit3_teardown | 30 | 0.0% |
+| junit5_after_all | 27 | 0.0% |
+| testng_after_method | 24 | 0.0% |
+| testng_before_test | 21 | 0.0% |
+| before_class_ambiguous | 16 | 0.0% |
+| after_class_ambiguous | 15 | 0.0% |
+| testng_after_test | 15 | 0.0% |
+| testng_before_suite | 15 | 0.0% |
+| testng_factory | 4 | 0.0% |
+| testng_after_suite | 2 | 0.0% |
+| testng_after_groups | 1 | 0.0% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
@@ -52,98 +164,84 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 | python | 20,359 | 1,013 | 4.98% | typescript=837, javascript=162, java=14 |
 | typescript | 40,497 | 1,301 | 3.21% | javascript=1,132, python=158, java=11 |
 
+**agent_type distribution** (descriptive only, not compared against other datasets -- see load_dataset_metrics()'s docstring for why)
+
+| Value | Count | % |
+|---|---|---|
+| human_pre2022 | 70,623 | 100.0% |
+
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
-### Table 1: Fixture Counts by Type (tab:rq2-counts)
+**Paper Metrics -- Continuous** (Mann-Whitney U on repo-level values, two-sided) -- one mean value per repo (per language, for the per-language rows), not per fixture, so fixtures clustering within a repo can't inflate the result. Effect size is Cliff's delta (thresholds: negligible <0.147, small <0.33, medium <0.474, else large; positive means the comparison dataset tends to have larger values than A, negative means A tends to have larger values). The Overall row is a single pooled test, not BH-corrected; each metric's per-language rows are BH-FDR corrected against each other only (one family per metric, 4 languages). These three (`loc`, `cyclomatic_complexity`, `comment_density`) are the only continuous metrics reported in the paper -- see this module's docstring. Each per-language row also reports `A median`/`C median`, `A Q3`/`C Q3` (75th percentile), and `A P90`/`C P90` (90th percentile) -- the median/Q3/P90 of the same per-repo mean values the Mann-Whitney test itself runs on, alongside (not a replacement for) the effect size and p-value. Q3/P90 exist to explain an effect that reaches significance despite identical medians -- a real difference concentrated in the upper tail, invisible to the median alone.
 
-Raw counts of setup-classified and teardown-classified fixtures, each also shown as a percentage of that language's *answerable* fixture count (setup + teardown + setup_and_teardown -- "other"-classified fixtures, e.g. a JUnit `@Rule` or a TestNG `@DataProvider` (see the Fixture Kind Classification Coverage by Language table below), are excluded from both the counts themselves and this percentage denominator, since they were never a setup/teardown candidate in the first place; a fixture classified as providing both -- e.g. a pytest fixture with setup code before its `yield` -- is counted in both columns, so they are not mutually exclusive and the two percentages can sum past 100%). Total is the dataset-wide sum across every language present, not just the four rows below. Purely descriptive -- no significance test.
+### loc
 
-| Language | Setup A | Setup C | Teardown A | Teardown C |
-|---|---|---|---|---|
-| Total | 49,839 (70.8%) | 53,269 (76.1%) | 24,659 (35.0%) | 18,034 (25.8%) |
-| java | 1,405 (67.1%) | 1,077 (64.3%) | 690 (32.9%) | 597 (35.7%) |
-| javascript | 2,842 (58.5%) | 3,353 (69.0%) | 2,016 (41.5%) | 1,505 (31.0%) |
-| python | 19,526 (94.5%) | 17,018 (82.3%) | 5,199 (25.2%) | 4,933 (23.9%) |
-| typescript | 26,066 (60.9%) | 31,821 (74.3%) | 16,754 (39.1%) | 10,999 (25.7%) |
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=1971070.0 | -0.063 | negligible | <.001 | -- |
+| java | 125 | 312 | 8.00 | 6.50 | 10.25 | 9.40 | 13.80 | 15.00 | U=16227.0 | -0.168 | small | 0.006 | 0.012 |
+| javascript | 143 | 563 | 5.13 | 4.80 | 8.00 | 7.96 | 12.93 | 12.96 | U=37493.5 | -0.069 | negligible | 0.204 | 0.204 |
+| python | 678 | 1059 | 8.00 | 6.39 | 11.20 | 9.79 | 16.00 | 16.04 | U=299669.0 | -0.165 | small | <.001 | <.001 |
+| typescript | 948 | 753 | 5.33 | 5.67 | 7.24 | 7.83 | 10.33 | 11.43 | U=374407.0 | 0.049 | negligible | 0.082 | 0.110 |
 
-### Table 2: Teardown Coverage by Repository (tab:rq2-coverage)
+### cyclomatic_complexity
 
-Per-repository binary coverage: 1 if a repo has >=1 teardown-classified fixture, else 0 (population: repos with >=1 setup/teardown/other-classified fixture). "Coverage A/C (%)" is the share of that population with the indicator at 1. "delta" is Cliff's delta from a Mann-Whitney U test on the indicator between datasets. Overall is a single pooled test (raw p, never BH-corrected); each language's p is BH-FDR-corrected against the other 3 languages' tests only.
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=1806030.0 | -0.142 | negligible | <.001 | -- |
+| java | 125 | 312 | 1.07 | 1.00 | 1.33 | 1.13 | 1.72 | 1.50 | U=14963.5 | -0.233 | small | <.001 | <.001 |
+| javascript | 143 | 563 | 1.00 | 1.00 | 1.33 | 1.00 | 1.67 | 1.21 | U=29511.0 | -0.267 | small | <.001 | <.001 |
+| python | 678 | 1059 | 1.08 | 1.08 | 1.34 | 1.38 | 1.75 | 1.89 | U=359194.5 | 0.001 | negligible | 0.984 | 0.984 |
+| typescript | 948 | 753 | 1.02 | 1.00 | 1.20 | 1.04 | 1.43 | 1.20 | U=280652.5 | -0.214 | small | <.001 | <.001 |
 
-| Language | n_A | n_C | Coverage A (%) | Coverage C (%) | delta | p (BH) |
-|---|---|---|---|---|---|---|
-| Overall | 1687 | 2506 | 78.0% | 62.5% | -0.155 (small) | <.001 |
-| java | 127 | 325 | 66.1% | 49.5% | -0.166 (small) | 0.001 |
-| javascript | 143 | 563 | 76.2% | 57.5% | -0.187 (small) | <.001 |
-| python | 678 | 1059 | 67.8% | 58.4% | -0.095 (negligible) | <.001 |
-| typescript | 948 | 753 | 85.2% | 72.8% | -0.125 (negligible) | <.001 |
+### comment_density
 
-## Supplementary Analyses
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=1826610.0 | -0.132 | negligible | <.001 | -- |
+| java | 125 | 312 | 0.00 | 0.00 | 0.04 | 0.00 | 0.08 | 0.05 | U=14481.0 | -0.257 | small | <.001 | <.001 |
+| javascript | 143 | 563 | 0.00 | 0.00 | 0.03 | 0.00 | 0.10 | 0.04 | U=30357.0 | -0.246 | small | <.001 | <.001 |
+| python | 678 | 1059 | 0.01 | 0.00 | 0.03 | 0.03 | 0.06 | 0.08 | U=351310.0 | -0.021 | negligible | 0.427 | 0.427 |
+| typescript | 948 | 753 | 0.01 | 0.00 | 0.02 | 0.01 | 0.05 | 0.04 | U=314766.5 | -0.118 | negligible | <.001 | <.001 |
 
-Analyses below are not part of either main paper table (tab:rq2-counts, tab:rq2-coverage) but are kept and computed since they may still be referenced in prose.
+**Other Extracted Features (Not in the Paper)** -- `num_parameters` is still collected but dropped from Mann-Whitney testing entirely (see this module's docstring for why); shown here only as a descriptive floor-percentage footnote, not a comparative test.
 
-### Setup Coverage by Repository
+**Floor-binding check (descriptive only -- not a comparative test)** -- `num_parameters` was dropped from Mann-Whitney testing (see this module's docstring) because it floors heavily in both datasets; this documents exactly how heavily, transparently, instead of silently omitting it.
 
-Per-repository binary coverage: 1 if a repo has >=1 setup-classified fixture, else 0 (population: repos with >=1 setup/teardown/other-classified fixture -- same population as Table 2's teardown coverage). "Setup Coverage A/C (%)" is the share of that population with the indicator at 1, from a Mann-Whitney U test on the indicator between datasets (no effect-size column -- see Table 2 for delta if needed, same underlying test shape). Overall is a single pooled test (raw p, never BH-corrected); each language's p is BH-FDR-corrected against the other 3 languages' tests only, its own family independent of Table 2's.
-
-| Language | n_A | n_C | Setup Coverage A (%) | Setup Coverage C (%) | p (BH) |
-|---|---|---|---|---|---|
-| Overall | 1687 | 2506 | 96.6% | 94.6% | 0.002 |
-| java | 127 | 325 | 94.5% | 84.0% | 0.012 |
-| javascript | 143 | 563 | 92.3% | 88.3% | 0.224 |
-| python | 678 | 1059 | 99.3% | 98.7% | 0.253 |
-| typescript | 948 | 753 | 94.7% | 96.8% | 0.072 |
-
-### Fixture Kind Classification Coverage by Language
-
-Per-language, per-dataset breakdown of `fixture_type_kind` (setup / teardown / setup_and_teardown / other) -- the same counts behind Table 1 above and the pooled dataset-wide `other` % in `Per-dataset summary`, just split out per language instead of pooled. Table 1 excludes `other` entirely from its own percentage denominator, so it never shows this slice; `other` fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider` -- neither is inherently setup or teardown) are not spread evenly across languages, so a language with a high `other` % has that much smaller a share of its fixtures represented in Table 1's counts at all. Worth re-checking whenever a new dataset is extracted -- a new language or framework can introduce its own unclassifiable fixture types.
-
-| Dataset | Language | Total fixtures | setup | teardown | setup_and_teardown | other (count) | other (%) |
-|---|---|---|---|---|---|---|---|
-| A | java | 2,261 | 1,405 | 690 | 0 | 166 | 7.3% |
-| A | javascript | 4,858 | 2,842 | 2,016 | 0 | 0 | 0.0% |
-| A | python | 20,684 | 15,454 | 1,127 | 4,072 | 31 | 0.1% |
-| A | typescript | 42,820 | 26,066 | 16,754 | 0 | 0 | 0.0% |
-| C | java | 2,261 | 1,077 | 597 | 0 | 587 | 26.0% |
-| C | javascript | 4,858 | 3,353 | 1,505 | 0 | 0 | 0.0% |
-| C | python | 20,684 | 15,734 | 3,649 | 1,284 | 17 | 0.1% |
-| C | typescript | 42,820 | 31,821 | 10,999 | 0 | 0 | 0.0% |
-
-### Unimodality Check: Python Teardown Proportion (Dip Test)
-
-Hartigan & Hartigan's dip test for unimodality [CITE: Hartigan & Hartigan 1985, The Dip Test of Unimodality], run on the per-repo Python `teardown_pct` distribution (each repo's teardown-classified fixtures divided by its total classified fixtures) -- separately per dataset, since this tests whether *one* distribution is unimodal, not whether two distributions differ. Not the same value as Table 2's binary coverage indicator. Null hypothesis: the distribution is unimodal; a low p-value is evidence of multimodality (e.g. a real "most repos provide none, a distinct minority provide all" split, rather than a smooth continuum from 0% to 100%).
-
-| Dataset | n (Python repos) | Dip statistic | p-value |
+| Metric | Floor value | Dataset A (agent-authored) at floor | Dataset C (human-authored, pre-LLM) at floor |
 |---|---|---|---|
-| Dataset A | 678 | 0.0324 | <.001 |
-| Dataset C | 1059 | 0.0274 | <.001 |
+| num_parameters | 0 | 88.4% | 92.9% |
 
-**Dataset A -- teardown_pct distribution across 678 Python repos**
+## Diagnostic: median-per-repo aggregation (NOT used in the paper)
 
-```
- 0.00- 0.10 | ######################################## (262)
- 0.10- 0.20 | ########## (67)
- 0.20- 0.30 | ############# (83)
- 0.30- 0.40 | ########### (70)
- 0.40- 0.50 | ####### (45)
- 0.50- 0.60 | ########## (65)
- 0.60- 0.70 | #### (26)
- 0.70- 0.80 | ## (10)
- 0.80- 0.90 | # (5)
- 0.90- 1.00 | ####### (45)
-```
+**This section is presented for transparency only -- these are not results, do not cite them.** The paper's own methodology (above) takes each repo's *mean* fixture value, then reports the median across repos. This section instead takes each repo's own *median* fixture value first. That interacts badly with `cyclomatic_complexity`/`comment_density`'s heavy floor-binding (CC=1, comment_density=0 for most fixtures -- see this module's docstring): most repos' own median collapses to that exact floor value, producing near-universal ties across repos and starving Mann-Whitney of power. The per-language pattern below can and does diverge substantially from the paper's actual table above -- that divergence is the point of keeping this section, as a record of how sensitive the comparison is to this choice, not a competing result.
 
-**Dataset C -- teardown_pct distribution across 1059 Python repos**
+### loc
 
-```
- 0.00- 0.10 | ######################################## (513)
- 0.10- 0.20 | ####### (88)
- 0.20- 0.30 | ######## (109)
- 0.30- 0.40 | ####### (90)
- 0.40- 0.50 | ##### (62)
- 0.50- 0.60 | ####### (86)
- 0.60- 0.70 | ## (29)
- 0.70- 0.80 | # (10)
- 0.80- 0.90 | # (13)
- 0.90- 1.00 | ##### (59)
-```
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=2018087.0 | -0.041 | negligible | 0.023 | -- |
+| java | 125 | 312 | 6.00 | 5.50 | 8.00 | 8.00 | 13.00 | 12.45 | U=17026.5 | -0.127 | negligible | 0.036 | 0.049 |
+| javascript | 143 | 563 | 4.00 | 4.00 | 7.00 | 6.00 | 11.00 | 10.50 | U=37602.5 | -0.066 | negligible | 0.216 | 0.216 |
+| python | 678 | 1059 | 6.00 | 5.00 | 8.50 | 7.00 | 13.00 | 12.00 | U=291072.0 | -0.189 | small | <.001 | <.001 |
+| typescript | 948 | 753 | 4.00 | 4.00 | 5.00 | 6.00 | 7.00 | 8.00 | U=378603.5 | 0.061 | negligible | 0.028 | 0.049 |
+
+### cyclomatic_complexity
+
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=2116082.5 | 0.005 | negligible | 0.514 | -- |
+| java | 125 | 312 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.50 | U=19162.0 | -0.017 | negligible | 0.602 | 0.602 |
+| javascript | 143 | 563 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.00 | U=37173.0 | -0.077 | negligible | <.001 | 0.002 |
+| python | 678 | 1059 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | U=370789.5 | 0.033 | negligible | 0.039 | 0.051 |
+| typescript | 948 | 753 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | U=346496.0 | -0.029 | negligible | 0.003 | 0.006 |
+
+### comment_density
+
+| Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Overall | 1687 | 2495 | -- | -- | -- | -- | -- | -- | U=2117002.0 | 0.006 | negligible | 0.462 | -- |
+| java | 125 | 312 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=19475.5 | -0.001 | negligible | 0.967 | 0.967 |
+| javascript | 143 | 563 | 0.00 | 0.00 | 0.00 | 0.00 | 0.08 | 0.00 | U=36429.0 | -0.095 | negligible | <.001 | 0.001 |
+| python | 678 | 1059 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.02 | U=367795.5 | 0.024 | negligible | 0.086 | 0.173 |
+| typescript | 948 | 753 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=351975.5 | -0.014 | negligible | 0.195 | 0.261 |

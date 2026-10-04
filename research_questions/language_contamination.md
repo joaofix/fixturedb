@@ -4,7 +4,7 @@
 
 Dataset C is checked against its fixture-level sample-down (`db/c_sampled.db`), not the full `db/c.db` -- see this module's docstring.
 
-Generated: 2026-09-16 02:22:07 UTC
+Generated: 2026-10-04 15:59:22 UTC
 
 ### Dataset A (agent-authored)
 

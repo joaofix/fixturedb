@@ -1,8 +1,8 @@
 # Control-Variable Balance Check
 
-> Are the repo samples behind two datasets comparable on language, domain, and repo age -- before attributing an RQ1-3 fixture-metric difference to authorship or era? See this module's docstring for why this check didn't previously run against the current data.
+> Are the repo samples behind two datasets comparable on language, domain, and repo age -- before attributing an RQ2-4 fixture-metric difference to authorship or era? See this module's docstring for why this check didn't previously run against the current data.
 
-Generated: 2026-09-16 02:21:44 UTC
+Generated: 2026-10-04 15:59:12 UTC
 
 Repo-level (each fixture-yielding repo counted once), not fixture-weighted -- see this module's docstring for why.
 

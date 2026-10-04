@@ -1,8 +1,8 @@
-# Dataset Findings (outside RQ1-3)
+# Dataset Findings (outside RQ2-4)
 
-> Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ1-3 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
+> Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ2-4 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-09-16 02:21:46 UTC
+Generated: 2026-10-04 15:59:13 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -107,7 +107,7 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 
 ## Fixture Counts by Language
 
-Total extracted fixtures per language, per dataset, counted by each fixture's own detected language -- not its repo's tagged language. This is a different grouping than the "Cross-language fixture leakage" table in rq1.md's per-dataset summaries, which groups by repo language instead, so a repo's language bucket there includes any fixtures written in a different language that were found inside it. The numbers here are the clean per-language totals -- a leaked fixture counts under the language it's actually written in, not its repo's tag.
+Total extracted fixtures per language, per dataset, counted by each fixture's own detected language -- not its repo's tagged language. This is a different grouping than the "Cross-language fixture leakage" table in rq2.md's per-dataset summaries, which groups by repo language instead, so a repo's language bucket there includes any fixtures written in a different language that were found inside it. The numbers here are the clean per-language totals -- a leaked fixture counts under the language it's actually written in, not its repo's tag.
 
 | Dataset | Java | JavaScript | Python | TypeScript | Total |
 |---|---|---|---|---|---|
