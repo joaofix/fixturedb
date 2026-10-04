@@ -9,7 +9,6 @@ real scan produces.
 
 from __future__ import annotations
 
-from collection.config import MIN_TEST_FILES
 from collection.research_questions.rq1 import (
     DISPLAY_LANGUAGES,
     LanguagePrevalence,
@@ -200,40 +199,36 @@ class TestComputePrevalence:
             assert len(entry.setup_per_repo) == entry.n_with_fixtures
             assert len(entry.teardown_per_repo) == entry.n_with_fixtures
 
-    def test_no_floor_variant_includes_everything(self, tmp_path):
+    def test_no_quality_floor_is_applied(self, tmp_path):
+        """RQ1 deliberately never filters on min_test_files (or anything
+        else) -- see this module's own docstring for why. A repo with a
+        single test file counts exactly like one with a thousand."""
         rows = self._rows(
             tmp_path,
             [{"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1}],
         )
-        result = compute_prevalence(rows, min_test_files=None)
+        result = compute_prevalence(rows)
         assert result["python"].n_with_tests == 1
-
-    def test_floor_variant_excludes_repos_below_min_test_files(self, tmp_path):
-        rows = self._rows(
-            tmp_path,
-            [
-                {"language": "python", "clone_ok": True, "num_test_files": MIN_TEST_FILES - 1, "num_fixtures": 1},
-                {"language": "python", "clone_ok": True, "num_test_files": MIN_TEST_FILES, "num_fixtures": 1},
-            ],
-        )
-        result = compute_prevalence(rows, min_test_files=MIN_TEST_FILES)
-        assert result["python"].n_with_tests == 1
-        assert result["python"].n_with_fixtures == 1
 
 
 class TestRenderTable1:
     def test_renders_counts_and_percentages(self):
+        """Fixture (%)/Setup (%)/Teardown (%) all share one denominator,
+        `n_with_tests` (2026-10-04 restructure -- see render_table1()'s
+        own docstring): 5/10 = 50%, 4/10 = 40%, 1/10 = 10%. No `#` column
+        -- that raw count lives in the Raw Numbers table instead, so
+        nothing here can be misread as dividing by it."""
         entry = LanguagePrevalence(n_with_tests=10, n_with_fixtures=5, n_with_setup=4, n_with_teardown=1)
         table = render_table1({"all": entry})
         lines = table.splitlines()
-        assert lines[0] == "| Language | Repositories with Tests | # | % | Setup (%) | Teardown (%) |"
+        assert lines[0] == "| Language | Repositories with Tests | Fixture (%) | Setup (%) | Teardown (%) |"
         all_line = next(l for l in lines if l.startswith("| All"))
-        assert "| All | 10 | 5 | 50.0% | 80.0% | 20.0% |" == all_line
+        assert "| All | 10 | 50.0% | 40.0% | 10.0% |" == all_line
 
     def test_zero_denominator_renders_dashes_not_a_crash(self):
         entry = LanguagePrevalence(n_with_tests=0, n_with_fixtures=0)
         table = render_table1({"all": entry})
-        assert "| All | 0 | 0 | -- | -- | -- |" in table
+        assert "| All | 0 | -- | -- | -- |" in table
 
     def test_includes_a_row_per_display_language_in_order(self):
         table = render_table1({})
@@ -304,23 +299,18 @@ class TestGenerateReport:
         # Only 1 successfully-scanned repo total, regardless of the 2 failures.
         assert "Population: 1 successfully-scanned repos" in report
 
-    def test_both_variants_present_and_floor_changes_the_numbers(self, tmp_path):
+    def test_no_quality_floor_section_appears_anywhere(self, tmp_path):
+        """Regression guard: the "Quality floor applied" variant (and its
+        min_test_files filtering) was deliberately removed -- see this
+        module's own docstring. Must never silently reappear."""
         _make_db(
             tmp_path,
-            [
-                # Below the floor: counts in "no floor", excluded from "floor applied".
-                {"language": "python", "clone_ok": True, "num_test_files": MIN_TEST_FILES - 1, "num_fixtures": 1, "num_setup": 1},
-                # Above the floor: counts in both.
-                {"language": "python", "clone_ok": True, "num_test_files": MIN_TEST_FILES, "num_fixtures": 1, "num_setup": 1},
-            ],
+            [{"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1, "num_setup": 1}],
         )
         report = generate_report(db_root=tmp_path)
-        assert "## No additional quality floor" in report
-        assert f"## Quality floor applied (>= {MIN_TEST_FILES} test files)" in report
-        no_floor_section = report.split("## No additional quality floor")[1].split("## Quality floor applied")[0]
-        with_floor_section = report.split(f"## Quality floor applied (>= {MIN_TEST_FILES} test files)")[1]
-        assert "| All | 2 |" in no_floor_section
-        assert "| All | 1 |" in with_floor_section
+        assert "## Quality floor applied" not in report
+        assert "## No additional quality floor" not in report
+        assert "| All | 1 |" in report
 
     def test_renders_display_languages_in_paper_order(self, tmp_path):
         _make_db(tmp_path, [{"language": "python", "clone_ok": True, "num_test_files": 1}])

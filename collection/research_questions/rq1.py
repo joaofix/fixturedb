@@ -8,35 +8,42 @@ own output) -- same role `rq2.py`/`rq3.py`/`rq4.py` play for `db/a.db` +
 `db/c.db`. No collection logic lives here; this module only aggregates and
 renders what that scan already persisted.
 
-Computes both paper tables in two variants: no additional quality floor
-(every successfully-scanned repo) and the project's own `min_test_files`
-floor applied (`MIN_TEST_FILES`, `study_parameters.yaml`) -- see
-`rq1_prevalence_scan.py`'s own module docstring for why the floor variant
-needs no second scan: SEART's own crawl-time `min_commits`/
-`min_non_blank_loc` filters already trivially bound the raw universe at
-`RQ1_CUTOFF_DATE`, so `num_test_files >= MIN_TEST_FILES` is the only floor
-that changes which repos qualify.
+Computes both paper tables over every successfully-scanned repo --
+deliberately no `min_test_files` quality floor applied here (2026-10-04
+methodology decision): RQ1's whole purpose is to characterize the raw
+universe *before* any Dataset A/B/C-style filtering, so applying one of
+A/B/C's own floors would partly collapse the distinction RQ1 exists to
+draw. A floored variant was reported here through 2026-10-04 (as a
+robustness check showing the floor barely moved the numbers) but was
+removed once that check had served its purpose -- see git history
+(`rq1_prevalence_scan.py` still collects `num_test_files` for every repo
+regardless; nothing about collection changed, only this report's
+rendering).
 
 A repo with `clone_ok=0` (clone failed, or no commit at/before
-`RQ1_CUTOFF_DATE`) is excluded from every count here, in every variant --
-it means "unknown whether this repo has tests," not "confirmed no tests."
-Counting it as a negative would silently bias every percentage down.
+`RQ1_CUTOFF_DATE`) is excluded from every count here -- it means "unknown
+whether this repo has tests," not "confirmed no tests." Counting it as a
+negative would silently bias every percentage down.
 
 **Table 1** (`tab:rq1-prevalence`): for each language (and "All", pooled
 across all four), how many repos have >=1 test file, how many of THOSE
-have >=1 fixture, and within the fixture-having subset, what % have >=1
-setup-classified / teardown-classified fixture. `num_setup`/`num_teardown`
-are read directly off `repo_prevalence` -- the dual-counting of a
-`setup_and_teardown` fixture toward both already happened once, in
+have >=1 fixture, and -- of repos **with >=1 test file** (2026-10-04: not
+"of repos with >=1 fixture," see `render_table1()`'s own docstring for
+why that denominator was the wrong one for the paper's "fixtures are
+commonly used in tests" framing) -- what % have >=1 setup-classified /
+teardown-classified fixture. `num_setup`/`num_teardown` are read directly
+off `repo_prevalence` -- the dual-counting of a `setup_and_teardown`
+fixture toward both already happened once, in
 `rq1_prevalence_scan.scan_working_tree()` (matching `research_questions/
 rq3.py`'s own convention), not redone here.
 
 **Table 2** (`tab:rq1-prevalence-median`): for each language (and "All"),
 the median fixtures/setup-fixtures/teardown-fixtures per repo, among
-repos with >=1 fixture -- the same denominator Table 1's "Setup (%)"/
-"Teardown (%)" columns use. "All" is one pooled median across every
-repo-with-fixtures regardless of language, not an average of the four
-per-language medians.
+repos with >=1 fixture (unchanged by the 2026-10-04 Table 1 denominator
+change above -- a median over repos with zero fixtures would trivially
+collapse to 0 and isn't informative). "All" is one pooled median across
+every repo-with-fixtures regardless of language, not an average of the
+four per-language medians.
 
 python -m collection.research_questions.rq1
 """
@@ -50,7 +57,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .. import paths
-from ..config import MIN_TEST_FILES
 from ..db import db_session
 from ..rq1_prevalence_scan import DB_PATH as _SCAN_DB_PATH
 from ._shared import OUTPUT_DIR, fmt, pct, write_markdown_report
@@ -113,25 +119,15 @@ def load_rows(db_root: Path = paths.DB_ROOT) -> list[sqlite3.Row] | None:
         ).fetchall()
 
 
-def compute_prevalence(
-    rows: list[sqlite3.Row], *, min_test_files: int | None = None
-) -> dict[str, LanguagePrevalence]:
+def compute_prevalence(rows: list[sqlite3.Row]) -> dict[str, LanguagePrevalence]:
     """Reduce `clone_ok=1` rows to one `LanguagePrevalence` per language
-    plus `"all"` (pooled across every language).
-
-    `min_test_files`, when given, restricts the population to rows with
-    `num_test_files >= min_test_files` first -- the "quality floor
-    applied" variant. `None` (default) is the "no floor" variant: every
-    row counts. Every surviving row's own `num_test_files > 0` check
-    still runs either way, so in the floor variant `n_with_tests` simply
-    equals the row count after filtering (every surviving row already
-    clears the floor, which is >= 1) -- no special-casing needed.
-    """
+    plus `"all"` (pooled across every language). No quality floor of any
+    kind is applied here -- see this module's own docstring for why RQ1
+    deliberately doesn't filter on `min_test_files` the way Dataset
+    A/B/C's own collection does."""
     by_language: dict[str, LanguagePrevalence] = {}
     pooled = LanguagePrevalence()
     for row in rows:
-        if min_test_files is not None and row["num_test_files"] < min_test_files:
-            continue
         language = row["language"]
         entry = by_language.setdefault(language, LanguagePrevalence())
         for target in (entry, pooled):
@@ -166,21 +162,40 @@ def _ordered_rows(by_language: dict[str, LanguagePrevalence]) -> list[tuple[str,
 
 
 def render_table1(by_language: dict[str, LanguagePrevalence]) -> str:
-    """tab:rq1-prevalence: Language | Repositories with Tests | # | % |
-    Setup (%) | Teardown (%). `#`/`%` are the fixture-having subset's
-    count and its share of "with Tests"; Setup/Teardown (%) are shares of
-    the fixture-having subset itself."""
+    """tab:rq1-prevalence: Language | Repositories with Tests | Fixture (%)
+    | Setup (%) | Teardown (%).
+
+    **Self-explanatory by construction (2026-10-04 restructure), no
+    caption needed:** every percentage column -- Fixture (%), Setup (%),
+    Teardown (%) -- divides by the exact same population,
+    `n_with_tests` (the "Repositories with Tests" column), not by each
+    other. The table's previous shape had a `#` column (the raw
+    fixture-having count) sitting between "Repositories with Tests" and
+    these percentages, which visually invited reading Setup (%)/
+    Teardown (%) as continuing to narrow from that `#` count -- the
+    *fixture-having* subset -- rather than from "Repositories with
+    Tests" again. That was also this table's actual old behavior before
+    the same day's earlier methodology change (dividing by
+    `n_with_fixtures`, a much easier bar to clear, which pushed every
+    language's Setup/Teardown (%) up near 95-99% regardless of how
+    common setup/teardown actually is -- see git history). Removing the
+    `#` column removes the ambiguity rather than just explaining it away:
+    there's no intervening absolute count left to suggest a narrowing
+    funnel, so three parallel percentage columns of one clearly-labeled
+    population is the whole story. The dropped raw fixture-having count
+    is still available in the "Raw numbers" table below (`n (fixtures)`),
+    so no information is lost, only this table's own potential for
+    misreading."""
     lines = [
-        "| Language | Repositories with Tests | # | % | Setup (%) | Teardown (%) |",
-        "|---|---|---|---|---|---|",
+        "| Language | Repositories with Tests | Fixture (%) | Setup (%) | Teardown (%) |",
+        "|---|---|---|---|---|",
     ]
     for label, entry in _ordered_rows(by_language):
         fixture_pct = pct(_pct_or_none(entry.n_with_fixtures, entry.n_with_tests))
-        setup_pct = pct(_pct_or_none(entry.n_with_setup, entry.n_with_fixtures))
-        teardown_pct = pct(_pct_or_none(entry.n_with_teardown, entry.n_with_fixtures))
+        setup_pct = pct(_pct_or_none(entry.n_with_setup, entry.n_with_tests))
+        teardown_pct = pct(_pct_or_none(entry.n_with_teardown, entry.n_with_tests))
         lines.append(
-            f"| {label} | {entry.n_with_tests:,} | {entry.n_with_fixtures:,} | "
-            f"{fixture_pct} | {setup_pct} | {teardown_pct} |"
+            f"| {label} | {entry.n_with_tests:,} | {fixture_pct} | {setup_pct} | {teardown_pct} |"
         )
     return "\n".join(lines)
 
@@ -238,29 +253,6 @@ def render_median_prose(by_language: dict[str, LanguagePrevalence]) -> str:
     )
 
 
-def _render_variant(title: str, intro: str, by_language: dict[str, LanguagePrevalence]) -> list[str]:
-    return [
-        f"## {title}",
-        "",
-        intro,
-        "",
-        "### Table 1: Prevalence of test fixtures in repositories (tab:rq1-prevalence)",
-        "",
-        render_table1(by_language),
-        "",
-        "### Table 2: Distribution of test fixtures by repository, median (tab:rq1-prevalence-median)",
-        "",
-        render_table2(by_language),
-        "",
-        render_median_prose(by_language),
-        "",
-        "### Raw numbers",
-        "",
-        render_raw_numbers(by_language),
-        "",
-    ]
-
-
 def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     rows = load_rows(db_root)
@@ -288,28 +280,31 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "`collection/rq1_prevalence_scan.py`'s module docstring. A repo whose "
         "clone failed, or that had no commit at or before that date, is "
         'excluded entirely from every count below ("unknown", never counted '
-        'as "confirmed no tests").',
+        'as "confirmed no tests"). No `min_test_files` quality floor is '
+        "applied -- every successfully-scanned repo counts here regardless "
+        "of how many test files it has, by design (see this module's own "
+        "docstring).",
         "",
     ]
 
-    no_floor = compute_prevalence(rows, min_test_files=None)
-    with_floor = compute_prevalence(rows, min_test_files=MIN_TEST_FILES)
+    by_language = compute_prevalence(rows)
 
-    lines += _render_variant(
-        "No additional quality floor",
-        "Every successfully-scanned repo counts here, regardless of how "
-        "many test files it has.",
-        no_floor,
-    )
-    lines += _render_variant(
-        f"Quality floor applied (>= {MIN_TEST_FILES} test files)",
-        f"Restricted to repos with >= {MIN_TEST_FILES} test files -- "
-        "matching `study_parameters.yaml`'s `min_test_files`, the same "
-        "floor Dataset A/B/C's own collection applies. No second scan was "
-        "needed for this variant -- see `collection/rq1_prevalence_scan.py`'s "
-        "module docstring for why.",
-        with_floor,
-    )
+    lines += [
+        "### Table 1: Prevalence of test fixtures in repositories (tab:rq1-prevalence)",
+        "",
+        render_table1(by_language),
+        "",
+        "### Table 2: Distribution of test fixtures by repository, median (tab:rq1-prevalence-median)",
+        "",
+        render_table2(by_language),
+        "",
+        render_median_prose(by_language),
+        "",
+        "### Raw numbers",
+        "",
+        render_raw_numbers(by_language),
+        "",
+    ]
 
     return "\n".join(lines)
 

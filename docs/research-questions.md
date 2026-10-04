@@ -25,14 +25,25 @@ from `datasets/{a,b,c}/` and `db/{a,b,c}.db` (see that module's own docstring fo
 full naming scheme and the production incidents its retry/timeout/auth logic exists
 to handle).
 
-`rq1.py` is the pure reader over that db, rendering two tables, each in two variants
-(no quality floor, and `study_parameters.yaml`'s `min_test_files` floor applied -- no
-second scan needed for the floor variant, see `rq1_prevalence_scan.py`'s docstring):
+`rq1.py` is the pure reader over that db, rendering two tables over every
+successfully-scanned repo -- deliberately no `min_test_files` quality floor (or any
+other filter) applied, unlike RQ2-4's Dataset A/C populations: RQ1's whole point is
+to characterize the raw universe *before* any such filtering (a floored variant was
+reported through 2026-10-04, as a robustness check showing the floor barely moved
+the numbers, then dropped once that check had served its purpose -- see git history):
 
-- **Table 1** (`tab:rq1-prevalence`): per language and "All" (pooled), how many repos
-  have >=1 test file, how many of those have >=1 fixture, and within the
-  fixture-having subset, what % have >=1 setup-classified / teardown-classified
-  fixture.
+- **Table 1** (`tab:rq1-prevalence`): per language and "All" (pooled), repos with >=1
+  test file, then three parallel percentages of that exact same population --
+  Fixture (%), Setup (%), Teardown (%) -- self-explanatory by construction, no
+  caption needed (2026-10-04 restructure: the table's previous `#`/`%` + Setup (%)/
+  Teardown (%) shape had an absolute fixture-having count sitting between the
+  population column and the percentages, visually inviting Setup/Teardown (%) to be
+  read as dividing by *that* count instead -- which was also this table's actual old
+  behavior, and pushed every language's numbers up near 95-99% regardless of how
+  common setup/teardown actually is, an almost-tautological reading once you've
+  already conditioned on "has a fixture." See `rq1.py`'s `render_table1()` docstring
+  for the full account; the dropped raw fixture-having count is unchanged and still
+  available in the report's own "Raw numbers" table).
 - **Table 2** (`tab:rq1-prevalence-median`): per language and "All" (one pooled
   median, not an average of four per-language medians), the median fixture/setup/
   teardown count per repo among repos with >=1 fixture.

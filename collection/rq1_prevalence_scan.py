@@ -27,18 +27,6 @@ find_cutoff_commit()` (already a plain `cutoff_date` parameter, not
 hardcoded to Dataset C's own cutoff) finds the latest commit at or before
 that date, which gets checked out before scanning.
 
-**Why no extra quality floor is needed for the "floor applied" variant:**
-`github-search-raw/details.txt`'s SEART crawl ran 2026-08-11, *before*
-RQ1_CUTOFF_DATE -- and `min_stars`/`min_commits`/`min_non_blank_loc` in
-`study_parameters.yaml` are identical to the SEART crawl's own filters. A
-repo only gains commits/LOC over time, so every repo in this raw universe
-already trivially clears those two floors as of RQ1_CUTOFF_DATE too. The
-only floor that changes which repos qualify is `min_test_files` -- and
-that's exactly this scan's own `num_test_files` column, so the "floor
-applied" paper table is just a `WHERE num_test_files >= MIN_TEST_FILES`
-filter over this same scan's results, not a second, separately-collected
-population.
-
 **Why counts are grouped by the repo's own tagged language, not each
 fixture's own detected language:** unlike Dataset C's cross-language-
 leakage handling (`find_test_files_with_language()`), this scan uses
