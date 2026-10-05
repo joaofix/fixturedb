@@ -1,109 +1,13 @@
-"""
-RQ4 -- Mocking (Quantitative): how do agent-generated and human-written
-fixtures differ in mock usage?
+"""RQ4 -- mocking in agent-written and human-written fixtures.
 
-One paper table (`_render_mocking_summary_table()`), per language and
-Overall: **Coverage** -- for each repo, a binary indicator -- does it
-have >=1 fixture with a mock at all (`num_mocks > 0`)? Population: every
-repo with >=1 fixture (of that language, for the per-language rows; any
-language, for Overall) -- reuses `has_mock_by_repo`/`has_mock_by_repo_
-and_language`, already fetched by the pre-existing has_mock detection
-query. "Coverage A/C (%)" is the share of that population with the
-indicator at 1 -- just the mean of that 0/1 list per side. **Purely
-descriptive -- no statistical test** (removed 2026-09-27, alongside
-RQ3's Table 2: the paper's RQ3/RQ4 coverage tables report plain
-percentages, no p-value, no effect size, no BH-FDR family. RQ2 is now
-the only script in this package that performs BH-FDR correction at all
--- see
-[internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md)
-for the full before/after inventory).
+The paper table gives mocking coverage: for each repository with at least one
+fixture, whether it has at least one fixture with a mock. Shown per language
+and overall, as the share of repositories. It has no test.
 
-**Intensity** (median `num_mocks` across a repo's own mocking fixtures,
-among repos where Coverage=1) was removed entirely the same day -- no
-longer one of the paper's reported metrics. Its whole computation
-(`_mocking_intensities_by_repo()`, `_fetch_num_mocks_by_repo_and_
-language()`, the `num_mocks_by_repo_and_language` field, and the
-combined 8-test BH-FDR family that used to merge it with Coverage) is
-gone, not just its rendering. `num_mocks_by_repo` (Overall-only, no
-per-language breakdown) stays on `DatasetMetrics` -- it's also what
-`has_mock_by_repo` is derived from (the `num_mocks > 0` threshold), an
-independent use that predates and outlives Intensity.
+The report also has the number of mock calls per fixture, and the number of
+fixtures with a mock, per language.
 
-Fixed four-language row order (java, javascript, python, typescript)
-rather than a "languages present on both sides" intersection convention
--- a deliberate simplification matching the paper's table spec,
-predating the statistical-test removal above and unaffected by it.
-
-This table replaces three previously-reported tables:
-
-- **Mock prevalence** (fixture-level `has_mock` chi-square, pooled + per
-  language) -- initially kept (computed identically, mock detection
-  logic untouched) in a "## Legacy: Fixture-Level Mock Prevalence (Not
-  Used in the Paper)" section below the main comparison, since it was
-  already marked "not used in the paper" before this change -- fixture-
-  level pseudo-replication, see docs/reference/limitations.md's
-  "Categorical Pseudo-Replication". Removed entirely (2026-09-27): never
-  cited, and `compare_datasets_categorical()`/`_render_has_mock()`/
-  `has_mock_n_by_language`/`_fetch_fixture_repo_count_by_language()` had
-  no other consumer once it was gone. The *repo-level* has_mock test that
-  WAS reported in the paper (formerly "## Repo-level aggregates") is
-  fully superseded by this table's Coverage column -- same population,
-  same underlying per-repo has_mock indicator. At the time of this
-  removal Coverage was still its own Mann-Whitney + Cliff's delta test
-  (computed via `compute_continuous_balance()` directly instead of
-  `compare_categorical_repo_level()` -- a two-category proportion test
-  on a binary variable is mathematically the mean-of-the-0/1-indicator
-  test that call runs, same number, cleaner path there); Coverage's own
-  test was itself removed the same day, see above.
-- **Framework distribution** -- removed from the report entirely (not
-  moved to legacy, per request: framework names are language-specific by
-  construction, `unittest.mock` Python-only / Sinon JS-only / Mockito
-  Java-only, so a pooled A-vs-C view was already confounded by language
-  mix -- 2026-08-12, see docs/reference/limitations.md). `mock_usages.
-  framework`'s fetch/fields (`framework_dist`, `framework_by_language`)
-  are UNCHANGED and still populate each dataset's own descriptive summary
-  above -- only the A-vs-C table is gone.
-- **Test-double category distribution** -- same treatment: removed from
-  the report entirely (category naming conventions are also
-  language/ecosystem-specific -- same 2026-08-12 fix). `category_dist`'s
-  fetch/field is UNCHANGED and still populates the per-dataset summary
-  above -- the per-language repo-level-proportion test and the pooled
-  descriptive table are gone from the report. `category_by_language`/
-  `category_by_repo_and_language` (the fetches that fed those two removed
-  tables) were themselves removed entirely (2026-09-27) after auditing
-  found them genuinely dead -- fetched and stored on `DatasetMetrics` but
-  never read by anything, not even the per-dataset summary the comment
-  above once claimed.
-
-`num_mocks`'s existing continuous Mann-Whitney tables (fixture-level and
-repo-level, Overall-only) are **unchanged** -- not one of the three
-tables named for replacement, and never had a per-language family or
-BH-FDR correction to begin with (Overall-only, a single pooled test).
-
-`num_interactions_configured` (a separate `mock_usages` column estimating
-how many interactions were configured on a mock, e.g. `.return_value`/
-`.side_effect`/`thenReturn`) was removed entirely (2026-09-26) -- it was
-never one of the paper's reported metrics (the paper review only named
-`num_mocks`), so its own continuous Mann-Whitney table (the counterpart to
-`num_mocks`'s above) is simply gone, not moved to a legacy section.
-
-**Mock Fixture Counts by Language** (`_render_mock_counts_table()`): an
-additional, purely descriptive table (no statistics), rendered right
-after the Coverage paper table -- NOT a replacement for it.
-The RQ3-counts-table analogue for mocking: raw count + percentage of
-`has_mock` fixtures per language, both datasets side by side, denominator
-is simply that language's total fixture count (no 'other'
-category/double-counting complication the way RQ3's setup/teardown kind
-has -- has_mock is a clean binary). Reuses has_mock_dist/has_mock_dist_
-by_language, the same counts already backing "Mock prevalence"/"Mock
-prevalence by language" in the per-dataset summary above.
-
-A vs C only; see rq2.py's module docstring.
-
-A dataset is skipped (not an error) if its db/{dataset}.db does not exist
-yet.
-
-python -m collection.research_questions.rq4
+Writes `research_questions/rq4.md`. Run with `python -m collection.research_questions.rq4`.
 """
 
 from __future__ import annotations

@@ -1,137 +1,20 @@
-"""
-RQ2 -- General Metrics Overview (Quantitative): how do agent-generated and
-human-written fixtures compare across structural metrics?
+"""RQ2 -- code characteristics of agent-written and human-written fixtures.
 
-Computes, per dataset (A/C), summary statistics for the RQ2 metrics (LOC,
-cyclomatic complexity, comment density, num_parameters), plus an A vs C
-comparison. `fixture_type` is shown per-dataset descriptively (a plain
-distribution, no test -- see below) but is not itself compared A vs C in
-any form anymore.
+Per dataset, summary statistics for the three paper metrics: `loc`,
+`cyclomatic_complexity` and `comment_density`. Then an A vs C comparison.
 
-**Three paper metrics, final** (as of 2026-09-26): `PAPER_CONTINUOUS_METRICS`
-is the exhaustive list of the continuous metrics reported in the paper --
-`loc`, `cyclomatic_complexity`, `comment_density` -- and, since
-`CONTINUOUS_METRICS` is now exactly that same list, also the only
-continuous metrics this script tests at all. `max_nesting_depth`,
-`num_objects_instantiated`, `num_external_calls`, and `has_teardown_pair`
-used to be computed and stored too (max_nesting_depth even fully
-Mann-Whitney tested, under a separate "Other Extracted Features" heading)
-but were dropped from the extracted metric set entirely -- not reported in
-the paper, and removed from detection/storage/CSV export rather than kept
-as unused columns. `scope` (a categorical metric) was dropped the same
-way, and so was `commit_type` (2026-09-27) -- a Conventional Commits
-classification of the originating commit's message, computed for both
-Dataset A and B and never used in any reported RQ; its whole
-`conventional_commits.py` module was removed along with it.
+Each repository gives one value per metric: the mean over its fixtures. The
+two datasets are compared with a Mann-Whitney U test. The overall row is not
+corrected. The per-language rows are corrected with Benjamini-Hochberg, one
+family per metric.
 
-`fixture_type` has no A vs C comparison of any kind anymore, fixture-level
-or repo-level. Its fixture-level chi-square (Overall + per-language) was
-removed 2026-09-27 -- it was never the paper's result, and had no other
-consumer once gone, so `compare_datasets_categorical()`/
-`_render_categorical_metric()`/`_fetch_fixture_type_by_language()`/
-`_fetch_repo_count_by_language()` went with it. Its repo-level proportion
-test (formerly "## Repo-level aggregates", `_render_repo_level_
-comparison()`) was removed the same day, once it turned out that test's
-"paper's actual result" framing -- inherited from this module's own
-pre-existing docstring -- had never actually been confirmed against the
-paper (`fixture_type` is, and always was, a support column that feeds
-`fixture_role`'s derivation, not a metric the paper itself reports; see
-docs/reference/limitations.md's Categorical Pseudo-Replication section
-for the full history of both removals). `compare_categorical_repo_level()`/
-`repo_level_category_proportions()`/`repo_level_category_n_counts()`/
-`render_categorical_repo_level_table()`/`fetch_categorical_column_by_repo()`
-in `_shared.py` were all removed as part of this -- `fixture_type` was
-their only caller anywhere in this package. `fixture_type`'s per-dataset
-*descriptive* distribution (no test, just counts --
-`CATEGORICAL_METRICS`/`categorical` on `DatasetMetrics`) is UNCHANGED and
-still rendered in each dataset's summary section -- that's now the only
-place `fixture_type` appears in this report at all.
+The report also has a diagnostic section that uses the per-repository median
+instead of the mean. It is not used in the paper. It shows how much the result
+depends on that choice.
 
-`comment_density` (added 2026-08-17, the third paper metric) is
-`fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
--- see docs/data/dataset-card.md. It's included in
-CONTINUOUS_METRICS like any other metric, so it automatically inherits
-the exact same NO_BODY_FIXTURE_TYPES exclusion loc/cyclomatic_complexity
-already get (see the next paragraph) purely by list membership -- no
-special-casing needed, since it's loc-derived and the same "different
-kind of code unit" reasoning applies.
+`fixture_type` is shown as a plain distribution per dataset. It has no test.
 
-`num_parameters` is dropped from the comparative (Mann-Whitney) analysis
-entirely (not just demoted to the other tier): 0 params is the
-overwhelming majority in both datasets (most fixtures take no arguments),
-which makes a distributional test not very informative. Still shown
-per-dataset descriptively (`_render_dataset_summary()`'s "Other" Continuous
-metrics table, repo-level like every other metric in that table -- see
-below) plus a dedicated floor-percentage footnote (`% of fixtures at 0
-params`, deliberately fixture-level -- "what fraction of fixtures sit at
-the floor" is a fixture-level question, no test) in the comparison
-section, so the floor-binding is documented transparently rather than
-silently dropped. `cyclomatic_complexity` also floors heavily (CC=1 is
-the large majority) but is tested anyway, same as `loc`/`comment_density`
--- unlike `num_parameters`, it's kept in the primary comparative analysis.
-
-Java's `@Rule`/`@ClassRule` fixtures (`junit_rule`/`junit_class_rule`) are
-excluded from `loc`/`cyclomatic_complexity`/`comment_density` entirely
-(`_shared.py::NO_BODY_FIXTURE_TYPES`) -- they're detected on a field
-declaration, not a function body, so Lizard structurally cannot analyze
-them (verified directly: an empty function_list every time, even with
-branching in the field's initializer) and `cyclomatic_complexity`/
-`num_parameters` silently fall back to hardcoded defaults rather than a
-real measurement. `loc`/`comment_density` remain genuinely measured
-(neither is Lizard-derived) but represent a different kind of code unit
-than every other fixture_type here. Still included in the `fixture_type`
-categorical distribution, where "this repo declared N JUnit Rules" is a
-meaningful, correctly-measured fact. See internal-docs/
-methodology-improvements/junit-rule-fixtures.md for the full
-investigation.
-
-Every remaining comparison (the three continuous metrics -- there is no
-longer a categorical one) renders through _shared.py's
-render_comparison_table(): one "Overall" row (uncorrected, single pooled
-test) plus one BH-corrected row per language, corrected independently of
-every other metric and of their own Overall row (see
-render_comparison_table()'s docstring). `loc`/`cyclomatic_complexity`/
-`comment_density` each have their own 4-language family -- the only
-BH-FDR families this script (or, as of 2026-09-27, this whole package
-outside `balance.py`) computes.
-
-Continuous metrics are repo-level throughout (one value per repo, per
-language for the per-language rows) -- not the raw per-fixture values --
-so fixtures clustering within a repo can't inflate the result. Each
-repo's contributed value is that repo's own **mean** fixture -- the
-paper's intended methodology, restored 2026-09-28 (see
-`repo_level_means()`'s docstring in `_shared.py`). This includes
-`_render_dataset_summary()`'s per-dataset "Continuous metrics" tables
-(median/mean/min/max/stdev, `n` = repo count): they read from the same
-repo-level-means data the comparison tests use, not the raw per-fixture
-values, so a single prolific repo can't skew the descriptive numbers any
-more than it can skew the tests themselves.
-
-**Median-per-repo was tried and reverted, same day.** A repo's *median*
-fixture (rather than its mean) was briefly the primary aggregation,
-reasoned as immune to that repo's own outlier fixtures -- but it
-interacts badly with `cyclomatic_complexity`/`comment_density`'s heavy
-floor-binding (see two paragraphs up): a repo's median CC/comment_density
-collapses to the exact floor value for most repos, producing
-near-universal ties across repos and collapsing two of the three
-paper metrics' Overall-row significance (p<.001 under mean-per-repo to
-p>0.4 under median-per-repo, on the real corpus) purely as an artifact
-of the aggregation choice, not a real change in the underlying data.
-Rather than silently discard that finding, `_render_comparison()` also
-renders a second, clearly-labeled "Diagnostic: median-per-repo
-aggregation (NOT used in the paper)" section with the same three
-metrics computed the median-per-repo way (`repo_level_continuous_
-median_diagnostic`/`repo_level_continuous_by_language_median_
-diagnostic` on `DatasetMetrics`, `repo_level_medians()` in `_shared.py`,
-`compare_datasets_repo_level_median_diagnostic()`) -- kept as a record of
-how sensitive this comparison is to the aggregation choice, explicitly
-not a competing result to cite.
-
-A dataset is skipped (not an error) if its db/{dataset}.db does not exist
-yet -- lets this run against whatever subset of A/C has been collected so
-far.
-
-python -m collection.research_questions.rq2
+Writes `research_questions/rq2.md`. Run with `python -m collection.research_questions.rq2`.
 """
 
 from __future__ import annotations

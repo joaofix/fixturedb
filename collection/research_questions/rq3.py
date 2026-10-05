@@ -1,127 +1,17 @@
-"""
-RQ3 -- Setup and Teardown Characterization (Quantitative): how do
-agent-generated fixtures compare to human-written ones in setup and
-teardown provision?
+"""RQ3 -- setup and teardown fixtures in agent-written and human-written code.
 
-Two paper tables, both keyed on **fixtures.fixture_role** -- setup /
-teardown / setup_and_teardown / other. This is a persisted DB column, set
-once at *extraction* time (not computed here) by
-`detector_shared._classify_fixture_kinds()` for every fixture type except
-`pytest_decorator`, plus `detector_python._detect_python()`'s own direct
-body-analysis classification for `pytest_decorator` -- see those two
-functions' docstrings for the exact per-type rules and why `pytest_decorator`
-needs its own mechanism (type/name alone can't split it: every pytest
-fixture is just named whatever the developer called it; see
-internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md).
-This module just reads the column and renders it -- no classification logic
-lives here, so a dataset's `fixture_role` numbers are identical
-regardless of when its RQ3 report is (re)generated relative to extraction.
+Each fixture has a `fixture_role`: setup, teardown, setup_and_teardown or other.
 
-Table 1's Setup/Teardown columns and Table 2's teardown-coverage indicator
-both treat a `setup_and_teardown`-classified fixture as counting toward
-*both* setup and teardown -- it genuinely provides both, so excluding it
-from either column would undercount that dataset's real setup/teardown
-provision.
+Table 1 gives the counts of setup and teardown fixtures per language. It has no
+test.
 
-**Table 1 (tab:rq3-counts) -- absolute fixture counts**
-(`_render_kind_counts_table()`): purely descriptive, no statistics. For
-each language and a Total row, the raw count of setup-classified and
-teardown-classified fixtures in each dataset, each also shown as a
-percentage of that language's *answerable* fixture count -- setup +
-teardown + setup_and_teardown, excluding 'other' entirely from both the
-counts and the percentage denominator (see `_answerable_total()`'s
-docstring for why: an 'other'-classified fixture, e.g. a JUnit `@Rule` or
-a TestNG `@DataProvider`, was never a setup/teardown candidate to begin
-with, so it shouldn't dilute the rate at which the *answerable* fixtures
-were classified one way or the other). Total is the dataset-wide sum
-across every language present, not just the four rows shown.
+Table 2 gives teardown coverage: for each repository, whether it has at least
+one teardown fixture. The table shows the share of repositories with a
+teardown, per language and overall. It has no test.
 
-**Table 2 (tab:rq3-coverage) -- teardown coverage**
-(`_render_teardown_coverage_table()`): for each repo, a binary indicator
--- does it have >=1 teardown-classified fixture at all (1) or none (0)?
-"Coverage A/C (%)" is just the mean of that 0/1 list per side, per
-language and Overall. Population (and n_A/n_C): repos with >=1
-setup/teardown/other-classified fixture (a repo with zero classified
-fixtures is skipped, not counted as 0-coverage). **Purely descriptive --
-no statistical test** (removed
-2026-09-27, alongside RQ4's Coverage/Intensity test and Intensity metric
-entirely: the paper's RQ3/RQ4 coverage tables report plain percentages,
-no p-value, no effect size, no BH-FDR family. RQ2 is now the only script
-in this package that performs BH-FDR correction at all -- see
-[internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md)
-for the full before/after inventory).
+A supplementary table shows how each fixture was classified, per language.
 
-Both tables render a fixed four-language row order (java, javascript,
-python, typescript) rather than this package's usual "intersection of
-languages present on both sides" convention (`compute_stratified_*_
-balance()`) -- a deliberate simplification matching the paper's table
-spec, predating the statistical-test removal above and unaffected by it.
-
-These two tables replace the single, previously-reported repo-level
-median setup_pct/teardown_pct/other_pct proportion table (Mann-Whitney U
-+ Cliff's delta on per-repo *proportions*, "V" labeled for paper-column
-consistency though the number was Cliff's delta) -- the paper first
-settled on two narrower tables (one purely descriptive, one
-inferential-but-simpler: a binary coverage rate instead of a continuous
-proportion), then dropped the inferential half of Table 2 too (see
-above). `compare_categorical_repo_level()`/
-`repo_level_category_proportions()` (formerly in `_shared.py`) were
-never used by rq3.py's own Table 2 (a plain per-repo mean needs no
-repo-declustering machinery of its own) -- both were removed from the
-package entirely on 2026-09-27, once rq2.py's `fixture_type` repo-level
-test (their only remaining caller anywhere) was also removed; see
-rq2.py's module docstring for that removal's full rationale.
-
-A vs C only; see rq2.py's module docstring.
-
-## Supplementary analyses (not part of either main table)
-
-**Setup coverage by repository and the unimodality check were both
-removed entirely (2026-09-27)**, after a review of which computed
-tables/tests actually feed the paper concluded neither did: setup
-coverage was already documented as "not one of the two paper tables"
-(it sat near-ceiling for 3 of 4 languages, so it never carried the kind
-of cross-language story Table 2 does -- the one real finding it turned
-up, a significant java gap (94.5% A vs 84.0% H, BH-corrected p=0.012),
-is recorded here rather than in a table: if this needs re-deriving,
-`_effective_setup_count()`/`_setup_coverage_indicators()`-shaped logic
-is what produced it, mirroring `_render_teardown_coverage_table()`
-exactly but for setup instead of teardown). The dip test's own docstring
-already flagged it as "not an A vs C comparison test" and kept only in
-case it "may still be cited in prose" -- removed once that never
-happened. Removing both also drops the `diptest` package as a project
-dependency (see `_shared.py`'s `run_dip_test()`, now itself removed) and
-one BH-FDR correction family per table (setup coverage's own
-Overall+4-language family) that this report no longer needs to compute.
-
-**Fixture kind classification coverage by language**
-(`_render_kind_classification_coverage_table()`): breaks Table 1's pooled,
-dataset-wide `other` percentage (see "Per-dataset summary" above) out per
-language instead, since `other` is not spread evenly -- e.g. `junit_rule`/
-`junit_class_rule`/`testng_data_provider` (java-only fixture types that
-aren't inherently setup or teardown) make java's `other` share far higher
-than javascript/typescript's (near 0%) or python's (negligible). Table 1
-excludes 'other' from its own denominator entirely (see
-`_answerable_total()`'s docstring), so this table isn't explaining a
-dilution of Table 1's percentages -- it's showing how much of each
-language's fixture population Table 1 is silently *not describing at
-all*: a language with a high `other` share has that much smaller a slice
-of its real setup/teardown-relevant fixtures represented anywhere in
-Table 1's counts. Worth checking on every future dataset extraction (a
-new language or framework can introduce its own unclassifiable fixture
-types), not just once at paper-writing time -- hence a permanent report
-section rather than a one-off query.
-
-`has_teardown_pair` (a separate fixtures-table column that used to exist
-alongside `fixture_role`) was never analyzed by this script -- it has
-since been dropped from the extracted metric set entirely (not reported in
-the paper). `fixture_role` above is unaffected: it's computed by its
-own, independent teardown-detection pass at extraction time.
-
-A dataset is skipped (not an error) if its db/{dataset}.db does not exist
-yet.
-
-python -m collection.research_questions.rq3
+Writes `research_questions/rq3.md`. Run with `python -m collection.research_questions.rq3`.
 """
 
 from __future__ import annotations

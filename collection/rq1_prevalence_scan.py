@@ -1,83 +1,23 @@
-"""RQ1 (Fixture Prevalence) data collection: how common are tests, fixtures,
-setup, and teardown across the *raw* ~24.7k-repo universe in
-`github-search-raw/*.csv.gz`, independent of any Dataset A/B/C filtering?
+"""RQ1 (fixture prevalence) data collection.
 
-Deliberately separate from the Dataset A/B/C pipeline -- this is not a 4th
-dataset. Every artifact here is `rq1_`/`rq1-`-prefixed so it can never be
-mistaken for part of that pipeline: this module (`rq1_prevalence_scan.py`,
-not wired into the `--dataset {a,b,c}` verb system -- run directly via
-`python -m collection.rq1_prevalence_scan`), its database (`db/
-rq1_prevalence.db`, never `db/{a,b,c}.db`), and its CSV output
-(`rq1-prevalence/`, a sibling of `datasets/`, not nested inside it).
-`collection/research_questions/rq1.py` is the only other thing that reads
-this db -- it renders the two paper tables from it, same role rq2.py/rq3.py/
-rq4.py play for db/a.db + db/c.db.
+Counts tests, fixtures, setups and teardowns across the raw repository list in
+`github-search-raw/*.csv.gz`. The scan is separate from the Dataset A and C
+pipeline and is not one of its verbs. It writes `db/rq1_prevalence.db` and
+`rq1-prevalence/*.csv`.
 
-**Temporal pinning (2026-09-xx methodology discussion):** Dataset A and C
-were both collected within hours of each other, `db/a.db`/`db/c.db`'s
-`repositories.collected_at` maxing at 2026-09-07/2026-09-08. Scanning this
-raw universe at "whenever this script happens to run" would let every repo
-accrue a few more weeks of commits that A/C never saw, skewing this RQ's
-numbers slightly ahead of the rest of the paper's reference point. So this
-scan pins every repo to the same `RQ1_CUTOFF_DATE` instead of current HEAD
--- a shallow clone bounded by `RQ1_SHALLOW_SINCE` (verified non-truncated,
-falls back to a full clone automatically if it was -- see
-`clone_primitives.clone_repo_for_commit_scan`), then `dataset_c.
-find_cutoff_commit()` (already a plain `cutoff_date` parameter, not
-hardcoded to Dataset C's own cutoff) finds the latest commit at or before
-that date, which gets checked out before scanning.
+Each repository is checked out at its last commit on or before
+`RQ1_CUTOFF_DATE`, so the counts match the date used for Datasets A and C. The
+clone is shallow, bounded by `RQ1_SHALLOW_SINCE`. A shallow clone can hide the
+right commit, so when no commit is found in a shallow clone, the clone is redone
+in full before "no commit" is recorded (`_resolve_cutoff_commit()`).
 
-**Why counts are grouped by the repo's own tagged language, not each
-fixture's own detected language:** unlike Dataset C's cross-language-
-leakage handling (`find_test_files_with_language()`), this scan uses
-`find_test_files_at_commit(repo_path, language=repo_language)` --
-restricted to one language. A stray test file in a different language than
-the repo's own tag is simply not counted at all, rather than leaking into
-a different language's bucket. This keeps each language row's denominator
-exactly "repos SEART tagged as that language," with no double-counting
-risk across Table 1/2's four language rows.
+Test files are matched only for the repository's own language tag. A test file
+in another language is not counted.
 
-**Production incident (2026-10-02, part 3 -- shallow clone hid the true
-cutoff commit for most of the "no commit at or before cutoff" bucket):**
-`RQ1_SHALLOW_SINCE` (2026-07-01) sits over 2 months *before*
-`RQ1_CUTOFF_DATE` (2026-09-08), deliberately, so a truncated-but-trusted
-shallow clone can't accidentally hide a real cutoff candidate close to the
-boundary. But `clone_primitives._shallow_clone_is_truncated()` only
-detects one specific failure mode: a shallow-boundary commit whose true
-parent is *itself inside* the requested window (a graft hiding an
-in-window commit). It does **not** detect a different, and in this run
-far more common, failure mode: a repo with zero commits anywhere in
-`[RQ1_SHALLOW_SINCE, RQ1_CUTOFF_DATE]` at all. For such a repo, the
-`--shallow-since` clone's earliest visible commit is already *after*
-`RQ1_CUTOFF_DATE`, so `find_cutoff_commit()` correctly finds no candidate
-*inside that clone* -- but the real answer (a commit before
-`RQ1_SHALLOW_SINCE`) sits just outside the shallow boundary, never
-fetched at all. Confirmed directly: of 25 repos sampled from this run's
-"no_commit_at_or_before_cutoff" rows, all 25 turned out to have a real
-commit before `RQ1_CUTOFF_DATE` once cloned in full -- this bug, not a
-quiet period, was almost certainly the cause for the overwhelming majority
-of that bucket. `_resolve_cutoff_commit()` closes this: whenever
-`find_cutoff_commit()` finds nothing AND the clone is shallow
-(`.git/shallow` exists), the clone is discarded and redone in full before
-"no commit found" is trusted. Repos that *did* get a cutoff commit from a
-shallow clone were never at risk of a wrong (too-early) answer from this
-bug -- by construction, if the true latest-commit-before-cutoff existed
-inside the shallow window, it would have been found correctly; the bug
-only ever produces a false *negative*, never a false commit SHA. Fixed
-retroactively via `retry_failed_repos()` against the already-collected db
-(see that function's own docstring) rather than a from-scratch re-run.
+Only counts are stored. A `setup_and_teardown` fixture counts as both a setup
+and a teardown.
 
-Deliberately NOT persisting fixture-level rows (raw_source, LOC, cyclomatic
-complexity, mocks, ...) -- RQ1 only needs counts, so storing ~24.7k repos'
-worth of full fixture metrics would be pure waste. `fixture_role` (setup/
-teardown/setup_and_teardown/other) is read off each extracted fixture
-dict (already computed at extraction time by the shared extractor) and
-immediately folded into `num_setup`/`num_teardown`, nothing else is kept.
-A `setup_and_teardown` fixture counts toward *both* -- same convention
-`research_questions/rq3.py` already uses for its own setup/teardown
-tables, for consistency.
-
-python -m collection.rq1_prevalence_scan
+Run with `python -m collection.rq1_prevalence_scan`.
 """
 
 from __future__ import annotations
@@ -132,8 +72,7 @@ DEFAULT_WORKERS = 12
 
 # Hard wall-clock budget for one repo's entire process_repo() call (clone +
 # checkout + find_cutoff_commit + scan_working_tree). See
-# run_with_deadline()'s docstring for the production incident (2026-10-02)
-# that made this necessary: every individual git subprocess call already
+# run_with_deadline()'s docstring: every individual git subprocess call already
 # has its own timeout, but find_cutoff_commit()'s PyDriller traversal and
 # scan_working_tree()'s tree-sitter parsing had none -- a single repo stuck
 # in either eventually exhausts run_parallel_per_repo()'s entire fixed-size
@@ -330,35 +269,12 @@ def _result_row(
 
 
 def github_auth_env(token: str = GITHUB_TOKEN) -> dict[str, str]:
-    """Extra env vars authenticating every git clone in this scan against
-    GitHub, when a token is available -- `{}` (unauthenticated, same as
-    before) otherwise.
+    """Extra env vars that authenticate every git clone in this scan, when a
+    token is available. `{}` otherwise.
 
-    Production incident (2026-10-02, part 1): running unauthenticated at
-    `--workers 16` for ~2 hours, the java chunk succeeded at ~97%, but the
-    following javascript chunk collapsed to ~10% -- GitHub throttling
-    sustained high-volume unauthenticated clone traffic from one IP.
-    Repos that failed on the server cloned instantly from an unrelated
-    machine with the exact same command, confirming it was IP-level
-    throttling, not the repos.
-
-    Production incident (2026-10-02, part 2 -- the first fix was itself
-    wrong): the first version of this function sent `Authorization:
-    Bearer <token>`, which works for GitHub's REST API but is REJECTED by
-    GitHub's git-over-HTTPS smart-HTTP endpoint with `remote: invalid
-    credentials` / `fatal: Authentication failed` -- confirmed directly.
-    That made every authenticated clone attempt fail instantly rather
-    than slowly, which is exactly how an entire resumed run (java already
-    done, the rest of javascript plus all of python and typescript)
-    finished in ~13 minutes with 100% failures instead of the many hours
-    it should have taken -- a worse outcome than being unauthenticated,
-    confirmed by directly reproducing both the broken `Bearer` scheme and
-    the correct one against a real clone. GitHub's git HTTP auth wants
-    HTTP Basic, not Bearer: `Authorization: Basic
-    base64("x-access-token:<token>")` -- any non-empty username works,
-    `x-access-token` matches GitHub's own documented convention for
-    token-based git auth. Confirmed working directly (real clone, exit 0)
-    before trusting this a second time.
+    GitHub's git-over-HTTPS endpoint takes HTTP Basic auth, not Bearer:
+    `Authorization: Basic base64("x-access-token:<token>")`. The Bearer
+    scheme used by the REST API is rejected there.
 
     Injects the header via the `GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_0`/
     `GIT_CONFIG_VALUE_0` env-var mechanism (git >= 2.31) rather than a
@@ -388,26 +304,13 @@ def _full_clone_with_timeout(
     timeout: int = FALLBACK_CLONE_TIMEOUT_SECONDS,
     extra_env: dict[str, str] | None = None,
 ) -> bool:
-    """A plain (non-shallow) clone with an explicit, tight timeout -- used
-    only as `_clone_with_shallow_fallback()`'s own second attempt, never
-    as a general-purpose clone primitive.
+    """A plain (non-shallow) clone with a tight timeout. Used only as the
+    second attempt of `_clone_with_shallow_fallback()`.
 
-    Deliberately does NOT call `clone_repo_for_commit_scan(shallow_since=
-    None)` for this: that function's own timeout is a hardcoded 300s, and
-    it can itself internally retry once more (on a truncated-but-
-    succeeded shallow clone), chaining up to ~600s before ever returning
-    to its caller. A toy run (2026-10-02) showed one repo taking 673s
-    total under concurrent load, yet cloning the exact same repo in
-    isolation -- both shallow and full -- took under 10s each; the cost
-    is from contention stacking multiple 300s-bounded attempts, not any
-    single repo being genuinely hard to clone. This function exists to
-    bound *this scan's own* contribution to that worst case tightly
-    (real clones complete in single-digit seconds even for sizable repos,
-    so `FALLBACK_CLONE_TIMEOUT_SECONDS` is already generous) without
-    touching the shared, already-proven `clone_primitives.py` that
-    Dataset A/B/C depend on -- reuses its `run_git_no_prompt()`/
-    `_output_requests_credentials()` building blocks instead of
-    duplicating that safety logic.
+    It does not call `clone_repo_for_commit_scan(shallow_since=None)`, because
+    that function has a longer timeout and may retry internally. This keeps
+    the worst case for one repository bounded. It reuses the no-prompt and
+    credential helpers from `clone_primitives.py`.
     """
     try:
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -447,20 +350,10 @@ def _clone_with_shallow_fallback(
     activity); if it fails outright, fall back to one tightly-timed-out
     full clone attempt (`_full_clone_with_timeout()`).
 
-    `clone_repo_for_commit_scan()` already retries as a full clone when a
-    shallow clone *succeeds but is truncated* (`_shallow_clone_is_truncated`)
-    -- this covers the other failure mode it doesn't: git can fail hard
-    (observed: "fatal: error processing shallow info: 4") when
-    `shallow_since` lands after EVERY commit the repo actually has, which
-    is common and unremarkable -- most of this scan's ~24.7k-repo universe
-    isn't necessarily active as of `shallow_since`, not just pathological
-    repos. Empirically ~47% of a random sample hit this on a first pass
-    (toy run, 2026-10-01) -- and a full clone of one of them took 4.6s and
-    51MB, confirming these are ordinary repos, not large/complex-history
-    ones. A genuinely pathological repo (e.g. an AOSP mirror) is still
-    expected to fail or time out on the full-clone fallback too -- a
-    bounded, acceptable cost for a rare case, not a reason to skip the
-    fallback for the common one.
+    A shallow clone can fail outright when `shallow_since` is after every
+    commit in the repository. In that case the full-clone fallback is used.
+    A repository that is still too large or slow to clone fails here, which is
+    accepted.
     """
     if clone_repo_for_commit_scan(
         clone_url, target_dir, shallow_since=shallow_since, extra_env=extra_env
@@ -478,24 +371,14 @@ def _resolve_cutoff_commit(
     *,
     extra_env: dict[str, str] | None = None,
 ) -> dict[str, str] | None:
-    """`find_cutoff_commit(repo_path, cutoff_date)`, but never trusts a
-    `None` result coming from a still-shallow clone (`.git/shallow`
-    exists) -- see this module's "Production incident ... part 3"
-    docstring section for the exact failure mode: a repo with zero
-    commits inside `[shallow_since, cutoff_date]` has every commit in its
-    shallow clone falling *after* `cutoff_date`, so `find_cutoff_commit()`
-    correctly finds nothing *in that clone*, while the real
-    latest-commit-before-cutoff sits just outside the shallow boundary,
-    never fetched. On that ambiguous `None`, this discards the shallow
-    clone and redoes it as a full clone before accepting "no commit
-    found" as the real answer. A `None` from an already-full clone
-    (`.git/shallow` absent) is trusted immediately -- that's a genuine
-    answer, not an artifact of the shallow boundary.
+    """`find_cutoff_commit(repo_path, cutoff_date)`, with one change: a `None`
+    from a shallow clone is not trusted. The clone is redone in full first.
 
-    Returns `None` if there is genuinely no commit at or before
-    `cutoff_date` (full history checked), or if the full-clone retry
-    itself fails (network/size/timeout) -- the caller can't distinguish
-    those two in isolation, but both correctly result in `clone_ok=0`.
+    A repository with no commit inside the shallow window looks the same as
+    one with no commit before the cutoff. The full clone tells them apart.
+
+    Returns `None` if there is no commit at or before `cutoff_date`, or if the
+    full-clone retry fails. Both give `clone_ok=0`.
     """
     cutoff = find_cutoff_commit(repo_path, cutoff_date=cutoff_date)
     if cutoff is not None:
@@ -683,18 +566,9 @@ def run_with_deadline(
     """Run `fn(*args, **kwargs)` with a hard wall-clock deadline. Returns
     `(True, result)` if it finished in time, `(False, None)` if not.
 
-    Production incident (2026-10-02): `process_repo()`'s git/network steps
-    are all individually timeout-bound (clone, checkout), but
-    `find_cutoff_commit()`'s PyDriller commit-history walk and
-    `scan_working_tree()`'s tree-sitter parsing are pure in-process Python/
-    C-extension work with no timeout at all. A real run froze for 6+ hours
-    on exactly this: the process stayed alive and CPU-bound, but with zero
-    git subprocess running and zero progress, because one repo's extraction
-    step never returned. Worse than just one stuck repo: `run_parallel_per_
-    repo()`'s `ThreadPoolExecutor` has a *fixed* worker count -- a thread
-    that never returns permanently removes one worker from the pool, so
-    over enough repos this eventually exhausts every worker and the whole
-    scan stalls forever, exactly as happened.
+    Git steps have their own timeouts. Parsing and history walks inside the
+    process do not. A stuck call there blocks its worker thread for good, and
+    the pool shrinks by one. This function bounds those calls.
 
     This runs `fn` in a daemon thread and only waits up to `timeout_seconds`
     for it. If it doesn't finish in time, this function gives up and
@@ -784,7 +658,7 @@ def run_scan(
             return result
         logger.warning(
             "[RQ1 scan] %s exceeded the %ds per-repo deadline -- abandoning "
-            "(the underlying work keeps running orphaned, but no longer "
+            "(the underlying work keeps running in the background, but no longer "
             "blocks the scan)",
             repo["repo_name"],
             process_repo_timeout_seconds,
@@ -871,15 +745,9 @@ def run_scan(
     return {"total": len(universe), "already_done": len(already_done), "scanned_this_run": len(pending)}
 
 
-# error_reasons worth re-attempting: all three are plausibly an artifact of
-# the clone/network/timing step itself, not a property of the repo's real
-# history -- "no_commit_at_or_before_cutoff" per the module docstring's
-# "part 3" incident (now fixed via _resolve_cutoff_commit()), "clone_failed"/
-# "timeout" as ordinary transient network/contention failures. A
-# "scan_failed: ..." reason (e.g. the ENAMETOOLONG cases seen in the real
-# run) is deliberately excluded here -- that is a deterministic local-
-# filesystem limitation that will fail identically on every retry, not a
-# one-off worth spending a retry attempt on.
+# Error reasons worth retrying. They come from the clone, network or timing
+# step, not from the repository's history. "scan_failed: ..." is left out: a
+# local filesystem limit fails the same way on every retry.
 REPAIRABLE_ERROR_REASONS: tuple[str, ...] = (
     "no_commit_at_or_before_cutoff",
     "clone_failed",
@@ -931,8 +799,7 @@ def retry_failed_repos(
     """Re-attempt every repo currently recorded with one of `error_reasons`
     (default: `REPAIRABLE_ERROR_REASONS`) against the *already-collected*
     db, rather than a from-scratch re-run of all ~24.7k repos -- a cheap,
-    targeted repair pass for the "part 3" incident (see module docstring)
-    plus ordinary transient clone failures/timeouts.
+    targeted repair pass for shallow-clone misses and transient clone failures.
 
     Each repo is re-run through the exact same `process_repo()` (now using
     the fixed `_resolve_cutoff_commit()`) and persisted via the same
@@ -1048,8 +915,7 @@ def main() -> None:
         logger.warning(
             "[RQ1 scan] No GITHUB_TOKEN found -- cloning unauthenticated. "
             "A sustained high-volume run is likely to hit GitHub's abuse "
-            "rate limiting (see github_auth_env()'s docstring for the "
-            "2026-10-02 incident this caused)."
+            "rate limiting."
         )
     if args.retry_failed:
         counts = retry_failed_repos(workers=args.workers, extra_env=extra_env)
