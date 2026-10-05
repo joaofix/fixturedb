@@ -360,20 +360,38 @@ def test_files_csv_has_boundary_comment_line():
     with _FILES_CSV_PATH.open("r", encoding="utf-8") as fh:
         raw_lines = fh.readlines()
     comment_lines = [line for line in raw_lines if line.lstrip().startswith("#")]
-    assert len(comment_lines) == 1
-    assert "own addition" in comment_lines[0]
-    assert "snapshotted verbatim on" in comment_lines[0]
+    boundary = [line for line in comment_lines if "own addition" in line]
+    assert len(boundary) == 1
+    assert "snapshotted verbatim on" in boundary[0]
+    disabled_note = [line for line in comment_lines if "Disabled" in line]
+    assert len(disabled_note) == 1
+    assert "Devin and Cline" in disabled_note[0]
 
 
-def test_files_csv_first_94_rows_are_upstream_verbatim():
-    """The file's first 94 data rows must be labri-progress/agent-mining's
+def test_files_csv_devin_and_cline_rows_are_disabled():
+    """Devin and Cline are disabled for Dataset A: their config-file patterns
+    collide with real human names and folder names. The rows stay in the file
+    as commented-out lines, so a reviewer can see what was turned off."""
+    rows = _read_files_csv_rows()
+    assert not any(row["tool"] in ("Devin", "Cline") for row in rows)
+    with _FILES_CSV_PATH.open("r", encoding="utf-8") as fh:
+        raw = fh.read()
+    for disabled in (".devin/,Devin,,", ".clinerules,Cline,,", ".cline/,Cline,,",
+                     "memory-bank/,Cline,,", "memory_bank/,Cline,,"):
+        assert f"\n#{disabled}\n" in raw, disabled
+
+
+def test_files_csv_first_89_rows_are_upstream_verbatim():
+    """The file's first 89 active data rows must be labri-progress/agent-mining's
     files.csv content, unmodified and in its original order -- this is the
     whole point of the CSV (a reviewer-checkable citation), not just a
     convenient format. Spot-checks a sample spanning the full file rather
-    than asserting all 94 rows verbatim, so the test doesn't itself become
+    than asserting all rows verbatim, so the test doesn't itself become
     an unreadable copy of the source file.
 
-    94, not upstream's original 95: this project removed upstream's
+    89 active rows = upstream's 94 minus the five Devin/Cline rows, which are
+    commented out (see test_files_csv_devin_and_cline_rows_are_disabled).
+    Upstream's original block is 95 rows: this project removed upstream's
     "CURSOR.md" row on 2026-07-15 after Dataset A validation sampling found
     it producing confirmed false positives (matching unrelated files
     literally named cursor.md -- CSS "cursor"-property docs, a blog post
@@ -385,8 +403,8 @@ def test_files_csv_first_94_rows_are_upstream_verbatim():
     Limitations section.
     """
     rows = _read_files_csv_rows()
-    upstream_rows = rows[:94]
-    assert len(upstream_rows) == 94
+    upstream_rows = rows[:89]
+    assert len(upstream_rows) == 89
     assert not any(row["pattern"] == "CURSOR.md" for row in rows), (
         "CURSOR.md should have been removed as an unverified, "
         "false-positive-prone upstream entry -- see boundary comment"
@@ -401,9 +419,9 @@ def test_files_csv_first_94_rows_are_upstream_verbatim():
         assert any(
             row["pattern"] == expected["pattern"] and row["tool"] == expected["tool"]
             for row in upstream_rows
-        ), f"upstream row {expected} not found verbatim in the first 94 rows"
-    # Last upstream row must be the final row of the 94-row block, proving
-    # the appended rows come strictly after it.
+        ), f"upstream row {expected} not found verbatim in the first 89 rows"
+    # Last active upstream row must be the final row of the upstream block,
+    # proving the appended rows come strictly after it.
     assert upstream_rows[-1] == {
         "pattern": ".superpowers/",
         "tool": "Superpowers",
@@ -423,10 +441,10 @@ def test_files_csv_our_addition_is_appended_after_upstream_block():
     directory-marker pattern (.claude/, .cursor/, .openhands/, .devin/,
     .cline/ match regardless of what's inside them). CURSOR.md is not
     replaced with anything here -- it was an upstream row this project
-    removed (see test_files_csv_first_94_rows_are_upstream_verbatim), not
+    removed (see test_files_csv_first_89_rows_are_upstream_verbatim), not
     an addition being appended."""
     rows = _read_files_csv_rows()
-    our_additions = rows[94:]
+    our_additions = rows[89:]
     assert our_additions == [
         {"pattern": ".cursorignore", "tool": "Cursor", "start_date": "", "end_date": ""}
     ]
