@@ -109,13 +109,10 @@ def collect_test_files_for_commit(
     # commit.modified_files is a property that computes the diff (a `git
     # diff-tree` subprocess call) the moment it's accessed here -- not
     # lazily per-item, so this needs its own try/except, separate from
-    # traverse_commits()'s above. Real incident (2026-08-12): a repo's
-    # --filter=blob:limit=10m partial clone needed to fetch a filtered-out
-    # blob on demand for this specific diff, that fetch failed, and
-    # GitCommandError propagated straight out of this loop uncaught --
-    # crashing the whole extract-fixtures run over one commit's diff,
-    # exactly the kind of single-commit failure traverse_commits()'s own
-    # try/except was already built to absorb.
+    # traverse_commits()'s above. A partial clone (--filter=blob:limit=10m)
+    # can fail to fetch one blob for a single commit's diff. That failure must
+    # not stop the whole extract-fixtures run, as traverse_commits() also
+    # guarantees.
     try:
         modified_files = commit.modified_files
     except Exception:

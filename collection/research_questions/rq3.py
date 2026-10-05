@@ -317,8 +317,7 @@ def _coverage_pct(indicators: list[float]) -> float | None:
 def _render_teardown_coverage_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """Table 2 (tab:rq3-coverage): % of repos with >=1 teardown-classified
     fixture, per language and Overall. Purely descriptive -- no
-    statistical test (removed 2026-09-27, see this module's docstring for
-    why RQ3 no longer reports one)."""
+    statistical test."""
     other_label = other.dataset.upper()
     lines = [
         "Per-repository binary coverage: 1 if a repo has >=1 teardown-"

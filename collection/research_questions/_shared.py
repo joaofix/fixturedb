@@ -230,12 +230,8 @@ def compute_stratified_continuous_balance(
     variable: str,
 ) -> dict[str, BalanceTest]:
     """Per-language Mann-Whitney U + Cliff's delta, restricted to languages
-    with data on both sides. RQ2's only remaining per-language stratified
-    test as of 2026-09-27 -- the categorical analogue,
-    compute_stratified_categorical_balance(), was removed the same day
-    once its last two consumers (RQ2's fixture_type fixture-level
-    chi-square, RQ4's Legacy has_mock chi-square) were both gone (same
-    rationale as this function: a pooled comparison can look significant
+    with data on both sides. The categorical analogue is not in use. A pooled
+    comparison can look significant
     purely because the two datasets have different language mixes; this
     checks whether the difference holds *within* a language).
     `a_values_by_language`/

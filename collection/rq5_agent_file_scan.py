@@ -930,11 +930,8 @@ def prune_removed_keywords(
     consistent with that (smaller) catalog version -- correct to do
     unconditionally, since every repo's results shrink identically.
 
-    Used once for catalog v1 -> v2 (see that YAML's own changelog
-    comment for why "before each"/"after each"/"before all"/"after all"
-    were removed) -- kept as a real, tested function rather than a
-    throwaway script, so the same correction is available again if a
-    future audit finds another keyword worth dropping.
+    Removes keywords from an existing match set without a new scan. It is
+    kept so that a later audit can drop another keyword the same way.
     """
     has_col = f"has_{keyword_list}"
     count_col = f"{keyword_list}_match_count"

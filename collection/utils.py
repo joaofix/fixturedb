@@ -77,11 +77,8 @@ def detect_agent_in_commit(
     Used by `Tier1RepositoryScanner` in tiered_agent_corpus_scanner.py --
     the sole agent-detection method now that Tier 2 (a second,
     independently-maintained copy of this same priority order in
-    agent_signal_primitives.py's `AgentCommitVerifier`) has been removed.
-    That duplication had previously drifted out of sync (see
-    tiered_agent_corpus_scanner.py's `_is_test_file_path` docstring for the
-    same failure mode elsewhere in this codebase) -- one reason Tier 2's
-    removal simplifies things, not just because it went unused.
+    agent_signal_primitives.py's `AgentCommitVerifier`) is not used. A second
+    copy would drift out of sync.
 
     Matching is word-boundary-based (not a bare substring check),
     case-insensitive. This prevents a keyword from matching inside an
@@ -103,10 +100,8 @@ def detect_agent_in_commit(
     employees committing under an @cline.bot work email with no way to tell
     bot from human. The broad "devin"/"devin ai" patterns were this
     project's own redundant addition -- the upstream "devin-ai-integration"
-    bot-identity pattern already catches every real Devin AI commit -- so
-    both were removed from agent_authors.csv entirely rather than patched
-    case-by-case. See docs/architecture/agent-detection.md's Known
-    Limitations for the full reasoning.
+    bot-identity pattern already catches every real Devin AI commit. Both are
+    absent from agent_authors.csv. See docs/architecture/agent-detection.md.
     """
     if is_bot_author(f"{author_name} {author_email}"):
         return None

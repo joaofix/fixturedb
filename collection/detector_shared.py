@@ -408,15 +408,10 @@ def _build_result(
     """Build a FixtureResult from a single node spanning the whole fixture.
 
     Every metric (line range, raw_source, mocks, complexity) is derived
-    from this one node. Python's pytest-decorator detection used to pass a
-    wider `decorated_definition` node for the line range/mocks scan while
-    using the bare `function_definition` for raw_source/complexity -- so a
-    fixture's reported line range disagreed with its own raw_source text by
-    exactly the decorator line, and a `MagicMock()` call sitting in the
-    decorator's own arguments (e.g. `@pytest.fixture(params=[...])`) leaked
-    into that fixture's mocks even though it isn't part of the fixture
-    body. Callers now always pass the fixture's own function/method node
-    (decorator excluded), never the decorated wrapper.
+    from this one node. Callers pass the fixture's own function or method node,
+    never the decorated wrapper. The decorator is not part of the fixture body,
+    so a call in its arguments (e.g. `@pytest.fixture(params=[...])`) is not a
+    mock of the fixture.
     """
     src_text = _source(func_node, src_bytes)
     name_node = _find_name_node(func_node)
@@ -476,11 +471,8 @@ def fixture_result_to_dict(
     Four call sites (agent_fixture_extractor.py's
     `_extract_from_commit`/`_extract_from_snapshot_file`,
     pre2021_fixture_extractor.py's `_extract_from_repo`, and
-    fixture_extractor.py's `extract_fixtures_at_commit`) hand-rolled its own
-    ~20-key dict literal from the same FixtureResult fields, with nothing
-    enforcing the four stayed in sync -- a new FixtureResult field added
-    later could easily be wired into one call site and silently forgotten
-    in the other three.
+    fixture_extractor.py's `extract_fixtures_at_commit`) use this one
+    function. A field added to FixtureResult is then written by all four.
     """
     return {
         "name": fixture.name,

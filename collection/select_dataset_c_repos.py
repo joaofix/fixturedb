@@ -7,7 +7,7 @@ HUMAN_CORPUS_CUTOFF_DATE and writes every qualifying repo straight to
 datasets/c/repos/{lang}_repo.csv (plus a combined all.csv) -- no domain
 classification, no stratification, no per-language cap. The date window
 itself is what bounds fixture-age risk and candidate volume; a proportional
-sample on top of it is no longer needed. See
+sample on top of it is not needed. See
 internal-docs/methodology-improvements/dataset-c-repo-selection.md for why.
 
 The actual repo quality floor (commit count, test file count) is enforced
@@ -65,9 +65,9 @@ def select_repos(
     github_id is carried through from the raw CSV's own "id" column
     (SEART/GitHub's real numeric repo ID) -- this is the uniqueness key
     the repositories table's github_id UNIQUE constraint relies on.
-    Discarding it (as this function used to) means every repo defaults to
-    github_id=0 downstream and collides on that constraint, silently
-    collapsing an entire collection run's repos into a single DB row. See
+    Discarding it means every repo defaults to github_id=0 downstream and
+    collides on that constraint, collapsing an entire collection run's repos
+    into a single DB row. See
     internal-docs/methodology-improvements/dataset-c-repo-selection.md.
     """
     selected: list[dict] = []

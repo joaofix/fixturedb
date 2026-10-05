@@ -6,12 +6,9 @@ attributing an RQ2-4 metric difference to era (A vs C)?
 This exists because the methodology described in docs/data/dataset-card.md's
 "Balance Tests" section and docs/reference/limitations.md's "Control
 Variable Balance" section was never actually wired up against the current
-db/{a,c}.db files. The original comparator class that used to sit next to
-these test functions (collection/between_group_comparison.py) read from a
-`between-group.db` that never existed and was never wired into the CLI, so it
-has been removed; the test primitives remain. The docs claimed a balance
-report exists (`between_group_comparison_*.json`); that file has never
-existed in this repo's history.
+db/{a,c}.db files. The comparator class in collection/between_group_comparison.py
+read a `between-group.db` that never existed, so it was removed. The test
+primitives remain.
 
 Run for real (2026-07-31) against the current corpora: domain and
 repo_age_years were NOT balanced for A vs C (p < 1e-7). This script reports
