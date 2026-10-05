@@ -3,7 +3,7 @@ Quantitative EDA Scripts
 ========================
 
 Pure statistical and analytical plots suitable for publication in
-ICPC 2027's Research Track.
+publication.
 
 Includes:
 - Corpus composition (repo and fixture counts)

@@ -41,7 +41,6 @@
 
 FixtureDB: A Multi-Language Dataset of Test Fixture Definitions from Open-Source Software
 João Almeida, Andre Hora
-ICPC 2027 — Research Track
 
 ## License
 

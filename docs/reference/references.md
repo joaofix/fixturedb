@@ -50,12 +50,9 @@ Hora, A. (2026). *GitEvo: Code Evolution Analysis for Git Repositories.* MSR 202
 ## How to Cite FixtureDB
 
 ```bibtex
-@inproceedings{Almeida2027,
+@misc{Almeida,
   author = {Almeida, João and Hora, Andre},
-  title = {FixtureDB: A Multi-Language Dataset of Test Fixture Definitions from Open-Source Software},
-  booktitle = {Proceedings of the 2027 IEEE/ACM International Conference on Program Comprehension (ICPC 2027)},
-  year = {2027},
-  note = {Research Track}
+  title = {FixtureDB: A Multi-Language Dataset of Test Fixture Definitions from Open-Source Software}
 }
 ```
 

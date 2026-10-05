@@ -1,7 +1,7 @@
 """
 FixtureDB — Quantitative EDA
 ============================
-Analysis-ready statistical plots for publication in ICPC 2027's Research Track.
+Analysis-ready statistical plots for publication.
 
 Only includes purely quantitative and statistical results that do not depend
 on subjective interpretation of the data.
@@ -71,7 +71,7 @@ DEFAULT_OUT = ROOT / "output" / "eda" / "quantitative"
 
 def main():
     parser = argparse.ArgumentParser(
-        description="FixtureDB Quantitative EDA — ICPC 2027 Research Track"
+        description="FixtureDB Quantitative EDA"
     )
     parser.add_argument("--db", default=str(DB_PATH))
     parser.add_argument("--out", default=str(DEFAULT_OUT), help="Base output directory")
@@ -103,7 +103,7 @@ def main():
     print(
         f"\nFixtureDB Quantitative EDA — {int(total):,} repos  ({int(analysed):,} analysed)"
     )
-    print("Track: ICPC 2027 Research Track (no subjective interpretation)")
+    print("No subjective interpretation")
     print(f"Output → {out_dir or 'screen'}\n")
 
     # Quantitative plots only (no subjectivity bias)

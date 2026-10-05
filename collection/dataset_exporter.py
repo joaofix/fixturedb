@@ -270,7 +270,7 @@ HAVING mock_count > 0;
 ## Citation
 
 If you use this dataset in your research, please cite:
-- Original corpus: [ICPC 2027]
+- Original corpus: FixtureDB
 - Dataset version: {version}
 - Generation date: [see export timestamp]
 
@@ -566,9 +566,9 @@ ORDER BY avg_complexity DESC;
 ## Citation
 
 If you use this dataset in your research, please cite:
-- Original corpus: [ICPC 2027]
+- Original corpus: FixtureDB
 - Dataset version: {version}
-- Agent detection methodology: [Advisor's paper reference]
+- Agent detection catalog: labri-progress/agent-mining (Robbes et al.)
 
 ## License
 
