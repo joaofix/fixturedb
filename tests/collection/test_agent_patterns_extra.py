@@ -20,12 +20,7 @@ def test_path_matches_pattern_dir_marker():
 
 
 def test_path_matches_pattern_multi_segment_dir_marker():
-    """Regression: a dir-marker pattern with more than one path segment
-    (e.g. ".github/instructions/", copilot's real custom-instructions
-    convention) previously could never match anything -- the code stripped
-    only the trailing "/" and compared the whole remaining string
-    (".github/instructions") against a SINGLE path component, but
-    Path.parts never contains "/", so the comparison was always False."""
+    """A directory pattern with several segments, such as `.github/instructions/`, matches the directory path."""
     p = Path(".github/instructions/setup.md")
     assert ap.path_matches_pattern(p, ".github/instructions/", is_dir=True)
     assert ap.path_matches_pattern(
@@ -45,19 +40,13 @@ def test_path_matches_pattern_multi_segment_dir_marker():
 
 
 def test_path_matches_pattern_dir_marker_rejects_plain_file():
-    """Regression test: a dir-marker pattern (e.g. ".claude/") must not
-    match a plain FILE that merely happens to share the directory's name --
-    only a real directory entry should count. is_dir defaults to True (old
-    behavior, for callers with no filesystem/API type info), so this must
-    be explicitly passed as False to exercise the fix."""
+    """A directory pattern such as `.claude/` does not match a plain file with that name. The check needs the entry type, so `is_dir` is passed as False here."""
     assert ap.path_matches_pattern(Path(".claude"), ".claude/", is_dir=True)
     assert not ap.path_matches_pattern(Path(".claude"), ".claude/", is_dir=False)
 
 
 def test_repo_contains_patterns_detects_multi_segment_dir_marker(tmp_path):
-    """End-to-end regression for the .github/instructions/ catalog entry
-    (copilot's real custom-instructions convention, in PAPER_AGENT_CONFIG_PATTERNS,
-    which is the full catalog) -- previously silently unmatchable."""
+    """End-to-end: a repository with `.github/instructions/` is detected by the Copilot pattern from the full catalog."""
     repo = tmp_path / "repo"
     (repo / ".github" / "instructions").mkdir(parents=True)
     (repo / ".github" / "instructions" / "setup.md").write_text("x")
@@ -68,10 +57,7 @@ def test_repo_contains_patterns_detects_multi_segment_dir_marker(tmp_path):
 
 
 def test_repo_contains_patterns_dir_marker_rejects_plain_file(tmp_path):
-    """Regression test (end-to-end via the real filesystem): a plain file
-    named ".claude" (not a directory -- .claude/ has no bare-name sibling
-    pattern in the catalog, unlike .cursor) must not satisfy the ".claude/"
-    pattern."""
+    """End-to-end on a real filesystem: a plain file named `.claude` does not match the `.claude/` pattern."""
     repo = tmp_path / "repo"
     repo.mkdir()
     (repo / ".claude").write_text("just a file, not a directory")
@@ -83,10 +69,7 @@ def test_repo_contains_patterns_dir_marker_rejects_plain_file(tmp_path):
 
 
 def test_repo_contains_patterns_ignores_vendored_dependency_config(tmp_path):
-    """Regression test: an agent-config-shaped file inside node_modules (a
-    vendored dependency's own docs, unrelated to whether *this* repo used
-    the agent) must not count, and .git internals must not be walked into
-    either."""
+    """Agent config inside `node_modules` does not count, and `.git` is not walked."""
     repo = tmp_path / "repo"
     vendor = repo / "node_modules" / "some-package"
     vendor.mkdir(parents=True)

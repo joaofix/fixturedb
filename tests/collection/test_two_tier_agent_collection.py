@@ -206,14 +206,7 @@ Co-authored-by: Bob <bob@example.com>"""
         assert agent == "claude"
 
     def test_bare_anthropic_domain_does_not_match(self, scanner):
-        """Regression test: a bare "anthropic" domain-substring pattern
-        used to match ANY @anthropic.com sender regardless of agent
-        involvement -- removed after it caused a real false positive
-        during Dataset A collection (an Anthropic employee's personal
-        commit under their own name and work email, no agent signal at
-        all). The catalog's specific service addresses
-        (claude@/noreply@/assistant@anthropic.com) still match; a generic
-        address at the same domain no longer does."""
+        """A generic address at the anthropic.com domain does not match. The catalog matches only the specific service addresses, such as claude@anthropic.com."""
         body = "Regular commit"
         agent = scanner._detect_agent_in_commit("User", "user@anthropic.com", body)
         assert agent is None
@@ -261,12 +254,7 @@ Co-authored-by: RandomDeveloper <random@example.com>"""
         assert agent is None
 
     def test_detect_anthropic_specific_address_in_coauthor(self, scanner):
-        """Should detect Claude via one of the catalog's specific service
-        addresses in a co-authored-by trailer. (A bare "anthropic" domain
-        substring used to match here too, e.g. a synthetic
-        "ai@anthropic.com" address -- removed for being more permissive
-        than upstream's own catalog, which only lists specific addresses
-        for this reason; see test_bare_anthropic_domain_does_not_match.)"""
+        """A co-author trailer with one of the catalog's specific Anthropic addresses is detected as Claude."""
         body = """Fix.
 
 Co-authored-by: Claude <claude@anthropic.com>"""
@@ -282,16 +270,7 @@ Co-authored-by: github.com/apps/github-copilot <copilot@example.com>"""
         assert agent == "copilot"
 
     def test_detect_all_known_agents_in_coauthors(self, scanner):
-        """Should detect all known agent types in co-authored-by, each by its own name.
-
-        No "Cline" case: removed from the catalog entirely on 2026-07-17 --
-        Cline has no bot identity or trailer convention of its own to match
-        (see agent_authors.csv's boundary comment). "Devin AI" now uses its
-        real bot identity (devin-ai-integration[bot]) rather than a bare
-        "devin@example.com" address, since the bare "devin" pattern that used
-        to match the old address was removed the same day (real name
-        collisions, e.g. "Devin Smith") -- devin-ai-integration is the one
-        pattern that's actually specific to the real bot."""
+        """Each known agent is detected from a co-author trailer, by its own name. Devin is detected from its bot identity, devin-ai-integration. Cline is not in the catalog."""
         test_cases = [
             ("Claude <claude@anthropic.com>", "claude"),
             ("GitHub Copilot <copilot@github.com>", "copilot"),

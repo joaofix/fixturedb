@@ -80,13 +80,7 @@ public class TestExample {
 
 
 class TestJUnit3Fallback:
-    """JUnit3-style setUp()/tearDown() with no annotation at all, in a
-    TestCase subclass. Regression tests for three bugs found while
-    auditing this codebase's fixture-detection test rigor: the fallback's
-    old guard only checked for "@Before"/"@After" *substrings* in existing
-    annotations (missing any other annotation entirely), and it never
-    checked class inheritance at all despite fixture_definitions.yaml's
-    own comment restricting it to a TestCase subclass."""
+    """JUnit 3 style `setUp()` and `tearDown()` with no annotation, in a `TestCase` subclass."""
 
     def test_setup_teardown_in_test_case_subclass_detected(self):
         """The genuine JUnit3 case: no annotations, extends TestCase."""
@@ -119,15 +113,7 @@ public class PlainClass {
         assert_fixture_not_detected(code, "java", "setUp")
 
     def test_annotated_method_is_not_double_detected_via_fallback(self):
-        """A method with a DIFFERENT, unrecognized annotation (not
-        @Before/@After) named tearDown must not be picked up by the JUnit3
-        fallback. Previously the fallback's guard only excluded
-        "@Before"/"@After" substrings, so an (at the time) @Given-annotated
-        method named tearDown produced two fixtures (cucumber_given AND a
-        spurious junit3_teardown) for the same method. @Given is no longer a
-        recognized annotation at all (Cucumber is out of scope -- see
-        fixture_definitions.yaml's java.excluded), so the correct outcome
-        now is zero fixtures for this method, not a double-count."""
+        """A method named `tearDown` with another annotation is not also detected as a JUnit 3 teardown. It is detected once, under its own annotation, or not at all."""
         code = """
 public class Steps extends TestCase {
     @Given("a precondition")
@@ -139,10 +125,7 @@ public class Steps extends TestCase {
         assert_fixture_count(code, "java", 0)
 
     def test_test_annotated_method_named_setup_is_not_misclassified(self):
-        """A @Test-annotated method that happens to be named setUp is a
-        real test method, not a fixture -- it must not be reported as
-        junit3_setup. Previously it was: @Test contains neither
-        "@Before" nor "@After", so the old guard let it through."""
+        """A `@Test` method named `setUp` is a test, not a fixture."""
         code = """
 public class MyTest extends TestCase {
     @Test
@@ -540,8 +523,7 @@ public class TestExample {
         assert_fixture_count(code, "java", 0)
 
     def test_listeners_alongside_a_real_fixture_is_not_itself_detected(self):
-        """@Listeners on the class must not produce a spurious second
-        fixture when the class also has a real one."""
+        """A `@Listeners` annotation on the class is not detected as a fixture, even when the class has a real one."""
         code = """
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -561,13 +543,7 @@ class TestJavaNegativeDetection:
     """Ensure non-fixtures in Java are not detected"""
 
     def test_regular_method_not_detected(self):
-        """A plain setUp() in a class that does NOT extend TestCase must
-        not be detected as a JUnit3 fixture -- the YAML's own
-        junit3_fallback comment restricts this to "a (JUnit3-style)
-        TestCase subclass", but the code did not actually check
-        inheritance until this test was tightened (previously asserted
-        only `isinstance(fixtures, list)`, a tautology that passed
-        regardless of whether the bug was present)."""
+        """A `setUp()` in a class that does not extend `TestCase` is not a JUnit 3 fixture."""
         code = """
 public class Test {
     public void setUp() {

@@ -64,10 +64,7 @@ from collection.rq5_agent_file_scan import (
 
 
 def _fake_response(status_code, json_data=None, headers=None):
-    """A real requests.Response with the given status/json/headers --
-    .json()/.status_code/.headers all behave exactly like the real
-    library would, so tests exercise the actual parsing code, not a
-    stand-in for it."""
+    """Returns a real `requests.Response` with the given status, JSON and headers, so the tests run the real parsing code."""
     resp = requests.Response()
     resp.status_code = status_code
     resp._content = json.dumps(json_data).encode("utf-8") if json_data is not None else b""
@@ -147,11 +144,7 @@ class TestLoadRq5KeywordCatalog:
         assert "teardown" not in catalog["fixture_keywords"]
 
     def test_removed_v1_keywords_never_reappear(self):
-        """Regression guard for the catalog v1 -> v2 removal (see that
-        YAML's own changelog comment): these four collided heavily with
-        ordinary English ("before each commit", "after each fix") having
-        nothing to do with test lifecycle hooks -- confirmed on real
-        collected data, not a hypothetical. Must never be re-added."""
+        """The four removed fixture phrases are not in the catalog. They matched ordinary English, such as "before each commit"."""
         catalog = load_rq5_keyword_catalog()
         for removed in V1_TO_V2_REMOVED_FIXTURE_KEYWORDS:
             assert removed not in catalog["fixture_keywords"]
@@ -161,8 +154,7 @@ class TestLoadRq5KeywordCatalog:
             assert kept in catalog["fixture_keywords"]
 
     def test_removed_v2_keywords_never_reappear(self):
-        """Regression guard for the catalog v2 -> v3 removal -- see that
-        YAML's own changelog comment."""
+        """The removed bare keyword `teardown` is not in the catalog. It matched generic cleanup text."""
         catalog = load_rq5_keyword_catalog()
         for removed in V2_TO_V3_REMOVED_FIXTURE_KEYWORDS:
             assert removed not in catalog["fixture_keywords"]
@@ -309,9 +301,7 @@ class TestApiGet:
         assert response.status_code == 200
 
     def test_exhausts_retries_and_raises_rate_limit_exhausted(self):
-        """Exhausted retries on a genuine rate limit must never look like
-        a plain `None` -- that's exactly what a caller already treats as
-        "confirmed not found" (see RateLimitExhausted's own docstring)."""
+        """When every retry is rate-limited, the call raises `RateLimitExhausted`. It does not return `None`, because `None` means the file was not found."""
         rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
         with (
             patch("requests.get", return_value=rate_limited) as get_mock,
@@ -355,17 +345,7 @@ class TestApiGet:
 
 
 class TestIsRateLimited:
-    """Regression coverage for the 2026-10-03 production incident: GitHub's
-    secondary (abuse-detection) rate limit returns a 403 WITHOUT zeroing
-    X-RateLimit-Remaining -- confirmed against GitHub's own docs ("there is
-    no 'remaining' header that shows you your secondary rate limit quota").
-    The real run's sustained 20-worker load evidently tripped this despite
-    the primary budget never running low, and every one of those 403s fell
-    through the original (too-narrow) check as an ordinary non-200
-    response -- silently recorded as a confirmed negative rather than
-    retried. Confirmed directly: ~1 in 3 repos re-sampled from the
-    "no_commit_at_or_before_cutoff" bucket turned out to have a real commit
-    on a plain, low-load re-check."""
+    """Rate-limit detection. GitHub's secondary limit returns a 403 without a zero `X-RateLimit-Remaining`, so the check also reads `Retry-After`. A 403 with neither header is a real permission error and is not retried."""
 
     def test_429_is_always_rate_limited(self):
         assert _is_rate_limited(_fake_response(429, {})) is True
@@ -377,9 +357,7 @@ class TestIsRateLimited:
         assert _is_rate_limited(response) is True
 
     def test_403_with_retry_after_but_nonzero_remaining_is_rate_limited(self):
-        """The secondary/abuse-detection case this fix adds -- exactly
-        what the real run's 403s looked like: throttled, but with plenty
-        of primary quota left."""
+        """A 403 with `Retry-After` and a non-zero remaining quota is rate limiting. This is the secondary-limit case."""
         response = _fake_response(403, {}, headers={"Retry-After": "60", "X-RateLimit-Remaining": "4000"})
         assert _is_rate_limited(response) is True
 
@@ -388,8 +366,7 @@ class TestIsRateLimited:
         assert _is_rate_limited(response) is True
 
     def test_plain_403_with_neither_signal_is_not_rate_limited(self):
-        """A genuine permission-denied/blocked-repo 403 must still surface
-        as a real failure, not loop on retries that can never succeed."""
+        """A 403 with neither header is a real permission error. It is not retried."""
         response = _fake_response(403, {})
         assert _is_rate_limited(response) is False
 
@@ -1053,18 +1030,10 @@ class TestWriteCsvOutputs:
 
 
 class TestPruneRemovedKeywords:
-    """Coverage for the catalog v1 -> v2 migration (see that YAML's own
-    changelog): removing a keyword can only shrink an already-collected
-    match set, never grow it, so this must be correct with zero access
-    to the original file content -- these tests build exactly that
-    "already collected under the bigger catalog" state and check the
-    recomputation matches what a from-scratch v2 scan would have found.
-    """
+    """Removing a keyword from the catalog only shrinks an existing match set. The recomputed set must equal what a fresh scan with the smaller catalog would find."""
 
     def _make_file_and_matches(self, repo_name, file_name, matches):
-        """`matches`: list of (keyword, line_number) tuples, all
-        keyword_list="fixture", used to build both the file row's
-        starting (pre-prune) flags/counts and the match rows."""
+        """Builds a file row and its match rows for the prune tests. Every match is a `fixture` keyword match, at the given line numbers."""
         keywords = sorted({kw for kw, _ in matches})
         file_row = {
             "repo_name": repo_name,
