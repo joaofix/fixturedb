@@ -1,44 +1,41 @@
-# FixtureDB and the Between-Group Study
+# What is FixtureDB?
 
-FixtureDB is a cross-language dataset of test fixtures comparing agent-authored and human-authored code across three independent corpora.
+FixtureDB is the replication package for the paper *"An empirical study on
+test fixture usage by coding agents on open source software"*. It collects
+test fixtures from open-source repositories and compares fixtures written by
+coding agents with fixtures written by humans before LLM coding tools existed.
 
-The study design is a between-group comparison across two datasets:
+A *test fixture* is code that prepares the state a test needs (setup) or
+cleans it up afterwards (teardown).
 
-- **Dataset A (agent)** — fixtures introduced by AI coding agents in agent-enabled repositories, commits since 2025-01-01.
-- **Dataset C (pre-LLM human)** — fixtures introduced by humans in an independent pool of repositories created between 2016-01-01 and 2020-12-31, predating LLM-based coding assistance entirely. This is a cross-repo, pre-agent-era baseline.
+## The two datasets
 
-Agent detection uses Tier 1 (co-authored-by/assisted-by/generated-by trailers, then author identity — see [Agent Detection](../architecture/agent-detection.md)). Control variables are language, domain, and repository age, each computed at its own dataset's temporal reference point. Because A and C are separate databases rather than matched pairs in one table, all statistical comparisons are unpaired: Mann-Whitney U for continuous variables, chi-square for categorical.
+| Dataset | Who wrote the fixtures | Repositories | Time window |
+|---------|------------------------|--------------|-------------|
+| **A** (agent) | Coding agents (Claude, Copilot, Cursor, and others) | Repositories with an agent configuration file and at least one agent commit | Commits from 2025-01-01 on |
+| **C** (human, pre-LLM) | Humans | Repositories created 2016-01-01 to 2020-12-31 | Snapshot at 2020-12-31 |
 
-This design supports one comparison: A-vs-C ("cross-repo," different repos, different era). Because there is no within-repo control, repository-level differences are handled only through the covariates (language, domain, repository age), not held fixed by design. See [Analyzing the Datasets](../usage/usage.md) for how to report this comparison.
+Dataset A answers "what do agents write?". Dataset C is the baseline: code
+written before LLM coding tools were available.
 
-## Why two datasets?
+## How we compare them
 
-Dataset C's pre-agent-era baseline is what separates a possible agent effect from a general secular trend in how fixtures are written over time, at the cost of drawing from a different repo pool (see [Limitations](../reference/limitations.md)). Keeping two independent per-dataset databases, rather than one shared table with a role column, keeps each dataset's provenance and temporal reference point unambiguous.
+- We detect agent commits from `Co-authored-by`, `Assisted-by` and
+  `Generated-by` trailers and from author names. See
+  [Agent Detection](../architecture/agent-detection.md).
+- We record language, domain and repository age for every repository. These
+  are the control variables.
+- The two datasets come from different repositories and different years, so
+  the comparison is unpaired. We use Mann-Whitney U for numbers and
+  chi-square for categories.
 
-## What the pipeline produces
+Because the two datasets come from different repositories, differences can
+come from who wrote the code or from when it was written. The design cannot
+separate the two. See [Limitations](../reference/limitations.md).
 
-Each dataset gets its own database (`db/a.db`, `db/c.db` — see [Database Schema](../architecture/database-schema.md)). Dataset A's fixtures are tagged `commit_kind='agent'` plus `agent_type`; Dataset C has no commit-level tagging (see the schema doc for why). Control variables are computed at each dataset's own temporal snapshot (2025-01-01 for A, 2020-12-31 for C), alongside fixture metrics for type, complexity, and mocks.
+## Where to go next
 
-A collection summary (`datasets/{dataset}/summary.yaml`, via `python -m collection summarize --dataset {a,c}`) reports repository statistics (languages, domains, contributor counts), fixture statistics (extraction rates by language, fixture type distributions), and, for Dataset A, the purity-gate acceptance rate.
-
-The result is analysis-ready: independent per-dataset samples for unpaired comparison, fixture-level metrics for distribution analysis, and repository-level context for stratified analysis.
-
-## Recommended extraction flow
-
-All collection runs through one unified CLI: `python -m collection <verb> --dataset {a,c}`. Run the verbs in this order:
-
-1. `discover-repos --dataset a` scans `github-search-raw/`, detects agent configuration files, and writes the per-language repo lists to `datasets/a/repos/{language}_repo.csv`.
-
-	```bash
-	python -m collection discover-repos --dataset a --language java
-	```
-
-2. `discover-commits --dataset a`, then `filter-test-commits --dataset a`, then `extract-fixtures --dataset a` detect agent test commits and extract Dataset A's fixtures, writing the per-language repo lists that yielded fixtures to `datasets/a/fixtures/repos/{language}_fixture_repos.csv`.
-
-	```bash
-	python -m collection discover-commits    --dataset a
-	python -m collection filter-test-commits --dataset a
-	python -m collection extract-fixtures    --dataset a --language java
-	```
-
-Dataset C is independent of A and can be collected in any order — see `discover-repos --dataset c` / `extract-fixtures --dataset c` in [Repository Structure](repository-structure.md) for the full verb-to-dataset matrix, and `AGENTS.md` for details.
+- [Setup](setup.md): install and run a small test.
+- [Repository Structure](repository-structure.md): where the code and data live.
+- [Research Questions](../research-questions.md): what each question measures.
+- [Reproducing the Study](../usage/reproducing.md): the full collection run.

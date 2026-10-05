@@ -1,64 +1,41 @@
-# FixtureDB Documentation Index
+# FixtureDB documentation
 
-Start here for the between-group study comparing human and agent-authored test fixtures.
-
-## Quick links
-
-| What do you want? | Start here |
-|-------------------|-----------|
-| Overview | [What is FixtureDB?](getting-started/intro.md) |
-| Install and configure | [Setup & Requirements](getting-started/setup.md) |
-| Understand the repository layout | [Repository Structure](getting-started/repository-structure.md) |
-| Read the research questions | [Research Questions](research-questions.md) |
-| Run the collection pipeline | [Using the Pipeline](usage/reproducing.md) |
-| Inspect the database schema | [Database Schema](architecture/database-schema.md) |
-| Understand agent detection | [Agent Detection Methodology](architecture/agent-detection.md) |
-| Read metric definitions | [Metrics Reference](architecture/metrics-reference.md) |
-| Understand fixture patterns | [Fixture Patterns Reference](usage/fixture-patterns-reference.md) |
-| Work with CSV exports | [CSV User Guide](data/csv-user-guide.md) |
-| Analyze the dataset | [Analysis Guide](usage/usage.md) |
-| Draw a manual-validation sample | [Manual-Validation Sampling](usage/validation-sampling.md) |
-| Review limitations | [Limitations & Threats to Validity](reference/limitations.md) |
-| Check tests and validation | [Test Suite & Validation](reference/testing.md)
-
-## Core sections
-
-### Getting started
+## Start here
 
 - [What is FixtureDB?](getting-started/intro.md)
-- [Setup & Requirements](getting-started/setup.md)
-- [Repository Structure](getting-started/repository-structure.md)
-- [Research Questions](research-questions.md)
+- [Setup](getting-started/setup.md)
+- [Repository structure](getting-started/repository-structure.md)
+- [Research questions](research-questions.md)
 
-### Architecture
+## Method
 
-- [Database Schema](architecture/database-schema.md)
-- [Agent Detection Methodology](architecture/agent-detection.md)
-- [Fixture Detection Logic](architecture/detection.md)
-- [Metrics Reference](architecture/metrics-reference.md)
-- [Configuration Reference](architecture/configuration.md)
+- [Agent detection](architecture/agent-detection.md)
+- [Fixture detection](architecture/detection.md)
+- [Collection pipeline](architecture/collection.md)
+- [Database schema](architecture/database-schema.md)
+- [Metrics](architecture/metrics-reference.md)
+- [Configuration](architecture/configuration.md)
 
-### Data and usage
+## Data
 
-- [Using the Dataset](usage/usage.md)
-- [Reproducing Results](usage/reproducing.md)
-- [Fixture Patterns Reference](usage/fixture-patterns-reference.md)
-- [Manual-Validation Sampling](usage/validation-sampling.md)
-- [CSV User Guide](data/csv-user-guide.md)
-- [Storage & Scale](data/storage.md)
+- [Dataset card](data/dataset-card.md)
+- [CSV export guide](data/csv-export-guide.md)
+- [CSV user guide](data/csv-user-guide.md)
+- [Storage](data/storage.md)
 
-### Reference
+## Usage
 
-- [Limitations & Threats to Validity](reference/limitations.md)
-- [Test Suite & Validation](reference/testing.md)
-- [Academic References](reference/references.md)
+- [Reproducing the study](usage/reproducing.md)
+- [Analysing the datasets](usage/usage.md)
+- [Manual validation sampling](usage/validation-sampling.md)
+- [Fixture patterns](usage/fixture-patterns-reference.md)
+
+## Reference
+
+- [Limitations](reference/limitations.md)
+- [Testing](reference/testing.md)
+- [References](reference/references.md)
 - [License](reference/license.md)
-
-## Study Design
-
-FixtureDB compares two independent datasets: Dataset A (agent-authored fixtures, 2025+) and Dataset C (human-authored fixtures, a cross-repo pre-2021 baseline). Agent identification uses Tier 1 detection (co-authored-by trailers, author signatures). Comparisons are unpaired (Mann-Whitney U / chi-square), since the two datasets are separate databases rather than matched pairs in one table.
-
-See the [introduction](getting-started/intro.md) for the full methodology.
 
 ## Citation
 
@@ -68,5 +45,5 @@ ICPC 2027 — Research Track
 
 ## License
 
-- Code: MIT License. See [LICENSE](../LICENSE) or [reference/license.md](reference/license.md).
-- Dataset: CC BY 4.0. See [reference/license.md](reference/license.md).
+- Code: MIT. See [license](reference/license.md).
+- Data: CC BY 4.0. See [license](reference/license.md).
