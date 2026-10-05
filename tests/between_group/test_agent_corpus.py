@@ -303,8 +303,7 @@ class TestQualityControlledInputs:
         assert [repo["full_name"] for repo in repos] == ["good/repo"]
         assert repos[0]["github_id"] != 0
         assert repos[0]["clone_url"] == "https://github.com/good/repo.git"
-        # forks used to be read nowhere along this path (build_repo_row()
-        # accepted it but no caller passed it), silently staying 0.
+        # forks must be read from the repository row, not left at 0.
         assert repos[0]["forks"] == 9
         assert list(commits.keys()) == ["good/repo", "bad/repo"]
         assert len(commits["good/repo"]) == 1
@@ -517,10 +516,9 @@ class TestQualityControlledInputs:
         assert count == 1
 
     def test_agent_corpus_persists_full_metrics_and_mocks(self, tmp_path, monkeypatch):
-        """Regression test: agent fixture rows must keep their real computed
-        metrics and agent_type, and their mocks must reach mock_usages —
-        this is the behavior persist_repository_and_fixtures() now provides
-        after agent_corpus.py stopped hand-rolling its own insertion loop."""
+        """Agent fixture rows keep their computed metrics and agent_type, and
+        their mocks reach mock_usages. Persistence goes through
+        persist_repository_and_fixtures()."""
         repo_qc_dir = tmp_path / "repo-qc"
         commit_qc_dir = tmp_path / "commit-qc"
         fixtures_output_dir = tmp_path / "fixtures-out"
@@ -884,9 +882,8 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
     assert rows_by_repo["owner/main-repo"]["rejected_mixed_test_diff"] == "1"
     assert rows_by_repo["owner/main-repo"]["accepted"] == "1"
 
-    # Repo-metadata fields (stars/forks/num_contributors) and
-    # agent_adoption_intensity previously only reached db/a.db -- confirm
-    # they now also land in the CSV, not just left at 0/blank there.
+    # Repo-metadata fields (stars, forks, num_contributors) and
+    # agent_adoption_intensity must also be written to the CSV.
     assert rows_by_repo["owner/main-repo"]["stars"] == "10"
     assert rows_by_repo["owner/main-repo"]["forks"] == "3"
     assert rows_by_repo["owner/main-repo"]["num_contributors"] == "1"
@@ -894,9 +891,8 @@ def test_agent_corpus_persists_repo_commit_stats_end_to_end(tmp_path, monkeypatc
     # 100% ratio, well above the "pervasive" (>20%) threshold.
     assert rows_by_repo["owner/main-repo"]["agent_adoption_intensity"] == "pervasive"
 
-    # total_commits_since_agent_start persists the same count_total_commits_since()
-    # call that already produced the ratio above -- previously computed and
-    # discarded, now also landing in the DB row. main-repo has 3 commits
+    # total_commits_since_agent_start is stored from the same
+    # count_total_commits_since() call that produces the ratio. main-repo has 3 commits
     # total since 2025-01-01 (the base commit plus the 2 agent commits).
     assert row_main["total_commits_since_agent_start"] == 3
     assert row_empty["total_commits_since_agent_start"] is not None
@@ -1319,12 +1315,8 @@ def test_agent_corpus_truncates_output_csvs_on_rerun(tmp_path, monkeypatch):
 
 
 def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
-    """Regression test: `extract-fixtures --dataset a --force` against an
-    already-completed DB used to silently produce 0 fixtures. --force only
-    bypassed the CLI's own "database already has fixture rows" check
-    (collection/__main__.py) -- it was never threaded into
-    AgentCorpusCollector.run(), whose own completion-checkpoint gate fired
-    regardless and returned immediately. Without force, the checkpoint
+    """`extract-fixtures --dataset a --force` must bypass the completion
+    checkpoint in AgentCorpusCollector.run(). Without force, the checkpoint
     must still gate (repos_scanned stays 0, the clone step is never
     reached); with force=True, the per-repo loop must actually run."""
     import contextlib
@@ -1367,9 +1359,8 @@ def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
 
 
 def test_crash_mid_language_leaves_already_processed_repos_persisted(tmp_path, monkeypatch):
-    """Regression test for the crash-safety property _process_agent_repository()/
-    _persist_agent_repo_result() must provide:
-    a crash partway through a language's repo list must not lose repos already
+    """Crash safety of _process_agent_repository() and
+    _persist_agent_repo_result(): a crash partway through a language's repo list must not lose repos already
     persisted before it -- each repo's DB row is written immediately as its
     result completes, not batched until the whole language finishes. Simulates
     a crash by monkeypatching _process_agent_repository (instance-level, so

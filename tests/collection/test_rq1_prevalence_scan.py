@@ -432,12 +432,8 @@ class TestGithubAuthEnv:
     visible to any other user on a shared server via a plain
     `ps aux`/`ps -ef`.
 
-    Regression coverage for the 2026-10-02 incident, part 2: the first
-    version of this function sent `Authorization: Bearer <token>`, which
-    GitHub's git-over-HTTPS endpoint rejects outright (`remote: invalid
-    credentials`) -- confirmed directly against a real clone, both the
-    broken Bearer scheme and the fix. GitHub's git HTTP auth wants Basic,
-    not Bearer: `Authorization: Basic base64("x-access-token:<token>")`.
+    GitHub's git-over-HTTPS endpoint takes HTTP Basic auth, not Bearer:
+    `Authorization: Basic base64("x-access-token:<token>")`.
     """
 
     def test_no_token_returns_empty_dict(self):
@@ -458,8 +454,7 @@ class TestGithubAuthEnv:
 class TestRunWithDeadline:
     """run_with_deadline(): the watchdog that bounds a per-repo call's
     overall wall-clock time, even when the underlying work has no timeout
-    of its own (regression coverage for the 2026-10-02 production freeze
-    -- see the function's own docstring for the full incident)."""
+    of its own."""
 
     def test_returns_true_and_the_result_when_fn_finishes_in_time(self):
         ok, result = rq1scan.run_with_deadline(lambda x: {"value": x}, 5, timeout_seconds=5)
@@ -559,10 +554,8 @@ class TestFullCloneWithTimeout:
 
 
 class TestCloneWithShallowFallback:
-    """Regression coverage for the real bug a 30-repo random toy run
-    surfaced (2026-10-01): git can fail hard on --shallow-since when the
-    boundary lands after every commit a repo actually has -- common, not
-    exotic. See _clone_with_shallow_fallback()'s own docstring."""
+    """git can fail hard on --shallow-since when the boundary lands after
+    every commit a repo has. The fallback to a full clone covers that case."""
 
     def test_returns_true_without_fallback_when_shallow_clone_succeeds(self, tmp_path):
         with (
@@ -810,9 +803,8 @@ class TestRunScan:
         assert load_scanned_repo_names(db_path) == {"org/already", "org/new"}
 
     def test_run_scan_records_a_timeout_instead_of_hanging(self, tmp_path):
-        """Regression coverage for the 2026-10-02 production freeze: a
-        repo whose processing never returns must not block the scan --
-        it gets recorded as a timeout and the run continues."""
+        """A repo whose processing never returns must not block the scan. It
+        is recorded as a timeout and the run continues."""
         db_path = tmp_path / "rq1.db"
         stop_event = threading.Event()
         universe = [
@@ -1018,12 +1010,10 @@ class TestRunScanNotifications:
 
 
 class TestResolveCutoffCommit:
-    """Regression coverage for the 2026-10-02 "part 3" production
-    incident: a repo with zero commits inside [shallow_since,
-    cutoff_date] has every commit visible in its `--shallow-since` clone
-    fall *after* cutoff_date, so a plain `find_cutoff_commit()` call
-    wrongly reports "no commit found" even though the real answer exists
-    just outside the shallow boundary. Uses real local `--shallow-since`
+    """A repo with zero commits inside [shallow_since, cutoff_date] has every
+    commit visible in its `--shallow-since` clone after cutoff_date. A plain
+    `find_cutoff_commit()` call then reports "no commit found", although the
+    real answer lies just outside the shallow boundary. Uses real local `--shallow-since`
     clones against a `file://` source (no network) to reproduce git's
     actual shallow-boundary behavior exactly, not a simulation of it."""
 
