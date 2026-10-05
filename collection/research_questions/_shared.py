@@ -67,7 +67,7 @@ NO_BODY_FIXTURE_TYPES = {"junit_rule", "junit_class_rule"}
 def require_db_or_none(dataset: str, db_root: Path = DB_ROOT) -> Path | None:
     """db/{dataset}.db's path, or None (with a warning logged) if it doesn't
     exist yet -- the shared "skip, don't error" convention every rqN.py
-    script uses so it can run against whatever subset of A/B/C is collected.
+    script uses so it can run against whatever subset of A/C is collected.
 
     Dataset "c" resolves to db/c_sampled.db instead of the full db/c.db --
     the fixture-level sample-down built by

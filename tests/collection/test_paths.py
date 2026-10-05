@@ -78,33 +78,6 @@ class TestDefaultRepoSource:
     def test_dataset_c_uses_raw_search_dir(self):
         assert paths.default_repo_source("c") == paths.RAW_SEARCH_DIR
 
-    def test_dataset_b_falls_back_to_a_repos_when_a_fixtures_repos_empty(
-        self, tmp_path
-    ):
-        root = tmp_path / "datasets"
-        assert paths.default_repo_source("b", root=root) == paths.stage_dir(
-            "a", "repos", root=root
-        )
-
-    def test_dataset_b_prefers_a_fixtures_repos_when_populated(self, tmp_path):
-        root = tmp_path / "datasets"
-        fixture_repos_dir = paths.stage_dir("a", "fixtures", root=root) / "repos"
-        fixture_repos_dir.mkdir(parents=True)
-        (fixture_repos_dir / "python_fixture_repos.csv").write_text("repo_name\n")
-
-        assert paths.default_repo_source("b", root=root) == fixture_repos_dir
-
-    def test_dataset_b_falls_back_when_a_fixtures_repos_exists_but_empty(
-        self, tmp_path
-    ):
-        root = tmp_path / "datasets"
-        fixture_repos_dir = paths.stage_dir("a", "fixtures", root=root) / "repos"
-        fixture_repos_dir.mkdir(parents=True)
-
-        assert paths.default_repo_source("b", root=root) == paths.stage_dir(
-            "a", "repos", root=root
-        )
-
     def test_unknown_dataset_raises(self):
         with pytest.raises(ValueError):
             paths.default_repo_source("z")

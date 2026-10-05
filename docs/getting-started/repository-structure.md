@@ -39,7 +39,7 @@ fixturedb/
 │       ├── conftest.py                      # Pytest fixtures and helpers
 │       ├── test_fixture_extractor_small.py  # Fixture extraction tests
 │       ├── test_db_helpers_full.py          # Database operation tests
-│       ├── between_group/, paired/, eda/    # Corpus-comparison, legacy paired, and EDA tests
+│       ├── between_group/, eda/              # Corpus-comparison and EDA tests
 │       └── collection/                      # Unit tests per collection/ module, incl.
 │                                             # test_main_cli.py (CLI dispatch),
 │                                             # test_dataset_pipeline.py, test_toy.py

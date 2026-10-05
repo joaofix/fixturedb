@@ -2,7 +2,7 @@
 RQ5 -- Agent Configuration Files (Mixed -- Qualitative + Quantitative): how
 often do root-level agent configuration files (AGENTS.md, CLAUDE.md) mention
 test-related and fixture-related guidance, across the raw repo universe --
-independent of any Dataset A/B/C filtering?
+independent of any Dataset A/C filtering?
 
 Pure reader over `db/rq5_agent_files.db` (`collection/rq5_agent_file_scan.py`'s
 own output) -- same role `rq1.py` plays for `db/rq1_prevalence.db`. No

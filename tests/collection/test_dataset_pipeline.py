@@ -127,19 +127,6 @@ class TestExportAndValidateDataset:
         assert report["valid"] is True
         assert report["zip_validation"]["agents_md_present"] is True
 
-    def test_full_pipeline_human_dataset(self, db_root, output_dir, export_root):
-        _build_db(db_root / "b.db", 6, agent=False)
-        sample_dataset("b", db_root=db_root, output_dir=output_dir)
-
-        export_dataset(
-            "b", db_root=db_root, export_root=export_root, sample_output_dir=output_dir
-        )
-
-        report = validate_dataset("b", export_root=export_root)
-        assert report["valid"] is True
-        # Dataset B/C are not agent datasets -- no AGENTS.md required.
-        assert report["zip_validation"]["agents_md_present"] is False
-
     def test_export_handles_empty_table_gracefully(self, db_root, output_dir, export_root):
         """Regression: export_table_to_csv() used to skip writing the CSV
         entirely when a table had zero matching rows (e.g. mock_usages for a

@@ -153,21 +153,6 @@ class TestDiscoverRepos:
             except SystemExit:
                 pass
 
-    def test_dataset_b_delegates_to_repo_resolve(self):
-        with patch(
-            "collection.repo_resolve.resolve_dataset_b_repos",
-            return_value={"python": 1},
-        ) as mock_resolve:
-            rc = main(["discover-repos", "--dataset", "b"])
-
-        assert rc == 0
-        mock_resolve.assert_called_once_with(
-            source_dir=paths.default_repo_source("b"),
-            output_dir=paths.stage_dir("b", "repos"),
-            language=None,
-        )
-
-
 class TestDiscoverCommits:
     def test_dataset_a_resolves_defaults(self):
         with patch(
@@ -209,21 +194,6 @@ class TestFilterTestCommits:
             paths.stage_dir("a", "test-commits"),
             workers=12,
         )
-
-    def test_dataset_b(self):
-        with patch(
-            "collection.human_test_commit_filter.collect_human_test_commits"
-        ) as mock_run:
-            rc = main(["filter-test-commits", "--dataset", "b"])
-
-        assert rc == 0
-        mock_run.assert_called_once_with(
-            paths.stage_dir("b", "repos"),
-            paths.stage_dir("b", "test-commits"),
-            workers=12,
-            language=None,
-        )
-
 
 class TestExtractFixtures:
     def test_dataset_a_does_not_skip_when_db_already_has_fixtures_from_another_language(
@@ -302,82 +272,6 @@ class TestExtractFixtures:
             language=None,
             force=False,
             workers=16,
-        )
-
-    def test_dataset_b_resolves_defaults(self):
-        stats = MagicMock(fixtures_collected=5)
-        with patch("collection.resume_utils.database_has_rows", return_value=False):
-            with patch(
-                "collection.human_corpus.HumanCorpusCollector"
-            ) as MockCollector:
-                MockCollector.return_value.run.return_value = (
-                    stats,
-                    paths.db_path("b"),
-                )
-                rc = main(["extract-fixtures", "--dataset", "b"])
-
-        assert rc == 0
-        MockCollector.assert_called_once_with(
-            output_db=paths.db_path("b"),
-            repo_qc_dir=paths.stage_dir("b", "repos"),
-            test_commits_csv=paths.stage_dir("b", "test-commits"),
-        )
-
-    def test_dataset_b_run_call_matches_real_signature(self):
-        """Regression: `collector.run(...)` was called with `languages=...`, a
-        kwarg HumanCorpusCollector.run() has never accepted (it takes
-        `language`, singular, no plural form) -- a plain MagicMock swallows
-        any kwarg silently, so this TypeError was invisible to
-        test_dataset_b_resolves_defaults above and would only surface on a
-        real, non-mocked run. autospec=True makes the mock enforce the real
-        method signature instead."""
-        stats = MagicMock(fixtures_collected=5)
-        with patch("collection.resume_utils.database_has_rows", return_value=False):
-            with patch(
-                "collection.human_corpus.HumanCorpusCollector", autospec=True
-            ) as MockCollector:
-                MockCollector.return_value.run.return_value = (
-                    stats,
-                    paths.db_path("b"),
-                )
-                rc = main(["extract-fixtures", "--dataset", "b", "--workers", "16"])
-
-        assert rc == 0
-        MockCollector.return_value.run.assert_called_once_with(
-            repos_per_language=None,
-            language=None,
-            workers=16,
-            force=False,
-        )
-
-    def test_dataset_b_does_not_skip_when_db_already_has_fixtures_from_another_language(self):
-        """Regression: unlike a/c, dataset b must NOT gate on a dataset-wide
-        database_has_rows() check. A prior `--language python` call can
-        incidentally insert a handful of cross-language fixture rows (see
-        collection/__main__.py's comment in the dataset=="b" branch), which
-        made every subsequent `--language X` call see the DB as
-        "already has fixture rows" and skip entirely -- even without
-        --force, even though language X was never processed. The real gate
-        is HumanCorpusCollector.run()'s own per-language DB checkpoints."""
-        stats = MagicMock(fixtures_collected=5)
-        with patch("collection.resume_utils.database_has_rows", return_value=True):
-            with patch(
-                "collection.human_corpus.HumanCorpusCollector"
-            ) as MockCollector:
-                MockCollector.return_value.run.return_value = (
-                    stats,
-                    paths.db_path("b"),
-                )
-                rc = main(
-                    ["extract-fixtures", "--dataset", "b", "--language", "java"]
-                )
-
-        assert rc == 0
-        MockCollector.return_value.run.assert_called_once_with(
-            repos_per_language=None,
-            language="java",
-            workers=8,
-            force=False,
         )
 
     def test_dataset_c_resolves_defaults(self):

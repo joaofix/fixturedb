@@ -1,6 +1,6 @@
 # RQ1 -- Fixture Prevalence
 
-> How common are tests, fixtures, setup, and teardown across the raw repo universe, independent of Dataset A/B/C's own filtering?
+> How common are tests, fixtures, setup, and teardown across the raw repo universe, independent of Dataset A/C's own filtering?
 
 Generated: 2026-10-04 17:56:03 UTC
 

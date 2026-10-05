@@ -77,29 +77,6 @@ class TestToyDatasetA:
         assert paths.DB_ROOT not in MockCollector.call_args.kwargs["output_db"].parents
 
 
-class TestToyDatasetB:
-    def test_all_paths_rooted_under_toy_dataset(self):
-        with patch("collection.repo_resolve.resolve_dataset_b_repos") as mock_resolve:
-            with patch(
-                "collection.human_corpus.HumanCorpusCollector"
-            ) as MockCollector:
-                stats = MagicMock(fixtures_collected=1)
-                MockCollector.return_value.run.return_value = (
-                    stats,
-                    paths.db_path("b", root=paths.TOY_ROOT / "db"),
-                )
-                rc = run_toy("b", repos=2)
-
-        assert rc == 0
-        resolve_kwargs = mock_resolve.call_args.kwargs
-        assert _under_toy_root(resolve_kwargs["source_dir"])
-        assert _under_toy_root(resolve_kwargs["output_dir"])
-        ctor_kwargs = MockCollector.call_args.kwargs
-        assert _under_toy_root(ctor_kwargs["output_db"])
-        assert _under_toy_root(ctor_kwargs["repo_qc_dir"])
-        assert _under_toy_root(ctor_kwargs["test_commits_csv"])
-
-
 class TestToyDatasetC:
     """write_per_language_files() and the load_dataset_c_repos() read-back
     are deliberately NOT mocked here (unlike every other toy step): they're

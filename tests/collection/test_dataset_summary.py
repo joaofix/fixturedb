@@ -153,39 +153,6 @@ class TestPurityGateSection:
         }
         assert gate["acceptance_rate_all_languages_combined"] == 0.5
 
-    def test_dataset_b_reads_purity_stats_csv(self, tmp_path):
-        _write_csv(
-            paths.stage_dir("b", "test-commits", root=tmp_path) / "python_purity_stats.csv",
-            [{"language": "python", "commits_accepted": "8", "commits_rejected": "2"}],
-            ["language", "commits_accepted", "commits_rejected"],
-        )
-        summary = compute_summary("b", root=tmp_path)
-        gate = summary["purity_gate"]
-        assert gate["by_repo_language"]["python"] == {
-            "accepted": 8,
-            "rejected": 2,
-            "acceptance_rate": 0.8,
-        }
-        assert gate["acceptance_rate_all_languages_combined"] == 0.8
-
-    def test_dataset_b_purity_stats_file_not_misread_as_test_commits(self, tmp_path):
-        """python_purity_stats.csv and python_human_test_commit.csv share a
-        directory and a leading filename token -- the test-commit reader
-        must not pick up the purity file as if it were commit rows."""
-        tc_dir = paths.stage_dir("b", "test-commits", root=tmp_path)
-        _write_csv(
-            tc_dir / "python_human_test_commit.csv",
-            [{"repo_name": "o/r1", "commit_sha": "abc"}],
-            ["repo_name", "commit_sha"],
-        )
-        _write_csv(
-            tc_dir / "python_purity_stats.csv",
-            [{"language": "python", "commits_accepted": "1", "commits_rejected": "0"}],
-            ["language", "commits_accepted", "commits_rejected"],
-        )
-        summary = compute_summary("b", root=tmp_path)
-        assert summary["test_commits"]["by_repo_language"] == {"python": 1}
-
     def test_dataset_c_has_no_purity_gate_section(self, tmp_path):
         """Dataset C has no test-commits stage and no purity gate --
         section must be absent entirely, not zeroed out."""

@@ -13,18 +13,12 @@ Verifies that the collection module correctly:
 Uses small test repositories and mocked git operations for speed.
 """
 
-import json
 import sqlite3
-from unittest.mock import patch
 
 import pytest
 
 from collection.agent_corpus import (
     AgentCorpusCollector,
-)
-from collection.human_corpus import (
-    HumanCorpusCollector,
-    HumanCorpusStats,
 )
 
 
@@ -32,126 +26,6 @@ from collection.human_corpus import (
 def test_data_dir(tmp_path):
     """Create test data directory with CSVs and DB."""
     return tmp_path / "test_data"
-
-
-@pytest.fixture
-def minimal_human_repo_qc_csv(test_data_dir, make_csv):
-    """Create minimal human repo QC CSV for testing using make_csv fixture."""
-    test_data_dir.mkdir(parents=True, exist_ok=True)
-    make_csv(test_data_dir, "python_agent_repo.csv")
-    return test_data_dir / "python_agent_repo.csv"
-
-
-@pytest.fixture
-def minimal_corpus_db(test_data_dir):
-    """Create a minimal corpus.db for testing."""
-    test_data_dir.mkdir(parents=True, exist_ok=True)
-    db_path = test_data_dir / "corpus.db"
-
-    conn = sqlite3.connect(db_path)
-
-    # Create minimal schema
-    conn.execute("""
-        CREATE TABLE repositories (
-            id INTEGER PRIMARY KEY,
-            github_id TEXT,
-            full_name TEXT,
-            language TEXT,
-            stars INTEGER,
-            forks INTEGER,
-            description TEXT,
-            topics TEXT,
-            created_at TEXT,
-            pushed_at TEXT,
-            clone_url TEXT,
-            status TEXT,
-            num_contributors INTEGER,
-            num_test_files INTEGER
-        )
-    """)
-
-    conn.execute("""
-        CREATE TABLE test_files (
-            id INTEGER PRIMARY KEY,
-            repo_id INTEGER,
-            path TEXT,
-            language TEXT,
-            loc INTEGER
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-    return db_path
-
-
-class TestHumanCorpusCollectorInitialization:
-    """Test HumanCorpusCollector initialization and configuration."""
-
-    def test_human_corpus_collector_initializes_with_defaults(self, minimal_corpus_db):
-        """Verify collector initializes with sensible defaults."""
-        collector = HumanCorpusCollector(
-            corpus_db_path=minimal_corpus_db,
-        )
-
-        assert collector.corpus_db_path == minimal_corpus_db
-        assert collector.clones_dir is not None
-        assert collector.output_db is not None
-        assert collector.repo_qc_dir is not None
-
-    def test_human_corpus_collector_accepts_custom_paths(
-        self, minimal_corpus_db, tmp_path
-    ):
-        """Verify collector accepts custom directory paths."""
-        custom_clone_dir = tmp_path / "custom_clones"
-        custom_output_db = tmp_path / "custom.db"
-        custom_qc_dir = tmp_path / "custom_qc"
-
-        collector = HumanCorpusCollector(
-            corpus_db_path=minimal_corpus_db,
-            clones_dir=custom_clone_dir,
-            output_db=custom_output_db,
-            repo_qc_dir=custom_qc_dir,
-        )
-
-        assert collector.clones_dir == custom_clone_dir
-        assert collector.output_db == custom_output_db
-        assert collector.repo_qc_dir == custom_qc_dir
-
-
-class TestHumanCorpusCollectorStatistics:
-    """Test statistics tracking and aggregation."""
-
-    def test_human_corpus_stats_initialization(self):
-        """Verify stats object initializes correctly."""
-        stats = HumanCorpusStats()
-
-        assert stats.repos_scanned == 0
-        assert stats.repos_passed_qc == 0
-        assert stats.repos_failed_qc == 0
-        assert stats.fixtures_collected == 0
-        assert len(stats.qc_skip_reasons) == 0
-
-    def test_human_corpus_stats_to_dict_serialization(self):
-        """Verify stats can be serialized to dict for JSON."""
-        stats = HumanCorpusStats(
-            repos_scanned=10,
-            repos_passed_qc=8,
-            repos_failed_qc=2,
-            fixtures_collected=42,
-            mean_repo_age_years=3.5,
-        )
-
-        stats_dict = stats.to_dict()
-
-        # Should be JSON serializable
-        json_str = json.dumps(stats_dict)
-        parsed = json.loads(json_str)
-
-        assert parsed["repos_scanned"] == 10
-        assert parsed["fixtures_collected"] == 42
-        assert parsed["mean_repo_age_years"] == 3.5
 
 
 class TestAgentCorpusCollectorInitialization:
@@ -175,29 +49,6 @@ class TestAgentCorpusCollectorInitialization:
 
 class TestCollectionDatabaseSchema:
     """Test database schema validation after collection."""
-
-    def test_collection_creates_output_database(
-        self, minimal_human_repo_qc_csv, tmp_path
-    ):
-        """Verify collection creates output database with correct schema."""
-        output_db = tmp_path / "output.db"
-
-        # Verify database is created (mocked to not actually run collection)
-        with patch("collection.human_corpus.clone_repo_for_commit_scan"):
-            with patch("collection.human_corpus.Tier1RepositoryScanner"):
-                with patch("collection.human_corpus.AgentFixtureExtractor"):
-                    with patch("collection.human_corpus.initialise_db") as mock_init:
-                        collector = HumanCorpusCollector(
-                            corpus_db_path=tmp_path / "corpus.db",
-                            output_db=output_db,
-                            repo_qc_dir=minimal_human_repo_qc_csv.parent,
-                        )
-
-                        # Should call initialise_db
-                        mock_init.assert_not_called()  # Not called until run()
-
-                        # Run would initialize, we just verify it would
-                        assert callable(collector.run)
 
     def test_between_group_database_has_required_tables(self, tmp_path):
         """Verify between-group.db has all required tables."""
@@ -368,62 +219,3 @@ class TestCollectionDataPersistence:
 
         conn.close()
 
-
-class TestCollectionConcurrency:
-    """Test collection with different worker configurations."""
-
-    def test_collection_sequential_execution(
-        self, minimal_human_repo_qc_csv, minimal_corpus_db, tmp_path
-    ):
-        """Verify sequential execution (workers=1) works correctly."""
-        collector = HumanCorpusCollector(
-            corpus_db_path=minimal_corpus_db,
-            output_db=tmp_path / "output.db",
-            repo_qc_dir=minimal_human_repo_qc_csv.parent,
-        )
-
-        # Verify collector can be created with sequential mode
-        assert collector is not None
-
-    def test_collection_concurrent_execution(
-        self, minimal_human_repo_qc_csv, minimal_corpus_db, tmp_path
-    ):
-        """Verify concurrent execution (workers>1) works correctly."""
-        collector = HumanCorpusCollector(
-            corpus_db_path=minimal_corpus_db,
-            output_db=tmp_path / "output.db",
-            repo_qc_dir=minimal_human_repo_qc_csv.parent,
-        )
-
-        # Verify collector can be configured for concurrent mode
-        assert collector is not None
-
-
-class TestCollectionErrorHandling:
-    """Test error handling in collection."""
-
-    def test_collection_handles_missing_repository_gracefully(
-        self, minimal_corpus_db, tmp_path
-    ):
-        """Verify collection skips missing repositories without crashing."""
-        # Create a collector with reference to non-existent repo
-        collector = HumanCorpusCollector(
-            corpus_db_path=minimal_corpus_db,
-            output_db=tmp_path / "output.db",
-            repo_qc_dir=tmp_path / "nonexistent",
-        )
-
-        # Verify collector initialized successfully
-        assert collector is not None
-
-    def test_collection_stats_incremented_on_skip(self):
-        """Verify skip reasons are tracked in statistics."""
-        stats = HumanCorpusStats()
-
-        stats.record_skip("clone_failed")
-        stats.record_skip("no_commits_in_window")
-        stats.record_skip("clone_failed")
-
-        assert stats.repos_failed_qc == 3
-        assert stats.qc_skip_reasons["clone_failed"] == 2
-        assert stats.qc_skip_reasons["no_commits_in_window"] == 1

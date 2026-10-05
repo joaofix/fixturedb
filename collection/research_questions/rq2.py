@@ -6,10 +6,7 @@ Computes, per dataset (A/C), summary statistics for the RQ2 metrics (LOC,
 cyclomatic complexity, comment density, num_parameters), plus an A vs C
 comparison. `fixture_type` is shown per-dataset descriptively (a plain
 distribution, no test -- see below) but is not itself compared A vs C in
-any form anymore. Dataset B (contemporary
-within-repo human baseline) is still collected (db/b.db,
-paired_collection.py) but out of scope for this script's reported
-comparisons.
+any form anymore.
 
 **Three paper metrics, final** (as of 2026-09-26): `PAPER_CONTINUOUS_METRICS`
 is the exhaustive list of the continuous metrics reported in the paper --

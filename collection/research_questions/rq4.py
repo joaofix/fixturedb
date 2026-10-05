@@ -98,9 +98,7 @@ has -- has_mock is a clean binary). Reuses has_mock_dist/has_mock_dist_
 by_language, the same counts already backing "Mock prevalence"/"Mock
 prevalence by language" in the per-dataset summary above.
 
-A vs C only -- Dataset B (contemporary within-repo human baseline) is still
-collected (db/b.db) but out of scope for this script's reported
-comparisons; see rq2.py's module docstring.
+A vs C only; see rq2.py's module docstring.
 
 A dataset is skipped (not an error) if its db/{dataset}.db does not exist
 yet.

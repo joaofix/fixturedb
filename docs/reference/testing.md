@@ -17,7 +17,7 @@ tests/
 ├── conftest.py                      # Shared pytest fixtures and helpers
 ├── TEST_PLAN.md                     # Test strategy document
 ├── test_*.py                        # Module-level tests (clone manager, sampling, db, ...)
-├── between_group/                   # Agent/human corpus + between-group comparison tests
+├── between_group/                   # Agent corpus + between-group comparison tests
 ├── paired/                          # Legacy paired-collection tests
 ├── eda/                             # Exploratory data-analysis scripts
 ├── fixtures/                        # Static test data (see fixtures/README.md)

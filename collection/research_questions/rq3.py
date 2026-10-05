@@ -72,9 +72,7 @@ package entirely on 2026-09-27, once rq2.py's `fixture_type` repo-level
 test (their only remaining caller anywhere) was also removed; see
 rq2.py's module docstring for that removal's full rationale.
 
-A vs C only -- Dataset B (contemporary within-repo human baseline) is still
-collected (db/b.db) but out of scope for this script's reported
-comparisons; see rq2.py's module docstring.
+A vs C only; see rq2.py's module docstring.
 
 ## Supplementary analyses (not part of either main table)
 

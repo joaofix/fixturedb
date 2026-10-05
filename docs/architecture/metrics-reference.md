@@ -105,7 +105,7 @@ Count of distinct mock usages detected within a fixture's own AST text (never ou
 up at module level or in a shared helper is invisible to this detector, which matters most for Jest's
 conventional top-level `jest.mock(...)`). Per-mock detail (framework, test-double category, target,
 interaction count, source snippet) is stored one row per mock in the `mock_usages` table — see
-[Database Schema § mock_usages](database-schema.md#mock_usages).
+Database Schema (`mock_usages` table).
 
 Each fixture is also classified into the classic test-double taxonomy (Meszaros) — `dummy`/`stub`/`spy`/
 `mock`/`fake` — by scanning the fixture's own full body text, case-insensitively, for one of the five

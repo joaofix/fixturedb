@@ -1,7 +1,7 @@
 """
 RQ1 -- Fixture Prevalence (Quantitative): how common are tests, fixtures,
 setup, and teardown across the raw repo universe -- independent of any
-Dataset A/B/C filtering?
+Dataset A/C filtering?
 
 Pure reader over `db/rq1_prevalence.db` (`collection/rq1_prevalence_scan.py`'s
 own output) -- same role `rq2.py`/`rq3.py`/`rq4.py` play for `db/a.db` +
@@ -11,8 +11,8 @@ renders what that scan already persisted.
 Computes both paper tables over every successfully-scanned repo --
 deliberately no `min_test_files` quality floor applied here (2026-10-04
 methodology decision): RQ1's whole purpose is to characterize the raw
-universe *before* any Dataset A/B/C-style filtering, so applying one of
-A/B/C's own floors would partly collapse the distinction RQ1 exists to
+universe *before* any Dataset A/C-style filtering, so applying one of
+A/C's own floors would partly collapse the distinction RQ1 exists to
 draw. A floored variant was reported here through 2026-10-04 (as a
 robustness check showing the floor barely moved the numbers) but was
 removed once that check had served its purpose -- see git history
@@ -127,7 +127,7 @@ def compute_prevalence(rows: list[sqlite3.Row]) -> dict[str, LanguagePrevalence]
     plus `"all"` (pooled across every language). No quality floor of any
     kind is applied here -- see this module's own docstring for why RQ1
     deliberately doesn't filter on `min_test_files` the way Dataset
-    A/B/C's own collection does."""
+    A/C's own collection does."""
     by_language: dict[str, LanguagePrevalence] = {}
     pooled = LanguagePrevalence()
     for row in rows:
@@ -290,7 +290,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "# RQ1 -- Fixture Prevalence",
         "",
         "> How common are tests, fixtures, setup, and teardown across the "
-        "raw repo universe, independent of Dataset A/B/C's own filtering?",
+        "raw repo universe, independent of Dataset A/C's own filtering?",
         "",
         f"Generated: {generated_at}",
         "",
