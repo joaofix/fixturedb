@@ -1,152 +1,65 @@
-# Testing Strategy and Execution
+# Testing
 
-This document describes the test suite for FixtureDB: test organization, how to run tests, and guidelines for adding new ones.
+The test suite is in `tests/`. It runs with pytest and needs no GitHub token. The
+test strategy is in [tests/TEST_PLAN.md](../../tests/TEST_PLAN.md).
 
-## Test Overview
-
-The test suite validates the fixture extraction module (`collection/detector.py`, which uses Tree-sitter ASTs to detect test fixtures) plus the rest of the collection pipeline — agent detection, dataset collectors, sampling, dedup. 431 test files across `tests/` as of this writing.
-
-Languages covered: Python, Java, JavaScript, TypeScript. Test framework: pytest, with custom assertion helpers in `tests/conftest.py`.
-
-## Test Organization
-
-The fixture-detector test categories described below live under `tests/collection/`, alongside per-module unit tests for the rest of the `collection/` package (agent detection, dataset collectors, sampling, dedup, etc.). Top-level `tests/` also has `between_group/` (agent/human corpus and comparison tests), `paired/` (legacy paired-collection tests), and `eda/` (exploratory-analysis scripts).
-
-```
-tests/
-├── conftest.py                      # Shared pytest fixtures and helpers
-├── TEST_PLAN.md                     # Test strategy document
-├── test_*.py                        # Module-level tests (clone manager, sampling, db, ...)
-├── between_group/                   # Agent corpus + between-group comparison tests
-├── paired/                          # Legacy paired-collection tests
-├── eda/                             # Exploratory data-analysis scripts
-├── fixtures/                        # Static test data (see fixtures/README.md)
-└── collection/                      # Per-module tests for collection/, including:
-    ├── test_extractor_unit/         # Category 1: small-snippet detection unit tests
-    │   ├── test_python_fixtures.py
-    │   ├── test_java_fixtures.py
-    │   ├── test_javascript_fixtures.py
-    │   └── test_typescript_fixtures.py
-    ├── test_extractor_metadata/     # Category 2: metadata accuracy
-    │   ├── test_line_numbers.py
-    │   ├── test_fixture_types_and_scopes.py
-    │   └── test_new_metrics.py
-    ├── test_extractor_edge_cases/   # Category 3: edge-case robustness
-    │   └── test_edge_cases.py
-    ├── test_mock_detection/         # Category 4: mock framework patterns
-    │   ├── test_mock_patterns.py    # Cross-language + false-positive/negative checks
-    │   ├── test_mock_pattern_catalog_coverage.py
-    │   ├── test_python_mock_patterns.py
-    │   ├── test_java_mock_patterns.py
-    │   ├── test_javascript_mock_patterns.py
-    │   └── test_typescript_mock_patterns.py
-    ├── test_integration/            # Category 5: realistic fixtures
-    │   ├── test_python_realistic_fixtures.py
-    │   ├── test_java_realistic_fixtures.py
-    │   ├── test_javascript_realistic_fixtures.py
-    │   ├── test_typescript_realistic_fixtures.py
-    │   └── test_realistic_fixtures.py
-    └── test_*.py                    # Per-module tests: agent detection, dataset
-                                      # collectors (A/C), dedup, sampling, CLI, ...
-```
-
-## Test Categories
-
-1. **Unit tests** — small code snippets (1–10 lines), validating fixture detection and `fixture_type` classification across all languages.
-2. **Metadata tests** — line numbers, LOC, fixture type, `fixture_role` classification, cyclomatic complexity, comment density/parameter counts.
-3. **Edge cases** — large fixtures (100+ lines), deep nesting, false positive prevention, unicode, special characters, indentation variations, empty fixtures, malformed code.
-4. **Mock detection** — mock framework identification and test-double category classification (`dummy`/`stub`/`spy`/`mock`/`fake`, per Meszaros), across languages. See [Fixture Detection Logic § Mock Detection](../architecture/detection.md#mock-detection) for the full methodology and [feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml) for the exact pattern/framework/category catalog (27 patterns, 8 frameworks). Coverage: Python (`unittest.mock`'s `patch`/`patch.object`, bare and `mock.`-qualified; `Mock`/`MagicMock`/`AsyncMock`; `create_autospec`; `pytest-mock`'s `mocker.patch`/`mocker.patch.object`; pytest's built-in `monkeypatch`), Java (Mockito, EasyMock — not PowerMock or Kotlin's MockK, both documented exclusions; see [detection.md § Mock Detection](../architecture/detection.md#mock-detection) for why a pattern once labeled `mockk` was retracted), JavaScript (Jest's `fn`/`spyOn`/`mock`/`mocked`/`createMockFromModule`, Sinon's `stub`/`spy`/`mock`/`fake`/`replace`/`createStubInstance`), TypeScript (same Jest/Sinon patterns, plus Vitest's `vi.fn`/`vi.mock`). Every test in this category asserts on `fixture.mocks` directly (framework, category, target_identifier) rather than just that the surrounding fixture was extracted — a fixture can be detected correctly while its mock usage inside is silently missed, which is how several real gaps were originally found (see `mock_patterns_excluded` in the YAML catalog for what's still knowingly unhandled).
-5. **Integration tests** — realistic, multi-language test code: Django TestCase hierarchy (Python), JUnit 5 with nested classes (Java), Jest with beforeAll/afterAll (JavaScript), type-annotated Jest (TypeScript), implicit vs. explicit setup patterns, complex fixture dependencies, large test modules with many fixtures.
-
-## Running Tests
+## Run the tests
 
 ```bash
-pytest tests/ -v                                                    # run everything
-pytest tests/test_extractor_unit/test_python_fixtures.py -v         # one file
-pytest tests/collection/test_mock_detection/ -v                     # one category
-pytest tests/ -v -k "python"                                        # by name pattern
-pytest tests/ --cov=collection.detector --cov-report=html           # coverage report
+pytest tests/                                      # everything
+pytest tests/collection/test_extractor_unit/ -v    # one folder
+pytest tests/ -k python                            # by name
+pytest tests/ --cov=collection --cov-report=html   # coverage
 ```
 
-See `pytest --help` for the rest of pytest's own flags (`-x` to stop on first failure, `-s` for print output, `--durations=10` for slowest tests, `-n auto` for parallel execution with pytest-xdist, etc.) — nothing about this project changes their behavior.
+The suite takes about a minute. Run it before every commit.
 
-## Test Helpers (conftest.py)
+## What is covered
 
-`tests/conftest.py` provides reusable pytest fixtures and assertion helpers:
+| Area | Where |
+|------|-------|
+| Fixture detection, per language | `tests/collection/test_extractor_unit/` |
+| Fixture metrics and roles | `tests/collection/test_extractor_metadata/` |
+| Edge cases | `tests/collection/test_extractor_edge_cases/` |
+| Mock detection | `tests/collection/test_mock_detection/` |
+| Realistic multi-language code | `tests/collection/test_integration/` |
+| Agent detection | `tests/test_agent_detector_pure.py`, `tests/collection/test_agent_*.py` |
+| Dataset A and C collectors | `tests/between_group/`, `tests/collection/test_dataset_c.py` |
+| CLI | `tests/collection/test_main_cli.py` |
+| Research-question reports | `tests/collection/test_rq*.py` |
+
+Catalog tests run every entry of the YAML catalogs through the detector. Adding
+an entry to a catalog adds a test.
+
+## Test helpers
+
+`tests/conftest.py` provides helpers for detector tests:
 
 ```python
-create_test_file(language, code)
-extract_and_find_fixtures(code, language)
-fixture = extract_and_find_fixtures(code, language, fixture_name='setUp')
-
-assert_fixture_detected(code, language, name)
-assert_fixture_not_detected(code, language, name)
-assert_fixture_count(code, language, expected_count)
-assert_line_range(fixture, start_line, end_line)
-assert_loc(fixture, expected_loc)
-assert_fixture_metrics(fixture, **kwargs)
+fixture = assert_fixture_detected(code, "python", "setUp")
+assert fixture.fixture_type == "unittest_setup"
+assert_loc(fixture, 1)
 ```
 
-Example:
+Other helpers: `extract_and_find_fixtures`, `assert_fixture_not_detected`,
+`assert_fixture_count`, `assert_line_range`, `assert_fixture_metrics`.
 
-```python
-def test_setUp_detected(self):
-    code = """
-class Test(unittest.TestCase):
-    def setUp(self):
-        self.x = 1
-"""
-    fixture = assert_fixture_detected(code, 'python', 'setUp')
-    assert fixture.fixture_type == 'unittest_setup'
-    assert_loc(fixture, 1)
-```
+## Guards
 
-## Agent Detection Tests
+Two guards run in every test.
 
-Agent detection — file scanning, commit-trailer/author-identity matching, fixture completeness marking (see [Agent Detection Methodology](../architecture/agent-detection.md)) — is covered across several files under `tests/collection/`, not one single end-to-end module:
+- Tests cannot write CSV output into `datasets/`. The guard is in
+  `tests/conftest.py`. A test that tries fails, and pytest shows its name.
+- `pytest` ignores the `clones/` folder. It holds external repositories with
+  their own tests.
 
-- `test_agent_detection_logic.py` — agent config file scanning, GitHub API file-listing helper (retry/rate-limit handling)
-- `test_agent_patterns_thorough.py`, `test_agent_patterns_extra.py` — agent signature catalog matching (author identity, trailers)
-- `test_end_to_end_collection.py` — collector initialization, DB persistence, concurrency, error handling for the Dataset A and C collectors
-- `tests/between_group/test_agent_corpus.py` — Dataset A's collector, using real git repositories in `tmp_path` with `Co-authored-by` trailers
+## Adding a test
 
-```bash
-pytest tests/collection/test_agent_detection_logic.py -v
-pytest tests/collection/ -v -k agent
-```
-
-## pytest Configuration
-
-The project configures test discovery and execution via `pyproject.toml`:
-
-```toml
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-norecursedirs = ["clones", ".git", "venv", "dist", "build"]
-addopts = "-q"
-```
-
-`norecursedirs` matters in particular: `clones/` holds hundreds of externally-cloned repositories with their own tests, and without excluding it, pytest would try to import and run them — causing dependency and timeout issues, and making a full run roughly 100x slower.
-
-## Adding New Tests
-
-Put the test under the matching category directory (`test_extractor_unit/`, `test_extractor_metadata/`, `test_extractor_edge_cases/`, `test_mock_detection/`, `test_integration/`, or `test_agent_detection_logic.py` for agent detection), reuse the `conftest` helpers, and follow the existing naming conventions (`Test<FeatureOrLanguage><Pattern>` for classes, `test_<what_is_tested>` for methods, `test_<language>_<category>.py` for files):
+Put the file in the folder that matches its subject. Use a relative import for
+the helpers:
 
 ```python
 from ..conftest import assert_fixture_detected
-
-class TestPythonAsyncFixtures:
-    def test_async_setUp_with_await(self):
-        code = "..."
-        fixture = assert_fixture_detected(code, 'python', 'setUp')
-        assert fixture.fixture_type == 'unittest_setup'  # not the method name itself
 ```
 
-If `ImportError: No module named 'conftest'` shows up, use the relative import (`from ..conftest import ...`), not a bare `from conftest import ...`.
-
-## References
-
-- [tests/TEST_PLAN.md](../../tests/TEST_PLAN.md) — test strategy document
-- [collection/detector.py](../../collection/detector.py) — detector implementation
-- [collection/detector_shared.py](../../collection/detector_shared.py) — `FixtureResult` dataclass
-- [pytest documentation](https://docs.pytest.org/)
+A bug fix needs a test that fails before the fix and passes after it.

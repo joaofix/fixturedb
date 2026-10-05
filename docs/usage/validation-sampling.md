@@ -1,202 +1,103 @@
-# Manual-Validation Sampling (Cochran's Formula)
+# Manual validation
 
-For the paper, a subset of pipeline outputs needs a human-reviewed accuracy
-sample — not every pipeline output, only the ones where a detection error
-would actually mislabel or contaminate the study's data (see "Reduced
-validation set" below). `collection/validation_sampling.py` draws a
-statistically-sized sample for a reviewer to manually check, sized with
-Cochran's formula rather than an arbitrary fixed count, and normalizes every
-sample to one fixed reviewer-facing CSV schema regardless of which pipeline
-step produced it.
+The automatic detectors can make mistakes. A reviewer checks a random sample of
+their output by hand. The tool that draws the sample is
+`collection/validation_sampling.py`. It is run by hand. It is not part of the
+pipeline.
 
-This tool is not part of the automatic phase pipeline. It never runs on its own — invoke it by hand, whenever a manual-validation sample is actually needed, against whatever CSV(s) that pipeline step already produced.
+## What is validated
 
-## Methodology
+Only the steps where an error would change the study are sampled:
 
-Sample size uses Cochran's formula with the finite-population correction:
+| `--step` | Checks | Input |
+|----------|--------|-------|
+| `agent-repos` | Repositories marked agent-enabled | `datasets/a/repos/*_repo.csv` |
+| `agent-commits-dataset-a` | Commits marked as agent work | `datasets/a/commits/*_commit.csv` |
+| `agent-fixtures-dataset-a` | Fixtures found in Dataset A | `datasets/a/fixtures/{language}_fixtures.csv` |
+| `human-fixtures-dataset-c` | Fixtures found in Dataset C | `datasets/c/fixtures/{language}_fixtures.csv` |
+
+Agent test-file matching is not sampled. It is a file-path match, which unit
+tests cover.
+
+## Sample size
+
+The size is set by Cochran's formula with a finite-population correction:
 
 ```
-n0 = z^2 * p * (1 - p) / e^2
-n  = n0 / (1 + (n0 - 1) / N)        (N = population size)
+n0 = z² · p · (1 − p) / e²
+n  = n0 / (1 + (n0 − 1) / N)
 ```
 
-- `z` is derived from the confidence level (95% → z≈1.96) via `scipy.stats.norm.ppf`.
-- `p` (assumed population proportion) defaults to 0.5 — Cochran's conservative
-  choice when there's no prior estimate, since it maximizes the required
-  sample size.
-- `e` is the margin of error (default 0.05).
-- The finite-population correction shrinks `n` for small populations, and the
-  result is always capped at the population size (you can't sample more rows
-  than exist).
+The defaults are 95% confidence (z = 1.96), a margin of error of 0.05, p = 0.5
+and seed 42. The sample is never larger than the population. All three
+parameters are command-line flags.
 
-Defaults match the paper's stated methodology: **95% confidence, 5% margin of
-error, seed 42**. All three are CLI flags, not hardcoded, in case a future
-validation step needs different rigor — but the seed default should stay
-fixed across runs so the paper's reported sample is reproducible.
+Rows are sorted by a hash of their content before the seeded draw. The same
+rows are picked for the same seed, whatever the input order.
 
-Sampling is deterministic by content, not just by seed: rows are sorted by a hash of their full content before the seeded random sample is drawn, so the exact same rows are selected for a given seed regardless of the order rows happen to appear in the source CSV (which can vary run-to-run under threaded export). This matters because the sampled rows are a citable research artifact — re-running the tool against the same underlying data must reproduce the same reviewed sample.
+For the two combined steps, the sample is stratified. `agent-repos` stratifies
+by language. `agent-commits-dataset-a` stratifies by language and agent type.
+Each stratum gets a share of the sample in proportion to its size.
 
-Repo and commit steps are stratified, not pooled-and-drawn-uniformly:
-`agent-repos` stratifies by `language`; `agent-commits-dataset-a` stratifies
-by `(language, agent_type)`. Each stratum gets a proportional share of the total sample size
-(largest-remainder allocation, so the shares always sum exactly to the
-computed `n`), so the reviewed set mirrors the corpus' language/agent
-composition instead of skewing toward whichever language or agent happens to
-dominate row count. The two fixture steps need no extra stratification: each
-already draws one independent sample per language file (see "The four steps"
-below).
-
-## Fixed output schema
-
-Every validation CSV — regardless of step — has exactly these columns, in
-this order:
-
-| Column | Meaning |
-|---|---|
-| `validation_id` | Unique row identifier (`<step>-<n>`, e.g. `agent-repos-0001`) |
-| `validation_type` | `repo` \| `commit` \| `fixture` |
-| `language` | The item's language |
-| `repo_full_name` | `owner/repo` slug |
-| `item_id` | Repo full name / commit SHA / composite fixture key (`repo:commit:file:start_line`) |
-| `item_url` | Direct clickable GitHub URL to the item being judged |
-| `detection_signal` | What triggered detection (matched config filename, agent type, or fixture type) |
-| `evidence` | Text for the reviewer to judge the detection against |
-| `label` | Empty — reviewer fills in: `TP` \| `FP` \| `Unsure` \| `404` |
-| `reviewer_notes` | Empty — reviewer fills in optional free text |
-
-A `README.md` documenting this schema and the label vocabulary is written
-(and refreshed) at the root of `validation-samples/` on every run, so it's
-readable straight from the output directory without needing this doc.
-
-### Per-type field mapping and known gaps
-
-| | `repo` | `commit` | `fixture` |
-|---|---|---|---|
-| `item_url` | `https://github.com/{repo_full_name}` | `commit_url` column (or reconstructed from repo + SHA) | `github_url` column (already precomputed at collection time) |
-| `detection_signal` | The matched agent-config filename (e.g. `CLAUDE.md`), or `agent_config_present` for CSVs collected before this column existed | `agent_type` (e.g. `claude`, `copilot`) | `fixture_type` (e.g. `pytest_decorator`) |
-| `evidence` | Same as `detection_signal` — no full config-file content is captured today, so the filename is the best available evidence | `agent_type` + `commit_date` + author — **not** the commit message or diff text (see "Known gap" below) | `raw_source` — the full fixture source text |
-
-Known gap: commit evidence is best-effort. The original spec for this tool assumed commit message + diff lines were "stored in DB"; they aren't.
-`agent_commit_counter.py` doesn't yet know which files in a commit are test
-files (that's determined later, in `test_commit_filter.py`), and no diff
-content is captured at all. Building real message/diff evidence would mean
-new git-diff capture logic threaded through an earlier pipeline stage. Until
-that exists, commit evidence is `agent_type`/`commit_date`/author only — a
-reviewer judging a sampled commit needs to open `item_url` on GitHub to see
-the actual message and diff.
-
-Repo/fixture evidence requires the current collector code: the
-`matched_config_file` and `raw_source` columns are populated by
-`agent_repository_counter.py` and `agent_corpus.py`'s fixture CSV export,
-respectively (as of the change that introduced the fixed schema above). CSVs
-collected before that change won't have these columns; the tool falls back
-to `agent_config_present` / an empty `evidence` string for those older files
-rather than erroring.
-
-## Reduced validation set
-
-Not every pipeline output carries the same risk if its detection logic has
-an error. The table below is the full inventory of candidate validation
-targets and which ones actually warrant a human-reviewed sample, for a
-reader who wants to judge the methodology without reading the source code.
-
-| Validation target | Necessary? | Why |
-|---|---|---|
-| Agent repository detection | **Yes** | This is the corpus's entry point. A repository wrongly flagged as agent-enabled contaminates every commit and fixture derived from it downstream — an error here can't be caught later. |
-| Agent commit detection (precision on claimed-agent commits) | **Yes** | This is the paper's core attribution claim: that a specific commit was authored or co-authored by an AI coding agent. A detection error here directly mislabels a data point between the agent and human corpora. |
-| Agent test-commit detection | No | Once a commit is already confirmed agent-authored, deciding whether it touches a test file is a mechanical file-path/pattern match, not an attribution judgment call — a code-correctness concern suited to ordinary unit tests, not manual review. |
-| Agent fixture detection (per language) | **Yes** | Fixture extraction (AST-pattern-based, per language grammar) produces the metric-bearing unit of analysis for the whole study. A false positive/negative here directly changes reported fixture counts and characteristics. |
-| Dataset C fixture detection (per language) | **Yes** | Same `detector.extract_fixtures()` call again, on Dataset C's pre-2021 snapshot corpus. Demonstrated necessary, not just theoretically prudent: manual review of a sample found two real false-positive classes (a `pytest_decorator` substring collision, a `.tsx`/JSX grammar mismatch) that Dataset A's review — on the same detector — did not happen to surface. Each dataset's corpus can exercise different edge cases of shared code. |
-
-Concretely, `collection/validation_sampling.py` only exposes `--step`
-choices for the seven "Yes" rows — "Agent test-commit detection" is the one
-deliberately not selectable, so the tool's own surface area reflects that
-one exclusion rather than merely documenting it separately from the code.
-
-## The seven steps
-
-| `--step` | What it validates | Typical `--input` | Population |
-|---|---|---|---|
-| `agent-repos` | Agent-enabled repository detection | `datasets/a/repos/*_repo.csv` (all languages) | Combined, stratified by language — rows with `has_agent_config != 1` are filtered out before sampling |
-| `agent-commits-dataset-a` | Agent commit attribution (precision) | `datasets/a/commits/*_commit.csv` (all languages) | Combined, stratified by `(language, agent_type)` |
-| `agent-fixtures-dataset-a` | Dataset A fixture extraction | `datasets/a/fixtures/{language}_fixtures.csv` | Per-language — one sample per file |
-| `human-fixtures-dataset-c` | Dataset C fixture extraction | `datasets/c/fixtures/{language}_fixtures.csv` | Per-language — one sample per file |
-
-The two combined-mode steps are language-agnostic: even though their
-source CSVs are split per language on disk, pass them all in one invocation
-and they're pooled into a single population, then a proportional sample is
-drawn per language (and per agent type, for `agent-commits-dataset-a`). The
-two fixture steps are language-specific (extraction differs per
-language/grammar), so each language file you pass is sampled as its own
-independent population, producing one output CSV per file.
-
-
-
-For `agent-repos`, only rows already flagged `has_agent_config=1` are
-sampled — the source CSV also contains scanned-but-negative repos, and
-validating "agent repository detection" means checking the claimed
-positives, not the whole scanned candidate pool.
+For `agent-repos`, only rows with `has_agent_config = 1` are sampled.
 
 ## Usage
 
 ```bash
-# Combined-mode step: pool all languages into one stratified sample
+# Combined step: one sample across all languages
 python -m collection.validation_sampling \
   --step agent-repos \
-  --input datasets/a/repos/python_repo.csv \
-          datasets/a/repos/java_repo.csv \
-          datasets/a/repos/javascript_repo.csv \
-          datasets/a/repos/typescript_repo.csv
+  --input datasets/a/repos/python_repo.csv datasets/a/repos/java_repo.csv
 
-# Per-language-mode step: one output per input file
+# Per-file step: one sample per input file
 python -m collection.validation_sampling \
   --step agent-fixtures-dataset-a \
-  --input datasets/a/fixtures/python_fixtures.csv \
-          datasets/a/fixtures/java_fixtures.csv
+  --input datasets/a/fixtures/python_fixtures.csv
 
-# Override confidence level / margin of error / seed
-python -m collection.validation_sampling \
-  --step agent-fixtures-dataset-a \
+# Change the defaults
+python -m collection.validation_sampling --step agent-fixtures-dataset-a \
   --input datasets/a/fixtures/python_fixtures.csv \
   --confidence-level 0.99 --margin-error 0.03 --seed 7
 ```
 
-Full flag reference: `python -m collection.validation_sampling --help`.
+`python -m collection.validation_sampling --help` lists every flag.
 
 ## Output
 
-```
-validation-samples/
-  README.md                          # schema + label vocabulary, refreshed every run
-  agent-repos/
-    agent-repos_sample_<timestamp>.csv
-    sample_metadata_<timestamp>.json
-  agent-commits-dataset-a/
-  agent-fixtures-dataset-a/
-    python_agent_fixtures_sample_<timestamp>.csv
-    java_agent_fixtures_sample_<timestamp>.csv
-    sample_metadata_<timestamp>.json
-  human-fixtures-dataset-c/
-    python_fixtures_sample_<timestamp>.csv
-    java_fixtures_sample_<timestamp>.csv
-    sample_metadata_<timestamp>.json
-```
+Samples are written under `validation-samples/`. Each run writes a
+`sample_metadata_<timestamp>.json` with the population size, the sample size,
+the confidence level, the margin of error, the seed and the strata. Cite this
+file when you report a validation result.
 
-Each run also writes a `sample_metadata_<timestamp>.json` recording the
-population size (N), computed sample size (n), confidence level, margin of
-error, assumed proportion, and seed for every output file produced. For
-stratified steps, it also includes a `strata` breakdown — each stratum's key
-(e.g. `{"language": "python"}` or `{"language": "python", "agent_type":
-"claude"}`), population size, and sample size — this is what the paper's
-methodology section should cite per validated step.
+`validation-samples/` is committed to git. The sampled rows are the artifact a
+reviewer checks, so they are kept with the code.
 
-`validation-samples/` is committed to the repository (not gitignored): the
-specific sampled rows are the actual artifact a reviewer checks against for
-the paper's reported precision/recall figures, so they're a citable
-research artifact rather than a disposable derivative like the pipeline's
-DB/CSV outputs.
+## Columns
 
-## See Also
+Every sample file has the same columns:
 
-- [Collection Architecture](../architecture/collection.md) — Dataset A/C build map
-- [Fixture detection](../architecture/detection.md)
+| Column | Meaning |
+|--------|---------|
+| `validation_id` | Row id, for example `agent-repos-0001` |
+| `validation_type` | `repo`, `commit` or `fixture` |
+| `language` | Language of the item |
+| `repo_full_name` | `owner/repo` |
+| `item_id` | Repository name, commit SHA, or `repo:commit:file:line` |
+| `item_url` | GitHub link to the item |
+| `detection_signal` | What flagged the item: config file, agent type or fixture type |
+| `evidence` | Text the reviewer checks the detection against |
+| `label` | Reviewer fills in: `TP`, `FP`, `Unsure` or `404` |
+| `reviewer_notes` | Reviewer fills in free text |
+
+The schema and label list are also in `validation-samples/README.md`, which is
+rewritten on every run.
+
+## Known gaps
+
+Commit evidence is thin. The sample has the agent type, the commit date and the
+author, but not the commit message or the diff. The reviewer opens `item_url` to
+read them. Adding the message and diff to the collected data would need a change
+to the commit stage.
+
+Older CSVs lack the `matched_config_file` and `raw_source` columns. For those,
+the tool writes a placeholder in `evidence` instead of failing.

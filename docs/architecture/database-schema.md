@@ -1,269 +1,97 @@
-# Database Schema
+# Database schema
 
-FixtureDB collects three separate datasets — see
-[Repository Structure](../getting-started/repository-structure.md) — each written to
-its own SQLite database rather than one shared file:
+There is one SQLite database per dataset: `db/a.db` and `db/c.db`. Both use the
+same schema, defined in `collection/db_schema.py`. Both run in WAL mode.
 
-## Database overview
+Each row in `fixtures` is one fixture. Each row in `mock_usages` is one mock
+call inside a fixture.
 
-| Database | Purpose | `fixtures.commit_kind` |
-|----------|---------|-------------------------|
-| `db/a.db` | Dataset A: agent-authored fixtures (2025+, Tier 1 detection) | always `'agent'` |
-| `db/c.db` | Dataset C: human-authored fixtures, cross-repo baseline (independent pre-2021 repo pool, snapshot extraction) | not set (Dataset C has no commit-level agent/human distinction to make — every fixture in it is human-authored by construction) |
+## repositories
 
-All three use the identical schema below (defined once in `collection/db_schema.py`)
-and run in SQLite WAL mode for safe concurrent reads. Because each dataset is a
-separate file, there is no single query that spans all three — see
-[Query examples](#query-examples) for the recommended cross-dataset pattern.
+| Column | Type | Meaning |
+|--------|------|---------|
+| `id` | INTEGER | Primary key |
+| `github_id` | INTEGER | GitHub numeric id |
+| `full_name` | TEXT | `owner/name` |
+| `language` | TEXT | Repository language tag |
+| `stars`, `forks` | INTEGER | Counts at collection time |
+| `description`, `topics` | TEXT | From GitHub. `topics` is a JSON list. |
+| `created_at`, `pushed_at` | TEXT | ISO 8601 dates |
+| `clone_url`, `pinned_commit` | TEXT | Clone address and the commit that was read |
+| `status`, `error_message`, `skip_reason` | TEXT | Collection state |
+| `num_test_files`, `num_fixtures`, `num_mock_usages` | INTEGER | Counts |
+| `num_contributors` | INTEGER | From GitHub |
+| `domain` | TEXT | `web`, `systems`, `ml`, `security`, `database`, `devops` or `other` |
+| `repo_age_years` | REAL | Age at the dataset's reference date. NULL if created after it. |
+| `repo_age_at_collection_years` | REAL | Age when collection ran |
+| `collected_at` | TEXT | Insert time |
 
-## Schema
+## test_files
 
-### repositories
+| Column | Type | Meaning |
+|--------|------|---------|
+| `id` | INTEGER | Primary key |
+| `repo_id` | INTEGER | Links to `repositories.id` |
+| `relative_path` | TEXT | Path in the repository |
+| `language` | TEXT | Language of the file |
+| `file_loc` | INTEGER | Non-blank lines |
+| `num_test_funcs`, `num_fixtures` | INTEGER | Counts in the file |
+| `total_fixture_loc` | INTEGER | Sum of fixture lines in the file |
 
-Repository metadata and control variables computed at fixture writing time.
+## fixtures
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Internal primary key |
-| `github_id` | INTEGER | GitHub repository numeric ID |
-| `full_name` | TEXT | Repository slug such as `pytest-dev/pytest` |
-| `language` | TEXT | Normalized primary language (`python`, `java`, `javascript`, `typescript`) |
-| `stars` | INTEGER | Star count (current; historical unavailable from GitHub API) |
-| `forks` | INTEGER | Fork count at collection time |
-| `description` | TEXT | Repository description from GitHub |
-| `topics` | TEXT | JSON-encoded list of GitHub topics |
-| `created_at` | TEXT | ISO 8601 repository creation date |
-| `pushed_at` | TEXT | ISO 8601 last push date |
-| `clone_url` | TEXT | Repository clone URL |
-| `pinned_commit` | TEXT | Commit SHA analyzed for the repository |
-| `status` | TEXT | Collection status such as `discovered`, `cloned`, `analysed`, `skipped`, or `error` |
-| `error_message` | TEXT | Error details if collection failed |
-| `skip_reason` | TEXT | Skip reason when a repository is filtered out |
-| `num_test_files` | INTEGER | Number of test files found |
-| `num_fixtures` | INTEGER | Number of fixture definitions found |
-| `num_mock_usages` | INTEGER | Number of mock usages detected |
-| `num_contributors` | INTEGER | Contributor count from GitHub |
-| **Control Variables** |
-| `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
-| `repo_age_years` | REAL | Repository age in years at each dataset's fixed temporal reference (2025-01-01 for Dataset A, 2020-12-31 for Dataset C); NULL when the repo was created after that date |
-| `repo_age_at_collection_years` | REAL | Repository age in years as of whenever collection actually ran (relative to "now", not a fixed reference) — always defined, unlike `repo_age_years` |
-| `collected_at` | TEXT | Timestamp of insertion |
+| Column | Type | Meaning |
+|--------|------|---------|
+| `id`, `file_id`, `repo_id` | INTEGER | Keys |
+| `name` | TEXT | Fixture name |
+| `fixture_type` | TEXT | Matched pattern, for example `pytest_decorator` |
+| `start_line`, `end_line` | INTEGER | 1-based location |
+| `loc` | INTEGER | Non-blank lines |
+| `cyclomatic_complexity` | INTEGER | Lizard |
+| `num_parameters` | INTEGER | Lizard |
+| `num_comment_lines`, `comment_density` | INTEGER, REAL | Single-line comments, and that count divided by `loc` |
+| `fixture_role` | TEXT | `setup`, `teardown`, `setup_and_teardown` or `other` |
+| `raw_source` | TEXT | Exact fixture text |
+| `num_mocks` | INTEGER | Number of mock calls in the fixture |
+| `commit_sha` | TEXT | Dataset A: the commit that added the fixture. Dataset C: the repository's cutoff commit. |
+| `commit_date` | TEXT | Date of `commit_sha` |
+| `commit_kind` | TEXT | `agent` in `db/a.db`. Not set in `db/c.db`. |
+| `agent_type` | TEXT | Agent family, if the commit is agent work |
+| `is_complete_addition` | INTEGER | 1 if the fixture was only added in its commit |
+| `repo_age_at_commit_years` | REAL | Repository age at `commit_date` |
 
-### test_files
+## mock_usages
 
-Test file inventory and file-level summary counts.
+| Column | Type | Meaning |
+|--------|------|---------|
+| `id`, `fixture_id`, `repo_id` | INTEGER | Keys |
+| `framework` | TEXT | Mock library, for example `unittest_mock` or `mockito` |
+| `category` | TEXT | `dummy`, `stub`, `spy`, `mock` or `fake` |
+| `target_identifier` | TEXT | The mocked name, if it can be read |
+| `num_interactions_configured` | INTEGER | Mock setup calls |
+| `raw_snippet` | TEXT | Exact mock text |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Internal primary key |
-| `repo_id` | INTEGER | Foreign key to `repositories.id` |
-| `relative_path` | TEXT | Path relative to repository root |
-| `language` | TEXT | File language |
-| `file_loc` | INTEGER | Non-blank lines of code in the file |
-| `num_test_funcs` | INTEGER | Number of detected test functions |
-| `num_fixtures` | INTEGER | Number of fixtures in the file |
-| `total_fixture_loc` | INTEGER | Sum of fixture LOC within the file |
+## Columns the paper does not use
 
-### fixtures
+These columns are still stored. The paper does not analyse them, and the code
+does not report them:
 
-Individual fixture definitions and their quantitative metrics.
+- `fixtures.scope`, `fixtures.framework`
+- `fixtures.max_nesting_depth`, `fixtures.num_objects_instantiated`,
+  `fixtures.num_external_calls`
+- `fixtures.has_teardown_pair`, `fixtures.commit_type`
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Internal primary key |
-| `file_id` | INTEGER | Foreign key to `test_files.id` |
-| `repo_id` | INTEGER | Foreign key to `repositories.id` |
-| `name` | TEXT | Fixture name or method name |
-| `fixture_type` | TEXT | Detected fixture pattern such as `pytest_decorator`, `unittest_setup`, or `before_each` |
-| `start_line` | INTEGER | 1-based start line |
-| `end_line` | INTEGER | 1-based end line |
-| `loc` | INTEGER | Non-blank lines of code in the fixture |
-| `cyclomatic_complexity` | INTEGER | McCabe cyclomatic complexity |
-| `num_comment_lines` | INTEGER | Comment-only lines within the fixture's own line span (tree-sitter comment-node walk) |
-| `comment_density` | REAL | `num_comment_lines / loc`, or `0.0` if `loc` is 0 |
-| `num_parameters` | INTEGER | Number of fixture parameters |
-| `fixture_role` | TEXT | `setup`/`teardown`/`setup_and_teardown`/`other`, set at extraction time -- see `collection/detector_shared.py`'s `_classify_fixture_kinds()` and `collection/detector_python.py`'s `classify_pytest_fixture_kind()` docstrings for the per-fixture-type rules |
-| `raw_source` | TEXT | Original source text for the fixture |
-| `num_mocks` | INTEGER | Number of distinct mock usages associated with the fixture |
-| **Dataset Labeling** |
-| `commit_sha` | TEXT | Commit that introduced this fixture; in `db/c.db` this is the repo's pinned cutoff commit (one per repo, shared by every fixture in it), not a per-fixture commit |
-| `commit_date` | TEXT | ISO date-only string of `commit_sha`'s own commit date |
-| `commit_kind` | TEXT | `'agent'` in `db/a.db` |
-| `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored; a fixed provenance tag (`'human'`, `'human_pre2022'`) otherwise |
-| `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
-| `repo_age_at_commit_years` | REAL | Repo age at `commit_date` (`created_at` → `commit_date`) — always defined, unlike `repositories.repo_age_years` |
+They will be removed when the schema is changed after the collection run.
 
-> **`num_comment_lines`/`comment_density` and pre-existing DB files:** these two columns were added after `db/a.db`/`db/c.db` were already collected. `initialise_db()`'s column-migration self-heal (`_COLUMN_MIGRATIONS` in `db.py`) adds the columns to any such file automatically, but only backs them with the schema `DEFAULT` (`0`/`0.0`) — it cannot retroactively compute the real count, which requires re-walking that fixture's own tree-sitter node. A `comment_density` of `0.0` on a fixture collected before this change is therefore ambiguous (genuinely zero comments, vs. never measured); a full re-extraction is required before these two columns can be trusted or reported on for any dataset collected earlier.
+## Queries
 
-### mock_usages
+Analysis examples are on the [analysis page](../usage/analysis.md).
 
-Per-fixture mock framework usage data — one row per detected mock call
-(a fixture with `num_mocks=3` has 3 rows here). See
-[Fixture Detection Logic § Mock Detection](detection.md#mock-detection)
-for how these are detected and classified, and
-[collection/heuristics/feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml)
-for the exact pattern/framework/category catalog.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER | Internal primary key |
-| `fixture_id` | INTEGER | Foreign key to `fixtures.id` |
-| `repo_id` | INTEGER | Foreign key to `repositories.id` |
-| `framework` | TEXT | Mocking framework or helper family (e.g. `unittest_mock`, `sinon`, `mockito`) |
-| `category` | TEXT | Classic test-double taxonomy (Meszaros): `dummy` \| `stub` \| `spy` \| `mock` \| `fake` — one value computed per fixture via an identifier-keyword scan, applied to every mock in it (see detection.md) |
-| `target_identifier` | TEXT | Identifier passed to the mock call, if extractable (empty string otherwise) |
-| `raw_snippet` | TEXT | Original source snippet for the mock usage |
-
-
-## Query examples
-
-Each database is a single dataset (see [Database overview](#database-overview)), so
-within-database queries never need a `commit_kind` filter to isolate a corpus — every
-row in `db/a.db` already is Dataset A. Cross-dataset comparisons instead load each
-database separately and combine in pandas.
-
-### Within one dataset: fixture characteristics
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect("db/a.db")
-
-summary = pd.read_sql("""
-    SELECT
-        COUNT(f.id) as fixture_count,
-        ROUND(AVG(f.loc), 2) as avg_loc,
-        ROUND(AVG(f.cyclomatic_complexity), 2) as avg_complexity,
-        ROUND(AVG(f.num_parameters), 2) as avg_parameters
-    FROM fixtures f
-""", conn)
-
-print(summary)
-```
-
-### Within one dataset: agent type distribution (Dataset A only)
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect("db/a.db")
-
-agent_breakdown = pd.read_sql("""
-    SELECT
-        f.agent_type,
-        COUNT(DISTINCT f.commit_sha) as commits,
-        COUNT(f.id) as fixtures,
-        ROUND(AVG(f.loc), 2) as avg_loc
-    FROM fixtures f
-    WHERE f.agent_type IS NOT NULL
-    GROUP BY f.agent_type
-    ORDER BY commits DESC
-""", conn)
-
-print(agent_breakdown)
-```
-
-### Cross-dataset: compare A vs C (agent vs pre-agent human)
-
-Load each database into its own DataFrame, tag with the dataset it came from, then
-concatenate — this is the general pattern for any A-vs-C comparison:
-
-```python
-import sqlite3
-import pandas as pd
-
-def load_fixtures(dataset: str) -> pd.DataFrame:
-    conn = sqlite3.connect(f"db/{dataset}.db")
-    df = pd.read_sql("""
-        SELECT f.*, r.language, r.domain, r.repo_age_years
-        FROM fixtures f
-        JOIN repositories r ON f.repo_id = r.id
-    """, conn)
-    df["dataset"] = dataset
-    return df
-
-combined = pd.concat([load_fixtures("a"), load_fixtures("b")], ignore_index=True)
-
-comparison = combined.groupby("dataset").agg(
-    fixture_count=("id", "count"),
-    avg_loc=("loc", "mean"),
-    avg_complexity=("cyclomatic_complexity", "mean"),
-)
-print(comparison)
-```
-
-The `dataset` column here plays the role Dataset A's `commit_kind='agent'` /
-`commit_kind='human'` distinction used to play in the old single-database design —
-prefer `dataset` (which one you loaded from) over `commit_kind` for A-vs-C
-comparisons, since `commit_kind` is not populated at all in `db/c.db`.
-
-### Test-double category breakdown, one dataset
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect("db/a.db")
-
-mock_categories = pd.read_sql("""
-    SELECT
-        m.category,
-        m.framework,
-        COUNT(*) as mock_count
-    FROM mock_usages m
-    JOIN fixtures f ON m.fixture_id = f.id
-    GROUP BY m.category, m.framework
-    ORDER BY mock_count DESC
-""", conn)
-
-print(mock_categories)
-```
-
-## Data quality guarantees
-
-The schema is append-safe and re-runnable — existing records are not duplicated during collection. Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A, 2020-12-31 for C), and quantitative fields such as LOC, complexity, and comment counts are derived deterministically from analyzed source code.
-
-## Accessing the database
-
-### CLI
+From the shell:
 
 ```bash
-# Fixture count for one dataset
 sqlite3 db/a.db "SELECT COUNT(*) FROM fixtures;"
-
-# Agent type breakdown (Dataset A only)
 sqlite3 db/a.db "SELECT agent_type, COUNT(*) FROM fixtures WHERE agent_type IS NOT NULL GROUP BY agent_type;"
 ```
 
-### Python
-
-```python
-import sqlite3
-
-conn = sqlite3.connect("db/a.db")
-
-count = conn.execute("SELECT COUNT(*) FROM fixtures").fetchone()[0]
-print(f"Dataset A: {count} fixtures")
-```
-
-### R
-
-```r
-library(DBI)
-con <- dbConnect(RSQLite::SQLite(), "db/a.db")
-
-dbGetQuery(con, "
-  SELECT agent_type, COUNT(*) AS fixture_count
-  FROM fixtures
-  WHERE agent_type IS NOT NULL
-  GROUP BY agent_type
-  ORDER BY fixture_count DESC
-")
-```
-
-## Notes
-
-The schema supports unpaired statistical tests appropriate for independent samples — Mann-Whitney U for continuous variables, chi-square for categorical — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design). `python -m collection summarize --dataset {a,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
-
+The databases are written by the pipeline. Do not edit them by hand.

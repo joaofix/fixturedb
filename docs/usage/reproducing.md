@@ -111,4 +111,4 @@ sqlite3 db/c.db "PRAGMA integrity_check;"
 
 - [Repository structure](../getting-started/repository-structure.md)
 - [Database schema](../architecture/database-schema.md)
-- [Analysing the datasets](usage.md)
+- [Analysing the datasets](analysis.md)
