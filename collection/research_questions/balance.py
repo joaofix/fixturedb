@@ -6,19 +6,18 @@ attributing an RQ2-4 metric difference to era (A vs C)?
 This exists because the methodology described in docs/data/dataset-card.md's
 "Balance Tests" section and docs/reference/limitations.md's "Control
 Variable Balance" section was never actually wired up against the current
-db/{a,b,c}.db files. `BetweenGroupComparator` (collection/
+db/{a,c}.db files. `BetweenGroupComparator` (collection/
 between_group_comparison.py) implements the right test functions, but reads
 from a `between-group.db` that doesn't exist and isn't referenced anywhere
 in collection/__main__.py's CLI -- it's leftover from an earlier
-architecture, before the Dataset A/B/C split. The docs claimed a balance
+architecture, before the dataset split. The docs claimed a balance
 report exists (`between_group_comparison_*.json`); that file has never
 existed in this repo's history.
 
-Run for real (2026-07-31, when this script still also checked A vs B)
-against the current corpora: domain and repo_age_years were NOT balanced,
-neither A vs B nor A vs C (all four p < 1e-7). This script now reports A vs
-C only -- Dataset B is still collected but out of scope for its output; see
-this module's generate_report() output for current numbers -- every RQ2-4
+Run for real (2026-07-31) against the current corpora: domain and
+repo_age_years were NOT balanced for A vs C (p < 1e-7). This script reports
+A vs C only; see this module's generate_report() output for current numbers --
+every RQ2-4
 comparison should be read with this in mind until it's addressed (stratify,
 regression-adjust, or at minimum explicitly disclose the confound).
 

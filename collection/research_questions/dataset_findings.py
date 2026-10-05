@@ -1,6 +1,6 @@
 """
 Dataset findings that support paper claims but don't belong to any single
-RQ2-4 comparison -- they don't pit Dataset A against B/C, they describe a
+RQ2-4 comparison -- they don't pit Dataset A against C, they describe a
 dataset's own collection process or composition. New findings of this kind
 get their own `##` section and render function in this file rather than a
 new script per finding (unlike rq2.py/rq3.py/rq4.py/balance.py/
@@ -23,10 +23,10 @@ Currently covers:
   count" rule), vs accepted? Reads `agent_commits_touching_tests`/
   `agent_commits_rejected_mixed_test_diff`/`agent_commits_accepted`,
   persisted per-repo by `agent_corpus.py` (`update_agent_commit_stats()`,
-  db.py) on every Dataset A collection run. Dataset B/C are out of scope by
+  db.py) on every Dataset A collection run. Dataset C is out of scope by
   construction, not by missing data: the pure-addition gate only governs
   which agent commits are accepted into Dataset A in the first place --
-  Dataset B/C never run agent commits through it, so their `repositories`
+  Dataset C never runs agent commits through it, so its `repositories`
   rows keep these columns at their 0 default.
 
   Known limitation (not fixed here): these counters are accumulated

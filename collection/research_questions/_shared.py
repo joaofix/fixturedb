@@ -29,7 +29,6 @@ OUTPUT_DIR = ROOT_DIR / "research_questions"
 
 DATASET_LABELS = {
     "a": "Dataset A (agent-authored)",
-    "b": "Dataset B (human-authored, contemporary)",
     "c": "Dataset C (human-authored, pre-LLM)",
 }
 
