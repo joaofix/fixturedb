@@ -1,198 +1,112 @@
-# Limitations and Threats to Validity - FixtureDB Between-Group Study
+# Limitations
 
-## Between-Group Study Design
+This page lists the known threats to the study. Each entry says what the
+problem is, what we do about it, and what is still open.
 
-The between-group methodology collects human and agent corpora at different time periods to avoid temporal confounding. However, this design introduces its own limitations:
+## Study design
 
-### Temporal Separation Confounding
-- **Problem:** The human corpus is drawn from pre-2021 repositories (fixture collection snapshot at 2020-12-31), while the agent corpus is drawn from 2025+ repositories with agent commits (snapshot at 2025-01-01). Changes in Python/JavaScript frameworks, testing best practices, and hardware between 2021 and 2025 may affect fixture patterns independently of agent involvement.
-- **Mitigation:** Control variables (language, domain, repo_age_years) are balanced across corpora using statistical tests (chi-square, Mann-Whitney U) — see `collection/between_group_comparison.py` and [Analyzing the Datasets § Comparing two datasets](../usage/usage.md#comparing-two-datasets). The balance report confirms no significant differences (p ≥ 0.05).
+**Time and authorship are mixed.** Agent fixtures come from 2025 onward.
+Human fixtures come from repositories created by 2020. Any difference can come
+from who wrote the code, from when it was written, or from both. The design
+cannot separate the two. We report differences between the groups, not causes.
 
-### Agent Detection Conservatism
-- **Problem:** Agents are identified via Tier 1 detection only — `co-authored-by` commit trailers and author identity. Agents without proper trailers are classified as human, so the true agent detection rate may be higher than reported.
-- **Mitigation:** Use conservative Tier 1 estimates. See [Agent Detection Methodology](../architecture/agent-detection.md) for the full detection method.
+**Human fixtures are a snapshot.** Human fixtures are read at 2020-12-31. Agent
+fixtures are read at the commit that added them. Fixtures that were edited later
+were not captured as they were first written.
 
-### Repository Availability
-- **Problem:** The human corpus assumes pre-2021 repositories are still publicly available; the agent corpus depends on GitHub API availability and rate limits. Extinct or private repositories can't be collected.
-- **Mitigation:** `discover-repos` and `discover-commits` query the live GitHub API with error handling.
+**The comparison is unpaired.** The two datasets come from different
+repositories. Control variables (language, domain, repository age) are compared
+with a balance test. In the current data, none of the three is balanced between
+the two datasets. See `research_questions/balance.md` for the numbers.
 
-### Repository-Level Duplication (Forks, Org Transfers, Shadow Copies)
-- **Problem:** Two different `repo_name`s in `github-search-raw/` can share partly or fully identical git history — GitHub org transfers, community mirrors, and independently-created "shadow copies" (a raw `git push` of one repo's history into a brand-new repo object). Each is counted as an independent repository, silently inflating sample size and duplicating fixtures. Not caught by the "exclude forks" query filter applied at source — `isFork=true` appears zero times across the entire raw candidate pool, since GitHub's own fork bookkeeping only covers repos created via its "Fork" button/API.
-- **Mitigation:** Dataset C checks each candidate's commit at the fixed cutoff date against every other candidate via the GitHub API before selection (`collection/dedupe_dataset_c_repos.py`) — a shared commit SHA is a cryptographic guarantee of identical content, never a false positive. Dataset A automatically drops repos currently sharing a HEAD commit (`lastCommitSHA`, already present in the raw SEART export for free) before cloning; this only catches repos still byte-identical *today*, not a pair that was mirrored for a while and has since diverged (e.g. `datahub-project/datahub`/`linkedin/datahub`). For that case, `collection/dedupe_commits_by_sha.py` runs after commit-level collection and removes any commit whose exact `commit_sha` was collected under more than one `repo_name` — a shared commit SHA there is the same cryptographic guarantee, just checked post-collection instead of via a live API call. For Dataset A this is fully preventive (`extract-fixtures --dataset a` reads its commit list from the exact file this step cleans, so a removed duplicate is never extracted, on this run or any future one). See `internal-docs/methodology-improvements/repo-deduplication.md` for the full investigation.
-- **Residual gap:** the commit-level check can only catch a duplicate if both repo_names' shared commits were actually collected in the first place. Two repos diverging before the collection window, or one side failing to yield any collected commits at all (confirmed real example: `camunda/zeebe`/`camunda-cloud/zeebe`/`camunda/camunda`, none of which have any rows in Dataset A's own commit CSVs, for a reason not yet root-caused), have no shared `commit_sha` to key on and are not caught by either mitigation above. Not implemented: a fix would need repo-identity matching independent of what got collected (e.g. a live API check of full commit-set overlap), not just a post-hoc check on already-collected data.
+## Sampling
 
-### Dataset A Commit-Discovery Completeness (Historical Cross-Check)
-- **Problem:** An earlier independent commit-role scan (Dataset B's, now removed from the design) cross-checked every commit it classified as agent-authored against Dataset A's already-collected commit list for the same repo. Observed disagreements have all been of type `dataset_a_missing` (Dataset B found an agent commit absent from Dataset A's list for that repo), concentrated in a small subset of repos rather than spread evenly — **none** have been of type `mismatch` (both datasets classifying the same commit differently), so this is not a detection-logic bug: everywhere both datasets examined the identical commit, they agreed.
-- **Investigation:** For the most-affected repos checked so far, a large majority of their "missing" commits have author dates *inside* Dataset A's own already-scanned commit-date range for that repo — ruling out "just new activity since Dataset A's snapshot" as the primary explanation. Leading hypothesis, not confirmed: branch-reachability at clone time. Dataset A's single-branch clone only contains whatever was reachable from the default branch *at the moment it was cloned*; a commit authored earlier on a feature branch that merged into the default branch only *after* Dataset A's clone would be invisible to Dataset A regardless of its author date, while Dataset B's later, independent clone of the same repo would see it (with its original, earlier author date intact). Both datasets' commit-trailer detection code was traced and confirmed to share the same underlying logic (`Tier1RepositoryScanner`), ruling out an implementation divergence as the cause.
-- **Status:** Documented, unconfirmed, not pursued further. Whether this means Dataset A's fixture corpus is missing real agent-authored fixtures for the affected repos (i.e. whether a fresh re-collection would grow the corpus) has not been tested.
-- **Mitigation:** None applied. Treat Dataset A's commit corpus, and any fixture counts derived from it, as a point-in-time snapshot that can undercount a repo's true agent-commit activity, especially for actively-developed repos with long-lived feature branches. The disagreement log (`commit_role_disagreements.csv`) belonged to that removed cross-check; re-running `discover-commits --dataset a` for the affected repos would test (but has not yet tested) whether the gap actually closes.
+**Popular repositories.** Repositories are filtered to at least 500 stars and
+100 commits. Popular projects may test more carefully than typical projects.
+Both datasets use the same filters, so the bias affects both sides.
 
-### Cross-Language Fixture Leakage
-- **Problem:** A repo's `language` (its single SEART-assigned tag) is a repo-level label, not a per-file fact — a "python" repo can genuinely contain a JavaScript config-test file, a Java repo a Python tooling script, etc. When extraction discovers test files from a commit's full diff (Dataset A) or a checkout snapshot (Dataset C), it can find and extract fixtures from these non-primary-language files too. This is real corpus content, not corruption, but it means "the python corpus" isn't 100% python by file, and it needs to be measured and reported, not silently ignored.
-- **Measurement, no new column needed:** every fixture's own detected language is already captured on `test_files.language` (set from the fixture's own file extension at persist time — see `collection/corpus_utils.py::persist_repository_and_fixtures()`), separate from `repositories.language` (the repo's tag). Leakage is a straight join:
-  ```sql
-  SELECT COUNT(*) AS total, SUM(CASE WHEN tf.language != r.language THEN 1 ELSE 0 END) AS leaked
-  FROM fixtures f
-  JOIN test_files tf ON f.file_id = tf.id
-  JOIN repositories r ON f.repo_id = r.id;
-  ```
-- **Measured rates (2026-07-31):** Dataset A 8.04% (4,061/50,498), Dataset C 0% at the time of measurement — **not because C's repos are more language-homogeneous**, but because `dataset_c.py` used to discover test files by checking each file against the repo's own tagged language only (`find_test_files_at_commit()`), never even looking for other-language files. Fixed (2026-07-31): `find_test_files_with_language()` now detects each file's own language from its extension, matching how A/B already discover test files — see `docs/architecture/collection.md`'s "Sampling modes". C's real leakage rate isn't known yet; it requires a fresh `extract-fixtures --dataset c --force` run to materialize, since leaked fixtures were never extracted under the old code, not merely mislabeled (nothing to backfill on already-collected data).
-- **Mitigation:** none needed beyond measurement — leakage is not an error to eliminate, just a corpus property to disclose. Report the rate per dataset; do not assume 100% language purity when describing corpus composition in the paper.
+**Four languages.** Python, Java, JavaScript and TypeScript only. Ruby (RSpec),
+Kotlin, Scala, Rust and C# are not included.
 
-### Agent-Identity Name Collisions (`devin`/`cline`/`codex`)
-- **Problem:** manual validation review of Dataset A's `agent-commits-dataset-a` sample (2026-07-17, live-verified against real GitHub commits) found real authors misattributed via exact name/email/employer-domain collisions with no trailer to disambiguate — e.g. authors literally named "Devin Jameson"/"Devin Robison", a human surnamed "Cline", actual Cline-company employees (including its creator) committing under an `@cline.bot` work email, and a repo-internal placeholder bot (`codex-review@example.com`) unrelated to real OpenAI Codex. See [Agent Detection § Known Limitations](../architecture/agent-detection.md#known-limitations) for the full investigation.
-- **Mitigation:** the collision-causing `devin`/`cline` patterns are removed from `collection/heuristics/agent-mining/agent_authors.csv` entirely; the `codex` placeholder identity is excluded via `known_human_collisions.csv` (the bare `codex` pattern itself is still needed for genuine trailer-based detection elsewhere). The real Devin AI bot identity (`devin-ai-integration`) and genuine trailer-based Codex detection are untouched and still correctly detected.
+## Agent detection
 
----
+**Agents without a trace are counted as human.** Detection uses commit trailers
+and author names. An agent that leaves neither is classified as human. The
+number of agent commits is therefore a lower bound.
 
-## Sampling bias
+**Name collisions.** Some author names look like agent names. Manual review
+found real people with the names `devin` and `cline`, and a placeholder identity
+for `codex`. The broad `devin` and `cline` patterns were removed. The `codex`
+placeholder is excluded in `known_human_collisions.csv`. The real Devin bot
+identity (`devin-ai-integration`) is kept.
 
-Both human and agent corpora are drawn from repositories with ≥500 GitHub stars. Popular,
-actively maintained projects may exhibit higher test discipline than typical
-open-source software. This is a known limitation in empirical software
-engineering studies (Hamster study by Pan et al., 2025) which also used
-star-based sampling to ensure sufficient test coverage. To mitigate this bias
-and improve generalizability, both corpora are restricted to high-star repositories
-across 4 programming languages, and control variables are balanced.
+**Tangled commits are dropped.** An agent commit is kept only if it adds lines
+and deletes none. Agent fixtures edited in a commit that also deletes code are
+missing. The agent fixture count is therefore conservative.
 
-## Language coverage
+## Repository data
 
-FixtureDB covers four languages: Python, Java, JavaScript, and TypeScript.
-Other languages such as Ruby (RSpec), Kotlin, Scala, Rust, and C# are not included.
+**Duplicate repositories.** Two `repo_name`s can share the same history, for
+example after an organisation transfer. Dataset A removes repositories that
+share the same current HEAD commit. It also removes commits that appear under
+more than one name. Dataset C checks each candidate against the others at its
+cutoff commit. A pair that diverged before collection is not caught.
 
-## Parametrized Tests
+**Commits missing from Dataset A.** An earlier cross-check found agent commits
+in some repositories that were not in Dataset A's commit list. The cross-check
+was part of the removed second dataset. A likely cause is that the clone reads
+only the default branch at the time of cloning. This is not confirmed. A rerun
+of `discover-commits` on the affected repositories would test it.
 
-Parametrized test functions are counted as single test functions, not multiplied by parameter set count. Test-to-fixture ratio may under-represent reuse in projects with heavy parametrization.
+**Language tags.** A repository has one language tag. Its test files can be in
+other languages. In Dataset A, 8.04% of fixtures (4,061 of 50,498, measured
+2026-07-31) are in a different language from their repository tag. This is part
+of the corpus and is reported, not removed. Dataset C's rate needs a new run to
+measure.
 
-To assess: Query `test_files` for parametrized patterns (regex: `parametrize|ParameterizedTest|test.each`).
+**Repositories disappear.** Repositories can be deleted or made private after
+they were collected. Dataset C pins a commit and is not affected by new
+commits. Dataset A reads the current history.
 
----
+## Fixture and mock detection
 
-## Mock detection completeness
+**Recall is not measured per group.** Both groups use the same detector, but
+recall can differ if agent code follows the framework idioms more closely than
+human code. This has not been measured. The planned manual validation should
+include a sample of human fixtures for this.
 
-Mock detection uses regular expressions over source text. Framework versions
-or unusual coding styles may produce false negatives. The `raw_source`
-column is included in the SQLite file specifically so that researchers can
-re-run or improve detection against the original fixture text.
+**Missing fixture styles.** The detector covers the main fixture mechanisms of
+each framework. Custom helper functions, runtime-generated fixtures and niche
+frameworks are missed. The exact list of covered and excluded patterns is in
+[`fixture_definitions.yaml`](../../collection/heuristics/fixture_definitions.yaml).
 
-## Fixture Detection Recall
+**Missing mock libraries.** Mock detection uses regular expressions over the
+fixture body. It covers 9 mock frameworks. Niche libraries such as PowerMock and
+nock are not covered. The list is in
+[`feature_extraction_patterns.yaml`](../../collection/heuristics/feature_extraction_patterns.yaml).
+Mocks outside the fixture body are not counted.
 
-**Expected detection recall by language:**
+**Parametrised tests.** A parametrised test counts once, not once per parameter
+set. Projects that parametrise heavily show fewer fixtures per test than they
+really use.
 
-| Language | Recall | Notes |
-|----------|--------|-------|
-| Python | >95% | Strong decorator standardization. Dynamically-created fixtures may be missed. |
-| Java | >95% | Annotation-based detection is unambiguous. Custom base class patterns are caught. |
-| JavaScript | >90% | Framework conventions vary. Helper functions not matching standard naming patterns may be missed. |
-| TypeScript | >90% | Same as JavaScript. Type annotations don't improve fixture detection. |
+**Metric caveats.** Lines of code, cyclomatic complexity and comment density are
+computed on fixture bodies. Java rules (`@Rule`, `@ClassRule`) are fields, not
+methods. Their complexity is a default value, not a measurement. The metric
+notes are in [Metrics](../architecture/metrics-reference.md).
 
-**Sources of false negatives:**
-- Custom helper functions implementing fixture-like behavior without standard naming/decoration
-- Metaprogrammed/dynamic fixtures created at runtime
-- Non-standard fixture mechanisms that abstract framework APIs
+## Statistics
 
-The three bullets above are the general pattern; the exact, per-language list
-of what counts as a fixture and what's deliberately excluded (with a reason
-for each) is `collection/heuristics/fixture_definitions.yaml` — it is both
-the executable pattern table the detector is built from and the audit trail
-a reviewer can check against without reading `detector_python.py` /
-`detector_java.py` / `detector_javascript.py` directly.
+**Repository-level tests.** Fixtures in the same repository are not independent.
+Continuous metrics are summarised per repository before testing. Categorical
+results are reported as repository shares, not fixture counts.
 
-**Mitigation:** `raw_source` column in SQLite allows manual audit. Draw a manual-review sample with `collection/validation_sampling.py` (Cochran's formula, 95% confidence / 5% margin of error by default — see [Manual-Validation Sampling](../usage/validation-sampling.md)) rather than an arbitrary fixed count, to calculate project-specific recall.
+**Multiple comparisons.** Per-language p-values are corrected with
+Benjamini-Hochberg within each metric. Overall p-values are not corrected.
 
----
+## Validation
 
-## Differential Recall Across Authorship Groups
-
-Fixture detection uses the identical AST-pattern detector for both the agent
-and human corpora — the same code path, just applied to different input.
-Detection is pattern/idiom-based (decorator conventions, naming conventions),
-so recall could differ by authorship group even with zero code defects, if
-agent-generated code follows canonical framework idioms more consistently
-than human-written code (which includes older, idiosyncratic, or
-framework-violating styles). If so, a reported between-group difference in
-fixture prevalence or characteristics could be partly a detection artifact
-rather than a true behavioral difference.
-
-This has not been measured. The current manual-validation design (see
-[Manual-Validation Sampling](../usage/validation-sampling.md)'s "Reduced
-validation set" table) treats human-fixture-detection validation as
-redundant with Dataset A's, on the reasoning that it's "the identical AST
-fixture detector" — that justification covers code-path correctness, not
-recall, which can depend on the input distribution rather than the code path
-alone.
-
-
-**Status:** Documented, unresolved. Broadening detector recall for
-non-canonical/non-textbook fixture patterns was considered as a mitigation
-and is not being pursued.
-
-**Mitigation (deferred):** When the full-dataset manual-validation study is
-run, draw an explicit comparison sample from the human corpus (B and/or C)
-rather than skipping it as redundant, specifically to test whether recall
-differs by authorship group.
-
----
-
-## Advanced Metrics Limitations
-
-| Metric | Limitation | Mitigation |
-|--------|-----------|-----------|
-| `num_contributors` | GitHub API page limit (~30 per page); repos with >100 contributors may be under-counted. | For precise counts, query GitHub API or web interface directly. |
-
-`scope`, `framework`, `max_nesting_depth`, `num_objects_instantiated`, `num_external_calls`, and `has_teardown_pair` were removed from the extracted metric set entirely (see [Metrics Reference](../architecture/metrics-reference.md)) -- their limitations no longer apply since the columns don't exist.
-
----
-
-## Validation Status
-
-**Status:** Heuristic-based detection. No inter-rater reliability metrics (Cohen's kappa) available. For critical research, use `collection/validation_sampling.py --step agent-fixtures-dataset-a` to draw a Cochran-sized (95% confidence / 5% margin of error by default) sample per language, then manually inspect it to establish project-specific precision and recall. Human fixture detection uses the identical AST detector and is intentionally not sampled separately — see the reduced validation set in [Manual-Validation Sampling](../usage/validation-sampling.md).
-
-**Language-Specific Confidence:**
-
-| Language | Status | Notes |
-|----------|--------|-------|
-| Python | High | Decorator-based detection is unambiguous. |
-| Java | High | Annotation-based detection is unambiguous. |
-| JavaScript | Medium | Framework conventions vary; helper detection relies on naming. |
-| TypeScript | Medium | Same as JavaScript. |
-
-**Known gaps:** Parametrized test detection edge cases. `num_objects_instantiated` was regex-based and matched text wherever it appeared (inside a string literal/comment, or a fixture's own capitalized name self-matching its signature line) until 2026-08-16, when it was rewritten to walk real tree-sitter AST node types instead (`object_creation_expression`/`new_expression` for Java/JS/TS, a capitalized-target `call` node for Python) -- see [internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md](../../internal-docs/methodology-improvements/num-objects-instantiated-false-positive-rate.md) for the investigation and fix. Java/JS/TS were exact by construction (a string/comment's contents are never parsed as nested code); Python retained a residual, much narrower heuristic-naming ambiguity (a capitalized call that isn't actually a constructor), found in 0 of a 46-match manual sample. `num_objects_instantiated` was later removed from the extracted metric set entirely (not part of the paper's reported metrics) -- this history is kept for the record of the detection-quality work, not because the metric is still collected.
-
----
-
-## Mock Detection
-
-27 regex patterns across 9 mock frameworks detected (`unittest.mock`, `pytest-mock`, pytest's built-in `monkeypatch`, Mockito, EasyMock, MockK, Jest, Sinon, Vitest — see the full, exact list in [collection/heuristics/feature_extraction_patterns.yaml](../../collection/heuristics/feature_extraction_patterns.yaml)'s `mock_patterns`). Coverage excludes niche frameworks (e.g. PowerMock) and non-standard APIs; the exact documented exclusions are in that same file's `mock_patterns_excluded`. Detects mocks within the fixture's own body only — not test bodies, and not module-level setup outside any fixture (e.g. Jest's conventional top-level `jest.mock('./module')` is invisible to this detector even though the pattern exists, since it's structurally outside any fixture's AST node). Treat `num_mocks=0` as reliable only within that scope; use `num_mocks>0` as a presence indicator, not an exact count.
-
-Each fixture is also classified into the classic test-double taxonomy (Meszaros) — `dummy`/`stub`/`spy`/`mock`/`fake` — as `mock_usages.category`. Classification scans the fixture's own full body text, case-insensitively, for one of the five category terms in priority order (dummy > stub > spy > fake > mock), falling back to `mock` when none is found — an identifier-keyword method, not a lookup keyed on which framework matched. One category is computed per fixture and applied to every mock recorded in it, so a fixture that legitimately creates two differently-named mocks (e.g. both a `dummy_x` and a `real_service_mock`) gets the same category for both, since classification isn't re-run per individual mock call. Treat `category` as a per-fixture classification, not a claim about how each individual mock instance was specifically used.
-
----
-
-## Control Variable Balance
-
-- **Problem:** RQ1-3's comparisons are only informative about authorship/era if the underlying repo samples are otherwise comparable — if domain or repo age differ systematically between two datasets, a metric difference could reflect that instead of what's being attributed to it. This was described as verified (`between_group_comparison_*.json`, generated by `BetweenGroupComparator`) but never actually was: that class reads from a `between-group.db` that has never existed in this repo, and isn't wired into `collection/__main__.py`'s CLI anywhere — leftover from an earlier architecture, before the current Dataset A/C split. No such JSON file has ever existed.
-- **Mitigation:** `collection/research_questions/balance.py` (added 2026-07-31) checks this for real, against the current `db/{a,c}.db` — repo-level (each fixture-yielding repo counted once, not fixture-weighted), chi-square for `language`/`domain`, Mann-Whitney U for `repo_age_years`, both with effect sizes (Cramér's V / Cliff's delta) so statistical significance (which p-values alone conflate with sample size) can be told apart from practical magnitude. Run via `python -m collection.research_questions.balance`, output at `research_questions/balance.md`.
-- **Current result (2026-07-31, A-vs-C):** none of the three variables are balanced (p < 0.05); A-vs-C shows non-negligible imbalance on all three (language medium, domain and repo_age_years small). The A-vs-C comparison therefore needs more caution, and RQ2/RQ3's per-language stratified comparisons are the main way the language imbalance is addressed.
-- **Limitation:** balance testing only checks for differences in the three measured distributions; unmeasured confounds (e.g., framework version changes, testing best practices evolution) may still exist.
-
----
-
-## Categorical Pseudo-Replication
-
-- **Problem:** RQ1's `fixture_type` distribution, RQ2's `fixture_role` (setup/teardown/other), and RQ3's `has_mock` prevalence, `framework` distribution, and test-double `category` distribution were each tested with a plain chi-square over fixture/mock-level counts (`compute_categorical_balance()`, [between_group_comparison.py](../../collection/between_group_comparison.py)). That treats every fixture/mock as an independent observation, but fixtures/mocks are nested in files nested in repos — a repo contributing hundreds of correlated rows (one framework choice, one team convention) is effectively one independent observation, not hundreds. Flagged in a 2026-08-11 methodology review: this inflates the chi-square statistic and, to a lesser degree, corrupts Cramér's V (which normalizes by n, and n is inflated by the same clustering) — three of the four headline RQ1/RQ3 effects were affected.
-- **Mitigation:** each of the 5 metrics above is now also tested with per-repo category proportions compared via Mann-Whitney U + Cliff's δ (`compare_categorical_repo_level()`, [_shared.py](../../collection/research_questions/_shared.py)) — the same de-clustering fix RQ1/RQ2's continuous metrics (LOC/CC/nesting/parameters, setup-to-teardown ratio) already used, extended to categorical variables: instead of one raw count per fixture, one proportion per repo, so each repo counts once regardless of how many fixtures/mocks it contributed. Rendered in each RQ script's "Repo-level aggregates" section, alongside (not replacing) the original fixture-level chi-square table.
-- **What the paper reports:** for `fixture_type`, the repo-level proportion test is what's cited in the paper — the pooled fixture-level chi-square table is kept in the generated `research_questions/rq1.md` report for transparency/comparison only and is explicitly marked "not used in the paper" (with a pointer to the repo-level result) at the point it's rendered. `has_mock`'s repo-level test was reported the same way through 2026-08-22, then superseded by RQ3's new mocking-coverage table — see the RQ3-simplification bullet below; its pooled fixture-level chi-square is kept but moved to a "Legacy" section in `research_questions/rq3.md`, same "not used in the paper" framing. For RQ3's `framework`/`category`, see the language-composition-confound bullet below — neither has a pooled result at all anymore, and (2026-08-22) neither has ANY rendered table anymore, pooled or repo-level. RQ2's `fixture_role` also has no pooled result anymore — see the RQ2-simplification bullets below (2026-08-14, then superseded 2026-08-22), which removed it (and the setup-to-teardown ratio and no-teardown-repo rate metrics entirely) in favor of two tables: a purely descriptive fixture-count table and a repo-level teardown-coverage test. Every other categorical result in these reports (RQ1's `scope`/`commit_type` and all the per-language stratified tables) is unaffected by this and is used as-is.
-- **Scope:** only the 5 metrics above were converted. RQ1's `scope`/`commit_type` pooled tests, and every per-language *stratified* categorical test (`compute_stratified_categorical_balance()`), have the identical clustering flaw but are still fixture-level, left as a known limitation of those specific tables rather than converted, since per-language repo counts are already small and repo-declustering them further would hit "insufficient data" often. RQ2's `repo_zero_teardown_rate` and `balance.py`'s language/domain checks needed no fix — both already count each repo once by construction.
-- **Per-language reporting (2026-08-11, same-day follow-up):** every A-vs-C comparison in rq1.py/rq2.py/rq3.py now reports an exact p-value (raw and BH-FDR-adjusted, never just "significant/not significant") and `n_A`/`n_C` -- always a repo count, even for these still-fixture-level chi-square tests, specifically so a reader can see how many repos actually back a given cell. Per-language stratified tests were added for every metric named in this doc's "Problem" bullet above, plus RQ1's `scope`, RQ2's setup-to-teardown ratio and no-teardown-repo rate -- each its own BH-FDR correction family (exactly that metric's 4 per-language tests, never mixed with another metric's or with the pooled "Overall" row, which is a single uncorrected test). RQ3's `framework`/`category` briefly got this treatment too, then had it removed the next day -- see the next bullet.
-- **`scope` removed (2026-09-26):** every mention of RQ1's `scope` categorical test above is historical -- `scope` was later dropped from the extracted metric set entirely (fully redundant with `fixture_type`; see [Metrics Reference](../architecture/metrics-reference.md)), so RQ1 no longer computes or reports it at all, pooled or per-language. The clustering-flaw discussion above no longer applies to it for the same reason.
-- **`commit_type` removed (2026-09-27):** every remaining mention of RQ1's `commit_type` above (in this bullet and the "Scope" bullet above it) is likewise historical -- `commit_type` (a Conventional Commits classification of the originating commit, unused in any reported RQ) was dropped from the extracted metric set entirely, along with the `conventional_commits.py` module that computed it. RQ1 no longer computes or reports it at all, pooled or per-language.
-- **Language-composition confound, RQ3 `framework`/`category` (2026-08-12, further superseded 2026-08-22 -- see below):** Dataset A is TypeScript-heavy, Dataset C skews Python/JavaScript. `mock_usages.framework` names are language-specific *by construction* (`unittest.mock` only exists for Python, Sinon only for JS, Mockito only for Java) and test-double `category` naming conventions vary systematically by ecosystem too (Sinon's explicit `.spy()`/`.stub()` API vs Python's monolithic `Mock`/`MagicMock`). That means *any* pooled-across-languages number for either variable -- the fixture-level chi-square Overall row, its per-language-stratified sibling rows (each still fine on its own, but sitting next to a table whose headline row wasn't), and even the repo-level-proportion Mann-Whitney fix described above (which pools every repo's proportion regardless of language) -- reflects each dataset's language mix, not an authorship-era effect. Fix at the time: `framework`'s entire chi-square table and its repo-level-proportion test were removed outright, replaced with a purely descriptive per-language top-3-frameworks table (no test, no effect size). `category`'s chi-square table was similarly removed; its repo-level-proportion test was kept but restructured to run once per language instead of pooled, so each language's own 5-category family (dummy/fake/mock/spy/stub) was its own BH-FDR family. `has_mock` was untouched at the time -- a binary yes/no isn't a language-specific construct the way a framework *name* or a category *naming convention* is, so pooling it across languages doesn't have the same confound. **As of 2026-08-22, `framework`'s descriptive table and `category`'s per-language test are both gone from the report entirely** (not just their pooled versions) -- see the next bullet; the raw data (`framework_dist`/`category_dist`/etc.) is still fetched and available on `DatasetMetrics`, just no longer rendered.
-- **RQ2 simplified to one repo-level table (2026-08-14, superseded 2026-08-22 -- see the next bullet):** the paper settled on a single RQ2 table -- median per-repo `setup_pct`/`teardown_pct` (from the `fixture_role` classification above) per language and Overall, plus one repo-level effect size + BH-FDR p-value per language, reusing `compare_categorical_repo_level()` exactly as described above. This is a further simplification than the rest of this section describes, not just an extension: RQ2's `fixture_role` no longer has a pooled fixture-level chi-square table at all (the repo-level version *replaces* it, rather than sitting alongside it as "also tested this way" like RQ1's `fixture_type`/RQ3's `has_mock` still do), and the setup-to-teardown ratio and no-teardown-repo rate metrics (both described in the "Per-language reporting" bullet above) were dropped from the paper's reported output entirely, not just de-pooled. The table's one effect-size/p-value column pair per row is the `setup` category's own repo-level test standing in for the whole `setup`/`teardown`/`other` distribution (they're not independent -- all three sum to 100% per repo) -- labeled "V" for consistency with the paper's other effect-size columns, but the number is Cliff's delta from that Mann-Whitney test, not literally Cramér's V; see `rq2.py`'s module docstring for the full reasoning.
-- **RQ2 split into two tables (2026-08-22):** the single median-proportion table above was itself replaced by two narrower tables. Table 1 (fixture counts) is purely descriptive -- raw setup-classified/teardown-classified fixture counts per language, no statistical test at all, "other" excluded. Table 2 (teardown coverage) is the inferential table: per repo, a binary indicator (does it have >=1 teardown-classified fixture, yes/no), compared between datasets via Mann-Whitney U + Cliff's δ on that 0/1 indicator (`compute_continuous_balance()` directly, not `compare_categorical_repo_level()` -- there's only one category being tested, not a set of mutually exclusive ones) -- the mean of the 0/1 values doubles as "% of repos with >=1 teardown fixture" for the table's Coverage A/C (%) columns. Same repo-declustering principle as every other fix in this section (one observation per repo, not per fixture), same BH-FDR-per-language-family convention. Motivation for the further split: a continuous per-repo proportion and a binary "has any at all" coverage rate answer different questions, and the paper wanted both surfaced separately rather than compressed into one proportion-medians table. The dip test (Python `teardown_pct` unimodality) and the `setup_pct`/`teardown_pct`-proportion computation it depends on are both still computed by `rq2.py`, just moved to a clearly separate "Supplementary Analyses" section, not part of either main table -- kept since they may still be cited in prose. See `rq2.py`'s module docstring for the full reasoning.
-- **RQ3 collapsed to one mocking coverage + intensity table (2026-08-22):** the three previously-reported RQ3 tables (fixture-level `has_mock` chi-square, `framework` descriptive table, `category` per-language repo-level test) were replaced by one table with two repo-level metrics, both A vs C via `compute_continuous_balance()` directly on a per-repo value (same "binary indicator's mean is the percentage" trick as RQ2's teardown-coverage table): **Coverage** (does a repo have >=1 fixture with a mock at all?) and **Intensity** (among repos where Coverage=1 only, the median mock-call count across that repo's own mocking fixtures -- non-mocking repos are excluded from Intensity entirely, not counted as 0, so its true population is a strict subset of Coverage's; the table's one `n_A`/`n_C` per row is Coverage's population size, stated explicitly in the table's own intro text). Coverage directly supersedes what used to be `has_mock`'s repo-level test (same statistic -- a two-category proportion test on a binary variable is mathematically the mean-of-the-0/1-indicator test this table uses, just computed via `compute_continuous_balance()` now instead of `compare_categorical_repo_level()`). **Both metrics' per-language tests are BH-FDR corrected together as one combined 8-test family (4 languages × 2 metrics), not two separate 4-test families** -- an explicit, deliberate departure from every other per-language family in this section (which are always one metric's own 4 languages), since both metrics are reported in the same table. `framework`/`category` lost their tables entirely (not just their pooled versions, see the bullet above) -- their raw data is still on `DatasetMetrics` but no longer rendered. `has_mock`'s fixture-level chi-square (pooled + per-language, already "not used in the paper" before this change) is kept, moved to a "Legacy" section for transparency only. `num_mocks`/`num_interactions_configured`'s existing continuous Mann-Whitney tables are unaffected. See `rq3.py`'s module docstring for the full reasoning.
-- **RQ2's `pytest_decorator` fixtures are no longer all "other" (2026-08-30):** `fixture_role` previously bucketed *every* `pytest_decorator` fixture (a bare `@pytest.fixture`) as `"other"`, unconditionally -- `fixture_type`/`name` alone can't tell a pytest setup fixture from a teardown one, since every pytest fixture is just named whatever the developer called it (see internal-docs/methodology-improvements/pytest-yield-teardown-vs-fixture-kind.md). `pytest_decorator` fixtures are now classified via a third mechanism, body analysis (`detector_python.classify_pytest_fixture_kind()`): does the fixture call `request.addfinalizer(...)`? does it `yield` at all? is a bare `yield` its first statement? This adds a fourth `fixture_role` value, `setup_and_teardown` (a fixture that both sets up and tears down -- most pytest fixtures with a `yield`), which Table 1's Setup/Teardown columns and Table 2's teardown-coverage indicator both count toward *both* setup and teardown, not a fifth mutually-exclusive bucket sitting alongside `"other"`. **`fixture_role` is now a real, persisted `fixtures` table column** (added via `db.py`'s `_COLUMN_MIGRATIONS`, self-healing older DB files to the `'other'` default on next `initialise_db()` call, same as `comment_density` before it) -- computed once at *extraction* time (`detector_shared._classify_fixture_kinds()` for every type except `pytest_decorator`; `detector_python._detect_python()`'s own direct body-analysis call for `pytest_decorator`, using the tree-sitter body node it already has rather than re-parsing `raw_source` later) and read as-is by `rq2.py`, not recomputed at report time. A `pytest_decorator` fixture whose body can't be classified (shouldn't happen on real extracted data) falls back to `"other"`, same as the DB column's own default. This was an intentional revision during implementation: the classification logic was initially wired in report-time-only (recomputed on every RQ2 run, no schema change), then moved to extraction time at the user's request specifically so the in-progress Dataset A recollection's `extract-fixtures` step produces fixture files with the classification already correct, instead of requiring every future RQ2 run to redo it. See `detector_shared.py`'s and `detector_python.py`'s docstrings for the exact algorithm and table semantics.
-- **`fixture_type`'s fixture-level chi-square and RQ3's Legacy `has_mock` chi-square both removed entirely (2026-09-27):** neither was ever the paper's result (see "What the paper reports" above), and both had already been explicitly marked "not used in the paper" at the point they were rendered -- kept only for transparency/comparison until this pass confirmed neither had ever actually been cited. `fixture_type`'s repo-level proportion test in "Repo-level aggregates" is UNCHANGED and remains the paper's actual result; RQ3's Coverage column (in the paper table) likewise remains has_mock's actual reported result. This drops two full BH-FDR families (each Overall + 4 languages) from what these reports compute per run. Every mention of these two tables elsewhere in this section (the "Mitigation"/"What the paper reports"/"Per-language reporting" bullets above, and the RQ3-collapse bullet below) is now historical.
-- **Drastic simplification: RQ2 and RQ3's coverage tables lose their statistical test entirely; RQ3's Intensity metric removed entirely (2026-09-27, same day as the bullet above):** the paper's RQ2/RQ3 coverage tables were simplified to report plain descriptive percentages, with no Mann-Whitney U, no Cliff's delta, no p-value, and no BH-FDR family at all -- **RQ1 is now the only script in this package that performs BH-FDR correction.** RQ2's Table 2 (teardown coverage) and RQ3's Coverage column both still report `n_A`/`n_C` and a coverage percentage per language and Overall, just computed as a plain mean of the per-repo 0/1 indicator rather than fed through `compute_continuous_balance()`. RQ3's Intensity metric (median mock count among mocking repos) was removed entirely, not just de-tested -- it's no longer one of the paper's reported metrics at all, and its RQ3 research question text was updated to drop the "and intensity" clause accordingly. Every mention of Table 2's/Coverage's Mann-Whitney test, effect size, or BH-FDR family in the bullets above (the "RQ2 split into two tables" and "RQ3 collapsed to one mocking coverage + intensity table" bullets in particular) is now historical -- accurate as of the date each was written, not the current behavior. See [internal-docs/methodology-improvements/bh-fdr-correction-families.md](../../internal-docs/methodology-improvements/bh-fdr-correction-families.md) for the complete, current family inventory.
-- **`fixture_type`'s repo-level proportion test ("Repo-level aggregates") removed entirely, same day:** the bullet immediately above this one (and the "Mitigation"/"What the paper reports" bullets much further up) claimed this test was "UNCHANGED and remains the paper's actual result" -- that claim was itself never actually verified against the paper; it was inherited unquestioned from `rq1.py`'s own pre-existing code comment, which this pass finally checked directly against `paper-draft/3-results.md` (which doesn't yet contain any RQ1 metric tables at all, so it couldn't confirm or deny it either) and against the user's own, more authoritative statement earlier in this project's history that `fixture_type` "is only used as a support column for determining other columns." `fixture_type` now has no A-vs-C comparison of any kind, fixture-level or repo-level -- only its per-dataset descriptive distribution remains. `compare_categorical_repo_level()`/`repo_level_category_proportions()`/`repo_level_category_n_counts()`/`render_categorical_repo_level_table()`/`fetch_categorical_column_by_repo()` were removed from `_shared.py` entirely -- `fixture_type` was their only caller anywhere in this package. See `rq1.py`'s module docstring for the full account, and treat every earlier bullet in this section calling this test "the paper's actual `fixture_type` result" as superseded.
-
+No inter-rater agreement (Cohen's kappa) has been measured. Precision and recall
+of the agent detection and fixture detection are estimated from a manual sample
+drawn with `validation_sampling.py`. The sampling method is in
+[Manual validation](../usage/validation-sampling.md).
