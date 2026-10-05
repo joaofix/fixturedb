@@ -200,18 +200,15 @@ def _iter_repo_files(repo_path: Path) -> List[Path]:
     `agent_signal_primitives.py` use for their own repo-tree walks.
 
     Shared by `find_test_files_at_commit()`, `find_test_files_with_language()`,
-    and `_count_repo_loc()` below -- all three used to run their own
-    independent `rglob("*")`/`os.walk()` pass, and `rglob()` in particular
-    has no directory-pruning mechanism at all: it always descended into
-    `.git/`, `node_modules/`, `vendor/`, `build/`, etc. too. For a repo
-    with a large committed dependency tree or a long git history, that
-    made those walks unboundedly slow relative to the repo's actual
-    source size -- unlike Dataset A/B, which never walk a working tree at
-    all (they discover test files from each commit's own bounded diff via
-    PyDriller; see `agent_fixture_extractor.py::_find_added_test_files()`).
-    A single stuck/slow repo here can stall an entire ThreadPoolExecutor
-    stage, since the stage only finishes once every submitted future
-    resolves. See internal-docs/methodology-improvements/dataset-c-repo-selection.md.
+    and `_count_repo_loc()` below. The walk prunes `.git/`, `node_modules/`,
+    `vendor/`, `build/` and similar folders. Without pruning, a repo with a
+    large dependency tree makes these walks slow. Dataset A does not walk a
+    working tree. It reads each commit's own diff through PyDriller (see
+    `agent_fixture_extractor.py::_find_added_test_files()`).
+
+    One slow repository can stall the whole extraction stage, because the
+    stage ends only when every submitted repository has finished. See
+    internal-docs/methodology-improvements/dataset-c-repo-selection.md.
     """
     found: List[Path] = []
     for dirpath, dirnames, filenames in os.walk(repo_path):
@@ -230,7 +227,7 @@ def find_test_files_at_commit(
     see `_is_test_file_path`'s own contract). Single-language legacy
     helper; `_process_repo` uses `find_test_files_with_language()` below
     instead, so a multi-language repo's non-primary-language test files
-    aren't invisible to Dataset C the way they used to be."""
+    are found."""
     test_files: List[str] = []
     for file_path in _iter_repo_files(repo_path):
         if not file_path.is_file():
@@ -283,11 +280,7 @@ def _count_repo_loc(repo_path: Path) -> int:
     a line" (`_count_file_loc` -- non-blank, no comment-stripping)
     definitions used everywhere else in this codebase for fixture/file
     LOC, just summed repo-wide instead of per-fixture. Shares
-    `_iter_repo_files()`'s pruned walk with `find_test_files_at_commit()`/
-    `find_test_files_with_language()` above -- previously ran its own
-    separate, already-pruned `os.walk()`, while those two used an
-    unpruned `rglob()`; unifying on one walk removes that inconsistency
-    and the redundant extra pass.
+    `_iter_repo_files()`'s pruned walk, the same walk the test-file functions above use.
     """
     total = 0
     for file_path in _iter_repo_files(repo_path):
@@ -503,10 +496,7 @@ def _process_repo(
                         # find_test_files_with_language()'s docstring. The
                         # repo's own tagged language rides along separately
                         # as repo_language, for the repositories-table row
-                        # (collect_dataset_c_fixtures() used to read the
-                        # first fixture's "language" for this, safe only
-                        # because every fixture's language was always the
-                        # repo's own before this change).
+                        # (not the first fixture's language, which can differ).
                         "repo_language": language,
                         "github_id": repo.get("github_id", 0),
                         # Threaded through the same way as github_id --
@@ -781,11 +771,8 @@ def collect_dataset_c_fixtures(
         _write_dataset_c_progress(progress_path, completed_repos, counts)
 
     for repo_full, fixtures_list in repo_groups.items():
-        # The repo's own tagged language, not fixtures_list[0]'s -- a
-        # fixture's own "language" can now legitimately differ from its
-        # repo's (cross-language leakage, see find_test_files_with_language()
-        # above), so the first fixture in the group is no longer a safe
-        # stand-in for the repo's real language the way it used to be.
+        # The repo's own tagged language. A fixture's language can differ from its
+        # repo's, so the first fixture is not used (see find_test_files_with_language()).
         language_val = (
             fixtures_list[0].get("repo_language") if fixtures_list else "unknown"
         )
@@ -860,22 +847,11 @@ def collect_dataset_c_fixtures(
         except Exception as exc:
             logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
         finally:
-            # `repo_full` is only added to completed_repos *here*, after its
-            # own persist_repository_and_fixtures() call above has actually
-            # run (whether it succeeded or raised) -- not any earlier. It
-            # used to be folded into completed_repos in one bulk update
-            # right after extraction finished, before this loop even
-            # started; that made every repo in repo_groups "completed" in
-            # memory from the very first loop iteration onward, so the
-            # per-iteration checkpoint save below would flush repos #2..N
-            # to disk as done while their own persistence call hadn't run
-            # yet. A crash or kill partway through this loop then
-            # permanently skipped those never-persisted repos on the next
-            # resume (checkpoint said done; db/c.db never got their rows) --
-            # the exact kind of silent data loss this checkpoint exists to
-            # prevent. Adding repo_full one at a time here, right before the
-            # save, means the on-disk checkpoint can never claim a repo is
-            # done ahead of its own persist call actually having run.
+            # `repo_full` is added to completed_repos only after its own
+            # persist_repository_and_fixtures() call has run, whether that call
+            # succeeded or raised. A repository is never marked done before its
+            # rows are written. A crash in this loop then leaves the checkpoint
+            # consistent with the database.
             #
             # This save still happens once per repo (one `_save_dataset_c_
             # checkpoint()` call per loop iteration, in a `finally` so it
