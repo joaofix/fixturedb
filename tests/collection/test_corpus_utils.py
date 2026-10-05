@@ -141,13 +141,7 @@ class TestComputeRepoMetadata:
     def test_compute_repo_metadata_repo_age_at_collection_defined_when_repo_age_years_is_none(
         self,
     ):
-        """Regression test: repo_age_years is None for a repo created after
-        the fixed temporal_reference (negative age is undefined) -- this
-        used to be the *only* age signal, so 41% of Dataset A's
-        fixture-bearing repos (created during the agent era, after its
-        2025-01-01 reference) had no age info at all.
-        repo_age_at_collection_years must still be defined in that case,
-        since it isn't relative to temporal_reference at all."""
+        """When a repository is created after the reference date, `repo_age_years` is None. `repo_age_at_collection_years` is still defined, because it does not depend on the reference date."""
         repo = {
             "topics": "[]",
             "description": "",
@@ -335,12 +329,7 @@ class TestWriteFixtureCsvRow:
         assert "is_complete_addition" in content
 
     def test_write_fixture_csv_row_preserves_fixture_agent_type(self, tmp_path):
-        """Fixture's own agent_type should be passed via extra_fields value.
-
-        Regression test for agent_corpus.py: when writing per-fixture CSV
-        rows, the caller must pass fixture.get('agent_type', fallback) as
-        the extra_fields value, not the outer-loop's stale agent_type.
-        """
+        """A fixture's own agent_type is written to its CSV row. The per-fixture value is used, not the loop's value."""
         out_path = tmp_path / "fixtures.csv"
 
         fixture = {
@@ -574,12 +563,7 @@ class TestPersistRepositoryAndFixtures:
                     assert "fixture" in content
 
     def test_persist_marks_repo_analysed_with_correct_counts(self, tmp_path):
-        """Regression test: repositories.status/num_test_files/num_fixtures/
-        num_mock_usages used to stay at their defaults ('discovered'/0/0/0)
-        forever -- set_repo_analysed() existed and was tested in isolation
-        but no collector ever called it. Also verifies num_contributors
-        (set separately via upsert_repository from GitHub metadata) survives
-        the call unchanged rather than being zeroed."""
+        """After persisting, a repository has status `analysed` and the correct counts. Its num_contributors is kept."""
         from collection.db import initialise_db
 
         db_path = tmp_path / "test.db"
@@ -642,14 +626,7 @@ class TestPersistRepositoryAndFixtures:
         assert row["num_contributors"] == 42
 
     def test_persist_syncs_test_file_fixture_counts(self, tmp_path):
-        """Regression test: test_files.num_fixtures/total_fixture_loc stayed
-        at their schema default (0) forever -- update_test_file_counts()
-        existed in db.py but no collector ever called it, unlike the
-        equivalent repositories-table resync above. Real numbers: 79% of
-        Dataset B's test_files rows and 99.6% of Dataset A's were stale
-        this way. Two fixtures in one file must sum correctly, and a
-        second, later call touching the same file must re-sync to the new
-        true total rather than leaving the first call's numbers stale."""
+        """The test file's fixture count and fixture LOC are the sums over its fixtures. A later call on the same file updates the totals."""
         from collection.db import initialise_db
 
         db_path = tmp_path / "test.db"
@@ -738,12 +715,7 @@ class TestPersistRepositoryAndFixtures:
     def test_persist_computes_repo_age_at_commit_for_repo_created_after_reference(
         self, tmp_path
     ):
-        """Regression test: repositories.repo_age_years is NULL for a repo
-        created after the dataset's fixed temporal reference (e.g. Dataset
-        A's 2025-01-01) -- true for 41% of Dataset A's fixture-bearing repos.
-        fixtures.repo_age_at_commit_years must still be a well-defined,
-        positive age (repo created_at -> this fixture's own commit_date),
-        since a commit can never precede its own repo's creation."""
+        """For a repository created after the reference date, `fixtures.repo_age_at_commit_years` is still a positive age, measured from the repository's creation to the fixture's commit."""
         from collection.db import initialise_db
 
         db_path = tmp_path / "test.db"

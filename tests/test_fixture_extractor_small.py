@@ -67,13 +67,7 @@ def test_should_process_file_extension_and_size(tmp_path):
 
 
 def test_should_process_file_matches_detector_allowed_exts(tmp_path):
-    """Regression test: _should_process_file used to carry its own,
-    independently hand-copied extension allowlist that had already drifted
-    from detector.py's ALLOWED_EXTS (the check that actually gates
-    extract_fixtures()) -- missing .pyw/.pyi for python, and an extra .cts
-    entry for typescript that would pass this pre-filter only to be
-    silently rejected one step later. Now both read the same catalog, so
-    this must hold for every language/extension pair in it."""
+    """The extension filter that picks files to parse uses the same list as the detector. Every language and extension pair in the list is accepted."""
     from collection.detector import ALLOWED_EXTS
 
     extractor = Pre2021FixtureExtractor(clones_dir=tmp_path)
@@ -92,10 +86,7 @@ def test_should_process_file_matches_detector_allowed_exts(tmp_path):
 
 
 def test_find_test_files_detects_flat_prefix_convention(tmp_path):
-    """Regression: the old rglob("*test_.py") glob only matched filenames
-    ENDING in "test_.py", never the standard "test_*.py" PREFIX convention
-    (e.g. a flat-layout "test_widget.py" with no tests/ subdirectory), so
-    such repos were silently scanned as having zero test files."""
+    """Test files named `test_*.py` are found, including flat-layout files with no tests/ folder."""
     extractor = Pre2021FixtureExtractor(clones_dir=tmp_path)
 
     repo = tmp_path / "repo"
@@ -273,11 +264,7 @@ class TestRawDiffFileIsPureAddition:
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
 
     def test_deletion_line_starting_with_double_dash_not_mistaken_for_header(self):
-        """A deleted line whose own content starts with "--" (no space at
-        position 4, e.g. a CLI-flag example string "--verbose") renders as a
-        "---"-prefixed hunk line. Regression test: this must still be
-        detected as a deletion, not silently skipped as if it were the
-        "--- a/path" file header."""
+        """A deleted line that starts with `--` is counted as a deletion, not as the `--- a/path` file header."""
         diff = "\n".join(
             [
                 "diff --git a/tests/test_foo.py b/tests/test_foo.py",
@@ -292,10 +279,7 @@ class TestRawDiffFileIsPureAddition:
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
 
     def test_deletion_line_looking_like_sql_comment_not_mistaken_for_header(self):
-        """A deleted line whose content is a SQL/Lua-style "-- comment"
-        renders as "--- comment" -- three dashes plus a space, textually
-        identical in shape to a real "--- a/path" file header. Regression
-        test: must still be detected as a deletion."""
+        """A deleted SQL or Lua comment, shown as `--- comment`, is counted as a deletion."""
         diff = "\n".join(
             [
                 "diff --git a/tests/test_foo.py b/tests/test_foo.py",
@@ -310,10 +294,7 @@ class TestRawDiffFileIsPureAddition:
         assert _raw_diff_file_is_pure_addition(diff, "tests/test_foo.py") is False
 
     def test_space_in_path_pure_addition(self):
-        """Regression test: "diff --git a/<path> b/<path>" packs both paths
-        into one whitespace-split line, ambiguous when <path> contains a
-        space -- a backreference-based header match resolves this without
-        space-splitting."""
+        """A file whose path contains a space is read correctly. A pure addition to it is still recognised as pure."""
         diff = "\n".join(
             [
                 "diff --git a/tests/my test.py b/tests/my test.py",
@@ -327,8 +308,7 @@ class TestRawDiffFileIsPureAddition:
         assert _raw_diff_file_is_pure_addition(diff, "tests/my test.py") is True
 
     def test_space_in_path_with_deletion(self):
-        """Regression test: a real deletion in a file whose path contains a
-        space must still be detected."""
+        """A deletion in a file whose path contains a space is detected."""
         diff = "\n".join(
             [
                 "diff --git a/tests/my test.py b/tests/my test.py",
@@ -731,9 +711,7 @@ class TestRawDiffCommitIsPureAddition:
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     def test_deletion_line_starting_with_double_dash_not_mistaken_for_header(self):
-        """Regression test (commit-level): a deleted line starting with "--"
-        renders as a "---"-prefixed hunk line and must still count as a
-        deletion, not be mistaken for the "--- a/path" file header."""
+        """At commit level, a deleted line that starts with `--` counts as a deletion."""
         diff = "\n".join(
             [
                 "diff --git a/tests/test_foo.py b/tests/test_foo.py",
@@ -748,9 +726,7 @@ class TestRawDiffCommitIsPureAddition:
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     def test_deletion_line_looking_like_sql_comment_not_mistaken_for_header(self):
-        """Regression test (commit-level): a deleted SQL/Lua-style "--
-        comment" renders as "--- comment", textually identical in shape to a
-        real file header, and must still count as a deletion."""
+        """At commit level, a deleted SQL or Lua comment counts as a deletion."""
         diff = "\n".join(
             [
                 "diff --git a/tests/test_foo.py b/tests/test_foo.py",
@@ -897,10 +873,7 @@ class TestRawDiffCommitIsPureAddition:
     # ── paths containing spaces ──
 
     def test_space_in_path_pure_addition(self):
-        """Regression test: the "diff --git a/<path> b/<path>" header packs
-        both paths into one whitespace-split line, ambiguous when <path>
-        contains a space. A pure addition of such a file must still be
-        recognized as pure."""
+        """A file whose path contains a space is read correctly. A pure addition to it is still recognised as pure."""
         diff = "\n".join(
             [
                 "diff --git a/tests/my test.py b/tests/my test.py",
@@ -914,8 +887,7 @@ class TestRawDiffCommitIsPureAddition:
         assert _raw_diff_commit_is_pure_addition(diff) is True
 
     def test_space_in_path_with_deletion_is_tainted(self):
-        """Regression test: a real deletion in a file whose path contains a
-        space must still be detected (not lost to header-parsing ambiguity)."""
+        """A deletion in a file whose path contains a space taints the commit."""
         diff = "\n".join(
             [
                 "diff --git a/tests/my test.py b/tests/my test.py",
@@ -930,10 +902,7 @@ class TestRawDiffCommitIsPureAddition:
         assert _raw_diff_commit_is_pure_addition(diff) is False
 
     def test_space_in_path_renamed_test_file_is_tainted(self):
-        """Regression test: a renamed test file whose *new* path contains a
-        space must still be recognized as a test file and rejected as a
-        rename, via the unambiguous "rename to " marker line correcting any
-        misparse from the "diff --git" header's fallback split."""
+        """A renamed test file whose new path contains a space is recognised as a rename. The `rename to` line gives the path."""
         diff = "\n".join(
             [
                 "diff --git a/tests/old.py b/tests/my new test.py",

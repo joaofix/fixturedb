@@ -15,7 +15,7 @@ from collection.fixture_extractor import (
 
 
 def _init_repo_with_commits(tmp_path: Path, commits: list[dict]) -> str:
-    """Create a real git repo under tmp_path/owner__repo and return HEAD commit SHA."""
+    """Creates a git repository under tmp_path/owner__repo and returns the HEAD commit SHA."""
     repo = tmp_path / "owner__repo"
     repo.mkdir()
     subprocess.run(
@@ -53,10 +53,7 @@ def _init_repo_with_commits(tmp_path: Path, commits: list[dict]) -> str:
 
 
 def _get_commit(tmp_path: Path, commits: list[dict]):
-    """Build a real repo via _init_repo_with_commits() and return (repo_path,
-    PyDriller Commit) for the resulting HEAD commit -- used by tests that
-    exercise _build_diff_line_maps()/_find_added_test_files() directly
-    against a real PyDriller Commit object, rather than hand-typed diff text."""
+    """Returns the repository path and the PyDriller commit for its HEAD. The tests use the real commit, not hand-written diff text."""
     sha = _init_repo_with_commits(tmp_path, commits)
     repo_path = tmp_path / "owner__repo"
     commit = Git(str(repo_path)).get_commit(sha)
@@ -88,11 +85,7 @@ def test_fixture_span_with_context_line_is_not_complete():
 
 
 def test_diff_parser_marks_added_and_context_lines_by_file(tmp_path):
-    """_build_diff_line_maps() sources its per-line added/not-added state
-    directly from PyDriller's own ModifiedFile.diff_parsed -- built against
-    a real two-commit repo here, rather than hand-typed diff text, so this
-    is exercising the actual PyDriller integration, not an assumption about
-    its output shape."""
+    """Added and context lines are marked per file. The marks come from PyDriller's parsed diff, checked on a real two-commit repository."""
     repo_path, commit = _get_commit(
         tmp_path,
         [
@@ -126,12 +119,7 @@ def test_diff_parser_marks_added_and_context_lines_by_file(tmp_path):
 
 
 def test_diff_parser_added_line_starting_with_plus_plus(tmp_path):
-    """An *added* line whose own content starts with "++" (e.g. `++counter;`)
-    used to render as a "+++"-prefixed hunk line that a hand-rolled parser
-    could mistake for a file header, corrupting the line map. PyDriller's
-    diff_parsed gives structured (line_no, text) tuples directly, so this
-    can no longer happen -- verified here against a real repo with exactly
-    that content."""
+    """An added line that starts with `++` is parsed as an added line, not as a file header."""
     repo_path, commit = _get_commit(
         tmp_path,
         [
@@ -159,13 +147,7 @@ def test_diff_parser_added_line_starting_with_plus_plus(tmp_path):
 
 
 def test_diff_parser_added_line_looking_like_file_header(tmp_path):
-    """An added line whose content happens to read like "+++ b/<path>" used
-    to risk being misparsed by a hand-rolled parser as a bogus file-header
-    line. _build_diff_line_maps() no longer parses header lines from text
-    at all -- file identity comes from ModifiedFile.new_path directly -- so
-    this is structurally no longer possible; verified here against a real
-    repo with exactly that content, confirming only the one real file is
-    present and its lines are attributed correctly."""
+    """An added line that reads like a file header is not treated as one. The file identity comes from PyDriller."""
     repo_path, commit = _get_commit(
         tmp_path,
         [
@@ -266,13 +248,7 @@ def test_ast_aware_completeness_ignores_comments_inside_python_fixture(tmp_path)
 
 
 def test_ast_aware_completeness_ignores_comments_inside_java_fixture(tmp_path):
-    """Regression test: Java's tree-sitter grammar names comment nodes
-    "line_comment"/"block_comment", not "comment" (unlike Python/JS/TS) --
-    a check for the literal string "comment" silently never excluded Java
-    comments, so a comment line landing on "context" in the diff (e.g. a
-    generic comment the diff algorithm matched elsewhere) rejected an
-    otherwise-100%-added Java fixture that the identical Python/JS/TS case
-    would have accepted."""
+    """Comments inside a Java fixture are ignored when checking that the fixture is fully added. Java names comment nodes `line_comment` and `block_comment`."""
     fixture_file = tmp_path / "SampleTest.java"
     fixture_file.write_text(
         "\n".join(
@@ -470,10 +446,7 @@ def test_added_test_file_detection_ignores_go_paths(tmp_path):
 
 
 def test_added_test_file_detection_handles_paths_with_spaces(tmp_path):
-    """Regression test: the "diff --git a/<path> b/<path>" header packs both
-    paths into one whitespace-split line, which is ambiguous when a path
-    contains a space. Detection now reads the path from PyDriller's
-    ModifiedFile.new_path directly (never parses the header line at all)."""
+    """A test file whose path contains a space is detected as added. The path comes from PyDriller, not from the diff header."""
     repo_path, commit = _get_commit(
         tmp_path,
         [
@@ -527,14 +500,7 @@ def test_checkout_commit_removes_stale_index_lock_and_retries(tmp_path, monkeypa
 
 
 def test_checkout_commit_fetch_fallback_uses_no_prompt_env(tmp_path, monkeypatch):
-    """Real incident (2026-08-11): discover-repos got stuck repeatedly on
-    interactive Username/Password prompts. The `git fetch --unshallow`
-    fallback here (reached when a commit isn't available in the current
-    shallow clone) goes through run_git_no_prompt(), not a plain
-    subprocess.run -- patches the global subprocess.run (not
-    commit_checkout's own module-qualified one, since run_git_no_prompt
-    calls through clone_primitives' subprocess reference) so the real
-    env-injection logic actually runs and gets verified."""
+    """The `git fetch --unshallow` fallback runs without prompts, through `run_git_no_prompt()`. The test checks the environment that is passed."""
     repo_path = tmp_path / "repo"
     (repo_path / ".git").mkdir(parents=True)
 
@@ -770,8 +736,7 @@ def test_extract_from_commit_mixed_files_one_skipped_one_kept(tmp_path):
 
 
 def test_extract_from_commit_empty_commit_returns_nothing(tmp_path):
-    """A commit that touches no files (git commit --allow-empty) has no
-    modified_files, so no test files can be found."""
+    """A commit that changes no files has no test files, so nothing is extracted."""
     repo_path, _first_commit = _get_commit(
         tmp_path,
         [
