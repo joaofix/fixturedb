@@ -12,8 +12,8 @@
 # Test-double category classification
 # ====================================
 # mock_patterns below only detects THAT a mock construct exists (which
-# framework, what's being targeted) -- it no longer carries the
-# construct's category. Category (dummy/stub/spy/mock/fake -- the classic
+# framework, what's being targeted). It does not carry the construct's
+# category. Category (dummy/stub/spy/mock/fake -- the classic
 # Meszaros taxonomy; see also Fowler's "Mocks Aren't Stubs") is computed at
 # detection time, per match, by scanning the actual matched code (the
 # snippet around the call plus its captured target identifier) for one of
@@ -44,8 +44,8 @@ mock_category_keywords:
 
 # Each entry: pattern (regex, applied case-insensitively against the
 # fixture's own source text) + the mock framework it signals. Category is
-# no longer part of this table (see "Test-double category classification"
-# above). Order doesn't affect results -- every pattern is scanned against
+# not part of this table (see "Test-double category classification" above).
+# Order doesn't affect results -- every pattern is scanned against
 # every fixture body, so a fixture can match more than one framework/pattern.
 mock_patterns:
   # Python
@@ -67,7 +67,7 @@ mock_patterns:
     note: "pytest-mock's mocker.patch.object -- same gap as mock.patch.object above."
   # Bare patch(...)/patch.object(...), i.e. `from unittest.mock import patch`
   # then calling it unqualified -- at least as common as the mock.patch(...)
-  # form and previously not covered at all. Negative lookbehind excludes
+  # form. Negative lookbehind excludes
   # mock.patch(/mocker.patch( so this can't double-count alongside those
   # two patterns above.
   - pattern: '(?<!mock\.)(?<!mocker\.)\bpatch\s*\(\s*[''"]([^''"]+)[''"]'
@@ -84,9 +84,8 @@ mock_patterns:
   # tried at a later position within the same word).
   - pattern: 'MagicMock\s*\(|\bMock\s*\(|AsyncMock\s*\('
     framework: unittest_mock
-  # pytest's built-in monkeypatch fixture. Not a mock *library* the way the
-  # others are, but the same test-isolation-via-patching concept the
-  # num_mocks metric is meant to capture, and previously not covered at all.
+  # pytest's built-in monkeypatch fixture. It is not a mock library, but it
+  # isolates tests by patching, which the num_mocks metric counts.
   # Capture group is the operation name (setattr/setenv/...), not a target
   # identifier -- monkeypatch's first argument is too variable in shape
   # (object reference, dotted string, or plain name) to extract reliably.
@@ -125,9 +124,7 @@ mock_patterns:
     framework: jest
   - pattern: 'jest\.createMockFromModule\s*\(\s*[''"]([^''"]+)[''"]'
     framework: jest
-  # sinon.(stub|spy|mock|fake|replace) used to be one alternation; split so
-  # each verb keeps its own regex entry (its own call site should still be
-  # counted as a distinct match even though category no longer lives here).
+  # Each sinon verb has its own entry, so each call site is one distinct match.
   - pattern: 'sinon\.stub\s*\('
     framework: sinon
   - pattern: 'sinon\.spy\s*\('
@@ -198,19 +195,10 @@ external_call_patterns:
   - pattern: '\bshutil\.'
     matches: "filesystem operations"
 
-# object_instantiation_patterns (num_objects_instantiated) used to live
-# here as a regex table (`new X(...)` for Java/JS/TS, a capitalized-call
-# heuristic for Python), filtered against Lizard's external_call_count for
-# validation. Removed 2026-08-16: replaced by a proper tree-sitter AST walk
-# in detector_shared.py::_count_object_instantiations() -- `new X(...)`'s
-# dedicated node type (object_creation_expression/new_expression) in Java/
-# JS/TS, a capitalized-target `call` node in Python (still a heuristic
-# there -- Python has no dedicated "this is a constructor" node -- but now
-# scoped to a genuine call site instead of a text/regex scan). See
-# internal-docs/methodology-improvements/
-# num-objects-instantiated-false-positive-rate.md for why the regex
-# version needed replacing (it matched inside string literals/comments,
-# and against a fixture's own capitalized name).
+# num_objects_instantiated is computed by a tree-sitter walk over call and
+# constructor nodes (detector_shared.py::_count_object_instantiations()). A
+# regex over the text is not used, because it matched inside strings and
+# comments.
 
 # Setup/teardown pairing (has_teardown_pair), split by detection mechanism:
 teardown_detection:
