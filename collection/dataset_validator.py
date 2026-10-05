@@ -1,12 +1,7 @@
 """Validate an exported dataset ZIP for completeness and independence.
 
-Moved from the old phase_8_final_validation.py, which only ever validated
-a hardcoded pair (human + agent) via `generate_validation_report()`. That
-method is kept for backward compatibility; new code (`validate --dataset X`)
-should use `validate_single()`, which validates exactly one ZIP and accepts
-an explicit `is_agent` flag instead of sniffing the word "agent" out of the
-zip filename -- the new per-dataset zip names (`export/a.zip`, `b.zip`,
-`c.zip`) don't carry that substring for Dataset A.
+`validate_single()` validates exactly one ZIP and takes an explicit `is_agent`
+flag (the zip filenames `export/{a,c}.zip` do not carry the word "agent").
 """
 
 from __future__ import annotations
@@ -254,46 +249,3 @@ class DatasetValidator:
             "valid": valid,
         }
 
-    def generate_validation_report(
-        self,
-        human_zip: Path,
-        agent_zip: Path,
-    ) -> dict[str, Any]:
-        """Pairwise report over a hardcoded (human, agent) pair. Kept for
-        backward compatibility; new code should use validate_single()."""
-        report: dict[str, Any] = {
-            "timestamp": datetime.now().isoformat(),
-            "human_dataset": {
-                "zip_validation": self.validate_zip_archive(human_zip),
-                "csv_validation": self.validate_csv_files(human_zip),
-                "independence_validation": self.validate_independence(human_zip),
-            },
-            "agent_dataset": {
-                "zip_validation": self.validate_zip_archive(agent_zip),
-                "csv_validation": self.validate_csv_files(agent_zip),
-                "independence_validation": self.validate_independence(agent_zip),
-            },
-        }
-
-        human_valid = (
-            report["human_dataset"]["zip_validation"]["zip_readable"]
-            and all(
-                report["human_dataset"]["zip_validation"]["required_files"].values()  # type: ignore[union-attr]
-            )
-            and report["human_dataset"]["independence_validation"]["is_independent"]
-            and self._csv_content_valid(report["human_dataset"]["csv_validation"])
-        )
-
-        agent_valid = (
-            report["agent_dataset"]["zip_validation"]["zip_readable"]
-            and all(
-                report["agent_dataset"]["zip_validation"]["required_files"].values()  # type: ignore[union-attr]
-            )
-            and report["agent_dataset"]["zip_validation"]["agents_md_present"]
-            and report["agent_dataset"]["independence_validation"]["is_independent"]
-            and self._csv_content_valid(report["agent_dataset"]["csv_validation"])
-        )
-
-        report["validation_passed"] = human_valid and agent_valid
-
-        return report

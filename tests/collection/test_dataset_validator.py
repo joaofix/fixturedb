@@ -31,36 +31,6 @@ def _write_zip(path: Path, *, fixtures_csv: str | None = None, agent: bool = Fal
             zf.writestr("AGENTS.md", "agent docs\n")
 
 
-def test_validation_passes_for_well_formed_datasets(tmp_path):
-    human_zip = tmp_path / "fixturedb-human_v1.0_export.zip"
-    agent_zip = tmp_path / "fixturedb-agent_v1.0_export.zip"
-    _write_zip(human_zip)
-    _write_zip(agent_zip, agent=True)
-
-    validator = DatasetValidator(tmp_path)
-    report = validator.generate_validation_report(human_zip, agent_zip)
-
-    assert report["validation_passed"] is True
-
-
-def test_validation_fails_when_fixtures_csv_is_empty(tmp_path):
-    """Regression: csv_validation (row_count/columns/valid per CSV) was
-    computed but never read again by validation_passed -- only filename
-    presence and a few header columns were checked. An empty (header-only)
-    fixtures.csv previously still reported VALIDATION PASSED."""
-    human_zip = tmp_path / "fixturedb-human_v1.0_export.zip"
-    agent_zip = tmp_path / "fixturedb-agent_v1.0_export.zip"
-    empty_fixtures_csv = "id,name,fixture_type,loc,raw_source\n"  # header only
-    _write_zip(human_zip, fixtures_csv=empty_fixtures_csv, agent=False)
-    _write_zip(agent_zip, agent=True)
-
-    validator = DatasetValidator(tmp_path)
-    report = validator.generate_validation_report(human_zip, agent_zip)
-
-    assert report["human_dataset"]["csv_validation"]["fixtures"]["row_count"] == 0
-    assert report["validation_passed"] is False
-
-
 def test_validate_csv_files_row_count_is_not_off_by_one(tmp_path):
     """Regression: row_count was computed as
     `sum(1 for _ in f) - 1  # -1 for header`, but f.readline() had already
@@ -79,17 +49,3 @@ def test_validate_csv_files_row_count_is_not_off_by_one(tmp_path):
     assert result["mock_usages"]["row_count"] == 0
 
 
-def test_validation_passes_when_only_mock_usages_csv_is_empty(tmp_path):
-    """mock_usages.csv legitimately having zero rows must not fail
-    validation -- only the three core CSVs (repositories/test_files/
-    fixtures) are required to be non-empty."""
-    human_zip = tmp_path / "fixturedb-human_v1.0_export.zip"
-    agent_zip = tmp_path / "fixturedb-agent_v1.0_export.zip"
-    _write_zip(human_zip)
-    _write_zip(agent_zip, agent=True)
-
-    validator = DatasetValidator(tmp_path)
-    report = validator.generate_validation_report(human_zip, agent_zip)
-
-    assert report["human_dataset"]["csv_validation"]["mock_usages"]["row_count"] == 0
-    assert report["validation_passed"] is True
