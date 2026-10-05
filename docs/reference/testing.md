@@ -1,7 +1,6 @@
 # Testing
 
-The test suite is in `tests/`. It runs with pytest and needs no GitHub token. The
-test strategy is in [tests/TEST_PLAN.md](../../tests/TEST_PLAN.md).
+The test suite is in `tests/`. It runs with pytest and needs no GitHub token.
 
 ## Run the tests
 
