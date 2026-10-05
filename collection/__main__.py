@@ -131,8 +131,8 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
         from .agent_corpus import AgentCorpusCollector
 
         output_db = args.output_db or paths.db_path("a")
-        # No dataset-wide database_has_rows() gate here (removed 2026-08-12,
-        # same bug/fix as Dataset C further down) --
+        # No dataset-wide database_has_rows() gate here, because it would skip
+        # a language that was never processed --
         # AgentCorpusCollector.run() already gates per-language via its own
         # DB checkpoints (agent_complete:{lang}/:all), which a dataset-wide
         # "does *any* row exist" check would short-circuit incorrectly: a
@@ -513,8 +513,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint: dispatch to the appropriate subcommand."""
     # Every module's own `logger.info(...)` calls are invisible until the
-    # root logger has a level/handler -- each phase script used to call this
-    # itself from its own `if __name__ == "__main__":` block, but those are
+    # root logger has a level and a handler. Each module's own `__main__` block
+    # would otherwise call this itself, but those are
     # dead code now that everything routes through this single entrypoint.
     configure_logging()
     parser = build_parser()

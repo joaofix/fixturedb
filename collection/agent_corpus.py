@@ -928,7 +928,7 @@ class AgentCorpusCollector:
                         "topics": repo.get("topics") or "[]",
                         # repo_data already carries these (computed a few
                         # lines above, at construct_repo_dict() time) -- were
-                        # previously only reaching db/a.db, never a CSV.
+                        # now also written to the CSV.
                         "stars": repo_data.get("stars", 0),
                         "forks": repo_data.get("forks", 0),
                         "num_contributors": repo_data.get("num_contributors", 0),

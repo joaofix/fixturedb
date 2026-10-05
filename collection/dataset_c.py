@@ -557,8 +557,8 @@ def collect_dataset_c_fixtures(
     7. Persist sampled fixtures to DB
 
     fixtures_output_dir overrides where the per-language fixture CSVs land
-    (default: datasets/c/fixtures/) -- required for toy runs so they don't
-    write into the real dataset.
+    (default: datasets/c/fixtures/). Toy runs must set it, so they do not write
+    into the real dataset.
     """
     workers = max(1, int(workers or 1))
     initialise_db(output_db)

@@ -403,8 +403,8 @@ def persist_repository_and_fixtures(
         # update_test_file_counts()'s full 4: num_test_funcs/file_loc
         # aren't computed here and nothing in the pipeline currently sets
         # them, so clobbering them to 0 unconditionally would be wrong if
-        # that ever changes). Previously never called at all here, which
-        # left num_fixtures/total_fixture_loc at their schema default (0)
+        # that ever changes). Without this call, num_fixtures and
+        # total_fixture_loc stay at their schema default (0)
         # for every test_files row except the small subset
         # a one-off dedupe cascade happened to touch.
         for file_id in set(test_files_cache.values()):

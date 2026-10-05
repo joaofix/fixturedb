@@ -41,7 +41,7 @@ def sample_fixtures_by_language(
     fixtures from the same repo can land on opposite sides of the sample.
     Deliberate -- see dataset_pipeline.py::sample_dataset_c_repos()'s
     docstring for why (this maximizes the number of distinct repos
-    represented in the sample, at the cost of no longer guaranteeing a
+    represented in the sample, at the cost of not guaranteeing a
     sampled repo's fixtures are all present together -- repo-level
     metrics like RQ3's setup/teardown pairing must not be computed
     against a sample built this way).

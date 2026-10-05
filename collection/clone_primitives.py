@@ -69,13 +69,10 @@ def _no_prompt_env() -> dict[str, str]:
     repo instead of blocking on an interactive Username/Password prompt.
     GIT_TERMINAL_PROMPT=0 is git's own documented switch for this; its
     failure message ("fatal: could not read Username...") is already one of
-    CREDENTIAL_PROMPT_PATTERNS above, so existing detection just starts
-    firing fast instead of only after subprocess's timeout= fires (a real
-    incident: without this, a blocked repo burned up to timeout*(retries+1)
-    -- ~20 minutes -- before clone_to_tempdir() gave up, and wasn't even
-    recorded as "requires credentials", since TimeoutExpired never reaches
-    the stderr-inspection path below). GIT_ASKPASS=echo is defense in depth
-    against a configured credential.helper trying some other prompt
+    CREDENTIAL_PROMPT_PATTERNS above, so existing detection fires quickly.
+    Without this, a blocked repo would use up to timeout*(retries+1), about 20
+    minutes, before clone_to_tempdir() gave up. GIT_ASKPASS=echo is defense in
+    depth against a configured credential.helper trying some other prompt
     channel. Reads os.environ fresh (not module-level) so tests can
     monkeypatch it, and so PATH/etc. stay intact -- git still needs to be
     findable."""
@@ -135,14 +132,8 @@ def clone_to_tempdir(
     defends against a brief blip within one call -- it will not survive a
     sustained outage; recovering from that is the checkpoint layer's job.
 
-    The raised `CloneUnavailable` carries the *last* attempt's actual
-    failure reason (stderr / timeout / exception text) -- real incident
-    (2026-08-12): two verifiably public, reachable repos (confirmed after
-    the fact with a plain `git ls-remote`) each failed all 3 clone attempts
-    during a live Dataset A `discover-commits` run, but the old message was
-    just "clone failed after 3 attempt(s): <repo>" with no way to tell
-    whether that was a timeout, a network blip, or something else --
-    every prior attempt's stderr/exception was silently discarded.
+    The raised `CloneUnavailable` carries the last attempt's failure reason
+    (stderr, timeout or exception text), so the cause is visible.
     """
     owner, name = repo_full_name.split("/")
     last_error = "unknown error"

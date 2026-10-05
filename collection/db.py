@@ -225,7 +225,7 @@ _COLUMN_RENAMES: list[tuple[str, str, str]] = [
 
 def _apply_column_renames(conn: sqlite3.Connection) -> None:
     """Idempotently rename columns per _COLUMN_RENAMES. A no-op once a given
-    DB file has already been renamed (old column no longer exists), and a
+    DB file has already been renamed (the old column is gone), and a
     no-op on a DB file that predates the old column entirely (the
     ADD-COLUMN fallback in _COLUMN_MIGRATIONS covers that case instead)."""
     for table, old, new in _COLUMN_RENAMES:

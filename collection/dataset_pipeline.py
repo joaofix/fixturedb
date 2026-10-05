@@ -269,8 +269,8 @@ def _fetch_fixture_language_counts(conn: sqlite3.Connection) -> dict[str, int]:
 def _fetch_repo_counts_by_fixture_language(conn: sqlite3.Connection) -> dict[str, int]:
     """Distinct repo count per fixture's own language -- "how many repos
     have at least one fixture written in this language". Purely
-    descriptive under fixture-level sampling (a repo is no longer a
-    sampling unit, so this isn't a quota) -- exists for the
+    descriptive under fixture-level sampling (a repo is not a sampling unit,
+    so this is not a quota). It exists for the
     sampling-summary report's "repos touched" figures, which
     research_questions/dataset_findings.py still reads from the output
     JSON this module writes."""
@@ -541,7 +541,7 @@ def sample_dataset_c_repos(
     affects another's target.
 
     `tolerance` is accepted for CLI-signature/backward-compatibility but
-    no longer affects sampling: a fixture-level sample either hits a
+    does not affect sampling: a fixture-level sample either hits a
     language's target exactly or (on shortfall) takes everything
     available -- there's no probabilistic deviation left to tolerate the
     way whole-repo chunking had.

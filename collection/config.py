@@ -199,7 +199,7 @@ LANGUAGE_CONFIGS = {
 # Testing Framework Registry
 #
 # Authoritative mapping of testing frameworks per language.
-# Used to validate detected frameworks and ensure consistency.
+# Used to validate detected frameworks.
 # Categories: unit, integration, bdd, mocking
 #
 # This registry supports:

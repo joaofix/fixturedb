@@ -6,8 +6,8 @@ used by `repository_quality_control/agent_repository_counter.py` (Dataset A
 repo qualification) and `dedupe_dataset_c_repos.py` (Dataset C dedup) to
 avoid cloning a repo just to find out it has no agent config at all.
 
-Used to also host the scan/verify primitives for
-`tiered_agent_corpus_scanner.py`'s Tier 2 discovery path
+Hosts the scan and verify primitives for
+`tiered_agent_corpus_scanner.py`'s discovery path
 (`AgentFileScanner`, `AgentCommitVerifier`) -- removed alongside Tier 2,
 since this module's `GitHubAgentFileChecker` was their only other caller.
 
