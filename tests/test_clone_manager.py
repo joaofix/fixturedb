@@ -180,3 +180,52 @@ class TestSetMaxConcurrentClones:
 
         agent_commit_counter.run(input_dir=tmp_path, output_dir=tmp_path / "out", progress_db_path=tmp_path / "p.db")
         assert applied == []
+
+
+class TestCloneFilterArgument:
+    """The partial-clone filter is a parameter. The default keeps file contents,
+    and a commit-only step can ask for no blobs."""
+
+    def _captured_args(self, **kwargs):
+        from unittest.mock import patch
+
+        seen = []
+
+        def fake_clone(repo_full_name, clone_url, clone_args, **_):
+            seen.append(list(clone_args))
+            return None, None
+
+        with patch.object(cm, "clone_to_tempdir", side_effect=fake_clone):
+            with cm.temp_clone_commit_history("https://example.invalid/o/r.git", "o/r", **kwargs) as path:
+                assert path is None
+        return seen[0]
+
+    def test_default_keeps_blobs_under_ten_megabytes(self):
+        assert "--filter=blob:limit=10m" in self._captured_args()
+
+    def test_commit_only_clone_passes_blob_none(self):
+        args = self._captured_args(clone_filter="--filter=blob:none")
+        assert "--filter=blob:none" in args
+        assert "--filter=blob:limit=10m" not in args
+
+
+class TestDiscoverCommitsCloneFilter:
+    def test_discover_commits_clones_without_blobs(self, monkeypatch):
+        from contextlib import contextmanager
+
+        from collection.repository_quality_control import agent_commit_counter as acc
+
+        captured = {}
+
+        @contextmanager
+        def fake_temp_clone(clone_url, repo_full_name, **kwargs):
+            captured.update(kwargs)
+            yield None
+
+        monkeypatch.setattr(acc, "temp_clone_commit_history", fake_temp_clone)
+        with pytest.raises(acc.RepoUnavailable):
+            acc.process_repo_for_commits(
+                {"repo_name": "o/r", "clone_url": "https://example.invalid/o/r.git", "language": "python"},
+                "2025-01-01",
+            )
+        assert captured["clone_filter"] == "--filter=blob:none"

@@ -197,8 +197,13 @@ def temp_clone_commit_history(
     prefix: str = "collection-",
     timeout: int = CLONE_TIMEOUT_SECONDS,
     shallow_since: Optional[str] = None,
+    clone_filter: str = "--filter=blob:limit=10m",
 ):
     """Clone history into a temporary directory and cleanup on exit.
+
+    `clone_filter` is the git partial-clone filter. The default keeps every
+    blob under 10 MB, which file-content steps need. A step that only walks
+    commits can pass `--filter=blob:none` to skip the file contents.
 
     Uses `clone_to_tempdir` helper; yields the repo path (or None on failure).
     The actual `git clone` subprocess is gated by `_CLONE_SEMAPHORE`
@@ -221,7 +226,7 @@ def temp_clone_commit_history(
     that fallback clone re-acquires the semaphore on its own (via the
     recursive call below), rather than holding two slots at once.
     """
-    clone_args = ["--filter=blob:limit=10m", "--single-branch", "--no-tags"]
+    clone_args = [clone_filter, "--single-branch", "--no-tags"]
     if shallow_since is not None:
         clone_args.append(f"--shallow-since={shallow_since}")
 
@@ -243,7 +248,12 @@ def temp_clone_commit_history(
     if shallow_since is not None and _shallow_clone_is_truncated(repo_path, shallow_since):
         cleanup_tempdir(temp_root)
         with temp_clone_commit_history(
-            clone_url, repo_full_name, prefix=prefix, timeout=timeout, shallow_since=None
+            clone_url,
+            repo_full_name,
+            prefix=prefix,
+            timeout=timeout,
+            shallow_since=None,
+            clone_filter=clone_filter,
         ) as fallback_path:
             yield fallback_path
         return

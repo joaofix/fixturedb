@@ -40,7 +40,7 @@ one command to paste.
 # Dataset A (agent-authored fixtures)
 python3 -m collection discover-repos --dataset a --workers 24 \
   && curl -d "Dataset A 1/8: discover-repos finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection discover-commits --dataset a --workers 24 --max-concurrent-clones 16\
+  && python3 -m collection discover-commits --dataset a --workers 24 --max-concurrent-clones 16 \
   && curl -d "Dataset A 2/8: discover-commits finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection.dedupe_commits_by_sha --dataset a \
   && curl -d "Dataset A 3/8: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
@@ -95,6 +95,9 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
 - **`discover-commits --max-concurrent-clones N`** caps the git clones in flight at once,
   independently of `--workers` (default: 8, and it does not read `MAX_CONCURRENT_CLONES`).
   Workers above the clone limit only wait for a clone slot.
+- **`discover-commits` clones with `--filter=blob:none`.** It walks commit history only, so it
+  does not download file contents. The other steps keep `--filter=blob:limit=10m`, because
+  `filter-test-commits` needs file contents for its pure-addition check.
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
   work; DB and CSV writes stay on the main thread regardless. **Not CPU core
   count** is the ceiling here — the `discover-repos`/`discover-commits`/

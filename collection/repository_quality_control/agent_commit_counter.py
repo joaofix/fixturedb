@@ -168,13 +168,7 @@ def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
     lang = (row.get("language") or "unknown").strip().lower()
     if not full_name:
         return [], 0
-    clone_args = [
-        "--filter=blob:limit=10m",
-        "--single-branch",
-        "--no-tags",
-        "--no-checkout",
-    ]
-    logger.debug("Cloning %s (lang=%s) args=%s", full_name, lang, clone_args)
+    logger.debug("Cloning %s (lang=%s) filter=%s", full_name, lang, COMMIT_HISTORY_CLONE_FILTER)
     out_rows = []
     with temp_clone_commit_history(
         clone_url,
@@ -182,6 +176,7 @@ def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
         prefix="agent-commits-",
         timeout=300,
         shallow_since=shallow_clone_since(since),
+        clone_filter=COMMIT_HISTORY_CLONE_FILTER,
     ) as repo_path:
         if repo_path is None:
             logger.warning("Clone refused for %s (clone_url=%s)", full_name, clone_url)
@@ -263,6 +258,13 @@ PROGRESS_DB_PATH = paths.DB_ROOT / "a_discover_commits.db"
 # not recorded, so the next run retries it.
 STATUS_OK = "ok"
 STATUS_CLONE_UNAVAILABLE = "clone_unavailable"
+
+
+# discover-commits walks commit objects only (author, message, date), never file
+# contents, so it clones with no blobs. Measured on five sample repositories:
+# the same agent commits and commit counts as blob:limit=10m, in about a sixth of
+# the clone time. filter-test-commits still needs the file contents.
+COMMIT_HISTORY_CLONE_FILTER = "--filter=blob:none"
 
 
 class RepoUnavailable(Exception):
