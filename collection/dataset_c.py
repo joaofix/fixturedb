@@ -30,7 +30,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 from collection.agent_patterns import _EXCLUDED_DIR_NAMES
 from collection.clone_primitives import clone_repo_for_commit_scan
+from collection import paths
 from collection.config import (
+    COLLECTION_OUTPUT_TAG,
     DATASET_C_SAMPLING_SEED,
     HUMAN_CORPUS_CUTOFF_DATE,
     MIN_COMMITS,
@@ -52,6 +54,12 @@ from collection.sampling import stratified_sample_by_language
 from collection.tiered_agent_corpus_scanner import _is_test_file_path
 
 logger = get_logger(__name__)
+
+
+def _dataset_c_fixture_csv_path(language: str, override: Path | None = None) -> Path:
+    """Per-language fixture CSV for Dataset C, default datasets/c/fixtures/."""
+    root = override if override is not None else paths.stage_dir("c", "fixtures") / COLLECTION_OUTPUT_TAG
+    return root / f"{language}_fixtures.csv"
 
 
 def load_dataset_c_repos(csv_path: Path) -> list[dict]:
@@ -704,8 +712,6 @@ def collect_dataset_c_fixtures(
 
     # Clear stale CSV output for a fresh run so we don't append duplicates
     # on top of a previous run that used the same language CSV.
-    from collection.human_corpus import _human_fixture_csv_path
-
     fresh_start = not checkpoint_path.exists()
     if fresh_start:
         # Only clear the CSV(s) this *invocation* actually owns -- when
@@ -738,7 +744,7 @@ def collect_dataset_c_fixtures(
             if lang is None:
                 lang = "unknown"
             try:
-                csv_path = _human_fixture_csv_path(lang, "c", fixtures_output_dir)
+                csv_path = _dataset_c_fixture_csv_path(lang, fixtures_output_dir)
                 if csv_path.exists():
                     csv_path.unlink()
                     logger.debug(
@@ -828,8 +834,6 @@ def collect_dataset_c_fixtures(
             repo_age_at_collection_years=metadata["repo_age_at_collection_years"],
         )
         try:
-            from collection.human_corpus import _human_fixture_csv_path
-
             # Bucket by each fixture's OWN language, not just the first
             # fixture's language for the whole repo -- a multi-language repo
             # can have fixtures spanning more than one real language. Same
@@ -841,8 +845,8 @@ def collect_dataset_c_fixtures(
                 fixtures_by_language[str(fx_lang).strip().lower()].append(fx)
 
             for fx_lang, fx_group in fixtures_by_language.items():
-                fixture_out_path = _human_fixture_csv_path(
-                    fx_lang, "c", fixtures_output_dir
+                fixture_out_path = _dataset_c_fixture_csv_path(
+                    fx_lang, fixtures_output_dir
                 )
                 persist_repository_and_fixtures(
                     output_db,

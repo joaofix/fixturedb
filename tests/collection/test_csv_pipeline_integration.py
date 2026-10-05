@@ -12,7 +12,6 @@ import csv
 
 import pytest
 
-from collection.human_corpus_repo_selection import select_human_corpus_repositories
 
 
 @pytest.fixture
@@ -156,73 +155,3 @@ class TestCSVFixtureExportFormat:
             assert row["fixture_name"] == "fixture, with, commas"
 
 
-class TestCSVPipelineEndToEnd:
-    """Test end-to-end CSV pipeline (read input, process, write output)."""
-
-    def test_csv_pipeline_reads_input_and_writes_output(self, tmp_path):
-        """Verify full pipeline: read input CSV → process → write output CSV."""
-        # Create input CSV
-        input_dir = tmp_path / "input"
-        input_dir.mkdir()
-
-        csv_path = input_dir / "python_agent_repo.csv"
-        rows = [
-            {
-                "repo_name": "owner/repo",
-                "full_name": "owner/repo",
-                "language": "python",
-                "stars": 100,
-                "forks": 10,
-                "num_contributors": 5,
-                "clone_url": "https://github.com/owner/repo.git",
-                "has_agent_config": "1",
-            }
-        ]
-
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-            writer.writeheader()
-            writer.writerows(rows)
-
-        # Select repositories from input CSV
-        repos = select_human_corpus_repositories(
-            input_dir,
-            repos_per_language=None,
-            language="python",
-        )
-
-        # Verify input was read correctly
-        assert len(repos) == 1
-        assert repos[0]["full_name"] == "owner/repo"
-
-        # Create output CSV directory
-        output_dir = tmp_path / "fixtures-from-humans" / "same-repo"
-        output_dir.mkdir(parents=True)
-
-        # Write output fixture CSV
-        from collection.corpus_utils import write_fixture_csv_row
-
-        out_path = output_dir / "python_human_fixtures.csv"
-        fixture = {
-            "commit_sha": "abc123",
-            "file_path": "test_foo.py",
-            "name": "test_fixture",
-            "fixture_type": "function",
-            "start_line": 10,
-            "end_line": 20,
-            "loc": 11,
-            "mocks": [],
-        }
-
-        write_fixture_csv_row(out_path, repos[0]["full_name"], "python", fixture)
-
-        # Verify output CSV was created and contains expected data
-        assert out_path.exists()
-
-        with open(out_path, encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            rows_out = list(reader)
-
-            assert len(rows_out) == 1
-            assert rows_out[0]["repo_name"] == "owner/repo"
-            assert rows_out[0]["fixture_name"] == "test_fixture"

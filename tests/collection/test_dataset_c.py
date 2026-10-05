@@ -1447,7 +1447,7 @@ def test_collect_dataset_c_repos_with_distinct_github_ids_get_distinct_db_rows(
 
     # This test deliberately exercises the real persist_repository_and_
     # fixtures() path (see docstring), which also writes a CSV side-output
-    # via human_corpus._human_fixture_csv_path() -- redirect it into
+    # via dataset_c._dataset_c_fixture_csv_path() -- redirect it into
     # tmp_path via fixtures_output_dir instead of writing into the real,
     # tracked datasets/c/fixtures/ directory on every test run.
     with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
