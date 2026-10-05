@@ -5,10 +5,7 @@ The actual pipeline entry point for agent detection:
 trailer commits and computes adoption-intensity stats. See
 `docs/architecture/agent-detection.md` for the methodology.
 
-Used to also host a Tier 2 (`Tier2RepoMatcher`) supplementary-discovery
-mechanism -- removed since Tier 1 alone consistently met the statistical-
-power thresholds in every real collection run, so the extra GitHub-search-
-based fallback was never actually triggered. The module keeps its
+Tier 1 is the only detection step. The module keeps its
 `tiered_` name since several other modules (`agent_corpus.py`,
 `test_commit_filter.py`, `backfill_total_commits.py`, `dataset_c.py`)
 import `Tier1RepositoryScanner` from it by that name; renaming buys nothing
@@ -66,8 +63,7 @@ def _parse_since_date(start_date: str) -> datetime:
 def _is_test_file_path(relative_path: str, language: Optional[str] = None) -> bool:
     """Thin wrapper around the canonical `test_commit_utils.is_test_file_path`.
 
-    This used to be an independent, duplicated implementation that drifted
-    from its sibling: a false-positive fix applied to `test_commit_utils.py`
+    This was once a duplicate of its sibling: a false-positive fix applied to `test_commit_utils.py`
     (bare suffixes like "IT.java"/"test.js" matching unrelated files, e.g.
     "Deposit.java"/"latest.js") was never applied here, so the same bug
     stayed live at this call site. Delegating avoids future drift.

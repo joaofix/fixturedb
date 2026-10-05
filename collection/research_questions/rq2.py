@@ -61,9 +61,7 @@ logger = get_logger(__name__)
 # illustrative. Order here is this list's own reporting order (both in the
 # per-dataset summary and the A-vs-C comparison's "Paper Metrics" section).
 PAPER_CONTINUOUS_METRICS = ["loc", "cyclomatic_complexity", "comment_density"]
-# Mann-Whitney-tested continuous metrics. Used to be paper metrics plus
-# max_nesting_depth (kept fully tested but rendered under a separate
-# "Other Extracted Features (Not in the Paper)" heading) -- max_nesting_depth
+# Mann-Whitney-tested continuous metrics. These are the paper metrics. max_nesting_depth
 # (along with num_objects_instantiated/num_external_calls/has_teardown_pair)
 # was dropped from the extracted metric set entirely, so CONTINUOUS_METRICS
 # is now exactly the paper set. See this module's docstring for why
@@ -170,10 +168,8 @@ def load_dataset_metrics(
         # DESCRIPTIVE_CONTINUOUS_METRICS (5), not CONTINUOUS_METRICS (4) --
         # num_parameters is still fetched fixture-level for the
         # floor-percentage footnote (a fixture-level question: what fraction
-        # of *fixtures* sit at the floor), even though it's no longer
-        # Mann-Whitney tested and no longer what the per-dataset descriptive
-        # table displays (see module docstring and repo_level_continuous
-        # below).
+        # of *fixtures* sit at the floor). It is not Mann-Whitney tested, and
+        # the per-dataset table does not show it (see repo_level_continuous below).
         continuous_raw = {
             m: fetch_continuous_column(conn, "fixtures", m) for m in DESCRIPTIVE_CONTINUOUS_METRICS
         }

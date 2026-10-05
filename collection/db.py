@@ -290,7 +290,7 @@ def upsert_repository(conn: sqlite3.Connection, repo: dict) -> tuple[int, bool]:
     Insert or update a repository record.
 
     Returns (internal_row_id, is_new) where is_new=True means this was a
-    genuine insert (repo not previously in the DB), False means it already
+    genuine insert (repo not already in the DB), False means it already
     existed and was updated in place.
 
     Callers that want to count new discoveries should only increment their

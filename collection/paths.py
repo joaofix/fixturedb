@@ -7,8 +7,8 @@ phase scripts to resolve paths one directory too shallow, or relative to the
 current working directory instead of the repo root.
 
 `root` is a parameter on every function here (not a module-level global), so
-a toy run can pass `root=TOY_ROOT` and get an identical directory shape under
-`toy-dataset/` with zero risk of colliding with real `datasets/` output.
+a toy run can pass `root=TOY_ROOT` and get the same directory shape under
+`toy-dataset/`, which never collides with `datasets/`.
 """
 
 from __future__ import annotations

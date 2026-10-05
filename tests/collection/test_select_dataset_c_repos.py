@@ -52,8 +52,7 @@ class TestSelectRepos:
     def test_reads_forks_and_num_contributors(self, tmp_path):
         """The raw SEART export has real `forks`/`contributors` columns
         (verified directly against github-search-raw/python.csv.gz) that
-        used to be read nowhere in this function -- forks silently 0,
-        num_contributors not read at all. Confirm both are picked up now."""
+        must be read from the CSV. Confirm both are picked up."""
         _write_gz_csv(
             tmp_path / "python.csv.gz",
             [
@@ -77,8 +76,7 @@ class TestSelectRepos:
     def test_reads_pushed_at(self, tmp_path):
         """pushedAt is a real column in the raw SEART export (verified
         directly against github-search-raw/python.csv.gz) that used to be
-        read nowhere in this function -- repositories.pushed_at came out
-        empty for every Dataset C repo as a result. Confirm it's now
+        read from the CSV. Confirm it's now
         carried through, at full ISO precision (unlike created_at, which
         is deliberately truncated to date-only for the min/max-window
         comparison -- pushed_at has no such window check)."""
@@ -217,8 +215,7 @@ class TestSelectRepos:
         """Regression: github_id is the repositories table's UNIQUE key.
         If this ever collapsed to a shared/default value again, every repo
         in a real collection run would silently collide onto one DB row --
-        found via a real end-to-end toy collection, not a unit test, since
-        every dataset_c.py unit test mocks _process_repo entirely."""
+        a unit test mocks _process_repo, so an end-to-end run is needed to catch it."""
         _write_gz_csv(
             tmp_path / "python.csv.gz",
             [

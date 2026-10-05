@@ -22,12 +22,8 @@ BENEFITS of using Lizard:
 - Better cross-language consistency
 - Academic credibility for published research
 
-`num_objects_instantiated` used to be computed here too, then moved to a
-dedicated tree-sitter AST walk in detector_shared.py (see internal-docs/
-methodology-improvements/num-objects-instantiated-false-positive-rate.md
-for that investigation) -- since removed from the extracted metric set
-entirely, along with `num_external_calls`, `max_nesting_depth`, and
-`has_teardown_pair` (not reported in the paper).
+This module does not compute `num_objects_instantiated`, `num_external_calls`,
+`max_nesting_depth` or `has_teardown_pair`. The paper does not report them.
 """
 
 from pathlib import Path
@@ -95,7 +91,7 @@ def analyze_function_complexity(
         num_objects_instantiated is not computed here -- see this module's
         docstring. Lizard's own external_call_count isn't returned either:
         it was only ever read here to validate/cap the old regex-based
-        object-instantiation count, which no longer exists.
+        object-instantiation count.
 
     Example:
         >>> code = "def fixture(x):\\n    if x:\\n        return db.query()"

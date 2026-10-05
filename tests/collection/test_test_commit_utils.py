@@ -23,18 +23,16 @@ def test_is_test_file_path_uses_language_heuristics() -> None:
 
 
 def test_is_test_file_path_bare_suffix_requires_case_match() -> None:
-    """Regression: bare PascalCase suffixes like "IT.java" previously matched
-    case-insensitively, so any file ending in "it.java" (e.g. Deposit.java,
-    Credit.java) false-positived as a test file."""
+    """A bare suffix like "IT.java" must not match a file that only ends in those
+    letters (e.g. Deposit.java, Credit.java)."""
     assert is_test_file_path("src/main/java/com/example/OrderServiceIT.java", "java")
     assert not is_test_file_path("src/main/java/com/example/Deposit.java", "java")
     assert not is_test_file_path("src/main/java/com/example/Credit.java", "java")
 
 
 def test_is_test_file_path_bare_lowercase_suffix_requires_boundary() -> None:
-    """Regression: the bare "test.js"/"test.ts" suffixes previously matched
-    any filename ending in that substring, so ordinary files like latest.js
-    or contest.js false-positived as test files."""
+    """The bare "test.js" and "test.ts" suffixes must not match files such as
+    latest.js or contest.js."""
     assert is_test_file_path("test.js", "javascript")
     assert is_test_file_path("src/my-test.js", "javascript")
     assert not is_test_file_path("src/latest.js", "javascript")
@@ -103,7 +101,7 @@ def test_collect_test_files_for_commit_survives_modified_files_diff_failure(
 ) -> None:
     """Regression (2026-08-12): commit.modified_files computes the diff (a
     `git diff-tree` subprocess call) the moment it's accessed -- outside
-    traverse_commits()'s own try/except above. Real incident: a repo's
+    traverse_commits()'s own try/except above. A repo's
     --filter=blob:limit=10m partial clone needed an on-demand blob fetch for
     this diff, that fetch failed, and GitCommandError propagated straight
     out of the for-loop uncaught -- crashing the entire extract-fixtures run

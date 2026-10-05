@@ -1,5 +1,5 @@
 """
-Preliminary repository counter (previously agent_repo_preliminar_quality_control.py)
+Preliminary repository counter.
 
 Scans `github-search-raw` result files, shallow-clones each candidate, detects whether
 an agent configuration file exists in the latest tree, and writes per-language

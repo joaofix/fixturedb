@@ -36,8 +36,7 @@ This makes the whole scan immune to repo size -- a behemoth like
 repeated 600s clone timeouts) costs exactly the same handful of small
 JSON responses as a tiny repo, since nothing beyond 2 root files is ever
 fetched. It also eliminates an entire class of problems RQ1's clone-based
-approach fought in production: no disk space, no `ENAMETOOLONG`, no
-shallow-clone-truncation edge cases, no orphaned-clone cleanup.
+approach needed: no disk space, no `ENAMETOOLONG`, no shallow-clone edge cases, no orphaned clones.
 
 **Symlinks need no special-casing, confirmed against a real example:** a
 blob's content is just bytes, regardless of what the file represents --

@@ -55,7 +55,7 @@ def _make_db(db_root, rows):
 
 class TestLoadRows:
     def test_reads_the_exact_file_the_scan_module_writes(self, tmp_path):
-        """Regression guard: this module's db filename is derived from
+        """The db filename is derived from
         rq1_prevalence_scan.DB_PATH, not a second hardcoded literal, so a
         rename there can't silently desync into "always reports not
         available" here."""
@@ -321,9 +321,7 @@ class TestGenerateReport:
         assert "Population: 1 successfully-scanned repos" in report
 
     def test_no_quality_floor_section_appears_anywhere(self, tmp_path):
-        """Regression guard: the "Quality floor applied" variant (and its
-        min_test_files filtering) was deliberately removed -- see this
-        module's own docstring. Must never silently reappear."""
+        """No quality-floor variant is reported. The min_test_files filter is not applied."""
         _make_db(
             tmp_path,
             [{"language": "python", "clone_ok": True, "num_test_files": 1, "num_fixtures": 1, "num_setup": 1}],

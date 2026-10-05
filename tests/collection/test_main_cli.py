@@ -82,8 +82,7 @@ class TestDiscoverRepos:
         )
 
     def test_dataset_c_filters_known_duplicates_before_writing(self):
-        """Regression test: discover-repos --dataset c used to never call
-        filter_known_duplicates() at all, so the "run discover-repos twice"
+        """discover-repos --dataset c calls filter_known_duplicates(), so the "run discover-repos twice"
         workflow documented in RUN_COMMANDS.md never actually dropped known
         duplicate repos -- see internal-docs/RUN_COMMANDS.md's dedup note.
         """
@@ -250,9 +249,7 @@ class TestExtractFixtures:
 
     def test_dataset_a_run_call_matches_real_signature(self):
         """Regression, mirrors test_dataset_b_run_call_matches_real_signature
-        below: `--workers` used to be silently dropped for dataset a (never
-        passed to `collector.run(...)` at all, and AgentCorpusCollector.run()
-        didn't even accept it). A plain MagicMock would swallow that
+        below: `--workers` must reach `collector.run(...)` for dataset a. A plain MagicMock would swallow that
         silently; autospec=True makes the mock enforce the real method
         signature instead."""
         stats = MagicMock(fixtures_collected=5)

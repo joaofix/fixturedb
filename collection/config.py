@@ -48,7 +48,7 @@ DB_PATH = DB_DIR / "corpus.db"
 # ---------------------------------------------------------------------------
 # Collection run label
 # ---------------------------------------------------------------------------
-# Tag used to version collection output subfolders (e.g. v2-pure-addition-2026-06).
+# Tag used to version collection output subfolders, if set.
 # Set to empty string to write directly to root output directories (no versioning).
 COLLECTION_OUTPUT_TAG = ""
 LOGS_DIR = ROOT_DIR / "logs"

@@ -30,8 +30,7 @@ For each of the supported languages, we define:
 
    Cognitive complexity was evaluated and dropped: the only programmatic
    implementation (complexipy) is Python-only, and no equivalent exists for
-   Java/JS/TS, so it was removed rather than shipped as a Python-only metric
-   or an unreliable cross-language formula.
+   Java/JS/TS, so it is not measured.
 
 MODULE LAYOUT
 =============
@@ -123,8 +122,7 @@ DETECTORS = {
 # exit plus a language-specific whitelist to be stricter for the languages
 # under study. Module-level (not function-local) and imported by
 # pre2021_fixture_extractor.py's own pre-filter rather than that module
-# hand-copying its own extension set: it previously did, and had already
-# drifted (missing .pyw/.pyi for python; a .cts entry for typescript that
+# hand-copying its own extension set. A copy would drift (missing .pyw/.pyi for python; a .cts entry for typescript that
 # would pass that file's own filter only to be silently rejected here one
 # step later, since this is the authoritative check).
 ALLOWED_EXTS = {

@@ -100,8 +100,8 @@ def test_fixture_definitions_java_shapes_and_scopes():
     }
     assert java_defs["junit3_fallback"]["framework"] == "junit"
     assert java_defs["annotations"]["@BeforeMethod"]["framework"] == "testng"
-    # Only JUnit/TestNG are in scope -- Spring/Cucumber were removed (see
-    # java.excluded) since they're not testing frameworks.
+    # Only JUnit and TestNG are in scope. Spring and Cucumber are listed in
+    # java.excluded, because they are not testing frameworks.
     assert "@Bean" not in java_defs["annotations"]
     assert "@Given" not in java_defs["annotations"]
     assert java_defs["excluded"], "java must document known boundary cases"
@@ -114,9 +114,8 @@ def test_fixture_definitions_javascript_typescript_shapes_and_scopes():
     for fields in table.values():
         assert fields["scope"] in VALID_SCOPES
         assert fields["fixture_type"].strip()
-    # Only Jest/Mocha/Vitest are in scope -- AVA/ts_decorators were removed
-    # (see javascript_typescript.excluded) since AVA is niche and no real
-    # package uses the ts_decorators convention.
+    # Only Jest, Mocha and Vitest are in scope. AVA and ts_decorators are listed
+    # in javascript_typescript.excluded.
     assert "ava_patterns" not in js_defs
     assert "ts_decorators" not in js_defs
     assert js_defs["excluded"], "javascript_typescript must document known boundary cases"

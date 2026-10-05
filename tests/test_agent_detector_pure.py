@@ -39,9 +39,7 @@ def test_detect_agent_in_commit_author_and_coauthor():
     # author email containing keyword
     # Uses one of the catalog's specific upstream Claude Code service
     # addresses (not a bare "anthropic" domain match -- that project-added
-    # pattern was removed after it caused a real false positive on an
-    # Anthropic employee's personal commit; see
-    # test_bare_anthropic_domain_no_longer_matches_claude).
+    # pattern is not in the catalog. See test_bare_anthropic_domain_no_longer_matches_claude.
     agent = scanner._detect_agent_in_commit("Alice", "claude@anthropic.com", "")
     assert agent == "claude"
 
@@ -211,9 +209,7 @@ def test_detect_agent_bot_authors_are_excluded():
     # Regular author with bot-like email but no [bot] in name should still be checked
     # Uses one of the catalog's specific upstream Claude Code service
     # addresses (not a bare "anthropic" domain match -- that project-added
-    # pattern was removed after it caused a real false positive on an
-    # Anthropic employee's personal commit; see
-    # test_bare_anthropic_domain_no_longer_matches_claude).
+    # pattern is not in the catalog. See test_bare_anthropic_domain_no_longer_matches_claude.
     agent = scanner._detect_agent_in_commit("Alice", "claude@anthropic.com", "")
     assert agent == "claude"
 
