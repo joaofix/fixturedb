@@ -38,6 +38,7 @@ def fixture_setup():
         code = """
 @pytest.fixture
 def fixture_setup():
+    # this used to use mock.patch("module.function") but not anymore
     return Mock()
 """
         fixture = extract_and_find_fixtures(code, "python", "fixture_setup")[0]
