@@ -47,7 +47,7 @@ tests/
     │   ├── test_typescript_realistic_fixtures.py
     │   └── test_realistic_fixtures.py
     └── test_*.py                    # Per-module tests: agent detection, dataset
-                                      # collectors (A/B/C), dedup, sampling, CLI, ...
+                                      # collectors (A/C), dedup, sampling, CLI, ...
 ```
 
 ## Test Categories
@@ -107,7 +107,7 @@ Agent detection — file scanning, commit-trailer/author-identity matching, fixt
 
 - `test_agent_detection_logic.py` — agent config file scanning, GitHub API file-listing helper (retry/rate-limit handling)
 - `test_agent_patterns_thorough.py`, `test_agent_patterns_extra.py` — agent signature catalog matching (author identity, trailers)
-- `test_end_to_end_collection.py` — collector initialization, DB persistence, concurrency, error handling for both Dataset A and B collectors
+- `test_end_to_end_collection.py` — collector initialization, DB persistence, concurrency, error handling for the Dataset A and C collectors
 - `tests/between_group/test_agent_corpus.py` — Dataset A's collector, using real git repositories in `tmp_path` with `Co-authored-by` trailers
 
 ```bash

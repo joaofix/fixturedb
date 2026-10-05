@@ -1,7 +1,7 @@
 # CSV Quick-Reference
 
 A quick-import reference for the CSVs inside `export/{dataset}.zip` (Dataset A, B,
-or C — `python -m collection export --dataset {a,b,c}`). For the full column
+or C — `python -m collection export --dataset {a,c}`). For the full column
 reference and export mechanics, see [CSV Export Guide](csv-export-guide.md); this
 page is just the "how do I open this in my tool of choice" cheat sheet.
 

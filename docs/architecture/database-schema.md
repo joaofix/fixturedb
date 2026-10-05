@@ -9,7 +9,6 @@ its own SQLite database rather than one shared file:
 | Database | Purpose | `fixtures.commit_kind` |
 |----------|---------|-------------------------|
 | `db/a.db` | Dataset A: agent-authored fixtures (2025+, Tier 1 detection) | always `'agent'` |
-| `db/b.db` | Dataset B: human-authored fixtures, within-repo control (same repos as A, non-agent commits) | always `'human'` |
 | `db/c.db` | Dataset C: human-authored fixtures, cross-repo baseline (independent pre-2021 repo pool, snapshot extraction) | not set (Dataset C has no commit-level agent/human distinction to make — every fixture in it is human-authored by construction) |
 
 All three use the identical schema below (defined once in `collection/db_schema.py`)
@@ -46,7 +45,7 @@ Repository metadata and control variables computed at fixture writing time.
 | `num_contributors` | INTEGER | Contributor count from GitHub |
 | **Control Variables** |
 | `domain` | TEXT | Classified domain (`web`, `systems`, `ml`, `security`, `database`, `devops`, `other`) |
-| `repo_age_years` | REAL | Repository age in years at each dataset's fixed temporal reference (2025-01-01 for Datasets A/B, 2020-12-31 for Dataset C); NULL when the repo was created after that date |
+| `repo_age_years` | REAL | Repository age in years at each dataset's fixed temporal reference (2025-01-01 for Dataset A, 2020-12-31 for Dataset C); NULL when the repo was created after that date |
 | `repo_age_at_collection_years` | REAL | Repository age in years as of whenever collection actually ran (relative to "now", not a fixed reference) — always defined, unlike `repo_age_years` |
 | `collected_at` | TEXT | Timestamp of insertion |
 
@@ -89,12 +88,12 @@ Individual fixture definitions and their quantitative metrics.
 | **Dataset Labeling** |
 | `commit_sha` | TEXT | Commit that introduced this fixture; in `db/c.db` this is the repo's pinned cutoff commit (one per repo, shared by every fixture in it), not a per-fixture commit |
 | `commit_date` | TEXT | ISO date-only string of `commit_sha`'s own commit date |
-| `commit_kind` | TEXT | `'agent'` in `db/a.db`, `'human'` in `db/b.db` and `db/c.db` |
+| `commit_kind` | TEXT | `'agent'` in `db/a.db` |
 | `agent_type` | TEXT | Agent family (`claude`, `copilot`, `cursor`, `aider`) if agent-authored; a fixed provenance tag (`'human'`, `'human_pre2022'`) otherwise |
 | `is_complete_addition` | INTEGER | 1 when the fixture was added as a complete addition in its commit |
 | `repo_age_at_commit_years` | REAL | Repo age at `commit_date` (`created_at` → `commit_date`) — always defined, unlike `repositories.repo_age_years` |
 
-> **`num_comment_lines`/`comment_density` and pre-existing DB files:** these two columns were added after `db/a.db`/`db/b.db`/`db/c.db` were already collected. `initialise_db()`'s column-migration self-heal (`_COLUMN_MIGRATIONS` in `db.py`) adds the columns to any such file automatically, but only backs them with the schema `DEFAULT` (`0`/`0.0`) — it cannot retroactively compute the real count, which requires re-walking that fixture's own tree-sitter node. A `comment_density` of `0.0` on a fixture collected before this change is therefore ambiguous (genuinely zero comments, vs. never measured); a full re-extraction is required before these two columns can be trusted or reported on for any dataset collected earlier.
+> **`num_comment_lines`/`comment_density` and pre-existing DB files:** these two columns were added after `db/a.db`/`db/c.db` were already collected. `initialise_db()`'s column-migration self-heal (`_COLUMN_MIGRATIONS` in `db.py`) adds the columns to any such file automatically, but only backs them with the schema `DEFAULT` (`0`/`0.0`) — it cannot retroactively compute the real count, which requires re-walking that fixture's own tree-sitter node. A `comment_density` of `0.0` on a fixture collected before this change is therefore ambiguous (genuinely zero comments, vs. never measured); a full re-extraction is required before these two columns can be trusted or reported on for any dataset collected earlier.
 
 ### mock_usages
 
@@ -166,10 +165,10 @@ agent_breakdown = pd.read_sql("""
 print(agent_breakdown)
 ```
 
-### Cross-dataset: compare A vs B (same repos, agent vs human)
+### Cross-dataset: compare A vs C (agent vs pre-agent human)
 
 Load each database into its own DataFrame, tag with the dataset it came from, then
-concatenate — this is the general pattern for any A-vs-B or A-vs-C comparison:
+concatenate — this is the general pattern for any A-vs-C comparison:
 
 ```python
 import sqlite3
@@ -195,9 +194,9 @@ comparison = combined.groupby("dataset").agg(
 print(comparison)
 ```
 
-Dataset B's `dataset` column here plays the role Dataset A's `commit_kind='agent'` /
+The `dataset` column here plays the role Dataset A's `commit_kind='agent'` /
 `commit_kind='human'` distinction used to play in the old single-database design —
-prefer `dataset` (which one you loaded from) over `commit_kind` for A-vs-B/A-vs-C
+prefer `dataset` (which one you loaded from) over `commit_kind` for A-vs-C
 comparisons, since `commit_kind` is not populated at all in `db/c.db`.
 
 ### Test-double category breakdown, one dataset
@@ -224,7 +223,7 @@ print(mock_categories)
 
 ## Data quality guarantees
 
-The schema is append-safe and re-runnable — existing records are not duplicated during collection. Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A/B, 2020-12-31 for C), and quantitative fields such as LOC, complexity, and comment counts are derived deterministically from analyzed source code.
+The schema is append-safe and re-runnable — existing records are not duplicated during collection. Control variables (`language`, `domain`, `repo_age_years`) are computed deterministically at each dataset's temporal boundary (2025-01-01 for A, 2020-12-31 for C), and quantitative fields such as LOC, complexity, and comment counts are derived deterministically from analyzed source code.
 
 ## Accessing the database
 
@@ -266,5 +265,5 @@ dbGetQuery(con, "
 
 ## Notes
 
-The schema supports unpaired statistical tests appropriate for independent samples — Mann-Whitney U for continuous variables, chi-square for categorical — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design). `python -m collection summarize --dataset {a,b,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
+The schema supports unpaired statistical tests appropriate for independent samples — Mann-Whitney U for continuous variables, chi-square for categorical — see [Between-Group Study Design](../reference/limitations.md#between-group-study-design). `python -m collection summarize --dataset {a,c}` writes `datasets/{dataset}/summary.yaml` with repo/fixture counts and purity-gate rates read directly from the CSV outputs, not the database — see `collection/dataset_summary.py`.
 

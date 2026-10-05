@@ -7,23 +7,21 @@ fixturedb/
 │
 ├── MAIN CLI
 │   └── collection/
-│       ├── __main__.py                      # `python -m collection <verb> --dataset {a,b,c}`
-│       ├── paths.py                         # Central path registry: datasets/{a,b,c}/{stage}, db/*.db, export/*.zip
+│       ├── __main__.py                      # `python -m collection <verb> --dataset {a,c}`
+│       ├── paths.py                         # Central path registry: datasets/{a,c}/{stage}, db/*.db, export/*.zip
 │       │
 │       ├── repository_quality_control/
 │       │   ├── agent_repository_counter.py  # discover-repos --dataset a
 │       │   └── agent_commit_counter.py      # discover-commits --dataset a
-│       ├── repo_resolve.py                  # discover-repos --dataset b
 │       ├── select_dataset_c_repos.py        # discover-repos --dataset c
-│       ├── test_commit_filter.py            # filter-test-commits --dataset {a,b}
+│       ├── test_commit_filter.py            # filter-test-commits --dataset {a}
 │       │
 │       ├── agent_corpus.py                  # Dataset A collector (AgentCorpusCollector) -- extract-fixtures --dataset a
-│       ├── human_corpus.py                  # Dataset B collector (HumanCorpusCollector) -- extract-fixtures --dataset b
 │       ├── dataset_c.py                     # Dataset C collector (collect_dataset_c_fixtures) -- extract-fixtures --dataset c
 │       │
 │       ├── dataset_pipeline.py              # analyze-distribution / sample / export
 │       ├── dataset_validator.py             # validate
-│       ├── toy.py                           # toy --dataset {a,b,c}: small real run under toy-dataset/
+│       ├── toy.py                           # toy --dataset {a,c}: small real run under toy-dataset/
 │       │
 │       ├── between_group_comparison.py      # Statistical comparison
 │       ├── agent_signal_primitives.py       # Agent detection in commits (formerly agent_detector.py)
@@ -44,19 +42,18 @@ fixturedb/
 │       ├── between_group/, paired/, eda/    # Corpus-comparison, legacy paired, and EDA tests
 │       └── collection/                      # Unit tests per collection/ module, incl.
 │                                             # test_main_cli.py (CLI dispatch),
-│                                             # test_dataset_pipeline.py, test_repo_resolve.py, test_toy.py
+│                                             # test_dataset_pipeline.py, test_toy.py
 │                                             # -- see docs/reference/testing.md for the fixture-detector categories
 │
 ├── DATA & DATABASES
 │   ├── datasets/                            # The real, reviewable output -- CSV files, one tree per dataset
 │   │   ├── a/{repos,commits,test-commits,fixtures}/
-│   │   ├── b/{repos,test-commits,fixtures}/
 │   │   └── c/{repos,fixtures}/
 │   │
 │   ├── db/                                  # Secondary: per-dataset SQLite DBs
-│   │   └── a.db, b.db, c.db
+│   │   └── a.db, c.db
 │   │
-│   ├── export/                              # Final per-dataset export ZIPs (a.zip, b.zip, c.zip)
+│   ├── export/                              # Final per-dataset export ZIPs (a.zip, c.zip)
 │   │
 │   ├── toy-dataset/                         # Output of `toy --dataset X` -- mirrors datasets/+db/, gitignored
 │   │
@@ -123,16 +120,14 @@ fixturedb/
 
 ### Main CLI (root)
 
-`python -m collection <verb> --dataset {a,b,c}` is the one, authoritative CLI surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only), `filter-test-commits` (A/B only), `extract-fixtures`, `analyze-distribution`, `sample`, `export`, `validate`, `toy`, `paired`, `status`. There is no separate root-level `pipeline.py` convenience CLI — it was retired once every verb it exposed had an equivalent under `python -m collection`.
+`python -m collection <verb> --dataset {a,c}` is the one, authoritative CLI surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only), `filter-test-commits` (A only), `extract-fixtures`, `analyze-distribution`, `sample`, `export`, `validate`, `toy`, `paired`, `status`. There is no separate root-level `pipeline.py` convenience CLI — it was retired once every verb it exposed had an equivalent under `python -m collection`.
 
 ### collection/ module
 
 One collector module per dataset:
 
-- **`human_corpus.py` — Dataset B (within-repo human control).** Extracts human fixtures from the same agent-enabled repos and 2025+ window as Dataset A, computing control variables at the `AGENT_CORPUS_START_DATE` snapshot. Entry point: `extract-fixtures --dataset b`.
 - **`dataset_c.py` — Dataset C (cross-repo pre-2021 baseline).** Repos come from `select_dataset_c_repos.py` (`discover-repos --dataset c`): every repo created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`), no sampling. Each is checked out at its pinned pre-2021 cutoff commit, and every fixture is extracted from every test file at that snapshot. The commit-count/test-file-count quality floor is measured from real git history at the cutoff commit (`count_commits_up_to()`), not GitHub's live metadata. Entry point: `extract-fixtures --dataset c`.
 - **`agent_corpus.py` — Dataset A (agent-authored).** Uses the QC'd repo/commit CSVs to find agent-authored commits via Tier 1 detection (author metadata plus co-authored-by trailers) and classify agent type (claude, copilot, cursor, etc.). Entry point: `extract-fixtures --dataset a`.
-- **`between_group_comparison.py`.** Chi-square tests for categorical controls (language, domain), Mann-Whitney U for continuous controls (repo_age_years), and balance report generation.
 
 Supporting modules: `agent_signal_primitives.py` (agent detection utilities, formerly `agent_detector.py`), `fixture_extractor.py` (fixture extraction at commit level), `db.py` (schema, helpers, control-variable functions), `config.py` (configuration constants, re-exporting the reference-data catalogs in `study_parameters/` and `heuristics/` — see [Configuration Reference](../architecture/configuration.md)), and `paths.py` (the central path registry for every dataset's stage directories, `db/*.db`, and `export/*.zip`).
 
@@ -143,23 +138,20 @@ github-search-raw/ (SEART export, dataset-agnostic input for A/C)
     ↓
 discover-repos --dataset a   → datasets/a/repos/
 discover-repos --dataset c   → datasets/c/repos/
-discover-repos --dataset b   → datasets/b/repos/ (resolved from Dataset A's repos)
     ↓
 discover-commits --dataset a                → datasets/a/commits/
     ↓
 filter-test-commits --dataset a             → datasets/a/test-commits/
-filter-test-commits --dataset b             → datasets/b/test-commits/
     ↓
 extract-fixtures --dataset a   → Dataset A → db/a.db, datasets/a/fixtures/
-extract-fixtures --dataset b   → Dataset B → db/b.db, datasets/b/fixtures/
 extract-fixtures --dataset c   → Dataset C → db/c.db, datasets/c/fixtures/
     ↓
 analyze-distribution --dataset X --against Y   (recommend a balanced sample size)
-sample --dataset {a,b,c}                       → output/sample_{dataset}.json
-export --dataset {a,b,c}                       → export/{dataset}.zip
-validate --dataset {a,b,c}                     (each dataset is independently usable)
+sample --dataset {a,c}                       → output/sample_{dataset}.json
+export --dataset {a,c}                       → export/{dataset}.zip
+validate --dataset {a,c}                     (each dataset is independently usable)
     ↓
-Final: db/a.db, db/b.db, db/c.db, plus export/a.zip, export/b.zip, export/c.zip
+Final: db/a.db, db/c.db, plus export/a.zip, export/c.zip
 ```
 
 See [docs/INDEX.md](../INDEX.md) for the full documentation map — the tree above already shows where each page lives.
@@ -175,7 +167,7 @@ See [docs/INDEX.md](../INDEX.md) for the full documentation map — the tree abo
 |------|---------|
 | collection/__main__.py | CLI entrypoint |
 | collection/*.py | Core modules |
-| db/{a,b,c}.db | Per-dataset results (output, created during collection) |
+| db/{a,c}.db | Per-dataset results (output, created during collection) |
 | conftest.py | Shared pytest fixtures |
 | requirements.txt | Dependencies |
 | docs/INDEX.md | Documentation hub |
@@ -192,27 +184,25 @@ See [docs/INDEX.md](../INDEX.md) for the full documentation map — the tree abo
 |-------|-------|--------------|--------|
 | A | `discover-repos` | `datasets/a/repos/{lang}_repo.csv` | CSV |
 | A | `discover-commits` | `datasets/a/commits/{lang}_commit.csv` | CSV |
-| A/B | `filter-test-commits` | `datasets/{a,b}/test-commits/{lang}_test_commit.csv` | CSV |
-| A/B/C | `extract-fixtures` | `datasets/{a,b,c}/fixtures/{lang}_fixtures.csv` + `db/{a,b,c}.db` | CSV + SQLite |
-| A/B/C | `sample` | `output/sample_{dataset}.json` | JSON |
-| A/B/C | `export` | `export/{dataset}.zip` | ZIP (CSV + docs) |
+| A | `filter-test-commits` | `datasets/a/test-commits/{lang}_test_commit.csv` | CSV |
+| A/C | `extract-fixtures` | `datasets/{a,c}/fixtures/{lang}_fixtures.csv` + `db/{a,c}.db` | CSV + SQLite |
+| A/C | `sample` | `output/sample_{dataset}.json` | JSON |
+| A/C | `export` | `export/{dataset}.zip` | ZIP (CSV + docs) |
 
 ### Final Output
 
 ```
-db/a.db, db/b.db, db/c.db    # Per-dataset repositories/fixtures/mock_usages
+db/a.db, db/c.db    # Per-dataset repositories/fixtures/mock_usages
 
 datasets/a/                  # Dataset A CSV exports (repos, commits, test-commits, fixtures)
-datasets/b/                  # Dataset B CSV exports (repos, test-commits, fixtures)
 datasets/c/                  # Dataset C CSV exports (repos, fixtures)
 
 export/
 ├── a.zip                    # Dataset A standalone export
-├── b.zip                    # Dataset B standalone export
 └── c.zip                    # Dataset C standalone export
 
 output/
-├── sample_a.json / sample_b.json / sample_c.json
+├── sample_a.json / sample_c.json
 └── ... (internal bookkeeping, summaries)
 ```
 

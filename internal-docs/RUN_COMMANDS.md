@@ -1,13 +1,12 @@
 # Run Commands: Toy and Full Datasets
 
 Copy-paste reference for actually running collection, one command per dataset. All
-verbs go through the unified CLI: `python -m collection <verb> --dataset {a,b,c}`
+verbs go through the unified CLI: `python -m collection <verb> --dataset {a,c}`
 (see `AGENTS.md` for the full verb-to-dataset matrix and `collection/paths.py` for
 where each verb reads/writes).
 
-Dataset A = agent-authored fixtures. Dataset B = human-authored, within-repo control
-(same repos as A). Dataset C = human-authored, cross-repo baseline (independent
-pre-2021 repo pool).
+Dataset A = agent-authored fixtures. Dataset C = human-authored, cross-repo baseline
+(independent pre-2021 repo pool).
 
 ## Toy datasets
 
@@ -21,9 +20,6 @@ Cochran-sized representative sample instead of a fixed count.
 # Dataset A
 python -m collection toy --dataset a
 
-# Dataset B
-python -m collection toy --dataset b
-
 # Dataset C
 python -m collection toy --dataset c
 ```
@@ -36,48 +32,35 @@ layout) plus `toy-dataset/db/{dataset}.db`, and finishes by writing
 
 No single verb runs a dataset end-to-end — each dataset chains a different subset of
 verbs (not every verb applies to every dataset; `discover-commits` is Dataset A only,
-`filter-test-commits` is Datasets A/B only). Chained below with `&&` so each block is
+`filter-test-commits` is Dataset A only). Chained below with `&&` so each block is
 one command to paste.
 
-**Run Dataset A first.** Dataset B's repo pool is resolved from Dataset A's output
-(same agent-enabled repos, human commits only) — see `collection/repo_resolve.py`.
 
 ```bash
 # Dataset A (agent-authored fixtures)
-python3 -m collection discover-repos --dataset a --workers 16 \
+python3 -m collection discover-repos --dataset a --workers 24 \
   && curl -d "Dataset A 1/8: discover-repos finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection discover-commits --dataset a --workers 16 \
+  && python3 -m collection discover-commits --dataset a --workers 24 \
   && curl -d "Dataset A 2/8: discover-commits finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection.dedupe_commits_by_sha --dataset a \
   && curl -d "Dataset A 3/8: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection filter-test-commits --dataset a --workers 16 \
+  && python3 -m collection filter-test-commits --dataset a --workers 24 \
   && curl -d "Dataset A 4/8: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset a --language python --workers 16 \
+  && python3 -m collection extract-fixtures --dataset a --language python --workers 24 \
   && curl -d "Dataset A 5/8: extract-fixtures (python) finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset a --language java --workers 16 \
+  && python3 -m collection extract-fixtures --dataset a --language java --workers 24 \
   && curl -d "Dataset A 6/8: extract-fixtures (java) finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset a --language javascript --workers 16 \
+  && python3 -m collection extract-fixtures --dataset a --language javascript --workers 24 \
   && curl -d "Dataset A 7/8: extract-fixtures (javascript) finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset a --language typescript --workers 16 \
+  && python3 -m collection extract-fixtures --dataset a --language typescript --workers 24 \
   && curl -d "Dataset A 8/8: extract-fixtures (typescript) finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
-# Dataset B (human-authored, within-repo control) — run after Dataset A completes
-python3 -m collection discover-repos --dataset b \
-  && curl -d "Dataset B 1/5: discover-repos finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection filter-test-commits --dataset b --workers 16 \
-  && curl -d "Dataset B 2/5: filter-test-commits finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection.dedupe_commits_by_sha --dataset b \
-  && curl -d "Dataset B 3/5: dedupe_commits_by_sha finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection extract-fixtures --dataset b --workers 16 \
-  && curl -d "Dataset B 4/5: extract-fixtures finished" ntfy.sh/joaofix_fixturedb \
-  && python3 -m collection.dedupe_fixtures_by_sha --dataset b \
-  && curl -d "Dataset B 5/5: dedupe_fixtures_by_sha finished (collection complete)" ntfy.sh/joaofix_fixturedb
 ```
 
 ```bash
-# Dataset C (human-authored, cross-repo baseline) — independent of A/B
+# Dataset C (human-authored, cross-repo baseline) — independent of A
 python3 -m collection discover-repos --dataset c \
   && curl -d "Dataset C 1/7: discover-repos (pass 1) finished" ntfy.sh/joaofix_fixturedb \
   && python3 -m collection.dedupe_dataset_c_repos \
@@ -105,8 +88,7 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   calls (verified: the only two `api.github.com` call sites in the whole package,
   `agent_signal_primitives.py`'s Contents-API check and `persistent_clone.py`'s
   Code-Search-API call, are reached only via `dedupe_dataset_c_repos.py` and
-  `paired_collection.py`'s `clone_repo()` call respectively — neither is on any
-  of the commands above). Every clone here is also plain anonymous `git clone`
+  a removed collection path — neither is on any of the commands above). Every clone here is also plain anonymous `git clone`
   over HTTPS — `clone_primitives.py`/`ephemeral_clone.py` never read
   `GITHUB_TOKEN`, so there's no authenticated-tier allowance to raise even if
   you set one. So the actual ceiling is GitHub's own throttling on many
@@ -117,28 +99,19 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   failures / `database is locked` retries at 16 and confirming there's headroom.
   - `discover-commits`/`filter-test-commits` honor `--workers` directly.
     `discover-repos` only does for `--dataset a` (`agent_repository_counter.run()`
-    threads its clone-probe step) -- `--dataset b`/`--dataset c` are both a pure
-    local CSV/file transform with no `workers` parameter at all
-    (`resolve_dataset_b_repos()`, `select_repos()`), so `--workers` there would be
-    a silent no-op; omitted above rather than left in as a no-op that looks like
-    it's doing something.
+    threads its clone-probe step) -- `--dataset c` is a pure local CSV/file
+    transform with no `workers` parameter (`select_repos()`), so `--workers` there
+    would be a silent no-op; omitted above rather than left in as a no-op that looks
+    like it's doing something.
   - `extract-fixtures --dataset a` honors `--workers` (added later than the rest of
     this table -- it used to ignore the flag entirely, single-threaded by design,
-    with no `ThreadPoolExecutor` anywhere in `agent_corpus.py`). Now shares the same
-    thread-pool harness as `--dataset b` (`collection/parallel_utils.py
+    with no `ThreadPoolExecutor` anywhere in `agent_corpus.py`). Now uses the
+    thread-pool harness in `collection/parallel_utils.py
     ::run_parallel_per_repo()` -- each repo's result is persisted immediately as it
     completes, so a crash mid-batch only loses whatever repo was still in flight).
     `--dataset c` still has its own separate `ThreadPoolExecutor`, not this harness
     -- see that collector's own comment for why.
-  - `extract-fixtures --dataset b` *did* silently drop `--workers` the same way
-    until `collection/__main__.py` was fixed to actually pass it through to
-    `HumanCorpusCollector.run()` — that same fix also removed a `languages=...` kwarg
-    the collector never accepted, which meant a real (non-mocked) `extract-fixtures
-    --dataset b` run crashed with `TypeError` before reaching any fixture extraction
-    at all. Caught via `tests/collection/test_main_cli.py`'s
-    `test_dataset_b_run_call_matches_real_signature` (uses `autospec=True` so the
-    mock enforces the real method signature instead of silently accepting anything).
-  - **All three of `extract-fixtures --dataset {a,b,c}` are safe to split into
+  - **Both `extract-fixtures --dataset {a,c}` are safe to split into
     separate per-language calls** (as the Dataset A/C chains above now do), no
     `--force` needed between them, and none should be added — each call
     correctly gates on its own per-language checkpoint (`agent_complete:{lang}`
@@ -202,46 +175,18 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   than filtering at the repo level. **This is a one-time, permanent fix for
   Dataset A only** — `extract-fixtures --dataset a` reads its commits
   straight from the file this step just cleaned, so a duplicate removed
-  here never gets extracted, on this run or any future one. **It has no
-  effect on Dataset B's fixtures** — `extract-fixtures --dataset b`
-  (`HumanCorpusCollector`) never reads `datasets/b/test-commits/*.csv` at
-  all; it independently re-clones and re-scans every repo's full history
-  itself, silently rediscovering the exact same duplicate commits under
-  every repo_name variant regardless of how clean that CSV is. Confirmed on
-  a real run: 36.6% of Dataset B's extracted python fixtures shared a
-  `commit_sha` with a different `repo_name`. That's what the next step
-  below actually fixes for B.
-- **`dedupe_fixtures_by_sha.py` (Dataset B only) removes the same
-  cross-repo-name duplicate commits, but from the already-extracted
-  fixture CSVs and `db/b.db` directly** — a recurring cleanup, not a
-  one-time fix like the step above. Run it after *every*
-  `extract-fixtures --dataset b` invocation, including per-language
-  re-runs, not just once; a clean state finds nothing to remove and
-  leaves everything untouched, so it's always safe to run again. Reuses
-  the exact same duplicate-detection logic as `dedupe_commits_by_sha.py`
-  (same `find_duplicate_commit_rows`/`pick_cluster_survivor`), just aimed
-  at `datasets/b/fixtures/*.csv` instead, and additionally cascades the
-  removal into `db/b.db`'s `fixtures`/`mock_usages` tables and re-syncs
-  the denormalized aggregate columns
-  (`test_files.num_fixtures`/`total_fixture_loc`,
-  `repositories.num_fixtures`/`num_mock_usages`) for every repo touched,
-  since those are snapshot columns written once at persist time, not kept
-  live. Restructuring `extract-fixtures --dataset b` to consume the
-  deduped commit CSV directly (making this a one-time fix like Dataset
-  A's) is a real architecture change, deliberately deferred — see
-  `collection/dedupe_fixtures_by_sha.py`'s module docstring and
-  `internal-docs/methodology-improvements/repo-deduplication.md` section 9.
+  here never gets extracted, on this run or any future one.
 - **`--language <lang>`** narrows any verb to one language (default: all four —
   python/java/javascript/typescript). Useful for a partial/incremental run.
 - Each verb is checkpointed and safe to re-run — already-completed languages/repos
   are skipped, not redone (see each collector's `is_global_checkpoint_completed`
   usage in `collection/db.py`).
 
-### RQ1 / RQ5: raw-universe scans (independent of `--dataset {a,b,c}`)
+### RQ1 / RQ5: raw-universe scans (independent of `--dataset {a,c}`)
 
-Not part of the `--dataset {a,b,c}` pipeline above -- these two scan the full raw
+Not part of the `--dataset {a,c}` pipeline above -- these two scan the full raw
 `github-search-raw/*.csv.gz` universe directly, each into its own db
-(`db/rq1_prevalence.db` / `db/rq5_agent_files.db`, never `db/{a,b,c}.db`), pinned to
+(`db/rq1_prevalence.db` / `db/rq5_agent_files.db`, never `db/{a,c}.db`), pinned to
 the same snapshot date Dataset A/C were collected at. Both are resumable (already-
 scanned repos are skipped on a re-run -- the db's own rows are the checkpoint, no
 separate checkpoint file), log to `db/rq1_prevalence.log` / `db/rq5_agent_files.log`,
@@ -282,8 +227,8 @@ python -m collection export     --dataset a   # writes export/a.zip
 python -m collection validate   --dataset a   # checks export/a.zip
 ```
 
-Same four commands with `--dataset b` / `--dataset c` for the other two datasets.
-`analyze-distribution` is the one pair-aware verb (defaults to `--dataset a --against b`)
+Same four commands with `--dataset c` for the other dataset.
+`analyze-distribution` is the one pair-aware verb (defaults to `--dataset a --against c`)
 since its whole job is comparing two already-extracted datasets.
 
 ### Dataset C sampling: required before running `research_questions/` scripts

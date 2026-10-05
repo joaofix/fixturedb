@@ -1,15 +1,14 @@
 # Storage and Scale
 
-Storage layout and disk-usage drivers for the three-dataset collection pipeline — Dataset A (agent fixtures), Dataset B (human within-repo control), Dataset C (human cross-repo baseline). See [Repository Structure](../getting-started/repository-structure.md).
+Storage layout and disk-usage drivers for the two-dataset collection pipeline — Dataset A (agent fixtures) and Dataset C (human cross-repo baseline). See [Repository Structure](../getting-started/repository-structure.md).
 
 ## Database layout
 
-Each dataset writes to its own SQLite file under `db/`, not a single shared database. See [Database Schema § Database overview](../architecture/database-schema.md#database-overview) for what each file contains and why they're kept separate — Dataset C in particular has no commit-level agent/human distinction to make, so folding it into a shared `commit_kind` column the way A/B once were would misrepresent it.
+Each dataset writes to its own SQLite file under `db/`, not a single shared database. See [Database Schema § Database overview](../architecture/database-schema.md#database-overview) for what each file contains and why they're kept separate — Dataset C in particular has no commit-level agent/human distinction to make, so folding it into a shared `commit_kind` column would misrepresent it.
 
 ```
 db/
 ├── a.db        # Dataset A
-├── b.db        # Dataset B
 └── c.db        # Dataset C
 ```
 
@@ -20,7 +19,7 @@ and the survivorship-bias note in `collection/dataset_summary.py`'s module docst
 for why "repos scanned" and "repos yielding fixtures" are not the same denominator).
 There are no fixed size figures published here — actual database size depends on
 how many repos/languages a given run targets; run
-`python -m collection summarize --dataset {a,b,c}` after collection and check
+`python -m collection summarize --dataset {a,c}` after collection and check
 `datasets/{dataset}/summary.yaml`'s `fixtures.total` for the real count, then
 `du -h db/{dataset}.db` for the corresponding file size.
 
@@ -28,11 +27,11 @@ how many repos/languages a given run targets; run
 
 | Component | Persists after collection? | Notes |
 |-----------|----------------------------|-------|
-| `db/{a,b,c}.db` | Yes | The actual deliverable — required for `sample`/`export`/`validate`/`summarize` |
+| `db/{a,c}.db` | Yes | The actual deliverable — required for `sample`/`export`/`validate`/`summarize` |
 | `clones/` | No — safe to delete once collection finishes | Full or shallow git clones of every candidate repo; by far the largest transient consumer of disk space, since it holds full commit history for repos under active scan |
-| `datasets/{a,b,c}/**/*.csv` | Yes | Stage-by-stage CSV outputs (repos/commits/test-commits/fixtures); the real source of truth for downstream steps — see [Repository Structure](../getting-started/repository-structure.md) |
-| `export/{a,b,c}.zip` | Yes | Self-contained per-dataset export (see [CSV Export Guide](csv-export-guide.md)); much smaller than the source DB since it's the sampled subset only |
-| `toy-dataset/` | Local only — gitignored | Structurally identical output tree for `toy --dataset {a,b,c}` dry runs, isolated from `datasets/`/`db/` by construction (see `collection/paths.py`) |
+| `datasets/{a,c}/**/*.csv` | Yes | Stage-by-stage CSV outputs (repos/commits/test-commits/fixtures); the real source of truth for downstream steps — see [Repository Structure](../getting-started/repository-structure.md) |
+| `export/{a,c}.zip` | Yes | Self-contained per-dataset export (see [CSV Export Guide](csv-export-guide.md)); much smaller than the source DB since it's the sampled subset only |
+| `toy-dataset/` | Local only — gitignored | Structurally identical output tree for `toy --dataset {a,c}` dry runs, isolated from `datasets/`/`db/` by construction (see `collection/paths.py`) |
 
 `clones/` is the component worth actively managing: `rm -rf clones/` after a
 collection run reclaims the majority of disk used during that run, since the CSV/DB

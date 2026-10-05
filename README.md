@@ -16,11 +16,9 @@ Some of our agent-commit detection heuristics (co-authored-by trailer parsing, c
 
 ## Datasets
 
-The repository contains three main datasets. The fixture collections will be regenerated during the next collection cycle.
+The repository contains two main datasets. The fixture collections will be regenerated during the next collection cycle.
 
-- **fixtures-from-agents (Dataset A)** — Agent-authored test fixtures extracted from commits identified as agent-generated. This is the agent corpus for the within-repository comparison. The directory also includes stratified repository sample CSVs (e.g. `dataset_c_sample.csv`) for Dataset C.
-
-- **fixtures-from-humans (Dataset B)** — Human-authored test fixtures extracted from the same repositories as Dataset A. This is the matched human control sample for the within-repository comparison.
+- **fixtures-from-agents (Dataset A)** — Agent-authored test fixtures extracted from commits identified as agent-generated. This is the agent corpus for the comparison against the pre-agent baseline. The directory also includes stratified repository sample CSVs (e.g. `dataset_c_sample.csv`) for Dataset C.
 
 - **pre-agent-baseline (Dataset C)** — Human-authored test fixtures collected from pre-2022 software repositories that are independent from the agent-enabled corpus. This dataset serves as an inter-repository baseline. The repository sample files are stored under `fixtures-from-agents/` as `dataset_c_*.csv`.
 

@@ -2,9 +2,7 @@
 
 FixtureDB addresses five research questions, comparing agent-authored fixtures
 (Dataset A) against pre-LLM human-authored fixtures from an independent repository
-pool (Dataset C) -- the RQ2-4 scripts' reported comparison is A vs C. A contemporary
-human-authored baseline from the same repositories (Dataset B) is also collected, but
-isn't part of these scripts' reported output. See
+pool (Dataset C) -- the RQ2-4 scripts' reported comparison is A vs C. See
 [Database Schema](architecture/database-schema.md) for the underlying tables and
 [Dataset Card](data/dataset-card.md) for corpus composition.
 
@@ -13,15 +11,15 @@ isn't part of these scripts' reported output. See
 ## RQ1 — Fixture Prevalence (Quantitative)
 
 > How common are tests, fixtures, setup, and teardown across the raw repo universe,
-> independent of Dataset A/B/C's own filtering?
+> independent of Dataset A/C's own filtering?
 
 Unlike RQ2-4, this is not an A-vs-C comparison -- it characterizes the full raw
 population (`github-search-raw/*.csv.gz`, ~24.7k repos minus known duplicates) that
-A/B/C are each filtered subsets of. A dedicated collection stage,
+A/C are each filtered subsets of. A dedicated collection stage,
 `collection/rq1_prevalence_scan.py`, clones every repo (pinned to a fixed cutoff date
 matching A/C's own collection date, not current HEAD) and persists per-repo counts to
 `db/rq1_prevalence.db` -- deliberately not a 4th dataset, kept structurally separate
-from `datasets/{a,b,c}/` and `db/{a,b,c}.db` (see that module's own docstring for the
+from `datasets/{a,c}/` and `db/{a,c}.db` (see that module's own docstring for the
 full naming scheme and the production incidents its retry/timeout/auth logic exists
 to handle).
 
@@ -96,7 +94,7 @@ Generating the findings: `python -m collection.research_questions.rq4` computes 
 > test-related and fixture-related guidance?
 
 A keyword-based scan over the same raw ~24.7k-repo universe RQ1 measures
-(`github-search-raw/*.csv.gz`), independent of Dataset A/B/C's own filtering, pinned
+(`github-search-raw/*.csv.gz`), independent of Dataset A/C's own filtering, pinned
 to the same snapshot date as RQ1 (`collection/rq5_agent_file_scan.py`'s
 `RQ5_CUTOFF_DATE`, reused directly from `rq1_prevalence_scan.RQ1_CUTOFF_DATE`).
 Unlike RQ1, this scan never clones anything — it reads entirely through GitHub's
@@ -158,11 +156,11 @@ reads that db and writes `research_questions/rq5.md`.
 
 | RQ | Question | Type | Key Metrics | Datasets |
 |----|----------|------|--------------|----------|
-| RQ1 | How common are tests/fixtures/setup/teardown across the raw repo universe? | Quantitative | Repo counts with tests/fixtures/setup/teardown (%), median fixtures/setup/teardown per repo | Raw universe (not A/B/C) |
+| RQ1 | How common are tests/fixtures/setup/teardown across the raw repo universe? | Quantitative | Repo counts with tests/fixtures/setup/teardown (%), median fixtures/setup/teardown per repo | Raw universe (not A/C) |
 | RQ2 | How do agent and human fixtures compare on fundamental structural metrics? | Quantitative | Paper: `loc`, `cyclomatic_complexity`, `comment_density`. Also reported (not in paper): `num_parameters`, `fixture_type` | A vs C |
 | RQ3 | How do agent and human fixtures compare in setup and teardown provision? | Quantitative | `fixture_role` (setup/teardown/other): absolute fixture counts by type, per-repo teardown coverage rate | A vs C |
 | RQ4 | How do agent and human fixtures differ in mock usage? | Quantitative | Mocking coverage (% repos with any mock) | A vs C |
-| RQ5 | How often do agent configuration files mention test/fixture guidance? | Mixed | % of repos (with >=1 root AGENTS.md/CLAUDE.md) with >=1 test keyword / >=1 fixture keyword, per keyword repo-count | Raw universe (not A/B/C) |
+| RQ5 | How often do agent configuration files mention test/fixture guidance? | Mixed | % of repos (with >=1 root AGENTS.md/CLAUDE.md) with >=1 test keyword / >=1 fixture keyword, per keyword repo-count | Raw universe (not A/C) |
 
 ---
 
@@ -176,11 +174,10 @@ not yet collected is skipped rather than erroring). Each is standalone:
 
 | Script | Answers | Reads | Writes |
 |---|---|---|---|
-| `rq1.py` | RQ1 — fixture/setup/teardown prevalence and per-repo medians, each in a no-floor and a `min_test_files`-floor variant | `db/rq1_prevalence.db` (written by `collection/rq1_prevalence_scan.py`, not `db/{a,b,c}.db`) | `research_questions/rq1.md` |
+| `rq1.py` | RQ1 — fixture/setup/teardown prevalence and per-repo medians | `db/rq1_prevalence.db` (written by `collection/rq1_prevalence_scan.py`, not `db/{a,c}.db`) | `research_questions/rq1.md` |
 | `rq2.py` | RQ2 — per-dataset structural-metric summaries, plus an A vs C comparison (Mann-Whitney U / chi-square) | `db/a.db`, `db/c.db` | `research_questions/rq2.md` |
 | `rq3.py` | RQ3 — per-dataset `fixture_type` kind (setup/teardown/other) distribution, plus two A vs C tables: absolute setup/teardown fixture counts by language, and per-repo teardown coverage rate by language (both purely descriptive) | `db/a.db`, `db/c.db` | `research_questions/rq3.md` |
 | `rq4.py` | RQ4 — per-dataset mocking summary, plus one A vs C paper table (mocking coverage %, per language, purely descriptive) | `db/a.db`, `db/c.db` | `research_questions/rq4.md` |
-| `rq5.py` | RQ5 — agent-config-file test/fixture keyword prevalence, repo-level (a repo counts if ANY of its root agent files matches): overall, by repo language, and per keyword | `db/rq5_agent_files.db` (written by `collection/rq5_agent_file_scan.py`, not `db/{a,b,c}.db`) | `research_questions/rq5.md` |
+| `rq5.py` | RQ5 — agent-config-file test/fixture keyword prevalence, repo-level (a repo counts if ANY of its root agent files matches): overall, by repo language, and per keyword | `db/rq5_agent_files.db` (written by `collection/rq5_agent_file_scan.py`, not `db/{a,c}.db`) | `research_questions/rq5.md` |
 | `language_contamination.py` | Data-quality check (not tied to one RQ) — for each per-language fixture CSV, what fraction of rows carry a mismatched `language` value | `datasets/{a,c}/fixtures*/*.csv` | `research_questions/language_contamination.md` |
 
-Dataset B (contemporary within-repo human baseline) is still collected (`db/b.db`, `paired_collection.py`) but is not part of any RQ2-4 script's reported output above.

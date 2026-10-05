@@ -1,46 +1,11 @@
 # Configuration Reference
 
 This document describes configuration options for the `python -m collection`
-CLI. See [Collection Architecture](./collection.md) for the Dataset A/B/C
+CLI. See [Collection Architecture](./collection.md) for the Dataset A/C
 build map, and [Reproducing Results](../usage/reproducing.md) for the full
 verb sequence.
 
 Per-run parameters (which repos, which language, output paths) are all set via command-line arguments — every verb supports `--help` for its full argument list, and every default input/output directory is resolved through `collection/paths.py`. Fixed reference data (file-type filters, the testing-framework registry, per-language search settings, study-design constants, and the agent/fixture-detection catalogs) is instead kept as YAML, under `collection/study_parameters/` for settings and `collection/heuristics/` for detection-heuristic pattern catalogs — see Reference-Data Catalogs below.
-
-## Dataset B: `extract-fixtures --dataset b`
-
-```bash
-python -m collection extract-fixtures --dataset b [OPTIONS]
-```
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `--output-db` | PATH | db/b.db | SQLite database output path |
-| `--repos-per-language` | INT | (all) | Target repos per language |
-| `--repo-dir` | PATH | datasets/b/repos/ | Directory with `*_repo.csv` files (see `discover-repos --dataset b`) |
-| `--commit-dir` | PATH | datasets/b/test-commits/ | Directory to also write discovered test-commit CSVs to |
-| `--language` | STR | (all) | Specific language: python, java, javascript, typescript |
-| `--workers` | INT | 4 | Parallel worker threads |
-| `--force` | FLAG | off | Re-extract even if `--output-db` already has fixture rows |
-
-### Control Variables (Fixed)
-
-Computed automatically at the `AGENT_CORPUS_START_DATE` snapshot (same window as Dataset A, since Dataset B is the within-repo matched control):
-
-| Variable | Description |
-|----------|-------------|
-| `language` | Programming language |
-| `domain` | Repository domain (computed from topics/description) |
-| `repo_age_years` | Repository age in years at the snapshot date; NULL if the repo was created after it |
-| `repo_age_at_collection_years` | Repository age as of collection time — always defined |
-| `agent_adoption_intensity` | Share of agent vs. human commits in the repo |
-
-### Example
-
-```bash
-python -m collection discover-repos      --dataset b --language python
-python -m collection extract-fixtures    --dataset b --repos-per-language 100 --language python
-```
 
 ## Dataset C: `extract-fixtures --dataset c`
 
@@ -120,10 +85,10 @@ python -m collection extract-fixtures    --dataset a --languages python javascri
 ## Statistical Comparison
 
 `collection/between_group_comparison.py` compares two datasets' `fixtures`
-tables. Since each dataset now has its own database (`db/a.db`, `db/b.db`,
-`db/c.db`), comparing two of them means pointing it at both DB paths
+tables. Since each dataset now has its own database (`db/a.db`, `db/c.db`),
+comparing two of them means pointing it at both DB paths
 directly rather than filtering one shared database by `commit_kind`.
-`python -m collection analyze-distribution --dataset a --against b` covers
+`python -m collection analyze-distribution --dataset a --against c` covers
 the same "are these two corpora comparable in size" question at the fixture-
 count level; `between_group_comparison.py` goes deeper with per-control
 statistical tests.
@@ -140,12 +105,12 @@ Fixed dates from `collection/config.py` (not configurable via CLI):
 
 | Constant | Value | Used by | Rationale |
 |----------|-------|---------|-----------|
-| `AGENT_CORPUS_START_DATE` | 2025-01-01 | Dataset A, Dataset B | Agent availability window |
+| `AGENT_CORPUS_START_DATE` | 2025-01-01 | Dataset A | Agent availability window |
 | `HUMAN_CORPUS_CUTOFF_DATE` | 2020-12-31 | Dataset C | Pre-AI-agent era cutoff, and upper bound of the repo creation-date window |
 | `DATASET_C_MIN_CREATED_DATE` | 2016-01-01 | Dataset C | Lower bound of the repo creation-date window |
 
 These dates ensure Dataset C has no possible agent involvement (cutoff in
-2020, agents available from 2025), while Datasets A and B are directly
+2020, agents available from 2025), while Dataset A are directly
 comparable since they're drawn from the same repos and the same window.
 `DATASET_C_MIN_CREATED_DATE`/`HUMAN_CORPUS_CUTOFF_DATE` together bound a
 Dataset C repo's age at snapshot time to a fixed ~5-year window, the same
@@ -161,9 +126,6 @@ Each dataset has its own, fully separate database:
 -- Dataset A (db/a.db)
 SELECT COUNT(*) FROM fixtures;
 
--- Dataset B (db/b.db) -- within-repo, same 2025+ window as A
-SELECT COUNT(*) FROM fixtures;
-
 -- Dataset C (db/c.db) -- cross-repo pre-2021 baseline
 SELECT COUNT(*) FROM fixtures;
 ```
@@ -174,7 +136,7 @@ Shared thresholds from `collection/config.py`: `MIN_STARS = 500`,
 `MIN_COMMITS = 100`, `MIN_TEST_FILES = 5`. `MIN_NON_BLANK_LOC = 5000` is
 Dataset C only (below).
 
-### Dataset A / Dataset B (same repos)
+### Dataset A
 - Repositories with agent config files and agent commits in the 2025+ window
 - At least `MIN_TEST_FILES` test files, at least 1 fixture extracted
 - Tier 1 agent detection only (no heuristics)
@@ -201,7 +163,6 @@ Extraction and sampling produce JSON summaries in `output/`:
 
 ```
 output/
-├── human_corpus_summary_*.json    # Dataset B extraction run summary
 ├── agent_corpus_summary_*.json    # Dataset A extraction run summary
 ├── sample_a.json, sample_b.json, sample_c.json   # per-dataset sample results
 └── ...
@@ -249,16 +210,14 @@ Temporal boundaries (`AGENT_CORPUS_START_DATE`, `HUMAN_CORPUS_CUTOFF_DATE`) and 
 
 ```bash
 # Rebuild indexes after collection
-sqlite3 db/b.db "VACUUM; ANALYZE;"
 sqlite3 db/a.db "VACUUM; ANALYZE;"
 
 # Check database health
-sqlite3 db/b.db "PRAGMA integrity_check;"
 ```
 
 ## See Also
 
 - [Reproducing Results](../usage/reproducing.md) — Step-by-step collection guide
-- [Collection Architecture](./collection.md) — Dataset A/B/C build map
+- [Collection Architecture](./collection.md) — Dataset A/C build map
 - [Database Schema](./database-schema.md) — Table structure and columns
 - [Agent Detection](./agent-detection.md) — How agents are identified

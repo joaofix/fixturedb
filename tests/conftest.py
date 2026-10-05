@@ -11,6 +11,33 @@ import pytest
 from collection.detector import FixtureResult, extract_fixtures
 
 
+@pytest.fixture(autouse=True)
+def _forbid_writes_to_real_datasets(monkeypatch):
+    """Fail any test that writes CSV output into the real datasets/ tree.
+
+    A test once left two rows in datasets/a/repos/ (real Dataset A output)
+    because nothing stopped a code path from writing to the default output
+    directory. Every CSV write goes through CSVAdapter.append_dicts, so
+    guarding that one method catches the whole class of leak, and the
+    failure names the test that did it.
+    """
+    from collection import csv_adapter, paths
+
+    real_root = Path(paths.DATASETS_ROOT).resolve()
+    original = csv_adapter.CSVAdapter.append_dicts
+
+    def guarded(self, path, rows, fieldnames, fsync=False):
+        target = Path(path).resolve()
+        if real_root in target.parents:
+            raise AssertionError(
+                f"test wrote to real datasets path {target}; "
+                "pass tmp_path output dirs or monkeypatch paths.DATASETS_ROOT"
+            )
+        return original(self, path, rows, fieldnames, fsync=fsync)
+
+    monkeypatch.setattr(csv_adapter.CSVAdapter, "append_dicts", guarded)
+
+
 @pytest.fixture
 def temp_test_file():
     """Create a temporary test file and clean it up after test."""

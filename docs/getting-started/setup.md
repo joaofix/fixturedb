@@ -44,8 +44,8 @@ Testing: `pytest`, `pytest-cov`.
 
 ## Running the Between-Group Study
 
-The authoritative, reproducible pipeline for the paper's three datasets is
-`python -m collection <verb> --dataset {a,b,c}`, run from the project root:
+The authoritative, reproducible pipeline for the paper's two datasets is
+`python -m collection <verb> --dataset {a,c}`, run from the project root:
 
 ```bash
 # Dataset A: discover repos, scan for agent commits, filter to test-touching commits, extract
@@ -54,23 +54,19 @@ python -m collection discover-commits    --dataset a
 python -m collection filter-test-commits --dataset a
 python -m collection extract-fixtures    --dataset a
 
-# Dataset B (within-repo human) and Dataset C (cross-repo baseline)
-python -m collection discover-repos      --dataset b
-python -m collection filter-test-commits --dataset b
-python -m collection extract-fixtures    --dataset b
-
+# Dataset C (cross-repo human baseline)
 python -m collection discover-repos   --dataset c
 python -m collection extract-fixtures --dataset c
 
 # Cross-cutting: distribution analysis, sampling, export, validation (per dataset)
-python -m collection analyze-distribution --dataset a --against b
+python -m collection analyze-distribution --dataset a --against c
 python -m collection sample    --dataset a
 python -m collection export    --dataset a
 python -m collection validate  --dataset a
 ```
 
 See [docs/architecture/collection.md](../architecture/collection.md) for the
-Dataset A/B/C → collector map, and
+Dataset A/C → collector map, and
 [Reproducing Results](../usage/reproducing.md) for detailed instructions and
 optional parameters.
 
@@ -79,20 +75,14 @@ the one, authoritative surface for every stage.
 
 ## Quick Start
 
-### Minimal Test (Dataset B Only)
+### Minimal Test (Dataset A Only)
 ```bash
-python -m collection discover-repos      --dataset b --language python
-python -m collection extract-fixtures    --dataset b --repos-per-language 5 --language python
+python -m collection discover-repos      --dataset a --language python
+python -m collection extract-fixtures    --dataset a --repos-per-language 5 --language python
 ```
 
-This will:
-1. Resolve Dataset B's repo list from Dataset A's already-discovered agent-enabled repositories
-2. Extract human fixtures from the same 2025+ commit window as Dataset A
-3. Write a small sample to `db/b.db`
-4. Complete in 5-10 minutes
-
 For a smaller, fully self-contained smoke test that never touches real data,
-use `python -m collection toy --dataset b --repos 5` instead (writes under
+use `python -m collection toy --dataset a --repos 5` instead (writes under
 `toy-dataset/` rather than `datasets/`/`db/`).
 
 ## Configuration
@@ -101,7 +91,6 @@ All parameters are command-line arguments. No configuration files needed:
 
 ```bash
 # See all available options
-python -m collection extract-fixtures --dataset b --help
 python -m collection extract-fixtures --dataset c --help
 python -m collection extract-fixtures --dataset a --help
 ```
@@ -143,7 +132,7 @@ python -m collection --help
 
 ### sqlite3.OperationalError: no such table
 **Solution:** Verify the relevant dataset's database exists and is valid
-(run `extract-fixtures --dataset {a,b,c}` first if not):
+(run `extract-fixtures --dataset {a,c}` first if not):
 ```bash
 sqlite3 db/a.db ".tables"  # Should show: fixtures repositories test_files mock_usages
 ```

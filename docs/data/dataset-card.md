@@ -2,7 +2,7 @@
 
 ## Overview
 
-FixtureDB is a cross-language dataset of test fixture definitions extracted from GitHub repositories. It compares agent-authored and human-authored fixtures across three corpora: agent-authored fixtures (Dataset A), contemporary human-authored fixtures from the same repositories (Dataset B), and pre-LLM human-authored fixtures from an independent repository pool (Dataset C).
+FixtureDB is a cross-language dataset of test fixture definitions extracted from GitHub repositories. It compares agent-authored and human-authored fixtures across two corpora: agent-authored fixtures (Dataset A) and pre-LLM human-authored fixtures from an independent repository pool (Dataset C).
 
 | Property | Value |
 |----------|-------|
@@ -17,13 +17,13 @@ FixtureDB is a cross-language dataset of test fixture definitions extracted from
 
 ### What the dataset contains
 
-Each dataset is a SQLite database (`db/{a,b,c}.db`, schema in [Database Schema](../architecture/database-schema.md)) with four tables: `repositories`, `test_files`, `fixtures`, and `mock_usages`. Dataset A's fixtures carry `commit_kind='agent'` and an `agent_type`; Dataset B's carry `commit_kind='human'`. Dataset C has no commit-level tagging — its fixtures come from a single repository snapshot rather than a commit-by-commit scan.
+Each dataset is a SQLite database (`db/{a,c}.db`, schema in [Database Schema](../architecture/database-schema.md)) with four tables: `repositories`, `test_files`, `fixtures`, and `mock_usages`. Dataset A's fixtures carry `commit_kind='agent'` and an `agent_type`. Dataset C has no commit-level tagging — its fixtures come from a single repository snapshot rather than a commit-by-commit scan.
 
 Alongside the databases:
 
-- **CSV stage outputs**, git-tracked, under `datasets/{a,b,c}/{repos,commits,test-commits,fixtures}/` — the intermediate artifacts of each collection stage, not just the final database.
-- **Per-dataset export bundles** (`export/{a,b,c}.zip`, via `python -m collection export --dataset {a,b,c}`) — self-contained CSV dumps of the four tables, filtered to the manual-review sample, with a generated README and schema. See [CSV Export Guide](csv-export-guide.md).
-- **Collection summaries** (`datasets/{dataset}/summary.yaml`, via `python -m collection summarize --dataset {a,b,c}`) — repository/fixture counts, extraction rates, and (for A/B) purity-gate acceptance rate.
+- **CSV stage outputs**, git-tracked, under `datasets/{a,c}/{repos,commits,test-commits,fixtures}/` — the intermediate artifacts of each collection stage, not just the final database.
+- **Per-dataset export bundles** (`export/{a,c}.zip`, via `python -m collection export --dataset {a,c}`) — self-contained CSV dumps of the four tables, filtered to the manual-review sample, with a generated README and schema. See [CSV Export Guide](csv-export-guide.md).
+- **Collection summaries** (`datasets/{dataset}/summary.yaml`, via `python -m collection summarize --dataset {a,c}`) — repository/fixture counts, extraction rates, and (for A) purity-gate acceptance rate.
 
 ### Unit of analysis
 
@@ -36,13 +36,13 @@ The unit of analysis is the **fixture**: an individual test setup/teardown defin
 - **Complexity** — LOC, cyclomatic complexity, max nesting depth
 - **Structure** — parameter count, object instantiations, external calls
 - **Behavior** — teardown pair presence, fixture dependencies, mock usages
-- **Provenance** — commit SHA (A/B only), commit kind, agent type (A only)
+- **Provenance** — commit SHA (A only), commit kind, agent type (A only)
 
 ---
 
 ## Research Objectives
 
-See [Research Questions](../research-questions.md) for the full RQ1–RQ5 definitions and how the three-dataset comparison applies to each.
+See [Research Questions](../research-questions.md) for the full RQ1–RQ5 definitions and how the two-dataset comparison applies to each.
 
 ---
 
@@ -50,7 +50,7 @@ See [Research Questions](../research-questions.md) for the full RQ1–RQ5 defini
 
 ### Independent variable
 
-**Dataset membership (A/B/C)** — which corpus a fixture belongs to, determined by the collection pipeline that produced it (agent-attributed commit for A, non-agent commit in the same repo pool for B, pre-LLM-era repository snapshot for C), not a single shared `commit_role` column. See [Agent Detection](../architecture/agent-detection.md).
+**Dataset membership (A/C)** — which corpus a fixture belongs to, determined by the collection pipeline that produced it (agent-attributed commit for A, pre-LLM-era repository snapshot for C), not a single shared `commit_role` column. See [Agent Detection](../architecture/agent-detection.md).
 
 Membership is operationalized via Tier 1 detection: co-authored-by/assisted-by/generated-by trailers, then author identity, with bot accounts excluded first. The design prioritizes precision over recall — a false positive (human code labeled agent) threatens validity more than a false negative, which only costs statistical power.
 
@@ -72,7 +72,7 @@ All metrics are collected from test files only.
 
 ### Control variables
 
-Computed at each dataset's own temporal reference point: 2025-01-01 for A/B, 2020-12-31 for C.
+Computed at each dataset's own temporal reference point: 2025-01-01 for A, 2020-12-31 for C.
 
 | Variable | Operationalization |
 |----------|-------------------|
@@ -93,14 +93,13 @@ Three-corpus between-group comparison. See [Agent Detection](../architecture/age
 1. **Repository seeding.** All candidate repositories come from SEART GHS (`github-search-raw/`), filtered at source to ≥500 stars, ≥100 commits, ≥5k LOC, non-fork. This filter doesn't catch org transfers or independently-created "shadow copies" (repos with identical git history but no GitHub-native fork relationship) — see [Repository-Level Duplication](#repository-level-duplication) below and [Limitations](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies).
 2. **Dataset A repo qualification.** Candidates whose working tree contains a config file from any agent in the full ~60-agent detection catalog (`agent_files.csv`, including `AGENTS.md`).
 3. **Dataset A commit scanning.** Within qualified repos, commits since 2025-01-01 are checked against the full agent-signature catalog (bot exclusion, then trailer, then author identity).
-4. **Dataset B repo resolution.** Resolved directly from Dataset A's already-qualified repos, not independently searched — this is what makes B a within-repo control by construction.
-5. **Dataset C repo selection.** Independent of A/B, filtered only by repo-creation date (2016-01-01 to 2020-12-31); no agent-related filter, since this window predates agent tooling entirely. Commit count, test-file count, and non-blank LOC are all independently re-verified against each repo's own pinned pre-2021 cutoff commit (`dataset_c.py::_process_repo()`), not trusted from step 1's crawl-time source-filter values — a repo could have grown past any of those floors well after 2020. Star count has no historical equivalent to re-check, so it's simply not enforced for Dataset C (see [Known limitations](#known-limitations) below).
-6. **Fixture extraction.** `detector.extract_fixtures()` applied identically across all three datasets.
-7. **Purity gating (A/B only).** Commit-level: reject the whole commit if any touched test file has a deletion or rename. Fixture-level: each fixture's own line span must be 100% newly added.
+4. **Dataset C repo selection.** Independent of A, filtered only by repo-creation date (2016-01-01 to 2020-12-31); no agent-related filter, since this window predates agent tooling entirely. Commit count, test-file count, and non-blank LOC are all independently re-verified against each repo's own pinned pre-2021 cutoff commit (`dataset_c.py::_process_repo()`), not trusted from step 1's crawl-time source-filter values — a repo could have grown past any of those floors well after 2020. Star count has no historical equivalent to re-check, so it's simply not enforced for Dataset C (see [Known limitations](#known-limitations) below).
+6. **Fixture extraction.** `detector.extract_fixtures()` applied identically across both datasets.
+6. **Purity gating (A only).** Commit-level: reject the whole commit if any touched test file has a deletion or rename. Fixture-level: each fixture's own line span must be 100% newly added.
 
 ### Temporal windows
 
-Datasets A and B use the same window — commits dated 2025-01-01 onward — which is what makes B a valid within-repo, same-era control for A. Dataset C uses repositories created 2016-01-01 through 2020-12-31, snapshotted at each repository's own last commit on or before 2020-12-31. Because C is a single snapshot rather than a commit-by-commit scan, its fixture age is bounded to roughly this five-year window but not known exactly — contrast with A/B, where every fixture is dated to its exact authoring commit.
+Dataset A uses commits dated 2025-01-01 onward. Dataset C uses repositories created 2016-01-01 through 2020-12-31, snapshotted at each repository's own last commit on or before 2020-12-31. Because C is a single snapshot rather than a commit-by-commit scan, its fixture age is bounded to roughly this five-year window but not known exactly — contrast with A, where every fixture is dated to its exact authoring commit.
 
 ### Agent detection
 
@@ -112,7 +111,7 @@ Tier 1 detection checks, in order, until the first match:
 
 Matching is word-boundary, case-insensitive. Free-text commit message scanning is deliberately not used — see [Agent Detection § Known Limitations](../architecture/agent-detection.md) for the false positives it would introduce. The full agent catalog (~60 tools) lives in `collection/heuristics/agent-mining/`.
 
-### Pure-addition filter (Datasets A/B)
+### Pure-addition filter (Dataset A)
 
 To ensure fixtures are 100% newly added by their attributed author, not a modification of pre-existing code, two gates apply: a commit-level gate rejects commits where any test file contains deletions, renames, or copies, and a fixture-level gate accepts only fixtures whose own line span is exclusively added lines (AST-node-precise, falling back to a line-range check).
 
@@ -122,7 +121,7 @@ Two different `repo_name`s can share partly or fully identical git history — o
 
 Two repo-level pre-filters run before selection. Dataset C checks each candidate's commit at the fixed cutoff date against every other candidate (`collection/dedupe_dataset_c_repos.py`). Dataset A drops repos currently sharing a HEAD commit before cloning — but this only catches repos still byte-identical *today*, not a pair that has since diverged.
 
-A third, commit-level mechanism (`collection/dedupe_commits_by_sha.py`) closes most of that gap by working on already-collected commit data instead of a live pre-check: any commit whose exact SHA was collected under more than one `repo_name` is removed, keeping one canonical `repo_name`'s copy. This is fully preventive for Dataset A, since `extract-fixtures --dataset a` reads its commits from the exact file this step cleans — but it has no effect on Dataset B, because `extract-fixtures --dataset b` independently re-clones and re-scans every repo's history rather than reading the deduped file, so it silently rediscovers the same duplicate commits regardless. A fourth mechanism, `collection/dedupe_fixtures_by_sha.py`, closes that gap for B specifically by running the same detection logic against the already-extracted fixture CSVs and database, after (not before) `extract-fixtures --dataset b` — and unlike the other three, it's a recurring cleanup that must be re-run after every extraction, not a one-time fix.
+A third, commit-level mechanism (`collection/dedupe_commits_by_sha.py`) closes most of that gap by working on already-collected commit data instead of a live pre-check: any commit whose exact SHA was collected under more than one `repo_name` is removed, keeping one canonical `repo_name`'s copy. This is fully preventive for Dataset A, since `extract-fixtures --dataset a` reads its commits from the exact file this step cleans.
 
 See [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies) and `internal-docs/methodology-improvements/repo-deduplication.md` for the full investigation and measured duplication rates.
 
@@ -132,7 +131,7 @@ See [Limitations § Repository-Level Duplication](../reference/limitations.md#re
 
 ### Balance tests (pre-comparison)
 
-Before comparing fixture distributions between any two datasets, we check whether the underlying repo samples are themselves comparable on control variables — repo-level (each fixture-yielding repo counted once), not fixture-weighted:
+Before comparing fixture distributions between the two datasets, we check whether the underlying repo samples are themselves comparable on control variables — repo-level (each fixture-yielding repo counted once), not fixture-weighted:
 
 1. **Language distribution** — chi-square
 2. **Domain distribution** — chi-square
@@ -142,7 +141,7 @@ The goal is to confirm two corpora are comparable on control variables before at
 
 ### Group comparison tests
 
-A/B/C are three separate databases, not paired observations within one table, so all tests are unpaired:
+A and C are two separate databases, not paired observations within one table, so all tests are unpaired:
 
 | Variable type | Test |
 |----------|--------------|
@@ -159,7 +158,7 @@ See [Analyzing the Datasets](../usage/usage.md) for the concrete query/test patt
 
 Every fixture meeting the pipeline's criteria is collected for Datasets A, B, and C — there's no fixture-level sampling at collection time.
 
-For manual precision/recall review, `python -m collection sample --dataset {a,b,c}` draws a Cochran-sized (95% confidence, ±5% margin) stratified sample per language. See [Manual-Validation Sampling](../usage/validation-sampling.md). This is the same sample that `export/{dataset}.zip`'s `fixtures.csv`/`mock_usages.csv` are filtered to.
+For manual precision/recall review, `python -m collection sample --dataset {a,c}` draws a Cochran-sized (95% confidence, ±5% margin) stratified sample per language. See [Manual-Validation Sampling](../usage/validation-sampling.md). This is the same sample that `export/{dataset}.zip`'s `fixtures.csv`/`mock_usages.csv` are filtered to.
 
 ---
 
@@ -169,7 +168,7 @@ See [Limitations and Threats to Validity](../reference/limitations.md) for the f
 
 ### Internal validity
 
-Tier 1 agent detection under-reports agent contributions by design (precision over recall) — commits without agent trailers or identity signals are classified as human. This creates a differential false-negative risk between Datasets B and C: Dataset B's repos are agent-adopting by construction, so an untrailed, informally-agent-assisted commit is more likely there than in Dataset C's pool. B and C are not interchangeable human baselines; treat A-vs-B and A-vs-C as related but distinct comparisons. A further, unmeasured threat is differential recall across authorship groups — the same AST detector is applied to agent and human code alike, but recall could differ if agent code follows canonical framework idioms more consistently than human code.
+Tier 1 agent detection under-reports agent contributions by design (precision over recall) — commits without agent trailers or identity signals are classified as human. This creates a differential false-negative risk for the A-vs-C comparison, since Dataset C's pool is not drawn from agent-adopting repositories. A further, unmeasured threat is differential recall across authorship groups — the same AST detector is applied to agent and human code alike, but recall could differ if agent code follows canonical framework idioms more consistently than human code.
 
 ### Construct validity
 
@@ -177,7 +176,7 @@ The study targets automatically detectable fixture patterns, per `collection/heu
 
 ### External validity
 
-Language coverage is limited to Python, Java, JavaScript, and TypeScript. Every repository has ≥500 GitHub stars — a hard filter at the SEART seeding stage, not a tunable threshold — so popular OSS projects may not reflect typical developer practices, a known tradeoff in empirical SE studies that draw on star-based sampling (see the Hamster study, Pan et al., 2025). Finally, Dataset C's window (2016–2020) predates A/B's (2025+), so framework and practice changes across that gap are a threat to the cross-repo comparison specifically — not to A-vs-B, which shares a window.
+Language coverage is limited to Python, Java, JavaScript, and TypeScript. Every repository has ≥500 GitHub stars — a hard filter at the SEART seeding stage, not a tunable threshold — so popular OSS projects may not reflect typical developer practices, a known tradeoff in empirical SE studies that draw on star-based sampling (see the Hamster study, Pan et al., 2025). Finally, Dataset C's window (2016–2020) predates A's (2025+), so framework and practice changes across that gap are a threat to the cross-repo comparison specifically — not to A-vs-C, which shares a window.
 
 ### Conclusion validity
 
@@ -196,7 +195,7 @@ Final per-language fixture counts depend on repository availability and the pipe
 5. **Domain classification** — heuristic keyword-based; accuracy depends on topic/description quality.
 6. **Sampling bias** — all repositories have ≥500 stars.
 7. **Repository-level duplication** — not caught by the source query's non-fork filter (org transfers, shadow copies). Forward-looking detection is now in place for future collections but hasn't been applied retroactively. See [Limitations § Repository-Level Duplication](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies).
-8. **Cross-language fixture leakage** — a repo's single language tag doesn't mean every extracted fixture is in that language; multi-language repos contribute a measurable minority of fixtures in other languages (Dataset B 12.15%, Dataset A 8.04% as of 2026-07-31; Dataset C's rate requires a fresh extraction run to measure). This is a corpus property to report, not an error to fix. See [Limitations § Cross-Language Fixture Leakage](../reference/limitations.md#cross-language-fixture-leakage).
+8. **Cross-language fixture leakage** — a repo's single language tag doesn't mean every extracted fixture is in that language; multi-language repos contribute a measurable minority of fixtures in other languages (Dataset A 8.04% as of 2026-07-31; Dataset C's rate requires a fresh extraction run to measure). This is a corpus property to report, not an error to fix. See [Limitations § Cross-Language Fixture Leakage](../reference/limitations.md#cross-language-fixture-leakage).
 
 ---
 
@@ -205,7 +204,6 @@ Final per-language fixture counts depend on repository availability and the pipe
 | Dataset | Repositories | Commits/Snapshot | Fixtures | Description |
 |---------|-------------|-------------------|----------|-------------|
 | `a` | Agent-enabled (any agent in the config-file catalog) | Agent-attributed, 2025-01-01+ | Agent-authored | Primary agent corpus |
-| `b` | Same repos as `a` | Non-agent, 2025-01-01+ | Human-authored | Within-repo control |
 | `c` | Independent pool, created 2016–2020 | Snapshot at each repo's last commit ≤2020-12-31 | Human-authored | Cross-repo, pre-agent-era baseline |
 
 ---
@@ -217,7 +215,6 @@ Final per-language fixture counts depend on repository availability and the pipe
 ```bash
 # Path
 db/a.db   # Dataset A (agent)
-db/b.db   # Dataset B (contemporary human)
 db/c.db   # Dataset C (pre-LLM human)
 
 # Tables
@@ -228,7 +225,6 @@ db/c.db   # Dataset C (pre-LLM human)
 
 ```
 datasets/a/{repos,commits,test-commits,fixtures}/
-datasets/b/{repos,test-commits,fixtures}/
 datasets/c/{repos,fixtures}/
 ```
 
@@ -236,7 +232,6 @@ datasets/c/{repos,fixtures}/
 
 ```
 export/a.zip   # repositories.csv, test_files.csv, fixtures.csv, mock_usages.csv, README.md, SCHEMA.md, AGENTS.md
-export/b.zip   # same, no AGENTS.md
 export/c.zip   # same, no AGENTS.md
 ```
 
@@ -246,7 +241,6 @@ See [CSV Export Guide](csv-export-guide.md) for the exact contents and how the s
 
 ```
 datasets/a/summary.yaml
-datasets/b/summary.yaml
 datasets/c/summary.yaml
 ```
 

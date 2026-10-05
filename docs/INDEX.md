@@ -56,7 +56,7 @@ Start here for the between-group study comparing human and agent-authored test f
 
 ## Study Design
 
-FixtureDB compares three independent datasets: Dataset A (agent-authored fixtures, 2025+), Dataset B (human-authored fixtures, a within-repo control using the same repos and window as A), and Dataset C (human-authored fixtures, a cross-repo pre-2021 baseline). Agent identification uses Tier 1 detection (co-authored-by trailers, author signatures). Comparisons are unpaired (Mann-Whitney U / chi-square), since each dataset is its own database rather than matched pairs in one table.
+FixtureDB compares two independent datasets: Dataset A (agent-authored fixtures, 2025+) and Dataset C (human-authored fixtures, a cross-repo pre-2021 baseline). Agent identification uses Tier 1 detection (co-authored-by trailers, author signatures). Comparisons are unpaired (Mann-Whitney U / chi-square), since the two datasets are separate databases rather than matched pairs in one table.
 
 See the [introduction](getting-started/intro.md) for the full methodology.
 

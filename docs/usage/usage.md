@@ -1,9 +1,8 @@
 # Analyzing the FixtureDB Datasets
 
-FixtureDB collects three datasets — Dataset A (agent-authored fixtures, 2025+),
-Dataset B (human-authored fixtures, within-repo control, same repos as A), and
+FixtureDB collects two datasets — Dataset A (agent-authored fixtures, 2025+) and
 Dataset C (human-authored fixtures, cross-repo baseline, independent pre-2021 repo
-pool) — each in its own SQLite database (`db/a.db`, `db/b.db`, `db/c.db`; see
+pool) — each in its own SQLite database (`db/a.db`, `db/c.db`; see
 [Database Schema](../architecture/database-schema.md)). This guide shows how to
 query one dataset and how to compare across two.
 
@@ -11,14 +10,12 @@ query one dataset and how to compare across two.
 
 ## Study Design Overview
 
-- **Dataset A vs Dataset B ("within-repo")** — same agent-enabled repositories, agent-authored vs human-authored fixtures, same 2025+ temporal window.
-- **Dataset A vs Dataset C ("cross-repo")** — Dataset C is an independent, non-agent repo pool from a pre-2021 window, a different baseline with different residual risk (see [Limitations § Differential False-Negative Risk](../reference/limitations.md#differential-false-negative-risk-dataset-b-vs-dataset-c)).
+- **Dataset A vs Dataset C ("cross-repo")** — Dataset C is an independent, non-agent repo pool from a pre-2021 window, a different baseline with different residual risk.
 - **Agent identification** — Tier 1 only: co-authored-by trailers, author signatures.
 - **Control variables** — language, domain, repository age, computed at each dataset's own temporal snapshot.
-- **Statistical approach** — unpaired tests (Mann-Whitney U for continuous variables, chi-square for categorical), since A/B/C are separate databases rather than paired observations within one table.
+- **Statistical approach** — unpaired tests (Mann-Whitney U for continuous variables, chi-square for categorical), since A and C are separate databases rather than paired observations within one table.
 
-Treat A-vs-B and A-vs-C as testing related but distinct questions — don't pool all
-three into one undifferentiated "agent vs. human" number.
+Because there is no within-repo control, the A-vs-C comparison cannot separate agent authorship from repository effects. Report it as a cross-repo comparison, and don't present it as an isolated agent effect.
 
 ---
 
@@ -99,7 +96,7 @@ print(fixture_type_adoption)
 
 Each dataset is a separate database file, so a comparison loads both and
 concatenates in pandas — see
-[Database Schema § Cross-dataset query pattern](../architecture/database-schema.md#cross-dataset-compare-a-vs-b-same-repos-agent-vs-human)
+[Database Schema § Cross-dataset query pattern](../architecture/database-schema.md#cross-dataset-compare-a-vs-c-agent-vs-pre-agent-human)
 for the full pattern. The helper below is reused by every example in this section:
 
 ```python
@@ -215,10 +212,10 @@ SELECT COUNT(*), AVG(cyclomatic_complexity), MIN(cyclomatic_complexity), MAX(cyc
 FROM fixtures;
 ```
 
-Run the same query against `db/a.db`, `db/b.db`, or `db/c.db` and combine the
+Run the same query against `db/a.db` or `db/c.db` and combine the
 results in pandas (see [Comparing two datasets](#comparing-two-datasets)) rather
 than trying to express a cross-dataset `GROUP BY` in SQL — there is no single
-database that contains all three.
+database that contains both.
 
 ---
 
@@ -226,11 +223,11 @@ database that contains all three.
 
 When writing papers using this dataset:
 
-1. State which comparison you ran. A-vs-B (within-repo) and A-vs-C (cross-repo) test related but distinct questions — say which one, don't conflate them.
+1. State which comparison you ran. The only comparison is A-vs-C (cross-repo).
 2. Document control variable balance: report the balance-test results (chi-square for categorical, Mann-Whitney U for continuous) for the specific pair compared.
 3. Note the agent detection method: Tier 1 (co-authored-by trailers, author signatures) only — see [Agent Detection](../architecture/agent-detection.md).
-4. Report per-dataset fixture counts from `datasets/{dataset}/summary.yaml` (`python -m collection summarize --dataset {a,b,c}`), not estimated.
-5. Acknowledge temporal confounding for A-vs-C: Dataset C's window (pre-2021) predates Dataset A/B's (2025+), and framework/practice changes across that gap are a threat to validity — see [Limitations](../reference/limitations.md).
+4. Report per-dataset fixture counts from `datasets/{dataset}/summary.yaml` (`python -m collection summarize --dataset {a,c}`), not estimated.
+5. Acknowledge temporal confounding for A-vs-C: Dataset C's window (pre-2021) predates Dataset A's (2025+), and framework/practice changes across that gap are a threat to validity — see [Limitations](../reference/limitations.md).
 
 ---
 
@@ -238,5 +235,5 @@ When writing papers using this dataset:
 
 - [Database Schema](../architecture/database-schema.md) — schema reference, per-dataset differences, query pattern this guide builds on
 - [Agent Detection](../architecture/agent-detection.md) — agent detection methodology
-- [Limitations](../reference/limitations.md) — threats to validity, including the A-vs-B/A-vs-C distinction
+- [Limitations](../reference/limitations.md) — threats to validity, including the A-vs-C distinction
 - [Reproducing Results](reproducing.md) — how to reproduce collection for a given dataset

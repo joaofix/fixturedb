@@ -2,22 +2,21 @@
 
 The FixtureDB datasets are reproducible via the unified `python -m collection`
 CLI, run from agent-enabled repositories discovered through GitHub search.
-Every verb takes `--dataset {a,b,c}` and resolves its default input/output
-directories through `collection/paths.py` — CSVs under `datasets/{a,b,c}/`
+Every verb takes `--dataset {a,c}` and resolves its default input/output
+directories through `collection/paths.py` — CSVs under `datasets/{a,c}/`
 are the real, reviewable output; the per-dataset SQLite DBs under `db/` are
 secondary/derived.
 
 ## Overview
 
-The pipeline builds three datasets from agent-enabled repositories:
+The pipeline builds two datasets:
 
 | Dataset | What it is | `extract-fixtures` collector |
 |---|---|---|
 | A | Agent-authored fixtures | `agent_corpus.AgentCorpusCollector` |
-| B | Human-authored fixtures, within-repo matched control (same repos and 2025+ window as Dataset A) | `human_corpus.HumanCorpusCollector.run()` |
 | C | Human-authored fixtures, cross-repo pre-2021 baseline (independent repo set) | `dataset_c.collect_dataset_c_fixtures()` |
 
-Datasets A and B come from the same agent-enabled repos, scanned in the same temporal window (post-2025), giving paired within-repo observations. Dataset C comes from an independent set of repos created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`, 2016–2020), each checked out at its own pinned pre-2021 commit — no domain sampling, no per-language cap. This bounds repo age at snapshot time instead of relying on a live popularity filter; see [internal-docs/methodology-improvements/dataset-c-repo-selection.md](../../internal-docs/methodology-improvements/dataset-c-repo-selection.md). Agent detection is Tier 1 only (co-authored-by trailers, author signatures).
+Dataset A comes from agent-enabled repos, scanned in the post-2025 temporal window. Dataset C comes from an independent set of repos created within a fixed window (`DATASET_C_MIN_CREATED_DATE` to `HUMAN_CORPUS_CUTOFF_DATE`, 2016–2020), each checked out at its own pinned pre-2021 commit — no domain sampling, no per-language cap. This bounds repo age at snapshot time instead of relying on a live popularity filter; see [internal-docs/methodology-improvements/dataset-c-repo-selection.md](../../internal-docs/methodology-improvements/dataset-c-repo-selection.md). Agent detection is Tier 1 only (co-authored-by trailers, author signatures).
 
 ## Collection Pipeline
 
@@ -30,31 +29,23 @@ python -m collection discover-commits    --dataset a
 python -m collection filter-test-commits --dataset a
 python -m collection extract-fixtures    --dataset a
 
-# Dataset B: resolve repo list from Dataset A, filter test commits, extract
-python -m collection discover-repos      --dataset b
-python -m collection filter-test-commits --dataset b
-python -m collection extract-fixtures    --dataset b
-
 # Dataset C: select repos in the fixed creation-date window, extract at the pinned cutoff commit
 python -m collection discover-repos   --dataset c
 python -m collection extract-fixtures --dataset c
 
 # Cross-cutting: balance, sample, export, validate -- one dataset at a time
-python -m collection analyze-distribution --dataset a --against b
+python -m collection analyze-distribution --dataset a --against c
 python -m collection sample    --dataset a --target-count N
-python -m collection sample    --dataset b --target-count N
 python -m collection sample    --dataset c
 python -m collection export    --dataset a
-python -m collection export    --dataset b
 python -m collection export    --dataset c
 python -m collection validate  --dataset a
-python -m collection validate  --dataset b
 python -m collection validate  --dataset c
 ```
 
 `--help` on any verb lists its full argument set (`--language`,
 `--repos-per-language`, `--workers`, `--output-db`, etc.). Before a full
-collection run, use `python -m collection toy --dataset {a,b,c} --repos N`
+collection run, use `python -m collection toy --dataset {a,c} --repos N`
 to smoke-test the same code path end-to-end at small scale, entirely under
 `toy-dataset/` (never touches `datasets/`/`db/`).
 
@@ -62,26 +53,24 @@ to smoke-test the same code path end-to-end at small scale, entirely under
 
 **Databases:**
 - `db/a.db` — Dataset A fixtures
-- `db/b.db` — Dataset B fixtures
 - `db/c.db` — Dataset C fixtures
 - Schema: `repositories`, `test_files`, `fixtures`, `mock_usages` (see [Database Schema](../architecture/database-schema.md))
 
 **CSV exports (the primary, reviewable output):**
 - `datasets/a/{repos,commits,test-commits,fixtures}/`
-- `datasets/b/{repos,test-commits,fixtures}/`
 - `datasets/c/{repos,fixtures}/`
 
 **Final export ZIPs:**
-- `export/a.zip`, `export/b.zip`, `export/c.zip` — one standalone, independently-usable archive per dataset
+- `export/a.zip`, `export/c.zip` — one standalone, independently-usable archive per dataset
 
 **Statistics:**
-- `output/sample_{a,b,c}.json` — per-dataset stratified-sampling results
+- `output/sample_{a,c}.json` — per-dataset stratified-sampling results
 - `output/*_corpus_summary_*.json` — extraction run summaries
 
 ## Reproducing from Frozen Inputs
 
-All three datasets reproduce from the `github-search-raw/` snapshot and each
-stage's own CSV output under `datasets/{a,b,c}/`.
+Both datasets reproduce from the `github-search-raw/` snapshot and each
+stage's own CSV output under `datasets/{a,c}/`.
 
 ```bash
 # Verify clones are available
@@ -101,8 +90,7 @@ sqlite3 db/a.db ".schema fixtures"
 # Count Dataset A fixtures
 sqlite3 db/a.db "SELECT COUNT(*) FROM fixtures;"
 
-# Count Dataset B fixtures and Dataset C fixtures separately (each has its own DB)
-sqlite3 db/b.db "SELECT COUNT(*) FROM fixtures;"
+# Count Dataset C fixtures (its own DB)
 sqlite3 db/c.db "SELECT COUNT(*) FROM fixtures;"
 ```
 
@@ -133,15 +121,15 @@ GitHub token. If a step you're running does hit rate limits, set
 ### Large Database Performance
 
 ```bash
-sqlite3 db/b.db "VACUUM;"
-sqlite3 db/b.db "ANALYZE;"
+sqlite3 db/a.db "VACUUM;"
+sqlite3 db/a.db "ANALYZE;"
 ```
 
 ### Verify Database Integrity
 
 ```bash
-sqlite3 db/b.db "PRAGMA integrity_check;"
 sqlite3 db/a.db "PRAGMA integrity_check;"
+sqlite3 db/c.db "PRAGMA integrity_check;"
 ```
 
 ## Determinism & Reproducibility Guarantees
@@ -154,10 +142,10 @@ Agent detection (co-authored-by trailer parsing, Tier 1), fixture extraction (tr
 
 Repository selection depends on the `github-search-raw/` snapshot and each stage's own QC CSV outputs. Temporal boundaries are fixed via `AGENT_CORPUS_START_DATE`/`HUMAN_CORPUS_CUTOFF_DATE` in `collection/config.py`. Clone freshness depends on git history at time of collection — Dataset C pins an explicit cutoff commit SHA to avoid this issue. Live GitHub state can change between runs (repos going private or being deleted) — see [Limitations § Repository Availability](../reference/limitations.md#repository-availability).
 
-Guarantee: if the `github-search-raw/` snapshot, the QC CSV inputs, and the temporal boundaries are fixed, all three datasets are reproducible.
+Guarantee: if the `github-search-raw/` snapshot, the QC CSV inputs, and the temporal boundaries are fixed, both datasets are reproducible.
 
 ## See Also
 
 - [Database Schema](../architecture/database-schema.md) — Database schema
-- [Collection Architecture](../architecture/collection.md) — Dataset A/B/C build map and module layout
+- [Collection Architecture](../architecture/collection.md) — Dataset A/C build map and module layout
 - [Analyzing the Dataset](./usage.md) — Query examples and statistical analysis

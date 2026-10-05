@@ -21,10 +21,9 @@ It's a master's thesis companion codebase. The pipeline detects agent-authored c
 
 ## Key datasets we build
 - **Dataset A** (`datasets/a/`): agent-authored fixtures from agent-enabled repos
-- **Dataset B** (`datasets/b/`): human-authored fixtures from the same repos (matched control)
 - **Dataset C** (`datasets/c/`): human-authored fixtures from pre-2021 repos (cross-repo baseline)
 
-Every dataset is built through the same CLI verbs, selected via `--dataset {a,b,c}`
+Every dataset is built through the same CLI verbs, selected via `--dataset {a,c}`
 (`python -m collection <verb> --dataset X`) — see "Command-line interface" below.
 Each verb calls exactly one collector/function; no runtime branching decides which
 dataset a run produces:
@@ -32,7 +31,6 @@ dataset a run produces:
 | Dataset | `extract-fixtures` collector |
 |---|---|
 | A | `agent_corpus.AgentCorpusCollector` |
-| B | `human_corpus.HumanCorpusCollector.run()` |
 | C | `dataset_c.collect_dataset_c_fixtures()` |
 
 ## Languages we collect fixtures for
@@ -43,8 +41,8 @@ Python, Java, JavaScript, TypeScript.
 
 ```
 collection/          # Main pipeline code (the "library")
-  __main__.py        # `python -m collection <verb> --dataset {a,b,c}` -- the one CLI surface
-  paths.py           # Central path registry: datasets/{a,b,c}/{stage}, db/{a,b,c}.db, export/{a,b,c}.zip
+  __main__.py        # `python -m collection <verb> --dataset {a,c}` -- the one CLI surface
+  paths.py           # Central path registry: datasets/{a,c}/{stage}, db/{a,c}.db, export/{a,c}.zip
   config.py          # Thresholds, dates -- re-exports constants loaded from study_parameters/ and heuristics/ below
   study_parameters/  # Settings + study-design constants as YAML (non-code extensions, framework
                      # registry, per-language configs, and study_parameters.yaml: temporal
@@ -70,28 +68,23 @@ collection/          # Main pipeline code (the "library")
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a
-  repo_resolve.py    # discover-repos --dataset b (resolves Dataset B's repo list from Dataset A's)
   select_dataset_c_repos.py  # discover-repos --dataset c
   dedupe_dataset_c_repos.py  # repo-level dedup, between discover-repos --dataset c's two passes
   test_commit_filter.py       # filter-test-commits --dataset a
-  human_test_commit_filter.py # filter-test-commits --dataset b (+ pre-2021 helper used by Dataset C tooling)
   test_commit_resume_state.py # checkpoint/resume state shared by both filters above
-  dedupe_commits_by_sha.py  # cross-repo-name commit dedup, a/b, after filter-test-commits
+  dedupe_commits_by_sha.py  # cross-repo-name commit dedup, a, after filter-test-commits
   agent_corpus.py    # Dataset A: extract agent fixtures (extract-fixtures --dataset a)
-  human_corpus.py    # Dataset B: extract human fixtures, within-repo (extract-fixtures --dataset b)
-  human_corpus_repo_selection.py  # Dataset B's repo selection, split out of human_corpus.py
   dataset_c.py        # Dataset C: extract human fixtures, cross-repo baseline (extract-fixtures --dataset c)
-  dedupe_fixtures_by_sha.py  # Dataset B only -- fixture-level dedup, run after every extract-fixtures --dataset b
   dataset_pipeline.py # analyze-distribution / sample / export cross-cutting stages
   dataset_validator.py # validate stage
-  dataset_summary.py  # summarize stage -- writes {dataset}/summary.yaml (repo/commit/fixture counts, purity-gate rate for a/b); also run automatically at the end of `toy`
-  toy.py              # `toy --dataset {a,b,c}`: small real end-to-end run under toy-dataset/
+  dataset_summary.py  # summarize stage -- writes {dataset}/summary.yaml (repo/commit/fixture counts, purity-gate rate for a); also run automatically at the end of `toy`
+  toy.py              # `toy --dataset {a,c}`: small real end-to-end run under toy-dataset/
   fixture_extractor.py     # Tree-sitter AST fixture extraction
   detector.py        # Fixture pattern detection
   corpus_utils.py    # Shared repo/fixture persistence helpers
   between_group_comparison.py  # Statistical-test primitives (effect sizes etc.) used by research_questions/ below.
                      # BetweenGroupComparator in here is dead/orphaned -- don't use it
-  rq1_prevalence_scan.py  # RQ1's own collection, independent of --dataset {a,b,c}: scans the raw
+  rq1_prevalence_scan.py  # RQ1's own collection, independent of --dataset {a,c}: scans the raw
                      # github-search-raw/ universe for test/fixture/setup/teardown prevalence,
                      # writes db/rq1_prevalence.db + rq1-prevalence/*.csv. Run directly:
                      # `python -m collection.rq1_prevalence_scan`
@@ -102,10 +95,10 @@ collection/          # Main pipeline code (the "library")
                      # heuristics/rq5_agent_file_keywords.yaml. Run directly:
                      # `python -m collection.rq5_agent_file_scan`
   research_questions/  # Answers the paper's RQs, writes research_questions/*.md (committed):
-                     # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,b,c}.db),
+                     # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,c}.db),
                      # rq2/rq3/rq4.py (structural/teardown/mocking, read db/{a,c}.db), rq5.py
                      # (agent config file test/fixture keyword prevalence, reads
-                     # db/rq5_agent_files.db -- not db/{a,b,c}.db), balance.py (control-variable
+                     # db/rq5_agent_files.db -- not db/{a,c}.db), balance.py (control-variable
                      # check), dataset_findings.py (non-RQ descriptive findings),
                      # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
@@ -120,39 +113,37 @@ paper-draft/         # The paper, one markdown file per section, LaTeX tables in
 
 ## Command-line interface
 
-One CLI, one set of step verbs shared across all three datasets:
+One CLI, one set of step verbs shared across both datasets:
 
 ```bash
-python -m collection discover-repos       --dataset {a,b,c}
+python -m collection discover-repos       --dataset {a,c}
 python -m collection discover-commits     --dataset a
-python -m collection filter-test-commits  --dataset {a,b}
-python -m collection extract-fixtures     --dataset {a,b,c}
-python -m collection analyze-distribution --dataset a --against b
-python -m collection sample               --dataset {a,b,c}
-python -m collection export               --dataset {a,b,c}
-python -m collection validate             --dataset {a,b,c}
-python -m collection summarize            --dataset {a,b,c}
-python -m collection toy                  --dataset {a,b,c} [--repos N]
+python -m collection filter-test-commits  --dataset {a}
+python -m collection extract-fixtures     --dataset {a,c}
+python -m collection analyze-distribution --dataset a --against c
+python -m collection sample               --dataset {a,c}
+python -m collection export               --dataset {a,c}
+python -m collection validate             --dataset {a,c}
+python -m collection summarize            --dataset {a,c}
+python -m collection toy                  --dataset {a,c} [--repos N]
 ```
 
 Not every verb applies to every dataset (`discover-commits`/most of `filter-test-commits`
-are Dataset-A/B-specific, since Dataset C has no per-commit history scan) — invoking one
+are Dataset-A-specific, since Dataset C has no per-commit history scan) — invoking one
 that doesn't apply exits 1 with an explicit message. Every verb resolves its default
 input/output directories through `collection/paths.py`; `toy` runs the identical step
 functions rooted under `toy-dataset/` instead of `datasets/`+`db/`.
 
-The `dedupe_*.py` scripts sit outside this verb interface -- invoke as
-`python -m collection.dedupe_fixtures_by_sha --dataset b`, etc. For the full ordered
+For the full ordered
 command chain per dataset, see `internal-docs/RUN_COMMANDS.md`.
 
 ## Database
 
-SQLite via `collection/db.py`. One output database per dataset: `db/a.db`, `db/b.db`,
-`db/c.db`. Schema includes
+SQLite via `collection/db.py`. One output database per dataset: `db/a.db`, `db/c.db`. Schema includes
 `repositories`, `test_files`, `fixtures`, `commit_observations`, `test_commits`,
 `mock_usages`. Use `db_session()` context manager for all DB access — it handles WAL
 mode, retries, and connection pooling. The database is secondary: the CSV files under
-`datasets/{a,b,c}/` are the real, reviewable output of each pipeline stage.
+`datasets/{a,c}/` are the real, reviewable output of each pipeline stage.
 
 ## Key constants (config.py)
 
