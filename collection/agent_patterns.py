@@ -53,13 +53,10 @@ AGENT_SIGNATURES = _HEURISTICS["commit_signatures"]
 # Full config-file/directory catalog, per agent (broad/lightweight scans).
 LIGHTWEIGHT_AGENT_CONFIG_PATTERNS = _HEURISTICS["file_based"]
 
-# Subset of the file-based catalog used for the paper's strict
-# repo-qualification filter.
-PAPER_AGENT_CONFIG_PATTERNS = {
-    agent: patterns
-    for agent, patterns in _HEURISTICS["file_based"].items()
-    if agent in _HEURISTICS["paper_scope"]
-}
+# The paper's repo-qualification filter (Dataset A) uses the full file-based
+# catalog, the same as the lightweight scans. It used to be a three-agent
+# subset (claude/cursor/copilot); that restriction was removed.
+PAPER_AGENT_CONFIG_PATTERNS = _HEURISTICS["file_based"]
 
 # Flat list of commit author/email patterns identifying CI/automation bot
 # accounts (dependabot, renovate, github-actions, etc.) rather than a human

@@ -10,8 +10,8 @@ time; see docs/architecture/detection.md's "On the word 'heuristics'" note),
 while feature_extraction_patterns.yaml is genuinely regex/heuristic. Don't
 infer one from the other just because both live in this directory.
 
-- agent_heuristics.yaml (this package's root): paper_scope, this project's
-  own data.
+- agent_heuristics.yaml (this package's root): currently holds no keys; kept
+  as a placeholder for future agent-level settings.
 - agent-mining/agent_files.csv, agent_authors.csv, bots.csv: file_based,
   commit_signatures, bot_patterns respectively -- flat CSVs mirroring
   labri-progress/agent-mining's own data files so a reviewer can diff them
@@ -223,11 +223,10 @@ def _load_known_human_collision_patterns(
 
 def load_agent_heuristics(path: Path = _HEURISTICS_PATH) -> Dict[str, Any]:
     """Parse and return the agent heuristics catalog (file_based,
-    commit_signatures, bot_patterns, known_human_collision_patterns,
-    paper_scope) -- see this module's docstring for where each piece comes
-    from."""
+    commit_signatures, bot_patterns, known_human_collision_patterns) -- see
+    this module's docstring for where each piece comes from."""
     with path.open("r", encoding="utf-8") as fh:
-        data = yaml.safe_load(fh)
+        data = yaml.safe_load(fh) or {}
     data["file_based"] = _load_file_based_patterns()
     data["commit_signatures"] = _load_commit_signatures()
     data["bot_patterns"] = _load_bot_patterns()

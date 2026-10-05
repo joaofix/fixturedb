@@ -258,3 +258,7 @@ paper-draft/
 # Archived dataset collection runs (datasets/{a,b,c} snapshots moved aside
 # before a recollection), grouped by week e.g. past-datasets/13-17-jul-2026/
 past-datasets/
+
+# Archived SQLite databases from before a recollection. Not committed: the
+# files are too large for GitHub (a.db alone is ~150 MB).
+past-db/

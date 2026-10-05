@@ -56,8 +56,8 @@ def test_path_matches_pattern_dir_marker_rejects_plain_file():
 
 def test_repo_contains_patterns_detects_multi_segment_dir_marker(tmp_path):
     """End-to-end regression for the .github/instructions/ catalog entry
-    (copilot's real custom-instructions convention, in PAPER_AGENT_CONFIG_PATTERNS
-    since copilot is in paper_scope) -- previously silently unmatchable."""
+    (copilot's real custom-instructions convention, in PAPER_AGENT_CONFIG_PATTERNS,
+    which is the full catalog) -- previously silently unmatchable."""
     repo = tmp_path / "repo"
     (repo / ".github" / "instructions").mkdir(parents=True)
     (repo / ".github" / "instructions" / "setup.md").write_text("x")

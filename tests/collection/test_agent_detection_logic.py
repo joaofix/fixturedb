@@ -2,8 +2,12 @@
 
 from pathlib import Path
 
-from collection.agent_patterns import scan_cloned_repo_for_agent_configs
+from collection.agent_patterns import (
+    PAPER_AGENT_CONFIG_PATTERNS,
+    scan_cloned_repo_for_agent_configs,
+)
 from collection.agent_signal_primitives import GitHubAgentFileChecker
+from collection.heuristics import load_agent_heuristics
 
 
 def _make_repo(tmp_path: Path, repo_name: str = "owner__repo") -> Path:
@@ -35,6 +39,34 @@ def test_scan_cloned_repo_for_agent_configs_matches_nested_directory(tmp_path):
     (nested / "README.md").write_text("# Anthropic\n")
 
     assert scan_cloned_repo_for_agent_configs(repo_path) is not None
+
+
+def test_paper_qualification_uses_the_full_file_based_catalog():
+    """Dataset A's qualification must not be restricted to a subset of agents."""
+    assert PAPER_AGENT_CONFIG_PATTERNS == load_agent_heuristics()["file_based"]
+
+
+def test_scan_qualifies_repo_with_only_agents_md(tmp_path):
+    """AGENTS.md (the Generic entry) qualifies a repo now that the subset is gone."""
+    repo_path = _make_repo(tmp_path)
+    (repo_path / "AGENTS.md").write_text("# Agents\n")
+
+    assert scan_cloned_repo_for_agent_configs(repo_path) == "AGENTS.md"
+
+
+def test_scan_qualifies_repo_configured_for_an_agent_outside_the_old_subset(tmp_path):
+    """Aider was outside the old claude/cursor/copilot subset and now qualifies."""
+    repo_path = _make_repo(tmp_path)
+    (repo_path / ".aider.conf.yml").write_text("model: gpt-4o\n")
+
+    assert scan_cloned_repo_for_agent_configs(repo_path) is not None
+
+
+def test_scan_returns_none_for_repo_without_any_agent_config(tmp_path):
+    repo_path = _make_repo(tmp_path)
+    (repo_path / "README.md").write_text("# Plain repo\n")
+
+    assert scan_cloned_repo_for_agent_configs(repo_path) is None
 
 
 def test_github_api_checker_recurses_one_level_for_nested_configs(monkeypatch):

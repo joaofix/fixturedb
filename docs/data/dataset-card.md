@@ -91,7 +91,7 @@ Star count is not a control variable: every repository comes from `github-search
 Three-corpus between-group comparison. See [Agent Detection](../architecture/agent-detection.md) for the full detection methodology and `internal-docs/methodology-improvements/dataset-c-repo-selection.md` for Dataset C's repo-selection rationale.
 
 1. **Repository seeding.** All candidate repositories come from SEART GHS (`github-search-raw/`), filtered at source to ≥500 stars, ≥100 commits, ≥5k LOC, non-fork. This filter doesn't catch org transfers or independently-created "shadow copies" (repos with identical git history but no GitHub-native fork relationship) — see [Repository-Level Duplication](#repository-level-duplication) below and [Limitations](../reference/limitations.md#repository-level-duplication-forks-org-transfers-shadow-copies).
-2. **Dataset A repo qualification.** Candidates whose working tree contains a Claude/Cursor/Copilot config file — a strict subset of the ~60-agent detection catalog, chosen as an unambiguous, high-adoption qualification signal.
+2. **Dataset A repo qualification.** Candidates whose working tree contains a config file from any agent in the full ~60-agent detection catalog (`agent_files.csv`, including `AGENTS.md`).
 3. **Dataset A commit scanning.** Within qualified repos, commits since 2025-01-01 are checked against the full agent-signature catalog (bot exclusion, then trailer, then author identity).
 4. **Dataset B repo resolution.** Resolved directly from Dataset A's already-qualified repos, not independently searched — this is what makes B a within-repo control by construction.
 5. **Dataset C repo selection.** Independent of A/B, filtered only by repo-creation date (2016-01-01 to 2020-12-31); no agent-related filter, since this window predates agent tooling entirely. Commit count, test-file count, and non-blank LOC are all independently re-verified against each repo's own pinned pre-2021 cutoff commit (`dataset_c.py::_process_repo()`), not trusted from step 1's crawl-time source-filter values — a repo could have grown past any of those floors well after 2020. Star count has no historical equivalent to re-check, so it's simply not enforced for Dataset C (see [Known limitations](#known-limitations) below).
@@ -204,7 +204,7 @@ Final per-language fixture counts depend on repository availability and the pipe
 
 | Dataset | Repositories | Commits/Snapshot | Fixtures | Description |
 |---------|-------------|-------------------|----------|-------------|
-| `a` | Agent-enabled (Claude/Cursor/Copilot config) | Agent-attributed, 2025-01-01+ | Agent-authored | Primary agent corpus |
+| `a` | Agent-enabled (any agent in the config-file catalog) | Agent-attributed, 2025-01-01+ | Agent-authored | Primary agent corpus |
 | `b` | Same repos as `a` | Non-agent, 2025-01-01+ | Human-authored | Within-repo control |
 | `c` | Independent pool, created 2016–2020 | Snapshot at each repo's last commit ≤2020-12-31 | Human-authored | Cross-repo, pre-agent-era baseline |
 

@@ -1,12 +1,6 @@
-# AI coding agent detection heuristics -- paper_scope only. file_based and
-# commit_signatures live in collection/heuristics/agent-mining/, loaded by
-# collection/heuristics/__init__.py. See docs/architecture/agent-detection.md
-# for the full detection methodology and known limitations.
-
-# paper_scope: subset of agents used for the paper's strict repo-qualification
-# filter (agent_patterns.py's scan_cloned_repo_for_agent_configs). Broader
-# pre-clone/lightweight scans use the full agent-mining/agent_files.csv catalog.
-paper_scope:
-  - claude
-  - cursor
-  - copilot
+# AI coding agent detection heuristics. Currently holds no keys: the agent
+# catalogs live in collection/heuristics/agent-mining/ (file_based,
+# commit_signatures, bot_patterns, known_human_collision_patterns), loaded by
+# collection/heuristics/__init__.py. The paper's Dataset A qualification uses
+# the full file_based catalog, so no separate subset is kept here.
+# See docs/architecture/agent-detection.md for the full detection methodology.

@@ -58,7 +58,7 @@ collection/          # Main pipeline code (the "library")
   heuristics/        # Detection-heuristic catalogs as YAML/CSV -- pattern/keyword tables that
                      # drive a classification decision (agent vs. human, fixture vs. not,
                      # boilerplate repo vs. not), as opposed to study_parameters/'s plain settings
-  heuristics/agent_heuristics.yaml  # paper_scope only now -- edit here to change the paper's strict-scope agent subset (this project's own catalog, kept at heuristics/ root)
+  heuristics/agent_heuristics.yaml  # currently holds no keys; the agent catalogs live in heuristics/agent-mining/ (this project's own catalog, kept at heuristics/ root)
   heuristics/agent-mining/agent_files.csv  # Config-file/directory patterns (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's files.csv schema+content for citation
   heuristics/agent-mining/agent_authors.csv  # Commit author/trailer signatures (pattern,tool,start_date,end_date) -- mirrors labri-progress/agent-mining's authors.csv schema+content for citation
   heuristics/agent-mining/bots.csv  # CI/automation bot account patterns (pattern,tool) -- mirrors labri-progress/agent-mining's bots.csv schema+content for citation

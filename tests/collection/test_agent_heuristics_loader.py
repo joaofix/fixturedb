@@ -25,14 +25,7 @@ def test_loader_returns_expected_top_level_keys():
         "commit_signatures",
         "bot_patterns",
         "known_human_collision_patterns",
-        "paper_scope",
     }
-
-
-def test_paper_scope_agents_all_have_file_based_patterns():
-    data = load_agent_heuristics()
-    for agent in data["paper_scope"]:
-        assert agent in data["file_based"], f"{agent} in paper_scope but not file_based"
 
 
 def test_every_catalog_entry_is_a_non_empty_list_of_non_empty_strings():
