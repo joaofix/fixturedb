@@ -86,10 +86,15 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   in `db/a_discover_commits.db` (tables `repo_progress` and `agent_commits`, which also
   back up the rows). A restart skips every recorded repository and reloads the scan
   totals from that file. A repository whose clone fails for a transient reason is not
-  recorded, so the next run retries it. A repository whose clone is refused for a
+  recorded, so the next run retries it. A GitHub throttling response (HTTP 429, a rate or
+  abuse limit) is also transient, even when git prints a credential prompt with it.
+  A repository whose clone is refused for a
   permanent reason (deleted, private, or not found) is recorded with status
   `clone_unavailable` and is not retried. To retry those, delete their rows from
   `repo_progress` in `db/a_discover_commits.db`.
+- **`discover-commits --max-concurrent-clones N`** caps the git clones in flight at once,
+  independently of `--workers` (default: 8, and it does not read `MAX_CONCURRENT_CLONES`).
+  Workers above the clone limit only wait for a clone slot.
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
   work; DB and CSV writes stay on the main thread regardless. **Not CPU core
   count** is the ceiling here — the `discover-repos`/`discover-commits`/

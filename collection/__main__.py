@@ -99,6 +99,7 @@ def _cmd_discover_commits(args: argparse.Namespace) -> int:
         workers=args.workers,
         input_dir=args.input_dir or paths.stage_dir("a", "repos"),
         output_dir=args.output_dir or paths.stage_dir("a", "commits"),
+        max_concurrent_clones=args.max_concurrent_clones,
     )
 
 
@@ -350,6 +351,12 @@ def build_parser() -> argparse.ArgumentParser:
     add_workers_arg(discover_commits, default=4)
     discover_commits.add_argument("--input-dir", type=Path, default=None)
     discover_commits.add_argument("--output-dir", type=Path, default=None)
+    discover_commits.add_argument(
+        "--max-concurrent-clones",
+        type=int,
+        default=8,
+        help="Clones allowed in flight at once (default: 8)",
+    )
 
     filter_test_commits = subparsers.add_parser(
         "filter-test-commits", help="Filter commits down to ones touching test files"

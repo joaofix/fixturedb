@@ -166,7 +166,17 @@ class TestDiscoverCommits:
             workers=4,
             input_dir=paths.stage_dir("a", "repos"),
             output_dir=paths.stage_dir("a", "commits"),
+            max_concurrent_clones=8,
         )
+
+    def test_max_concurrent_clones_flag_is_passed_to_run(self):
+        with patch(
+            "collection.repository_quality_control.agent_commit_counter.run",
+            return_value=0,
+        ) as mock_run:
+            main(["discover-commits", "--dataset", "a", "--max-concurrent-clones", "12"])
+
+        assert mock_run.call_args.kwargs["max_concurrent_clones"] == 12
 
     def test_dataset_b_and_c_rejected_by_argparse(self):
         # "b"/"c" are rejected at the argparse level (choices=("a",)) before

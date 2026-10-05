@@ -49,7 +49,7 @@ from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_
 from collection.config import shallow_clone_since
 from collection.csv_adapter import get_adapter
 from collection.db import db_session
-from collection.ephemeral_clone import temp_clone_commit_history
+from collection.ephemeral_clone import set_max_concurrent_clones, temp_clone_commit_history
 
 # Defaults, resolved through the central path registry (collection.paths).
 # Not created at import time -- `run()` creates `output_dir` once it knows
@@ -368,14 +368,20 @@ def run(
     input_dir: Path = GITHUB_SEARCH_AGENT_DIR,
     output_dir: Path = OUTPUT_DIR,
     progress_db_path: Path = PROGRESS_DB_PATH,
+    max_concurrent_clones: int | None = None,
 ) -> int:
     """Scan all config-positive repos for agent commits and write per-language CSVs.
+
+    `max_concurrent_clones` caps the clones in flight at once. None keeps the
+    MAX_CONCURRENT_CLONES environment default.
 
     Each repository is checkpointed in `progress_db_path` after its CSV rows are
     written. The CSVs are written first: a crash between the two writes repeats
     that one repository, and the SHA check drops its repeated rows.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
+    if max_concurrent_clones is not None:
+        set_max_concurrent_clones(max_concurrent_clones)
     initialise_progress_db(progress_db_path)
     candidates = read_config_positive_rows(input_dir)
     logger.info("Found %d config-positive repos", len(candidates))

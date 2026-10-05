@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 from collection import ephemeral_clone as cm
@@ -133,3 +134,49 @@ def test_temp_clone_commit_history_failure(monkeypatch):
         "https://example.com/repo.git", "owner/repo"
     ) as rp:
         assert rp is None
+
+
+class TestSetMaxConcurrentClones:
+    """The clone limit is a run-time setting, not only the environment variable."""
+
+    def test_limit_is_the_number_of_clones_allowed_in_flight(self):
+        from collection import ephemeral_clone
+
+        original = ephemeral_clone._CLONE_SEMAPHORE
+        try:
+            ephemeral_clone.set_max_concurrent_clones(3)
+            sem = ephemeral_clone._CLONE_SEMAPHORE
+            assert [sem.acquire(blocking=False) for _ in range(4)] == [True, True, True, False]
+        finally:
+            ephemeral_clone._CLONE_SEMAPHORE = original
+
+    def test_rejects_a_limit_below_one(self):
+        from collection import ephemeral_clone
+
+        with pytest.raises(ValueError):
+            ephemeral_clone.set_max_concurrent_clones(0)
+
+    def test_discover_commits_run_applies_the_limit(self, tmp_path, monkeypatch):
+        from collection.repository_quality_control import agent_commit_counter
+
+        applied = []
+        monkeypatch.setattr(agent_commit_counter, "set_max_concurrent_clones", applied.append)
+        monkeypatch.setattr(agent_commit_counter, "read_config_positive_rows", lambda input_dir: [])
+
+        agent_commit_counter.run(
+            input_dir=tmp_path,
+            output_dir=tmp_path / "out",
+            progress_db_path=tmp_path / "p.db",
+            max_concurrent_clones=7,
+        )
+        assert applied == [7]
+
+    def test_discover_commits_run_keeps_the_environment_default_when_not_given(self, tmp_path, monkeypatch):
+        from collection.repository_quality_control import agent_commit_counter
+
+        applied = []
+        monkeypatch.setattr(agent_commit_counter, "set_max_concurrent_clones", applied.append)
+        monkeypatch.setattr(agent_commit_counter, "read_config_positive_rows", lambda input_dir: [])
+
+        agent_commit_counter.run(input_dir=tmp_path, output_dir=tmp_path / "out", progress_db_path=tmp_path / "p.db")
+        assert applied == []

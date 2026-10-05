@@ -32,6 +32,19 @@ DEFAULT_MAX_CONCURRENT_CLONES = int(os.getenv("MAX_CONCURRENT_CLONES", "4"))
 _CLONE_SEMAPHORE = threading.Semaphore(DEFAULT_MAX_CONCURRENT_CLONES)
 
 
+def set_max_concurrent_clones(limit: int) -> None:
+    """Replace the clone semaphore with one that allows `limit` clones in flight.
+
+    Call before any clone starts (a CLI verb does this once, at startup).
+    Clones look the semaphore up when they start, so the new limit applies to
+    every clone after the call.
+    """
+    global _CLONE_SEMAPHORE
+    if limit < 1:
+        raise ValueError(f"max concurrent clones must be >= 1, got {limit}")
+    _CLONE_SEMAPHORE = threading.Semaphore(limit)
+
+
 def clone_with_throttle(
     clone_fn: Callable[[str, Path], bool],
     clone_url: str,
