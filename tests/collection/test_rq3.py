@@ -3,8 +3,8 @@
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks per-repo/per-language repo-count
 bookkeeping and report rendering -- never touching the real db/ or
-research_questions/ directories. rq3.py no longer classifies fixture_role
-itself (that now happens at extraction time -- see detector_shared.py's
+research_questions/ directories. rq3.py does not classify fixture_role
+itself. That happens at extraction time (see detector_shared.py's
 _classify_fixture_kinds() and detector_python.py's pytest body-analysis
 classification, both covered by their own test files:
 test_fixture_kind_classification.py and test_classify_pytest_fixture_kind.py),
@@ -12,8 +12,7 @@ so these fixture-dict literals set fixture_role directly via
 _default_fixture_role() below -- a thin test-only wrapper around those
 same two real functions, not a reimplementation, so this file's synthetic
 data stays in sync with production classification automatically. Neither
-table in this script runs a statistical test anymore (removed
-2026-09-27, see rq3.py's module docstring) -- both are purely
+table in this script runs a statistical test. Both are purely
 descriptive, so there's no Mann-Whitney/BH-FDR machinery left here to
 test at all.
 """
@@ -517,7 +516,7 @@ class TestGenerateReport:
     def test_teardown_coverage_table_renders_percentages_no_statistical_test(self, tmp_path):
         """Table 2: A has 1 of 2 repos with any teardown (50%); C has 2 of
         2 (100%). Purely descriptive -- no statistic/effect-size/p-value
-        columns at all (removed 2026-09-27)."""
+        columns at all."""
         _make_db(
             tmp_path,
             "a",

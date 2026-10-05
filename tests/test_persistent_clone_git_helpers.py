@@ -1,8 +1,6 @@
 """Tests for persistent_clone.py's small git read-only helpers.
 
-Previously had zero test coverage; added while migrating them from
-subprocess ("git rev-parse HEAD") to GitPython (git.Repo(...).head.commit.hexsha)
-as part of a broader DIY-vs-library pass.
+Uses GitPython (git.Repo(...).head.commit.hexsha) to read the HEAD commit.
 """
 
 import subprocess
@@ -87,9 +85,8 @@ def test_count_commits_returns_none_not_zero_when_verification_fails(tmp_path):
 
 
 def test_count_commits_fetch_uses_no_prompt_env(tmp_path, monkeypatch):
-    """Real incident (2026-08-11): discover-repos got stuck repeatedly on
-    interactive Username/Password prompts. _count_commits()'s `git fetch`
-    is one of the network calls that must never let git prompt. Patches
+    """_count_commits()'s `git fetch` is a network call that must never let git
+    prompt. Patches
     the underlying subprocess.run (not run_git_no_prompt itself) so the
     real env-injection logic actually runs and gets verified."""
     repo = _init_repo(tmp_path)
@@ -133,9 +130,8 @@ def test_is_accessible_remote_detects_credential_prompt(monkeypatch):
 
 
 def test_count_test_files_counts_every_directory_pattern_match_not_just_one(tmp_path):
-    """Regression test: `_count_test_files()` used to credit at most 1 file
-    per matched `test_path_patterns` directory, no matter how many test
-    files actually lived there (a stray `break` after the first match).
+    """`_count_test_files()` counts every test file in each matched
+    `test_path_patterns` directory.
     Delegating to `is_test_file_path()` fixed that -- these 3 files live
     under Python's `tests/` directory convention without a `_test.py`-style
     suffix, so the old code would have reported 1, not 3."""

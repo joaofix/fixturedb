@@ -38,8 +38,8 @@ def _fake_result(returncode: int, stderr: str = "") -> Mock:
 
 
 class TestNoPromptEnv:
-    """Real incident (2026-08-11): a Dataset A discover-repos run got stuck
-    repeatedly on `Username for 'https://github.com':` prompts -- fully
+    """A clone must never prompt for a username. Prompts from git stall an
+    automated run. Fully
     automated, nothing there to type a username, so each affected repo just
     blocked until its subprocess timeout eventually fired (up to 300s,
     times retries). These tests cover the fix: git must never be given the
@@ -170,9 +170,7 @@ class TestCloneToTempdir:
         assert calls["n"] == 1  # confirmed-permanent -- no retry attempted
 
     def test_generic_failure_retries_then_raises_clone_unavailable(self, tmp_path, monkeypatch):
-        """Real incident (2026-08-12): two verifiably public, reachable
-        repos each failed all 3 clone attempts during a live discover-
-        commits run, but the raised message gave no clue why -- the actual
+        """A clone failure must report the real cause, not just a generic message. The actual
         stderr from every attempt was silently discarded. This covers the
         fix: the last attempt's stderr survives into the exception message."""
         calls = {"n": 0}
@@ -521,8 +519,7 @@ class TestCloneToTempdirNoPromptEnv:
 
 class TestShallowCloneRepo:
     """shallow_clone_repo() (used by discover-repos' agent-config scan --
-    the exact step that got stuck in the real 2026-08-11 incident) had zero
-    prior test coverage."""
+    the step that can stall on a prompt) is covered here."""
 
     def test_success(self, tmp_path, monkeypatch):
         def fake_run(args, **kwargs):

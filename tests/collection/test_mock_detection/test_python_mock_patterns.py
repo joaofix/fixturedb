@@ -36,7 +36,7 @@ def svc():
     def test_unittest_mock_bare_patch(self):
         """`from unittest.mock import patch` then calling it unqualified
         (patch('dotted.path'), no "mock." prefix) is at least as common an
-        idiom as mock.patch(...) -- previously not covered at all."""
+        idiom as mock.patch(...)."""
         code = """
 import unittest
 from unittest.mock import Mock, patch
@@ -85,9 +85,8 @@ def svc():
 
     def test_unittest_mock_patch_object(self):
         """mock.patch.object(target, 'attr') is a distinct call shape from
-        mock.patch('dotted.path') -- previously missed entirely since the
-        plain .patch( pattern requires an opening paren immediately after
-        "patch", which .object( breaks."""
+        mock.patch('dotted.path') -- the plain .patch( pattern needs an opening
+        paren right after "patch", which .object( breaks."""
         code = """
 @pytest.fixture
 def svc():
@@ -134,7 +133,7 @@ class TestPytestMockPatterns:
 
     def test_pytest_mock_patch_object(self):
         """mocker.patch.object(...) is pytest-mock's equivalent of
-        mock.patch.object(...) -- same previously-missed call shape."""
+        mock.patch.object(...) -- the same call shape."""
         code = """
 @pytest.fixture
 def user_service(mocker):

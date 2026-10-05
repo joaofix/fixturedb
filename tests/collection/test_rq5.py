@@ -96,7 +96,7 @@ class TestLoadAgentFiles:
         assert rows[0]["file_name"] == "AGENTS.md"
 
     def test_reads_the_exact_file_the_scan_module_writes(self, tmp_path):
-        """Regression test for _DB_FILENAME being derived from
+        """_DB_FILENAME is derived from
         rq5_agent_file_scan.DB_PATH rather than a second hardcoded
         literal -- if they ever desync, this fails loudly instead of
         silently reporting "not available" forever."""
@@ -285,7 +285,7 @@ class TestRenderOverallTable:
 
 class TestRenderByLanguageTable:
     def test_each_language_computed_only_from_its_own_repos(self):
-        """Regression guard: Python's percentage must never leak into
+        """Python's percentage must never leak into
         Java's row, or vice versa -- deliberately asymmetric group sizes
         and percentages so a cross-group mixup would be visible."""
         guidances = (
@@ -372,7 +372,7 @@ class TestGenerateReport:
         assert "| Repositories with >=1 root agent file | 1 |" in report
 
     def test_a_repo_with_two_files_counts_once_in_the_overall_denominator(self, tmp_path):
-        """Regression guard for the repo-level (not file-level) unit: one
+        """The unit is the repository, not the file: one
         repo contributing both AGENTS.md and CLAUDE.md must still count
         as exactly one repo in "repositories with >=1 root agent file"."""
         db_path = tmp_path / "rq5_agent_files.db"

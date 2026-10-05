@@ -171,9 +171,8 @@ def run_toy(
                 # source_dir has to be the real github-search-raw/ (that's
                 # where the real candidate pool lives), but run()'s dedup
                 # artifact defaults to writing next to source_dir -- without
-                # this override a toy run would overwrite the real, shared
-                # duplicate_repos_by_current_commit.csv with a toy-scoped
-                # partial result.
+                # without this override, a toy run would overwrite the real, shared
+                # duplicate_repos_by_current_commit.csv with a partial result.
                 artifact_path=paths.stage_dir("a", "repos", root=root)
                 / "duplicate_repos_by_current_commit.csv",
             )

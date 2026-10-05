@@ -50,9 +50,7 @@ CONTINUOUS_METRICS = ["num_mocks"]
 # All 3 are shown descriptively per dataset (_render_dataset_summary())
 # only -- none gets an A-vs-C statistical test here. has_mock's own
 # fixture-level chi-square (Overall + per-language) and framework/
-# category's pooled treatment were both removed entirely (2026-08-12 for
-# framework/category, 2026-09-27 for has_mock) -- the paper table's
-# Coverage column is has_mock's repo-level result and supersedes it.
+# the paper table's Coverage column is the repo-level result for mocks.
 CATEGORICAL_METRICS = ["has_mock", "framework", "category"]
 
 # Fixed row order for the paper table -- see the module docstring for why
@@ -294,7 +292,7 @@ def _mocking_coverage_indicators(by_repo: dict[int, dict[str, int]]) -> list[flo
 def _render_mocking_row(label: str, n_a: int, n_c: int, pct_a: float | None, pct_c: float | None) -> str:
     """One row: Coverage A/C (%) is just the mean of the 0/1
     has-any-mock indicator per side. Purely descriptive -- no statistical
-    test (removed 2026-09-27, see this module's docstring)."""
+    test."""
     if pct_a is None and pct_c is None:
         return f"| {label} | {n_a} | {n_c} | -- | -- |"
     return f"| {label} | {n_a} | {n_c} | {pct(pct_a)} | {pct(pct_c)} |"
@@ -309,9 +307,7 @@ def _coverage_pct(indicators: list[float]) -> float | None:
 
 def _render_mocking_summary_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
     """The paper table: per-language + Overall mocking coverage (%).
-    Purely descriptive -- no statistical test (removed 2026-09-27, see
-    this module's docstring for why RQ4 no longer reports one, and for
-    Intensity's complete removal)."""
+    Purely descriptive, with no statistical test."""
     other_label = other.dataset.upper()
     lines = [
         "**Coverage** = % of repos with >=1 fixture containing a mock at "

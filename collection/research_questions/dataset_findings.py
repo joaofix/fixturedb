@@ -13,7 +13,7 @@ Every section here reads data collection already computes and persists --
 `db/*.db`, or (for the newest section below) the raw SEART export and
 Dataset A's commit-discovery CSVs; this script adds no new *collection-side*
 instrumentation of its own, though a couple of rows are newly-derived
-queries over existing columns rather than previously-reported numbers.
+queries over existing columns.
 
 Currently covers:
 

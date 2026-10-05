@@ -54,8 +54,7 @@ AGENT_SIGNATURES = _HEURISTICS["commit_signatures"]
 LIGHTWEIGHT_AGENT_CONFIG_PATTERNS = _HEURISTICS["file_based"]
 
 # The paper's repo-qualification filter (Dataset A) uses the full file-based
-# catalog, the same as the lightweight scans. It used to be a three-agent
-# subset (claude/cursor/copilot); that restriction was removed.
+# catalog, the same as the lightweight scans.
 PAPER_AGENT_CONFIG_PATTERNS = _HEURISTICS["file_based"]
 
 # Flat list of commit author/email patterns identifying CI/automation bot
@@ -106,7 +105,7 @@ def is_bot_author(text: str) -> bool:
     a known CI/automation bot pattern from
     collection/heuristics/agent-mining/bots.csv.
 
-    Used to exclude bot-authored commits from both the human baseline and
+    Excludes bot-authored commits from both the human baseline and
     the agent corpus -- a bot account is neither a human developer nor one
     of the coding agents tracked in AGENT_SIGNATURES.
     """
