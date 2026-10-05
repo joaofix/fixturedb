@@ -194,8 +194,8 @@ def _make_multi_language_db(root, dataset: str, files: list[dict]) -> None:
 class TestPaperMetricsTiering:
     """PAPER_CONTINUOUS_METRICS is the exhaustive, final continuous set --
     exactly loc/cyclomatic_complexity/comment_density. max_nesting_depth
-    (which used to be Mann-Whitney tested but rendered under a separate
-    "Other Extracted Features" tier) was dropped from the extracted metric
+    (which was Mann-Whitney tested, under a separate
+    "Other Extracted Features" tier) is not part of the extracted metric
     set entirely, so CONTINUOUS_METRICS is now identical to it -- there is
     no more "other" continuous tier."""
 

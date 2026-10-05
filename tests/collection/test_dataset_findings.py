@@ -1184,7 +1184,7 @@ class TestFixtureCountsByLanguageSection:
 class TestGenerateReportIncludesNewSections:
     def test_dataset_c_section_renders_even_when_dataset_a_db_missing(self, tmp_path):
         """The old early-return (db/a.db missing -> stop rendering
-        entirely) must no longer swallow the Dataset C section."""
+        entirely) must not swallow the Dataset C section."""
         _write_gzip_csv(
             tmp_path / "raw" / "python.csv.gz", ["id", "name"], [{"id": "1", "name": "o/r0"}]
         )

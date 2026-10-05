@@ -923,7 +923,7 @@ class AgentCorpusCollector:
                         "accepted": repo_commit_stats["accepted"],
                         # Carried through so the per-repo fixture list keeps
                         # real domain/repo-age control-variable inputs instead
-                        # of the dead defaults this file used to force.
+                        # instead of empty defaults.
                         "created_at": repo.get("created_at") or "",
                         "topics": repo.get("topics") or "[]",
                         # repo_data already carries these (computed a few

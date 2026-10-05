@@ -387,7 +387,7 @@ public Object[][] provide() {
         (the test's own parameters) into lifecycle methods, unlike JUnit's
         always-no-arg equivalents. Detection reads only the annotation, on
         any method_declaration, never inspecting formal_parameters at all
-        -- this locks that in as a regression guard."""
+        -- this locks that in."""
         code = f"""
 import org.testng.annotations.BeforeMethod;
 

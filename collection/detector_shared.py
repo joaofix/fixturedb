@@ -473,7 +473,7 @@ def fixture_result_to_dict(
     `is_complete_addition` for a commit-level extraction, or `commit_kind`
     for a snapshot one.
 
-    Previously each of four call sites (agent_fixture_extractor.py's
+    Four call sites (agent_fixture_extractor.py's
     `_extract_from_commit`/`_extract_from_snapshot_file`,
     pre2021_fixture_extractor.py's `_extract_from_repo`, and
     fixture_extractor.py's `extract_fixtures_at_commit`) hand-rolled its own

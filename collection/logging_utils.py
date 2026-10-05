@@ -13,7 +13,7 @@ def get_logger(name: str) -> logging.Logger:
     (this package's `__main__.py`, and each script's own `if __name__ ==
     "__main__":` block) calls `configure_logging()` once, which sets up the
     root logger's single handler. Records propagate up to it. Attaching a
-    handler here too used to double-print every message (once via this
+    handler here too would double-print every message (once via this
     logger's own handler, once via root's) whenever `configure_logging()`
     ran after this module had already been imported -- which is always,
     since imports resolve before `main()` runs.

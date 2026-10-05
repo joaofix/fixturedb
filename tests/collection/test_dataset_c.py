@@ -386,7 +386,7 @@ def test_collect_dataset_c_fresh_start_does_not_clear_other_languages_csv(tmp_pa
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
 
-    # Simulate a previously-completed, unrelated python run: its CSV
+    # Simulate a completed, unrelated python run: its CSV
     # already has real content and, crucially, no fresh_start clearing
     # should ever look at it during *this* java run.
     python_csv = tmp_path / "python_fixtures.csv"

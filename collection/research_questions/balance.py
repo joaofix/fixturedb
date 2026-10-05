@@ -210,7 +210,7 @@ def generate_report(*, db_root: Path = paths.DB_ROOT) -> str:
         "> Are the repo samples behind two datasets comparable on language, "
         "domain, and repo age -- before attributing an RQ2-4 fixture-metric "
         "difference to authorship or era? See this module's docstring for why "
-        "this check didn't previously run against the current data.",
+        "this check was not run against the current data.",
         "",
         f"Generated: {generated_at}",
         "",

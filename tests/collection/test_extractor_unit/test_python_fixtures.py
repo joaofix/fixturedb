@@ -364,7 +364,7 @@ class Module(object):
 class TestPytestClassMethodClassScope:
     """pytest-style setup_class()/teardown_class() -- the per_class-scope
     half of pytest_class_method. Only the per_test half (setup_method/
-    teardown_method) previously had test coverage."""
+    teardown_method) is covered here."""
 
     def test_setup_class_detected(self):
         code = """

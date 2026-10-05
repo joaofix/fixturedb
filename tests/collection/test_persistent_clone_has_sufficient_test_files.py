@@ -1,7 +1,6 @@
 """Tests for persistent_clone.py's _has_sufficient_test_files() -- the
-pre-clone GitHub code-search API screen for MIN_TEST_FILES. Previously
-untested: every branch (enough matches, too few, unsearchable repo, rate
-limit / other error status, network failure) ran unexercised in production.
+pre-clone GitHub code-search API screen for MIN_TEST_FILES. Every branch (enough matches, too few, unsearchable repo, rate
+limit / other error status, network failure) is exercised here.
 
 It fails open (returns True) on anything other than a confident "not
 enough files" 200 response -- a false skip here discards a repo entirely

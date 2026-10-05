@@ -87,8 +87,7 @@ def test_read_repo_list_carries_through_github_id_and_last_commit_sha(monkeypatc
 
 def test_read_repo_list_carries_through_forks(monkeypatch, tmp_path):
     """The raw SEART export has a real `forks` column (verified directly
-    against github-search-raw/python.csv.gz) that used to be read nowhere
-    in this pipeline, silently defaulting every repo's forks to 0
+    against github-search-raw/python.csv.gz). Forks must be read, not defaulted to 0
     downstream. Confirm it's actually picked up now."""
     raw_dir = tmp_path / "github-search-raw"
     raw_dir.mkdir()
@@ -112,8 +111,7 @@ def test_read_repo_list_carries_through_forks(monkeypatch, tmp_path):
 
 def test_read_repo_list_carries_through_pushed_at(monkeypatch, tmp_path):
     """Same class of gap as forks/created_at above: the raw SEART export
-    has a real `pushedAt` column that used to be read nowhere in this
-    pipeline, silently defaulting every Dataset A repo's pushed_at to ""
+    has a `pushedAt` column. It must be read, not defaulted to ""
     downstream (verified: 100% empty across db/a.db's 3,776 repos)."""
     raw_dir = tmp_path / "github-search-raw"
     raw_dir.mkdir()

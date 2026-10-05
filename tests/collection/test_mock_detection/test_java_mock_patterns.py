@@ -80,7 +80,7 @@ public class UserServiceTest {
 
     def test_mockito_spy_pattern(self):
         """Mockito.spy(realObject) should be detected as category "spy" --
-        previously not covered by any pattern at all, meaning Java had zero
+        not covered by any pattern before, so Java had zero
         spy-category coverage despite spy being a distinct, common Mockito
         API from mock()."""
         code = """

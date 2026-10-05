@@ -257,7 +257,7 @@ class Pre2021FixtureExtractor:
         A pre-filter ahead of the rglob walk in _find_test_files -- avoids
         queuing files extract_fixtures() would reject anyway. Uses
         detector.py's own ALLOWED_EXTS rather than a separate hand-copied
-        extension set: this file used to carry its own, and it had already
+        extension set. A copy of the set would drift from
         drifted from the authoritative one in detector.py (missing .pyw/.pyi
         for python; an extra .cts entry for typescript that would pass this
         filter only to be silently rejected by extract_fixtures()'s own

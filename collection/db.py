@@ -169,7 +169,7 @@ def insert_test_commit(conn: sqlite3.Connection, test_commit: dict) -> int:
 
 
 # Columns added to the schema after CREATE TABLE IF NOT EXISTS statements
-# already existed in real, previously-collected DB files. That guard is a
+# already exists in a DB file. That guard is a
 # no-op on a table that already exists, so a schema addition never reaches
 # a DB created before it landed unless something else adds the column --
 # confirmed via db/a.db, whose last collection run predated two separate

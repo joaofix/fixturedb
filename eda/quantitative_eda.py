@@ -41,7 +41,7 @@ from eda.quantitative.p04c_lines_of_code import plot_lines_of_code
 from eda.quantitative.p04d_complexity_metrics import plot_complexity_metrics
 from eda.quantitative.p04e_framework_by_scope import plot_framework_by_scope
 
-# NOTE: plot_mock_styles removed (mock_style column no longer exists in DB as of 2026-04-25)
+# NOTE: plot_mock_styles is not included: the mock_style column is not in the DB.
 from eda.quantitative.p05a_nesting_depth import plot_nesting_depth
 from eda.quantitative.p05b_nesting_complexity_correlation import (
     plot_nesting_complexity_correlation,

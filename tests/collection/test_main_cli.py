@@ -200,8 +200,7 @@ class TestExtractFixtures:
     ):
         """Regression (2026-08-12): unlike the old behavior, dataset a must
         NOT gate on a dataset-wide database_has_rows() check. A prior
-        `--language python` call can incidentally insert a handful of
-        cross-language fixture rows, which made every subsequent
+        `--language python` call can insert a few cross-language fixture rows, which made every subsequent
         `--language X` call see the DB as "already has fixture rows" and
         skip entirely -- even without --force, even though X was never
         processed. The real gate is AgentCorpusCollector.run()'s own

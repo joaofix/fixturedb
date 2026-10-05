@@ -38,7 +38,7 @@ class Test(unittest.TestCase):
 
     def test_pytest_mock_fixture(self):
         """pytest-mock mocker fixture should be detected, including the
-        mocker.patch.object(...) call shape (previously missed entirely)."""
+        mocker.patch.object(...) call shape."""
         code = """
 @pytest.fixture
 def user_service(mocker):

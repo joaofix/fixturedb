@@ -165,7 +165,7 @@ beforeEach(function() {
         assert fixture.mocks[0].category == "mock"
 
     def test_sinon_fake_and_replace(self):
-        """sinon.fake() and sinon.replace() were previously missing from
+        """sinon.fake() and sinon.replace() must be matched. They were missing from
         the sinon alternation (only stub|spy|mock were covered). Both are
         classified as the "fake" test-double category here -- "fake" is a
         substring of "sinon.fake(" directly, and sinon.replace(...)'s own

@@ -187,7 +187,7 @@ def apply_fdr_correction(tests: dict[str, BalanceTest]) -> dict[str, BalanceTest
     p_value, and every renderer's own "skip this row" guard already only
     checks for insufficient_data/error specifically, so leaving it out
     here left it with no `adjusted_p_value` for those renderers' `corrected`
-    branch to read -- a real, previously-latent KeyError, not just here."""
+    branch to read, which would otherwise raise a KeyError."""
     testable_keys = [
         k
         for k, t in tests.items()

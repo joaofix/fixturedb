@@ -1151,7 +1151,7 @@ def _render_js_hook_complexity_side_note(*, db_root: Path = paths.DB_ROOT) -> li
 
 
 # ---------------------------------------------------------------------------
-# Mocha bare before()/after() detection -- regression guard, side note
+# Mocha bare before()/after() detection. A side note, kept as a check
 # ---------------------------------------------------------------------------
 
 _MOCHA_BARE_HOOK_TYPES = ("mocha_before", "mocha_after")

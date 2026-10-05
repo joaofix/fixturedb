@@ -9,16 +9,12 @@ own output) -- same role `rq2.py`/`rq3.py`/`rq4.py` play for `db/a.db` +
 renders what that scan already persisted.
 
 Computes both paper tables over every successfully-scanned repo --
-deliberately no `min_test_files` quality floor applied here (2026-10-04
-methodology decision): RQ1's whole purpose is to characterize the raw
+with no `min_test_files` quality floor. RQ1's whole purpose is to characterize the raw
 universe *before* any Dataset A/C-style filtering, so applying one of
 A/C's own floors would partly collapse the distinction RQ1 exists to
-draw. A floored variant was reported here through 2026-10-04 (as a
-robustness check showing the floor barely moved the numbers) but was
-removed once that check had served its purpose -- see git history
-(`rq1_prevalence_scan.py` still collects `num_test_files` for every repo
-regardless; nothing about collection changed, only this report's
-rendering).
+draw. A floored variant is therefore not reported
+(`rq1_prevalence_scan.py` collects `num_test_files` for every repo. The
+report does not filter on it.)
 
 A repo with `clone_ok=0` (clone failed, or no commit at/before
 `RQ1_CUTOFF_DATE`) is excluded from every count here -- it means "unknown

@@ -5,7 +5,7 @@ timestamped JSON files and hardcoded exactly two datasets (human, agent).
 These tests build tiny real SQLite DBs and run analyze_distribution ->
 sample_dataset -> export_dataset -> validate_dataset against them for real
 (no mocking of the sampler/exporter/validator), since that combination was
-never previously exercised end-to-end -- doing so here caught a real bug in
+never exercised end-to-end. Doing so here found a bug in
 dataset_exporter.py (see test_export_handles_empty_table_gracefully).
 """
 
@@ -128,7 +128,7 @@ class TestExportAndValidateDataset:
         assert report["zip_validation"]["agents_md_present"] is True
 
     def test_export_handles_empty_table_gracefully(self, db_root, output_dir, export_root):
-        """Regression: export_table_to_csv() used to skip writing the CSV
+        """export_table_to_csv() must write the CSV
         entirely when a table had zero matching rows (e.g. mock_usages for a
         sample with no mocks), so the later zip/size step crashed with
         FileNotFoundError trying to stat() a file that was never created.

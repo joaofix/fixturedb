@@ -226,7 +226,7 @@ class TestRun:
         assert second == {"updated": 0, "failed": 0}
 
     def test_self_heals_a_db_collected_before_the_column_existed(self, tmp_path, monkeypatch):
-        """Regression test: db/a.db predating this column entirely (CREATE
+        """A db/a.db without this column (CREATE
         TABLE IF NOT EXISTS is a no-op on an already-existing table, so the
         column would never appear on its own) must not crash with "no such
         column" -- run() calls initialise_db() first, same as every other

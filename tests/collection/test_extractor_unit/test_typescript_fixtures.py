@@ -192,7 +192,7 @@ class TestTsxJsxParsing:
             temp_path.unlink()
 
     def test_before_each_boundary_not_widened_by_following_jsx(self):
-        """The exact shape of the real bug: a beforeEach(...) hook followed
+        """A beforeEach(...) hook followed
         by a JSX-containing sibling (render(<Component />) inside another
         block) must not have its own raw_source/end_line swallow that
         trailing code."""

@@ -1,7 +1,7 @@
 """Unit tests for the collection.paths path registry.
 
 Covers every (dataset, stage) pair in STAGE_ORDER, the root=TOY_ROOT override
-(the mechanism that keeps toy runs from colliding with real datasets/ output),
+(the mechanism that keeps toy runs out of datasets/),
 and the error cases for unsupported dataset/stage combinations.
 """
 

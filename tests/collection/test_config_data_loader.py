@@ -152,9 +152,7 @@ def _all_known_fixture_types() -> set[str]:
 def test_feature_extraction_patterns_has_expected_top_level_sections():
     """object_instantiation_patterns/mock_interaction_keywords are
     deliberately NOT in this set -- num_objects_instantiated/
-    num_interactions_configured were both removed from the extracted
-    metric set entirely (their own pattern tables removed along with
-    them), not just relocated elsewhere."""
+    num_interactions_configured are not part of the extracted metric set."""
     patterns = load_feature_extraction_patterns()
     assert set(patterns) == {
         "mock_patterns",

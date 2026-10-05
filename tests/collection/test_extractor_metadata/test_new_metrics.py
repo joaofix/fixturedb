@@ -120,7 +120,7 @@ class TestPythonDecoratorExcludedFromFixtureScope:
     """A pytest/behave decorator's own arguments are not part of the
     fixture's body -- start_line/end_line and mocks must all be scoped to
     the function only, consistent with raw_source (which was already
-    function-only). Previously the decorated_definition node (decorator
+    function-only). The decorated_definition node (decorator
     included) was used for line range/mocks while the bare
     function_definition was used for raw_source/complexity, so the
     reported line range disagreed with raw_source by exactly the decorator

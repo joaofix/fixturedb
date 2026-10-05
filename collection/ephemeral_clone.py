@@ -194,7 +194,7 @@ def temp_clone_commit_history(
     non-network git operations against the already-cloned repo (scanning
     individual commits for test files) *after* this context manager yields;
     only the clone itself is bandwidth-bound and needs capping independently
-    of that worker count. Real incident (2026-08-12): with clone concurrency
+    of that worker count. With clone concurrency
     unbounded, up to 12 simultaneous clones exhausted available bandwidth
     badly enough that even a single repo's shallow clone flirted with the
     300s timeout, producing repeated CloneUnavailable failures on large but

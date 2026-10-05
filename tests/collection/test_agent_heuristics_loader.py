@@ -43,10 +43,10 @@ def test_every_catalog_entry_is_a_non_empty_list_of_non_empty_strings():
 
 def test_new_agents_present_with_expected_patterns():
     data = load_agent_heuristics()
-    # AGENTS.md was previously (incorrectly) attributed to codex alone; it's
-    # actually a cross-agent/tool-agnostic convention (confirmed against
+    # AGENTS.md is a cross-agent, tool-agnostic convention, so it is not attributed to codex alone;
+    # it's (confirmed against
     # labri-progress/agent-mining's data, where it's classified "Generic",
-    # not codex-specific), so it's no longer in codex's own list here.
+    # not codex-specific), so it is not in codex's own list.
     # .codex/ is codex's real, agent-specific marker.
     assert data["file_based"]["codex"] == [".codex/"]
     assert ".windsurfrules" in data["file_based"]["windsurf"]

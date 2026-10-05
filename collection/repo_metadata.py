@@ -93,7 +93,7 @@ def classify_domain(topics_str: str | None, description_str: str | None) -> str:
     # Word-boundary matching, not a plain substring check: several keywords
     # are short/common enough to collide with unrelated English words (e.g.
     # "ai" inside "email", "os" inside "postgresql", "auth" inside "author"),
-    # which previously mis-tagged ordinary repo descriptions.
+    # which would mis-tag ordinary repo descriptions.
     for domain, keywords in domain_keywords.items():
         if any(re.search(rf"\b{re.escape(kw)}\b", text) for kw in keywords):
             return domain
@@ -164,8 +164,7 @@ def get_control_variables_at_date(repo: dict, target_date: str) -> dict:
     with a hard >=500-star query filter (see github-search-raw/details.txt),
     so no repository this pipeline ever sees can fall below that floor --
     a computed "core (>=500) / extended (<500)" tier could only ever
-    evaluate to "core" and carried no real information. Previously computed
-    here as `star_tier` and removed as dead weight.
+    evaluate to "core" and carried no real information, so it is not computed.
 
     Args:
         repo: Repository metadata dict with keys: topics, description, created_at

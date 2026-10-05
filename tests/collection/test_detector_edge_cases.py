@@ -328,8 +328,8 @@ def parametrized_fixture(request, arg1, arg2, arg3, arg4, arg5):
     def test_keyword_only_and_positional_only_separators_not_counted(self, tmp_path):
         """Regression: tree-sitter-python emits standalone "keyword_separator"
         (bare `*`) and "positional_separator" (bare `/`) nodes for
-        keyword-only/positional-only argument markers. These were previously
-        counted as parameter names, inflating num_parameters."""
+        keyword-only/positional-only argument markers. They must not be
+        counted as parameter names, which would inflate num_parameters."""
         py_file = tmp_path / "test_separators.py"
         py_file.write_text("""
 import pytest

@@ -62,7 +62,7 @@ def setUp(self):
     def test_pytest_fixture_line_numbers(self):
         """Pytest fixtures' line range covers the function only, not its
         decorator -- consistent with raw_source, which is also
-        function-only. (Previously start_line included the decorator line
+        function-only. (start_line must not include the decorator line
         while raw_source didn't, so the reported range and the actual
         source text disagreed by one line.)"""
         code = """

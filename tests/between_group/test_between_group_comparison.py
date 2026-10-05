@@ -300,7 +300,7 @@ class TestCategoricalBalance:
         """A category present (as a key) in both distributions but with
         zero count on both sides -- e.g. a fixed-shape {"setup": 0,
         "teardown": 0, "other": 0} distribution some callers always
-        initialize -- used to crash chi2_contingency (division by zero for
+        initialize -- would crash chi2_contingency (division by zero for
         that column's expected frequency), silently caught and papered
         over as a fake "balanced, p=1.0" result. Dropping the empty column
         lets the test actually run on the real variation that remains,
@@ -385,7 +385,7 @@ class TestContinuousBalance:
         assert result.variable == "repo_age_years"
 
     def test_median_correct_for_even_length_list(self):
-        """Regression test: the median was previously computed as
+        """The median is computed as
         sorted(vals)[len(vals) // 2] -- the sorted list's middle-index
         element, which is only correct for odd-length lists. For an
         even-length list this silently reports the upper-middle element

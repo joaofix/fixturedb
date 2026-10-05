@@ -48,7 +48,7 @@ def _hermetic(tmp_path, monkeypatch):
 
 
 def test_unexpected_exception_after_clone_becomes_an_error_row_not_a_crash(tmp_path, monkeypatch):
-    """Regression guard for the crash-proofing fix: an unanticipated
+    """An unanticipated
     exception from a post-clone step (here _count_test_files, standing in
     for any surprise -- a pathological filename, a permissions error, disk
     pressure) must come back as a clean ('error', ...) tuple, not propagate

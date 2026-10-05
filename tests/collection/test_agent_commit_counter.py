@@ -178,8 +178,7 @@ def test_run_accumulates_per_language_totals_across_repos(tmp_path: Path):
 
 
 def test_run_workers_1_continues_after_a_clone_failure(tmp_path: Path, monkeypatch):
-    """Real incident (2026-08-12): a single repo's clone failure must not
-    abort the whole discover-commits run. The workers>1 branch already
+    """A single repo's clone failure must not abort the whole discover-commits run. The workers>1 branch already
     tolerated this (fut.result()'s try/except in run()); the workers=1
     sync branch called process_repo_for_commits() with no try/except at
     all, so one CloneUnavailable there would kill the entire run."""

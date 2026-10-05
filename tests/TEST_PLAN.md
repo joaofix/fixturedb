@@ -238,8 +238,8 @@ tests/
   - Complex test hierarchies
 
 - [ ] **Regression Tests** (category 8)
-  - Previously missed fixtures
-  - Previously over-detected fixtures
+  - Missed fixtures
+  - Over-detected fixtures
   - Language-specific quirks
 
 - [ ] **Performance Tests** (category 9)

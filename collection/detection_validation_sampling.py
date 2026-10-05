@@ -3,7 +3,7 @@ checks: mock detection and the pytest setup/teardown/setup_and_teardown
 lifecycle heuristic.
 
 Mock-*type* (dummy/stub/spy/fake/mock category) classification was
-dropped from manual validation entirely (2026-09) -- no longer sampled,
+not part of manual validation, so not sampled,
 reviewed, or reported anywhere in this pipeline.
 
 Reuses `collection.validation_sampling`'s Cochran sample-size formula and

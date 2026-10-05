@@ -51,7 +51,7 @@ beforeEach(() => {
 
 
 class TestTypeScriptVitestPatterns:
-    """Vitest mock patterns (previously had no dedicated test coverage)"""
+    """Vitest mock patterns"""
 
     def test_vi_fn(self):
         """vi.fn() -- "fn" itself contains no category keyword, but the

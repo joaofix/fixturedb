@@ -218,7 +218,7 @@ java:
         Scope decision: only the dominant, actively-maintained testing
         frameworks per language are covered (JUnit and TestNG for Java).
         Spring is a dependency-injection framework, not a testing
-        framework; its test-context annotations were previously included,
+        framework. Its test-context annotations are not included,
         but there is no principled place to stop once one non-testing
         framework's own conventions are in scope -- every other framework
         that projects layer on top of JUnit/TestNG would have an equally

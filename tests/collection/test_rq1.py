@@ -2,7 +2,7 @@
 
 Builds synthetic db/rq1_prevalence.db files under tmp_path by reusing
 rq1_prevalence_scan.py's own initialise_rq1_db()/persist_result()/
-_result_row() -- the real production code that writes this db, not a
+_result_row() -- the production code that writes this db, not a
 reimplementation -- so these tests exercise the exact schema/shape the
 real scan produces.
 """

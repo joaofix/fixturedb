@@ -300,7 +300,7 @@ def _count_test_files(repo_dir: Path, language: str) -> int:
     file-language detection) -- so the >=MIN_TEST_FILES eligibility gate
     can't disagree with what "test file" means downstream.
 
-    Previously this duplicated its own looser, buggy approximation: a
+    This does not duplicate a separate, looser count. That version: a
     suffix-glob count plus, per directory pattern (e.g. "tests/"), a flat
     +1 if *any* file matched -- capped at 1 per pattern no matter how many
     files actually lived there, silently undercounting repos whose test

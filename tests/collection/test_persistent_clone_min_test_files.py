@@ -52,7 +52,7 @@ def _hermetic(tmp_path, monkeypatch):
 
 
 def test_clone_repo_keeps_a_repo_whose_test_files_only_match_by_directory_convention(tmp_path):
-    """Regression test for the _count_test_files() undercount bug: 6 files
+    """_count_test_files() counts 6 files
     live under tests/ with no suffix convention. The old code credited at
     most 1 file for the whole "tests/" pattern match (1 < 5 -> would have
     wrongly skipped this repo); the fixed count is exact (6 >= 5 -> cloned)."""
