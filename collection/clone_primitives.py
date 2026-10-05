@@ -55,6 +55,27 @@ CREDENTIAL_PROMPT_PATTERNS = [
 ]
 
 
+# git's stderr when GitHub throttles or blocks an anonymous clone (HTTP 429, or a
+# secondary/abuse limit). A throttled clone is transient: it is retried, and it is
+# never a permanent refusal, even when the same output also contains a credential
+# prompt, which git prints when the server refuses the request.
+# Patterns are specific on purpose: a bare "429" or "abuse" could be part of a
+# repository name in the URL, which would make a deleted repository look transient.
+THROTTLE_PATTERNS = [
+    re.compile(r"returned error: 429", re.IGNORECASE),
+    re.compile(r"\bHTTP/[\d.]+ 429\b"),
+    re.compile(r"too many requests", re.IGNORECASE),
+    re.compile(r"secondary rate limit", re.IGNORECASE),
+    re.compile(r"rate limit exceeded", re.IGNORECASE),
+    re.compile(r"abuse detection", re.IGNORECASE),
+]
+
+
+def _output_is_throttled(stderr: str) -> bool:
+    """True if stderr says GitHub throttled the request (retry, do not give up)."""
+    return any(pattern.search(stderr) for pattern in THROTTLE_PATTERNS)
+
+
 def _output_requests_credentials(stderr: str) -> bool:
     """Check if stderr output indicates a credential prompt or private repo error."""
     for pattern in CREDENTIAL_PROMPT_PATTERNS:
@@ -121,7 +142,9 @@ def clone_to_tempdir(
 
     A credential prompt (private/deleted repo -- see
     `_output_requests_credentials`) is a confirmed, permanent condition and
-    returns `(None, None)` immediately, no retry. Any other failure (network
+    returns `(None, None)` immediately, no retry. A throttling response from
+    GitHub (see `_output_is_throttled`) is never treated as that: it is
+    transient, even when git also prints a credential prompt. Any other failure (network
     error, timeout, transient GitHub 5xx) is retried up to `retries` times
     with exponential backoff; if every attempt fails, raises
     `CloneUnavailable` instead of returning `(None, None)` -- a generic
@@ -151,7 +174,7 @@ def clone_to_tempdir(
             )
             if result.returncode == 0:
                 return repo_path, temp_root
-            if _output_requests_credentials(result.stderr):
+            if not _output_is_throttled(result.stderr) and _output_requests_credentials(result.stderr):
                 cleanup_tempdir(temp_root)
                 return None, None
             last_error = (result.stderr or "").strip()[-500:] or f"git exited {result.returncode}"
