@@ -3,7 +3,6 @@ from collection.db import (
     get_analyzed_count_by_language,
     get_corpus_stats,
     initialise_db,
-    insert_commit_observation,
     insert_fixture,
     insert_mock_usage,
     insert_test_commit,
@@ -78,24 +77,10 @@ def test_db_helpers_end_to_end(tmp_path):
         fixture_id = insert_fixture(conn, fixture)
         assert isinstance(fixture_id, int) and fixture_id > 0
 
-        # Insert commit observation and test commit
-        obs = {
-            "repo_id": repo_id,
-            "commit_sha": "deadbeef",
-            "commit_role": "human",
-            "agent_type": None,
-            "commit_date": "2020-01-01",
-            "fixture_count": 1,
-            "mock_usage_count": 0,
-            "test_file_count": 1,
-        }
-        obs_id = insert_commit_observation(conn, obs)
-        assert isinstance(obs_id, int) and obs_id > 0
-
+        # Insert a test commit
         test_commit = {
             "repo_id": repo_id,
             "commit_sha": "deadbeef",
-            "commit_role": "human",
             "agent_type": None,
             "commit_date": "2020-01-01",
             "language": "python",

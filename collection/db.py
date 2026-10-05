@@ -96,55 +96,18 @@ def db_session(db_path: Path = DB_PATH, max_retries: int = 20):
                 conn.close()
 
 
-def insert_commit_observation(conn: sqlite3.Connection, observation: dict) -> int:
-    """Insert a paired-study commit observation and return its row id."""
-    cursor = conn.execute(
-        """
-        INSERT INTO commit_observations (
-            repo_id, commit_sha, commit_role, agent_type,
-            commit_date, fixture_count, mock_usage_count, test_file_count
-        ) VALUES (
-            :repo_id, :commit_sha, :commit_role, :agent_type,
-            :commit_date, :fixture_count, :mock_usage_count, :test_file_count
-        )
-        ON CONFLICT(repo_id, commit_sha) DO UPDATE SET
-            commit_role = excluded.commit_role,
-            agent_type = excluded.agent_type,
-            commit_date = excluded.commit_date,
-            fixture_count = excluded.fixture_count,
-            mock_usage_count = excluded.mock_usage_count,
-            test_file_count = excluded.test_file_count
-        """,
-        observation,
-    )
-    if cursor.rowcount == 1:
-        rowid = cursor.lastrowid
-        return rowid if rowid is not None else 0
-
-    row = conn.execute(
-        "SELECT id FROM commit_observations WHERE repo_id=? AND commit_sha=?",
-        (observation["repo_id"], observation["commit_sha"]),
-    ).fetchone()
-    if row is None:
-        raise ValueError(
-            f"Commit observation insert conflict but SELECT returned no rows: repo_id={observation['repo_id']}, commit_sha={observation['commit_sha']}"
-        )
-    return row["id"]
-
-
 def insert_test_commit(conn: sqlite3.Connection, test_commit: dict) -> int:
     """Insert a detected test commit and return its row id."""
     cursor = conn.execute(
         """
         INSERT INTO test_commits (
-            repo_id, commit_sha, commit_role, agent_type,
+            repo_id, commit_sha, agent_type,
             commit_date, language, test_file_count, test_file_paths
         ) VALUES (
-            :repo_id, :commit_sha, :commit_role, :agent_type,
+            :repo_id, :commit_sha, :agent_type,
             :commit_date, :language, :test_file_count, :test_file_paths
         )
         ON CONFLICT(repo_id, commit_sha) DO UPDATE SET
-            commit_role = excluded.commit_role,
             agent_type = excluded.agent_type,
             commit_date = excluded.commit_date,
             language = excluded.language,

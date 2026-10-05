@@ -462,17 +462,6 @@ def make_csv():
                 "has_agent_config": "1",
             },
         ],
-        "python_human_test_commit.csv": [
-            {
-                "repo_name": "owner1/repo_python",
-                "full_name": "owner1/repo_python",
-                "language": "python",
-                "commit_sha": "abc123",
-                "commit_role": "human",
-                "test_file_count": "2",
-                "test_file_paths": '["tests/test_foo.py", "tests/test_bar.py"]',
-            }
-        ],
         "python_agent_test_commit.csv": [
             {
                 "repo_name": "owner/only_test_repo",

@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS repositories (
     num_contributors INTEGER DEFAULT 0,     -- GitHub API: repository contributor count
     domain          TEXT DEFAULT NULL,      -- classified domain (web/systems/ml/etc)
     repo_age_years  REAL DEFAULT NULL,      -- age at each dataset's fixed temporal reference
-                                    -- (2025-01-01 for A/B, 2020-12-31 for C); NULL when the
+                                    -- (2025-01-01 for A, 2020-12-31 for C); NULL when the
                                     -- repo was created after that date -- see repo_age_at_collection_years
                                     -- for a value that's always defined.
     repo_age_at_collection_years REAL DEFAULT NULL,  -- age relative to now (whenever collection
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS repositories (
     total_commits_since_agent_start INTEGER DEFAULT NULL,  -- Dataset A: non-merge commits (agent+human+bot
                                     -- alike) since AGENT_CORPUS_START_DATE, via count_total_commits_since()
                                     -- -- the same call already used to compute agent_adoption_intensity, just
-                                    -- persisted this time. NULL for Dataset B/C rows and for Dataset A repos
+                                    -- persisted this time. NULL for Dataset C rows and for Dataset A repos
                                     -- collected before this column existed (see backfill_total_commits.py).
     collected_at    TEXT DEFAULT (datetime('now'))
 );
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS fixtures (
     commit_sha              TEXT DEFAULT NULL,      -- exact commit where fixture added (agent-only)
     commit_date             TEXT DEFAULT NULL,      -- that commit's own date (ISO, date-only)
     agent_type              TEXT DEFAULT NULL,      -- agent type: claude/copilot/cursor/other
-    commit_kind             TEXT DEFAULT NULL,      -- agent / human (paired-study label)
+    commit_kind             TEXT DEFAULT NULL,      -- agent / human
     is_complete_addition    INTEGER DEFAULT NULL,   -- 1=completely added, 0=partial/refactored (validation flag)
     repo_age_at_commit_years REAL DEFAULT NULL,     -- repo age (created_at -> commit_date), always
                                     -- defined (a commit can't precede its own repo's creation) --
@@ -96,30 +96,12 @@ CREATE TABLE IF NOT EXISTS fixtures (
 );
 
 -- -------------------------------------------------------------------------
--- Commit-level observations for paired within-repo analysis
--- -------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS commit_observations (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    repo_id             INTEGER NOT NULL REFERENCES repositories(id),
-    commit_sha          TEXT NOT NULL,
-    commit_role         TEXT NOT NULL,   -- agent / human
-    agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/other
-    commit_date         TEXT,
-    fixture_count       INTEGER DEFAULT 0,
-    mock_usage_count    INTEGER DEFAULT 0,
-    test_file_count     INTEGER DEFAULT 0,
-    collected_at        TEXT DEFAULT (datetime('now')),
-    UNIQUE(repo_id, commit_sha)
-);
-
--- -------------------------------------------------------------------------
 -- Test commits detected from repository history
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS test_commits (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     repo_id             INTEGER NOT NULL REFERENCES repositories(id),
     commit_sha          TEXT NOT NULL,
-    commit_role         TEXT NOT NULL,   -- agent / human
     agent_type          TEXT DEFAULT NULL,  -- claude/copilot/cursor/aider/other
     commit_date         TEXT,
     language            TEXT NOT NULL,
@@ -155,7 +137,6 @@ CREATE INDEX IF NOT EXISTS idx_mocks_framework  ON mock_usages(framework);
 CREATE INDEX IF NOT EXISTS idx_mocks_category   ON mock_usages(category);
 CREATE INDEX IF NOT EXISTS idx_test_files_repo  ON test_files(repo_id);
 CREATE INDEX IF NOT EXISTS idx_test_commits_repo ON test_commits(repo_id);
-CREATE INDEX IF NOT EXISTS idx_test_commits_role ON test_commits(commit_role);
 
 -- -------------------------------------------------------------------------
 -- Checkpoints and run state for idempotent collection runs
