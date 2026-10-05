@@ -1,6 +1,5 @@
 """Shared thread-pool harness for "process N repos, persist each result
-immediately" -- the shape Dataset A's and Dataset B's extract-fixtures steps
-both need.
+immediately" -- the shape Dataset A's extract-fixtures step needs.
 
 Extracted from the original inline `if workers <= 1: ... else:
 ThreadPoolExecutor ...` block (added when that collector was made

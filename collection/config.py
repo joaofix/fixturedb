@@ -39,9 +39,9 @@ _STUDY_PARAMS = load_study_parameters()
 
 ROOT_DIR = Path(__file__).parent.parent
 CLONES_DIR = ROOT_DIR / "clones"  # temporary, deleted after extraction
-# Secondary/bootstrap SQLite databases (per-dataset DBs live in db/{a,b,c}.db,
-# see collection/paths.py -- this is only corpus.db and the older
-# paired-study/between-group bootstrap DBs).
+# Secondary/bootstrap SQLite databases (per-dataset DBs live in db/{a,c}.db,
+# see collection/paths.py -- this is only corpus.db, which nothing writes any
+# more).
 DB_DIR = ROOT_DIR / "db"
 DB_PATH = DB_DIR / "corpus.db"
 

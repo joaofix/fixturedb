@@ -1,4 +1,4 @@
-"""Cross-repo-name commit deduplication for Datasets A and B.
+"""Cross-repo-name commit deduplication for Dataset A.
 
 Some repos in Dataset A's candidate pool are the same underlying repository
 counted under more than one `repo_name` -- org transfers and renames whose
@@ -8,10 +8,6 @@ conservative -- see that function's docstring) doesn't catch them. Real
 example found in the 2026-07-25 Dataset A collection: `camunda-cloud/zeebe`,
 `camunda/zeebe`, and `camunda/camunda` are the same project, all three
 present as separate repos, together accounting for thousands of duplicated
-commits. Since Dataset B's repo pool is resolved from Dataset A's own
-output, it inherits the same duplication -- and, scanning each repo's real
-git history live rather than reusing Dataset A's classification, rediscovers
-the same commits independently under each name.
 
 Repo-level filtering (deciding in advance which repo_names are "the same
 repo") needs a full historical commit-set comparison to do safely -- get it
@@ -26,17 +22,13 @@ collides, so it's never touched.
 For each commit_sha shared by more than one repo_name, exactly one
 repo_name's copy survives (highest `stars`, tie-broken by earliest
 `created_at` -- see `pick_cluster_survivor()` in repo_dedup_utils.py); the
-other repo_name(s)' rows for that same commit_sha are removed. Runs
-independently per dataset, on that dataset's own already-collected
-commit-level CSVs -- Dataset B does its own live commit scan of each repo
-rather than reusing Dataset A's, so it needs its own pass, not just a
-downstream consequence of deduping Dataset A's.
+other repo_name(s)' rows for that same commit_sha are removed. Runs on
+Dataset A's already-collected commit-level CSVs.
 
     python -m collection.dedupe_commits_by_sha --dataset a
-    python -m collection.dedupe_commits_by_sha --dataset b
 
-Run this after commit-level data exists (discover-commits for A,
-filter-test-commits for B) and before extract-fixtures, so duplicate
+Run this after commit-level data exists (discover-commits for A)
+and before extract-fixtures, so duplicate
 commits are never even used to generate fixtures in the first place. If
 fixtures/db already exist for a dataset (as with a retroactive fix), this
 tool only touches the commit-level CSVs -- cascading the removal into
@@ -70,12 +62,9 @@ AUDIT_FIELDNAMES = [
 
 # Per-dataset shape: which commit-level CSVs to dedupe, and where the
 # matching repo metadata (stars, created_at) lives. Dataset A's own commit
-# discovery writes commits/*_commit.csv; Dataset B has no separate
-# "discover all commits" stage, so its earliest commit-level artifact is
-# test-commits/*_human_test_commit.csv (filter-test-commits' own output).
+# discovery writes commits/*_commit.csv.
 DATASET_SHAPES: dict[str, dict[str, str]] = {
     "a": {"commit_stage": "commits", "commit_pattern": "*_commit.csv"},
-    "b": {"commit_stage": "test-commits", "commit_pattern": "*_human_test_commit.csv"},
 }
 
 AUDIT_FILENAME = "duplicate_commits_removed.csv"

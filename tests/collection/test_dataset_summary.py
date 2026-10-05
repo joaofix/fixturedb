@@ -5,7 +5,7 @@ real datasets/ or toy-dataset/) and checks compute_summary()/write_summary()
 read them back correctly -- counts, per-repo/per-file averages (including
 the unconditional avg_fixtures_per_repo_overall, which must include repos
 that yielded zero fixtures, unlike avg_fixtures_per_repo_with_fixtures),
-and the purity-gate acceptance rate for datasets A and B (absent for C,
+and the purity-gate acceptance rate for dataset A (absent for C,
 which has no purity gate at all).
 """
 

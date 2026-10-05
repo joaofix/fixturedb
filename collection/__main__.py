@@ -132,7 +132,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
 
         output_db = args.output_db or paths.db_path("a")
         # No dataset-wide database_has_rows() gate here (removed 2026-08-12,
-        # same bug/fix as Dataset B below and Dataset C further down) --
+        # same bug/fix as Dataset C further down) --
         # AgentCorpusCollector.run() already gates per-language via its own
         # DB checkpoints (agent_complete:{lang}/:all), which a dataset-wide
         # "does *any* row exist" check would short-circuit incorrectly: a
@@ -164,7 +164,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
 
         output_db = args.output_db or paths.db_path("c")
         # No dataset-wide database_has_rows() gate here -- same bug/fix as
-        # Dataset A/B above. collect_dataset_c_fixtures() already gates
+        # Dataset A above. collect_dataset_c_fixtures() already gates
         # per-language via its own JSON checkpoint
         # (dataset_c_checkpoint_{language}.json), which a dataset-wide
         # "does *any* row exist" check would short-circuit incorrectly: a

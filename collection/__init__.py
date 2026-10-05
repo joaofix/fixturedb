@@ -1,28 +1,12 @@
-"""
-Human vs Agent Fixture Collection Pipeline
+"""FixtureDB collection pipeline.
 
-This package now implements the paired within-repository study for FixtureDB.
+Agent-authored fixtures (Dataset A) are compared against pre-LLM human fixtures
+from an independent repository pool (Dataset C). Every step is a verb of the
+one CLI:
 
-Methodology:
-  Sample repositories that contain both human and agent commit histories.
-  Compare agent commits against non-agent commits inside the same repository.
-  Record commit-level observations for paired statistical analysis.
+  python -m collection <verb> --dataset {a,c} [OPTIONS]
 
-Primary command:
-  python -m collection paired
-
-Usage:
-  python -m collection paired
-  python -m collection phase-1a
-  python -m collection phase-1b
-  python -m collection phase-1c
-  python -m collection phase-1d
-  python -m collection phase-2
-  python -m collection phase-3
-  python -m collection phase-4
-  python -m collection phase-5
-  python -m collection phase-6-7
-  python -m collection phase-8
+See docs/architecture/collection.md for the full pipeline.
 """
 
 __version__ = "2.0.0"

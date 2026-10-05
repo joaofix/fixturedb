@@ -16,7 +16,7 @@ from typing import Iterable, Iterator
 # (e.g. a mass baseline-regeneration commit), pushing test_file_paths past
 # the csv module's default 128KB field limit -- confirmed against a real
 # microsoft/TypeScript commit (1.5MB test_file_paths, 21640 files) in
-# Dataset B's toy output. Raise it process-wide so read_dicts/append_dicts
+# the toy output of an earlier run. Raise it process-wide so read_dicts/append_dicts
 # don't crash on real, non-adversarial data.
 csv.field_size_limit(sys.maxsize)
 

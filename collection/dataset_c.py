@@ -811,8 +811,8 @@ def collect_dataset_c_fixtures(
         # Dataset C's own temporal reference is HUMAN_CORPUS_CUTOFF_DATE
         # (the pre-2022 human baseline window), not AGENT_CORPUS_START_DATE
         # -- repo age here means "age as of the human-era cutoff", matching
-        # how Dataset B/A compute age at their own respective reference
-        # dates rather than "today".
+        # how Dataset A computes age at its own reference date rather than
+        # "today".
         metadata = compute_repo_metadata(
             {"topics": repo_topics, "created_at": repo_created_at, "stars": repo_stars},
             HUMAN_CORPUS_CUTOFF_DATE,

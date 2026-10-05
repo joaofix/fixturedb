@@ -59,7 +59,7 @@ def extract_fixtures_at_commit(
 ) -> List[Dict]:
     """Extract fixtures from a repository at a specific commit.
 
-    This is the commit-level primitive used by the paired study workflow.
+    This is the commit-level primitive used by the agent corpus collector.
     """
     if not Path(repo_path).exists():
         raise RuntimeError(f"Repository not found: {repo_path}")

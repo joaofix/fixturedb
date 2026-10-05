@@ -1,15 +1,15 @@
-"""Checkpoint/resume state for test-commit filtering (agent and human).
+"""Checkpoint/resume state for agent test-commit filtering.
 
 Split out of test_commit_filter.py: this is a self-contained concern (load
 already-written per-language CSVs + a JSON checkpoint, resume a filtering
-run without rescanning completed repos) shared by both the agent-side and
-human-side filtering modules.
+run without rescanning completed repos).
 """
 
 from __future__ import annotations
 
 import csv
 import json
+import os
 from collections import defaultdict
 from pathlib import Path
 
@@ -18,16 +18,12 @@ from .logging_utils import get_logger
 logger = get_logger(__name__)
 
 AGENT_TEST_COMMITS_CHECKPOINT = "agent_test_commits.checkpoint.json"
-HUMAN_TEST_COMMITS_CHECKPOINT = "human_test_commits.checkpoint.json"
 
 
 def _load_test_commit_resume_state(
-    output_dir: Path, role: str = "agent"
+    output_dir: Path,
 ) -> tuple[dict[str, list[dict]], dict[str, set[str]], set[str], dict]:
-    """Generic resume loader for test-commit filtering.
-
-    role: 'agent' or 'human' determines filename patterns and checkpoint name.
-    """
+    """Load already-written per-language test-commit CSVs and the checkpoint."""
     rows_by_language: dict[str, list[dict]] = defaultdict(list)
     seen_commit_shas_by_language: dict[str, set[str]] = defaultdict(set)
     completed_repos: set[str] = set()
@@ -40,16 +36,10 @@ def _load_test_commit_resume_state(
     }
 
     output_dir = Path(output_dir)
-    pattern = "*_test_commit.csv" if role == "agent" else "*_human_test_commit.csv"
-    suffix = "_test_commit.csv" if role == "agent" else "_human_test_commit.csv"
-    checkpoint_name = (
-        AGENT_TEST_COMMITS_CHECKPOINT
-        if role == "agent"
-        else HUMAN_TEST_COMMITS_CHECKPOINT
-    )
+    suffix = "_test_commit.csv"
 
     if output_dir.exists():
-        for csv_path in sorted(output_dir.glob(pattern), key=lambda p: p.name):
+        for csv_path in sorted(output_dir.glob(f"*{suffix}"), key=lambda p: p.name):
             language = csv_path.name.replace(suffix, "")
             with csv_path.open("r", encoding="utf-8", newline="") as fh:
                 for row in csv.DictReader(fh):
@@ -59,7 +49,7 @@ def _load_test_commit_resume_state(
                     if commit_sha:
                         seen_commit_shas_by_language[language].add(commit_sha)
 
-    checkpoint_path = output_dir / checkpoint_name
+    checkpoint_path = output_dir / AGENT_TEST_COMMITS_CHECKPOINT
     if checkpoint_path.exists():
         with checkpoint_path.open("r", encoding="utf-8") as fh:
             data = json.load(fh)
@@ -85,20 +75,11 @@ def _save_test_commit_resume_state(
     output_dir: Path,
     counts: dict,
     completed_repos: set[str],
-    role: str = "agent",
 ) -> None:
-    """Generic resume saver for test-commit filtering.
-
-    role: 'agent' or 'human' determines the checkpoint filename.
-    """
+    """Write the checkpoint JSON, including every count the loader reads back."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    checkpoint_name = (
-        AGENT_TEST_COMMITS_CHECKPOINT
-        if role == "agent"
-        else HUMAN_TEST_COMMITS_CHECKPOINT
-    )
-    checkpoint_path = output_dir / checkpoint_name
+    checkpoint_path = output_dir / AGENT_TEST_COMMITS_CHECKPOINT
     commits_scanned_by_language = counts.get("commits_scanned_by_language") or {}
     checkpoint = {
         "repos_processed": int(counts.get("repos_processed", 0) or 0),
@@ -115,21 +96,17 @@ def _save_test_commit_resume_state(
         json.dump(checkpoint, fh, ensure_ascii=False, indent=2)
         fh.flush()
         try:
-            import os
-
             os.fsync(fh.fileno())
         except Exception:
             logger.debug("Unable to fsync checkpoint %s", checkpoint_path)
 
 
-# Backwards-compatible wrappers for existing names
+# Names used by test_commit_filter.py
 def _load_agent_test_commit_resume_state(output_dir: Path):
-    return _load_test_commit_resume_state(output_dir, role="agent")
+    return _load_test_commit_resume_state(output_dir)
 
 
 def _save_agent_test_commit_resume_state(
     output_dir: Path, counts: dict[str, int], completed_repos: set[str]
 ):
-    return _save_test_commit_resume_state(
-        output_dir, counts, completed_repos, role="agent"
-    )
+    return _save_test_commit_resume_state(output_dir, counts, completed_repos)
