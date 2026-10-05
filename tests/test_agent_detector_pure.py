@@ -22,11 +22,8 @@ def test_is_test_file_path_python_cases():
 
 
 def test_is_test_file_path_delegates_to_shared_boundary_fix():
-    """Regression: this module used to have its own independent copy of
-    is_test_file_path that drifted from test_commit_utils.py's version --
-    a false-positive fix there (bare suffixes like "IT.java"/"test.js"
-    matching unrelated files) was never applied here. Now it delegates, so
-    the same boundary cases must hold true here too."""
+    """is_test_file_path delegates to the shared implementation in test_commit_utils,
+    so the same boundary cases hold here."""
     assert not _is_test_file_path("src/main/java/com/example/Deposit.java", "java")
     assert not _is_test_file_path("src/main/java/com/example/Credit.java", "java")
     assert not _is_test_file_path("src/latest.js", "javascript")
@@ -83,9 +80,8 @@ def test_detect_agent_no_match():
 
 
 def test_detect_codex_and_roo_code_via_commit_signatures():
-    """Regression test: codex/roo_code previously had zero commit_signatures
-    entries (file_based only), so they could never be detected via author
-    identity or trailers -- only by scanning the repo's file tree."""
+    """codex and roo_code have commit signatures, so they are detected from author
+    identity and trailers, not only from the repository's file tree."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
 
     assert scanner._detect_agent_in_commit("Someone", "codex@openai.com", "") == "codex"
@@ -98,16 +94,9 @@ def test_detect_codex_and_roo_code_via_commit_signatures():
 
 
 def test_detect_agent_word_boundary_rejects_compound_word_collision():
-    """Regression test: a bare substring check on author name/email
-    incorrectly matched agent keywords inside unrelated compound
-    words/surnames (e.g. "gemini" inside "McGeminicorp" -- a synthetic
-    example, since no real such collision has been found in this project's
-    own corpus for any keyword still in the catalog). Word-boundary matching
-    fixes this class of false positive (though not the case of an exact
-    common first name -- see test_devin_cline_exact_name_collision_is_fixed
-    for the specific instances of that problem already found and closed,
-    and agent_heuristics.yaml's module comment for the general residual
-    risk on other keywords)."""
+    """A keyword does not match inside a longer word or a surname. For example,
+    "gemini" does not match "McGeminicorp". Exact whole-word collisions with common
+    first names are handled by known_human_collisions.csv."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     assert (
         scanner._detect_agent_in_commit(
@@ -118,21 +107,9 @@ def test_detect_agent_word_boundary_rejects_compound_word_collision():
 
 
 def test_devin_cline_exact_name_collision_is_fixed():
-    """Regression test, not a documented limitation: manual validation review
-    of Dataset A's agent-commits sample (2026-07-17) found real humans
-    misattributed to "devin"/"cline" via exact whole-word name/email
-    collisions with no trailer to disambiguate (e.g. an author literally
-    named "Devin Smith", or an employee of the Cline company committing
-    under an @cline.bot work email). Unlike the general name-collision risk
-    documented in agent_heuristics.yaml's module comment (still real for
-    keywords like "claude", handled case-by-case via
-    known_human_collisions.csv), this specific case is closed at the root:
-    the bare "devin"/"devin ai" patterns were this project's own redundant
-    addition (the upstream "devin-ai-integration" bot-identity pattern
-    already catches every real Devin AI commit found in the corpus), and
-    "cline" was removed from the catalog entirely (see
-    agent_authors.csv's boundary comment -- Cline has no bot identity or
-    trailer convention to match at all)."""
+    """The bare "devin" and "cline" patterns are not in the catalog. A person named
+    Devin, or a Cline employee using a @cline.bot address, is not classified as an
+    agent. The Devin bot identity "devin-ai-integration" is still matched."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     assert (
         scanner._detect_agent_in_commit("Devin Smith", "devin.smith@gmail.com", "")
@@ -155,14 +132,9 @@ def test_devin_cline_exact_name_collision_is_fixed():
 
 
 def test_detect_agent_trailer_overrides_author_name_collision():
-    """Regression: _detect_agent_in_commit used to check author identity
-    before the commit trailer, so a human author whose name collides with
-    an agent keyword (e.g. "Devin Smith") was misattributed to that agent
-    even when the commit carried a correct, unambiguous trailer crediting a
-    *different* real agent. Trailer is now checked before author identity
-    specifically because it's the less collision-prone signal -- a
-    deliberate, structured convention only agents/tooling emit, unlike a
-    freely-editable author-name field a human can also happen to share."""
+    """A commit trailer is checked before the author name. A human whose name matches
+    an agent keyword is not classified as that agent when the commit carries a
+    trailer for a different agent."""
     scanner = Tier1RepositoryScanner(Path("/tmp"))
     body = "Fix bug\n\nCo-authored-by: Claude <claude@anthropic.com>"
     assert (
@@ -188,12 +160,8 @@ def test_detect_agent_bot_status_overrides_coincidental_trailer():
 
 
 def test_agent_trailer_re_tolerates_missing_hyphens():
-    """Regression test: some agents emit "Coauthored-by"/"Co-authoredby"/
-    "Coauthoredby" trailers with a hyphen missing on either side of "by" --
-    a real, empirically observed variant (see labri-progress/agent-mining's
-    _iter_coauthors(), which uses the same co-?authored-?by pattern). The
-    previous regex required the literal "co-authored-by" and silently
-    missed all three variants."""
+    """The trailer pattern matches "Co-authored-by", "Coauthored-by", "Co-authoredby"
+    and "Coauthoredby"."""
     for trailer in (
         "Co-authored-by",
         "Coauthored-by",
@@ -413,12 +381,8 @@ def test_is_test_file_path_javascript():
 
 
 def test_known_human_collision_excludes_author_identity_match():
-    """Regression test: a real Django core developer named "Claude Paroz"
-    was misattributed to the Claude agent via bare author-name matching
-    during Dataset A's real collection (2026-07-15 review) -- no trailer
-    involved, just his own literal first name colliding with the agent
-    catalog's "Claude" entry. known_human_collisions.csv now excludes this
-    specific, individually-verified identity from author-identity matching."""
+    """A named human in known_human_collisions.csv is not matched by the author-name
+    check, even when the name equals an agent keyword."""
     from collection.utils import detect_agent_in_commit
 
     assert (
@@ -441,16 +405,8 @@ def test_known_human_collision_does_not_override_a_real_trailer():
 
 
 def test_known_human_collision_excludes_placeholder_bot_identity():
-    """Regression test: codex-review@example.com is a repo-internal
-    placeholder bot identity (Yeachan-Heo/oh-my-claude-sisyphus's own
-    multi-agent-orchestration tooling), not real OpenAI Codex -- found via
-    Dataset A's agent-commits-dataset-a validation review (2026-07-17),
-    226 commits / 204 fixtures in the current corpus. Unlike devin/cline,
-    the bare "codex" pattern itself can't be removed (most real Codex
-    commits are trailer-based, e.g. "Assisted-by: Codex:gpt-5.5", and don't
-    contain "codex" in the author name/email at all), so this is a
-    known_human_collisions.csv exclusion, the same shape as "Claude
-    Paroz" -- a specific bad identity, not a removable root pattern."""
+    """The placeholder identity codex-review@example.com is not matched as Codex by
+    the author-name check. Real Codex commits carry a trailer, so they still match."""
     from collection.utils import detect_agent_in_commit
 
     assert (
@@ -474,16 +430,8 @@ def test_known_human_collision_placeholder_bot_does_not_override_a_real_trailer(
 
 
 def test_bare_anthropic_domain_no_longer_matches_claude():
-    """Regression test: agent_authors.csv used to carry a project-added
-    bare "anthropic" substring pattern that matched any @anthropic.com
-    sender regardless of agent involvement -- found via a real false
-    positive in Dataset A (an Anthropic employee's personal commit under
-    their own name, no agent signal at all). That bare-domain entry was
-    this project's own addition (not upstream data), so it was removed
-    outright rather than added to the human-collision denylist; the
-    upstream catalog's own specific bot/service addresses
-    (claude@anthropic.com, noreply@anthropic.com, assistant@anthropic.com)
-    are untouched and still match."""
+    """The author catalog has no bare "anthropic" pattern. Specific service addresses
+    such as claude@anthropic.com still match."""
     from collection.utils import detect_agent_in_commit
 
     assert (
