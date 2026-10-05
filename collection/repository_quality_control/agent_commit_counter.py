@@ -18,7 +18,10 @@ Output per-language CSV columns (one row per agent commit):
 - `clone_url` — repository clone URL
 - `processed_at` — when this row was written (ISO 8601 UTC)
 
-This script skips commits already written in existing per-language CSVs so it can be resumed.
+Progress is checkpointed per repository in `db/a_discover_commits.db` (see
+`PROGRESS_DB_PATH`). A repository is recorded there after its CSV rows are written,
+including repositories with no agent commit. A restarted run skips every recorded
+repository and reloads the scan totals from the same file.
 Temporary clones are deleted in a `finally` block immediately after each repo is processed.
 It only reads repositories marked `has_agent_config` in the repo-counter CSV output.
 By default the clone is blob-limited so large file contents are not downloaded; commit history remains complete.
@@ -45,6 +48,7 @@ from collection.agent_patterns import PAPER_AGENT_REPOSITORY_LANGUAGES
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.config import shallow_clone_since
 from collection.csv_adapter import get_adapter
+from collection.db import db_session
 from collection.ephemeral_clone import temp_clone_commit_history
 
 # Defaults, resolved through the central path registry (collection.paths).
@@ -180,8 +184,8 @@ def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
         shallow_since=shallow_clone_since(since),
     ) as repo_path:
         if repo_path is None:
-            logger.warning("Clone failed for %s (clone_url=%s)", full_name, clone_url)
-            return [], 0
+            logger.warning("Clone refused for %s (clone_url=%s)", full_name, clone_url)
+            raise RepoUnavailable(full_name)
 
         if repo_path and repo_path.exists():
             commits, total_examined = get_agent_commits(repo_path, since)
@@ -251,14 +255,128 @@ def write_commit_scan_totals(
         logger.exception("Failed to write %s", summary_path)
 
 
+PROGRESS_DB_PATH = paths.DB_ROOT / "a_discover_commits.db"
+
+# Progress status of a repository whose clone was refused for a permanent
+# reason (deleted, private, or not found). Recorded so it is not retried on
+# every run. A transient clone failure raises CloneUnavailable instead, and is
+# not recorded, so the next run retries it.
+STATUS_OK = "ok"
+STATUS_CLONE_UNAVAILABLE = "clone_unavailable"
+
+
+class RepoUnavailable(Exception):
+    """The repository could not be cloned for a permanent reason."""
+
+PROGRESS_SCHEMA = """
+CREATE TABLE IF NOT EXISTS repo_progress (
+    repo_name         TEXT PRIMARY KEY,
+    language          TEXT NOT NULL,
+    status            TEXT NOT NULL DEFAULT 'ok',  -- ok | clone_unavailable
+    commits_examined  INTEGER NOT NULL,
+    agent_commits     INTEGER NOT NULL,
+    completed_at      TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS agent_commits (
+    repo_name     TEXT NOT NULL,
+    commit_sha    TEXT NOT NULL,
+    language      TEXT,
+    agent_type    TEXT,
+    commit_date   TEXT,
+    author_name   TEXT,
+    author_email  TEXT,
+    commit_url    TEXT,
+    clone_url     TEXT,
+    processed_at  TEXT,
+    PRIMARY KEY (repo_name, commit_sha)
+);
+"""
+
+
+def initialise_progress_db(db_path: Path = PROGRESS_DB_PATH) -> None:
+    """Create the progress tables if missing. Never drops or truncates rows."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with db_session(db_path) as conn:
+        conn.executescript(PROGRESS_SCHEMA)
+
+
+def load_completed_repos(db_path: Path = PROGRESS_DB_PATH) -> dict[str, tuple[str, int]]:
+    """Repositories already checkpointed: name -> (language, commits_examined)."""
+    if not db_path.exists():
+        return {}
+    with db_session(db_path) as conn:
+        rows = conn.execute("SELECT repo_name, language, commits_examined FROM repo_progress").fetchall()
+    return {repo_name: (language, examined) for repo_name, language, examined in rows}
+
+
+def record_repo_progress(
+    db_path: Path,
+    repo_name: str,
+    language: str,
+    commits_examined: int,
+    rows: list[dict],
+    status: str = STATUS_OK,
+) -> None:
+    """Checkpoint one finished repository and its agent commit rows in one
+    transaction. Idempotent: recording the same repository twice leaves one
+    checkpoint and one row per commit."""
+    with db_session(db_path) as conn:
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO repo_progress
+                (repo_name, language, status, commits_examined, agent_commits, completed_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                repo_name,
+                language,
+                status,
+                commits_examined,
+                len(rows),
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+        conn.executemany(
+            """
+            INSERT OR REPLACE INTO agent_commits
+                (repo_name, commit_sha, language, agent_type, commit_date, author_name,
+                 author_email, commit_url, clone_url, processed_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    r.get("repo_name"),
+                    r.get("commit_sha"),
+                    r.get("language"),
+                    r.get("agent_type"),
+                    r.get("commit_date"),
+                    r.get("author_name"),
+                    r.get("author_email"),
+                    r.get("commit_url"),
+                    r.get("clone_url"),
+                    r.get("processed_at"),
+                )
+                for r in rows
+            ],
+        )
+
+
 def run(
     since: str = "2025-01-01",
     workers: int = 4,
     input_dir: Path = GITHUB_SEARCH_AGENT_DIR,
     output_dir: Path = OUTPUT_DIR,
+    progress_db_path: Path = PROGRESS_DB_PATH,
 ) -> int:
-    """Scan all config-positive repos for agent commits and write per-language CSVs."""
+    """Scan all config-positive repos for agent commits and write per-language CSVs.
+
+    Each repository is checkpointed in `progress_db_path` after its CSV rows are
+    written. The CSVs are written first: a crash between the two writes repeats
+    that one repository, and the SHA check drops its repeated rows.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
+    initialise_progress_db(progress_db_path)
     candidates = read_config_positive_rows(input_dir)
     logger.info("Found %d config-positive repos", len(candidates))
     if not candidates:
@@ -276,6 +394,18 @@ def run(
 
     logger.info("%d unique repos to process after deduplication", len(unique))
 
+    completed = load_completed_repos(progress_db_path)
+    commits_scanned_by_lang: dict[str, int] = defaultdict(int)
+    for lang, examined in completed.values():
+        commits_scanned_by_lang[lang] += examined
+    unique = [r for r in unique if (r.get("repo_name") or "").strip() not in completed]
+    logger.info(
+        "%d repos already checkpointed in %s, %d pending",
+        len(completed),
+        progress_db_path,
+        len(unique),
+    )
+
     # Preload per-language seen commit SHAs for resume-safety
     lang_seen = {}
     for r in unique:
@@ -286,7 +416,7 @@ def run(
     workers = max(1, int(workers or 1))
     processed_count = 0
     commits_found = 0
-    commits_scanned_by_lang: dict[str, int] = defaultdict(int)
+    unavailable_count = 0
     logger.info("Starting processing with %d workers", workers)
     if workers == 1:
         with tqdm(total=len(unique), desc="discover-commits", unit="repo") as pbar:
@@ -301,6 +431,18 @@ def run(
                 # this mirrors it so both branches behave identically.
                 try:
                     rows, total_examined = process_repo_for_commits(r, since)
+                except RepoUnavailable:
+                    record_repo_progress(
+                        progress_db_path,
+                        (r.get("repo_name") or "").strip(),
+                        lang,
+                        0,
+                        [],
+                        status=STATUS_CLONE_UNAVAILABLE,
+                    )
+                    unavailable_count += 1
+                    pbar.update(1)
+                    continue
                 except Exception as e:
                     logger.exception("Error processing %s: %s", r.get("repo_name"), e)
                     pbar.update(1)
@@ -324,6 +466,13 @@ def run(
                         len(new_rows),
                         (r.get("repo_name") or ""),
                     )
+                record_repo_progress(
+                    progress_db_path,
+                    (r.get("repo_name") or "").strip(),
+                    lang,
+                    total_examined,
+                    rows,
+                )
                 processed_count += 1
                 pbar.set_postfix(commits=commits_found)
                 pbar.update(1)
@@ -339,6 +488,18 @@ def run(
                     lang = (src.get("language") or "unknown").strip().lower()
                     try:
                         rows, total_examined = fut.result()
+                    except RepoUnavailable:
+                        record_repo_progress(
+                            progress_db_path,
+                            (src.get("repo_name") or "").strip(),
+                            lang,
+                            0,
+                            [],
+                            status=STATUS_CLONE_UNAVAILABLE,
+                        )
+                        unavailable_count += 1
+                        pbar.update(1)
+                        continue
                     except Exception as e:
                         logger.exception(
                             "Error processing %s: %s", src.get("repo_name"), e
@@ -366,6 +527,13 @@ def run(
                             len(new_rows),
                             src.get("repo_name"),
                         )
+                    record_repo_progress(
+                        progress_db_path,
+                        (src.get("repo_name") or "").strip(),
+                        lang,
+                        total_examined,
+                        rows,
+                    )
                     processed_count += 1
                     pbar.set_postfix(commits=commits_found)
                     pbar.update(1)
@@ -374,8 +542,9 @@ def run(
 
     write_commit_scan_totals(commits_scanned_by_lang, output_dir)
     print(
-        f"Processed {processed_count} config-positive repos; per-language commit CSVs "
-        f"stored in {output_dir}; commit scan totals: {dict(commits_scanned_by_lang)}"
+        f"Processed {processed_count} config-positive repos ({unavailable_count} clone-unavailable, "
+        f"recorded and not retried); per-language commit CSVs stored in {output_dir}; "
+        f"commit scan totals: {dict(commits_scanned_by_lang)}"
     )
     return 0
 

@@ -1,3 +1,4 @@
+import pytest
 """Real (non-mocked) unit tests for agent_commit_counter.py's per-commit and
 per-run "total commits examined" counting -- the number that feeds
 paper-draft/3-results.md's "all commits" column, distinct from the
@@ -76,17 +77,21 @@ def test_process_repo_for_commits_no_repo_name_returns_empty(tmp_path: Path):
     assert total_examined == 0
 
 
-def test_process_repo_for_commits_clone_failure_returns_zero_total(tmp_path: Path):
-    out_rows, total_examined = process_repo_for_commits(
-        {
-            "repo_name": "owner/nonexistent",
-            "clone_url": str(tmp_path / "does-not-exist"),
-            "language": "python",
-        },
-        "2025-01-01",
-    )
-    assert out_rows == []
-    assert total_examined == 0
+def test_process_repo_for_commits_refused_clone_raises_repo_unavailable(tmp_path: Path):
+    """A clone refused for a permanent reason is not a repo with zero commits:
+    it raises RepoUnavailable so the progress file can record it apart from
+    a clean scan."""
+    from collection.repository_quality_control.agent_commit_counter import RepoUnavailable
+
+    with pytest.raises(RepoUnavailable):
+        process_repo_for_commits(
+            {
+                "repo_name": "owner/nonexistent",
+                "clone_url": str(tmp_path / "does-not-exist"),
+                "language": "python",
+            },
+            "2025-01-01",
+        )
 
 
 def test_run_writes_commit_scan_summary_md(tmp_path: Path):
@@ -118,7 +123,7 @@ def test_run_writes_commit_scan_summary_md(tmp_path: Path):
         since="2025-01-01",
         workers=1,
         input_dir=repo_qc_dir,
-        output_dir=output_dir,
+        output_dir=output_dir, progress_db_path=tmp_path / "progress.db",
     )
     assert result == 0
 
@@ -170,7 +175,7 @@ def test_run_accumulates_per_language_totals_across_repos(tmp_path: Path):
     )
 
     output_dir = tmp_path / "out"
-    run(since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir)
+    run(since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir, progress_db_path=tmp_path / "progress.db")
 
     summary_text = (output_dir / "summary.md").read_text()
     assert "| python | 3 |" in summary_text
@@ -219,7 +224,7 @@ def test_run_workers_1_continues_after_a_clone_failure(tmp_path: Path, monkeypat
 
     output_dir = tmp_path / "out"
     result = agent_commit_counter.run(
-        since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir
+        since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir, progress_db_path=tmp_path / "progress.db"
     )
     assert result == 0  # run() completed, didn't crash/propagate
 
@@ -272,7 +277,7 @@ def test_run_multi_worker_accumulates_per_language_totals_correctly(tmp_path: Pa
     _write_repo_qc_csv(repo_qc_dir, "java_agent_repo.csv", java_rows)
 
     output_dir = tmp_path / "out"
-    run(since="2025-01-01", workers=4, input_dir=repo_qc_dir, output_dir=output_dir)
+    run(since="2025-01-01", workers=4, input_dir=repo_qc_dir, output_dir=output_dir, progress_db_path=tmp_path / "progress.db")
 
     summary_text = (output_dir / "summary.md").read_text()
     assert f"| python | {expected_python_total} |" in summary_text
@@ -300,6 +305,6 @@ def test_run_skips_repos_missing_agent_config(tmp_path: Path):
     )
 
     output_dir = tmp_path / "out"
-    result = run(since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir)
+    result = run(since="2025-01-01", workers=1, input_dir=repo_qc_dir, output_dir=output_dir, progress_db_path=tmp_path / "progress.db")
     assert result == 0
     assert not (output_dir / "summary.md").exists()

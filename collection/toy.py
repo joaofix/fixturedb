@@ -180,6 +180,7 @@ def run_toy(
         agent_commit_counter.run(
             input_dir=paths.stage_dir("a", "repos", root=root),
             output_dir=paths.stage_dir("a", "commits", root=root),
+            progress_db_path=db_root / "a_discover_commits.db",
             workers=workers if workers is not None else 4,
         )
         logger.info("[toy a] filtering to test-touching commits (stage 3/4)")

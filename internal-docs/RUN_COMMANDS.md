@@ -81,6 +81,15 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
 
 ### Notes
 
+- **`discover-commits` resumes per repository.** After each repository, it writes its
+  agent commit rows to `datasets/a/commits/*_commit.csv` and then records the repository
+  in `db/a_discover_commits.db` (tables `repo_progress` and `agent_commits`, which also
+  back up the rows). A restart skips every recorded repository and reloads the scan
+  totals from that file. A repository whose clone fails for a transient reason is not
+  recorded, so the next run retries it. A repository whose clone is refused for a
+  permanent reason (deleted, private, or not found) is recorded with status
+  `clone_unavailable` and is not retried. To retry those, delete their rows from
+  `repo_progress` in `db/a_discover_commits.db`.
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
   work; DB and CSV writes stay on the main thread regardless. **Not CPU core
   count** is the ceiling here — the `discover-repos`/`discover-commits`/
@@ -182,16 +191,19 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   are skipped, not redone (see each collector's `is_global_checkpoint_completed`
   usage in `collection/db.py`).
 
-### RQ1 / RQ5: raw-universe scans (independent of `--dataset {a,c}`)
+### RQ1 / RQ5: separate scans (independent of `--dataset {a,c}`)
 
-Not part of the `--dataset {a,c}` pipeline above -- these two scan the full raw
-`github-search-raw/*.csv.gz` universe directly, each into its own db
-(`db/rq1_prevalence.db` / `db/rq5_agent_files.db`, never `db/{a,c}.db`), pinned to
-the same snapshot date Dataset A/C were collected at. Both are resumable (already-
-scanned repos are skipped on a re-run -- the db's own rows are the checkpoint, no
-separate checkpoint file), log to `db/rq1_prevalence.log` / `db/rq5_agent_files.log`,
-write a `db/*_progress.json` for monitoring, and push one ntfy.sh notification per
-language chunk plus one final push.
+Not part of the `--dataset {a,c}` pipeline above. Each writes its own db, never
+`db/{a,c}.db`. Both are resumable (already-scanned repos are skipped on a re-run --
+the db's own rows are the checkpoint), write a `db/*_progress.json` for monitoring,
+and push one ntfy.sh notification per language chunk plus one final push.
+
+- RQ1 scans the full raw `github-search-raw/*.csv.gz` universe, into
+  `db/rq1_prevalence.db`, at a fixed snapshot date.
+- RQ5 scans only the repositories that have at least one fixture in Dataset A
+  (`datasets/a/fixtures/*_fixtures.csv`), into `db/rq5_agent_files_v4.db`. It
+  needs `--snapshot-date`, which has no default: the date of the new Dataset A
+  collection is not fixed yet.
 
 RQ1 clones every repo (`--workers` defaults to 12 -- pass a higher value on a
 many-core server; see that module's own docstring for operational history).
@@ -202,15 +214,17 @@ run risks GitHub rate-limiting.
 RQ5 never clones anything -- it reads entirely through GitHub's REST API
 (`--workers` defaults to 20, since there's no disk/subprocess cost per repo
 anymore). `GITHUB_TOKEN` is effectively **required** here, not just recommended:
-the unauthenticated REST rate limit is 60 requests/hour, far too low for ~24.7k
-repos x ~2 requests each (vs. 5,000/hour authenticated).
+the unauthenticated REST rate limit is 60 requests/hour, far too low for the
+corpus's repositories x ~2 requests each (vs. 5,000/hour authenticated). Run it
+after the Dataset A fixture CSVs exist. It writes `rq5_v4/` (the three review
+CSVs) and `research_questions/rq5.md`.
 
 ```bash
 python -m collection.rq1_prevalence_scan --workers 12
   && curl -d "RQ1 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq1   # writes research_questions/rq1.md
 
-python -m collection.rq5_agent_file_scan --workers 20
+python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD --workers 20
   && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq5   # writes research_questions/rq5.md
 ```
