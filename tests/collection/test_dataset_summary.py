@@ -160,13 +160,6 @@ class TestPurityGateSection:
         assert "purity_gate" not in summary
         assert "test_commits" not in summary
 
-    def test_absent_when_no_source_file_exists_yet(self, tmp_path):
-        """A run predating this instrumentation (or dataset b before any
-        repo has been processed) has no purity source file -- must come
-        back absent, not a zeroed/fake section."""
-        paths.stage_dir("b", "test-commits", root=tmp_path).mkdir(parents=True)
-        summary = compute_summary("b", root=tmp_path)
-        assert "purity_gate" not in summary
 
 
 class TestWriteSummary:
@@ -188,10 +181,8 @@ class TestWriteSummary:
         assert data["sampling_seed"] is not None
 
     def test_sampling_seed_omitted_entirely_for_a_and_b(self, tmp_path):
-        """Verified this is never anything but null for real A/B collection
-        (the removed resolver's --stratified capping is a plain rows[:n] slice,
-        no RNG at all) -- so the key is absent there instead of shown as
-        permanently-empty noise, and present (a real value) only for C."""
+        """Verified this is never anything but null for real Dataset A collection
+        -- so the key is absent there instead of shown as permanently-empty
+        noise, and present (a real value) only for C."""
         assert "sampling_seed" not in compute_summary("a", root=tmp_path)
-        assert "sampling_seed" not in compute_summary("b", root=tmp_path)
         assert "sampling_seed" in compute_summary("c", root=tmp_path)

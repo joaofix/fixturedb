@@ -20,9 +20,6 @@ class TestStageDir:
             ("a", "commits"),
             ("a", "test-commits"),
             ("a", "fixtures"),
-            ("b", "repos"),
-            ("b", "test-commits"),
-            ("b", "fixtures"),
             ("c", "repos"),
             ("c", "fixtures"),
         ],
@@ -42,7 +39,7 @@ class TestStageDir:
 
     def test_unknown_stage_for_dataset_raises(self):
         with pytest.raises(ValueError, match="no 'commits' stage"):
-            paths.stage_dir("b", "commits")
+            paths.stage_dir("c", "commits")
 
     def test_dataset_c_has_no_test_commits_or_commits_stage(self):
         for bad_stage in ("commits", "test-commits"):
@@ -84,13 +81,17 @@ class TestDefaultRepoSource:
 
 
 class TestDbPaths:
-    @pytest.mark.parametrize("dataset", ["a", "b", "c"])
+    @pytest.mark.parametrize("dataset", ["a", "c"])
     def test_db_path(self, dataset):
         assert paths.db_path(dataset) == paths.DB_ROOT / f"{dataset}.db"
 
     def test_db_path_unknown_dataset_raises(self):
         with pytest.raises(ValueError):
             paths.db_path("z")
+
+    def test_dataset_b_is_no_longer_a_dataset(self):
+        with pytest.raises(ValueError):
+            paths.db_path("b")
 
     def test_corpus_db_path(self):
         assert paths.corpus_db_path() == paths.DB_ROOT / "corpus.db"
@@ -101,7 +102,7 @@ class TestDbPaths:
 
 
 class TestExportPath:
-    @pytest.mark.parametrize("dataset", ["a", "b", "c"])
+    @pytest.mark.parametrize("dataset", ["a", "c"])
     def test_export_path(self, dataset):
         assert paths.export_path(dataset) == paths.EXPORT_ROOT / f"{dataset}.zip"
 

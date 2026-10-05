@@ -26,7 +26,6 @@ RAW_SEARCH_DIR = ROOT_DIR / "github-search-raw"
 # The four stage names that exist anywhere, in pipeline order, per dataset.
 STAGE_ORDER: dict[str, list[str]] = {
     "a": ["repos", "commits", "test-commits", "fixtures"],
-    "b": ["repos", "test-commits", "fixtures"],
     "c": ["repos", "fixtures"],
 }
 
@@ -77,19 +76,11 @@ def previous_stage_dir(dataset: str, stage: str, *, root: Path = DATASETS_ROOT) 
 def default_repo_source(dataset: str, *, root: Path = DATASETS_ROOT) -> Path:
     """Where `discover-repos --dataset {dataset}` defaults its input from.
 
-    - b: Dataset A's fixture-yielding repos if that stage is populated,
-      else Dataset A's raw discovered repos.
-    - a/c: the raw SEART search export (dataset-agnostic, not under `root`).
+    Both datasets read the raw SEART search export (dataset-agnostic, not under
+    `root`).
     """
     _check_dataset(dataset)
-    if dataset == "b":
-        fixture_repos = stage_dir("a", "fixtures", root=root) / "repos"
-        if fixture_repos.exists() and any(fixture_repos.iterdir()):
-            return fixture_repos
-        return stage_dir("a", "repos", root=root)
-    if dataset in ("a", "c"):
-        return RAW_SEARCH_DIR
-    raise ValueError(dataset)
+    return RAW_SEARCH_DIR
 
 
 def db_path(dataset: str, *, root: Path = DB_ROOT) -> Path:

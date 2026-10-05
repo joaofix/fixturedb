@@ -194,7 +194,7 @@ _COLUMN_MIGRATIONS: list[tuple[str, str, str]] = [
     # (a plain ALTER TABLE) has no access to. A fixture row with
     # comment_density=0.0 after this migration is therefore ambiguous --
     # either it genuinely has no comments, or it simply predates this
-    # column and was never measured. db/a.db, db/b.db, db/c.db all need a
+    # column and was never measured. db/a.db and db/c.db both need a
     # full re-extraction (not just this migration) before num_comment_lines/
     # comment_density can be trusted or reported on.
     ("fixtures", "num_comment_lines", "INTEGER DEFAULT 0"),

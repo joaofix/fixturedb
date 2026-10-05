@@ -75,18 +75,18 @@ def export_root(tmp_path):
 class TestAnalyzeDistribution:
     def test_recommends_smaller_dataset_as_target(self, db_root):
         _build_db(db_root / "a.db", 10, agent=True)
-        _build_db(db_root / "b.db", 6)
+        _build_db(db_root / "c.db", 6)
 
-        result = analyze_distribution("a", "b", db_root=db_root)
+        result = analyze_distribution("a", "c", db_root=db_root)
 
         assert result["a"]["statistics"]["total_fixtures"] == 10
-        assert result["b"]["statistics"]["total_fixtures"] == 6
+        assert result["c"]["statistics"]["total_fixtures"] == 6
         assert result["sampling_recommendation"]["target_count"] == 6
 
     def test_raises_when_db_missing(self, db_root):
         _build_db(db_root / "a.db", 5)
-        with pytest.raises(FileNotFoundError, match="extract-fixtures --dataset b"):
-            analyze_distribution("a", "b", db_root=db_root)
+        with pytest.raises(FileNotFoundError, match="extract-fixtures --dataset c"):
+            analyze_distribution("a", "c", db_root=db_root)
 
 
 class TestSampleDataset:
