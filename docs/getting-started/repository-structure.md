@@ -120,7 +120,7 @@ fixturedb/
 
 ### Main CLI (root)
 
-`python -m collection <verb> --dataset {a,c}` is the one, authoritative CLI surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only), `filter-test-commits` (A only), `extract-fixtures`, `analyze-distribution`, `sample`, `export`, `validate`, `toy`, `paired`, `status`. There is no separate root-level `pipeline.py` convenience CLI — it was retired once every verb it exposed had an equivalent under `python -m collection`.
+`python -m collection <verb> --dataset {a,c}` is the one, authoritative CLI surface. Verbs: `discover-repos`, `discover-commits` (Dataset A only), `filter-test-commits` (A only), `extract-fixtures`, `analyze-distribution`, `sample`, `export`, `validate`, `toy`, `status`. There is no separate root-level `pipeline.py` convenience CLI — it was retired once every verb it exposed had an equivalent under `python -m collection`.
 
 ### collection/ module
 

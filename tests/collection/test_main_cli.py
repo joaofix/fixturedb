@@ -348,32 +348,32 @@ class TestExtractFixtures:
 
 
 class TestAnalyzeDistribution:
-    def test_defaults_to_a_vs_b(self):
+    def test_defaults_to_a_vs_c(self):
         with patch(
             "collection.dataset_pipeline.analyze_distribution",
             return_value={
                 "a": {"statistics": {"total_fixtures": 10}},
-                "b": {"statistics": {"total_fixtures": 5}},
+                "c": {"statistics": {"total_fixtures": 5}},
                 "sampling_recommendation": {"target_count": 5},
             },
         ) as mock_analyze:
             rc = main(["analyze-distribution"])
 
         assert rc == 0
-        mock_analyze.assert_called_once_with("a", "b")
+        mock_analyze.assert_called_once_with("a", "c")
 
     def test_explicit_dataset_and_against(self):
         with patch(
             "collection.dataset_pipeline.analyze_distribution",
             return_value={
-                "b": {"statistics": {"total_fixtures": 5}},
-                "c": {"statistics": {"total_fixtures": 3}},
+                "c": {"statistics": {"total_fixtures": 5}},
+                "a": {"statistics": {"total_fixtures": 3}},
                 "sampling_recommendation": {"target_count": 3},
             },
         ) as mock_analyze:
-            main(["analyze-distribution", "--dataset", "b", "--against", "c"])
+            main(["analyze-distribution", "--dataset", "c", "--against", "a"])
 
-        mock_analyze.assert_called_once_with("b", "c")
+        mock_analyze.assert_called_once_with("c", "a")
 
 
 class TestSample:

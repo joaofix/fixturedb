@@ -206,38 +206,6 @@ def run_toy(
         logger.info(f"[toy a] wrote {summary_path}")
         return 0
 
-    if dataset == "b":
-        from .human_corpus import HumanCorpusCollector
-        from .repo_resolve import resolve_dataset_b_repos
-
-        logger.info(
-            "[toy b] resolving repos from Dataset A's already-collected pool "
-            "(stage 1/2, requires toy --dataset a to have run under this root)"
-        )
-        resolved_counts = resolve_dataset_b_repos(
-            source_dir=paths.default_repo_source("b", root=root),
-            output_dir=paths.stage_dir("b", "repos", root=root),
-            language=language,
-            stratified=stratified,
-        )
-        logger.info("[toy b] resolved repos per language: %s", resolved_counts)
-        logger.info("[toy b] extracting fixtures (stage 2/2)")
-        collector = HumanCorpusCollector(
-            output_db=paths.db_path("b", root=db_root),
-            repo_qc_dir=paths.stage_dir("b", "repos", root=root),
-            test_commits_csv=paths.stage_dir("b", "test-commits", root=root),
-            fixtures_output_dir=paths.stage_dir("b", "fixtures", root=root),
-        )
-        stats, db_path = collector.run(
-            repos_per_language=None if stratified else repos,
-            language=language,
-            workers=workers,
-        )
-        logger.info(f"[toy b] done: {stats.fixtures_collected} fixtures in {db_path}")
-        summary_path = write_summary("b", root=root)
-        logger.info(f"[toy b] wrote {summary_path}")
-        return 0
-
     if dataset == "c":
         from .config import DATASET_C_MIN_CREATED_DATE, HUMAN_CORPUS_CUTOFF_DATE
         from .dataset_c import collect_dataset_c_fixtures

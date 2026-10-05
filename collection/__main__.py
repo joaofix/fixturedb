@@ -1,7 +1,7 @@
 """Command-line entrypoint for the FixtureDB collection pipeline.
 
 One CLI, one set of step verbs shared across all three datasets, selected via
-`--dataset {a,b,c}`. Each verb resolves its default input/output directories
+`--dataset {a,c}`. Each verb resolves its default input/output directories
 through `collection.paths` -- see that module's docstring for the directory
 layout. Not every verb applies to every dataset (e.g. `discover-commits` is
 Dataset A only); invoking one that doesn't apply exits 1 with an explicit
@@ -25,11 +25,10 @@ from .config import (
 )
 from .db import db_session
 from .logging_utils import configure_logging, get_logger
-from .paired_collection import main as paired_main
 
 logger = get_logger(__name__)
 
-_DATASET_CHOICES = ("a", "b", "c")
+_DATASET_CHOICES = ("a", "c")
 
 
 def _unsupported(verb: str, dataset: str, supported: tuple[str, ...]) -> int:
@@ -59,16 +58,6 @@ def _cmd_discover_repos(args: argparse.Namespace) -> int:
             source_dir=args.source_dir or paths.default_repo_source("a"),
             output_dir=args.output_dir or paths.stage_dir("a", "repos"),
         )
-
-    if args.dataset == "b":
-        from .repo_resolve import resolve_dataset_b_repos
-
-        resolve_dataset_b_repos(
-            source_dir=args.source_dir or paths.default_repo_source("b"),
-            output_dir=args.output_dir or paths.stage_dir("b", "repos"),
-            language=args.language,
-        )
-        return 0
 
     if args.dataset == "c":
         from .config import DATASET_C_MIN_CREATED_DATE, HUMAN_CORPUS_CUTOFF_DATE
@@ -129,18 +118,7 @@ def _cmd_filter_test_commits(args: argparse.Namespace) -> int:
         )
         return 0
 
-    if args.dataset == "b":
-        from .human_test_commit_filter import collect_human_test_commits
-
-        collect_human_test_commits(
-            args.input_dir or paths.stage_dir("b", "repos"),
-            args.output_dir or paths.stage_dir("b", "test-commits"),
-            workers=args.workers,
-            language=args.language,
-        )
-        return 0
-
-    return _unsupported("filter-test-commits", args.dataset, ("a", "b"))
+    return _unsupported("filter-test-commits", args.dataset, ("a",))
 
 
 # ---------------------------------------------------------------------------
@@ -178,40 +156,6 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
         )
         logger.info(
             f"Dataset A extraction complete: {stats.fixtures_collected} fixtures in {db_path}"
-        )
-        return 0
-
-    if args.dataset == "b":
-        from .human_corpus import HumanCorpusCollector
-
-        output_db = args.output_db or paths.db_path("b")
-        # No dataset-wide database_has_rows() gate here --
-        # HumanCorpusCollector.run() already gates per-language via its own
-        # DB checkpoints (human_within_complete:{lang}/:all), which a
-        # dataset-wide "does *any* row exist" check would short-circuit
-        # incorrectly: a language processed by an earlier
-        # `--language X` call can incidentally produce a handful of
-        # cross-language fixture rows (a multi-language repo's test files
-        # in a different language than the repo's own tag -- see
-        # docs/architecture/collection.md's "Repository deduplication"),
-        # which would otherwise make every subsequent `--language Y` call
-        # for this dataset see the DB as "already has fixture rows" and
-        # skip entirely, even though language Y was never actually
-        # processed. See internal-docs/RUN_COMMANDS.md's per-language
-        # Dataset B chain.
-        collector = HumanCorpusCollector(
-            output_db=output_db,
-            repo_qc_dir=args.repo_dir or paths.stage_dir("b", "repos"),
-            test_commits_csv=args.commit_dir or paths.stage_dir("b", "test-commits"),
-        )
-        stats, db_path = collector.run(
-            repos_per_language=args.repos_per_language,
-            language=args.language,
-            workers=args.workers,
-            force=args.force,
-        )
-        logger.info(
-            f"Dataset B extraction complete: {stats.fixtures_collected} fixtures in {db_path}"
         )
         return 0
 
@@ -366,8 +310,6 @@ def _cmd_status() -> int:
             print(f"  db/{dataset}.db{'':<8} (not created)")
         print()
 
-    corpus_db = paths.corpus_db_path()
-    print(f"db/corpus.db: {'present' if corpus_db.exists() else 'absent (run `paired` to produce it)'}")
     return 0
 
 
@@ -412,7 +354,7 @@ def build_parser() -> argparse.ArgumentParser:
     filter_test_commits = subparsers.add_parser(
         "filter-test-commits", help="Filter commits down to ones touching test files"
     )
-    _add_dataset_arg(filter_test_commits, choices=("a", "b"))
+    _add_dataset_arg(filter_test_commits, choices=("a",))
     add_language_arg(filter_test_commits, sorted(LANGUAGE_CONFIGS.keys()))
     add_workers_arg(filter_test_commits, default=12)
     filter_test_commits.add_argument("--input-dir", type=Path, default=None)
@@ -442,7 +384,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Compare two datasets' fixture distributions and recommend a balanced sample size",
     )
     # Unlike every other verb, --dataset here defaults to "a" (paired with
-    # --against, default "b") rather than being required -- its whole job is
+    # --against, default "c") rather than being required -- its whole job is
     # comparing two corpora, so a sensible default pair keeps the common case
     # a bare `analyze-distribution` invocation.
     analyze_distribution.add_argument(
@@ -452,7 +394,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Which dataset (default: a)",
     )
     analyze_distribution.add_argument(
-        "--against", choices=list(_DATASET_CHOICES), default="b"
+        "--against", choices=list(_DATASET_CHOICES), default="c"
     )
 
     sample = subparsers.add_parser(
@@ -531,20 +473,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_dataset_arg(summarize)
 
-    paired_parser = subparsers.add_parser(
-        "paired", help="Bootstrap db/corpus.db via the paired within-repository study"
-    )
-    add_language_arg(paired_parser, LANGUAGE_CONFIGS, "Limit to one language")
-    add_repos_per_language_arg(
-        paired_parser, 50, "Repositories per language to consider"
-    )
-    paired_parser.add_argument(
-        "--max-commits-per-role",
-        type=int,
-        default=8,
-        help="Max commits per role to sample per repo",
-    )
-
     toy_parser = subparsers.add_parser(
         "toy", help="Build one dataset end-to-end under toy-dataset/ at small scale"
     )
@@ -603,14 +531,6 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "extract-fixtures":
         return _cmd_extract_fixtures(args)
-
-    if args.command == "paired":
-        paired_args: list[str] = []
-        if getattr(args, "language", None):
-            paired_args.extend(["--language", args.language])
-        paired_args.extend(["--repos-per-language", str(args.repos_per_language)])
-        paired_args.extend(["--max-commits-per-role", str(args.max_commits_per_role)])
-        return int(paired_main(paired_args) or 0)
 
     if args.command == "analyze-distribution":
         return _cmd_analyze_distribution(args)
