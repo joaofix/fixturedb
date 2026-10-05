@@ -3,7 +3,7 @@
 Replaces the old phase_4/5/6_7/8 scripts, which relayed state between each
 other through timestamped JSON files under output/ (glob for the latest
 `phase_N_*.json`) and hardcoded exactly two datasets (human, agent). Each
-function here operates on one dataset at a time, identified by 'a'/'b'/'c',
+function here operates on one dataset at a time, identified by 'a'/'c',
 resolving DB/export paths through collection.paths.
 
 `sample_dataset()` still persists its result to a JSON file (there is a real
@@ -41,7 +41,6 @@ logger = get_logger(__name__)
 
 _EXPORTER_CLASSES = {
     "a": AgentDatasetExporter,
-    "b": HumanDatasetExporter,
     "c": HumanDatasetExporter,
 }
 

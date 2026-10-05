@@ -1,12 +1,12 @@
 """Dataset-level summary statistics.
 
 Computes repo/commit/fixture counts, per-repo and per-file fixture
-averages, and (for datasets A and B, which apply the commit-level purity
+averages, and (for dataset A, which applies the commit-level purity
 gate -- see docs/architecture/agent-detection.md's "Pure-Addition Filter")
 the gate's acceptance rate -- by reading a dataset's already-written stage
 CSVs, not by re-running collection. Written to summary.yaml
 (paths.summary_path()) by `python -m collection summarize --dataset
-{a,b,c}`, and automatically at the end of each dataset's `toy` run.
+{a,c}`, and automatically at the end of each dataset's `toy` run.
 
 Dataset C has no purity gate (snapshot extraction, not diff-based -- see
 dataset_c.py's module docstring) and no test-commits stage at all, so
@@ -84,16 +84,9 @@ def _repos_section(dataset: str, root: Path) -> dict[str, Any]:
     }
 
 
-def _test_commit_suffix(dataset: str) -> str:
-    # Dataset A's own commits (agent-authored) vs Dataset B's (human,
-    # within the same repos) are written with different filename suffixes
-    # -- see agent_corpus.py's writer.
-    return "_test_commit.csv" if dataset == "a" else "_human_test_commit.csv"
-
-
 def _test_commits_section(dataset: str, root: Path) -> dict[str, Any]:
     tc_dir = paths.stage_dir(dataset, "test-commits", root=root)
-    by_lang = _glob_by_language(tc_dir, _test_commit_suffix(dataset))
+    by_lang = _glob_by_language(tc_dir, "_test_commit.csv")
     return {
         "total": sum(len(rows) for rows in by_lang.values()),
         "by_repo_language": {
@@ -110,9 +103,8 @@ def _purity_gate_section(dataset: str, root: Path) -> dict[str, Any] | None:
 
     Dataset A's counts live in fixtures/repos/{lang}_fixture_repos.csv
     (rejected_mixed_test_diff/accepted columns, one row per repo -- summed
-    here). Dataset B's live in test-commits/{lang}_purity_stats.csv (one
-    already-aggregated row per language, written by the removed Dataset B collector). Returns None if
-    neither source exists yet (e.g. run predates this instrumentation).
+    here). Returns None if the source does not exist yet (e.g. a run
+    predating this instrumentation).
     """
     by_lang: dict[str, dict[str, int]] = {}
 
@@ -124,17 +116,6 @@ def _purity_gate_section(dataset: str, root: Path) -> dict[str, Any] | None:
             accepted = sum(int(r.get("accepted") or 0) for r in rows)
             rejected = sum(int(r.get("rejected_mixed_test_diff") or 0) for r in rows)
             by_lang[lang] = {"accepted": accepted, "rejected": rejected}
-    elif dataset == "b":
-        tc_dir = paths.stage_dir(dataset, "test-commits", root=root)
-        for lang, rows in sorted(
-            _glob_by_language(tc_dir, "_purity_stats.csv").items()
-        ):
-            if not rows:
-                continue
-            by_lang[lang] = {
-                "accepted": int(rows[0].get("commits_accepted") or 0),
-                "rejected": int(rows[0].get("commits_rejected") or 0),
-            }
 
     if not by_lang:
         return None
