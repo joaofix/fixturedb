@@ -262,3 +262,6 @@ past-datasets/
 # Archived SQLite databases from before a recollection. Not committed: the
 # files are too large for GitHub (a.db alone is ~150 MB).
 past-db/
+
+# Local copy of the paper draft, never committed
+paper.md
