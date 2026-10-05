@@ -84,14 +84,10 @@ python -m collection extract-fixtures    --dataset a --languages python javascri
 
 ## Statistical Comparison
 
-`collection/between_group_comparison.py` compares two datasets' `fixtures`
-tables. Since each dataset now has its own database (`db/a.db`, `db/c.db`),
-comparing two of them means pointing it at both DB paths
-directly rather than filtering one shared database by `commit_kind`.
-`python -m collection analyze-distribution --dataset a --against c` covers
-the same "are these two corpora comparable in size" question at the fixture-
-count level; `between_group_comparison.py` goes deeper with per-control
-statistical tests.
+`python -m collection analyze-distribution --dataset a --against c` compares
+the two datasets' fixture counts. The control-variable balance tests live in
+`collection/between_group_comparison.py` (primitives) and are run by
+`collection/research_questions/balance.py`.
 
 | Control | Test | Interpretation |
 |---------|------|-----------------|

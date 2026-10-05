@@ -9,20 +9,16 @@ Tests statistical comparison of human vs agent corpora including:
 """
 
 import sqlite3
-import tempfile
 from pathlib import Path
 
 from collection.between_group_comparison import (
     BalanceTest,
-    BetweenGroupComparison,
     _cliffs_delta,
     _cliffs_delta_magnitude,
     _cramers_v,
     _cramers_v_magnitude,
     compute_categorical_balance,
     compute_continuous_balance,
-    get_agent_fixtures_by_variable,
-    get_human_fixtures_by_variable,
 )
 
 
@@ -408,154 +404,3 @@ class TestContinuousBalance:
         assert result.details["agent_median"] == 7.0
 
 
-class TestVariableDistribution:
-    """Test querying fixture distributions by control variables."""
-
-    def test_get_human_fixtures_by_variable(self):
-        """Should return distribution of human fixtures by variable."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            _create_test_between_group_db(db_path)
-
-            dist = get_human_fixtures_by_variable(db_path, "language")
-
-            assert "python" in dist
-            assert "javascript" in dist
-            assert dist["python"] == 20  # 2 repos * 10 fixtures
-            assert dist["javascript"] == 10  # 1 repo * 10 fixtures
-
-    def test_get_agent_fixtures_by_variable(self):
-        """Should return distribution of agent fixtures by variable."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            _create_test_between_group_db(db_path)
-
-            dist = get_agent_fixtures_by_variable(db_path, "language")
-
-            assert "python" in dist
-            assert "javascript" in dist
-            assert dist["python"] == 20  # 2 repos * 10 fixtures
-            assert dist["javascript"] == 8  # 1 repo * 8 fixtures
-
-    def test_get_fixtures_by_domain(self):
-        """Should work for domain variable."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            db_path = Path(tmpdir) / "test.db"
-            _create_test_between_group_db(db_path)
-
-            human_dist = get_human_fixtures_by_variable(db_path, "domain")
-            agent_dist = get_agent_fixtures_by_variable(db_path, "domain")
-
-            assert "web" in human_dist
-            assert "ml" in human_dist
-            assert "web" in agent_dist
-            assert "database" in agent_dist
-
-
-class TestBetweenGroupComparison:
-    """Test BetweenGroupComparison result aggregation."""
-
-    def test_comparison_initialization(self):
-        """Should initialize with all required fields."""
-        balance_tests = [
-            BalanceTest("language", "chi-square", 0.5, True),
-            BalanceTest("domain", "chi-square", 0.3, True),
-        ]
-
-        comparison = BetweenGroupComparison(
-            timestamp="2024-05-18T10:00:00Z",
-            methodology={"approach": "between-group"},
-            balance_tests=balance_tests,
-            human_corpus_stats={},
-            agent_corpus_stats={},
-            control_variable_summary={},
-        )
-
-        assert comparison.timestamp == "2024-05-18T10:00:00Z"
-        assert len(comparison.balance_tests) == 2
-
-    def test_comparison_to_dict(self):
-        """Should convert to dictionary for JSON serialization."""
-        balance_tests = [
-            BalanceTest("language", "chi-square", 0.5, True),
-        ]
-
-        comparison = BetweenGroupComparison(
-            timestamp="2024-05-18T10:00:00Z",
-            methodology={"approach": "between-group"},
-            balance_tests=balance_tests,
-            human_corpus_stats={"fixtures": 100},
-            agent_corpus_stats={"fixtures": 80},
-            control_variable_summary={},
-        )
-
-        comparison_dict = comparison.to_dict()
-
-        assert comparison_dict["timestamp"] == "2024-05-18T10:00:00Z"
-        assert len(comparison_dict["balance_tests"]) == 1
-        assert comparison_dict["human_corpus_stats"]["fixtures"] == 100
-
-    def test_comparison_all_tests_balanced(self):
-        """Should report when all control variables are balanced."""
-        balance_tests = [
-            BalanceTest("language", "chi-square", 0.5, True),
-            BalanceTest("domain", "chi-square", 0.3, True),
-            BalanceTest("repo_age_years", "mann-whitney-u", 0.4, True),
-        ]
-
-        comparison = BetweenGroupComparison(
-            timestamp="2024-05-18T10:00:00Z",
-            methodology={},
-            balance_tests=balance_tests,
-            human_corpus_stats={},
-            agent_corpus_stats={},
-            control_variable_summary={},
-        )
-
-        all_balanced = all(t.is_balanced for t in comparison.balance_tests)
-        assert all_balanced is True
-
-    def test_comparison_some_tests_imbalanced(self):
-        """Should report when some control variables are imbalanced."""
-        balance_tests = [
-            BalanceTest("language", "chi-square", 0.5, True),
-            BalanceTest("domain", "chi-square", 0.02, False),  # Imbalanced
-            BalanceTest("repo_age_years", "mann-whitney-u", 0.6, True),
-        ]
-
-        comparison = BetweenGroupComparison(
-            timestamp="2024-05-18T10:00:00Z",
-            methodology={},
-            balance_tests=balance_tests,
-            human_corpus_stats={},
-            agent_corpus_stats={},
-            control_variable_summary={},
-        )
-
-        all_balanced = all(t.is_balanced for t in comparison.balance_tests)
-        assert all_balanced is False
-
-
-class TestComparisonLimitations:
-    """Test documentation of between-group study limitations."""
-
-    def test_comparison_with_limitations(self):
-        """Should document known limitations of between-group design."""
-        limitations = [
-            "Temporal separation confounding: human corpus (pre-2021) vs agent corpus (2025+)",
-            "Tier 1 agent detection is conservative (70-80% recall, 99%+ precision)",
-            "Repository availability may differ between temporal periods",
-        ]
-
-        comparison = BetweenGroupComparison(
-            timestamp="2024-05-18T10:00:00Z",
-            methodology={},
-            balance_tests=[],
-            human_corpus_stats={},
-            agent_corpus_stats={},
-            control_variable_summary={},
-            limitations=limitations,
-        )
-
-        assert len(comparison.limitations) == 3
-        assert "Temporal separation confounding" in comparison.limitations[0]

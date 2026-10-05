@@ -50,8 +50,8 @@ class TestAgentCorpusCollectorInitialization:
 class TestCollectionDatabaseSchema:
     """Test database schema validation after collection."""
 
-    def test_between_group_database_has_required_tables(self, tmp_path):
-        """Verify between-group.db has all required tables."""
+    def test_output_database_has_required_tables(self, tmp_path):
+        """Verify a freshly initialised output database has all required tables."""
         from collection.db import initialise_db
 
         db_path = tmp_path / "test.db"

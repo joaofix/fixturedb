@@ -82,8 +82,7 @@ collection/          # Main pipeline code (the "library")
   fixture_extractor.py     # Tree-sitter AST fixture extraction
   detector.py        # Fixture pattern detection
   corpus_utils.py    # Shared repo/fixture persistence helpers
-  between_group_comparison.py  # Statistical-test primitives (effect sizes etc.) used by research_questions/ below.
-                     # BetweenGroupComparator in here is dead/orphaned -- don't use it
+  between_group_comparison.py  # Statistical-test primitives (balance tests, effect sizes) used by research_questions/ below.
   rq1_prevalence_scan.py  # RQ1's own collection, independent of --dataset {a,c}: scans the raw
                      # github-search-raw/ universe for test/fixture/setup/teardown prevalence,
                      # writes db/rq1_prevalence.db + rq1-prevalence/*.csv. Run directly:

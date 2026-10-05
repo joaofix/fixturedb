@@ -6,11 +6,10 @@ attributing an RQ2-4 metric difference to era (A vs C)?
 This exists because the methodology described in docs/data/dataset-card.md's
 "Balance Tests" section and docs/reference/limitations.md's "Control
 Variable Balance" section was never actually wired up against the current
-db/{a,c}.db files. `BetweenGroupComparator` (collection/
-between_group_comparison.py) implements the right test functions, but reads
-from a `between-group.db` that doesn't exist and isn't referenced anywhere
-in collection/__main__.py's CLI -- it's leftover from an earlier
-architecture, before the dataset split. The docs claimed a balance
+db/{a,c}.db files. The original comparator class that used to sit next to
+these test functions (collection/between_group_comparison.py) read from a
+`between-group.db` that never existed and was never wired into the CLI, so it
+has been removed; the test primitives remain. The docs claimed a balance
 report exists (`between_group_comparison_*.json`); that file has never
 existed in this repo's history.
 
@@ -22,11 +21,7 @@ comparison should be read with this in mind until it's addressed (stratify,
 regression-adjust, or at minimum explicitly disclose the confound).
 
 Repo-level, not fixture-weighted: each repo counts once, restricted to
-repos with >=1 fixture (matching the intent of the original, orphaned
-get_human_fixtures_by_variable()/get_agent_fixtures_by_variable(), which
-counted repos this way too -- despite their names, they never counted
-"fixtures", the query has no GROUP BY that would double-count a repo with
-many fixtures). Fixture-weighting would conflate "are the repo samples
+repos with >=1 fixture. Fixture-weighting would conflate "are the repo samples
 comparable" with "did some repos happen to yield more fixtures than
 others", which is a different question RQ2-4's own fixture-level tests
 already cover.
