@@ -15,13 +15,10 @@ and its CSV output (`rq5-agent-files/`, a sibling of `datasets/`).
 this db -- it renders RQ5's findings report from it, same role rq1.py plays
 for `db/rq1_prevalence.db`.
 
-**Why GitHub's REST API, not a clone (2026-10-03 design change):** the
-first version of this module cloned every repo, reusing RQ1's shallow-
-clone infra, purely out of convenience. That turned out to be far more
-than this RQ actually needs: unlike RQ1 (which tree-sitter-parses
-potentially hundreds of test files, and so genuinely needs a working
-tree), RQ5 only ever needs the content of 0-2 specific root-level files.
-That's a close-to-perfect fit for GitHub's Git Database API, which can
+**Why GitHub's REST API, not a clone:** this scan needs the content of 0 to 2
+root-level files per repository. GitHub's Git Database API returns those
+without cloning, so the scan stays fast whatever the size of the repository.
+, which can
 answer "what's at this commit's root" and "give me this one blob" without
 ever materializing the rest of the repository. Concretely, per repo:
 
@@ -54,26 +51,13 @@ implementation's `git show` gave for the equivalent local test case. This
 is exactly the desired behavior per the project's own spec: search a
 pointer file as its own file, never resolve it.
 
-**Known, accepted difference from RQ1's cutoff-commit semantics:**
-`find_cutoff_commit_via_api()` filters by UTC-normalized commit
-timestamps (`until=<date>T23:59:59Z`), while RQ1's `dataset_c.
-find_cutoff_commit()` (PyDriller-based) compares each commit's date in
-that commit's own *original* timezone offset. These are not always the
-same commit: confirmed directly against `facebook/react`, where a commit
-timestamped `2026-09-09T00:08:45+01:00` (so a UTC-based comparison
-treats its UTC instant, `2026-09-08T23:08:45Z`, as being within the
-cutoff day) has a local calendar date of `2026-09-09` in its own
-timezone (so PyDriller, which never converts to UTC, correctly excludes
-it instead). GitHub's REST API has no field anywhere that recovers a
-commit's original offset -- confirmed by checking both the commits-list
-and single-commit endpoints -- so exactly replicating PyDriller's
-semantics via the API is not possible without a clone. This only matters
-for a commit landing within the ~14-hour window around UTC midnight on
-the exact cutoff date (the full range of UTC offsets); explicitly
-accepted as immaterial for this RQ (reviewed and agreed 2026-10-03) --
-root agent-config files change on the order of weeks/months, not hours,
-so the rare repo where this shifts the chosen commit by one position is
-essentially certain to still read the identical file content either way.
+**Known difference from RQ1's cutoff-commit rule:** the API filters commits by
+UTC time. RQ1 compares each commit's date in its own timezone. For a commit
+close to UTC midnight on the cutoff date, the two rules can pick different
+commits. GitHub's API does not return a commit's original timezone, so the two
+rules cannot be made identical without a clone. The effect is limited to a
+window of about 14 hours on the cutoff date. Root agent-config files change over
+weeks, so the file content is almost always the same either way.
 
 **Column naming note:** `repo_scan.fetch_ok` (and `_repo_row()`'s/
 `run_scan()`'s `fetch_ok` naming) deliberately does NOT reuse RQ1's
@@ -97,7 +81,7 @@ match, not just a tally. Persisted immediately per repo (`agent_files`/
 memory for the whole run, for the same crash-safety reason RQ1 persists
 per-repo rather than per-language-chunk.
 
-**CSV shape (2026-10-03):** the db keeps every column for every table, but
+**CSV shape:** the db keeps every column for every table, but
 `write_csv_outputs()`'s two manual-review CSVs (`agent_files.csv`,
 `agent_file_matches.csv` -- `repo_scan.csv` isn't a review artifact, so it
 keeps everything) are trimmed to essentials, each carrying a `github_url`
@@ -107,16 +91,11 @@ matched line* via a `#L<line_number>` anchor, computed with a join back
 to `agent_files.github_url` at write time rather than stored as a second,
 redundant copy of that URL on every match row.
 
-**Rate limiting:** GitHub's REST API allows 5,000 authenticated requests/
-hour per token (vs. 60/hour unauthenticated -- far too low for ~24.7k
-repos x ~2 requests each, so a real run requires `GITHUB_TOKEN`). Detects
-and retries/backs off on both the primary (hourly quota) and secondary
-(abuse-detection/burst) rate limits -- see `_is_rate_limited()`'s and
-`_retry_wait_seconds()`'s own docstrings for the production incident that
-made the secondary-limit case necessary, found auditing the real run's
-results rather than before it ran. Paced proactively by `_RateLimiter`/
-`TARGET_REQUESTS_PER_HOUR` below regardless, so this retry path should be
-the exception, not the norm, in normal operation.
+**Rate limiting:** GitHub's REST API allows 5,000 authenticated requests an
+hour per token, and 60 without authentication. A run needs `GITHUB_TOKEN`.
+The scan paces its requests below the hourly limit, and it retries on both the
+hourly and the secondary (burst) limits. See `_is_rate_limited()` and
+`_retry_wait_seconds()`.
 
 python -m collection.rq5_agent_file_scan
 """
@@ -165,58 +144,33 @@ LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
 
 # No disk/subprocess overhead per repo anymore (just a couple of small
 # HTTP calls) -- higher than RQ1's clone-bound default is safe. Worker
-# count no longer controls the real request rate at all (see
-# TARGET_REQUESTS_PER_HOUR/_RateLimiter below) -- it only controls how
-# many repos are "in flight" waiting for their paced turn, so there's no
-# rate-limit reason to keep this low.
+# The worker count does not set the request rate. The rate limiter does (see
+# TARGET_REQUESTS_PER_HOUR). The worker count only sets how many repositories
+# wait for their turn.
 DEFAULT_WORKERS = 20
 
 GITHUB_API_BASE = "https://api.github.com"
 API_TIMEOUT_SECONDS = 15
 API_MAX_RETRIES = 3
 
-# **Production incident avoided (2026-10-03, caught in the 100-repo toy
-# run before the real run, not during it):** a plain burst of requests at
-# DEFAULT_WORKERS concurrency measured ~13.7 requests/second -- about 10x
-# GitHub's 5,000/hour authenticated budget's sustainable rate (~1.39/s).
-# Left unthrottled, that burns the entire hourly quota in ~6 minutes, and
-# `_api_get()`'s *reactive* retry (wait, then try again) was never enough
-# to recover from that: GitHub's primary hourly-quota 403 doesn't reliably
-# send `Retry-After` (that header is for the separate secondary/abuse-
-# detection limit) -- it sends `X-RateLimit-Reset` instead, a Unix
-# timestamp for the actual reset, up to an hour away. The original retry
-# logic never read that header, so it fell back to a plain exponential
-# backoff capped at 30s, exhausted `API_MAX_RETRIES` in well under a
-# minute, and gave up -- silently recording the repo as a normal failure
-# (`no_commit_at_or_before_cutoff`/`tree_fetch_failed`), indistinguishable
-# from a genuine negative result. Exactly the same class of bug as RQ1's
-# shallow-clone-hides-the-cutoff-commit incident: a transient/
-# environmental failure conflated with a real one.
-#
-# Fixed with defense in depth, not just a bigger number:
-# 1. `_RateLimiter` proactively paces every request at `_api_get()`'s own
-#    call site to `TARGET_REQUESTS_PER_HOUR` (a deliberate margin below
-#    5,000, not the limit itself -- real request timing has jitter across
-#    worker threads that a target right at the edge would risk tipping
-#    over), so the primary limit should never actually be hit in normal
-#    operation, regardless of worker count.
-# 2. `_retry_wait_seconds()` reads `X-RateLimit-Reset` as a fallback wait
-#    time when `Retry-After` is absent, instead of silently capping at
-#    30s -- defense in depth for the rare case the proactive limiter has a
-#    gap (e.g. a previous run left the quota already low, or another
-#    process shares the same token).
-# 3. A distinct `rate_limited` error_reason (`RateLimitExhausted`) so any
+# Rate limiting, in three parts:
+# 1. `_RateLimiter` paces every request in `_api_get()` to
+#    `TARGET_REQUESTS_PER_HOUR`. That target is a margin below 5,000, because
+#    request timing jitters across threads. The primary limit is not reached
+#    in normal operation.
+# 2. `_retry_wait_seconds()` reads `X-RateLimit-Reset` when `Retry-After` is
+#    missing. The hourly-quota 403 sends the reset time in that header.
+# 3. A repository that still hits the limit gets the `rate_limited` error
+#    reason (`RateLimitExhausted`). It can be retried later, and it is never
+#    counted as a confirmed negative. (`RateLimitExhausted`) so any
 #    repo that still hits this is cleanly identifiable and retryable
 #    later, never silently mixed into a "confirmed negative" bucket.
 TARGET_REQUESTS_PER_HOUR = 4000.0
 
-# Generous relative to this module's actual worst case (a handful of small
-# JSON calls, each already individually timeout-bound, plus rate-limit
-# backoff) -- see run_with_deadline()'s own docstring (rq1_prevalence_scan.py)
-# for the production incident that makes a watchdog worth keeping even when
-# every individual call already has its own timeout: `requests`' timeout
-# parameter has known edge cases (e.g. DNS resolution) where it doesn't
-# always fire reliably, and this costs nothing when nothing goes wrong.
+# A watchdog around each repository. Each call already has its own timeout,
+# but `requests` does not always honour its timeout (for example during DNS
+# resolution). The watchdog costs nothing when nothing goes wrong.
+
 PROCESS_REPO_TIMEOUT_SECONDS = 300
 
 NTFY_TOPIC = "joaofix_fixturedb"
@@ -430,20 +384,11 @@ class _RateLimiter:
 
 
 def _retry_wait_seconds(response: requests.Response, attempt: int) -> float:
-    """How long to wait before retrying a rate-limited response. Prefers
-    `Retry-After` (seconds -- what GitHub's secondary/abuse-detection
-    limit sends), falls back to `X-RateLimit-Reset` (a Unix timestamp --
-    what the *primary* hourly-quota limit sends instead, up to an hour
-    away) when that header is absent, and only falls back further to a
-    short exponential backoff if neither is present/parseable. See
-    `TARGET_REQUESTS_PER_HOUR`'s docstring for the production incident
-    (caught in a toy run, not a real one) this fixes: the original
-    version of this function (`GitHubAgentFileChecker.
-    _rate_limit_wait_seconds()`, still used as-is by that class's own
-    callers -- this is a separate, local function, not a modification of
-    that shared one) never read `X-RateLimit-Reset` at all, so it
-    silently capped every wait at 30s even when the real reset was much
-    further away.
+    """How long to wait before retrying a rate-limited response.
+
+    Prefers `Retry-After`, which the secondary limit sends. Falls back to
+    `X-RateLimit-Reset`, a Unix timestamp, which the hourly-quota limit sends.
+    Falls back to a short exponential backoff when neither header is usable.
     """
     retry_after = response.headers.get("Retry-After")
     if retry_after:
@@ -463,35 +408,14 @@ def _retry_wait_seconds(response: requests.Response, attempt: int) -> float:
 
 
 def _is_rate_limited(response: requests.Response | None) -> bool:
-    """True for a 429, or a 403 that is GitHub's rate limiting rather
-    than a genuine permission/not-found 403.
+    """True for a 429, or a 403 that is GitHub's rate limiting rather than a
+    genuine permission or not-found 403.
 
-    **Production incident (2026-10-03, found auditing the real run's
-    results, not before it):** the original version of this check
-    (`GitHubAgentFileChecker._is_rate_limited()`, still used as-is by
-    that class's own callers -- this is a separate, local function, not
-    a modification of that shared one) only recognized a 403 when
-    `X-RateLimit-Remaining` was exactly `"0"` -- which is how the
-    *primary* hourly-quota limit presents, but GitHub's own docs are
-    explicit that the *secondary* (abuse-detection) limit does not: "there
-    is no 'remaining' header that shows you your secondary rate limit
-    quota" (only `Retry-After`, sometimes `X-RateLimit-Reset` -- see
-    https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api).
-    Under this scan's sustained 20-worker, 14-hour real run, secondary
-    limiting evidently fired despite the proactive `_RateLimiter` keeping
-    the *primary* budget nowhere near exhausted -- and every one of those
-    403s fell straight through the old check as an ordinary non-200
-    response, silently recorded as `no_commit_at_or_before_cutoff`/
-    `tree_fetch_failed`/a dropped file rather than retried. Confirmed
-    directly: re-querying a random sample of repos recorded as
-    `no_commit_at_or_before_cutoff` found a real commit for ~1 in 3 of
-    them on a plain, low-load re-check.
-
-    A 403 with *neither* `Retry-After` nor a zeroed
-    `X-RateLimit-Remaining` is still treated as NOT rate-limited -- that
-    combination is what a genuine permission-denied response looks like,
-    and must still surface as a real failure, not loop on retries that
-    will never succeed."""
+    The primary hourly limit sends a 403 with `X-RateLimit-Remaining: 0`. The
+    secondary (abuse) limit sends no remaining-quota header, so it is detected
+    by `Retry-After`. A 403 with neither is a real permission error. It is not
+    retried, because retries would never succeed.
+    """
     if response is None:
         return False
     if response.status_code == 429:
@@ -968,8 +892,7 @@ V2_TO_V3_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("teardown",)
 # they correctly find the literal word "fixture". The problem is semantic,
 # not lexical, and the catalog can't fix it by word choice -- "fixture"
 # genuinely has two senses in agent-config prose, and this study's object
-# is only one of them. Manual sampling of 60 real matches (2026-10-03)
-# found roughly a third were fixture-as-code ("functions decorated with
+# is only one of them. A manual sample of 60 real matches found roughly a third were fixture-as-code ("functions decorated with
 # @pytest.fixture", shared conftest.py fixtures) and over half were
 # fixture-as-test-data-file ("tests/fixtures/*.json", "fixture.json",
 # snapshot fixtures, Docker-based fixtures) -- the latter sense is
@@ -1215,10 +1138,8 @@ def run_scan(
     return {"total": len(universe), "already_done": len(already_done), "scanned_this_run": len(pending)}
 
 
-# error_reasons worth re-attempting -- all four are plausibly an artifact
-# of the fetch step itself (including the rate-limiting incident this
-# module's docstring documents), not a property of the repo's real root
-# contents. Mirrors rq1_prevalence_scan.REPAIRABLE_ERROR_REASONS's own
+# error_reasons worth re-attempting. Each one is plausibly an artifact of the
+# fetch step, not of the repository's root contents. Mirrors rq1_prevalence_scan.REPAIRABLE_ERROR_REASONS's own
 # reasoning and naming convention.
 REPAIRABLE_ERROR_REASONS: tuple[str, ...] = (
     "no_commit_at_or_before_cutoff",
@@ -1272,8 +1193,7 @@ def retry_failed_repos(
     """Re-attempt every repo currently recorded with one of
     `error_reasons` (default: `REPAIRABLE_ERROR_REASONS`) against the
     *already-collected* db, rather than a from-scratch re-run of all
-    ~24.7k repos -- a cheap, targeted repair pass for the rate-limit-
-    detection incident this module's docstring documents.
+    ~24.7k repos.
 
     Each repo is re-run through the exact same `process_repo()` (now
     using the fixed `_is_rate_limited()`) and persisted via the same
