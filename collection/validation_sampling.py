@@ -14,19 +14,8 @@ commit-attribution logic (same file-matching applied to an already-checked
 corpus) -- see docs/usage/validation-sampling.md for the full reduced
 validation set and the reasoning behind each inclusion/exclusion.
 
-Dataset B's human-side steps (`human-commits-dataset-b`,
-`human-test-commits-dataset-b`, `human-fixtures-dataset-b`) ARE covered,
-despite reusing the same detection code as their Dataset A counterparts:
-Dataset A's `agent-commits-dataset-a` sample only checks *precision* on the
-claimed-agent commits (are these really agent-authored?), never *recall* on
-the human side (did a real agent commit get missed by the classifier and
-land in the human/control corpus instead, contaminating it?). The Dataset B
-steps close that gap and separately re-validate test-commit file-matching
-and fixture extraction against Dataset B's own corpus rather than assuming
-Dataset A's review transfers.
-
 `human-fixtures-dataset-c` is covered for the same reason: Dataset C uses
-the identical `detector.extract_fixtures()` call as A/B, but on a real
+the identical `detector.extract_fixtures()` call as Dataset A, but on a real
 sample it turned up two false-positive classes (a substring collision in
 the pytest_decorator pattern, a `.tsx`/JSX grammar mismatch) that Dataset
 A's own review happened not to catch, since neither edge case appeared in
@@ -99,7 +88,7 @@ produced it:
 | Column | Meaning |
 |---|---|
 | `validation_id` | Unique row identifier (`<step>-<n>`), stable for a given sampling run |
-| `validation_type` | `repo` \\| `commit` \\| `fixture` \\| `human_commit` \\| `human_test_commit` |
+| `validation_type` | `repo` \\| `commit` \\| `fixture` |
 | `language` | Language of the item (`all` is never used -- each row's own language) |
 | `repo_full_name` | `owner/repo` slug |
 | `item_id` | repo full name / commit SHA / composite fixture key |
@@ -135,7 +124,7 @@ class StepConfig:
     """How a validation-sampling step's population should be assembled."""
 
     population_mode: str  # "combined" or "per_file"
-    # "repo" | "commit" | "fixture" | "human_commit" | "human_test_commit"
+    # "repo" | "commit" | "fixture"
     validation_type: str  # -- selects normalizer/filter
     stratify_by: tuple[str, ...] = ()  # raw-row keys to stratify the sample by
 
@@ -202,66 +191,10 @@ def _normalize_fixture_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _normalize_human_commit_row(row: dict[str, Any]) -> dict[str, Any]:
-    """Contamination check: was a commit classified `commit_role=human`
-    correctly, i.e. is it really not agent-authored? Dataset A's
-    `agent-commits-dataset-a` sample only validates precision on the claimed-
-    agent side of the same classifier; this validates recall on the human
-    side -- a real agent commit missed by the classifier would silently
-    contaminate the human/control corpus instead of raising a false positive
-    anywhere else."""
-    repo_name = row.get("repo_name", "")
-    commit_sha = row.get("commit_sha", "")
-    item_url = row.get("commit_url") or (
-        f"https://github.com/{repo_name}/commit/{commit_sha}"
-        if repo_name and commit_sha
-        else ""
-    )
-    return {
-        "validation_type": "human_commit",
-        "language": row.get("language", ""),
-        "repo_full_name": repo_name,
-        "item_id": commit_sha,
-        "item_url": item_url,
-        "detection_signal": "classified_as_human",
-        "evidence": (
-            f"commit_role={row.get('commit_role', '')}; "
-            f"commit_date={row.get('commit_date', '')}; "
-            f"test_file_count={row.get('test_file_count', '')}"
-        ),
-    }
-
-
-def _normalize_human_test_commit_row(row: dict[str, Any]) -> dict[str, Any]:
-    """File-path match check: do the paths this commit was flagged for
-    (`test_file_paths`) actually look like test files? Same mechanical
-    file-path/pattern-matching logic as agent test-commit detection, applied
-    here to Dataset B's own corpus rather than assuming Dataset A's review
-    transfers."""
-    repo_name = row.get("repo_name", "")
-    commit_sha = row.get("commit_sha", "")
-    item_url = row.get("commit_url") or (
-        f"https://github.com/{repo_name}/commit/{commit_sha}"
-        if repo_name and commit_sha
-        else ""
-    )
-    return {
-        "validation_type": "human_test_commit",
-        "language": row.get("language", ""),
-        "repo_full_name": repo_name,
-        "item_id": commit_sha,
-        "item_url": item_url,
-        "detection_signal": f"test_file_count={row.get('test_file_count', '')}",
-        "evidence": row.get("test_file_paths", ""),
-    }
-
-
 _NORMALIZERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "repo": _normalize_repo_row,
     "commit": _normalize_commit_row,
     "fixture": _normalize_fixture_row,
-    "human_commit": _normalize_human_commit_row,
-    "human_test_commit": _normalize_human_test_commit_row,
 }
 
 
@@ -275,19 +208,6 @@ STEPS: dict[str, StepConfig] = {
         stratify_by=("language", "agent_type"),
     ),
     "agent-fixtures-dataset-a": StepConfig(
-        population_mode="per_file", validation_type="fixture", stratify_by=()
-    ),
-    "human-commits-dataset-b": StepConfig(
-        population_mode="combined",
-        validation_type="human_commit",
-        stratify_by=("language",),
-    ),
-    "human-test-commits-dataset-b": StepConfig(
-        population_mode="combined",
-        validation_type="human_test_commit",
-        stratify_by=("language",),
-    ),
-    "human-fixtures-dataset-b": StepConfig(
         population_mode="per_file", validation_type="fixture", stratify_by=()
     ),
     "human-fixtures-dataset-c": StepConfig(
