@@ -102,9 +102,7 @@ def test_load_repo_cutoffs_missing_file(tmp_path):
 
 
 def test_load_dataset_c_repos_reads_forks_and_num_contributors(tmp_path):
-    """forks/num_contributors used to be silently dropped here even once
-    select_dataset_c_repos.py started writing them -- only `stars` was
-    read back out."""
+    """forks and num_contributors are read back from the CSV, as well as stars."""
     csv_path = tmp_path / "python_repo.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(
@@ -166,9 +164,7 @@ def test_load_dataset_c_repos_defaults_forks_and_contributors_when_absent(tmp_pa
 
 
 def test_load_dataset_c_repos_reads_pushed_at(tmp_path):
-    """pushed_at used to be silently dropped here (select_dataset_c_repos.py
-    never wrote it, so every Dataset C repositories.pushed_at row came out
-    as an empty string) -- confirm it round-trips once present in the CSV."""
+    """pushed_at is read back from the CSV and stored in the repositories row."""
     csv_path = tmp_path / "python_repo.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(
@@ -242,10 +238,7 @@ def test_find_test_files_at_commit_filters_by_language(tmp_path):
 
 
 def test_find_test_files_with_language_detects_each_files_own_language(tmp_path):
-    """Regression: this is what makes Dataset C leakage measurable at all --
-    a multi-language repo's non-primary-language test files must be found
-    and correctly labeled, not silently invisible the way
-    find_test_files_at_commit()'s single-language filter leaves them."""
+    """Each test file is labelled with its own language, not the repository's tag. A test file in another language is found and kept under that language."""
     repo = tmp_path / "repo"
     repo.mkdir()
     (repo / "tests").mkdir()
@@ -267,13 +260,7 @@ def test_find_test_files_with_language_detects_each_files_own_language(tmp_path)
 
 
 def test_find_test_files_with_language_skips_vendored_directories(tmp_path):
-    """Regression: find_test_files_with_language() used to walk via
-    rglob("*"), which has no directory-pruning mechanism -- it descended
-    into .git/, node_modules/, vendor/, etc. just like every other
-    directory. A vendored test-looking file must not surface here, and
-    (more importantly for real repos) a large vendored subtree must not
-    be walked at all. See internal-docs/methodology-improvements/
-    dataset-c-repo-selection.md."""
+    """Test-looking files inside vendored directories are not found. Directories such as .git, node_modules and vendor are pruned, not walked."""
     repo = tmp_path / "repo"
     repo.mkdir()
     (repo / "tests").mkdir()
@@ -395,19 +382,7 @@ def test_collect_dataset_c_respects_checkpoint(tmp_path):
 
 
 def test_collect_dataset_c_fresh_start_does_not_clear_other_languages_csv(tmp_path):
-    """Regression: a language's own first-ever run (fresh_start=True for
-    *its* checkpoint) used to clear the stale-CSV output for every language
-    seen in `candidates` -- not just its own -- and a repo's candidates can
-    legitimately include a *different* language's fixtures via cross-
-    language leakage (find_test_files_with_language() looks at all 4
-    languages, regardless of which language's repo list this run is
-    processing). So a java run's first invocation, on discovering even one
-    leaked python test file, would delete an already-complete
-    python_fixtures.csv outright -- even though python's own checkpoint
-    (and the DB) still correctly considered every one of its repos done,
-    so nothing would ever regenerate those rows. Passing `language`
-    explicitly (the only way this is ever invoked in practice) must scope
-    the clear to that language alone."""
+    """A language's first run clears only its own fixture CSV. Other languages' CSVs are kept, even when this run finds their fixtures."""
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
 
@@ -478,13 +453,7 @@ def test_collect_dataset_c_fresh_start_does_not_clear_other_languages_csv(tmp_pa
 
 
 def test_collect_dataset_c_checkpoint_persisted_incrementally(tmp_path):
-    """Regression: the final persist loop used to call
-    _save_dataset_c_checkpoint() exactly once, after every repo in
-    repo_groups had been persisted -- a crash or interrupt partway
-    through the loop left the checkpoint file exactly as stale as it was
-    when the loop started, even though earlier repos in the loop already
-    had real, committed rows in the DB. Each repo's checkpoint credit
-    must now land on disk before the next repo is even attempted."""
+    """The checkpoint is saved after each repository is persisted. A crash partway through leaves the saved state consistent with the database."""
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
     checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
@@ -555,16 +524,7 @@ def test_collect_dataset_c_checkpoint_persisted_incrementally(tmp_path):
 def test_collect_dataset_c_checkpoint_does_not_mark_unpersisted_repos_complete(
     tmp_path,
 ):
-    """Regression: completed_repos used to be bulk-updated with every
-    extraction-successful repo right after extraction finished, before the
-    persist loop below even started -- so the very first per-iteration
-    checkpoint save would flush *every* repo in repo_groups to disk as
-    "completed", including ones whose own persist_repository_and_fixtures()
-    call hadn't run yet. A crash right after that first save would then
-    permanently skip re-persisting the not-yet-persisted repos on the next
-    resume, even though db/c.db never got their rows. A repo must only
-    appear in the on-disk completed_repos once its own persist call has
-    actually happened."""
+    """A repository is marked complete only after its own persist call has run. A resumed run re-persists any repository that did not finish."""
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
     checkpoint_path = tmp_path / "dataset_c_checkpoint_python.json"
@@ -776,12 +736,7 @@ def test_collect_dataset_c_no_dedup_keeps_all_fixtures(tmp_path):
 def test_collect_dataset_c_repositories_row_uses_repo_language_not_first_fixture(
     tmp_path,
 ):
-    """Regression: the repositories-table row used to be built from
-    fixtures_list[0]'s "language" -- safe only because every fixture's
-    language always equaled its repo's tag before cross-language leakage
-    was enabled. Put the leaked (javascript) fixture first in the list to
-    prove the repo row still gets "python" (repo_language), not
-    "javascript", regardless of dict ordering."""
+    """The repositories row takes its language from the repository tag, not from the first fixture. The test puts a JavaScript fixture first to check this."""
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
 
@@ -1140,8 +1095,7 @@ def test_count_repo_loc_skips_vendored_directories(tmp_path):
 
 @contextmanager
 def _fake_clone_at(repo_path):
-    """Stand-in for clone_with_function that just yields an already-built
-    local repo instead of doing a real network clone."""
+    """Stands in for clone_with_function. It returns an already-built local repository instead of cloning."""
     yield repo_path
 
 
@@ -1176,10 +1130,7 @@ def test_process_repo_rejects_below_commit_floor_at_cutoff(tmp_path):
 
 
 def test_process_repo_rejects_below_loc_floor_at_cutoff(tmp_path):
-    """github-search-raw/ pre-filters to >=5k LOC at *source*, but from
-    today's crawl -- a repo that was tiny back at its own cutoff snapshot
-    and only grew past that floor afterward must still be rejected here,
-    the same survivorship-bias fix already applied to commit count above."""
+    """A repository is rejected when it is below the LOC floor at its cutoff snapshot. The check uses the snapshot, not the current size."""
     repo_path = _make_git_repo(tmp_path)
     for i in range(6):
         _commit(repo_path, f"f{i}.txt", str(i), f"2018-01-0{i + 1}T00:00:00")
@@ -1294,14 +1245,7 @@ def test_process_repo_extracts_fixtures_when_both_floors_pass(tmp_path):
 
 
 def test_process_repo_extracts_cross_language_leakage_fixtures(tmp_path):
-    """Regression: a repo tagged "python" containing a JS test file used to
-    have that file invisible to Dataset C entirely (find_test_files_at_commit
-    only looked for python-suffix files), and even if found, its fixture
-    would have been mislabeled "python" (the old unconditional "language":
-    language override in _process_repo). Both must now be fixed: the JS
-    fixture is found, keeps its own "javascript" language, and still
-    carries "repo_language": "python" (the repo's own tag, used for the
-    repositories-table row -- distinct from the per-fixture language)."""
+    """A test file in another language is found in a repository tagged with one language. Its fixture keeps its own language and the repository's tag."""
     repo_path = _make_git_repo(tmp_path)
     for i in range(4):
         _commit(repo_path, f"f{i}.txt", str(i), f"2018-01-0{i + 1}T00:00:00")
@@ -1351,12 +1295,7 @@ def test_process_repo_extracts_cross_language_leakage_fixtures(tmp_path):
 
 
 def test_process_repo_embeds_github_id_in_fixture_dicts(tmp_path):
-    """github_id is the repositories table's UNIQUE key -- it must survive
-    from the input repo dict into every returned fixture dict, since the
-    persist loop in collect_dataset_c_fixtures() reads it from
-    fixtures_list[0], not from the original repo dict (which isn't in
-    scope there). See test_collect_dataset_c_repos_with_distinct_github_ids_
-    get_distinct_db_rows below for the real bug this caused."""
+    """Each fixture dict carries the repository's github_id, which is the repositories table's unique key."""
     repo_path = _make_git_repo(tmp_path)
     for i in range(4):
         _commit(repo_path, f"f{i}.txt", str(i), f"2018-01-0{i + 1}T00:00:00")
@@ -1397,19 +1336,7 @@ def test_process_repo_embeds_github_id_in_fixture_dicts(tmp_path):
 def test_collect_dataset_c_repos_with_distinct_github_ids_get_distinct_db_rows(
     tmp_path,
 ):
-    """Regression: construct_repo_dict() defaults github_id to 0 when a
-    fixture dict doesn't carry one. The repositories table's github_id
-    UNIQUE constraint (ON CONFLICT(github_id) DO UPDATE) means every repo
-    that defaults to 0 collides on the same row -- an entire collection
-    run's repos silently collapse into one, with every fixture
-    misattributed to whichever repo inserted first. This was found by a
-    real end-to-end toy collection, not a unit test: every other test in
-    this file mocks _process_repo, so persist_repository_and_fixtures's
-    real behavior was never exercised with realistic (missing-until-now
-    github_id) data. This test does NOT mock persist_repository_and_fixtures,
-    specifically so it exercises the real upsert path against a real
-    sqlite DB.
-    """
+    """Repositories with different github_id values get separate rows. The test does not mock persist_repository_and_fixtures, so the real upsert runs against a real SQLite database."""
     output_db = tmp_path / "out.db"
     initialise_db(output_db)
 

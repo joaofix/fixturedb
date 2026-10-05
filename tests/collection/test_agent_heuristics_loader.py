@@ -56,41 +56,27 @@ def test_new_agents_present_with_expected_patterns():
 
 
 def test_cursorrules_only_under_cursor_not_claude():
-    """Regression: .cursorrules was previously copy-pasted into claude's list too."""
+    """`.cursorrules` belongs to Cursor only, not to Claude."""
     data = load_agent_heuristics()
     assert ".cursorrules" not in data["file_based"]["claude"]
     assert ".cursorrules" in data["file_based"]["cursor"]
 
 
 def test_agents_md_not_attributed_to_codex():
-    """Regression: AGENTS.md was previously listed as codex's own marker,
-    but it's a cross-agent/tool-agnostic convention (used by many agents,
-    not codex-specific) -- confirmed against labri-progress/agent-mining's
-    empirically-verified catalog, which classifies it "Generic". Attributing
-    it to codex specifically was a real misclassification risk: any repo
-    using the generic AGENTS.md convention with some other agent would have
-    been misattributed to codex."""
+    """AGENTS.md is a generic convention, used by many agents. It is not attributed to Codex alone."""
     data = load_agent_heuristics()
     assert "AGENTS.md" not in data["file_based"]["codex"]
 
 
 def test_claude_anthropic_pattern_is_dotfile():
-    """Regression: claude's file_based list had a bare "anthropic/" dir
-    marker, which matches ANY directory named "anthropic" anywhere in the
-    repo tree (e.g. a vendored SDK folder unrelated to actual Claude usage).
-    The real convention is the dotfile ".anthropic/"."""
+    """The Claude directory marker is `.anthropic/`. A bare `anthropic/` would match any folder with that name."""
     data = load_agent_heuristics()
     assert ".anthropic/" in data["file_based"]["claude"]
     assert "anthropic/" not in data["file_based"]["claude"]
 
 
 def test_aider_file_patterns_match_real_convention():
-    """Regression: aider's file_based list previously had .aider.conf (no
-    extension), .aider-config, aider.config -- none of which match aider's
-    actual documented config filename (.aider.conf.yml / .aider.conf.yaml,
-    confirmed against labri-progress/agent-mining's GitHub-code-search-
-    verified data). The old patterns likely never matched a single real
-    aider repo."""
+    """Aider's config file is `.aider.conf.yml` or `.aider.conf.yaml`."""
     data = load_agent_heuristics()
     aider_patterns = data["file_based"]["aider"]
     assert ".aider.conf.yml" in aider_patterns
@@ -101,9 +87,7 @@ def test_aider_file_patterns_match_real_convention():
 
 
 def test_jules_junie_gemini_have_file_based_patterns():
-    """Regression: jules/junie/gemini were previously only detectable via
-    commit_signatures (author/trailer), with no file_based coverage at all,
-    despite being agents this project already tracks."""
+    """Jules, Junie and Gemini have file patterns, not only commit signatures."""
     data = load_agent_heuristics()
     assert data["file_based"]["jules"] == [".jules/"]
     assert ".junie/" in data["file_based"]["junie"]
@@ -112,9 +96,7 @@ def test_jules_junie_gemini_have_file_based_patterns():
 
 
 def test_codex_roo_code_have_commit_signatures():
-    """Regression: codex/roo_code were previously only detectable via
-    file_based patterns, with no commit_signatures coverage at all, despite
-    being agents this project already tracks."""
+    """Codex and Roo Code have commit signatures, not only file patterns."""
     data = load_agent_heuristics()
     assert "codex" in data["commit_signatures"]
     assert "roo_code" in data["commit_signatures"]
@@ -164,16 +146,9 @@ def test_authors_csv_every_tool_has_agent_type_mapping():
 
 
 def test_authors_csv_first_78_rows_are_upstream_verbatim():
-    """The file's first 78 data rows must be labri-progress/agent-mining's
-    authors.csv content, unmodified and in its original order -- this is
-    the whole point of the CSV (a reviewer-checkable citation), not just a
-    convenient format. Spot-checks a sample spanning the full file rather
-    than asserting all 78 rows verbatim, so the test doesn't itself become
-    an unreadable copy of the source file.
+    """The first 78 data rows of agent_authors.csv must be upstream's content, unmodified and in order. The file is a citation, so the rows must match the source. The test spot-checks a sample of the rows.
 
-    78, not the original 80: upstream's "cline"/"cline@example.com" rows
-    were removed on 2026-07-17 -- see agent_authors.csv's boundary comment
-    and test_authors_csv_cline_removed_as_deliberate_exception below."""
+    78 rows, because upstream's "cline" and "cline@example.com" rows are removed. See test_authors_csv_cline_removed_as_deliberate_exception."""
     rows = _read_authors_csv_rows()
     upstream_rows = rows[:78]
     assert len(upstream_rows) == 78
@@ -201,15 +176,7 @@ def test_authors_csv_first_78_rows_are_upstream_verbatim():
 
 
 def test_authors_csv_cline_removed_as_deliberate_exception():
-    """Unlike the rest of the upstream block, "cline" and "cline@example.com"
-    were individually removed on 2026-07-17 -- Dataset A validation sampling
-    found real humans (a surname collision, and multiple actual employees of
-    the Cline company committing under an @cline.bot work email) misattributed
-    to the Cline agent, and a check of Cline's official docs found no
-    auto-commit-under-its-own-identity feature or Co-authored-by/Assisted-by
-    trailer convention at all -- the same evidentiary bar the CURSOR.md
-    removal from agent_files.csv used. See agent_authors.csv's boundary
-    comment for the full rationale."""
+    """The "cline" and "cline@example.com" rows are not in the file. Each one matched real people, and Cline has no commit convention to match."""
     rows = _read_authors_csv_rows()
     patterns = {row["pattern"] for row in rows}
     assert "cline" not in patterns
@@ -217,18 +184,7 @@ def test_authors_csv_cline_removed_as_deliberate_exception():
 
 
 def test_authors_csv_our_additions_are_appended_after_upstream_block():
-    """"anthropic" (a bare company-domain substring, matching any
-    @anthropic.com sender regardless of agent involvement) was removed
-    from this set after it caused a real false positive during Dataset A
-    collection -- see docs/architecture/agent-detection.md's Known
-    Limitations and tests/test_agent_detector_pure.py's
-    test_bare_anthropic_domain_no_longer_matches_claude. "devin ai"/"devin"
-    were removed on 2026-07-17 for the same reason (real name collisions,
-    e.g. an author literally named "Devin Smith") -- redundant anyway, since
-    the upstream "devin-ai-integration" pattern (kept) already catches every
-    real Devin AI bot commit found in the corpus. See
-    tests/test_agent_detector_pure.py's
-    test_devin_cline_exact_name_collision_is_fixed."""
+    """The project's own author patterns come after the upstream block. The bare "anthropic" pattern and the bare "devin" and "devin ai" patterns are not in the file. See test_bare_anthropic_domain_no_longer_matches_claude and test_devin_cline_exact_name_collision_is_fixed."""
     rows = _read_authors_csv_rows()
     our_additions = rows[78:]
     added_patterns = {row["pattern"] for row in our_additions}
@@ -321,10 +277,7 @@ def test_bots_csv_first_84_rows_are_upstream_verbatim():
 
 
 def test_bots_csv_our_additions_are_appended_after_upstream_block():
-    """This project's own bot-pattern additions must be a short, explicit
-    list of individually-verified real accounts, not a generic catch-all
-    (e.g. NOT a bare "\\[bot\\]" wildcard) -- see agent-detection.md's Known
-    Limitations for why that tradeoff was deliberately made."""
+    """The project's own bot patterns are a short list of specific, verified accounts. A generic `[bot]` pattern is not allowed."""
     rows = _read_bots_csv_rows()
     our_additions = rows[84:]
     assert our_additions == [
@@ -369,9 +322,7 @@ def test_files_csv_has_boundary_comment_line():
 
 
 def test_files_csv_devin_and_cline_rows_are_disabled():
-    """Devin and Cline are disabled for Dataset A: their config-file patterns
-    collide with real human names and folder names. The rows stay in the file
-    as commented-out lines, so a reviewer can see what was turned off."""
+    """Devin and Cline are disabled for Dataset A. Their config-file patterns match real names and folder names. The rows stay in the file as commented-out lines, so a reviewer can see what was turned off."""
     rows = _read_files_csv_rows()
     assert not any(row["tool"] in ("Devin", "Cline") for row in rows)
     with _FILES_CSV_PATH.open("r", encoding="utf-8") as fh:
@@ -382,26 +333,9 @@ def test_files_csv_devin_and_cline_rows_are_disabled():
 
 
 def test_files_csv_first_89_rows_are_upstream_verbatim():
-    """The file's first 89 active data rows must be labri-progress/agent-mining's
-    files.csv content, unmodified and in its original order -- this is the
-    whole point of the CSV (a reviewer-checkable citation), not just a
-    convenient format. Spot-checks a sample spanning the full file rather
-    than asserting all rows verbatim, so the test doesn't itself become
-    an unreadable copy of the source file.
+    """The first 89 active data rows of agent_files.csv must be upstream's content, unmodified and in order. The file is a citation. The test spot-checks a sample of the rows.
 
-    89 active rows = upstream's 94 minus the five Devin/Cline rows, which are
-    commented out (see test_files_csv_devin_and_cline_rows_are_disabled).
-    Upstream's original block is 95 rows: this project removed upstream's
-    "CURSOR.md" row on 2026-07-15 after Dataset A validation sampling found
-    it producing confirmed false positives (matching unrelated files
-    literally named cursor.md -- CSS "cursor"-property docs, a blog post
-    about Cursor-IDE support -- since "cursor" is also an ordinary word and
-    the pattern isn't root-anchored), and Cursor's own docs
-    (cursor.com/docs/rules) don't document any CURSOR.md convention. This is
-    the one deliberate exception to "verbatim" -- see the source file's own
-    boundary comment and docs/architecture/agent-detection.md's Known
-    Limitations section.
-    """
+    89 active rows: upstream's 94, minus the five commented-out Devin and Cline rows. The CURSOR.md row is also not in the file. It matches unrelated files, and Cursor does not document that name."""
     rows = _read_files_csv_rows()
     upstream_rows = rows[:89]
     assert len(upstream_rows) == 89
@@ -431,18 +365,7 @@ def test_files_csv_first_89_rows_are_upstream_verbatim():
 
 
 def test_files_csv_our_addition_is_appended_after_upstream_block():
-    """Only .cursorignore is appended -- individually confirmed against
-    Cursor's official docs (cursor.com/docs/reference/ignore-file) and
-    missing from upstream's own list. Ten other candidates (claude.config,
-    bare .cursor, cursor.config, .copilot-instructions.md,
-    .openhands.config, bare .openhands, .devin.config, bare .devin,
-    .cline.config, bare .cline) were checked the same way and dropped:
-    none were documented, and each was already redundant with an upstream
-    directory-marker pattern (.claude/, .cursor/, .openhands/, .devin/,
-    .cline/ match regardless of what's inside them). CURSOR.md is not
-    replaced with anything here -- it was an upstream row this project
-    removed (see test_files_csv_first_89_rows_are_upstream_verbatim), not
-    an addition being appended."""
+    """Only `.cursorignore` is appended after the upstream block. It is documented by Cursor. The other candidates were not documented, or were already covered by a directory pattern, so they are not in the file. CURSOR.md is not replaced here."""
     rows = _read_files_csv_rows()
     our_additions = rows[89:]
     assert our_additions == [
