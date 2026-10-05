@@ -26,8 +26,6 @@ import pytest
 import requests
 
 from collection.rq5_agent_file_scan import (
-    _FILE_CSV_FIELDNAMES,
-    _MATCH_CSV_FIELDNAMES,
     AMBIGUOUS_FIXTURE_KEYWORDS,
     REPAIRABLE_ERROR_REASONS,
     RQ5_LANGUAGES,
@@ -59,7 +57,6 @@ from collection.rq5_agent_file_scan import (
     retry_failed_repos,
     run_scan,
     scan_file_content,
-    write_csv_outputs,
 )
 
 
@@ -585,7 +582,7 @@ class TestProcessRepo:
             "requests.get",
             side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob}),
         ):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 1
         assert result["repo"]["error_reason"] is None
@@ -614,7 +611,7 @@ class TestProcessRepo:
         tree = [_tree_entry("README.md", "blobsha1")]
 
         with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree})):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 1
         assert result["repo"]["error_reason"] is None
@@ -624,7 +621,7 @@ class TestProcessRepo:
 
     def test_no_commit_before_cutoff_returns_zero_row(self):
         with patch("requests.get", side_effect=_route(commits=[])):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 0
         assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
@@ -635,7 +632,7 @@ class TestProcessRepo:
         commits = [_commit_json("sha1")]
         # trees={} means the Trees API 404s for "sha1" -- simulated failure.
         with patch("requests.get", side_effect=_route(commits=commits, trees={})):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 0
         assert result["repo"]["error_reason"] == "tree_fetch_failed"
@@ -646,7 +643,7 @@ class TestProcessRepo:
         blobs = {"blob_present": _blob_json("a fixture file")}  # blob_missing -> 404
 
         with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs=blobs)):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 1
         assert [f["file_name"] for f in result["files"]] == ["CLAUDE.md"]
@@ -663,7 +660,7 @@ class TestProcessRepo:
         }
 
         with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs=blobs)):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         by_name = {f["file_name"]: f for f in result["files"]}
         assert by_name["AGENTS.md"]["has_test"] is True
@@ -680,7 +677,7 @@ class TestProcessRepo:
         with patch(
             "requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob})
         ):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08")
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08")
 
         assert result["files"][0]["has_fixture"] is True
 
@@ -690,7 +687,7 @@ class TestProcessRepo:
             patch("requests.get", return_value=rate_limited),
             patch("collection.rq5_agent_file_scan.time.sleep"),
         ):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 0
         assert result["repo"]["error_reason"] == "rate_limited"
@@ -710,7 +707,7 @@ class TestProcessRepo:
             patch("requests.get", side_effect=_get),
             patch("collection.rq5_agent_file_scan.time.sleep"),
         ):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 0
         assert result["repo"]["error_reason"] == "rate_limited"
@@ -737,7 +734,7 @@ class TestProcessRepo:
             patch("requests.get", side_effect=_get),
             patch("collection.rq5_agent_file_scan.time.sleep"),
         ):
-            result = process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
 
         assert result["repo"]["fetch_ok"] == 0
         assert result["repo"]["error_reason"] == "rate_limited"
@@ -756,7 +753,7 @@ class TestProcessRepo:
             ),
             patch.object(limiter, "acquire", wraps=limiter.acquire) as acquire_mock,
         ):
-            process_repo(self._repo_dict(), cutoff_date="2026-09-08", catalog=_TEST_CATALOG, rate_limiter=limiter)
+            process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG, rate_limiter=limiter)
 
         # commit lookup + tree listing + one blob fetch = 3 calls, each paced.
         assert acquire_mock.call_count == 3
@@ -766,7 +763,7 @@ class TestProcessRepoRobustness:
     def test_connection_error_is_treated_as_a_failed_fetch_not_a_crash(self):
         repo = {"repo_name": "owner/repo", "language": "python", "clone_url": "x"}
         with patch("requests.get", side_effect=requests.ConnectionError("boom")):
-            result = process_repo(repo, cutoff_date="2026-09-08", catalog=_TEST_CATALOG)
+            result = process_repo(repo, snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
         assert result["repo"]["fetch_ok"] == 0
         assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
 
@@ -826,6 +823,10 @@ class TestPersistResult:
             "keyword": "test",
             "line_number": 1,
             "line_context": "a test",
+            "line_before_2": "",
+            "line_before_1": "",
+            "line_after_1": "",
+            "line_after_2": "",
             "in_code_block": False,
         }
         persist_result(
@@ -876,6 +877,10 @@ class TestPersistResult:
             "keyword": "test",
             "line_number": 1,
             "line_context": "a test",
+            "line_before_2": "",
+            "line_before_1": "",
+            "line_after_1": "",
+            "line_after_2": "",
             "in_code_block": False,
         }
         match_fixture = {
@@ -885,6 +890,10 @@ class TestPersistResult:
             "keyword": "fixture",
             "line_number": 2,
             "line_context": "a fixture",
+            "line_before_2": "",
+            "line_before_1": "",
+            "line_after_1": "",
+            "line_after_2": "",
             "in_code_block": True,
         }
         persist_result(
@@ -907,126 +916,6 @@ class TestPersistResult:
         assert file_row["has_fixture"] == 1
         assert len(match_rows) == 2
         assert match_rows[1]["in_code_block"] == 1
-
-
-class TestWriteCsvOutputs:
-    def test_writes_three_csvs_with_headers_and_rows(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "file_type": "AGENTS.md",
-            "language": "python",
-            "commit_sha": "sha1",
-            "has_test": True,
-            "has_fixture": False,
-            "test_match_count": 1,
-            "fixture_match_count": 0,
-            "matched_test_keywords": "test",
-            "matched_fixture_keywords": "",
-            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
-        }
-        match1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "keyword_list": "test",
-            "keyword": "test",
-            "line_number": 1,
-            "line_context": "a test",
-            "in_code_block": False,
-        }
-        persist_result(
-            _scan_result(
-                _repo_row("o/a", "python", "t", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
-                files=[file1],
-                matches=[match1],
-            ),
-            db_path,
-        )
-
-        out_dir = tmp_path / "csvs"
-        written = write_csv_outputs(db_path, out_dir)
-
-        assert set(written.keys()) == {"repo_scan", "agent_files", "agent_file_matches"}
-        for path in written.values():
-            assert path.exists()
-
-        agent_files_csv = (out_dir / "agent_files.csv").read_text()
-        assert "AGENTS.md" in agent_files_csv
-        matches_csv = (out_dir / "agent_file_matches.csv").read_text()
-        assert "a test" in matches_csv
-
-    def test_agent_files_csv_is_trimmed_to_essentials_for_manual_review(self, tmp_path):
-        """repo_scan.csv keeps every column (not a review artifact), but
-        agent_files.csv is one of the two manual-review surfaces -- no
-        language/commit_sha/match-count columns, since those add nothing
-        a reviewer needs beyond what's already on the row."""
-        assert _FILE_CSV_FIELDNAMES == [
-            "repo_name",
-            "file_type",
-            "has_test",
-            "has_fixture",
-            "matched_test_keywords",
-            "matched_fixture_keywords",
-            "github_url",
-        ]
-
-    def test_agent_file_matches_csv_links_directly_to_the_matched_line(self, tmp_path):
-        """The other manual-review surface: no raw line_number column --
-        it's folded into github_url as a #L<n> anchor instead, so a
-        reviewer can click straight from the spreadsheet to the exact
-        matched line, not just the file."""
-        assert _MATCH_CSV_FIELDNAMES == [
-            "repo_name",
-            "file_name",
-            "keyword_list",
-            "keyword",
-            "line_context",
-            "in_code_block",
-            "github_url",
-        ]
-
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "file_type": "AGENTS.md",
-            "language": "python",
-            "commit_sha": "sha1",
-            "has_test": True,
-            "has_fixture": False,
-            "test_match_count": 1,
-            "fixture_match_count": 0,
-            "matched_test_keywords": "test",
-            "matched_fixture_keywords": "",
-            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
-        }
-        match1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "keyword_list": "test",
-            "keyword": "test",
-            "line_number": 42,
-            "line_context": "a test",
-            "in_code_block": False,
-        }
-        persist_result(
-            _scan_result(
-                _repo_row("o/a", "python", "t", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
-                files=[file1],
-                matches=[match1],
-            ),
-            db_path,
-        )
-
-        out_dir = tmp_path / "csvs"
-        write_csv_outputs(db_path, out_dir)
-
-        rows = (out_dir / "agent_file_matches.csv").read_text().splitlines()
-        assert rows[0] == ",".join(_MATCH_CSV_FIELDNAMES)
-        assert rows[1].endswith("https://github.com/o/a/blob/sha1/AGENTS.md#L42")
 
 
 class TestPruneRemovedKeywords:
@@ -1057,6 +946,10 @@ class TestPruneRemovedKeywords:
                 "keyword": kw,
                 "line_number": line,
                 "line_context": f"context for {kw}",
+                "line_before_2": "",
+                "line_before_1": "",
+                "line_after_1": "",
+                "line_after_2": "",
                 "in_code_block": False,
             }
             for kw, line in matches
@@ -1184,6 +1077,10 @@ class TestPruneRemovedKeywords:
             "keyword": "bogus_test_kw",
             "line_number": 1,
             "line_context": "x",
+            "line_before_2": "",
+            "line_before_1": "",
+            "line_after_1": "",
+            "line_after_2": "",
             "in_code_block": False,
         }
         persist_result(
@@ -1222,10 +1119,10 @@ class TestRunScan:
             return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            counts = run_scan(
+            counts = run_scan(snapshot_date="2026-09-08", 
                 db_path=db_path,
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1252,10 +1149,10 @@ class TestRunScan:
 
         try:
             with (
-                patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+                patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
                 patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
             ):
-                counts = run_scan(
+                counts = run_scan(snapshot_date="2026-09-08", 
                     db_path=db_path,
                     workers=2,
                     progress_path=tmp_path / "progress.json",
@@ -1284,10 +1181,10 @@ class TestRunScan:
             return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1306,10 +1203,10 @@ class TestRunScan:
             return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1327,10 +1224,10 @@ class TestRunScan:
             return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1352,10 +1249,10 @@ class TestRunScan:
             return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1407,10 +1304,10 @@ class TestRunScan:
             return {"repo": row, "files": files, "matches": []}
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=db_path,
                 workers=1,
                 progress_path=progress_path,
@@ -1438,11 +1335,11 @@ class TestRunScanNotifications:
         notify_calls = []
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=self._fake_process_repo),
             patch("collection.rq5_agent_file_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1456,11 +1353,11 @@ class TestRunScanNotifications:
         universe = [{"repo_name": "org/py", "language": "python", "clone_url": "x"}]
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=self._fake_process_repo),
             patch("collection.rq5_agent_file_scan._notify") as notify_mock,
         ):
-            run_scan(
+            run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
                 workers=1,
                 progress_path=tmp_path / "progress.json",
@@ -1499,7 +1396,7 @@ class TestLoadReposNeedingRetry:
             {"repo_name": "org/c", "language": "python", "clone_url": "url-c"},
             {"repo_name": "org/d", "language": "python", "clone_url": "url-d"},
         ]
-        with patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe):
+        with patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe):
             targets = load_repos_needing_retry(db_path=db_path)
 
         assert {t["repo_name"] for t in targets} == {"org/a", "org/b"}
@@ -1510,7 +1407,7 @@ class TestLoadReposNeedingRetry:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(_scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=True)), db_path)
-        with patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=[]):
+        with patch("collection.rq5_agent_file_scan.load_corpus", return_value=[]):
             assert load_repos_needing_retry(db_path=db_path) == []
 
     def test_custom_error_reasons_narrows_selection(self, tmp_path):
@@ -1527,7 +1424,7 @@ class TestLoadReposNeedingRetry:
             {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
             {"repo_name": "org/b", "language": "python", "clone_url": "url-b"},
         ]
-        with patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe):
+        with patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe):
             targets = load_repos_needing_retry(error_reasons=("rate_limited",), db_path=db_path)
         assert {t["repo_name"] for t in targets} == {"org/a"}
 
@@ -1566,10 +1463,10 @@ class TestRetryFailedRepos:
             )
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            counts = retry_failed_repos(db_path=db_path, workers=1, notify=False)
+            counts = retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=False)
 
         assert counts == {"attempted": 1, "recovered": 1, "still_failed": 0}
         rows = {
@@ -1593,10 +1490,10 @@ class TestRetryFailedRepos:
             )
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            counts = retry_failed_repos(db_path=db_path, workers=1, notify=False)
+            counts = retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=False)
 
         assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
 
@@ -1616,10 +1513,10 @@ class TestRetryFailedRepos:
 
         try:
             with (
-                patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+                patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
                 patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
             ):
-                counts = retry_failed_repos(
+                counts = retry_failed_repos(snapshot_date="2026-09-08", 
                     db_path=db_path, workers=1, notify=False, process_repo_timeout_seconds=0.05
                 )
         finally:
@@ -1645,11 +1542,11 @@ class TestRetryFailedRepos:
 
         notify_calls = []
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
             patch("collection.rq5_agent_file_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
         ):
-            retry_failed_repos(db_path=db_path, workers=1, notify=True)
+            retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=True)
 
         assert len(notify_calls) == 1
         assert "1/1 repos recovered" in notify_calls[0]
@@ -1669,10 +1566,10 @@ class TestRetryFailedRepos:
             return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
 
         with (
-            patch("collection.rq5_agent_file_scan.load_raw_universe", return_value=universe),
+            patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
             patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
         ):
-            retry_failed_repos(db_path=db_path, workers=1, notify=False, token="sometoken")
+            retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=False, token="sometoken")
 
         assert seen_kwargs["token"] == "sometoken"
         assert isinstance(seen_kwargs["rate_limiter"], _RateLimiter)
@@ -1681,10 +1578,10 @@ class TestRetryFailedRepos:
 class TestMainCli:
     def _run_main_with_argv(self, argv):
         with (
-            patch.object(sys, "argv", ["rq5_agent_file_scan.py", *argv]),
+            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--snapshot-date", "2026-09-08", *argv]),
             patch("collection.rq5_agent_file_scan.configure_logging"),
             patch("collection.rq5_agent_file_scan.add_file_logging"),
-            patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+            patch("collection.rq5_agent_file_scan.write_review_outputs"),
             patch("collection.rq5_agent_file_scan.run_scan", return_value={}) as run_scan_mock,
         ):
             main()
@@ -1713,10 +1610,10 @@ class TestMainCli:
     def test_warns_when_no_token_is_available(self):
         with patch("collection.rq5_agent_file_scan.GITHUB_TOKEN", ""):
             with (
-                patch.object(sys, "argv", ["rq5_agent_file_scan.py"]),
+                patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--snapshot-date", "2026-09-08"]),
                 patch("collection.rq5_agent_file_scan.configure_logging"),
                 patch("collection.rq5_agent_file_scan.add_file_logging"),
-                patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+                patch("collection.rq5_agent_file_scan.write_review_outputs"),
                 patch("collection.rq5_agent_file_scan.run_scan", return_value={}),
                 patch("collection.rq5_agent_file_scan.logger") as logger_mock,
             ):
@@ -1725,10 +1622,10 @@ class TestMainCli:
 
     def test_retry_failed_flag_calls_retry_failed_repos_instead_of_run_scan(self):
         with (
-            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--retry-failed"]),
+            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--snapshot-date", "2026-09-08", "--retry-failed"]),
             patch("collection.rq5_agent_file_scan.configure_logging"),
             patch("collection.rq5_agent_file_scan.add_file_logging"),
-            patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+            patch("collection.rq5_agent_file_scan.write_review_outputs"),
             patch("collection.rq5_agent_file_scan.run_scan") as run_scan_mock,
             patch("collection.rq5_agent_file_scan.retry_failed_repos", return_value={}) as retry_mock,
         ):
@@ -1739,10 +1636,10 @@ class TestMainCli:
 
     def test_retry_failed_threads_workers_and_rate_through(self):
         with (
-            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--retry-failed", "--workers", "16"]),
+            patch.object(sys, "argv", ["rq5_agent_file_scan.py", "--snapshot-date", "2026-09-08", "--retry-failed", "--workers", "16"]),
             patch("collection.rq5_agent_file_scan.configure_logging"),
             patch("collection.rq5_agent_file_scan.add_file_logging"),
-            patch("collection.rq5_agent_file_scan.write_csv_outputs"),
+            patch("collection.rq5_agent_file_scan.write_review_outputs"),
             patch("collection.rq5_agent_file_scan.retry_failed_repos", return_value={}) as retry_mock,
         ):
             main()

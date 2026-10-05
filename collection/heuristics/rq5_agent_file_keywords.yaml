@@ -64,7 +64,11 @@
 # kind of accepted precision/recall trade as v1 -> v2's hyphenated
 # "before-each" loss above. Applied retroactively via
 # `prune_removed_keywords()`, same mechanism as v1 -> v2.
-version: 3
+# **v3 -> v4: added "tested" to test_keywords.** Same list otherwise. The
+# new `ardic_test_keywords` list below is only for the comparison statistic
+# against Ardic et al. (SCAM 2026); it is a subset of test_keywords, so every
+# Ardic term is also a test keyword.
+version: 4
 
 # Matched against each repo's root-level tree entries only (no
 # subdirectories), case-insensitively -- see find_target_files_at_commit().
@@ -76,6 +80,7 @@ test_keywords:
   - test
   - tests
   - testing
+  - tested
   - unit test
   - integration test
   - functional test
@@ -104,3 +109,12 @@ fixture_keywords:
   - afterEach
   - beforeAll
   - afterAll
+
+# Terms for the Ardic et al. (SCAM 2026) comparison statistic only: the
+# repositories whose root agent files mention one of these words. Not used
+# for the main test statistic, which uses test_keywords above.
+ardic_test_keywords:
+  - test
+  - tests
+  - testing
+  - tested

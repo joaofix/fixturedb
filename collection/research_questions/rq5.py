@@ -1,74 +1,44 @@
 """
-RQ5 -- Agent Configuration Files (Mixed -- Qualitative + Quantitative): how
-often do root-level agent configuration files (AGENTS.md, CLAUDE.md) mention
-test-related and fixture-related guidance, across the raw repo universe --
-independent of any Dataset A/C filtering?
+RQ5 -- Agent Configuration Files: how often do root-level agent configuration
+files (AGENTS.md, CLAUDE.md) mention test-related and fixture-related guidance,
+for the repositories that contribute at least one fixture to Dataset A?
 
-Pure reader over `db/rq5_agent_files.db` (`collection/rq5_agent_file_scan.py`'s
-own output) -- same role `rq1.py` plays for `db/rq1_prevalence.db`. No
-collection logic lives here; this module only aggregates and renders what
-that scan already persisted.
+Pure reader over `db/rq5_agent_files_v4.db` (`collection/rq5_agent_file_scan.py`'s
+own output). No collection logic lives here.
 
-A repo with `fetch_ok=0` in `repo_scan` (no commit at/before the snapshot
-date, or the root tree/blob fetch failed) contributes zero rows to
-`agent_files` by construction (`rq5_agent_file_scan.process_repo()` never
-reaches the file-matching step for such a repo) -- so every count below is
-already implicitly restricted to successfully-analyzed repos, with no
-extra filter needed here. "Repositories skipped" is reported separately,
-for transparency, not folded into any percentage's denominator.
+Every statistic is at the repository level. A repository counts as having a
+kind of guidance if ANY of its root agent files matches. The denominators are:
 
-**Every statistic here is at the repository level, not the file level**
-(2026-10-02 methodology correction -- the first version of this report was
-file-level throughout; see git history if that shape is ever needed again).
-The denominator for every percentage is "repositories with >=1 root agent
-file" (`aggregate_repo_guidance()`'s own population), never "agent files
-found": a repo has test (or fixture) guidance if ANY of its root agent
-files matches >=1 test (or fixture) keyword (`RepoGuidance.has_test`/
-`has_fixture`, folded with logical OR across that repo's files in
-`aggregate_repo_guidance()`). A pointer file (e.g. a `CLAUDE.md` that's a
-symlink to `AGENTS.md`) needs no special-casing here: its own blob content
-is the literal link-target text (see `rq5_agent_file_scan.
-read_blob_via_api()`'s docstring), which trivially never contains a
-catalog keyword on its own, so it can never manufacture a false guidance
-signal for its repo -- `AGENTS.md`'s own row is what would (correctly)
-carry the real signal.
+- "analyzed" repositories (commit found at the snapshot, root tree fetched) for
+  the share with at least one root agent file;
+- repositories with at least one root agent file for every other share.
 
-`agent_files.csv` (the scan's own CSV output) stays file-level raw data --
-intentionally not re-aggregated into percentages at that granularity
-anywhere, including here; this module only computes percentages over the
-repo-level aggregation.
+The Ardic et al. (SCAM 2026) statistic uses the same computation as the test
+statistic, with `ardic_test_keywords` instead of `test_keywords`.
 
 python -m collection.research_questions.rq5
 """
 
 from __future__ import annotations
 
-import sqlite3
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
-from .. import paths
 from ..db import db_session
 from ..rq5_agent_file_scan import (
-    AMBIGUOUS_FIXTURE_KEYWORDS,
-    RQ5_CUTOFF_DATE,
+    CATALOG_PATH,
+    DB_PATH,
+    REPO_TABLE_NAME,
+    load_repo_guidance,
     load_rq5_keyword_catalog,
+    load_scan_meta,
 )
-from ..rq5_agent_file_scan import CATALOG_PATH as _CATALOG_PATH
-from ..rq5_agent_file_scan import DB_PATH as _SCAN_DB_PATH
 from ._shared import OUTPUT_DIR, pct, write_markdown_report
 
-# Derived from rq5_agent_file_scan.DB_PATH rather than a second hardcoded
-# "rq5_agent_files.db" literal -- see rq1.py's own _DB_FILENAME for why
-# (a rename there must not be able to silently desync from what this
-# module reads).
-_DB_FILENAME = _SCAN_DB_PATH.name
-
-# Paper's own row order -- deliberately NOT rq5_agent_file_scan.RQ5_LANGUAGES's
-# alphabetical order (java, javascript, python, typescript), matching rq1.py's
-# own DISPLAY_LANGUAGES convention.
+# Paper's row order, matching rq1.py's DISPLAY_LANGUAGES convention.
 DISPLAY_LANGUAGES: tuple[str, ...] = ("python", "java", "javascript", "typescript")
 DISPLAY_LABELS: dict[str, str] = {
     "python": "Python",
@@ -79,272 +49,186 @@ DISPLAY_LABELS: dict[str, str] = {
 
 
 @dataclass
-class RepoGuidance:
-    """One repo's test/fixture guidance signal, folded (logical OR) across
-    every root agent file it has -- the unit every statistic in this
-    report is computed over. `test_keywords`/`fixture_keywords` are the
-    union of keywords matched across that repo's files, for the per-
-    keyword repo counts."""
+class GroupStats:
+    """Counts for one group of repositories (all, or one language).
 
-    language: str
-    has_test: bool = False
-    has_fixture: bool = False
-    test_keywords: set[str] = field(default_factory=set)
-    fixture_keywords: set[str] = field(default_factory=set)
+    `analyzed` is every repository with a successful fetch. `with_agent_file`
+    is the subset with at least one root agent file, the denominator for every
+    share except the first."""
 
-
-@dataclass
-class RepoGroupStats:
-    """One group's (overall, or one language) repo-level counts. Always
-    computed directly from that group's own `RepoGuidance` subset, never
-    derived from another group's numbers, so there is no pooled-vs-
-    averaged ambiguity anywhere in this report."""
-
-    n: int = 0
-    n_test: int = 0
-    n_fixture: int = 0
-    n_fixture_unambiguous: int = 0
-    n_test_and_fixture: int = 0
+    analyzed: int = 0
+    with_agent_file: int = 0
+    test: int = 0
+    test_ardic: int = 0
+    fixture: int = 0
 
 
-def _split_keywords(raw: str | None) -> list[str]:
-    return [k.strip() for k in (raw or "").split(",") if k.strip()]
-
-
-def aggregate_repo_guidance(rows: list[sqlite3.Row]) -> dict[str, RepoGuidance]:
-    """Fold `agent_files` rows (one per root agent file found) into one
-    `RepoGuidance` per repo. Only repos with >=1 agent file appear here at
-    all -- a repo contributing zero `agent_files` rows (the common case)
-    is simply absent, which is exactly "repositories with >=1 root agent
-    file" as a population (`len()` of this dict's result)."""
-    by_repo: dict[str, RepoGuidance] = {}
-    for row in rows:
-        entry = by_repo.setdefault(row["repo_name"], RepoGuidance(language=row["language"]))
-        if row["has_test"]:
-            entry.has_test = True
-        if row["has_fixture"]:
-            entry.has_fixture = True
-        entry.test_keywords.update(_split_keywords(row["matched_test_keywords"]))
-        entry.fixture_keywords.update(_split_keywords(row["matched_fixture_keywords"]))
-    return by_repo
-
-
-def _has_unambiguous_fixture_keyword(guidance: RepoGuidance) -> bool:
-    """True if `guidance` has >=1 fixture keyword match outside
-    `AMBIGUOUS_FIXTURE_KEYWORDS` -- see that constant's own docstring
-    (rq5_agent_file_scan.py) for why bare "fixture"/"fixtures" are kept
-    in the catalog but excluded from this stricter count: they're
-    majority test-data-file-sense in manual sampling, not the fixture-
-    as-code sense this study targets, and the catalog has no lexical fix
-    for a semantic ambiguity. This is a reporting-only distinction, not
-    a keyword removal -- `guidance.has_fixture` (the inclusive flag) is
-    unaffected."""
-    return bool(guidance.fixture_keywords - set(AMBIGUOUS_FIXTURE_KEYWORDS))
-
-
-def _repo_group_stats(guidances: list[RepoGuidance]) -> RepoGroupStats:
-    n_test = sum(1 for g in guidances if g.has_test)
-    n_fixture = sum(1 for g in guidances if g.has_fixture)
-    n_fixture_unambiguous = sum(1 for g in guidances if _has_unambiguous_fixture_keyword(g))
-    n_both = sum(1 for g in guidances if g.has_test and g.has_fixture)
-    return RepoGroupStats(
-        n=len(guidances),
-        n_test=n_test,
-        n_fixture=n_fixture,
-        n_fixture_unambiguous=n_fixture_unambiguous,
-        n_test_and_fixture=n_both,
+def group_stats(records: list[dict[str, Any]]) -> GroupStats:
+    """Counts over analyzed-repository records (see `load_repo_guidance()`)."""
+    with_agent = [r for r in records if r["agent_files"]]
+    return GroupStats(
+        analyzed=len(records),
+        with_agent_file=len(with_agent),
+        test=sum(1 for r in with_agent if r["has_test"]),
+        test_ardic=sum(1 for r in with_agent if r["has_test_ardic"]),
+        fixture=sum(1 for r in with_agent if r["has_fixture"]),
     )
 
 
-def _pct_or_none(numerator: int, denominator: int) -> float | None:
-    return None if denominator == 0 else numerator / denominator
-
-
-def load_agent_files(db_root: Path = paths.DB_ROOT) -> list[sqlite3.Row] | None:
-    """Every row of `agent_files` -- every root-level AGENTS.md/CLAUDE.md
-    (or case-variant) found across the whole scanned universe. `None` if
-    `db/rq5_agent_files.db` doesn't exist yet (not collected), as distinct
-    from an empty list (collected, but zero agent files found so far --
-    e.g. mid-run, or a toy run). This is raw, file-level input --
-    `aggregate_repo_guidance()` is what turns it into the repo-level
-    population every statistic in this report actually uses."""
-    db_path = db_root / _DB_FILENAME
-    if not db_path.exists():
-        return None
+def load_corpus_counts(db_path: Path = DB_PATH) -> dict[str, Any]:
+    """Corpus size, analyzed count, and skipped repositories grouped by reason."""
     with db_session(db_path) as conn:
-        conn.row_factory = sqlite3.Row
-        return conn.execute("SELECT * FROM agent_files").fetchall()
+        total = conn.execute(f"SELECT COUNT(*) FROM {REPO_TABLE_NAME}").fetchone()[0]
+        reasons = conn.execute(
+            f"SELECT error_reason, COUNT(*) FROM {REPO_TABLE_NAME} WHERE fetch_ok = 0 "
+            "GROUP BY error_reason ORDER BY COUNT(*) DESC, error_reason"
+        ).fetchall()
+    skipped = sum(count for _, count in reasons)
+    return {
+        "total": total,
+        "analyzed": total - skipped,
+        "skipped": skipped,
+        "skipped_by_reason": [(reason, count) for reason, count in reasons],
+    }
 
 
-def load_repo_counts(db_root: Path = paths.DB_ROOT) -> dict[str, int] | None:
-    """How many repos were attempted vs. successfully analyzed
-    (`fetch_ok=1`) vs. skipped (`fetch_ok=0`, any reason) -- `None` if the
-    db doesn't exist yet. Reported for transparency only -- "analyzed"
-    includes every successfully-scanned repo regardless of whether it had
-    any agent file, so it is NOT the denominator any percentage in this
-    report uses (see `aggregate_repo_guidance()`'s docstring)."""
-    db_path = db_root / _DB_FILENAME
-    if not db_path.exists():
-        return None
-    with db_session(db_path) as conn:
-        total = conn.execute("SELECT COUNT(*) FROM repo_scan").fetchone()[0]
-        analyzed = conn.execute("SELECT COUNT(*) FROM repo_scan WHERE fetch_ok = 1").fetchone()[0]
-    return {"total": total, "analyzed": analyzed, "skipped": total - analyzed}
-
-
-def _keyword_repo_counts(guidances: list[RepoGuidance], attr: str, catalog_keywords: list[str]) -> Counter:
-    """How many repos have >=1 root agent file containing each catalog
-    keyword -- `attr` is `"test_keywords"` or `"fixture_keywords"`, the
-    per-repo union already built by `aggregate_repo_guidance()`. Every
-    catalog keyword is present in the result even at 0, so a report
-    reader sees the full list searched for, not just the ones that
-    happened to fire."""
-    counts: Counter = Counter(dict.fromkeys(catalog_keywords, 0))
-    for guidance in guidances:
-        for keyword in getattr(guidance, attr):
-            counts[keyword] += 1
+def fixture_term_counts(records: list[dict[str, Any]], fixture_terms: list[str]) -> Counter:
+    """Repositories (among those with a root agent file) containing each
+    fixture term. Every catalog term appears, even at zero."""
+    counts: Counter = Counter(dict.fromkeys(fixture_terms, 0))
+    for record in records:
+        if not record["agent_files"]:
+            continue
+        for term in record["fixture_terms"]:
+            counts[term] += 1
     return counts
 
 
-def render_overall_table(guidances: list[RepoGuidance]) -> str:
-    stats = _repo_group_stats(guidances)
-    secondary = pct(_pct_or_none(stats.n_test_and_fixture, stats.n_test))
+def _ratio(numerator: int, denominator: int) -> float | None:
+    return None if denominator == 0 else numerator / denominator
+
+
+def render_overall_table(counts: dict[str, Any], stats: GroupStats) -> str:
     lines = [
-        "| Metric | Value |",
-        "|---|---|",
-        f"| Repositories with >=1 root agent file | {stats.n:,} |",
-        f"| ... with >=1 test keyword | {stats.n_test:,} ({pct(_pct_or_none(stats.n_test, stats.n))}) |",
-        f"| ... with >=1 fixture keyword (inclusive) | {stats.n_fixture:,} "
-        f"({pct(_pct_or_none(stats.n_fixture, stats.n))}) |",
-        f"| ... with >=1 *unambiguous* fixture keyword | {stats.n_fixture_unambiguous:,} "
-        f"({pct(_pct_or_none(stats.n_fixture_unambiguous, stats.n))}) |",
-        f"| Test-guidance repos that also have fixture guidance | {stats.n_test_and_fixture:,} ({secondary}) |",
+        "| # | Statistic | Count | Percentage | Denominator |",
+        "|---|---|---|---|---|",
+        f"| 1 | Repositories in the corpus | {counts['total']:,} | -- | -- |",
+        f"| 1 | Repositories analyzed | {stats.analyzed:,} | "
+        f"{pct(_ratio(stats.analyzed, counts['total']))} | corpus |",
+        f"| 2 | With at least one root agent file | {stats.with_agent_file:,} | "
+        f"{pct(_ratio(stats.with_agent_file, stats.analyzed))} | analyzed |",
+        f"| 3 | With a test keyword (`test_keywords`) | {stats.test:,} | "
+        f"{pct(_ratio(stats.test, stats.with_agent_file))} | with agent file |",
+        f"| 4 | With an Ardic test term (`ardic_test_keywords`) | {stats.test_ardic:,} | "
+        f"{pct(_ratio(stats.test_ardic, stats.with_agent_file))} | with agent file |",
+        f"| 5 | With a fixture keyword (`fixture_keywords`) | {stats.fixture:,} | "
+        f"{pct(_ratio(stats.fixture, stats.with_agent_file))} | with agent file |",
     ]
     return "\n".join(lines)
 
 
-def render_by_language_table(guidances: list[RepoGuidance]) -> str:
+def render_by_language_table(records: list[dict[str, Any]]) -> str:
     lines = [
-        "| Language | Repositories with >=1 agent file | Test keyword (%) | Fixture keyword, inclusive (%) | "
-        "Fixture keyword, unambiguous (%) |",
-        "|---|---|---|---|---|",
+        "| Language | Analyzed | With agent file (% of analyzed) | "
+        "Test keyword (% of with agent file) | Ardic test term (%) | Fixture keyword (%) |",
+        "|---|---|---|---|---|---|",
     ]
     for language in DISPLAY_LANGUAGES:
-        group = _repo_group_stats([g for g in guidances if g.language == language])
+        stats = group_stats([r for r in records if r["language"] == language])
         lines.append(
-            f"| {DISPLAY_LABELS[language]} | {group.n:,} | {pct(_pct_or_none(group.n_test, group.n))} | "
-            f"{pct(_pct_or_none(group.n_fixture, group.n))} | "
-            f"{pct(_pct_or_none(group.n_fixture_unambiguous, group.n))} |"
+            f"| {DISPLAY_LABELS[language]} | {stats.analyzed:,} | "
+            f"{stats.with_agent_file:,} ({pct(_ratio(stats.with_agent_file, stats.analyzed))}) | "
+            f"{pct(_ratio(stats.test, stats.with_agent_file))} | "
+            f"{pct(_ratio(stats.test_ardic, stats.with_agent_file))} | "
+            f"{pct(_ratio(stats.fixture, stats.with_agent_file))} |"
         )
     return "\n".join(lines)
 
 
-def render_keyword_table(counts: Counter, *, header: str) -> str:
-    lines = [f"| {header} | Repositories containing it |", "|---|---|"]
-    for keyword, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])):
-        lines.append(f"| {keyword} | {count:,} |")
+def render_fixture_term_table(counts: Counter, terms: list[str]) -> str:
+    lines = ["| Fixture term | Repositories containing it |", "|---|---|"]
+    for term in terms:
+        lines.append(f"| {term} | {counts[term]:,} |")
     return "\n".join(lines)
 
 
-def generate_report(*, db_root: Path = paths.DB_ROOT, catalog_path: Path = _CATALOG_PATH) -> str:
+def render_skipped_table(counts: dict[str, Any]) -> str:
+    if not counts["skipped_by_reason"]:
+        return "No repositories were skipped."
+    lines = ["| Reason | Repositories |", "|---|---|"]
+    for reason, count in counts["skipped_by_reason"]:
+        lines.append(f"| {reason} | {count:,} |")
+    return "\n".join(lines)
+
+
+def generate_report(*, db_path: Path = DB_PATH, catalog_path: Path = CATALOG_PATH) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    rows = load_agent_files(db_root)
-    repo_counts = load_repo_counts(db_root)
     catalog = load_rq5_keyword_catalog(catalog_path)
+    meta = load_scan_meta(db_path)
 
     lines = [
         "# RQ5 -- Agent Configuration Files",
         "",
-        "> How often do root-level agent configuration files mention "
-        "test-related and fixture-related guidance?",
+        "> How often do root-level agent configuration files mention test-related "
+        "and fixture-related guidance, for the repositories that contribute a fixture "
+        "to Dataset A?",
         "",
         f"Generated: {generated_at}",
         "",
-        "See [docs/research-questions.md](../docs/research-questions.md) for "
-        "the full RQ5 definition.",
-        "",
     ]
 
-    if rows is None or repo_counts is None:
-        lines += ["_Not available -- db/rq5_agent_files.db not collected yet._", ""]
+    if not db_path.exists() or not meta:
+        lines += ["_Not available -- no RQ5 scan has been run yet._", ""]
         return "\n".join(lines)
 
-    by_repo = aggregate_repo_guidance(rows)
+    counts = load_corpus_counts(db_path)
+    records = load_repo_guidance(set(catalog["ardic_test_keywords"]), db_path)
+    stats = group_stats(records)
+    all_fixture_terms = list(catalog["fixture_keywords"])
 
     lines += [
-        f"Snapshot date: {RQ5_CUTOFF_DATE} (same commit-pinning policy as RQ1 -- see "
-        "`collection/rq5_agent_file_scan.py`'s module docstring).",
-        f"Target files searched (repository root only, case-insensitive, catalog "
-        f"version {catalog['version']}): {', '.join(catalog['target_files'])}.",
-        f"Repositories analyzed (commit found at/before the "
-        f"snapshot date, root tree/blob fetch succeeded): {repo_counts['analyzed']:,}.",
-        f"Repositories skipped (no commit at/before the snapshot date, or a "
-        f"fetch failed): {repo_counts['skipped']:,}.",
-        "Every statistic below is at the repository level -- a repo counts as "
-        "having test (or fixture) guidance if ANY of its root agent files "
-        "matches >=1 test (or fixture) keyword. The denominator throughout is "
-        '"repositories with >=1 root agent file", not "repositories '
-        'analyzed" (most analyzed repos have none).',
+        f"Snapshot date: {meta['snapshot_date']} (each repository's root files are read at "
+        "its last commit on or before this date).",
+        f"Keyword catalog: `collection/heuristics/rq5_agent_file_keywords.yaml`, version "
+        f"{catalog['version']}.",
+        f"Target files (repository root only, case-insensitive): "
+        f"{', '.join(catalog['target_files'])}.",
+        f"Repositories skipped (no commit at or before the snapshot, or a failed fetch): "
+        f"{counts['skipped']:,} of {counts['total']:,}.",
         "",
-        '**Inclusive vs. unambiguous fixture guidance:** "fixture"/"fixtures" '
-        "are kept in the catalog (dropping them would also lose every real "
-        "fixture-as-code match), but manual sampling of real matches found "
-        "they are majority fixture-as-test-data-file (e.g. `tests/fixtures/"
-        "*.json`), not fixture-as-code (e.g. `@pytest.fixture`) -- a sense "
-        "outside this study's scope. "
-        '"Inclusive" below counts a repo if ANY '
-        "fixture keyword matches (what every prior RQ5 report showed); "
-        '"unambiguous" additionally requires >=1 match from a keyword other '
-        'than "fixture"/"fixtures" (`conftest`, `beforeEach`/`afterEach`/'
-        "`beforeAll`/`afterAll`, `test setup`, `setup and teardown`) -- a "
-        "stricter floor, not a replacement metric.",
-        "",
-    ]
-
-    if not by_repo:
-        lines += ["_No agent files found yet in the collected data._", ""]
-        return "\n".join(lines)
-
-    guidances = list(by_repo.values())
-
-    lines += [
         "## Overall",
         "",
-        render_overall_table(guidances),
+        render_overall_table(counts, stats),
         "",
-        "## By repository language",
+        "## By language",
         "",
-        render_by_language_table(guidances),
+        render_by_language_table(records),
         "",
-        "## Keyword frequency -- test keywords",
+        "## Fixture terms",
         "",
-        render_keyword_table(
-            _keyword_repo_counts(guidances, "test_keywords", catalog["test_keywords"]),
-            header="Test keyword",
-        ),
+        "Repositories with at least one root agent file that contain each term.",
         "",
-        "## Keyword frequency -- fixture keywords",
+        render_fixture_term_table(fixture_term_counts(records, all_fixture_terms), all_fixture_terms),
         "",
-        render_keyword_table(
-            _keyword_repo_counts(guidances, "fixture_keywords", catalog["fixture_keywords"]),
-            header="Fixture keyword",
-        ),
+        "## Skipped repositories",
         "",
-        "## Keyword lists used (catalog version "
-        f"{catalog['version']}, `collection/heuristics/rq5_agent_file_keywords.yaml`)",
+        render_skipped_table(counts),
         "",
-        f"- Test keywords: {', '.join(catalog['test_keywords'])}",
+        "## Keyword lists",
+        "",
+        f"- Test keywords (version {catalog['version']}): {', '.join(catalog['test_keywords'])}",
+        f"- Ardic test terms (comparison with Ardic et al., SCAM 2026): "
+        f"{', '.join(catalog['ardic_test_keywords'])}",
         f"- Fixture keywords: {', '.join(catalog['fixture_keywords'])}",
         "",
+        "Matching is case-insensitive and whole-word.",
+        "",
     ]
-
     return "\n".join(lines)
 
 
-def write_report(
-    output_dir: Path = OUTPUT_DIR, *, db_root: Path = paths.DB_ROOT
-) -> Path:
-    report = generate_report(db_root=db_root)
+def write_report(output_dir: Path = OUTPUT_DIR, *, db_path: Path = DB_PATH) -> Path:
+    report = generate_report(db_path=db_path)
     return write_markdown_report(output_dir, "rq5.md", report)
 
 

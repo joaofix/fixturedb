@@ -1,19 +1,24 @@
-"""RQ5 (Agent Configuration Files) data collection: how often do root-level
-agent configuration files (AGENTS.md, CLAUDE.md, ...) mention test-related
-and fixture-related guidance, across the same raw ~24.7k-repo universe
-RQ1 measures (`github-search-raw/*.csv.gz`), independent of any Dataset
-A/B/C filtering?
+"""RQ5 (Agent Configuration Files): how often do root-level agent
+configuration files (AGENTS.md, CLAUDE.md) mention test-related and
+fixture-related guidance, for the repositories that contribute at least one
+fixture to Dataset A (agent-created fixtures)?
 
-Deliberately separate from the Dataset A/B/C pipeline, and from RQ1's own
-collection -- not a 4th/5th dataset. Every artifact here is
-`rq5_`/`rq5-`-prefixed: this module (`rq5_agent_file_scan.py`, run directly
-via `python -m collection.rq5_agent_file_scan`), its database
-(`db/rq5_agent_files.db`, never `db/{a,b,c}.db` or `db/rq1_prevalence.db`),
-its keyword catalog (`collection/heuristics/rq5_agent_file_keywords.yaml`),
-and its CSV output (`rq5-agent-files/`, a sibling of `datasets/`).
-`collection/research_questions/rq5.py` is the only other thing that reads
-this db -- it renders RQ5's findings report from it, same role rq1.py plays
-for `db/rq1_prevalence.db`.
+The corpus is read from `datasets/a/fixtures/*_fixtures.csv`. The snapshot
+is the last commit on or before `--snapshot-date`, a required argument: the
+date of the new Dataset A collection is not fixed yet, so there is no default.
+Every run records its snapshot date in the database's `scan_meta` table, and
+a run refuses to continue with a different date.
+
+Every artifact here is `rq5_`/`rq5-`-prefixed: this module (run directly via
+`python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD`), its
+database (`db/rq5_agent_files_v4.db`), its keyword catalog
+(`collection/heuristics/rq5_agent_file_keywords.yaml`), and its review
+outputs (`rq5_v4/`). `collection/research_questions/rq5.py` reads this
+database to write the RQ5 report.
+
+The first iteration (catalog v3, the raw ~24.7k-repo universe, no snapshot
+argument) is kept in `rq5_v3/` and `db/rq5_agent_files.db`. This module no
+longer produces it.
 
 **Why GitHub's REST API, not a clone:** this scan needs the content of 0 to 2
 root-level files per repository. GitHub's Git Database API returns those
@@ -22,7 +27,7 @@ without cloning, so the scan stays fast whatever the size of the repository.
 answer "what's at this commit's root" and "give me this one blob" without
 ever materializing the rest of the repository. Concretely, per repo:
 
-1. `GET /repos/{repo}/commits?until=<cutoff_date>T23:59:59Z&per_page=1`
+1. `GET /repos/{repo}/commits?until=<snapshot_date>T23:59:59Z&per_page=1`
    -- the cutoff commit (replaces a clone + PyDriller's commit walk).
 2. `GET /repos/{repo}/git/trees/{sha}` -- root-level tree entries, non-
    recursive by default (replaces `git ls-tree`; "look only at the
@@ -120,14 +125,11 @@ from .db import db_session
 from .logging_utils import configure_logging, get_logger
 from .parallel_utils import run_parallel_per_repo
 from .rq1_prevalence_scan import (
-    DUPLICATES_PATH,
     _notify,
     _write_progress,
     add_file_logging,
-    load_raw_universe,
     run_with_deadline,
 )
-from .rq1_prevalence_scan import RQ1_CUTOFF_DATE as RQ5_CUTOFF_DATE
 
 logger = get_logger(__name__)
 
@@ -135,11 +137,19 @@ RQ5_LANGUAGES: tuple[str, ...] = ("java", "javascript", "python", "typescript")
 
 CATALOG_PATH = paths.ROOT_DIR / "collection" / "heuristics" / "rq5_agent_file_keywords.yaml"
 
-DB_PATH = paths.DB_ROOT / "rq5_agent_files.db"
-CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq5-agent-files"
-PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_progress.json"
+# The Dataset A fixture CSVs (one per language). A repository's presence in
+# any of them puts it in the RQ5 corpus.
+DATASET_A_FIXTURES_DIR = paths.stage_dir("a", "fixtures")
+
+DB_PATH = paths.DB_ROOT / "rq5_agent_files_v4.db"
+CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq5_v4"
+PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_v4_progress.json"
 PROGRESS_LOG_EVERY = 50
-LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
+LOG_PATH = paths.DB_ROOT / "rq5_agent_files_v4.log"
+
+# The snapshot date is a required run argument (--snapshot-date). It has no
+# default because the new Dataset A collection has no build date yet.
+SNAPSHOT_DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 # No disk/subprocess overhead per repo anymore (just a couple of small
 # HTTP calls) -- higher than RQ1's clone-bound default is safe. Worker
@@ -177,8 +187,14 @@ NTFY_TOPIC = "joaofix_fixturedb"
 REPO_TABLE_NAME = "repo_scan"
 FILE_TABLE_NAME = "agent_files"
 MATCH_TABLE_NAME = "agent_file_matches"
+META_TABLE_NAME = "scan_meta"
 
 SCHEMA = f"""
+CREATE TABLE IF NOT EXISTS {META_TABLE_NAME} (
+    key    TEXT PRIMARY KEY,
+    value  TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS {REPO_TABLE_NAME} (
     repo_name        TEXT PRIMARY KEY,
     language         TEXT NOT NULL,
@@ -208,48 +224,20 @@ CREATE TABLE IF NOT EXISTS {FILE_TABLE_NAME} (
 );
 
 CREATE TABLE IF NOT EXISTS {MATCH_TABLE_NAME} (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    repo_name     TEXT NOT NULL,
-    file_name     TEXT NOT NULL,
-    keyword_list  TEXT NOT NULL,
-    keyword       TEXT NOT NULL,
-    line_number   INTEGER NOT NULL,
-    line_context  TEXT NOT NULL,
-    in_code_block INTEGER NOT NULL DEFAULT 0
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    repo_name      TEXT NOT NULL,
+    file_name      TEXT NOT NULL,
+    keyword_list   TEXT NOT NULL,
+    keyword        TEXT NOT NULL,
+    line_number    INTEGER NOT NULL,
+    line_context   TEXT NOT NULL,
+    line_before_2  TEXT NOT NULL DEFAULT '',
+    line_before_1  TEXT NOT NULL DEFAULT '',
+    line_after_1   TEXT NOT NULL DEFAULT '',
+    line_after_2   TEXT NOT NULL DEFAULT '',
+    in_code_block  INTEGER NOT NULL DEFAULT 0
 );
 """
-
-_FILE_CSV_FIELDNAMES = [
-    "repo_name",
-    "file_type",
-    "has_test",
-    "has_fixture",
-    "matched_test_keywords",
-    "matched_fixture_keywords",
-    "github_url",
-]
-
-_MATCH_CSV_FIELDNAMES = [
-    "repo_name",
-    "file_name",
-    "keyword_list",
-    "keyword",
-    "line_context",
-    "in_code_block",
-    "github_url",
-]
-
-_REPO_CSV_FIELDNAMES = [
-    "repo_name",
-    "language",
-    "fetch_ok",
-    "commit_sha",
-    "commit_date",
-    "num_agent_files",
-    "catalog_version",
-    "error_reason",
-    "scanned_at",
-]
 
 _FENCE_RE = re.compile(r"^(`{3,}|~{3,})")
 
@@ -268,7 +256,11 @@ def load_rq5_keyword_catalog(path: Path = CATALOG_PATH) -> dict[str, Any]:
     *detection* pipeline; this catalog has an entirely different consumer
     and shape, and gains nothing from sharing that machinery."""
     with path.open("r", encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
+        catalog = yaml.safe_load(fh)
+    missing = set(catalog["ardic_test_keywords"]) - set(catalog["test_keywords"])
+    if missing:
+        raise ValueError(f"ardic_test_keywords must be a subset of test_keywords; missing: {sorted(missing)}")
+    return catalog
 
 
 def _build_keyword_pattern(keyword: str) -> re.Pattern:
@@ -312,22 +304,32 @@ def find_keyword_matches(content: str, patterns: dict[str, re.Pattern]) -> list[
     marker line never itself contains a catalog keyword)."""
     matches: list[dict[str, Any]] = []
     in_fence = False
-    for line_number, line in enumerate(content.splitlines(), start=1):
-        stripped = line.strip()
+    lines = [line.strip() for line in content.splitlines()]
+    for index, stripped in enumerate(lines):
         current_in_fence = in_fence
         for keyword, pattern in patterns.items():
-            for _ in pattern.finditer(line):
+            for _ in pattern.finditer(lines[index]):
                 matches.append(
                     {
                         "keyword": keyword,
-                        "line_number": line_number,
+                        "line_number": index + 1,
                         "line_context": stripped,
+                        "line_before_2": _line_at(lines, index - 2),
+                        "line_before_1": _line_at(lines, index - 1),
+                        "line_after_1": _line_at(lines, index + 1),
+                        "line_after_2": _line_at(lines, index + 2),
                         "in_code_block": current_in_fence,
                     }
                 )
         if _FENCE_RE.match(stripped):
             in_fence = not in_fence
     return matches
+
+
+def _line_at(lines: list[str], index: int) -> str:
+    """The stripped line at `index`, or "" outside the file (used for the
+    two-lines-either-side context of each match)."""
+    return lines[index] if 0 <= index < len(lines) else ""
 
 
 def scan_file_content(
@@ -490,16 +492,16 @@ def _api_get(
 
 
 def find_cutoff_commit_via_api(
-    repo_name: str, cutoff_date: str, *, token: str = GITHUB_TOKEN, rate_limiter: _RateLimiter | None = None
+    repo_name: str, snapshot_date: str, *, token: str = GITHUB_TOKEN, rate_limiter: _RateLimiter | None = None
 ) -> dict[str, str] | None:
-    """The latest commit at or before `cutoff_date` (UTC-normalized --
+    """The latest commit at or before `snapshot_date` (UTC-normalized --
     see module docstring's "Known, accepted difference" section), via
     GitHub's commits-list endpoint. `None` if the repo has no such commit,
     doesn't exist, or the request fails for a non-rate-limit reason --
     raises `RateLimitExhausted` (uncaught here) if it's specifically rate
     limiting, so `process_repo()` can tell the two apart."""
     url = f"{GITHUB_API_BASE}/repos/{repo_name}/commits"
-    params = {"until": f"{cutoff_date}T23:59:59Z", "per_page": 1}
+    params = {"until": f"{snapshot_date}T23:59:59Z", "per_page": 1}
     response = _api_get(url, token=token, params=params, rate_limiter=rate_limiter)
     if response is None or response.status_code != 200:
         return None
@@ -614,7 +616,7 @@ def _scan_result(
 def process_repo(
     repo: dict,
     *,
-    cutoff_date: str = RQ5_CUTOFF_DATE,
+    snapshot_date: str,
     token: str = GITHUB_TOKEN,
     catalog: dict[str, Any] | None = None,
     rate_limiter: _RateLimiter | None = None,
@@ -658,7 +660,7 @@ def process_repo(
         )
 
     try:
-        cutoff = find_cutoff_commit_via_api(repo_name, cutoff_date, token=token, rate_limiter=rate_limiter)
+        cutoff = find_cutoff_commit_via_api(repo_name, snapshot_date, token=token, rate_limiter=rate_limiter)
         if cutoff is None:
             return _fail("no_commit_at_or_before_cutoff")
 
@@ -720,6 +722,70 @@ def process_repo(
         num_agent_files=len(files),
     )
     return _scan_result(repo_row, files, matches)
+
+
+def load_corpus(fixtures_dir: Path = DATASET_A_FIXTURES_DIR) -> list[dict[str, str]]:
+    """The RQ5 corpus: every repository with at least one fixture in Dataset
+    A, read from `<fixtures_dir>/*_fixtures.csv`. Each entry has `repo_name`
+    and `language` (the language of the fixture file the repo first appears
+    in, in filename order). A repo that appears under two languages keeps
+    the first and is logged once."""
+    corpus: dict[str, dict[str, str]] = {}
+    conflicts: set[str] = set()
+    for path in sorted(fixtures_dir.glob("*_fixtures.csv")):
+        with path.open("r", encoding="utf-8", newline="") as fh:
+            for row in csv.DictReader(fh):
+                repo_name, language = row["repo_name"], row["language"]
+                existing = corpus.get(repo_name)
+                if existing is None:
+                    corpus[repo_name] = {"repo_name": repo_name, "language": language}
+                elif existing["language"] != language:
+                    conflicts.add(repo_name)
+    for repo_name in sorted(conflicts):
+        logger.warning(
+            "[RQ5 corpus] %s has fixtures in more than one language; keeping %s",
+            repo_name,
+            corpus[repo_name]["language"],
+        )
+    return list(corpus.values())
+
+
+def validated_snapshot_date(value: str | None) -> str:
+    """`value` as a YYYY-MM-DD string that is a real calendar date. Raises
+    `ValueError` for a missing or malformed date -- there is deliberately no
+    default."""
+    if not value or not SNAPSHOT_DATE_PATTERN.match(value):
+        raise ValueError(f"snapshot date must be YYYY-MM-DD, got {value!r}")
+    datetime.strptime(value, "%Y-%m-%d")
+    return value
+
+
+def record_scan_meta(
+    snapshot_date: str,
+    catalog_version: int | None,
+    db_path: Path = DB_PATH,
+) -> None:
+    """Store the run's snapshot date and catalog version in `scan_meta`.
+    Raises if the database already holds a different snapshot date, so a
+    resumed run can never mix repositories scanned at two dates."""
+    with db_session(db_path) as conn:
+        row = conn.execute(f"SELECT value FROM {META_TABLE_NAME} WHERE key = 'snapshot_date'").fetchone()
+        if row is not None and row[0] != snapshot_date:
+            raise ValueError(
+                f"{db_path.name} was scanned at snapshot {row[0]}; refusing to continue at {snapshot_date}"
+            )
+        conn.executemany(
+            f"INSERT OR REPLACE INTO {META_TABLE_NAME} (key, value) VALUES (?, ?)",
+            [("snapshot_date", snapshot_date), ("catalog_version", str(catalog_version))],
+        )
+
+
+def load_scan_meta(db_path: Path = DB_PATH) -> dict[str, str]:
+    """The `scan_meta` key/value pairs, or {} if the database does not exist."""
+    if not db_path.exists():
+        return {}
+    with db_session(db_path) as conn:
+        return dict(conn.execute(f"SELECT key, value FROM {META_TABLE_NAME}").fetchall())
 
 
 def load_scanned_repo_names(db_path: Path = DB_PATH) -> set[str]:
@@ -811,8 +877,9 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
                 f"""
                 INSERT INTO {MATCH_TABLE_NAME}
                     (repo_name, file_name, keyword_list, keyword, line_number,
-                     line_context, in_code_block)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                     line_context, line_before_2, line_before_1, line_after_1,
+                     line_after_2, in_code_block)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -822,6 +889,10 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
                         m["keyword"],
                         m["line_number"],
                         m["line_context"],
+                        m["line_before_2"],
+                        m["line_before_1"],
+                        m["line_after_1"],
+                        m["line_after_2"],
                         1 if m["in_code_block"] else 0,
                     )
                     for m in matches
@@ -829,47 +900,162 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
             )
 
 
-def write_csv_outputs(db_path: Path = DB_PATH, output_dir: Path = CSV_OUTPUT_DIR) -> dict[str, Path]:
-    """Three CSVs, the "real, reviewable output" counterpart to
-    `db/rq5_agent_files.db`: `repo_scan.csv` (every repo attempted, incl.
-    skipped ones and why -- not a manual-review artifact, so it keeps
-    every column) and the two actual manual-review surfaces, each
-    trimmed to essentials with a `github_url` a reviewer can click
-    straight from the spreadsheet: `agent_files.csv` (one row per agent
-    file, linking to the file itself) and `agent_file_matches.csv` (one
-    row per keyword occurrence, linking to the *exact matched line* via
-    a `#L<line_number>` anchor -- computed by joining back to
-    `agent_files.github_url` rather than storing a second, redundant
-    copy of the file's own URL on every match row)."""
+REPO_CSV_FIELDNAMES: tuple[str, ...] = (
+    "repository",
+    "commit_sha",
+    "agent_files_found",
+    "has_test",
+    "has_test_ardic",
+    "has_fixture",
+    "matched_fixture_terms",
+)
+CODING_SHEET_FIELDNAMES: tuple[str, ...] = (
+    "repository",
+    "file_name",
+    "line_number",
+    "matched_term",
+    "line_before_2",
+    "line_before_1",
+    "matched_line",
+    "line_after_1",
+    "line_after_2",
+    "in_code_block",
+    "category",
+    "about_fixtures",
+    "notes",
+)
+SKIPPED_CSV_FIELDNAMES: tuple[str, ...] = ("repository", "language", "error_reason")
+
+
+def load_repo_guidance(
+    ardic_terms: set[str] | frozenset[str], db_path: Path = DB_PATH
+) -> list[dict[str, Any]]:
+    """One record per analyzed repository (`fetch_ok=1`), folding its root
+    agent files with logical OR. A repository with no agent file is included
+    with every flag False. Repository is the unit every RQ5 statistic counts.
+
+    `has_test_ardic` is true when a root agent file matches at least one of
+    `ardic_terms` (a subset of the test keywords, so it is computed from the
+    stored test matches, not from a second scan)."""
+    with db_session(db_path) as conn:
+        repos = conn.execute(
+            f"SELECT repo_name, language, commit_sha FROM {REPO_TABLE_NAME} "
+            "WHERE fetch_ok = 1 ORDER BY repo_name"
+        ).fetchall()
+        files = conn.execute(
+            f"SELECT repo_name, file_name, has_test, has_fixture, matched_test_keywords, "
+            f"matched_fixture_keywords FROM {FILE_TABLE_NAME} ORDER BY repo_name, file_name"
+        ).fetchall()
+
+    by_repo: dict[str, dict[str, Any]] = {
+        repo_name: {
+            "repository": repo_name,
+            "language": language,
+            "commit_sha": commit_sha,
+            "agent_files": [],
+            "has_test": False,
+            "has_test_ardic": False,
+            "has_fixture": False,
+            "fixture_terms": set(),
+            "test_terms": set(),
+        }
+        for repo_name, language, commit_sha in repos
+    }
+    for repo_name, file_name, has_test, has_fixture, test_terms, fixture_terms in files:
+        record = by_repo.get(repo_name)
+        if record is None:
+            continue
+        record["agent_files"].append(file_name)
+        record["has_test"] = record["has_test"] or bool(has_test)
+        record["has_fixture"] = record["has_fixture"] or bool(has_fixture)
+        matched_test = {t for t in test_terms.split(",") if t}
+        record["test_terms"] |= matched_test
+        record["has_test_ardic"] = record["has_test_ardic"] or bool(matched_test & set(ardic_terms))
+        record["fixture_terms"] |= {t for t in fixture_terms.split(",") if t}
+    return list(by_repo.values())
+
+
+def write_review_outputs(
+    ardic_terms: set[str] | frozenset[str],
+    db_path: Path = DB_PATH,
+    output_dir: Path = CSV_OUTPUT_DIR,
+) -> dict[str, Path]:
+    """Write the three RQ5 review outputs into `output_dir`:
+
+    - `rq5_repositories.csv`: one row per analyzed repository (commit SHA,
+      agent files found, the test/Ardic/fixture flags, matched fixture terms).
+    - `rq5_fixture_coding_sheet.csv`: one row per fixture-keyword match, with
+      two lines of context on each side and empty columns for manual coding.
+    - `rq5_skipped_repositories.csv`: every repository that could not be
+      analyzed, with the reason.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
-    with db_session(db_path) as conn:
-        for table, fieldnames, filename in (
-            (REPO_TABLE_NAME, _REPO_CSV_FIELDNAMES, "repo_scan.csv"),
-            (FILE_TABLE_NAME, _FILE_CSV_FIELDNAMES, "agent_files.csv"),
-        ):
-            rows = conn.execute(f"SELECT {', '.join(fieldnames)} FROM {table}").fetchall()
-            out_path = output_dir / filename
-            with out_path.open("w", encoding="utf-8", newline="") as fh:
-                writer = csv.writer(fh)
-                writer.writerow(fieldnames)
-                writer.writerows(rows)
-            written[table] = out_path
 
+    repo_path = output_dir / "rq5_repositories.csv"
+    with repo_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(REPO_CSV_FIELDNAMES)
+        for record in load_repo_guidance(ardic_terms, db_path):
+            writer.writerow(
+                [
+                    record["repository"],
+                    record["commit_sha"],
+                    ";".join(record["agent_files"]),
+                    int(record["has_test"]),
+                    int(record["has_test_ardic"]),
+                    int(record["has_fixture"]),
+                    ",".join(sorted(record["fixture_terms"])),
+                ]
+            )
+    written["repositories"] = repo_path
+
+    with db_session(db_path) as conn:
         match_rows = conn.execute(
             f"""
-            SELECT m.repo_name, m.file_name, m.keyword_list, m.keyword, m.line_context,
-                   m.in_code_block, f.github_url || '#L' || m.line_number
-            FROM {MATCH_TABLE_NAME} m
-            JOIN {FILE_TABLE_NAME} f ON f.repo_name = m.repo_name AND f.file_name = m.file_name
+            SELECT repo_name, file_name, line_number, keyword, line_before_2,
+                   line_before_1, line_context, line_after_1, line_after_2, in_code_block
+            FROM {MATCH_TABLE_NAME}
+            WHERE keyword_list = 'fixture'
+            ORDER BY repo_name, file_name, line_number, keyword
             """
         ).fetchall()
-        match_path = output_dir / "agent_file_matches.csv"
-        with match_path.open("w", encoding="utf-8", newline="") as fh:
-            writer = csv.writer(fh)
-            writer.writerow(_MATCH_CSV_FIELDNAMES)
-            writer.writerows(match_rows)
-        written[MATCH_TABLE_NAME] = match_path
+        skipped_rows = conn.execute(
+            f"SELECT repo_name, language, error_reason FROM {REPO_TABLE_NAME} "
+            "WHERE fetch_ok = 0 ORDER BY repo_name"
+        ).fetchall()
+
+    sheet_path = output_dir / "rq5_fixture_coding_sheet.csv"
+    with sheet_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(CODING_SHEET_FIELDNAMES)
+        for row in match_rows:
+            repo_name, file_name, line_number, keyword, before_2, before_1, matched, after_1, after_2, in_block = row
+            writer.writerow(
+                [
+                    repo_name,
+                    file_name,
+                    line_number,
+                    keyword,
+                    before_2,
+                    before_1,
+                    matched,
+                    after_1,
+                    after_2,
+                    bool(in_block),
+                    "",
+                    "",
+                    "",
+                ]
+            )
+    written["coding_sheet"] = sheet_path
+
+    skipped_path = output_dir / "rq5_skipped_repositories.csv"
+    with skipped_path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(SKIPPED_CSV_FIELDNAMES)
+        writer.writerows(skipped_rows)
+    written["skipped"] = skipped_path
     return written
 
 
@@ -973,12 +1159,12 @@ def prune_removed_keywords(
 
 
 def run_scan(
-    raw_dir: Path = paths.RAW_SEARCH_DIR,
-    duplicates_path: Path = DUPLICATES_PATH,
+    corpus: list[dict[str, str]] | None = None,
+    fixtures_dir: Path = DATASET_A_FIXTURES_DIR,
     db_path: Path = DB_PATH,
     progress_path: Path = PROGRESS_PATH,
     workers: int = DEFAULT_WORKERS,
-    cutoff_date: str = RQ5_CUTOFF_DATE,
+    snapshot_date: str | None = None,
     log_every: int = PROGRESS_LOG_EVERY,
     notify: bool = True,
     process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
@@ -986,8 +1172,9 @@ def run_scan(
     catalog_path: Path = CATALOG_PATH,
     target_requests_per_hour: float | None = TARGET_REQUESTS_PER_HOUR,
 ) -> dict[str, int]:
-    """Scan every not-yet-scanned repo in the raw universe, persisting each
-    result immediately. Resumable by construction (`db_path`'s own rows
+    """Scan every not-yet-scanned repo in the corpus (`corpus`, or
+    `load_corpus(fixtures_dir)` when omitted) at `snapshot_date`, persisting
+    each result immediately. Resumable by construction (`db_path`'s own rows
     are the checkpoint -- see `load_scanned_repo_names()`). Logs a progress
     line and refreshes `progress_path` every `log_every` completions, and
     (when `notify`) pushes one ntfy.sh notification per `RQ5_LANGUAGES`
@@ -1009,10 +1196,12 @@ def run_scan(
     it matters for a real run, where the default keeps the whole run
     safely under GitHub's primary rate limit regardless of `workers`).
     """
+    snapshot_date = validated_snapshot_date(snapshot_date)
     initialise_rq5_db(db_path)
     catalog = load_rq5_keyword_catalog(catalog_path)
+    record_scan_meta(snapshot_date, catalog.get("version"), db_path)
     rate_limiter = _RateLimiter(target_requests_per_hour / 3600) if target_requests_per_hour else None
-    universe = load_raw_universe(raw_dir, duplicates_path)
+    universe = corpus if corpus is not None else load_corpus(fixtures_dir)
     already_done = load_scanned_repo_names(db_path)
     pending = [r for r in universe if r["repo_name"] not in already_done]
 
@@ -1030,7 +1219,7 @@ def run_scan(
         ok, result = run_with_deadline(
             process_repo,
             repo,
-            cutoff_date=cutoff_date,
+            snapshot_date=snapshot_date,
             token=token,
             catalog=catalog,
             rate_limiter=rate_limiter,
@@ -1149,12 +1338,12 @@ def load_repos_needing_retry(
     error_reasons: tuple[str, ...] = REPAIRABLE_ERROR_REASONS,
     *,
     db_path: Path = DB_PATH,
-    raw_dir: Path = paths.RAW_SEARCH_DIR,
-    duplicates_path: Path = DUPLICATES_PATH,
+    corpus: list[dict[str, str]] | None = None,
+    fixtures_dir: Path = DATASET_A_FIXTURES_DIR,
 ) -> list[dict]:
     """Every repo currently persisted with `fetch_ok=0` and an
     `error_reason` in `error_reasons` -- cross-referenced back against the
-    raw universe to recover each one's `language`/`clone_url` (not stored
+    corpus to recover each one's `language`/`clone_url` (not stored
     on a failed row). Empty list if the db doesn't exist yet, or nothing
     matches."""
     if not db_path.exists():
@@ -1168,18 +1357,18 @@ def load_repos_needing_retry(
     target_names = {r[0] for r in rows}
     if not target_names:
         return []
-    universe = load_raw_universe(raw_dir, duplicates_path)
+    universe = corpus if corpus is not None else load_corpus(fixtures_dir)
     return [repo for repo in universe if repo["repo_name"] in target_names]
 
 
 def retry_failed_repos(
     error_reasons: tuple[str, ...] = REPAIRABLE_ERROR_REASONS,
     *,
-    raw_dir: Path = paths.RAW_SEARCH_DIR,
-    duplicates_path: Path = DUPLICATES_PATH,
+    corpus: list[dict[str, str]] | None = None,
+    fixtures_dir: Path = DATASET_A_FIXTURES_DIR,
     db_path: Path = DB_PATH,
     workers: int = DEFAULT_WORKERS,
-    cutoff_date: str = RQ5_CUTOFF_DATE,
+    snapshot_date: str | None = None,
     process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
     token: str = GITHUB_TOKEN,
     catalog_path: Path = CATALOG_PATH,
@@ -1200,13 +1389,15 @@ def retry_failed_repos(
     `error_reasons` are selected in the first place.
 
     No per-language chunking (unlike `run_scan()`) -- a repair pass is
-    expected to be a small fraction of the full universe, so one
+    expected to be a small fraction of the corpus, so one
     `notify` push at the end is enough.
     """
+    snapshot_date = validated_snapshot_date(snapshot_date)
     catalog = load_rq5_keyword_catalog(catalog_path)
+    record_scan_meta(snapshot_date, catalog.get("version"), db_path)
     rate_limiter = _RateLimiter(target_requests_per_hour / 3600) if target_requests_per_hour else None
     targets = load_repos_needing_retry(
-        error_reasons, db_path=db_path, raw_dir=raw_dir, duplicates_path=duplicates_path
+        error_reasons, db_path=db_path, corpus=corpus, fixtures_dir=fixtures_dir
     )
     logger.info(
         "[RQ5 retry] %d repos selected for retry (reasons: %s)",
@@ -1220,7 +1411,7 @@ def retry_failed_repos(
         ok, result = run_with_deadline(
             process_repo,
             repo,
-            cutoff_date=cutoff_date,
+            snapshot_date=snapshot_date,
             token=token,
             catalog=catalog,
             rate_limiter=rate_limiter,
@@ -1264,9 +1455,15 @@ def retry_failed_repos(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="RQ5 agent-configuration-file keyword scan over the raw repo "
-        "universe (github-search-raw/*.csv.gz), independent of Dataset A/B/C. "
-        "Reads entirely via the GitHub REST API -- no cloning."
+        description="RQ5 agent-configuration-file keyword scan over the repositories "
+        "that contribute a fixture to Dataset A. Reads entirely via the GitHub REST "
+        "API -- no cloning."
+    )
+    parser.add_argument(
+        "--snapshot-date",
+        required=True,
+        help="YYYY-MM-DD. Each repository's root agent files are read at its last "
+        "commit on or before this date. Required: there is no default.",
     )
     parser.add_argument(
         "--workers",
@@ -1288,7 +1485,7 @@ def main() -> None:
         action="store_true",
         help="Re-attempt repos currently recorded as fetch_ok=0 for a recoverable "
         f"reason ({', '.join(REPAIRABLE_ERROR_REASONS)}) against the existing db, "
-        "instead of scanning the full universe.",
+        "instead of scanning the whole corpus.",
     )
     args = parser.parse_args()
 
@@ -1297,18 +1494,27 @@ def main() -> None:
     if not GITHUB_TOKEN:
         logger.warning(
             "[RQ5 scan] No GITHUB_TOKEN found -- GitHub's unauthenticated REST "
-            "API rate limit is 60 requests/hour, far too low for ~24.7k repos "
-            "x ~2 requests each. This run will be impractically slow without "
-            "a token in .env."
+            "API rate limit is 60 requests/hour, far too low for a corpus of "
+            "thousands of repos x ~2 requests each. This run will be impractically "
+            "slow without a token in .env."
         )
     target_rate = args.max_requests_per_hour or None
+    ardic_terms = set(load_rq5_keyword_catalog()["ardic_test_keywords"])
     if args.retry_failed:
-        counts = retry_failed_repos(workers=args.workers, target_requests_per_hour=target_rate)
-        write_csv_outputs()
+        counts = retry_failed_repos(
+            workers=args.workers,
+            target_requests_per_hour=target_rate,
+            snapshot_date=args.snapshot_date,
+        )
+        write_review_outputs(ardic_terms)
         print(f"[RQ5 retry] done: {counts}")
         return
-    counts = run_scan(workers=args.workers, target_requests_per_hour=target_rate)
-    write_csv_outputs()
+    counts = run_scan(
+        workers=args.workers,
+        target_requests_per_hour=target_rate,
+        snapshot_date=args.snapshot_date,
+    )
+    write_review_outputs(ardic_terms)
     print(f"[RQ5 scan] done: {counts}")
 
 

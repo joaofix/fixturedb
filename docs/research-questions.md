@@ -1,8 +1,9 @@
 # Research questions
 
 The study asks five questions. RQ2 to RQ4 compare agent-written fixtures
-(Dataset A) with pre-LLM human fixtures (Dataset C). RQ1 and RQ5 describe the
-raw repository universe, so they do not compare the two datasets.
+(Dataset A) with pre-LLM human fixtures (Dataset C). RQ1 describes the raw
+repository universe. RQ5 describes the repositories that contribute to Dataset A,
+so neither compares the two datasets.
 
 Each question has a script in `collection/research_questions/`. The script
 writes its results to `research_questions/<rq>.md`.
@@ -48,14 +49,23 @@ applied.
 
 ## RQ5: What do agent configuration files say about tests?
 
-Input: the root `AGENTS.md` and `CLAUDE.md` files of the same repositories as
-RQ1. The scan (`rq5_agent_file_scan.py`) uses the GitHub API and does not clone
-repositories.
+Input: the root `AGENTS.md` and `CLAUDE.md` files of every repository that
+contributes at least one fixture to Dataset A. Each file is read at the last
+commit on or before a snapshot date. The snapshot date is a required argument of
+the scan.
 
-The scan counts keyword matches for test-related and fixture-related terms. The
-catalog of keywords is in `collection/heuristics/rq5_agent_file_keywords.yaml`.
-The report gives the share of repositories that mention testing and the share
-that mention fixtures.
+The scan (`rq5_agent_file_scan.py`) uses the GitHub API and does not clone
+repositories. It searches for test-related and fixture-related terms. The keyword
+catalog is `collection/heuristics/rq5_agent_file_keywords.yaml`, version 4.
+A repository counts as matching if any of its root files matches.
+
+The report gives, at repository level, the share of repositories with a root
+agent file, and among those the shares that mention tests, the four Ardic et al.
+(SCAM 2026) test terms, and fixtures. It also gives the shares per language and
+the number of repositories containing each fixture term.
+
+The first iteration (catalog version 3, all repositories in the raw universe) is
+kept in `rq5_v3/`.
 
 ## Where the numbers come from
 
@@ -65,6 +75,6 @@ that mention fixtures.
 | RQ2 | `db/a.db`, `db/c.db` | `research_questions/rq2.md` |
 | RQ3 | `db/a.db`, `db/c.db` | `research_questions/rq3.md` |
 | RQ4 | `db/a.db`, `db/c.db` | `research_questions/rq4.md` |
-| RQ5 | `db/rq5_agent_files.db` | `research_questions/rq5.md` |
+| RQ5 | `db/rq5_agent_files_v4.db` (Dataset A repositories) | `research_questions/rq5.md` |
 
 See [Limitations](reference/limitations.md) before reading any comparison.
