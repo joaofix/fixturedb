@@ -189,7 +189,7 @@ class TestWriteSummary:
 
     def test_sampling_seed_omitted_entirely_for_a_and_b(self, tmp_path):
         """Verified this is never anything but null for real A/B collection
-        (repo_resolve.py's --stratified capping is a plain rows[:n] slice,
+        (the removed resolver's --stratified capping is a plain rows[:n] slice,
         no RNG at all) -- so the key is absent there instead of shown as
         permanently-empty noise, and present (a real value) only for C."""
         assert "sampling_seed" not in compute_summary("a", root=tmp_path)

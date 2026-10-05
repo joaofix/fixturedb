@@ -185,7 +185,7 @@ def build_repo_row(
     """Build a normalized repository row dict for CSV/DB insertion.
 
     This replaces the duplicated repo-row construction logic that appears
-    in agent_corpus.py, human_corpus.py, agent_fixture_counter.py, and
+    in agent_corpus.py, agent_fixture_counter.py, and
     agent_repository_counter.py.
     """
     repo_id_val = repo_id if repo_id is not None else _stable_repo_id(repo_name)

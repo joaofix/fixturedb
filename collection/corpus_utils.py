@@ -406,7 +406,7 @@ def persist_repository_and_fixtures(
         # that ever changes). Previously never called at all here, which
         # left num_fixtures/total_fixture_loc at their schema default (0)
         # for every test_files row except the small subset
-        # dedupe_fixtures_by_sha.py's cascade happened to touch.
+        # a one-off dedupe cascade happened to touch.
         for file_id in set(test_files_cache.values()):
             file_counts = conn.execute(
                 "SELECT COUNT(*) AS n, COALESCE(SUM(loc), 0) AS total_loc "

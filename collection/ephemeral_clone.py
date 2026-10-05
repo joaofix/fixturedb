@@ -189,8 +189,7 @@ def temp_clone_commit_history(
 
     Uses `clone_to_tempdir` helper; yields the repo path (or None on failure).
     The actual `git clone` subprocess is gated by `_CLONE_SEMAPHORE`
-    (`MAX_CONCURRENT_CLONES`, default 4) -- callers here (test_commit_filter.py,
-    human_test_commit_filter.py) drive this with a much higher worker count
+    (`MAX_CONCURRENT_CLONES`, default 4) -- callers here (test_commit_filter.py) drive this with a much higher worker count
     (default 12) because most of a worker's time is spent on local,
     non-network git operations against the already-cloned repo (scanning
     individual commits for test files) *after* this context manager yields;

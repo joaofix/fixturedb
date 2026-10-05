@@ -231,8 +231,7 @@ EXTRACT_WORKERS = 8
 FILE_EXTRACTION_TIMEOUT = 180  # 3 minutes
 
 # Maximum time to spend on a single ephemeral `git clone` (seconds) --
-# temp_clone_commit_history()'s default, used by test_commit_filter.py and
-# human_test_commit_filter.py. Raised from 300s -> 600s 2026-08-12: with
+# temp_clone_commit_history()'s default, used by test_commit_filter.py. Raised from 300s -> 600s 2026-08-12: with
 # clone concurrency now throttled (see ephemeral_clone.py's
 # _CLONE_SEMAPHORE), the remaining timeout failures are genuine large-repo
 # outliers (e.g. skforecast/skforecast, ~1GB) rather than bandwidth

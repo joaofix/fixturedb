@@ -33,9 +33,7 @@ DATASET_LABELS = {
     "c": "Dataset C (human-authored, pre-LLM)",
 }
 
-# (dataset compared against A, comparison label). Dataset B (contemporary
-# within-repo human baseline) is still collected (db/b.db, paired_collection.py)
-# but intentionally excluded here -- these scripts only ever report A vs C now.
+# (dataset compared against A, comparison label). These scripts only ever report A vs C.
 COMPARISONS = [("c", "A vs C")]
 
 # Java fixture_types detected on a field_declaration, not a method/function --

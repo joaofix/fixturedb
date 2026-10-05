@@ -1,7 +1,6 @@
 """Filtering agent commit datasets down to test commits (Dataset A).
 
-Human-side filtering (Dataset B/C) lives in human_test_commit_filter.py;
-checkpoint/resume state shared by both lives in test_commit_resume_state.py.
+Checkpoint/resume state lives in test_commit_resume_state.py.
 Entry point: `python -m collection filter-test-commits --dataset a`.
 """
 

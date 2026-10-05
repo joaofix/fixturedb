@@ -1368,8 +1368,7 @@ def test_run_force_bypasses_completion_checkpoint(tmp_path, monkeypatch):
 
 def test_crash_mid_language_leaves_already_processed_repos_persisted(tmp_path, monkeypatch):
     """Regression test for the crash-safety property _process_agent_repository()/
-    _persist_agent_repo_result() must provide, mirroring
-    tests/test_human_collection_integration.py's equivalent test for Dataset B:
+    _persist_agent_repo_result() must provide:
     a crash partway through a language's repo list must not lose repos already
     persisted before it -- each repo's DB row is written immediately as its
     result completes, not batched until the whole language finishes. Simulates

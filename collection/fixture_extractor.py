@@ -13,8 +13,8 @@ This is a slim facade over:
   - agent_fixture_extractor.py: AgentFixtureExtractor (Phase 3)
 
 Only extract_fixtures_at_commit() is defined here — everything else is
-re-exported so existing call sites (human_corpus.py, agent_corpus.py,
-dataset_c.py, agent_fixture_counter.py, paired_collection.py, and tests)
+re-exported so existing call sites (agent_corpus.py,
+dataset_c.py, agent_fixture_counter.py, and tests)
 need no import changes.
 """
 

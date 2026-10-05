@@ -81,11 +81,7 @@ def clone_repo(
 
     Returns (repo_id, status, pinned_commit_or_None, skip_reason_or_None).
     status is one of: 'cloned' | 'skipped' | 'error'. Never raises --
-    `paired_collection.py` (the only real call site now that
-    `tiered_agent_corpus_scanner.py`'s Tier 2 discovery, this function's
-    other former caller, has been removed) calls this directly inside a
-    plain per-repo loop with no try/except of its own
-    (`clone_pending_repos()` below is the only other caller, with its own
+    `clone_pending_repos()` below is the only caller left, with its own
     try/except-free ThreadPoolExecutor loop), so one repo hitting an
     unanticipated failure here (disk full, a pathological filename, a
     git-internals edge case) must degrade to an 'error' row for that repo,

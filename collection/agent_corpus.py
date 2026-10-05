@@ -3,8 +3,7 @@ Builds Dataset A: agent-authored fixtures for the between-group comparison.
 
 Collects fixtures from agent-authored commits (Tier 1: co-authored-by trailers
 only) detected from repositories with agent configuration files. Entry point:
-`python -m collection extract-fixtures --dataset a`. See human_corpus.py
-(Dataset B) and dataset_c.py (Dataset C) for the other two datasets.
+`python -m collection extract-fixtures --dataset a`. See dataset_c.py (Dataset C) for the other dataset.
 """
 
 import csv
@@ -497,8 +496,7 @@ class AgentCorpusCollector:
         extract fixtures. Safe to run in a worker thread: creates its own
         AgentFixtureExtractor rather than sharing one across threads, and
         never opens a DB connection. All persistence happens in
-        _persist_agent_repo_result(), in the calling thread only. Mirrors
-        human_corpus.py::_process_human_repository()'s split.
+        _persist_agent_repo_result(), in the calling thread only.
         """
         repo_name = repo.get("full_name", "unknown")
         language_name = repo.get("language", "unknown")
@@ -641,7 +639,6 @@ class AgentCorpusCollector:
 
                 # repo_id isn't known yet (no DB access here) -- attached in
                 # _persist_agent_repo_result() right before insert_test_commit(),
-                # same as human_corpus.py::persist_result() does.
                 test_commits.append(
                     {
                         "commit_info": commit_info,
@@ -668,7 +665,7 @@ class AgentCorpusCollector:
                 return {**base_result, "skip_reason": "no_test_commits"}
 
             # Extract fixtures from test commits. A fresh extractor per call
-            # (not shared across worker threads) -- matches human_corpus.py.
+            # (not shared across worker threads).
             agent_extractor = AgentFixtureExtractor(clones_dir=self.clones_dir)
             agent_types_seen: list = []
 
@@ -748,8 +745,7 @@ class AgentCorpusCollector:
         """Persist one repo's _process_agent_repository() result -- DB
         writes, stats bookkeeping, and the CSV/DB fixture export via the
         existing _persist_repo_agent_commit_stats(). Runs only in the
-        calling thread, never inside a worker thread -- mirrors
-        human_corpus.py::persist_result().
+        calling thread, never inside a worker thread .
         """
         stats.repos_scanned += 1
         repo_name = result["repo_name"]

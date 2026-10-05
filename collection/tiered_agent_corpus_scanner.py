@@ -10,8 +10,7 @@ mechanism -- removed since Tier 1 alone consistently met the statistical-
 power thresholds in every real collection run, so the extra GitHub-search-
 based fallback was never actually triggered. The module keeps its
 `tiered_` name since several other modules (`agent_corpus.py`,
-`human_corpus.py`, `paired_collection.py`, `test_commit_filter.py`,
-`human_test_commit_filter.py`, `backfill_total_commits.py`, `dataset_c.py`)
+`test_commit_filter.py`, `backfill_total_commits.py`, `dataset_c.py`)
 import `Tier1RepositoryScanner` from it by that name; renaming buys nothing
 functionally.
 """

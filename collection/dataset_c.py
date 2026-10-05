@@ -5,8 +5,7 @@ fixed window (DATASET_C_MIN_CREATED_DATE to HUMAN_CORPUS_CUTOFF_DATE, see
 collection/select_dataset_c_repos.py), checked out at each repo's own
 pinned pre-2021 cutoff commit (a snapshot, not a commit-by-commit scan).
 Entry point: `python -m collection extract-fixtures --dataset c`. See
-agent_corpus.py (Dataset A) and human_corpus.py (Dataset B, the within-repo
-matched control) for the other two datasets.
+agent_corpus.py (Dataset A) for the other dataset.
 
 Repo quality (commit count, test file count, non-blank LOC) is enforced in
 _process_repo() below from each repo's real git history as of its cutoff
@@ -664,7 +663,7 @@ def collect_dataset_c_fixtures(
     successful_repos: Set[str] = set()
 
     # Not using collection/parallel_utils.py::run_parallel_per_repo() here --
-    # unlike agent_corpus.py/human_corpus.py, persistence below can't happen
+    # unlike agent_corpus.py, persistence below can't happen
     # per-repo as each one completes: the stratified sample (targets, below)
     # needs every candidate gathered first. Adopting the shared harness would
     # need that sampling step decoupled from persistence first.
@@ -837,8 +836,7 @@ def collect_dataset_c_fixtures(
             # Bucket by each fixture's OWN language, not just the first
             # fixture's language for the whole repo -- a multi-language repo
             # can have fixtures spanning more than one real language. Same
-            # fix as agent_corpus.py's _persist_repo_agent_commit_stats() and
-            # human_corpus.py's _process_human_within_language().
+            # fix as agent_corpus.py's _persist_repo_agent_commit_stats().
             fixtures_by_language: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
             for fx in fixtures_list:
                 fx_lang = (fx.get("language") or language_val or "unknown")

@@ -18,7 +18,7 @@ structural-metrics report), not to define a second notion of it.
 Previous version of this check (before this rewrite) compared a fixture's
 CSV row `language` column against the CSV *filename* it was routed into.
 That was a tautology, not a real check: both the routing decision
-(`fixtures_by_language[...]` in agent_corpus.py/human_corpus.py/
+(`fixtures_by_language[...]` in agent_corpus.py/
 dataset_c.py) and the persisted column value
 (`persist_repository_and_fixtures()` in corpus_utils.py) read the exact
 same `fixture.get("language")` value with the exact same repo-language

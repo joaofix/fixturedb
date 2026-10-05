@@ -22,7 +22,7 @@ to code elsewhere using unexplained "tier a"/"tier b" jargon):
 - by_fixture_language: each individual fixture's own detected language
   (fixtures.csv is organized this way -- a multi-language repo's fixtures
   can land in more than one language's file even though the repo itself
-  has one assigned language). See collection/human_corpus.py's
+  has one assigned language). See collection/agent_corpus.py's
   fixtures_by_language comment for the extraction-time routing this
   mirrors.
 A repo touching both Java and Python test files in one commit will show
@@ -87,7 +87,7 @@ def _repos_section(dataset: str, root: Path) -> dict[str, Any]:
 def _test_commit_suffix(dataset: str) -> str:
     # Dataset A's own commits (agent-authored) vs Dataset B's (human,
     # within the same repos) are written with different filename suffixes
-    # -- see agent_corpus.py / human_corpus.py's respective writers.
+    # -- see agent_corpus.py's writer.
     return "_test_commit.csv" if dataset == "a" else "_human_test_commit.csv"
 
 
@@ -111,8 +111,7 @@ def _purity_gate_section(dataset: str, root: Path) -> dict[str, Any] | None:
     Dataset A's counts live in fixtures/repos/{lang}_fixture_repos.csv
     (rejected_mixed_test_diff/accepted columns, one row per repo -- summed
     here). Dataset B's live in test-commits/{lang}_purity_stats.csv (one
-    already-aggregated row per language, written by
-    human_corpus.py::_process_human_within_language). Returns None if
+    already-aggregated row per language, written by the removed Dataset B collector). Returns None if
     neither source exists yet (e.g. run predates this instrumentation).
     """
     by_lang: dict[str, dict[str, int]] = {}
@@ -230,7 +229,7 @@ def compute_summary(dataset: str, root: Path = paths.DATASETS_ROOT) -> dict[str,
 
     # Only Dataset C's repo selection is ever seeded (A/B's --stratified
     # capping is a plain rows[:n] slice, no RNG involved at all -- see
-    # repo_resolve.py -- so this field would be permanently null for them;
+    # the removed Dataset B repo resolver -- so this field would be permanently null for them;
     # omitted there entirely rather than shown as always-empty).
     if dataset == "c":
         summary["sampling_seed"] = DATASET_C_SAMPLING_SEED

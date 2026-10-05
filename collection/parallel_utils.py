@@ -2,8 +2,8 @@
 immediately" -- the shape Dataset A's and Dataset B's extract-fixtures steps
 both need.
 
-Extracted from human_corpus.py's original inline `if workers <= 1: ... else:
-ThreadPoolExecutor ...` block (added when human_corpus.py was made
+Extracted from the original inline `if workers <= 1: ... else:
+ThreadPoolExecutor ...` block (added when that collector was made
 crash-safe: persisting every repo's result immediately as it completes,
 rather than batching until a whole language finishes, so a crash mid-batch
 only loses whatever's still in flight). agent_corpus.py adopts the same

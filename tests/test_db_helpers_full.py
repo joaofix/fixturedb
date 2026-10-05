@@ -172,8 +172,8 @@ def test_upsert_repository_backward_compatible_without_repo_age_at_collection_ye
 ):
     """Regression test: upsert_repository() is a fixed-column INSERT bound
     by named params from the caller's dict -- callers that predate
-    repo_age_at_collection_years (e.g. paired_collection.py's own
-    hand-built repo dict, which doesn't set it) must not crash just because
+    repo_age_at_collection_years (e.g. an older hand-built repo
+    dict, which doesn't set it) must not crash just because
     the schema grew a new column."""
     db_path = tmp_path / "test.db"
     initialise_db(db_path)

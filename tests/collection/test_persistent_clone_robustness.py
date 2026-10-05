@@ -1,5 +1,5 @@
 """Tests for clone_repo()'s crash-proofing: both real production call sites
-(tiered_agent_corpus_scanner.py, paired_collection.py) call clone_repo()
+(tiered_agent_corpus_scanner.py) call clone_repo()
 directly inside a plain per-repo loop with no try/except of their own, so
 clone_repo() itself must never let an unexpected exception escape -- one
 bad repo must degrade to that repo's own 'error' row, not abort every repo

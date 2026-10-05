@@ -37,7 +37,7 @@ class CloneUnavailable(Exception):
     repo is cloneable" apart from "confirmed: it isn't" -- callers must
     not treat the two the same way (e.g. checkpointing a repo as
     permanently done because of a transient failure silently hides it from
-    every future run; see human_test_commit_filter.py/test_commit_filter.py
+    every future run; see test_commit_filter.py
     for where this bit a real Dataset B collection when the network dropped
     mid-run)."""
 

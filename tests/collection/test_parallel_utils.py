@@ -1,11 +1,10 @@
 """Tests for collection/parallel_utils.py's run_parallel_per_repo() -- the
-shared thread-pool harness agent_corpus.py and human_corpus.py both use.
+shared thread-pool harness agent_corpus.py uses.
 
 Pure unit tests against trivial fake compute/persist functions -- no DB, no
 git, no real repos. The DB/git-level crash-safety guarantee this harness
 provides is exercised end-to-end by each collector's own integration tests
-(tests/test_human_collection_integration.py, tests/between_group/
-test_agent_corpus.py); these tests only need to prove the harness itself
+(tests/between_group/test_agent_corpus.py); these tests only need to prove the harness itself
 does what it promises.
 """
 
