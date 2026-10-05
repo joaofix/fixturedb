@@ -1,111 +1,96 @@
-# Agent Detection Methodology
+# Agent detection
 
-Identifying AI coding agent involvement in commits for the between-group study.
+This page explains how a commit is marked as written by a coding agent. It
+covers only who authored a commit. Fixture detection is on
+[its own page](detection.md).
 
-**Module layering.** `collection/agent_patterns.py` holds the shared, low-level matching primitives (`match_agent_keyword()`, `path_matches_pattern()`, `repo_contains_patterns()`) and loads the agent catalog from [`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml). `collection/agent_signal_primitives.py` provides `GitHubAgentFileChecker`, a pre-clone GitHub-API check for agent config files, used by `dedupe_dataset_c_repos.py` (Dataset C dedup). `collection/tiered_agent_corpus_scanner.py` is the corpus-scale orchestrator and the actual pipeline entry point for the method below.
+## Which repositories are checked
 
----
+A repository is agent-enabled when two things hold:
 
-## Tier 1: Author Metadata + Co-authored-by Trailers (primary and only method)
+1. Its tree has a file or folder from the agent catalog, such as `AGENTS.md`,
+   `CLAUDE.md`, `.cursor/` or `.github/instructions/`.
+2. It has at least one agent commit after 2025-01-01.
 
-Used for Dataset A, the study's main agent corpus. Checked in order, first match wins:
+The file catalog is in
+[`agent_files.csv`](../../collection/heuristics/agent-mining/agent_files.csv).
+The paper uses the full catalog. The check runs in
+`collection/agent_patterns.py`.
 
-1. **Bot status.** The commit's author name and email are checked against `bots.csv`'s catalog. This is never overridden by a later signal: a bot-authored commit whose message happens to contain an agent-style trailer (e.g. templated tooling stamping a `Generated-by:` line onto a dependency-bump commit) must still be excluded as a bot, not misattributed to that agent.
-2. **Co-authored-by trailers.** The commit body is scanned for `Co-authored-by:`, `Assisted-by:`, `Generated-by:` lines — case-insensitive, and hyphen-tolerant on "co-authored-by" specifically, so `Coauthored-by`/`Co-authoredby`/`Coauthoredby` all match too (a real variant some agents emit, not just the canonical spelling). The trailer value is checked the same way. `Tier1RepositoryScanner` uses the trailer regex `AGENT_TRAILER_RE` in `collection/utils.py`. This check runs before author metadata because it's the less collision-prone signal — a deliberate, structured convention only agents/tooling emit, unlike a freely-editable author-name field a human can also happen to share (see Known Limitations below).
-3. **Author metadata.** The commit's author name and email are checked against the `commit_signatures` catalog — some tools set themselves as the primary author, similar to how CI bots operate.
+## How a commit is classified
 
-Matching is word-boundary-based (`agent_patterns.py::match_agent_keyword()`), not a bare substring check, so a keyword can't match inside an unrelated compound word (e.g. "cline" no longer matches inside "McLine"). It does not, however, rule out an exact whole-word collision with a common name when no trailer is present to disambiguate (see Known Limitations below).
+The checks run in this order. The first match decides:
 
-Implementation: `Tier1RepositoryScanner._detect_agent_in_commit()` in `tiered_agent_corpus_scanner.py`.
+1. **Bot.** If the author name or email matches the bot list
+   ([`bots.csv`](../../collection/heuristics/agent-mining/bots.csv)), the commit
+   is a bot commit. Trailers are not checked. A bot is never counted as an agent.
+2. **Trailers.** The commit message is scanned for `Co-authored-by`,
+   `Assisted-by` and `Generated-by` lines. Matching ignores case, and
+   `Co-authored-by` also matches without the hyphen. A line that names an agent
+   counts as agent work.
+3. **Author.** The author name and email are compared with the author catalog
+   ([`agent_authors.csv`](../../collection/heuristics/agent-mining/agent_authors.csv)).
 
-### Why this design
+Matching uses whole words. `cline` does not match inside `McLine`.
 
-The study prioritizes precision over recall for the main analysis: a false positive (classifying human code as agent-assisted) threatens validity more than a false negative, which just reduces statistical power. Explicit `Co-authored-by` trailers and matched author identity are the most constrained, deliberate signal available. Free-text commit-message scanning is deliberately not used, for the reasons in Known Limitations.
+Merge commits are excluded everywhere.
 
-### Pure-addition filter for test files
+The code is in `Tier1RepositoryScanner._detect_agent_in_commit()`
+(`collection/tiered_agent_corpus_scanner.py`).
 
-Identifying an agent-authored commit isn't sufficient on its own — a commit could still mix agent-added fixtures with human-edited test code. The pipeline additionally requires that a fixture's own diff span be 100% newly added, never modified, via two gates: a commit-level gate that rejects the whole commit if any test file in it has a deletion, rename, or copy, and a file-level gate that requires each fixture's own line span (preferring an AST-node-precise check, falling back to a line-range check) to consist exclusively of added lines.
+## Why only these signals
 
-Implementation: `collection/diff_purity.py` (`commit_is_pure_addition()`, `is_pure_addition()`, built on PyDriller's `Commit` object), `collection/agent_fixture_extractor.py` (`_is_fixture_completely_added()`, `_build_diff_line_maps()`, built directly from PyDriller's `ModifiedFile.diff_parsed`/`.change_type` rather than hand-parsed diff text). `diff_purity.py` also has raw-unified-diff-text equivalents (`_raw_diff_commit_is_pure_addition()`, `_raw_diff_file_is_pure_addition()`) for callers without a PyDriller `Commit` object in hand; the agent-corpus pipeline always has one, so it uses the `Commit`-based versions. Tests: `tests/collection/test_fixture_extractor_partial_detection.py`, `tests/test_fixture_extractor_small.py`.
+The study favours precision. A human commit wrongly marked as agent work hurts
+the results more than a missed agent commit. Trailers and author names are
+explicit. Free-text commit messages are not scanned. A message such as
+"Revert a bad Claude suggestion" is not agent work.
 
-**Example — accepted (pure addition):**
-```diff
-diff --git a/tests/test_new_feature.py b/tests/test_new_feature.py
-new file mode 100644
---- /dev/null
-+++ b/tests/test_new_feature.py
-@@ -0,0 +1,5 @@
-+import pytest
-+
-+@pytest.fixture
-+def new_feature_fixture():
-+    return "agent_generated"
-```
+As a result, an agent that adds no trailer and uses a neutral author name is
+counted as human. The agent counts are lower bounds.
 
-**Example — rejected (contains a deletion):**
-```diff
-diff --git a/tests/test_existing.py b/tests/test_existing.py
---- a/tests/test_existing.py
-+++ b/tests/test_existing.py
-@@ -3,7 +3,7 @@
- import pytest
+## Known problems
 
- @pytest.fixture
--def old_fixture():
-+def renamed_fixture():
-     return 42
-```
+**Common names.** Some agent names are also real names or common words. An
+author named "Claude Smith" would match `claude` on the name check alone. We
+accept this. Keep an eye on it in manual review.
 
----
+**Removed names.** The bare patterns `devin` and `cline` were removed from the
+author catalog. They matched real people, including employees of the Cline
+company. The bot identity `devin-ai-integration` is kept.
 
-## Agent Catalog
+**`CURSOR.md`.** The upstream catalog has a `CURSOR.md` entry. It was removed
+because Cursor does not use that file name, and the entry matched unrelated
+files.
 
-The full, current catalog of recognized agents lives in five data files, not duplicated here — the catalog of coding agents grows faster than any doc can track, so these are the single source of truth, and adding or updating an agent is a data change, not a code change.
+**Narrow bot list.** The bot list is short. Bots with unusual names are not
+excluded.
 
-- [`collection/heuristics/agent_heuristics.yaml`](../../collection/heuristics/agent_heuristics.yaml) currently holds no keys. The paper's Dataset A qualification uses the full `file_based` catalog (no subset), and `file_based`/`commit_signatures`/`bot_patterns` all live in their own CSVs, below.
-- [`agent-mining/agent_files.csv`](../../collection/heuristics/agent-mining/agent_files.csv) lists config-file/directory patterns (`file_based`) as a flat `pattern,tool,start_date,end_date` table. It mirrors [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s own `files.csv` verbatim, with one deliberate exception: upstream's `CURSOR.md` row was removed (see Known Limitations — it matches any file literally named `cursor.md` regardless of content, and no such convention actually exists in [Cursor's own docs](https://cursor.com/docs/rules); its real conventions are `.cursor/rules/*.mdc`, `.cursorrules`, `AGENTS.md`). This project's own additions are appended after a `#`-prefixed boundary comment: `.cursorignore` (individually verified against [Cursor's docs](https://cursor.com/docs/reference/ignore-file)); ten other candidates were considered and dropped as either undocumented or already redundant with an upstream directory-marker pattern (`.claude/`, `.cursor/`, `.openhands/`, `.devin/`, `.cline/` already match regardless of what's inside them). Entries ending in `/` match a directory name anywhere in the path; others may use fnmatch globs (see `agent_patterns.py:path_matches_pattern`).
-- [`agent-mining/agent_authors.csv`](../../collection/heuristics/agent-mining/agent_authors.csv) lists commit author/trailer signatures (`commit_signatures`) as a flat `pattern,tool,start_date,end_date` table, deliberately mirroring [labri-progress/agent-mining](https://github.com/labri-progress/agent-mining)'s own `authors.csv` schema and content — the file's first 80 data rows are that file's content verbatim in its original order, with this project's own additions appended after a `#`-prefixed boundary comment (plain CSV has no comment syntax, so `collection/heuristics/__init__.py`'s `_non_comment_lines()` strips it before parsing). Rows are grouped by internal `agent_type` via a shared `_TOOL_TO_AGENT_TYPE` mapping used by both `agent_files.csv` and `agent_authors.csv`, so the same tool name always maps to the same agent_type regardless of which file it came from. `start_date`/`end_date` are always empty and intentionally unused — this project matches agent patterns independent of time period, not as validity windows; the columns are kept only for schema parity with the source file.
-- [`agent-mining/bots.csv`](../../collection/heuristics/agent-mining/bots.csv) lists CI/automation bot account patterns (`bot_patterns`) as a flat `pattern,tool` table, mirroring upstream's own `bots.csv` (no `start_date`/`end_date` in this one — upstream doesn't have them either). It follows the same verbatim-then-boundary-comment-then-additions structure as `agent_authors.csv`: the first 84 data rows are upstream's content unmodified, followed by a short list of this project's own additions — specific, individually-verified bot accounts observed in this project's own corpus but missing from upstream (currently `copilot-swe-agent[bot]` and `anthropic-code-agent[bot]`), not a generic `[bot]`-suffix catch-all (see Known Limitations for why that tradeoff was made deliberately). This file's `pattern` column is already regex-ready as copied from upstream (brackets pre-escaped, e.g. `dependabot\[bot\]`) rather than plain literal text, so `agent_patterns.py`'s `is_bot_author()` compiles patterns directly instead of `re.escape()`-ing them first (see that function's docstring for why re-escaping would break every bracketed pattern). This replaced a bare `"[bot]" in author_name` substring check the project used before adopting the upstream catalog, which caught any bracket-suffixed name regardless of whether it was individually verified.
-- [`agent-mining/known_human_collisions.csv`](../../collection/heuristics/agent-mining/known_human_collisions.csv) lists `known_human_collision_patterns`, with no upstream counterpart — entirely this project's own. It's a short, individually-verified denylist of real authors whose name/email collides with an `agent_authors.csv` keyword (currently one entry: a Django core developer literally named Claude, found via Dataset A collection review). It's checked in `detect_agent_in_commit()` (`collection/utils.py`) only for the author-name/author-email steps, after the trailer check, with the same verification bar and regex-ready-pattern contract as `bots.csv` — but a materially different exclusion semantic: a bot match means "not agent, not human, exclude outright," while a human-collision match means "don't trust identity matching for this specific person," so a genuine trailer on one of their commits still counts. See `agent_patterns.py`'s `is_known_human_author()`.
+## Date cutoff
 
----
+Only commits from 2025-01-01 on count for Dataset A. This is the start of the
+agent window.
 
-## Exclusions
+## Catalog files
 
-Merge commits are excluded everywhere — they're version-control artifacts (PR merges, branch integration), not individual developer or agent activity. Every `git log` invocation in this pipeline uses `--no-merges`.
+| File | Contents |
+|------|----------|
+| [`agent_files.csv`](../../collection/heuristics/agent-mining/agent_files.csv) | Config file and folder patterns |
+| [`agent_authors.csv`](../../collection/heuristics/agent-mining/agent_authors.csv) | Author names and trailer names |
+| [`bots.csv`](../../collection/heuristics/agent-mining/bots.csv) | Bot account patterns |
+| [`known_human_collisions.csv`](../../collection/heuristics/agent-mining/known_human_collisions.csv) | Real people whose names match an agent pattern |
 
-Bot accounts (matched against `bots.csv`'s catalog — dependabot, renovate, github-actions, and dozens of other CI/automation bots, e.g. `copilot-swe-agent[bot]`) are classified separately as `"bot"`, not attributed to a specific coding agent — a repo's own CI/automation bots are a different thing from an interactive coding assistant. This check runs before agent-signature matching, so a bot account whose name happens to contain an agent keyword (e.g. `copilot-swe-agent[bot]`) isn't misattributed to that agent.
-
----
-
-## Known Limitations
-
-**Name/word collisions in author-identity matching.** Several agent signatures (`jules`, `claude`, `cursor`, `gemini`, `windsurf`) are also common human first names or ordinary English words. Word-boundary matching rules out a keyword matching inside an unrelated compound word or surname, but it can't rule out an exact whole-word collision — a commit author literally named "Claude Smith" is still misattributed to the Claude agent when there's no trailer to disambiguate. Detection checks the trailer before author identity for exactly this reason: a commit by "Claude Smith" carrying a correct `Co-authored-by: Devin` trailer is classified `devin`, not `claude`. The residual gap is a commit that both collides on author name and has no trailer at all — that case has no signal to fall back on. This is a fundamental limit of text-only heuristics on a freely-editable author-name field, not something a smarter regex closes. Specific collisions found in this project's own corpus (e.g. a Django core developer literally named "Claude Paroz") are closed directly via `known_human_collisions.csv` rather than left as a standing risk. If false-positive rate matters for a specific analysis, spot-check manually via `collection/validation_sampling.py`.
-
-Two other bare-word additions with real collision potential, `gemini` and `windsurf`, were checked and found genuine, not false positives. `Neo Gemini <neo-gemini-3-1-pro@neomjs.com>` is a real, self-documented Gemini-based bot — `neomjs/neo`'s own README describes it as an AI maintainer running a Gemini model in a multi-agent swarm alongside Claude- and GPT-based counterparts. `Cascade <cascade@windsurf.dev>` is a real Windsurf/Cascade bot commit whose domain simply isn't covered by upstream's narrower `windsurf.ai` pattern, so the bare `windsurf` fallback catching it is working as intended. Neither required a fix.
-
-**`devin`/`cline` collision patterns were removed at the root, not patched case-by-case.** Both proved to have unacceptable collision rates with ordinary names/surnames ("Devin Jameson", "Aiden Cline"), and `cline` additionally collided with real Cline-company employees committing under an `@cline.bot` work email with no way to distinguish bot commits from human ones. Rather than growing `known_human_collisions.csv` per instance, the root patterns were removed from `agent_authors.csv` entirely: every genuine Devin AI bot commit already matches the safer, specific upstream `devin-ai-integration` pattern (kept), and Cline has no auto-commit-under-its-own-identity feature or trailer convention at all, so it fails this project's detection methodology outright. The broad patterns added false-positive risk with no offsetting detection benefit. This doesn't affect repo-level Cline detection — `agent_files.csv`'s `.clinerules`/`.cline/` file patterns are untouched — only commit-level authorship attribution for Cline is now impossible, by design.
-
-**Repo-level config-file patterns can collide with ordinary words too.** `agent_files.csv`'s upstream `CURSOR.md` entry matched any file literally named `cursor.md` anywhere in a repo's tree, including unrelated CSS or documentation content with no connection to the Cursor agent. It was removed outright rather than replaced, since Cursor's own docs confirm no such convention exists (its real conventions are `.cursor/rules/*.mdc`, `.cursorrules`, `AGENTS.md`). This only affects the repo-level `has_agent_config` candidacy signal; commit-level agent detection is independently sourced and unaffected. **Devin and Cline are disabled in `agent_files.csv`.** Their five config-file rows (`.devin/`, `.clinerules`, `.cline/`, `memory-bank/`, `memory_bank/`) are commented out, not deleted, so the change is visible to a reviewer. The two folder names are the riskiest, since `memory-bank/` and `memory_bank/` are generic enough to appear in unrelated repos. This disables only the repo-level signal. `agent_authors.csv` still contains the `devin-ai-integration` commit-author pattern, which is intentionally kept.
-
-**Free-text commit messages are not scanned.** Only structured fields — author name/email, trailer lines — are checked. Scanning the full commit-message body for agent keywords produces real false positives, e.g. "Revert a bad Claude suggestion" (a prose mention, no real attribution) or "Fix cursor blinking bug" (an unrelated UI element, not the Cursor agent), so this path isn't used as a broader-recall option.
-
-**Explicit attribution is required.** An agent-assisted commit with no trailer and no agent-identity author isn't detected at all under Tier 1 — a deliberate false-negative tradeoff for precision, not a bug.
-
-**Bot detection is a fixed, mostly-upstream list, not a generic pattern.** `bots.csv` is labri-progress/agent-mining's own catalog verbatim, plus a short, deliberately narrow list of this project's own additions: specific bot accounts (currently `copilot-swe-agent[bot]`, `anthropic-code-agent[bot]`) individually confirmed present in this project's corpus and specifically prone to misattribution, since their names contain an agent keyword (e.g. "copilot"/"claude") that would otherwise count them as agent-authored rather than excluded. This trades recall for precision against a generic `"[bot]" in author_name` substring check — a CI/automation bot account that's in neither upstream's list nor this short addition isn't detected as a bot, and its commits fall through to being counted as human-authored (or agent-authored, if its name happens to contain an agent keyword). Extending the addition list requires the same bar as the two entries already there: a specific, individually-confirmed account, not a speculative pattern.
-
-**Date cutoff (`AGENT_CORPUS_START_DATE`, 2025-01-01).** Chosen as a window where all catalogued agents are assumed mature enough to detect; commits before this date are excluded from Dataset A regardless of any agent signal they might carry.
-
----
+The first rows of each file come from
+[labri-progress/agent-mining](https://github.com/labri-progress/agent-mining).
+Project additions come after a `#` line. Each file's header says how the
+additions were checked.
 
 ## Reproducibility
 
-Detection is fully deterministic given a pinned commit SHA: the same repository state, pattern catalog, and date cutoff always produce the same classification. The only non-deterministic input is external — repository state changing over time as new commits land.
+The result depends only on the commit data and the catalog. The same commit and
+the same catalog give the same classification. New commits in a repository can
+change the result on a rerun.
 
----
+## Tests
 
-## See Also
-
-- [Fixture Detection Logic](detection.md) — how fixtures themselves are found and measured, a separate concern from who authored the commit
-- [Manual-Validation Sampling](../usage/validation-sampling.md) — drawing a review sample to spot-check detection precision on a specific collection run
-- `tests/test_agent_detector_pure.py`, `tests/collection/test_two_tier_agent_collection.py`, `tests/collection/test_agent_patterns_extra.py`, `tests/collection/test_agent_patterns_thorough.py` — the real, current test coverage for everything described above
+The tests for this page are in `tests/test_agent_detector_pure.py` and
+`tests/collection/test_agent_patterns_*.py`.
