@@ -59,7 +59,7 @@ The detector delegates metric calculation to industry-standard tools:
 - Tree-sitter: AST parsing for fixture detection and comment lines
 
 See collection/complexity_provider.py for the Lizard integration and
-docs/architecture/metrics-reference.md for full per-metric methodology.
+docs/data/dataset-card.md for the metric definitions.
 
 PUBLIC INTERFACE
 ================

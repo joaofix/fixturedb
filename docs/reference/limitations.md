@@ -93,7 +93,7 @@ really use.
 **Metric caveats.** Lines of code, cyclomatic complexity and comment density are
 computed on fixture bodies. Java rules (`@Rule`, `@ClassRule`) are fields, not
 methods. Their complexity is a default value, not a measurement. The metric
-notes are in [Metrics](../architecture/metrics-reference.md).
+notes are in the [dataset card](../data/dataset-card.md).
 
 ## Statistics
 

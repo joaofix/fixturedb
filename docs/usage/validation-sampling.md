@@ -199,4 +199,4 @@ DB/CSV outputs.
 ## See Also
 
 - [Collection Architecture](../architecture/collection.md) — Dataset A/C build map
-- [Configuration Reference](../architecture/configuration.md) — reference-data catalogs
+- [Fixture detection](../architecture/detection.md)

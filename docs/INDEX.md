@@ -13,22 +13,17 @@
 - [Fixture detection](architecture/detection.md)
 - [Collection pipeline](architecture/collection.md)
 - [Database schema](architecture/database-schema.md)
-- [Metrics](architecture/metrics-reference.md)
-- [Configuration](architecture/configuration.md)
 
 ## Data
 
 - [Dataset card](data/dataset-card.md)
-- [CSV export guide](data/csv-export-guide.md)
-- [CSV user guide](data/csv-user-guide.md)
-- [Storage](data/storage.md)
+- [Exports and storage](data/exports.md)
 
 ## Usage
 
 - [Reproducing the study](usage/reproducing.md)
 - [Analysing the datasets](usage/usage.md)
 - [Manual validation sampling](usage/validation-sampling.md)
-- [Fixture patterns](usage/fixture-patterns-reference.md)
 
 ## Reference
 

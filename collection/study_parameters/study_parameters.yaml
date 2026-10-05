@@ -2,7 +2,7 @@
 # temporal boundaries, quality-filter thresholds, and sampling parameters.
 # Kept as data here, not hardcoded in collection/config.py, so a reviewer has
 # one place to find every numeric/date parameter that shapes the study.
-# See docs/architecture/configuration.md for how each is used downstream.
+# Each value is read by collection/config.py.
 
 # Temporal boundaries
 human_corpus_cutoff_date: "2020-12-31" # Dataset C: pre-agent-era snapshot

@@ -1,4 +1,4 @@
-# FixtureDB — Fixture Collection Pipeline
+# FixtureDB
 
 [![Tests & Coverage](https://github.com/joaofix/fixturedb/actions/workflows/coverage.yml/badge.svg)](https://github.com/joaofix/fixturedb/actions/workflows/coverage.yml)
 ![Coverage](./.github/coverage.svg)
@@ -8,55 +8,42 @@ Replication package for the paper:
 > **An empirical study on test fixture usage by coding agents on open source software**
 > João Almeida, Andre Hora
 
-FixtureDB is a between-group study of test fixtures extracted from agent-enabled GitHub repositories. It is the companion code for a master's degree thesis in Software Engineering. The collection pipeline detects agent commits, extracts fixtures, and compares agent-authored and human-authored test code within the same repositories. It also includes a separate human-only dataset collected from pre-agent repositories for inter-repository baseline comparison.
-
-## Acknowledgments
-
-Some of our agent-commit detection heuristics (co-authored-by trailer parsing, config-file patterns for individual agents) were cross-checked and improved against [agent-mining](https://github.com/labri-progress/agent-mining), a community-maintained, empirically-verified catalog of AI coding agent detection heuristics maintained by the [LaBRI](https://www.labri.fr/) research group. We're grateful for their work being openly available.
+FixtureDB collects test fixtures from open-source repositories. It compares
+fixtures written by coding agents with fixtures written by humans before LLM
+coding tools existed. The code covers Python, Java, JavaScript and TypeScript.
 
 ## Datasets
 
-The repository contains two main datasets. The fixture collections will be regenerated during the next collection cycle.
+- **Dataset A (agent).** Fixtures from commits made by coding agents, in
+  repositories that have agent configuration files.
+- **Dataset C (human, pre-LLM).** Fixtures from repositories created from 2016
+  to 2020, read at their last commit on or before 2020-12-31.
 
-- **fixtures-from-agents (Dataset A)** — Agent-authored test fixtures extracted from commits identified as agent-generated. This is the agent corpus for the comparison against the pre-agent baseline. The directory also includes stratified repository sample CSVs (e.g. `dataset_c_sample.csv`) for Dataset C.
+Details are in the [dataset card](docs/data/dataset-card.md).
 
-- **pre-agent-baseline (Dataset C)** — Human-authored test fixtures collected from pre-2022 software repositories that are independent from the agent-enabled corpus. This dataset serves as an inter-repository baseline. The repository sample files are stored under `fixtures-from-agents/` as `dataset_c_*.csv`.
+## Quick start
 
-## Methodology
+```bash
+pip install -r requirements.txt
+python -m collection --help
+python -m collection toy --dataset a --repos 5
+pytest tests/
+```
 
-FixtureDB covers **Python, Java, JavaScript, and TypeScript**. For each fixture it extracts structural, semantic, and usage metrics through tree-sitter AST analysis, Lizard complexity measurement, and framework-specific pattern matching.
-
-| Metric | Description |
-|--------|-------------|
-| `loc` | Non-blank lines of code in the fixture body |
-| `cyclomatic_complexity` | McCabe cyclomatic complexity of the fixture |
-| `max_nesting_depth` | Maximum block nesting depth in the fixture body |
-| `num_parameters` | Number of fixture parameters |
-| `num_objects_instantiated` | Estimated object creations inside the fixture |
-| `num_external_calls` | Estimated I/O or external library calls inside the fixture |
-| `fixture_type` | Detected pattern (e.g. `pytest_decorator`, `unittest_setUp`) |
-| `scope` | Execution scope (`per_test`, `per_class`, `per_module`, `global`) |
-| `framework` | Detected testing framework (`pytest`, `unittest`, `junit`, `jest`, `mocha`, etc.) |
-| `has_teardown_pair` | Whether the fixture has a teardown or cleanup counterpart |
-| `fixture_dependencies` | Other fixtures or setup functions this fixture depends on |
-| `mock_usages` | Mock framework usages associated with the fixture |
+The toy run writes to `toy-dataset/`. It does not touch `datasets/` or `db/`.
 
 ## Documentation
 
-| Topic | Document |
-|-------|----------|
-| Overview and methodology | [What is FixtureDB?](docs/getting-started/intro.md) |
-| Installation and setup | [Setup & Requirements](docs/getting-started/setup.md) |
-| Repository layout | [Repository Structure](docs/getting-started/repository-structure.md) |
-| Running the pipeline | [Reproducing Results](docs/usage/reproducing.md) |
-| Database schema | [Database Schema](docs/architecture/database-schema.md) |
-| Agent detection | [Agent Detection](docs/architecture/agent-detection.md) |
-| Fixture detection | [Fixture Detection](docs/architecture/detection.md) |
-| Metric definitions | [Metrics Reference](docs/architecture/metrics-reference.md) |
-| Fixture patterns | [Fixture Patterns Reference](docs/usage/fixture-patterns-reference.md) |
-| CSV exports | [CSV User Guide](docs/data/csv-user-guide.md) |
-| Analysis examples | [Analysis Guide](docs/usage/usage.md) |
-| Limitations | [Limitations & Threats to Validity](docs/reference/limitations.md) |
-| Tests | [Test Suite & Validation](docs/reference/testing.md) |
+- [Documentation index](docs/INDEX.md)
+- [Setup](docs/getting-started/setup.md)
+- [Research questions](docs/research-questions.md)
+- [Reproducing the study](docs/usage/reproducing.md)
+- [Limitations](docs/reference/limitations.md)
 
-See the [full documentation index](docs/INDEX.md) for the complete set of guides.
+## Acknowledgments
+
+Some agent-detection heuristics (co-authored-by trailer parsing, config-file
+patterns for individual agents) were checked and improved against
+[agent-mining](https://github.com/labri-progress/agent-mining), a catalog of AI
+coding agent detection heuristics maintained by the
+[LaBRI](https://www.labri.fr/) research group.

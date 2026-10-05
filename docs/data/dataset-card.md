@@ -30,7 +30,7 @@ The release also includes:
 
 - **Export bundles** (`export/a.zip`, `export/c.zip`). Each bundle contains CSV
   files for the four tables, the manual-review sample, a README and a schema
-  file. See the [CSV export guide](csv-export-guide.md).
+  file. See [Exports and storage](exports.md).
 - **Stage CSVs** (`datasets/a/`, `datasets/c/`). These are the intermediate
   outputs of each collection step. They are the easiest files to review.
 - **Collection summaries** (`datasets/a/summary.yaml`, `datasets/c/summary.yaml`).

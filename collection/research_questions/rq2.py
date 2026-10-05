@@ -49,7 +49,7 @@ place `fixture_type` appears in this report at all.
 
 `comment_density` (added 2026-08-17, the third paper metric) is
 `fixtures.comment_density` (`num_comment_lines / loc`, 0.0 if loc is 0)
--- see docs/architecture/metrics-reference.md. It's included in
+-- see docs/data/dataset-card.md. It's included in
 CONTINUOUS_METRICS like any other metric, so it automatically inherits
 the exact same NO_BODY_FIXTURE_TYPES exclusion loc/cyclomatic_complexity
 already get (see the next paragraph) purely by list membership -- no
