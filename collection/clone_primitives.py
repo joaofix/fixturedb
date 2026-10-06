@@ -17,6 +17,7 @@ have silently cut off in-window history.
 
 from __future__ import annotations
 
+import base64
 import os
 import re
 import shutil
@@ -97,7 +98,23 @@ def _no_prompt_env() -> dict[str, str]:
     channel. Reads os.environ fresh (not module-level) so tests can
     monkeypatch it, and so PATH/etc. stay intact -- git still needs to be
     findable."""
-    return {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"}
+    env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo"}
+    token = os.environ.get("GITHUB_TOKEN", "")
+    if token:
+        # Authenticated clones. Anonymous git-over-HTTPS requests are rejected
+        # under load ("could not read Username"), which the credential check
+        # below reads as a permanently private or deleted repository. The header
+        # goes in the environment, not argv, same as rq1_prevalence_scan's
+        # github_auth_env().
+        basic = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+        env.update(
+            {
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "http.extraHeader",
+                "GIT_CONFIG_VALUE_0": f"Authorization: Basic {basic}",
+            }
+        )
+    return env
 
 
 def run_git_no_prompt(

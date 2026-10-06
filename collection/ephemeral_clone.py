@@ -21,6 +21,7 @@ from collection.logging_utils import get_logger
 logger = get_logger(__name__)
 
 from .clone_primitives import (
+    CloneUnavailable,
     _shallow_clone_is_truncated,
     cleanup_tempdir,
     clone_to_tempdir,
@@ -230,6 +231,7 @@ def temp_clone_commit_history(
     if shallow_since is not None:
         clone_args.append(f"--shallow-since={shallow_since}")
 
+    shallow_refused = False
     _CLONE_SEMAPHORE.acquire()
     try:
         repo_path, temp_root = clone_to_tempdir(
@@ -239,8 +241,29 @@ def temp_clone_commit_history(
             timeout=timeout,
             prefix=prefix,
         )
+    except CloneUnavailable as exc:
+        # git 2.43 cannot parse the shallow info some repositories send for
+        # --shallow-since ("fatal: error processing shallow info: 4"), on every
+        # attempt. The full history still contains every in-window commit, so
+        # fall back to it for that failure only. Any other failure is still raised.
+        if shallow_since is None or "shallow info" not in str(exc):
+            raise
+        shallow_refused = True
     finally:
         _CLONE_SEMAPHORE.release()
+
+    if shallow_refused:
+        with temp_clone_commit_history(
+            clone_url,
+            repo_full_name,
+            prefix=prefix,
+            timeout=timeout,
+            shallow_since=None,
+            clone_filter=clone_filter,
+        ) as fallback_path:
+            yield fallback_path
+        return
+
     if repo_path is None:
         yield None
         return

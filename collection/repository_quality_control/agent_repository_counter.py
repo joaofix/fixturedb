@@ -384,6 +384,26 @@ def _dedupe_by_last_commit_sha(repos: List[dict]) -> List[dict]:
     return survivors
 
 
+def _error_row(full_name: str, language: str, *, error: str) -> dict:
+    """The CSV row for a repository whose processing raised an exception."""
+    return {
+        "repo_name": full_name,
+        "has_agent_config": 0,
+        "language": language,
+        "stars": "",
+        "clone_url": f"https://github.com/{full_name}.git",
+        "num_contributors": "",
+        "forks": "",
+        "qc_reason": f"error:{error}",
+        "matched_config_file": "",
+        "processed_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": "",
+        "pushed_at": "",
+        "topics": "[]",
+        "discovery_tier": 1,
+    }
+
+
 def _process_single(entry: dict, since: str) -> Optional[dict]:
     full_name = entry.get("full_name")
     try:
@@ -451,8 +471,12 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         }
         return row
     except Exception as e:
-        logger.debug(f"Error processing {full_name}: {e}")
-        return None
+        # Keep the repository visible in the CSV with the reason it failed, so a
+        # transient clone or parse error can be told apart from "no agent config"
+        # and retried. Dropping it silently is what lost ~3.7k repositories.
+        logger.warning("Error processing %s: %s", full_name, e)
+        language = (entry.get("language") or entry.get("source_language") or "unknown").strip().lower()
+        return _error_row(full_name, language, error=type(e).__name__)
 
 
 def run(

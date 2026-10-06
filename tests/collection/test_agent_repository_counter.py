@@ -485,3 +485,25 @@ def test_run_reports_repos_with_agent_config_separately_from_rows_written(monkey
     qc.run(workers=1, source_dir=raw_dir, output_dir=tmp_path / "out", languages=["python"])
 
     assert "Processed 2 repos (1 with agent config)" in capsys.readouterr().out
+
+
+def test_process_single_keeps_a_failed_repository_as_an_error_row(monkeypatch):
+    """An exception during processing must not drop the repository silently: the
+    row stays in its language's CSV with the error recorded, so it can be retried."""
+
+    @contextmanager
+    def _failing_clone(clone_url, full_name, prefix="", timeout=60):
+        raise RuntimeError("clone timed out")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr(qc, "temp_clone_tree", _failing_clone)
+
+    row = qc._process_single(
+        {"full_name": "owner/flaky", "language": "typescript", "stars": 10}, since="2025-01-01"
+    )
+
+    assert row is not None
+    assert row["repo_name"] == "owner/flaky"
+    assert row["language"] == "typescript"
+    assert row["has_agent_config"] == 0
+    assert row["qc_reason"] == "error:RuntimeError"

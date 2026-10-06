@@ -51,6 +51,22 @@ class TestNoPromptEnv:
         assert env["GIT_TERMINAL_PROMPT"] == "0"
         assert env["GIT_ASKPASS"] == "echo"
 
+    def test_authenticates_clones_when_a_github_token_is_available(self, monkeypatch):
+        import base64
+
+        monkeypatch.setenv("GITHUB_TOKEN", "tok-123")
+        env = _no_prompt_env()
+        assert env["GIT_CONFIG_COUNT"] == "1"
+        assert env["GIT_CONFIG_KEY_0"] == "http.extraHeader"
+        expected = base64.b64encode(b"x-access-token:tok-123").decode()
+        assert env["GIT_CONFIG_VALUE_0"] == f"Authorization: Basic {expected}"
+
+    def test_no_auth_header_without_a_token(self, monkeypatch):
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        env = _no_prompt_env()
+        assert "GIT_CONFIG_COUNT" not in env
+        assert "GIT_CONFIG_VALUE_0" not in env
+
     def test_preserves_rest_of_os_environ(self, monkeypatch):
         monkeypatch.setenv("SOME_UNRELATED_VAR", "keep-me")
         env = _no_prompt_env()
@@ -119,6 +135,7 @@ class TestRunGitNoPrompt:
         assert captured["kwargs"]["env"]["GIT_CONFIG_VALUE_0"] == "Authorization: Bearer super-secret-token"
 
     def test_no_extra_env_behaves_exactly_as_before(self, monkeypatch):
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         captured = {}
 
         def fake_run(args, **kwargs):

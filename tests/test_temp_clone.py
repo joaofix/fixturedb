@@ -155,3 +155,58 @@ class TestCloneToTempdirThrottling:
                 "owner/abuse-429-tool", "https://github.com/owner/abuse-429-tool.git", [], timeout=60, prefix="test-"
             )
         assert repo_path is None and temp_root is None
+
+
+class TestShallowInfoFallback:
+    """git 2.43 fails --shallow-since on some repositories with "error processing
+    shallow info" on every attempt. The commit-history clone must fall back to the
+    full history for that failure, and only for that failure."""
+
+    def _clone_that_fails_shallow_only(self, calls):
+        from collection.clone_primitives import CloneUnavailable
+        from contextlib import contextmanager
+        import tempfile
+        from pathlib import Path
+
+        def fake_clone(repo_full_name, clone_url, clone_args, *, timeout, prefix):
+            calls.append(list(clone_args))
+            if any(a.startswith("--shallow-since") for a in clone_args):
+                raise CloneUnavailable(
+                    f"clone failed after 3 attempt(s): {repo_full_name} -- last error: "
+                    "fatal: error processing shallow info: 4"
+                )
+            root = Path(tempfile.mkdtemp(prefix="fallback-test-"))
+            return root / "repo", root
+
+        return fake_clone
+
+    def test_falls_back_to_full_history_when_shallow_info_is_refused(self, monkeypatch):
+        from collection import ephemeral_clone
+
+        calls = []
+        monkeypatch.setattr(ephemeral_clone, "clone_to_tempdir", self._clone_that_fails_shallow_only(calls))
+        monkeypatch.setattr(ephemeral_clone, "cleanup_tempdir", lambda root: None)
+
+        with ephemeral_clone.temp_clone_commit_history(
+            "https://github.com/o/r.git", "o/r", shallow_since="2025-01-01"
+        ) as path:
+            assert path is not None
+
+        assert any(a.startswith("--shallow-since") for a in calls[0])
+        assert not any(a.startswith("--shallow-since") for a in calls[-1])
+        assert len(calls) == 2
+
+    def test_other_clone_failures_are_still_raised(self, monkeypatch):
+        from collection import ephemeral_clone
+        from collection.clone_primitives import CloneUnavailable
+
+        def always_fails(repo_full_name, clone_url, clone_args, *, timeout, prefix):
+            raise CloneUnavailable("clone failed after 3 attempt(s): o/r -- last error: timed out")
+
+        monkeypatch.setattr(ephemeral_clone, "clone_to_tempdir", always_fails)
+
+        with pytest.raises(CloneUnavailable):
+            with ephemeral_clone.temp_clone_commit_history(
+                "https://github.com/o/r.git", "o/r", shallow_since="2025-01-01"
+            ):
+                pass
