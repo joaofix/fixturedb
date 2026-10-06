@@ -116,6 +116,7 @@ def _cmd_filter_test_commits(args: argparse.Namespace) -> int:
             args.input_dir or paths.stage_dir("a", "commits"),
             args.output_dir or paths.stage_dir("a", "test-commits"),
             workers=args.workers,
+            max_concurrent_clones=args.max_concurrent_clones,
         )
         return 0
 
@@ -366,6 +367,12 @@ def build_parser() -> argparse.ArgumentParser:
     add_workers_arg(filter_test_commits, default=12)
     filter_test_commits.add_argument("--input-dir", type=Path, default=None)
     filter_test_commits.add_argument("--output-dir", type=Path, default=None)
+    filter_test_commits.add_argument(
+        "--max-concurrent-clones",
+        type=int,
+        default=8,
+        help="Clones allowed in flight at once (default: 8)",
+    )
 
     extract_fixtures = subparsers.add_parser(
         "extract-fixtures", help="Extract fixtures for a dataset"

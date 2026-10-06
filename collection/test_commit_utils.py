@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 from pathlib import Path
 from typing import Iterable
 
@@ -176,3 +178,151 @@ def write_test_commits_csv(records: Iterable[dict], output_path: Path) -> Path:
     ]
 
     return adapter.write_dicts(Path(output_path), rows, fieldnames)
+
+
+# git must not fetch a missing object from a partial clone's remote during these
+# checks: they only ask what this clone holds (GIT_NO_LAZY_FETCH is git's switch).
+_NO_LAZY_FETCH_ENV = dict(os.environ, GIT_NO_LAZY_FETCH="1")
+
+
+def _present_commit_shas(repo_path: Path, shas: list[str]) -> list[str]:
+    """The SHAs that exist as commits in this repository. A commit missing from a
+    shallow clone, or a SHA that is not a commit, is left out."""
+    if not shas:
+        return []
+    proc = subprocess.run(
+        ["git", "-C", str(repo_path), "cat-file", "--batch-check"],
+        input="\n".join(shas) + "\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="surrogateescape",
+        env=_NO_LAZY_FETCH_ENV,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"git cat-file failed in {repo_path}: {proc.stderr.strip()[:200]}")
+    present = []
+    for line in proc.stdout.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[1] == "commit":
+            present.append(parts[0])
+    return present
+
+
+def _shallow_boundary_commits(repo_path: Path) -> set[str]:
+    """The commits git records as shallow boundaries (the cut points of the clone)."""
+    shallow_file = Path(repo_path) / ".git" / "shallow"
+    if not shallow_file.exists():
+        return set()
+    return set(shallow_file.read_text().split())
+
+
+def _commits_with_missing_parents(repo_path: Path, shas: list[str]) -> set[str]:
+    """The commits (of `shas`) that git sees as roots only because of the clone's cut.
+
+    A shallow clone hides a boundary commit's parents from `git log`, so git would
+    treat it as a root and list every file as added. Such a commit is recorded in
+    `.git/shallow`, and its raw object still names the parent. Both are checked, and
+    no object is fetched on demand (`--no-lazy-fetch`), so a partial clone is not
+    changed by this check.
+    """
+    if not shas:
+        return set()
+    boundary = _shallow_boundary_commits(repo_path)
+    proc = subprocess.run(
+        ["git", "-C", str(repo_path), "cat-file", "--batch"],
+        input=("\n".join(shas) + "\n").encode(),
+        capture_output=True,
+        env=_NO_LAZY_FETCH_ENV,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"git cat-file failed in {repo_path}: {proc.stderr.decode()[:200]}")
+    data = proc.stdout
+    pos = 0
+    parents_of: dict[str, list[str]] = {}
+    for sha in shas:
+        newline = data.index(b"\n", pos)
+        header = data[pos:newline].split()
+        pos = newline + 1
+        if len(header) != 3 or header[1] != b"commit":
+            continue  # "<sha> missing" or another object type
+        size = int(header[2])
+        body = data[pos:pos + size]
+        pos += size + 1
+        fields = body.split(b"\n\n", 1)[0]
+        parents_of[sha] = [
+            line[len(b"parent "):].decode()
+            for line in fields.split(b"\n")
+            if line.startswith(b"parent ")
+        ]
+    all_parents = sorted({parent for parents in parents_of.values() for parent in parents})
+    present_parents = set(_present_commit_shas(repo_path, all_parents))
+    return {
+        sha
+        for sha, parents in parents_of.items()
+        if parents and (sha in boundary or any(parent not in present_parents for parent in parents))
+    }
+
+
+def collect_test_files_by_commit(
+    repo_path: Path, commit_shas: Iterable[str], language: str
+) -> dict[str, list[str]]:
+    """Test files touched by each commit, from one `git log --name-status` call.
+
+    The same answer as `collect_test_files_for_commit`, for every commit at once,
+    with the same rules: a deleted file is skipped, a renamed file counts under its
+    new path, and each path is listed once in git's order. It reads paths only, so
+    a blobless clone is enough. A commit that is missing from the clone maps to [],
+    and so does a commit whose parent is missing (a shallow boundary), as with
+    PyDriller. A true root commit lists every file it adds.
+    """
+    shas = list(dict.fromkeys(sha.strip() for sha in commit_shas if sha and sha.strip()))
+    result: dict[str, list[str]] = {sha: [] for sha in shas}
+    present = _present_commit_shas(repo_path, shas)
+    boundary = _commits_with_missing_parents(repo_path, present)
+    present = [sha for sha in present if sha not in boundary]
+    if not present:
+        return result
+
+    proc = subprocess.run(
+        [
+            "git", "-C", str(repo_path), "log", "--no-walk=unsorted", "--stdin",
+            "--root", "-M", "--name-status", "-z", "--format=%x01%H",
+        ],
+        input="\n".join(present) + "\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="surrogateescape",
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(f"git log failed in {repo_path}: {proc.stderr.strip()[:200]}")
+
+    seen: dict[str, set[str]] = {}
+    current: str | None = None
+    tokens = proc.stdout.split("\0")
+    i = 0
+    while i < len(tokens):
+        token = tokens[i].lstrip("\n")
+        i += 1
+        if not token:
+            continue
+        if token.startswith("\x01"):
+            current = token[1:]
+            seen.setdefault(current, set())
+            continue
+        status = token
+        if status[0] in "RC":
+            path = tokens[i + 1]
+            i += 2
+        else:
+            path = tokens[i]
+            i += 1
+        if status[0] == "D" or current is None:
+            continue
+        if path and path not in seen[current] and is_test_file_path(path, language):
+            seen[current].add(path)
+            if current in result:
+                result[current].append(path)
+    return result
+

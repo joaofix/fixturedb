@@ -202,6 +202,7 @@ class TestFilterTestCommits:
             paths.stage_dir("a", "commits"),
             paths.stage_dir("a", "test-commits"),
             workers=12,
+            max_concurrent_clones=8,
         )
 
 class TestExtractFixtures:

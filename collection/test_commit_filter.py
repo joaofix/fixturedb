@@ -24,15 +24,21 @@ from .config import (
     HUMAN_CORPUS_CUTOFF_DATE,
     shallow_clone_since,
 )
-from .ephemeral_clone import temp_clone_commit_history
+from .ephemeral_clone import set_max_concurrent_clones, temp_clone_commit_history
 from .test_commit_resume_state import (
     _load_agent_test_commit_resume_state,
     _save_agent_test_commit_resume_state,
 )
-from .test_commit_utils import collect_test_files_for_commit, write_test_commits_csv
+from .test_commit_utils import collect_test_files_by_commit, write_test_commits_csv
 from .tiered_agent_corpus_scanner import Tier1RepositoryScanner
 
 logger = get_logger(__name__)
+
+
+# The test-commit filter reads file paths only (git log --name-status), never file
+# contents, so it clones without blobs. The output is the same as with a blob-limited
+# clone; see test_commit_utils.collect_test_files_by_commit.
+TEST_COMMIT_CLONE_FILTER = "--filter=blob:none"
 
 
 def _load_agent_commit_rows(commit_qc_dir: Path) -> list[dict]:
@@ -59,6 +65,7 @@ def _process_repo_test_commits(
         repo_name,
         prefix="agent-test-commits-",
         shallow_since=shallow_clone_since(AGENT_CORPUS_START_DATE),
+        clone_filter=TEST_COMMIT_CLONE_FILTER,
     ) as repo_path:
         if repo_path is None:
             logger.warning("Failed to clone %s while filtering test commits", repo_name)
@@ -66,12 +73,17 @@ def _process_repo_test_commits(
 
         test_commit_rows: list[dict] = []
         commits_scanned = 0
+        test_files_by_sha = collect_test_files_by_commit(
+            repo_path,
+            [(row.get("commit_sha") or "").strip() for row in repo_rows],
+            language,
+        )
         for row in repo_rows:
             commit_sha = (row.get("commit_sha") or "").strip()
             if not commit_sha:
                 continue
             commits_scanned += 1
-            test_files = collect_test_files_for_commit(repo_path, commit_sha, language)
+            test_files = test_files_by_sha.get(commit_sha, [])
             if not test_files:
                 continue
             test_commit_rows.append(
@@ -102,8 +114,15 @@ def collect_agent_test_commits(
     output_dir: Path,
     clones_dir: Path = CLONES_DIR,
     workers: int = 12,
+    max_concurrent_clones: int | None = None,
 ) -> dict:
-    """Filter an agent commit dataset to commits that touch test files."""
+    """Filter an agent commit dataset to commits that touch test files.
+
+    `max_concurrent_clones` caps the clones in flight at once. None keeps the
+    MAX_CONCURRENT_CLONES environment default.
+    """
+    if max_concurrent_clones is not None:
+        set_max_concurrent_clones(max_concurrent_clones)
     rows = _load_agent_commit_rows(commit_qc_dir)
     grouped: dict[str, list[dict]] = defaultdict(list)
     for row in rows:

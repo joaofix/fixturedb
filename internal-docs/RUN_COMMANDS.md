@@ -102,6 +102,11 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   `--depth=1 --filter=blob:none --no-checkout` and lists the tree, so it downloads neither
   history nor file contents. The result matches a full checkout scan on the sample it was
   checked against. A repository with no commits has no config file (`no_agent_config`).
+- **`filter-test-commits --max-concurrent-clones N`** caps the clones in flight at once (default: 8).
+  It clones without blobs (`--filter=blob:none`) and lists each repository's commits with one
+  `git log --name-status`, so it reads paths only. Its output matches the earlier per-commit
+  check on a 40-repository sample. A commit whose parent lies outside the shallow clone gets no
+  test files, as before.
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
   work; DB and CSV writes stay on the main thread regardless. **Not CPU core
   count** is the ceiling here — the `discover-repos`/`discover-commits`/
