@@ -294,6 +294,7 @@ def collect_test_files_by_commit(
         text=True,
         encoding="utf-8",
         errors="surrogateescape",
+        env=_NO_LAZY_FETCH_ENV,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"git log failed in {repo_path}: {proc.stderr.strip()[:200]}")

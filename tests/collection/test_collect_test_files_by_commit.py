@@ -191,3 +191,24 @@ def test_a_blobless_shallow_boundary_commit_gets_no_files_and_is_not_fetched(var
     ).returncode == 0
     assert not parent_fetched
 
+
+
+def test_test_file_listing_never_lazily_fetches_missing_objects(varied_repo, monkeypatch):
+    """A missing object must not trigger a network fetch in the test-file listing:
+    on a blobless partial clone that fetch failed mid-run on the server."""
+    from collection import test_commit_utils
+
+    repo, shas = varied_repo
+    seen_envs = []
+    real_run = subprocess.run
+
+    def spy(args, **kwargs):
+        if "log" in args:
+            seen_envs.append(kwargs.get("env") or {})
+        return real_run(args, **kwargs)
+
+    monkeypatch.setattr(test_commit_utils.subprocess, "run", spy)
+    collect_test_files_by_commit(repo, [shas["no_tests"]], "python")
+
+    assert seen_envs, "expected a git log call"
+    assert all(env.get("GIT_NO_LAZY_FETCH") == "1" for env in seen_envs)

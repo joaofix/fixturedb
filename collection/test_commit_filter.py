@@ -202,6 +202,17 @@ def collect_agent_test_commits(
                     clone_failures += 1
                     pbar.update(1)
                     continue
+                except RuntimeError as exc:
+                    # A git failure in one repository must not abort the other repositories.
+                    logger.warning(
+                        "[test-commits] git failed for %s; leaving it unchecked so it's "
+                        "retried next run (not marked complete): %s",
+                        repo_name,
+                        exc,
+                    )
+                    clone_failures += 1
+                    pbar.update(1)
+                    continue
                 repos_processed += repo_count
                 commits_scanned += repo_commits_scanned
                 new_rows = []
@@ -241,6 +252,18 @@ def collect_agent_test_commits(
                                 "[test-commits] %s could not be cloned this run; "
                                 "leaving it unchecked so it's retried next run "
                                 "(not marked complete): %s",
+                                repo_name,
+                                exc,
+                            )
+                            clone_failures += 1
+                            pbar.update(1)
+                            continue
+                        except RuntimeError as exc:
+                            # A git failure in one repository (e.g. a dropped connection
+                            # during a lazy fetch) must not abort the other workers.
+                            logger.warning(
+                                "[test-commits] git failed for %s; leaving it unchecked so "
+                                "it's retried next run (not marked complete): %s",
                                 repo_name,
                                 exc,
                             )

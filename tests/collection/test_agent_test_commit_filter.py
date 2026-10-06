@@ -293,3 +293,33 @@ def test_default_output_dir_no_versioned_subfolder_when_tag_empty():
     default_path = Path("output/test-commits") / COLLECTION_OUTPUT_TAG
     assert COLLECTION_OUTPUT_TAG == ""
     assert str(default_path).rstrip("/").endswith("output/test-commits")
+
+
+def test_git_failure_in_one_repo_is_skipped_not_fatal(tmp_path: Path, monkeypatch):
+    """A git failure (e.g. a dropped connection during a lazy fetch) in one repository
+    must leave that repository unchecked and let the run finish, not abort it."""
+
+    @contextlib.contextmanager
+    def _git_fails(*args, **kwargs):
+        raise RuntimeError("git log failed: could not fetch deadbeef")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr("collection.test_commit_filter.temp_clone_commit_history", _git_fails)
+
+    commit_dir = tmp_path / "agent_commits"
+    commit_dir.mkdir()
+    header = ["repo_name", "language", "clone_url", "commit_sha", "agent_type", "commit_date"]
+    with (commit_dir / "python_commit.csv").open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=header)
+        writer.writeheader()
+        writer.writerow({
+            "repo_name": "owner/repo", "language": "python", "clone_url": "unused",
+            "commit_sha": "deadbeef", "agent_type": "copilot", "commit_date": "2025-01-01",
+        })
+
+    out_dir = tmp_path / "out"
+    result = collect_agent_test_commits(commit_dir, out_dir, workers=1)
+
+    assert result["clone_failures"] == 1
+    checkpoint = json.loads((out_dir / "agent_test_commits.checkpoint.json").read_text())
+    assert "owner/repo" not in checkpoint["completed_repos"]
