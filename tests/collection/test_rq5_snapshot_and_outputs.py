@@ -242,7 +242,7 @@ class TestWriteReviewOutputs:
 
         written = write_review_outputs(ARDIC_TERMS, v4_db, out)
 
-        assert set(written) == {"repositories", "fixture_matches", "repository_sheet", "skipped", "readme"}
+        assert set(written) == {"repositories", "fixture_matches", "snippets", "repository_sheet", "skipped", "readme"}
         with written["repositories"].open(encoding="utf-8") as fh:
             repo_rows = list(csv.reader(fh))
         assert tuple(repo_rows[0]) == REPO_CSV_FIELDNAMES

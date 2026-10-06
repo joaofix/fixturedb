@@ -1177,8 +1177,9 @@ FIXTURE_MATCHES_FIELDNAMES: tuple[str, ...] = (
 )
 SKIPPED_CSV_FIELDNAMES: tuple[str, ...] = ("repository", "language", "error_reason")
 REPOSITORY_SHEET_NAME = "rq5_repository_coding_sheet.csv"
+SNIPPETS_MARKDOWN_NAME = "rq5_snippets.md"
 REPOSITORY_CODING_COLUMNS: tuple[str, ...] = (
-    "code_fixture_guidance",
+    "decision",
     "evidence_row_id",
     "category",
     "notes",
@@ -1192,7 +1193,7 @@ REPOSITORY_SHEET_FIELDNAMES: tuple[str, ...] = (
     # pushing the coding columns off screen.
     "fixture_snippets",
 )
-CODE_FIXTURE_GUIDANCE_VALUES: tuple[str, ...] = ("yes", "no", "unsure")
+DECISION_VALUES: tuple[str, ...] = ("yes", "no", "unsure")
 # Ardic et al.'s themes for agent-file testing guidance.
 CATEGORY_VALUES: tuple[str, ...] = (
     "location_placement",
@@ -1348,6 +1349,86 @@ def write_repository_coding_sheet(
     return path
 
 
+def _fence(lines: list[str]) -> str:
+    """A backtick fence longer than any backtick run inside `lines`."""
+    longest = max((len(run) for line in lines for run in re.findall(r"`+", line)), default=0)
+    return "`" * max(3, longest + 1)
+
+
+def write_snippets_markdown(
+    match_rows: list[tuple],
+    db_path: Path = DB_PATH,
+    output_dir: Path = CSV_OUTPUT_DIR,
+) -> Path:
+    """Write `rq5_snippets.md`, a read-only view of the repository coding sheet:
+    one numbered section per repository, in the sheet's row order, listing
+    every matched line with its row id(s), a GitHub link to that line at the
+    scanned commit, and two lines of context on each side. A line matching
+    several terms is shown once, with every row id. Lines follow
+    `SNIPPET_TERM_ORDER` (by the line's first term), then file and line."""
+    with db_session(db_path) as conn:
+        languages = dict(conn.execute(f"SELECT repo_name, language FROM {REPO_TABLE_NAME}").fetchall())
+        urls = {
+            (repo_name, file_name): url
+            for repo_name, file_name, url in conn.execute(
+                f"SELECT repo_name, file_name, github_url FROM {FILE_TABLE_NAME}"
+            ).fetchall()
+        }
+
+    term_rank = {term: rank for rank, term in enumerate(SNIPPET_TERM_ORDER)}
+    by_repo: dict[str, dict[tuple[str, int], dict[str, Any]]] = {}
+    for row_id, row in enumerate(match_rows, start=1):
+        repo_name, file_name, line_number, keyword = row[0], row[1], row[2], row[3]
+        line = by_repo.setdefault(repo_name, {}).setdefault(
+            (file_name, line_number),
+            {"ids": [], "terms": [], "context": row[4:9], "in_code_block": bool(row[9])},
+        )
+        line["ids"].append(row_id)
+        line["terms"].append(keyword)
+
+    parts = [
+        "# RQ5 fixture snippets",
+        "",
+        f"Read-only companion to `{REPOSITORY_SHEET_NAME}`: code in the CSV, read here.",
+        "Repository N below is data row N of the sheet (spreadsheet row N+1).",
+        "Row ids are the data rows of `rq5_fixture_matches.csv`; use one as",
+        "`evidence_row_id`. `>` marks the matched line.",
+        "",
+    ]
+    for number, repo_name in enumerate(sorted(by_repo), start=1):
+        lines = sorted(
+            by_repo[repo_name].items(),
+            key=lambda item: (
+                min(term_rank.get(t, len(term_rank)) for t in item[1]["terms"]),
+                item[0][0],
+                item[0][1],
+            ),
+        )
+        match_count = sum(len(line["ids"]) for _, line in lines)
+        parts += [
+            f"## {number}. {repo_name}",
+            "",
+            f"{languages.get(repo_name, '')} · {match_count} fixture "
+            f"{'match' if match_count == 1 else 'matches'}",
+            "",
+        ]
+        for (file_name, line_number), line in lines:
+            ids = ", ".join(str(i) for i in line["ids"])
+            terms = ", ".join(sorted(set(line["terms"]), key=lambda t: term_rank.get(t, len(term_rank))))
+            location = f"{file_name}:{line_number}"
+            url = urls.get((repo_name, file_name))
+            link = f"[{location}]({url}#L{line_number})" if url else location
+            block = " · in a fenced code block" if line["in_code_block"] else ""
+            before_2, before_1, matched, after_1, after_2 = line["context"]
+            body = [f"  {before_2}", f"  {before_1}", f"> {matched}", f"  {after_1}", f"  {after_2}"]
+            fence = _fence(body)
+            parts += [f"**[{ids}]** {terms} · {link}{block}", "", f"{fence}text", *body, fence, ""]
+
+    path = output_dir / SNIPPETS_MARKDOWN_NAME
+    path.write_text("\n".join(parts), encoding="utf-8")
+    return path
+
+
 def write_rq5_readme(output_dir: Path = CSV_OUTPUT_DIR) -> Path:
     """Write `README.md` for the review outputs, including the allowed values
     of the repository-level coding columns."""
@@ -1370,12 +1451,25 @@ reads it once every row is coded.
   match. `fixture_snippets` lists all of the repository's matched lines, each
   prefixed with its row id, ordered by term ({", ".join(SNIPPET_TERM_ORDER)}),
   then file and line. The order is only a reading order, not a classification.
+- `{SNIPPETS_MARKDOWN_NAME}`: read-only view of the repository sheet for reading
+  the snippets. Repository N is data row N of the sheet; each matched line has
+  its row id(s), a GitHub link and two lines of context on each side.
 - `rq5_skipped_repositories.csv`: repositories that could not be analyzed.
 
 ## Coding columns of `{REPOSITORY_SHEET_NAME}`
 
-- `code_fixture_guidance`: {" / ".join(f"`{v}`" for v in CODE_FIXTURE_GUIDANCE_VALUES)}.
-  Whether the repository's agent files give guidance about test fixtures as code.
+- `decision`: {" / ".join(f"`{v}`" for v in DECISION_VALUES)}. One verdict per
+  repository, over all of its root agent files.
+  - `yes`: at least one match refers to test fixtures as code (setup/teardown
+    code: pytest fixtures, `conftest.py`, `beforeEach`/`afterEach`,
+    setUp/tearDown, ...). Description counts as guidance: in an agent
+    configuration file, a statement about how fixtures are done is an
+    instruction to the agent. One such match is enough; put its row id in
+    `evidence_row_id`.
+  - `no`: no match refers to code fixtures, e.g. only test-data files
+    (`tests/fixtures/*.json`) or a product/domain term named "fixture".
+  - `unsure`: a match might refer to code fixtures but the context does not
+    settle it.
 - `evidence_row_id`: the match row id that confirmed `yes`. Required for `yes`.
 - `category`: required for `yes`. One or more of the values below, separated by
   `;`. The values are the themes of Ardic et al. (SCAM 2026).
@@ -1405,6 +1499,8 @@ def write_review_outputs(
       fixture match, see `write_repository_coding_sheet()`.
     - `rq5_skipped_repositories.csv`: every repository that could not be
       analyzed, with the reason.
+    - `rq5_snippets.md`: a read-only view of the repository sheet, see
+      `write_snippets_markdown()`.
     - `README.md`: the files and the allowed manual-coding values.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1456,6 +1552,7 @@ def write_review_outputs(
                 ]
             )
     written["fixture_matches"] = matches_path
+    written["snippets"] = write_snippets_markdown(match_rows, db_path, output_dir)
     written["repository_sheet"] = write_repository_coding_sheet(match_rows, db_path, output_dir)
     written["readme"] = write_rq5_readme(output_dir)
 

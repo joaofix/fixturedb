@@ -16,12 +16,25 @@ reads it once every row is coded.
   match. `fixture_snippets` lists all of the repository's matched lines, each
   prefixed with its row id, ordered by term (conftest, beforeEach, afterEach, beforeAll, afterAll, test setup, setup and teardown, fixture, fixtures),
   then file and line. The order is only a reading order, not a classification.
+- `rq5_snippets.md`: read-only view of the repository sheet for reading
+  the snippets. Repository N is data row N of the sheet; each matched line has
+  its row id(s), a GitHub link and two lines of context on each side.
 - `rq5_skipped_repositories.csv`: repositories that could not be analyzed.
 
 ## Coding columns of `rq5_repository_coding_sheet.csv`
 
-- `code_fixture_guidance`: `yes` / `no` / `unsure`.
-  Whether the repository's agent files give guidance about test fixtures as code.
+- `decision`: `yes` / `no` / `unsure`. One verdict per
+  repository, over all of its root agent files.
+  - `yes`: at least one match refers to test fixtures as code (setup/teardown
+    code: pytest fixtures, `conftest.py`, `beforeEach`/`afterEach`,
+    setUp/tearDown, ...). Description counts as guidance: in an agent
+    configuration file, a statement about how fixtures are done is an
+    instruction to the agent. One such match is enough; put its row id in
+    `evidence_row_id`.
+  - `no`: no match refers to code fixtures, e.g. only test-data files
+    (`tests/fixtures/*.json`) or a product/domain term named "fixture".
+  - `unsure`: a match might refer to code fixtures but the context does not
+    settle it.
 - `evidence_row_id`: the match row id that confirmed `yes`. Required for `yes`.
 - `category`: required for `yes`. One or more of the values below, separated by
   `;`. The values are the themes of Ardic et al. (SCAM 2026).

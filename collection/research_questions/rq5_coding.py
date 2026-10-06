@@ -27,9 +27,9 @@ from typing import Any
 
 from ..rq5_agent_file_scan import (
     CATEGORY_VALUES,
-    CODE_FIXTURE_GUIDANCE_VALUES,
     CSV_OUTPUT_DIR,
     DB_PATH,
+    DECISION_VALUES,
     REPOSITORY_SHEET_FIELDNAMES,
     REPOSITORY_SHEET_NAME,
     load_repo_guidance,
@@ -47,7 +47,7 @@ class CodingIncompleteError(ValueError):
 
 def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
     """The sheet's rows, validated. Raises `CodingIncompleteError` listing every
-    problem: an empty or unknown `code_fixture_guidance`, a `yes` without a
+    problem: an empty or unknown `decision`, a `yes` without a
     category or an evidence row id, an evidence row id that is not one of the
     repository's snippets, or an unknown category."""
     if not path.exists():
@@ -64,32 +64,32 @@ def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
     coded: list[dict[str, Any]] = []
     for row in rows:
         repo = row["repository"]
-        guidance = row["code_fixture_guidance"].strip().lower()
+        decision = row["decision"].strip().lower()
         evidence = row["evidence_row_id"].strip()
         categories = [c.strip() for c in row["category"].split(";") if c.strip()]
 
-        if not guidance:
+        if not decision:
             uncoded.append(repo)
             continue
-        if guidance not in CODE_FIXTURE_GUIDANCE_VALUES:
-            problems.append(f"{repo}: code_fixture_guidance {guidance!r} is not one of {CODE_FIXTURE_GUIDANCE_VALUES}")
+        if decision not in DECISION_VALUES:
+            problems.append(f"{repo}: decision {decision!r} is not one of {DECISION_VALUES}")
         unknown = [c for c in categories if c not in CATEGORY_VALUES]
         if unknown:
             problems.append(f"{repo}: unknown category {', '.join(unknown)}")
-        if guidance == "yes":
+        if decision == "yes":
             if not categories:
                 problems.append(f"{repo}: coded yes without a category")
             if not evidence:
                 problems.append(f"{repo}: coded yes without an evidence_row_id")
             elif not evidence.isdigit() or int(evidence) not in snippet_row_ids(row["fixture_snippets"]):
                 problems.append(f"{repo}: evidence_row_id {evidence!r} is not one of this repository's snippets")
-        coded.append({"repository": repo, "language": row["primary_language"], "guidance": guidance, "categories": categories})
+        coded.append({"repository": repo, "language": row["primary_language"], "decision": decision, "categories": categories})
 
     if uncoded or problems:
         lines = []
         if uncoded:
             shown = ", ".join(uncoded[:10]) + (" ..." if len(uncoded) > 10 else "")
-            lines.append(f"{len(uncoded)} of {len(rows)} rows are still uncoded (code_fixture_guidance empty): {shown}")
+            lines.append(f"{len(uncoded)} of {len(rows)} rows are still uncoded (decision empty): {shown}")
         lines += problems
         raise CodingIncompleteError(f"{path} is not fully coded:\n" + "\n".join(lines))
     return coded
@@ -107,15 +107,15 @@ def agent_file_counts(db_path: Path = DB_PATH) -> Counter:
 
 
 def compute_results(coded: list[dict[str, Any]], with_agent_file: Counter) -> dict[str, Any]:
-    guidance = Counter(r["guidance"] for r in coded)
-    yes_by_language = Counter(r["language"] for r in coded if r["guidance"] == "yes")
-    categories = Counter(c for r in coded if r["guidance"] == "yes" for c in r["categories"])
+    decisions = Counter(r["decision"] for r in coded)
+    yes_by_language = Counter(r["language"] for r in coded if r["decision"] == "yes")
+    categories = Counter(c for r in coded if r["decision"] == "yes" for c in r["categories"])
     return {
         "with_agent_file": with_agent_file,
         "with_fixture_match": len(coded),
-        "yes": guidance["yes"],
-        "no": guidance["no"],
-        "unsure": guidance["unsure"],
+        "yes": decisions["yes"],
+        "no": decisions["no"],
+        "unsure": decisions["unsure"],
         "yes_by_language": yes_by_language,
         "categories": categories,
     }
@@ -159,7 +159,7 @@ def generate_report(results: dict[str, Any]) -> str:
         "| Coding | Repositories | Percentage of repositories with a fixture match |",
         "|---|---|---|",
     ]
-    for value in CODE_FIXTURE_GUIDANCE_VALUES:
+    for value in DECISION_VALUES:
         lines.append(f"| `{value}` | {results[value]:,} | {pct(_ratio(results[value], matched))} |")
     lines += [
         f"| Total | {matched:,} | -- |",

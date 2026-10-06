@@ -1,4 +1,4 @@
-repository,primary_language,fixture_match_count,code_fixture_guidance,evidence_row_id,category,notes,fixture_snippets
+repository,primary_language,fixture_match_count,decision,evidence_row_id,category,notes,fixture_snippets
 0xGF/boneyard,typescript,6,,,,,"[1] fixture | CLAUDE.md:22 | - **Fixtures**: a `fixture` prop provides alternate markup for the CLI to snapshot instead of real children. Useful when real data isn't available at build time.
 [3] fixture | CLAUDE.md:24 | - **Priority**: explicit `initialBones` prop > registry lookup by `name` > fixture fallback.
 [4] fixture | CLAUDE.md:25 | - **Build mode**: CLI sets `window.__BONEYARD_BUILD = true`, component renders `fixture ?? children`, CLI snapshots the DOM, writes bones JSON.

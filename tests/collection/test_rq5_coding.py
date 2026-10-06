@@ -26,6 +26,7 @@ from collection.rq5_agent_file_scan import (
     CATEGORY_VALUES,
     REPOSITORY_SHEET_FIELDNAMES,
     REPOSITORY_SHEET_NAME,
+    SNIPPETS_MARKDOWN_NAME,
     _repo_row,
     _scan_result,
     initialise_rq5_db,
@@ -34,6 +35,8 @@ from collection.rq5_agent_file_scan import (
     record_scan_meta,
     snippet_row_ids,
     write_review_outputs,
+    write_rq5_readme,
+    write_snippets_markdown,
 )
 
 ARDIC_TERMS = {"test", "tests", "testing", "tested"}
@@ -131,7 +134,7 @@ class TestRepositoryCodingSheet:
             ("owner/b", "typescript", "1"),
         ]
         for row in rows:
-            for column in ("code_fixture_guidance", "evidence_row_id", "category", "notes"):
+            for column in ("decision", "evidence_row_id", "category", "notes"):
                 assert row[column] == ""
 
     def test_snippets_follow_the_term_reading_order(self, coded_db, tmp_path):
@@ -172,13 +175,77 @@ class TestRepositoryCodingSheet:
         assert snippet_row_ids("[3] fixture | A.md:1 | x\n[12] conftest | A.md:2 | [7] y") == {3, 12}
 
 
+class TestSnippetsMarkdown:
+    def test_sections_follow_the_sheet_rows_and_leave_the_csv_alone(self, coded_db, tmp_path):
+        out = tmp_path / "out"
+        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+        sheet_before = (out / REPOSITORY_SHEET_NAME).read_bytes()
+        markdown = (out / SNIPPETS_MARKDOWN_NAME).read_text()
+
+        sections = [line for line in markdown.splitlines() if line.startswith("## ")]
+        repos = [row["repository"] for row in _read(out / REPOSITORY_SHEET_NAME)]
+        assert sections == [f"## {n}. {repo}" for n, repo in enumerate(repos, start=1)]
+        assert "python · 3 fixture matches" in markdown
+        assert "typescript · 1 fixture match\n" in markdown
+
+        write_snippets_markdown(load_fixture_match_rows(coded_db), coded_db, out)
+        assert (out / REPOSITORY_SHEET_NAME).read_bytes() == sheet_before
+
+    def test_each_line_has_its_ids_link_context_and_code_block_marker(self, coded_db, tmp_path):
+        path = write_snippets_markdown(load_fixture_match_rows(coded_db), coded_db, tmp_path)
+        markdown = path.read_text()
+        # Row ids match the match sheet: owner/a's conftest is the third match row.
+        assert "**[3]** conftest · [AGENTS.md:9](https://github.com/owner/a/blob/sha/AGENTS.md#L9)" in markdown
+        assert "AGENTS.md#L9) · in a fenced code block" in markdown
+        assert "> line 9 mentions conftest" in markdown
+        # Reading order: conftest before fixture before fixtures.
+        section_a = markdown.split("## 1. owner/a")[1].split("## 2.")[0]
+        assert section_a.index("conftest") < section_a.index("**[2]** fixture ·") < section_a.index("fixtures ·")
+
+    def test_one_line_matching_two_terms_is_shown_once_with_both_ids(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        _persist(
+            db_path,
+            "owner/x",
+            "python",
+            [_match("owner/x", "AGENTS.md", "fixture", 4), _match("owner/x", "AGENTS.md", "fixtures", 4)],
+        )
+
+        markdown = write_snippets_markdown(load_fixture_match_rows(db_path), db_path, tmp_path).read_text()
+
+        assert "**[1, 2]** fixture, fixtures · " in markdown
+        assert markdown.count("> line 4 mentions") == 1
+        assert "python · 2 fixture matches" in markdown
+
+    def test_fence_is_longer_than_backticks_inside_the_context(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        initialise_rq5_db(db_path)
+        match = _match("owner/x", "AGENTS.md", "fixture", 4)
+        match["line_before_1"] = "```python"
+        _persist(db_path, "owner/x", "python", [match])
+
+        markdown = write_snippets_markdown(load_fixture_match_rows(db_path), db_path, tmp_path).read_text()
+
+        assert "````text\n" in markdown
+        assert markdown.rstrip().endswith("````")
+
+
 class TestReadme:
+    def test_states_the_decision_rule(self, tmp_path):
+        readme = write_rq5_readme(tmp_path).read_text()
+
+        assert "One verdict per\n  repository, over all of its root agent files." in readme
+        assert "Description counts as guidance" in readme
+        assert "One such match is enough" in readme
+        assert "product/domain term" in readme
+
     def test_documents_every_allowed_coding_value(self, coded_db, tmp_path):
         out = tmp_path / "out"
         write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
         readme = (out / "README.md").read_text()
 
-        for value in (*CATEGORY_VALUES, "yes", "no", "unsure", "evidence_row_id", REPOSITORY_SHEET_NAME):
+        for value in (*CATEGORY_VALUES, "yes", "no", "unsure", "evidence_row_id", REPOSITORY_SHEET_NAME, SNIPPETS_MARKDOWN_NAME):
             assert value in readme
 
 
@@ -220,7 +287,7 @@ def _first_id(sheet, repo):
 
 class TestLoadCodedSheet:
     def test_fails_when_a_row_is_uncoded(self, coded_db, tmp_path):
-        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"code_fixture_guidance": "no"}})
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"decision": "no"}})
 
         with pytest.raises(CodingIncompleteError, match="1 of 2 rows are still uncoded.*owner/a"):
             load_coded_sheet(sheet)
@@ -229,7 +296,7 @@ class TestLoadCodedSheet:
         sheet = _coded_rows(
             coded_db,
             tmp_path,
-            {"owner/a": {"code_fixture_guidance": "maybe"}, "owner/b": {"code_fixture_guidance": "unsure", "category": "misc"}},
+            {"owner/a": {"decision": "maybe"}, "owner/b": {"decision": "unsure", "category": "misc"}},
         )
 
         with pytest.raises(CodingIncompleteError) as exc:
@@ -241,7 +308,7 @@ class TestLoadCodedSheet:
         sheet = _coded_rows(
             coded_db,
             tmp_path,
-            {"owner/a": {"code_fixture_guidance": "yes"}, "owner/b": {"code_fixture_guidance": "no"}},
+            {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
         )
         foreign_id = _first_id(sheet, "owner/b")
         rows = _read(sheet)
@@ -263,10 +330,10 @@ class TestLoadCodedSheet:
 
 class TestComputeResults:
     def test_shares_precision_and_categories(self, coded_db, tmp_path):
-        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"code_fixture_guidance": "unsure"}})
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"decision": "unsure"}})
         rows = _read(sheet)
         rows[0].update(
-            code_fixture_guidance="yes",
+            decision="yes",
             evidence_row_id=_first_id(sheet, "owner/a"),
             category="strategy; location_placement",
         )
