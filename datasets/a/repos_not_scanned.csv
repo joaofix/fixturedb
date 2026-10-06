@@ -1,0 +1,6 @@
+repo_name,language,reason
+WebKit/WebKit,javascript,commit scan not completed (very large history; stopped by decision)
+BrowserWorks/Waterfox,javascript,commit scan not started (stopped by decision)
+raycast/extensions,typescript,commit scan not started (stopped by decision)
+mozilla-firefox/firefox,javascript,commit scan not started (stopped by decision)
+Azure/Azure-Sentinel,python,commit scan not started (stopped by decision)
