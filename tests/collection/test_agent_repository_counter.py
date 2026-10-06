@@ -270,8 +270,8 @@ def test_run_writes_duplicate_repos_artifact_next_to_raw_source(monkeypatch, tmp
         ],
     )
 
-    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
-    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_tree", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", lambda repo_path: None)
 
     qc.run(
         workers=1,
@@ -320,8 +320,8 @@ def test_run_honors_an_explicit_artifact_path_override(monkeypatch, tmp_path):
         ],
     )
 
-    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
-    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_tree", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", lambda repo_path: None)
 
     sandboxed_artifact_path = tmp_path / "sandbox" / "duplicate_repos_by_current_commit.csv"
     qc.run(
@@ -342,7 +342,7 @@ def test_run_honors_an_explicit_artifact_path_override(monkeypatch, tmp_path):
 
 def test_run_never_clones_a_dropped_duplicate(monkeypatch, tmp_path):
     """The real point of dedupe-before-clone: a repo dropped as a duplicate
-    must never reach temp_clone_commit_history (has_agent_config check)."""
+    must never reach temp_clone_tree (has_agent_config check)."""
     raw_dir = tmp_path / "github-search-raw"
     raw_dir.mkdir()
     _write_raw_csv(
@@ -378,8 +378,8 @@ def test_run_never_clones_a_dropped_duplicate(monkeypatch, tmp_path):
 
         return _ctx()
 
-    monkeypatch.setattr(qc, "temp_clone_commit_history", fake_temp_clone)
-    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_tree", fake_temp_clone)
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", lambda repo_path: None)
 
     output_dir = tmp_path / "out"
     qc.run(
@@ -402,9 +402,9 @@ def _fake_temp_clone(repo_path: Path):
 
 def test_process_single_records_matched_config_file(monkeypatch, tmp_path):
     monkeypatch.setattr(
-        qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: "CLAUDE.md"
+        qc, "scan_repo_tree_for_agent_configs", lambda repo_path: "CLAUDE.md"
     )
-    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "temp_clone_tree", _fake_temp_clone(tmp_path))
 
     row = qc._process_single(
         {"full_name": "owner/repo", "language": "python", "stars": 10}, since="2025-01-01"
@@ -415,8 +415,8 @@ def test_process_single_records_matched_config_file(monkeypatch, tmp_path):
 
 
 def test_process_single_empty_matched_config_file_when_no_match(monkeypatch, tmp_path):
-    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
-    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_tree", _fake_temp_clone(tmp_path))
 
     row = qc._process_single(
         {"full_name": "owner/repo", "language": "python", "stars": 10}, since="2025-01-01"
@@ -428,8 +428,8 @@ def test_process_single_empty_matched_config_file_when_no_match(monkeypatch, tmp
 
 
 def test_process_single_carries_forks_into_the_row(monkeypatch, tmp_path):
-    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
-    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_tree", _fake_temp_clone(tmp_path))
 
     row = qc._process_single(
         {"full_name": "owner/repo", "language": "python", "stars": 10, "forks": 7},
@@ -440,8 +440,8 @@ def test_process_single_carries_forks_into_the_row(monkeypatch, tmp_path):
 
 
 def test_process_single_carries_pushed_at_into_the_row(monkeypatch, tmp_path):
-    monkeypatch.setattr(qc, "scan_cloned_repo_for_agent_configs", lambda repo_path: None)
-    monkeypatch.setattr(qc, "temp_clone_commit_history", _fake_temp_clone(tmp_path))
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", lambda repo_path: None)
+    monkeypatch.setattr(qc, "temp_clone_tree", _fake_temp_clone(tmp_path))
 
     row = qc._process_single(
         {
@@ -454,3 +454,34 @@ def test_process_single_carries_pushed_at_into_the_row(monkeypatch, tmp_path):
     )
 
     assert row["pushed_at"] == "2025-03-14T00:00:00Z"
+
+
+def test_run_reports_repos_with_agent_config_separately_from_rows_written(monkeypatch, tmp_path, capsys):
+    """The count that means 'has an agent config' must not be the count of rows
+    written: a repo without a config file is still a row (has_agent_config=0)."""
+    raw_dir = tmp_path / "github-search-raw"
+    raw_dir.mkdir()
+    _write_raw_csv(
+        raw_dir / "python.csv.gz",
+        [
+            {"id": "1", "name": "owner/good", "mainLanguage": "python", "stargazers": "100", "contributors": "1"},
+            {"id": "2", "name": "owner/bare", "mainLanguage": "python", "stargazers": "90", "contributors": "1"},
+        ],
+    )
+    for name in ("owner/good", "owner/bare"):
+        (tmp_path / "clones" / name).mkdir(parents=True)
+
+    @contextmanager
+    def fake_temp_clone(clone_url, full_name, prefix="", timeout=60):
+        yield tmp_path / "clones" / full_name
+
+    monkeypatch.setattr(qc, "temp_clone_tree", fake_temp_clone)
+    monkeypatch.setattr(
+        qc,
+        "scan_repo_tree_for_agent_configs",
+        lambda repo_path: "CLAUDE.md" if repo_path.name == "good" else None,
+    )
+
+    qc.run(workers=1, source_dir=raw_dir, output_dir=tmp_path / "out", languages=["python"])
+
+    assert "Processed 2 repos (1 with agent config)" in capsys.readouterr().out

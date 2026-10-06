@@ -98,6 +98,10 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
 - **`discover-commits` clones with `--filter=blob:none`.** It walks commit history only, so it
   does not download file contents. The other steps keep `--filter=blob:limit=10m`, because
   `filter-test-commits` needs file contents for its pure-addition check.
+- **`discover-repos --dataset a` checks config files from HEAD's tree.** It clones with
+  `--depth=1 --filter=blob:none --no-checkout` and lists the tree, so it downloads neither
+  history nor file contents. The result matches a full checkout scan on the sample it was
+  checked against. A repository with no commits has no config file (`no_agent_config`).
 - **`--workers N`** sets concurrent worker threads for that verb's clone/scan-bound
   work; DB and CSV writes stay on the main thread regardless. **Not CPU core
   count** is the ceiling here — the `discover-repos`/`discover-commits`/

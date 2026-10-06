@@ -23,12 +23,12 @@ if str(PROJECT_ROOT) not in __import__("sys").path:
 from collection import paths
 from collection.agent_patterns import (
     PAPER_AGENT_REPOSITORY_LANGUAGES,
-    scan_cloned_repo_for_agent_configs,
+    scan_repo_tree_for_agent_configs,
 )
 from collection.cli_utils import add_output_dir_arg, add_since_arg, add_workers_arg
 from collection.config import EXCLUSION_KEYWORDS
 from collection.csv_adapter import get_adapter
-from collection.ephemeral_clone import temp_clone_commit_history
+from collection.ephemeral_clone import temp_clone_tree
 from collection.logging_utils import get_logger
 from collection.repo_dedup_utils import (
     find_duplicate_clusters,
@@ -410,12 +410,12 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
         matched_config_file: Optional[str] = None
         qc_reason = ""
 
-        with temp_clone_commit_history(
+        with temp_clone_tree(
             clone_url, str(full_name), prefix="agent-repos-", timeout=60
         ) as repo_path:
             try:
                 if repo_path and repo_path.exists():
-                    matched_config_file = scan_cloned_repo_for_agent_configs(repo_path)
+                    matched_config_file = scan_repo_tree_for_agent_configs(repo_path)
                     if not matched_config_file:
                         qc_reason = "no_agent_config"
                 else:
@@ -507,29 +507,34 @@ def run(
     workers = max(1, int(workers or 1))
     if workers == 1:
         count = 0
+        config_count = 0
         with tqdm(total=len(to_process), desc="discover-repos", unit="repo") as pbar:
             for entry in to_process:
                 res = _process_single(entry, since)
                 if res:
                     write_row(res)
                     count += 1
-                pbar.set_postfix(agent_config=count)
+                    config_count += int(res["has_agent_config"])
+                pbar.set_postfix(agent_config=config_count, written=count)
                 pbar.update(1)
-        print(f"Processed {count} repos; CSVs stored in {output_dir}")
+        print(f"Processed {count} repos ({config_count} with agent config); CSVs stored in {output_dir}")
     else:
         with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
             futures = [ex.submit(_process_single, entry, since) for entry in to_process]
             count = 0
+            config_count = 0
             with tqdm(total=len(futures), desc="discover-repos", unit="repo") as pbar:
                 for fut in concurrent.futures.as_completed(futures):
                     r = fut.result()
                     if r:
                         write_row(r)
                         count += 1
-                    pbar.set_postfix(agent_config=count)
+                        config_count += int(r["has_agent_config"])
+                    pbar.set_postfix(agent_config=config_count, written=count)
                     pbar.update(1)
         print(
-            f"Processed {count} repos with {workers} workers; CSVs stored in {output_dir}"
+            f"Processed {count} repos ({config_count} with agent config) with {workers} workers; "
+            f"CSVs stored in {output_dir}"
         )
     return 0
 

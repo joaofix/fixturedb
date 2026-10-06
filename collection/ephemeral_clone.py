@@ -262,3 +262,42 @@ def temp_clone_commit_history(
         yield repo_path
     finally:
         cleanup_tempdir(temp_root)
+
+
+# A config-file scan needs HEAD's tree only: depth 1 (no history), no blobs (no
+# file contents), no checkout (no working tree).
+TREE_CLONE_ARGS = ["--depth=1", "--filter=blob:none", "--no-checkout", "--single-branch", "--no-tags"]
+
+
+@contextmanager
+def temp_clone_tree(
+    clone_url: str,
+    repo_full_name: str,
+    *,
+    prefix: str = "collection-",
+    timeout: int = CLONE_TIMEOUT_SECONDS,
+):
+    """Clone HEAD's tree into a temporary directory and clean up on exit.
+
+    Yields the repository path, or None when the clone is refused for a permanent
+    reason. Gated by the same clone limit as `temp_clone_commit_history`.
+    """
+    _CLONE_SEMAPHORE.acquire()
+    try:
+        repo_path, temp_root = clone_to_tempdir(
+            repo_full_name,
+            clone_url,
+            TREE_CLONE_ARGS,
+            timeout=timeout,
+            prefix=prefix,
+        )
+    finally:
+        _CLONE_SEMAPHORE.release()
+    if repo_path is None:
+        yield None
+        return
+    try:
+        yield repo_path
+    finally:
+        cleanup_tempdir(temp_root)
+

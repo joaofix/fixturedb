@@ -368,3 +368,32 @@ def shallow_clone_repo(clone_url: str, target_dir: Path) -> bool:
         return result.returncode == 0 and target_dir.exists()
     except Exception:
         return False
+
+
+def list_tree_entries(repo_path: Path) -> list[tuple[str, bool]]:
+    """Every path in HEAD's tree as (path, is_dir). Reads tree objects only, so a
+    blobless clone is enough. An empty list when the repository has no HEAD (no
+    commits yet). Raises RuntimeError if git cannot list the tree."""
+    head = subprocess.run(
+        ["git", "-C", str(repo_path), "rev-parse", "--verify", "-q", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    if head.returncode != 0:
+        return []
+    listing = subprocess.run(
+        ["git", "-C", str(repo_path), "ls-tree", "-r", "-t", "-z", "HEAD"],
+        capture_output=True,
+        text=True,
+    )
+    if listing.returncode != 0:
+        raise RuntimeError(f"git ls-tree failed in {repo_path}: {listing.stderr.strip()[:200]}")
+    entries = []
+    for record in listing.stdout.split("\0"):
+        if not record:
+            continue
+        meta, path = record.split("\t", 1)
+        _, kind, _ = meta.split()
+        entries.append((path, kind == "tree"))
+    return entries
+

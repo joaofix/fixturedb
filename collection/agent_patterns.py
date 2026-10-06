@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 from typing import Iterable, Mapping
 
+from .clone_primitives import list_tree_entries
 from .heuristics import load_agent_heuristics
 from .logging_utils import get_logger
 
@@ -203,6 +204,29 @@ def repo_contains_patterns(
                 if path_matches_pattern(
                     found_path.relative_to(repo_path), pattern, is_dir=is_dir
                 ):
+                    return pattern
+    return None
+
+
+def scan_repo_tree_for_agent_configs(repo_path: Path) -> str | None:
+    """The first agent-config pattern found in HEAD's tree of a repository, or None.
+
+    Same answer as `scan_cloned_repo_for_agent_configs` on a checked-out working
+    tree (same patterns, same excluded directories), but it reads only the tree
+    listing, so the clone needs no file contents. An empty repository (no HEAD)
+    has no config files.
+    """
+    entries = [
+        (path, is_dir)
+        for path, is_dir in list_tree_entries(repo_path)
+        if not any(part in _EXCLUDED_DIR_NAMES for part in Path(path).parts)
+    ]
+    # Patterns in catalog order, as repo_contains_patterns does, so that the same
+    # pattern is reported when a repository has more than one config file.
+    for pattern_list in PAPER_AGENT_CONFIG_PATTERNS.values():
+        for pattern in pattern_list:
+            for path, is_dir in entries:
+                if path_matches_pattern(path, pattern, is_dir=is_dir):
                     return pattern
     return None
 
