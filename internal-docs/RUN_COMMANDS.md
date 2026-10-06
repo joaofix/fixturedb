@@ -228,12 +228,13 @@ many-core server; see that module's own docstring for operational history).
 see `rq1_prevalence_scan.github_auth_env()`'s docstring for why an unauthenticated
 run risks GitHub rate-limiting.
 
-RQ5 never clones anything -- it reads entirely through GitHub's REST API
-(`--workers` defaults to 20, since there's no disk/subprocess cost per repo
-anymore). `GITHUB_TOKEN` is effectively **required** here, not just recommended:
-the unauthenticated REST rate limit is 60 requests/hour, far too low for the
-corpus's repositories x ~2 requests each (vs. 5,000/hour authenticated). Run it
-after the Dataset A fixture CSVs exist. It writes `rq5_v4/` (the three review
+RQ5 never clones anything -- it reads entirely through GitHub's GraphQL API,
+in batches of 25 repositories (two GraphQL requests per batch; `--workers`
+defaults to 20 batches in flight). `GITHUB_TOKEN` is effectively **required**
+here, not just recommended: the unauthenticated REST rate limit is 60
+requests/hour, and the GraphQL endpoint refuses unauthenticated requests. The
+authenticated GraphQL budget is 5,000 points/hour, and a batch costs about 2 to
+3 points. Run it after the Dataset A fixture CSVs exist. It writes `rq5_v4/` (the three review
 CSVs) and `research_questions/rq5.md`.
 
 ```bash

@@ -112,6 +112,15 @@ def _route(*, commits=None, trees=None, blobs=None):
     return _get
 
 
+def _per_repo(fake):
+    """Adapt a one-repository fake to the batch signature of process_repos_graphql()."""
+
+    def _batch(batch, **kwargs):
+        return [fake(repo, **kwargs) for repo in batch]
+
+    return _batch
+
+
 _TEST_CATALOG = {
     "version": 1,
     "target_files": ["AGENTS.md", "CLAUDE.md"],
@@ -1120,7 +1129,7 @@ class TestRunScan:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             counts = run_scan(snapshot_date="2026-09-08", 
                 db_path=db_path,
@@ -1133,45 +1142,6 @@ class TestRunScan:
         assert counts == {"total": 2, "already_done": 1, "scanned_this_run": 1}
         assert load_scanned_repo_names(db_path) == {"org/already", "org/new"}
 
-    def test_run_scan_records_a_timeout_instead_of_hanging(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        stop_event = threading.Event()
-        universe = [
-            {"repo_name": "org/stuck", "language": "python", "clone_url": "x"},
-            {"repo_name": "org/fine", "language": "python", "clone_url": "y"},
-        ]
-
-        def _fake_process_repo(repo, **kwargs):
-            if repo["repo_name"] == "org/stuck":
-                stop_event.wait(5)
-                return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", 1, fetch_ok=True))
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
-
-        try:
-            with (
-                patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-                patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
-            ):
-                counts = run_scan(snapshot_date="2026-09-08", 
-                    db_path=db_path,
-                    workers=2,
-                    progress_path=tmp_path / "progress.json",
-                    notify=False,
-                    process_repo_timeout_seconds=0.05,
-                )
-        finally:
-            stop_event.set()
-
-        assert counts == {"total": 2, "already_done": 0, "scanned_this_run": 2}
-        rows = {
-            row[0]: (row[1], row[2])
-            for row in sqlite3.connect(db_path).execute(
-                "SELECT repo_name, fetch_ok, error_reason FROM repo_scan"
-            )
-        }
-        assert rows["org/stuck"] == (0, "timeout")
-        assert rows["org/fine"] == (1, None)
-
     def test_run_scan_threads_token_through_to_process_repo(self, tmp_path):
         universe = [{"repo_name": "org/a", "language": "python", "clone_url": "x"}]
         seen_kwargs = {}
@@ -1182,7 +1152,7 @@ class TestRunScan:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
@@ -1204,7 +1174,7 @@ class TestRunScan:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
@@ -1225,7 +1195,7 @@ class TestRunScan:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
@@ -1250,7 +1220,7 @@ class TestRunScan:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             run_scan(snapshot_date="2026-09-08", 
                 db_path=tmp_path / "rq5.db",
@@ -1305,7 +1275,7 @@ class TestRunScan:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             run_scan(snapshot_date="2026-09-08", 
                 db_path=db_path,
@@ -1336,7 +1306,7 @@ class TestRunScanNotifications:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=self._fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(self._fake_process_repo)),
             patch("collection.rq5_agent_file_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
         ):
             run_scan(snapshot_date="2026-09-08", 
@@ -1354,7 +1324,7 @@ class TestRunScanNotifications:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=self._fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(self._fake_process_repo)),
             patch("collection.rq5_agent_file_scan._notify") as notify_mock,
         ):
             run_scan(snapshot_date="2026-09-08", 

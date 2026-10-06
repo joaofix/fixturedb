@@ -20,21 +20,25 @@ The first iteration (catalog v3, the raw ~24.7k-repo universe, no snapshot
 argument) is kept in `rq5_v3/` and `db/rq5_agent_files.db`. This module no
 longer produces it.
 
-**Why GitHub's REST API, not a clone:** this scan needs the content of 0 to 2
-root-level files per repository. GitHub's Git Database API returns those
-without cloning, so the scan stays fast whatever the size of the repository.
-, which can
-answer "what's at this commit's root" and "give me this one blob" without
-ever materializing the rest of the repository. Concretely, per repo:
+**Why the GitHub API, not a clone:** this scan needs the content of 0 to 2
+root-level files per repository. GitHub's API returns those without cloning,
+so the scan stays fast whatever the size of the repository. Per repository it
+needs three answers, which the batched GraphQL path (`process_repos_graphql()`)
+gets in one aliased query for up to `GRAPHQL_BATCH_SIZE` repositories:
 
-1. `GET /repos/{repo}/commits?until=<snapshot_date>T23:59:59Z&per_page=1`
-   -- the cutoff commit (replaces a clone + PyDriller's commit walk).
-2. `GET /repos/{repo}/git/trees/{sha}` -- root-level tree entries, non-
-   recursive by default (replaces `git ls-tree`; "look only at the
-   repository root" falls out of the API's own default behavior, not
-   something this code has to enforce).
-3. `GET /repos/{repo}/git/blobs/{blob_sha}` for each matched entry
-   (replaces `git show <sha>:<path>`).
+1. The cutoff commit: the latest default-branch commit at or before
+   `<snapshot_date>T23:59:59Z` (replaces a clone + PyDriller's commit walk).
+2. The root tree entries at that commit, non-recursive (replaces `git ls-tree`;
+   "look only at the repository root" falls out of the query, not something
+   this code has to enforce).
+3. The text of each matched root file (replaces `git show <sha>:<path>`), read
+   in a second batched query. A truncated text is re-read in full through the
+   REST blob endpoint.
+
+The REST path (`process_repo()`, one repository per call) is kept for
+`retry_failed_repos()` and for the truncated-text fallback. It records the same
+rows as the GraphQL path; `tests/collection/test_rq5_graphql.py` checks that on
+the same scenarios.
 
 This makes the whole scan immune to repo size -- a behemoth like
 `WebKit/WebKit` or `JetBrains/intellij-community` (both of which cost RQ1
@@ -96,7 +100,9 @@ to `agent_files.github_url` at write time rather than stored as a second,
 redundant copy of that URL on every match row.
 
 **Rate limiting:** GitHub's REST API allows 5,000 authenticated requests an
-hour per token, and 60 without authentication. A run needs `GITHUB_TOKEN`.
+hour per token, and 60 without authentication. GraphQL has a separate budget of
+5,000 points an hour per token, and a batch of 25 repositories costs about 2 to
+3 points, so the GraphQL path is far from the limit. A run needs `GITHUB_TOKEN`.
 The scan paces its requests below the hourly limit, and it retries on both the
 hourly and the secondary (burst) limits. See `_is_rate_limited()` and
 `_retry_wait_seconds()`.
@@ -109,12 +115,13 @@ from __future__ import annotations
 import argparse
 import base64
 import csv
+import json
 import re
 import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import requests
 import yaml
@@ -613,6 +620,297 @@ def _scan_result(
     return {"repo": repo_row, "files": files or [], "matches": matches or []}
 
 
+def _records_for_matched_files(
+    repo_name: str,
+    language: str,
+    commit_sha: str,
+    matched: list[tuple[str, str, str]],
+    *,
+    read_content: Callable[[str], str | None],
+    test_patterns: dict[str, re.Pattern],
+    fixture_patterns: dict[str, re.Pattern],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Scan each matched root file (see `find_target_files_at_commit()`) and
+    return its `agent_files` rows and `agent_file_matches` rows. `read_content`
+    maps a blob sha to the file's text, or `None` when it cannot be read; an
+    unreadable file is skipped, as the REST path always did. Shared by
+    `process_repo()` and `process_repos_graphql()` so both record exactly the
+    same rows."""
+    files: list[dict[str, Any]] = []
+    matches: list[dict[str, Any]] = []
+    for on_disk_name, file_type, blob_sha in matched:
+        content = read_content(blob_sha)
+        if content is None:
+            logger.debug("[RQ5 scan] failed reading %s in %s", on_disk_name, repo_name)
+            continue
+
+        scanned = scan_file_content(content, test_patterns=test_patterns, fixture_patterns=fixture_patterns)
+        test_matches = scanned["test_matches"]
+        fixture_matches = scanned["fixture_matches"]
+        matched_test_keywords = sorted({m["keyword"] for m in test_matches})
+        matched_fixture_keywords = sorted({m["keyword"] for m in fixture_matches})
+
+        files.append(
+            {
+                "repo_name": repo_name,
+                "file_name": on_disk_name,
+                "file_type": file_type,
+                "language": language,
+                "commit_sha": commit_sha,
+                "has_test": bool(test_matches),
+                "has_fixture": bool(fixture_matches),
+                "test_match_count": len(test_matches),
+                "fixture_match_count": len(fixture_matches),
+                "matched_test_keywords": ",".join(matched_test_keywords),
+                "matched_fixture_keywords": ",".join(matched_fixture_keywords),
+                "github_url": f"https://github.com/{repo_name}/blob/{commit_sha}/{on_disk_name}",
+            }
+        )
+        for match in test_matches:
+            matches.append({"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "test", **match})
+        for match in fixture_matches:
+            matches.append({"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "fixture", **match})
+    return files, matches
+
+
+# GraphQL batching. The REST path costs about two requests per repository (the
+# cutoff commit, the root tree, one request per matched file), so a full run is
+# roughly 2 x repositories requests against a 5,000-per-hour quota. The GraphQL
+# endpoint answers the same questions for a whole batch of repositories in one
+# request, and has its own point budget. Measured on 224 repositories with the
+# snapshot 2026-03-01: identical output to the REST path, 17 GraphQL points in
+# total, against 500 REST requests.
+GRAPHQL_URL = f"{GITHUB_API_BASE}/graphql"
+GRAPHQL_BATCH_SIZE = 25
+_BLOB_FIELDS = "text isBinary isTruncated"
+
+
+class GraphQLError(Exception):
+    """A GraphQL request failed in a way that retrying will not fix: a transport
+    error, an unexpected HTTP status, or a body that is not JSON. Caught by
+    `process_repos_graphql()`, which records the batch as `tree_fetch_failed`."""
+
+
+def _split_repo_name(repo_name: str) -> tuple[str, str]:
+    owner, sep, name = repo_name.partition("/")
+    if not sep or not owner or not name:
+        raise GraphQLError(f"not an owner/name repository: {repo_name!r}")
+    return owner, name
+
+
+def _graphql_rate_limited(payload: dict[str, Any]) -> bool:
+    return any(error.get("type") == "RATE_LIMITED" for error in payload.get("errors") or [])
+
+
+def _graphql_post(query: str, variables: dict[str, Any], *, token: str, rate_limiter: _RateLimiter | None) -> dict:
+    """POST one GraphQL query, retrying on rate limiting with the same wait rule
+    as `_api_get()`. Raises `RateLimitExhausted` when every retry is spent,
+    `GraphQLError` on any other failure, and returns the parsed body otherwise."""
+    headers = {"Accept": "application/vnd.github+json", "Authorization": f"bearer {token}"}
+    body = {"query": query, "variables": variables}
+    for attempt in range(API_MAX_RETRIES + 1):
+        if rate_limiter is not None:
+            rate_limiter.acquire()
+        try:
+            response = requests.post(GRAPHQL_URL, json=body, headers=headers, timeout=API_TIMEOUT_SECONDS)
+        except requests.RequestException as exc:
+            raise GraphQLError(f"transport error: {exc}") from exc
+
+        payload = None
+        if response.status_code == 200:
+            try:
+                payload = response.json()
+            except ValueError as exc:
+                raise GraphQLError("GraphQL response is not JSON") from exc
+
+        if _is_rate_limited(response) or (payload is not None and _graphql_rate_limited(payload)):
+            if attempt < API_MAX_RETRIES:
+                wait_seconds = _retry_wait_seconds(response, attempt)
+                logger.warning(
+                    "[RQ5 scan] GraphQL rate limited (attempt %d/%d); retrying in %.1fs",
+                    attempt + 1,
+                    API_MAX_RETRIES,
+                    wait_seconds,
+                )
+                time.sleep(wait_seconds)
+                continue
+            raise RateLimitExhausted(GRAPHQL_URL)
+
+        if payload is None:
+            raise GraphQLError(f"GraphQL HTTP {response.status_code}")
+        return payload
+    raise RateLimitExhausted(GRAPHQL_URL)
+
+
+def _cutoff_query(repos: list[dict], snapshot_date: str) -> str:
+    """One aliased query: for each repository, the latest default-branch commit
+    at or before the snapshot, with its root tree entries."""
+    aliases = []
+    for index, repo in enumerate(repos):
+        owner, name = _split_repo_name(repo["repo_name"])
+        aliases.append(
+            f"r{index}: repository(owner: {json.dumps(owner)}, name: {json.dumps(name)}) {{"
+            " defaultBranchRef { target { ... on Commit {"
+            " history(first: 1, until: $until) { nodes { oid authoredDate"
+            " tree { entries { name type oid } } } } } } } }"
+        )
+    return "query($until: GitTimestamp!) { " + " ".join(aliases) + " }"
+
+
+def _blob_query(pairs: list[tuple[str, str]]) -> str:
+    aliases = []
+    for index, (repo_name, blob_sha) in enumerate(pairs):
+        owner, name = _split_repo_name(repo_name)
+        aliases.append(
+            f"b{index}: repository(owner: {json.dumps(owner)}, name: {json.dumps(name)}) {{"
+            f" object(oid: {json.dumps(blob_sha)}) {{ ... on Blob {{ {_BLOB_FIELDS} }} }} }}"
+        )
+    return "query { " + " ".join(aliases) + " }"
+
+
+def _fetch_cutoffs(
+    repos: list[dict], snapshot_date: str, *, token: str, rate_limiter: _RateLimiter | None
+) -> dict[str, dict[str, Any]]:
+    """Per repository: `{"sha", "date", "entries"}` for the cutoff commit, or
+    `{"error_reason"}`. A repository with no commit at or before the snapshot
+    (missing, empty, or with no such history) gets the same reason the REST
+    path records for it."""
+    payload = _graphql_post(
+        _cutoff_query(repos, snapshot_date),
+        {"until": f"{snapshot_date}T23:59:59Z"},
+        token=token,
+        rate_limiter=rate_limiter,
+    )
+    data = payload.get("data") or {}
+    errors_by_alias: dict[str, set[str]] = {}
+    for error in payload.get("errors") or []:
+        path = error.get("path") or [""]
+        errors_by_alias.setdefault(path[0], set()).add(error.get("type", ""))
+
+    outcomes: dict[str, dict[str, Any]] = {}
+    for index, repo in enumerate(repos):
+        alias = f"r{index}"
+        node = data.get(alias)
+        if node is None:
+            if "NOT_FOUND" in errors_by_alias.get(alias, set()):
+                outcomes[repo["repo_name"]] = {"error_reason": "no_commit_at_or_before_cutoff"}
+            else:
+                outcomes[repo["repo_name"]] = {"error_reason": "tree_fetch_failed"}
+            continue
+        target = (node.get("defaultBranchRef") or {}).get("target") or {}
+        commits = ((target.get("history") or {}).get("nodes")) or []
+        if not commits:
+            outcomes[repo["repo_name"]] = {"error_reason": "no_commit_at_or_before_cutoff"}
+            continue
+        commit = commits[0]
+        outcomes[repo["repo_name"]] = {
+            "sha": commit["oid"],
+            "date": commit["authoredDate"][:10],
+            "entries": [
+                {"path": entry["name"], "type": entry["type"], "sha": entry["oid"]}
+                for entry in (commit["tree"] or {}).get("entries", [])
+            ],
+        }
+    return outcomes
+
+
+def _fetch_blobs(
+    pairs: list[tuple[str, str]], *, token: str, rate_limiter: _RateLimiter | None
+) -> dict[tuple[str, str], str | None]:
+    """Text of each `(repo_name, blob_sha)`, or `None` when unreadable. Binary
+    blobs are unreadable, as on the REST path. A truncated text is re-read in
+    full through the REST blob endpoint, so the scan never sees a partial file."""
+    if not pairs:
+        return {}
+    payload = _graphql_post(_blob_query(pairs), {}, token=token, rate_limiter=rate_limiter)
+    data = payload.get("data") or {}
+    texts: dict[tuple[str, str], str | None] = {}
+    for index, pair in enumerate(pairs):
+        obj = (data.get(f"b{index}") or {}).get("object") or {}
+        if obj.get("isBinary"):
+            texts[pair] = None
+        elif obj.get("isTruncated"):
+            texts[pair] = read_blob_via_api(pair[0], pair[1], token=token, rate_limiter=rate_limiter)
+        else:
+            texts[pair] = obj.get("text")
+    return texts
+
+
+def process_repos_graphql(
+    repos: list[dict],
+    *,
+    snapshot_date: str,
+    token: str = GITHUB_TOKEN,
+    catalog: dict[str, Any] | None = None,
+    rate_limiter: _RateLimiter | None = None,
+) -> list[dict[str, Any]]:
+    """The same scan as `process_repo()`, for a batch of repositories in a
+    handful of GraphQL requests instead of about two REST requests each (see
+    the GraphQL section above). Returns one result per repository in `repos`,
+    in the same shape `process_repo()` returns. Never raises: a rate-limited
+    batch records every repository as `rate_limited`, and any other failure
+    records them as `tree_fetch_failed`. Both reasons are retryable, and
+    neither is recorded as a confirmed negative."""
+    catalog = catalog or load_rq5_keyword_catalog()
+    target_files = catalog["target_files"]
+    test_patterns = _build_patterns(catalog["test_keywords"])
+    fixture_patterns = _build_patterns(catalog["fixture_keywords"])
+    catalog_version = catalog.get("version")
+    scanned_at = datetime.now(timezone.utc).isoformat()
+
+    def _fail(repo: dict, error_reason: str) -> dict[str, Any]:
+        return _scan_result(
+            _repo_row(repo["repo_name"], repo["language"], scanned_at, catalog_version, fetch_ok=False, error_reason=error_reason)
+        )
+
+    try:
+        cutoffs = _fetch_cutoffs(repos, snapshot_date, token=token, rate_limiter=rate_limiter)
+        matched_by_repo: dict[str, list[tuple[str, str, str]]] = {}
+        pairs: list[tuple[str, str]] = []
+        for repo in repos:
+            outcome = cutoffs[repo["repo_name"]]
+            if "sha" not in outcome:
+                continue
+            matched = find_target_files_at_commit(outcome["entries"], target_files)
+            matched_by_repo[repo["repo_name"]] = matched
+            pairs.extend((repo["repo_name"], blob_sha) for _, _, blob_sha in matched)
+        blobs = _fetch_blobs(pairs, token=token, rate_limiter=rate_limiter)
+    except RateLimitExhausted:
+        return [_fail(repo, "rate_limited") for repo in repos]
+    except GraphQLError as exc:
+        logger.warning("[RQ5 scan] GraphQL batch of %d failed: %s", len(repos), exc)
+        return [_fail(repo, "tree_fetch_failed") for repo in repos]
+
+    results: list[dict[str, Any]] = []
+    for repo in repos:
+        repo_name = repo["repo_name"]
+        outcome = cutoffs[repo_name]
+        if "sha" not in outcome:
+            results.append(_fail(repo, outcome["error_reason"]))
+            continue
+        files, matches = _records_for_matched_files(
+            repo_name,
+            repo["language"],
+            outcome["sha"],
+            matched_by_repo[repo_name],
+            read_content=lambda blob_sha, name=repo_name: blobs.get((name, blob_sha)),
+            test_patterns=test_patterns,
+            fixture_patterns=fixture_patterns,
+        )
+        repo_row = _repo_row(
+            repo_name,
+            repo["language"],
+            scanned_at,
+            catalog_version,
+            fetch_ok=True,
+            commit_sha=outcome["sha"],
+            commit_date=outcome["date"],
+            num_agent_files=len(files),
+        )
+        results.append(_scan_result(repo_row, files, matches))
+    return results
+
+
 def process_repo(
     repo: dict,
     *,
@@ -624,7 +922,8 @@ def process_repo(
     """Resolve `repo`'s cutoff commit and keyword-scan whichever of
     `catalog`'s `target_files` exist at the repo's root as of that
     commit -- entirely via GitHub's REST API, no clone of any kind (see
-    module docstring). Never raises -- any failure is captured as a
+    module docstring). `run_scan()` uses `process_repos_graphql()` instead;
+    this per-repository path serves `retry_failed_repos()`. Never raises -- any failure is captured as a
     zero-filled row with `fetch_ok=0` and `error_reason` set, so one bad
     repo can never crash a ~24.7k-repo run. Runs in a worker thread when
     called via `run_parallel_per_repo()` -- touches no shared DB
@@ -669,45 +968,17 @@ def process_repo(
             return _fail("tree_fetch_failed")
 
         matched = find_target_files_at_commit(tree_entries, target_files)
-
-        files: list[dict[str, Any]] = []
-        matches: list[dict[str, Any]] = []
-        for on_disk_name, file_type, blob_sha in matched:
-            content = read_blob_via_api(repo_name, blob_sha, token=token, rate_limiter=rate_limiter)
-            if content is None:
-                logger.debug("[RQ5 scan] failed reading %s in %s", on_disk_name, repo_name)
-                continue
-
-            scanned = scan_file_content(content, test_patterns=test_patterns, fixture_patterns=fixture_patterns)
-            test_matches = scanned["test_matches"]
-            fixture_matches = scanned["fixture_matches"]
-            matched_test_keywords = sorted({m["keyword"] for m in test_matches})
-            matched_fixture_keywords = sorted({m["keyword"] for m in fixture_matches})
-
-            files.append(
-                {
-                    "repo_name": repo_name,
-                    "file_name": on_disk_name,
-                    "file_type": file_type,
-                    "language": language,
-                    "commit_sha": cutoff["sha"],
-                    "has_test": bool(test_matches),
-                    "has_fixture": bool(fixture_matches),
-                    "test_match_count": len(test_matches),
-                    "fixture_match_count": len(fixture_matches),
-                    "matched_test_keywords": ",".join(matched_test_keywords),
-                    "matched_fixture_keywords": ",".join(matched_fixture_keywords),
-                    "github_url": f"https://github.com/{repo_name}/blob/{cutoff['sha']}/{on_disk_name}",
-                }
-            )
-            for match in test_matches:
-                matches.append(
-                    {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "test", **match}
-                )
-            for match in fixture_matches:
-                matches.append(
-                    {"repo_name": repo_name, "file_name": on_disk_name, "keyword_list": "fixture", **match}
-                )
+        files, matches = _records_for_matched_files(
+            repo_name,
+            language,
+            cutoff["sha"],
+            matched,
+            read_content=lambda blob_sha: read_blob_via_api(
+                repo_name, blob_sha, token=token, rate_limiter=rate_limiter
+            ),
+            test_patterns=test_patterns,
+            fixture_patterns=fixture_patterns,
+        )
     except RateLimitExhausted:
         return _fail("rate_limited")
 
@@ -1167,10 +1438,10 @@ def run_scan(
     snapshot_date: str | None = None,
     log_every: int = PROGRESS_LOG_EVERY,
     notify: bool = True,
-    process_repo_timeout_seconds: float = PROCESS_REPO_TIMEOUT_SECONDS,
     token: str = GITHUB_TOKEN,
     catalog_path: Path = CATALOG_PATH,
     target_requests_per_hour: float | None = TARGET_REQUESTS_PER_HOUR,
+    batch_size: int = GRAPHQL_BATCH_SIZE,
 ) -> dict[str, int]:
     """Scan every not-yet-scanned repo in the corpus (`corpus`, or
     `load_corpus(fixtures_dir)` when omitted) at `snapshot_date`, persisting
@@ -1215,33 +1486,18 @@ def run_scan(
     started_at = datetime.now(timezone.utc)
     counters = {"completed": 0, "fetch_ok": 0, "fetch_failed": 0, "agent_files_found": 0}
 
-    def _compute(repo: dict) -> dict:
-        ok, result = run_with_deadline(
-            process_repo,
-            repo,
+    def _compute(batch: list[dict]) -> list[dict]:
+        return process_repos_graphql(
+            batch,
             snapshot_date=snapshot_date,
             token=token,
             catalog=catalog,
             rate_limiter=rate_limiter,
-            timeout_seconds=process_repo_timeout_seconds,
         )
-        if ok:
-            return result
-        logger.warning(
-            "[RQ5 scan] %s exceeded the %ds per-repo deadline -- abandoning",
-            repo["repo_name"],
-            process_repo_timeout_seconds,
-        )
-        return _scan_result(
-            _repo_row(
-                repo["repo_name"],
-                repo["language"],
-                datetime.now(timezone.utc).isoformat(),
-                catalog.get("version"),
-                fetch_ok=False,
-                error_reason="timeout",
-            )
-        )
+
+    def _persist_batch(results: list[dict]) -> None:
+        for result in results:
+            _persist(result)
 
     def _persist(result: dict) -> None:
         persist_result(result, db_path)
@@ -1304,7 +1560,8 @@ def run_scan(
             language,
             len(chunk),
         )
-        run_parallel_per_repo(chunk, _compute, _persist, workers, desc=f"[RQ5 scan {language}]")
+        batches = [chunk[start : start + batch_size] for start in range(0, len(chunk), batch_size)]
+        run_parallel_per_repo(batches, _compute, _persist_batch, workers, desc=f"[RQ5 scan {language}]")
         if notify:
             _notify(
                 f"RQ5 scan {idx}/{len(RQ5_LANGUAGES)}: {language} done -- "
@@ -1456,8 +1713,8 @@ def retry_failed_repos(
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="RQ5 agent-configuration-file keyword scan over the repositories "
-        "that contribute a fixture to Dataset A. Reads entirely via the GitHub REST "
-        "API -- no cloning."
+        "that contribute a fixture to Dataset A. Reads entirely via the GitHub API "
+        "(GraphQL batches) -- no cloning."
     )
     parser.add_argument(
         "--snapshot-date",

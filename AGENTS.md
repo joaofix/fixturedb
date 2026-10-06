@@ -88,7 +88,7 @@ collection/          # Main pipeline code (the "library")
                      # writes db/rq1_prevalence.db + rq1-prevalence/*.csv. Run directly:
                      # `python -m collection.rq1_prevalence_scan`
   rq5_agent_file_scan.py  # RQ5's own collection, for the repos with a Dataset A fixture (not the raw
-                     # universe), at a required --snapshot-date -- via the GitHub REST API, never a
+                     # universe), at a required --snapshot-date -- via GitHub's GraphQL API (batched), never a
                      # clone: keyword-scans root-level AGENTS.md/CLAUDE.md, writes db/rq5_agent_files_v4.db
                      # + rq5_v4/*.csv. Keyword/target-file catalog: heuristics/rq5_agent_file_keywords.yaml.
                      # Run directly: `python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD`

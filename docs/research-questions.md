@@ -54,8 +54,8 @@ contributes at least one fixture to Dataset A. Each file is read at the last
 commit on or before a snapshot date. The snapshot date is a required argument of
 the scan.
 
-The scan (`rq5_agent_file_scan.py`) uses the GitHub API and does not clone
-repositories. It searches for test-related and fixture-related terms. The keyword
+The scan (`rq5_agent_file_scan.py`) uses the GitHub GraphQL API, in batches of
+25 repositories, and does not clone repositories. It searches for test-related and fixture-related terms. The keyword
 catalog is `collection/heuristics/rq5_agent_file_keywords.yaml`, version 4.
 A repository counts as matching if any of its root files matches.
 
