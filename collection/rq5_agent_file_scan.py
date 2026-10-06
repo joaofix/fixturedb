@@ -1187,8 +1187,10 @@ REPOSITORY_SHEET_FIELDNAMES: tuple[str, ...] = (
     "repository",
     "primary_language",
     "fixture_match_count",
-    "fixture_snippets",
     *REPOSITORY_CODING_COLUMNS,
+    # Last, so the long cell can be widened in a spreadsheet without
+    # pushing the coding columns off screen.
+    "fixture_snippets",
 )
 CODE_FIXTURE_GUIDANCE_VALUES: tuple[str, ...] = ("yes", "no", "unsure")
 # Ardic et al.'s themes for agent-file testing guidance.
@@ -1323,8 +1325,8 @@ def write_repository_coding_sheet(
         by_repo.setdefault(repo_name, []).append((row_id, keyword, file_name, line_number, row[6]))
 
     with path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.writer(fh)
-        writer.writerow(REPOSITORY_SHEET_FIELDNAMES)
+        writer = csv.DictWriter(fh, fieldnames=REPOSITORY_SHEET_FIELDNAMES)
+        writer.writeheader()
         for repo_name in sorted(by_repo):
             matches = sorted(
                 by_repo[repo_name],
@@ -1334,7 +1336,15 @@ def write_repository_coding_sheet(
                 f"[{row_id}] {keyword} | {file_name}:{line_number} | {line}"
                 for row_id, keyword, file_name, line_number, line in matches
             )
-            writer.writerow([repo_name, languages.get(repo_name, ""), len(matches), snippets, "", "", "", ""])
+            writer.writerow(
+                {
+                    "repository": repo_name,
+                    "primary_language": languages.get(repo_name, ""),
+                    "fixture_match_count": len(matches),
+                    **dict.fromkeys(REPOSITORY_CODING_COLUMNS, ""),
+                    "fixture_snippets": snippets,
+                }
+            )
     return path
 
 

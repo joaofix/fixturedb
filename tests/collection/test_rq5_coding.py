@@ -125,6 +125,7 @@ class TestRepositoryCodingSheet:
         rows = _read(out / REPOSITORY_SHEET_NAME)
 
         assert list(rows[0].keys()) == list(REPOSITORY_SHEET_FIELDNAMES)
+        assert list(rows[0].keys())[-1] == "fixture_snippets"
         assert [(r["repository"], r["primary_language"], r["fixture_match_count"]) for r in rows] == [
             ("owner/a", "python", "3"),
             ("owner/b", "typescript", "1"),
