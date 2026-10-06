@@ -128,10 +128,10 @@ class TestGenerateReport:
 
         assert "| 1 | Repositories in the corpus | 6 |" in report
         assert "| 1 | Repositories analyzed | 5 | 83.3% | corpus |" in report
-        assert "| 2 | With at least one root agent file | 4 | 80.0% | analyzed |" in report
+        assert "| 2 | With a root agent file (AGENTS.md or CLAUDE.md) | 4 | 80.0% | analyzed |" in report
         assert "| 3 | With a test keyword (`test_keywords`) | 3 | 75.0% | with agent file |" in report
         assert "| 4 | With an Ardic test term (`ardic_test_keywords`) | 2 | 50.0% | with agent file |" in report
-        assert "| 5 | With a fixture keyword (`fixture_keywords`) | 1 | 25.0% | with agent file |" in report
+        assert "| 5 | With a fixture keyword match (`fixture_keywords`) | 1 | 25.0% | with agent file |" in report
 
     def test_by_language_splits_the_shares(self, scanned_db):
         report = generate_report(db_path=scanned_db)

@@ -243,8 +243,12 @@ defaults to 20 batches in flight). `GITHUB_TOKEN` is effectively **required**
 here, not just recommended: the unauthenticated REST rate limit is 60
 requests/hour, and the GraphQL endpoint refuses unauthenticated requests. The
 authenticated GraphQL budget is 5,000 points/hour, and a batch costs about 2 to
-3 points. Run it after the Dataset A fixture CSVs exist. It writes `rq5/` (the three review
-CSVs) and `research_questions/rq5.md`.
+3 points. Run it after the Dataset A fixture CSVs exist. It writes `rq5/` (the review
+CSVs, including the repository-level coding sheet, and a README with the coding
+values) and `research_questions/rq5.md`. After the manual coding of
+`rq5/rq5_repository_coding_sheet.csv` is complete, run `rq5_coding` (it exits
+with the list of uncoded rows until then). A rescan refuses to overwrite a
+repository sheet that already holds coding.
 
 ```bash
 python -m collection.rq1_prevalence_scan --workers 12
@@ -254,6 +258,7 @@ python -m collection.research_questions.rq1   # writes research_questions/rq1.md
 python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD --workers 20
   && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq5   # writes research_questions/rq5.md
+python -m collection.research_questions.rq5_coding   # after manual coding; writes research_questions/rq5_coding.md
 ```
 
 ### After collection

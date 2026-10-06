@@ -26,7 +26,6 @@ import pytest
 import requests
 
 from collection.rq5_agent_file_scan import (
-    AMBIGUOUS_FIXTURE_KEYWORDS,
     REPAIRABLE_ERROR_REASONS,
     RQ5_LANGUAGES,
     TARGET_REQUESTS_PER_HOUR,
@@ -157,15 +156,6 @@ class TestLoadRq5KeywordCatalog:
         # these concepts are still caught.
         for kept in ("beforeEach", "afterEach", "beforeAll", "afterAll", "setup and teardown"):
             assert kept in catalog["fixture_keywords"]
-
-    def test_ambiguous_fixture_keywords_are_still_in_the_catalog(self):
-        """AMBIGUOUS_FIXTURE_KEYWORDS ("fixture"/"fixtures") are a
-        reporting caveat, not a removal -- see that constant's own
-        docstring for why they're kept despite the measured data-file-
-        sense majority."""
-        catalog = load_rq5_keyword_catalog()
-        for keyword in AMBIGUOUS_FIXTURE_KEYWORDS:
-            assert keyword in catalog["fixture_keywords"]
 
 
 class TestBuildKeywordPattern:

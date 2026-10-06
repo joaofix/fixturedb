@@ -59,10 +59,22 @@ The scan (`rq5_agent_file_scan.py`) uses the GitHub GraphQL API, in batches of
 catalog is `collection/heuristics/rq5_agent_file_keywords.yaml`.
 A repository counts as matching if any of its root files matches.
 
-The report gives, at repository level, the share of repositories with a root
-agent file, and among those the shares that mention tests, the four Ardic et al.
-(SCAM 2026) test terms, and fixtures. It also gives the shares per language and
-the number of repositories containing each fixture term.
+The report (`research_questions/rq5.md`) gives numbers and definitions only. At
+repository level: the share of repositories with a root agent file, and among
+those the shares matching the test keywords, the keyword set of Ardic et al.
+(SCAM 2026), and the fixture keywords, overall and per language, plus the number
+of repositories containing each fixture term. Per match: how many fixture
+matches fall inside fenced code blocks, overall and per term.
+
+A fixture keyword match is not fixture guidance: many "fixture"/"fixtures"
+matches refer to test-data files, which are out of scope. The final RQ5 number
+comes from manual coding of `rq5/rq5_repository_coding_sheet.csv`, one row per
+repository with a fixture match (coding values in `rq5/README.md`). Once every
+row is coded, `research_questions/rq5_coding.py` writes
+`research_questions/rq5_coding.md`: the share of repositories with a root agent
+file coded `yes` (overall and per language), the precision of the keyword search
+(with `unsure` reported separately), and the repositories per category. It
+refuses to run while any row is uncoded.
 
 ## Where the numbers come from
 

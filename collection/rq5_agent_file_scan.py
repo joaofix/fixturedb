@@ -1179,6 +1179,45 @@ CODING_SHEET_FIELDNAMES: tuple[str, ...] = (
     "notes",
 )
 SKIPPED_CSV_FIELDNAMES: tuple[str, ...] = ("repository", "language", "error_reason")
+REPOSITORY_SHEET_NAME = "rq5_repository_coding_sheet.csv"
+REPOSITORY_CODING_COLUMNS: tuple[str, ...] = (
+    "code_fixture_guidance",
+    "evidence_row_id",
+    "category",
+    "notes",
+)
+REPOSITORY_SHEET_FIELDNAMES: tuple[str, ...] = (
+    "repository",
+    "primary_language",
+    "fixture_match_count",
+    "fixture_snippets",
+    *REPOSITORY_CODING_COLUMNS,
+)
+CODE_FIXTURE_GUIDANCE_VALUES: tuple[str, ...] = ("yes", "no", "unsure")
+# Ardic et al.'s themes for agent-file testing guidance.
+CATEGORY_VALUES: tuple[str, ...] = (
+    "location_placement",
+    "strategy",
+    "tips",
+    "avoidance",
+    "example",
+    "framework_environment",
+    "other",
+)
+# Reading order of a repository's snippets in the repository-level sheet.
+# Only an order, not a classification.
+SNIPPET_TERM_ORDER: tuple[str, ...] = (
+    "conftest",
+    "beforeEach",
+    "afterEach",
+    "beforeAll",
+    "afterAll",
+    "test setup",
+    "setup and teardown",
+    "fixture",
+    "fixtures",
+)
+_SNIPPET_ID_RE = re.compile(r"^\[(\d+)\]", re.MULTILINE)
 
 
 def load_repo_guidance(
@@ -1229,19 +1268,135 @@ def load_repo_guidance(
     return list(by_repo.values())
 
 
+def load_fixture_match_rows(db_path: Path = DB_PATH) -> list[tuple]:
+    """Every fixture-keyword match, in the row order of
+    `rq5_fixture_coding_sheet.csv`. A match's row id is its 1-based position
+    in this list (the sheet's Nth data row)."""
+    with db_session(db_path) as conn:
+        return conn.execute(
+            f"""
+            SELECT repo_name, file_name, line_number, keyword, line_before_2,
+                   line_before_1, line_context, line_after_1, line_after_2, in_code_block
+            FROM {MATCH_TABLE_NAME}
+            WHERE keyword_list = 'fixture'
+            ORDER BY repo_name, file_name, line_number, keyword
+            """
+        ).fetchall()
+
+
+def snippet_row_ids(snippets: str) -> set[int]:
+    """The match row ids prefixed to each snippet of a `fixture_snippets` cell."""
+    return {int(m) for m in _SNIPPET_ID_RE.findall(snippets)}
+
+
+def _has_manual_coding(path: Path) -> bool:
+    if not path.exists():
+        return False
+    with path.open("r", encoding="utf-8", newline="") as fh:
+        return any(
+            (row.get(column) or "").strip()
+            for row in csv.DictReader(fh)
+            for column in REPOSITORY_CODING_COLUMNS
+        )
+
+
+def write_repository_coding_sheet(
+    match_rows: list[tuple],
+    db_path: Path = DB_PATH,
+    output_dir: Path = CSV_OUTPUT_DIR,
+) -> Path:
+    """Write `rq5_repository_coding_sheet.csv`: one row per repository with at
+    least one fixture match. `fixture_snippets` holds every one of the
+    repository's matched lines, one per line of the cell, as
+    `[<row id>] <term> | <file>:<line> | <matched line>`, ordered by
+    `SNIPPET_TERM_ORDER`, then file and line. The coding columns are empty.
+
+    Raises rather than overwrite a sheet that already holds manual coding."""
+    path = output_dir / REPOSITORY_SHEET_NAME
+    if _has_manual_coding(path):
+        raise ValueError(f"{path} already holds manual coding; refusing to overwrite it")
+
+    with db_session(db_path) as conn:
+        languages = dict(conn.execute(f"SELECT repo_name, language FROM {REPO_TABLE_NAME}").fetchall())
+
+    term_rank = {term: rank for rank, term in enumerate(SNIPPET_TERM_ORDER)}
+    by_repo: dict[str, list[tuple]] = {}
+    for row_id, row in enumerate(match_rows, start=1):
+        repo_name, file_name, line_number, keyword = row[0], row[1], row[2], row[3]
+        by_repo.setdefault(repo_name, []).append((row_id, keyword, file_name, line_number, row[6]))
+
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(REPOSITORY_SHEET_FIELDNAMES)
+        for repo_name in sorted(by_repo):
+            matches = sorted(
+                by_repo[repo_name],
+                key=lambda m: (term_rank.get(m[1], len(term_rank)), m[2], m[3], m[0]),
+            )
+            snippets = "\n".join(
+                f"[{row_id}] {keyword} | {file_name}:{line_number} | {line}"
+                for row_id, keyword, file_name, line_number, line in matches
+            )
+            writer.writerow([repo_name, languages.get(repo_name, ""), len(matches), snippets, "", "", "", ""])
+    return path
+
+
+def write_rq5_readme(output_dir: Path = CSV_OUTPUT_DIR) -> Path:
+    """Write `README.md` for the review outputs, including the allowed values
+    of the repository-level coding columns."""
+    categories = "\n".join(f"- `{value}`" for value in CATEGORY_VALUES)
+    text = f"""# RQ5 review outputs
+
+Written by `python -m collection.rq5_agent_file_scan`. Manual coding is done
+in `{REPOSITORY_SHEET_NAME}`; `python -m collection.research_questions.rq5_coding`
+reads it once every row is coded.
+
+## Files
+
+- `rq5_repositories.csv`: one row per analyzed repository.
+- `rq5_fixture_coding_sheet.csv`: one row per fixture-keyword match, with two
+  lines of context on each side. A match's **row id** is its 1-based position
+  among the data rows (row id N is spreadsheet row N+1, below the header).
+- `{REPOSITORY_SHEET_NAME}`: one row per repository with at least one fixture
+  match. `fixture_snippets` lists all of the repository's matched lines, each
+  prefixed with its row id, ordered by term ({", ".join(SNIPPET_TERM_ORDER)}),
+  then file and line. The order is only a reading order, not a classification.
+- `rq5_skipped_repositories.csv`: repositories that could not be analyzed.
+
+## Coding columns of `{REPOSITORY_SHEET_NAME}`
+
+- `code_fixture_guidance`: {" / ".join(f"`{v}`" for v in CODE_FIXTURE_GUIDANCE_VALUES)}.
+  Whether the repository's agent files give guidance about test fixtures as code.
+- `evidence_row_id`: the match row id that confirmed `yes`. Required for `yes`.
+- `category`: required for `yes`. One or more of the values below, separated by
+  `;`. The values are the themes of Ardic et al. (SCAM 2026).
+- `notes`: free text.
+
+Allowed `category` values:
+
+{categories}
+"""
+    path = output_dir / "README.md"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
 def write_review_outputs(
     ardic_terms: set[str] | frozenset[str],
     db_path: Path = DB_PATH,
     output_dir: Path = CSV_OUTPUT_DIR,
 ) -> dict[str, Path]:
-    """Write the three RQ5 review outputs into `output_dir`:
+    """Write the RQ5 review outputs into `output_dir`:
 
     - `rq5_repositories.csv`: one row per analyzed repository (commit SHA,
       agent files found, the test/Ardic/fixture flags, matched fixture terms).
     - `rq5_fixture_coding_sheet.csv`: one row per fixture-keyword match, with
       two lines of context on each side and empty columns for manual coding.
+    - `rq5_repository_coding_sheet.csv`: one row per repository with a
+      fixture match, see `write_repository_coding_sheet()`.
     - `rq5_skipped_repositories.csv`: every repository that could not be
       analyzed, with the reason.
+    - `README.md`: the files and the allowed manual-coding values.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, Path] = {}
@@ -1264,16 +1419,8 @@ def write_review_outputs(
             )
     written["repositories"] = repo_path
 
+    match_rows = load_fixture_match_rows(db_path)
     with db_session(db_path) as conn:
-        match_rows = conn.execute(
-            f"""
-            SELECT repo_name, file_name, line_number, keyword, line_before_2,
-                   line_before_1, line_context, line_after_1, line_after_2, in_code_block
-            FROM {MATCH_TABLE_NAME}
-            WHERE keyword_list = 'fixture'
-            ORDER BY repo_name, file_name, line_number, keyword
-            """
-        ).fetchall()
         skipped_rows = conn.execute(
             f"SELECT repo_name, language, error_reason FROM {REPO_TABLE_NAME} "
             "WHERE fetch_ok = 0 ORDER BY repo_name"
@@ -1303,6 +1450,8 @@ def write_review_outputs(
                 ]
             )
     written["coding_sheet"] = sheet_path
+    written["repository_sheet"] = write_repository_coding_sheet(match_rows, db_path, output_dir)
+    written["readme"] = write_rq5_readme(output_dir)
 
     skipped_path = output_dir / "rq5_skipped_repositories.csv"
     with skipped_path.open("w", encoding="utf-8", newline="") as fh:
@@ -1311,24 +1460,6 @@ def write_review_outputs(
         writer.writerows(skipped_rows)
     written["skipped"] = skipped_path
     return written
-
-
-# **A reporting caveat, see collection/research_questions/rq5.py's
-# conservative-subset metric.** Unlike the catalog's excluded terms,
-# "fixture"/"fixtures" are not a false-positive-prone pattern match:
-# they correctly find the literal word "fixture". The problem is semantic,
-# not lexical, and the catalog can't fix it by word choice -- "fixture"
-# genuinely has two senses in agent-config prose, and this study's object
-# is only one of them. A manual sample of 60 real matches found roughly a third were fixture-as-code ("functions decorated with
-# @pytest.fixture", shared conftest.py fixtures) and over half were
-# fixture-as-test-data-file ("tests/fixtures/*.json", "fixture.json",
-# snapshot fixtures, Docker-based fixtures) -- the latter sense is
-# explicitly out of scope for this study (fixtures-as-code only). Kept in
-# the catalog regardless, since dropping them would also lose every real
-# code-sense match, undercounting rather than fixing anything -- this
-# constant exists purely so the report can additionally show a stricter,
-# code-only-keyword count alongside the inclusive one.
-AMBIGUOUS_FIXTURE_KEYWORDS: tuple[str, ...] = ("fixture", "fixtures")
 
 
 def run_scan(

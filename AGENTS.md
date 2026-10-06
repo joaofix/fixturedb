@@ -96,7 +96,8 @@ collection/          # Main pipeline code (the "library")
                      # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,c}.db),
                      # rq2/rq3/rq4.py (structural/teardown/mocking, read db/{a,c}.db), rq5.py
                      # (agent config file test/fixture keyword prevalence, reads
-                     # db/rq5_agent_files.db -- not db/{a,c}.db), balance.py (control-variable
+                     # db/rq5_agent_files.db -- not db/{a,c}.db), rq5_coding.py (final RQ5 numbers
+                     # from the manually coded rq5/rq5_repository_coding_sheet.csv), balance.py (control-variable
                      # check), dataset_findings.py (non-RQ descriptive findings),
                      # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)

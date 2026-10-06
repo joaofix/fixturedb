@@ -237,12 +237,12 @@ class TestLoadRepoGuidance:
 
 
 class TestWriteReviewOutputs:
-    def test_writes_the_three_outputs_with_the_agreed_columns(self, v4_db, tmp_path):
+    def test_writes_every_output_with_the_agreed_columns(self, v4_db, tmp_path):
         out = tmp_path / "out"
 
         written = write_review_outputs(ARDIC_TERMS, v4_db, out)
 
-        assert set(written) == {"repositories", "coding_sheet", "skipped"}
+        assert set(written) == {"repositories", "coding_sheet", "repository_sheet", "skipped", "readme"}
         with written["repositories"].open(encoding="utf-8") as fh:
             repo_rows = list(csv.reader(fh))
         assert tuple(repo_rows[0]) == REPO_CSV_FIELDNAMES

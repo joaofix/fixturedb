@@ -6,15 +6,18 @@ for the repositories that contribute at least one fixture to Dataset A?
 Pure reader over `db/rq5_agent_files.db` (`collection/rq5_agent_file_scan.py`'s
 own output). No collection logic lives here.
 
-Every statistic is at the repository level. A repository counts as having a
-kind of guidance if ANY of its root agent files matches. The denominators are:
+The report gives numbers and definitions only. Every statistic except the
+fenced-code-block table is at the repository level: a repository counts as
+matching a keyword list if ANY of its root agent files matches. A fixture
+keyword match is not fixture guidance; that is decided by manual coding (see
+`rq5_coding.py`). The denominators are:
 
 - "analyzed" repositories (commit found at the snapshot, root tree fetched) for
   the share with at least one root agent file;
 - repositories with at least one root agent file for every other share.
 
-The Ardic et al. (SCAM 2026) statistic uses the same computation as the test
-statistic, with `ardic_test_keywords` instead of `test_keywords`.
+The `ardic_test_keywords` statistic uses the keyword set of Ardic et al. (SCAM
+2026) with the same computation as the `test_keywords` statistic.
 
 python -m collection.research_questions.rq5
 """
@@ -32,6 +35,7 @@ from ..rq5_agent_file_scan import (
     CATALOG_PATH,
     DB_PATH,
     REPO_TABLE_NAME,
+    load_fixture_match_rows,
     load_repo_guidance,
     load_rq5_keyword_catalog,
     load_scan_meta,
@@ -104,6 +108,19 @@ def fixture_term_counts(records: list[dict[str, Any]], fixture_terms: list[str])
     return counts
 
 
+def code_block_counts(match_rows: list[tuple], fixture_terms: list[str]) -> dict[str, tuple[int, int]]:
+    """Fixture matches and those inside a fenced code block, per term (every
+    catalog term, even at zero) and under the key `"all"`."""
+    counts = {term: [0, 0] for term in [*fixture_terms, "all"]}
+    for row in match_rows:
+        keyword, in_block = row[3], bool(row[9])
+        for key in (keyword, "all"):
+            counts.setdefault(key, [0, 0])
+            counts[key][0] += 1
+            counts[key][1] += in_block
+    return {key: (total, in_block) for key, (total, in_block) in counts.items()}
+
+
 def _ratio(numerator: int, denominator: int) -> float | None:
     return None if denominator == 0 else numerator / denominator
 
@@ -115,13 +132,13 @@ def render_overall_table(counts: dict[str, Any], stats: GroupStats) -> str:
         f"| 1 | Repositories in the corpus | {counts['total']:,} | -- | -- |",
         f"| 1 | Repositories analyzed | {stats.analyzed:,} | "
         f"{pct(_ratio(stats.analyzed, counts['total']))} | corpus |",
-        f"| 2 | With at least one root agent file | {stats.with_agent_file:,} | "
+        f"| 2 | With a root agent file (AGENTS.md or CLAUDE.md) | {stats.with_agent_file:,} | "
         f"{pct(_ratio(stats.with_agent_file, stats.analyzed))} | analyzed |",
         f"| 3 | With a test keyword (`test_keywords`) | {stats.test:,} | "
         f"{pct(_ratio(stats.test, stats.with_agent_file))} | with agent file |",
         f"| 4 | With an Ardic test term (`ardic_test_keywords`) | {stats.test_ardic:,} | "
         f"{pct(_ratio(stats.test_ardic, stats.with_agent_file))} | with agent file |",
-        f"| 5 | With a fixture keyword (`fixture_keywords`) | {stats.fixture:,} | "
+        f"| 5 | With a fixture keyword match (`fixture_keywords`) | {stats.fixture:,} | "
         f"{pct(_ratio(stats.fixture, stats.with_agent_file))} | with agent file |",
     ]
     return "\n".join(lines)
@@ -130,7 +147,7 @@ def render_overall_table(counts: dict[str, Any], stats: GroupStats) -> str:
 def render_by_language_table(records: list[dict[str, Any]]) -> str:
     lines = [
         "| Language | Analyzed | With agent file (% of analyzed) | "
-        "Test keyword (% of with agent file) | Ardic test term (%) | Fixture keyword (%) |",
+        "Test keyword (% of with agent file) | Ardic test term (%) | Fixture keyword match (%) |",
         "|---|---|---|---|---|---|",
     ]
     for language in DISPLAY_LANGUAGES:
@@ -149,6 +166,15 @@ def render_fixture_term_table(counts: Counter, terms: list[str]) -> str:
     lines = ["| Fixture term | Repositories containing it |", "|---|---|"]
     for term in terms:
         lines.append(f"| {term} | {counts[term]:,} |")
+    return "\n".join(lines)
+
+
+def render_code_block_table(counts: dict[str, tuple[int, int]], terms: list[str]) -> str:
+    lines = ["| Fixture term | Fixture matches | In a fenced code block | Percentage |", "|---|---|---|---|"]
+    for term in [*terms, "all"]:
+        total, in_block = counts[term]
+        label = "All terms" if term == "all" else term
+        lines.append(f"| {label} | {total:,} | {in_block:,} | {pct(_ratio(in_block, total))} |")
     return "\n".join(lines)
 
 
@@ -209,6 +235,12 @@ def generate_report(*, db_path: Path = DB_PATH, catalog_path: Path = CATALOG_PAT
         "",
         render_fixture_term_table(fixture_term_counts(records, all_fixture_terms), all_fixture_terms),
         "",
+        "## Fixture matches in fenced code blocks",
+        "",
+        "Counted per match (one line of a root agent file matching a term), not per repository.",
+        "",
+        render_code_block_table(code_block_counts(load_fixture_match_rows(db_path), all_fixture_terms), all_fixture_terms),
+        "",
         "## Skipped repositories",
         "",
         render_skipped_table(counts),
@@ -216,11 +248,14 @@ def generate_report(*, db_path: Path = DB_PATH, catalog_path: Path = CATALOG_PAT
         "## Keyword lists",
         "",
         f"- Test keywords: {', '.join(catalog['test_keywords'])}",
-        f"- Ardic test terms (comparison with Ardic et al., SCAM 2026): "
+        f"- Ardic test terms (the keyword set of Ardic et al., SCAM 2026): "
         f"{', '.join(catalog['ardic_test_keywords'])}",
         f"- Fixture keywords: {', '.join(catalog['fixture_keywords'])}",
         "",
         "Matching is case-insensitive and whole-word.",
+        f"`test_keywords` match {stats.test - stats.test_ardic:,} "
+        f"{'repository' if stats.test - stats.test_ardic == 1 else 'repositories'} that "
+        "`ardic_test_keywords` do not.",
         "",
     ]
     return "\n".join(lines)
