@@ -193,22 +193,49 @@ def test_a_blobless_shallow_boundary_commit_gets_no_files_and_is_not_fetched(var
 
 
 
-def test_test_file_listing_never_lazily_fetches_missing_objects(varied_repo, monkeypatch):
-    """A missing object must not trigger a network fetch in the test-file listing:
-    on a blobless partial clone that fetch failed mid-run on the server."""
+def test_a_transient_network_failure_in_the_listing_is_retried(varied_repo, monkeypatch):
+    """A dropped connection while fetching a missing object (server, 2026-10-06) must
+    be retried, and the answer must match the one from an uninterrupted run."""
     from collection import test_commit_utils
 
     repo, shas = varied_repo
-    seen_envs = []
-    real_run = subprocess.run
+    baseline = collect_test_files_by_commit(repo, [shas["no_tests"], shas["adds"]], "python")
 
-    def spy(args, **kwargs):
+    real_run = subprocess.run
+    log_calls = []
+
+    def flaky(args, **kwargs):
         if "log" in args:
-            seen_envs.append(kwargs.get("env") or {})
+            log_calls.append(1)
+            if len(log_calls) < 3:
+                return subprocess.CompletedProcess(args, 128, "", "fatal: could not fetch abc from promisor remote")
         return real_run(args, **kwargs)
 
-    monkeypatch.setattr(test_commit_utils.subprocess, "run", spy)
-    collect_test_files_by_commit(repo, [shas["no_tests"]], "python")
+    monkeypatch.setattr(test_commit_utils.subprocess, "run", flaky)
+    monkeypatch.setattr(test_commit_utils.time, "sleep", lambda seconds: None)
 
-    assert seen_envs, "expected a git log call"
-    assert all(env.get("GIT_NO_LAZY_FETCH") == "1" for env in seen_envs)
+    result = collect_test_files_by_commit(repo, [shas["no_tests"], shas["adds"]], "python")
+
+    assert len(log_calls) == 3
+    assert result == baseline
+
+
+def test_a_non_network_git_failure_is_not_retried(varied_repo, monkeypatch):
+    from collection import test_commit_utils
+
+    repo, shas = varied_repo
+    log_calls = []
+    real = subprocess.run
+
+    def refused(args, **kwargs):
+        if "log" in args:
+            log_calls.append(1)
+            return subprocess.CompletedProcess(args, 128, "", "fatal: bad revision 'nope'")
+        return real(args, **kwargs)
+
+    monkeypatch.setattr(test_commit_utils.subprocess, "run", refused)
+    monkeypatch.setattr(test_commit_utils.time, "sleep", lambda seconds: None)
+
+    with pytest.raises(RuntimeError, match="git log failed"):
+        collect_test_files_by_commit(repo, [shas["no_tests"]], "python")
+    assert len(log_calls) == 1

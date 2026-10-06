@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import Iterable
 
@@ -190,14 +191,13 @@ def _present_commit_shas(repo_path: Path, shas: list[str]) -> list[str]:
     shallow clone, or a SHA that is not a commit, is left out."""
     if not shas:
         return []
-    proc = subprocess.run(
+    # Lazy fetching stays on: a listed commit that is missing from the clone is
+    # part of the window and must be fetched, as it was before. Only the parent
+    # check below turns it off, because fetching a boundary's parent is what
+    # produced false test files.
+    proc = _run_git_with_retry(
         ["git", "-C", str(repo_path), "cat-file", "--batch-check"],
-        input="\n".join(shas) + "\n",
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="surrogateescape",
-        env=_NO_LAZY_FETCH_ENV,
+        "\n".join(shas) + "\n",
     )
     if proc.returncode != 0:
         raise RuntimeError(f"git cat-file failed in {repo_path}: {proc.stderr.strip()[:200]}")
@@ -264,6 +264,50 @@ def _commits_with_missing_parents(repo_path: Path, shas: list[str]) -> set[str]:
     }
 
 
+# git's messages for a dropped or refused connection while fetching a missing object.
+# These are transient: the same request usually succeeds a few seconds later.
+_TRANSIENT_NETWORK_ERRORS = (
+    "could not fetch",
+    "Failed to connect",
+    "Could not resolve host",
+    "Connection timed out",
+    "Connection reset",
+    "RPC failed",
+    "early EOF",
+)
+_GIT_LOG_RETRIES = 3
+
+
+def _run_git_with_retry(
+    args: list[str], text_input: str, *, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess:
+    """Run a git command that may fetch missing objects, retrying transient network errors.
+
+    A missing object in a blobless clone is fetched on demand from the promisor remote,
+    unless the caller passes `env` with GIT_NO_LAZY_FETCH set. A dropped connection during
+    that fetch fails the call, so it is retried with backoff. Any other failure is
+    returned at once.
+    """
+    proc = None
+    for attempt in range(_GIT_LOG_RETRIES + 1):
+        proc = subprocess.run(
+            args,
+            input=text_input,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="surrogateescape",
+            env=env,
+        )
+        if proc.returncode == 0:
+            return proc
+        transient = any(marker in proc.stderr for marker in _TRANSIENT_NETWORK_ERRORS)
+        if not transient or attempt == _GIT_LOG_RETRIES:
+            return proc
+        time.sleep(5.0 * (2**attempt))
+    return proc
+
+
 def collect_test_files_by_commit(
     repo_path: Path, commit_shas: Iterable[str], language: str
 ) -> dict[str, list[str]]:
@@ -284,17 +328,12 @@ def collect_test_files_by_commit(
     if not present:
         return result
 
-    proc = subprocess.run(
+    proc = _run_git_with_retry(
         [
             "git", "-C", str(repo_path), "log", "--no-walk=unsorted", "--stdin",
             "--root", "-M", "--name-status", "-z", "--format=%x01%H",
         ],
-        input="\n".join(present) + "\n",
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="surrogateescape",
-        env=_NO_LAZY_FETCH_ENV,
+        "\n".join(present) + "\n",
     )
     if proc.returncode != 0:
         raise RuntimeError(f"git log failed in {repo_path}: {proc.stderr.strip()[:200]}")
