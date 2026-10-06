@@ -3,7 +3,7 @@ RQ5 -- Agent Configuration Files: how often do root-level agent configuration
 files (AGENTS.md, CLAUDE.md) mention test-related and fixture-related guidance,
 for the repositories that contribute at least one fixture to Dataset A?
 
-Pure reader over `db/rq5_agent_files_v4.db` (`collection/rq5_agent_file_scan.py`'s
+Pure reader over `db/rq5_agent_files.db` (`collection/rq5_agent_file_scan.py`'s
 own output). No collection logic lives here.
 
 Every statistic is at the repository level. A repository counts as having a
@@ -189,8 +189,7 @@ def generate_report(*, db_path: Path = DB_PATH, catalog_path: Path = CATALOG_PAT
     lines += [
         f"Snapshot date: {meta['snapshot_date']} (each repository's root files are read at "
         "its last commit on or before this date).",
-        f"Keyword catalog: `collection/heuristics/rq5_agent_file_keywords.yaml`, version "
-        f"{catalog['version']}.",
+        "Keyword catalog: `collection/heuristics/rq5_agent_file_keywords.yaml`.",
         f"Target files (repository root only, case-insensitive): "
         f"{', '.join(catalog['target_files'])}.",
         f"Repositories skipped (no commit at or before the snapshot, or a failed fetch): "
@@ -216,7 +215,7 @@ def generate_report(*, db_path: Path = DB_PATH, catalog_path: Path = CATALOG_PAT
         "",
         "## Keyword lists",
         "",
-        f"- Test keywords (version {catalog['version']}): {', '.join(catalog['test_keywords'])}",
+        f"- Test keywords: {', '.join(catalog['test_keywords'])}",
         f"- Ardic test terms (comparison with Ardic et al., SCAM 2026): "
         f"{', '.join(catalog['ardic_test_keywords'])}",
         f"- Fixture keywords: {', '.join(catalog['fixture_keywords'])}",

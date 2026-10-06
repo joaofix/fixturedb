@@ -70,7 +70,6 @@ def _persist_repo(db_path, repo, language, *, files=(), matches=(), fetch_ok=Tru
         repo,
         language,
         "2026-01-01T00:00:00+00:00",
-        4,
         fetch_ok=fetch_ok,
         error_reason=error_reason,
         commit_sha=f"sha-{repo}" if fetch_ok else None,
@@ -145,40 +144,40 @@ class TestLoadCorpus:
 
 
 class TestScanMeta:
-    def test_records_snapshot_and_catalog_version(self, tmp_path):
+    def test_records_snapshot_date(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
 
-        record_scan_meta("2026-03-01", 4, db_path)
+        record_scan_meta("2026-03-01", db_path)
 
         meta = load_scan_meta(db_path)
         assert meta["snapshot_date"] == "2026-03-01"
-        assert meta["catalog_version"] == "4"
+        assert meta == {"snapshot_date": "2026-03-01"}
 
     def test_resuming_with_the_same_date_is_allowed(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        record_scan_meta("2026-03-01", 4, db_path)
+        record_scan_meta("2026-03-01", db_path)
 
-        record_scan_meta("2026-03-01", 4, db_path)
+        record_scan_meta("2026-03-01", db_path)
 
     def test_refuses_to_mix_snapshot_dates_in_one_database(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        record_scan_meta("2026-03-01", 4, db_path)
+        record_scan_meta("2026-03-01", db_path)
 
         with pytest.raises(ValueError, match="refusing to continue"):
-            record_scan_meta("2026-06-01", 4, db_path)
+            record_scan_meta("2026-06-01", db_path)
 
     def test_run_scan_refuses_to_start_without_a_snapshot_date(self, tmp_path):
         with pytest.raises(ValueError):
             run_scan(corpus=[], db_path=tmp_path / "rq5.db", progress_path=tmp_path / "p.json", notify=False)
 
 
-class TestCatalogV4:
+class TestCatalogTestKeywords:
     def test_real_catalog_has_tested_and_an_ardic_list_inside_test_keywords(self):
         catalog = load_rq5_keyword_catalog()
-        assert catalog["version"] == 4
+        assert "version" not in catalog
         assert "tested" in catalog["test_keywords"]
         assert set(catalog["ardic_test_keywords"]) == ARDIC_TERMS
         assert ARDIC_TERMS <= set(catalog["test_keywords"])
@@ -193,7 +192,6 @@ class TestCatalogV4:
         bad.write_text(
             yaml.safe_dump(
                 {
-                    "version": 9,
                     "target_files": ["AGENTS.md"],
                     "test_keywords": ["test"],
                     "fixture_keywords": ["fixture"],

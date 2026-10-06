@@ -56,16 +56,13 @@ the scan.
 
 The scan (`rq5_agent_file_scan.py`) uses the GitHub GraphQL API, in batches of
 25 repositories, and does not clone repositories. It searches for test-related and fixture-related terms. The keyword
-catalog is `collection/heuristics/rq5_agent_file_keywords.yaml`, version 4.
+catalog is `collection/heuristics/rq5_agent_file_keywords.yaml`.
 A repository counts as matching if any of its root files matches.
 
 The report gives, at repository level, the share of repositories with a root
 agent file, and among those the shares that mention tests, the four Ardic et al.
 (SCAM 2026) test terms, and fixtures. It also gives the shares per language and
 the number of repositories containing each fixture term.
-
-The first iteration (catalog version 3, all repositories in the raw universe) is
-kept in `rq5_v3/`.
 
 ## Where the numbers come from
 
@@ -75,6 +72,6 @@ kept in `rq5_v3/`.
 | RQ2 | `db/a.db`, `db/c.db` | `research_questions/rq2.md` |
 | RQ3 | `db/a.db`, `db/c.db` | `research_questions/rq3.md` |
 | RQ4 | `db/a.db`, `db/c.db` | `research_questions/rq4.md` |
-| RQ5 | `db/rq5_agent_files_v4.db` (Dataset A repositories) | `research_questions/rq5.md` |
+| RQ5 | `db/rq5_agent_files.db` (Dataset A repositories) | `research_questions/rq5.md` |
 
 See [Limitations](reference/limitations.md) before reading any comparison.

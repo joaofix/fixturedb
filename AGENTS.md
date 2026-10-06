@@ -89,14 +89,14 @@ collection/          # Main pipeline code (the "library")
                      # `python -m collection.rq1_prevalence_scan`
   rq5_agent_file_scan.py  # RQ5's own collection, for the repos with a Dataset A fixture (not the raw
                      # universe), at a required --snapshot-date -- via GitHub's GraphQL API (batched), never a
-                     # clone: keyword-scans root-level AGENTS.md/CLAUDE.md, writes db/rq5_agent_files_v4.db
-                     # + rq5_v4/*.csv. Keyword/target-file catalog: heuristics/rq5_agent_file_keywords.yaml.
+                     # clone: keyword-scans root-level AGENTS.md/CLAUDE.md, writes db/rq5_agent_files.db
+                     # + rq5/*.csv. Keyword/target-file catalog: heuristics/rq5_agent_file_keywords.yaml.
                      # Run directly: `python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD`
   research_questions/  # Answers the paper's RQs, writes research_questions/*.md (committed):
                      # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,c}.db),
                      # rq2/rq3/rq4.py (structural/teardown/mocking, read db/{a,c}.db), rq5.py
                      # (agent config file test/fixture keyword prevalence, reads
-                     # db/rq5_agent_files_v4.db -- not db/{a,c}.db), balance.py (control-variable
+                     # db/rq5_agent_files.db -- not db/{a,c}.db), balance.py (control-variable
                      # check), dataset_findings.py (non-RQ descriptive findings),
                      # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)

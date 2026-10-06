@@ -227,7 +227,7 @@ and push one ntfy.sh notification per language chunk plus one final push.
 - RQ1 scans the full raw `github-search-raw/*.csv.gz` universe, into
   `db/rq1_prevalence.db`, at a fixed snapshot date.
 - RQ5 scans only the repositories that have at least one fixture in Dataset A
-  (`datasets/a/fixtures/*_fixtures.csv`), into `db/rq5_agent_files_v4.db`. It
+  (`datasets/a/fixtures/*_fixtures.csv`), into `db/rq5_agent_files.db`. It
   needs `--snapshot-date`, which has no default: the date of the new Dataset A
   collection is not fixed yet.
 
@@ -243,7 +243,7 @@ defaults to 20 batches in flight). `GITHUB_TOKEN` is effectively **required**
 here, not just recommended: the unauthenticated REST rate limit is 60
 requests/hour, and the GraphQL endpoint refuses unauthenticated requests. The
 authenticated GraphQL budget is 5,000 points/hour, and a batch costs about 2 to
-3 points. Run it after the Dataset A fixture CSVs exist. It writes `rq5_v4/` (the three review
+3 points. Run it after the Dataset A fixture CSVs exist. It writes `rq5/` (the three review
 CSVs) and `research_questions/rq5.md`.
 
 ```bash

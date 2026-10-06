@@ -8,11 +8,6 @@
 # convention (same "pattern/keyword table drives a classification decision"
 # shape), not because it feeds the same loader.
 #
-# `version` bumps on any edit to `target_files`/`test_keywords`/
-# `fixture_keywords` below, so the paper can cite exactly which catalog
-# version produced a given collection run (also persisted per-repo as
-# `catalog_version` in db/rq5_agent_files.db's `repo_scan` table).
-#
 # Matching rules (collection/rq5_agent_file_scan.py::_build_keyword_pattern()):
 #   - Case-insensitive, word-boundary-respecting (e.g. "test" never matches
 #     "latest"/"contest"/"attestation").
@@ -28,47 +23,24 @@
 # alone -- both match generic, non-test-related prose having nothing to
 # do with test fixtures ("setup" catches environment-setup instructions;
 # "teardown" catches DOM/UI teardown, infra/container teardown, async
-# resource cleanup -- see v2 -> v3 changelog below for the concrete
-# evidence on "teardown"). They only appear inside a phrase ("test
-# setup", "setup and teardown").
+# resource cleanup -- see the exclusions below). They only appear inside
+# a phrase ("test setup", "setup and teardown").
 #
-# **v1 -> v2 (2026-10-03): removed "before each"/"after each"/"before
-# all"/"after all".** Auditing the real collection's matches (manual
-# review -- exactly what this catalog's own match-level persistence
-# exists for) found these four spaced phrases collide heavily with
-# ordinary English having nothing to do with test lifecycle hooks --
-# "before each commit", "after each fix", "before each model request",
-# "after each interaction" all matched and were not test-related.
-# Measured false-positive rate on real samples: roughly 17-50% across
-# the four. The camelCase forms (beforeEach/afterEach/beforeAll/afterAll,
-# still below) don't have this problem at all -- they're unambiguous
-# identifiers that don't occur in natural prose, so they're kept as the
-# only way to catch these four hooks. A hyphenated prose mention
-# ("before-each") is lost by this removal, but that's a much rarer
-# documentation style than either camelCase or plain English spacing, so
-# a clearly worthwhile precision trade. See `prune_removed_keywords()`
-# in rq5_agent_file_scan.py for how this was retroactively applied to
-# the already-collected db without a from-scratch re-run (removing a
-# keyword only ever shrinks a match set, never grows it, so no
-# re-fetch from GitHub was needed).
+# Excluded on purpose, after manual review of real matches:
+#   - "before each"/"after each"/"before all"/"after all": the spaced
+#     phrases collide with ordinary English ("before each commit", "after
+#     each fix"); roughly 17-50% of their matches were not test-related.
+#     The camelCase forms (beforeEach/afterEach/beforeAll/afterAll, below)
+#     are unambiguous identifiers and are kept. A hyphenated prose mention
+#     ("before-each") is lost, an accepted precision trade.
+#   - Bare "teardown": in a 20-match sample most matches described generic
+#     resource/UI/infrastructure cleanup ("./scripts/dev.sh teardown",
+#     "leaves DOM teardown to the caller"). A test's `tearDown()` mention is
+#     lost unless it also hits "setup and teardown".
 #
-# **v2 -> v3 (2026-10-03): removed the bare word "teardown".** Same
-# defect class as "setup" (already excluded above for exactly this
-# reason), caught by the same kind of real-sample audit as the v1 -> v2
-# removal above: a 20-match sample found the clear majority describing
-# generic resource/UI/infrastructure cleanup with no test relevance at
-# all -- e.g. "./scripts/dev.sh teardown # also remove Postgres volume",
-# "clear callbacks on teardown" (UI lifecycle), "leaves DOM teardown to
-# the caller". A genuine mention of a test's `tearDown()` method is lost
-# by this removal unless it also hits "setup and teardown" -- the same
-# kind of accepted precision/recall trade as v1 -> v2's hyphenated
-# "before-each" loss above. Applied retroactively via
-# `prune_removed_keywords()`, same mechanism as v1 -> v2.
-# **v3 -> v4: added "tested" to test_keywords.** Same list otherwise. The
-# new `ardic_test_keywords` list below is only for the comparison statistic
-# against Ardic et al. (SCAM 2026); it is a subset of test_keywords, so every
-# Ardic term is also a test keyword.
-version: 4
+# `ardic_test_keywords` below is only for the comparison statistic against
+# Ardic et al. (SCAM 2026); it is a subset of test_keywords, so every Ardic
+# term is also a test keyword.
 
 # Matched against each repo's root-level tree entries only (no
 # subdirectories), case-insensitively -- see find_target_files_at_commit().

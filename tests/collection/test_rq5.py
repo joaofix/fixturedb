@@ -48,7 +48,6 @@ def _persist(db_path, repo, language, *, test_terms=(), fixture_terms=(), has_fi
         repo,
         language,
         "2026-01-01T00:00:00+00:00",
-        4,
         fetch_ok=fetch_ok,
         error_reason=error,
         commit_sha=f"sha-{repo}" if fetch_ok else None,
@@ -87,7 +86,7 @@ def scanned_db(tmp_path):
     """
     db_path = tmp_path / "rq5.db"
     initialise_rq5_db(db_path)
-    record_scan_meta("2026-03-01", 4, db_path)
+    record_scan_meta("2026-03-01", db_path)
     _persist(db_path, "owner/a", "python", test_terms=["tests"], fixture_terms=["fixture"])
     _persist(db_path, "owner/b", "python", test_terms=["tested"])
     _persist(db_path, "owner/c", "java", test_terms=["pytest"])
@@ -150,12 +149,13 @@ class TestGenerateReport:
         for term in catalog["fixture_keywords"]:
             assert f"| {term} |" in report
 
-    def test_reports_snapshot_version_skipped_count_and_both_keyword_lists(self, scanned_db):
+    def test_reports_snapshot_catalog_skipped_count_and_both_keyword_lists(self, scanned_db):
         report = generate_report(db_path=scanned_db)
         catalog = load_rq5_keyword_catalog()
 
         assert "Snapshot date: 2026-03-01" in report
-        assert f"version {catalog['version']}" in report
+        assert "Keyword catalog: `collection/heuristics/rq5_agent_file_keywords.yaml`." in report
+        assert "version" not in report
         assert "Repositories skipped (no commit at or before the snapshot, or a failed fetch): 1 of 6." in report
         assert ", ".join(catalog["ardic_test_keywords"]) in report
         assert ", ".join(catalog["test_keywords"]) in report

@@ -11,14 +11,10 @@ a run refuses to continue with a different date.
 
 Every artifact here is `rq5_`/`rq5-`-prefixed: this module (run directly via
 `python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD`), its
-database (`db/rq5_agent_files_v4.db`), its keyword catalog
+database (`db/rq5_agent_files.db`), its keyword catalog
 (`collection/heuristics/rq5_agent_file_keywords.yaml`), and its review
-outputs (`rq5_v4/`). `collection/research_questions/rq5.py` reads this
+outputs (`rq5/`). `collection/research_questions/rq5.py` reads this
 database to write the RQ5 report.
-
-The first iteration (catalog v3, the raw ~24.7k-repo universe, no snapshot
-argument) is kept in `rq5_v3/` and `db/rq5_agent_files.db`. This module no
-longer produces it.
 
 **Why the GitHub API, not a clone:** this scan needs the content of 0 to 2
 root-level files per repository. GitHub's API returns those without cloning,
@@ -148,11 +144,11 @@ CATALOG_PATH = paths.ROOT_DIR / "collection" / "heuristics" / "rq5_agent_file_ke
 # any of them puts it in the RQ5 corpus.
 DATASET_A_FIXTURES_DIR = paths.stage_dir("a", "fixtures")
 
-DB_PATH = paths.DB_ROOT / "rq5_agent_files_v4.db"
-CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq5_v4"
-PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_v4_progress.json"
+DB_PATH = paths.DB_ROOT / "rq5_agent_files.db"
+CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq5"
+PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_progress.json"
 PROGRESS_LOG_EVERY = 50
-LOG_PATH = paths.DB_ROOT / "rq5_agent_files_v4.log"
+LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
 
 # The snapshot date is a required run argument (--snapshot-date). It has no
 # default because the new Dataset A collection has no build date yet.
@@ -209,7 +205,6 @@ CREATE TABLE IF NOT EXISTS {REPO_TABLE_NAME} (
     commit_sha       TEXT,
     commit_date      TEXT,
     num_agent_files  INTEGER NOT NULL DEFAULT 0,
-    catalog_version  INTEGER,
     error_reason     TEXT,
     scanned_at       TEXT NOT NULL
 );
@@ -257,7 +252,7 @@ def initialise_rq5_db(db_path: Path = DB_PATH) -> None:
 
 
 def load_rq5_keyword_catalog(path: Path = CATALOG_PATH) -> dict[str, Any]:
-    """Load the versioned target-file/keyword catalog. Kept as a plain,
+    """Load the target-file/keyword catalog. Kept as a plain,
     standalone loader (not wired into `collection/heuristics/__init__.py`'s
     loader machinery) -- that module's loaders feed the main agent/fixture
     *detection* pipeline; this catalog has an entirely different consumer
@@ -280,8 +275,8 @@ def _build_keyword_pattern(keyword: str) -> re.Pattern:
     it isn't a "multi-word term" in the catalog's own representation.
 
     Use this tolerance carefully: it was dropped entirely for "before
-    each"/"after each"/"before all"/"after all" (catalog v2, see that
-    file's own changelog) because allowing the bare-space form made them
+    each"/"after each"/"before all"/"after all" (see the catalog's
+    exclusions) because allowing the bare-space form made them
     collide with ordinary English ("before each commit", "after each
     fix") having nothing to do with the test lifecycle hooks they were
     meant to catch -- a multi-word catalog entry is only safe when the
@@ -591,7 +586,6 @@ def _repo_row(
     repo_name: str,
     language: str,
     scanned_at: str,
-    catalog_version: int | None,
     *,
     fetch_ok: bool,
     error_reason: str | None = None,
@@ -606,7 +600,6 @@ def _repo_row(
         "commit_sha": commit_sha,
         "commit_date": commit_date,
         "num_agent_files": num_agent_files,
-        "catalog_version": catalog_version,
         "error_reason": error_reason,
         "scanned_at": scanned_at,
     }
@@ -855,12 +848,11 @@ def process_repos_graphql(
     target_files = catalog["target_files"]
     test_patterns = _build_patterns(catalog["test_keywords"])
     fixture_patterns = _build_patterns(catalog["fixture_keywords"])
-    catalog_version = catalog.get("version")
     scanned_at = datetime.now(timezone.utc).isoformat()
 
     def _fail(repo: dict, error_reason: str) -> dict[str, Any]:
         return _scan_result(
-            _repo_row(repo["repo_name"], repo["language"], scanned_at, catalog_version, fetch_ok=False, error_reason=error_reason)
+            _repo_row(repo["repo_name"], repo["language"], scanned_at, fetch_ok=False, error_reason=error_reason)
         )
 
     try:
@@ -901,7 +893,6 @@ def process_repos_graphql(
             repo_name,
             repo["language"],
             scanned_at,
-            catalog_version,
             fetch_ok=True,
             commit_sha=outcome["sha"],
             commit_date=outcome["date"],
@@ -947,7 +938,6 @@ def process_repo(
     target_files = catalog["target_files"]
     test_patterns = _build_patterns(catalog["test_keywords"])
     fixture_patterns = _build_patterns(catalog["fixture_keywords"])
-    catalog_version = catalog.get("version")
 
     repo_name = repo["repo_name"]
     language = repo["language"]
@@ -955,7 +945,7 @@ def process_repo(
 
     def _fail(error_reason: str) -> dict[str, Any]:
         return _scan_result(
-            _repo_row(repo_name, language, scanned_at, catalog_version, fetch_ok=False, error_reason=error_reason)
+            _repo_row(repo_name, language, scanned_at, fetch_ok=False, error_reason=error_reason)
         )
 
     try:
@@ -986,7 +976,6 @@ def process_repo(
         repo_name,
         language,
         scanned_at,
-        catalog_version,
         fetch_ok=True,
         commit_sha=cutoff["sha"],
         commit_date=cutoff["date"],
@@ -1031,12 +1020,8 @@ def validated_snapshot_date(value: str | None) -> str:
     return value
 
 
-def record_scan_meta(
-    snapshot_date: str,
-    catalog_version: int | None,
-    db_path: Path = DB_PATH,
-) -> None:
-    """Store the run's snapshot date and catalog version in `scan_meta`.
+def record_scan_meta(snapshot_date: str, db_path: Path = DB_PATH) -> None:
+    """Store the run's snapshot date in `scan_meta`.
     Raises if the database already holds a different snapshot date, so a
     resumed run can never mix repositories scanned at two dates."""
     with db_session(db_path) as conn:
@@ -1045,9 +1030,9 @@ def record_scan_meta(
             raise ValueError(
                 f"{db_path.name} was scanned at snapshot {row[0]}; refusing to continue at {snapshot_date}"
             )
-        conn.executemany(
-            f"INSERT OR REPLACE INTO {META_TABLE_NAME} (key, value) VALUES (?, ?)",
-            [("snapshot_date", snapshot_date), ("catalog_version", str(catalog_version))],
+        conn.execute(
+            f"INSERT OR REPLACE INTO {META_TABLE_NAME} (key, value) VALUES ('snapshot_date', ?)",
+            (snapshot_date,),
         )
 
 
@@ -1087,15 +1072,14 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
             f"""
             INSERT INTO {REPO_TABLE_NAME}
                 (repo_name, language, fetch_ok, commit_sha, commit_date,
-                 num_agent_files, catalog_version, error_reason, scanned_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 num_agent_files, error_reason, scanned_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(repo_name) DO UPDATE SET
                 language=excluded.language,
                 fetch_ok=excluded.fetch_ok,
                 commit_sha=excluded.commit_sha,
                 commit_date=excluded.commit_date,
                 num_agent_files=excluded.num_agent_files,
-                catalog_version=excluded.catalog_version,
                 error_reason=excluded.error_reason,
                 scanned_at=excluded.scanned_at
             """,
@@ -1106,7 +1090,6 @@ def persist_result(result: dict[str, Any], db_path: Path = DB_PATH) -> None:
                 repo_row["commit_sha"],
                 repo_row["commit_date"],
                 repo_row["num_agent_files"],
-                repo_row["catalog_version"],
                 repo_row["error_reason"],
                 repo_row["scanned_at"],
             ),
@@ -1330,21 +1313,9 @@ def write_review_outputs(
     return written
 
 
-# The catalog v1 -> v2 removal (see rq5_agent_file_keywords.yaml's own
-# changelog comment for why) -- named here so prune_removed_keywords()'s
-# real call site and this module's own tests share one source instead
-# of two copies of the same four strings.
-V1_TO_V2_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("before each", "after each", "before all", "after all")
-
-# The catalog v2 -> v3 removal (see rq5_agent_file_keywords.yaml's own
-# changelog comment for why: the bare word "teardown" has the exact same
-# defect "setup" was already excluded for -- it matches generic
-# resource/UI/infra cleanup prose having nothing to do with tests).
-V2_TO_V3_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("teardown",)
-
-# **Not a removal -- a reporting caveat, see collection/research_questions/
-# rq5.py's conservative-subset metric.** Unlike every keyword above/removed
-# so far, "fixture"/"fixtures" are not a false-positive-prone pattern match:
+# **A reporting caveat, see collection/research_questions/rq5.py's
+# conservative-subset metric.** Unlike the catalog's excluded terms,
+# "fixture"/"fixtures" are not a false-positive-prone pattern match:
 # they correctly find the literal word "fixture". The problem is semantic,
 # not lexical, and the catalog can't fix it by word choice -- "fixture"
 # genuinely has two senses in agent-config prose, and this study's object
@@ -1358,75 +1329,6 @@ V2_TO_V3_REMOVED_FIXTURE_KEYWORDS: tuple[str, ...] = ("teardown",)
 # constant exists purely so the report can additionally show a stricter,
 # code-only-keyword count alongside the inclusive one.
 AMBIGUOUS_FIXTURE_KEYWORDS: tuple[str, ...] = ("fixture", "fixtures")
-
-
-def prune_removed_keywords(
-    removed_keywords: tuple[str, ...],
-    *,
-    keyword_list: str = "fixture",
-    new_catalog_version: int | None = None,
-    db_path: Path = DB_PATH,
-) -> dict[str, int]:
-    """Retroactively remove `removed_keywords` (all from the same
-    `keyword_list`, `"test"` or `"fixture"`) from an already-collected
-    db, with no re-fetch from GitHub at all.
-
-    This is correct, not an approximation: removing a keyword from the
-    catalog can only ever shrink a match set, never grow it -- the file
-    content itself didn't change, only which of its already-found
-    occurrences still count. So "what `agent_files`/`agent_file_matches`
-    would look like under the smaller catalog" is exactly "what they
-    already look like, minus every match of the removed keywords" --
-    nothing here needs the raw file text, which isn't even stored.
-
-    Deletes the affected `agent_file_matches` rows, then recomputes
-    `agent_files.has_<keyword_list>`/`<keyword_list>_match_count`/
-    `matched_<keyword_list>_keywords` for every file from whatever
-    matches remain. Pass `new_catalog_version` to also stamp every
-    `repo_scan` row with it, documenting that the stored results are now
-    consistent with that (smaller) catalog version -- correct to do
-    unconditionally, since every repo's results shrink identically.
-
-    Removes keywords from an existing match set without a new scan. It is
-    kept so that a later audit can drop another keyword the same way.
-    """
-    has_col = f"has_{keyword_list}"
-    count_col = f"{keyword_list}_match_count"
-    matched_col = f"matched_{keyword_list}_keywords"
-
-    with db_session(db_path) as conn:
-        placeholders = ", ".join("?" for _ in removed_keywords)
-        matches_deleted = conn.execute(
-            f"DELETE FROM {MATCH_TABLE_NAME} WHERE keyword_list = ? AND keyword IN ({placeholders})",
-            (keyword_list, *removed_keywords),
-        ).rowcount
-
-        file_rows = conn.execute(f"SELECT repo_name, file_name, {has_col} FROM {FILE_TABLE_NAME}").fetchall()
-        files_changed = 0
-        for repo_name, file_name, old_has_flag in file_rows:
-            remaining = conn.execute(
-                f"SELECT keyword FROM {MATCH_TABLE_NAME} "
-                f"WHERE repo_name = ? AND file_name = ? AND keyword_list = ?",
-                (repo_name, file_name, keyword_list),
-            ).fetchall()
-            keywords = sorted({k[0] for k in remaining})
-            new_has_flag = 1 if keywords else 0
-            if new_has_flag != old_has_flag:
-                files_changed += 1
-            conn.execute(
-                f"UPDATE {FILE_TABLE_NAME} SET {has_col} = ?, {count_col} = ?, {matched_col} = ? "
-                f"WHERE repo_name = ? AND file_name = ?",
-                (new_has_flag, len(remaining), ",".join(keywords), repo_name, file_name),
-            )
-
-        if new_catalog_version is not None:
-            conn.execute(f"UPDATE {REPO_TABLE_NAME} SET catalog_version = ?", (new_catalog_version,))
-
-    return {
-        "matches_deleted": matches_deleted,
-        "files_examined": len(file_rows),
-        "files_flag_changed": files_changed,
-    }
 
 
 def run_scan(
@@ -1470,7 +1372,7 @@ def run_scan(
     snapshot_date = validated_snapshot_date(snapshot_date)
     initialise_rq5_db(db_path)
     catalog = load_rq5_keyword_catalog(catalog_path)
-    record_scan_meta(snapshot_date, catalog.get("version"), db_path)
+    record_scan_meta(snapshot_date, db_path)
     rate_limiter = _RateLimiter(target_requests_per_hour / 3600) if target_requests_per_hour else None
     universe = corpus if corpus is not None else load_corpus(fixtures_dir)
     already_done = load_scanned_repo_names(db_path)
@@ -1651,7 +1553,7 @@ def retry_failed_repos(
     """
     snapshot_date = validated_snapshot_date(snapshot_date)
     catalog = load_rq5_keyword_catalog(catalog_path)
-    record_scan_meta(snapshot_date, catalog.get("version"), db_path)
+    record_scan_meta(snapshot_date, db_path)
     rate_limiter = _RateLimiter(target_requests_per_hour / 3600) if target_requests_per_hour else None
     targets = load_repos_needing_retry(
         error_reasons, db_path=db_path, corpus=corpus, fixtures_dir=fixtures_dir
@@ -1686,7 +1588,6 @@ def retry_failed_repos(
                 repo["repo_name"],
                 repo["language"],
                 datetime.now(timezone.utc).isoformat(),
-                catalog.get("version"),
                 fetch_ok=False,
                 error_reason="timeout",
             )

@@ -30,8 +30,6 @@ from collection.rq5_agent_file_scan import (
     REPAIRABLE_ERROR_REASONS,
     RQ5_LANGUAGES,
     TARGET_REQUESTS_PER_HOUR,
-    V1_TO_V2_REMOVED_FIXTURE_KEYWORDS,
-    V2_TO_V3_REMOVED_FIXTURE_KEYWORDS,
     RateLimitExhausted,
     _api_get,
     _build_keyword_pattern,
@@ -52,7 +50,6 @@ from collection.rq5_agent_file_scan import (
     main,
     persist_result,
     process_repo,
-    prune_removed_keywords,
     read_blob_via_api,
     retry_failed_repos,
     run_scan,
@@ -121,8 +118,12 @@ def _per_repo(fake):
     return _batch
 
 
+# Terms the catalog excludes on purpose (see its header comment): the spaced
+# lifecycle phrases match ordinary English, bare "teardown" matches generic
+# cleanup prose.
+EXCLUDED_FIXTURE_KEYWORDS = ("before each", "after each", "before all", "after all", "teardown")
+
 _TEST_CATALOG = {
-    "version": 1,
     "target_files": ["AGENTS.md", "CLAUDE.md"],
     "test_keywords": ["test", "pytest"],
     "fixture_keywords": ["fixture", "fixtures", "conftest", "test setup", "beforeEach"],
@@ -135,7 +136,6 @@ class TestLoadRq5KeywordCatalog:
         assert catalog["target_files"] == ["AGENTS.md", "CLAUDE.md"]
         assert "test" in catalog["test_keywords"]
         assert "fixture" in catalog["fixture_keywords"]
-        assert isinstance(catalog["version"], int)
 
     def test_bare_setup_is_never_a_standalone_keyword(self):
         catalog = load_rq5_keyword_catalog()
@@ -144,33 +144,19 @@ class TestLoadRq5KeywordCatalog:
 
     def test_bare_teardown_is_never_a_standalone_keyword(self):
         """Same defect class as bare "setup" above -- see the catalog's
-        own v2 -> v3 changelog comment: "teardown" alone matches generic
-        resource/UI/infra cleanup prose with no test relevance."""
+        exclusions: "teardown" alone matches generic resource/UI/infra
+        cleanup prose with no test relevance."""
         catalog = load_rq5_keyword_catalog()
         assert "teardown" not in catalog["fixture_keywords"]
 
-    def test_removed_v1_keywords_never_reappear(self):
-        """The four removed fixture phrases are not in the catalog. They matched ordinary English, such as "before each commit"."""
+    def test_excluded_keywords_never_reappear(self):
         catalog = load_rq5_keyword_catalog()
-        for removed in V1_TO_V2_REMOVED_FIXTURE_KEYWORDS:
-            assert removed not in catalog["fixture_keywords"]
-        # The unambiguous camelCase forms must still be there -- they're
-        # the only way these four hooks are caught now.
-        for kept in ("beforeEach", "afterEach", "beforeAll", "afterAll"):
+        for excluded in EXCLUDED_FIXTURE_KEYWORDS:
+            assert excluded not in catalog["fixture_keywords"]
+        # The unambiguous camelCase forms and "setup and teardown" are how
+        # these concepts are still caught.
+        for kept in ("beforeEach", "afterEach", "beforeAll", "afterAll", "setup and teardown"):
             assert kept in catalog["fixture_keywords"]
-
-    def test_removed_v2_keywords_never_reappear(self):
-        """The removed bare keyword `teardown` is not in the catalog. It matched generic cleanup text."""
-        catalog = load_rq5_keyword_catalog()
-        for removed in V2_TO_V3_REMOVED_FIXTURE_KEYWORDS:
-            assert removed not in catalog["fixture_keywords"]
-        # "setup and teardown" is the phrase kept to still catch this
-        # concept without the bare word's false-positive rate.
-        assert "setup and teardown" in catalog["fixture_keywords"]
-
-    def test_real_catalog_is_at_least_version_3(self):
-        catalog = load_rq5_keyword_catalog()
-        assert catalog["version"] >= 3
 
     def test_ambiguous_fixture_keywords_are_still_in_the_catalog(self):
         """AMBIGUOUS_FIXTURE_KEYWORDS ("fixture"/"fixtures") are a
@@ -561,19 +547,19 @@ class TestFindTargetFilesAtCommit:
 
 class TestRepoRowAndScanResult:
     def test_repo_row_coerces_fetch_ok_to_int(self):
-        row = _repo_row("o/r", "python", "t", 1, fetch_ok=True)
+        row = _repo_row("o/r", "python", "t", fetch_ok=True)
         assert row["fetch_ok"] == 1
-        row = _repo_row("o/r", "python", "t", 1, fetch_ok=False)
+        row = _repo_row("o/r", "python", "t", fetch_ok=False)
         assert row["fetch_ok"] == 0
 
     def test_repo_row_defaults(self):
-        row = _repo_row("o/r", "python", "t", 1, fetch_ok=False, error_reason="clone_failed")
+        row = _repo_row("o/r", "python", "t", fetch_ok=False, error_reason="clone_failed")
         assert row["commit_sha"] is None
         assert row["num_agent_files"] == 0
         assert row["error_reason"] == "clone_failed"
 
     def test_scan_result_defaults_files_and_matches_to_empty_lists(self):
-        row = _repo_row("o/r", "python", "t", 1, fetch_ok=False)
+        row = _repo_row("o/r", "python", "t", fetch_ok=False)
         result = _scan_result(row)
         assert result == {"repo": row, "files": [], "matches": []}
 
@@ -596,7 +582,6 @@ class TestProcessRepo:
         assert result["repo"]["fetch_ok"] == 1
         assert result["repo"]["error_reason"] is None
         assert result["repo"]["num_agent_files"] == 1
-        assert result["repo"]["catalog_version"] == 1
         assert result["repo"]["commit_sha"] == "sha1"
 
         assert len(result["files"]) == 1
@@ -784,7 +769,7 @@ class TestLoadScannedRepoNames:
     def test_returns_persisted_repo_names(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("o/a", "python", "t", fetch_ok=True)), db_path)
         assert load_scanned_repo_names(db_path) == {"o/a"}
 
 
@@ -793,12 +778,12 @@ class TestPersistResult:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("o/a", "python", "t1", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")),
+            _scan_result(_repo_row("o/a", "python", "t1", fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")),
             db_path,
         )
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t2", 1, fetch_ok=True, commit_sha="abc", num_agent_files=1)
+                _repo_row("o/a", "python", "t2", fetch_ok=True, commit_sha="abc", num_agent_files=1)
             ),
             db_path,
         )
@@ -840,7 +825,7 @@ class TestPersistResult:
         }
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t1", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
+                _repo_row("o/a", "python", "t1", fetch_ok=True, commit_sha="sha1", num_agent_files=1),
                 files=[file1],
                 matches=[match1, match1],
             ),
@@ -849,7 +834,7 @@ class TestPersistResult:
 
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t2", 1, fetch_ok=True, commit_sha="sha2", num_agent_files=0)
+                _repo_row("o/a", "python", "t2", fetch_ok=True, commit_sha="sha2", num_agent_files=0)
             ),
             db_path,
         )
@@ -907,7 +892,7 @@ class TestPersistResult:
         }
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", 1, fetch_ok=True, commit_sha="sha1", num_agent_files=1),
+                _repo_row("o/a", "python", "t", fetch_ok=True, commit_sha="sha1", num_agent_files=1),
                 files=[file1],
                 matches=[match_test, match_fixture],
             ),
@@ -927,195 +912,11 @@ class TestPersistResult:
         assert match_rows[1]["in_code_block"] == 1
 
 
-class TestPruneRemovedKeywords:
-    """Removing a keyword from the catalog only shrinks an existing match set. The recomputed set must equal what a fresh scan with the smaller catalog would find."""
-
-    def _make_file_and_matches(self, repo_name, file_name, matches):
-        """Builds a file row and its match rows for the prune tests. Every match is a `fixture` keyword match, at the given line numbers."""
-        keywords = sorted({kw for kw, _ in matches})
-        file_row = {
-            "repo_name": repo_name,
-            "file_name": file_name,
-            "file_type": file_name,
-            "language": "python",
-            "commit_sha": "sha1",
-            "has_test": False,
-            "has_fixture": bool(matches),
-            "test_match_count": 0,
-            "fixture_match_count": len(matches),
-            "matched_test_keywords": "",
-            "matched_fixture_keywords": ",".join(keywords),
-            "github_url": f"https://github.com/{repo_name}/blob/sha1/{file_name}",
-        }
-        match_rows = [
-            {
-                "repo_name": repo_name,
-                "file_name": file_name,
-                "keyword_list": "fixture",
-                "keyword": kw,
-                "line_number": line,
-                "line_context": f"context for {kw}",
-                "line_before_2": "",
-                "line_before_1": "",
-                "line_after_1": "",
-                "line_after_2": "",
-                "in_code_block": False,
-            }
-            for kw, line in matches
-        ]
-        return file_row, match_rows
-
-    def test_deletes_matches_for_the_removed_keywords_only(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file_row, matches = self._make_file_and_matches(
-            "o/a", "AGENTS.md", [("before each", 1), ("conftest", 2)]
-        )
-        persist_result(
-            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
-            db_path,
-        )
-
-        counts = prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
-
-        assert counts["matches_deleted"] == 1
-        with sqlite3.connect(db_path) as conn:
-            remaining = conn.execute("SELECT keyword FROM agent_file_matches WHERE repo_name='o/a'").fetchall()
-        assert remaining == [("conftest",)]
-
-    def test_file_with_only_removed_keywords_flips_has_fixture_to_false(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file_row, matches = self._make_file_and_matches(
-            "o/a", "AGENTS.md", [("before each", 1), ("after all", 2)]
-        )
-        persist_result(
-            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
-            db_path,
-        )
-
-        counts = prune_removed_keywords(("before each", "after all"), keyword_list="fixture", db_path=db_path)
-
-        assert counts["files_flag_changed"] == 1
-        with sqlite3.connect(db_path) as conn:
-            row = conn.execute(
-                "SELECT has_fixture, fixture_match_count, matched_fixture_keywords FROM agent_files WHERE repo_name='o/a'"
-            ).fetchone()
-        assert row == (0, 0, "")
-
-    def test_file_with_a_surviving_keyword_keeps_has_fixture_true(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file_row, matches = self._make_file_and_matches(
-            "o/a", "AGENTS.md", [("before each", 1), ("conftest", 2), ("conftest", 3)]
-        )
-        persist_result(
-            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
-            db_path,
-        )
-
-        counts = prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
-
-        assert counts["files_flag_changed"] == 0  # has_fixture was already True, stays True
-        with sqlite3.connect(db_path) as conn:
-            row = conn.execute(
-                "SELECT has_fixture, fixture_match_count, matched_fixture_keywords FROM agent_files WHERE repo_name='o/a'"
-            ).fetchone()
-        assert row == (1, 2, "conftest")
-
-    def test_unaffected_files_are_left_exactly_as_they_were(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file_row, matches = self._make_file_and_matches("o/a", "AGENTS.md", [("conftest", 1)])
-        persist_result(
-            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=matches),
-            db_path,
-        )
-
-        counts = prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
-
-        assert counts == {"matches_deleted": 0, "files_examined": 1, "files_flag_changed": 0}
-
-    def test_stamps_catalog_version_when_given(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
-        persist_result(_scan_result(_repo_row("o/b", "python", "t", 2, fetch_ok=True)), db_path)
-
-        prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path, new_catalog_version=2)
-
-        with sqlite3.connect(db_path) as conn:
-            versions = {v for (v,) in conn.execute("SELECT catalog_version FROM repo_scan")}
-        assert versions == {2}
-
-    def test_omitting_new_catalog_version_leaves_it_untouched(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True)), db_path)
-
-        prune_removed_keywords(("before each",), keyword_list="fixture", db_path=db_path)
-
-        with sqlite3.connect(db_path) as conn:
-            version = conn.execute("SELECT catalog_version FROM repo_scan WHERE repo_name='o/a'").fetchone()[0]
-        assert version == 1
-
-    def test_also_works_on_the_test_keyword_list(self, tmp_path):
-        """keyword_list is a parameter, not hardcoded to "fixture" --
-        this module doesn't currently need to prune a test keyword, but
-        the function must handle it correctly if it ever does."""
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        file_row = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "file_type": "AGENTS.md",
-            "language": "python",
-            "commit_sha": "sha1",
-            "has_test": True,
-            "has_fixture": False,
-            "test_match_count": 1,
-            "fixture_match_count": 0,
-            "matched_test_keywords": "bogus_test_kw",
-            "matched_fixture_keywords": "",
-            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
-        }
-        match = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "keyword_list": "test",
-            "keyword": "bogus_test_kw",
-            "line_number": 1,
-            "line_context": "x",
-            "line_before_2": "",
-            "line_before_1": "",
-            "line_after_1": "",
-            "line_after_2": "",
-            "in_code_block": False,
-        }
-        persist_result(
-            _scan_result(_repo_row("o/a", "python", "t", 1, fetch_ok=True, num_agent_files=1), files=[file_row], matches=[match]),
-            db_path,
-        )
-
-        counts = prune_removed_keywords(("bogus_test_kw",), keyword_list="test", db_path=db_path)
-
-        assert counts["files_flag_changed"] == 1
-        with sqlite3.connect(db_path) as conn:
-            row = conn.execute(
-                "SELECT has_test, test_match_count, matched_test_keywords FROM agent_files WHERE repo_name='o/a'"
-            ).fetchone()
-        assert row == (0, 0, "")
-
-    def test_default_removed_keywords_constant_matches_the_catalog_changelog(self):
-        assert V1_TO_V2_REMOVED_FIXTURE_KEYWORDS == ("before each", "after each", "before all", "after all")
-        assert V2_TO_V3_REMOVED_FIXTURE_KEYWORDS == ("teardown",)
-
-
 class TestRunScan:
     def test_run_scan_skips_already_scanned_repos(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("org/already", "python", "t", 1, fetch_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("org/already", "python", "t", fetch_ok=True)), db_path)
 
         universe = [
             {"repo_name": "org/already", "language": "python", "clone_url": "x"},
@@ -1125,7 +926,7 @@ class TestRunScan:
 
         def _fake_process_repo(repo, **kwargs):
             processed.append(repo["repo_name"])
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
@@ -1148,7 +949,7 @@ class TestRunScan:
 
         def _fake_process_repo(repo, **kwargs):
             seen_kwargs.update(kwargs)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
@@ -1170,7 +971,7 @@ class TestRunScan:
 
         def _fake_process_repo(repo, **kwargs):
             seen_kwargs.update(kwargs)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
@@ -1191,7 +992,7 @@ class TestRunScan:
 
         def _fake_process_repo(repo, **kwargs):
             seen_kwargs.update(kwargs)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
@@ -1216,7 +1017,7 @@ class TestRunScan:
 
         def _fake_process_repo(repo, **kwargs):
             seen_catalogs.append(kwargs["catalog"])
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
@@ -1246,7 +1047,6 @@ class TestRunScan:
                 repo["repo_name"],
                 repo["language"],
                 "t",
-                1,
                 fetch_ok=ok,
                 error_reason=None if ok else "no_commit_at_or_before_cutoff",
                 num_agent_files=1 if ok else 0,
@@ -1295,7 +1095,7 @@ class TestRunScan:
 
 class TestRunScanNotifications:
     def _fake_process_repo(self, repo, **kwargs):
-        return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", 1, fetch_ok=True))
+        return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t", fetch_ok=True))
 
     def test_notifies_once_per_language_plus_one_final_push(self, tmp_path):
         universe = [
@@ -1345,20 +1145,20 @@ class TestLoadReposNeedingRetry:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            _scan_result(_repo_row("org/a", "python", "t", fetch_ok=False, error_reason="rate_limited")),
             db_path,
         )
         persist_result(
             _scan_result(
-                _repo_row("org/b", "python", "t", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
+                _repo_row("org/b", "python", "t", fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
             ),
             db_path,
         )
         persist_result(
-            _scan_result(_repo_row("org/c", "python", "t", 1, fetch_ok=False, error_reason="some_other_reason")),
+            _scan_result(_repo_row("org/c", "python", "t", fetch_ok=False, error_reason="some_other_reason")),
             db_path,
         )
-        persist_result(_scan_result(_repo_row("org/d", "python", "t", 1, fetch_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("org/d", "python", "t", fetch_ok=True)), db_path)
 
         universe = [
             {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
@@ -1376,7 +1176,7 @@ class TestLoadReposNeedingRetry:
     def test_no_matching_rows_returns_empty_list(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        persist_result(_scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=True)), db_path)
+        persist_result(_scan_result(_repo_row("org/a", "python", "t", fetch_ok=True)), db_path)
         with patch("collection.rq5_agent_file_scan.load_corpus", return_value=[]):
             assert load_repos_needing_retry(db_path=db_path) == []
 
@@ -1384,11 +1184,11 @@ class TestLoadReposNeedingRetry:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            _scan_result(_repo_row("org/a", "python", "t", fetch_ok=False, error_reason="rate_limited")),
             db_path,
         )
         persist_result(
-            _scan_result(_repo_row("org/b", "python", "t", 1, fetch_ok=False, error_reason="timeout")), db_path
+            _scan_result(_repo_row("org/b", "python", "t", fetch_ok=False, error_reason="timeout")), db_path
         )
         universe = [
             {"repo_name": "org/a", "language": "python", "clone_url": "url-a"},
@@ -1413,12 +1213,12 @@ class TestRetryFailedRepos:
         initialise_rq5_db(db_path)
         persist_result(
             _scan_result(
-                _repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
+                _repo_row("org/a", "python", "t", fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
             ),
             db_path,
         )
         persist_result(
-            _scan_result(_repo_row("org/untouched", "python", "t", 1, fetch_ok=True, num_agent_files=1)),
+            _scan_result(_repo_row("org/untouched", "python", "t", fetch_ok=True, num_agent_files=1)),
             db_path,
         )
 
@@ -1429,7 +1229,7 @@ class TestRetryFailedRepos:
 
         def _fake_process_repo(repo, **kwargs):
             return _scan_result(
-                _repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True, num_agent_files=2)
+                _repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=True, num_agent_files=2)
             )
 
         with (
@@ -1450,13 +1250,13 @@ class TestRetryFailedRepos:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="timeout")), db_path
+            _scan_result(_repo_row("org/a", "python", "t", fetch_ok=False, error_reason="timeout")), db_path
         )
         universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
 
         def _fake_process_repo(repo, **kwargs):
             return _scan_result(
-                _repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=False, error_reason="rate_limited")
+                _repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=False, error_reason="rate_limited")
             )
 
         with (
@@ -1471,7 +1271,7 @@ class TestRetryFailedRepos:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("org/stuck", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            _scan_result(_repo_row("org/stuck", "python", "t", fetch_ok=False, error_reason="rate_limited")),
             db_path,
         )
         universe = [{"repo_name": "org/stuck", "language": "python", "clone_url": "url"}]
@@ -1479,7 +1279,7 @@ class TestRetryFailedRepos:
 
         def _fake_process_repo(repo, **kwargs):
             stop_event.wait(5)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", fetch_ok=True))
 
         try:
             with (
@@ -1502,13 +1302,13 @@ class TestRetryFailedRepos:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            _scan_result(_repo_row("org/a", "python", "t", fetch_ok=False, error_reason="rate_limited")),
             db_path,
         )
         universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
 
         def _fake_process_repo(repo, **kwargs):
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=True))
 
         notify_calls = []
         with (
@@ -1525,7 +1325,7 @@ class TestRetryFailedRepos:
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
-            _scan_result(_repo_row("org/a", "python", "t", 1, fetch_ok=False, error_reason="rate_limited")),
+            _scan_result(_repo_row("org/a", "python", "t", fetch_ok=False, error_reason="rate_limited")),
             db_path,
         )
         universe = [{"repo_name": "org/a", "language": "python", "clone_url": "url-a"}]
@@ -1533,7 +1333,7 @@ class TestRetryFailedRepos:
 
         def _fake_process_repo(repo, **kwargs):
             seen_kwargs.update(kwargs)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", 1, fetch_ok=True))
+            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=True))
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),

@@ -146,7 +146,6 @@ def _graphql_fake(scenarios):
 def _canonical_result(result):
     repo = dict(result["repo"])
     repo.pop("scanned_at", None)
-    repo.pop("catalog_version", None)
     files = sorted((sorted(f.items()) for f in result["files"]), key=str)
     matches = sorted((sorted(m.items()) for m in result["matches"]), key=str)
     return {"repo": sorted(repo.items()), "files": files, "matches": matches}
@@ -300,7 +299,7 @@ class TestRunScanUsesBatches:
             batch_sizes.append(len(batch))
             return [
                 {"repo": {"repo_name": r["repo_name"], "language": "python", "fetch_ok": 1, "commit_sha": "c",
-                          "commit_date": "2026-01-01", "num_agent_files": 0, "catalog_version": 1,
+                          "commit_date": "2026-01-01", "num_agent_files": 0,
                           "error_reason": None, "scanned_at": "t"},
                  "files": [], "matches": []}
                 for r in batch
