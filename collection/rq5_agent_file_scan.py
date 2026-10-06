@@ -1738,6 +1738,14 @@ def main() -> None:
         "entirely (not recommended).",
     )
     parser.add_argument(
+        "--fixtures-dir",
+        type=Path,
+        default=DATASET_A_FIXTURES_DIR,
+        help="Directory of Dataset A *_fixtures.csv files that define the corpus "
+        f"(default: {DATASET_A_FIXTURES_DIR}). Point it at an earlier build to scan "
+        "that build's repositories instead.",
+    )
+    parser.add_argument(
         "--retry-failed",
         action="store_true",
         help="Re-attempt repos currently recorded as fetch_ok=0 for a recoverable "
@@ -1767,6 +1775,7 @@ def main() -> None:
         print(f"[RQ5 retry] done: {counts}")
         return
     counts = run_scan(
+        fixtures_dir=args.fixtures_dir,
         workers=args.workers,
         target_requests_per_hour=target_rate,
         snapshot_date=args.snapshot_date,

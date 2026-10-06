@@ -1577,6 +1577,16 @@ class TestMainCli:
         run_scan_mock = self._run_main_with_argv(["--max-requests-per-hour", "0"])
         assert run_scan_mock.call_args.kwargs["target_requests_per_hour"] is None
 
+    def test_fixtures_dir_defaults_to_the_current_dataset_a_build(self):
+        from collection.rq5_agent_file_scan import DATASET_A_FIXTURES_DIR
+
+        run_scan_mock = self._run_main_with_argv([])
+        assert run_scan_mock.call_args.kwargs["fixtures_dir"] == DATASET_A_FIXTURES_DIR
+
+    def test_fixtures_dir_flag_points_the_corpus_at_an_earlier_build(self, tmp_path):
+        run_scan_mock = self._run_main_with_argv(["--fixtures-dir", str(tmp_path)])
+        assert run_scan_mock.call_args.kwargs["fixtures_dir"] == tmp_path
+
     def test_warns_when_no_token_is_available(self):
         with patch("collection.rq5_agent_file_scan.GITHUB_TOKEN", ""):
             with (
