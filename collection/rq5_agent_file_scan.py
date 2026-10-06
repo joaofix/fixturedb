@@ -1163,7 +1163,7 @@ REPO_CSV_FIELDNAMES: tuple[str, ...] = (
     "has_fixture",
     "matched_fixture_terms",
 )
-CODING_SHEET_FIELDNAMES: tuple[str, ...] = (
+FIXTURE_MATCHES_FIELDNAMES: tuple[str, ...] = (
     "repository",
     "file_name",
     "line_number",
@@ -1174,9 +1174,6 @@ CODING_SHEET_FIELDNAMES: tuple[str, ...] = (
     "line_after_1",
     "line_after_2",
     "in_code_block",
-    "category",
-    "about_fixtures",
-    "notes",
 )
 SKIPPED_CSV_FIELDNAMES: tuple[str, ...] = ("repository", "language", "error_reason")
 REPOSITORY_SHEET_NAME = "rq5_repository_coding_sheet.csv"
@@ -1270,7 +1267,7 @@ def load_repo_guidance(
 
 def load_fixture_match_rows(db_path: Path = DB_PATH) -> list[tuple]:
     """Every fixture-keyword match, in the row order of
-    `rq5_fixture_coding_sheet.csv`. A match's row id is its 1-based position
+    `rq5_fixture_matches.csv`. A match's row id is its 1-based position
     in this list (the sheet's Nth data row)."""
     with db_session(db_path) as conn:
         return conn.execute(
@@ -1354,9 +1351,11 @@ reads it once every row is coded.
 ## Files
 
 - `rq5_repositories.csv`: one row per analyzed repository.
-- `rq5_fixture_coding_sheet.csv`: one row per fixture-keyword match, with two
-  lines of context on each side. A match's **row id** is its 1-based position
-  among the data rows (row id N is spreadsheet row N+1, below the header).
+- `rq5_fixture_matches.csv`: one row per fixture-keyword match, with two
+  lines of context on each side. Not coded: it is the lookup for a snippet's
+  context and for `evidence_row_id`. A match's **row id** is its 1-based
+  position among the data rows (row id N is spreadsheet row N+1, below the
+  header).
 - `{REPOSITORY_SHEET_NAME}`: one row per repository with at least one fixture
   match. `fixture_snippets` lists all of the repository's matched lines, each
   prefixed with its row id, ordered by term ({", ".join(SNIPPET_TERM_ORDER)}),
@@ -1390,8 +1389,8 @@ def write_review_outputs(
 
     - `rq5_repositories.csv`: one row per analyzed repository (commit SHA,
       agent files found, the test/Ardic/fixture flags, matched fixture terms).
-    - `rq5_fixture_coding_sheet.csv`: one row per fixture-keyword match, with
-      two lines of context on each side and empty columns for manual coding.
+    - `rq5_fixture_matches.csv`: one row per fixture-keyword match, with
+      two lines of context on each side. Not coded; the lookup for row ids.
     - `rq5_repository_coding_sheet.csv`: one row per repository with a
       fixture match, see `write_repository_coding_sheet()`.
     - `rq5_skipped_repositories.csv`: every repository that could not be
@@ -1426,10 +1425,10 @@ def write_review_outputs(
             "WHERE fetch_ok = 0 ORDER BY repo_name"
         ).fetchall()
 
-    sheet_path = output_dir / "rq5_fixture_coding_sheet.csv"
-    with sheet_path.open("w", encoding="utf-8", newline="") as fh:
+    matches_path = output_dir / "rq5_fixture_matches.csv"
+    with matches_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.writer(fh)
-        writer.writerow(CODING_SHEET_FIELDNAMES)
+        writer.writerow(FIXTURE_MATCHES_FIELDNAMES)
         for row in match_rows:
             repo_name, file_name, line_number, keyword, before_2, before_1, matched, after_1, after_2, in_block = row
             writer.writerow(
@@ -1444,12 +1443,9 @@ def write_review_outputs(
                     after_1,
                     after_2,
                     bool(in_block),
-                    "",
-                    "",
-                    "",
                 ]
             )
-    written["coding_sheet"] = sheet_path
+    written["fixture_matches"] = matches_path
     written["repository_sheet"] = write_repository_coding_sheet(match_rows, db_path, output_dir)
     written["readme"] = write_rq5_readme(output_dir)
 

@@ -64,7 +64,7 @@ collection/          # Main pipeline code (the "library")
   heuristics/exclusion_keywords.yaml  # Repo name/description keywords that signal a boilerplate/toy repo
   heuristics/feature_extraction_patterns.yaml  # Mock-framework/external-call/object-instantiation regex tables + setup/teardown pairing rules
   heuristics/rq5_agent_file_keywords.yaml  # RQ5's own catalog (not fed into the loaders above): target agent-config
-                     # file names + versioned test/fixture keyword lists, consumed directly by rq5_agent_file_scan.py
+                     # file names + test/fixture keyword lists, consumed directly by rq5_agent_file_scan.py
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a

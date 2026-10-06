@@ -7,9 +7,11 @@ reads it once every row is coded.
 ## Files
 
 - `rq5_repositories.csv`: one row per analyzed repository.
-- `rq5_fixture_coding_sheet.csv`: one row per fixture-keyword match, with two
-  lines of context on each side. A match's **row id** is its 1-based position
-  among the data rows (row id N is spreadsheet row N+1, below the header).
+- `rq5_fixture_matches.csv`: one row per fixture-keyword match, with two
+  lines of context on each side. Not coded: it is the lookup for a snippet's
+  context and for `evidence_row_id`. A match's **row id** is its 1-based
+  position among the data rows (row id N is spreadsheet row N+1, below the
+  header).
 - `rq5_repository_coding_sheet.csv`: one row per repository with at least one fixture
   match. `fixture_snippets` lists all of the repository's matched lines, each
   prefixed with its row id, ordered by term (conftest, beforeEach, afterEach, beforeAll, afterAll, test setup, setup and teardown, fixture, fixtures),

@@ -9,7 +9,7 @@ import pytest
 import yaml
 
 from collection.rq5_agent_file_scan import (
-    CODING_SHEET_FIELDNAMES,
+    FIXTURE_MATCHES_FIELDNAMES,
     REPO_CSV_FIELDNAMES,
     SKIPPED_CSV_FIELDNAMES,
     _build_patterns,
@@ -242,7 +242,7 @@ class TestWriteReviewOutputs:
 
         written = write_review_outputs(ARDIC_TERMS, v4_db, out)
 
-        assert set(written) == {"repositories", "coding_sheet", "repository_sheet", "skipped", "readme"}
+        assert set(written) == {"repositories", "fixture_matches", "repository_sheet", "skipped", "readme"}
         with written["repositories"].open(encoding="utf-8") as fh:
             repo_rows = list(csv.reader(fh))
         assert tuple(repo_rows[0]) == REPO_CSV_FIELDNAMES
@@ -258,20 +258,20 @@ class TestWriteReviewOutputs:
         ]
         assert by_repo["owner/b"][3:6] == ["1", "0", "0"]
 
-    def test_coding_sheet_has_one_row_per_fixture_match_and_empty_coding_columns(self, v4_db, tmp_path):
+    def test_fixture_matches_has_one_row_per_match_and_no_coding_columns(self, v4_db, tmp_path):
         out = tmp_path / "out"
 
         written = write_review_outputs(ARDIC_TERMS, v4_db, out)
 
-        with written["coding_sheet"].open(encoding="utf-8") as fh:
+        with written["fixture_matches"].open(encoding="utf-8") as fh:
             rows = list(csv.DictReader(fh))
-        assert tuple(rows[0].keys()) == CODING_SHEET_FIELDNAMES
+        assert tuple(rows[0].keys()) == FIXTURE_MATCHES_FIELDNAMES
         assert len(rows) == 1  # the one fixture match; the test match is not a fixture row
         row = rows[0]
         assert row["matched_term"] == "fixture"
         assert (row["line_before_2"], row["line_before_1"]) == ("before two", "before one")
         assert (row["line_after_1"], row["line_after_2"]) == ("after one", "after two")
-        assert (row["category"], row["about_fixtures"], row["notes"]) == ("", "", "")
+        assert not {"category", "about_fixtures", "notes"} & set(row)
 
     def test_skipped_repositories_are_listed_with_their_reason(self, v4_db, tmp_path):
         written = write_review_outputs(ARDIC_TERMS, v4_db, tmp_path / "out")

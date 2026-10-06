@@ -143,7 +143,7 @@ class TestRepositoryCodingSheet:
     def test_snippet_ids_are_the_match_sheet_row_positions(self, coded_db, tmp_path):
         out = tmp_path / "out"
         write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
-        match_sheet = _read(out / "rq5_fixture_coding_sheet.csv")
+        match_sheet = _read(out / "rq5_fixture_matches.csv")
 
         for row in _read(out / REPOSITORY_SHEET_NAME):
             for snippet in row["fixture_snippets"].split("\n"):
