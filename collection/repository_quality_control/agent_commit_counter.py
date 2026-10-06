@@ -158,7 +158,9 @@ def write_commit_rows(rows: list[dict], output_dir: Path = OUTPUT_DIR) -> None:
             logger.exception("Failed to write checkpoint for language=%s", lang)
 
 
-def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
+def process_repo_for_commits(
+    row: dict, since: str, *, clone_timeout: int = 300
+) -> tuple[list[dict], int]:
     """Temp-clone the repo in *row* and return (agent commits, total commits
     examined) since *since*. The total counts every commit the scan looked
     at in the date window -- agent, human, and bot alike -- not just the
@@ -174,7 +176,7 @@ def process_repo_for_commits(row: dict, since: str) -> tuple[list[dict], int]:
         clone_url,
         full_name,
         prefix="agent-commits-",
-        timeout=300,
+        timeout=clone_timeout,
         shallow_since=shallow_clone_since(since),
         clone_filter=COMMIT_HISTORY_CLONE_FILTER,
     ) as repo_path:

@@ -141,3 +141,20 @@ def test_discover_repos_records_an_empty_repository_as_no_agent_config(tmp_path,
     assert row is not None
     assert row["has_agent_config"] == 0
     assert row["qc_reason"] == "no_agent_config"
+
+
+def test_tree_listing_survives_a_file_name_that_is_not_utf8(tmp_path):
+    """Git stores file names as raw bytes. A Latin-1 name used to make the listing
+    raise UnicodeDecodeError, which discover-repos then recorded as a clone failure.
+    The listing must keep every name, and the config match must still be found."""
+    repo = _repo_with_files(tmp_path / "r", {"CLAUDE.md": "guidance"})
+    raw_path = os.path.join(os.fsencode(repo), b"caf\xe9.txt")
+    with open(raw_path, "wb") as fh:
+        fh.write(b"x")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "latin-1 name")
+
+    paths = {path for path, _ in list_tree_entries(repo)}
+
+    assert "CLAUDE.md" in paths
+    assert scan_repo_tree_for_agent_configs(repo) == "CLAUDE.md"

@@ -27,11 +27,14 @@ Three modules clone repositories. Pick the one that fits the job.
 | `ephemeral_clone.py` | The same, with a clone limit, free-disk checks and cleanup on exit. The collectors use this one. |
 | `persistent_clone.py` | Clones into `clones/` and records the result in the database. |
 
-Clones are removed when their context ends. `clones/` is the only folder that
+Clones authenticate with `GITHUB_TOKEN` when it is set, through an environment
+variable so the token stays out of the command line. Clones are removed when their
+context ends. `clones/` is the only folder that
 grows large during a run. It can be deleted after the run.
 
 A commit-history clone can be cut at a date with `shallow_since`. Dataset A uses
-this. Dataset C does not, because it needs the last commit before a fixed date.
+this. When git cannot parse the shallow information for a repository, the clone falls
+back to the full history. Dataset C does not, because it needs the last commit before a fixed date.
 
 ## Database writes
 

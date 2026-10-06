@@ -440,8 +440,10 @@ def _process_single(entry: dict, since: str) -> Optional[dict]:
                         qc_reason = "no_agent_config"
                 else:
                     qc_reason = "clone_failed_or_missing"
-            except Exception:
-                qc_reason = "clone_failed_or_missing"
+            except Exception as exc:
+                # The clone succeeded; the scan failed. Record the real cause, so it is
+                # not mistaken for a clone failure and stays retryable.
+                qc_reason = f"error:{type(exc).__name__}"
 
         row = {
             "repo_name": full_name,

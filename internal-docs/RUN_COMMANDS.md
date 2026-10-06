@@ -102,6 +102,11 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   `--depth=1 --filter=blob:none --no-checkout` and lists the tree, so it downloads neither
   history nor file contents. The result matches a full checkout scan on the sample it was
   checked against. A repository with no commits has no config file (`no_agent_config`).
+  Every candidate gets a row. `qc_reason` says what happened: empty (config found),
+  `no_agent_config`, `clone_failed_or_missing` (the repository is gone or inaccessible,
+  e.g. HTTP 404 or 403), or `error:<ExceptionType>` (processing failed, so retry it).
+  A repository that raises is recorded as an error, not dropped. Clones authenticate with
+  `GITHUB_TOKEN` when it is set, because anonymous git requests are refused under load.
 - **`filter-test-commits --max-concurrent-clones N`** caps the clones in flight at once (default: 8).
   It clones without blobs (`--filter=blob:none`) and lists each repository's commits with one
   `git log --name-status`, so it reads paths only. Its output matches the earlier per-commit
@@ -186,6 +191,10 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
   docstring. Standalone/manual by design: only rerun it when
   `github-search-raw/` is refreshed or Dataset C's candidate pool otherwise
   changes, not on every Dataset C build.
+- **`discover-commits` falls back to full history when git refuses `--shallow-since`.**
+  Some repositories fail with `error processing shallow info` on every shallow attempt.
+  The scan then clones the full history, which still contains every in-window commit.
+  Other clone failures are still reported.
 - **`dedupe_commits_by_sha.py` (Datasets A and B) removes commits duplicated
   across repo_names that share git history** — org transfers/renames whose
   history has since diverged (e.g. `camunda-cloud/zeebe`/`camunda/zeebe`),

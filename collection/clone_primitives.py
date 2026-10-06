@@ -401,12 +401,17 @@ def list_tree_entries(repo_path: Path) -> list[tuple[str, bool]]:
     listing = subprocess.run(
         ["git", "-C", str(repo_path), "ls-tree", "-r", "-t", "-z", "HEAD"],
         capture_output=True,
-        text=True,
     )
     if listing.returncode != 0:
-        raise RuntimeError(f"git ls-tree failed in {repo_path}: {listing.stderr.strip()[:200]}")
+        raise RuntimeError(
+            f"git ls-tree failed in {repo_path}: {listing.stderr.decode('utf-8', 'replace').strip()[:200]}"
+        )
+    # File names are raw bytes in git and need not be valid UTF-8 (some repositories
+    # have Latin-1 names). surrogateescape keeps every name intact, instead of
+    # raising on one of them and losing the whole repository.
+    stdout = listing.stdout.decode("utf-8", errors="surrogateescape")
     entries = []
-    for record in listing.stdout.split("\0"):
+    for record in stdout.split("\0"):
         if not record:
             continue
         meta, path = record.split("\t", 1)

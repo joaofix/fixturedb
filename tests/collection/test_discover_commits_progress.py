@@ -248,3 +248,26 @@ def test_real_clone_of_a_missing_repository_is_a_permanent_refusal(tmp_path):
 
     with pytest.raises(agent_commit_counter.RepoUnavailable):
         agent_commit_counter.process_repo_for_commits(missing, "2025-01-01")
+
+
+def test_commit_clone_timeout_is_configurable_and_defaults_to_five_minutes(monkeypatch):
+    """Very large repositories (e.g. Firefox) need longer than 300s for a blobless
+    history clone. The default must stay 300s, and a caller must be able to raise it."""
+    seen = []
+
+    from contextlib import contextmanager
+
+    @contextmanager
+    def _fake_clone(clone_url, full_name, prefix="", timeout=60, shallow_since=None, clone_filter=None):
+        seen.append(timeout)
+        yield None
+
+    monkeypatch.setattr(agent_commit_counter, "temp_clone_commit_history", _fake_clone)
+    row = {"repo_name": "owner/big", "language": "python", "clone_url": "https://example.invalid/big.git"}
+
+    with pytest.raises(agent_commit_counter.RepoUnavailable):
+        agent_commit_counter.process_repo_for_commits(row, "2025-01-01")
+    with pytest.raises(agent_commit_counter.RepoUnavailable):
+        agent_commit_counter.process_repo_for_commits(row, "2025-01-01", clone_timeout=3600)
+
+    assert seen == [300, 3600]

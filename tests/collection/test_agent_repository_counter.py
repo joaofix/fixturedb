@@ -507,3 +507,23 @@ def test_process_single_keeps_a_failed_repository_as_an_error_row(monkeypatch):
     assert row["language"] == "typescript"
     assert row["has_agent_config"] == 0
     assert row["qc_reason"] == "error:RuntimeError"
+
+
+def test_scan_failure_after_a_successful_clone_is_recorded_with_its_real_cause(monkeypatch, tmp_path):
+    """A tree-scan exception happens after the clone succeeded. It must be recorded as
+    the error it is, not as a clone failure."""
+
+    @contextmanager
+    def _clone_ok(clone_url, full_name, prefix="", timeout=60):
+        yield tmp_path
+
+    def _scan_raises(repo_path):
+        raise UnicodeDecodeError("utf-8", b"\xe0", 0, 1, "invalid continuation byte")
+
+    monkeypatch.setattr(qc, "temp_clone_tree", _clone_ok)
+    monkeypatch.setattr(qc, "scan_repo_tree_for_agent_configs", _scan_raises)
+
+    row = qc._process_single({"full_name": "owner/odd", "language": "python", "stars": 1}, since="2025-01-01")
+
+    assert row["qc_reason"] == "error:UnicodeDecodeError"
+    assert row["has_agent_config"] == 0
