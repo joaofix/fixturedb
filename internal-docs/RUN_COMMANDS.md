@@ -142,6 +142,12 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     completes, so a crash mid-batch only loses whatever repo was still in flight).
     `--dataset c` still has its own separate `ThreadPoolExecutor`, not this harness
     -- see that collector's own comment for why.
+  - **`dedupe_dataset_c_repos --lookup {rest,graphql}`** chooses how the commit at the
+    reference date is found. `rest` (default) makes one request per repository. `graphql`
+    batches 25 repositories per request, on GraphQL's separate budget. On a sample of
+    205 checkpointed repositories with REST answers, the two agree on 204; the one
+    difference is a repository renamed since, where REST reports no commit and GraphQL
+    follows the rename.
   - **`dedupe_dataset_c_repos` paces its GitHub requests.** `--max-requests-per-hour`
     (default 4000, under GitHub's 5,000/hour budget) spaces every REST request, retries
     included, so a long run stays within the hourly budget. `0` turns pacing off. It

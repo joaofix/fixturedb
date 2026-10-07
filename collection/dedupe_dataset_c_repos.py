@@ -68,6 +68,7 @@ from .repo_dedup_utils import (
     write_duplicate_repos_csv,  # noqa: F401 -- re-exported
 )
 from .repo_dedup_utils import find_duplicate_clusters as _cluster_by_key
+from .rq5_agent_file_scan import GraphQLError, RateLimitExhausted, _graphql_post
 
 logger = get_logger(__name__)
 
@@ -202,6 +203,74 @@ def _save_sha_checkpoint(checkpoint_path: Path, resolved: dict[str, str | None])
         fh.flush()
 
 
+# Sentinel for a lookup that could not be completed. Such a repository is kept for this
+# run and not checkpointed, so it is retried on the next run.
+UNAVAILABLE = object()
+
+# Repositories per GraphQL request. One request costs about one point, against a
+# separate 5,000-point hourly budget, so 25 per request keeps a large pool far below it.
+GRAPHQL_LOOKUP_BATCH_SIZE = 25
+
+
+def _commit_lookup_query(names: list[str]) -> str:
+    """One aliased query: each repository's latest default-branch commit at or before
+    $until, the same commit the REST lookup returns."""
+    aliases = []
+    for index, name in enumerate(names):
+        owner, sep, repo = name.partition("/")
+        if not sep or not owner or not repo:
+            raise ValueError(f"not an owner/name repository: {name!r}")
+        aliases.append(
+            f"r{index}: repository(owner: {json.dumps(owner)}, name: {json.dumps(repo)}) {{"
+            " defaultBranchRef { target { ... on Commit {"
+            " history(first: 1, until: $until) { nodes { oid } } } } } }"
+        )
+    return "query($until: GitTimestamp!) { " + " ".join(aliases) + " }"
+
+
+def fetch_reference_commit_shas_graphql(
+    names: list[str],
+    reference_date: str,
+    github_token: str,
+    *,
+    pacer: "RequestPacer | None" = None,
+) -> dict[str, Any]:
+    """The same answer as fetch_reference_commit_sha(), for a batch of repositories in
+    one GraphQL request. Maps each name to its commit SHA, to None (no commit at or
+    before the date, or no such repository), or to UNAVAILABLE (the lookup failed).
+    A failed request makes the whole batch UNAVAILABLE."""
+    if not names:
+        return {}
+    try:
+        payload = _graphql_post(
+            _commit_lookup_query(names),
+            {"until": f"{reference_date}T23:59:59Z"},
+            token=github_token,
+            rate_limiter=pacer,
+        )
+    except (RateLimitExhausted, GraphQLError) as exc:
+        logger.warning("[dedupe-c] GraphQL lookup of %d repositories failed: %s", len(names), exc)
+        return {name: UNAVAILABLE for name in names}
+
+    data = payload.get("data") or {}
+    errors_by_alias: dict[str, set[str]] = {}
+    for error in payload.get("errors") or []:
+        path = error.get("path") or [""]
+        errors_by_alias.setdefault(path[0], set()).add(error.get("type", ""))
+
+    out: dict[str, Any] = {}
+    for index, name in enumerate(names):
+        alias = f"r{index}"
+        node = data.get(alias)
+        if node is None:
+            out[name] = None if "NOT_FOUND" in errors_by_alias.get(alias, set()) else UNAVAILABLE
+            continue
+        target = (node.get("defaultBranchRef") or {}).get("target") or {}
+        commits = ((target.get("history") or {}).get("nodes")) or []
+        out[name] = commits[0]["oid"] if commits else None
+    return out
+
+
 def _log_dedupe_progress(
     looked_up: int,
     to_look_up: int,
@@ -241,6 +310,8 @@ def find_duplicate_clusters(
     checkpoint_every: int = 50,
     log_every: int = 1000,
     pacer: "RequestPacer | None" = None,
+    batch_fetch_fn=None,
+    batch_size: int = GRAPHQL_LOOKUP_BATCH_SIZE,
 ) -> list[dict[str, Any]]:
     """Group `repos` by their commit at `reference_date`; return one row per
     repo that should be removed as a duplicate.
@@ -258,7 +329,6 @@ def find_duplicate_clusters(
     """
     resolved = _load_sha_checkpoint(checkpoint_path)
     sha_by_repo: dict[str, str | None] = {}
-    fetched_since_checkpoint = 0
     names = [n for n in ((r.get("repo_name") or r.get("full_name")) for r in repos) if n]
     total = len(names)
     cached = sum(1 for n in names if n in resolved)
@@ -271,37 +341,50 @@ def find_duplicate_clusters(
         to_look_up,
     )
 
-    looked_up = 0
-    unavailable = 0
+    state = {"looked_up": 0, "unavailable": 0, "since_checkpoint": 0}
     started = time.monotonic()
-    for name in names:
-        if name in resolved:
-            sha_by_repo[name] = resolved[name]
-            continue
-        extra = {"pacer": pacer} if pacer is not None else {}
-        try:
-            sha = fetch_fn(name, reference_date, github_token, **extra)
-        except CommitLookupUnavailable:
+
+    def _settle(name: str, sha: Any) -> None:
+        looked_up_now = state["looked_up"] + 1
+        state["looked_up"] = looked_up_now
+        if sha is UNAVAILABLE:
             logger.warning(
                 "[dedupe-c] Could not resolve %s this run; will retry next run", name
             )
             sha_by_repo[name] = None
-            unavailable += 1
-            looked_up += 1
-            _log_dedupe_progress(
-                looked_up, to_look_up, cached, total, unavailable, started, log_every
-            )
-            continue
-        sha_by_repo[name] = sha
-        resolved[name] = sha
-        looked_up += 1
-        fetched_since_checkpoint += 1
-        if fetched_since_checkpoint >= checkpoint_every:
-            _save_sha_checkpoint(checkpoint_path, resolved)
-            fetched_since_checkpoint = 0
+            state["unavailable"] += 1
+        else:
+            sha_by_repo[name] = sha
+            resolved[name] = sha
+            state["since_checkpoint"] += 1
+            if state["since_checkpoint"] >= checkpoint_every:
+                _save_sha_checkpoint(checkpoint_path, resolved)
+                state["since_checkpoint"] = 0
         _log_dedupe_progress(
-            looked_up, to_look_up, cached, total, unavailable, started, log_every
+            looked_up_now, to_look_up, cached, total, state["unavailable"], started, log_every
         )
+
+    pending = []
+    for name in names:
+        if name in resolved:
+            sha_by_repo[name] = resolved[name]
+        else:
+            pending.append(name)
+
+    if batch_fetch_fn is not None:
+        for start_index in range(0, len(pending), batch_size):
+            batch = pending[start_index:start_index + batch_size]
+            results = batch_fetch_fn(batch, reference_date, github_token, pacer=pacer)
+            for name in batch:
+                _settle(name, results.get(name, UNAVAILABLE))
+    else:
+        extra = {"pacer": pacer} if pacer is not None else {}
+        for name in pending:
+            try:
+                sha = fetch_fn(name, reference_date, github_token, **extra)
+            except CommitLookupUnavailable:
+                sha = UNAVAILABLE
+            _settle(name, sha)
 
     _save_sha_checkpoint(checkpoint_path, resolved)
     logger.info(
@@ -309,8 +392,8 @@ def find_duplicate_clusters(
         "%d unavailable (kept, retried next run)",
         total,
         cached,
-        looked_up,
-        unavailable,
+        state["looked_up"],
+        state["unavailable"],
     )
 
     return _cluster_by_key(repos, key_fn=lambda r: sha_by_repo.get(r.get("repo_name") or r.get("full_name")))
@@ -358,6 +441,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Where to write the duplicate-repos CSV (default: %(default)s)",
     )
     parser.add_argument(
+        "--lookup",
+        choices=("rest", "graphql"),
+        default="rest",
+        help="How to look up each repository's commit at the reference date. 'rest' makes "
+        "one REST request per repository (default). 'graphql' batches the lookups into "
+        "GraphQL requests, which use a separate, much larger budget.",
+    )
+    parser.add_argument(
         "--max-requests-per-hour",
         type=float,
         default=DEFAULT_MAX_REQUESTS_PER_HOUR,
@@ -402,6 +493,7 @@ def main(argv: list[str] | None = None) -> int:
         github_token=args.github_token,
         checkpoint_path=args.checkpoint,
         pacer=pacer,
+        batch_fetch_fn=fetch_reference_commit_shas_graphql if args.lookup == "graphql" else None,
     )
     write_duplicate_repos_csv(rows, args.output)
 

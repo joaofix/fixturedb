@@ -422,3 +422,100 @@ def test_default_request_budget_stays_below_githubs_hourly_limit():
 
     assert 0 < DEFAULT_MAX_REQUESTS_PER_HOUR < 5000
     assert build_parser().parse_args([]).max_requests_per_hour == DEFAULT_MAX_REQUESTS_PER_HOUR
+
+
+class TestGraphqlLookup:
+    """The GraphQL lookup answers the same question as the REST one, in batches."""
+
+    def _payload(self, data, errors=None):
+        return {"data": data, **({"errors": errors} if errors else {})}
+
+    def test_batch_returns_each_repositorys_default_branch_commit_at_the_cutoff(self, monkeypatch):
+        from collection import dedupe_dataset_c_repos as dd
+
+        seen = {}
+
+        def post(query, variables, *, token, rate_limiter):
+            seen["query"] = query
+            seen["variables"] = variables
+            return self._payload({
+                "r0": {"defaultBranchRef": {"target": {"history": {"nodes": [{"oid": "sha-a"}]}}}},
+                "r1": {"defaultBranchRef": {"target": {"history": {"nodes": [{"oid": "sha-b"}]}}}},
+            })
+
+        monkeypatch.setattr(dd, "_graphql_post", post)
+        out = dd.fetch_reference_commit_shas_graphql(["owner/a", "owner/b"], "2020-12-31", "t")
+
+        assert out == {"owner/a": "sha-a", "owner/b": "sha-b"}
+        assert seen["variables"] == {"until": "2020-12-31T23:59:59Z"}
+        assert 'r0: repository(owner: "owner", name: "a")' in seen["query"]
+        assert "history(first: 1, until: $until)" in seen["query"]
+
+    def test_missing_repository_is_a_definitive_none_and_other_errors_are_unavailable(self, monkeypatch):
+        from collection import dedupe_dataset_c_repos as dd
+
+        def post(query, variables, *, token, rate_limiter):
+            return self._payload(
+                {"r0": None, "r1": None, "r2": {"defaultBranchRef": None}},
+                errors=[{"type": "NOT_FOUND", "path": ["r0"]}, {"type": "SOMETHING", "path": ["r1"]}],
+            )
+
+        monkeypatch.setattr(dd, "_graphql_post", post)
+        out = dd.fetch_reference_commit_shas_graphql(["o/gone", "o/broken", "o/empty"], "2020-12-31", "t")
+
+        assert out["o/gone"] is None
+        assert out["o/broken"] is dd.UNAVAILABLE
+        assert out["o/empty"] is None  # no default branch: no commit at the cutoff
+
+    def test_a_failed_request_marks_the_whole_batch_unavailable(self, monkeypatch):
+        from collection import dedupe_dataset_c_repos as dd
+        from collection.rq5_agent_file_scan import RateLimitExhausted
+
+        def post(query, variables, *, token, rate_limiter):
+            raise RateLimitExhausted("graphql")
+
+        monkeypatch.setattr(dd, "_graphql_post", post)
+        out = dd.fetch_reference_commit_shas_graphql(["o/a", "o/b"], "2020-12-31", "t")
+        assert out == {"o/a": dd.UNAVAILABLE, "o/b": dd.UNAVAILABLE}
+
+    def test_find_duplicate_clusters_in_graphql_batches_with_the_same_checkpoint(self, tmp_path, monkeypatch):
+        from collection import dedupe_dataset_c_repos as dd
+
+        batches = []
+
+        def batch_fetch(names, date, token, *, pacer=None):
+            batches.append(list(names))
+            return {n: f"sha-{n}" for n in names}
+
+        repos = [{"repo_name": f"o/r{i}", "language": "python", "stars": 1, "github_id": i} for i in range(7)]
+        ck = tmp_path / "ck.json"
+        find_duplicate_clusters(
+            repos, reference_date="2020-12-31", github_token="t", checkpoint_path=ck,
+            batch_fetch_fn=batch_fetch, batch_size=3,
+        )
+
+        assert [len(b) for b in batches] == [3, 3, 1]
+        import json as _json
+
+        assert set(_json.loads(ck.read_text())) == {f"o/r{i}" for i in range(7)}
+
+    def test_unavailable_in_a_batch_is_not_checkpointed(self, tmp_path):
+        from collection import dedupe_dataset_c_repos as dd
+
+        def batch_fetch(names, date, token, *, pacer=None):
+            return {n: dd.UNAVAILABLE for n in names}
+
+        repos = [{"repo_name": "o/x", "language": "python", "stars": 1, "github_id": 1}]
+        ck = tmp_path / "ck.json"
+        rows = find_duplicate_clusters(
+            repos, reference_date="2020-12-31", github_token="t", checkpoint_path=ck,
+            batch_fetch_fn=batch_fetch,
+        )
+        assert rows == []
+        assert not ck.exists() or "o/x" not in ck.read_text()
+
+    def test_lookup_option_defaults_to_rest_and_accepts_graphql(self):
+        from collection.dedupe_dataset_c_repos import build_parser
+
+        assert build_parser().parse_args([]).lookup == "rest"
+        assert build_parser().parse_args(["--lookup", "graphql"]).lookup == "graphql"
