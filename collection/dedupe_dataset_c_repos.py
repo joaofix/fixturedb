@@ -51,6 +51,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -72,6 +73,9 @@ logger = get_logger(__name__)
 
 DEFAULT_INPUT_DIR = stage_dir("c", "repos")
 DEFAULT_OUTPUT_PATH = stage_dir("c", "repos") / "duplicate_repos.csv"
+# GitHub allows 5,000 authenticated REST requests an hour. Stay below it, with the same
+# margin the RQ5 scan uses, so that a retry storm cannot exhaust the budget.
+DEFAULT_MAX_REQUESTS_PER_HOUR = 4000.0
 DEFAULT_CHECKPOINT_PATH = stage_dir("c", "repos") / "dedupe_dataset_c_repos.checkpoint.json"
 
 
@@ -88,6 +92,33 @@ class CommitLookupUnavailable(Exception):
     every subsequent run until the checkpoint was manually purged."""
 
 
+class RequestPacer:
+    """Spaces REST requests so that at most `max_per_hour` start in any hour.
+
+    One pacer is shared by every lookup in a run, so the budget holds whatever
+    the number of workers. A pause does not build up a burst: after a long
+    pause, requests resume at the normal spacing. The clock and sleep functions
+    are injectable for tests.
+    """
+
+    def __init__(self, max_per_hour: float, *, clock=time.monotonic, sleep=time.sleep) -> None:
+        if max_per_hour <= 0:
+            raise ValueError("max_per_hour must be positive")
+        self._interval = 3600.0 / max_per_hour
+        self._clock = clock
+        self._sleep = sleep
+        self._next_slot = 0.0
+        self._lock = threading.Lock()
+
+    def acquire(self) -> None:
+        with self._lock:
+            now = self._clock()
+            slot = max(now, self._next_slot)
+            if slot > now:
+                self._sleep(slot - now)
+            self._next_slot = slot + self._interval
+
+
 def fetch_reference_commit_sha(
     repo_name: str,
     reference_date: str,
@@ -95,6 +126,7 @@ def fetch_reference_commit_sha(
     *,
     timeout: int = 10,
     max_retries: int = 3,
+    pacer: "RequestPacer | None" = None,
 ) -> str | None:
     """Return the SHA of `repo_name`'s most recent commit at or before
     `reference_date` (ISO date, e.g. "2020-12-31"), or None if there is
@@ -116,6 +148,8 @@ def fetch_reference_commit_sha(
 
     for attempt in range(max_retries + 1):
         try:
+            if pacer is not None:
+                pacer.acquire()
             response = requests.get(url, headers=headers, params=params, timeout=timeout)
             response.raise_for_status()
             data = response.json()
@@ -206,6 +240,7 @@ def find_duplicate_clusters(
     fetch_fn=fetch_reference_commit_sha,
     checkpoint_every: int = 50,
     log_every: int = 1000,
+    pacer: "RequestPacer | None" = None,
 ) -> list[dict[str, Any]]:
     """Group `repos` by their commit at `reference_date`; return one row per
     repo that should be removed as a duplicate.
@@ -243,8 +278,9 @@ def find_duplicate_clusters(
         if name in resolved:
             sha_by_repo[name] = resolved[name]
             continue
+        extra = {"pacer": pacer} if pacer is not None else {}
         try:
-            sha = fetch_fn(name, reference_date, github_token)
+            sha = fetch_fn(name, reference_date, github_token, **extra)
         except CommitLookupUnavailable:
             logger.warning(
                 "[dedupe-c] Could not resolve %s this run; will retry next run", name
@@ -322,6 +358,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Where to write the duplicate-repos CSV (default: %(default)s)",
     )
     parser.add_argument(
+        "--max-requests-per-hour",
+        type=float,
+        default=DEFAULT_MAX_REQUESTS_PER_HOUR,
+        help="Target GitHub REST request rate for the commit lookups, paced across "
+        f"all lookups in the run (default: {DEFAULT_MAX_REQUESTS_PER_HOUR:.0f}, a margin "
+        "below GitHub's 5,000/hour authenticated budget). 0 disables pacing.",
+    )
+    parser.add_argument(
         "--checkpoint",
         type=Path,
         default=DEFAULT_CHECKPOINT_PATH,
@@ -349,11 +393,15 @@ def main(argv: list[str] | None = None) -> int:
     repos = _load_candidates(args.input_dir)
     logger.info("[dedupe-c] Loaded %d candidate repos from %s", len(repos), args.input_dir)
 
+    pacer = (
+        RequestPacer(args.max_requests_per_hour) if args.max_requests_per_hour > 0 else None
+    )
     rows = find_duplicate_clusters(
         repos,
         reference_date=args.reference_date,
         github_token=args.github_token,
         checkpoint_path=args.checkpoint,
+        pacer=pacer,
     )
     write_duplicate_repos_csv(rows, args.output)
 

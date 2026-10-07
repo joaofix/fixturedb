@@ -334,3 +334,91 @@ def test_progress_is_logged_every_thousand_lookups_by_default():
     from collection.dedupe_dataset_c_repos import find_duplicate_clusters as f
 
     assert inspect.signature(f).parameters["log_every"].default == 1000
+
+
+class TestRequestPacer:
+    """The dedupe stays under a per-hour request budget, however many lookups run."""
+
+    def _clock(self):
+        state = {"now": 0.0, "slept": []}
+
+        def clock():
+            return state["now"]
+
+        def sleep(seconds):
+            state["slept"].append(seconds)
+            state["now"] += seconds
+
+        return state, clock, sleep
+
+    def test_spaces_requests_evenly_across_the_hour_budget(self):
+        from collection.dedupe_dataset_c_repos import RequestPacer
+
+        state, clock, sleep = self._clock()
+        pacer = RequestPacer(3600, clock=clock, sleep=sleep)  # one request per second
+        for _ in range(4):
+            pacer.acquire()
+        assert state["slept"] == [1.0, 1.0, 1.0]
+
+    def test_a_pause_longer_than_the_interval_does_not_build_up_a_burst(self):
+        from collection.dedupe_dataset_c_repos import RequestPacer
+
+        state, clock, sleep = self._clock()
+        pacer = RequestPacer(3600, clock=clock, sleep=sleep)
+        pacer.acquire()
+        state["now"] += 100.0  # a long pause
+        pacer.acquire()
+        pacer.acquire()
+        assert state["slept"] == [1.0]  # the pause is not banked into a burst of requests
+
+    def test_every_rest_attempt_is_paced_including_retries(self, monkeypatch):
+        from collection import dedupe_dataset_c_repos as dd
+
+        class _Pacer:
+            calls = 0
+
+            def acquire(self):
+                _Pacer.calls += 1
+
+        class _Resp:
+            status_code = 429  # a rate-limit response, which is the case that retries
+            headers = {"Retry-After": "0"}
+
+            def raise_for_status(self):
+                raise requests.HTTPError(response=self)
+
+            def json(self):
+                return []
+
+        monkeypatch.setattr(requests, "get", lambda *a, **k: _Resp())
+        monkeypatch.setattr("time.sleep", lambda _: None)
+        with pytest.raises(dd.CommitLookupUnavailable):
+            dd.fetch_reference_commit_sha("owner/repo", "2020-12-31", "t", max_retries=2, pacer=_Pacer())
+        assert _Pacer.calls == 3  # the first attempt and both retries
+
+    def test_find_duplicate_clusters_passes_the_pacer_to_each_lookup(self, tmp_path):
+        from collection.dedupe_dataset_c_repos import RequestPacer
+
+        seen = []
+
+        def fetch(name, date, token, pacer=None):
+            seen.append(pacer)
+            return f"sha-{name}"
+
+        marker = object()
+        find_duplicate_clusters(
+            [{"repo_name": "owner/a", "language": "python", "stars": 1, "github_id": 1}],
+            reference_date="2020-12-31",
+            github_token="t",
+            checkpoint_path=tmp_path / "ck.json",
+            fetch_fn=fetch,
+            pacer=marker,
+        )
+        assert seen == [marker]
+
+
+def test_default_request_budget_stays_below_githubs_hourly_limit():
+    from collection.dedupe_dataset_c_repos import DEFAULT_MAX_REQUESTS_PER_HOUR, build_parser
+
+    assert 0 < DEFAULT_MAX_REQUESTS_PER_HOUR < 5000
+    assert build_parser().parse_args([]).max_requests_per_hour == DEFAULT_MAX_REQUESTS_PER_HOUR

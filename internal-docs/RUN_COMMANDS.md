@@ -142,6 +142,11 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     completes, so a crash mid-batch only loses whatever repo was still in flight).
     `--dataset c` still has its own separate `ThreadPoolExecutor`, not this harness
     -- see that collector's own comment for why.
+  - **`dedupe_dataset_c_repos` paces its GitHub requests.** `--max-requests-per-hour`
+    (default 4000, under GitHub's 5,000/hour budget) spaces every REST request, retries
+    included, so a long run stays within the hourly budget. `0` turns pacing off. It
+    resumes from `datasets/c/repos/dedupe_dataset_c_repos.checkpoint.json`: resolved
+    repositories are skipped, and rate-limited ones are retried on the next run.
   - **`extract-fixtures --dataset c` never records a failed repository as done.** A
     repository is complete only after its own fixtures are stored. It stays pending
     (and is retried next run) when its commit count fails (a timeout or a git error is
