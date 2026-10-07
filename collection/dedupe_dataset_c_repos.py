@@ -168,6 +168,35 @@ def _save_sha_checkpoint(checkpoint_path: Path, resolved: dict[str, str | None])
         fh.flush()
 
 
+def _log_dedupe_progress(
+    looked_up: int,
+    to_look_up: int,
+    cached: int,
+    total: int,
+    unavailable: int,
+    started: float,
+    log_every: int,
+) -> None:
+    """One progress line every `log_every` lookups, and on the last one, with a rate and an ETA."""
+    if log_every <= 0 or (looked_up % log_every != 0 and looked_up != to_look_up):
+        return
+    elapsed = max(time.monotonic() - started, 1e-9)
+    rate = looked_up / elapsed
+    remaining = to_look_up - looked_up
+    eta = f"{remaining / rate / 60:.0f}min" if rate > 0 and remaining > 0 else "0min"
+    logger.info(
+        "[dedupe-c] %d/%d repositories resolved (%d cached, %d looked up, %d unavailable) "
+        "-- %.1f lookups/s, ETA %s",
+        cached + looked_up,
+        total,
+        cached,
+        looked_up,
+        unavailable,
+        rate,
+        eta,
+    )
+
+
 def find_duplicate_clusters(
     repos: list[dict[str, Any]],
     reference_date: str,
@@ -176,6 +205,7 @@ def find_duplicate_clusters(
     *,
     fetch_fn=fetch_reference_commit_sha,
     checkpoint_every: int = 50,
+    log_every: int = 100,
 ) -> list[dict[str, Any]]:
     """Group `repos` by their commit at `reference_date`; return one row per
     repo that should be removed as a duplicate.
@@ -194,11 +224,22 @@ def find_duplicate_clusters(
     resolved = _load_sha_checkpoint(checkpoint_path)
     sha_by_repo: dict[str, str | None] = {}
     fetched_since_checkpoint = 0
+    names = [n for n in ((r.get("repo_name") or r.get("full_name")) for r in repos) if n]
+    total = len(names)
+    cached = sum(1 for n in names if n in resolved)
+    to_look_up = total - cached
+    logger.info(
+        "[dedupe-c] %d repositories: %d already resolved from %s, %d to look up",
+        total,
+        cached,
+        checkpoint_path,
+        to_look_up,
+    )
 
-    for repo in repos:
-        name = repo.get("repo_name") or repo.get("full_name")
-        if not name:
-            continue
+    looked_up = 0
+    unavailable = 0
+    started = time.monotonic()
+    for name in names:
         if name in resolved:
             sha_by_repo[name] = resolved[name]
             continue
@@ -209,15 +250,32 @@ def find_duplicate_clusters(
                 "[dedupe-c] Could not resolve %s this run; will retry next run", name
             )
             sha_by_repo[name] = None
+            unavailable += 1
+            looked_up += 1
+            _log_dedupe_progress(
+                looked_up, to_look_up, cached, total, unavailable, started, log_every
+            )
             continue
         sha_by_repo[name] = sha
         resolved[name] = sha
+        looked_up += 1
         fetched_since_checkpoint += 1
         if fetched_since_checkpoint >= checkpoint_every:
             _save_sha_checkpoint(checkpoint_path, resolved)
             fetched_since_checkpoint = 0
+        _log_dedupe_progress(
+            looked_up, to_look_up, cached, total, unavailable, started, log_every
+        )
 
     _save_sha_checkpoint(checkpoint_path, resolved)
+    logger.info(
+        "[dedupe-c] summary: %d repositories -- %d from the checkpoint, %d looked up, "
+        "%d unavailable (kept, retried next run)",
+        total,
+        cached,
+        looked_up,
+        unavailable,
+    )
 
     return _cluster_by_key(repos, key_fn=lambda r: sha_by_repo.get(r.get("repo_name") or r.get("full_name")))
 

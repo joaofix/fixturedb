@@ -270,3 +270,59 @@ class TestFetchReferenceCommitSha:
 
         with pytest.raises(CommitLookupUnavailable):
             fetch_reference_commit_sha("owner/repo", "2020-12-31", "fake-token")
+
+
+class TestProgressLogging:
+    """The dedupe run must say how far it is, so a long run can be followed from its log."""
+
+    def _repos(self, n):
+        return [{"repo_name": f"owner/r{i}", "language": "python", "stars": 1, "github_id": i} for i in range(n)]
+
+    def test_logs_progress_during_the_run_and_a_final_summary(self, tmp_path, caplog):
+        import logging
+
+        from collection.dedupe_dataset_c_repos import CommitLookupUnavailable
+
+        def fetch(name, date, token):
+            if name == "owner/r3":
+                raise CommitLookupUnavailable("rate limited")
+            return "sha-same" if name in ("owner/r0", "owner/r1") else f"sha-{name}"
+
+        with caplog.at_level(logging.INFO, logger="collection.dedupe_dataset_c_repos"):
+            find_duplicate_clusters(
+                self._repos(10),
+                reference_date="2020-12-31",
+                github_token="t",
+                checkpoint_path=tmp_path / "ck.json",
+                fetch_fn=fetch,
+                log_every=4,
+            )
+
+        messages = [r.getMessage() for r in caplog.records]
+        progress = [m for m in messages if "lookups" in m and "/" in m]
+        assert progress, messages
+        assert any("4/10" in m for m in progress)
+        assert any("ETA" in m for m in progress)
+        summary = [m for m in messages if "summary" in m]
+        assert summary and "10 repositories" in summary[-1]
+        assert "1 unavailable" in summary[-1]
+
+    def test_cached_repositories_are_reported_separately_from_new_lookups(self, tmp_path, caplog):
+        import logging
+
+        ck = tmp_path / "ck.json"
+        ck.write_text('{"owner/r0": "sha-a", "owner/r1": "sha-b"}', encoding="utf-8")
+        calls = []
+
+        def fetch(name, date, token):
+            calls.append(name)
+            return f"sha-{name}"
+
+        with caplog.at_level(logging.INFO, logger="collection.dedupe_dataset_c_repos"):
+            find_duplicate_clusters(
+                self._repos(4), reference_date="2020-12-31", github_token="t",
+                checkpoint_path=ck, fetch_fn=fetch, log_every=100,
+            )
+
+        assert calls == ["owner/r2", "owner/r3"]
+        assert any("2 already resolved" in r.getMessage() for r in caplog.records)
