@@ -68,9 +68,9 @@ matches fall inside fenced code blocks, overall and per term.
 
 A fixture keyword match is not fixture guidance: many "fixture"/"fixtures"
 matches refer to test-data files, which are out of scope. The final RQ5 number
-comes from manual coding of `rq5/rq5_repository_coding_sheet.csv`, one row per
-repository with a fixture match (coding values in `rq5/README.md`), read through
-`rq5/rq5_snippets.md`, which shows each repository's matched lines with their
+comes from manual coding of `research_questions/rq5/rq5_repository_coding_sheet.csv`, one row per
+repository with a fixture match (coding values in `research_questions/rq5/README.md`), read through
+`research_questions/rq5/rq5_snippets.md`, which shows each repository's matched lines with their
 context and a GitHub link. A repository is coded `yes` when at least one match
 refers to test fixtures as code; a description counts as guidance, because in
 an agent configuration file it acts as an instruction to the agent. Once every

@@ -1,6 +1,6 @@
 """
 RQ5 -- manual coding results: reads the completed repository-level coding
-sheet (`rq5/rq5_repository_coding_sheet.csv`) and computes the final RQ5
+sheet (`research_questions/rq5/rq5_repository_coding_sheet.csv`) and computes the final RQ5
 fixture-guidance numbers.
 
 Denominators:
@@ -11,7 +11,7 @@ Denominators:
   precision of the keyword search.
 
 Refuses to run while any row is uncoded or holds a value outside the allowed
-ones (see `rq5/README.md`). No coding is inferred here.
+ones (see `research_questions/rq5/README.md`). No coding is inferred here.
 
 python -m collection.research_questions.rq5_coding
 """
@@ -134,7 +134,7 @@ def generate_report(results: dict[str, Any]) -> str:
         "",
         f"Generated: {generated_at}",
         "",
-        f"Source: `rq5/{REPOSITORY_SHEET_NAME}`, one row per repository with a fixture keyword match.",
+        f"Source: `research_questions/rq5/{REPOSITORY_SHEET_NAME}`, one row per repository with a fixture keyword match.",
         "",
         "## Code fixture guidance",
         "",

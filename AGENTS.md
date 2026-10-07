@@ -85,7 +85,7 @@ collection/          # Main pipeline code (the "library")
   between_group_comparison.py  # Statistical-test primitives (balance tests, effect sizes) used by research_questions/ below.
   rq1_prevalence_scan.py  # RQ1's own collection, independent of --dataset {a,c}: scans the raw
                      # github-search-raw/ universe for test/fixture/setup/teardown prevalence,
-                     # writes db/rq1_prevalence.db + rq1-prevalence/*.csv. Run directly:
+                     # writes db/rq1_prevalence.db + research_questions/RQ1/*.csv. Run directly:
                      # `python -m collection.rq1_prevalence_scan`
   rq5_agent_file_scan.py  # RQ5's own collection, for the repos with a Dataset A fixture (not the raw
                      # universe), at a required --snapshot-date -- via GitHub's GraphQL API (batched), never a
@@ -97,7 +97,7 @@ collection/          # Main pipeline code (the "library")
                      # rq2/rq3/rq4.py (structural/teardown/mocking, read db/{a,c}.db), rq5.py
                      # (agent config file test/fixture keyword prevalence, reads
                      # db/rq5_agent_files.db -- not db/{a,c}.db), rq5_coding.py (final RQ5 numbers
-                     # from the manually coded rq5/rq5_repository_coding_sheet.csv), balance.py (control-variable
+                     # from the manually coded research_questions/rq5/rq5_repository_coding_sheet.csv), balance.py (control-variable
                      # check), dataset_findings.py (non-RQ descriptive findings),
                      # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)

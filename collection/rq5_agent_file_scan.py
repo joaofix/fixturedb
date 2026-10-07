@@ -145,7 +145,7 @@ CATALOG_PATH = paths.ROOT_DIR / "collection" / "heuristics" / "rq5_agent_file_ke
 DATASET_A_FIXTURES_DIR = paths.stage_dir("a", "fixtures")
 
 DB_PATH = paths.DB_ROOT / "rq5_agent_files.db"
-CSV_OUTPUT_DIR = paths.ROOT_DIR / "rq5"
+CSV_OUTPUT_DIR = paths.ROOT_DIR / "research_questions" / "rq5"
 PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_progress.json"
 PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
