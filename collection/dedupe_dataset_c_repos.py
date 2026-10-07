@@ -205,7 +205,7 @@ def find_duplicate_clusters(
     *,
     fetch_fn=fetch_reference_commit_sha,
     checkpoint_every: int = 50,
-    log_every: int = 100,
+    log_every: int = 1000,
 ) -> list[dict[str, Any]]:
     """Group `repos` by their commit at `reference_date`; return one row per
     repo that should be removed as a duplicate.

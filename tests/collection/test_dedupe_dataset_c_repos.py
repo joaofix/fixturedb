@@ -326,3 +326,11 @@ class TestProgressLogging:
 
         assert calls == ["owner/r2", "owner/r3"]
         assert any("2 already resolved" in r.getMessage() for r in caplog.records)
+
+
+def test_progress_is_logged_every_thousand_lookups_by_default():
+    import inspect
+
+    from collection.dedupe_dataset_c_repos import find_duplicate_clusters as f
+
+    assert inspect.signature(f).parameters["log_every"].default == 1000
