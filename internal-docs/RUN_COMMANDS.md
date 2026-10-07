@@ -142,6 +142,13 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     completes, so a crash mid-batch only loses whatever repo was still in flight).
     `--dataset c` still has its own separate `ThreadPoolExecutor`, not this harness
     -- see that collector's own comment for why.
+  - **`extract-fixtures --dataset c` never records a failed repository as done.** A
+    repository is complete only after its own fixtures are stored. It stays pending
+    (and is retried next run) when its commit count fails (a timeout or a git error is
+    not "zero commits"), when its checkout or any test file's extraction fails, or when
+    its database write fails. Failed repositories are logged as a warning and listed in
+    `{db}_dataset_c_{language}_progress.json` under `failed_repos`. A file name that is not
+    valid UTF-8 is stored with U+FFFD in place of the undecodable bytes.
   - **Both `extract-fixtures --dataset {a,c}` are safe to split into
     separate per-language calls** (as the Dataset A/C chains above now do), no
     `--force` needed between them, and none should be added — each call

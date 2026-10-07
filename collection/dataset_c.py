@@ -165,7 +165,7 @@ def find_cutoff_commit(
         return None
 
 
-def count_commits_up_to(repo_path: Path, commit_sha: str) -> int:
+def count_commits_up_to(repo_path: Path, commit_sha: str) -> Optional[int]:
     """Count commits reachable from commit_sha -- i.e. commits made on or
     before the cutoff commit, in the clone's own (single-branch) history.
 
@@ -176,6 +176,10 @@ def count_commits_up_to(repo_path: Path, commit_sha: str) -> int:
     after 2020, so "has 100+ commits today" says nothing about whether it
     had 100+ commits back at the Dataset C snapshot. `git rev-list --count`
     against the actual cutoff commit answers that honestly.
+
+    Returns None when the count could not be made (timeout, git error, unknown
+    commit). That is not the same as zero commits: a caller that treated it as
+    zero would record a repository as "too few commits" and never retry it.
     """
     try:
         result = subprocess.run(
@@ -187,10 +191,20 @@ def count_commits_up_to(repo_path: Path, commit_sha: str) -> int:
         )
         return int(result.stdout.strip())
     except Exception as exc:
-        logger.debug(
-            "Failed to count commits up to %s in %s: %s", commit_sha, repo_path, exc
+        logger.warning(
+            "[Dataset C] Could not count commits up to %s in %s (will retry): %s",
+            commit_sha,
+            repo_path,
+            exc,
         )
-        return 0
+        return None
+
+
+def _utf8_safe(text: str) -> str:
+    """A string that can be stored in SQLite and CSV. Git and os.walk give file names
+    as raw bytes; a name that is not valid UTF-8 keeps its undecodable bytes as
+    surrogates, which SQLite refuses. Those bytes become U+FFFD here."""
+    return text.encode("utf-8", "surrogateescape").decode("utf-8", "replace")
 
 
 def _iter_repo_files(repo_path: Path) -> List[Path]:
@@ -329,17 +343,41 @@ def _save_dataset_c_checkpoint(
 
 
 def _write_dataset_c_progress(
-    progress_path: Path, completed_repos: Set[str], counts: Dict[str, int]
+    progress_path: Path,
+    completed_repos: Set[str],
+    counts: Dict[str, int],
+    failed_repos: Optional[List[str]] = None,
 ) -> None:
     progress = {
         "repos_persisted": counts.get("repos_persisted", 0),
         "fixtures_persisted": counts.get("fixtures_persisted", 0),
         "completed_repos_count": len(completed_repos),
+        "failed_repos": sorted(failed_repos or []),
     }
     progress_path.parent.mkdir(parents=True, exist_ok=True)
     with progress_path.open("w", encoding="utf-8") as fh:
         json.dump(progress, fh, ensure_ascii=False, indent=2)
         fh.flush()
+
+
+def _process_repo_guarded(
+    repo: Dict[str, Any],
+    cutoffs: Dict[str, Dict[str, str]],
+    extractor: AgentFixtureExtractor,
+    clones_dir: Path,
+) -> Tuple[bool, List[Tuple[Dict[str, Any], Dict[str, Any]]]]:
+    """_process_repo() for one repository, with any unexpected exception turned into a
+    failed result. The run carries on, and the repository stays pending for the next run.
+    """
+    try:
+        return _process_repo(repo, cutoffs, extractor, clones_dir)
+    except Exception as exc:
+        logger.warning(
+            "[Dataset C] Unexpected error processing %s (will retry next run): %s",
+            repo.get("full_name"),
+            exc,
+        )
+        return False, []
 
 
 def _process_repo(
@@ -391,6 +429,9 @@ def _process_repo(
         # cheap ref lookup (no working-tree changes needed), so a repo
         # that fails it skips the more expensive checkout + file walk.
         commit_count = count_commits_up_to(actual_repo_path, cutoff_sha)
+        if commit_count is None:
+            # Could not count: leave the repository pending for the next run.
+            return False, []
         if commit_count < MIN_COMMITS:
             logger.debug(
                 "[Dataset C] %s has only %d commits at cutoff %s (need %d)",
@@ -457,6 +498,7 @@ def _process_repo(
         )
 
         repo_fixtures: List[Dict[str, Any]] = []
+        failed_files: List[str] = []
         for test_file, file_language in test_files:
             try:
                 file_fixtures = extractor._extract_from_snapshot_file(
@@ -468,12 +510,16 @@ def _process_repo(
                 )
                 repo_fixtures.extend(file_fixtures)
             except Exception as exc:
-                logger.debug(
-                    "[Dataset C] Failed to extract %s in %s: %s",
+                failed_files.append(test_file)
+                logger.warning(
+                    "[Dataset C] Failed to extract %s in %s (will retry next run): %s",
                     test_file,
                     repo_name,
                     exc,
                 )
+        if failed_files:
+            # Some of the repository's fixtures are missing, so it is not finished.
+            return False, []
 
         if repo_fixtures:
             logger.debug(
@@ -659,14 +705,14 @@ def collect_dataset_c_fixtures(
     # need that sampling step decoupled from persistence first.
     if workers <= 1:
         for repo in tqdm(pending_repos, desc="[Dataset C]", unit="repo"):
-            success, results = _process_repo(repo, cutoffs, extractor, clones_dir)
+            success, results = _process_repo_guarded(repo, cutoffs, extractor, clones_dir)
             if success:
                 successful_repos.add(repo["full_name"])
                 candidates.extend(results)
     else:
 
         def _submit(repo):
-            return _process_repo(repo, cutoffs, extractor, clones_dir)
+            return _process_repo_guarded(repo, cutoffs, extractor, clones_dir)
 
         with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = {executor.submit(_submit, repo): repo for repo in pending_repos}
@@ -819,6 +865,7 @@ def collect_dataset_c_fixtures(
             repo_age_years=metadata["repo_age_years"],
             repo_age_at_collection_years=metadata["repo_age_at_collection_years"],
         )
+        persisted_ok = False
         try:
             # Bucket by each fixture's OWN language, not just the first
             # fixture's language for the whole repo -- a multi-language repo
@@ -826,6 +873,7 @@ def collect_dataset_c_fixtures(
             # fix as agent_corpus.py's _persist_repo_agent_commit_stats().
             fixtures_by_language: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
             for fx in fixtures_list:
+                fx["file_path"] = _utf8_safe(str(fx.get("file_path", "")))
                 fx_lang = (fx.get("language") or language_val or "unknown")
                 fixtures_by_language[str(fx_lang).strip().lower()].append(fx)
 
@@ -844,8 +892,11 @@ def collect_dataset_c_fixtures(
             counts["fixtures_persisted"] = counts.get("fixtures_persisted", 0) + len(
                 fixtures_list
             )
+            persisted_ok = True
         except Exception as exc:
-            logger.warning("[Dataset C] Failed to persist %s: %s", repo_full, exc)
+            logger.warning(
+                "[Dataset C] Failed to persist %s (will retry next run): %s", repo_full, exc
+            )
         finally:
             # `repo_full` is added to completed_repos only after its own
             # persist_repository_and_fixtures() call has run, whether that call
@@ -863,15 +914,25 @@ def collect_dataset_c_fixtures(
             # `insert_fixture()`'s `ON CONFLICT ... DO NOTHING` makes
             # re-persisting a given repo a no-op regardless, so this is
             # belt-and-suspenders, not load-bearing for correctness.
-            completed_repos.add(repo_full)
+            if persisted_ok:
+                completed_repos.add(repo_full)
             _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
             _write_dataset_c_progress(progress_path, completed_repos, counts)
 
     # Unconditional final save, kept alongside the per-repo ones above (not
     # a replacement for them) as a final flush -- e.g. covers repo_groups
     # being empty outright (loop body never runs at all).
+    # A repository is failed when it is still not complete after this run: an
+    # extraction failure, a failed count or checkout, or a failed persist.
+    failed_repos = [r["full_name"] for r in pending_repos if r["full_name"] not in completed_repos]
+    if failed_repos:
+        logger.warning(
+            "[Dataset C] %d repositories failed this run and stay pending for the next run: %s",
+            len(failed_repos),
+            ", ".join(sorted(failed_repos)[:20]) + (" ..." if len(failed_repos) > 20 else ""),
+        )
     _save_dataset_c_checkpoint(checkpoint_path, completed_repos, counts)
-    _write_dataset_c_progress(progress_path, completed_repos, counts)
+    _write_dataset_c_progress(progress_path, completed_repos, counts, failed_repos)
 
     totals: Dict[str, int] = {
         "repos_persisted": counts.get("repos_persisted", 0),

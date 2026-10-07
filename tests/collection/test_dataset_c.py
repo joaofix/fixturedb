@@ -1057,10 +1057,11 @@ def test_count_commits_up_to_counts_reachable_commits(tmp_path):
     assert count_commits_up_to(repo_path, sha3) == 3
 
 
-def test_count_commits_up_to_invalid_sha_returns_zero(tmp_path):
+def test_count_commits_up_to_invalid_sha_returns_none(tmp_path):
+    """An unknown commit is "could not count" (None), not zero commits."""
     repo_path = _make_git_repo(tmp_path)
     _commit(repo_path, "a.txt", "1", "2016-01-01T00:00:00")
-    assert count_commits_up_to(repo_path, "0" * 40) == 0
+    assert count_commits_up_to(repo_path, "0" * 40) is None
 
 
 def test_count_repo_loc_sums_non_blank_lines_across_recognized_languages(tmp_path):
