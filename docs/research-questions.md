@@ -74,7 +74,7 @@ repository with a fixture match (coding values in `research-questions/rq5/README
 context and a GitHub link. A repository is coded `yes` when at least one match
 refers to test fixtures as code; a description counts as guidance, because in
 an agent configuration file it acts as an instruction to the agent. Once every
-row is coded, `research-questions/rq5_coding.py` writes
+row is coded, `collection/research_questions/rq5_coding.py` writes
 `research-questions/rq5_coding.md`: the share of repositories with a root agent
 file coded `yes` (overall and per language), the precision of the keyword search
 (with `unsure` reported separately), and the repositories per category. It
