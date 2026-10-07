@@ -7,7 +7,7 @@ name = "fixturedb"
 version = "0.1.0"
 description = "FixtureDB: a multi-language dataset of test fixture definitions from open-source software"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 
 [tool.black]
 line-length = 88

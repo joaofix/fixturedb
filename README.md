@@ -1,8 +1,5 @@
 # FixtureDB
 
-[![Tests & Coverage](https://github.com/joaofix/fixturedb/actions/workflows/coverage.yml/badge.svg)](https://github.com/joaofix/fixturedb/actions/workflows/coverage.yml)
-![Coverage](./.github/coverage.svg)
-
 Replication package for the paper:
 
 > **An empirical study on test fixture usage by coding agents on open source software**
