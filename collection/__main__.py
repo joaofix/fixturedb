@@ -143,7 +143,7 @@ def _cmd_extract_fixtures(args: argparse.Namespace) -> int:
         # which would otherwise make every subsequent `--language Y` call
         # see the DB as "already has fixture rows" and skip entirely, even
         # though Y was never actually processed. See
-        # internal-docs/RUN_COMMANDS.md's per-language Dataset A chain.
+        # docs/usage/run-commands.md's per-language Dataset A chain.
         collector = AgentCorpusCollector(
             output_db=output_db,
             repo_qc_dir=args.repo_dir or paths.stage_dir("a", "repos"),
@@ -436,7 +436,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Sample whole Dataset C repos, stratified by language, down to "
         "db/c_sampled.db + datasets/c/fixtures-sampled/ -- required before "
         "any research_questions/ script will report on Dataset C (see "
-        "internal-docs/RUN_COMMANDS.md)",
+        "docs/usage/run-commands.md)",
     )
     sample_c_repos_target = sample_c_repos.add_mutually_exclusive_group(required=True)
     sample_c_repos_target.add_argument(

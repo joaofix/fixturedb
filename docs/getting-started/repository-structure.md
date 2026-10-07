@@ -7,7 +7,6 @@
 | `collection/` | The pipeline code. Run it with `python -m collection`. |
 | `tests/` | The test suite. |
 | `docs/` | This documentation. |
-| `internal-docs/` | Working notes and the run recipe, `RUN_COMMANDS.md`. |
 | `github-search-raw/` | The SEART repository list. This is the input. |
 | `datasets/` | Stage CSVs, one folder per dataset. Created by the pipeline. |
 | `db/` | SQLite databases, one per dataset. Created by the pipeline. |

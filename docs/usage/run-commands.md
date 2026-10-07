@@ -173,8 +173,7 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     language's own stale leftovers from an unrelated older attempt are not
     auto-cleared — a genuine from-scratch rebuild still needs
     `datasets/c/fixtures/`, `db/c.db`, and all `dataset_c_checkpoint_*.json`
-    removed by hand first. Full writeup and the retroactive data repair in
-    `internal-docs/methodology-improvements/dataset-c-cross-language-leak-clearing-bug.md`.
+    removed by hand first.
   - **Both `extract-fixtures --dataset {a,c}` are safe to split into
     separate per-language calls** (as the Dataset A/C chains above now do), no
     `--force` needed between them, and none should be added — each call
@@ -348,8 +347,7 @@ an incomplete per-repo fixture set for Dataset C. Sampling is
 content-blind (uniform random per language, independent of
 fixture_type/repo), so this adds per-repo estimation noise, not a
 systematic bias -- see
-`collection/dataset_pipeline.py::sample_dataset_c_repos()`'s docstring and
-`internal-docs/methodology-improvements/dataset-c-fixture-level-sampling.md`
+`collection/dataset_pipeline.py::sample_dataset_c_repos()`'s docstring
 for the full writeup. Pass an explicit `--target-count N` instead of
 `--match-dataset` to split across languages by Dataset C's own mix instead
 of another dataset's. Writes `db/c_sampled.db` +

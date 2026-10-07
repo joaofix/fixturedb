@@ -80,7 +80,7 @@ DEFAULT_WORKERS = 12
 # timing observed in testing (worst real case: ~180s for a large repo).
 PROCESS_REPO_TIMEOUT_SECONDS = 600
 
-# Same ntfy.sh topic internal-docs/RUN_COMMANDS.md's own curl -d pushes use
+# Same ntfy.sh topic docs/usage/run-commands.md's own curl -d pushes use
 # between separate CLI invocations -- here it's one push per language chunk
 # (plus one final push) from inside this single long-running script instead.
 NTFY_TOPIC = "joaofix_fixturedb"
@@ -545,7 +545,7 @@ def _write_progress(progress_path: Path, state: dict[str, Any]) -> None:
 
 def _notify(message: str, *, topic: str = NTFY_TOPIC) -> None:
     """Best-effort ntfy.sh push -- same `curl -d ... ntfy.sh/joaofix_fixturedb`
-    convention `internal-docs/RUN_COMMANDS.md` already uses between separate
+    convention `docs/usage/run-commands.md` already uses between separate
     CLI invocations, just issued from inside this one long-running script.
     A notification failure (ntfy.sh down, no network) must never interrupt
     or fail a multi-hour scan -- every error is swallowed, logged at DEBUG
@@ -621,7 +621,7 @@ def run_scan(
     can push one ntfy.sh notification per language finished, plus one
     final push -- a natural, cheap way to split a multi-hour run into a
     handful of "still alive, here's where it's at" pings, matching
-    `internal-docs/RUN_COMMANDS.md`'s existing per-step notification
+    `docs/usage/run-commands.md`'s existing per-step notification
     convention. Set `notify=False` for tests/local runs that shouldn't
     hit the network.
 

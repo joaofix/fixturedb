@@ -103,7 +103,6 @@ collection/          # Main pipeline code (the "library")
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
 tests/               # pytest suite
 docs/                # Full documentation
-internal-docs/       # Internal notes, RUN_COMMANDS.md (authoritative per-dataset command recipes)
 ```
 
 ## Command-line interface
@@ -130,7 +129,7 @@ input/output directories through `collection/paths.py`; `toy` runs the identical
 functions rooted under `toy-dataset/` instead of `datasets/`+`db/`.
 
 For the full ordered
-command chain per dataset, see `internal-docs/RUN_COMMANDS.md`.
+command chain per dataset, see `docs/usage/run-commands.md`.
 
 ## Database
 

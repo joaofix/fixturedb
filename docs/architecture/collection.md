@@ -54,8 +54,7 @@ transfer. The pipeline removes them at three points:
 - Dataset C checks each candidate against the others at its pinned commit.
 
 The method and its limits are in
-[Limitations](../reference/limitations.md#repository-data). The full analysis
-is in `internal-docs/methodology-improvements/repo-deduplication.md`.
+[Limitations](../reference/limitations.md#repository-data).
 
 ## Runbook
 

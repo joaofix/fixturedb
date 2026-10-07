@@ -213,8 +213,7 @@ __marimo__/
 # and silently makes the rule match nothing. Every pattern below must have
 # its comment on its own line, not trailing the pattern (confirmed via a
 # clean-repo check-ignore test; several lines here were silently broken
-# this way -- see internal-docs/ note further below for the one case that
-# is left as-is rather than fixed).
+# this way).
 #
 # Temporary git clones (deleted after extraction)
 clones/
@@ -239,16 +238,10 @@ toy-dataset/**/*_corpus_summary_*.json
 logs/
 # Internal bookkeeping (pipeline sample/summary JSON, analysis results)
 output/
-# internal-docs/* was intended to be ignored ("internal documentation and
-# notes") but the inline-comment bug above made this a silent no-op --
-# 28 files are already tracked there, including ones committed this
-# session at explicit request, so it's being used as real, versioned
-# documentation in practice. Left non-functional deliberately rather than
-# "fixed" -- ask before changing, since making it actually ignore would
-# silently block future `git add` here without `-f`, diverging from
-# current usage. Left commented out (still inert) rather than deleted, so
-# the original intent stays visible if this is ever revisited.
-# internal-docs/*
+# Internal working notes, kept local and out of the repository
+internal-docs/
+# Reference papers (third-party PDFs), kept local and out of the repository
+references/
 github-search-human/pre_2021_test_commits/
 # Pipeline checkpoint files (runtime artifacts)
 *.checkpoint.json

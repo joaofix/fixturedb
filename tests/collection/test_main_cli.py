@@ -83,8 +83,8 @@ class TestDiscoverRepos:
 
     def test_dataset_c_filters_known_duplicates_before_writing(self):
         """discover-repos --dataset c calls filter_known_duplicates(), so the "run discover-repos twice"
-        workflow documented in RUN_COMMANDS.md never actually dropped known
-        duplicate repos -- see internal-docs/RUN_COMMANDS.md's dedup note.
+        workflow documented in docs/usage/run-commands.md never actually dropped
+        known duplicate repos -- see its dedup note.
         """
         with patch(
             "collection.select_dataset_c_repos.select_repos",

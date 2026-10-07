@@ -4,7 +4,7 @@ Run every step from the project root with `python -m collection`. Each verb
 takes `--dataset {a,c}`. Use `--help` on any verb for its options.
 
 For the full chain of commands with progress notifications, see
-[internal-docs/RUN_COMMANDS.md](../../internal-docs/RUN_COMMANDS.md).
+[Run commands](run-commands.md).
 
 ## Datasets
 

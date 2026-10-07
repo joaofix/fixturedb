@@ -22,6 +22,7 @@
 ## Usage
 
 - [Reproducing the study](usage/reproducing.md)
+- [Run commands](usage/run-commands.md)
 - [Analysing the datasets](usage/analysis.md)
 - [Manual validation sampling](usage/validation-sampling.md)
 

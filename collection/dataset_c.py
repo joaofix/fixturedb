@@ -762,7 +762,7 @@ def collect_dataset_c_fixtures(
     # automatic protection against *its own* stale, unrelated leftovers from an older,
     # separate collection. A genuine from-scratch rebuild should clear datasets/c/fixtures/,
     # db/c.db and every dataset_c_checkpoint_*.json by hand first, the same way every other
-    # "start fresh" in this project's history has been done -- see internal-docs/RUN_COMMANDS.md.
+    # "start fresh" in this project's history has been done -- see docs/usage/run-commands.md.
     sibling_checkpoint_exists = any(
         p.name != checkpoint_path.name
         for p in checkpoint_path.parent.glob("dataset_c_checkpoint_*.json")
@@ -771,7 +771,7 @@ def collect_dataset_c_fixtures(
     if fresh_start:
         # Only clear the CSV(s) this *invocation* actually owns -- when
         # `language` is given (the only way this is ever invoked in
-        # practice, see internal-docs/RUN_COMMANDS.md's per-language
+        # practice, see docs/usage/run-commands.md's per-language
         # Dataset C chain), that's exactly {language}, never every language
         # discovered in `candidates`. Fixture extraction discovers a
         # repo's test files in *any* of the 4 supported languages

@@ -968,7 +968,7 @@ def _render_junit3_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -> list[
         "annotation -- by method name plus a substring check on the "
         "enclosing class's superclass, which is not an exact-name or "
         "recursive type-resolution check. See "
-        "`internal-docs/methodology-improvements/junit3-fallback-detection.md` "
+        "the internal methodology note on JUnit 3 fallback detection "
         "for the full investigation (manual review of every instance found "
         "in both datasets at time of writing; all genuine, one only via "
         "substring coincidence). Tracked here so a re-collection that picks "
@@ -1116,7 +1116,7 @@ def _render_js_hook_complexity_side_note(*, db_root: Path = paths.DB_ROOT) -> li
         "`raw_source` contains a likely nested construct are re-checked "
         "(\"Nested construct\" column) -- that's the precondition for the "
         "issue at all. See "
-        "`internal-docs/methodology-improvements/js-ts-hook-fixture-complexity.md` "
+        "the internal methodology note on JS/TS hook fixture complexity "
         "for the full investigation.",
         "",
         "| " + " | ".join(header) + " |",
@@ -1192,7 +1192,7 @@ def _render_mocha_bare_hook_side_note(*, db_root: Path = paths.DB_ROOT) -> list[
         "`raw_source` does not start with a bare `before(`/`after(` "
         "call, i.e. would indicate the `page.after()`/`browser.before()` "
         "false-positive shape investigated in "
-        "`internal-docs/methodology-improvements/mocha-before-after-detection.md`. "
+        "the internal methodology note on Mocha before/after detection. "
         "That investigation found this is structurally impossible given "
         "the detector's exact full-text-equality matching (confirmed 0/80 "
         "in a manual sample) -- this should always read 0; a nonzero value "
@@ -1280,7 +1280,7 @@ def _render_aliased_mock_import_side_note(*, db_root: Path = paths.DB_ROOT) -> l
         "declared *inside* a fixture body -- the far more common "
         "top-of-file form is invisible to it by construction (`raw_source` "
         "is function-body-only). See "
-        "`internal-docs/methodology-improvements/aliased-mock-import-prevalence.md` "
+        "the internal methodology note on aliased mock imports "
         "for the real-file sampling that actually calibrates the true "
         "rate (found ~0% there too, via a different, network-dependent "
         "method this script deliberately doesn't replicate).",
@@ -1393,7 +1393,7 @@ def _render_mock_category_fallback_side_note(*, db_root: Path = paths.DB_ROOT) -
         "category terms (dummy/stub/spy/fake/mock) appear anywhere at all "
         "-- nothing in the schema distinguishes which happened for a given "
         "row. This reconstructs that split exactly (not an estimate -- see "
-        "`internal-docs/methodology-improvements/mock-category-fallback-analysis.md`), "
+        "the internal methodology note on the mock-category fallback), "
         'in the shape the paper cites it: "X% of mock-type classifications '
         'result from a positive keyword match, Y% from the fallback."',
         "",
