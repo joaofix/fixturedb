@@ -747,7 +747,27 @@ def collect_dataset_c_fixtures(
 
     # Clear stale CSV output for a fresh run so we don't append duplicates
     # on top of a previous run that used the same language CSV.
-    fresh_start = not checkpoint_path.exists()
+    # A language's own checkpoint being absent is not enough: a sibling language's
+    # earlier invocation in the same collection attempt may have already written real,
+    # cross-language-leaked rows into this language's own CSV (find_test_files_with_
+    # language() finds a file in any of the 4 languages, whichever repo list it came
+    # from -- see that function's docstring). Clearing on checkpoint-absence alone wiped
+    # exactly those legitimate rows the moment the leaked-into language's own run started
+    # for the first time. Only clear when NO Dataset C checkpoint exists anywhere yet --
+    # i.e. this is truly the first invocation of a fresh attempt, so nothing could have
+    # leaked into any file yet. A later language's own first run then always skips the
+    # clear, keeping whatever earlier runs already wrote.
+    #
+    # This still leaves one gap: a language that is not first in a fresh attempt gets no
+    # automatic protection against *its own* stale, unrelated leftovers from an older,
+    # separate collection. A genuine from-scratch rebuild should clear datasets/c/fixtures/,
+    # db/c.db and every dataset_c_checkpoint_*.json by hand first, the same way every other
+    # "start fresh" in this project's history has been done -- see internal-docs/RUN_COMMANDS.md.
+    sibling_checkpoint_exists = any(
+        p.name != checkpoint_path.name
+        for p in checkpoint_path.parent.glob("dataset_c_checkpoint_*.json")
+    )
+    fresh_start = not checkpoint_path.exists() and not sibling_checkpoint_exists
     if fresh_start:
         # Only clear the CSV(s) this *invocation* actually owns -- when
         # `language` is given (the only way this is ever invoked in

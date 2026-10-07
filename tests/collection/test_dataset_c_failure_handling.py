@@ -282,3 +282,62 @@ def test_non_utf8_file_name_is_persisted_with_a_valid_utf8_path(tmp_path):
 def test_utf8_safe_keeps_valid_names_and_replaces_undecodable_bytes():
     assert dataset_c._utf8_safe("tests/test_ok.py") == "tests/test_ok.py"
     assert dataset_c._utf8_safe("tests/caf\udce9.py") == "tests/caf�.py"
+
+
+# --- 7. A language's first run must not destroy cross-language leaks an earlier
+#        language's run already wrote into its CSV, in the same collection attempt ---
+
+def test_a_later_languages_first_run_does_not_clear_an_earlier_runs_leaked_rows(tmp_path):
+    """A sibling language (java) has already run in this attempt and left a real,
+    leaked python row in python_fixtures.csv. python's own first run (its own checkpoint
+    is still empty) must not clear that file."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+    # java already ran in this attempt: its own checkpoint exists, and it left a
+    # genuine leaked python fixture in python_fixtures.csv as a side effect.
+    (tmp_path / "dataset_c_checkpoint_java.json").write_text(
+        '{"completed_repos": ["owner/java-repo"], "counts": {}}', encoding="utf-8"
+    )
+    python_csv = tmp_path / "python_fixtures.csv"
+    python_csv.write_text(
+        "repo_name,language,commit_sha,file_path,fixture_name\n"
+        "owner/java-repo,python,sha1,conftest.py,leaked\n",
+        encoding="utf-8",
+    )
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, []
+
+    python_repo = {"full_name": "owner/python-repo", "language": "python", "clone_url": "https://example.invalid/p.git"}
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ), patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+        collect_dataset_c_fixtures(
+            agent_repos=[python_repo], clones_dir=tmp_path / "clones", output_db=output_db,
+            workers=1, language="python", fixtures_output_dir=tmp_path,
+        )
+
+    assert "leaked" in python_csv.read_text(), "python's own first run destroyed java's earlier leaked rows"
+
+
+def test_the_very_first_invocation_of_a_fresh_attempt_still_clears_its_own_stale_csv(tmp_path):
+    """With no Dataset C checkpoint anywhere yet, this must be a genuinely fresh attempt,
+    so clearing this language's own (possibly stale, leftover) CSV is still safe."""
+    output_db = tmp_path / "out.db"
+    initialise_db(output_db)
+    stale = tmp_path / "java_fixtures.csv"
+    stale.write_text("repo_name,language\nowner/stale-old-repo,java\n", encoding="utf-8")
+
+    def fake_process(repo, cutoffs, extractor, clones_dir):
+        return True, []
+
+    repo = {"full_name": "owner/java-repo", "language": "java", "clone_url": "https://example.invalid/j.git"}
+    with patch("collection.dataset_c._process_repo", side_effect=fake_process), patch(
+        "collection.dataset_c.persist_repository_and_fixtures"
+    ), patch("collection.dataset_c.stratified_sample_by_language", side_effect=lambda c, t, seed=42: c):
+        collect_dataset_c_fixtures(
+            agent_repos=[repo], clones_dir=tmp_path / "clones", output_db=output_db,
+            workers=1, language="java", fixtures_output_dir=tmp_path,
+        )
+
+    assert not stale.exists() or "stale-old-repo" not in stale.read_text()

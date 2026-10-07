@@ -160,6 +160,21 @@ Each writes `datasets/{dataset}/...` and `db/{dataset}.db`.
     its database write fails. Failed repositories are logged as a warning and listed in
     `{db}_dataset_c_{language}_progress.json` under `failed_repos`. A file name that is not
     valid UTF-8 is stored with U+FFFD in place of the undecodable bytes.
+  - **A language's first-ever run no longer clears another language's
+    already-leaked rows.** Cross-language leakage (a repo tagged one language
+    containing test files of another, written into that other language's own
+    CSV) is expected — see "Repository deduplication" in
+    `docs/architecture/collection.md`. Before 2026-10-07, a language's fresh
+    start (`not checkpoint_path.exists()`) unlinked its own CSV even when an
+    earlier language's run had already deposited real, correct leaked rows
+    into it, destroying them. Fixed by also checking for any sibling
+    `dataset_c_checkpoint_*.json`: fresh-start clearing only happens when
+    *no* Dataset C language has ever run yet. One residual gap: a non-first
+    language's own stale leftovers from an unrelated older attempt are not
+    auto-cleared — a genuine from-scratch rebuild still needs
+    `datasets/c/fixtures/`, `db/c.db`, and all `dataset_c_checkpoint_*.json`
+    removed by hand first. Full writeup and the retroactive data repair in
+    `internal-docs/methodology-improvements/dataset-c-cross-language-leak-clearing-bug.md`.
   - **Both `extract-fixtures --dataset {a,c}` are safe to split into
     separate per-language calls** (as the Dataset A/C chains above now do), no
     `--force` needed between them, and none should be added — each call
