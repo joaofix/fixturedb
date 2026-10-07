@@ -12,7 +12,7 @@
 | `datasets/` | Stage CSVs, one folder per dataset. Created by the pipeline. |
 | `db/` | SQLite databases, one per dataset. Created by the pipeline. |
 | `export/` | Export bundles, one zip per dataset. |
-| `research_questions/` | The generated RQ reports (Markdown). |
+| `research-questions/` | The generated RQ reports (Markdown). |
 | `toy-dataset/` | Output of the toy runs. Git-ignored. |
 
 ## The pipeline code

@@ -2,55 +2,55 @@
 
 > How do agent-generated fixtures compare to human-written ones in setup and teardown provision?
 
-Generated: 2026-10-03 21:14:56 UTC
+Generated: 2026-10-07 13:35:48 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ3 definition.
 
 ## Per-dataset summary
 
-### Dataset A (agent-authored) -- 70,623 fixtures
+### Dataset A (agent-authored) -- 85,206 fixtures
 
 **fixture_type kind distribution**
 
 | Kind | Count | % |
 |---|---|---|
-| setup | 45,767 | 64.8% |
-| teardown | 20,587 | 29.2% |
-| setup_and_teardown | 4,072 | 5.8% |
-| other | 197 | 0.3% |
+| setup | 54,008 | 63.4% |
+| teardown | 26,212 | 30.8% |
+| setup_and_teardown | 4,706 | 5.5% |
+| other | 280 | 0.3% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-5,352/70,623 fixtures (7.58%) leaked.
+6,765/85,206 fixtures (7.94%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 2,265 | 262 | 11.57% | typescript=175, python=86, javascript=1 |
-| javascript | 3,975 | 1,210 | 30.44% | typescript=1,017, python=170, java=23 |
-| python | 21,078 | 1,253 | 5.94% | typescript=950, javascript=160, java=143 |
-| typescript | 43,305 | 2,627 | 6.07% | javascript=1,932, python=603, java=92 |
+| java | 3,310 | 277 | 8.37% | typescript=179, python=94, javascript=4 |
+| javascript | 5,566 | 1,953 | 35.09% | typescript=1,536, python=383, java=34 |
+| python | 24,293 | 1,548 | 6.37% | typescript=1,182, javascript=202, java=164 |
+| typescript | 52,037 | 2,987 | 5.74% | javascript=2,131, python=814, java=42 |
 
-### Dataset C (human-authored, pre-LLM) -- 70,623 fixtures
+### Dataset C (human-authored, pre-LLM) -- 82,680 fixtures
 
 **fixture_type kind distribution**
 
 | Kind | Count | % |
 |---|---|---|
-| setup | 51,985 | 73.6% |
-| teardown | 16,750 | 23.7% |
-| setup_and_teardown | 1,284 | 1.8% |
-| other | 604 | 0.9% |
+| setup | 60,823 | 73.6% |
+| teardown | 19,441 | 23.5% |
+| setup_and_teardown | 1,602 | 1.9% |
+| other | 814 | 1.0% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-6,376/70,623 fixtures (9.03%) leaked.
+7,480/82,680 fixtures (9.05%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 4,157 | 1,936 | 46.57% | typescript=990, python=866, javascript=80 |
-| javascript | 5,610 | 2,126 | 37.90% | typescript=1,797, python=314, java=15 |
-| python | 20,359 | 1,013 | 4.98% | typescript=837, javascript=162, java=14 |
-| typescript | 40,497 | 1,301 | 3.21% | javascript=1,132, python=158, java=11 |
+| java | 5,453 | 2,217 | 40.66% | typescript=1,104, python=1,003, javascript=110 |
+| javascript | 6,820 | 2,523 | 36.99% | typescript=2,176, python=336, java=11 |
+| python | 23,728 | 1,222 | 5.15% | typescript=980, javascript=226, java=16 |
+| typescript | 46,679 | 1,518 | 3.25% | javascript=1,317, python=191, java=10 |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
@@ -60,11 +60,11 @@ Raw counts of setup-classified and teardown-classified fixtures, each also shown
 
 | Language | Setup A | Setup C | Teardown A | Teardown C |
 |---|---|---|---|---|
-| Total | 49,839 (70.8%) | 53,269 (76.1%) | 24,659 (35.0%) | 18,034 (25.8%) |
-| java | 1,405 (67.1%) | 1,077 (64.3%) | 690 (32.9%) | 597 (35.7%) |
-| javascript | 2,842 (58.5%) | 3,353 (69.0%) | 2,016 (41.5%) | 1,505 (31.0%) |
-| python | 19,526 (94.5%) | 17,018 (82.3%) | 5,199 (25.2%) | 4,933 (23.9%) |
-| typescript | 26,066 (60.9%) | 31,821 (74.3%) | 16,754 (39.1%) | 10,999 (25.7%) |
+| Total | 58,714 (69.1%) | 62,425 (76.3%) | 30,918 (36.4%) | 21,043 (25.7%) |
+| java | 1,951 (64.5%) | 1,665 (66.9%) | 1,075 (35.5%) | 823 (33.1%) |
+| javascript | 3,400 (57.1%) | 4,157 (69.9%) | 2,550 (42.9%) | 1,793 (30.1%) |
+| python | 22,422 (93.4%) | 19,711 (82.1%) | 6,288 (26.2%) | 5,898 (24.6%) |
+| typescript | 30,941 (59.6%) | 36,892 (74.6%) | 21,005 (40.4%) | 12,529 (25.4%) |
 
 ### Table 2: Teardown Coverage by Repository (tab:rq3-coverage)
 
@@ -72,11 +72,11 @@ Per-repository binary coverage: 1 if a repo has >=1 teardown-classified fixture,
 
 | Language | n_A | n_C | Coverage A (%) | Coverage C (%) |
 |---|---|---|---|---|
-| Overall | 1687 | 2506 | 78.0% | 62.5% |
-| java | 127 | 325 | 66.1% | 49.5% |
-| javascript | 143 | 563 | 76.2% | 57.5% |
-| python | 678 | 1059 | 67.8% | 58.4% |
-| typescript | 948 | 753 | 85.2% | 72.8% |
+| Overall | 2169 | 2549 | 78.7% | 64.7% |
+| java | 177 | 358 | 66.7% | 51.7% |
+| javascript | 211 | 589 | 81.5% | 58.2% |
+| python | 856 | 1061 | 67.6% | 62.3% |
+| typescript | 1198 | 749 | 86.2% | 72.5% |
 
 ## Supplementary Analyses
 
@@ -88,11 +88,11 @@ Per-language, per-dataset breakdown of `fixture_role` (setup / teardown / setup_
 
 | Dataset | Language | Total fixtures | setup | teardown | setup_and_teardown | other (count) | other (%) |
 |---|---|---|---|---|---|---|---|
-| A | java | 2,261 | 1,405 | 690 | 0 | 166 | 7.3% |
-| A | javascript | 4,858 | 2,842 | 2,016 | 0 | 0 | 0.0% |
-| A | python | 20,684 | 15,454 | 1,127 | 4,072 | 31 | 0.1% |
-| A | typescript | 42,820 | 26,066 | 16,754 | 0 | 0 | 0.0% |
-| C | java | 2,261 | 1,077 | 597 | 0 | 587 | 26.0% |
-| C | javascript | 4,858 | 3,353 | 1,505 | 0 | 0 | 0.0% |
-| C | python | 20,684 | 15,734 | 3,649 | 1,284 | 17 | 0.1% |
-| C | typescript | 42,820 | 31,821 | 10,999 | 0 | 0 | 0.0% |
+| A | java | 3,273 | 1,951 | 1,075 | 0 | 247 | 7.5% |
+| A | javascript | 5,950 | 3,400 | 2,550 | 0 | 0 | 0.0% |
+| A | python | 24,036 | 17,716 | 1,582 | 4,706 | 32 | 0.1% |
+| A | typescript | 51,947 | 30,941 | 21,005 | 0 | 1 | 0.0% |
+| C | java | 3,273 | 1,665 | 823 | 0 | 785 | 24.0% |
+| C | javascript | 5,950 | 4,157 | 1,793 | 0 | 0 | 0.0% |
+| C | python | 24,036 | 18,109 | 4,296 | 1,602 | 29 | 0.1% |
+| C | typescript | 49,421 | 36,892 | 12,529 | 0 | 0 | 0.0% |

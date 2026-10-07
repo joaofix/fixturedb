@@ -106,7 +106,7 @@ separately, where every one of those also has `has_teardown_pair=0`:
 **This is the actual mechanism, and it's a real, substantial gap.**
 65.3% of Dataset A's Python repos have *every* fixture landing in
 `_kind()`'s `"other"` bucket -- which is exactly why the current, live
-`research_questions/rq2.md` already shows Python's median `setup_pct`/
+`research-questions/rq2.md` already shows Python's median `setup_pct`/
 `teardown_pct` at **0.0%/0.0%** for Dataset A (0.0%/0.0% also for the
 Overall-repo-level medians; C sampled shows 50.0%/0.0%) -- more than half
 the repos contribute a literal 0% to that per-repo proportion, dragging
@@ -148,7 +148,7 @@ existing error, and it's worth keeping this doc around specifically so
 whoever writes the Python RQ2 narrative next doesn't reach for
 `fixture_type_kind`'s `"other"`/teardown numbers as if they were a
 teardown-*detection* result -- they aren't; `has_teardown_pair` is (§2-4
-above). For reference, the actual current live numbers (`research_questions/rq2.md`,
+above). For reference, the actual current live numbers (`research-questions/rq2.md`,
 regenerated on demand): Python's repo-level median setup/teardown split
 is 0.0%/0.0% (A) vs. 50.0%/0.0% (C), Cliff's delta V=0.371 (medium,
 p<.001) -- not 0.469, and not from a chi-square/Cramer's V (RQ2 no longer

@@ -99,7 +99,7 @@ class LanguagePrevalence:
 def load_rows(db_root: Path = paths.DB_ROOT) -> list[sqlite3.Row] | None:
     """Every `clone_ok=1` row from `repo_prevalence`, or `None` if the db
     doesn't exist yet -- the project's "skip, don't error" convention, so
-    a batch regeneration of every `research_questions/` report doesn't
+    a batch regeneration of every `research-questions/` report doesn't
     crash on an RQ whose collection hasn't run yet.
 
     `clone_ok=0` rows (clone failed, or no commit at/before

@@ -23,6 +23,7 @@ from collection.research_questions.rq5_coding import (
     write_report as write_coding_report,
 )
 from collection.rq5_agent_file_scan import (
+    CATEGORY_LABELS,
     CATEGORY_VALUES,
     REPOSITORY_SHEET_FIELDNAMES,
     REPOSITORY_SHEET_NAME,
@@ -240,6 +241,14 @@ class TestReadme:
         assert "One such match is enough" in readme
         assert "product/domain term" in readme
 
+    def test_lists_every_category_with_its_label(self, tmp_path):
+        readme = write_rq5_readme(tmp_path).read_text()
+
+        for value, label in CATEGORY_LABELS.items():
+            assert f"- `{value}`: {label}" in readme
+        assert "- `examples`: Test-related examples" in readme
+        assert "`example`:" not in readme
+
     def test_documents_every_allowed_coding_value(self, coded_db, tmp_path):
         out = tmp_path / "out"
         write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
@@ -352,7 +361,7 @@ class TestComputeResults:
         assert "| Python | 2 | 1 | 50.0% |" in report
         assert "| TypeScript | 1 | 0 | 0.0% |" in report
         assert "Precision: 1 of 2 (50.0%); 1 coded `unsure`." in report
-        assert "| strategy | 1 |" in report
+        assert "| strategy | Test strategy | 1 |" in report
 
         path = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
         assert path.name == "rq5_coding.md"

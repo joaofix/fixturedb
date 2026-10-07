@@ -7,7 +7,7 @@ and overall, as the share of repositories. It has no test.
 The report also has the number of mock calls per fixture, and the number of
 fixtures with a mock, per language.
 
-Writes `research_questions/rq4.md`. Run with `python -m collection.research_questions.rq4`.
+Writes `research-questions/rq4.md`. Run with `python -m collection.research_questions.rq4`.
 """
 
 from __future__ import annotations

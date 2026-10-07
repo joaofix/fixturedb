@@ -3,7 +3,7 @@
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks per-repo/per-language repo-count
 bookkeeping and report rendering -- never touching the real db/ or
-research_questions/ directories. rq3.py does not classify fixture_role
+research-questions/ directories. rq3.py does not classify fixture_role
 itself. That happens at extraction time (see detector_shared.py's
 _classify_fixture_kinds() and detector_python.py's pytest body-analysis
 classification, both covered by their own test files:

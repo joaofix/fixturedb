@@ -42,10 +42,13 @@ reads it once every row is coded.
 
 Allowed `category` values:
 
-- `location_placement`
-- `strategy`
-- `tips`
-- `avoidance`
-- `example`
-- `framework_environment`
-- `other`
+- `location_placement`: Test locations and placement
+- `strategy`: Test strategy
+- `tips`: Testing tips
+- `mentality`: Test mentality
+- `avoidance`: Avoidance guidance
+- `mocking`: Mocking guidance
+- `examples`: Test-related examples
+- `framework_environment`: Test framework and environment
+- `test_data`: Test data files
+- `other`: Other

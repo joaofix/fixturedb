@@ -2,7 +2,7 @@
 
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks the repo-level loading, comparison, and
-report-rendering logic -- never touching the real db/ or research_questions/
+report-rendering logic -- never touching the real db/ or research-questions/
 directories. The chi-square/Mann-Whitney/effect-size math itself is already
 covered by tests/between_group/test_between_group_comparison.py; these
 tests focus on balance.py's own wiring: repo-level (not fixture-weighted)

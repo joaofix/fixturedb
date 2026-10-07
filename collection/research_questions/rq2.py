@@ -14,7 +14,7 @@ depends on that choice.
 
 `fixture_type` is shown as a plain distribution per dataset. It has no test.
 
-Writes `research_questions/rq2.md`. Run with `python -m collection.research_questions.rq2`.
+Writes `research-questions/rq2.md`. Run with `python -m collection.research_questions.rq2`.
 """
 
 from __future__ import annotations

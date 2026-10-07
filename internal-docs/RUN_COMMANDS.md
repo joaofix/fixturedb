@@ -276,22 +276,22 @@ defaults to 20 batches in flight). `GITHUB_TOKEN` is effectively **required**
 here, not just recommended: the unauthenticated REST rate limit is 60
 requests/hour, and the GraphQL endpoint refuses unauthenticated requests. The
 authenticated GraphQL budget is 5,000 points/hour, and a batch costs about 2 to
-3 points. Run it after the Dataset A fixture CSVs exist. It writes `research_questions/rq5/` (the review
+3 points. Run it after the Dataset A fixture CSVs exist. It writes `research-questions/rq5/` (the review
 CSVs, including the repository-level coding sheet, `rq5_snippets.md` for reading
-the snippets, and a README with the coding values) and `research_questions/rq5.md`. After the manual coding of
-`research_questions/rq5/rq5_repository_coding_sheet.csv` is complete, run `rq5_coding` (it exits
+the snippets, and a README with the coding values) and `research-questions/rq5.md`. After the manual coding of
+`research-questions/rq5/rq5_repository_coding_sheet.csv` is complete, run `rq5_coding` (it exits
 with the list of uncoded rows until then). A rescan refuses to overwrite a
 repository sheet that already holds coding.
 
 ```bash
 python -m collection.rq1_prevalence_scan --workers 12
   && curl -d "RQ1 scan finished" ntfy.sh/joaofix_fixturedb
-python -m collection.research_questions.rq1   # writes research_questions/rq1.md
+python -m collection.research_questions.rq1   # writes research-questions/rq1.md
 
 python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD --workers 20
   && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
-python -m collection.research_questions.rq5   # writes research_questions/rq5.md
-python -m collection.research_questions.rq5_coding   # after manual coding; writes research_questions/rq5_coding.md
+python -m collection.research_questions.rq5   # writes research-questions/rq5.md
+python -m collection.research_questions.rq5_coding   # after manual coding; writes research-questions/rq5_coding.md
 ```
 
 ### After collection
@@ -310,14 +310,14 @@ Same four commands with `--dataset c` for the other dataset.
 `analyze-distribution` is the one pair-aware verb (defaults to `--dataset a --against c`)
 since its whole job is comparing two already-extracted datasets.
 
-### Dataset C sampling: required before running `research_questions/` scripts
+### Dataset C sampling: required before running `research-questions/` scripts
 
-Every `research_questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/`rq4.py`/
+Every `research-questions/*.py` script (`rq1.py`/`rq2.py`/`rq3.py`/`rq4.py`/
 `rq5.py`/`balance.py`/`language_contamination.py`/`dataset_findings.py`) reads
 Dataset C's fixture-level sample-down (`db/c_sampled.db` +
 `datasets/c/fixtures-sampled/`), not the full `db/c.db` +
 `datasets/c/fixtures/` -- see
-`collection/research_questions/_shared.py::require_db_or_none()`'s
+`collection/research-questions/_shared.py::require_db_or_none()`'s
 docstring. Run `sample-c-repos` (below) at least once after any Dataset C
 re-collection, before regenerating RQ reports -- if `db/c_sampled.db`
 doesn't exist yet, every dataset-C-dependent row/section degrades to N/A
@@ -341,7 +341,7 @@ only ever land close to a target, never on it, since a repo is an
 indivisible chunk of fixtures).
 
 **Known limitation**: because a repo's fixtures can now be only partially
-represented, every `research_questions/` repo-level statistic (e.g. RQ3's
+represented, every `research-questions/` repo-level statistic (e.g. RQ3's
 per-repo setup/teardown proportions, or any other rqN.py/balance.py
 comparison -- they all aggregate one value per repo) can be computed from
 an incomplete per-repo fixture set for Dataset C. Sampling is

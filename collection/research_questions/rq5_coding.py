@@ -1,6 +1,6 @@
 """
 RQ5 -- manual coding results: reads the completed repository-level coding
-sheet (`research_questions/rq5/rq5_repository_coding_sheet.csv`) and computes the final RQ5
+sheet (`research-questions/rq5/rq5_repository_coding_sheet.csv`) and computes the final RQ5
 fixture-guidance numbers.
 
 Denominators:
@@ -11,7 +11,7 @@ Denominators:
   precision of the keyword search.
 
 Refuses to run while any row is uncoded or holds a value outside the allowed
-ones (see `research_questions/rq5/README.md`). No coding is inferred here.
+ones (see `research-questions/rq5/README.md`). No coding is inferred here.
 
 python -m collection.research_questions.rq5_coding
 """
@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from ..rq5_agent_file_scan import (
+    CATEGORY_LABELS,
     CATEGORY_VALUES,
     CSV_OUTPUT_DIR,
     DB_PATH,
@@ -134,7 +135,7 @@ def generate_report(results: dict[str, Any]) -> str:
         "",
         f"Generated: {generated_at}",
         "",
-        f"Source: `research_questions/rq5/{REPOSITORY_SHEET_NAME}`, one row per repository with a fixture keyword match.",
+        f"Source: `research-questions/rq5/{REPOSITORY_SHEET_NAME}`, one row per repository with a fixture keyword match.",
         "",
         "## Code fixture guidance",
         "",
@@ -171,11 +172,11 @@ def generate_report(results: dict[str, Any]) -> str:
         "",
         "Repositories coded `yes` per category. A repository can have more than one category.",
         "",
-        "| Category | Repositories |",
-        "|---|---|",
+        "| Category | Label | Repositories |",
+        "|---|---|---|",
     ]
-    for category in CATEGORY_VALUES:
-        lines.append(f"| {category} | {results['categories'][category]:,} |")
+    for category, label in CATEGORY_LABELS.items():
+        lines.append(f"| {category} | {label} | {results['categories'][category]:,} |")
     lines.append("")
     return "\n".join(lines)
 

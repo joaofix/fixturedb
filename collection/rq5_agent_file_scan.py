@@ -145,7 +145,7 @@ CATALOG_PATH = paths.ROOT_DIR / "collection" / "heuristics" / "rq5_agent_file_ke
 DATASET_A_FIXTURES_DIR = paths.stage_dir("a", "fixtures")
 
 DB_PATH = paths.DB_ROOT / "rq5_agent_files.db"
-CSV_OUTPUT_DIR = paths.ROOT_DIR / "research_questions" / "rq5"
+CSV_OUTPUT_DIR = paths.ROOT_DIR / "research-questions" / "rq5"
 PROGRESS_PATH = paths.DB_ROOT / "rq5_agent_files_progress.json"
 PROGRESS_LOG_EVERY = 50
 LOG_PATH = paths.DB_ROOT / "rq5_agent_files.log"
@@ -1194,16 +1194,21 @@ REPOSITORY_SHEET_FIELDNAMES: tuple[str, ...] = (
     "fixture_snippets",
 )
 DECISION_VALUES: tuple[str, ...] = ("yes", "no", "unsure")
-# Ardic et al.'s themes for agent-file testing guidance.
-CATEGORY_VALUES: tuple[str, ...] = (
-    "location_placement",
-    "strategy",
-    "tips",
-    "avoidance",
-    "example",
-    "framework_environment",
-    "other",
-)
+# Ardic et al.'s (SCAM 2026) themes for agent-file testing guidance, with
+# their labels: the allowed values of the coding sheet's `category` column.
+CATEGORY_LABELS: dict[str, str] = {
+    "location_placement": "Test locations and placement",
+    "strategy": "Test strategy",
+    "tips": "Testing tips",
+    "mentality": "Test mentality",
+    "avoidance": "Avoidance guidance",
+    "mocking": "Mocking guidance",
+    "examples": "Test-related examples",
+    "framework_environment": "Test framework and environment",
+    "test_data": "Test data files",
+    "other": "Other",
+}
+CATEGORY_VALUES: tuple[str, ...] = tuple(CATEGORY_LABELS)
 # Reading order of a repository's snippets in the repository-level sheet.
 # Only an order, not a classification.
 SNIPPET_TERM_ORDER: tuple[str, ...] = (
@@ -1432,7 +1437,7 @@ def write_snippets_markdown(
 def write_rq5_readme(output_dir: Path = CSV_OUTPUT_DIR) -> Path:
     """Write `README.md` for the review outputs, including the allowed values
     of the repository-level coding columns."""
-    categories = "\n".join(f"- `{value}`" for value in CATEGORY_VALUES)
+    categories = "\n".join(f"- `{value}`: {label}" for value, label in CATEGORY_LABELS.items())
     text = f"""# RQ5 review outputs
 
 Written by `python -m collection.rq5_agent_file_scan`. Manual coding is done

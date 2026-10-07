@@ -3,7 +3,7 @@
 Counts tests, fixtures, setups and teardowns across the raw repository list in
 `github-search-raw/*.csv.gz`. The scan is separate from the Dataset A and C
 pipeline and is not one of its verbs. It writes `db/rq1_prevalence.db` and
-`research_questions/RQ1/*.csv`.
+`research-questions/RQ1/*.csv`.
 
 Each repository is checked out at its last commit on or before
 `RQ1_CUTOFF_DATE`, so the counts match the date used for Datasets A and C. The
@@ -63,7 +63,7 @@ RQ1_SHALLOW_SINCE = "2026-07-01"
 FALLBACK_CLONE_TIMEOUT_SECONDS = 90
 
 DB_PATH = paths.DB_ROOT / "rq1_prevalence.db"
-CSV_OUTPUT_DIR = paths.ROOT_DIR / "research_questions" / "RQ1"
+CSV_OUTPUT_DIR = paths.ROOT_DIR / "research-questions" / "RQ1"
 DUPLICATES_PATH = paths.RAW_SEARCH_DIR / "duplicate_repos_by_current_commit.csv"
 PROGRESS_PATH = paths.DB_ROOT / "rq1_prevalence_progress.json"
 PROGRESS_LOG_EVERY = 50

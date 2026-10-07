@@ -2,7 +2,7 @@
 
 > How common are tests, fixtures, setup, and teardown across the raw repo universe, independent of Dataset A/C's own filtering?
 
-Generated: 2026-10-04 17:56:03 UTC
+Generated: 2026-10-07 13:35:38 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ1 definition.
 

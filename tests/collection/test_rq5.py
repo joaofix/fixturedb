@@ -164,7 +164,7 @@ class TestGenerateReport:
 
 class TestWriteReport:
     def test_writes_rq5_markdown_into_the_output_dir(self, scanned_db, tmp_path):
-        out_dir = tmp_path / "research_questions"
+        out_dir = tmp_path / "research-questions"
 
         path = write_report(out_dir, db_path=scanned_db)
 

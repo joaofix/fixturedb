@@ -3,7 +3,7 @@
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks mock-metric loading, per-language
 breakdowns, and report rendering -- never touching the real db/ or
-research_questions/ directories. The Mann-Whitney U / chi-square math itself
+research-questions/ directories. The Mann-Whitney U / chi-square math itself
 is already covered by tests/between_group/test_between_group_comparison.py.
 """
 

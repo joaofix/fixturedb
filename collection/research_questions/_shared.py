@@ -25,7 +25,7 @@ from ..paths import DB_ROOT, db_path
 
 logger = get_logger(__name__)
 
-OUTPUT_DIR = ROOT_DIR / "research_questions"
+OUTPUT_DIR = ROOT_DIR / "research-questions"
 
 DATASET_LABELS = {
     "a": "Dataset A (agent-authored)",

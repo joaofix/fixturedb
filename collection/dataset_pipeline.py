@@ -451,7 +451,7 @@ def _write_sampled_fixture_csvs(sampled_db: Path, output_dir: Path) -> None:
     datasets/c/fixtures/*.csv's own real writer.
 
     Always fully rebuilt: `output_dir` is removed and recreated first, same
-    "regenerate on demand" convention as research_questions/'s reports.
+    "regenerate on demand" convention as research-questions/'s reports.
     """
     shutil.rmtree(output_dir, ignore_errors=True)
     output_dir.mkdir(parents=True, exist_ok=True)

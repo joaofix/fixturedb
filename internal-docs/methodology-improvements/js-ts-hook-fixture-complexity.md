@@ -135,7 +135,7 @@ directly against every already-stored `raw_source` containing a likely
 nested construct (cheap: no network, ~0.5ms/fixture) and compares against
 the true outer function (the one starting at `raw_source`'s own line 1),
 rather than sampling. Numbers as of this writing (also visible live in
-`research_questions/dataset_findings.md`, regenerated on demand):
+`research-questions/dataset_findings.md`, regenerated on demand):
 
 | Dataset | before_each/after_each | Nested construct | Re-checked | Mismatched | Mismatch rate |
 |---|---|---|---|---|---|
@@ -196,7 +196,7 @@ to agent- vs. human-authored code.
   handles callbacks fine" claim -- and, unlike the original sample-based
   estimate, no longer just an estimate: `dataset_findings.py` computes
   this exactly on every re-collection now (see
-  `research_questions/dataset_findings.md`'s "JS/TS Hook Fixture
+  `research-questions/dataset_findings.md`'s "JS/TS Hook Fixture
   Complexity" section), so this number won't silently drift stale the
   way a one-off manual sample would. This is a distinct issue from the
   `@Rule`/`@ClassRule` Lizard-empty-function-list case documented in

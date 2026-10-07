@@ -2,7 +2,7 @@
 
 Builds tiny synthetic db/{dataset}.db files under tmp_path (via the real
 schema, initialise_db()) and checks the loading, summary-statistics, and
-report-rendering logic -- never touching the real db/ or research_questions/
+report-rendering logic -- never touching the real db/ or research-questions/
 directories. The Mann-Whitney U / chi-square math itself is already covered
 by tests/between_group/test_between_group_comparison.py; these tests focus
 on rq2.py's own wiring: SQL aggregation, missing-db handling, and markdown

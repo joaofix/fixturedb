@@ -11,7 +11,7 @@ teardown, per language and overall. It has no test.
 
 A supplementary table shows how each fixture was classified, per language.
 
-Writes `research_questions/rq3.md`. Run with `python -m collection.research_questions.rq3`.
+Writes `research-questions/rq3.md`. Run with `python -m collection.research_questions.rq3`.
 """
 
 from __future__ import annotations

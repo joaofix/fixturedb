@@ -17,7 +17,7 @@ were not captured as they were first written.
 **The comparison is unpaired.** The two datasets come from different
 repositories. Control variables (language, domain, repository age) are compared
 with a balance test. In the current data, none of the three is balanced between
-the two datasets. See `research_questions/balance.md` for the numbers.
+the two datasets. See `research-questions/balance.md` for the numbers.
 
 ## Sampling
 

@@ -1,4 +1,4 @@
-"""Output folders: the RQ folders live under research_questions/, and the code creates
+"""Output folders: the RQ folders live under research-questions/, and the code creates
 its output folders when they are missing (so toy-dataset/ can be deleted safely)."""
 
 from collection import paths
@@ -9,11 +9,11 @@ from collection.rq5_agent_file_scan import CSV_OUTPUT_DIR as RQ5_CSV_DIR
 
 
 def test_rq1_csv_outputs_live_under_research_questions_RQ1():
-    assert RQ1_CSV_DIR == paths.ROOT_DIR / "research_questions" / "RQ1"
+    assert RQ1_CSV_DIR == paths.ROOT_DIR / "research-questions" / "RQ1"
 
 
 def test_rq5_review_outputs_live_under_research_questions_rq5():
-    assert RQ5_CSV_DIR == paths.ROOT_DIR / "research_questions" / "rq5"
+    assert RQ5_CSV_DIR == paths.ROOT_DIR / "research-questions" / "rq5"
 
 
 def test_database_setup_creates_a_missing_toy_folder(tmp_path):

@@ -6,7 +6,7 @@ repository universe. RQ5 describes the repositories that contribute to Dataset A
 so neither compares the two datasets.
 
 Each question has a script in `collection/research_questions/`. The script
-writes its results to `research_questions/<rq>.md`.
+writes its results to `research-questions/<rq>.md`.
 
 ## RQ1: How common are test fixtures?
 
@@ -59,7 +59,7 @@ The scan (`rq5_agent_file_scan.py`) uses the GitHub GraphQL API, in batches of
 catalog is `collection/heuristics/rq5_agent_file_keywords.yaml`.
 A repository counts as matching if any of its root files matches.
 
-The report (`research_questions/rq5.md`) gives numbers and definitions only. At
+The report (`research-questions/rq5.md`) gives numbers and definitions only. At
 repository level: the share of repositories with a root agent file, and among
 those the shares matching the test keywords, the keyword set of Ardic et al.
 (SCAM 2026), and the fixture keywords, overall and per language, plus the number
@@ -68,26 +68,49 @@ matches fall inside fenced code blocks, overall and per term.
 
 A fixture keyword match is not fixture guidance: many "fixture"/"fixtures"
 matches refer to test-data files, which are out of scope. The final RQ5 number
-comes from manual coding of `research_questions/rq5/rq5_repository_coding_sheet.csv`, one row per
-repository with a fixture match (coding values in `research_questions/rq5/README.md`), read through
-`research_questions/rq5/rq5_snippets.md`, which shows each repository's matched lines with their
+comes from manual coding of `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per
+repository with a fixture match (coding values in `research-questions/rq5/README.md`), read through
+`research-questions/rq5/rq5_snippets.md`, which shows each repository's matched lines with their
 context and a GitHub link. A repository is coded `yes` when at least one match
 refers to test fixtures as code; a description counts as guidance, because in
 an agent configuration file it acts as an instruction to the agent. Once every
-row is coded, `research_questions/rq5_coding.py` writes
-`research_questions/rq5_coding.md`: the share of repositories with a root agent
+row is coded, `research-questions/rq5_coding.py` writes
+`research-questions/rq5_coding.md`: the share of repositories with a root agent
 file coded `yes` (overall and per language), the precision of the keyword search
 (with `unsure` reported separately), and the repositories per category. It
 refuses to run while any row is uncoded.
+
+### RQ5 categories
+
+Every repository coded `yes` gets one or more categories in the `category`
+column, separated by `;`. The categories are the themes of Ardic et al. (SCAM
+2026) for testing guidance in agent configuration files:
+
+| `category` value | Theme |
+|---|---|
+| `location_placement` | Test locations and placement |
+| `strategy` | Test strategy |
+| `tips` | Testing tips |
+| `mentality` | Test mentality |
+| `avoidance` | Avoidance guidance |
+| `mocking` | Mocking guidance |
+| `examples` | Test-related examples |
+| `framework_environment` | Test framework and environment |
+| `test_data` | Test data files |
+| `other` | Other |
+
+The allowed values are defined once, in `CATEGORY_LABELS` in
+`collection/rq5_agent_file_scan.py`; `research-questions/rq5/README.md` and the
+`rq5_coding` report list them from there.
 
 ## Where the numbers come from
 
 | Question | Reads | Writes |
 |----------|-------|--------|
-| RQ1 | `db/rq1_prevalence.db` | `research_questions/rq1.md` |
-| RQ2 | `db/a.db`, `db/c.db` | `research_questions/rq2.md` |
-| RQ3 | `db/a.db`, `db/c.db` | `research_questions/rq3.md` |
-| RQ4 | `db/a.db`, `db/c.db` | `research_questions/rq4.md` |
-| RQ5 | `db/rq5_agent_files.db` (Dataset A repositories) | `research_questions/rq5.md` |
+| RQ1 | `db/rq1_prevalence.db` | `research-questions/rq1.md` |
+| RQ2 | `db/a.db`, `db/c.db` | `research-questions/rq2.md` |
+| RQ3 | `db/a.db`, `db/c.db` | `research-questions/rq3.md` |
+| RQ4 | `db/a.db`, `db/c.db` | `research-questions/rq4.md` |
+| RQ5 | `db/rq5_agent_files.db` (Dataset A repositories) | `research-questions/rq5.md` |
 
 See [Limitations](reference/limitations.md) before reading any comparison.
