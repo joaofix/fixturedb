@@ -237,7 +237,7 @@ toy-dataset/**/*_checkpoint_*.json
 toy-dataset/**/*_corpus_summary_*.json
 # Pipeline execution logs
 logs/
-# Internal bookkeeping (EDA output, analysis results)
+# Internal bookkeeping (pipeline sample/summary JSON, analysis results)
 output/
 # internal-docs/* was intended to be ignored ("internal documentation and
 # notes") but the inline-comment bug above made this a silent no-op --
@@ -252,9 +252,6 @@ output/
 github-search-human/pre_2021_test_commits/
 # Pipeline checkpoint files (runtime artifacts)
 *.checkpoint.json
-# Academic paper draft (working markdown, not the collection pipeline --
-# kept local/unpublished; papers/ above is unrelated, tracked reference PDFs)
-paper-draft/
 # Archived dataset collection runs (datasets/{a,b,c} snapshots moved aside
 # before a recollection), grouped by week e.g. past-datasets/13-17-jul-2026/
 past-datasets/

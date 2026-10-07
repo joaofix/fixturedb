@@ -1,8 +1,8 @@
 import pytest
 """Real (non-mocked) unit tests for agent_commit_counter.py's per-commit and
-per-run "total commits examined" counting -- the number that feeds
-paper-draft/3-results.md's "all commits" column, distinct from the
-agent-attributed subset already captured in datasets/a/commits/*.csv."""
+per-run "total commits examined" counting -- the "all commits" figure,
+distinct from the agent-attributed subset already captured in
+datasets/a/commits/*.csv."""
 
 import csv
 import os

@@ -45,11 +45,6 @@ addopts = "-q"
 line-length = 88
 select = ["E", "F", "I", "C", "Q", "B", "UP"]
 ignore = ["E501", "E402", "C901", "B904"]
-exclude = [
-    "eda",
-    "tests/eda",
-    "zenodo-examples",
-]
 
 [tool.mypy]
 python_version = "3.11"

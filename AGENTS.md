@@ -102,12 +102,8 @@ collection/          # Main pipeline code (the "library")
                      # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)
 tests/               # pytest suite
-eda/                 # Exploratory data analysis notebooks
 docs/                # Full documentation
 internal-docs/       # Internal notes, RUN_COMMANDS.md (authoritative per-dataset command recipes)
-paper-draft/         # The paper, one markdown file per section, LaTeX tables in ```latex fences. Gitignored.
-                     # Pull numbers fresh from research-questions/*.md and datasets/*/summary.md -- don't
-                     # trust a previous fill-in without checking current collection state
 ```
 
 ## Command-line interface
@@ -176,4 +172,3 @@ Tests use `tmp_path` fixtures for temporary git repos and SQLite databases. Neve
 - A prompt that changed code is only considered finished if all tests are passing
 - If we change collection/, we evaluate the need to update the docs/ folder as well. collection/ represents the methodology of this work as code. We want to keep documentation up to date with the methodology.
 - Long-running collection commands: chain with `&&` and a `curl -d "<step> finished" ntfy.sh/joaofix_fixturedb` after each step.
-- Verify paper-draft/ numbers against current collected data before citing -- don't trust a previous fill-in.
