@@ -1,5 +1,5 @@
-"""RQ5 v4 additions: corpus from Dataset A, required snapshot date, the Ardic
-flag, two-line context around each match, and the three review outputs."""
+"""RQ5: corpus from Dataset A, required snapshot date, the test keywords,
+two-line context around each match, and the review outputs."""
 
 import csv
 import sys
@@ -32,11 +32,18 @@ from collection.rq5_agent_file_scan import (
 ARDIC_TERMS = {"test", "tests", "testing", "tested"}
 
 
-def _file(repo, name, test_terms=(), fixture_terms=()):
+def _location(path):
+    return "root" if "/" not in path else "nested"
+
+
+def _file(repo, path, test_terms=(), fixture_terms=()):
     return {
         "repo_name": repo,
-        "file_name": name,
-        "file_type": name,
+        "file_path": path,
+        "file_name": path.rsplit("/", 1)[-1],
+        "file_type": path.rsplit("/", 1)[-1],
+        "location": _location(path),
+        "symlink_target": "",
         "language": "python",
         "commit_sha": f"sha-{repo}",
         "has_test": bool(test_terms),
@@ -45,14 +52,15 @@ def _file(repo, name, test_terms=(), fixture_terms=()):
         "fixture_match_count": len(fixture_terms),
         "matched_test_keywords": ",".join(sorted(test_terms)),
         "matched_fixture_keywords": ",".join(sorted(fixture_terms)),
-        "github_url": f"https://github.com/{repo}/blob/sha-{repo}/{name}",
+        "github_url": f"https://github.com/{repo}/blob/sha-{repo}/{path}",
     }
 
 
-def _match(repo, name, keyword, keyword_list="fixture", line=3):
+def _match(repo, path, keyword, keyword_list="fixture", line=3):
     return {
         "repo_name": repo,
-        "file_name": name,
+        "file_path": path,
+        "location": _location(path),
         "keyword_list": keyword_list,
         "keyword": keyword,
         "line_number": line,
@@ -74,13 +82,17 @@ def _persist_repo(db_path, repo, language, *, files=(), matches=(), fetch_ok=Tru
         error_reason=error_reason,
         commit_sha=f"sha-{repo}" if fetch_ok else None,
         commit_date="2025-12-31" if fetch_ok else None,
-        num_agent_files=len(files),
+        num_guidance_files=len(files),
+        num_root_files=sum(1 for f in files if f["location"] == "root"),
     )
     persist_result(_scan_result(repo_row, list(files), list(matches)), db_path)
 
 
 @pytest.fixture
 def v4_db(tmp_path):
+    """owner/a: root AGENTS.md with a fixture match. owner/b: root CLAUDE.md with
+    a test match and a nested docs/AGENTS.md with a fixture match. owner/c: no
+    guidance file. owner/d: skipped."""
     db_path = tmp_path / "rq5.db"
     initialise_rq5_db(db_path)
     _persist_repo(
@@ -97,10 +109,16 @@ def v4_db(tmp_path):
         db_path,
         "owner/b",
         "python",
-        files=[_file("owner/b", "CLAUDE.md", ["pytest"])],
-        matches=[_match("owner/b", "CLAUDE.md", "pytest", "test")],
+        files=[
+            _file("owner/b", "CLAUDE.md", ["test"]),
+            _file("owner/b", "docs/AGENTS.md", [], ["conftest"]),
+        ],
+        matches=[
+            _match("owner/b", "CLAUDE.md", "test", "test"),
+            _match("owner/b", "docs/AGENTS.md", "conftest", "fixture", line=7),
+        ],
     )
-    _persist_repo(db_path, "owner/c", "java")  # analyzed, no root agent file
+    _persist_repo(db_path, "owner/c", "java")  # analyzed, no guidance file
     _persist_repo(db_path, "owner/d", "java", fetch_ok=False, error_reason="no_commit_at_or_before_cutoff")
     return db_path
 
@@ -175,32 +193,24 @@ class TestScanMeta:
 
 
 class TestCatalogTestKeywords:
-    def test_real_catalog_has_tested_and_an_ardic_list_inside_test_keywords(self):
+    def test_real_catalog_test_keywords_are_exactly_ardics(self):
         catalog = load_rq5_keyword_catalog()
         assert "version" not in catalog
-        assert "tested" in catalog["test_keywords"]
+        assert "test_keywords" not in catalog
         assert set(catalog["ardic_test_keywords"]) == ARDIC_TERMS
-        assert ARDIC_TERMS <= set(catalog["test_keywords"])
+
+    def test_real_catalog_does_not_match_framework_names_as_test_keywords(self):
+        patterns = _build_patterns(load_rq5_keyword_catalog()["ardic_test_keywords"])
+        assert find_keyword_matches("run pytest, jest or junit; add a unit test", patterns) == [
+            m for m in find_keyword_matches("run pytest, jest or junit; add a unit test", patterns)
+            if m["keyword"] == "test"
+        ]
+        assert [m["keyword"] for m in find_keyword_matches("run pytest, jest or junit", patterns)] == []
 
     def test_tested_matches_as_its_own_term_not_as_test(self):
         patterns = _build_patterns(["test", "tested"])
         matches = find_keyword_matches("the suite was tested", patterns)
         assert [m["keyword"] for m in matches] == ["tested"]
-
-    def test_loader_rejects_an_ardic_term_that_is_not_a_test_keyword(self, tmp_path):
-        bad = tmp_path / "catalog.yaml"
-        bad.write_text(
-            yaml.safe_dump(
-                {
-                    "target_files": ["AGENTS.md"],
-                    "test_keywords": ["test"],
-                    "fixture_keywords": ["fixture"],
-                    "ardic_test_keywords": ["test", "tested"],
-                }
-            )
-        )
-        with pytest.raises(ValueError, match="tested"):
-            load_rq5_keyword_catalog(bad)
 
 
 class TestContextLines:
@@ -221,60 +231,65 @@ class TestContextLines:
 
 
 class TestLoadRepoGuidance:
-    def test_folds_root_files_per_repo_and_flags_ardic_terms(self, v4_db):
-        records = {r["repository"]: r for r in load_repo_guidance(ARDIC_TERMS, v4_db)}
+    def test_folds_files_per_repo(self, v4_db):
+        records = {r["repository"]: r for r in load_repo_guidance(v4_db)}
 
         assert set(records) == {"owner/a", "owner/b", "owner/c"}
-        assert records["owner/a"]["has_test_ardic"] is True
+        assert records["owner/a"]["has_test"] is True
         assert records["owner/a"]["has_fixture"] is True
         assert records["owner/b"]["has_test"] is True
-        assert records["owner/b"]["has_test_ardic"] is False
-        assert records["owner/c"]["agent_files"] == []
+        assert records["owner/b"]["has_fixture"] is True  # from the nested file
+        assert records["owner/b"]["guidance_files"] == ["CLAUDE.md", "docs/AGENTS.md"]
+        assert records["owner/b"]["root_files"] == ["CLAUDE.md"]
+        assert records["owner/c"]["guidance_files"] == []
         assert records["owner/c"]["has_test"] is False
 
+    def test_fixture_flags_per_location(self, v4_db):
+        records = {r["repository"]: r for r in load_repo_guidance(v4_db)}
+        assert (records["owner/a"]["has_fixture_root"], records["owner/a"]["has_fixture_nested"]) == (True, False)
+        assert (records["owner/b"]["has_fixture_root"], records["owner/b"]["has_fixture_nested"]) == (False, True)
+        assert records["owner/b"]["fixture_terms"] == {"conftest"}
+
     def test_skipped_repository_is_excluded(self, v4_db):
-        assert "owner/d" not in {r["repository"] for r in load_repo_guidance(ARDIC_TERMS, v4_db)}
+        assert "owner/d" not in {r["repository"] for r in load_repo_guidance(v4_db)}
 
 
 class TestWriteReviewOutputs:
     def test_writes_every_output_with_the_agreed_columns(self, v4_db, tmp_path):
-        out = tmp_path / "out"
-
-        written = write_review_outputs(ARDIC_TERMS, v4_db, out)
+        written = write_review_outputs(v4_db, tmp_path / "out")
 
         assert set(written) == {"repositories", "fixture_matches", "snippets", "repository_sheet", "skipped", "readme"}
         with written["repositories"].open(encoding="utf-8") as fh:
-            repo_rows = list(csv.reader(fh))
-        assert tuple(repo_rows[0]) == REPO_CSV_FIELDNAMES
-        by_repo = {row[0]: row for row in repo_rows[1:]}
-        assert by_repo["owner/a"] == [
-            "owner/a",
-            "sha-owner/a",
-            "AGENTS.md",
-            "1",
-            "1",
-            "1",
-            "fixture",
-        ]
-        assert by_repo["owner/b"][3:6] == ["1", "0", "0"]
+            repo_rows = list(csv.DictReader(fh))
+        assert tuple(repo_rows[0].keys()) == REPO_CSV_FIELDNAMES
+        by_repo = {row["repository"]: row for row in repo_rows}
+        assert by_repo["owner/a"] == {
+            "repository": "owner/a", "commit_sha": "sha-owner/a", "num_guidance_files": "1",
+            "guidance_files": "AGENTS.md", "has_root_file": "1", "has_test": "1",
+            "has_fixture": "1", "has_fixture_root": "1", "has_fixture_nested": "0",
+            "matched_fixture_terms": "fixture",
+        }
+        b = by_repo["owner/b"]
+        assert (b["num_guidance_files"], b["guidance_files"]) == ("2", "CLAUDE.md;docs/AGENTS.md")
+        assert (b["has_fixture"], b["has_fixture_root"], b["has_fixture_nested"]) == ("1", "0", "1")
+        assert (by_repo["owner/c"]["num_guidance_files"], by_repo["owner/c"]["has_root_file"]) == ("0", "0")
 
-    def test_fixture_matches_has_one_row_per_match_and_no_coding_columns(self, v4_db, tmp_path):
-        out = tmp_path / "out"
-
-        written = write_review_outputs(ARDIC_TERMS, v4_db, out)
+    def test_fixture_matches_have_path_location_and_no_coding_columns(self, v4_db, tmp_path):
+        written = write_review_outputs(v4_db, tmp_path / "out")
 
         with written["fixture_matches"].open(encoding="utf-8") as fh:
             rows = list(csv.DictReader(fh))
         assert tuple(rows[0].keys()) == FIXTURE_MATCHES_FIELDNAMES
-        assert len(rows) == 1  # the one fixture match; the test match is not a fixture row
-        row = rows[0]
-        assert row["matched_term"] == "fixture"
-        assert (row["line_before_2"], row["line_before_1"]) == ("before two", "before one")
-        assert (row["line_after_1"], row["line_after_2"]) == ("after one", "after two")
-        assert not {"category", "about_fixtures", "notes"} & set(row)
+        assert [(r["repository"], r["file_path"], r["location"], r["matched_term"]) for r in rows] == [
+            ("owner/a", "AGENTS.md", "root", "fixture"),
+            ("owner/b", "docs/AGENTS.md", "nested", "conftest"),
+        ]
+        assert (rows[0]["line_before_2"], rows[0]["line_before_1"]) == ("before two", "before one")
+        assert (rows[0]["line_after_1"], rows[0]["line_after_2"]) == ("after one", "after two")
+        assert not {"category", "about_fixtures", "notes", "decision"} & set(rows[0])
 
     def test_skipped_repositories_are_listed_with_their_reason(self, v4_db, tmp_path):
-        written = write_review_outputs(ARDIC_TERMS, v4_db, tmp_path / "out")
+        written = write_review_outputs(v4_db, tmp_path / "out")
 
         with written["skipped"].open(encoding="utf-8") as fh:
             rows = list(csv.reader(fh))

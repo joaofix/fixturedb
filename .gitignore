@@ -255,3 +255,6 @@ past-db/
 
 # Local copy of the paper draft, never committed
 paper.md
+
+# Local RQ5 coding notes (not tracked)
+research-questions/rq5/CODING_RULES.local.md

@@ -63,8 +63,9 @@ collection/          # Main pipeline code (the "library")
   heuristics/fixture_definitions.yaml  # Operational definition of "fixture" per language -- edit here to update a detector pattern; also documents per-language `excluded` boundary cases the fixture detectors deliberately don't catch (reviewer audit trail)
   heuristics/exclusion_keywords.yaml  # Repo name/description keywords that signal a boilerplate/toy repo
   heuristics/feature_extraction_patterns.yaml  # Mock-framework/external-call/object-instantiation regex tables + setup/teardown pairing rules
-  heuristics/rq5_agent_file_keywords.yaml  # RQ5's own catalog (not fed into the loaders above): target agent-config
-                     # file names + test/fixture keyword lists, consumed directly by rq5_agent_file_scan.py
+  heuristics/rq5_agent_file_keywords.yaml  # RQ5's own catalog (not fed into the loaders above): test/fixture
+                     # keyword lists, consumed directly by rq5_agent_file_scan.py
+  heuristics/rq5_agent_guidance_files.yaml  # RQ5 guidance file names (AGENTS.md, CLAUDE.md, GEMINI.md) and excluded dirs
   clone_primitives.py / ephemeral_clone.py / persistent_clone.py  # Layered cloning: raw primitive / throttled ephemeral / DB-tracked persistent
   repository_quality_control/agent_repository_counter.py  # discover-repos --dataset a
   repository_quality_control/agent_commit_counter.py      # discover-commits --dataset a
@@ -88,9 +89,11 @@ collection/          # Main pipeline code (the "library")
                      # writes db/rq1_prevalence.db + research-questions/RQ1/*.csv. Run directly:
                      # `python -m collection.rq1_prevalence_scan`
   rq5_agent_file_scan.py  # RQ5's own collection, for the repos with a Dataset A fixture (not the raw
-                     # universe), at a required --snapshot-date -- via GitHub's GraphQL API (batched), never a
-                     # clone: keyword-scans root-level AGENTS.md/CLAUDE.md, writes db/rq5_agent_files.db
-                     # + rq5/*.csv. Keyword/target-file catalog: heuristics/rq5_agent_file_keywords.yaml.
+                     # universe), at a required --snapshot-date -- via GitHub's API (batched), never a
+                     # clone: keyword-scans every AGENTS.md, CLAUDE.md or GEMINI.md in the tree, at any
+                     # depth (no reference following), writes db/rq5_agent_files.db
+                     # + research-questions/rq5/*. Catalogs: heuristics/rq5_agent_file_keywords.yaml,
+                     # heuristics/rq5_agent_guidance_files.yaml.
                      # Run directly: `python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD`
   research_questions/  # Answers the paper's RQs, writes research-questions/*.md (committed):
                      # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,c}.db),

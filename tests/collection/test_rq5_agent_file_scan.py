@@ -18,7 +18,6 @@ import base64
 import json
 import sqlite3
 import sys
-import threading
 import time
 from unittest.mock import patch
 
@@ -38,22 +37,25 @@ from collection.rq5_agent_file_scan import (
     _repo_row,
     _retry_wait_seconds,
     _scan_result,
-    find_cutoff_commit_via_api,
+    fetch_full_tree,
+    fetch_tree_via_api,
+    find_guidance_files,
     find_keyword_matches,
-    find_target_files_at_commit,
     initialise_rq5_db,
-    list_root_tree_via_api,
+    is_excluded,
+    load_guidance_catalog,
     load_repos_needing_retry,
     load_rq5_keyword_catalog,
     load_scanned_repo_names,
     main,
     persist_result,
-    process_repo,
     read_blob_via_api,
+    resolve_symlinks,
     retry_failed_repos,
     run_scan,
     scan_file_content,
 )
+from collection.agent_patterns import _EXCLUDED_DIR_NAMES
 
 
 def _fake_response(status_code, json_data=None, headers=None):
@@ -63,10 +65,6 @@ def _fake_response(status_code, json_data=None, headers=None):
     resp._content = json.dumps(json_data).encode("utf-8") if json_data is not None else b""
     resp.headers = requests.structures.CaseInsensitiveDict(headers or {})
     return resp
-
-
-def _commit_json(sha, date="2026-09-08T12:00:00Z"):
-    return {"sha": sha, "commit": {"author": {"date": date}, "committer": {"date": date}}}
 
 
 def _blob_json(content_str, encoding="base64"):
@@ -80,29 +78,33 @@ def _tree_entry(path, sha, type_="blob", mode="100644"):
     return {"path": path, "type": type_, "sha": sha, "mode": mode}
 
 
-def _route(*, commits=None, trees=None, blobs=None):
-    """requests.get side_effect routing by URL shape:
-    .../commits           -> `commits` (a list of commit dicts; None means empty result)
-    .../git/trees/<sha>   -> `trees[sha]` (a list of tree entries)
-    .../git/blobs/<sha>   -> `blobs[sha]` (a blob dict)
-    Any sha not present in `trees`/`blobs` is treated as a 404.
-    """
-    trees = trees or {}
+def _route(*, blobs=None, trees=None):
+    """requests.get side_effect for the REST endpoints: .../git/blobs/<sha> ->
+    `blobs[sha]` (a blob dict) and .../repos/<owner>/<name>/git/trees/<sha> ->
+    `trees[(repo_name, sha)]` (a trees response dict), or, for a
+    non-recursive listing, `trees[(repo_name, sha, "flat")]`. `trees` may also
+    be a function of `(repo_name, sha, recursive)`. Anything missing is a 404."""
     blobs = blobs or {}
+    trees = trees or {}
 
     def _get(url, headers=None, params=None, timeout=None):
-        if url.endswith("/commits"):
-            return _fake_response(200, commits if commits is not None else [])
-        if "/git/trees/" in url:
-            sha = url.rsplit("/", 1)[-1]
-            if sha not in trees:
-                return _fake_response(404, {"message": "Not Found"})
-            return _fake_response(200, {"sha": sha, "tree": trees[sha], "truncated": False})
         if "/git/blobs/" in url:
             sha = url.rsplit("/", 1)[-1]
             if sha not in blobs:
                 return _fake_response(404, {"message": "Not Found"})
             return _fake_response(200, blobs[sha])
+        if "/git/trees/" in url:
+            assert params in ({"recursive": "1"}, None)
+            head, _, sha = url.partition("/git/trees/")
+            repo_name = "/".join(head.rsplit("/", 2)[-2:])
+            recursive = params is not None
+            if callable(trees):
+                body = trees(repo_name, sha, recursive)
+            else:
+                body = trees.get((repo_name, sha) if recursive else (repo_name, sha, "flat"))
+            if body is None:
+                return _fake_response(404, {"message": "Not Found"})
+            return _fake_response(200, body)
         raise AssertionError(f"unexpected URL in test: {url}")
 
     return _get
@@ -123,8 +125,9 @@ def _per_repo(fake):
 EXCLUDED_FIXTURE_KEYWORDS = ("before each", "after each", "before all", "after all", "teardown")
 
 _TEST_CATALOG = {
-    "target_files": ["AGENTS.md", "CLAUDE.md"],
-    "test_keywords": ["test", "pytest"],
+    "guidance_files": ["AGENTS.md", "CLAUDE.md", "GEMINI.md"],
+    "excluded_dirs": ["node_modules", "vendor"],
+    "ardic_test_keywords": ["test", "tests"],
     "fixture_keywords": ["fixture", "fixtures", "conftest", "test setup", "beforeEach"],
 }
 
@@ -132,13 +135,41 @@ _TEST_CATALOG = {
 class TestLoadRq5KeywordCatalog:
     def test_real_catalog_has_expected_shape(self):
         catalog = load_rq5_keyword_catalog()
-        assert catalog["target_files"] == ["AGENTS.md", "CLAUDE.md"]
-        assert "test" in catalog["test_keywords"]
+        assert "test" in catalog["ardic_test_keywords"]
+        assert "test_keywords" not in catalog
         assert "fixture" in catalog["fixture_keywords"]
+        assert "target_files" not in catalog and "referred_file_allowlist" not in catalog
+
+    def test_guidance_files_are_exactly_the_three_names(self):
+        assert load_rq5_keyword_catalog()["guidance_files"] == ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]
+
+    def test_excluded_dirs_are_the_dataset_a_detectors(self):
+        assert set(load_rq5_keyword_catalog()["excluded_dirs"]) == set(_EXCLUDED_DIR_NAMES)
+
+    def test_guidance_loader_rejects_paths_and_non_markdown(self, tmp_path):
+        bad = tmp_path / "g.yaml"
+        bad.write_text("guidance_files: [docs/AGENTS.md]\nexcluded_dirs: []\n")
+        with pytest.raises(ValueError, match="bare .md"):
+            load_guidance_catalog(bad)
+        bad.write_text("guidance_files: [AGENTS.txt]\nexcluded_dirs: []\n")
+        with pytest.raises(ValueError, match="bare .md"):
+            load_guidance_catalog(bad)
+
+    def test_guidance_loader_rejects_duplicates_case_insensitively(self, tmp_path):
+        bad = tmp_path / "g.yaml"
+        bad.write_text("guidance_files: [AGENTS.md, agents.md]\nexcluded_dirs: []\n")
+        with pytest.raises(ValueError, match="duplicate"):
+            load_guidance_catalog(bad)
+
+    def test_guidance_loader_rejects_an_excluded_dir_that_is_a_path(self, tmp_path):
+        bad = tmp_path / "g.yaml"
+        bad.write_text("guidance_files: [AGENTS.md]\nexcluded_dirs: [a/node_modules]\n")
+        with pytest.raises(ValueError, match="bare directory"):
+            load_guidance_catalog(bad)
 
     def test_bare_setup_is_never_a_standalone_keyword(self):
         catalog = load_rq5_keyword_catalog()
-        assert "setup" not in catalog["test_keywords"]
+        assert "setup" not in catalog["ardic_test_keywords"]
         assert "setup" not in catalog["fixture_keywords"]
 
     def test_bare_teardown_is_never_a_standalone_keyword(self):
@@ -419,54 +450,6 @@ class TestRateLimiter:
         assert time.monotonic() - start < 0.05  # should NOT wait out a backlog
 
 
-class TestFindCutoffCommitViaApi:
-    def test_returns_sha_and_date_from_the_first_commit(self):
-        commits = [_commit_json("abc123", date="2026-09-08T16:40:33Z")]
-        with patch("requests.get", side_effect=_route(commits=commits)):
-            result = find_cutoff_commit_via_api("owner/repo", "2026-09-08")
-        assert result == {"sha": "abc123", "date": "2026-09-08"}
-
-    def test_empty_commit_list_returns_none(self):
-        with patch("requests.get", side_effect=_route(commits=[])):
-            result = find_cutoff_commit_via_api("owner/repo", "2026-09-08")
-        assert result is None
-
-    def test_non_200_returns_none(self):
-        with patch("requests.get", return_value=_fake_response(404, {})):
-            result = find_cutoff_commit_via_api("owner/repo", "2026-09-08")
-        assert result is None
-
-    def test_uses_until_parameter_bounded_to_end_of_cutoff_day(self):
-        with patch("requests.get", return_value=_fake_response(200, [])) as get_mock:
-            find_cutoff_commit_via_api("owner/repo", "2026-09-08")
-        assert get_mock.call_args.kwargs["params"]["until"] == "2026-09-08T23:59:59Z"
-
-    def test_propagates_rate_limit_exhausted_rather_than_returning_none(self):
-        """A caller must be able to tell "genuinely no commit" apart from
-        "couldn't check, GitHub throttled us" -- this does NOT catch
-        RateLimitExhausted itself; process_repo() is what catches it."""
-        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
-        with (
-            patch("requests.get", return_value=rate_limited),
-            patch("collection.rq5_agent_file_scan.time.sleep"),
-        ):
-            with pytest.raises(RateLimitExhausted):
-                find_cutoff_commit_via_api("owner/repo", "2026-09-08", rate_limiter=None)
-
-
-class TestListRootTreeViaApi:
-    def test_returns_tree_entries(self):
-        entries = [_tree_entry("AGENTS.md", "sha1")]
-        with patch("requests.get", side_effect=_route(trees={"abc": entries})):
-            result = list_root_tree_via_api("owner/repo", "abc")
-        assert result == entries
-
-    def test_missing_sha_returns_none(self):
-        with patch("requests.get", side_effect=_route(trees={})):
-            result = list_root_tree_via_api("owner/repo", "missing")
-        assert result is None
-
-
 class TestReadBlobViaApi:
     def test_decodes_base64_content(self):
         with patch("requests.get", side_effect=_route(blobs={"sha1": _blob_json("hello world")})):
@@ -507,32 +490,225 @@ class TestReadBlobViaApi:
         assert content is not None  # decoded with errors="replace", never raised
 
 
-class TestFindTargetFilesAtCommit:
-    def test_matches_case_insensitively(self):
-        entries = [_tree_entry("agents.md", "sha1")]
-        found = find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"])
-        assert found == [("agents.md", "AGENTS.md", "sha1")]
+EXCLUDED = frozenset({"node_modules", "vendor"})
+GUIDANCE = ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]
 
-    def test_excludes_a_directory_with_a_matching_name(self):
-        entries = [_tree_entry("AGENTS.md", "sha1", type_="tree")]
-        found = find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"])
-        assert found == []
 
-    def test_finds_both_target_files_independently(self):
-        entries = [_tree_entry("AGENTS.md", "sha1"), _tree_entry("CLAUDE.md", "sha2")]
-        found = sorted(find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"]))
-        assert found == [("AGENTS.md", "AGENTS.md", "sha1"), ("CLAUDE.md", "CLAUDE.md", "sha2")]
+def _found(path, sha, file_type=None, symlink=False):
+    return {"path": path, "file_type": file_type or path.rsplit("/", 1)[-1], "sha": sha, "symlink": symlink}
 
-    def test_no_match_returns_empty_list(self):
-        entries = [_tree_entry("README.md", "sha1")]
-        assert find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"]) == []
 
-    def test_symlink_mode_is_still_a_blob_and_matches(self):
-        """A symlink's tree entry has mode 120000 but type "blob" -- it
-        must still be picked up for reading, same as any other file."""
-        entries = [_tree_entry("CLAUDE.md", "sha1", type_="blob", mode="120000")]
-        found = find_target_files_at_commit(entries, ["AGENTS.md", "CLAUDE.md"])
-        assert found == [("CLAUDE.md", "CLAUDE.md", "sha1")]
+class TestFindGuidanceFiles:
+    def test_finds_files_at_any_depth_case_insensitively(self):
+        entries = [
+            _tree_entry("agents.md", "s1"),
+            _tree_entry("packages/api/CLAUDE.md", "s2"),
+            _tree_entry("a/b/c/d/Gemini.md", "s3"),
+        ]
+        assert find_guidance_files(entries, GUIDANCE, EXCLUDED) == [
+            _found("a/b/c/d/Gemini.md", "s3", "GEMINI.md"),
+            _found("agents.md", "s1", "AGENTS.md"),
+            _found("packages/api/CLAUDE.md", "s2", "CLAUDE.md"),
+        ]
+
+    def test_skips_files_under_an_excluded_directory_at_any_depth(self):
+        entries = [
+            _tree_entry("node_modules/pkg/AGENTS.md", "s1"),
+            _tree_entry("web/node_modules/pkg/CLAUDE.md", "s2"),
+            _tree_entry("vendor/AGENTS.md", "s3"),
+            _tree_entry("src/AGENTS.md", "s4"),
+        ]
+        assert find_guidance_files(entries, GUIDANCE, EXCLUDED) == [_found("src/AGENTS.md", "s4")]
+
+    def test_a_file_named_like_an_excluded_directory_is_not_excluded(self):
+        assert is_excluded("docs/vendor", EXCLUDED) is False
+        assert is_excluded("vendor/x.md", EXCLUDED) is True
+
+    def test_excluded_directory_names_match_exactly(self):
+        entries = [_tree_entry("Vendor/AGENTS.md", "s1"), _tree_entry("vendors/AGENTS.md", "s2")]
+        assert [f["path"] for f in find_guidance_files(entries, GUIDANCE, EXCLUDED)] == [
+            "Vendor/AGENTS.md", "vendors/AGENTS.md",
+        ]
+
+    def test_a_directory_named_like_a_guidance_file_is_not_a_file(self):
+        entries = [_tree_entry("AGENTS.md", "s1", type_="tree"), _tree_entry("AGENTS.md/x.md", "s2")]
+        assert find_guidance_files(entries, GUIDANCE, EXCLUDED) == []
+
+    def test_a_submodule_is_not_a_file(self):
+        assert find_guidance_files([_tree_entry("AGENTS.md", "s1", type_="commit", mode="160000")], GUIDANCE, EXCLUDED) == []
+
+    def test_symlinks_are_flagged(self):
+        entries = [_tree_entry("CLAUDE.md", "s1", mode="120000")]
+        assert find_guidance_files(entries, GUIDANCE, EXCLUDED) == [_found("CLAUDE.md", "s1", symlink=True)]
+
+    def test_graphql_integer_symlink_mode_is_flagged_too(self):
+        entries = [{"path": "CLAUDE.md", "type": "blob", "mode": 0o120000, "sha": "s1"}]
+        assert find_guidance_files(entries, GUIDANCE, EXCLUDED)[0]["symlink"] is True
+
+    @pytest.mark.parametrize("name", ["AGENTS.MD", "Agents.md", "agents.md", "Claude.md", "GEMINI.md", "gemini.MD"])
+    def test_any_case_of_a_name_matches_with_its_catalog_spelling(self, name):
+        [found] = find_guidance_files([_tree_entry(f"x/{name}", "s1")], GUIDANCE, EXCLUDED)
+        assert found["path"] == f"x/{name}"
+        assert found["file_type"].casefold() == name.casefold() and found["file_type"] in GUIDANCE
+
+    @pytest.mark.parametrize(
+        "name",
+        ["AGENT.md", "CLAUDE.local.md", "AGENTS.local.md", "copilot-instructions.md", "SKILL.md",
+         "CONTRIBUTING.md", "TESTING.md", "agents", "AGENTS.md.bak", "my-AGENTS.md"],
+    )
+    def test_other_names_do_not_match(self, name):
+        assert find_guidance_files([_tree_entry(name, "s1"), _tree_entry(f"d/{name}", "s2")], GUIDANCE, EXCLUDED) == []
+
+
+def _reader(texts):
+    calls = []
+
+    def _read(shas):
+        calls.append(list(shas))
+        return {sha: texts.get(sha) for sha in shas}
+
+    _read.calls = calls
+    return _read
+
+
+class TestResolveSymlinks:
+    def test_regular_files_are_read_as_they_are(self):
+        files = [_found("AGENTS.md", "s1"), _found("pkg/CLAUDE.md", "s2")]
+        assert resolve_symlinks(files, [], _reader({})) == [
+            {"path": "AGENTS.md", "file_type": "AGENTS.md", "blob_sha": "s1", "symlink_target": ""},
+            {"path": "pkg/CLAUDE.md", "file_type": "CLAUDE.md", "blob_sha": "s2", "symlink_target": ""},
+        ]
+
+    def test_a_link_to_a_guidance_file_already_read_is_not_read_again(self):
+        entries = [_tree_entry("AGENTS.md", "s1"), _tree_entry("CLAUDE.md", "l1", mode="120000")]
+        files = [_found("AGENTS.md", "s1"), _found("CLAUDE.md", "l1", symlink=True)]
+        assert [f["path"] for f in resolve_symlinks(files, entries, _reader({"l1": "AGENTS.md"}))] == ["AGENTS.md"]
+
+    def test_a_link_to_another_file_is_read_through_its_target(self):
+        entries = [_tree_entry("docs/ai.md", "t1"), _tree_entry("CLAUDE.md", "l1", mode="120000")]
+        files = [_found("CLAUDE.md", "l1", symlink=True)]
+        assert resolve_symlinks(files, entries, _reader({"l1": "docs/ai.md\n"})) == [
+            {"path": "CLAUDE.md", "file_type": "CLAUDE.md", "blob_sha": "t1", "symlink_target": "docs/ai.md"}
+        ]
+
+    def test_relative_targets_resolve_from_the_links_directory(self):
+        entries = [_tree_entry("shared/AI.md", "t1"), _tree_entry("pkg/a/CLAUDE.md", "l1", mode="120000")]
+        files = [_found("pkg/a/CLAUDE.md", "l1", symlink=True)]
+        [read] = resolve_symlinks(files, entries, _reader({"l1": "../../shared/AI.md"}))
+        assert (read["symlink_target"], read["blob_sha"]) == ("shared/AI.md", "t1")
+
+    def test_two_links_to_the_same_target_read_it_once(self):
+        entries = [
+            _tree_entry("docs/ai.md", "t1"),
+            _tree_entry("CLAUDE.md", "l1", mode="120000"),
+            _tree_entry("GEMINI.md", "l2", mode="120000"),
+        ]
+        files = [_found("CLAUDE.md", "l1", symlink=True), _found("GEMINI.md", "l2", symlink=True)]
+        reads = resolve_symlinks(files, entries, _reader({"l1": "docs/ai.md", "l2": "docs/ai.md"}))
+        assert [f["path"] for f in reads] == ["CLAUDE.md"]
+
+    def test_a_chain_of_links_is_followed(self):
+        entries = [
+            _tree_entry("real.md", "t1"),
+            _tree_entry("hop.md", "l2", mode="120000"),
+            _tree_entry("CLAUDE.md", "l1", mode="120000"),
+        ]
+        reader = _reader({"l1": "hop.md", "l2": "real.md"})
+        [read] = resolve_symlinks([_found("CLAUDE.md", "l1", symlink=True)], entries, reader)
+        assert read["symlink_target"] == "real.md"
+        assert reader.calls == [["l1"], ["l2"]]
+
+    def test_a_cycle_is_dropped(self):
+        entries = [_tree_entry("a.md", "l2", mode="120000"), _tree_entry("CLAUDE.md", "l1", mode="120000")]
+        reads = resolve_symlinks([_found("CLAUDE.md", "l1", symlink=True)], entries, _reader({"l1": "a.md", "l2": "CLAUDE.md"}))
+        assert reads == []
+
+    @pytest.mark.parametrize("target", ["missing.md", "../outside.md", "/etc/passwd", "docs", "", "   "])
+    def test_a_link_that_leaves_the_tree_or_points_at_nothing_is_dropped(self, target):
+        entries = [_tree_entry("docs", "d1", type_="tree"), _tree_entry("CLAUDE.md", "l1", mode="120000")]
+        assert resolve_symlinks([_found("CLAUDE.md", "l1", symlink=True)], entries, _reader({"l1": target})) == []
+
+    def test_an_unreadable_link_is_dropped(self):
+        entries = [_tree_entry("CLAUDE.md", "l1", mode="120000")]
+        assert resolve_symlinks([_found("CLAUDE.md", "l1", symlink=True)], entries, _reader({})) == []
+
+    def test_no_links_means_no_reads(self):
+        reader = _reader({})
+        resolve_symlinks([_found("AGENTS.md", "s1")], [], reader)
+        assert reader.calls == []
+
+
+class TestFetchFullTree:
+    """`fetch` is a dict of (sha, recursive) -> (entries, truncated)."""
+
+    def _fetch(self, listings):
+        calls = []
+
+        def fetch(sha, recursive):
+            calls.append((sha, recursive))
+            return listings.get((sha, recursive))
+
+        fetch.calls = calls
+        return fetch
+
+    def test_a_complete_listing_is_returned_as_is(self):
+        fetch = self._fetch({("c1", True): ([_tree_entry("a/AGENTS.md", "s1")], False)})
+        assert fetch_full_tree("c1", fetch, EXCLUDED) == ([_tree_entry("a/AGENTS.md", "s1")], False)
+        assert fetch.calls == [("c1", True)]
+
+    def test_a_truncated_listing_is_split_into_subdirectories(self):
+        fetch = self._fetch({
+            ("c1", True): ([_tree_entry("AGENTS.md", "s0")], True),
+            ("c1", False): ([_tree_entry("AGENTS.md", "s0"), _tree_entry("pkg", "t1", type_="tree"),
+                             _tree_entry("node_modules", "t2", type_="tree")], False),
+            ("t1", True): ([_tree_entry("api", "t3", type_="tree"), _tree_entry("api/CLAUDE.md", "s1")], False),
+        })
+        entries, split = fetch_full_tree("c1", fetch, EXCLUDED)
+        assert split is True
+        assert sorted(e["path"] for e in entries) == ["AGENTS.md", "node_modules", "pkg", "pkg/api", "pkg/api/CLAUDE.md"]
+        assert ("t2", True) not in fetch.calls  # excluded directories are not fetched
+
+    def test_a_truncated_subdirectory_is_split_again(self):
+        fetch = self._fetch({
+            ("c1", True): ([], True),
+            ("c1", False): ([_tree_entry("big", "t1", type_="tree")], False),
+            ("t1", True): ([], True),
+            ("t1", False): ([_tree_entry("x", "t2", type_="tree")], False),
+            ("t2", True): ([_tree_entry("GEMINI.md", "s1")], False),
+        })
+        entries, _ = fetch_full_tree("c1", fetch, EXCLUDED)
+        assert sorted(e["path"] for e in entries) == ["big", "big/x", "big/x/GEMINI.md"]
+
+    def test_any_failed_request_fails_the_tree(self):
+        fetch = self._fetch({
+            ("c1", True): ([], True),
+            ("c1", False): ([_tree_entry("pkg", "t1", type_="tree")], False),
+        })
+        assert fetch_full_tree("c1", fetch, EXCLUDED) is None
+        assert fetch_full_tree("missing", fetch, EXCLUDED) is None
+
+
+class TestFetchTreeViaApi:
+    def test_returns_entries_and_the_truncated_flag(self):
+        trees = {("o/r", "c1"): {"truncated": True, "tree": [_tree_entry("a/AGENTS.md", "s1")]}}
+        with patch("collection.rq5_agent_file_scan.requests.get", side_effect=_route(trees=trees)):
+            entries, truncated = fetch_tree_via_api("o/r", "c1", token="t")
+        assert entries == [{"path": "a/AGENTS.md", "type": "blob", "mode": "100644", "sha": "s1"}]
+        assert truncated is True
+
+    def test_a_flat_listing_is_requested_without_the_recursive_flag(self):
+        trees = {("o/r", "t1", "flat"): {"truncated": False, "tree": [_tree_entry("pkg", "t2", type_="tree")]}}
+        with patch("collection.rq5_agent_file_scan.requests.get", side_effect=_route(trees=trees)):
+            entries, truncated = fetch_tree_via_api("o/r", "t1", recursive=False, token="t")
+        assert [e["path"] for e in entries] == ["pkg"] and truncated is False
+
+    def test_missing_tree_returns_none(self):
+        with patch("collection.rq5_agent_file_scan.requests.get", side_effect=_route()):
+            assert fetch_tree_via_api("o/r", "c1", token="t") is None
+
+    def test_malformed_body_returns_none(self):
+        with patch("collection.rq5_agent_file_scan.requests.get", return_value=_fake_response(200, {"nope": 1})):
+            assert fetch_tree_via_api("o/r", "c1", token="t") is None
 
 
 class TestRepoRowAndScanResult:
@@ -545,211 +721,13 @@ class TestRepoRowAndScanResult:
     def test_repo_row_defaults(self):
         row = _repo_row("o/r", "python", "t", fetch_ok=False, error_reason="clone_failed")
         assert row["commit_sha"] is None
-        assert row["num_agent_files"] == 0
+        assert (row["num_guidance_files"], row["num_root_files"], row["tree_truncated"]) == (0, 0, 0)
         assert row["error_reason"] == "clone_failed"
 
-    def test_scan_result_defaults_files_and_matches_to_empty_lists(self):
+    def test_scan_result_defaults_to_empty_lists(self):
         row = _repo_row("o/r", "python", "t", fetch_ok=False)
         result = _scan_result(row)
         assert result == {"repo": row, "files": [], "matches": []}
-
-
-class TestProcessRepo:
-    def _repo_dict(self, name="owner/repo", language="python"):
-        return {"repo_name": name, "language": language, "clone_url": "https://example.com/owner/repo.git"}
-
-    def test_successful_scan_with_one_matching_file(self):
-        commits = [_commit_json("sha1", date="2026-08-01T00:00:00Z")]
-        tree = [_tree_entry("AGENTS.md", "blobsha1")]
-        blob = _blob_json("Run `pytest` and check the fixture setup.\nUse beforeEach for fixtures.")
-
-        with patch(
-            "requests.get",
-            side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob}),
-        ):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 1
-        assert result["repo"]["error_reason"] is None
-        assert result["repo"]["num_agent_files"] == 1
-        assert result["repo"]["commit_sha"] == "sha1"
-
-        assert len(result["files"]) == 1
-        file_row = result["files"][0]
-        assert file_row["file_name"] == "AGENTS.md"
-        assert file_row["file_type"] == "AGENTS.md"
-        assert file_row["has_test"] is True
-        assert file_row["has_fixture"] is True
-        assert file_row["test_match_count"] == 1  # "pytest" only
-        # "fixture" (line 1) + "beforeEach" + "fixtures" (line 2).
-        assert file_row["fixture_match_count"] == 3
-        assert "pytest" in file_row["matched_test_keywords"]
-        assert file_row["github_url"] == "https://github.com/owner/repo/blob/sha1/AGENTS.md"
-
-        assert len(result["matches"]) == file_row["test_match_count"] + file_row["fixture_match_count"]
-        assert all(m["repo_name"] == "owner/repo" for m in result["matches"])
-        assert all(m["file_name"] == "AGENTS.md" for m in result["matches"])
-
-    def test_repo_with_no_target_files_is_fetch_ok_with_zero_files(self):
-        commits = [_commit_json("sha1")]
-        tree = [_tree_entry("README.md", "blobsha1")]
-
-        with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree})):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 1
-        assert result["repo"]["error_reason"] is None
-        assert result["repo"]["num_agent_files"] == 0
-        assert result["files"] == []
-        assert result["matches"] == []
-
-    def test_no_commit_before_cutoff_returns_zero_row(self):
-        with patch("requests.get", side_effect=_route(commits=[])):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 0
-        assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
-        assert result["files"] == []
-        assert result["matches"] == []
-
-    def test_tree_fetch_failure_returns_zero_row(self):
-        commits = [_commit_json("sha1")]
-        # trees={} means the Trees API 404s for "sha1" -- simulated failure.
-        with patch("requests.get", side_effect=_route(commits=commits, trees={})):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 0
-        assert result["repo"]["error_reason"] == "tree_fetch_failed"
-
-    def test_one_unreadable_blob_does_not_block_the_other(self):
-        commits = [_commit_json("sha1")]
-        tree = [_tree_entry("AGENTS.md", "blob_missing"), _tree_entry("CLAUDE.md", "blob_present")]
-        blobs = {"blob_present": _blob_json("a fixture file")}  # blob_missing -> 404
-
-        with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs=blobs)):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 1
-        assert [f["file_name"] for f in result["files"]] == ["CLAUDE.md"]
-
-    def test_symlinked_claude_md_is_scanned_as_its_own_literal_content(self):
-        commits = [_commit_json("sha1")]
-        tree = [
-            _tree_entry("AGENTS.md", "blob_agents"),
-            _tree_entry("CLAUDE.md", "blob_claude_symlink", mode="120000"),
-        ]
-        blobs = {
-            "blob_agents": _blob_json("a test mention and a fixture mention"),
-            "blob_claude_symlink": _blob_json("AGENTS.md"),  # the symlink's own literal target text
-        }
-
-        with patch("requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs=blobs)):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        by_name = {f["file_name"]: f for f in result["files"]}
-        assert by_name["AGENTS.md"]["has_test"] is True
-        assert by_name["AGENTS.md"]["has_fixture"] is True
-        # CLAUDE.md's blob content is literally "AGENTS.md" -- no keyword in that string.
-        assert by_name["CLAUDE.md"]["has_test"] is False
-        assert by_name["CLAUDE.md"]["has_fixture"] is False
-
-    def test_default_catalog_is_loaded_when_none_is_passed(self):
-        commits = [_commit_json("sha1")]
-        tree = [_tree_entry("AGENTS.md", "blobsha1")]
-        blob = _blob_json("mentions conftest for fixtures")
-
-        with patch(
-            "requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob})
-        ):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08")
-
-        assert result["files"][0]["has_fixture"] is True
-
-    def test_rate_limit_exhausted_during_cutoff_lookup_is_recorded_distinctly(self):
-        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
-        with (
-            patch("requests.get", return_value=rate_limited),
-            patch("collection.rq5_agent_file_scan.time.sleep"),
-        ):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 0
-        assert result["repo"]["error_reason"] == "rate_limited"
-        # Must never be conflated with a genuine negative result:
-        assert result["repo"]["error_reason"] != "no_commit_at_or_before_cutoff"
-
-    def test_rate_limit_exhausted_during_tree_fetch_is_recorded_distinctly(self):
-        commits = [_commit_json("sha1")]
-        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
-
-        def _get(url, headers=None, params=None, timeout=None):
-            if url.endswith("/commits"):
-                return _fake_response(200, commits)
-            return rate_limited  # the /git/trees/ call
-
-        with (
-            patch("requests.get", side_effect=_get),
-            patch("collection.rq5_agent_file_scan.time.sleep"),
-        ):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 0
-        assert result["repo"]["error_reason"] == "rate_limited"
-
-    def test_rate_limit_exhausted_mid_file_loop_discards_partial_results(self):
-        """One file already read successfully, then the second blob fetch
-        gets rate limited -- the whole repo must fail cleanly with no
-        files/matches at all, never a partial fetch_ok=1 row that looks
-        like "this repo only has 1 agent file" when the truth is unknown."""
-        commits = [_commit_json("sha1")]
-        tree = [_tree_entry("AGENTS.md", "blob_ok"), _tree_entry("CLAUDE.md", "blob_limited")]
-        rate_limited = _fake_response(429, {}, headers={"Retry-After": "0"})
-
-        def _get(url, headers=None, params=None, timeout=None):
-            if url.endswith("/commits"):
-                return _fake_response(200, commits)
-            if url.endswith("/git/trees/sha1"):
-                return _fake_response(200, {"tree": tree})
-            if url.endswith("/blob_ok"):
-                return _fake_response(200, _blob_json("a test file"))
-            return rate_limited  # the blob_limited fetch
-
-        with (
-            patch("requests.get", side_effect=_get),
-            patch("collection.rq5_agent_file_scan.time.sleep"),
-        ):
-            result = process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-
-        assert result["repo"]["fetch_ok"] == 0
-        assert result["repo"]["error_reason"] == "rate_limited"
-        assert result["files"] == []
-        assert result["matches"] == []
-
-    def test_threads_rate_limiter_through_to_every_api_call(self):
-        limiter = _RateLimiter(rate_per_second=1000)
-        commits = [_commit_json("sha1")]
-        tree = [_tree_entry("AGENTS.md", "blobsha1")]
-        blob = _blob_json("a test file")
-
-        with (
-            patch(
-                "requests.get", side_effect=_route(commits=commits, trees={"sha1": tree}, blobs={"blobsha1": blob})
-            ),
-            patch.object(limiter, "acquire", wraps=limiter.acquire) as acquire_mock,
-        ):
-            process_repo(self._repo_dict(), snapshot_date="2026-09-08", catalog=_TEST_CATALOG, rate_limiter=limiter)
-
-        # commit lookup + tree listing + one blob fetch = 3 calls, each paced.
-        assert acquire_mock.call_count == 3
-
-
-class TestProcessRepoRobustness:
-    def test_connection_error_is_treated_as_a_failed_fetch_not_a_crash(self):
-        repo = {"repo_name": "owner/repo", "language": "python", "clone_url": "x"}
-        with patch("requests.get", side_effect=requests.ConnectionError("boom")):
-            result = process_repo(repo, snapshot_date="2026-09-08", catalog=_TEST_CATALOG)
-        assert result["repo"]["fetch_ok"] == 0
-        assert result["repo"]["error_reason"] == "no_commit_at_or_before_cutoff"
 
 
 class TestLoadScannedRepoNames:
@@ -763,6 +741,43 @@ class TestLoadScannedRepoNames:
         assert load_scanned_repo_names(db_path) == {"o/a"}
 
 
+def _file_row(path, *, has_test=True, has_fixture=False, symlink_target=""):
+    return {
+        "repo_name": "o/a",
+        "file_path": path,
+        "file_name": path.rsplit("/", 1)[-1],
+        "file_type": path.rsplit("/", 1)[-1],
+        "location": "root" if "/" not in path else "nested",
+        "symlink_target": symlink_target,
+        "language": "python",
+        "commit_sha": "sha1",
+        "has_test": has_test,
+        "has_fixture": has_fixture,
+        "test_match_count": int(has_test),
+        "fixture_match_count": int(has_fixture),
+        "matched_test_keywords": "test" if has_test else "",
+        "matched_fixture_keywords": "fixture" if has_fixture else "",
+        "github_url": f"https://github.com/o/a/blob/sha1/{path}",
+    }
+
+
+def _match_row(path, keyword_list="test", keyword="test", line=1, in_block=False):
+    return {
+        "repo_name": "o/a",
+        "file_path": path,
+        "location": "root" if "/" not in path else "nested",
+        "keyword_list": keyword_list,
+        "keyword": keyword,
+        "line_number": line,
+        "line_context": f"a {keyword}",
+        "line_before_2": "",
+        "line_before_1": "",
+        "line_after_1": "",
+        "line_after_2": "",
+        "in_code_block": in_block,
+    }
+
+
 class TestPersistResult:
     def test_upserts_repo_row_by_name(self, tmp_path):
         db_path = tmp_path / "rq5.db"
@@ -773,133 +788,83 @@ class TestPersistResult:
         )
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t2", fetch_ok=True, commit_sha="abc", num_agent_files=1)
+                _repo_row(
+                    "o/a", "python", "t2", fetch_ok=True, commit_sha="abc",
+                    num_guidance_files=3, num_root_files=1, tree_truncated=True,
+                )
             ),
             db_path,
         )
 
         with sqlite3.connect(db_path) as conn:
-            rows = conn.execute("SELECT fetch_ok, commit_sha FROM repo_scan WHERE repo_name='o/a'").fetchall()
-        assert rows == [(1, "abc")]
+            rows = conn.execute(
+                "SELECT fetch_ok, commit_sha, num_guidance_files, num_root_files, tree_truncated "
+                "FROM repo_scan WHERE repo_name='o/a'"
+            ).fetchall()
+        assert rows == [(1, "abc", 3, 1, 1)]
 
-    def test_re_persisting_replaces_file_and_match_rows_not_duplicates_them(self, tmp_path):
+    def test_re_persisting_replaces_file_and_match_rows(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-
-        file1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "file_type": "AGENTS.md",
-            "language": "python",
-            "commit_sha": "sha1",
-            "has_test": True,
-            "has_fixture": False,
-            "test_match_count": 1,
-            "fixture_match_count": 0,
-            "matched_test_keywords": "test",
-            "matched_fixture_keywords": "",
-            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
-        }
-        match1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "keyword_list": "test",
-            "keyword": "test",
-            "line_number": 1,
-            "line_context": "a test",
-            "line_before_2": "",
-            "line_before_1": "",
-            "line_after_1": "",
-            "line_after_2": "",
-            "in_code_block": False,
-        }
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t1", fetch_ok=True, commit_sha="sha1", num_agent_files=1),
-                files=[file1],
-                matches=[match1, match1],
+                _repo_row("o/a", "python", "t1", fetch_ok=True, commit_sha="sha1", num_root_files=1),
+                files=[_file_row("AGENTS.md")],
+                matches=[_match_row("AGENTS.md"), _match_row("AGENTS.md")],
             ),
             db_path,
         )
-
-        persist_result(
-            _scan_result(
-                _repo_row("o/a", "python", "t2", fetch_ok=True, commit_sha="sha2", num_agent_files=0)
-            ),
-            db_path,
-        )
+        persist_result(_scan_result(_repo_row("o/a", "python", "t2", fetch_ok=True, commit_sha="sha2")), db_path)
 
         with sqlite3.connect(db_path) as conn:
-            file_count = conn.execute("SELECT COUNT(*) FROM agent_files WHERE repo_name='o/a'").fetchone()[0]
-            match_count = conn.execute(
-                "SELECT COUNT(*) FROM agent_file_matches WHERE repo_name='o/a'"
-            ).fetchone()[0]
-        assert file_count == 0
-        assert match_count == 0
+            counts = [
+                conn.execute(f"SELECT COUNT(*) FROM {table} WHERE repo_name='o/a'").fetchone()[0]
+                for table in ("agent_files", "agent_file_matches")
+            ]
+        assert counts == [0, 0]
 
-    def test_persists_files_and_matches(self, tmp_path):
+    def test_persists_root_and_nested_files_and_matches(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
-        file1 = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "file_type": "AGENTS.md",
-            "language": "python",
-            "commit_sha": "sha1",
-            "has_test": True,
-            "has_fixture": True,
-            "test_match_count": 1,
-            "fixture_match_count": 1,
-            "matched_test_keywords": "test",
-            "matched_fixture_keywords": "fixture",
-            "github_url": "https://github.com/o/a/blob/sha1/AGENTS.md",
-        }
-        match_test = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "keyword_list": "test",
-            "keyword": "test",
-            "line_number": 1,
-            "line_context": "a test",
-            "line_before_2": "",
-            "line_before_1": "",
-            "line_after_1": "",
-            "line_after_2": "",
-            "in_code_block": False,
-        }
-        match_fixture = {
-            "repo_name": "o/a",
-            "file_name": "AGENTS.md",
-            "keyword_list": "fixture",
-            "keyword": "fixture",
-            "line_number": 2,
-            "line_context": "a fixture",
-            "line_before_2": "",
-            "line_before_1": "",
-            "line_after_1": "",
-            "line_after_2": "",
-            "in_code_block": True,
-        }
+        files = [
+            _file_row("AGENTS.md", has_fixture=True),
+            _file_row("pkg/CLAUDE.md", has_fixture=True, symlink_target="docs/ai.md"),
+        ]
+        matches = [
+            _match_row("AGENTS.md"),
+            _match_row("AGENTS.md", keyword_list="fixture", keyword="fixture", line=2, in_block=True),
+            _match_row("pkg/CLAUDE.md", keyword_list="fixture", keyword="fixtures", line=5),
+        ]
         persist_result(
             _scan_result(
-                _repo_row("o/a", "python", "t", fetch_ok=True, commit_sha="sha1", num_agent_files=1),
-                files=[file1],
-                matches=[match_test, match_fixture],
+                _repo_row("o/a", "python", "t", fetch_ok=True, commit_sha="sha1", num_guidance_files=2, num_root_files=1),
+                files=files,
+                matches=matches,
             ),
             db_path,
         )
 
         with sqlite3.connect(db_path) as conn:
             conn.row_factory = sqlite3.Row
-            file_row = conn.execute("SELECT * FROM agent_files WHERE repo_name='o/a'").fetchone()
-            match_rows = conn.execute(
-                "SELECT * FROM agent_file_matches WHERE repo_name='o/a' ORDER BY line_number"
-            ).fetchall()
+            file_rows = conn.execute("SELECT * FROM agent_files ORDER BY file_path").fetchall()
+            match_rows = conn.execute("SELECT * FROM agent_file_matches ORDER BY file_path, line_number").fetchall()
 
-        assert file_row["has_test"] == 1
-        assert file_row["has_fixture"] == 1
-        assert len(match_rows) == 2
-        assert match_rows[1]["in_code_block"] == 1
+        assert [(r["file_path"], r["location"], r["symlink_target"]) for r in file_rows] == [
+            ("AGENTS.md", "root", ""),
+            ("pkg/CLAUDE.md", "nested", "docs/ai.md"),
+        ]
+        assert [(r["file_path"], r["location"], r["in_code_block"]) for r in match_rows] == [
+            ("AGENTS.md", "root", 0),
+            ("AGENTS.md", "root", 1),
+            ("pkg/CLAUDE.md", "nested", 0),
+        ]
+
+    def test_initialise_refuses_a_database_from_the_earlier_scan(self, tmp_path):
+        db_path = tmp_path / "rq5.db"
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("CREATE TABLE agent_files (repo_name TEXT, file_path TEXT, source TEXT)")
+        with pytest.raises(ValueError, match="earlier RQ5 scan"):
+            initialise_rq5_db(db_path)
 
 
 class TestRunScan:
@@ -1021,7 +986,8 @@ class TestRunScan:
             )
 
         assert seen_catalogs[0] is seen_catalogs[1]
-        assert seen_catalogs[0]["target_files"] == ["AGENTS.md", "CLAUDE.md"]
+        assert seen_catalogs[0]["guidance_files"] == ["AGENTS.md", "CLAUDE.md", "GEMINI.md"]
+        assert "node_modules" in seen_catalogs[0]["excluded_dirs"]
 
     def test_run_scan_writes_progress_file_with_correct_tallies(self, tmp_path):
         db_path = tmp_path / "rq5.db"
@@ -1039,29 +1005,10 @@ class TestRunScan:
                 "t",
                 fetch_ok=ok,
                 error_reason=None if ok else "no_commit_at_or_before_cutoff",
-                num_agent_files=1 if ok else 0,
+                num_root_files=1 if ok else 0,
             )
-            files = (
-                [
-                    {
-                        "repo_name": repo["repo_name"],
-                        "file_name": "AGENTS.md",
-                        "file_type": "AGENTS.md",
-                        "language": repo["language"],
-                        "commit_sha": "sha1",
-                        "has_test": True,
-                        "has_fixture": False,
-                        "test_match_count": 1,
-                        "fixture_match_count": 0,
-                        "matched_test_keywords": "test",
-                        "matched_fixture_keywords": "",
-                        "github_url": "https://github.com/org/a/blob/sha1/AGENTS.md",
-                    }
-                ]
-                if ok
-                else []
-            )
-            return {"repo": row, "files": files, "matches": []}
+            files = [{**_file_row("AGENTS.md"), "repo_name": repo["repo_name"]}] if ok else []
+            return _scan_result(row, files)
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
@@ -1208,7 +1155,7 @@ class TestRetryFailedRepos:
             db_path,
         )
         persist_result(
-            _scan_result(_repo_row("org/untouched", "python", "t", fetch_ok=True, num_agent_files=1)),
+            _scan_result(_repo_row("org/untouched", "python", "t", fetch_ok=True, num_root_files=1)),
             db_path,
         )
 
@@ -1219,19 +1166,19 @@ class TestRetryFailedRepos:
 
         def _fake_process_repo(repo, **kwargs):
             return _scan_result(
-                _repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=True, num_agent_files=2)
+                _repo_row(repo["repo_name"], repo["language"], "t2", fetch_ok=True, num_root_files=2)
             )
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             counts = retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=False)
 
         assert counts == {"attempted": 1, "recovered": 1, "still_failed": 0}
         rows = {
             r[0]: (r[1], r[2])
-            for r in sqlite3.connect(db_path).execute("SELECT repo_name, fetch_ok, num_agent_files FROM repo_scan")
+            for r in sqlite3.connect(db_path).execute("SELECT repo_name, fetch_ok, num_root_files FROM repo_scan")
         }
         assert rows["org/a"] == (1, 2)
         assert rows["org/untouched"] == (1, 1)  # never touched by the retry
@@ -1251,42 +1198,11 @@ class TestRetryFailedRepos:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             counts = retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=False)
 
         assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
-
-    def test_a_stuck_repo_is_recorded_as_timeout_not_hung(self, tmp_path):
-        db_path = tmp_path / "rq5.db"
-        initialise_rq5_db(db_path)
-        persist_result(
-            _scan_result(_repo_row("org/stuck", "python", "t", fetch_ok=False, error_reason="rate_limited")),
-            db_path,
-        )
-        universe = [{"repo_name": "org/stuck", "language": "python", "clone_url": "url"}]
-        stop_event = threading.Event()
-
-        def _fake_process_repo(repo, **kwargs):
-            stop_event.wait(5)
-            return _scan_result(_repo_row(repo["repo_name"], repo["language"], "never", fetch_ok=True))
-
-        try:
-            with (
-                patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-                patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
-            ):
-                counts = retry_failed_repos(snapshot_date="2026-09-08", 
-                    db_path=db_path, workers=1, notify=False, process_repo_timeout_seconds=0.05
-                )
-        finally:
-            stop_event.set()
-
-        assert counts == {"attempted": 1, "recovered": 0, "still_failed": 1}
-        row = sqlite3.connect(db_path).execute(
-            "SELECT fetch_ok, error_reason FROM repo_scan WHERE repo_name='org/stuck'"
-        ).fetchone()
-        assert row == (0, "timeout")
 
     def test_notifies_with_a_recovery_summary(self, tmp_path):
         db_path = tmp_path / "rq5.db"
@@ -1303,7 +1219,7 @@ class TestRetryFailedRepos:
         notify_calls = []
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
             patch("collection.rq5_agent_file_scan._notify", side_effect=lambda msg: notify_calls.append(msg)),
         ):
             retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=True)
@@ -1311,7 +1227,7 @@ class TestRetryFailedRepos:
         assert len(notify_calls) == 1
         assert "1/1 repos recovered" in notify_calls[0]
 
-    def test_threads_rate_limiter_and_token_through_to_process_repo(self, tmp_path):
+    def test_threads_rate_limiter_and_token_through_to_the_batch_scan(self, tmp_path):
         db_path = tmp_path / "rq5.db"
         initialise_rq5_db(db_path)
         persist_result(
@@ -1327,7 +1243,7 @@ class TestRetryFailedRepos:
 
         with (
             patch("collection.rq5_agent_file_scan.load_corpus", return_value=universe),
-            patch("collection.rq5_agent_file_scan.process_repo", side_effect=_fake_process_repo),
+            patch("collection.rq5_agent_file_scan.process_repos_graphql", side_effect=_per_repo(_fake_process_repo)),
         ):
             retry_failed_repos(snapshot_date="2026-09-08", db_path=db_path, workers=1, notify=False, token="sometoken")
 

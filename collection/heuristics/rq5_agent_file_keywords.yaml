@@ -1,6 +1,6 @@
 # RQ5 (Agent Configuration Files) keyword catalog -- test-related and
-# fixture-related terms searched for inside root-level agent configuration
-# files (AGENTS.md, CLAUDE.md, ...). Not consumed by the main agent/fixture
+# fixture-related terms searched for inside the guidance files (AGENTS.md,
+# CLAUDE.md, GEMINI.md at any depth). Not consumed by the main agent/fixture
 # detection pipeline (collection/heuristics/__init__.py's loaders) -- this is
 # RQ5's own, independent catalog, loaded directly by
 # collection/rq5_agent_file_scan.py::load_rq5_keyword_catalog(). Kept here,
@@ -38,38 +38,15 @@
 #     "leaves DOM teardown to the caller"). A test's `tearDown()` mention is
 #     lost unless it also hits "setup and teardown".
 #
-# `ardic_test_keywords` below is only for the comparison statistic against
-# Ardic et al. (SCAM 2026); it is a subset of test_keywords, so every Ardic
-# term is also a test keyword.
+# The test keywords are the keyword set of Ardic et al. (SCAM 2026).
 
-# Matched against each repo's root-level tree entries only (no
-# subdirectories), case-insensitively -- see find_target_files_at_commit().
-target_files:
-  - AGENTS.md
-  - CLAUDE.md
+# The guidance file names live in rq5_agent_guidance_files.yaml.
 
-test_keywords:
+ardic_test_keywords:
   - test
   - tests
   - testing
   - tested
-  - unit test
-  - integration test
-  - functional test
-  - acceptance test
-  - end-to-end test
-  - e2e test
-  - test suite
-  - test case
-  - test file
-  - pytest
-  - unittest
-  - jest
-  - vitest
-  - mocha
-  - jasmine
-  - junit
-  - testng
 
 fixture_keywords:
   - fixture
@@ -81,12 +58,3 @@ fixture_keywords:
   - afterEach
   - beforeAll
   - afterAll
-
-# Terms for the Ardic et al. (SCAM 2026) comparison statistic only: the
-# repositories whose root agent files mention one of these words. Not used
-# for the main test statistic, which uses test_keywords above.
-ardic_test_keywords:
-  - test
-  - tests
-  - testing
-  - tested

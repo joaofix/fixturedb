@@ -5,15 +5,17 @@ fixture-guidance numbers.
 
 Denominators:
 
-- repositories with a root agent file (from `db/rq5_agent_files.db`) for the
+- repositories with a guidance file (from `db/rq5_agent_files.db`) for the
   share coded `yes`, overall and per primary language;
 - repositories with a fixture keyword match (the sheet's rows) for the
   precision of the keyword search.
 
 Refuses to run while any row is uncoded or holds a value outside the allowed
 ones (see `research-questions/rq5/README.md`). No coding is inferred here.
+With `--decisions-only`, a `yes` without a category is accepted (categories are
+coded after the decisions) and the categories section is marked pending.
 
-python -m collection.research_questions.rq5_coding
+python -m collection.research_questions.rq5_coding [--decisions-only]
 """
 
 from __future__ import annotations
@@ -26,15 +28,12 @@ from pathlib import Path
 from typing import Any
 
 from ..rq5_agent_file_scan import (
-    CATEGORY_LABELS,
-    CATEGORY_VALUES,
     CSV_OUTPUT_DIR,
     DB_PATH,
     DECISION_VALUES,
     REPOSITORY_SHEET_FIELDNAMES,
     REPOSITORY_SHEET_NAME,
     load_repo_guidance,
-    snippet_row_ids,
 )
 from ._shared import OUTPUT_DIR, pct, write_markdown_report
 from .rq5 import DISPLAY_LABELS, DISPLAY_LANGUAGES
@@ -46,11 +45,11 @@ class CodingIncompleteError(ValueError):
     """The coding sheet has uncoded or invalid rows."""
 
 
-def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
+def load_coded_sheet(path: Path = SHEET_PATH, *, decisions_only: bool = False) -> list[dict[str, Any]]:
     """The sheet's rows, validated. Raises `CodingIncompleteError` listing every
-    problem: an empty or unknown `decision`, a `yes` without a
-    category or an evidence row id, an evidence row id that is not one of the
-    repository's snippets, or an unknown category."""
+    problem: an empty or unknown `decision`, or a `yes` without a category
+    (unless `decisions_only`). Category values are free text: the category set
+    is defined during coding."""
     if not path.exists():
         raise CodingIncompleteError(f"{path} does not exist")
     with path.open("r", encoding="utf-8", newline="") as fh:
@@ -66,7 +65,6 @@ def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
     for row in rows:
         repo = row["repository"]
         decision = row["decision"].strip().lower()
-        evidence = row["evidence_row_id"].strip()
         categories = [c.strip() for c in row["category"].split(";") if c.strip()]
 
         if not decision:
@@ -74,16 +72,9 @@ def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
             continue
         if decision not in DECISION_VALUES:
             problems.append(f"{repo}: decision {decision!r} is not one of {DECISION_VALUES}")
-        unknown = [c for c in categories if c not in CATEGORY_VALUES]
-        if unknown:
-            problems.append(f"{repo}: unknown category {', '.join(unknown)}")
-        if decision == "yes":
+        if decision == "yes" and not decisions_only:
             if not categories:
                 problems.append(f"{repo}: coded yes without a category")
-            if not evidence:
-                problems.append(f"{repo}: coded yes without an evidence_row_id")
-            elif not evidence.isdigit() or int(evidence) not in snippet_row_ids(row["fixture_snippets"]):
-                problems.append(f"{repo}: evidence_row_id {evidence!r} is not one of this repository's snippets")
         coded.append({"repository": repo, "language": row["primary_language"], "decision": decision, "categories": categories})
 
     if uncoded or problems:
@@ -96,29 +87,31 @@ def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
     return coded
 
 
-def agent_file_counts(db_path: Path = DB_PATH) -> Counter:
-    """Repositories with at least one root agent file, per language, plus the
+def guidance_file_counts(db_path: Path = DB_PATH) -> Counter:
+    """Repositories with at least one guidance file, per language, plus the
     total under the key `"all"`."""
     counts: Counter = Counter()
-    for record in load_repo_guidance(frozenset(), db_path):
-        if record["agent_files"]:
+    for record in load_repo_guidance(db_path):
+        if record["guidance_files"]:
             counts[record["language"]] += 1
             counts["all"] += 1
     return counts
 
 
-def compute_results(coded: list[dict[str, Any]], with_agent_file: Counter) -> dict[str, Any]:
+def compute_results(coded: list[dict[str, Any]], with_guidance_file: Counter) -> dict[str, Any]:
     decisions = Counter(r["decision"] for r in coded)
     yes_by_language = Counter(r["language"] for r in coded if r["decision"] == "yes")
     categories = Counter(c for r in coded if r["decision"] == "yes" for c in r["categories"])
+    uncategorised = sum(1 for r in coded if r["decision"] == "yes" and not r["categories"])
     return {
-        "with_agent_file": with_agent_file,
+        "with_guidance_file": with_guidance_file,
         "with_fixture_match": len(coded),
         "yes": decisions["yes"],
         "no": decisions["no"],
         "unsure": decisions["unsure"],
         "yes_by_language": yes_by_language,
         "categories": categories,
+        "uncategorised": uncategorised,
     }
 
 
@@ -128,29 +121,29 @@ def _ratio(numerator: int, denominator: int) -> float | None:
 
 def generate_report(results: dict[str, Any]) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-    total = results["with_agent_file"]["all"]
+    total = results["with_guidance_file"]["all"]
     matched = results["with_fixture_match"]
     lines = [
         "# RQ5 -- Manual coding of fixture guidance",
         "",
         f"Generated: {generated_at}",
         "",
-        f"Source: `research-questions/rq5/{REPOSITORY_SHEET_NAME}`, one row per repository with a fixture keyword match.",
+        f"Source: `research-questions/rq5/{REPOSITORY_SHEET_NAME}`, one row per repository with a fixture keyword match in its guidance files.",
         "",
         "## Code fixture guidance",
         "",
         "| Statistic | Count | Percentage | Denominator |",
         "|---|---|---|---|",
         f"| Coded `yes` | {results['yes']:,} | {pct(_ratio(results['yes'], total))} | "
-        f"{total:,} repositories with a root agent file |",
+        f"{total:,} repositories with a guidance file |",
         "",
         "## By primary language",
         "",
-        "| Language | With root agent file | Coded `yes` | Percentage |",
+        "| Language | With guidance file | Coded `yes` | Percentage |",
         "|---|---|---|---|",
     ]
     for language in DISPLAY_LANGUAGES:
-        denominator = results["with_agent_file"][language]
+        denominator = results["with_guidance_file"][language]
         yes = results["yes_by_language"][language]
         lines.append(f"| {DISPLAY_LABELS[language]} | {denominator:,} | {yes:,} | {pct(_ratio(yes, denominator))} |")
     lines += [
@@ -170,30 +163,48 @@ def generate_report(results: dict[str, Any]) -> str:
         "",
         "## Categories",
         "",
-        "Repositories coded `yes` per category. A repository can have more than one category.",
-        "",
-        "| Category | Label | Repositories |",
-        "|---|---|---|",
     ]
-    for category, label in CATEGORY_LABELS.items():
-        lines.append(f"| {category} | {label} | {results['categories'][category]:,} |")
+    if results["uncategorised"]:
+        lines.append(
+            f"Pending: {results['uncategorised']:,} of {results['yes']:,} repositories coded `yes` "
+            "have no category yet. Categories are coded after the decisions."
+        )
+    else:
+        lines += [
+            "Repositories coded `yes` per category. A repository can have more than one category.",
+            "",
+            "| Category | Repositories |",
+            "|---|---|",
+        ]
+        for category, count in sorted(results["categories"].items(), key=lambda kv: (-kv[1], kv[0])):
+            lines.append(f"| {category} | {count:,} |")
     lines.append("")
     return "\n".join(lines)
 
 
 def write_report(
-    output_dir: Path = OUTPUT_DIR, *, sheet_path: Path = SHEET_PATH, db_path: Path = DB_PATH
+    output_dir: Path = OUTPUT_DIR,
+    *,
+    sheet_path: Path = SHEET_PATH,
+    db_path: Path = DB_PATH,
+    decisions_only: bool = False,
 ) -> Path:
-    results = compute_results(load_coded_sheet(sheet_path), agent_file_counts(db_path))
+    coded = load_coded_sheet(sheet_path, decisions_only=decisions_only)
+    results = compute_results(coded, guidance_file_counts(db_path))
     return write_markdown_report(output_dir, "rq5_coding.md", generate_report(results))
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RQ5 results from the completed repository-level coding sheet.")
     parser.add_argument("--sheet", type=Path, default=SHEET_PATH, help=f"Coding sheet (default: {SHEET_PATH})")
+    parser.add_argument(
+        "--decisions-only",
+        action="store_true",
+        help="Accept `yes` rows without a category and mark the categories section pending.",
+    )
     args = parser.parse_args()
     try:
-        path = write_report(sheet_path=args.sheet)
+        path = write_report(sheet_path=args.sheet, decisions_only=args.decisions_only)
     except CodingIncompleteError as exc:
         raise SystemExit(str(exc)) from None
     print(f"RQ5 coding report written to {path}")

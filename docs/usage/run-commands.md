@@ -259,7 +259,8 @@ and push one ntfy.sh notification per language chunk plus one final push.
 - RQ1 scans the full raw `github-search-raw/*.csv.gz` universe, into
   `db/rq1_prevalence.db`, at a fixed snapshot date.
 - RQ5 scans only the repositories that have at least one fixture in Dataset A
-  (`datasets/a/fixtures/*_fixtures.csv`), into `db/rq5_agent_files.db`. It
+  (`datasets/a/fixtures/*_fixtures.csv`), into `db/rq5_agent_files.db`: every
+  `AGENTS.md`, `CLAUDE.md` or `GEMINI.md` in their tree, at any depth. It
   needs `--snapshot-date`, which has no default: the date of the new Dataset A
   collection is not fixed yet.
 
@@ -269,18 +270,23 @@ many-core server; see that module's own docstring for operational history).
 see `rq1_prevalence_scan.github_auth_env()`'s docstring for why an unauthenticated
 run risks GitHub rate-limiting.
 
-RQ5 never clones anything -- it reads entirely through GitHub's GraphQL API,
-in batches of 25 repositories (two GraphQL requests per batch; `--workers`
-defaults to 20 batches in flight). `GITHUB_TOKEN` is effectively **required**
-here, not just recommended: the unauthenticated REST rate limit is 60
-requests/hour, and the GraphQL endpoint refuses unauthenticated requests. The
-authenticated GraphQL budget is 5,000 points/hour, and a batch costs about 2 to
-3 points. Run it after the Dataset A fixture CSVs exist. It writes `research-questions/rq5/` (the review
-CSVs, including the repository-level coding sheet, `rq5_snippets.md` for reading
-the snippets, and a README with the coding values) and `research-questions/rq5.md`. After the manual coding of
-`research-questions/rq5/rq5_repository_coding_sheet.csv` is complete, run `rq5_coding` (it exits
-with the list of uncoded rows until then). A rescan refuses to overwrite a
-repository sheet that already holds coding.
+RQ5 never clones anything -- it reads through GitHub's API, in batches of 25
+repositories (`--workers` defaults to 20 batches in flight): GraphQL for the
+snapshot commits and the file texts, and one REST request per repository for its
+recursive file list. `GITHUB_TOKEN` is effectively **required** here, not just
+recommended: the unauthenticated REST rate limit is 60 requests/hour, and the
+GraphQL endpoint refuses unauthenticated requests. The scan paces its requests
+to 4,000/hour (`--max-requests-per-hour`), so the ~2,200 repositories of the
+current corpus take about 40 minutes. Run it after the Dataset A fixture CSVs
+exist, into a new database (it refuses a database written by the earlier,
+reference-following version). It writes `research-questions/rq5/` (the review
+CSVs, including the repository-level coding sheet, `rq5_snippets.md` for
+reading the snippets, and a README with the coding values) and
+`research-questions/rq5.md`. After the manual coding of
+`research-questions/rq5/rq5_repository_coding_sheet.csv` is complete, run
+`rq5_coding` (it exits with the list of uncoded rows until then). A rescan over
+a coded sheet backs the sheet up into `db/` and carries the coding over (see
+`docs/research-questions.md`).
 
 ```bash
 python -m collection.rq1_prevalence_scan --workers 12
@@ -291,6 +297,7 @@ python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD --workers 20
   && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq5   # writes research-questions/rq5.md
 python -m collection.research_questions.rq5_coding   # after manual coding; writes research-questions/rq5_coding.md
+python -m collection.research_questions.rq5_coding --decisions-only   # decisions coded, categories pending
 ```
 
 ### After collection

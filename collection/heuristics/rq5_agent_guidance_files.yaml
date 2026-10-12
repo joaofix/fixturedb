@@ -1,0 +1,35 @@
+# RQ5 agent guidance file catalog: the file names the RQ5 scan reads.
+#
+# A guidance file is a file whose name is in guidance_files, at any depth of
+# the repository's tree at the snapshot commit (the root or any subdirectory,
+# e.g. packages/api/AGENTS.md). Matching is case-insensitive on the file name.
+# References between files are not followed: a file is read only because of
+# its name and location in the tree.
+#
+# A file under a directory named in excluded_dirs (at any depth) is not read:
+# dependency, build and cache trees can ship another project's guidance file.
+#
+# History: RQ5 first followed Ardic et al., "Uncovering AGENTS.md: What Testing
+# Guidance ..." (SCAM 2026): 18 root file names plus the Markdown files they
+# reference, one hop away. It now reads the three names below at any depth.
+guidance_files:
+  - AGENTS.md
+  - CLAUDE.md
+  - GEMINI.md
+
+# The same list as the Dataset A agent-config detector
+# (collection/agent_patterns.py, _EXCLUDED_DIR_NAMES). A directory name
+# matches exactly (case-sensitive), as in the detector.
+excluded_dirs:
+  - .git
+  - node_modules
+  - vendor
+  - venv
+  - .venv
+  - build
+  - dist
+  - target
+  - .tox
+  - __pycache__
+  - .mypy_cache
+  - .pytest_cache

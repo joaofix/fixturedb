@@ -3,14 +3,15 @@ README, the fenced-code-block counts in the report, and the post-coding
 analysis (`collection/research_questions/rq5_coding.py`)."""
 
 import csv
+import re
 
 import pytest
 
 from collection.research_questions.rq5 import code_block_counts, generate_report
 from collection.research_questions.rq5_coding import (
     CodingIncompleteError,
-    agent_file_counts,
     compute_results,
+    guidance_file_counts,
     load_coded_sheet,
 )
 from collection.research_questions.rq5_coding import (
@@ -23,30 +24,33 @@ from collection.research_questions.rq5_coding import (
     write_report as write_coding_report,
 )
 from collection.rq5_agent_file_scan import (
-    CATEGORY_LABELS,
-    CATEGORY_VALUES,
     REPOSITORY_SHEET_FIELDNAMES,
     REPOSITORY_SHEET_NAME,
     SNIPPETS_MARKDOWN_NAME,
     _repo_row,
     _scan_result,
+    carry_over_coding,
+    fixture_match_keys,
     initialise_rq5_db,
     load_fixture_match_rows,
     persist_result,
     record_scan_meta,
-    snippet_row_ids,
+    write_repository_coding_sheet,
     write_review_outputs,
     write_rq5_readme,
     write_snippets_markdown,
 )
 
-ARDIC_TERMS = {"test", "tests", "testing", "tested"}
+
+def _location(path):
+    return "root" if "/" not in path else "nested"
 
 
-def _match(repo, file_name, keyword, line, *, keyword_list="fixture", in_code_block=False):
+def _match(repo, file_path, keyword, line, *, keyword_list="fixture", in_code_block=False):
     return {
         "repo_name": repo,
-        "file_name": file_name,
+        "file_path": file_path,
+        "location": _location(file_path),
         "keyword_list": keyword_list,
         "keyword": keyword,
         "line_number": line,
@@ -59,27 +63,37 @@ def _match(repo, file_name, keyword, line, *, keyword_list="fixture", in_code_bl
     }
 
 
-def _persist(db_path, repo, language, matches=(), *, has_file=True):
-    fixture_terms = sorted({m["keyword"] for m in matches if m["keyword_list"] == "fixture"})
-    files = []
-    if has_file:
-        files.append(
-            {
-                "repo_name": repo,
-                "file_name": "AGENTS.md",
-                "file_type": "AGENTS.md",
-                "language": language,
-                "commit_sha": f"sha-{repo}",
-                "has_test": False,
-                "has_fixture": bool(fixture_terms),
-                "test_match_count": 0,
-                "fixture_match_count": len(fixture_terms),
-                "matched_test_keywords": "",
-                "matched_fixture_keywords": ",".join(fixture_terms),
-                "github_url": f"https://github.com/{repo}/blob/sha/AGENTS.md",
-            }
-        )
-    row = _repo_row(repo, language, "t", fetch_ok=True, commit_sha=f"sha-{repo}", num_agent_files=len(files))
+def _agent_file(repo, path, language, matches):
+    fixture_terms = sorted(
+        {m["keyword"] for m in matches if m["keyword_list"] == "fixture" and m["file_path"] == path}
+    )
+    return {
+        "repo_name": repo,
+        "file_path": path,
+        "file_name": path.rsplit("/", 1)[-1],
+        "file_type": path.rsplit("/", 1)[-1],
+        "location": _location(path),
+        "symlink_target": "",
+        "language": language,
+        "commit_sha": f"sha-{repo}",
+        "has_test": False,
+        "has_fixture": bool(fixture_terms),
+        "test_match_count": 0,
+        "fixture_match_count": len(fixture_terms),
+        "matched_test_keywords": "",
+        "matched_fixture_keywords": ",".join(fixture_terms),
+        "github_url": f"https://github.com/{repo}/blob/sha/{path}",
+    }
+
+
+def _persist(db_path, repo, language, matches=(), *, has_file=True, nested=()):
+    """A root AGENTS.md (when `has_file`) plus the `nested` file paths."""
+    files = [_agent_file(repo, "AGENTS.md", language, matches)] if has_file else []
+    files += [_agent_file(repo, path, language, matches) for path in nested]
+    row = _repo_row(
+        repo, language, "t", fetch_ok=True, commit_sha=f"sha-{repo}",
+        num_guidance_files=len(files), num_root_files=int(has_file),
+    )
     persist_result(_scan_result(row, files, list(matches)), db_path)
 
 
@@ -88,8 +102,8 @@ def coded_db(tmp_path):
     """owner/a (python): fixtures at line 2, conftest at line 9 (in a code
     block), fixture at line 5 -- three matches in one file.
     owner/b (typescript): beforeEach.
-    owner/c (python): agent file, no fixture match.
-    owner/d (java): no agent file."""
+    owner/c (python): guidance file, no fixture match.
+    owner/d (java): no guidance file."""
     db_path = tmp_path / "rq5.db"
     initialise_rq5_db(db_path)
     record_scan_meta("2026-03-01", db_path)
@@ -125,69 +139,64 @@ def _write_sheet(path, rows):
 class TestRepositoryCodingSheet:
     def test_one_row_per_repository_with_a_fixture_match_and_empty_coding(self, coded_db, tmp_path):
         out = tmp_path / "out"
-        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+        write_review_outputs(db_path=coded_db, output_dir=out)
         rows = _read(out / REPOSITORY_SHEET_NAME)
 
         assert list(rows[0].keys()) == list(REPOSITORY_SHEET_FIELDNAMES)
-        assert list(rows[0].keys())[-1] == "fixture_snippets"
+        assert "fixture_snippets" not in rows[0]  # read in rq5_snippets.md instead
         assert [(r["repository"], r["primary_language"], r["fixture_match_count"]) for r in rows] == [
             ("owner/a", "python", "3"),
             ("owner/b", "typescript", "1"),
         ]
         for row in rows:
-            for column in ("decision", "evidence_row_id", "category", "notes"):
+            for column in ("decision", "category", "notes"):
                 assert row[column] == ""
+        assert "evidence_row_id" not in rows[0]
 
-    def test_snippets_follow_the_term_reading_order(self, coded_db, tmp_path):
+    def test_every_cell_fits_a_spreadsheet_cell(self, coded_db, tmp_path):
         out = tmp_path / "out"
-        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
-        snippets = _read(out / REPOSITORY_SHEET_NAME)[0]["fixture_snippets"].split("\n")
+        write_review_outputs(db_path=coded_db, output_dir=out)
+        assert all(len(v) <= 32767 and "\n" not in v for row in _read(out / REPOSITORY_SHEET_NAME) for v in row.values())
 
-        assert [s.split(" | ")[0].split("] ")[1] for s in snippets] == ["conftest", "fixture", "fixtures"]
-
-    def test_snippet_ids_are_the_match_sheet_row_positions(self, coded_db, tmp_path):
+    def test_snippet_ids_in_the_markdown_are_the_match_sheet_row_positions(self, coded_db, tmp_path):
         out = tmp_path / "out"
-        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+        write_review_outputs(db_path=coded_db, output_dir=out)
         match_sheet = _read(out / "rq5_fixture_matches.csv")
+        markdown = (out / SNIPPETS_MARKDOWN_NAME).read_text()
 
-        for row in _read(out / REPOSITORY_SHEET_NAME):
-            for snippet in row["fixture_snippets"].split("\n"):
-                row_id = int(snippet[1 : snippet.index("]")])
-                term, location, line = snippet.split("] ", 1)[1].split(" | ")
-                match = match_sheet[row_id - 1]
-                assert match["repository"] == row["repository"]
-                assert match["matched_term"] == term
-                assert f"{match['file_name']}:{match['line_number']}" == location
-                assert match["matched_line"] == line
+        headers = re.findall(r"^\*\*\[([\d, ]+)\]\*\* (.+?) · (root|nested) · \[(.+?):(\d+)\]", markdown, re.M)
+        assert headers
+        for ids, terms, location, path, line in headers:
+            for row_id in ids.split(", "):
+                match = match_sheet[int(row_id) - 1]
+                assert match["matched_term"] in terms.split(", ")
+                assert (match["location"], match["file_path"], match["line_number"]) == (location, path, line)
 
-    def test_refuses_to_overwrite_a_sheet_with_manual_coding(self, coded_db, tmp_path):
+    def test_the_sheet_writer_refuses_to_overwrite_manual_coding(self, coded_db, tmp_path):
         out = tmp_path / "out"
-        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+        write_review_outputs(db_path=coded_db, output_dir=out)
         sheet = out / REPOSITORY_SHEET_NAME
         rows = _read(sheet)
         rows[0]["notes"] = "started coding"
         _write_sheet(sheet, rows)
 
         with pytest.raises(ValueError, match="already holds manual coding"):
-            write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+            write_repository_coding_sheet(load_fixture_match_rows(coded_db), coded_db, out)
         assert _read(sheet)[0]["notes"] == "started coding"
-
-    def test_snippet_row_ids_parses_every_prefix(self):
-        assert snippet_row_ids("[3] fixture | A.md:1 | x\n[12] conftest | A.md:2 | [7] y") == {3, 12}
 
 
 class TestSnippetsMarkdown:
     def test_sections_follow_the_sheet_rows_and_leave_the_csv_alone(self, coded_db, tmp_path):
         out = tmp_path / "out"
-        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+        write_review_outputs(db_path=coded_db, output_dir=out)
         sheet_before = (out / REPOSITORY_SHEET_NAME).read_bytes()
         markdown = (out / SNIPPETS_MARKDOWN_NAME).read_text()
 
         sections = [line for line in markdown.splitlines() if line.startswith("## ")]
         repos = [row["repository"] for row in _read(out / REPOSITORY_SHEET_NAME)]
         assert sections == [f"## {n}. {repo}" for n, repo in enumerate(repos, start=1)]
-        assert "python · 3 fixture matches" in markdown
-        assert "typescript · 1 fixture match\n" in markdown
+        assert "python · 3 fixture matches · root" in markdown
+        assert "typescript · 1 fixture match · root\n" in markdown
 
         write_snippets_markdown(load_fixture_match_rows(coded_db), coded_db, out)
         assert (out / REPOSITORY_SHEET_NAME).read_bytes() == sheet_before
@@ -196,7 +205,7 @@ class TestSnippetsMarkdown:
         path = write_snippets_markdown(load_fixture_match_rows(coded_db), coded_db, tmp_path)
         markdown = path.read_text()
         # Row ids match the match sheet: owner/a's conftest is the third match row.
-        assert "**[3]** conftest · [AGENTS.md:9](https://github.com/owner/a/blob/sha/AGENTS.md#L9)" in markdown
+        assert "**[3]** conftest · root · [AGENTS.md:9](https://github.com/owner/a/blob/sha/AGENTS.md#L9)" in markdown
         assert "AGENTS.md#L9) · in a fenced code block" in markdown
         assert "> line 9 mentions conftest" in markdown
         # Reading order: conftest before fixture before fixtures.
@@ -215,9 +224,9 @@ class TestSnippetsMarkdown:
 
         markdown = write_snippets_markdown(load_fixture_match_rows(db_path), db_path, tmp_path).read_text()
 
-        assert "**[1, 2]** fixture, fixtures · " in markdown
+        assert "**[1, 2]** fixture, fixtures · root · " in markdown
         assert markdown.count("> line 4 mentions") == 1
-        assert "python · 2 fixture matches" in markdown
+        assert "python · 2 fixture matches · root" in markdown
 
     def test_fence_is_longer_than_backticks_inside_the_context(self, tmp_path):
         db_path = tmp_path / "rq5.db"
@@ -236,26 +245,32 @@ class TestReadme:
     def test_states_the_decision_rule(self, tmp_path):
         readme = write_rq5_readme(tmp_path).read_text()
 
-        assert "One verdict per\n  repository, over all of its root agent files." in readme
+        assert "One verdict per\n  repository, over all of its guidance files." in readme
         assert "Description counts as guidance" in readme
         assert "One such match is enough" in readme
-        assert "product/domain term" in readme
+        assert "product or domain term" in readme
+        assert "fixtures used by tests" in readme
+        assert "inferred from the terms near the match" in readme
+        assert "Decide from the matched lines and the lines around them only" in readme
 
-    def test_lists_every_category_with_its_label(self, tmp_path):
+    def test_category_set_is_the_studys_own(self, tmp_path):
         readme = write_rq5_readme(tmp_path).read_text()
 
-        for value, label in CATEGORY_LABELS.items():
-            assert f"- `{value}`: {label}" in readme
-        assert "- `examples`: Test-related examples" in readme
-        assert "`example`:" not in readme
+        assert "The category set is this study's own" in readme
+        assert "Ardic" not in readme
+        assert "Allowed `category` values" not in readme
 
     def test_documents_every_allowed_coding_value(self, coded_db, tmp_path):
         out = tmp_path / "out"
-        write_review_outputs(ARDIC_TERMS, db_path=coded_db, output_dir=out)
+        write_review_outputs(db_path=coded_db, output_dir=out)
         readme = (out / "README.md").read_text()
 
-        for value in (*CATEGORY_VALUES, "yes", "no", "unsure", "evidence_row_id", REPOSITORY_SHEET_NAME, SNIPPETS_MARKDOWN_NAME):
+        for value in (
+            "yes", "no", "unsure", REPOSITORY_SHEET_NAME, SNIPPETS_MARKDOWN_NAME,
+            "fixture_location", "AGENTS.md, CLAUDE.md, GEMINI.md", "carry_over_coding",
+        ):
             assert value in readme
+        assert "referred" not in readme
 
 
 class TestCodeBlockCounts:
@@ -280,18 +295,13 @@ class TestCodeBlockCounts:
 def _coded_rows(db_path, tmp_path, codes):
     """The real sheet for `db_path`, with `codes` (repository -> column values) filled in."""
     out = tmp_path / "out"
-    write_review_outputs(ARDIC_TERMS, db_path=db_path, output_dir=out)
+    write_review_outputs(db_path=db_path, output_dir=out)
     sheet = out / REPOSITORY_SHEET_NAME
     rows = _read(sheet)
     for row in rows:
         row.update(codes.get(row["repository"], {}))
     _write_sheet(sheet, rows)
     return sheet
-
-
-def _first_id(sheet, repo):
-    row = next(r for r in _read(sheet) if r["repository"] == repo)
-    return str(min(snippet_row_ids(row["fixture_snippets"])))
 
 
 class TestLoadCodedSheet:
@@ -305,29 +315,49 @@ class TestLoadCodedSheet:
         sheet = _coded_rows(
             coded_db,
             tmp_path,
-            {"owner/a": {"decision": "maybe"}, "owner/b": {"decision": "unsure", "category": "misc"}},
+            {"owner/a": {"decision": "maybe"}, "owner/b": {"decision": "unsure"}},
         )
 
-        with pytest.raises(CodingIncompleteError) as exc:
+        with pytest.raises(CodingIncompleteError, match="'maybe'"):
             load_coded_sheet(sheet)
-        assert "'maybe'" in str(exc.value)
-        assert "unknown category misc" in str(exc.value)
 
-    def test_yes_needs_a_category_and_an_evidence_id_from_its_own_snippets(self, coded_db, tmp_path):
+    def test_any_category_value_is_accepted(self, coded_db, tmp_path):
+        sheet = _coded_rows(
+            coded_db,
+            tmp_path,
+            {"owner/a": {"decision": "yes", "category": "our_own; another"}, "owner/b": {"decision": "no"}},
+        )
+
+        coded = load_coded_sheet(sheet)
+
+        assert coded[0]["categories"] == ["our_own", "another"]
+
+    def test_yes_needs_a_category(self, coded_db, tmp_path):
         sheet = _coded_rows(
             coded_db,
             tmp_path,
             {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
         )
-        foreign_id = _first_id(sheet, "owner/b")
-        rows = _read(sheet)
-        rows[0]["evidence_row_id"] = foreign_id
-        _write_sheet(sheet, rows)
 
-        with pytest.raises(CodingIncompleteError) as exc:
+        with pytest.raises(CodingIncompleteError, match="owner/a: coded yes without a category"):
             load_coded_sheet(sheet)
-        assert "owner/a: coded yes without a category" in str(exc.value)
-        assert f"evidence_row_id '{foreign_id}' is not one of this repository's snippets" in str(exc.value)
+
+    def test_decisions_only_accepts_yes_without_a_category(self, coded_db, tmp_path):
+        sheet = _coded_rows(
+            coded_db,
+            tmp_path,
+            {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
+        )
+
+        coded = load_coded_sheet(sheet, decisions_only=True)
+
+        assert [r["decision"] for r in coded] == ["yes", "no"]
+
+    def test_decisions_only_still_fails_when_a_row_is_uncoded(self, coded_db, tmp_path):
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"decision": "no"}})
+
+        with pytest.raises(CodingIncompleteError, match="still uncoded"):
+            load_coded_sheet(sheet, decisions_only=True)
 
     def test_main_exits_with_the_message_when_uncoded(self, coded_db, tmp_path, monkeypatch):
         sheet = _coded_rows(coded_db, tmp_path, {})
@@ -343,25 +373,301 @@ class TestComputeResults:
         rows = _read(sheet)
         rows[0].update(
             decision="yes",
-            evidence_row_id=_first_id(sheet, "owner/a"),
             category="strategy; location_placement",
         )
         _write_sheet(sheet, rows)
 
-        results = compute_results(load_coded_sheet(sheet), agent_file_counts(coded_db))
+        results = compute_results(load_coded_sheet(sheet), guidance_file_counts(coded_db))
 
-        assert results["with_agent_file"]["all"] == 3
-        assert results["with_agent_file"]["python"] == 2
+        assert results["with_guidance_file"]["all"] == 3
+        assert results["with_guidance_file"]["python"] == 2
         assert (results["yes"], results["no"], results["unsure"]) == (1, 0, 1)
         assert results["with_fixture_match"] == 2
         assert results["categories"] == {"strategy": 1, "location_placement": 1}
 
         report = generate_coding_report(results)
-        assert "| Coded `yes` | 1 | 33.3% | 3 repositories with a root agent file |" in report
+        assert "| Coded `yes` | 1 | 33.3% | 3 repositories with a guidance file |" in report
         assert "| Python | 2 | 1 | 50.0% |" in report
         assert "| TypeScript | 1 | 0 | 0.0% |" in report
         assert "Precision: 1 of 2 (50.0%); 1 coded `unsure`." in report
-        assert "| strategy | Test strategy | 1 |" in report
+        assert "| Category | Repositories |" in report
+        assert "| location_placement | 1 |" in report
+        assert "| strategy | 1 |" in report
 
         path = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
         assert path.name == "rq5_coding.md"
+
+    def test_decisions_only_report_marks_categories_pending(self, coded_db, tmp_path):
+        sheet = _coded_rows(
+            coded_db,
+            tmp_path,
+            {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
+        )
+
+        results = compute_results(load_coded_sheet(sheet, decisions_only=True), guidance_file_counts(coded_db))
+        report = generate_coding_report(results)
+
+        assert results["uncategorised"] == 1
+        assert "Precision: 1 of 2 (50.0%); 0 coded `unsure`." in report
+        assert "Pending: 1 of 1 repositories coded `yes` have no category yet." in report
+        assert "| Category | Repositories |" not in report
+
+        with pytest.raises(CodingIncompleteError, match="coded yes without a category"):
+            write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
+        path = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db, decisions_only=True)
+        assert "Pending: 1 of 1" in path.read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def nested_db(tmp_path):
+    """owner/a: fixture matches in its root AGENTS.md and in a nested
+    docs/AGENTS.md. owner/g: a fixture match only in a nested web/CLAUDE.md."""
+    db_path = tmp_path / "nested.db"
+    initialise_rq5_db(db_path)
+    record_scan_meta("2026-03-01", db_path)
+    _persist(
+        db_path,
+        "owner/a",
+        "python",
+        [
+            _match("owner/a", "AGENTS.md", "fixture", 5),
+            _match("owner/a", "docs/AGENTS.md", "conftest", 2),
+            _match("owner/a", "docs/AGENTS.md", "fixture", 8),
+        ],
+        nested=["docs/AGENTS.md"],
+    )
+    _persist(
+        db_path,
+        "owner/g",
+        "typescript",
+        [_match("owner/g", "web/CLAUDE.md", "beforeEach", 3)],
+        has_file=False,
+        nested=["web/CLAUDE.md"],
+    )
+    return db_path
+
+
+class TestSheetWithNestedFiles:
+    def test_fixture_location_says_where_the_matches_are(self, nested_db, tmp_path):
+        out = tmp_path / "out"
+        write_review_outputs(db_path=nested_db, output_dir=out)
+        rows = {r["repository"]: r for r in _read(out / REPOSITORY_SHEET_NAME)}
+        assert rows["owner/a"]["fixture_location"] == "root+nested"
+        assert rows["owner/g"]["fixture_location"] == "nested"
+        assert rows["owner/a"]["fixture_match_count"] == "3"
+
+    def test_markdown_orders_by_term_then_root_before_nested(self, nested_db, tmp_path):
+        markdown = write_snippets_markdown(load_fixture_match_rows(nested_db), nested_db, tmp_path).read_text()
+        section = markdown.split("## 1. owner/a")[1].split("## 2.")[0]
+        located = re.findall(r"^\*\*\[[\d, ]+\]\*\* (.+?) · (root|nested) · \[(.+?)\]", section, re.M)
+        assert located == [
+            ("conftest", "nested", "docs/AGENTS.md:2"),
+            ("fixture", "root", "AGENTS.md:5"),
+            ("fixture", "nested", "docs/AGENTS.md:8"),
+        ]
+
+    def test_match_sheet_lists_root_matches_before_nested_ones(self, nested_db, tmp_path):
+        out = tmp_path / "out"
+        write_review_outputs(db_path=nested_db, output_dir=out)
+        rows = _read(out / "rq5_fixture_matches.csv")
+        assert [(r["repository"], r["location"], r["file_path"]) for r in rows] == [
+            ("owner/a", "root", "AGENTS.md"),
+            ("owner/a", "nested", "docs/AGENTS.md"),
+            ("owner/a", "nested", "docs/AGENTS.md"),
+            ("owner/g", "nested", "web/CLAUDE.md"),
+        ]
+
+    def test_snippets_markdown_shows_location_and_link_to_the_nested_file(self, nested_db, tmp_path):
+        markdown = write_snippets_markdown(load_fixture_match_rows(nested_db), nested_db, tmp_path).read_text()
+        assert "python · 3 fixture matches · root+nested" in markdown
+        assert "conftest · nested · [docs/AGENTS.md:2](https://github.com/owner/a/blob/sha/docs/AGENTS.md#L2)" in markdown
+
+
+def _sheet(path, rows):
+    """A coding sheet with the given rows (missing columns left empty)."""
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=REPOSITORY_SHEET_FIELDNAMES)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field, "") for field in REPOSITORY_SHEET_FIELDNAMES})
+    return path
+
+
+def _matches(path, rows, *, legacy=False):
+    """A rq5_fixture_matches.csv with (repository, term, path, line, text) rows;
+    `legacy` writes the oldest format (`file_name`, no location)."""
+    fields = (
+        ["repository", "file_name", "line_number", "matched_term", "matched_line"]
+        if legacy
+        else ["repository", "file_path", "location", "line_number", "matched_term", "matched_line"]
+    )
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        for repo, term, file_path, line, text in rows:
+            writer.writerow({
+                "repository": repo, "file_path": file_path, "file_name": file_path, "location": "root",
+                "line_number": line, "matched_term": term, "matched_line": text,
+            })
+    return path
+
+
+class TestFixtureMatchKeys:
+    def test_keys_ignore_row_order_and_location(self, tmp_path):
+        new = _matches(tmp_path / "new.csv", [("o/r", "fixture", "AGENTS.md", 3, "a | b"), ("o/r", "conftest", "docs/T.md", 1, "x")])
+        old = _matches(tmp_path / "old.csv", [("o/r", "conftest", "docs/T.md", 1, "x"), ("o/r", "fixture", "AGENTS.md", 3, "a | b")], legacy=True)
+        assert fixture_match_keys(new) == fixture_match_keys(old)
+        assert fixture_match_keys(new)["o/r"] == {("fixture", "AGENTS.md", "3", "a | b"), ("conftest", "docs/T.md", "1", "x")}
+
+    def test_keys_ignore_the_source_column_of_the_previous_format(self, tmp_path):
+        path = tmp_path / "old.csv"
+        path.write_text(
+            "repository,file_path,source,line_number,matched_term,matched_line\n"
+            "o/r,CONTRIBUTING.md,referred,4,fixture,x\n"
+        )
+        assert fixture_match_keys(path) == {"o/r": {("fixture", "CONTRIBUTING.md", "4", "x")}}
+
+
+class TestCarryOverCoding:
+    def _new(self, nested_db, tmp_path):
+        """The real sheet and match file written for `nested_db`."""
+        out = tmp_path / "out"
+        write_review_outputs(db_path=nested_db, output_dir=out)
+        return out / REPOSITORY_SHEET_NAME, out / "rq5_fixture_matches.csv"
+
+    def _carry(self, tmp_path, old_rows, old_matches, new_sheet, new_matches):
+        old_sheet = _sheet(tmp_path / "old_sheet.csv", old_rows)
+        old_csv = _matches(tmp_path / "old_matches.csv", old_matches)
+        return carry_over_coding(old_sheet, new_sheet, old_matches=old_csv, new_matches=new_matches)
+
+    G_MATCH = ("owner/g", "beforeEach", "web/CLAUDE.md", 3, "line 3 mentions beforeEach")
+
+    def test_unchanged_matches_keep_decision_category_and_notes(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        outcome = self._carry(
+            tmp_path, [{"repository": "owner/g", "decision": "no", "notes": "data only"}], [self.G_MATCH], new_sheet, new_matches
+        )
+        row = {r["repository"]: r for r in _read(new_sheet)}["owner/g"]
+        assert (row["decision"], row["category"], row["notes"]) == ("no", "", "data only")
+        assert outcome["unchanged"] == ["owner/g"]
+
+    @pytest.mark.parametrize("decision,category", [("yes", "strategy;mocking"), ("no", ""), ("unsure", "")])
+    def test_changed_matches_keep_every_decision_as_it_was(self, nested_db, tmp_path, decision, category):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        outcome = self._carry(
+            tmp_path,
+            [{"repository": "owner/a", "decision": decision, "category": category, "notes": "n"}],
+            [("owner/a", "fixture", "CONTRIBUTING.md", 5, "line 5 mentions fixture")],
+            new_sheet, new_matches,
+        )
+        row = {r["repository"]: r for r in _read(new_sheet)}["owner/a"]
+        assert (row["decision"], row["category"], row["notes"]) == (decision, category, "n")
+        assert outcome["matches_changed"] == ["owner/a"]
+
+    def test_a_match_moving_to_another_line_counts_as_changed(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        moved = ("owner/g", "beforeEach", "web/CLAUDE.md", 4, "line 3 mentions beforeEach")
+        outcome = self._carry(tmp_path, [{"repository": "owner/g", "decision": "no"}], [moved], new_sheet, new_matches)
+        assert outcome["matches_changed"] == ["owner/g"]
+        assert {r["repository"]: r for r in _read(new_sheet)}["owner/g"]["decision"] == "no"
+
+    def test_repositories_no_longer_in_the_sheet_are_dropped_and_reported(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        outcome = self._carry(
+            tmp_path, [{"repository": "owner/gone", "decision": "yes", "category": "tips"}], [], new_sheet, new_matches
+        )
+        assert outcome["removed"] == ["owner/gone"]
+        assert "owner/gone" not in {r["repository"] for r in _read(new_sheet)}
+
+    def test_uncoded_old_rows_and_new_repositories_are_left_uncoded(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        before = _read(new_sheet)
+        outcome = self._carry(tmp_path, [{"repository": "owner/a"}], [], new_sheet, new_matches)
+        assert _read(new_sheet) == before
+        assert outcome == {"unchanged": [], "matches_changed": [], "removed": []}
+
+    def test_refuses_to_overwrite_coding_already_in_the_new_sheet(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        rows = _read(new_sheet)
+        rows[0]["decision"] = "unsure"
+        _write_sheet(new_sheet, rows)
+        with pytest.raises(ValueError, match="already holds coding"):
+            self._carry(tmp_path, [{"repository": "owner/a", "decision": "yes", "category": "tips"}], [], new_sheet, new_matches)
+        assert _read(new_sheet)[0]["decision"] == "unsure"
+
+    def test_the_same_scan_carries_everything_over_unchanged(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        coded = tmp_path / "coded.csv"
+        rows = _read(new_sheet)
+        rows[0].update(decision="yes", category="tips")
+        rows[1].update(decision="no", notes="x")
+        _write_sheet(coded, rows)
+        outcome = carry_over_coding(coded, new_sheet, old_matches=new_matches, new_matches=new_matches)
+        assert outcome["unchanged"] == ["owner/a", "owner/g"]
+        assert _read(new_sheet) == rows
+
+    def test_an_old_sheet_with_the_previous_columns_carries_over(self, nested_db, tmp_path):
+        new_sheet, new_matches = self._new(nested_db, tmp_path)
+        old_sheet = tmp_path / "old.csv"
+        old_sheet.write_text(
+            "repository,primary_language,fixture_match_count,fixture_source,decision,category,notes\n"
+            "owner/g,typescript,1,referred,yes,tips,kept\n"
+        )
+        carry_over_coding(old_sheet, new_sheet, old_matches=_matches(tmp_path / "m.csv", []), new_matches=new_matches)
+        row = {r["repository"]: r for r in _read(new_sheet)}["owner/g"]
+        assert (row["fixture_location"], row["decision"], row["category"], row["notes"]) == ("nested", "yes", "tips", "kept")
+
+
+class TestWriteReviewOutputsKeepsCoding:
+    """A rescan rewrites the outputs over a coded sheet: the coding is backed up
+    and carried over, repositories that left are dropped, new ones are added
+    uncoded."""
+
+    def _rescan(self, nested_db, tmp_path):
+        out, backups = tmp_path / "out", tmp_path / "backups"
+        write_review_outputs(db_path=nested_db, output_dir=out, backup_dir=backups)
+        rows = _read(out / REPOSITORY_SHEET_NAME)
+        rows[0].update(decision="unsure", notes="first pass")  # owner/a
+        rows[1].update(decision="yes", category="tips")  # owner/g
+        _write_sheet(out / REPOSITORY_SHEET_NAME, rows)
+        coded_before = (out / REPOSITORY_SHEET_NAME).read_bytes()
+        matches_before = (out / "rq5_fixture_matches.csv").read_bytes()
+
+        # The new scan: owner/a loses its nested matches, owner/g leaves, owner/n is new.
+        _persist(nested_db, "owner/a", "python", [_match("owner/a", "AGENTS.md", "fixture", 5)])
+        _persist(nested_db, "owner/g", "typescript", has_file=False, nested=["web/CLAUDE.md"])
+        _persist(nested_db, "owner/n", "java", [_match("owner/n", "pkg/AGENTS.md", "fixtures", 1)], has_file=False, nested=["pkg/AGENTS.md"])
+        written = write_review_outputs(db_path=nested_db, output_dir=out, backup_dir=backups)
+        return out, backups, written, coded_before, matches_before
+
+    def test_coding_is_kept_removed_repositories_dropped_and_new_ones_added(self, nested_db, tmp_path):
+        out, _, _, _, _ = self._rescan(nested_db, tmp_path)
+        rows = {r["repository"]: r for r in _read(out / REPOSITORY_SHEET_NAME)}
+        assert set(rows) == {"owner/a", "owner/n"}
+        assert (rows["owner/a"]["decision"], rows["owner/a"]["notes"], rows["owner/a"]["fixture_match_count"]) == (
+            "unsure", "first pass", "1",
+        )
+        assert (rows["owner/n"]["decision"], rows["owner/n"]["category"], rows["owner/n"]["notes"]) == ("", "", "")
+
+    def test_the_old_sheet_and_matches_are_backed_up_byte_for_byte(self, nested_db, tmp_path):
+        _, backups, _, coded_before, matches_before = self._rescan(nested_db, tmp_path)
+        [sheet_backup] = backups.glob("rq5_coding_sheet_backup_*[0-9]Z.csv")
+        [matches_backup] = backups.glob("rq5_fixture_matches_backup_*.csv")
+        assert sheet_backup.read_bytes() == coded_before
+        assert matches_backup.read_bytes() == matches_before
+
+    def test_the_outcome_report_lists_each_coded_repository(self, nested_db, tmp_path):
+        _, _, written, _, _ = self._rescan(nested_db, tmp_path)
+        report = {r["repository"]: r for r in _read(written["carry_over"])}
+        assert (report["owner/a"]["outcome"], report["owner/a"]["decision"]) == ("matches_changed", "unsure")
+        assert (report["owner/g"]["outcome"], report["owner/g"]["decision"], report["owner/g"]["category"]) == (
+            "removed", "yes", "tips",
+        )
+        assert "owner/n" not in report
+
+    def test_an_uncoded_sheet_is_rewritten_without_a_backup(self, nested_db, tmp_path):
+        out, backups = tmp_path / "out", tmp_path / "backups"
+        write_review_outputs(db_path=nested_db, output_dir=out, backup_dir=backups)
+        written = write_review_outputs(db_path=nested_db, output_dir=out, backup_dir=backups)
+        assert "carry_over" not in written
+        assert not backups.exists()
