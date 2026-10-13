@@ -1,6 +1,6 @@
 # RQ5 -- Manual coding of fixture guidance
 
-Generated: 2026-10-13 03:55:38 UTC
+Generated: 2026-10-13 04:00:00 UTC
 
 Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per repository with a fixture keyword match in its guidance files.
 
@@ -50,7 +50,7 @@ Population: the 556 repositories coded `yes`, in one random permutation (seed 20
 | Fixture maintenance | Updating, regenerating, versioning or not editing fixtures. | 12 | 14.5% |
 | Cleanup | Removing what fixtures or tests create. | 11 | 13.3% |
 | Test isolation | Keeping fixture state from leaking between tests (no shared mutation, read-only, parallel-safe), including per-test resources such as temporary directories or private databases. | 9 | 10.8% |
-| Non-actionable guidance | Mentions fixtures without telling the agent what to do, such as a fixture path in a command, a passing tip, or a pointer to another document. | 8 | 9.6% |
+| Non-actionable mention | Mentions fixtures without telling the agent what to do, such as a fixture path in a command, a passing tip, or a pointer to another document. | 8 | 9.6% |
 | Sensitive information | No real credentials, personal or customer data in fixtures. | 5 | 6.0% |
 
 A repository can belong to several categories, so percentages do not add up to 100%.

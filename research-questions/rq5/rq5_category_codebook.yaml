@@ -30,5 +30,5 @@ categories:
     name: Fixture maintenance
     definition: Updating, regenerating, versioning or not editing fixtures.
   - code: non_actionable
-    name: Non-actionable guidance
+    name: Non-actionable mention
     definition: Mentions fixtures without telling the agent what to do, such as a fixture path in a command, a passing tip, or a pointer to another document.
