@@ -63,6 +63,7 @@
 - `research_questions/rq1.py` to `rq5.py`: one report per question.
 - `rq1_prevalence_scan.py`: the RQ1 scan, which clones repositories.
 - `rq5_agent_file_scan.py`: the RQ5 scan, which uses the GitHub API.
+- `rq5_category_sample.py`: the RQ5 category sample, codebook and agreement sheet.
 - `research_questions/balance.py`: control-variable balance checks.
 
 ## Where to look for what

@@ -1,6 +1,6 @@
 # RQ5 -- Manual coding of fixture guidance
 
-Generated: 2026-10-12 17:27:08 UTC
+Generated: 2026-10-12 23:58:29 UTC
 
 Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per repository with a fixture keyword match in its guidance files.
 
@@ -9,6 +9,7 @@ Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per re
 | Statistic | Count | Percentage | Denominator |
 |---|---|---|---|
 | Coded `yes` | 556 | 28.1% | 1,978 repositories with a guidance file |
+| Coded `yes` or `unsure` (every `unsure` counted as `yes`) | 620 | 31.3% | 1,978 repositories with a guidance file |
 
 ## By primary language
 
@@ -32,4 +33,4 @@ Precision: 556 of 679 (81.9%); 64 coded `unsure`.
 
 ## Categories
 
-Pending: 556 of 556 repositories coded `yes` have no category yet. Categories are coded after the decisions.
+Not coded yet: none of the 556 repositories in `research-questions/rq5/rq5_category_sample.csv` has categories (checkpoints 83 and 228).

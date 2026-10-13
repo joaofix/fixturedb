@@ -108,6 +108,27 @@ def cochran_sample_size(
     return min(population, math.ceil(n))
 
 
+def margin_of_error(
+    sample_size: int,
+    population: int,
+    confidence_z: float = 1.96,
+    p: float = 0.5,
+) -> float:
+    """Margin of error of a proportion estimated from `sample_size` units drawn
+    without replacement from `population`, at the confidence level implied by
+    `confidence_z`, with the finite population correction: the counterpart of
+    `cochran_sample_size` for reporting the precision of a sample actually
+    taken. A sample of the whole population has no sampling error (0.0)."""
+    if sample_size <= 0 or population <= 0:
+        raise ValueError("sample_size and population must be positive")
+    if sample_size > population:
+        raise ValueError(f"sample_size {sample_size} exceeds population {population}")
+    if population == 1:
+        return 0.0
+    fpc = (population - sample_size) / (population - 1)
+    return confidence_z * math.sqrt(p * (1 - p) / sample_size * fpc)
+
+
 def sample_stratified_by_population(
     rows: List[dict],
     language_key: str = "language",

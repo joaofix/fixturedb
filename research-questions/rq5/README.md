@@ -54,6 +54,12 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
   developer reading many unfamiliar projects: do not look elsewhere in the
   repository, and do not rely on specialist knowledge of the project, its
   language or its frameworks.
-- `category`: required for `yes`. One or more categories, separated by `;`.
-  The category set is this study's own and is defined during coding.
 - `notes`: free text.
+
+## Category coding
+
+The fixture guidance of the repositories coded `yes` is categorized on a random
+sample, with this study's own categories: see `rq5_category_sample.csv`,
+`rq5_category_codebook.yaml` and `rq5_agreement_sheet.csv`, written by
+`python -m collection.rq5_category_sample`. The instructions are in
+`CATEGORY_CODING.md`.

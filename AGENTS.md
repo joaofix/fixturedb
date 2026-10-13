@@ -95,12 +95,17 @@ collection/          # Main pipeline code (the "library")
                      # + research-questions/rq5/*. Catalogs: heuristics/rq5_agent_file_keywords.yaml,
                      # heuristics/rq5_agent_guidance_files.yaml.
                      # Run directly: `python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD`
+  rq5_category_sample.py  # RQ5 category coding: the random sample of the repos coded yes
+                     # (rq5_category_sample.csv, seed 20261012, Cochran checkpoints 83/228), the empty
+                     # rq5_category_codebook.yaml, and the second-coder agreement sheet + Cohen's kappa.
+                     # `python -m collection.rq5_category_sample {sample,agreement-sheet,agreement}`
   research_questions/  # Answers the paper's RQs, writes research-questions/*.md (committed):
                      # rq1.py (fixture prevalence, reads db/rq1_prevalence.db -- not db/{a,c}.db),
                      # rq2/rq3/rq4.py (structural/teardown/mocking, read db/{a,c}.db), rq5.py
                      # (agent config file test/fixture keyword prevalence, reads
                      # db/rq5_agent_files.db -- not db/{a,c}.db), rq5_coding.py (final RQ5 numbers
-                     # from the manually coded research-questions/rq5/rq5_repository_coding_sheet.csv), balance.py (control-variable
+                     # from the manually coded research-questions/rq5/rq5_repository_coding_sheet.csv, plus the
+                     # categories of the coded prefix of rq5_category_sample.csv), balance.py (control-variable
                      # check), dataset_findings.py (non-RQ descriptive findings),
                      # language_contamination.py, _shared.py
   validation_sampling.py  # Manual, on-demand Cochran-formula sampling for human review (not part of the automatic pipeline)

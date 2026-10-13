@@ -1,27 +1,31 @@
 """
 RQ5 -- manual coding results: reads the completed repository-level coding
 sheet (`research-questions/rq5/rq5_repository_coding_sheet.csv`) and computes the final RQ5
-fixture-guidance numbers.
+fixture-guidance numbers, then the categories of the coded part of the random
+category sample (`rq5_category_sample.csv`, see `collection/rq5_category_sample.py`).
 
 Denominators:
 
 - repositories with a guidance file (from `db/rq5_agent_files.db`) for the
   share coded `yes`, overall and per primary language;
 - repositories with a fixture keyword match (the sheet's rows) for the
-  precision of the keyword search.
+  precision of the keyword search;
+- the coded sample (the prefix of the category sample whose `categories` is
+  filled) for the category shares.
 
 Refuses to run while any row is uncoded or holds a value outside the allowed
-ones (see `research-questions/rq5/README.md`). No coding is inferred here.
-With `--decisions-only`, a `yes` without a category is accepted (categories are
-coded after the decisions) and the categories section is marked pending.
+ones (see `research-questions/rq5/README.md`), or while the category sample is
+inconsistent (coded out of order, a code not in the codebook, stale against the
+sheet). No coding is inferred here.
 
-python -m collection.research_questions.rq5_coding [--decisions-only]
+python -m collection.research_questions.rq5_coding
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import statistics
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +39,21 @@ from ..rq5_agent_file_scan import (
     REPOSITORY_SHEET_NAME,
     load_repo_guidance,
 )
+from ..rq5_category_sample import (
+    AGREEMENT_SHEET_NAME,
+    CODEBOOK_NAME,
+    SAMPLE_NAME,
+    SAMPLE_SEED,
+    AgreementResult,
+    CategoryCodingError,
+    agreement_status,
+    check_sample_matches_population,
+    load_agreement,
+    load_codebook,
+    load_coded_sample,
+    parse_categories,
+    sample_margin_of_error,
+)
 from ._shared import OUTPUT_DIR, pct, write_markdown_report
 from .rq5 import DISPLAY_LABELS, DISPLAY_LANGUAGES
 
@@ -45,11 +64,9 @@ class CodingIncompleteError(ValueError):
     """The coding sheet has uncoded or invalid rows."""
 
 
-def load_coded_sheet(path: Path = SHEET_PATH, *, decisions_only: bool = False) -> list[dict[str, Any]]:
+def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
     """The sheet's rows, validated. Raises `CodingIncompleteError` listing every
-    problem: an empty or unknown `decision`, or a `yes` without a category
-    (unless `decisions_only`). Category values are free text: the category set
-    is defined during coding."""
+    problem: an empty or unknown `decision`."""
     if not path.exists():
         raise CodingIncompleteError(f"{path} does not exist")
     with path.open("r", encoding="utf-8", newline="") as fh:
@@ -65,17 +82,12 @@ def load_coded_sheet(path: Path = SHEET_PATH, *, decisions_only: bool = False) -
     for row in rows:
         repo = row["repository"]
         decision = row["decision"].strip().lower()
-        categories = [c.strip() for c in row["category"].split(";") if c.strip()]
-
         if not decision:
             uncoded.append(repo)
             continue
         if decision not in DECISION_VALUES:
             problems.append(f"{repo}: decision {decision!r} is not one of {DECISION_VALUES}")
-        if decision == "yes" and not decisions_only:
-            if not categories:
-                problems.append(f"{repo}: coded yes without a category")
-        coded.append({"repository": repo, "language": row["primary_language"], "decision": decision, "categories": categories})
+        coded.append({"repository": repo, "language": row["primary_language"], "decision": decision})
 
     if uncoded or problems:
         lines = []
@@ -101,8 +113,6 @@ def guidance_file_counts(db_path: Path = DB_PATH) -> Counter:
 def compute_results(coded: list[dict[str, Any]], with_guidance_file: Counter) -> dict[str, Any]:
     decisions = Counter(r["decision"] for r in coded)
     yes_by_language = Counter(r["language"] for r in coded if r["decision"] == "yes")
-    categories = Counter(c for r in coded if r["decision"] == "yes" for c in r["categories"])
-    uncategorised = sum(1 for r in coded if r["decision"] == "yes" and not r["categories"])
     return {
         "with_guidance_file": with_guidance_file,
         "with_fixture_match": len(coded),
@@ -110,19 +120,145 @@ def compute_results(coded: list[dict[str, Any]], with_guidance_file: Counter) ->
         "no": decisions["no"],
         "unsure": decisions["unsure"],
         "yes_by_language": yes_by_language,
-        "categories": categories,
-        "uncategorised": uncategorised,
     }
+
+
+def compute_category_results(sheet_path: Path = SHEET_PATH) -> dict[str, Any] | None:
+    """The category analysis of the coded prefix of the category sample next
+    to `sheet_path`, or None if the sample has not been written yet."""
+    directory = sheet_path.parent
+    sample_path = directory / SAMPLE_NAME
+    if not sample_path.exists():
+        return None
+    codebook = load_codebook(directory / CODEBOOK_NAME)
+    sample = load_coded_sample(sample_path, codebook)
+    check_sample_matches_population(sample, sheet_path)
+
+    coded = sample.coded
+    per_repo = [set(parse_categories(row["categories"])) for row in coded]
+    sizes = [len(codes) for codes in per_repo]
+    return {
+        "population": sample.population,
+        "checkpoints": sample.checkpoints,
+        "size": sample.size,
+        "checkpoint_reached": sample.checkpoint_reached,
+        "margin_of_error": sample_margin_of_error(sample.size, sample.population) if coded else None,
+        "codebook": codebook,
+        "category_counts": Counter(code for codes in per_repo for code in codes),
+        "categories_per_repository": (statistics.median(sizes), min(sizes), max(sizes)) if sizes else None,
+        "sample_languages": Counter(row["primary_language"] for row in coded),
+        "population_languages": Counter(row["primary_language"] for row in sample.rows),
+        "agreement": load_agreement(directory, codebook, sample) if coded else None,
+        "agreement_status": agreement_status(directory),
+    }
+
+
+def checkpoint_warning(category: dict[str, Any] | None) -> str | None:
+    """A warning when the coded prefix does not end exactly at a checkpoint."""
+    if not category or not category["size"] or category["checkpoint_reached"] is not None:
+        return None
+    return (
+        f"The coded category sample has {category['size']} repositories, which is not a checkpoint "
+        f"({', '.join(str(c) for c in category['checkpoints'])}); the results use the actual size."
+    )
 
 
 def _ratio(numerator: int, denominator: int) -> float | None:
     return None if denominator == 0 else numerator / denominator
 
 
-def generate_report(results: dict[str, Any]) -> str:
+def _kappa(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.2f}"
+
+
+def render_category_section(category: dict[str, Any] | None) -> list[str]:
+    lines = ["## Categories", ""]
+    if category is None:
+        return [*lines, f"Not started: `research-questions/rq5/{SAMPLE_NAME}` has not been written yet.", ""]
+    population, size = category["population"], category["size"]
+    checkpoints = " and ".join(str(c) for c in category["checkpoints"])
+    if not size:
+        return [
+            *lines,
+            f"Not coded yet: none of the {population:,} repositories in `research-questions/rq5/{SAMPLE_NAME}` "
+            f"has categories (checkpoints {checkpoints}).",
+            "",
+        ]
+    reached = category["checkpoint_reached"]
+    checkpoint_text = (
+        f"checkpoint {reached} reached"
+        if reached is not None
+        else f"no checkpoint reached ({checkpoints}): the coded prefix stops at {size}"
+    )
+    lines += [
+        "### Sampling",
+        "",
+        f"Population: the {population:,} repositories coded `yes`, in one random permutation (seed "
+        f"{SAMPLE_SEED}, not stratified), coded from the top; {checkpoint_text}. Sample size: {size:,}. "
+        f"Confidence: 95%. Margin of error: {pct(category['margin_of_error'])} (p = 0.5, with the finite "
+        "population correction).",
+        "",
+        "### Categories of fixture guidance",
+        "",
+        "| Category | Definition | Repositories | % of sample |",
+        "|---|---|---|---|",
+    ]
+    for entry in category["codebook"]:
+        count = category["category_counts"][entry.code]
+        lines.append(f"| {entry.name} | {entry.definition} | {count:,} | {pct(_ratio(count, size))} |")
+    median, minimum, maximum = category["categories_per_repository"]
+    lines += [
+        "",
+        "A repository can belong to several categories, so percentages do not add up to 100%.",
+        "",
+        f"Categories per repository: median {median:g}, minimum {minimum}, maximum {maximum}.",
+        "",
+        "### Languages",
+        "",
+        f"| Language | Coded sample (n = {size:,}) | % | All `yes` repositories (N = {population:,}) | % |",
+        "|---|---|---|---|---|",
+    ]
+    sample_languages, population_languages = category["sample_languages"], category["population_languages"]
+    for language in DISPLAY_LANGUAGES:
+        s, p = sample_languages[language], population_languages[language]
+        lines.append(
+            f"| {DISPLAY_LABELS[language]} | {s:,} | {pct(_ratio(s, size))} | {p:,} | {pct(_ratio(p, population))} |"
+        )
+    lines += ["", "### Agreement", ""]
+    agreement: AgreementResult | None = category["agreement"]
+    status = category["agreement_status"]
+    if agreement is None:
+        lines.append(
+            "No second coding yet."
+            if status is None
+            else f"Pending: `{AGREEMENT_SHEET_NAME}` has {status[0]} of {status[1]} repositories coded."
+        )
+    else:
+        lines += [
+            f"A second coder coded {agreement.items} repositories drawn at random from the coded sample. Per "
+            "category, each repository counts as yes or no for that category in each coding.",
+            "",
+            "| Category | Agreement | Cohen's kappa |",
+            "|---|---|---|",
+        ]
+        for entry, share, kappa in agreement.per_category:
+            lines.append(f"| {entry.name} | {pct(share)} | {_kappa(kappa)} |")
+        lines.append(f"| Average | {pct(agreement.mean_agreement)} | {_kappa(agreement.mean_kappa)} |")
+        if any(kappa is None for _, _, kappa in agreement.per_category):
+            lines += [
+                "",
+                "n/a: kappa is undefined when both coders gave every repository the same value; the average "
+                "kappa leaves those categories out.",
+            ]
+    lines.append("")
+    return lines
+
+
+def generate_report(results: dict[str, Any], category: dict[str, Any] | None = None) -> str:
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     total = results["with_guidance_file"]["all"]
     matched = results["with_fixture_match"]
+    yes_or_unsure = results["yes"] + results["unsure"]
     lines = [
         "# RQ5 -- Manual coding of fixture guidance",
         "",
@@ -136,6 +272,8 @@ def generate_report(results: dict[str, Any]) -> str:
         "|---|---|---|---|",
         f"| Coded `yes` | {results['yes']:,} | {pct(_ratio(results['yes'], total))} | "
         f"{total:,} repositories with a guidance file |",
+        f"| Coded `yes` or `unsure` (every `unsure` counted as `yes`) | {yes_or_unsure:,} | "
+        f"{pct(_ratio(yes_or_unsure, total))} | {total:,} repositories with a guidance file |",
         "",
         "## By primary language",
         "",
@@ -161,52 +299,31 @@ def generate_report(results: dict[str, Any]) -> str:
         f"Precision: {results['yes']:,} of {matched:,} ({pct(_ratio(results['yes'], matched))}); "
         f"{results['unsure']:,} coded `unsure`.",
         "",
-        "## Categories",
-        "",
     ]
-    if results["uncategorised"]:
-        lines.append(
-            f"Pending: {results['uncategorised']:,} of {results['yes']:,} repositories coded `yes` "
-            "have no category yet. Categories are coded after the decisions."
-        )
-    else:
-        lines += [
-            "Repositories coded `yes` per category. A repository can have more than one category.",
-            "",
-            "| Category | Repositories |",
-            "|---|---|",
-        ]
-        for category, count in sorted(results["categories"].items(), key=lambda kv: (-kv[1], kv[0])):
-            lines.append(f"| {category} | {count:,} |")
-    lines.append("")
+    lines += render_category_section(category)
     return "\n".join(lines)
 
 
 def write_report(
-    output_dir: Path = OUTPUT_DIR,
-    *,
-    sheet_path: Path = SHEET_PATH,
-    db_path: Path = DB_PATH,
-    decisions_only: bool = False,
-) -> Path:
-    coded = load_coded_sheet(sheet_path, decisions_only=decisions_only)
-    results = compute_results(coded, guidance_file_counts(db_path))
-    return write_markdown_report(output_dir, "rq5_coding.md", generate_report(results))
+    output_dir: Path = OUTPUT_DIR, *, sheet_path: Path = SHEET_PATH, db_path: Path = DB_PATH
+) -> tuple[Path, str | None]:
+    """Write `rq5_coding.md`; returns its path and the checkpoint warning, if any."""
+    results = compute_results(load_coded_sheet(sheet_path), guidance_file_counts(db_path))
+    category = compute_category_results(sheet_path)
+    path = write_markdown_report(output_dir, "rq5_coding.md", generate_report(results, category))
+    return path, checkpoint_warning(category)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RQ5 results from the completed repository-level coding sheet.")
     parser.add_argument("--sheet", type=Path, default=SHEET_PATH, help=f"Coding sheet (default: {SHEET_PATH})")
-    parser.add_argument(
-        "--decisions-only",
-        action="store_true",
-        help="Accept `yes` rows without a category and mark the categories section pending.",
-    )
     args = parser.parse_args()
     try:
-        path = write_report(sheet_path=args.sheet, decisions_only=args.decisions_only)
-    except CodingIncompleteError as exc:
+        path, warning = write_report(sheet_path=args.sheet)
+    except (CodingIncompleteError, CategoryCodingError) as exc:
         raise SystemExit(str(exc)) from None
+    if warning:
+        print(f"WARNING: {warning}")
     print(f"RQ5 coding report written to {path}")
 
 

@@ -284,7 +284,9 @@ CSVs, including the repository-level coding sheet, `rq5_snippets.md` for
 reading the snippets, and a README with the coding values) and
 `research-questions/rq5.md`. After the manual coding of
 `research-questions/rq5/rq5_repository_coding_sheet.csv` is complete, run
-`rq5_coding` (it exits with the list of uncoded rows until then). A rescan over
+`rq5_coding` (it exits with the list of uncoded rows until then); it also
+reports the categories of the coded part of the category sample (see
+`docs/research-questions.md`, "RQ5 categories"). A rescan over
 a coded sheet backs the sheet up into `db/` and carries the coding over (see
 `docs/research-questions.md`).
 
@@ -297,7 +299,9 @@ python -m collection.rq5_agent_file_scan --snapshot-date YYYY-MM-DD --workers 20
   && curl -d "RQ5 scan finished" ntfy.sh/joaofix_fixturedb
 python -m collection.research_questions.rq5   # writes research-questions/rq5.md
 python -m collection.research_questions.rq5_coding   # after manual coding; writes research-questions/rq5_coding.md
-python -m collection.research_questions.rq5_coding --decisions-only   # decisions coded, categories pending
+python -m collection.rq5_category_sample sample            # once: writes the category sample and an empty codebook
+python -m collection.rq5_category_sample agreement-sheet   # optional: 20 coded repositories for a second coder
+python -m collection.rq5_category_sample agreement         # optional: agreement once the second sheet is coded
 ```
 
 ### After collection

@@ -114,27 +114,56 @@ on specialist knowledge of the project. Once every
 row is coded, `collection/research_questions/rq5_coding.py` writes
 `research-questions/rq5_coding.md`: the share of repositories with a guidance
 file coded `yes` (overall and per language), the precision of the keyword search
-(with `unsure` reported separately), and the repositories per category. It
-refuses to run while any row is uncoded. Categories are coded after the
-decisions; until then, `--decisions-only` accepts `yes` rows without a category
-and writes the decision-based numbers with the categories section marked
-pending.
+(with `unsure` reported separately, plus the share if every `unsure` were
+`yes`), and the categories of the coded category sample (below). It refuses to
+run while any row is uncoded.
 
 A rescan never discards coding. When the coding sheet already holds coding,
 the scan copies it and its `rq5_fixture_matches.csv` into `db/` (timestamped)
 and writes the new sheet with the coding carried over: a repository still in
-the sheet keeps its decision, category and notes exactly as they were, even if
+the sheet keeps its decision and notes exactly as they were, even if
 its matches changed; a repository that no longer has a fixture match is
 dropped; a new repository is added uncoded. The outcome per coded repository
 (`unchanged`, `matches_changed`, `removed`) is written next to the backup.
 
 ### RQ5 categories
 
-Every repository coded `yes` gets one or more categories in the `category`
-column, separated by `;`. The category set is this study's own and is defined
-during coding, after the decisions; until it is fixed, the code accepts any
-category value, and the `rq5_coding` report counts the repositories per value
-found in the sheet.
+The coders' instructions are in `research-questions/rq5/CATEGORY_CODING.md`.
+The fixture guidance of the repositories coded `yes` is categorized by open
+coding a random sample, with this study's own categories (not Ardic et al.'s).
+`python -m collection.rq5_category_sample sample` writes
+`research-questions/rq5/rq5_category_sample.csv`: all repositories coded `yes`
+(556), in one simple random permutation of the coding sheet's order (seed
+20261012, not stratified), each with its matched lines (match row id, file
+path, the line before and the line after) in one cell, and empty `open_code`,
+`categories` and `notes` columns. A cell longer than a spreadsheet cell holds
+(32,767 characters) keeps the lines that fit and points to the repository's
+section of `rq5_snippets.md`. Rows are coded from the top, so the coded sample
+is always the prefix of rows with `categories` filled. Two checkpoints mark
+where coding can stop: Cochran's sample size at 95% confidence, p = 0.5, with
+the finite population correction, rounded up, for a 10% and a 5% margin of
+error (83 and 228 of 556; the command fails if the numbers differ). It also
+writes an empty `rq5_category_codebook.yaml`, where each category gets a
+`code` (one snake_case word, used in `categories`), a `name` and a
+`definition`.
+
+The `rq5_coding` report then gives the sample size reached and its margin of
+error, each category's repositories and share of the coded sample (a
+repository can have several categories), the number of categories per
+repository, and the languages of the coded sample next to those of all 556. It
+fails if a row after the coded prefix has categories (coding out of order), if
+a code is not in the codebook, or if the sample no longer matches the
+repositories coded `yes`; if the prefix does not end at a checkpoint, it warns
+and reports the actual size.
+
+For inter-coder agreement, `python -m collection.rq5_category_sample
+agreement-sheet` draws 20 repositories from the coded prefix (seed 20261013)
+into `rq5_agreement_sheet.csv` for a second coder, and
+`python -m collection.rq5_category_sample agreement` compares the two codings:
+per category, each repository is yes or no for that category, with percent
+agreement and Cohen's kappa (undefined, and left out of the average, when both
+coders gave every repository the same value). Once the second sheet is fully
+coded, the `rq5_coding` report includes the agreement table.
 
 ## Where the numbers come from
 

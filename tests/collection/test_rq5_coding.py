@@ -144,12 +144,13 @@ class TestRepositoryCodingSheet:
 
         assert list(rows[0].keys()) == list(REPOSITORY_SHEET_FIELDNAMES)
         assert "fixture_snippets" not in rows[0]  # read in rq5_snippets.md instead
+        assert "category" not in rows[0]  # categories are coded in rq5_category_sample.csv
         assert [(r["repository"], r["primary_language"], r["fixture_match_count"]) for r in rows] == [
             ("owner/a", "python", "3"),
             ("owner/b", "typescript", "1"),
         ]
         for row in rows:
-            for column in ("decision", "category", "notes"):
+            for column in ("decision", "notes"):
                 assert row[column] == ""
         assert "evidence_row_id" not in rows[0]
 
@@ -253,10 +254,12 @@ class TestReadme:
         assert "inferred from the terms near the match" in readme
         assert "Decide from the matched lines and the lines around them only" in readme
 
-    def test_category_set_is_the_studys_own(self, tmp_path):
+    def test_points_to_the_category_coding_files(self, tmp_path):
         readme = write_rq5_readme(tmp_path).read_text()
 
-        assert "The category set is this study's own" in readme
+        assert "this study's own categories" in readme
+        assert "rq5_category_sample.csv" in readme and "rq5_category_codebook.yaml" in readme
+        assert "`category`" not in readme
         assert "Ardic" not in readme
         assert "Allowed `category` values" not in readme
 
@@ -321,43 +324,14 @@ class TestLoadCodedSheet:
         with pytest.raises(CodingIncompleteError, match="'maybe'"):
             load_coded_sheet(sheet)
 
-    def test_any_category_value_is_accepted(self, coded_db, tmp_path):
-        sheet = _coded_rows(
-            coded_db,
-            tmp_path,
-            {"owner/a": {"decision": "yes", "category": "our_own; another"}, "owner/b": {"decision": "no"}},
+    def test_an_extra_category_column_from_the_old_format_is_ignored(self, coded_db, tmp_path):
+        sheet = tmp_path / "old_format.csv"
+        sheet.write_text(
+            "repository,primary_language,fixture_match_count,fixture_location,decision,category,notes\n"
+            "owner/a,python,3,root,yes,,\n"
         )
 
-        coded = load_coded_sheet(sheet)
-
-        assert coded[0]["categories"] == ["our_own", "another"]
-
-    def test_yes_needs_a_category(self, coded_db, tmp_path):
-        sheet = _coded_rows(
-            coded_db,
-            tmp_path,
-            {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
-        )
-
-        with pytest.raises(CodingIncompleteError, match="owner/a: coded yes without a category"):
-            load_coded_sheet(sheet)
-
-    def test_decisions_only_accepts_yes_without_a_category(self, coded_db, tmp_path):
-        sheet = _coded_rows(
-            coded_db,
-            tmp_path,
-            {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
-        )
-
-        coded = load_coded_sheet(sheet, decisions_only=True)
-
-        assert [r["decision"] for r in coded] == ["yes", "no"]
-
-    def test_decisions_only_still_fails_when_a_row_is_uncoded(self, coded_db, tmp_path):
-        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"decision": "no"}})
-
-        with pytest.raises(CodingIncompleteError, match="still uncoded"):
-            load_coded_sheet(sheet, decisions_only=True)
+        assert load_coded_sheet(sheet) == [{"repository": "owner/a", "language": "python", "decision": "yes"}]
 
     def test_main_exits_with_the_message_when_uncoded(self, coded_db, tmp_path, monkeypatch):
         sheet = _coded_rows(coded_db, tmp_path, {})
@@ -368,14 +342,8 @@ class TestLoadCodedSheet:
 
 
 class TestComputeResults:
-    def test_shares_precision_and_categories(self, coded_db, tmp_path):
-        sheet = _coded_rows(coded_db, tmp_path, {"owner/b": {"decision": "unsure"}})
-        rows = _read(sheet)
-        rows[0].update(
-            decision="yes",
-            category="strategy; location_placement",
-        )
-        _write_sheet(sheet, rows)
+    def test_shares_precision_and_the_yes_or_unsure_share(self, coded_db, tmp_path):
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "unsure"}})
 
         results = compute_results(load_coded_sheet(sheet), guidance_file_counts(coded_db))
 
@@ -383,39 +351,18 @@ class TestComputeResults:
         assert results["with_guidance_file"]["python"] == 2
         assert (results["yes"], results["no"], results["unsure"]) == (1, 0, 1)
         assert results["with_fixture_match"] == 2
-        assert results["categories"] == {"strategy": 1, "location_placement": 1}
 
         report = generate_coding_report(results)
         assert "| Coded `yes` | 1 | 33.3% | 3 repositories with a guidance file |" in report
+        assert "| Coded `yes` or `unsure` (every `unsure` counted as `yes`) | 2 | 66.7% | 3 repositories" in report
         assert "| Python | 2 | 1 | 50.0% |" in report
         assert "| TypeScript | 1 | 0 | 0.0% |" in report
         assert "Precision: 1 of 2 (50.0%); 1 coded `unsure`." in report
-        assert "| Category | Repositories |" in report
-        assert "| location_placement | 1 |" in report
-        assert "| strategy | 1 |" in report
+        assert "Not started" in report
 
-        path = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
+        path, warning = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
         assert path.name == "rq5_coding.md"
-
-    def test_decisions_only_report_marks_categories_pending(self, coded_db, tmp_path):
-        sheet = _coded_rows(
-            coded_db,
-            tmp_path,
-            {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}},
-        )
-
-        results = compute_results(load_coded_sheet(sheet, decisions_only=True), guidance_file_counts(coded_db))
-        report = generate_coding_report(results)
-
-        assert results["uncategorised"] == 1
-        assert "Precision: 1 of 2 (50.0%); 0 coded `unsure`." in report
-        assert "Pending: 1 of 1 repositories coded `yes` have no category yet." in report
-        assert "| Category | Repositories |" not in report
-
-        with pytest.raises(CodingIncompleteError, match="coded yes without a category"):
-            write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
-        path = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db, decisions_only=True)
-        assert "Pending: 1 of 1" in path.read_text(encoding="utf-8")
+        assert warning is None
 
 
 @pytest.fixture
@@ -542,26 +489,26 @@ class TestCarryOverCoding:
 
     G_MATCH = ("owner/g", "beforeEach", "web/CLAUDE.md", 3, "line 3 mentions beforeEach")
 
-    def test_unchanged_matches_keep_decision_category_and_notes(self, nested_db, tmp_path):
+    def test_unchanged_matches_keep_decision_and_notes(self, nested_db, tmp_path):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
         outcome = self._carry(
             tmp_path, [{"repository": "owner/g", "decision": "no", "notes": "data only"}], [self.G_MATCH], new_sheet, new_matches
         )
         row = {r["repository"]: r for r in _read(new_sheet)}["owner/g"]
-        assert (row["decision"], row["category"], row["notes"]) == ("no", "", "data only")
+        assert (row["decision"], row["notes"]) == ("no", "data only")
         assert outcome["unchanged"] == ["owner/g"]
 
-    @pytest.mark.parametrize("decision,category", [("yes", "strategy;mocking"), ("no", ""), ("unsure", "")])
-    def test_changed_matches_keep_every_decision_as_it_was(self, nested_db, tmp_path, decision, category):
+    @pytest.mark.parametrize("decision", ["yes", "no", "unsure"])
+    def test_changed_matches_keep_every_decision_as_it_was(self, nested_db, tmp_path, decision):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
         outcome = self._carry(
             tmp_path,
-            [{"repository": "owner/a", "decision": decision, "category": category, "notes": "n"}],
+            [{"repository": "owner/a", "decision": decision, "notes": "n"}],
             [("owner/a", "fixture", "CONTRIBUTING.md", 5, "line 5 mentions fixture")],
             new_sheet, new_matches,
         )
         row = {r["repository"]: r for r in _read(new_sheet)}["owner/a"]
-        assert (row["decision"], row["category"], row["notes"]) == (decision, category, "n")
+        assert (row["decision"], row["notes"]) == (decision, "n")
         assert outcome["matches_changed"] == ["owner/a"]
 
     def test_a_match_moving_to_another_line_counts_as_changed(self, nested_db, tmp_path):
@@ -574,7 +521,7 @@ class TestCarryOverCoding:
     def test_repositories_no_longer_in_the_sheet_are_dropped_and_reported(self, nested_db, tmp_path):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
         outcome = self._carry(
-            tmp_path, [{"repository": "owner/gone", "decision": "yes", "category": "tips"}], [], new_sheet, new_matches
+            tmp_path, [{"repository": "owner/gone", "decision": "yes"}], [], new_sheet, new_matches
         )
         assert outcome["removed"] == ["owner/gone"]
         assert "owner/gone" not in {r["repository"] for r in _read(new_sheet)}
@@ -592,14 +539,14 @@ class TestCarryOverCoding:
         rows[0]["decision"] = "unsure"
         _write_sheet(new_sheet, rows)
         with pytest.raises(ValueError, match="already holds coding"):
-            self._carry(tmp_path, [{"repository": "owner/a", "decision": "yes", "category": "tips"}], [], new_sheet, new_matches)
+            self._carry(tmp_path, [{"repository": "owner/a", "decision": "yes"}], [], new_sheet, new_matches)
         assert _read(new_sheet)[0]["decision"] == "unsure"
 
     def test_the_same_scan_carries_everything_over_unchanged(self, nested_db, tmp_path):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
         coded = tmp_path / "coded.csv"
         rows = _read(new_sheet)
-        rows[0].update(decision="yes", category="tips")
+        rows[0].update(decision="yes", notes="tips")
         rows[1].update(decision="no", notes="x")
         _write_sheet(coded, rows)
         outcome = carry_over_coding(coded, new_sheet, old_matches=new_matches, new_matches=new_matches)
@@ -615,7 +562,8 @@ class TestCarryOverCoding:
         )
         carry_over_coding(old_sheet, new_sheet, old_matches=_matches(tmp_path / "m.csv", []), new_matches=new_matches)
         row = {r["repository"]: r for r in _read(new_sheet)}["owner/g"]
-        assert (row["fixture_location"], row["decision"], row["category"], row["notes"]) == ("nested", "yes", "tips", "kept")
+        assert (row["fixture_location"], row["decision"], row["notes"]) == ("nested", "yes", "kept")
+        assert "category" not in row
 
 
 class TestWriteReviewOutputsKeepsCoding:
@@ -628,7 +576,7 @@ class TestWriteReviewOutputsKeepsCoding:
         write_review_outputs(db_path=nested_db, output_dir=out, backup_dir=backups)
         rows = _read(out / REPOSITORY_SHEET_NAME)
         rows[0].update(decision="unsure", notes="first pass")  # owner/a
-        rows[1].update(decision="yes", category="tips")  # owner/g
+        rows[1].update(decision="yes", notes="tips")  # owner/g
         _write_sheet(out / REPOSITORY_SHEET_NAME, rows)
         coded_before = (out / REPOSITORY_SHEET_NAME).read_bytes()
         matches_before = (out / "rq5_fixture_matches.csv").read_bytes()
@@ -647,7 +595,7 @@ class TestWriteReviewOutputsKeepsCoding:
         assert (rows["owner/a"]["decision"], rows["owner/a"]["notes"], rows["owner/a"]["fixture_match_count"]) == (
             "unsure", "first pass", "1",
         )
-        assert (rows["owner/n"]["decision"], rows["owner/n"]["category"], rows["owner/n"]["notes"]) == ("", "", "")
+        assert (rows["owner/n"]["decision"], rows["owner/n"]["notes"]) == ("", "")
 
     def test_the_old_sheet_and_matches_are_backed_up_byte_for_byte(self, nested_db, tmp_path):
         _, backups, _, coded_before, matches_before = self._rescan(nested_db, tmp_path)
@@ -660,7 +608,7 @@ class TestWriteReviewOutputsKeepsCoding:
         _, _, written, _, _ = self._rescan(nested_db, tmp_path)
         report = {r["repository"]: r for r in _read(written["carry_over"])}
         assert (report["owner/a"]["outcome"], report["owner/a"]["decision"]) == ("matches_changed", "unsure")
-        assert (report["owner/g"]["outcome"], report["owner/g"]["decision"], report["owner/g"]["category"]) == (
+        assert (report["owner/g"]["outcome"], report["owner/g"]["decision"], report["owner/g"]["notes"]) == (
             "removed", "yes", "tips",
         )
         assert "owner/n" not in report

@@ -1,0 +1,6 @@
+# RQ5 categories of fixture guidance: this study's own, built by open coding
+# rq5_category_sample.csv. One entry per category:
+#   - code: one word, snake_case (the value used in the sheets' `categories`)
+#     name: short display name
+#     definition: what a repository's guidance must say to get this category
+categories: []

@@ -1283,7 +1283,6 @@ REPOSITORY_SHEET_NAME = "rq5_repository_coding_sheet.csv"
 SNIPPETS_MARKDOWN_NAME = "rq5_snippets.md"
 REPOSITORY_CODING_COLUMNS: tuple[str, ...] = (
     "decision",
-    "category",
     "notes",
 )
 REPOSITORY_SHEET_FIELDNAMES: tuple[str, ...] = (
@@ -1602,9 +1601,15 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
   developer reading many unfamiliar projects: do not look elsewhere in the
   repository, and do not rely on specialist knowledge of the project, its
   language or its frameworks.
-- `category`: required for `yes`. One or more categories, separated by `;`.
-  The category set is this study's own and is defined during coding.
 - `notes`: free text.
+
+## Category coding
+
+The fixture guidance of the repositories coded `yes` is categorized on a random
+sample, with this study's own categories: see `rq5_category_sample.csv`,
+`rq5_category_codebook.yaml` and `rq5_agreement_sheet.csv`, written by
+`python -m collection.rq5_category_sample`. The instructions are in
+`CATEGORY_CODING.md`.
 """
     path = output_dir / "README.md"
     path.write_text(text, encoding="utf-8")
@@ -1728,7 +1733,7 @@ def _back_up_coding(sheet_path: Path, matches_path: Path, backup_dir: Path) -> t
 def _write_carry_over_report(old_sheet: Path, outcome: dict[str, list[str]]) -> Path:
     """`<backup>_carry_over.csv`: each coded repository of the old sheet with
     its outcome (`unchanged`, `matches_changed` or `removed`) and its old
-    decision, category and notes."""
+    decision and notes."""
     with old_sheet.open("r", encoding="utf-8", newline="") as fh:
         old_rows = {row["repository"]: row for row in csv.DictReader(fh)}
     path = old_sheet.with_name(old_sheet.stem + "_carry_over.csv")
@@ -1762,7 +1767,7 @@ def carry_over_coding(
     """Copy manual coding from `old_sheet` into the freshly written `new_sheet`.
 
     A repository coded in `old_sheet` and still in `new_sheet` keeps its
-    decision, category and notes exactly as they were, whether or not its
+    decision and notes exactly as they were, whether or not its
     fixture matches changed. A repository coded before but absent from
     `new_sheet` (it no longer has a fixture match) is dropped. A repository new
     to `new_sheet` stays uncoded.
