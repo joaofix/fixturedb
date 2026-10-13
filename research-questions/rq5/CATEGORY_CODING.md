@@ -109,7 +109,7 @@ example for each.
 | Cleanup (`cleanup`) | Removing what fixtures or tests create. | "Cleanup runs from `afterAll` even when an assertion fails" |
 | Test isolation (`isolation`) | Keeping fixture state from leaking between tests. | "Every PG/MySQL container suite MUST own its fixture database." |
 | Sensitive information (`sensitive`) | No real credentials, personal or customer data in fixtures. | "Never commit secrets, credentials, or raw sensitive payloads in logs or fixtures." |
-| Other (`other`) | Mentions fixtures without saying how to use them, such as a pointer to another document. | "Test conventions, fixtures: HACKING.rst / TESTING.rst" |
+| Non-actionable guidance (`non_actionable`) | Mentions fixtures without telling the agent what to do: a fixture path in a command, a passing tip, a pointer to another document. | "Test conventions, fixtures: HACKING.rst / TESTING.rst" |
 
 ## Changing the categories
 

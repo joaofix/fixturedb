@@ -86,7 +86,7 @@ collection/          # Main pipeline code (the "library")
   between_group_comparison.py  # Statistical-test primitives (balance tests, effect sizes) used by research_questions/ below.
   rq1_prevalence_scan.py  # RQ1's own collection, independent of --dataset {a,c}: scans the raw
                      # github-search-raw/ universe for test/fixture/setup/teardown prevalence,
-                     # writes db/rq1_prevalence.db + research-questions/RQ1/*.csv. Run directly:
+                     # writes db/rq1_prevalence.db + research-questions/rq1/*.csv. Run directly:
                      # `python -m collection.rq1_prevalence_scan`
   rq5_agent_file_scan.py  # RQ5's own collection, for the repos with a Dataset A fixture (not the raw
                      # universe), at a required --snapshot-date -- via GitHub's API (batched), never a

@@ -9,7 +9,7 @@ from collection.rq5_agent_file_scan import CSV_OUTPUT_DIR as RQ5_CSV_DIR
 
 
 def test_rq1_csv_outputs_live_under_research_questions_RQ1():
-    assert RQ1_CSV_DIR == paths.ROOT_DIR / "research-questions" / "RQ1"
+    assert RQ1_CSV_DIR == paths.ROOT_DIR / "research-questions" / "rq1"
 
 
 def test_rq5_review_outputs_live_under_research_questions_rq5():
