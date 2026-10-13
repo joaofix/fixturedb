@@ -1,6 +1,34 @@
-# RQ5 categories of fixture guidance: this study's own, built by open coding
-# rq5_category_sample.csv. One entry per category:
-#   - code: one word, snake_case (the value used in the sheets' `categories`)
-#     name: short display name
-#     definition: what a repository's guidance must say to get this category
-categories: []
+categories:
+  - code: location
+    name: Location
+    definition: Where fixtures live or must be placed.
+  - code: reuse
+    name: Reuse
+    definition: Use or reuse existing fixtures, or names the ones available.
+  - code: creation
+    name: Fixture creation
+    definition: When to add a fixture, or which tool or procedure creates it.
+  - code: framework
+    name: Framework features
+    definition: How to use the test framework's fixture features, such as which mechanism (fixtures, setUp, hooks, wrappers) and at what scope (per test, module, session).
+  - code: cleanup
+    name: Cleanup
+    definition: Removing what fixtures or tests create.
+  - code: isolation
+    name: Test isolation
+    definition: Keeping fixture state from leaking between tests (no shared mutation, read-only, parallel-safe), including per-test resources such as temporary directories or private databases.
+  - code: test_doubles
+    name: Test doubles
+    definition: Mocks, stubs or fakes provided by fixtures or reset in hooks.
+  - code: design
+    name: Fixture design
+    definition: Qualities a fixture should have, such as minimal, deterministic, synthetic or typed.
+  - code: sensitive
+    name: Sensitive information
+    definition: No real credentials, personal or customer data in fixtures.
+  - code: maintenance
+    name: Fixture maintenance
+    definition: Updating, regenerating, versioning or not editing fixtures.
+  - code: other
+    name: Other
+    definition: Mentions fixtures without instructing how to use them, such as a pointer to another document.

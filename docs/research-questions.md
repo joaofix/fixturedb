@@ -99,8 +99,8 @@ repositories whose file list was fetched in parts.
 A fixture keyword match is not fixture guidance: many "fixture"/"fixtures"
 matches refer to test-data files, which are out of scope. The final RQ5 number
 comes from manual coding of `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per
-repository with a fixture match in its guidance files (coding values in
-`research-questions/rq5/README.md`). The matched lines are read in
+repository with a fixture match in its guidance files (the rules, with examples,
+are in `research-questions/rq5/DECISION_CODING.md`). The matched lines are read in
 `research-questions/rq5/rq5_snippets.md`, one section per sheet row, with their
 file path, whether they come from a root or a nested file, their context and
 a GitHub link. A repository is coded `yes` when at least one match, in any of

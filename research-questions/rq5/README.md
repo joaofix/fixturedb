@@ -29,7 +29,8 @@ between files are not followed. Both lists are in
   context on each side, ordered by term (conftest, beforeEach, afterEach, beforeAll, afterAll, test setup, setup and teardown, fixture, fixtures), then
   location, path and line. The order is only a reading order, not a
   classification.
-- `rq5_skipped_repositories.csv`: repositories that could not be analyzed.
+- `rq5_skipped_repositories.csv`: repositories that could not be analyzed,
+  with the reason; written only when there is at least one.
 
 A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
 `collection/rq5_agent_file_scan.py`.
@@ -53,7 +54,8 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
   Decide from the matched lines and the lines around them only, as an average
   developer reading many unfamiliar projects: do not look elsewhere in the
   repository, and do not rely on specialist knowledge of the project, its
-  language or its frameworks.
+  language or its frameworks. The full rules, with examples, are in
+  `DECISION_CODING.md`.
 - `notes`: free text.
 
 ## Category coding

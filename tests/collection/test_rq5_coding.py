@@ -253,6 +253,7 @@ class TestReadme:
         assert "fixtures used by tests" in readme
         assert "inferred from the terms near the match" in readme
         assert "Decide from the matched lines and the lines around them only" in readme
+        assert "DECISION_CODING.md" in readme
 
     def test_points_to_the_category_coding_files(self, tmp_path):
         readme = write_rq5_readme(tmp_path).read_text()

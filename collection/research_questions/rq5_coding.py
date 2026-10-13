@@ -203,8 +203,10 @@ def render_category_section(category: dict[str, Any] | None) -> list[str]:
         "| Category | Definition | Repositories | % of sample |",
         "|---|---|---|---|",
     ]
-    for entry in category["codebook"]:
-        count = category["category_counts"][entry.code]
+    counts = category["category_counts"]
+    # Most frequent first; ties keep the codebook order.
+    for entry in sorted(category["codebook"], key=lambda e: -counts[e.code]):
+        count = counts[entry.code]
         lines.append(f"| {entry.name} | {entry.definition} | {count:,} | {pct(_ratio(count, size))} |")
     median, minimum, maximum = category["categories_per_repository"]
     lines += [

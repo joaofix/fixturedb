@@ -2,6 +2,7 @@
 two-line context around each match, and the review outputs."""
 
 import csv
+import sqlite3
 import sys
 from unittest.mock import patch
 
@@ -295,6 +296,18 @@ class TestWriteReviewOutputs:
             rows = list(csv.reader(fh))
         assert tuple(rows[0]) == SKIPPED_CSV_FIELDNAMES
         assert rows[1] == ["owner/d", "java", "no_commit_at_or_before_cutoff"]
+
+    def test_no_skipped_file_when_every_repository_was_analyzed(self, v4_db, tmp_path):
+        out = tmp_path / "out"
+        write_review_outputs(v4_db, out)
+        assert (out / "rq5_skipped_repositories.csv").exists()
+
+        with sqlite3.connect(v4_db) as conn:
+            conn.execute("UPDATE repo_scan SET fetch_ok = 1, error_reason = NULL")
+        written = write_review_outputs(v4_db, out)
+
+        assert "skipped" not in written
+        assert not (out / "rq5_skipped_repositories.csv").exists()  # the earlier file is removed
 
 
 class TestMainRequiresSnapshotDate:

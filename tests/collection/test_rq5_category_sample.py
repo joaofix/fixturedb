@@ -332,6 +332,14 @@ class TestCategoryAnalysis:
         assert f"| Python | {sample_python} | " in report and "| 10 | 25.0% |" in report
         assert "No second coding yet." in report
 
+    def test_categories_are_listed_most_frequent_first(self, rq5_dir):
+        _sample(rq5_dir)
+        codes = {o: "cleanup" for o in range(1, 30)}
+        codes[1] = "location; cleanup"
+        _code(rq5_dir, codes)
+        report = generate_report(_results(), compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME))
+        assert report.index("| Cleanup | Says how fixtures clean up. | 29 |") < report.index("| Fixture location |")
+
     def test_off_checkpoint_warns_and_reports_the_actual_size(self, rq5_dir):
         _sample(rq5_dir)
         _code(rq5_dir, {o: "location" for o in range(1, 31)})

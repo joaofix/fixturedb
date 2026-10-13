@@ -1576,7 +1576,8 @@ between files are not followed. Both lists are in
   context on each side, ordered by term ({", ".join(SNIPPET_TERM_ORDER)}), then
   location, path and line. The order is only a reading order, not a
   classification.
-- `rq5_skipped_repositories.csv`: repositories that could not be analyzed.
+- `rq5_skipped_repositories.csv`: repositories that could not be analyzed,
+  with the reason; written only when there is at least one.
 
 A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
 `collection/rq5_agent_file_scan.py`.
@@ -1600,7 +1601,8 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
   Decide from the matched lines and the lines around them only, as an average
   developer reading many unfamiliar projects: do not look elsewhere in the
   repository, and do not rely on specialist knowledge of the project, its
-  language or its frameworks.
+  language or its frameworks. The full rules, with examples, are in
+  `DECISION_CODING.md`.
 - `notes`: free text.
 
 ## Category coding
@@ -1636,7 +1638,8 @@ def write_review_outputs(
     - `rq5_snippets.md`: a read-only view of the repository sheet, see
       `write_snippets_markdown()`.
     - `rq5_skipped_repositories.csv`: every repository that could not be
-      analyzed, with the reason.
+      analyzed, with the reason; only written when there is at least one
+      (an older file is removed otherwise).
     - `README.md`: the files and the allowed manual-coding values.
 
     When the sheet in `output_dir` already holds coding, it and its
@@ -1708,11 +1711,16 @@ def write_review_outputs(
             "WHERE fetch_ok = 0 ORDER BY repo_name"
         ).fetchall()
     skipped_path = output_dir / "rq5_skipped_repositories.csv"
-    with skipped_path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.writer(fh)
-        writer.writerow(SKIPPED_CSV_FIELDNAMES)
-        writer.writerows(skipped_rows)
-    written["skipped"] = skipped_path
+    if skipped_rows:
+        with skipped_path.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(SKIPPED_CSV_FIELDNAMES)
+            writer.writerows(skipped_rows)
+        written["skipped"] = skipped_path
+    else:
+        # Only written when a repository could not be analyzed; a file left by
+        # an earlier scan would otherwise report skips this scan no longer has.
+        skipped_path.unlink(missing_ok=True)
     return written
 
 
