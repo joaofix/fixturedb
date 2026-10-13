@@ -1,6 +1,6 @@
 # RQ5 -- Manual coding of fixture guidance
 
-Generated: 2026-10-13 04:00:00 UTC
+Generated: 2026-10-13 04:09:14 UTC
 
 Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per repository with a fixture keyword match in its guidance files.
 

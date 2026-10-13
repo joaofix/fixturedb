@@ -2,7 +2,7 @@
 
 > How often do agent configuration files mention test-related and fixture-related guidance, for the repositories that contribute a fixture to Dataset A?
 
-Generated: 2026-10-09 14:53:09 UTC
+Generated: 2026-10-13 04:09:13 UTC
 
 Snapshot date: 2026-10-06 (each repository's files are read at its last commit on or before this date).
 Keyword catalog: `collection/heuristics/rq5_agent_file_keywords.yaml`.
