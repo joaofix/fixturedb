@@ -6,16 +6,16 @@ fixtures in their agent files (`yes` in `rq5_repository_coding_sheet.csv`; see
 where fixtures live, how to clean them up, what to keep out of them, and so on.
 We sort it into categories that we built ourselves from the data.
 
-We do not categorize all 556 repositories. We categorize a random sample, large
+We do not categorize all 586 repositories. We categorize a random sample, large
 enough to describe the whole group with a known margin of error.
 
 ## The files
 
 | File | What it is |
 |---|---|
-| `rq5_category_sample.csv` | The sheet you code: the repositories coded `yes`, in random order, with their fixture lines |
+| `rq5_category_sample.csv` | The sheet you code: the repositories coded `yes`, in random order |
 | `rq5_category_codebook.yaml` | The list of categories: a code, a name and a definition for each |
-| `rq5_snippets.md` | The full matched lines with more context, for when the sheet is not enough |
+| `rq5_snippets.md` | Where you read each repository's fixture lines, with context and GitHub links |
 | `rq5_agreement_sheet.csv` | 20 repositories for a second coder (only when the agreement check is done) |
 | `../rq5_coding.md` | The results, regenerated from the sheets |
 
@@ -23,43 +23,59 @@ This step never changes the decisions in `rq5_repository_coding_sheet.csv`.
 
 ## How the sample works
 
-All the 556 repositories coded `yes` were shuffled once, at random, with a
-fixed seed (**20261012**) so that anyone can reproduce the same order. Because
-the order is random, the first *n* rows are a random sample of size *n*. So we
-simply code from the top, and wherever we stop, what we have coded is a valid
-random sample.
+The rows are in random order, so the first *n* rows are a random sample of
+size *n*. So we simply code from the top, and at a checkpoint what we have
+coded is a valid random sample.
+
+The order was made in two steps:
+
+1. **First pass.** All the 556 repositories coded `yes` in the first pass were
+   shuffled once, at random, with a fixed seed (**20261012**) so that anyone
+   can reproduce the same order. The first 83 rows (the ±10% checkpoint for
+   N = 556: **83** rows, and **228** for ±5%) were coded.
+2. **Decision review (2026-10-13).** A second review of the decisions changed
+   the population to **586**: 8 repositories left `yes` and 38 joined. One of
+   the 8 had been coded, so 82 coded rows remained, out of the 548 repositories
+   of the first pass that are still `yes`. The sample was rebuilt once as a
+   **proportional stratified sample**: the 548 keep their order and coding, the
+   38 new ones were shuffled with seed **20261014**, and the two are
+   interleaved at the same rate. Rows 1–82 are the coded rows of the first
+   pass, rows 83–88 the first 6 of the 38 (82/548 of 38 = 5.7, rounded to 6),
+   and after that each row comes from the group further below its share.
+   Because both groups are sampled at the same rate, the coded rows are again
+   a random sample of all 586, with no weighting.
 
 There are two good places to stop, marked in the `checkpoint` column:
 
 | Stop after | Margin of error | `checkpoint` column |
 |---|---|---|
-| **83** rows | ±10% | `83` on rows 1–83 |
-| **228** rows | ±5% | `228` on rows 84–228 |
+| **88** rows | ±9.6% | `88` on rows 1–88 |
+| **233** rows | ±5% | `233` on rows 89–233 |
 
 "±10%" means that if 30% of the coded repositories have a category, the true
-share among all 556 is, with 95% confidence, between 20% and 40%.
+share among all 586 is, with 95% confidence, between 20% and 40%.
 
 <details>
-<summary>Where 83 and 228 come from</summary>
+<summary>Where 88 and 233 come from</summary>
 
 Cochran's formula at 95% confidence (z = 1.96), with p = 0.5 (the most
-cautious choice) and the finite population correction for N = 556, rounded up:
+cautious choice) and the finite population correction, rounded up:
 
 - n0 = z² · p · (1 − p) / e²
 - n = n0 / (1 + (n0 − 1) / N)
 
-For e = 0.10 this gives 82.02, so 83; for e = 0.05 it gives 227.43, so 228. The
-margin reported for the size actually reached is
-z · √(p (1 − p) / n · (N − n) / (N − 1)): 9.9% at 83 and 5.0% at 228.
+For N = 586, e = 0.10 gives 82.64, so 83; e = 0.05 gives 232.28, so 233. The
+first checkpoint is 88 rather than 83 because 88 is where both groups are at
+the same rate (82 of 548 and 6 of 38); at 233 there are 218 and 15. The margin
+reported for the size actually reached is
+z · √(p (1 − p) / n · (N − n) / (N − 1)): 9.6% at 88 and 5.0% at 233.
 </details>
 
 ## Coding a row
 
-Each row of `rq5_category_sample.csv` is one repository. The `snippets` cell
-shows every fixture line found in it: a row id and the file it comes from, then
-the line before, the matched line (marked `>`) and the line after. If a
-repository has so much text that it does not fit in one cell, the cell ends
-with a note pointing to its section in `rq5_snippets.md`.
+Each row of `rq5_category_sample.csv` is one repository. Read its fixture lines
+in `rq5_snippets.md`: search for the repository's name to find its section,
+which shows every matched line with two lines of context and a GitHub link.
 
 You fill three columns:
 
@@ -81,8 +97,8 @@ A few rules keep the coding consistent:
   something else adds no category.
 - **Repeated text counts once.** The same guidance in `AGENTS.md` and
   `CLAUDE.md` is one piece of guidance.
-- **Use only what you see**, as in the first step: the lines in the sheet (or in
-  `rq5_snippets.md`), without looking elsewhere in the repository.
+- **Use only what you see**, as in the first step: the lines in
+  `rq5_snippets.md`, without looking elsewhere in the repository.
 - **Every row gets at least one category.** If a repository looks like it
   should not have been `yes`, say so in `notes` and give it the closest
   category; do not change the decision sheet from here.
@@ -99,17 +115,25 @@ example for each.
 
 | Category (code) | What the guidance says | Example |
 |---|---|---|
-| Location (`location`) | Where fixtures live or must be placed. | "Fixtures (sample PDF, docx, xlsx, archive, etc.) live in `test/fixtures/`." |
-| Reuse (`reuse`) | Use or reuse existing fixtures, or names the ones available. | "Use the shared `context` pytest fixture from `test/config/conftest.py`" |
-| Framework features (`framework`) | How to use the framework's fixture features: which mechanism, at what scope. | "Prefer fixtures over setup/teardown methods" |
-| Test doubles (`test_doubles`) | Mocks, stubs or fakes provided by fixtures or reset in hooks. | "Unit test conftest provides `driver` fixture as MagicMock" |
-| Fixture creation (`creation`) | When to add a fixture, or which tool or procedure creates it. | "Add fixture in `tests/fixtures/<tool_name>_output.(json\|xml\|txt)`" |
-| Fixture design (`design`) | Qualities a fixture should have: minimal, deterministic, synthetic, typed. | "Use the smallest synthetic fixture that crosses the required boundary" |
-| Fixture maintenance (`maintenance`) | Updating, regenerating, versioning or not editing fixtures. | "All binary fixtures under `tests/fixtures/` MUST be tracked via git-lfs." |
+| Location (`location`) | Where fixtures live or should be placed. | "Fixtures (sample PDF, docx, xlsx, archive, etc.) live in `test/fixtures/`." |
+| Reuse (`reuse`) | Using existing fixtures. | "Use the shared `context` pytest fixture from `test/config/conftest.py`" |
+| Framework features (`framework`) | Which fixture mechanism and scope to use. | "Prefer fixtures over setup/teardown methods" |
+| Test doubles (`test_doubles`) | Mocks and stubs handled by fixtures. | "Unit test conftest provides `driver` fixture as MagicMock" |
+| Fixture creation (`creation`) | When and how to create fixtures. | "Add fixture in `tests/fixtures/<tool_name>_output.(json\|xml\|txt)`" |
+| Fixture design (`design`) | Qualities that fixtures should have. | "Use the smallest synthetic fixture that crosses the required boundary" |
+| Fixture maintenance (`maintenance`) | Keeping fixtures up to date. | "All binary fixtures under `tests/fixtures/` MUST be tracked via git-lfs." |
 | Cleanup (`cleanup`) | Removing what fixtures or tests create. | "Cleanup runs from `afterAll` even when an assertion fails" |
-| Test isolation (`isolation`) | Keeping fixture state from leaking between tests. | "Every PG/MySQL container suite MUST own its fixture database." |
-| Sensitive information (`sensitive`) | No real credentials, personal or customer data in fixtures. | "Never commit secrets, credentials, or raw sensitive payloads in logs or fixtures." |
-| Non-actionable mention (`non_actionable`) | Mentions fixtures without telling the agent what to do: a fixture path in a command, a passing tip, a pointer to another document. | "Test conventions, fixtures: HACKING.rst / TESTING.rst" |
+| Test isolation (`isolation`) | Avoiding state leaks between tests. | "Every PG/MySQL container suite MUST own its fixture database." |
+| Sensitive information (`sensitive`) | No real or private data in fixtures. | "Never commit secrets, credentials, or raw sensitive payloads in logs or fixtures." |
+| Non-actionable mention (`non_actionable`) | Mentions fixtures without instructions. | "Test conventions, fixtures: HACKING.rst / TESTING.rst" |
+
+Two boundaries need care (they are also `note`s in the codebook):
+
+- **Reuse** also covers guidance that only lists or names the fixtures
+  available, such as a table of the fixtures in `conftest.py`.
+- **Fixture creation** is about the tool or procedure that creates a fixture
+  ("Build fixtures with `@verdaccio/test-helper`"); what the fixture should be
+  like ("deterministic", "synthetic") is **Fixture design**.
 
 ## Changing the categories
 
@@ -119,6 +143,8 @@ one:
 1. Edit `rq5_category_codebook.yaml`. Each entry has a `code` (one word in
    snake_case, used in the sheet), a `name` (shown in the results) and a
    `definition` (written so that someone else could apply it without asking).
+   An entry can also have a `note`: a hint for coders on a boundary case, which
+   is not shown in the results.
 2. Go back over the rows already coded and update their `categories` to match.
 
 A code used in the sheet but missing from the codebook stops the analysis with
@@ -131,8 +157,8 @@ To show that the categories are clear enough for someone else to apply:
 1. Once at least 20 rows are coded, run
    `python -m collection.rq5_category_sample agreement-sheet`. It picks 20
    repositories at random from the coded rows (seed **20261013**) and writes
-   `rq5_agreement_sheet.csv` with their snippets and an empty `categories`
-   column.
+   `rq5_agreement_sheet.csv` with an empty `categories` column. The second
+   coder reads the lines in `rq5_snippets.md`, like the first.
 2. The second coder fills `categories` for all 20 repositories, using only the
    codebook and without looking at the first coding.
 3. Run `python -m collection.rq5_category_sample agreement`, or regenerate the
@@ -157,7 +183,9 @@ python -m collection.rq5_category_sample agreement-sheet
 python -m collection.rq5_category_sample agreement
 ```
 
-The sample command refuses to overwrite a sheet that already has coding.
+The sample command refuses to overwrite a sheet that already has coding. It
+wrote the first-pass order; the rebuild after the decision review was done
+once, by hand, and the command is not run again.
 
 ## What the results show
 
@@ -168,7 +196,7 @@ The "Categories" section of `rq5_coding.md` reports:
   sample (a repository can have several categories, so the shares add up to
   more than 100%);
 - how many categories a repository has (median, minimum, maximum);
-- the languages of the sample next to those of all 556 repositories;
+- the languages of the sample next to those of all 586 repositories;
 - the agreement with the second coder, once available.
 
 ## Things that break the sample

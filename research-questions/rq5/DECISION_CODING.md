@@ -1,9 +1,7 @@
 # RQ5 decision coding: is this guidance about test fixtures?
 
 The keyword search finds every line in a repository's agent guidance files
-(`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`) that mentions a fixture term such as
-`fixture`, `conftest`, `beforeEach` or `test setup`. Many of those lines are not
-about test fixtures at all. This step decides, for each repository, whether its
+that mentions a fixture term such as `fixture`, `conftest`, `beforeEach` or `test setup`. Many of those lines are not about test fixtures at all. This step decides, for each repository, whether its
 guidance really is about test fixtures.
 
 The decision goes in the `decision` column of `rq5_repository_coding_sheet.csv`.
@@ -11,13 +9,12 @@ The matched lines are read in `rq5_snippets.md` (section N is row N of the
 sheet). The repositories coded `yes` are later categorized; see
 `CATEGORY_CODING.md`.
 
-## The three answers
+## The two answers
 
 | Decision | Meaning |
 |---|---|
 | `yes` | At least one match is about test fixtures. |
-| `no` | No match is about test fixtures. |
-| `unsure` | A match might be about test fixtures, but the text does not settle it. |
+| `no` | No match is about test fixtures, or none clearly is. |
 
 One decision per repository, over all of its matches in all of its guidance
 files. **One good match is enough for `yes`.**
@@ -62,9 +59,14 @@ on) are fixtures. Saying where they live is enough.
 > "Fixtures (sample PDF, docx, xlsx, archive, etc.) live in `test/fixtures/`.
 > Reuse them rather than generating new files on the fly." → `yes`
 
-A guidance file that is itself part of a test fixture counts too:
+A guidance file that is itself part of a test fixture counts too, when its
+body speaks to the reader about the fixture. When "fixture" appears only in
+the file's title, the file is test data, not guidance:
 
-> "# Git streaming fixture agent" (in `tests/runner-e2e/fixtures/…/AGENTS.md`) → `yes`
+> "Guidance for coding agents working in this fixture project." (in
+> `…/fixtures/clean/CLAUDE.md`) → `yes`
+>
+> "# Git streaming fixture agent" (in `tests/runner-e2e/fixtures/…/AGENTS.md`) → `no`
 
 ### Pointers and "don't" rules: `yes`
 
@@ -97,6 +99,12 @@ variables, an emulator) are not fixtures.
 >
 > "`src/setupTests.ts`", "e2e/ — End-to-end test setup" → `no`
 
+A shared setup file *is* a fixture when the text says what it sets up for the
+tests, such as mocks for every test or a temporary home directory:
+
+> "Shared test mocks belong in `src/test-setup.ts` and are wired through
+> `test.setupFiles`" → `yes`
+
 ### Fixtures that are not for tests: `no`
 
 The word "fixture" also names demo inputs, screenshots, seed data for running
@@ -128,21 +136,20 @@ A **skill file** in the repository (for example under `.agents/skills/`) does
 count: the agent reads it when it looks for guidance, even if it only holds
 examples.
 
-## When to answer `unsure`
+## When the text does not settle it: `no`
 
-Answer `unsure` when the match could be about test fixtures but nothing in the
-text makes it clear. Typical cases:
+If a match could be about test fixtures but nothing in the text makes it
+clear, the answer is `no`: an unclear case is never counted as fixture
+guidance. Typical cases:
 
-- **The link to tests needs insider knowledge.** "The per-fixture operation is
-  unchanged: read the spec and drive the verdict to `match-error`…" only makes
-  sense if you know the project's conformance bench.
 - **The test context is only implied by a vague phrase.** "`pnpm fixtures:check`
   — use this rather than ad-hoc emit-and-diff", or "the geometry is the fixture".
-- **A file sits in a fixtures folder but is described as something else**, such
-  as a helper or a lookup table.
+- **"Fixture" appears in passing**, with a hint of tests nearby but nothing
+  that ties it to them ("Wave-2 with full fixtures + tests" in a status list).
 
-If the text never clearly says the fixture is a test fixture, prefer `unsure`
-over `yes`.
+Check the rules above first: golden or conformance cases that implementations
+must pass, and fixture files under `tests/fixtures/`, are `yes` even when the
+word "test" is missing.
 
 ## Quick reference
 
@@ -151,10 +158,12 @@ over `yes`.
 | A pytest/`conftest.py` fixture, or a setup/teardown hook in tests | `yes` |
 | Where test fixture files live, or what test data to use | `yes` |
 | A pointer to a doc about test fixtures, or a "don't" rule about them | `yes` |
-| A guidance file that is itself a test fixture, or a skill file in the repo | `yes` |
+| A guidance file that is itself a test fixture and says so, or a skill file in the repo | `yes` |
+| A fixture file where "fixture" appears only in its title | `no` |
 | A mock with no fixture or hook around it | `no` |
-| Test configuration, a generic setup file, runner settings | `no` |
+| A shared setup file described by what it sets up (mocks, temp home) | `yes` |
+| Test configuration, a setup file only named, runner settings | `no` |
 | Demo, seed, benchmark, screenshot or documentation "fixtures" | `no` |
 | The word with another meaning (router guard, tool name) | `no` |
 | Vendored third-party guidance, or an example prompt | `no` |
-| Might be a test fixture, but the text does not settle it | `unsure` |
+| Might be a test fixture, but the text does not settle it | `no` |

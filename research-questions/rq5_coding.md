@@ -1,6 +1,6 @@
 # RQ5 -- Manual coding of fixture guidance
 
-Generated: 2026-10-13 04:09:14 UTC
+Generated: 2026-10-13 20:55:21 UTC
 
 Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per repository with a fixture keyword match in its guidance files.
 
@@ -8,50 +8,48 @@ Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per re
 
 | Statistic | Count | Percentage | Denominator |
 |---|---|---|---|
-| Coded `yes` | 556 | 28.1% | 1,978 repositories with a guidance file |
-| Coded `yes` or `unsure` (every `unsure` counted as `yes`) | 620 | 31.3% | 1,978 repositories with a guidance file |
+| Coded `yes` | 586 | 29.6% | 1,978 repositories with a guidance file |
 
 ## By primary language
 
 | Language | With guidance file | Coded `yes` | Percentage |
 |---|---|---|---|
-| Python | 724 | 222 | 30.7% |
-| Java | 159 | 40 | 25.2% |
-| JavaScript | 193 | 52 | 26.9% |
-| TypeScript | 902 | 242 | 26.8% |
+| Python | 724 | 227 | 31.4% |
+| Java | 159 | 43 | 27.0% |
+| JavaScript | 193 | 56 | 29.0% |
+| TypeScript | 902 | 260 | 28.8% |
 
 ## Keyword search precision
 
 | Coding | Repositories | Percentage of repositories with a fixture match |
 |---|---|---|
-| `yes` | 556 | 81.9% |
-| `no` | 59 | 8.7% |
-| `unsure` | 64 | 9.4% |
+| `yes` | 586 | 86.3% |
+| `no` | 93 | 13.7% |
 | Total | 679 | -- |
 
-Precision: 556 of 679 (81.9%); 64 coded `unsure`.
+Precision: 586 of 679 (86.3%).
 
 ## Categories
 
 ### Sampling
 
-Population: the 556 repositories coded `yes`, in one random permutation (seed 20261012, not stratified), coded from the top; checkpoint 83 reached. Sample size: 83. Confidence: 95%. Margin of error: 9.9% (p = 0.5, with the finite population correction).
+Population: the 586 repositories coded `yes`, ordered as a proportional stratified random sample: the 548 repositories coded `yes` in the first pass and still `yes`, in their random order (seed 20261012), and the 38 coded `yes` in the decision review, in a random order (seed 20261014), interleaved so that every checkpoint holds both at the same rate; coded from the top; no checkpoint reached (88 and 233): the coded prefix stops at 82. Sample size: 82. Confidence: 95%. Margin of error: 10.0% (p = 0.5, with the finite population correction).
 
 ### Categories of fixture guidance
 
 | Category | Definition | Repositories | % of sample |
 |---|---|---|---|
-| Location | Where fixtures live or must be placed. | 25 | 30.1% |
-| Reuse | Use or reuse existing fixtures, or names the ones available. | 16 | 19.3% |
-| Framework features | How to use the test framework's fixture features, such as which mechanism (fixtures, setUp, hooks, wrappers) and at what scope (per test, module, session). | 13 | 15.7% |
-| Test doubles | Mocks, stubs or fakes provided by fixtures or reset in hooks. | 13 | 15.7% |
-| Fixture creation | When to add a fixture, or which tool or procedure creates it. | 12 | 14.5% |
-| Fixture design | Qualities a fixture should have, such as minimal, deterministic, synthetic or typed. | 12 | 14.5% |
-| Fixture maintenance | Updating, regenerating, versioning or not editing fixtures. | 12 | 14.5% |
-| Cleanup | Removing what fixtures or tests create. | 11 | 13.3% |
-| Test isolation | Keeping fixture state from leaking between tests (no shared mutation, read-only, parallel-safe), including per-test resources such as temporary directories or private databases. | 9 | 10.8% |
-| Non-actionable mention | Mentions fixtures without telling the agent what to do, such as a fixture path in a command, a passing tip, or a pointer to another document. | 8 | 9.6% |
-| Sensitive information | No real credentials, personal or customer data in fixtures. | 5 | 6.0% |
+| Location | Where fixtures live or should be placed | 24 | 29.3% |
+| Reuse | Using existing fixtures | 16 | 19.5% |
+| Framework features | Which fixture mechanism and scope to use | 13 | 15.9% |
+| Test doubles | Mocks and stubs handled by fixtures | 13 | 15.9% |
+| Fixture creation | When and how to create fixtures | 12 | 14.6% |
+| Fixture design | Qualities that fixtures should have | 12 | 14.6% |
+| Fixture maintenance | Keeping fixtures up to date | 12 | 14.6% |
+| Cleanup | Removing what fixtures or tests create | 11 | 13.4% |
+| Test isolation | Avoiding state leaks between tests | 9 | 11.0% |
+| Non-actionable mention | Mentions fixtures without instructions | 8 | 9.8% |
+| Sensitive information | No real or private data in fixtures | 5 | 6.1% |
 
 A repository can belong to several categories, so percentages do not add up to 100%.
 
@@ -59,12 +57,12 @@ Categories per repository: median 2, minimum 1, maximum 3.
 
 ### Languages
 
-| Language | Coded sample (n = 83) | % | All `yes` repositories (N = 556) | % |
+| Language | Coded sample (n = 82) | % | All `yes` repositories (N = 586) | % |
 |---|---|---|---|---|
-| Python | 31 | 37.3% | 222 | 39.9% |
-| Java | 5 | 6.0% | 40 | 7.2% |
-| JavaScript | 8 | 9.6% | 52 | 9.4% |
-| TypeScript | 39 | 47.0% | 242 | 43.5% |
+| Python | 30 | 36.6% | 227 | 38.7% |
+| Java | 5 | 6.1% | 43 | 7.3% |
+| JavaScript | 8 | 9.8% | 56 | 9.6% |
+| TypeScript | 39 | 47.6% | 260 | 44.4% |
 
 ### Agreement
 

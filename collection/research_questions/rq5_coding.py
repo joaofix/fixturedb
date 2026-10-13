@@ -38,12 +38,12 @@ from ..rq5_agent_file_scan import (
     REPOSITORY_SHEET_FIELDNAMES,
     REPOSITORY_SHEET_NAME,
     load_repo_guidance,
+    load_repo_languages,
 )
 from ..rq5_category_sample import (
     AGREEMENT_SHEET_NAME,
     CODEBOOK_NAME,
     SAMPLE_NAME,
-    SAMPLE_SEED,
     AgreementResult,
     CategoryCodingError,
     agreement_status,
@@ -53,6 +53,7 @@ from ..rq5_category_sample import (
     load_coded_sample,
     parse_categories,
     sample_margin_of_error,
+    sampling_design,
 )
 from ._shared import OUTPUT_DIR, pct, write_markdown_report
 from .rq5 import DISPLAY_LABELS, DISPLAY_LANGUAGES
@@ -87,7 +88,7 @@ def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
             continue
         if decision not in DECISION_VALUES:
             problems.append(f"{repo}: decision {decision!r} is not one of {DECISION_VALUES}")
-        coded.append({"repository": repo, "language": row["primary_language"], "decision": decision})
+        coded.append({"repository": repo, "decision": decision})
 
     if uncoded or problems:
         lines = []
@@ -97,6 +98,15 @@ def load_coded_sheet(path: Path = SHEET_PATH) -> list[dict[str, Any]]:
         lines += problems
         raise CodingIncompleteError(f"{path} is not fully coded:\n" + "\n".join(lines))
     return coded
+
+
+def attach_languages(coded: list[dict[str, Any]], languages: dict[str, str]) -> list[dict[str, Any]]:
+    """`coded` with each repository's primary language (from the scan
+    database; the coding sheet does not repeat it)."""
+    missing = [row["repository"] for row in coded if row["repository"] not in languages]
+    if missing:
+        raise CodingIncompleteError(f"no language in the scan database for: {', '.join(missing[:10])}")
+    return [{**row, "language": languages[row["repository"]]} for row in coded]
 
 
 def guidance_file_counts(db_path: Path = DB_PATH) -> Counter:
@@ -118,14 +128,16 @@ def compute_results(coded: list[dict[str, Any]], with_guidance_file: Counter) ->
         "with_fixture_match": len(coded),
         "yes": decisions["yes"],
         "no": decisions["no"],
-        "unsure": decisions["unsure"],
         "yes_by_language": yes_by_language,
     }
 
 
-def compute_category_results(sheet_path: Path = SHEET_PATH) -> dict[str, Any] | None:
+def compute_category_results(
+    sheet_path: Path = SHEET_PATH, languages: dict[str, str] | None = None
+) -> dict[str, Any] | None:
     """The category analysis of the coded prefix of the category sample next
-    to `sheet_path`, or None if the sample has not been written yet."""
+    to `sheet_path`, or None if the sample has not been written yet. Primary
+    languages come from `languages` (default: the scan database)."""
     directory = sheet_path.parent
     sample_path = directory / SAMPLE_NAME
     if not sample_path.exists():
@@ -134,6 +146,10 @@ def compute_category_results(sheet_path: Path = SHEET_PATH) -> dict[str, Any] | 
     sample = load_coded_sample(sample_path, codebook)
     check_sample_matches_population(sample, sheet_path)
 
+    languages = load_repo_languages() if languages is None else languages
+    unknown = [row["repository"] for row in sample.rows if row["repository"] not in languages]
+    if unknown:
+        raise CategoryCodingError(f"no language in the scan database for: {', '.join(unknown[:10])}")
     coded = sample.coded
     per_repo = [set(parse_categories(row["categories"])) for row in coded]
     sizes = [len(codes) for codes in per_repo]
@@ -146,8 +162,8 @@ def compute_category_results(sheet_path: Path = SHEET_PATH) -> dict[str, Any] | 
         "codebook": codebook,
         "category_counts": Counter(code for codes in per_repo for code in codes),
         "categories_per_repository": (statistics.median(sizes), min(sizes), max(sizes)) if sizes else None,
-        "sample_languages": Counter(row["primary_language"] for row in coded),
-        "population_languages": Counter(row["primary_language"] for row in sample.rows),
+        "sample_languages": Counter(languages[row["repository"]] for row in coded),
+        "population_languages": Counter(languages[row["repository"]] for row in sample.rows),
         "agreement": load_agreement(directory, codebook, sample) if coded else None,
         "agreement_status": agreement_status(directory),
     }
@@ -193,8 +209,8 @@ def render_category_section(category: dict[str, Any] | None) -> list[str]:
     lines += [
         "### Sampling",
         "",
-        f"Population: the {population:,} repositories coded `yes`, in one random permutation (seed "
-        f"{SAMPLE_SEED}, not stratified), coded from the top; {checkpoint_text}. Sample size: {size:,}. "
+        f"Population: the {population:,} repositories coded `yes`, ordered as {sampling_design(population)}; "
+        f"coded from the top; {checkpoint_text}. Sample size: {size:,}. "
         f"Confidence: 95%. Margin of error: {pct(category['margin_of_error'])} (p = 0.5, with the finite "
         "population correction).",
         "",
@@ -260,7 +276,6 @@ def generate_report(results: dict[str, Any], category: dict[str, Any] | None = N
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     total = results["with_guidance_file"]["all"]
     matched = results["with_fixture_match"]
-    yes_or_unsure = results["yes"] + results["unsure"]
     lines = [
         "# RQ5 -- Manual coding of fixture guidance",
         "",
@@ -274,8 +289,6 @@ def generate_report(results: dict[str, Any], category: dict[str, Any] | None = N
         "|---|---|---|---|",
         f"| Coded `yes` | {results['yes']:,} | {pct(_ratio(results['yes'], total))} | "
         f"{total:,} repositories with a guidance file |",
-        f"| Coded `yes` or `unsure` (every `unsure` counted as `yes`) | {yes_or_unsure:,} | "
-        f"{pct(_ratio(yes_or_unsure, total))} | {total:,} repositories with a guidance file |",
         "",
         "## By primary language",
         "",
@@ -298,8 +311,7 @@ def generate_report(results: dict[str, Any], category: dict[str, Any] | None = N
     lines += [
         f"| Total | {matched:,} | -- |",
         "",
-        f"Precision: {results['yes']:,} of {matched:,} ({pct(_ratio(results['yes'], matched))}); "
-        f"{results['unsure']:,} coded `unsure`.",
+        f"Precision: {results['yes']:,} of {matched:,} ({pct(_ratio(results['yes'], matched))}).",
         "",
     ]
     lines += render_category_section(category)
@@ -310,8 +322,10 @@ def write_report(
     output_dir: Path = OUTPUT_DIR, *, sheet_path: Path = SHEET_PATH, db_path: Path = DB_PATH
 ) -> tuple[Path, str | None]:
     """Write `rq5_coding.md`; returns its path and the checkpoint warning, if any."""
-    results = compute_results(load_coded_sheet(sheet_path), guidance_file_counts(db_path))
-    category = compute_category_results(sheet_path)
+    languages = load_repo_languages(db_path)
+    coded = attach_languages(load_coded_sheet(sheet_path), languages)
+    results = compute_results(coded, guidance_file_counts(db_path))
+    category = compute_category_results(sheet_path, languages)
     path = write_markdown_report(output_dir, "rq5_coding.md", generate_report(results, category))
     return path, checkpoint_warning(category)
 

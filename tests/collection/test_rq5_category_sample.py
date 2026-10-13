@@ -17,9 +17,14 @@ from collection.rq5_category_sample import (
     AGREEMENT_SEED,
     AGREEMENT_SHEET_NAME,
     AGREEMENT_SIZE,
+    ADDED_STRATUM,
     EXPECTED_CHECKPOINTS,
     EXPECTED_POPULATION,
+    ORIGINAL_STRATUM,
+    REVIEWED_CHECKPOINTS,
+    REVIEWED_POPULATION,
     SAMPLE_SEED,
+    TOP_UP_SEED,
     CODEBOOK_NAME,
     CODEBOOK_TEMPLATE,
     SAMPLE_FIELDNAMES,
@@ -34,23 +39,18 @@ from collection.rq5_category_sample import (
     compare_codings,
     load_codebook,
     load_coded_sample,
-    load_snippets,
     load_yes_population,
     sample_margin_of_error,
+    sampling_design,
     shuffle_population,
-    snippets_cell,
     write_agreement_sheet,
     write_category_sample,
     write_codebook_template,
 )
 from collection.paths import ROOT_DIR
-from collection.rq5_agent_file_scan import FIXTURE_MATCHES_CSV_NAME, REPOSITORY_SHEET_NAME
+from collection.rq5_agent_file_scan import REPOSITORY_SHEET_NAME
 from collection.sampling import margin_of_error
 
-MATCH_FIELDS = (
-    "repository", "file_path", "location", "line_number", "matched_term",
-    "line_before_2", "line_before_1", "matched_line", "line_after_1", "line_after_2", "in_code_block",
-)
 LANGUAGES = ("python", "typescript", "java", "javascript")
 CODEBOOK = """\
 categories:
@@ -77,34 +77,20 @@ def _write(path, fieldnames, rows):
 
 @pytest.fixture
 def rq5_dir(tmp_path):
-    """A coding sheet with 40 repositories coded yes (o/r00..o/r39), one no and
-    one unsure, and a matches file: each repository has one fixture match in
-    AGENTS.md; o/r00 also has a nested line matching two terms."""
+    """A coding sheet with 40 repositories coded yes (o/r00..o/r39) and two
+    coded no."""
     out = tmp_path / "rq5"
     out.mkdir()
-    sheet, matches = [], []
-    names = [f"o/r{i:02d}" for i in range(40)] + ["o/zno", "o/zunsure"]
-    for i, name in enumerate(names):
-        decision = "yes" if i < 40 else ("no" if name == "o/zno" else "unsure")
-        sheet.append({
-            "repository": name, "primary_language": LANGUAGES[i % 4], "fixture_match_count": "1",
-            "fixture_location": "root", "decision": decision, "notes": "",
-        })
-        matches.append({
-            "repository": name, "file_path": "AGENTS.md", "location": "root", "line_number": "3",
-            "matched_term": "fixture", "line_before_2": "far before", "line_before_1": "before " + name,
-            "matched_line": "use the fixture in " + name, "line_after_1": "after " + name,
-            "line_after_2": "far after", "in_code_block": "0",
-        })
-    for term in ("conftest", "fixtures"):
-        matches.append({
-            "repository": "o/r00", "file_path": "tests/AGENTS.md", "location": "nested", "line_number": "7",
-            "matched_term": term, "line_before_2": "", "line_before_1": "", "matched_line": "conftest fixtures",
-            "line_after_1": "", "line_after_2": "", "in_code_block": "0",
-        })
+    names = [f"o/r{i:02d}" for i in range(40)] + ["o/zno", "o/zno2"]
+    decisions = ["yes"] * 40 + ["no", "no"]
+    sheet = [{"repository": n, "decision": d, "notes": ""} for n, d in zip(names, decisions)]
     _write(out / REPOSITORY_SHEET_NAME, list(sheet[0]), sheet)
-    _write(out / FIXTURE_MATCHES_CSV_NAME, MATCH_FIELDS, matches)
     return out
+
+
+def _languages():
+    names = [f"o/r{i:02d}" for i in range(40)] + ["o/zno", "o/zno2"]
+    return {name: LANGUAGES[i % 4] for i, name in enumerate(names)}
 
 
 def _sample(rq5_dir):
@@ -163,6 +149,14 @@ class TestPopulationAndShuffle:
         with pytest.raises(CategoryCodingError, match="without a final decision"):
             load_yes_population(sheet)
 
+    def test_unsure_is_not_a_final_decision(self, rq5_dir):
+        sheet = rq5_dir / REPOSITORY_SHEET_NAME
+        rows = _read(sheet)
+        rows[5]["decision"] = "unsure"
+        _write(sheet, list(rows[0]), rows)
+        with pytest.raises(CategoryCodingError, match="without a final decision.*'unsure'"):
+            load_yes_population(sheet)
+
     def test_shuffle_is_a_reproducible_permutation(self):
         items = [{"repository": str(i)} for i in range(100)]
         first, again, other = shuffle_population(items, 20261012), shuffle_population(items, 20261012), shuffle_population(items, 1)
@@ -172,43 +166,16 @@ class TestPopulationAndShuffle:
         assert items == [{"repository": str(i)} for i in range(100)]  # input untouched
 
 
-class TestSnippets:
-    def test_one_entry_per_line_with_every_id_and_term(self, rq5_dir):
-        snippets = load_snippets(rq5_dir / FIXTURE_MATCHES_CSV_NAME)
-        root, nested = snippets["o/r00"]
-        assert (root["ids"], root["terms"]) == ([1], ["fixture"])
-        assert (nested["ids"], nested["terms"]) == ([43, 44], ["conftest", "fixtures"])
-
-    def test_cell_has_ids_path_matched_line_and_one_line_of_context(self, rq5_dir):
-        cell = snippets_cell(load_snippets(rq5_dir / FIXTURE_MATCHES_CSV_NAME)["o/r00"], 1)
-        assert cell == (
-            "[1] AGENTS.md:3 (fixture)\n  before o/r00\n> use the fixture in o/r00\n  after o/r00\n\n"
-            "[43, 44] tests/AGENTS.md:7 (conftest, fixtures)\n> conftest fixtures"
-        )
-        assert "far before" not in cell
-
-    def test_a_cell_over_the_limit_is_cut_with_a_pointer_to_the_markdown(self, rq5_dir):
-        entries = load_snippets(rq5_dir / FIXTURE_MATCHES_CSV_NAME)["o/r00"]
-        limit = len(snippets_cell(entries, 7)) - 1  # one character too long for the whole text
-        cell = snippets_cell(entries, 7, limit=limit)
-        assert len(cell) <= limit
-        assert cell.startswith("[1] AGENTS.md:3")
-        assert cell.endswith("[1 more matched lines not shown: see section 7 of rq5_snippets.md]")
-
-
 class TestWriteCategorySample:
     def test_every_yes_repository_once_in_shuffled_order_with_checkpoints(self, rq5_dir):
         rows = _read(_sample(rq5_dir))
-        assert list(rows[0]) == list(SAMPLE_FIELDNAMES)
-        assert "fixture_match_count" not in rows[0]
+        assert list(rows[0]) == ["sample_order", "checkpoint", "repository", "open_code", "categories", "notes"]
+        assert list(SAMPLE_FIELDNAMES) == list(rows[0])
         assert [int(r["sample_order"]) for r in rows] == list(range(1, 41))
         assert sorted(r["repository"] for r in rows) == [f"o/r{i:02d}" for i in range(40)]
         assert [r["repository"] for r in rows] != [f"o/r{i:02d}" for i in range(40)]
         assert [r["checkpoint"] for r in rows] == ["29"] * 29 + ["37"] * 8 + [""] * 3
         assert all(r[c] == "" for r in rows for c in ("open_code", "categories", "notes"))
-        by_repo = {r["repository"]: r for r in rows}
-        assert by_repo["o/r01"]["primary_language"] == "typescript"
-        assert by_repo["o/r01"]["snippets"].startswith("[2] AGENTS.md:3 (fixture)")
 
     def test_rewriting_gives_the_same_sample_and_leaves_the_sheet_alone(self, rq5_dir):
         sheet_before = (rq5_dir / REPOSITORY_SHEET_NAME).read_bytes()
@@ -245,6 +212,13 @@ class TestCodebook:
             Category("location", "Fixture location", "Says where fixtures live."),
             Category("cleanup", "Cleanup", "Says how fixtures clean up."),
         ]
+
+    def test_a_note_for_coders_is_accepted_and_not_reported(self, rq5_dir):
+        (rq5_dir / CODEBOOK_NAME).write_text(
+            "categories:\n  - {code: reuse, name: Reuse, definition: Using existing fixtures, note: Also listing them.}\n",
+            encoding="utf-8",
+        )
+        assert load_codebook(rq5_dir / CODEBOOK_NAME) == [Category("reuse", "Reuse", "Using existing fixtures")]
 
     @pytest.mark.parametrize(
         "entry,message",
@@ -295,17 +269,38 @@ class TestCodedPrefix:
 
 def _results():
     coded = [{"repository": f"r{i}", "language": "python", "decision": "yes"} for i in range(40)]
-    coded += [{"repository": "x", "language": "java", "decision": "unsure"}]
+    coded += [{"repository": "x", "language": "java", "decision": "no"}]
     return compute_results(coded, Counter({"all": 100, "python": 60, "java": 40}))
+
+
+class TestRebuiltSampleDesign:
+    """The one-time stratified rebuild after the 2026-10-13 decision review."""
+
+    def test_the_rebuilt_checkpoints_follow_from_the_strata(self):
+        cochran = checkpoint_sizes(REVIEWED_POPULATION)
+        assert REVIEWED_POPULATION == ORIGINAL_STRATUM + ADDED_STRATUM == 586
+        assert REVIEWED_CHECKPOINTS[1] == cochran[1] == 233
+        # 82 coded rows of the first pass are still `yes`; the top-up keeps the rate.
+        first = 82 + round(ADDED_STRATUM * 82 / ORIGINAL_STRATUM)
+        assert REVIEWED_CHECKPOINTS[0] == first == 88
+        assert first >= cochran[0]
+        assert sample_margin_of_error(first, REVIEWED_POPULATION) < 0.10
+
+    def test_sampling_design_names_the_strata_and_both_seeds_only_for_the_reviewed_population(self):
+        stratified = sampling_design(REVIEWED_POPULATION)
+        assert stratified.startswith("a proportional stratified random sample")
+        assert f"the {ORIGINAL_STRATUM} repositories" in stratified and f"the {ADDED_STRATUM} coded" in stratified
+        assert f"seed {SAMPLE_SEED}" in stratified and f"seed {TOP_UP_SEED}" in stratified
+        assert sampling_design(EXPECTED_POPULATION) == f"one random permutation (seed {SAMPLE_SEED}, not stratified)"
 
 
 class TestCategoryAnalysis:
     def test_not_started_and_not_coded_yet(self, rq5_dir):
-        assert compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME) is None
+        assert compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages()) is None
         assert "Not started" in generate_report(_results(), None)
         _sample(rq5_dir)
         write_codebook_template(rq5_dir)
-        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME)
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
         assert "Not coded yet: none of the 40 repositories" in generate_report(_results(), category)
         assert checkpoint_warning(category) is None
 
@@ -314,7 +309,7 @@ class TestCategoryAnalysis:
         codes = {o: "location" for o in range(1, 30)}
         codes.update({1: "location; cleanup", 2: "cleanup"})
         _code(rq5_dir, codes)
-        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME)
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
 
         assert (category["size"], category["checkpoint_reached"]) == (29, 29)
         assert category["category_counts"] == {"location": 28, "cleanup": 2}
@@ -328,8 +323,20 @@ class TestCategoryAnalysis:
         assert "| Cleanup | Says how fixtures clean up. | 2 | 6.9% |" in report
         assert "A repository can belong to several categories, so percentages do not add up to 100%." in report
         assert "Categories per repository: median 1, minimum 1, maximum 2." in report
-        sample_python = sum(1 for r in _read(rq5_dir / SAMPLE_NAME)[:29] if r["primary_language"] == "python")
+        sample_python = sum(1 for r in _read(rq5_dir / SAMPLE_NAME)[:29] if _languages()[r["repository"]] == "python")
         assert f"| Python | {sample_python} | " in report and "| 10 | 25.0% |" in report
+
+    def test_the_report_states_the_sampling_design(self, rq5_dir, monkeypatch):
+        _sample(rq5_dir)
+        _code(rq5_dir, {o: "location" for o in range(1, 30)})
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
+        report = generate_report(_results(), category)
+        assert "ordered as one random permutation (seed 20261012, not stratified); coded from the top" in report
+
+        monkeypatch.setattr("collection.rq5_category_sample.REVIEWED_POPULATION", 40)
+        report = generate_report(_results(), category)
+        assert "ordered as a proportional stratified random sample: the 548 repositories" in report
+        assert "seed 20261014" in report and "not stratified" not in report
         assert "No second coding yet." in report
 
     def test_categories_are_listed_most_frequent_first(self, rq5_dir):
@@ -337,13 +344,21 @@ class TestCategoryAnalysis:
         codes = {o: "cleanup" for o in range(1, 30)}
         codes[1] = "location; cleanup"
         _code(rq5_dir, codes)
-        report = generate_report(_results(), compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME))
+        report = generate_report(_results(), compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages()))
         assert report.index("| Cleanup | Says how fixtures clean up. | 29 |") < report.index("| Fixture location |")
+
+    def test_fails_when_a_repository_has_no_language(self, rq5_dir):
+        _sample(rq5_dir)
+        _code(rq5_dir, {1: "location"})
+        languages = _languages()
+        del languages["o/r07"]
+        with pytest.raises(CategoryCodingError, match="no language in the scan database for: o/r07"):
+            compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, languages)
 
     def test_off_checkpoint_warns_and_reports_the_actual_size(self, rq5_dir):
         _sample(rq5_dir)
         _code(rq5_dir, {o: "location" for o in range(1, 31)})
-        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME)
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
         assert category["size"] == 30
         assert "30 repositories, which is not a checkpoint (29, 37)" in checkpoint_warning(category)
         assert "no checkpoint reached (29 and 37): the coded prefix stops at 30" in generate_report(_results(), category)
@@ -375,7 +390,8 @@ class TestAgreement:
         prefix = {r["repository"] for r in rows[:29]}
         assert len(drawn) == 20 and {r["repository"] for r in drawn} <= prefix
         assert [int(r["sample_order"]) for r in drawn] == sorted(int(r["sample_order"]) for r in drawn)
-        assert all(r["categories"] == "" and r["snippets"] for r in drawn)
+        assert all(r["categories"] == "" for r in drawn)
+        assert list(drawn[0]) == ["sample_order", "repository", "categories"]
         assert write_agreement_sheet(rq5_dir).read_bytes() == path.read_bytes()
 
     def test_agreement_sheet_needs_20_coded_and_never_overwrites_coding(self, rq5_dir):
@@ -398,14 +414,14 @@ class TestAgreement:
         rows = _read(path)
         rows[0]["categories"] = "location"
         _write(path, list(rows[0]), rows)
-        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME)
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
         assert f"Pending: `{AGREEMENT_SHEET_NAME}` has 1 of 20 repositories coded." in generate_report(_results(), category)
 
         codes = {r["repository"]: r["categories"] for r in sample_rows}
         for i, row in enumerate(rows):
             row["categories"] = "location; cleanup" if i == 0 else codes[row["repository"]]
         _write(path, list(rows[0]), rows)
-        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME)
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
         report = generate_report(_results(), category)
         assert "A second coder coded 20 repositories" in report
         assert "| Fixture location | 100.0% | n/a |" in report
@@ -423,6 +439,9 @@ class TestInstructions:
         for checkpoint in EXPECTED_CHECKPOINTS:
             assert f"**{checkpoint}**" in text
         assert f"{AGREEMENT_SIZE} repositories" in text
+        assert f"**{TOP_UP_SEED}**" in text and f"**{REVIEWED_POPULATION}**" in text
+        for checkpoint in REVIEWED_CHECKPOINTS:
+            assert f"**{checkpoint}**" in text
         for name in (SAMPLE_NAME, CODEBOOK_NAME, AGREEMENT_SHEET_NAME):
             assert name in text
         assert "rq5_category_sample sample" in text and "rq5_category_sample agreement-sheet" in text

@@ -108,14 +108,15 @@ its guidance files, is about test fixtures, either fixture code or fixtures
 used by tests (fixture files, test data), including when this is inferred from
 the terms near the match rather than stated; a description counts as guidance,
 because in an agent configuration file it acts as an instruction to the agent.
-Decisions use only the matched lines and the lines around them, read as an
+Every other repository is coded `no`, including one whose matches might be about
+test fixtures but whose text does not settle it: an unclear case is never
+counted as fixture guidance. Decisions use only the matched lines and the lines around them, read as an
 average developer would, without looking elsewhere in the repository or relying
 on specialist knowledge of the project. Once every
 row is coded, `collection/research_questions/rq5_coding.py` writes
 `research-questions/rq5_coding.md`: the share of repositories with a guidance
-file coded `yes` (overall and per language), the precision of the keyword search
-(with `unsure` reported separately, plus the share if every `unsure` were
-`yes`), and the categories of the coded category sample (below). It refuses to
+file coded `yes` (overall and per language), the precision of the keyword search,
+and the categories of the coded category sample (below). It refuses to
 run while any row is uncoded.
 
 A rescan never discards coding. When the coding sheet already holds coding,
@@ -134,11 +135,9 @@ coding a random sample, with this study's own categories (not Ardic et al.'s).
 `python -m collection.rq5_category_sample sample` writes
 `research-questions/rq5/rq5_category_sample.csv`: all repositories coded `yes`
 (556), in one simple random permutation of the coding sheet's order (seed
-20261012, not stratified), each with its matched lines (match row id, file
-path, the line before and the line after) in one cell, and empty `open_code`,
-`categories` and `notes` columns. A cell longer than a spreadsheet cell holds
-(32,767 characters) keeps the lines that fit and points to the repository's
-section of `rq5_snippets.md`. Rows are coded from the top, so the coded sample
+20261012, not stratified), with empty `open_code`, `categories` and `notes`
+columns; the matched lines are read in `rq5_snippets.md`, and the languages
+reported for the sample come from the scan database. Rows are coded from the top, so the coded sample
 is always the prefix of rows with `categories` filled. Two checkpoints mark
 where coding can stop: Cochran's sample size at 95% confidence, p = 0.5, with
 the finite population correction, rounded up, for a 10% and a 5% margin of
@@ -147,10 +146,25 @@ writes an empty `rq5_category_codebook.yaml`, where each category gets a
 `code` (one snake_case word, used in `categories`), a `name` and a
 `definition`.
 
+That was the sample of the first coding pass, of which the first 83 rows were
+coded. A review of the decisions (2026-10-13) then changed the population to
+586 repositories coded `yes`: 8 left (one of them coded) and 38 joined. The
+sample was rebuilt once, by hand, as a proportional stratified sample, keeping
+the coding already done: the 548 first-pass repositories still coded `yes`
+keep their order (and the 82 coded rows their coding), the 38 new ones are
+shuffled with seed 20261014, and the two are interleaved so that every
+checkpoint holds both at the same rate (rows 83–88 are the first 6 of the 38,
+82/548 of 38 rounded up). Because both strata are sampled at the same rate, the
+coded rows are a self-weighting random sample of the 586. The checkpoints of
+the rebuilt sample are 88 (82 + 6, the first size at or above Cochran's 83 for
+N = 586 where both strata are at the same rate; ±9.6%) and 233 (±5%). The
+constants are in `collection/rq5_category_sample.py` (`TOP_UP_SEED`,
+`ORIGINAL_STRATUM`, `ADDED_STRATUM`, `REVIEWED_CHECKPOINTS`).
+
 The `rq5_coding` report then gives the sample size reached and its margin of
 error, each category's repositories and share of the coded sample (a
 repository can have several categories), the number of categories per
-repository, and the languages of the coded sample next to those of all 556. It
+repository, and the languages of the coded sample next to those of all 586. It
 fails if a row after the coded prefix has categories (coding out of order), if
 a code is not in the codebook, or if the sample no longer matches the
 repositories coded `yes`; if the prefix does not end at a checkpoint, it warns

@@ -1,34 +1,36 @@
 categories:
   - code: location
     name: Location
-    definition: Where fixtures live or must be placed.
+    definition: Where fixtures live or should be placed
   - code: reuse
     name: Reuse
-    definition: Use or reuse existing fixtures, or names the ones available.
+    definition: Using existing fixtures
+    note: Also covers guidance that only lists or names the fixtures available.
   - code: creation
     name: Fixture creation
-    definition: When to add a fixture, or which tool or procedure creates it.
+    definition: When and how to create fixtures
+    note: '"How" means the tool or procedure that creates a fixture; what the fixture should be like is Fixture design.'
   - code: framework
     name: Framework features
-    definition: How to use the test framework's fixture features, such as which mechanism (fixtures, setUp, hooks, wrappers) and at what scope (per test, module, session).
+    definition: Which fixture mechanism and scope to use
   - code: cleanup
     name: Cleanup
-    definition: Removing what fixtures or tests create.
+    definition: Removing what fixtures or tests create
   - code: isolation
     name: Test isolation
-    definition: Keeping fixture state from leaking between tests (no shared mutation, read-only, parallel-safe), including per-test resources such as temporary directories or private databases.
+    definition: Avoiding state leaks between tests
   - code: test_doubles
     name: Test doubles
-    definition: Mocks, stubs or fakes provided by fixtures or reset in hooks.
+    definition: Mocks and stubs handled by fixtures
   - code: design
     name: Fixture design
-    definition: Qualities a fixture should have, such as minimal, deterministic, synthetic or typed.
+    definition: Qualities that fixtures should have
   - code: sensitive
     name: Sensitive information
-    definition: No real credentials, personal or customer data in fixtures.
+    definition: No real or private data in fixtures
   - code: maintenance
     name: Fixture maintenance
-    definition: Updating, regenerating, versioning or not editing fixtures.
+    definition: Keeping fixtures up to date
   - code: non_actionable
     name: Non-actionable mention
-    definition: Mentions fixtures without telling the agent what to do, such as a fixture path in a command, a passing tip, or a pointer to another document.
+    definition: Mentions fixtures without instructions

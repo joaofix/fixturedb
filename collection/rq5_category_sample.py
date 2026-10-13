@@ -4,18 +4,24 @@ with this study's own categories of fixture guidance.
 
 - `sample` writes `research-questions/rq5/rq5_category_sample.csv`: every
   repository coded `yes` in `rq5_repository_coding_sheet.csv`, in one random
-  permutation (seed `SAMPLE_SEED`, not stratified), with its fixture snippets
-  and empty coding columns. Rows are coded from the top; the first
-  `CHECKPOINTS` rows are the Cochran sample sizes for a 10% and a 5% margin of
-  error. It also writes an empty `rq5_category_codebook.yaml` when there is none.
+  permutation (seed `SAMPLE_SEED`, not stratified), with empty coding columns
+  (the matched lines are read in `rq5_snippets.md`). Rows are coded from the
+  top; the first `CHECKPOINTS` rows are the Cochran sample sizes for a 10% and
+  a 5% margin of error. It also writes an empty `rq5_category_codebook.yaml` when there is none.
+  This is how the sample of the first coding pass (556 repositories) was made.
+  The decision review of 2026-10-13 changed the `yes` population to 586 (8
+  left, 38 joined), and the sample was rebuilt once, by hand, as a proportional
+  stratified sample (`sampling_design()`, `TOP_UP_SEED`): the coded rows of the
+  556 that are still `yes` keep their order and coding, and the 38 are
+  interleaved at the same rate. `sample` is not run again.
 - `agreement-sheet` draws `AGREEMENT_SIZE` repositories (seed `AGREEMENT_SEED`)
   from the coded prefix and writes `rq5_agreement_sheet.csv` for a second coder.
 - `agreement` compares the two codings: percent agreement and Cohen's kappa
   per category.
 
-Only reads the repository coding sheet and `rq5_fixture_matches.csv`; never
-writes them, and never overwrites a sheet that holds coding. The coders'
-instructions are in `research-questions/rq5/CATEGORY_CODING.md`.
+Only reads the repository coding sheet; never writes it, and never overwrites a
+sheet that holds coding. The coders' instructions are in
+`research-questions/rq5/CATEGORY_CODING.md`.
 
 python -m collection.rq5_category_sample sample
 python -m collection.rq5_category_sample agreement-sheet
@@ -37,10 +43,7 @@ import yaml
 from .rq5_agent_file_scan import (
     CSV_OUTPUT_DIR,
     DECISION_VALUES,
-    FIXTURE_MATCHES_CSV_NAME,
-    LOCATIONS,
     REPOSITORY_SHEET_NAME,
-    SNIPPETS_MARKDOWN_NAME,
 )
 from .sampling import cochran_sample_size, margin_of_error
 
@@ -53,6 +56,15 @@ CHECKPOINT_MARGINS: tuple[float, ...] = (0.10, 0.05)
 # checkpoints derived from it; a different count means the coding sheet changed.
 EXPECTED_POPULATION = 556
 EXPECTED_CHECKPOINTS: tuple[int, ...] = (83, 228)
+# The one-time rebuild after the 2026-10-13 decision review (see the module
+# docstring): strata, the seed of the added stratum, and the checkpoints of the
+# rebuilt sample (88 = the 82 coded rows still `yes` + 6 of the 38 added, the
+# first size >= Cochran's 83 for N = 586 where both strata have the same rate).
+TOP_UP_SEED = 20261014
+ORIGINAL_STRATUM = 548  # coded `yes` in the first pass and still `yes`
+ADDED_STRATUM = 38  # coded `yes` in the review
+REVIEWED_POPULATION = ORIGINAL_STRATUM + ADDED_STRATUM
+REVIEWED_CHECKPOINTS: tuple[int, ...] = (88, 233)
 
 SAMPLE_NAME = "rq5_category_sample.csv"
 CODEBOOK_NAME = "rq5_category_codebook.yaml"
@@ -62,19 +74,9 @@ SAMPLE_FIELDNAMES: tuple[str, ...] = (
     "sample_order",
     "checkpoint",
     "repository",
-    "primary_language",
-    "snippets",
     *SAMPLE_CODING_COLUMNS,
 )
-AGREEMENT_FIELDNAMES: tuple[str, ...] = (
-    "sample_order",
-    "repository",
-    "primary_language",
-    "snippets",
-    "categories",
-)
-# Excel's limit for one cell; Google Sheets has a larger one.
-CELL_CHARACTER_LIMIT = 32_767
+AGREEMENT_FIELDNAMES: tuple[str, ...] = ("sample_order", "repository", "categories")
 CODE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
 CODEBOOK_TEMPLATE = """\
 # RQ5 categories of fixture guidance: this study's own, built by open coding
@@ -82,6 +84,7 @@ CODEBOOK_TEMPLATE = """\
 #   - code: one word, snake_case (the value used in the sheets' `categories`)
 #     name: short display name
 #     definition: what a repository's guidance must say to get this category
+#     note: optional, a hint for coders on a boundary case (not shown in results)
 categories: []
 """
 
@@ -125,6 +128,20 @@ def check_checkpoints(
     return sizes
 
 
+def sampling_design(population: int) -> str:
+    """How the sample of `population` repositories is ordered, for the report:
+    the rebuilt, stratified sample for the reviewed population, otherwise the
+    single permutation written by `sample`."""
+    if population == REVIEWED_POPULATION:
+        return (
+            f"a proportional stratified random sample: the {ORIGINAL_STRATUM:,} repositories coded `yes` in "
+            f"the first pass and still `yes`, in their random order (seed {SAMPLE_SEED}), and the "
+            f"{ADDED_STRATUM:,} coded `yes` in the decision review, in a random order (seed {TOP_UP_SEED}), "
+            "interleaved so that every checkpoint holds both at the same rate"
+        )
+    return f"one random permutation (seed {SAMPLE_SEED}, not stratified)"
+
+
 def sample_margin_of_error(sample_size: int, population: int) -> float:
     """Margin of error at 95% confidence for `sample_size` of `population`."""
     return margin_of_error(sample_size, population, CONFIDENCE_Z)
@@ -145,11 +162,7 @@ def load_yes_population(sheet_path: Path) -> list[dict[str, Any]]:
         shown = "; ".join(problems[:10]) + (" ..." if len(problems) > 10 else "")
         raise CategoryCodingError(f"{sheet_path} has {len(problems)} rows without a final decision: {shown}")
     return [
-        {
-            "repository": row["repository"],
-            "primary_language": row["primary_language"],
-            "sheet_row": index,
-        }
+        {"repository": row["repository"], "sheet_row": index}
         for index, row in enumerate(rows, start=1)
         if row["decision"].strip().lower() == "yes"
     ]
@@ -161,79 +174,6 @@ def shuffle_population(population: list[dict[str, Any]], seed: int = SAMPLE_SEED
     shuffled = list(population)
     random.Random(seed).shuffle(shuffled)
     return shuffled
-
-
-# --------------------------------------------------------------------------
-# Snippets
-# --------------------------------------------------------------------------
-
-
-def load_snippets(matches_csv: Path) -> dict[str, list[dict[str, Any]]]:
-    """Per repository, its matched lines from `rq5_fixture_matches.csv`: one
-    entry per (file, line), with every row id and term that matched it, the
-    line before and the line after. Row id N is the Nth data row."""
-    by_line: dict[tuple[str, str, str], dict[str, Any]] = {}
-    with matches_csv.open("r", encoding="utf-8", newline="") as fh:
-        for row_id, row in enumerate(csv.DictReader(fh), start=1):
-            key = (row["repository"], row["file_path"], row["line_number"])
-            entry = by_line.setdefault(
-                key,
-                {
-                    "repository": row["repository"],
-                    "file_path": row["file_path"],
-                    "location": row["location"],
-                    "line_number": int(row["line_number"]),
-                    "ids": [],
-                    "terms": [],
-                    "before": row["line_before_1"],
-                    "line": row["matched_line"],
-                    "after": row["line_after_1"],
-                },
-            )
-            entry["ids"].append(row_id)
-            if row["matched_term"] not in entry["terms"]:
-                entry["terms"].append(row["matched_term"])
-    snippets: dict[str, list[dict[str, Any]]] = {}
-    for entry in by_line.values():
-        snippets.setdefault(entry["repository"], []).append(entry)
-    location_rank = {location: rank for rank, location in enumerate(LOCATIONS)}
-    for entries in snippets.values():
-        entries.sort(key=lambda e: (location_rank.get(e["location"], len(LOCATIONS)), e["file_path"], e["line_number"]))
-    return snippets
-
-
-def format_snippet(entry: dict[str, Any]) -> str:
-    """`[ids] path:line (terms)`, then the line before, the matched line
-    (marked `>`) and the line after; empty context lines are left out."""
-    ids = ", ".join(str(i) for i in entry["ids"])
-    lines = [f"[{ids}] {entry['file_path']}:{entry['line_number']} ({', '.join(entry['terms'])})"]
-    if entry["before"].strip():
-        lines.append(f"  {entry['before'].strip()}")
-    lines.append(f"> {entry['line'].strip()}")
-    if entry["after"].strip():
-        lines.append(f"  {entry['after'].strip()}")
-    return "\n".join(lines)
-
-
-def snippets_cell(entries: list[dict[str, Any]], sheet_row: int, limit: int = CELL_CHARACTER_LIMIT) -> str:
-    """All of a repository's snippets in one cell, blank-line separated. If they
-    exceed `limit` characters, the cell keeps the snippets that fit and ends
-    with a pointer to the repository's full section in `rq5_snippets.md`."""
-    blocks = [format_snippet(entry) for entry in entries]
-    text = "\n\n".join(blocks)
-    if len(text) <= limit:
-        return text
-    kept: list[str] = []
-    for count in range(len(blocks), -1, -1):
-        marker = (
-            f"[{len(blocks) - count} more matched lines not shown: see section {sheet_row} "
-            f"of {SNIPPETS_MARKDOWN_NAME}]"
-        )
-        kept = blocks[:count]
-        candidate = "\n\n".join([*kept, marker])
-        if len(candidate) <= limit:
-            return candidate
-    raise CategoryCodingError(f"cell limit {limit} is too small for the truncation marker")
 
 
 # --------------------------------------------------------------------------
@@ -267,8 +207,8 @@ def write_category_sample(
     expected_checkpoints: tuple[int, ...] | None = EXPECTED_CHECKPOINTS,
 ) -> Path:
     """Write `rq5_category_sample.csv` (see the module docstring) from the
-    repository coding sheet and `rq5_fixture_matches.csv` in `output_dir`.
-    Raises rather than overwrite a sample that holds coding."""
+    repository coding sheet in `output_dir`. Raises rather than overwrite a
+    sample that holds coding."""
     path = output_dir / SAMPLE_NAME
     if _has_coding(path, SAMPLE_CODING_COLUMNS):
         raise CategoryCodingError(f"{path} already holds coding; refusing to overwrite it")
@@ -276,10 +216,6 @@ def write_category_sample(
     sizes = check_checkpoints(
         len(population), expected_population=expected_population, expected_checkpoints=expected_checkpoints
     )
-    snippets = load_snippets(output_dir / FIXTURE_MATCHES_CSV_NAME)
-    missing = [repo["repository"] for repo in population if repo["repository"] not in snippets]
-    if missing:
-        raise CategoryCodingError(f"no fixture matches in {FIXTURE_MATCHES_CSV_NAME} for: {', '.join(missing)}")
 
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=SAMPLE_FIELDNAMES)
@@ -290,8 +226,6 @@ def write_category_sample(
                     "sample_order": order,
                     "checkpoint": checkpoint_label(order, sizes),
                     "repository": repo["repository"],
-                    "primary_language": repo["primary_language"],
-                    "snippets": snippets_cell(snippets[repo["repository"]], repo["sheet_row"]),
                     **dict.fromkeys(SAMPLE_CODING_COLUMNS, ""),
                 }
             )
@@ -426,9 +360,9 @@ def write_agreement_sheet(
     output_dir: Path = CSV_OUTPUT_DIR, *, seed: int = AGREEMENT_SEED, size: int = AGREEMENT_SIZE
 ) -> Path:
     """Draw `size` repositories at random from the coded prefix of the sample
-    and write `rq5_agreement_sheet.csv` with their snippets and an empty
-    `categories` column, in sample order. Raises rather than overwrite a
-    sheet that holds coding."""
+    and write `rq5_agreement_sheet.csv` with an empty `categories` column, in
+    sample order (the matched lines are read in `rq5_snippets.md`). Raises
+    rather than overwrite a sheet that holds coding."""
     path = output_dir / AGREEMENT_SHEET_NAME
     if _has_coding(path, ("categories",)):
         raise CategoryCodingError(f"{path} already holds coding; refusing to overwrite it")

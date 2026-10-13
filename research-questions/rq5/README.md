@@ -20,9 +20,9 @@ between files are not followed. Both lists are in
   its 1-based position among the data rows (row id N is spreadsheet row N+1,
   below the header).
 - `rq5_repository_coding_sheet.csv`: the coding sheet, one row per repository with at
-  least one fixture match. `fixture_location` says whether the matches are in
-  root files, nested files or both. The matched lines are not in the sheet;
-  read them in `rq5_snippets.md`.
+  least one fixture match. The matched lines are not in the sheet; read them
+  in `rq5_snippets.md`, which also says how many there are and whether
+  they are in root or nested files.
 - `rq5_snippets.md`: the matched lines, for reading while coding.
   Repository N is data row N of the sheet; each matched line has its row id(s)
   in `rq5_fixture_matches.csv`, its location, a GitHub link and two lines of
@@ -37,7 +37,7 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
 
 ## Coding columns of `rq5_repository_coding_sheet.csv`
 
-- `decision`: `yes` / `no` / `unsure`. One verdict per
+- `decision`: `yes` / `no`. One verdict per
   repository, over all of its guidance files.
   - `yes`: at least one match is about test fixtures: fixture code
     (pytest fixtures, `conftest.py`, `beforeEach`/`afterEach`, setUp/tearDown,
@@ -46,10 +46,10 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
     not be pedantic. Description counts as guidance: in an agent configuration
     file, a statement about how fixtures are done is an instruction to the
     agent. One such match is enough.
-  - `no`: no match is about testing, e.g. a product or domain term named
-    "fixture", a contract, a changelog entry, or a link to a setup document.
-  - `unsure`: a match might be about test fixtures but its surrounding lines
-    do not settle it.
+  - `no`: no match is about test fixtures, e.g. a product or domain term
+    named "fixture", a contract, a changelog entry, or a link to a setup
+    document. A match that might be about test fixtures but whose surrounding
+    lines do not settle it is also `no`: an unclear case is never counted.
 
   Decide from the matched lines and the lines around them only, as an average
   developer reading many unfamiliar projects: do not look elsewhere in the

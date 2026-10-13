@@ -10,6 +10,7 @@ import pytest
 from collection.research_questions.rq5 import code_block_counts, generate_report
 from collection.research_questions.rq5_coding import (
     CodingIncompleteError,
+    attach_languages,
     compute_results,
     guidance_file_counts,
     load_coded_sheet,
@@ -33,6 +34,7 @@ from collection.rq5_agent_file_scan import (
     fixture_match_keys,
     initialise_rq5_db,
     load_fixture_match_rows,
+    load_repo_languages,
     persist_result,
     record_scan_meta,
     write_repository_coding_sheet,
@@ -145,10 +147,8 @@ class TestRepositoryCodingSheet:
         assert list(rows[0].keys()) == list(REPOSITORY_SHEET_FIELDNAMES)
         assert "fixture_snippets" not in rows[0]  # read in rq5_snippets.md instead
         assert "category" not in rows[0]  # categories are coded in rq5_category_sample.csv
-        assert [(r["repository"], r["primary_language"], r["fixture_match_count"]) for r in rows] == [
-            ("owner/a", "python", "3"),
-            ("owner/b", "typescript", "1"),
-        ]
+        assert [r["repository"] for r in rows] == ["owner/a", "owner/b"]
+        assert list(rows[0]) == ["repository", "decision", "notes"]  # nothing else: a minimal sheet
         for row in rows:
             for column in ("decision", "notes"):
                 assert row[column] == ""
@@ -182,7 +182,7 @@ class TestRepositoryCodingSheet:
         _write_sheet(sheet, rows)
 
         with pytest.raises(ValueError, match="already holds manual coding"):
-            write_repository_coding_sheet(load_fixture_match_rows(coded_db), coded_db, out)
+            write_repository_coding_sheet(load_fixture_match_rows(coded_db), out)
         assert _read(sheet)[0]["notes"] == "started coding"
 
 
@@ -270,11 +270,12 @@ class TestReadme:
         readme = (out / "README.md").read_text()
 
         for value in (
-            "yes", "no", "unsure", REPOSITORY_SHEET_NAME, SNIPPETS_MARKDOWN_NAME,
-            "fixture_location", "AGENTS.md, CLAUDE.md, GEMINI.md", "carry_over_coding",
+            "yes", "no", REPOSITORY_SHEET_NAME, SNIPPETS_MARKDOWN_NAME,
+            "AGENTS.md, CLAUDE.md, GEMINI.md", "carry_over_coding",
         ):
             assert value in readme
         assert "referred" not in readme
+        assert "unsure" not in readme
 
 
 class TestCodeBlockCounts:
@@ -319,10 +320,16 @@ class TestLoadCodedSheet:
         sheet = _coded_rows(
             coded_db,
             tmp_path,
-            {"owner/a": {"decision": "maybe"}, "owner/b": {"decision": "unsure"}},
+            {"owner/a": {"decision": "maybe"}, "owner/b": {"decision": "no"}},
         )
 
         with pytest.raises(CodingIncompleteError, match="'maybe'"):
+            load_coded_sheet(sheet)
+
+    def test_unsure_is_no_longer_an_allowed_decision(self, coded_db, tmp_path):
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "unsure"}})
+
+        with pytest.raises(CodingIncompleteError, match="owner/b: decision 'unsure' is not one of"):
             load_coded_sheet(sheet)
 
     def test_an_extra_category_column_from_the_old_format_is_ignored(self, coded_db, tmp_path):
@@ -332,7 +339,14 @@ class TestLoadCodedSheet:
             "owner/a,python,3,root,yes,,\n"
         )
 
-        assert load_coded_sheet(sheet) == [{"repository": "owner/a", "language": "python", "decision": "yes"}]
+        assert load_coded_sheet(sheet) == [{"repository": "owner/a", "decision": "yes"}]
+
+    def test_languages_come_from_the_scan_database(self, coded_db, tmp_path):
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}})
+        coded = attach_languages(load_coded_sheet(sheet), load_repo_languages(coded_db))
+        assert [(r["repository"], r["language"]) for r in coded] == [("owner/a", "python"), ("owner/b", "typescript")]
+        with pytest.raises(CodingIncompleteError, match="no language in the scan database for: owner/b"):
+            attach_languages(load_coded_sheet(sheet), {"owner/a": "python"})
 
     def test_main_exits_with_the_message_when_uncoded(self, coded_db, tmp_path, monkeypatch):
         sheet = _coded_rows(coded_db, tmp_path, {})
@@ -343,22 +357,25 @@ class TestLoadCodedSheet:
 
 
 class TestComputeResults:
-    def test_shares_precision_and_the_yes_or_unsure_share(self, coded_db, tmp_path):
-        sheet = _coded_rows(coded_db, tmp_path, {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "unsure"}})
+    def test_shares_and_precision(self, coded_db, tmp_path):
+        sheet = _coded_rows(coded_db, tmp_path, {"owner/a": {"decision": "yes"}, "owner/b": {"decision": "no"}})
 
-        results = compute_results(load_coded_sheet(sheet), guidance_file_counts(coded_db))
+        coded = attach_languages(load_coded_sheet(sheet), load_repo_languages(coded_db))
+        results = compute_results(coded, guidance_file_counts(coded_db))
 
         assert results["with_guidance_file"]["all"] == 3
         assert results["with_guidance_file"]["python"] == 2
-        assert (results["yes"], results["no"], results["unsure"]) == (1, 0, 1)
+        assert (results["yes"], results["no"]) == (1, 1)
+        assert "unsure" not in results
         assert results["with_fixture_match"] == 2
 
         report = generate_coding_report(results)
         assert "| Coded `yes` | 1 | 33.3% | 3 repositories with a guidance file |" in report
-        assert "| Coded `yes` or `unsure` (every `unsure` counted as `yes`) | 2 | 66.7% | 3 repositories" in report
         assert "| Python | 2 | 1 | 50.0% |" in report
         assert "| TypeScript | 1 | 0 | 0.0% |" in report
-        assert "Precision: 1 of 2 (50.0%); 1 coded `unsure`." in report
+        assert "| `no` | 1 | 50.0% |" in report
+        assert "Precision: 1 of 2 (50.0%)." in report
+        assert "unsure" not in report
         assert "Not started" in report
 
         path, warning = write_coding_report(tmp_path / "report", sheet_path=sheet, db_path=coded_db)
@@ -396,13 +413,11 @@ def nested_db(tmp_path):
 
 
 class TestSheetWithNestedFiles:
-    def test_fixture_location_says_where_the_matches_are(self, nested_db, tmp_path):
+    def test_sheet_lists_repositories_with_nested_matches(self, nested_db, tmp_path):
         out = tmp_path / "out"
         write_review_outputs(db_path=nested_db, output_dir=out)
         rows = {r["repository"]: r for r in _read(out / REPOSITORY_SHEET_NAME)}
-        assert rows["owner/a"]["fixture_location"] == "root+nested"
-        assert rows["owner/g"]["fixture_location"] == "nested"
-        assert rows["owner/a"]["fixture_match_count"] == "3"
+        assert set(rows) == {"owner/a", "owner/g"}
 
     def test_markdown_orders_by_term_then_root_before_nested(self, nested_db, tmp_path):
         markdown = write_snippets_markdown(load_fixture_match_rows(nested_db), nested_db, tmp_path).read_text()
@@ -499,7 +514,7 @@ class TestCarryOverCoding:
         assert (row["decision"], row["notes"]) == ("no", "data only")
         assert outcome["unchanged"] == ["owner/g"]
 
-    @pytest.mark.parametrize("decision", ["yes", "no", "unsure"])
+    @pytest.mark.parametrize("decision", ["yes", "no"])
     def test_changed_matches_keep_every_decision_as_it_was(self, nested_db, tmp_path, decision):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
         outcome = self._carry(
@@ -537,11 +552,11 @@ class TestCarryOverCoding:
     def test_refuses_to_overwrite_coding_already_in_the_new_sheet(self, nested_db, tmp_path):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
         rows = _read(new_sheet)
-        rows[0]["decision"] = "unsure"
+        rows[0]["decision"] = "no"
         _write_sheet(new_sheet, rows)
         with pytest.raises(ValueError, match="already holds coding"):
             self._carry(tmp_path, [{"repository": "owner/a", "decision": "yes"}], [], new_sheet, new_matches)
-        assert _read(new_sheet)[0]["decision"] == "unsure"
+        assert _read(new_sheet)[0]["decision"] == "no"
 
     def test_the_same_scan_carries_everything_over_unchanged(self, nested_db, tmp_path):
         new_sheet, new_matches = self._new(nested_db, tmp_path)
@@ -563,7 +578,7 @@ class TestCarryOverCoding:
         )
         carry_over_coding(old_sheet, new_sheet, old_matches=_matches(tmp_path / "m.csv", []), new_matches=new_matches)
         row = {r["repository"]: r for r in _read(new_sheet)}["owner/g"]
-        assert (row["fixture_location"], row["decision"], row["notes"]) == ("nested", "yes", "kept")
+        assert (row["decision"], row["notes"]) == ("yes", "kept")
         assert "category" not in row
 
 
@@ -576,7 +591,7 @@ class TestWriteReviewOutputsKeepsCoding:
         out, backups = tmp_path / "out", tmp_path / "backups"
         write_review_outputs(db_path=nested_db, output_dir=out, backup_dir=backups)
         rows = _read(out / REPOSITORY_SHEET_NAME)
-        rows[0].update(decision="unsure", notes="first pass")  # owner/a
+        rows[0].update(decision="no", notes="first pass")  # owner/a
         rows[1].update(decision="yes", notes="tips")  # owner/g
         _write_sheet(out / REPOSITORY_SHEET_NAME, rows)
         coded_before = (out / REPOSITORY_SHEET_NAME).read_bytes()
@@ -593,9 +608,7 @@ class TestWriteReviewOutputsKeepsCoding:
         out, _, _, _, _ = self._rescan(nested_db, tmp_path)
         rows = {r["repository"]: r for r in _read(out / REPOSITORY_SHEET_NAME)}
         assert set(rows) == {"owner/a", "owner/n"}
-        assert (rows["owner/a"]["decision"], rows["owner/a"]["notes"], rows["owner/a"]["fixture_match_count"]) == (
-            "unsure", "first pass", "1",
-        )
+        assert (rows["owner/a"]["decision"], rows["owner/a"]["notes"]) == ("no", "first pass")
         assert (rows["owner/n"]["decision"], rows["owner/n"]["notes"]) == ("", "")
 
     def test_the_old_sheet_and_matches_are_backed_up_byte_for_byte(self, nested_db, tmp_path):
@@ -608,7 +621,7 @@ class TestWriteReviewOutputsKeepsCoding:
     def test_the_outcome_report_lists_each_coded_repository(self, nested_db, tmp_path):
         _, _, written, _, _ = self._rescan(nested_db, tmp_path)
         report = {r["repository"]: r for r in _read(written["carry_over"])}
-        assert (report["owner/a"]["outcome"], report["owner/a"]["decision"]) == ("matches_changed", "unsure")
+        assert (report["owner/a"]["outcome"], report["owner/a"]["decision"]) == ("matches_changed", "no")
         assert (report["owner/g"]["outcome"], report["owner/g"]["decision"], report["owner/g"]["notes"]) == (
             "removed", "yes", "tips",
         )

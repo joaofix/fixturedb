@@ -1287,12 +1287,9 @@ REPOSITORY_CODING_COLUMNS: tuple[str, ...] = (
 )
 REPOSITORY_SHEET_FIELDNAMES: tuple[str, ...] = (
     "repository",
-    "primary_language",
-    "fixture_match_count",
-    "fixture_location",
     *REPOSITORY_CODING_COLUMNS,
 )
-DECISION_VALUES: tuple[str, ...] = ("yes", "no", "unsure")
+DECISION_VALUES: tuple[str, ...] = ("yes", "no")
 # Reading order of a repository's snippets in the repository-level sheet.
 # Only an order, not a classification.
 SNIPPET_TERM_ORDER: tuple[str, ...] = (
@@ -1306,6 +1303,12 @@ SNIPPET_TERM_ORDER: tuple[str, ...] = (
     "fixture",
     "fixtures",
 )
+
+
+def load_repo_languages(db_path: Path = DB_PATH) -> dict[str, str]:
+    """Primary language of every scanned repository."""
+    with db_session(db_path) as conn:
+        return dict(conn.execute(f"SELECT repo_name, language FROM {REPO_TABLE_NAME}").fetchall())
 
 
 def load_repo_guidance(db_path: Path = DB_PATH) -> list[dict[str, Any]]:
@@ -1399,14 +1402,12 @@ def _has_manual_coding(path: Path) -> bool:
 
 def write_repository_coding_sheet(
     match_rows: list[dict[str, Any]],
-    db_path: Path = DB_PATH,
     output_dir: Path = CSV_OUTPUT_DIR,
 ) -> Path:
     """Write `rq5_repository_coding_sheet.csv`: one row per repository with at
     least one fixture match in its guidance files, in the order of the sections
-    of `rq5_snippets.md` (where the matches are read). `fixture_location` says
-    where its matches are (`root`, `nested` or `root+nested`). The
-    coding columns are empty. The matched lines are deliberately not in the
+    of `rq5_snippets.md` (where the matches are read). The coding columns are
+    empty. The matched lines are deliberately not in the
     sheet: a repository can have more text than a spreadsheet cell holds
     (32,767 characters in Excel).
 
@@ -1415,27 +1416,13 @@ def write_repository_coding_sheet(
     if _has_manual_coding(path):
         raise ValueError(f"{path} already holds manual coding; refusing to overwrite it")
 
-    with db_session(db_path) as conn:
-        languages = dict(conn.execute(f"SELECT repo_name, language FROM {REPO_TABLE_NAME}").fetchall())
-
-    by_repo: dict[str, list[dict[str, Any]]] = {}
-    for row in match_rows:
-        by_repo.setdefault(row["repo_name"], []).append(row)
+    repositories = sorted({row["repo_name"] for row in match_rows})
 
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=REPOSITORY_SHEET_FIELDNAMES)
         writer.writeheader()
-        for repo_name in sorted(by_repo):
-            matches = by_repo[repo_name]
-            writer.writerow(
-                {
-                    "repository": repo_name,
-                    "primary_language": languages.get(repo_name, ""),
-                    "fixture_match_count": len(matches),
-                    "fixture_location": _fixture_location({m["location"] for m in matches}),
-                    **dict.fromkeys(REPOSITORY_CODING_COLUMNS, ""),
-                }
-            )
+        for repo_name in repositories:
+            writer.writerow({"repository": repo_name, **dict.fromkeys(REPOSITORY_CODING_COLUMNS, "")})
     return path
 
 
@@ -1567,9 +1554,9 @@ between files are not followed. Both lists are in
   its 1-based position among the data rows (row id N is spreadsheet row N+1,
   below the header).
 - `{REPOSITORY_SHEET_NAME}`: the coding sheet, one row per repository with at
-  least one fixture match. `fixture_location` says whether the matches are in
-  root files, nested files or both. The matched lines are not in the sheet;
-  read them in `{SNIPPETS_MARKDOWN_NAME}`.
+  least one fixture match. The matched lines are not in the sheet; read them
+  in `{SNIPPETS_MARKDOWN_NAME}`, which also says how many there are and whether
+  they are in root or nested files.
 - `{SNIPPETS_MARKDOWN_NAME}`: the matched lines, for reading while coding.
   Repository N is data row N of the sheet; each matched line has its row id(s)
   in `rq5_fixture_matches.csv`, its location, a GitHub link and two lines of
@@ -1593,10 +1580,10 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
     not be pedantic. Description counts as guidance: in an agent configuration
     file, a statement about how fixtures are done is an instruction to the
     agent. One such match is enough.
-  - `no`: no match is about testing, e.g. a product or domain term named
-    "fixture", a contract, a changelog entry, or a link to a setup document.
-  - `unsure`: a match might be about test fixtures but its surrounding lines
-    do not settle it.
+  - `no`: no match is about test fixtures, e.g. a product or domain term
+    named "fixture", a contract, a changelog entry, or a link to a setup
+    document. A match that might be about test fixtures but whose surrounding
+    lines do not settle it is also `no`: an unclear case is never counted.
 
   Decide from the matched lines and the lines around them only, as an average
   developer reading many unfamiliar projects: do not look elsewhere in the
@@ -1698,7 +1685,7 @@ def write_review_outputs(
             )
     written["fixture_matches"] = matches_path
     written["snippets"] = write_snippets_markdown(match_rows, db_path, output_dir)
-    written["repository_sheet"] = write_repository_coding_sheet(match_rows, db_path, output_dir)
+    written["repository_sheet"] = write_repository_coding_sheet(match_rows, output_dir)
     if backup is not None:
         old_sheet, old_matches = backup
         outcome = carry_over_coding(old_sheet, sheet_path, old_matches=old_matches, new_matches=matches_path)
