@@ -138,37 +138,48 @@ coding a random sample, with this study's own categories (not Ardic et al.'s).
 20261012, not stratified), with empty `open_code`, `categories` and `notes`
 columns; the matched lines are read in `rq5_snippets.md`, and the languages
 reported for the sample come from the scan database. Rows are coded from the top, so the coded sample
-is always the prefix of rows with `categories` filled. Two checkpoints mark
-where coding can stop: Cochran's sample size at 95% confidence, p = 0.5, with
-the finite population correction, rounded up, for a 10% and a 5% margin of
-error (83 and 228 of 556; the command fails if the numbers differ). It also
+is always the prefix of rows with `categories` filled. The sample is the first
+100 rows (`SAMPLE_SIZE`), marked `100` in the `checkpoint` column: an
+exploratory random sample, for which no margin of error is computed. It also
 writes an empty `rq5_category_codebook.yaml`, where each category gets a
-`code` (one snake_case word, used in `categories`), a `name` and a
-`definition`.
+`code` (one snake_case word, used in `categories`), a `name`, a one-line
+`description` (shown in the report and the paper), a `definition` (may be
+left empty) and, optionally, `in_results: false` to keep a category in the
+sheet but out of the results.
 
-That was the sample of the first coding pass, of which the first 83 rows were
+That command made the order of the first coding pass, whose first 83 rows were
 coded. A review of the decisions (2026-10-13) then changed the population to
 586 repositories coded `yes`: 8 left (one of them coded) and 38 joined. The
-sample was rebuilt once, by hand, as a proportional stratified sample, keeping
-the coding already done: the 548 first-pass repositories still coded `yes`
-keep their order (and the 82 coded rows their coding), the 38 new ones are
-shuffled with seed 20261014, and the two are interleaved so that every
-checkpoint holds both at the same rate (rows 83–88 are the first 6 of the 38,
-82/548 of 38 rounded up). Because both strata are sampled at the same rate, the
-coded rows are a self-weighting random sample of the 586. The checkpoints of
-the rebuilt sample are 88 (82 + 6, the first size at or above Cochran's 83 for
-N = 586 where both strata are at the same rate; ±9.6%) and 233 (±5%). The
-constants are in `collection/rq5_category_sample.py` (`TOP_UP_SEED`,
-`ORIGINAL_STRATUM`, `ADDED_STRATUM`, `REVIEWED_CHECKPOINTS`).
+order was rebuilt once, by hand, keeping the coding already done: the 548
+first-pass repositories still coded `yes` keep their order (and the 82 coded
+rows their coding), the 38 new ones are shuffled with seed 20261014, and the
+two are interleaved so that any first rows hold both at the same rate (rows
+83–88 are the first 6 of the 38). The sample was then set to the first 100 rows
+of this order, without reshuffling (rows 1–88 were already coded). The
+constants are in `collection/rq5_category_sample.py` (`SAMPLE_SIZE`,
+`TOP_UP_SEED`, `ORIGINAL_STRATUM`, `ADDED_STRATUM`).
 
-The `rq5_coding` report then gives the sample size reached and its margin of
-error, each category's repositories and share of the coded sample (a
+The categories were revised once (2026-10-15), after the first 88 rows were
+coded: several were merged or renamed, and one, Non-actionable mention, was
+taken out of the results (`in_results: false`): its repositories keep it in
+the sheet and stay in the sample and in the denominator of every share, but it
+is not in the category table or the per-repository counts.
+`research-questions/rq5/rq5_category_mapping.csv` maps each old category code
+to its new one. The mapping was applied to the coded rows automatically, with
+duplicates removed; nothing else was recoded. The state before the revision is
+the git tag `rq5-categories-before-revision`.
+
+The `rq5_coding` report then gives how many of the 100 are coded and the seeds
+of the order, each category's repositories and share of the coded sample (a
 repository can have several categories), the number of categories per
-repository, and the languages of the coded sample next to those of all 586. It
-fails if a row after the coded prefix has categories (coding out of order), if
+repository, the repositories whose only category is out of the results
+(Non-actionable mention) and how many have it with other categories, and the
+languages of
+the coded sample next to those of all 586. It fails if a row after the coded
+prefix has categories (coding out of order), if
 a code is not in the codebook, or if the sample no longer matches the
-repositories coded `yes`; if the prefix does not end at a checkpoint, it warns
-and reports the actual size.
+repositories coded `yes`; if the coded prefix is not exactly the 100 rows of the
+sample, it warns and reports the actual size.
 
 For inter-coder agreement, `python -m collection.rq5_category_sample
 agreement-sheet` draws 20 repositories from the coded prefix (seed 20261013)

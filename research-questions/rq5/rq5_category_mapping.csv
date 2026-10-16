@@ -1,0 +1,12 @@
+old_code,old_name,new_code,new_name
+location,Location,location,Location
+creation,Fixture creation,creation,Creation
+reuse,Reuse,creation,Creation
+design,Fixture design,quality,Quality
+maintenance,Fixture maintenance,quality,Quality
+isolation,Test isolation,quality,Quality
+cleanup,Cleanup,quality,Quality
+framework,Framework features,conventions,Conventions
+test_doubles,Test doubles,test_doubles,Test doubles
+sensitive,Sensitive information,security,Security
+non_actionable,Non-actionable mention,non_actionable,Non-actionable mention

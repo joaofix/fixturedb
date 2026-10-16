@@ -4,16 +4,16 @@ with this study's own categories of fixture guidance.
 
 - `sample` writes `research-questions/rq5/rq5_category_sample.csv`: every
   repository coded `yes` in `rq5_repository_coding_sheet.csv`, in one random
-  permutation (seed `SAMPLE_SEED`, not stratified), with empty coding columns
-  (the matched lines are read in `rq5_snippets.md`). Rows are coded from the
-  top; the first `CHECKPOINTS` rows are the Cochran sample sizes for a 10% and
-  a 5% margin of error. It also writes an empty `rq5_category_codebook.yaml` when there is none.
-  This is how the sample of the first coding pass (556 repositories) was made.
-  The decision review of 2026-10-13 changed the `yes` population to 586 (8
-  left, 38 joined), and the sample was rebuilt once, by hand, as a proportional
-  stratified sample (`sampling_design()`, `TOP_UP_SEED`): the coded rows of the
-  556 that are still `yes` keep their order and coding, and the 38 are
-  interleaved at the same rate. `sample` is not run again.
+  permutation (seed `SAMPLE_SEED`), with empty coding columns (the matched
+  lines are read in `rq5_snippets.md`). Rows are coded from the top; the sample
+  is the first `SAMPLE_SIZE` rows, an exploratory random sample (no margin of
+  error is computed). It also writes an empty `rq5_category_codebook.yaml` when
+  there is none. This is how the order of the first coding pass (556
+  repositories) was made. The decision review of 2026-10-13 changed the `yes`
+  population to 586 (8 left, 38 joined), and the order was rebuilt once, by
+  hand: the 548 first-pass repositories still `yes` keep their order and
+  coding, and the 38 new ones (seed `TOP_UP_SEED`) are interleaved at the same
+  rate (`sampling_design()`). `sample` is not run again.
 - `agreement-sheet` draws `AGREEMENT_SIZE` repositories (seed `AGREEMENT_SEED`)
   from the coded prefix and writes `rq5_agreement_sheet.csv` for a second coder.
 - `agreement` compares the two codings: percent agreement and Cohen's kappa
@@ -45,26 +45,17 @@ from .rq5_agent_file_scan import (
     DECISION_VALUES,
     REPOSITORY_SHEET_NAME,
 )
-from .sampling import cochran_sample_size, margin_of_error
 
 SAMPLE_SEED = 20261012
 AGREEMENT_SEED = 20261013
 AGREEMENT_SIZE = 20
-CONFIDENCE_Z = 1.96  # 95% confidence
-CHECKPOINT_MARGINS: tuple[float, ...] = (0.10, 0.05)
-# The design fixes the population (the repositories coded `yes`) and the
-# checkpoints derived from it; a different count means the coding sheet changed.
-EXPECTED_POPULATION = 556
-EXPECTED_CHECKPOINTS: tuple[int, ...] = (83, 228)
-# The one-time rebuild after the 2026-10-13 decision review (see the module
-# docstring): strata, the seed of the added stratum, and the checkpoints of the
-# rebuilt sample (88 = the 82 coded rows still `yes` + 6 of the 38 added, the
-# first size >= Cochran's 83 for N = 586 where both strata have the same rate).
+# The sample: the first SAMPLE_SIZE rows of the random order (one checkpoint).
+SAMPLE_SIZE = 100
+# The one-time rebuild of the order after the 2026-10-13 decision review (see
+# the module docstring): its two groups and the seed of the added one.
 TOP_UP_SEED = 20261014
 ORIGINAL_STRATUM = 548  # coded `yes` in the first pass and still `yes`
 ADDED_STRATUM = 38  # coded `yes` in the review
-REVIEWED_POPULATION = ORIGINAL_STRATUM + ADDED_STRATUM
-REVIEWED_CHECKPOINTS: tuple[int, ...] = (88, 233)
 
 SAMPLE_NAME = "rq5_category_sample.csv"
 CODEBOOK_NAME = "rq5_category_codebook.yaml"
@@ -74,7 +65,9 @@ SAMPLE_FIELDNAMES: tuple[str, ...] = (
     "sample_order",
     "checkpoint",
     "repository",
-    *SAMPLE_CODING_COLUMNS,
+    "open_code",
+    "categories",
+    "notes",
 )
 AGREEMENT_FIELDNAMES: tuple[str, ...] = ("sample_order", "repository", "categories")
 CODE_PATTERN = re.compile(r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$")
@@ -83,8 +76,9 @@ CODEBOOK_TEMPLATE = """\
 # rq5_category_sample.csv. One entry per category:
 #   - code: one word, snake_case (the value used in the sheets' `categories`)
 #     name: short display name
-#     definition: what a repository's guidance must say to get this category
-#     note: optional, a hint for coders on a boundary case (not shown in results)
+#     description: one line, shown in the results and the paper
+#     definition: what a repository's guidance must say to get this category (may be empty)
+#     in_results: optional, false to keep a category in the sheet but out of the results
 categories: []
 """
 
@@ -94,57 +88,21 @@ class CategoryCodingError(ValueError):
 
 
 # --------------------------------------------------------------------------
-# Population and checkpoints
+# Population and order
 # --------------------------------------------------------------------------
 
 
-def checkpoint_sizes(
-    population: int, margins: tuple[float, ...] = CHECKPOINT_MARGINS, confidence_z: float = CONFIDENCE_Z
-) -> tuple[int, ...]:
-    """Cochran sample sizes (p = 0.5, finite population correction, rounded
-    up) for each margin of error."""
-    return tuple(cochran_sample_size(population, margin, confidence_z) for margin in margins)
-
-
-def check_checkpoints(
-    population: int,
-    *,
-    expected_population: int | None = EXPECTED_POPULATION,
-    expected_checkpoints: tuple[int, ...] | None = EXPECTED_CHECKPOINTS,
-) -> tuple[int, ...]:
-    """The checkpoint sizes for `population`, failing loudly if the population
-    or the sizes are not the ones the design fixed (pass `None` to skip a
-    check)."""
-    if expected_population is not None and population != expected_population:
-        raise CategoryCodingError(
-            f"{population} repositories are coded yes, but the category design fixes the population at "
-            f"{expected_population}; the repository coding sheet changed"
-        )
-    sizes = checkpoint_sizes(population)
-    if expected_checkpoints is not None and sizes != tuple(expected_checkpoints):
-        raise CategoryCodingError(
-            f"Cochran checkpoints for N={population} are {sizes}, expected {tuple(expected_checkpoints)}"
-        )
-    return sizes
-
-
 def sampling_design(population: int) -> str:
-    """How the sample of `population` repositories is ordered, for the report:
-    the rebuilt, stratified sample for the reviewed population, otherwise the
-    single permutation written by `sample`."""
-    if population == REVIEWED_POPULATION:
+    """The seeds of the random order of `population` repositories, for the
+    report: the rebuilt order for the reviewed population, otherwise the single
+    permutation written by `sample`."""
+    if population == ORIGINAL_STRATUM + ADDED_STRATUM:
         return (
-            f"a proportional stratified random sample: the {ORIGINAL_STRATUM:,} repositories coded `yes` in "
-            f"the first pass and still `yes`, in their random order (seed {SAMPLE_SEED}), and the "
-            f"{ADDED_STRATUM:,} coded `yes` in the decision review, in a random order (seed {TOP_UP_SEED}), "
-            "interleaved so that every checkpoint holds both at the same rate"
+            f"seed {SAMPLE_SEED} for the {ORIGINAL_STRATUM:,} repositories coded `yes` in the first pass, "
+            f"seed {TOP_UP_SEED} for the {ADDED_STRATUM:,} coded `yes` in the decision review, interleaved "
+            "at the same rate"
         )
-    return f"one random permutation (seed {SAMPLE_SEED}, not stratified)"
-
-
-def sample_margin_of_error(sample_size: int, population: int) -> float:
-    """Margin of error at 95% confidence for `sample_size` of `population`."""
-    return margin_of_error(sample_size, population, CONFIDENCE_Z)
+    return f"seed {SAMPLE_SEED}"
 
 
 def load_yes_population(sheet_path: Path) -> list[dict[str, Any]]:
@@ -203,8 +161,7 @@ def write_category_sample(
     output_dir: Path = CSV_OUTPUT_DIR,
     *,
     seed: int = SAMPLE_SEED,
-    expected_population: int | None = EXPECTED_POPULATION,
-    expected_checkpoints: tuple[int, ...] | None = EXPECTED_CHECKPOINTS,
+    sample_size: int = SAMPLE_SIZE,
 ) -> Path:
     """Write `rq5_category_sample.csv` (see the module docstring) from the
     repository coding sheet in `output_dir`. Raises rather than overwrite a
@@ -213,9 +170,6 @@ def write_category_sample(
     if _has_coding(path, SAMPLE_CODING_COLUMNS):
         raise CategoryCodingError(f"{path} already holds coding; refusing to overwrite it")
     population = load_yes_population(output_dir / REPOSITORY_SHEET_NAME)
-    sizes = check_checkpoints(
-        len(population), expected_population=expected_population, expected_checkpoints=expected_checkpoints
-    )
 
     with path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=SAMPLE_FIELDNAMES)
@@ -224,20 +178,12 @@ def write_category_sample(
             writer.writerow(
                 {
                     "sample_order": order,
-                    "checkpoint": checkpoint_label(order, sizes),
+                    "checkpoint": str(sample_size) if order <= sample_size else "",
                     "repository": repo["repository"],
                     **dict.fromkeys(SAMPLE_CODING_COLUMNS, ""),
                 }
             )
     return path
-
-
-def checkpoint_label(order: int, sizes: tuple[int, ...]) -> str:
-    """The first checkpoint whose sample includes row `order`, or "" past the last."""
-    for size in sorted(sizes):
-        if order <= size:
-            return str(size)
-    return ""
 
 
 # --------------------------------------------------------------------------
@@ -249,12 +195,15 @@ def checkpoint_label(order: int, sizes: tuple[int, ...]) -> str:
 class Category:
     code: str
     name: str
-    definition: str
+    description: str
+    definition: str = ""
+    in_results: bool = True
 
 
 def load_codebook(path: Path) -> list[Category]:
     """The categories of `rq5_category_codebook.yaml`, validated: each has a
-    snake_case `code`, a `name` and a `definition`, and codes are unique."""
+    snake_case `code`, a `name` and a `description` (`definition` may be
+    empty), codes are unique, and `in_results` (default true) is a boolean."""
     if not path.exists():
         raise CategoryCodingError(f"{path} does not exist; run `python -m collection.rq5_category_sample sample`")
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -267,12 +216,18 @@ def load_codebook(path: Path) -> list[Category]:
         if not isinstance(entry, dict):
             problems.append(f"entry {index} is not a mapping")
             continue
-        code, name, definition = (str(entry.get(k) or "").strip() for k in ("code", "name", "definition"))
+        code, name, description, definition = (
+            str(entry.get(k) or "").strip() for k in ("code", "name", "description", "definition")
+        )
         if not CODE_PATTERN.match(code):
             problems.append(f"entry {index}: code {code!r} is not one snake_case word")
-        if not name or not definition:
-            problems.append(f"entry {index} ({code}): name and definition are required")
-        categories.append(Category(code, name, definition))
+        if not name or not description:
+            problems.append(f"entry {index} ({code}): name and description are required")
+        in_results = entry.get("in_results", True)
+        if not isinstance(in_results, bool):
+            problems.append(f"entry {index} ({code}): in_results must be true or false")
+            in_results = True
+        categories.append(Category(code, name, description, definition, in_results))
     codes = [c.code for c in categories]
     duplicates = sorted({c for c in codes if codes.count(c) > 1})
     if duplicates:
@@ -473,8 +428,7 @@ def main() -> None:
     try:
         if args.command == "sample":
             path = write_category_sample(out)
-            sizes = checkpoint_sizes(EXPECTED_POPULATION)
-            print(f"Category sample written to {path} (seed {SAMPLE_SEED}, checkpoints {sizes})")
+            print(f"Category sample written to {path} (seed {SAMPLE_SEED}, sample of the first {SAMPLE_SIZE} rows)")
             codebook = write_codebook_template(out)
             print(f"Empty codebook written to {codebook}" if codebook else f"Kept the existing {out / CODEBOOK_NAME}")
         elif args.command == "agreement-sheet":

@@ -1,36 +1,34 @@
 categories:
   - code: location
     name: Location
-    definition: Where fixtures live or should be placed
-  - code: reuse
-    name: Reuse
-    definition: Using existing fixtures
-    note: Also covers guidance that only lists or names the fixtures available.
+    description: Where fixtures live or should be placed
+    definition: ''
   - code: creation
-    name: Fixture creation
-    definition: When and how to create fixtures
-    note: '"How" means the tool or procedure that creates a fixture; what the fixture should be like is Fixture design.'
-  - code: framework
-    name: Framework features
-    definition: Which fixture mechanism and scope to use
-  - code: cleanup
-    name: Cleanup
-    definition: Removing what fixtures or tests create
-  - code: isolation
-    name: Test isolation
-    definition: Avoiding state leaks between tests
+    name: Creation
+    description: When to create fixtures or reuse existing ones
+    definition: ''
+  - code: quality
+    name: Quality
+    description: Qualities fixtures should have and keep
+    definition: ''
+  - code: conventions
+    name: Conventions
+    description: Which fixture mechanism and scope to use
+    definition: ''
   - code: test_doubles
     name: Test doubles
-    definition: Mocks and stubs handled by fixtures
-  - code: design
-    name: Fixture design
-    definition: Qualities that fixtures should have
-  - code: sensitive
-    name: Sensitive information
-    definition: No real or private data in fixtures
-  - code: maintenance
-    name: Fixture maintenance
-    definition: Keeping fixtures up to date
+    description: Mocks and stubs handled by fixtures
+    definition: ''
+  - code: security
+    name: Security
+    description: No real or private data in fixtures
+    definition: ''
+  - code: miscellaneous
+    name: Miscellaneous
+    description: Guidance that fits no other category
+    definition: ''
   - code: non_actionable
     name: Non-actionable mention
-    definition: Mentions fixtures without instructions
+    description: Mentions fixtures without instructions
+    definition: ''
+    in_results: false

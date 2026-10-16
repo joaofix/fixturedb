@@ -63,5 +63,6 @@ A new scan keeps the coding already in the sheet: see `carry_over_coding()` in
 The fixture guidance of the repositories coded `yes` is categorized on a random
 sample, with this study's own categories: see `rq5_category_sample.csv`,
 `rq5_category_codebook.yaml` and `rq5_agreement_sheet.csv`, written by
-`python -m collection.rq5_category_sample`. The instructions are in
-`CATEGORY_CODING.md`.
+`python -m collection.rq5_category_sample`, and `rq5_category_mapping.csv`
+(how the categories before the 2026-10-15 revision map to the current ones).
+The instructions are in `CATEGORY_CODING.md`.

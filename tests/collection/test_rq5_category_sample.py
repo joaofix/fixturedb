@@ -18,12 +18,9 @@ from collection.rq5_category_sample import (
     AGREEMENT_SHEET_NAME,
     AGREEMENT_SIZE,
     ADDED_STRATUM,
-    EXPECTED_CHECKPOINTS,
-    EXPECTED_POPULATION,
     ORIGINAL_STRATUM,
-    REVIEWED_CHECKPOINTS,
-    REVIEWED_POPULATION,
     SAMPLE_SEED,
+    SAMPLE_SIZE,
     TOP_UP_SEED,
     CODEBOOK_NAME,
     CODEBOOK_TEMPLATE,
@@ -31,16 +28,12 @@ from collection.rq5_category_sample import (
     SAMPLE_NAME,
     Category,
     CategoryCodingError,
-    check_checkpoints,
     check_sample_matches_population,
-    checkpoint_label,
-    checkpoint_sizes,
     cohens_kappa,
     compare_codings,
     load_codebook,
     load_coded_sample,
     load_yes_population,
-    sample_margin_of_error,
     sampling_design,
     shuffle_population,
     write_agreement_sheet,
@@ -49,17 +42,16 @@ from collection.rq5_category_sample import (
 )
 from collection.paths import ROOT_DIR
 from collection.rq5_agent_file_scan import REPOSITORY_SHEET_NAME
-from collection.sampling import margin_of_error
 
 LANGUAGES = ("python", "typescript", "java", "javascript")
 CODEBOOK = """\
 categories:
   - code: location
     name: Fixture location
-    definition: Says where fixtures live.
+    description: Says where fixtures live.
   - code: cleanup
     name: Cleanup
-    definition: Says how fixtures clean up.
+    description: Says how fixtures clean up.
 """
 
 
@@ -94,7 +86,7 @@ def _languages():
 
 
 def _sample(rq5_dir):
-    return write_category_sample(rq5_dir, expected_population=40, expected_checkpoints=(29, 37))
+    return write_category_sample(rq5_dir, sample_size=29)
 
 
 def _code(rq5_dir, codes_by_order, *, codebook=CODEBOOK):
@@ -106,33 +98,6 @@ def _code(rq5_dir, codes_by_order, *, codebook=CODEBOOK):
         row["categories"] = codes_by_order.get(int(row["sample_order"]), row["categories"])
     _write(path, SAMPLE_FIELDNAMES, rows)
     return rows
-
-
-class TestCheckpointsAndMarginOfError:
-    def test_the_design_checkpoints_for_556_are_83_and_228(self):
-        assert checkpoint_sizes(556) == (83, 228)
-        assert check_checkpoints(556) == (83, 228)
-
-    def test_fails_loudly_on_another_population_or_other_checkpoints(self):
-        with pytest.raises(CategoryCodingError, match="fixes the population at 556"):
-            check_checkpoints(555)
-        with pytest.raises(CategoryCodingError, match=r"expected \(82, 228\)"):
-            check_checkpoints(556, expected_checkpoints=(82, 228))
-
-    def test_margin_of_error_inverts_cochran_at_the_checkpoints(self):
-        assert sample_margin_of_error(83, 556) == pytest.approx(0.0993, abs=1e-4)
-        assert sample_margin_of_error(228, 556) == pytest.approx(0.0499, abs=1e-4)
-        assert sample_margin_of_error(83, 556) <= 0.10 and sample_margin_of_error(228, 556) <= 0.05
-
-    def test_margin_of_error_edge_cases(self):
-        assert margin_of_error(556, 556) == 0.0
-        with pytest.raises(ValueError):
-            margin_of_error(0, 556)
-        with pytest.raises(ValueError):
-            margin_of_error(557, 556)
-
-    def test_checkpoint_labels(self):
-        assert [checkpoint_label(o, (83, 228)) for o in (1, 83, 84, 228, 229)] == ["83", "83", "228", "228", ""]
 
 
 class TestPopulationAndShuffle:
@@ -174,7 +139,8 @@ class TestWriteCategorySample:
         assert [int(r["sample_order"]) for r in rows] == list(range(1, 41))
         assert sorted(r["repository"] for r in rows) == [f"o/r{i:02d}" for i in range(40)]
         assert [r["repository"] for r in rows] != [f"o/r{i:02d}" for i in range(40)]
-        assert [r["checkpoint"] for r in rows] == ["29"] * 29 + ["37"] * 8 + [""] * 3
+        assert [r["checkpoint"] for r in rows] == ["29"] * 29 + [""] * 11
+        assert SAMPLE_SIZE == 100
         assert all(r[c] == "" for r in rows for c in ("open_code", "categories", "notes"))
 
     def test_rewriting_gives_the_same_sample_and_leaves_the_sheet_alone(self, rq5_dir):
@@ -191,11 +157,6 @@ class TestWriteCategorySample:
             _sample(rq5_dir)
         assert (rq5_dir / SAMPLE_NAME).read_bytes() == coded
 
-    def test_fails_loudly_when_the_population_is_not_the_designed_one(self, rq5_dir):
-        with pytest.raises(CategoryCodingError, match="fixes the population at 556"):
-            write_category_sample(rq5_dir)
-        assert not (rq5_dir / SAMPLE_NAME).exists()
-
 
 class TestCodebook:
     def test_template_is_written_once_and_never_overwritten(self, rq5_dir):
@@ -206,26 +167,41 @@ class TestCodebook:
         assert (rq5_dir / CODEBOOK_NAME).read_text(encoding="utf-8") == CODEBOOK
         assert "categories: []" in CODEBOOK_TEMPLATE
 
-    def test_loads_code_name_and_definition(self, rq5_dir):
+    def test_loads_code_name_and_description(self, rq5_dir):
         (rq5_dir / CODEBOOK_NAME).write_text(CODEBOOK, encoding="utf-8")
         assert load_codebook(rq5_dir / CODEBOOK_NAME) == [
             Category("location", "Fixture location", "Says where fixtures live."),
             Category("cleanup", "Cleanup", "Says how fixtures clean up."),
         ]
 
-    def test_a_note_for_coders_is_accepted_and_not_reported(self, rq5_dir):
+    def test_in_results_defaults_to_true_and_can_be_false(self, rq5_dir):
         (rq5_dir / CODEBOOK_NAME).write_text(
-            "categories:\n  - {code: reuse, name: Reuse, definition: Using existing fixtures, note: Also listing them.}\n",
+            "categories:\n"
+            "  - {code: location, name: Location, description: Where fixtures live}\n"
+            "  - {code: non_actionable, name: Non-actionable, description: No instructions, in_results: false}\n",
             encoding="utf-8",
         )
-        assert load_codebook(rq5_dir / CODEBOOK_NAME) == [Category("reuse", "Reuse", "Using existing fixtures")]
+        assert [c.in_results for c in load_codebook(rq5_dir / CODEBOOK_NAME)] == [True, False]
+
+    def test_the_definition_is_optional_and_kept_when_given(self, rq5_dir):
+        (rq5_dir / CODEBOOK_NAME).write_text(
+            "categories:\n"
+            "  - {code: creation, name: Creation, description: When to create fixtures, definition: ''}\n"
+            "  - {code: quality, name: Quality, description: Qualities fixtures should have, definition: Says what.}\n",
+            encoding="utf-8",
+        )
+        assert load_codebook(rq5_dir / CODEBOOK_NAME) == [
+            Category("creation", "Creation", "When to create fixtures"),
+            Category("quality", "Quality", "Qualities fixtures should have", "Says what."),
+        ]
 
     @pytest.mark.parametrize(
         "entry,message",
         [
-            ("  - {code: Two Words, name: N, definition: D}", "not one snake_case word"),
-            ("  - {code: ok, name: N}", "name and definition are required"),
-            ("  - {code: ok, name: N, definition: D}\n  - {code: ok, name: M, definition: E}", "duplicate codes: ok"),
+            ("  - {code: Two Words, name: N, description: D}", "not one snake_case word"),
+            ("  - {code: ok, name: N, definition: D}", "name and description are required"),
+            ("  - {code: ok, name: N, description: D}\n  - {code: ok, name: M, description: E}", "duplicate codes: ok"),
+            ("  - {code: ok, name: N, description: D, in_results: maybe}", "in_results must be true or false"),
         ],
     )
     def test_rejects_invalid_entries(self, rq5_dir, entry, message):
@@ -242,7 +218,7 @@ class TestCodedPrefix:
         _sample(rq5_dir)
         _code(rq5_dir, {1: "location", 2: "location; cleanup", 3: "cleanup"})
         sample = self._load(rq5_dir)
-        assert (sample.size, sample.population, sample.checkpoints, sample.checkpoint_reached) == (3, 40, (29, 37), None)
+        assert (sample.size, sample.population, sample.checkpoints, sample.checkpoint_reached) == (3, 40, (29,), None)
 
     def test_coding_out_of_order_fails(self, rq5_dir):
         _sample(rq5_dir)
@@ -273,25 +249,15 @@ def _results():
     return compute_results(coded, Counter({"all": 100, "python": 60, "java": 40}))
 
 
-class TestRebuiltSampleDesign:
-    """The one-time stratified rebuild after the 2026-10-13 decision review."""
+class TestSampleOrder:
+    """The order rebuilt once after the 2026-10-13 decision review."""
 
-    def test_the_rebuilt_checkpoints_follow_from_the_strata(self):
-        cochran = checkpoint_sizes(REVIEWED_POPULATION)
-        assert REVIEWED_POPULATION == ORIGINAL_STRATUM + ADDED_STRATUM == 586
-        assert REVIEWED_CHECKPOINTS[1] == cochran[1] == 233
-        # 82 coded rows of the first pass are still `yes`; the top-up keeps the rate.
-        first = 82 + round(ADDED_STRATUM * 82 / ORIGINAL_STRATUM)
-        assert REVIEWED_CHECKPOINTS[0] == first == 88
-        assert first >= cochran[0]
-        assert sample_margin_of_error(first, REVIEWED_POPULATION) < 0.10
-
-    def test_sampling_design_names_the_strata_and_both_seeds_only_for_the_reviewed_population(self):
-        stratified = sampling_design(REVIEWED_POPULATION)
-        assert stratified.startswith("a proportional stratified random sample")
-        assert f"the {ORIGINAL_STRATUM} repositories" in stratified and f"the {ADDED_STRATUM} coded" in stratified
-        assert f"seed {SAMPLE_SEED}" in stratified and f"seed {TOP_UP_SEED}" in stratified
-        assert sampling_design(EXPECTED_POPULATION) == f"one random permutation (seed {SAMPLE_SEED}, not stratified)"
+    def test_sampling_design_gives_both_seeds_only_for_the_reviewed_population(self):
+        assert ORIGINAL_STRATUM + ADDED_STRATUM == 586
+        rebuilt = sampling_design(586)
+        assert f"seed {SAMPLE_SEED} for the {ORIGINAL_STRATUM} repositories" in rebuilt
+        assert f"seed {TOP_UP_SEED} for the {ADDED_STRATUM} coded" in rebuilt
+        assert sampling_design(556) == f"seed {SAMPLE_SEED}"
 
 
 class TestCategoryAnalysis:
@@ -314,11 +280,12 @@ class TestCategoryAnalysis:
         assert (category["size"], category["checkpoint_reached"]) == (29, 29)
         assert category["category_counts"] == {"location": 28, "cleanup": 2}
         assert category["categories_per_repository"] == (1, 1, 2)
-        assert category["margin_of_error"] == pytest.approx(margin_of_error(29, 40))
         assert checkpoint_warning(category) is None
 
         report = generate_report(_results(), category)
-        assert "seed 20261012" in report and "checkpoint 29 reached. Sample size: 29. Confidence: 95%." in report
+        assert "an exploratory random sample of the first 29 of them" in report
+        assert "(seed 20261012), coded from the top; all 29 coded. Sample size: 29." in report
+        assert "Margin of error" not in report and "Confidence" not in report
         assert "| Fixture location | Says where fixtures live. | 28 | 96.6% |" in report
         assert "| Cleanup | Says how fixtures clean up. | 2 | 6.9% |" in report
         assert "A repository can belong to several categories, so percentages do not add up to 100%." in report
@@ -331,12 +298,12 @@ class TestCategoryAnalysis:
         _code(rq5_dir, {o: "location" for o in range(1, 30)})
         category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
         report = generate_report(_results(), category)
-        assert "ordered as one random permutation (seed 20261012, not stratified); coded from the top" in report
+        assert "in the existing random order (seed 20261012), coded from the top" in report
 
-        monkeypatch.setattr("collection.rq5_category_sample.REVIEWED_POPULATION", 40)
+        monkeypatch.setattr("collection.rq5_category_sample.ORIGINAL_STRATUM", 35)
+        monkeypatch.setattr("collection.rq5_category_sample.ADDED_STRATUM", 5)
         report = generate_report(_results(), category)
-        assert "ordered as a proportional stratified random sample: the 548 repositories" in report
-        assert "seed 20261014" in report and "not stratified" not in report
+        assert "(seed 20261012 for the 35 repositories coded `yes` in the first pass, seed 20261014 for the 5" in report
         assert "No second coding yet." in report
 
     def test_categories_are_listed_most_frequent_first(self, rq5_dir):
@@ -347,6 +314,31 @@ class TestCategoryAnalysis:
         report = generate_report(_results(), compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages()))
         assert report.index("| Cleanup | Says how fixtures clean up. | 29 |") < report.index("| Fixture location |")
 
+    def test_a_category_out_of_the_results_stays_in_the_sample_but_not_in_the_table(self, rq5_dir):
+        codebook = CODEBOOK + (
+            "  - code: non_actionable\n    name: Non-actionable mention\n"
+            "    description: Mentions fixtures without instructions\n    in_results: false\n"
+        )
+        _sample(rq5_dir)
+        rows = _code(
+            rq5_dir,
+            {o: "location" for o in range(1, 30)} | {4: "non_actionable", 9: "non_actionable", 12: "location; non_actionable"},
+            codebook=codebook,
+        )
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
+        only = [rows[3]["repository"], rows[8]["repository"]]
+        assert category["size"] == 29  # still in the sample
+        [excluded] = category["excluded"]
+        assert (excluded["category"].code, excluded["only"], excluded["with_others"]) == ("non_actionable", only, 1)
+        assert category["categories_per_repository"] == (1, 0, 1)  # the excluded code is not counted
+        report = generate_report(_results(), category)
+        assert "| Fixture location | Says where fixtures live. | 27 | 93.1% |" in report
+        assert "| Non-actionable mention |" not in report
+        assert (
+            "Not in the table: Non-actionable mention (mentions fixtures without instructions). 2 repositories have "
+            f"it as their only category: {only[0]}, {only[1]}. 1 have it together with other categories." in report
+        )
+
     def test_fails_when_a_repository_has_no_language(self, rq5_dir):
         _sample(rq5_dir)
         _code(rq5_dir, {1: "location"})
@@ -355,13 +347,20 @@ class TestCategoryAnalysis:
         with pytest.raises(CategoryCodingError, match="no language in the scan database for: o/r07"):
             compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, languages)
 
-    def test_off_checkpoint_warns_and_reports_the_actual_size(self, rq5_dir):
+    def test_a_partly_coded_sample_warns_and_reports_the_actual_size(self, rq5_dir):
+        _sample(rq5_dir)
+        _code(rq5_dir, {o: "location" for o in range(1, 21)})
+        category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
+        assert category["size"] == 20
+        assert "has 20 of its 29 repositories coded" in checkpoint_warning(category)
+        assert "20 of the 29 coded so far. Sample size: 20." in generate_report(_results(), category)
+
+    def test_coding_past_the_sample_warns(self, rq5_dir):
         _sample(rq5_dir)
         _code(rq5_dir, {o: "location" for o in range(1, 31)})
         category = compute_category_results(rq5_dir / REPOSITORY_SHEET_NAME, _languages())
-        assert category["size"] == 30
-        assert "30 repositories, which is not a checkpoint (29, 37)" in checkpoint_warning(category)
-        assert "no checkpoint reached (29 and 37): the coded prefix stops at 30" in generate_report(_results(), category)
+        assert "has 30 (more than its 29) repositories coded" in checkpoint_warning(category)
+        assert "30 coded, beyond the 29 of the sample" in generate_report(_results(), category)
 
 
 class TestAgreement:
@@ -435,13 +434,9 @@ class TestInstructions:
     def test_the_instructions_match_the_code(self):
         text = (ROOT_DIR / "research-questions" / "rq5" / "CATEGORY_CODING.md").read_text(encoding="utf-8")
         assert f"**{SAMPLE_SEED}**" in text and f"**{AGREEMENT_SEED}**" in text
-        assert f"the {EXPECTED_POPULATION} repositories coded `yes`" in text
-        for checkpoint in EXPECTED_CHECKPOINTS:
-            assert f"**{checkpoint}**" in text
         assert f"{AGREEMENT_SIZE} repositories" in text
-        assert f"**{TOP_UP_SEED}**" in text and f"**{REVIEWED_POPULATION}**" in text
-        for checkpoint in REVIEWED_CHECKPOINTS:
-            assert f"**{checkpoint}**" in text
+        assert f"**{TOP_UP_SEED}**" in text and f"**{SAMPLE_SIZE}**" in text
+        assert "**586**" in text
         for name in (SAMPLE_NAME, CODEBOOK_NAME, AGREEMENT_SHEET_NAME):
             assert name in text
         assert "rq5_category_sample sample" in text and "rq5_category_sample agreement-sheet" in text

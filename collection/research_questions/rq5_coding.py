@@ -52,7 +52,6 @@ from ..rq5_category_sample import (
     load_codebook,
     load_coded_sample,
     parse_categories,
-    sample_margin_of_error,
     sampling_design,
 )
 from ._shared import OUTPUT_DIR, pct, write_markdown_report
@@ -152,16 +151,26 @@ def compute_category_results(
         raise CategoryCodingError(f"no language in the scan database for: {', '.join(unknown[:10])}")
     coded = sample.coded
     per_repo = [set(parse_categories(row["categories"])) for row in coded]
-    sizes = [len(codes) for codes in per_repo]
+    # Categories with `in_results: false` stay in the sheet but out of every result.
+    reported = {c.code for c in codebook if c.in_results}
+    sizes = [len(codes & reported) for codes in per_repo]
     return {
         "population": sample.population,
         "checkpoints": sample.checkpoints,
         "size": sample.size,
         "checkpoint_reached": sample.checkpoint_reached,
-        "margin_of_error": sample_margin_of_error(sample.size, sample.population) if coded else None,
         "codebook": codebook,
         "category_counts": Counter(code for codes in per_repo for code in codes),
         "categories_per_repository": (statistics.median(sizes), min(sizes), max(sizes)) if sizes else None,
+        "excluded": [
+            {
+                "category": c,
+                "only": [row["repository"] for row, codes in zip(coded, per_repo) if codes == {c.code}],
+                "with_others": sum(1 for codes in per_repo if c.code in codes and codes != {c.code}),
+            }
+            for c in codebook
+            if not c.in_results
+        ],
         "sample_languages": Counter(languages[row["repository"]] for row in coded),
         "population_languages": Counter(languages[row["repository"]] for row in sample.rows),
         "agreement": load_agreement(directory, codebook, sample) if coded else None,
@@ -170,13 +179,13 @@ def compute_category_results(
 
 
 def checkpoint_warning(category: dict[str, Any] | None) -> str | None:
-    """A warning when the coded prefix does not end exactly at a checkpoint."""
+    """A warning when the coded prefix does not end exactly at the sample size."""
     if not category or not category["size"] or category["checkpoint_reached"] is not None:
         return None
-    return (
-        f"The coded category sample has {category['size']} repositories, which is not a checkpoint "
-        f"({', '.join(str(c) for c in category['checkpoints'])}); the results use the actual size."
-    )
+    target = max(category["checkpoints"], default=category["population"])
+    size = category["size"]
+    coded = f"{size} of its {target}" if size < target else f"{size} (more than its {target})"
+    return f"The category sample has {coded} repositories coded; the results use the actual size."
 
 
 def _ratio(numerator: int, denominator: int) -> float | None:
@@ -185,6 +194,22 @@ def _ratio(numerator: int, denominator: int) -> float | None:
 
 def _kappa(value: float | None) -> str:
     return "n/a" if value is None else f"{value:.2f}"
+
+
+def _excluded_category_lines(excluded: list[dict[str, Any]]) -> list[str]:
+    """For each category kept in the sheet but out of the results: the
+    repositories that have only it, and how many have it with other categories."""
+    lines: list[str] = []
+    for entry in excluded:
+        name, only = entry["category"].name, entry["only"]
+        listed = f": {', '.join(only)}" if only else ""
+        lines += [
+            f"Not in the table: {name} ({entry['category'].description.lower()}). "
+            f"{len(only):,} repositories have it as their only category{listed}. "
+            f"{entry['with_others']:,} have it together with other categories.",
+            "",
+        ]
+    return lines
 
 
 def render_category_section(category: dict[str, Any] | None) -> list[str]:
@@ -200,30 +225,30 @@ def render_category_section(category: dict[str, Any] | None) -> list[str]:
             f"has categories (checkpoints {checkpoints}).",
             "",
         ]
-    reached = category["checkpoint_reached"]
-    checkpoint_text = (
-        f"checkpoint {reached} reached"
-        if reached is not None
-        else f"no checkpoint reached ({checkpoints}): the coded prefix stops at {size}"
-    )
+    target = max(category["checkpoints"], default=population)
+    if size == target:
+        status = f"all {target:,} coded"
+    elif size < target:
+        status = f"{size:,} of the {target:,} coded so far"
+    else:
+        status = f"{size:,} coded, beyond the {target:,} of the sample"
     lines += [
         "### Sampling",
         "",
-        f"Population: the {population:,} repositories coded `yes`, ordered as {sampling_design(population)}; "
-        f"coded from the top; {checkpoint_text}. Sample size: {size:,}. "
-        f"Confidence: 95%. Margin of error: {pct(category['margin_of_error'])} (p = 0.5, with the finite "
-        "population correction).",
+        f"Population: the {population:,} repositories coded `yes`. Sample: an exploratory random sample of the "
+        f"first {target:,} of them, in the existing random order ({sampling_design(population)}), coded from "
+        f"the top; {status}. Sample size: {size:,}.",
         "",
         "### Categories of fixture guidance",
         "",
-        "| Category | Definition | Repositories | % of sample |",
+        "| Category | Description | Repositories | % of sample |",
         "|---|---|---|---|",
     ]
     counts = category["category_counts"]
     # Most frequent first; ties keep the codebook order.
-    for entry in sorted(category["codebook"], key=lambda e: -counts[e.code]):
+    for entry in sorted((e for e in category["codebook"] if e.in_results), key=lambda e: -counts[e.code]):
         count = counts[entry.code]
-        lines.append(f"| {entry.name} | {entry.definition} | {count:,} | {pct(_ratio(count, size))} |")
+        lines.append(f"| {entry.name} | {entry.description} | {count:,} | {pct(_ratio(count, size))} |")
     median, minimum, maximum = category["categories_per_repository"]
     lines += [
         "",
@@ -231,6 +256,7 @@ def render_category_section(category: dict[str, Any] | None) -> list[str]:
         "",
         f"Categories per repository: median {median:g}, minimum {minimum}, maximum {maximum}.",
         "",
+        *_excluded_category_lines(category["excluded"]),
         "### Languages",
         "",
         f"| Language | Coded sample (n = {size:,}) | % | All `yes` repositories (N = {population:,}) | % |",
