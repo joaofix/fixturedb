@@ -92,12 +92,12 @@ be written.
 
 | Category (code) | What the guidance says | Example |
 |---|---|---|
-| Location (`location`) | Where fixtures live or should be placed. | "Fixtures (sample PDF, docx, xlsx, archive, etc.) live in `test/fixtures/`." |
-| Creation (`creation`) | When to create fixtures or reuse existing ones. | "Add fixture in `tests/fixtures/<tool_name>_output.(json\|xml\|txt)`" |
-| Quality (`quality`) | Qualities fixtures should have and keep. | "Use the smallest synthetic fixture that crosses the required boundary" |
-| Conventions (`conventions`) | Which fixture mechanism and scope to use. | "Prefer fixtures over setup/teardown methods" |
-| Test doubles (`test_doubles`) | Mocks and stubs handled by fixtures. | "Unit test conftest provides `driver` fixture as MagicMock" |
-| Security (`security`) | No real or private data in fixtures. | "Never commit secrets, credentials, or raw sensitive payloads in logs or fixtures." |
+| Location (`location`) | Placing and organizing fixtures. | "Fixtures (sample PDF, docx, xlsx, archive, etc.) live in `test/fixtures/`." |
+| Creation (`creation`) | Creating or reusing fixtures. | "Add fixture in `tests/fixtures/<tool_name>_output.(json\|xml\|txt)`" |
+| Quality (`quality`) | Keeping fixtures reliable and independent. | "Use the smallest synthetic fixture that crosses the required boundary" |
+| Mechanisms (`mechanisms`) | Choosing decorators, annotations or functions. | "Prefer fixtures over setup/teardown methods" |
+| Test doubles (`test_doubles`) | Handling mocks within fixtures. | "Unit test conftest provides `driver` fixture as MagicMock" |
+| Sensitive data (`security`) | Avoid private or production data. | "Never commit secrets, credentials, or raw sensitive payloads in logs or fixtures." |
 | Miscellaneous (`miscellaneous`) | Guidance that fits no other category. | (none coded yet) |
 | Non-actionable mention (`non_actionable`) | Mentions fixtures without instructions. Kept in the sheet, but not in the results (`in_results: false`). | "Test conventions, fixtures: HACKING.rst / TESTING.rst" |
 
@@ -118,9 +118,9 @@ mapping:
 | Location | Location |
 | Fixture creation, Reuse | Creation |
 | Fixture design, Fixture maintenance, Test isolation, Cleanup | Quality |
-| Framework features | Conventions |
+| Framework features | Mechanisms |
 | Test doubles | Test doubles |
-| Sensitive information | Security |
+| Sensitive information | Sensitive data |
 | Non-actionable mention | Non-actionable mention, kept in the sheet but not in the results |
 
 The mapping was applied to the coded rows automatically, removing duplicates

@@ -1,27 +1,27 @@
 categories:
   - code: location
     name: Location
-    description: Where fixtures live or should be placed
+    description: Placing and organizing fixtures
     definition: ''
   - code: creation
     name: Creation
-    description: When to create fixtures or reuse existing ones
+    description: Creating or reusing fixtures
     definition: ''
   - code: quality
     name: Quality
-    description: Qualities fixtures should have and keep
+    description: Keeping fixtures reliable and independent
     definition: ''
-  - code: conventions
-    name: Conventions
-    description: Which fixture mechanism and scope to use
+  - code: mechanisms
+    name: Mechanisms
+    description: Choosing decorators, annotations or functions
     definition: ''
   - code: test_doubles
     name: Test doubles
-    description: Mocks and stubs handled by fixtures
+    description: Handling mocks within fixtures
     definition: ''
   - code: security
-    name: Security
-    description: No real or private data in fixtures
+    name: Sensitive data
+    description: Avoid private or production data
     definition: ''
   - code: miscellaneous
     name: Miscellaneous

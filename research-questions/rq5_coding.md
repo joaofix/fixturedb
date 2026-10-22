@@ -1,6 +1,6 @@
 # RQ5 -- Manual coding of fixture guidance
 
-Generated: 2026-10-16 01:16:27 UTC
+Generated: 2026-10-22 21:48:57 UTC
 
 Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per repository with a fixture keyword match in its guidance files.
 
@@ -39,12 +39,12 @@ Population: the 586 repositories coded `yes`. Sample: an exploratory random samp
 
 | Category | Description | Repositories | % of sample |
 |---|---|---|---|
-| Quality | Qualities fixtures should have and keep | 43 | 43.0% |
-| Creation | When to create fixtures or reuse existing ones | 39 | 39.0% |
-| Location | Where fixtures live or should be placed | 28 | 28.0% |
-| Test doubles | Mocks and stubs handled by fixtures | 15 | 15.0% |
-| Conventions | Which fixture mechanism and scope to use | 13 | 13.0% |
-| Security | No real or private data in fixtures | 7 | 7.0% |
+| Quality | Keeping fixtures reliable and independent | 43 | 43.0% |
+| Creation | Creating or reusing fixtures | 39 | 39.0% |
+| Location | Placing and organizing fixtures | 28 | 28.0% |
+| Test doubles | Handling mocks within fixtures | 15 | 15.0% |
+| Mechanisms | Choosing decorators, annotations or functions | 13 | 13.0% |
+| Sensitive data | Avoid private or production data | 7 | 7.0% |
 | Miscellaneous | Guidance that fits no other category | 0 | 0.0% |
 
 A repository can belong to several categories, so percentages do not add up to 100%.

@@ -6,7 +6,7 @@ design,Fixture design,quality,Quality
 maintenance,Fixture maintenance,quality,Quality
 isolation,Test isolation,quality,Quality
 cleanup,Cleanup,quality,Quality
-framework,Framework features,conventions,Conventions
+framework,Framework features,mechanisms,Mechanisms
 test_doubles,Test doubles,test_doubles,Test doubles
-sensitive,Sensitive information,security,Security
+sensitive,Sensitive information,security,Sensitive data
 non_actionable,Non-actionable mention,non_actionable,Non-actionable mention
