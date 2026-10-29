@@ -132,8 +132,6 @@ java:
     "@After": {fixture_type: junit4_after, scope: per_test, family: junit4, framework: junit}
     "@BeforeMethod": {fixture_type: testng_before_method, scope: per_test, family: testng, framework: testng}
     "@AfterMethod": {fixture_type: testng_after_method, scope: per_test, family: testng, framework: testng}
-    "@DataProvider": {fixture_type: testng_data_provider, scope: per_test, family: testng, framework: testng}
-    "@Factory": {fixture_type: testng_factory, scope: per_test, family: testng, framework: testng}
     "@BeforeSuite": {fixture_type: testng_before_suite, scope: global, family: testng, framework: testng}
     "@AfterSuite": {fixture_type: testng_after_suite, scope: global, family: testng, framework: testng}
     "@BeforeTest": {fixture_type: testng_before_test, scope: global, family: testng, framework: testng}
@@ -142,16 +140,6 @@ java:
     "@AfterGroups": {fixture_type: testng_after_groups, scope: global, family: testng, framework: testng}
     "@Rule": {fixture_type: junit_rule, scope: per_test, family: junit4, framework: junit}
     "@ClassRule": {fixture_type: junit_class_rule, scope: per_class, family: junit4, framework: junit}
-  # @Factory supplies test-class instances (data-driven class
-  # instantiation), the same "supplies inputs rather than doing setup/
-  # teardown" role @DataProvider plays -- fixture_role classification
-  # (detector_shared.py) falls through to 'other' for both by construction
-  # (neither is in feature_extraction_patterns.yaml's type_based_pairs),
-  # same scope value (per_test) for consistency, not because either
-  # mapping is a precise fit. No JUnit collision risk for this name, so
-  # (unlike @BeforeClass/@AfterClass below) it needs no import-based
-  # disambiguation.
-  #
   # Same annotation name exists in both JUnit4 and TestNG for @BeforeClass/
   # @AfterClass; the detector resolves it per-file by checking which of
   # org.junit.*/org.testng.* is imported (detector_java.py's
@@ -200,6 +188,20 @@ java:
       from each other or from pytest's session scope; no finer-grained
       scope value exists in the current vocabulary to do so.
   excluded:
+    - case: "TestNG @DataProvider"
+      reason: >
+        Removed (2026-10-27): supplies test data rather than setting up or
+        tearing down the test environment. Consistent with not detecting
+        the equivalent mechanisms in other frameworks either (JUnit 5
+        @MethodSource, JUnit 4 @Parameters, pytest.mark.parametrize).
+    - case: "TestNG @Factory"
+      reason: >
+        Removed (2026-10-27): most real matches turned out to be false
+        positives from unrelated libraries sharing the annotation name
+        (Hamcrest's org.hamcrest.Factory, Apache Commons Configuration's
+        @Factory), neither a test fixture. Removed outright rather than
+        adding import-based disambiguation, trading away the smaller
+        number of genuine TestNG @Factory fixtures too.
     - case: "JUnit 5 Extension lifecycle methods (BeforeEachCallback, AfterEachCallback, etc.)"
       reason: >
         These are implemented via interfaces, not annotations -- the

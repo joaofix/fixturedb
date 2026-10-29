@@ -4,7 +4,7 @@ Unit tests for Java fixture extraction.
 Tests positive and negative detection of Java fixtures using:
 - JUnit 3/4/5 annotations (@Before, @After, @BeforeClass, @AfterClass, @BeforeEach, @AfterEach)
 - TestNG annotations (@BeforeMethod, @AfterMethod, @BeforeSuite/@AfterSuite,
-  @BeforeTest/@AfterTest, @BeforeGroups/@AfterGroups, @DataProvider, @Factory)
+  @BeforeTest/@AfterTest, @BeforeGroups/@AfterGroups)
 - Class initialization and static initializers
 
 @BeforeClass/@AfterClass collide with JUnit4's own annotations of the same
@@ -340,8 +340,12 @@ public class TestExample {
         fixture = assert_fixture_detected(code, "java", "tearDown")
         assert fixture.fixture_type == "testng_after_method"
 
-    def test_dataprovider_annotation(self):
-        """TestNG @DataProvider should be detected as data-driven fixture"""
+    def test_dataprovider_annotation_alone_produces_no_fixtures(self):
+        """@DataProvider is deliberately NOT in the annotation catalog
+        (removed 2026-10-27, see fixture_definitions.yaml's
+        java.excluded): it supplies test data, not setup/teardown, same
+        treatment as @MethodSource/@Parameters/pytest.mark.parametrize.
+        Sanity check only, no fix expected."""
         code = """
 import org.testng.annotations.DataProvider;
 
@@ -355,20 +359,7 @@ public class DataTests {
     }
 }
 """
-        fixture = assert_fixture_detected(code, "java", "provideTestData")
-        assert fixture.fixture_type == "testng_data_provider"
-        assert fixture.fixture_role == "other"
-
-    def test_dataprovider_with_params(self):
-        """DataProvider with method parameters"""
-        code = """
-@DataProvider
-public Object[][] provide() {
-    return new Object[][] { {1}, {2}, {3} };
-}
-"""
-        fixture = assert_fixture_detected(code, "java", "provide")
-        assert fixture.fixture_type == "testng_data_provider"
+        assert_fixture_count(code, "java", 0)
 
     @pytest.mark.parametrize(
         "signature",
@@ -479,14 +470,15 @@ public class TestExample {{
         assert fixture.fixture_role == "teardown"
 
 
-class TestTestNGFactory:
-    """@Factory supplies test-class instances (data-driven class
-    instantiation) -- same role as @DataProvider, so it's classified the
-    same way: detected, but fixture_role='other' (neither setup nor
-    teardown), matching @DataProvider's existing treatment. No JUnit
-    collision risk for this name, so no import-based resolution needed."""
+class TestTestNGFactoryExcluded:
+    """@Factory is deliberately NOT in the annotation catalog (removed
+    2026-10-27, see fixture_definitions.yaml's java.excluded): most real
+    matches were false positives from Hamcrest's org.hamcrest.Factory or
+    Apache Commons Configuration's @Factory, neither a test fixture.
+    Sanity check only, no fix expected -- this guards against
+    accidentally re-adding the pattern."""
 
-    def test_factory_annotation_detected_as_other(self):
+    def test_factory_annotation_alone_produces_no_fixtures(self):
         code = """
 import org.testng.annotations.Factory;
 
@@ -497,9 +489,7 @@ public class FactoryTests {
     }
 }
 """
-        fixture = assert_fixture_detected(code, "java", "createInstances")
-        assert fixture.fixture_type == "testng_factory"
-        assert fixture.fixture_role == "other"
+        assert_fixture_count(code, "java", 0)
 
 
 class TestTestNGListenersOutOfScope:
