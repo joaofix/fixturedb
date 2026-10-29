@@ -1317,22 +1317,6 @@ datahub-project/datahub,java,934f7a881f755ebc657c55321587495cab886161,metadata-s
   public void clearSecurityManager() {
     System.setSecurityManager(null);
   }",2026-03-12,10.310746064339494,1
-datahub-project/datahub,java,d3fee0b90bfd61ba9a887db769d52f9d0ac4b3f8,metadata-service/factories/src/test/java/com/linkedin/gms/factory/telemetry/DailyReportTest.java,extractPlatformNameTestCases,testng_data_provider,330,345,16,0,1,0,3,0.1875,other,https://github.com/datahub-project/datahub/blob/d3fee0b90bfd61ba9a887db769d52f9d0ac4b3f8/metadata-service/factories/src/test/java/com/linkedin/gms/factory/telemetry/DailyReportTest.java#L330-L345,claude,agent,"@DataProvider(name = ""extractPlatformNameTestCases"")
-  public Object[][] extractPlatformNameTestCases() {
-    return new Object[][] {
-      // Valid URNs should return just the platform name
-      {""urn:li:dataPlatform:snowflake"", ""snowflake""},
-      {""urn:li:dataPlatform:bigquery"", ""bigquery""},
-      {""urn:li:dataPlatform:mysql"", ""mysql""},
-      {""urn:li:dataPlatform:custom-platform"", ""custom-platform""},
-      // Malformed URNs should fall back to the raw value
-      {""not-a-urn"", ""not-a-urn""},
-      {""urn:li:dataset:foo"", ""urn:li:dataset:foo""},
-      {"""", """"},
-      // Null should return null
-      {null, null},
-    };
-  }",2026-03-12,10.310746064339494,1
 datahub-project/datahub,java,087eaf70e51c1a4ab9fd266a7355f50a838f8ab8,entity-registry/src/test/java/com/linkedin/metadata/aspect/hooks/AspectMigrationMutatorChainTest.java,setUp,testng_before_method,44,51,8,2,1,0,0,0.0,setup,https://github.com/datahub-project/datahub/blob/087eaf70e51c1a4ab9fd266a7355f50a838f8ab8/entity-registry/src/test/java/com/linkedin/metadata/aspect/hooks/AspectMigrationMutatorChainTest.java#L44-L51,claude,agent,"@BeforeMethod
   public void setUp() {
     entityRegistry = new TestEntityRegistry();
@@ -1476,17 +1460,6 @@ datahub-project/datahub,java,957720b45fa40964ea169fed617d61ab6320d3f9,metadata-i
     when(mockRetrieverContext.getAspectRetriever()).thenReturn(mockAspectRetriever);
     when(mockAspectRetriever.getEntityRegistry()).thenReturn(entityRegistry);
   }",2026-05-22,10.505133470225873,1
-datahub-project/datahub,java,1d1f55ffcf21038d478d68f9c4551cd4a1d0b784,metadata-io/src/test/java/com/linkedin/metadata/search/indexbuilder/ESIndexBuilderTest.java,provideEstimateMinutesRemainingData,testng_data_provider,1898,1908,11,0,1,0,6,0.5454545454545454,other,https://github.com/datahub-project/datahub/blob/1d1f55ffcf21038d478d68f9c4551cd4a1d0b784/metadata-io/src/test/java/com/linkedin/metadata/search/indexbuilder/ESIndexBuilderTest.java#L1898-L1908,claude,agent,"@DataProvider(name = ""estimateMinutesRemainingData"")
-  public Object[][] provideEstimateMinutesRemainingData() {
-    return new Object[][] {
-      // docsIndexedSinceStart, elapsedMillisSinceStart, remainingDocs, expectedMinutes
-      {1000L, 60_000L, 9000L, 9L}, // steady cumulative rate
-      {100L, 0L, 500L, 0L}, // zero elapsed time guards divide-by-zero
-      {0L, 30_000L, 1000L, 0L}, // no progress yet
-      {1000L, 60_000L, 0L, 0L}, // already complete
-      {10_000L, 60_000L, 100L, 0L}, // sub-minute ETA truncates to 0
-    };
-  }",2026-07-07,10.63107460643395,1
 datahub-project/datahub,java,a5eb7ea2a56ee2f8d7f0de1424cb0d255f021719,metadata-io/src/test/java/com/linkedin/metadata/usage/flush/AdaptiveFlushCoordinatorAlignmentTest.java,setup,testng_before_method,36,43,8,0,1,0,0,0.0,setup,https://github.com/datahub-project/datahub/blob/a5eb7ea2a56ee2f8d7f0de1424cb0d255f021719/metadata-io/src/test/java/com/linkedin/metadata/usage/flush/AdaptiveFlushCoordinatorAlignmentTest.java#L36-L43,cursor,agent,"@BeforeMethod
   public void setup() {
     YAMLMapper yamlMapper = yamlMapper();
@@ -1721,10 +1694,6 @@ datahub-project/datahub,java,0f58b998df13ff37f0e7af9fc7704a81b45886ac,metadata-j
     entityClient = Mockito.mock(SystemEntityClient.class);
     opContext = TestOperationContexts.systemContextNoSearchAuthorization();
     hydrator = new EntityHydrator(TestOperationContexts.defaultEntityRegistry(), entityClient);
-  }",2026-09-24,10.847364818617386,1
-datahub-project/datahub,java,0f58b998df13ff37f0e7af9fc7704a81b45886ac,metadata-jobs/mae-consumer/src/test/java/com/linkedin/metadata/kafka/hydrator/EntityHydratorTest.java,syntheticActors,testng_data_provider,43,46,4,0,1,0,0,0.0,other,https://github.com/datahub-project/datahub/blob/0f58b998df13ff37f0e7af9fc7704a81b45886ac/metadata-jobs/mae-consumer/src/test/java/com/linkedin/metadata/kafka/hydrator/EntityHydratorTest.java#L43-L46,cursor,agent,"@DataProvider(name = ""syntheticActors"")
-  public Object[][] syntheticActors() {
-    return new Object[][] {{SYSTEM_ACTOR}, {ANONYMOUS_ACTOR}, {UNKNOWN_ACTOR}};
   }",2026-09-24,10.847364818617386,1
 datahub-project/datahub,java,12b683965ee17779513d78f6c3d5bd7b95b4692e,metadata-io/src/test/java/com/linkedin/metadata/aspect/validation/StructuredPropertyPrivilegeConstraintsValidatorTest.java,setup,testng_before_method,69,128,57,4,3,0,0,0.0,setup,https://github.com/datahub-project/datahub/blob/12b683965ee17779513d78f6c3d5bd7b95b4692e/metadata-io/src/test/java/com/linkedin/metadata/aspect/validation/StructuredPropertyPrivilegeConstraintsValidatorTest.java#L69-L128,claude,agent,"@BeforeMethod
   public void setup() {
@@ -2785,22 +2754,6 @@ apache/flink-cdc,java,eef77bb0610c6af83447527a831b26f56e74b47b,flink-cdc-e2e-tes
         super.after();
         inventoryDatabase.dropDatabase();
     }",2026-09-26,6.16290212183436,1
-apache/fory,java,8d1fad1535f39e042ee18a001d8ed4bc90fa5a0d,java/fory-core/src/test/java/org/apache/fory/serializer/SerializerFactoryTest.java,factoryModes,testng_data_provider,225,228,4,0,1,0,0,0.0,other,https://github.com/apache/fory/blob/8d1fad1535f39e042ee18a001d8ed4bc90fa5a0d/java/fory-core/src/test/java/org/apache/fory/serializer/SerializerFactoryTest.java#L225-L228,claude,agent,"@DataProvider
-  public Object[][] factoryModes() {
-    return new Object[][] {{false}, {true}};
-  }",2026-09-07,3.359342915811088,1
-apache/fory,java,8d1fad1535f39e042ee18a001d8ed4bc90fa5a0d,java/fory-core/src/test/java/org/apache/fory/serializer/SerializerFactoryTest.java,metaFactoryModes,testng_data_provider,230,241,12,0,4,0,0,0.0,other,https://github.com/apache/fory/blob/8d1fad1535f39e042ee18a001d8ed4bc90fa5a0d/java/fory-core/src/test/java/org/apache/fory/serializer/SerializerFactoryTest.java#L230-L241,claude,agent,"@DataProvider
-  public Object[][] metaFactoryModes() {
-    List<Object[]> modes = new ArrayList<>();
-    for (boolean codegen : new boolean[] {false, true}) {
-      for (boolean registered : new boolean[] {false, true}) {
-        for (boolean metadataFirst : new boolean[] {false, true}) {
-          modes.add(new Object[] {codegen, registered, metadataFirst});
-        }
-      }
-    }
-    return modes.toArray(new Object[0][]);
-  }",2026-09-07,3.359342915811088,1
 apache/fory,java,af819581ef716a77c838cd011e49a84d8e993d9a,java/fory-format/src/test/java/org/apache/fory/format/GoCrossLanguageTest.java,ensureGoPeerReady,testng_before_class,56,80,25,0,4,0,0,0.0,setup,https://github.com/apache/fory/blob/af819581ef716a77c838cd011e49a84d8e993d9a/java/fory-format/src/test/java/org/apache/fory/format/GoCrossLanguageTest.java#L56-L80,claude,agent,"@BeforeClass
   public void ensureGoPeerReady() {
     String enabled = System.getenv(""FORY_GO_JAVA_CI"");
@@ -9799,116 +9752,6 @@ chinalwb/android-rich-text-editor,java,236df13fe7454731a87316882d12c2332ef3008b,
             scenario.close();
         }
     }",2026-09-08,9.259411362080767,1
-clickhouse/clickhouse-java,java,b649e59665728ea5f472a7c5d736797d9fb2bbee,client-v2/src/test/java/com/clickhouse/client/api/data_formats/internal/SerializerUtilsPrimitiveSerializationTests.java,invalidStringValues,testng_data_provider,119,127,9,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/b649e59665728ea5f472a7c5d736797d9fb2bbee/client-v2/src/test/java/com/clickhouse/client/api/data_formats/internal/SerializerUtilsPrimitiveSerializationTests.java#L119-L127,claude,agent,"@DataProvider(name = ""invalidStringValues"")
-    private Object[][] invalidStringValues() {
-        return new Object[][] {
-                {""UInt64"", ""-1""},
-                {""UInt64"", ""18446744073709551616""},
-                {""UUID"", ""not-a-uuid""},
-                {""UUID"", """"},
-        };
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,b649e59665728ea5f472a7c5d736797d9fb2bbee,client-v2/src/test/java/com/clickhouse/client/datatypes/RowBinaryFormatWriterTest.java,stringValuesForUInt64AndUUID,testng_data_provider,579,591,13,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/b649e59665728ea5f472a7c5d736797d9fb2bbee/client-v2/src/test/java/com/clickhouse/client/datatypes/RowBinaryFormatWriterTest.java#L579-L591,claude,agent,"@DataProvider(name = ""stringValuesForUInt64AndUUID"")
-    private Object[][] stringValuesForUInt64AndUUID() {
-        String uuid = ""61f0c404-5cb3-11e7-907b-a6006ad3dba0"";
-        return new Object[][] {
-                {""UInt64"", ""18446744073709551615"", ""18446744073709551615""},
-                {""Map(UInt64, Int32)"", singleEntryMap(""9223372036854775808"", 1), ""{9223372036854775808:1}""},
-                {""UUID"", uuid, uuid},
-                {""Nullable(UUID)"", uuid, uuid},
-                {""Array(UUID)"", Collections.singletonList(uuid), ""['"" + uuid + ""']""},
-                {""Tuple(Int32, Nullable(UUID), Float64)"", Arrays.asList(1, uuid, 0.25d), ""(1,'"" + uuid + ""',0.25)""},
-                {""Map(UUID, Int32)"", singleEntryMap(uuid, 1), ""{'"" + uuid + ""':1}""},
-        };
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13,jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataImplLikeMatcherTest.java,likePatterns,testng_data_provider,10,36,27,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13/jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataImplLikeMatcherTest.java#L10-L36,claude,agent,"@DataProvider(name = ""likePatterns"")
-    public Object[][] likePatterns() {
-        return new Object[][] {
-                {null, ""any_name"", true},
-                {null, """", true},
-                {"""", """", true},
-                {"""", ""a"", false},
-                {""%"", """", true},
-                {""%"", ""a\nb"", true},
-                {""abc"", ""abc"", true},
-                {""abc"", ""ABC"", false},
-                {""abc"", ""abcd"", false},
-                {""a_c"", ""abc"", true},
-                {""a_c"", ""ac"", false},
-                {""a%c"", ""ac"", true},
-                {""a%c"", ""a.b.c"", true},
-                {""a%c"", ""acd"", false},
-                {""a\\_c"", ""a_c"", true},
-                {""a\\_c"", ""abc"", false},
-                {""100\\%"", ""100%"", true},
-                {""100\\%"", ""1000"", false},
-                {""a\\\\b"", ""a\\b"", true},
-                {""a.c"", ""abc"", false},
-                {""(x)[y]*"", ""(x)[y]*"", true},
-                {""_"", ""😀"", true},
-        };
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13,jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java,metadataCallsWithShowStatements,testng_data_provider,642,663,22,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13/jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java#L642-L663,claude,agent,"@DataProvider(name = ""metadataCallsWithShowStatements"")
-    public Object[][] metadataCallsWithShowStatements() {
-        final String db = getDatabase();
-        final String table = SHOW_STATEMENTS_TABLE;
-        final String tables = SHOW_STATEMENTS_TABLE + ""%"";
-        return new Object[][] {
-                {(MetadataCall) md -> md.getColumns(null, db, table, null), false, true},
-                {(MetadataCall) md -> md.getColumns(null, db, table, ""d%""), false, true},
-                {(MetadataCall) md -> md.getColumns(null, db, table, ""%\\_t%""), false, true},
-                {(MetadataCall) md -> md.getColumns(null, db, tables, null), false, true},
-                {(MetadataCall) md -> md.getColumns(null, db + ""%"", ""metadata\\_show\\_statements%"", null), false, true},
-                {(MetadataCall) md -> md.getColumns(null, db, table, """"), false, false},
-                {(MetadataCall) md -> md.getTables(null, db, tables, null), true, true},
-                {(MetadataCall) md -> md.getTables(null, db + ""%"", ""metadata\\_show\\_statements%"", null), true, true},
-                {(MetadataCall) md -> md.getTables(null, db, tables, new String[]{""VIEW"", ""MATERIALIZED VIEW""}), true, true},
-                {(MetadataCall) md -> md.getTables(null, db, tables, new String[]{""UNKNOWN""}), true, true},
-                {(MetadataCall) md -> md.getTables(null, ""system"", ""%"", new String[]{""SYSTEM TABLE""}), true, true},
-                {(MetadataCall) md -> md.getTables(null, db, """", null), true, false},
-                {(MetadataCall) md -> md.getSchemas(null, db), false, true},
-                {(MetadataCall) md -> md.getSchemas(null, ""syst%""), false, true},
-        };
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13,jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java,showStatementsFlagValues,testng_data_provider,736,743,8,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13/jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java#L736-L743,claude,agent,"@DataProvider(name = ""showStatementsFlagValues"")
-    public Object[][] showStatementsFlagValues() {
-        return new Object[][] {
-                {null, null},
-                {""true"", null},
-                {""false"", ""flag table comment""},
-        };
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13,jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java,showStatementsFlagForRestrictedUser,testng_data_provider,768,777,10,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/a6cbd8f7c265f9a00a5aed0a38050c6b1171ea13/jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java#L768-L777,claude,agent,"@DataProvider(name = ""showStatementsFlagForRestrictedUser"")
-    public Object[][] showStatementsFlagForRestrictedUser() {
-        return new Object[][] {
-                {""true"", Arrays.asList(""metadata_show_statements_granted.id:Int32"",
-                        ""metadata_show_statements_granted.t:Tuple(a Int32, b String)"")},
-                {""false"", Arrays.asList(""metadata_show_statements_granted.id:Int32"",
-                        ""metadata_show_statements_granted.t:Tuple(a Int32, b String)"",
-                        ""metadata_show_statements_restricted.id:Int32"")},
-        };
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,64013a901bf41fe9bc3fcc081af6fee395cf652d,jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java,showStatementsFlags,testng_data_provider,771,774,4,0,1,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/64013a901bf41fe9bc3fcc081af6fee395cf652d/jdbc-v2/src/test/java/com/clickhouse/jdbc/metadata/DatabaseMetaDataTest.java#L771-L774,claude,agent,"@DataProvider(name = ""showStatementsFlags"")
-    public Object[][] showStatementsFlags() {
-        return new Object[][] {{""true""}, {""false""}};
-    }",2026-09-29,10.203969883641342,1
-clickhouse/clickhouse-java,java,70a047015b8a9aaa4279c14594cebc390562db3d,jdbc-v2/src/test/java/com/clickhouse/jdbc/WriterStatementImplTest.java,insertValuesListForms,testng_data_provider,372,388,17,0,3,0,0,0.0,other,https://github.com/clickhouse/clickhouse-java/blob/70a047015b8a9aaa4279c14594cebc390562db3d/jdbc-v2/src/test/java/com/clickhouse/jdbc/WriterStatementImplTest.java#L372-L388,claude,agent,"@DataProvider(name = ""insertValuesListForms"")
-    Object[][] insertValuesListForms() {
-        Object[][] statements = {
-                {""INSERT INTO %s (a, b, c) VALUES (?, ?, ?)"", new int[]{7, 20, 30}, true},
-                {""INSERT INTO %s (a, b, c) VALUES (7, ?, ?)"", new int[]{20, 30}, false},
-                {""INSERT INTO %s (a, b, c) VALUES (?, 20, ?)"", new int[]{7, 30}, false},
-                {""INSERT INTO %s (a, b, c) VALUES (?, ? + 1, ?)"", new int[]{7, 19, 30}, false},
-                {""INSERT INTO %s (a, b, c) VALUES ({fn ABS(-7)}, ?, ?)"", new int[]{20, 30}, false},
-        };
-        List<Object[]> rows = new ArrayList<>();
-        for (SqlParserFacade.SQLParser parser : SqlParserFacade.SQLParser.values()) {
-            for (Object[] statement : statements) {
-                rows.add(new Object[]{parser.name(), statement[0], statement[1], statement[2]});
-            }
-        }
-        return rows.toArray(new Object[0][]);
-    }",2026-10-01,10.209445585215606,1
 cbioportal/cbioportal,java,4ff61dfd45a0bdddda85ba882badf78e073b9235,src/test/java/org/cbioportal/domain/alteration/usecase/GetCnaAlterationCountByGeneUseCaseTest.java,setUp,junit5_before_each,32,40,9,0,1,0,0,0.0,setup,https://github.com/cbioportal/cbioportal/blob/4ff61dfd45a0bdddda85ba882badf78e073b9235/src/test/java/org/cbioportal/domain/alteration/usecase/GetCnaAlterationCountByGeneUseCaseTest.java#L32-L40,copilot,agent,"@BeforeEach
   void setUp() {
     useCase =
@@ -20383,15 +20226,6 @@ ical4j/ical4j,java,9774736d8e9cd27534ff5a48044ec3759b5f4338,src/test/java/net/fo
     void tearDown() {
         CompatibilityHints.clearHintEnabled(CompatibilityHints.KEY_RELAXED_VALIDATION);
     }",2026-06-06,12.752908966461328,1
-azure/azure-sdk-for-java,java,fe96d60cafaa9ca3ea72c7f0a8900928822eeaf0,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/ClientRetryPolicyTest.java,requestRateTooLargeArgProvider,testng_data_provider,51,59,9,0,1,0,1,0.1111111111111111,other,https://github.com/azure/azure-sdk-for-java/blob/fe96d60cafaa9ca3ea72c7f0a8900928822eeaf0/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/ClientRetryPolicyTest.java#L51-L59,copilot,agent,"@DataProvider(name = ""requestRateTooLargeArgProvider"")
-    public static Object[][] requestRateTooLargeArgProvider() {
-        return new Object[][]{
-            // OperationType, ResourceType, useMetadataThrottling
-            { OperationType.ReadFeed, ResourceType.PartitionKeyRange, true },
-            { OperationType.Read, ResourceType.Document, false },
-            { OperationType.ReadFeed, ResourceType.DocumentCollection, false }
-        };
-    }",2025-09-26,13.804243668720055,1
 azure/azure-sdk-for-java,java,fe96d60cafaa9ca3ea72c7f0a8900928822eeaf0,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/MetadataThrottlingRetryPolicyTest.java,before_MetadataThrottlingRetryPolicyTest,testng_before_class,49,53,5,0,1,0,0,0.0,setup,https://github.com/azure/azure-sdk-for-java/blob/fe96d60cafaa9ca3ea72c7f0a8900928822eeaf0/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/MetadataThrottlingRetryPolicyTest.java#L49-L53,copilot,agent,"@BeforeClass(groups = { ""emulator"" }, timeOut = 4 * SETUP_TIMEOUT)
     public void before_MetadataThrottlingRetryPolicyTest() {
         this.client = getClientBuilder().buildAsyncClient();
@@ -20555,258 +20389,6 @@ azure/azure-sdk-for-java,java,90611a85e11829150265b90645dbe4e35e4a7eb1,sdk/monit
     public void init() {
         customerSdkStats = new CustomerSdkStats(""unknown"", ""java"", ""3.5.1"");
     }",2026-03-26,14.299794661190965,1
-azure/azure-sdk-for-java,java,e73510225bf5afd70c4f6b30fc6a2c3add0a9bc9,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/FaultInjectionWithAvailabilityStrategyTestsBase.java,testConfigs_readManyByPartitionKeysAfterCreation,testng_data_provider,3948,4199,232,0,4,0,31,0.1336206896551724,other,https://github.com/azure/azure-sdk-for-java/blob/e73510225bf5afd70c4f6b30fc6a2c3add0a9bc9/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/FaultInjectionWithAvailabilityStrategyTestsBase.java#L3948-L4199,copilot,agent,"@DataProvider(name = ""testConfigs_readManyByPartitionKeysAfterCreation"")
-    public Object[][] testConfigs_readManyByPartitionKeysAfterCreation() {
-
-        final int ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE = 10;
-        final int NO_OTHER_DOCS_WITH_SAME_PK = 0;
-        final int NO_OTHER_DOCS_WITH_SAME_ID = 0;
-        final int ENOUGH_DOCS_OTHER_PK_TO_HIT_EVERY_PARTITION = PHYSICAL_PARTITION_COUNT * 10;
-        final int SINGLE_REGION = 1;
-        final int TWO_REGIONS = 2;
-
-        BiConsumer<CosmosResponseWrapper, Long> validateExpectedRecordCount = (response, expectedRecordCount) -> {
-            if (expectedRecordCount != null) {
-                assertThat(response).isNotNull();
-                assertThat(response.getTotalRecordCount()).isNotNull();
-                assertThat(response.getTotalRecordCount()).isEqualTo(expectedRecordCount);
-            }
-        };
-
-        Consumer<CosmosResponseWrapper> validateExactlyOneRecordReturned =
-            (response) -> validateExpectedRecordCount.accept(response, 1L);
-
-        Consumer<CosmosResponseWrapper> validateAllRecordsSamePartitionReturned =
-            (response) -> validateExpectedRecordCount.accept(
-                response,
-                1L + ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE);
-
-        BiConsumer<CosmosDiagnosticsContext, Integer> validateCtxRegions =
-            (ctx, expectedNumberOfRegionsContacted) -> {
-                assertThat(ctx).isNotNull();
-                if (ctx != null) {
-                    assertThat(ctx.getContactedRegionNames().size()).isEqualTo(expectedNumberOfRegionsContacted);
-                }
-            };
-
-        Consumer<CosmosDiagnosticsContext> validateCtxSingleRegion =
-            (ctx) -> validateCtxRegions.accept(ctx, SINGLE_REGION);
-
-        Consumer<CosmosDiagnosticsContext> validateCtxTwoRegions =
-            (ctx) -> validateCtxRegions.accept(ctx, TWO_REGIONS);
-
-        Consumer<CosmosDiagnosticsContext> validateCtxOnlyFeedResponses =
-            (ctx) -> {
-                assertThat(ctx).isNotNull();
-                if (ctx != null) {
-                    assertThat(ctx.getDiagnostics()).isNotNull();
-                    assertThat(ctx.getDiagnostics().size()).isGreaterThanOrEqualTo(1);
-                }
-            };
-
-        Function<ItemOperationInvocationParameters, CosmosResponseWrapper>
-            readManyByPkSinglePartition = (inputParams) ->
-                readManyByPartitionKeysCore(inputParams, ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE);
-
-        Function<ItemOperationInvocationParameters, CosmosResponseWrapper>
-            readManyByPkSingleDoc = (inputParams) ->
-                readManyByPartitionKeysCore(inputParams, NO_OTHER_DOCS_WITH_SAME_PK);
-
-        Object[][] testConfigs = new Object[][] {
-            // CONFIG description
-            // new Object[] {
-            //    TestId - name identifying the test case
-            //    End-to-end timeout
-            //    Availability Strategy used
-            //    Region switch hint
-            //    ConnectionMode
-            //    readManyByPartitionKeys operation callback
-            //    Failure injection callback
-            //    Status code/sub status code validation callback
-            //    Expected number of DiagnosticsContext instances
-            //    Diagnostics context validation callback applied to the first DiagnosticsContext
-            //    Diagnostics context validation callback applied to all other DiagnosticsContext
-            //    Consumer<CosmosResponseWrapper> - callback to validate the response
-            //    numberOfOtherDocumentsWithSameId
-            //    numberOfOtherDocumentsWithSamePk
-            // },
-
-            // readManyByPartitionKeys - single partition, no failures, no availability strategy
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_AllGood_NoAvailabilityStrategy"",
-                ONE_SECOND_DURATION,
-                noAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                noFailureInjection,
-                validateStatusCodeIs200Ok,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxSingleRegion,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                validateAllRecordsSamePartitionReturned,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-
-            // readManyByPartitionKeys - single doc, no failures, no availability strategy
-            new Object[] {
-                ""ReadManyByPk_SingleDoc_AllGood_NoAvailabilityStrategy"",
-                ONE_SECOND_DURATION,
-                noAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSingleDoc,
-                noFailureInjection,
-                validateStatusCodeIs200Ok,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxSingleRegion,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                validateExactlyOneRecordReturned,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                NO_OTHER_DOCS_WITH_SAME_PK
-            },
-
-            // readManyByPartitionKeys - 408 timeout in first region, eager availability strategy
-            // Should succeed via hedging to second region
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_408_FirstRegionOnly_EagerAvailabilityStrategy"",
-                THREE_SECOND_DURATION,
-                eagerThresholdAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                injectTransitTimeoutIntoFirstRegionOnly,
-                validateStatusCodeIs200Ok,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxTwoRegions,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                validateAllRecordsSamePartitionReturned,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-
-            // readManyByPartitionKeys - 404/1002 in first region, remote preferred, reluctant strategy
-            // Client retry policy should failover to second region before hedging kicks in
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_404-1002_RemotePreferred_FirstRegionOnly_ReluctantAvailabilityStrategy"",
-                Duration.ofSeconds(10),
-                reluctantThresholdAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                injectReadSessionNotAvailableIntoFirstRegionOnly,
-                validateStatusCodeIs200Ok,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxTwoRegions,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                validateAllRecordsSamePartitionReturned,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-
-            // readManyByPartitionKeys - 429/3200 in first region, default availability strategy
-            // Should succeed via hedging to second region
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_429-3200_FirstRegionOnly_DefaultAvailabilityStrategy"",
-                THREE_SECOND_DURATION,
-                defaultAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                injectRequestRateTooLargeIntoFirstRegionOnly,
-                validateStatusCodeIs200Ok,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxTwoRegions,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                validateAllRecordsSamePartitionReturned,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-
-            // readManyByPartitionKeys - 429/3200 in first region, no availability strategy
-            // Should time out since no hedging and 429 retries locally until timeout
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_429-3200_FirstRegionOnly_NoAvailabilityStrategy"",
-                THREE_SECOND_DURATION,
-                noAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                injectRequestRateTooLargeIntoFirstRegionOnly,
-                validateStatusCodeIsOperationCancelled,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxSingleRegion,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                null,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-
-            // readManyByPartitionKeys - 503 in first region, no availability strategy
-            // ClientRetryPolicy will failover to second region
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_503_FirstRegionOnly_NoAvailabilityStrategy"",
-                Duration.ofSeconds(90),
-                noAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                injectServiceUnavailableIntoFirstRegionOnly,
-                validateStatusCodeIs200Ok,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxTwoRegions,
-                    validateCtxOnlyFeedResponses
-                ),
-                null,
-                validateAllRecordsSamePartitionReturned,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-
-            // readManyByPartitionKeys - 503 in all regions, eager availability strategy
-            // Both regions fail - should get 503
-            new Object[] {
-                ""ReadManyByPk_SinglePartition_503_AllRegions_EagerAvailabilityStrategy"",
-                Duration.ofSeconds(10),
-                eagerThresholdAvailabilityStrategy,
-                noRegionSwitchHint,
-                ConnectionMode.DIRECT,
-                readManyByPkSinglePartition,
-                injectServiceUnavailableIntoAllRegions,
-                validateStatusCodeIsServiceUnavailable,
-                1,
-                ArrayUtils.toArray(
-                    validateCtxTwoRegions
-                ),
-                null,
-                null,
-                NO_OTHER_DOCS_WITH_SAME_ID,
-                ENOUGH_DOCS_SAME_PK_TO_EXCEED_PAGE_SIZE
-            },
-        };
-
-        return addBooleanFlagsToAllTestConfigs(testConfigs);
-    }",2026-04-24,14.379192334017796,1
 azure/azure-sdk-for-java,java,e73510225bf5afd70c4f6b30fc6a2c3add0a9bc9,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/ReadManyByPartitionKeyTest.java,before_ReadManyByPartitionKeyTest,testng_before_class,55,80,23,0,1,0,2,0.08695652173913043,setup,https://github.com/azure/azure-sdk-for-java/blob/e73510225bf5afd70c4f6b30fc6a2c3add0a9bc9/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/ReadManyByPartitionKeyTest.java#L55-L80,copilot,agent,"@BeforeClass(groups = {""emulator""}, timeOut = SETUP_TIMEOUT)
     public void before_ReadManyByPartitionKeyTest() {
         client = getClientBuilder().buildClient();
@@ -20867,155 +20449,6 @@ azure/azure-sdk-for-java,java,0bbaeac4b1645a938d7979ef97b5a545ec5d139a,sdk/voice
         tracerProvider.close();
         meterProvider.close();
     }",2026-05-01,14.39835728952772,1
-azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/RxGatewayStoreModelTest.java,readConsistencyStrategySessionTokenProvider,testng_data_provider,622,708,59,0,1,0,31,0.5254237288135594,other,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/RxGatewayStoreModelTest.java#L622-L708,copilot,agent,"@DataProvider(name = ""readConsistencyStrategySessionTokenProvider"")
-    public Object[][] readConsistencyStrategySessionTokenProvider() {
-        return new Object[][]{
-            // ── Request-level RCS (highest priority) ──
-
-            // RCS=SESSION overrides everything → session token applied
-            {ConsistencyLevel.EVENTUAL, null, ReadConsistencyStrategy.SESSION, null, true},
-
-            // RCS=EVENTUAL overrides even account-default=SESSION → no token
-            {ConsistencyLevel.SESSION, null, ReadConsistencyStrategy.EVENTUAL, null, false},
-
-            // RCS=DEFAULT is transparent → falls through to account default=SESSION → applied
-            {ConsistencyLevel.SESSION, null, ReadConsistencyStrategy.DEFAULT, null, true},
-
-            // RCS=DEFAULT is transparent → falls through to account default=EVENTUAL → no token
-            {ConsistencyLevel.EVENTUAL, null, ReadConsistencyStrategy.DEFAULT, null, false},
-
-            // ── Client-level RCS header (second priority) ──
-
-            // Client header RCS=Session → session token applied
-            {ConsistencyLevel.EVENTUAL, null, null, ReadConsistencyStrategy.SESSION.toString(), true},
-
-            // Client header RCS=Eventual → no token
-            {ConsistencyLevel.SESSION, null, null, ReadConsistencyStrategy.EVENTUAL.toString(), false},
-
-            // Client header RCS=Default is transparent → falls through to account default=SESSION
-            {ConsistencyLevel.SESSION, null, null, ReadConsistencyStrategy.DEFAULT.toString(), true},
-
-            // ── No RCS, request-level ConsistencyLevel (third priority) ──
-
-            // CL=SESSION → session token applied
-            {ConsistencyLevel.EVENTUAL, ConsistencyLevel.SESSION, null, null, true},
-
-            // CL=EVENTUAL → no token
-            {ConsistencyLevel.SESSION, ConsistencyLevel.EVENTUAL, null, null, false},
-
-            // ── No RCS, no request CL → account default (lowest priority) ──
-
-            // Account default=SESSION → applied
-            {ConsistencyLevel.SESSION, null, null, null, true},
-
-            // Account default=EVENTUAL → no token
-            {ConsistencyLevel.EVENTUAL, null, null, null, false},
-
-            // ── Request-level RCS overrides client-level RCS ──
-
-            // Request RCS=SESSION beats client RCS=Eventual → applied
-            {ConsistencyLevel.EVENTUAL, null, ReadConsistencyStrategy.SESSION, ReadConsistencyStrategy.EVENTUAL.toString(), true},
-
-            // Request RCS=EVENTUAL beats client RCS=Session → no token
-            {ConsistencyLevel.SESSION, null, ReadConsistencyStrategy.EVENTUAL, ReadConsistencyStrategy.SESSION.toString(), false},
-
-            // ── Quorum-read RCS (LATEST_COMMITTED / GLOBAL_STRONG) must NEVER attach a session token ──
-            // These strategies execute quorum reads server-side; sending a session token would mask
-            // any future regression that weakens them back to session reads.
-
-            // Request RCS=LATEST_COMMITTED on SESSION-default account → no token
-            {ConsistencyLevel.SESSION, null, ReadConsistencyStrategy.LATEST_COMMITTED, null, false},
-
-            // Request RCS=LATEST_COMMITTED on EVENTUAL-default account → no token
-            {ConsistencyLevel.EVENTUAL, null, ReadConsistencyStrategy.LATEST_COMMITTED, null, false},
-
-            // Request RCS=LATEST_COMMITTED on STRONG-default account → no token
-            {ConsistencyLevel.STRONG, null, ReadConsistencyStrategy.LATEST_COMMITTED, null, false},
-
-            // Request RCS=GLOBAL_STRONG on STRONG-default account → no token
-            {ConsistencyLevel.STRONG, null, ReadConsistencyStrategy.GLOBAL_STRONG, null, false},
-
-            // Client header RCS=LatestCommitted on SESSION-default account → no token
-            {ConsistencyLevel.SESSION, null, null, ReadConsistencyStrategy.LATEST_COMMITTED.toString(), false},
-
-            // Client header RCS=GlobalStrong on STRONG-default account → no token
-            {ConsistencyLevel.STRONG, null, null, ReadConsistencyStrategy.GLOBAL_STRONG.toString(), false},
-
-            // Request RCS=LATEST_COMMITTED beats client header RCS=Session → no token (quorum wins)
-            {ConsistencyLevel.SESSION, null, ReadConsistencyStrategy.LATEST_COMMITTED, ReadConsistencyStrategy.SESSION.toString(), false},
-
-            // Request RCS=SESSION beats client header RCS=LatestCommitted → token applied (session wins by request-level priority)
-            {ConsistencyLevel.EVENTUAL, null, ReadConsistencyStrategy.SESSION, ReadConsistencyStrategy.LATEST_COMMITTED.toString(), true},
-
-            // ── Account default=STRONG without any RCS override → quorum read, no token ──
-            {ConsistencyLevel.STRONG, null, null, null, false},
-
-            // Account default=STRONG with request CL=SESSION → request CL wins → token applied
-            {ConsistencyLevel.STRONG, ConsistencyLevel.SESSION, null, null, true},
-        };
-    }",2026-06-04,14.491444216290212,1
-azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/RxGatewayStoreModelTest.java,resolveEffectiveConsistencyHeadersProvider,testng_data_provider,809,852,35,0,1,0,10,0.2857142857142857,other,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/RxGatewayStoreModelTest.java#L809-L852,copilot,agent,"@DataProvider(name = ""resolveEffectiveConsistencyHeadersProvider"")
-    public Object[][] resolveEffectiveConsistencyHeadersProvider() {
-        return new Object[][]{
-            // 1. Request-level non-DEFAULT wins → CL stripped, RCS set from requestContext
-            {ReadConsistencyStrategy.LATEST_COMMITTED, null, ""Session"",
-                ReadConsistencyStrategy.LATEST_COMMITTED.toString(), null},
-
-            // 2. Request-level DEFAULT is transparent → header RCS (Eventual) wins → CL stripped
-            {ReadConsistencyStrategy.DEFAULT, ReadConsistencyStrategy.EVENTUAL.toString(), ""Session"",
-                ReadConsistencyStrategy.EVENTUAL.toString(), null},
-
-            // 3. Both null → CL governs, RCS stays absent
-            {null, null, ""Session"",
-                null, ""Session""},
-
-            // 4. Both null/DEFAULT → strip stale DEFAULT sentinel from header, CL untouched
-            {ReadConsistencyStrategy.DEFAULT, ReadConsistencyStrategy.DEFAULT.toString(), ""Session"",
-                null, ""Session""},
-
-            // 5. Header-only non-DEFAULT (GlobalStrong) → CL stripped, RCS preserved
-            {null, ReadConsistencyStrategy.GLOBAL_STRONG.toString(), ""Session"",
-                ReadConsistencyStrategy.GLOBAL_STRONG.toString(), null},
-
-            // 6. Request-level beats header on conflict → request RCS overwrites header, CL stripped
-            {ReadConsistencyStrategy.EVENTUAL, ReadConsistencyStrategy.LATEST_COMMITTED.toString(), ""Strong"",
-                ReadConsistencyStrategy.EVENTUAL.toString(), null},
-
-            // 7. Empty header value treated as absent (Strings.isNullOrEmpty) → no-op on headers
-            {null, """", ""Session"",
-                """", ""Session""},
-
-            // 8. Unknown header value (not a known RCS) → helper returns null → stale header stripped
-            {null, ""Bogus"", ""Session"",
-                null, ""Session""},
-
-            // 9. Request-level SESSION wins → CL stripped, RCS set to Session
-            {ReadConsistencyStrategy.SESSION, null, ""Eventual"",
-                ReadConsistencyStrategy.SESSION.toString(), null},
-
-            // 10. No CL present, request-level non-DEFAULT → RCS set, CL stays absent
-            {ReadConsistencyStrategy.GLOBAL_STRONG, null, null,
-                ReadConsistencyStrategy.GLOBAL_STRONG.toString(), null},
-        };
-    }",2026-06-04,14.491444216290212,1
-azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/directconnectivity/rntbd/RntbdReadConsistencyStrategyHeaderTests.java,readConsistencyStrategyToRntbdByteValues,testng_data_provider,77,85,9,0,1,0,0,0.0,other,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/directconnectivity/rntbd/RntbdReadConsistencyStrategyHeaderTests.java#L77-L85,copilot,agent,"@DataProvider(name = ""readConsistencyStrategyToRntbdByteValues"")
-    public Object[][] readConsistencyStrategyToRntbdByteValues() {
-        return new Object[][] {
-            { ReadConsistencyStrategy.EVENTUAL, RntbdConstants.RntbdReadConsistencyStrategy.Eventual.id() },
-            { ReadConsistencyStrategy.SESSION, RntbdConstants.RntbdReadConsistencyStrategy.Session.id() },
-            { ReadConsistencyStrategy.LATEST_COMMITTED, RntbdConstants.RntbdReadConsistencyStrategy.LatestCommitted.id() },
-            { ReadConsistencyStrategy.GLOBAL_STRONG, RntbdConstants.RntbdReadConsistencyStrategy.GlobalStrong.id() },
-        };
-    }",2026-06-04,14.491444216290212,1
-azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/directconnectivity/rntbd/RntbdReadConsistencyStrategyHeaderTests.java,readConsistencyStrategyStringToRntbdByteValues,testng_data_provider,87,95,9,0,1,0,0,0.0,other,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/directconnectivity/rntbd/RntbdReadConsistencyStrategyHeaderTests.java#L87-L95,copilot,agent,"@DataProvider(name = ""readConsistencyStrategyStringToRntbdByteValues"")
-    public Object[][] readConsistencyStrategyStringToRntbdByteValues() {
-        return new Object[][] {
-            { ""LatestCommitted"", (byte) 0x03 },
-            { ""Eventual"", (byte) 0x01 },
-            { ""Session"", (byte) 0x02 },
-            { ""GlobalStrong"", (byte) 0x04 },
-        };
-    }",2026-06-04,14.491444216290212,1
 azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategyE2ETest.java,beforeClass,testng_before_class,83,109,19,0,1,0,2,0.10526315789473684,setup,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategyE2ETest.java#L83-L109,copilot,agent,"@BeforeClass(groups = {""thinclient""}, timeOut = TIMEOUT)
     public void beforeClass() {
         System.setProperty(""COSMOS.THINCLIENT_ENABLED"", ""true"");
@@ -21055,10 +20488,6 @@ azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmo
         safeClose(gatewayV1Client);
         safeClose(gatewayV2Client);
         safeClose(directClient);
-    }",2026-06-04,14.491444216290212,1
-azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategyE2ETest.java,transportModes,testng_data_provider,125,128,4,0,1,0,0,0.0,other,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategyE2ETest.java#L125-L128,copilot,agent,"@DataProvider(name = ""transportModes"")
-    public Object[][] transportModes() {
-        return new Object[][] { { GATEWAY_V1 }, { GATEWAY_V2 }, { DIRECT } };
     }",2026-06-04,14.491444216290212,1
 azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategySpyWireTest.java,beforeClass,testng_before_class,99,131,25,0,1,0,3,0.12,setup,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategySpyWireTest.java#L99-L131,copilot,agent,"@BeforeClass(groups = {""thinclient""}, timeOut = TIMEOUT)
     public void beforeClass() {
@@ -21111,10 +20540,6 @@ azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmo
         if (v2SpyClient != null) {
             v2SpyClient.close();
         }
-    }",2026-06-04,14.491444216290212,1
-azure/azure-sdk-for-java,java,cec4b995d27b8b96cdb6fb95505500888ea88794,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategySpyWireTest.java,transportModes,testng_data_provider,153,156,4,0,1,0,0,0.0,other,https://github.com/azure/azure-sdk-for-java/blob/cec4b995d27b8b96cdb6fb95505500888ea88794/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GatewayReadConsistencyStrategySpyWireTest.java#L153-L156,copilot,agent,"@DataProvider(name = ""transportModes"")
-    public Object[][] transportModes() {
-        return new Object[][] { { V1 }, { V2 } };
     }",2026-06-04,14.491444216290212,1
 azure/azure-sdk-for-java,java,cfb70638f17870c24356fe40b710534483315366,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GlobalSecondaryIndexContainerCrudTest.java,before_GlobalSecondaryIndexContainerCrudTest,testng_before_class,437,441,5,0,1,0,0,0.0,setup,https://github.com/azure/azure-sdk-for-java/blob/cfb70638f17870c24356fe40b710534483315366/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/rx/GlobalSecondaryIndexContainerCrudTest.java#L437-L441,copilot,agent,"@BeforeClass(groups = {""gsi""}, timeOut = SETUP_TIMEOUT)
     public void before_GlobalSecondaryIndexContainerCrudTest() {
@@ -21175,21 +20600,6 @@ azure/azure-sdk-for-java,java,270b0a998f028b64877caf65674f3d58f688d129,sdk/keyva
         executor.shutdownNow();
         assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
     }",2026-08-11,14.677618069815194,1
-azure/azure-sdk-for-java,java,99310176e54bd21f7b62a1a51141ce7d33e73c7c,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/GlobalPartitionEndpointManagerForPPCBUnitTests.java,addressCacheStates,testng_data_provider,155,162,8,0,1,0,0,0.0,other,https://github.com/azure/azure-sdk-for-java/blob/99310176e54bd21f7b62a1a51141ce7d33e73c7c/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/GlobalPartitionEndpointManagerForPPCBUnitTests.java#L155-L162,copilot,agent,"@DataProvider(name = ""addressCacheStates"")
-    public Object[][] addressCacheStates() {
-        return new Object[][] {
-            { false, false },
-            { true, false },
-            { true, true }
-        };
-    }",2026-08-20,14.702258726899384,1
-azure/azure-sdk-for-java,java,99310176e54bd21f7b62a1a51141ce7d33e73c7c,sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/directconnectivity/GatewayAddressCacheTest.java,networkFailureResponseOrders,testng_data_provider,1770,1776,7,0,1,0,0,0.0,other,https://github.com/azure/azure-sdk-for-java/blob/99310176e54bd21f7b62a1a51141ce7d33e73c7c/sdk/cosmos/azure-cosmos-tests/src/test/java/com/azure/cosmos/implementation/directconnectivity/GatewayAddressCacheTest.java#L1770-L1776,copilot,agent,"@DataProvider(name = ""networkFailureResponseOrders"")
-    public Object[][] networkFailureResponseOrders() {
-        return new Object[][] {
-            { true },
-            { false }
-        };
-    }",2026-08-20,14.702258726899384,1
 azure/azure-sdk-for-java,java,c416fadbaed2c447401cf0b4738be86aa87e7d04,sdk/playwright/azure-resourcemanager-playwright/src/test/java/com/azure/resourcemanager/playwright/PlaywrightWorkspaceTests.java,deleteWorkspace,junit5_after_each,87,98,12,0,2,0,1,0.08333333333333333,teardown,https://github.com/azure/azure-sdk-for-java/blob/c416fadbaed2c447401cf0b4738be86aa87e7d04/sdk/playwright/azure-resourcemanager-playwright/src/test/java/com/azure/resourcemanager/playwright/PlaywrightWorkspaceTests.java#L87-L98,copilot,agent,"@AfterEach
     public void deleteWorkspace() {
         if (workspaceName != null) {
@@ -25401,97 +24811,10 @@ mixpanel/mixpanel-android,java,0d1af72b2df72a7e025ecdb95c245fc27458648a,analytic
         mContext.deleteDatabase(""mixpanel"");
         TestUtils.cleanUpMixpanelData(mContext);
     }",2026-09-01,16.071184120465436,1
-morphiaorg/morphia,java,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,critter/core/src/test/java/dev/morphia/critter/parser/TestAccessorsMutators.java,names,testng_data_provider,52,55,4,0,1,0,0,0.0,other,https://github.com/morphiaorg/morphia/blob/0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b/critter/core/src/test/java/dev/morphia/critter/parser/TestAccessorsMutators.java#L52-L55,claude,agent,"@DataProvider(name = ""classes"")
-    public Object[][] names() {
-        return new Object[][] { { Example.class } };
-    }",2026-02-28,12.843258042436688,1
-morphiaorg/morphia,java,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,critter/core/src/test/java/dev/morphia/critter/parser/TestEntityModelGenerator.java,methods,testng_data_provider,46,49,4,0,1,0,0,0.0,other,https://github.com/morphiaorg/morphia/blob/0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b/critter/core/src/test/java/dev/morphia/critter/parser/TestEntityModelGenerator.java#L46-L49,claude,agent,"@DataProvider(name = ""methods"")
-    public Object[][] methods() {
-        return GeneratorTest.methodNames(CritterEntityModel.class);
-    }",2026-02-28,12.843258042436688,1
-morphiaorg/morphia,java,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,critter/core/src/test/java/dev/morphia/critter/parser/TestPropertyModelGenerator.java,methods,testng_data_provider,32,46,15,0,2,0,0,0.0,other,https://github.com/morphiaorg/morphia/blob/0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b/critter/core/src/test/java/dev/morphia/critter/parser/TestPropertyModelGenerator.java#L32-L46,claude,agent,"@DataProvider(name = ""properties"")
-    public Object[][] methods() {
-        Object[][] methods = GeneratorTest.methodNames(CritterPropertyModel.class);
-        return List.of(""dev.morphia.critter.sources.ExampleNamePropertyModelTemplate"").stream()
-                .map(type -> {
-                    try {
-                        return loadModel(type);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .flatMap(propertyModel -> Arrays.stream(methods)
-                        .map(method -> new Object[] { propertyModel.getName(), method[0], method[1] }))
-                .toArray(Object[][]::new);
-    }",2026-02-28,12.843258042436688,1
 morphiaorg/morphia,java,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,critter/core/src/test/java/dev/morphia/critter/parser/TestVarHandleAccessor.java,setup,testng_before_class,21,25,5,0,1,0,0,0.0,setup,https://github.com/morphiaorg/morphia/blob/0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b/critter/core/src/test/java/dev/morphia/critter/parser/TestVarHandleAccessor.java#L21-L25,claude,agent,"@BeforeClass
     public void setup() {
         classLoader = new CritterClassLoader();
         CritterGizmoGenerator.INSTANCE.generate(Example.class, classLoader, true);
-    }",2026-02-28,12.843258042436688,1
-morphiaorg/morphia,java,0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b,critter/core/src/test/java/dev/morphia/critter/parser/TypesTest.java,typeProvider,testng_data_provider,16,79,57,0,1,0,8,0.14035087719298245,other,https://github.com/morphiaorg/morphia/blob/0ce4cb9b02541a6c4ba12f9f2ee05a9e568f743b/critter/core/src/test/java/dev/morphia/critter/parser/TypesTest.java#L16-L79,claude,agent,"@DataProvider(name = ""types"")
-    public Object[][] typeProvider() {
-        return new Object[][] {
-                // Primitive types
-                { boolean.class },
-                { char.class },
-                { byte.class },
-                { short.class },
-                { int.class },
-                { float.class },
-                { long.class },
-                { double.class },
-
-                // Object types
-                { String.class },
-                { Locale.class },
-                { Date.class },
-                { UUID.class },
-                { BigDecimal.class },
-                { Instant.class },
-
-                // Arrays of boxed primitives (Kotlin Array<X> = Java boxed X[])
-                { Boolean[].class },
-                { Character[].class },
-                { Byte[].class },
-                { Short[].class },
-                { Integer[].class },
-                { Float[].class },
-                { Long[].class },
-                { Double[].class },
-
-                // Primitive arrays (Kotlin XArray = Java primitive x[])
-                { boolean[].class },
-                { char[].class },
-                { byte[].class },
-                { short[].class },
-                { int[].class },
-                { float[].class },
-                { long[].class },
-                { double[].class },
-
-                // 2D primitive arrays (Kotlin Array<XArray> = Java primitive x[][])
-                { boolean[][].class },
-                { int[][].class },
-
-                // Arrays of objects
-                { String[].class },
-                { Locale[].class },
-                { Date[].class },
-                { UUID[].class },
-                { BigDecimal[].class },
-                { Instant[].class },
-
-                // Arrays of arrays (2D)
-                { Boolean[][].class },
-                { Integer[][].class },
-                { String[][].class },
-                { Locale[][].class },
-
-                // Arrays of arrays of arrays (3D)
-                { Integer[][][].class },
-                { String[][][].class },
-        };
     }",2026-02-28,12.843258042436688,1
 mvel/mvel,java,d8871dc26fdc20f62d06760fe7ceff6d755073ee,src/test/java/org/mvel3/javalambda/EndToEndRewriteTest.java,setup,junit5_before_each,26,29,4,0,1,0,0,0.0,setup,https://github.com/mvel/mvel/blob/d8871dc26fdc20f62d06760fe7ceff6d755073ee/src/test/java/org/mvel3/javalambda/EndToEndRewriteTest.java#L26-L29,claude,agent,"@BeforeEach
     void setup() {
@@ -27330,51 +26653,6 @@ plutext/docx4j,java,0d076bddedde9919975bd1c37bfb9ab3af95fd10,docx4j-core-tests/s
 		parts = new HashMap<String, CustomXmlPart>();
 		parts.put(STORE_ITEM_ID, part);
 	}",2026-09-24,14.368240930869268,1
-skadistats/clarity,java,1b07af475e1ba1502b20d113f815d207e4d74756,src/test/java/skadistats/clarity/model/state/EntityStateTest.java,impls,testng_data_provider,33,40,8,0,1,0,0,0.0,other,https://github.com/skadistats/clarity/blob/1b07af475e1ba1502b20d113f815d207e4d74756/src/test/java/skadistats/clarity/model/state/EntityStateTest.java#L33-L40,claude,agent,"@DataProvider(name = ""impls"")
-    public Object[][] impls() {
-        return new Object[][] {
-            {TestStateFactory.NESTED_ARRAY},
-            {TestStateFactory.TREE_MAP},
-            {TestStateFactory.FLAT},
-        };
-    }",2026-04-14,12.2984257357974,1
-skadistats/clarity,java,fdbdc5b0b1cca4e465048d436b929fb218a62962,src/test/java/skadistats/clarity/model/state/EntityStateTest.java,slabImpls,testng_data_provider,753,759,7,0,1,0,0,0.0,other,https://github.com/skadistats/clarity/blob/fdbdc5b0b1cca4e465048d436b929fb218a62962/src/test/java/skadistats/clarity/model/state/EntityStateTest.java#L753-L759,claude,agent,"@DataProvider(name = ""slabImpls"")
-    public Object[][] slabImpls() {
-        return new Object[][] {
-            {TestStateFactory.NESTED_ARRAY},
-            {TestStateFactory.FLAT},
-        };
-    }",2026-04-14,12.2984257357974,1
-skadistats/clarity,java,436d8542388f3434adf305e3bc2123689025b4c7,src/test/java/skadistats/clarity/state/CompositeFieldRoundTripTest.java,impls,testng_data_provider,38,44,7,0,1,0,0,0.0,other,https://github.com/skadistats/clarity/blob/436d8542388f3434adf305e3bc2123689025b4c7/src/test/java/skadistats/clarity/state/CompositeFieldRoundTripTest.java#L38-L44,claude,agent,"@DataProvider(name = ""impls"")
-    public Object[][] impls() {
-        return new Object[][]{
-            {TestStateFactory.NESTED_ARRAY},
-            {TestStateFactory.FLAT},
-        };
-    }",2026-04-23,12.323066392881588,1
-skadistats/clarity,java,436d8542388f3434adf305e3bc2123689025b4c7,src/test/java/skadistats/clarity/state/PrimitiveAccessorsTest.java,impls,testng_data_provider,28,35,8,0,1,0,0,0.0,other,https://github.com/skadistats/clarity/blob/436d8542388f3434adf305e3bc2123689025b4c7/src/test/java/skadistats/clarity/state/PrimitiveAccessorsTest.java#L28-L35,claude,agent,"@DataProvider(name = ""impls"")
-    public Object[][] impls() {
-        return new Object[][] {
-            {TestStateFactory.NESTED_ARRAY},
-            {TestStateFactory.TREE_MAP},
-            {TestStateFactory.FLAT},
-        };
-    }",2026-04-23,12.323066392881588,1
-skadistats/clarity,java,a563cb39295d9a764827c4049d0ffd6fa1918b20,src/test/java/skadistats/clarity/processor/entities/RejectEverythingParityTest.java,replays,testng_data_provider,32,38,7,0,1,0,0,0.0,other,https://github.com/skadistats/clarity/blob/a563cb39295d9a764827c4049d0ffd6fa1918b20/src/test/java/skadistats/clarity/processor/entities/RejectEverythingParityTest.java#L32-L38,claude,agent,"@DataProvider(name = ""replays"")
-    public Object[][] replays() {
-        return new Object[][]{
-                {""dota/s2/normal/1560289528.dem""},
-                {""dota/s1/normal/271145478.dem""},
-        };
-    }",2026-05-11,12.372347707049967,1
-skadistats/clarity,java,7e2b14340249460e733d3e40b692bc15644eb33c,src/test/java/skadistats/clarity/state/PrimitiveAccessorsAllocationTest.java,impls,testng_data_provider,33,40,8,0,1,0,0,0.0,other,https://github.com/skadistats/clarity/blob/7e2b14340249460e733d3e40b692bc15644eb33c/src/test/java/skadistats/clarity/state/PrimitiveAccessorsAllocationTest.java#L33-L40,claude,agent,"@DataProvider(name = ""impls"")
-    public Object[][] impls() {
-        return new Object[][] {
-            {TestStateFactory.NESTED_ARRAY},
-            {TestStateFactory.TREE_MAP},
-            {TestStateFactory.FLAT},
-        };
-    }",2026-10-04,12.772073921971252,1
 selenide/selenide,java,9f69159d4e6286dfabf7b07096f9efa4ea5a9c91,src/test/java/integration/ByRoleTest.java,openPage,junit5_before_each,12,15,4,0,1,0,0,0.0,setup,https://github.com/selenide/selenide/blob/9f69159d4e6286dfabf7b07096f9efa4ea5a9c91/src/test/java/integration/ByRoleTest.java#L12-L15,claude,agent,"@BeforeEach
   void openPage() {
     openFile(""page_with_aria_roles.html"");
@@ -28122,168 +27400,6 @@ sonarsource/sonar-java,java,7e97a86e406e187e423c12aa007146cccd3ce9b8,java-checks
     this.verifier = CheckVerifier.newVerifier()
       .withCache(readCache, writeCache);
   }",2026-07-29,13.894592744695414,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideData1,testng_data_provider,7,10,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L7-L10,claude,agent,"@DataProvider(name = ""testData"")
-  public Object[][] provideData1() {
-    return new Object[][]{{1, 2}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideData2,testng_data_provider,12,16,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L12-L16,claude,agent,"@DataProvider(name = ""testData"")
-  public Object[][] provideData2() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                  ^^^^^^^^^^^^
-    return new Object[][]{{3, 4}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideData3,testng_data_provider,18,22,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L18-L22,claude,agent,"@DataProvider(name = ""testData"")
-  public Object[][] provideData3() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                  ^^^^^^^^^^^^
-    return new Object[][]{{5, 6}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideUnique,testng_data_provider,24,27,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L24-L27,claude,agent,"@DataProvider(name = ""uniqueData"")
-  public Object[][] provideUnique() {
-    return new Object[][]{{7, 8}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideDefaultName,testng_data_provider,29,32,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L29-L32,claude,agent,"@DataProvider
-  public Object[][] provideDefaultName() {
-    return new Object[][]{{9, 10}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideAlpha,testng_data_provider,34,37,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L34-L37,claude,agent,"@DataProvider(name = ""alpha"")
-  public Object[][] provideAlpha() {
-    return new Object[][]{{11, 12}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideBeta,testng_data_provider,39,42,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L39-L42,claude,agent,"@DataProvider(name = ""beta"")
-  public Object[][] provideBeta() {
-    return new Object[][]{{13, 14}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,implicitExplicitCollision,testng_data_provider,44,48,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L44-L48,claude,agent,"@DataProvider(name = ""provideDefaultName"")
-  public Object[][] implicitExplicitCollision() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                  ^^^^^^^^^^^^^^^^^^^^^^^^^
-    return new Object[][]{{15, 16}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideData,testng_data_provider,52,55,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L52-L55,claude,agent,"@DataProvider(name = ""testData"")
-  public Object[][] provideData() {
-    return new Object[][]{{15, 16}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideOuter,testng_data_provider,59,62,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L59-L62,claude,agent,"@DataProvider(name = ""outerData"")
-  public Object[][] provideOuter() {
-    return new Object[][]{{17, 18}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideInner,testng_data_provider,65,68,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L65-L68,claude,agent,"@DataProvider(name = ""outerData"")
-    public Object[][] provideInner() {
-      return new Object[][]{{19, 20}};
-    }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideAnother,testng_data_provider,70,74,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L70-L74,claude,agent,"@DataProvider(name = ""outerData"")
-    public Object[][] provideAnother() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                    ^^^^^^^^^^^^^^
-      return new Object[][]{{21, 22}};
-    }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideWithConstant1,testng_data_provider,82,85,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L82-L85,claude,agent,"@DataProvider(name = CONSTANT_NAME)
-  public Object[][] provideWithConstant1() {
-    return new Object[][]{{1, 2}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideWithConstant2,testng_data_provider,87,91,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L87-L91,claude,agent,"@DataProvider(name = DUPLICATE_CONSTANT)
-  public Object[][] provideWithConstant2() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                  ^^^^^^^^^^^^^^^^^^^^
-    return new Object[][]{{3, 4}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideWithUniqueConstant,testng_data_provider,95,98,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L95-L98,claude,agent,"@DataProvider(name = UNIQUE_CONSTANT)
-  public Object[][] provideWithUniqueConstant() {
-    return new Object[][]{{5, 6}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideParallelOnly,testng_data_provider,100,103,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L100-L103,claude,agent,"@DataProvider(parallel = true)
-  public Object[][] provideParallelOnly() {
-    return new Object[][]{{1, 2}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,emptyName1,testng_data_provider,108,111,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L108-L111,claude,agent,"@DataProvider(name = """")
-  public Object[][] emptyName1() {
-    return new Object[][]{{1, 2}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,emptyName2,testng_data_provider,113,116,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L113-L116,claude,agent,"@DataProvider(name = """")
-  public Object[][] emptyName2() {
-    return new Object[][]{{3, 4}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,explicitName,testng_data_provider,118,121,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L118-L121,claude,agent,"@DataProvider(name = ""emptyNameCollision"")
-  public Object[][] explicitName() {
-    return new Object[][]{{5, 6}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,emptyNameCollision,testng_data_provider,123,127,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L123-L127,claude,agent,"@DataProvider(name = """")
-  public Object[][] emptyNameCollision() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                  ^^^^^^^^^^^^^^^^^^
-    return new Object[][]{{7, 8}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideRecordData1,testng_data_provider,131,134,4,0,1,0,0,0.0,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L131-L134,claude,agent,"@DataProvider(name = ""recordData"")
-  public Object[][] provideRecordData1() {
-    return new Object[][]{{1, 2}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,78a1d31f90ad92d002bb77f9ca71eaed7e101502,java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java,provideRecordData2,testng_data_provider,136,140,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/78a1d31f90ad92d002bb77f9ca71eaed7e101502/java-checks-test-sources/default/src/test/java/checks/tests/DataProviderNameUniquenessCheckSample.java#L136-L140,claude,agent,"@DataProvider(name = ""recordData"")
-  public Object[][] provideRecordData2() { // Noncompliant {{Rename this data provider to make it unique within this class.}}
-//                  ^^^^^^^^^^^^^^^^^^
-    return new Object[][]{{3, 4}};
-  }",2026-09-15,14.026009582477755,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,validTwoDimensionalArray,testng_data_provider,12,15,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L12-L15,claude,agent,"@DataProvider
-  public Object[][] validTwoDimensionalArray() { // Compliant
-    return new Object[][] {{""a"", 1}, {""b"", 2}};
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,validIterator,testng_data_provider,17,20,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L17-L20,claude,agent,"@DataProvider
-  public Iterator<Object[]> validIterator() { // Compliant
-    return Arrays.asList(new Object[] {""a""}, new Object[] {""b""}).iterator();
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,validOneDimensionalArray,testng_data_provider,22,25,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L22-L25,claude,agent,"@DataProvider
-  public Object[] validOneDimensionalArray() { // Compliant
-    return new Object[] {new Object[] {""a""}, new Object[] {""b""}};
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsList,testng_data_provider,27,31,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L27-L31,claude,agent,"@DataProvider
-  public List<String> returnsList() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^^^^^^^^^
-    return Arrays.asList(""a"", ""b"");
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsStream,testng_data_provider,33,37,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L33-L37,claude,agent,"@DataProvider
-  public Stream<String> returnsStream() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^^^^^^^^^^^
-    return Stream.of(""a"", ""b"");
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsStringArray,testng_data_provider,39,42,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L39-L42,claude,agent,"@DataProvider
-  public String[] returnsStringArray() { // Compliant - String[] is assignable to Object[] at runtime
-    return new String[] {""a"", ""b""};
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsIntArray2D,testng_data_provider,44,48,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L44-L48,claude,agent,"@DataProvider
-  public int[][] returnsIntArray2D() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^^^^
-    return new int[][] {{1, 2}, {3, 4}};
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsStringArray2D,testng_data_provider,50,53,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L50-L53,claude,agent,"@DataProvider
-  public String[][] returnsStringArray2D() { // Compliant - String[][] is assignable to Object[][] at runtime
-    return new String[][] {{""a""}, {""b""}};
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsIteratorOfString,testng_data_provider,55,58,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L55-L58,claude,agent,"@DataProvider
-  public Iterator<String> returnsIteratorOfString() { // Compliant - Iterator<String> works at runtime via TestNG
-    return Arrays.asList(""a"", ""b"").iterator();
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsIteratorOfObject,testng_data_provider,60,63,4,0,1,0,1,0.25,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L60-L63,claude,agent,"@DataProvider
-  public Iterator<Object> returnsIteratorOfObject() { // Compliant - TestNG converts via OneToTwoDimIterator
-    return Arrays.<Object>asList(""a"", ""b"").iterator();
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsObject,testng_data_provider,65,69,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L65-L69,claude,agent,"@DataProvider
-  public Object returnsObject() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^^^
-    return new Object();
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsVoid,testng_data_provider,71,74,4,0,1,0,2,0.5,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L71-L74,claude,agent,"@DataProvider
-  public void returnsVoid() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsCollection,testng_data_provider,76,80,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L76-L80,claude,agent,"@DataProvider
-  public Collection<Object[]> returnsCollection() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^^^^^^^^^^^^^^^^^
-    return Arrays.<Object[]>asList(new Object[] {""a""});
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsListOfObjectArray,testng_data_provider,82,86,5,0,1,0,2,0.4,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L82-L86,claude,agent,"@DataProvider
-  public List<Object[]> returnsListOfObjectArray() { // Noncompliant {{Change this return type to ""Object[][]"", ""Iterator<Object[]>"", ""Iterator<Object>"", or ""Object[]"".}}
-//       ^^^^^^^^^^^^^^
-    return Arrays.<Object[]>asList(new Object[] {""a""});
-  }",2026-09-18,14.03422313483915,1
-sonarsource/sonar-java,java,d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5,java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java,returnsRawIterator,testng_data_provider,96,100,5,0,1,0,1,0.2,other,https://github.com/sonarsource/sonar-java/blob/d9af65dd7b0b8b65d88d513ecefa9fc9faf4eca5/java-checks-test-sources/default/src/test/java/checks/tests/TestNGDataProviderReturnTypeCheckSample.java#L96-L100,claude,agent,"@DataProvider
-  @SuppressWarnings(""rawtypes"")
-  public Iterator returnsRawIterator() { // Compliant - raw Iterator works at runtime
-    return Arrays.asList(new Object[] {""a""}, new Object[] {""b""}).iterator();
-  }",2026-09-18,14.03422313483915,1
 tamboui/tamboui,java,3e4146b1412915e2cecaed7473971ba367b408f5,tamboui-core/src/test/java/dev/tamboui/terminal/RawOutputCleanupTest.java,setUp,junit5_before_each,122,126,5,0,1,0,0,0.0,setup,https://github.com/tamboui/tamboui/blob/3e4146b1412915e2cecaed7473971ba367b408f5/tamboui-core/src/test/java/dev/tamboui/terminal/RawOutputCleanupTest.java#L122-L126,claude,agent,"@BeforeEach
         void setUp() {
             backend = new TestBackend(20, 10);
