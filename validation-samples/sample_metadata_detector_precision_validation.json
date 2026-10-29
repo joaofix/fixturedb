@@ -1,0 +1,167 @@
+{
+  "seed": 42,
+  "target_sample_size_per_case": 100,
+  "timestamp": "20261029_142712",
+  "results": [
+    {
+      "case": "mock_detection",
+      "output_file": "/home/joao/fixturedb/validation-samples/mock-detection/mock_detection_sample.csv",
+      "population_size": 13347,
+      "sample_size": 100,
+      "shortfall": false,
+      "strata": [
+        {
+          "key": {
+            "dataset": "A",
+            "language": "java"
+          },
+          "population_size": 204,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "dataset": "A",
+            "language": "javascript"
+          },
+          "population_size": 223,
+          "sample_size": 2
+        },
+        {
+          "key": {
+            "dataset": "A",
+            "language": "python"
+          },
+          "population_size": 5341,
+          "sample_size": 40
+        },
+        {
+          "key": {
+            "dataset": "A",
+            "language": "typescript"
+          },
+          "population_size": 2599,
+          "sample_size": 19
+        },
+        {
+          "key": {
+            "dataset": "C",
+            "language": "java"
+          },
+          "population_size": 119,
+          "sample_size": 1
+        },
+        {
+          "key": {
+            "dataset": "C",
+            "language": "javascript"
+          },
+          "population_size": 424,
+          "sample_size": 3
+        },
+        {
+          "key": {
+            "dataset": "C",
+            "language": "python"
+          },
+          "population_size": 1235,
+          "sample_size": 9
+        },
+        {
+          "key": {
+            "dataset": "C",
+            "language": "typescript"
+          },
+          "population_size": 3202,
+          "sample_size": 24
+        }
+      ]
+    },
+    {
+      "case": "pytest_scope",
+      "output_file": "/home/joao/fixturedb/validation-samples/pytest-lifecycle/pytest_lifecycle_sample.csv",
+      "population_size": 6499,
+      "sample_size": 100,
+      "shortfall": false,
+      "strata": [
+        {
+          "key": {
+            "dataset": "A"
+          },
+          "population_size": 4851,
+          "sample_size": 75
+        },
+        {
+          "key": {
+            "dataset": "C"
+          },
+          "population_size": 1648,
+          "sample_size": 25
+        }
+      ]
+    },
+    {
+      "case": "unittest_detection",
+      "output_file": "/home/joao/fixturedb/validation-samples/unittest-heuristic/unittest_heuristic_sample.csv",
+      "population_size": 18625,
+      "sample_size": 100,
+      "shortfall": false,
+      "strata": [
+        {
+          "key": {
+            "dataset": "A"
+          },
+          "population_size": 4253,
+          "sample_size": 23
+        },
+        {
+          "key": {
+            "dataset": "C"
+          },
+          "population_size": 14372,
+          "sample_size": 77
+        }
+      ]
+    },
+    {
+      "case": "before_after",
+      "output_file": "/home/joao/fixturedb/validation-samples/before-after/before_after_sample.csv",
+      "population_size": 11178,
+      "sample_size": 100,
+      "shortfall": false,
+      "strata": [
+        {
+          "key": {
+            "dataset": "A",
+            "language": "javascript"
+          },
+          "population_size": 996,
+          "sample_size": 9
+        },
+        {
+          "key": {
+            "dataset": "A",
+            "language": "typescript"
+          },
+          "population_size": 806,
+          "sample_size": 7
+        },
+        {
+          "key": {
+            "dataset": "C",
+            "language": "javascript"
+          },
+          "population_size": 876,
+          "sample_size": 8
+        },
+        {
+          "key": {
+            "dataset": "C",
+            "language": "typescript"
+          },
+          "population_size": 8500,
+          "sample_size": 76
+        }
+      ]
+    }
+  ]
+}

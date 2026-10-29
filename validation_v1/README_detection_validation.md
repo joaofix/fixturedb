@@ -1,4 +1,11 @@
-# Detector Precision Validation Samples
+# Detector Precision Validation Samples (v1, superseded)
+
+**Archived 2026-10-29.** Superseded by the fixed-n=100 validation under
+`validation-samples/` (mock detection, pytest scope, unittest detection,
+bare before/after), run on the final `db/a.db` + `db/c_sampled.db`
+datasets after TestNG's `@DataProvider`/`@Factory` were removed from the
+catalog. Kept here, unmodified, for the historical record -- do not treat
+these numbers as current.
 
 Three Cochran-sized (95% confidence, 5% margin of error), stratified,
 precision-only samples for manual single-rater review. The first two are
