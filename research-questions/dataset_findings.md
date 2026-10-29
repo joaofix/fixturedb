@@ -2,7 +2,7 @@
 
 > Descriptive statistics about the datasets themselves -- collection process, composition -- that support paper claims but don't belong to any single RQ2-4 comparison. See this module's docstring for what each section below covers and why it lives here instead of its own script.
 
-Generated: 2026-10-07 14:03:49 UTC
+Generated: 2026-10-27 03:29:27 UTC
 
 ## Diff-Purity Gate (Dataset A)
 
@@ -102,8 +102,8 @@ Config -> No commits -> adoption tiers, per language -- the exact shape used for
 |---|---|---|---|---|---|
 | Candidate repos | 3,786 | 5,448 | 8,622 | 6,893 | 24,749 |
 | Created within 2016-2020 | 1,398 | 1,917 | 2,721 | 2,108 | 8,144 |
-| With any fixtures | 352 | 420 | 993 | 784 | 2,549 |
-| With any mocks | 58 | 95 | 236 | 279 | 668 |
+| With any fixtures | 368 | 424 | 995 | 785 | 2,572 |
+| With any mocks | 59 | 96 | 228 | 274 | 657 |
 
 ## Fixture Counts by Language
 
@@ -111,21 +111,21 @@ Total extracted fixtures per language, per dataset, counted by each fixture's ow
 
 | Dataset | Java | JavaScript | Python | TypeScript | Total |
 |---|---|---|---|---|---|
-| Dataset A (agent-authored) | 3,273 | 5,950 | 24,036 | 51,947 | 85,206 |
-| Dataset C (human-authored, pre-LLM) | 3,273 | 5,950 | 24,036 | 49,421 | 82,680 |
+| Dataset A (agent-authored) | 3,203 | 5,950 | 24,036 | 51,947 | 85,136 |
+| Dataset C (human-authored, pre-LLM) | 3,203 | 5,950 | 24,036 | 49,421 | 82,610 |
 
 ## Dataset C: Sampling-Down Summary
 
-Matched against Dataset a: 82,680/85,206 fixtures, 2,549 repos, seed=42.
+Matched against Dataset a: 82,610/85,136 fixtures, 2,572 repos, seed=42.
 
 A language whose "Repos sampled" hits its full available count took everything Dataset C had for it and still fell short of the target mix -- the shortfall was redistributed to the other languages, not discarded (see `_allocate_quotas_with_shortfall_reallocation()` in `dataset_sampler.py`).
 
 | Language | Dataset C's own mix | Target (a's mix) | Sampled mix | Repos sampled | Fixtures sampled |
 |---|---|---|---|---|---|
-| Java | 29.7% | 3.8% | 4.0% | 358/617 | 3,273/55,765 |
-| JavaScript | 21.6% | 7.0% | 7.2% | 589/802 | 5,950/40,566 |
-| Python | 22.5% | 28.2% | 29.1% | 1,061/1,105 | 24,036/42,274 |
-| TypeScript | 26.3% | 61.0% | 59.8% | 749/749 (all) | 49,421/49,421 |
+| Java | 27.8% | 3.8% | 3.9% | 375/617 | 3,203/50,956 |
+| JavaScript | 22.1% | 7.0% | 7.2% | 592/802 | 5,950/40,566 |
+| Python | 23.1% | 28.2% | 29.1% | 1,062/1,105 | 24,036/42,274 |
+| TypeScript | 27.0% | 61.0% | 59.8% | 749/749 (all) | 49,421/49,421 |
 
 ## JUnit 3 Fallback Detection (Java)
 
@@ -134,7 +134,7 @@ Side note, not a comparison: raw counts of `junit3_setup`/`junit3_teardown`, Jav
 | Dataset | junit3_setup | junit3_teardown | Total |
 |---|---|---|---|
 | Dataset A | 1 | 0 | 1 |
-| Dataset C | 55 | 38 | 93 |
+| Dataset C | 80 | 30 | 110 |
 
 ## JS/TS Hook Fixture Complexity (Lizard `function_list` Selection)
 
@@ -143,7 +143,7 @@ Side note, not a comparison: exact re-check, not a sample, of whether each `befo
 | Dataset | before_each/after_each | Nested construct | Re-checked | Mismatched | Mismatch rate |
 |---|---|---|---|---|---|
 | Dataset A | 48,040 | 5,383 | 4,406 | 963 | 21.86% |
-| Dataset C | 39,286 | 4,715 | 3,550 | 332 | 9.35% |
+| Dataset C | 39,284 | 4,739 | 3,572 | 337 | 9.43% |
 
 ## Mocha Bare `before()`/`after()` Detection (Regression Guard)
 
@@ -152,7 +152,7 @@ Side note, not a comparison, and not a live risk estimate -- count of `mocha_bef
 | Dataset | mocha_before/mocha_after | Non-bare-call shape |
 |---|---|---|
 | Dataset A | 1,802 | 2 |
-| Dataset C | 9,380 | 0 |
+| Dataset C | 9,376 | 0 |
 
 ## Aliased Mock Import Detection (Python)
 
@@ -172,7 +172,7 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 | Dataset | category='mock' rows | Positive match | Fallback (no keyword) | Positive % / Fallback % |
 |---|---|---|---|---|
 | Dataset A | 15,418 | 11,005 | 4,413 | 71.4% / 28.6% |
-| Dataset C | 4,580 | 3,445 | 1,135 | 75.2% / 24.8% |
+| Dataset C | 4,622 | 3,486 | 1,136 | 75.4% / 24.6% |
 
 ### Positive matches split further: framework API name vs. naming-only
 
@@ -181,7 +181,7 @@ Side note, not a comparison: `category='mock'` (`mock_usages.category`) is both 
 | Dataset | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
 | Dataset A | 15,418 | 8,517 (55.2%) | 2,488 (16.1%) | 4,413 (28.6%) |
-| Dataset C | 4,580 | 2,718 (59.3%) | 727 (15.9%) | 1,135 (24.8%) |
+| Dataset C | 4,622 | 2,753 (59.6%) | 733 (15.9%) | 1,136 (24.6%) |
 
 ### Per language
 
@@ -201,7 +201,7 @@ checking per language matters here specifically because it does:
 
 | Language | n | Framework API name | Naming-only | Fallback |
 |---|---|---|---|---|
-| java | 162 | 162 (100.0%) | 0 (0.0%) | 0 (0.0%) |
-| javascript | 406 | 158 (38.9%) | 106 (26.1%) | 142 (35.0%) |
-| python | 2,199 | 1,871 (85.1%) | 140 (6.4%) | 188 (8.5%) |
+| java | 215 | 215 (100.0%) | 0 (0.0%) | 0 (0.0%) |
+| javascript | 423 | 161 (38.1%) | 117 (27.7%) | 145 (34.3%) |
+| python | 2,171 | 1,850 (85.2%) | 135 (6.2%) | 186 (8.6%) |
 | typescript | 1,813 | 527 (29.1%) | 481 (26.5%) | 805 (44.4%) |

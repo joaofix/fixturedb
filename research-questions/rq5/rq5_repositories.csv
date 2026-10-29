@@ -675,7 +675,6 @@ classroomio/classroomio,8547b819f2fc69b37184f3c98b1c2e75697a6331,1,AGENTS.md,1,1
 claude-code-best/claude-code,77a7934e15d69da13879112ed7db695c9ee7a52a,2,AGENTS.md;CLAUDE.md,1,1,1,1,0,"afterAll,beforeAll,fixture,fixtures"
 clawwork-ai/clawwork,2239a01909e6eacceb17114ae02ad2125064091e,2,AGENTS.md;CLAUDE.md,1,0,0,0,0,
 clerk/javascript,05fc85a6645de6ee1ec185872001f2706dad1b63,5,AGENTS.md;CLAUDE.md;packages/expo/AGENTS.md;packages/swingset/AGENTS.md;packages/swingset/CLAUDE.md,1,1,1,0,1,"fixture,fixtures"
-clickhouse/clickhouse-java,d4c648b25f52a0e394d5e1b269dceecc536fea70,2,AGENTS.md;CLAUDE.md,1,1,1,1,0,test setup
 clientio/joint,a4d87258569ffe760d75020606d33745f8c35a53,2,CLAUDE.md;packages/joint-react/CLAUDE.md,1,1,0,0,0,
 cline/cline,e5dd38d81a939366165eebbd4fccacdf0a8a61ed,3,AGENTS.md;sdk/AGENTS.md;sdk/packages/llms/AGENTS.md,1,1,0,0,0,
 cloud-cv/evalai,8d3a5e8e0699114e8e2f5fc61355cdf9c97d749e,1,AGENTS.md,1,1,0,0,0,
@@ -1829,7 +1828,6 @@ sipyourdrink-ltd/bernstein,2ad8460a80738eba6fca7f63f05bfefe62e6c953,10,AGENTS.md
 sirixdb/sirix,9154f7d6b41fd095cb736aa43cd986e6b3e93458,2,AGENTS.md;CLAUDE.md,1,1,0,0,0,
 sirkirby/unifi-mcp,0fbab69929e5388eefe64d9edfab03c33dadae47,3,AGENTS.md;CLAUDE.md;apps/worker/AGENTS.md,1,1,0,0,0,
 sirmalloc/ccstatusline,3b602348afbbe082eb919b576b55926bbf8d19d6,1,AGENTS.md,1,1,0,0,0,
-skadistats/clarity,bd37eab0a572cd963dcfeaeaf9afb195f12c43aa,1,CLAUDE.md,1,1,0,0,0,
 skaldlabs/skald,106996246c4765dc8cb338cd074ed2cd019b0375,1,CLAUDE.md,1,0,0,0,0,
 skypilot-org/skypilot,3f4f7aea4a31f0e9111ce16907583b59b4104278,2,AGENTS.md;sky/batch/CLAUDE.md,1,1,1,1,0,"conftest,fixtures"
 skyscanner/backpack,2445895e69e4dcff1e2a09d6afb772faf6cb109a,2,AGENTS.md;CLAUDE.md,1,1,0,0,0,

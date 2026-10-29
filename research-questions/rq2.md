@@ -2,27 +2,27 @@
 
 > How do agent-generated and human-written fixtures compare across structural metrics?
 
-Generated: 2026-10-07 13:35:44 UTC
+Generated: 2026-10-27 03:29:14 UTC
 
 See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2 definition.
 
 ## Per-dataset summary
 
-### Dataset A (agent-authored) -- 85,206 fixtures
+### Dataset A (agent-authored) -- 85,136 fixtures
 
 **Continuous metrics -- Paper** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 2,168 | 6.41 | 7.56 | 1 | 82 | 5.14 |
-| cyclomatic_complexity | 2,168 | 1.06 | 1.22 | 1 | 7 | 0.42 |
-| comment_density | 2,168 | 0.01 | 0.02 | 0 | 0 | 0.04 |
+| loc | 2,166 | 6.40 | 7.56 | 1 | 82 | 5.15 |
+| cyclomatic_complexity | 2,166 | 1.06 | 1.22 | 1 | 7 | 0.43 |
+| comment_density | 2,166 | 0.01 | 0.02 | 0 | 0 | 0.04 |
 
 **Continuous metrics -- Other (not in the paper)** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| num_parameters | 2,169 | 0.00 | 0.18 | 0 | 4 | 0.37 |
+| num_parameters | 2,167 | 0.00 | 0.18 | 0 | 4 | 0.37 |
 
 **fixture_type distribution**
 
@@ -44,7 +44,6 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 | junit5_after_all | 219 | 0.3% |
 | junit_rule | 151 | 0.2% |
 | junit4_after | 126 | 0.1% |
-| testng_data_provider | 70 | 0.1% |
 | testng_before_method | 56 | 0.1% |
 | junit4_before_class | 39 | 0.0% |
 | junit_class_rule | 26 | 0.0% |
@@ -58,22 +57,22 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-6,765/85,206 fixtures (7.94%) leaked.
+6,762/85,136 fixtures (7.94%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 3,310 | 277 | 8.37% | typescript=179, python=94, javascript=4 |
+| java | 3,243 | 277 | 8.54% | typescript=179, python=94, javascript=4 |
 | javascript | 5,566 | 1,953 | 35.09% | typescript=1,536, python=383, java=34 |
-| python | 24,293 | 1,548 | 6.37% | typescript=1,182, javascript=202, java=164 |
+| python | 24,290 | 1,545 | 6.36% | typescript=1,182, javascript=202, java=161 |
 | typescript | 52,037 | 2,987 | 5.74% | javascript=2,131, python=814, java=42 |
 
 **agent_type distribution** (descriptive only, not compared against other datasets -- see load_dataset_metrics()'s docstring for why)
 
 | Value | Count | % |
 |---|---|---|
-| claude | 71,530 | 83.9% |
-| copilot | 5,462 | 6.4% |
-| cursor | 4,000 | 4.7% |
+| claude | 71,471 | 83.9% |
+| copilot | 5,452 | 6.4% |
+| cursor | 3,999 | 4.7% |
 | codex | 993 | 1.2% |
 | openhands | 801 | 0.9% |
 | devin | 699 | 0.8% |
@@ -102,77 +101,75 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 | generic | 1 | 0.0% |
 | ona | 1 | 0.0% |
 
-### Dataset C (human-authored, pre-LLM) -- 82,680 fixtures
+### Dataset C (human-authored, pre-LLM) -- 82,610 fixtures
 
 **Continuous metrics -- Paper** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| loc | 2,537 | 6.00 | 7.94 | 1 | 199 | 8.70 |
-| cyclomatic_complexity | 2,537 | 1.00 | 1.19 | 1 | 14 | 0.53 |
-| comment_density | 2,537 | 0.00 | 0.02 | 0 | 0 | 0.04 |
+| loc | 2,550 | 6.00 | 8.03 | 1 | 195 | 9.11 |
+| cyclomatic_complexity | 2,550 | 1.00 | 1.19 | 1 | 14 | 0.54 |
+| comment_density | 2,550 | 0.00 | 0.02 | 0 | 0 | 0.05 |
 
 **Continuous metrics -- Other (not in the paper)** (repo-level: one mean per repo, not one value per fixture)
 
 | Metric | n | median | mean | min | max | stdev |
 |---|---|---|---|---|---|---|
-| num_parameters | 2,549 | 0.00 | 0.14 | 0 | 3 | 0.36 |
+| num_parameters | 2,572 | 0.00 | 0.14 | 0 | 3 | 0.36 |
 
 **fixture_type distribution**
 
 | Value | Count | % |
 |---|---|---|
-| before_each | 30,565 | 37.0% |
-| unittest_setup | 14,359 | 17.4% |
-| pytest_decorator | 9,080 | 11.0% |
-| after_each | 8,721 | 10.5% |
-| mocha_before | 6,204 | 7.5% |
-| before_all | 4,280 | 5.2% |
-| mocha_after | 3,176 | 3.8% |
-| after_all | 2,425 | 2.9% |
-| junit4_before | 764 | 0.9% |
-| pytest_class_method | 597 | 0.7% |
-| junit_rule | 417 | 0.5% |
-| junit4_before_class | 356 | 0.4% |
-| junit4_after | 328 | 0.4% |
-| testng_data_provider | 282 | 0.3% |
-| junit4_after_class | 213 | 0.3% |
-| junit5_before_each | 184 | 0.2% |
-| testng_before_class | 91 | 0.1% |
-| junit_class_rule | 83 | 0.1% |
-| testng_before_method | 75 | 0.1% |
-| junit5_after_each | 72 | 0.1% |
-| testng_after_class | 66 | 0.1% |
-| junit5_before_all | 57 | 0.1% |
-| junit3_setup | 55 | 0.1% |
-| junit5_after_all | 41 | 0.0% |
-| junit3_teardown | 38 | 0.0% |
-| testng_before_suite | 30 | 0.0% |
-| testng_before_test | 30 | 0.0% |
-| testng_after_method | 29 | 0.0% |
-| before_class_ambiguous | 22 | 0.0% |
-| after_class_ambiguous | 21 | 0.0% |
+| before_each | 30,560 | 37.0% |
+| unittest_setup | 14,372 | 17.4% |
+| pytest_decorator | 9,066 | 11.0% |
+| after_each | 8,724 | 10.6% |
+| mocha_before | 6,194 | 7.5% |
+| before_all | 4,281 | 5.2% |
+| mocha_after | 3,182 | 3.9% |
+| after_all | 2,430 | 2.9% |
+| junit4_before | 893 | 1.1% |
+| pytest_class_method | 598 | 0.7% |
+| junit_rule | 415 | 0.5% |
+| junit4_before_class | 376 | 0.5% |
+| junit4_after | 332 | 0.4% |
+| junit4_after_class | 209 | 0.3% |
+| junit5_before_each | 168 | 0.2% |
+| junit_class_rule | 116 | 0.1% |
+| testng_before_class | 102 | 0.1% |
+| junit3_setup | 80 | 0.1% |
+| testng_before_method | 80 | 0.1% |
+| junit5_before_all | 75 | 0.1% |
+| junit5_after_each | 71 | 0.1% |
+| testng_after_class | 68 | 0.1% |
+| testng_after_method | 36 | 0.0% |
+| testng_before_suite | 32 | 0.0% |
+| junit5_after_all | 31 | 0.0% |
+| junit3_teardown | 30 | 0.0% |
+| testng_before_test | 29 | 0.0% |
+| after_class_ambiguous | 22 | 0.0% |
+| before_class_ambiguous | 19 | 0.0% |
 | testng_after_test | 12 | 0.0% |
-| testng_after_suite | 3 | 0.0% |
-| testng_factory | 3 | 0.0% |
-| testng_before_groups | 1 | 0.0% |
+| testng_after_suite | 5 | 0.0% |
+| testng_before_groups | 2 | 0.0% |
 
 **Cross-language fixture leakage** (a fixture's own detected language differs from its repo's tagged language -- see [Limitations § Cross-Language Fixture Leakage](../docs/reference/limitations.md#cross-language-fixture-leakage))
 
-7,480/82,680 fixtures (9.05%) leaked.
+7,483/82,610 fixtures (9.06%) leaked.
 
 | Repo language | Total fixtures | Leaked | Leaked % | Leaked into |
 |---|---|---|---|---|
-| java | 5,453 | 2,217 | 40.66% | typescript=1,104, python=1,003, javascript=110 |
-| javascript | 6,820 | 2,523 | 36.99% | typescript=2,176, python=336, java=11 |
-| python | 23,728 | 1,222 | 5.15% | typescript=980, javascript=226, java=16 |
-| typescript | 46,679 | 1,518 | 3.25% | javascript=1,317, python=191, java=10 |
+| java | 5,374 | 2,225 | 41.40% | typescript=1,104, python=1,003, javascript=118 |
+| javascript | 6,847 | 2,536 | 37.04% | typescript=2,176, python=336, java=24 |
+| python | 23,729 | 1,223 | 5.15% | typescript=980, javascript=223, java=20 |
+| typescript | 46,660 | 1,499 | 3.21% | javascript=1,298, python=191, java=10 |
 
 **agent_type distribution** (descriptive only, not compared against other datasets -- see load_dataset_metrics()'s docstring for why)
 
 | Value | Count | % |
 |---|---|---|
-| human_pre2022 | 82,680 | 100.0% |
+| human_pre2022 | 82,610 | 100.0% |
 
 ## A vs C: Dataset A (agent-authored) vs Dataset C (human-authored, pre-LLM)
 
@@ -182,30 +179,30 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 2168 | 2537 | -- | -- | -- | -- | -- | -- | U=2616902.0 | -0.048 | negligible | 0.004 | -- |
-| java | 175 | 342 | 8.00 | 7.00 | 10.62 | 10.50 | 14.00 | 15.12 | U=26376.0 | -0.119 | negligible | 0.027 | 0.054 |
-| javascript | 211 | 589 | 5.02 | 5.00 | 8.51 | 8.09 | 12.64 | 13.00 | U=61212.5 | -0.015 | negligible | 0.747 | 0.747 |
-| python | 856 | 1061 | 8.00 | 6.43 | 11.26 | 10.00 | 15.33 | 16.00 | U=387292.0 | -0.147 | small | <.001 | <.001 |
+| Overall | 2166 | 2550 | -- | -- | -- | -- | -- | -- | U=2629711.0 | -0.048 | negligible | 0.005 | -- |
+| java | 173 | 353 | 8.00 | 7.00 | 10.50 | 10.00 | 13.98 | 14.19 | U=26594.5 | -0.129 | negligible | 0.016 | 0.032 |
+| javascript | 211 | 592 | 5.02 | 5.00 | 8.51 | 8.00 | 12.64 | 13.00 | U=61833.5 | -0.010 | negligible | 0.830 | 0.830 |
+| python | 856 | 1062 | 8.00 | 6.42 | 11.26 | 10.00 | 15.33 | 16.00 | U=386885.0 | -0.149 | small | <.001 | <.001 |
 | typescript | 1198 | 749 | 5.41 | 5.65 | 7.33 | 7.79 | 10.24 | 11.34 | U=466150.0 | 0.039 | negligible | 0.147 | 0.196 |
 
 ### cyclomatic_complexity
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 2168 | 2537 | -- | -- | -- | -- | -- | -- | U=2367552.0 | -0.139 | negligible | <.001 | -- |
-| java | 175 | 342 | 1.08 | 1.00 | 1.36 | 1.17 | 1.78 | 1.67 | U=23481.5 | -0.215 | small | <.001 | <.001 |
-| javascript | 211 | 589 | 1.00 | 1.00 | 1.33 | 1.00 | 1.80 | 1.18 | U=44981.0 | -0.276 | small | <.001 | <.001 |
-| python | 856 | 1061 | 1.11 | 1.10 | 1.41 | 1.40 | 1.89 | 1.89 | U=447696.0 | -0.014 | negligible | 0.581 | 0.581 |
+| Overall | 2166 | 2550 | -- | -- | -- | -- | -- | -- | U=2374211.0 | -0.140 | negligible | <.001 | -- |
+| java | 173 | 353 | 1.07 | 1.00 | 1.36 | 1.15 | 1.79 | 1.58 | U=23844.5 | -0.219 | small | <.001 | <.001 |
+| javascript | 211 | 592 | 1.00 | 1.00 | 1.33 | 1.00 | 1.80 | 1.22 | U=45561.0 | -0.271 | small | <.001 | <.001 |
+| python | 856 | 1062 | 1.11 | 1.09 | 1.41 | 1.40 | 1.89 | 1.90 | U=445792.0 | -0.019 | negligible | 0.451 | 0.451 |
 | typescript | 1198 | 749 | 1.02 | 1.00 | 1.19 | 1.04 | 1.41 | 1.20 | U=354804.5 | -0.209 | small | <.001 | <.001 |
 
 ### comment_density
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 2168 | 2537 | -- | -- | -- | -- | -- | -- | U=2478668.0 | -0.099 | negligible | <.001 | -- |
-| java | 175 | 342 | 0.00 | 0.00 | 0.03 | 0.01 | 0.07 | 0.05 | U=24069.0 | -0.196 | small | <.001 | <.001 |
-| javascript | 211 | 589 | 0.00 | 0.00 | 0.03 | 0.01 | 0.09 | 0.05 | U=49211.5 | -0.208 | small | <.001 | <.001 |
-| python | 856 | 1061 | 0.01 | 0.01 | 0.03 | 0.03 | 0.06 | 0.08 | U=455503.0 | 0.003 | negligible | 0.904 | 0.904 |
+| Overall | 2166 | 2550 | -- | -- | -- | -- | -- | -- | U=2489470.0 | -0.099 | negligible | <.001 | -- |
+| java | 173 | 353 | 0.00 | 0.00 | 0.03 | 0.01 | 0.06 | 0.06 | U=24901.0 | -0.184 | small | <.001 | <.001 |
+| javascript | 211 | 592 | 0.00 | 0.00 | 0.03 | 0.01 | 0.09 | 0.05 | U=49865.0 | -0.202 | small | <.001 | <.001 |
+| python | 856 | 1062 | 0.01 | 0.01 | 0.03 | 0.03 | 0.06 | 0.08 | U=455785.5 | 0.003 | negligible | 0.914 | 0.914 |
 | typescript | 1198 | 749 | 0.00 | 0.00 | 0.02 | 0.01 | 0.05 | 0.04 | U=412202.5 | -0.081 | negligible | 0.001 | 0.002 |
 
 **Other Extracted Features (Not in the Paper)** -- `num_parameters` is still collected but dropped from Mann-Whitney testing entirely (see this module's docstring for why); shown here only as a descriptive floor-percentage footnote, not a comparative test.
@@ -214,7 +211,7 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 | Metric | Floor value | Dataset A (agent-authored) at floor | Dataset C (human-authored, pre-LLM) at floor |
 |---|---|---|---|
-| num_parameters | 0 | 88.1% | 92.8% |
+| num_parameters | 0 | 88.1% | 92.9% |
 
 ## Diagnostic: median-per-repo aggregation (NOT used in the paper)
 
@@ -224,28 +221,28 @@ See [docs/research-questions.md](../docs/research-questions.md) for the full RQ2
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 2168 | 2537 | -- | -- | -- | -- | -- | -- | U=2654203.0 | -0.035 | negligible | 0.037 | -- |
-| java | 175 | 342 | 6.00 | 6.00 | 8.50 | 8.50 | 12.00 | 13.00 | U=27307.5 | -0.087 | negligible | 0.100 | 0.134 |
-| javascript | 211 | 589 | 4.00 | 4.00 | 6.50 | 6.00 | 11.00 | 10.60 | U=61781.5 | -0.006 | negligible | 0.900 | 0.900 |
-| python | 856 | 1061 | 6.00 | 4.50 | 8.50 | 7.00 | 12.75 | 12.00 | U=362094.0 | -0.203 | small | <.001 | <.001 |
-| typescript | 1198 | 749 | 4.00 | 4.00 | 5.00 | 6.00 | 7.00 | 9.00 | U=474664.5 | 0.058 | negligible | 0.028 | 0.056 |
+| Overall | 2166 | 2550 | -- | -- | -- | -- | -- | -- | U=2665039.0 | -0.035 | negligible | 0.037 | -- |
+| java | 173 | 353 | 6.00 | 6.00 | 8.50 | 8.00 | 13.00 | 13.00 | U=26928.5 | -0.118 | negligible | 0.026 | 0.037 |
+| javascript | 211 | 592 | 4.00 | 4.00 | 6.50 | 6.00 | 11.00 | 11.00 | U=62797.0 | 0.005 | negligible | 0.905 | 0.905 |
+| python | 856 | 1062 | 6.00 | 4.50 | 8.50 | 7.00 | 12.75 | 12.00 | U=364278.0 | -0.199 | small | <.001 | <.001 |
+| typescript | 1198 | 749 | 4.00 | 4.00 | 5.00 | 6.00 | 7.00 | 9.00 | U=474664.5 | 0.058 | negligible | 0.028 | 0.037 |
 
 ### cyclomatic_complexity
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 2168 | 2537 | -- | -- | -- | -- | -- | -- | U=2735665.5 | -0.005 | negligible | 0.499 | -- |
-| java | 175 | 342 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.50 | U=29205.0 | -0.024 | negligible | 0.414 | 0.552 |
-| javascript | 211 | 589 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.00 | U=57605.5 | -0.073 | negligible | <.001 | 0.001 |
-| python | 856 | 1061 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.50 | U=455323.5 | 0.003 | negligible | 0.856 | 0.856 |
+| Overall | 2166 | 2550 | -- | -- | -- | -- | -- | -- | U=2735994.5 | -0.009 | negligible | 0.225 | -- |
+| java | 173 | 353 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.00 | U=29282.0 | -0.041 | negligible | 0.143 | 0.191 |
+| javascript | 211 | 592 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.00 | U=57812.5 | -0.074 | negligible | <.001 | <.001 |
+| python | 856 | 1062 | 1.00 | 1.00 | 1.00 | 1.00 | 1.50 | 1.50 | U=453711.0 | -0.002 | negligible | 0.902 | 0.902 |
 | typescript | 1198 | 749 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | U=435443.5 | -0.029 | negligible | 0.001 | 0.002 |
 
 ### comment_density
 
 | Language | n_A | n_C | A median | C median | A Q3 | C Q3 | A P90 | C P90 | Statistic | Effect size value | Magnitude | p (raw) | p (BH-adj) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Overall | 2168 | 2537 | -- | -- | -- | -- | -- | -- | U=2754163.5 | 0.001 | negligible | 0.841 | -- |
-| java | 175 | 342 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=30117.0 | 0.006 | negligible | 0.806 | 0.806 |
-| javascript | 211 | 589 | 0.00 | 0.00 | 0.00 | 0.00 | 0.08 | 0.00 | U=57480.5 | -0.075 | negligible | 0.001 | 0.006 |
-| python | 856 | 1061 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=460253.0 | 0.014 | negligible | 0.293 | 0.467 |
-| typescript | 1198 | 749 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=444444.0 | -0.009 | negligible | 0.350 | 0.467 |
+| Overall | 2166 | 2550 | -- | -- | -- | -- | -- | -- | U=2769011.5 | 0.003 | negligible | 0.718 | -- |
+| java | 173 | 353 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=31127.0 | 0.019 | negligible | 0.465 | 0.465 |
+| javascript | 211 | 592 | 0.00 | 0.00 | 0.00 | 0.00 | 0.08 | 0.00 | U=57802.0 | -0.075 | negligible | 0.002 | 0.006 |
+| python | 856 | 1062 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=460501.5 | 0.013 | negligible | 0.308 | 0.465 |
+| typescript | 1198 | 749 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | U=444444.0 | -0.009 | negligible | 0.350 | 0.465 |

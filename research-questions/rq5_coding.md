@@ -1,6 +1,6 @@
 # RQ5 -- Manual coding of fixture guidance
 
-Generated: 2026-10-22 21:48:57 UTC
+Generated: 2026-10-27 03:45:23 UTC
 
 Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per repository with a fixture keyword match in its guidance files.
 
@@ -8,14 +8,14 @@ Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per re
 
 | Statistic | Count | Percentage | Denominator |
 |---|---|---|---|
-| Coded `yes` | 586 | 29.6% | 1,978 repositories with a guidance file |
+| Coded `yes` | 586 | 29.7% | 1,976 repositories with a guidance file |
 
 ## By primary language
 
 | Language | With guidance file | Coded `yes` | Percentage |
 |---|---|---|---|
 | Python | 724 | 227 | 31.4% |
-| Java | 159 | 43 | 27.0% |
+| Java | 157 | 43 | 27.4% |
 | JavaScript | 193 | 56 | 29.0% |
 | TypeScript | 902 | 260 | 28.8% |
 
@@ -23,11 +23,11 @@ Source: `research-questions/rq5/rq5_repository_coding_sheet.csv`, one row per re
 
 | Coding | Repositories | Percentage of repositories with a fixture match |
 |---|---|---|
-| `yes` | 586 | 86.3% |
-| `no` | 93 | 13.7% |
-| Total | 679 | -- |
+| `yes` | 586 | 86.4% |
+| `no` | 92 | 13.6% |
+| Total | 678 | -- |
 
-Precision: 586 of 679 (86.3%).
+Precision: 586 of 678 (86.4%).
 
 ## Categories
 
