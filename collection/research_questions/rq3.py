@@ -186,8 +186,8 @@ def _effective_teardown_count(kind_counts: dict[str, int]) -> int:
 def _answerable_total(kind_counts: dict[str, int]) -> int:
     """Denominator for Table 1's Setup%/Teardown% cells: setup + teardown +
     setup_and_teardown, excluding 'other'. A fixture classified 'other'
-    (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG `@DataProvider`
-    -- see _render_kind_classification_coverage_table()'s docstring) was
+    (a JUnit `@Rule`/`@ClassRule` field -- see
+    _render_kind_classification_coverage_table()'s docstring) was
     never a candidate to be setup or teardown in the first place (no
     setup/teardown pairing mechanism applies to it, and unlike
     pytest_decorator there's no body-analysis fallback either), so it
@@ -238,9 +238,9 @@ def _render_kind_counts_table(a: DatasetMetrics, other: DatasetMetrics) -> str:
         "Raw counts of setup-classified and teardown-classified fixtures, "
         "each also shown as a percentage of that language's *answerable* "
         "fixture count (setup + teardown + setup_and_teardown -- "
-        '"other"-classified fixtures, e.g. a JUnit `@Rule` or a TestNG '
-        "`@DataProvider` (see the Fixture Kind Classification Coverage by "
-        "Language table below), are excluded from both the counts "
+        '"other"-classified fixtures (a JUnit `@Rule`/`@ClassRule` field '
+        "-- see the Fixture Kind Classification Coverage by "
+        "Language table below) are excluded from both the counts "
         "themselves and this percentage denominator, since they were "
         "never a setup/teardown candidate in the first place; a fixture "
         "classified as providing both -- e.g. a pytest fixture with setup "
@@ -370,9 +370,9 @@ def _render_kind_classification_coverage_table(a: DatasetMetrics, other: Dataset
     own denominator (see _answerable_total()'s docstring) and never shows
     the 'other' slice on its own; this table does, broken out per language
     instead of pooled dataset-wide (the "Per-dataset summary" section's
-    kind distribution) -- 'other' fixtures (e.g. a JUnit `@Rule`/
-    `@ClassRule` field, or a TestNG `@DataProvider`) aren't spread evenly
-    across languages, so a language with a high 'other' share has that
+    kind distribution) -- 'other' fixtures (a JUnit `@Rule`/
+    `@ClassRule` field) aren't spread evenly across languages, so a
+    language with a high 'other' share has that
     much smaller a slice of its fixtures represented anywhere in Table 1's
     counts at all (not a diluted rate -- an outright absence). Reuses
     _language_kind_totals() -- the same per-language totals Table 1 itself
@@ -388,8 +388,8 @@ def _render_kind_classification_coverage_table(a: DatasetMetrics, other: Dataset
         "% in `Per-dataset summary`, just split out per language instead "
         "of pooled. Table 1 excludes `other` entirely from its own "
         "percentage denominator, so it never shows this slice; `other` "
-        "fixtures (e.g. a JUnit `@Rule`/`@ClassRule` field, or a TestNG "
-        "`@DataProvider` -- neither is inherently setup or teardown) are "
+        "fixtures (a JUnit `@Rule`/`@ClassRule` field -- not inherently "
+        "setup or teardown) are "
         "not spread evenly across languages, so a language with a high "
         "`other` % has that much smaller a share of its fixtures "
         "represented in Table 1's counts at all. Worth re-checking "
